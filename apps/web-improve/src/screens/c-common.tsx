@@ -1,7 +1,7 @@
 import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
 import { Button, Empty, Status } from '../ui'
-import { canAccessProject } from '../store'
+import { canAccessProject } from '../auth/policy'
 import { go, selectProject, useRoute } from '../router/navigate'
 import { useDb, useMe } from '../state/console'
 import { useProjectStore } from '../state/stores'

@@ -14,16 +14,19 @@
  *   cross-project visibility.
  *
  * Both bridges unsubscribe on unmount, so repeated provider mounts rewire
- * exactly once. Render inside StoreProvider (the bridges need services).
+ * exactly once. Render inside ServicesProvider (the bridges need services).
  */
 import { useEffect, useMemo, type ReactNode } from 'react'
-import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
-import { useServices } from '../store'
+import { notifyManager, QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { useServices } from './services'
 import { actorRef } from '../auth/persona'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { ChangeSet, EntityKind } from '../domain/service'
 import { createConsoleQueryClient, scopeOf } from './keys'
 import { useAuthStore, useProjectStore } from './stores'
+
+// Observer delivery must not require another demo-clock tick after a commit.
+notifyManager.setScheduler(queueMicrotask)
 
 function ChangeSetBridge({ client, services }: { client: QueryClient; services: ConsoleServices }) {
   useEffect(
@@ -91,7 +94,7 @@ function ScopeCancelBridge({ client, services }: { client: QueryClient; services
   return null
 }
 
-/** Query provider + authority bridges; mount inside StoreProvider. */
+/** Query provider + authority bridges; mount inside ServicesProvider. */
 export function ConsoleProviders({ children }: { children: ReactNode }) {
   const services = useServices()
   const client = useMemo(() => createConsoleQueryClient(), [])

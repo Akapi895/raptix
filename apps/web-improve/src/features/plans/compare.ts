@@ -14,7 +14,7 @@ import { actorRef } from '../../auth/persona'
 import type { Db, Plan, PlanStep } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import { resolvePlan } from './service'
 

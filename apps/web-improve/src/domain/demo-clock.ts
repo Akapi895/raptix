@@ -4,7 +4,7 @@
  * The console's display clock is a host-elapsed projection anchored at the
  * dataset's demo instant — Oct 13, 2026, 10:42 AM (UTC+7) — advancing minute
  * by minute with the host wall clock. It stays in lockstep with the service
- * clock (StoreProvider advances the factory clock by the same elapsed host
+ * clock (ServicesProvider advances the factory clock by the same elapsed host
  * time every 15 s), and it is the single anchor for every display label:
  * audit/notice stamps, the live operation logs and the C2 grant countdown.
  *
@@ -14,9 +14,14 @@
  */
 import { DEMO_TZ_LABEL } from './clock'
 
-const T0 = Date.now()
+let T0 = Date.now()
 const pad = (n: number) => String(n).padStart(2, '0')
 const nowMin = () => 10 * 60 + 42 + Math.floor((Date.now() - T0) / 60000)
+
+/** Restores display elapsed time alongside the factory's dataset clock. */
+export function resetDemoClock(): void {
+  T0 = Date.now()
+}
 
 /** The projected demo time as a 24-hour `HH:MM` label. */
 export function hhmm() {

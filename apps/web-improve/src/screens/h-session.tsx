@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
 import { Ban, Bot, Clock, Copy, Eye, FileText, Loader2, Lock, OctagonX, Radio, ShieldCheck, TerminalSquare, Unplug } from 'lucide-react'
-import { useStore, useServices } from '../store'
+import { useServices } from '../state/services'
 import { go, useRoute } from '../router/navigate'
 import { useCan, useMe } from '../state/console'
 import { useProjectStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { emergencyStop } from '../features/demo/runtime'
-import { expireGrantTransaction, sessionCommandTransaction } from '../features/c2/grants'
+import { emergencyStop, terminateSession } from '../features/demo/runtime'
+import { expireGrantTransaction, requestSessionAccessTransaction, revokeGrantTransaction, sessionCommandTransaction } from '../features/c2/grants'
+import { ROLE_LABEL } from '../auth/policy'
+import { stamp } from '../domain/demo-clock'
 import type { Session } from '../data'
-import { C2ReadError, useC2Session, useC2Sessions } from '../features/c2/query'
+import { C2ReadError, useC2GrantWatch, useC2Session, useC2Sessions } from '../features/c2/query'
 import { hhmm } from '../features/c2/service'
 import type { C2AccessInfo } from '../features/c2/service'
 import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui'
@@ -27,24 +29,26 @@ export function minutesUntil(exp: string, nowHHMM: string) {
 }
 
 /* ───────── Request access drawer (C2-08) ───────── */
-export function RequestAccessDrawer({ session, open, onClose, initialMode = 'interactive' }: { session: Session; open: boolean; onClose: () => void; initialMode?: 'read-only' | 'interactive' }) {
-  const { A, db, go } = useStore()
+export function RequestAccessDrawer({ session, open, onClose, initialMode = 'interactive' }: { session: Session; open: boolean; onClose: () => void; initialMode?: 'read-only' | 'interactive' }): ReactElement {
+  const services = useServices()
+  const me = useMe()
+  const detail = useC2Session(session.id)
   const toast = useToastStore((s) => s.toast)
   const [mode, setMode] = useState<'read-only' | 'interactive'>(initialMode)
   const [duration, setDuration] = useState('1 hour')
   const [reason, setReason] = useState('')
   const [touched, setTouched] = useState(false)
   useEffect(() => { if (open) { setMode(initialMode); setReason(''); setTouched(false) } }, [open, initialMode])
-  const op = db.operations.find((o) => o.id === session.opId)
-  const project = db.projects.find((p) => p.id === session.projectId)
-  const approvers = db.projects.find((p) => p.id === session.projectId)?.members.filter((m) => m.role === 'manager' || m.role === 'admin').map((m) => m.user) || []
+  const op = detail.data?.op
+  const project = detail.data?.project
+  const approvers = project?.approvers ?? []
   const ok = reason.trim().length >= MIN_REASON
   const submit = () => {
     setTouched(true)
     if (!ok) return
-    const r = A.requestSessionAccess(session.id, mode, duration, reason.trim())
-    if (!r.ok) { toast(r.error || 'The request was refused.', 'bad'); return }
-    toast(`Request ${r.id} submitted — the approver has been notified.`)
+    const r = requestSessionAccessTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: session.projectId, corr: 'legacy' }, { sessionId: session.id, mode, duration, reason: reason.trim() })
+    if (!r.ok) { toast(r.failure.message || 'The request was refused.', 'bad'); return }
+    toast(`Request ${r.data.requestId} submitted — the approver has been notified.`)
     onClose()
     go('c2-session', { id: session.id })
   }
@@ -89,21 +93,22 @@ export function AccessChip({ a }: { a: C2AccessInfo }) {
  * mounted C2 screens' 15-second cadence for the countdown display and warns
  * the holder when the lifecycle just expired their grant.
  */
-export function useGrantWatch() {
-  const { db, me } = useStore()
+export function useGrantWatch(): void {
+  const me = useMe()
+  const watch = useC2GrantWatch()
   const toast = useToastStore((s) => s.toast)
   const [t, tick] = useState(0)
   useEffect(() => { const i = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(i) }, [])
   const held = useRef<Map<string, string>>(new Map())
   useEffect(() => {
     const next = new Map<string, string>()
-    db.sessions.forEach((s) => {
+    watch?.sessions.forEach((s) => {
       const g = s.grants.find((x) => x.user === me.name)
       if (g) next.set(s.id, g.perm)
       else if (held.current.get(s.id) && s.transcript.some((l) => l.text.includes(`grant for ${me.name} expired`))) toast(`Your ${held.current.get(s.id)} grant on ${s.id} expired. Input is locked.`, 'warn')
     })
     held.current = next
-  }, [t, db.sessions, me.name]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [t, watch, me.name, toast])
 }
 
 /* ───────── Revocation (with simulated failure) ───────── */
@@ -116,12 +121,12 @@ export function useRevokeSim() {
 }
 export const setFailNext = (v: boolean) => setSim({ failNext: v })
 
-export function useTerminate() {
-  const { A, db } = useStore()
+export function useTerminate(): (s: Session) => void {
+  const watch = useC2GrantWatch()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
   return (s: Session) => {
-    const op = db.operations.find((o) => o.id === s.opId)
+    const op = watch?.operations.find((o) => o.id === s.opId)
     confirm({
       title: `Terminate ${s.id}?`, confirmLabel: 'Terminate session', danger: true, reasonRequired: true, reasonLabel: 'Reason for termination',
       body: (
@@ -135,24 +140,27 @@ export function useTerminate() {
           </ul>
         </div>
       ),
-      onConfirm: (reason) => { A.terminateSession(s.id, reason); toast(`Termination of ${s.id} requested — waiting for acknowledgement.`, 'warn') },
+      onConfirm: (reason) => { terminateSession(s.id, reason); toast(`Termination of ${s.id} requested — waiting for acknowledgement.`, 'warn') },
     })
   }
 }
 
-export function useRevoke() {
-  const { A, me } = useStore()
+export function useRevoke(): ((s: Session, user: string) => void) & { retry: (s: Session, user: string) => void } {
+  const services = useServices()
+  const me = useMe()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
   const perform = (s: Session, user: string, reason: string) => {
     if (sim.failNext) {
       setSim({ failNext: false, fails: [...sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)), { sessionId: s.id, user, reason }] })
-      A.audit('Revocation failed', s.id, s.projectId, 'Failed', 'Revoke not acknowledged — grant may still be active')
+      services.authority.commit('legacy', (d) => {
+        d.audit.unshift({ corr: s.projectId === 'RT-2026-014' && /^(SS|AR)-/.test(s.id) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action: 'Revocation failed', obj: s.id, projectId: s.projectId, result: 'Failed', reason: 'Revoke not acknowledged — grant may still be active' })
+      })
       toast(`Revocation failed — ${user} may still have access to ${s.id}.`, 'bad')
       return
     }
-    const res = A.revokeGrant(s.id, user, reason)
-    if (!res.ok) { toast(res.error || 'The revocation was refused.', 'bad'); return }
+    const res = revokeGrantTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, { sessionId: s.id, user, reason })
+    if (!res.ok) { toast(res.failure.message || 'The revocation was refused.', 'bad'); return }
     setSim({ fails: sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)) })
     toast(`Access revoked for ${user}.`, 'warn')
   }
@@ -312,16 +320,10 @@ const ACTIONS: Record<Session['kind'], string[]> = {
 }
 const BUSY_MS = 2500
 
-export function Console() {
-  /* Ticket 67 wave 8: the console keeps the store-context reads (the A.*
-     entries retire below; db/me/toast/confirm/pid ride the provider's
-     projection). The canonical useDb seam subscribes to the authority via
-     useSyncExternalStore, and under the pinned ticket-47 suite (a commit
-     inside a delayed timer) that subscription desyncs the mounted Query
-     observers' React subscriptions — the cache refetches but the console
-     never re-renders. Revisit with the enabler-D follow-up. */
+export function Console(): ReactElement {
   const services = useServices()
-  const { db, go, me, can } = useStore()
+  const me = useMe()
+  const can = useCan()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const toast = useToastStore((s) => s.toast)
@@ -405,7 +407,7 @@ export function Console() {
   }
   const mine = (list.data?.items ?? []).filter((x) => x.projectId === s.projectId && x.access.key !== 'none')
   const statusLabel = busyNow ? 'Busy — command in progress' : { interactive: 'Interactive authorized', readonly: 'Read-only', pending: 'Pending access', expired: 'Expired', revoked: 'Revoked', terminated: s.state === 'revoking' ? 'Termination requested' : 'Terminated', disconnected: 'Disconnected', denied: 'Policy denied', revokefail: 'Revocation failed' }[st]
-  const stop = db.stopState && db.stopState.id === s.opId ? db.stopState : null
+  const stop = read.stop
   const doRefresh = () => { setRefresh('busy'); window.setTimeout(() => setRefresh('still'), 1200) }
   const overlay = (st === 'readonly' || st === 'pending' || renew) && !blocked
   return (
@@ -488,7 +490,7 @@ export function Console() {
             { k: 'Linked operation', v: <IdLink onClick={() => go('operation', { id: s.opId, tab: 'overview' })}>{s.opId}</IdLink> },
             { k: 'Approved ROE', v: project?.roeVersion || '—' },
             { k: 'Access grant', v: grant ? `Interactive until ${grant.expires}` : 'None' },
-            { k: 'Last reviewer', v: grant?.by || db.sessionRequests.find((r) => r.sessionId === s.id && r.decidedBy)?.decidedBy || '—' },
+            { k: 'Last reviewer', v: grant?.by || read.requests.find((r) => r.decidedBy)?.decidedBy || '—' },
             { k: 'Last observed', v: s.last },
             ...(s.kind === 'web' ? [{ k: 'HTTP session health', v: s.state === 'connected' ? 'Stable (demo)' : 'Unavailable' }] : []),
           ]} />

@@ -21,7 +21,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ExternalLink, Sparkles, X } from 'lucide-react'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { actorRef } from '../../auth/persona'
 import { useQueryScope } from '../../state/keys'
 import { useActiveProject, useCan, useReadOnly } from '../../state/console'

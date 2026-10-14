@@ -12,7 +12,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { projectDetailForScope } from './service'
 import type { ProjectDetail } from './service'

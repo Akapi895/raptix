@@ -11,7 +11,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { actorRef } from '../../auth/persona'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { toHref } from '../../router/history'
 import { dashboardForScope } from './service'

@@ -17,7 +17,7 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Download, Eye, FolderPlus, MoreHorizontal, Pencil, Pin, PinOff, Plus, SlidersHorizontal } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { eligibility } from '../features/operations/preflight'
 import { readOnlyContext } from '../auth/policy'
 import type { Project } from '../domain/entities'
