@@ -18,13 +18,13 @@ import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { DEMO_ANCHOR } from '../../domain/clock'
 import { APR } from '../../data'
 import type { Db, Operation } from '../../data'
-import { reviseScopeTransaction } from '../approvals/service'
+import { reviseScopeTransaction, decideApprovalTransaction } from '../approvals/service'
 import { assignAgentTransaction } from '../agents/writes'
 import { selectProject, go } from '../../router/navigate'
 import { routes } from '../../screens/c'
 import { seed } from '../../data'
-import { computePreflightChecks, eligibility, preflightPass } from './preflight'
-import { createOperationDraft, listOperations, operationDetail, operationStartGate, runOperationPreflight, updateOperationDraft } from './service'
+import { computePreflightChecks, eligibility, preflightPass, roeWindowIssue } from './preflight'
+import { createOperationDraft, listOperations, operationDetail, operationStartGate, runOperationPreflight, scheduleOperation, updateOperationDraft } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
@@ -33,6 +33,7 @@ const actor = (id: string, role: ActorRef['role']): ActorRef => ({ id, role })
 const ctxOf = (a: ActorRef, projectId: string): RequestContext => ({ actor: a, projectId, corr: `pf-${++corrSeq}` })
 const ALEX = actor('Alex Morgan', 'manager')
 const TAYLOR = actor('Taylor Chen', 'operator')
+const PAT = actor('Pat Kim', 'reviewer')
 const RILEY = actor('Riley Brooks', 'analyst')
 const CASEY = actor('Casey Nguyen (Client)', 'viewer')
 
@@ -78,6 +79,88 @@ describe('PRE-04 — the real time-window gate (project timezone, absolute insta
     expect(outside.state).toBe('fail')
     expect(outside.detail).toContain('outside the ROE window')
     expect(preflightPass(Object.values(checksFor('OP-014', Date.parse('2026-10-17T20:00:00+07:00'))))).toBe(false)
+  })
+})
+
+describe('edited ROE windows are honored at the enforcement sites (ticket 69 residual)', () => {
+  /** A planless draft whose preflight passes under the seeded window. */
+  function windowProbe(svc: ReturnType<typeof createConsoleServices>): string {
+    const created = createOperationDraft(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), { ...draftInput })
+    if (!created.ok) throw new Error(created.failure.message)
+    return created.data.op.id
+  }
+
+  /** Edits the window through the real governance path and re-approves it independently. */
+  function editWindow(svc: ReturnType<typeof createConsoleServices>, window: string) {
+    const revised = reviseScopeTransaction(svc.authority, svc.clock, ctxOf(ALEX, 'RT-2026-014'), 'RT-2026-014', { patch: { window }, reason: 'Change the ROE window' })
+    if (!revised.ok || !revised.data.invalidated) throw new Error('fixture scope revision did not invalidate')
+    expect(svc.authority.snapshot().projects.find((p) => p.id === 'RT-2026-014')!.roeStatus).toBe('pending')
+    const approval = svc.authority.snapshot().approvals.find((a) => a.projectId === 'RT-2026-014' && a.type === APR.scope && a.status === 'pending')!
+    expect(decideApprovalTransaction(svc.authority, svc.clock, ctxOf(PAT, 'RT-2026-014'), approval.id, 'approved', 'Window change accepted')).toMatchObject({ ok: true })
+  }
+
+  it('a narrowed window refuses at the schedule and start gates what the seeded window allowed', () => {
+    const svc = createConsoleServices()
+    const opId = windowProbe(svc)
+    // Under the seeded window (Mon–Fri, 9:00 AM–5:00 PM) a 09:30 Wednesday start is allowed…
+    expect(scheduleOperation(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId, '2026-10-14T09:30').ok).toBe(true)
+    // …the window is edited mid-engagement and re-approved…
+    editWindow(svc, 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)')
+    // …and the same 09:30 start now refuses at the schedule handler, committing nothing.
+    const refused = scheduleOperation(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId, '2026-10-14T09:30')
+    expect(refused.ok).toBe(false)
+    if (!refused.ok) expect(refused.failure.message).toContain('outside the ROE window')
+    expect(svc.authority.snapshot().operations.find((o) => o.id === opId)!.scheduleAt).toBe('2026-10-14T02:30:00.000Z')
+    // The stored 09:30 schedule now fails preflight at the execution gate…
+    const run = runOperationPreflight(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId)
+    expect(run.ok && run.data.pass).toBe(false)
+    if (!run.ok) return
+    const pre04 = run.data.checks.find((c) => c.code === 'PRE-04')!
+    expect(pre04.state).toBe('fail')
+    expect(pre04.detail).toContain('10:00 AM–4:00 PM')
+    expect(operationStartGate(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId))
+      .toMatchObject({ ok: false, failure: { kind: 'validation', message: expect.stringContaining('PRE-04') } })
+    // …while a start inside the edited window is admitted by the same gates.
+    expect(scheduleOperation(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId, '2026-10-14T10:30').ok).toBe(true)
+    const rerun = runOperationPreflight(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId)
+    expect(rerun.ok && rerun.data.pass).toBe(true)
+    svc.dispose()
+  })
+
+  it('a widened window admits at the same gates what the seeded window refused', () => {
+    const svc = createConsoleServices()
+    const opId = windowProbe(svc)
+    // Saturday 11:00 is outside the seeded Mon–Fri window…
+    const weekend = scheduleOperation(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId, '2026-10-17T11:00')
+    expect(weekend.ok).toBe(false)
+    if (!weekend.ok) expect(weekend.failure.message).toContain('outside the ROE window')
+    // …the widening edit runs through the same governance path…
+    editWindow(svc, 'Mon–Sat, 9:00 AM–5:00 PM (UTC+7)')
+    // …and the same Saturday start is admitted by the schedule handler and preflight.
+    expect(scheduleOperation(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId, '2026-10-17T11:00').ok).toBe(true)
+    const run = runOperationPreflight(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId)
+    expect(run.ok && run.data.pass).toBe(true)
+    expect(operationStartGate(svc.authority, svc.clock, ctxOf(TAYLOR, 'RT-2026-014'), opId).ok).toBe(true)
+    svc.dispose()
+  })
+
+  it('roeWindowIssue evaluates the edited text boundaries, overnight wrap and the unparseable fallback', () => {
+    const at = (window: string, iso: string) => roeWindowIssue({ window }, Date.parse(iso))
+    const narrowed = 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)'
+    expect(at(narrowed, '2026-10-14T09:59:00+07:00')).not.toBe('')
+    expect(at(narrowed, '2026-10-14T10:00:00+07:00')).toBe('')
+    expect(at(narrowed, '2026-10-14T15:59:00+07:00')).toBe('')
+    expect(at(narrowed, '2026-10-14T16:00:00+07:00')).not.toBe('')
+    expect(at(narrowed, '2026-10-17T11:00:00+07:00')).not.toBe('')
+    // The documented overnight shape wraps midnight: the late evening and the
+    // following morning are inside, midday is not.
+    const overnight = 'Mon–Fri, 8:00 PM–4:00 AM (UTC+7)'
+    expect(at(overnight, '2026-10-16T21:00:00+07:00')).toBe('')
+    expect(at(overnight, '2026-10-17T02:00:00+07:00')).toBe('')
+    expect(at(overnight, '2026-10-16T12:00:00+07:00')).not.toBe('')
+    // Wording that does not parse falls back to the fixed Mon–Fri 9–5 baseline.
+    expect(at('By appointment', '2026-10-14T11:00:00+07:00')).toBe('')
+    expect(at('By appointment', '2026-10-17T11:00:00+07:00')).not.toBe('')
   })
 })
 
