@@ -2,6 +2,7 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
 import type { MemberView, MembersView } from '@raptix/web-contracts';
 import { ProjectApiError } from './projects-service.js';
+import { assertEngagementOpen } from './closure-service.js';
 import { isMemberRole, requireEngagementAccess, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 
 /**
@@ -48,6 +49,7 @@ export class MembersService {
   public async invite(userId: string, engagementId: string, input: unknown): Promise<{ ok: true; memberId: string }> {
     if (!this.multiUser) throw await this.unsupported(engagementId, userId, 'Inviting members is not supported.');
     const access = await requireEngagementAccess(this.ctx(userId), engagementId, 'owner');
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { username?: unknown; displayName?: unknown; password?: unknown; role?: unknown };
     const username = typeof body.username === 'string' ? body.username.trim() : '';
     const displayName = typeof body.displayName === 'string' ? body.displayName.trim() : username;

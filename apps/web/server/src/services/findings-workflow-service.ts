@@ -1,6 +1,7 @@
-import type { PrismaClient } from '../generated/prisma/client.js';
+﻿import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
 import { requireEngagementAccess, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import { assertEngagementOpen } from './closure-service.js';
 
 /**
  * Ticket 10: curated finding records with the review/remediation lifecycle and
@@ -75,6 +76,7 @@ export class FindingsWorkflowService {
 
   public async create(actorId: string, engagementId: string, input: unknown): Promise<CuratedFindingView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { title?: unknown; severity?: unknown; detail?: unknown };
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     if (title.length === 0 || title.length > 300) throw new ProjectApiError(400, 'title (1-300 chars) is required.');
@@ -90,6 +92,7 @@ export class FindingsWorkflowService {
   /** Draft-import from a runtime/producer reference; never mutates producer evidence. */
   public async importDraft(actorId: string, engagementId: string, input: unknown): Promise<CuratedFindingView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { title?: unknown; producerRef?: unknown; detail?: unknown; severity?: unknown };
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     const producerRef = typeof body.producerRef === 'string' ? body.producerRef.trim() : '';
@@ -113,6 +116,7 @@ export class FindingsWorkflowService {
 
   public async update(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { expectedVersion?: unknown; title?: unknown; severity?: unknown; detail?: unknown };
     const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : null;
     if (expectedVersion === null) throw new ProjectApiError(400, 'expectedVersion is required for concurrent-edit safety.');
@@ -139,6 +143,7 @@ export class FindingsWorkflowService {
     const body = (input ?? {}) as { to?: unknown };
     const to = typeof body.to === 'string' ? body.to : '';
     const access = await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    await assertEngagementOpen(this.db, engagementId);
     const row = await this.findOwned(engagementId, findingId);
     const allowed = TRANSITIONS[row.status] ?? [];
     if (!allowed.includes(to)) {
@@ -156,6 +161,7 @@ export class FindingsWorkflowService {
   /** Attaches an opaque evidence reference; cross-engagement ids are refused. */
   public async attachEvidence(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<EvidenceView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { kind?: unknown; artifactPath?: unknown; digest?: unknown; producer?: unknown };
     const kind = typeof body.kind === 'string' && ['artifact', 'digest'].includes(body.kind) ? body.kind : '';
     if (kind.length === 0) throw new ProjectApiError(400, "kind must be 'artifact' or 'digest'.");

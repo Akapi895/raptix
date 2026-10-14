@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import type { VaultRevealView, VaultSecretView, VaultView } from '@raptix/web-contracts';
 import { ProjectApiError } from './projects-service.js';
+import { assertEngagementOpen } from './closure-service.js';
 
 /**
  * W18 credentials vault: server-side encrypted secret storage. Secrets are
@@ -41,6 +42,7 @@ export class VaultService {
 
   public async create(userId: string, engagementId: string, body: unknown): Promise<VaultSecretView> {
     const engagement = await this.findEngagement(userId, engagementId);
+    await assertEngagementOpen(this.db, engagementId);
     this.requireKey();
     const input = parseSecretInput(body);
     const iv = randomBytes(12);
@@ -65,6 +67,7 @@ export class VaultService {
 
   public async reveal(userId: string, engagementId: string, secretId: string): Promise<VaultRevealView> {
     const engagement = await this.findEngagement(userId, engagementId);
+    await assertEngagementOpen(this.db, engagementId);
     this.requireKey();
     const row = await this.db.vaultSecret.findFirst({ where: { id: secretId, engagementId: engagement.id } });
     if (!row) throw new ProjectApiError(404, 'Secret not found');

@@ -3,6 +3,7 @@ import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
 import type { ScopeService } from './scope-service.js';
 import { assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import { assertEngagementOpen } from './closure-service.js';
 
 /**
  * Ticket 09: governed business plans, operation bindings, preflight and
@@ -124,6 +125,7 @@ export class GovernanceService {
 
   public async savePlan(actorId: string, engagementId: string, input: unknown): Promise<PlanView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { objective?: unknown; methods?: unknown };
     const objective = typeof body.objective === 'string' ? body.objective.trim() : '';
     const methods = Array.isArray(body.methods) ? body.methods.filter((m): m is string => typeof m === 'string') : [];
@@ -144,6 +146,7 @@ export class GovernanceService {
 
   public async proposePlan(actorId: string, engagementId: string, planId: string): Promise<PlanView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
+    await assertEngagementOpen(this.db, engagementId);
     const plan = await this.findPlan(engagementId, planId);
     if (plan.status !== 'draft') throw new ProjectApiError(409, `Plan v${plan.version} is already ${plan.status}.`);
     const approved = await this.scope.latestApproved(engagementId);
@@ -220,6 +223,7 @@ export class GovernanceService {
   /** Binds an approved plan to an execution thread; the deadline and scope-pin gates run here. */
   public async bindPlan(actorId: string, engagementId: string, planId: string, threadId: string | null): Promise<BindingView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
+    await assertEngagementOpen(this.db, engagementId);
     const pre = await this.preflight(actorId, engagementId, threadId);
     if (!pre.ok) {
       const failed = pre.checks.filter((c) => c.state === 'fail').map((c) => `${c.id}: ${c.detail ?? 'failed'}`).join('; ');

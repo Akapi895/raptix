@@ -2,6 +2,7 @@ import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import { assertEngagementOpen } from './closure-service.js';
 
 /**
  * Ticket 11: report lifecycle with independent version-pinned review and
@@ -62,6 +63,7 @@ export class ReportsService {
 
   public async create(actorId: string, engagementId: string, input: unknown): Promise<ReportView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_EDIT);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { title?: unknown; summary?: unknown };
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     if (title.length === 0 || title.length > 300) throw new ProjectApiError(400, 'title (1-300 chars) is required.');
@@ -81,6 +83,7 @@ export class ReportsService {
 
   public async update(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_EDIT);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { expectedVersion?: unknown; title?: unknown; summary?: unknown; sections?: unknown };
     const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : null;
     if (expectedVersion === null) throw new ProjectApiError(400, 'expectedVersion is required for concurrent-edit safety.');
@@ -114,6 +117,7 @@ export class ReportsService {
 
   public async submitReview(actorId: string, engagementId: string, reportId: string): Promise<ReportView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_EDIT);
+    await assertEngagementOpen(this.db, engagementId);
     const row = await this.findOwned(engagementId, reportId);
     if (row.status !== 'draft' && row.status !== 'changes_requested') {
       throw new ProjectApiError(409, `The report is ${row.status}; only drafts or change-requests can enter review.`);
@@ -125,6 +129,7 @@ export class ReportsService {
 
   public async decideReview(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_REVIEW);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { decision?: unknown; comment?: unknown };
     const decision = typeof body.decision === 'string' ? body.decision : '';
     const comment = typeof body.comment === 'string' ? body.comment.trim() : '';
@@ -151,6 +156,7 @@ export class ReportsService {
   /** Export/delivery as separate audited records with truthful outcomes. */
   public async deliver(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_EDIT);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { kind?: unknown; format?: unknown; requestId?: unknown };
     const kind = typeof body.kind === 'string' && ['export', 'delivery'].includes(body.kind) ? body.kind : '';
     const format = typeof body.format === 'string' && ['json', 'markdown'].includes(body.format) ? body.format : '';
