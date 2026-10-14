@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { ArrowLeft, Building2, Check, Crosshair, KeyRound, Loader2, LogIn, ShieldCheck, Eye, EyeOff, LifeBuoy, Lock, FlaskConical } from 'lucide-react'
-import { useStore } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
 import { USERS } from '../data'
-import { switchPersona } from '../auth/persona'
+import { signIn, switchPersona } from '../auth/persona'
+import { useMe } from '../state/console'
+import { useAuthStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { currentRoute, navRawRoute } from '../router/navigate'
+import { isKnownPage, OUTSIDE_SHELL } from '../router/history'
 import { Banner, Button, Field, Input, Avatar, cx } from '../ui'
 
 const ORGS = [
@@ -16,7 +20,8 @@ type Stage = 'form' | 'mfa' | 'sso' | 'org'
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function Login() {
-  const { login, me } = useStore()
+  const me = useMe()
+  const clearDirty = useSessionStore((s) => s.clearDirty)
   const [stage, setStage] = useState<Stage>('form')
   const [email, setEmail] = useState('alex.morgan@acme-security.example.test')
   const [pw, setPw] = useState(DEMO_PASSWORD)
@@ -56,6 +61,19 @@ export function Login() {
     const u = USERS.find((x) => x.email.toLowerCase() === email.trim().toLowerCase()) || USERS.find((x) => x.name === me.name) || USERS[0]
     switchPersona(u.name); setEmail(u.email); setStage(u.role === 'admin' ? 'mfa' : 'org')
   }, 700)
+  /* Ticket 67 wave 3: the store's `login` entry, mirrored — sign in through
+     the auth action, then either reveal the requested route (the guard renders
+     login in place for protected URLs, so the safe return needs no redirect)
+     or fall back to the Command Center for public and unknown destinations. */
+  const login = (o?: string) => {
+    signIn(useAuthStore.getState().meName, o)
+    const r = currentRoute()
+    if (isKnownPage(r.page) && r.page !== 'login' && !OUTSIDE_SHELL.has(r.page)) {
+      clearDirty()
+      return
+    }
+    navRawRoute({ page: 'command-center' })
+  }
   const quick = (name: string) => { switchPersona(name); login(ORG_NAME) }
 
   const u = USERS.find((x) => x.name === me.name)!
