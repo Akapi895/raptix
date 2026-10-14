@@ -161,6 +161,22 @@ function lazyService<S extends object>(load: () => Promise<S>): S {
   })
 }
 
+/** The factory's superseded-scope read guard (see createConsoleServices). */
+export type ScopeGuard = <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>
+
+/**
+ * Lazy wiring for guard-taking services (ticket 70): the superseded-scope
+ * guard is created eagerly at facade-call time so cancelScope supersedes a
+ * read even while the service module is still loading; only the module load
+ * is deferred.
+ */
+function lazyGuarded<S extends object>(
+  guard: ScopeGuard,
+  load: (guard: ScopeGuard) => Promise<S>,
+): S {
+  return lazyService(() => load(guard))
+}
+
 export function createConsoleServices(): ConsoleServices {
   const clock = new MockClock()
   const scheduler = new Scheduler()
@@ -168,28 +184,29 @@ export function createConsoleServices(): ConsoleServices {
   const authority = createDatabaseAuthority(clock)
   const identity = createIdentityService(authority)
 
-  /* In-flight read registry per scope: cancellation resolves the promise as
-   * `unavailable` instead of restoring stale visibility. Mutations are never
-   * cancelled mid-flight — they capture ctx at call time and commit once. */
-  const inFlight = new Map<string, Set<() => void>>()
+  /* Superseded-scope guard: every feature wiring passes reads through this,
+   * so cancelScope covers all feature reads on a persona/project switch.
+   * Each guard captures the scope's cancellation generation at creation; a
+   * bump (cancelScope) makes every read of that scope resolve `unavailable`
+   * after one microtask — including reads whose guard was created while a
+   * lazy-bound service module was still loading (ticket 70). Writes never
+   * cancel mid-flight. */
+  const scopeGen = new Map<string, number>()
   const scopeKey = (actor: ActorRef, projectId: string): string => `${actor.id} ${actor.role} ${projectId}`
 
-  /* Shared superseded-scope guard: every feature wiring passes reads through
-   * this, so cancelScope covers all in-flight feature reads on a persona/
-   * project switch. Writes never cancel mid-flight. */
-  const scopeGuard = (actor: ActorRef, projectId: string) =>
-    async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      const key = scopeKey(actor, projectId)
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
+  const scopeGuard = (actor: ActorRef, projectId: string): ScopeGuard => {
+    const key = scopeKey(actor, projectId)
+    /* Capture the scope's generation at guard creation — the facade call —
+     * not at produce time: a lazy-bound service's first read runs its guard
+     * only after the module import resolves, and a cancelScope in between
+     * must still supersede it (ticket 70 regression guard). */
+    const gen = scopeGen.get(key) ?? 0
+    return async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
       await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      if ((scopeGen.get(key) ?? 0) !== gen) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
       return produce()
     }
+  }
 
   const forScope = (actor: ActorRef, projectId: string): ProjectService => {
     const guard = scopeGuard(actor, projectId)
@@ -217,45 +234,44 @@ export function createConsoleServices(): ConsoleServices {
   }
 
   const forOperations = (actor: ActorRef, projectId: string): OperationService =>
-    lazyService(() => import('../features/operations/service').then((m) => m.createOperationService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/operations/service').then((m) => m.createOperationService(authority, clock, guard)))
   const forFindings = (actor: ActorRef, projectId: string): FindingService =>
-    lazyService(() => import('../features/findings/service').then((m) => m.createFindingService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/findings/service').then((m) => m.createFindingService(authority, clock, guard)))
   const forChat = (actor: ActorRef, projectId: string): ChatService =>
     createChatService(authority, clock, scopeGuard(actor, projectId))
   const forAiHistory = (actor: ActorRef, projectId: string): AiHistoryService =>
-    lazyService(() => import('../features/aichat/history').then((m) => m.createAiHistoryService(authority, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/aichat/history').then((m) => m.createAiHistoryService(authority, guard)))
   const forPlans = (actor: ActorRef, projectId: string): PlanService =>
-    lazyService(() => import('../features/plans/service').then((m) => m.createPlanService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/plans/service').then((m) => m.createPlanService(authority, clock, guard)))
   const forAgents = (actor: ActorRef, projectId: string): AgentService =>
-    lazyService(() => import('../features/agents/service').then((m) => m.createAgentService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/agents/service').then((m) => m.createAgentService(authority, clock, guard)))
   const forReports = (actor: ActorRef, projectId: string): ReportService =>
-    lazyService(() => import('../features/reports/service').then((m) => m.createReportService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/reports/service').then((m) => m.createReportService(authority, clock, guard)))
   const forBranches = (actor: ActorRef, projectId: string): BranchService =>
-    lazyService(() => import('../features/branches/service').then((m) => m.createBranchService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/branches/service').then((m) => m.createBranchService(authority, clock, guard)))
   const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>
-    lazyService(() => import('../features/library/service').then((m) => m.createLibraryService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/library/service').then((m) => m.createLibraryService(authority, clock, guard)))
   const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService =>
-    lazyService(() => import('../features/analysis/service').then((m) => m.createAnalysisService(authority, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/analysis/service').then((m) => m.createAnalysisService(authority, guard)))
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
-    lazyService(() => import('../features/settings/service').then((m) => m.createSettingsService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/settings/service').then((m) => m.createSettingsService(authority, clock, guard)))
   const forAssets = (actor: ActorRef, projectId: string): AssetService =>
-    lazyService(() => import('../features/assets/service').then((m) => m.createAssetService(authority, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/assets/service').then((m) => m.createAssetService(authority, guard)))
   const forWorkers = (actor: ActorRef, projectId: string): WorkerService =>
-    lazyService(() => import('../features/workers/service').then((m) => m.createWorkerService(authority, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/workers/service').then((m) => m.createWorkerService(authority, guard)))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>
-    lazyService(() => import('../features/notices/service').then((m) => m.createNoticeService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/notices/service').then((m) => m.createNoticeService(authority, clock, guard)))
   const forResults = (actor: ActorRef, projectId: string): ResultsService =>
-    lazyService(() => import('../features/results/service').then((m) => m.createResultsService(authority, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/results/service').then((m) => m.createResultsService(authority, guard)))
   const forTrace = (actor: ActorRef, projectId: string): TraceService =>
-    lazyService(() => import('../features/trace/service').then((m) => m.createTraceService(authority, clock, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/trace/service').then((m) => m.createTraceService(authority, clock, guard)))
   const forC2 = (actor: ActorRef, projectId: string): C2Service =>
-    lazyService(() => import('../features/c2/service').then((m) => m.createC2Service(authority, scopeGuard(actor, projectId))))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/c2/service').then((m) => m.createC2Service(authority, guard)))
   const grants = createGrantLifecycle(authority, clock, scheduler)
 
   const cancelScope = (actor: ActorRef, projectId: string) => {
-    const set = inFlight.get(scopeKey(actor, projectId))
-    set?.forEach((cancel) => cancel())
-    inFlight.delete(scopeKey(actor, projectId))
+    const key = scopeKey(actor, projectId)
+    scopeGen.set(key, (scopeGen.get(key) ?? 0) + 1)
   }
 
   return {
@@ -290,7 +306,7 @@ export function createConsoleServices(): ConsoleServices {
       lazyService(() => import('../features/plans/bridge').then((m) => m.createPlanBridgeService(authority, clock))),
     // Ticket 42: the compare read shares the plans feature's scope rules.
     plansCompare: (actor, projectId) =>
-      lazyService(() => import('../features/plans/compare').then((m) => m.createPlanCompareService(authority, scopeGuard(actor, projectId)))),
+      lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/plans/compare').then((m) => m.createPlanCompareService(authority, guard))),
     agents: forAgents,
     reports: forReports,
     branches: forBranches,
