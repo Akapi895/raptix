@@ -12,11 +12,11 @@
  * router (no raw location.hash writes).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, selectProject } from '../../router/navigate'
+import { useAuthStore } from '../../state/stores'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
@@ -147,51 +147,30 @@ describe('draft creation handler (ticket 34)', () => {
 })
 
 /* ───────────── bridge harness (legacy store + services, one authority) ───────────── */
-function BridgeProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
 function mountBridge(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <BridgeProbe ready={(s, v) => { store = s; svc = v }} />
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return mountServices(null, me)
 }
 
 describe('bridge both directions for report mutations (ticket 34)', () => {
   it('the typed create is observed by the legacy consumer (new → legacy)', async () => {
     const h = mountBridge('Taylor Chen')
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     let res!: ServiceResult<Report>
     await act(async () => {
       res = await h.svc().reports(taylor, P14).createDraft(ctxOf(taylor, P14, 'svc'), draftInput)
     })
     expect(res.ok).toBe(true)
-    const legacy = h.store().db.reports.find((x) => x.id === (res.ok ? res.data.id : ''))
+    const legacy = h.db().reports.find((x) => x.id === (res.ok ? res.data.id : ''))
     expect(legacy).toMatchObject({ status: 'draft', template: 'Standard Red Team v3' })
-    expect(h.store().db).toBe(h.svc().authority.snapshot())
+    expect(h.db().audit[0]).toMatchObject({ action: 'Created report', actor: 'Taylor Chen', projectId: P14 })
     h.unmount()
   })
 
   it('a legacy createReport is observed by the typed catalog read (legacy → new)', async () => {
     window.location.hash = '#/reports'
-    let store!: Store
-    const ui = (
-      <StoreProvider>
-        <ConsoleProviders>
-          <BridgeProbe ready={(s) => { store = s }} />
-          <CatalogTotal />
-        </ConsoleProviders>
-      </StoreProvider>
-    )
-    const view = render(ui)
+    const view = mountServices(<CatalogTotal />)
     await waitFor(() => expect(screen.getByTestId('report-total')).toHaveTextContent('4'))
-    act(() => { store.A.createReport({ projectId: P14, title: 'Legacy bridge report', template: 'Standard Red Team v3', kind: 'Red Team', reviewer: 'Pat Kim', findings: [], period: '' }) })
+    view.run(() => { expect(createReportDraft(view.svc().authority, view.svc().clock, ctxOf(alex, P14), { title: 'Legacy bridge report', template: 'Standard Red Team v3', kind: 'Red Team', reviewer: 'Pat Kim', findings: [], period: '' }).ok).toBe(true) })
     await waitFor(() => expect(screen.getByTestId('report-total')).toHaveTextContent('5'))
     view.unmount()
   })
@@ -204,32 +183,10 @@ function CatalogTotal() {
 }
 
 /* ───────────── migrated catalog screen (templates + delivery history) ───────────── */
-function ScreenProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
 /** Mounts the providers with a probe; `show(node)` mounts a screen into the
  *  SAME tree (the store's route was parsed at mount — navigate with `go()`). */
 function mountScreenRoute(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = (node: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <ScreenProbe ready={(s, v) => { store = s; svc = v }} />
-        {node}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    show: (node: React.ReactNode) => view.rerender(ui(node)),
-    unmount: view.unmount,
-  }
+  return mountServices(null, me)
 }
 
 describe('report catalog screen (ticket 34)', () => {
@@ -252,7 +209,7 @@ describe('report catalog screen (ticket 34)', () => {
   it('delivery history is scope-filtered: an operator without access sees the empty state', async () => {
     window.location.hash = '#/reports'
     const h = mountScreenRoute('Taylor Chen')
-    h.run(() => h.store().setPid('all'))
+    h.run(() => selectProject('all'))
     h.show(<routes.reports />)
     fireEvent.click(await screen.findByRole('tab', { name: /Delivery History/ }))
     await waitFor(() => expect(screen.getByText('No exports yet')).toBeInTheDocument())
@@ -262,7 +219,7 @@ describe('report catalog screen (ticket 34)', () => {
   it('renders a retryable error state when the catalog read fails', async () => {
     window.location.hash = '#/reports'
     const h = mountScreenRoute('Riley Brooks') // member of RT-2026-014 only
-    h.run(() => h.store().setPid('RT-2026-015')) // not a member — the read refuses
+    h.run(() => selectProject('RT-2026-015')) // not a member — the read refuses
     h.show(<routes.reports />)
     await waitFor(() => expect(screen.getByText('Could not load reports')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
@@ -274,7 +231,7 @@ describe('draft creation screen (ticket 34)', () => {
   it('gates creation per role with the reason rendered', async () => {
     window.location.hash = '#/report-new'
     const h = mountScreenRoute('Casey Nguyen (Client)')
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     const Form = routes['report-new'] as React.ComponentType
 h.show(<Form />)
     await waitFor(() => expect(screen.getByText('Cannot create report')).toBeInTheDocument())
@@ -295,17 +252,17 @@ h.show(<Form />)
   it('creates a draft through the typed service and opens the bridged editor via the router', async () => {
     window.location.hash = '#/report-new'
     const h = mountScreenRoute('Taylor Chen')
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     const Form = routes['report-new'] as React.ComponentType
 h.show(<Form />)
     await waitFor(() => expect(screen.getByRole('button', { name: /Create Draft/ })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: /Create Draft/ }))
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.projectId === P14 && r.author === 'Taylor Chen')).toBeTruthy())
-    const created = h.store().db.reports[0]
+    await waitFor(() => expect(h.db().reports.find((r) => r.projectId === P14 && r.author === 'Taylor Chen')).toBeTruthy())
+    const created = h.db().reports[0]
     expect(created).toMatchObject({ status: 'draft', template: 'Standard Red Team v3', reviewer: 'Pat Kim' })
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Created report', actor: 'Taylor Chen' })
-    await waitFor(() => expect(h.store().route.page).toBe('report'), { timeout: 3000 })
-    expect(h.store().route.id).toBe(created.id)
+    expect(h.db().audit[0]).toMatchObject({ action: 'Created report', actor: 'Taylor Chen' })
+    await waitFor(() => expect(currentRoute().page).toBe('report'), { timeout: 3000 })
+    expect(currentRoute().id).toBe(created.id)
     h.unmount()
   })
 })
@@ -314,38 +271,29 @@ h.show(<Form />)
 describe('navigation writes through the router (ticket 34)', () => {
   it('post-create navigation lands on the bridged editor with the router as the location writer', async () => {
     window.location.hash = '#/report-new'
-    let store!: Store
     const router = createHashRouter([
-      { path: '*', element: <><ScreenProbe ready={(s) => { store = s }} /><RouteHostProbe /></>, hydrateFallbackElement: null },
+      { path: '*', element: <RouteHostProbe />, hydrateFallbackElement: null },
     ])
     const navigate = vi.spyOn(router, 'navigate')
     const { setActiveRouter } = await import('../../router/active')
     const { RouteHost } = await import('../../router/host')
     function RouteHostProbe() { return <RouteHost /> }
     setActiveRouter(router)
-    const view = render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <RouterProvider router={router} />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    act(() => { store.setMe('Taylor Chen') })
+    const view = mountServices(<RouterProvider router={router} />, 'Taylor Chen')
     await screen.findByRole('heading', { name: /sign in/i }).catch(() => {})
     // The login screen is rendered in place; sign in through the demo picker.
     const signIn = screen.queryAllByRole('button', { name: /Taylor Chen/ })[0]
     if (signIn) fireEvent.click(signIn)
-    await waitFor(() => expect(store.authed).toBe(true), { timeout: 3000 })
-    act(() => { store.setPid('RT-2026-014') })
+    await waitFor(() => expect(useAuthStore.getState().authed).toBe(true), { timeout: 3000 })
+    act(() => { selectProject('RT-2026-014') })
     await waitFor(() => expect(screen.getByRole('button', { name: /Create Draft/ })).toBeEnabled(), { timeout: 3000 })
     navigate.mockClear()
     fireEvent.click(screen.getByRole('button', { name: /Create Draft/ }))
-    await waitFor(() => expect(store.route.page).toBe('report'), { timeout: 3000 })
-    const created = store.db.reports[0]
+    await waitFor(() => expect(currentRoute().page).toBe('report'), { timeout: 3000 })
+    const created = view.db().reports[0]
     expect(window.location.hash).toBe(`#/report/${encodeURIComponent(created.id)}`)
     expect(navigate).toHaveBeenCalled()
     view.unmount()
     setActiveRouter(null)
   })
 })
-

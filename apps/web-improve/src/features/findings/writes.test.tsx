@@ -10,10 +10,11 @@
  * lifecycle/AI actions refuse per role with reasons.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, go, selectProject } from '../../router/navigate'
+import { useSessionStore } from '../../state/session'
+import { useToastStore } from '../../state/stores'
 import { createConsoleServices } from '../../domain/service-factory'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
@@ -22,7 +23,7 @@ import type { Finding } from '../../domain/entities'
 import type { FindingDetailRead } from './service'
 import { routes } from '../../screens/e'
 import {
-  attachFindingEvidence, recordFindingRetest, saveFinding, transitionFinding, uploadFindingEvidence,
+  attachFindingEvidence, importFindingSuggestion, recordFindingRetest, saveFinding, transitionFinding, uploadFindingEvidence,
 } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
@@ -275,20 +276,8 @@ describe('retest recording (ticket 32)', () => {
 })
 
 /* ───────────── bridge harness (legacy store + services, one authority) ───────────── */
-function BridgeProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
 function mountBridge(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <BridgeProbe ready={(s, v) => { store = s; svc = v }} />
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return mountServices(null, me)
 }
 
 describe('bridge both directions for finding mutations', () => {
@@ -299,14 +288,22 @@ describe('bridge both directions for finding mutations', () => {
       res = await h.svc().findings(taylor, P14).transition(ctxOf(taylor, P14, 'svc'), 'FD-011', 'remediation')
     })
     expect(res.ok).toBe(true)
-    expect(h.store().db.findings.find((x) => x.id === 'FD-011')!.status).toBe('remediation')
-    expect(h.store().db).toBe(h.svc().authority.snapshot())
+    expect(h.db().findings.find((x) => x.id === 'FD-011')!.status).toBe('remediation')
+    const read = await h.svc().findings(taylor, P14).get(ctxOf(taylor, P14), 'FD-011')
+    expect(read.ok && read.data.finding.status).toBe('remediation')
     h.unmount()
   })
 
   it('a legacy status change is observed by the typed read (legacy → new; re-asserts ticket 31)', async () => {
     const h = mountBridge('Taylor Chen')
-    h.run(() => h.store().A.setFindingStatus('FD-012', 'review', 'Verified from AI suggestion by a human'))
+    h.run(() => {
+      expect(transitionFinding(h.svc().authority, h.svc().clock, ctxOf(taylor, P14), 'FD-012', 'review').ok).toBe(false)
+      expect(h.db().findings.find((f) => f.id === 'FD-012')?.status).toBe('ai_suggested')
+      expect(importFindingSuggestion(h.svc().authority, h.svc().clock, ctxOf(taylor, P14), 'FD-012').ok).toBe(true)
+      expect(transitionFinding(h.svc().authority, h.svc().clock, ctxOf(taylor, P14), 'FD-012', 'review')).toMatchObject({ ok: false, failure: { kind: 'validation' } })
+      expect(uploadFindingEvidence(h.svc().authority, h.svc().clock, ctxOf(taylor, P14), { findingId: 'FD-012', name: 'human-verification.txt', kind: 'Text', source: 'Manual verification', sensitive: false }).ok).toBe(true)
+      expect(transitionFinding(h.svc().authority, h.svc().clock, ctxOf(taylor, P14), 'FD-012', 'review', 'Verified from AI suggestion by a human').ok).toBe(true)
+    })
     let res!: ServiceResult<FindingDetailRead>
     await act(async () => {
       res = await h.svc().findings(taylor, P14).get(ctxOf(taylor, P14), 'FD-012')
@@ -343,32 +340,10 @@ describe('delayed-response and mid-flight isolation', () => {
 })
 
 /* ───────────── migrated finding screen (forms + lifecycle wiring) ───────────── */
-function ScreenProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
 /** Mounts the providers with a probe; `show(node)` mounts a screen into the
  *  SAME tree (the store's route was parsed at mount — navigate with `go()`). */
 function mountScreenRoute(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = (node: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <ScreenProbe ready={(s, v) => { store = s; svc = v }} />
-        {node}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    show: (node: React.ReactNode) => view.rerender(ui(node)),
-    unmount: view.unmount,
-  }
+  return mountServices(null, me)
 }
 
 describe('finding form on the typed service (ticket 32)', () => {
@@ -376,23 +351,23 @@ describe('finding form on the typed service (ticket 32)', () => {
   it('blocks a bad submit with inline errors, commits nothing, and preserves what was typed', async () => {
     window.location.hash = '#/finding-new'
     const h = mountScreenRoute('Taylor Chen')
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     h.show(<Form />)
     const title = await waitFor(() => screen.getByLabelText('Finding title *')) as HTMLInputElement
     fireEvent.change(title, { target: { value: 'abc' } })
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument() // dirty tracking
     fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }))
     await waitFor(() => expect(screen.getByText('Enter a finding title (at least 5 characters).')).toBeInTheDocument())
-    expect(h.store().db.counters.finding).toBe(16) // nothing committed
+    expect(h.db().counters.finding).toBe(16) // nothing committed
     expect((screen.getByLabelText(/Finding title/) as HTMLInputElement).value).toBe('abc') // draft preserved
     // Completing the title lets the same draft save through the typed service.
     fireEvent.change(title, { target: { value: 'Probe finding from the form tests' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }))
-    await waitFor(() => expect(h.store().db.counters.finding).toBe(17))
-    const created = h.store().db.findings[0]
+    await waitFor(() => expect(h.db().counters.finding).toBe(17))
+    const created = h.db().findings[0]
     expect(created).toMatchObject({ title: 'Probe finding from the form tests', status: 'draft', projectId: P14 })
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Created draft finding', actor: 'Taylor Chen' })
-    await waitFor(() => expect(h.store().route.page).toBe('finding'), { timeout: 3000 })
+    expect(h.db().audit[0]).toMatchObject({ action: 'Created draft finding', actor: 'Taylor Chen' })
+    await waitFor(() => expect(currentRoute().page).toBe('finding'), { timeout: 3000 })
     h.unmount()
   })
 })
@@ -407,7 +382,7 @@ describe('finding detail lifecycle on the typed service (ticket 32)', () => {
     })
     expect(created.ok).toBe(true)
     const id = created.ok ? created.data.id : 'FD-017'
-    h.run(() => h.store().go('finding', { id }))
+    h.run(() => go('finding', { id }))
     h.show(<routes.finding />)
     await waitFor(() => expect(screen.getByText('Lifecycle probe finding')).toBeInTheDocument())
     // The operator (author) sees the reviewer gates as disabled actions with reasons.
@@ -415,30 +390,30 @@ describe('finding detail lifecycle on the typed service (ticket 32)', () => {
     expect(confirmBtn).toBeDisabled()
     expect(confirmBtn.getAttribute('title')).toContain('Only a Reviewer or Manager can confirm findings.')
     // The reviewer confirms: the confirm dialog's captured handler runs the typed transition.
-    act(() => { h.store().setMe('Pat Kim') })
+    h.as('Pat Kim')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirm Finding' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Finding' }))
-    const opts = h.store().confirmState!
+    const opts = useSessionStore.getState().confirmState!
     expect(opts.confirmLabel).toBe('Confirm Finding')
     await act(async () => { opts.onConfirm('') })
-    await waitFor(() => expect(h.store().db.findings.find((f) => f.id === id)!.status).toBe('confirmed'))
-    expect(h.store().toasts.some((t) => t.text === `${id} was confirmed.`)).toBe(true)
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Confirmed', actor: 'Pat Kim', obj: id })
+    await waitFor(() => expect(h.db().findings.find((f) => f.id === id)!.status).toBe('confirmed'))
+    expect(useToastStore.getState().toasts.some((t) => t.text === `${id} was confirmed.`)).toBe(true)
+    expect(h.db().audit[0]).toMatchObject({ action: 'Confirmed', actor: 'Pat Kim', obj: id })
     h.unmount()
   })
 
   it('verify & create finding imports an AI suggestion as a draft — never as review/confirmed', async () => {
     const h = mountScreenRoute('Taylor Chen')
-    h.run(() => h.store().go('finding', { id: 'FD-012' }))
+    h.run(() => go('finding', { id: 'FD-012' }))
     h.show(<routes.finding />)
     await waitFor(() => expect(screen.getAllByText('AI Suggested — unverified').length).toBeGreaterThan(0))
     fireEvent.click(screen.getByRole('button', { name: 'Verify & create finding' }))
-    const opts = h.store().confirmState!
+    const opts = useSessionStore.getState().confirmState!
     expect(opts.title).toContain('as a draft')
     await act(async () => { opts.onConfirm('') })
-    await waitFor(() => expect(h.store().db.findings.find((f) => f.id === 'FD-012')!.status).toBe('draft'))
-    expect(h.store().db.findings.find((f) => f.id === 'FD-012')!.history.at(-1)?.text).toBe('Imported AI suggestion as a draft')
-    expect(h.store().toasts.some((t) => t.text === 'FD-012 imported as a draft finding.')).toBe(true)
+    await waitFor(() => expect(h.db().findings.find((f) => f.id === 'FD-012')!.status).toBe('draft'))
+    expect(h.db().findings.find((f) => f.id === 'FD-012')!.history.at(-1)?.text).toBe('Imported AI suggestion as a draft')
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'FD-012 imported as a draft finding.')).toBe(true)
     h.unmount()
   })
 })

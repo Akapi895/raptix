@@ -12,11 +12,11 @@
  * refetch the new queue views).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { useRoute } from '../../router/navigate'
+import { useSessionStore } from '../../state/session'
+import { useToastStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { createDatabaseAuthority, type DbAuthority } from '../../domain/database'
 import { DEMO_ANCHOR } from '../../domain/clock'
@@ -28,42 +28,15 @@ import { decideRevision, proposeRevision, reviewQueue, submitForReview } from '.
 beforeEach(() => { window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 function mountReview(me = 'Alex Morgan', hash = '#/playbook-review') {
   window.location.hash = hash
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const Host = () => {
-    const { route } = useStore()
+    const route = useRoute()
     const C = routes[route.page]
     return C ? <C /> : null
   }
-  const ui = (withScreen: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {withScreen ? <Host /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+  const h = mountServices(null, me)
+  return { ...h, show: () => h.show(<Host />) }
 }
 
 const fakeClock = { now: () => DEMO_ANCHOR }
@@ -227,12 +200,12 @@ describe('playbook review screen (ticket 53)', () => {
     await waitFor(() => expect(screen.getByText('Step & technique diff: v2.3 → v2.4')).toBeInTheDocument())
     expect(screen.getByText('Validate audit-log forwarding (safe)')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Approve v2.4' }))
-    expect(h.store().confirmState).not.toBeNull()
-    h.run(() => h.store().confirmState!.onConfirm('Changelog verified against the lab scope'))
+    expect(useSessionStore.getState().confirmState).not.toBeNull()
+    h.run(() => useSessionStore.getState().confirmState!.onConfirm('Changelog verified against the lab scope'))
     await waitFor(() => expect(screen.getByText('Steps (13)')).toBeInTheDocument())
     expect(screen.getByText('PB-001 · v2.4')).toBeInTheDocument()
     expect(screen.queryByText('v2.4 is pending review')).not.toBeInTheDocument()
-    expect(h.store().db.playbooks.find((x) => x.id === 'PB-001')?.version).toBe('2.4')
+    expect(h.db().playbooks.find((x) => x.id === 'PB-001')?.version).toBe('2.4')
     h.unmount()
   })
 
@@ -254,13 +227,13 @@ describe('playbook review screen (ticket 53)', () => {
     fireEvent.change(screen.getByLabelText(/New version/), { target: { value: '1.1' } })
     fireEvent.change(screen.getByLabelText(/Changelog/), { target: { value: 'Tighten step names' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit revision' }))
-    await waitFor(() => expect(h.store().toasts[0]?.text).toContain('bump above v1.1'))
+    await waitFor(() => expect(useToastStore.getState().toasts[0]?.text).toContain('bump above v1.1'))
     expect(screen.getByText('Propose revision after v1.1')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText(/New version/), { target: { value: '1.2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit revision' }))
     await waitFor(() => expect(screen.getByText('Pending v1.2')).toBeInTheDocument())
     expect(screen.getByText('v1.1 is Approved and frozen')).toBeInTheDocument()
-    expect(h.store().db.playbooks.find((x) => x.id === 'PB-003')?.version).toBe('1.1')
+    expect(h.db().playbooks.find((x) => x.id === 'PB-003')?.version).toBe('1.1')
     h.unmount()
   })
 
@@ -269,14 +242,14 @@ describe('playbook review screen (ticket 53)', () => {
     h.show()
     await waitFor(() => expect(screen.getByText('PB-001 · v2.4 → v2.3')).toBeInTheDocument())
     expect(screen.queryByText('PB-004')).not.toBeInTheDocument()
-    h.run(() => h.store().A.setPlaybookStatus('PB-004', 'review'))
+    h.run(() => { expect(submitForReview(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'all', corr: 'review-queue-refetch' }, 'PB-004').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('PB-004 · v0.9 → v0.9')).toBeInTheDocument())
     h.run(() => {
       return h.svc().library({ id: 'Pat Kim', role: 'reviewer' }, 'all')
         .decideRevision({ actor: { id: 'Pat Kim', role: 'reviewer' }, projectId: 'all', corr: 'test' }, 'PB-001', 'approve', 'Queue decision')
     })
     await waitFor(() => expect(screen.queryByText('PB-001 · v2.4 → v2.3')).not.toBeInTheDocument())
-    expect(h.store().db.playbooks.find((x) => x.id === 'PB-001')?.version).toBe('2.4')
+    expect(h.db().playbooks.find((x) => x.id === 'PB-001')?.version).toBe('2.4')
     h.unmount()
   })
 })

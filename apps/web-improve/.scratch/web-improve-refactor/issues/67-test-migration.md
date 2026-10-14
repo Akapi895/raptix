@@ -78,3 +78,18 @@ Harness ordering fix: Query teardown rerun 7/7, exit 0; full
 `npm run test -- --maxWorkers=2`: 959 tests / 74 files, exit 0 (85.60s).
 Typecheck exit 0; helper and Query suite lint clean. Full output retains the
 existing Vite config-loader warning and two jsdom document-navigation notices.
+
+## T2 finding/report/C2/allocation batch
+
+- Nine test files migrated: finding inventory/writes, agent writes, playbook
+  review, report catalog/editor/review, C2 overview and session command UI.
+- Finding migration first failed because the final transaction correctly
+  refuses AI-suggested → review and drafts without evidence. Tests now assert
+  both refusals, import through the actual suggestion transaction, upload
+  human verification evidence, then submit through the final transition.
+  All original review/refetch assertions remain; focused finding run 40/40.
+- C2/allocation: 45/45 passed during the four-file run. Playbook/report
+  catalog/editor: 45/45 passed during the five-file run. Report-review and
+  session-console final rerun: 26/26, exit 0; delivery actor remains Alex
+  with independent report approval by Pat.
+- Typecheck exit 0, all nine touched tests lint with zero diagnostics.
