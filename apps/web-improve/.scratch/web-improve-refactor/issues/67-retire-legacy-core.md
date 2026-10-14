@@ -637,3 +637,64 @@ AGENTS.md § Windows Temporary Process Safety as the earlier waves; the
 screens are pinned by the agents, assets, library, console-seam and
 session-duality suites exercising them through real renders, and the build
 covers the module graph).
+
+### Wave 6 (e/f screens off the store, `wi/67w6-ef`)
+
+The five e/f screens (findings inventory + analysis, reports, settings)
+leave `useStore()` entirely — 50 sites across 5 screens; 7 files touched,
++313/−81 raw (migration comments included), far under the caps. Every
+replacement is the canonical hook the enablers host, and the observable
+behavior (toasts, confirms, refusals, audit rows, corr values, the
+dirty-guard ordering) is unchanged.
+
+- `src/features/findings/service.ts` (+14): new `addFindingCommentTransaction`
+  — the legacy raw `A.addFindingComment` entry moved verbatim (one 'legacy'
+  commit pushing the `{ by, at: stamp(), text }` history row; no status/
+  audit/`updated` side effects; the re-read snapshot returned).
+- `src/features/reports/service.ts` (+16): new
+  `setReportFindingsLegacyTransaction` — the raw `A.setReportFindings` entry
+  verbatim (`r.findings = ids; r.updated = stamp()`); the typed
+  `setReportFindings` keeps its validation path for typed callers.
+- `e-analysis.tsx` (10 sites) / `e-findings.tsx` (12) / `f.tsx` (4) /
+  `f-report.tsx` (11) / `f-settings.tsx` (13): the console/authority seams
+  (`useDb`/`useMe`/`useCan`/`useReadOnly`/`useActiveProject`/
+  `useAccessible`/`useScoped`), the shared authorities (project/ui/toast/
+  session/auth/theme stores), navigate (`go`/`useRoute`) and `stamp()`.
+  `e-analysis`'s `export type { Store }` surface is unchanged; `e-findings`'
+  AiActions dismiss + FindingDetail comment run the new transaction,
+  AddToReport runs the legacy report one, and FindingDetail's destructure
+  drops its two unused entries; `f-report`'s AiExclusion reads the typed
+  `useScoped<Finding>()`; the Settings logout mirrors the store entry
+  (`signOut()` + `navRawRoute({ page: 'login' })`) and NotifTab resolves the
+  theme authority directly; `persistFilters` reads gain explicit casts
+  (the session store types it `Record<string, unknown>` — the d-library
+  wave-5 precedent).
+- Raw audit mirrors: the 11 `A.audit` call sites (e-findings 2, f 3,
+  f-settings 6) keep the store helper's exact row (the RT-2026-014 SS/AR
+  COR-014-01 corr rule, `stamp()` demo time, `ROLE_LABEL` actor) through 8
+  local `audit` helpers committing one 'legacy' change each.
+- Delayed navigation: the three `setPid` + 80 ms redirect switches
+  (FindingDenied/EvidenceInspector) and the finding-form finish navigate
+  through a local `useDelayedNav` liveness guard. The module `go` always
+  writes, and a captured redirect outliving its provider must not move a
+  later mount's projected route — the isolation the store's epoch-scoped
+  `go` used to give (router enabler B); the evidence suite's sequential
+  provider mounts pin it (with the unguarded module `go`, the stray
+  redirect flipped a later test's route to EV-014-02 mid-read, resetting
+  its detail query to pending). The guard restores the base behavior; it
+  is the component-mount equivalent of the provider's epoch (mounted ⇒
+  same epoch).
+
+Checks: `npm run typecheck` — 0 diagnostics. `npm run lint` — 0 errors;
+167 → 165 warnings. File-level over the 7 touched files: e-analysis 15 →
+12, e-findings 6 → 4 (the two unused-var findings left with the dropped
+destructure), f.tsx 5 → 5, f-report/f-settings/services 0 → 0 — 0 new
+findings. `npm test -- --run --maxWorkers=2` — 955 tests / 72 files green;
+the evidence file passes 5 consecutive runs (15/15). `npm run build` —
+succeeds (pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (same optional HTTP-check gap per
+AGENTS.md § Windows Temporary Process Safety as the earlier waves; the
+screens are pinned by the analysis, findings evidence, reports editor/
+query/review, settings and ai-proposals suites exercising them through
+real renders, and `npm run build` covers the module graph).
