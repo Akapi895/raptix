@@ -29,3 +29,18 @@ are owned by the concurrent worker and are outside this branch's edits.
 - `src/store.tsx`: 762 lines; runtime contraction evidence is in
   `67-final-runtime.md` and parent 67. Existing tests still import the bridge.
 - Verification and exact final counts will be appended after execution.
+
+## T1/T2 first batches
+
+- Canonical `mountServices` mounts ServicesProvider + ConsoleProviders and
+  exposes explicit services, Query client, authority snapshots and persona
+  selection; it has no action compatibility bag. The old helper remains only
+  for bounded continuation batches.
+- Workers/results/attack-path/operation-write suites: 45 tests pass, focused
+  exit 0; typecheck exit 0. Removed an unused worker persona fixture.
+- Coverage/evidence/session-detail/copilot: 46 tests pass, focused exit 0.
+- Asset catalog/branches: 33 tests pass, focused exit 0. Branch cancellation
+  now invokes the final service, checks acceptance and preserves refetch.
+- Accessibility/dark/responsive route audits: 21 tests pass, focused exit 0.
+- The nine files in the second batch lint with zero diagnostics; typecheck
+  exit 0 after the six feature migrations. No runtime files edited.

@@ -11,13 +11,14 @@
  * across the header and settings consumers. The pixel-level light/dark
  * contrast sweep of the real UI remains a recorded gap (ticket Evidence).
  */
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { StoreProvider, useStore, type Store } from '../store'
-import { ConsoleProviders } from '../state/query'
+import { mountServices } from '../test/helpers'
+import { go } from '../router/navigate'
+import { useThemeStore } from '../state/stores'
 import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
 
@@ -25,26 +26,13 @@ import { RouteHost } from '../router/host'
    vitest runs with the app root as cwd). */
 const themeCss = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8')
 
-function Probe({ ready }: { ready: (s: Store) => void }) {
-  ready(useStore())
-  return null
-}
-
 function mountApp(hash?: string) {
   if (hash !== undefined) window.location.hash = hash
-  let store!: Store
   const router = createHashRouter([
-    { path: '*', element: <><Probe ready={(s) => (store = s)} /><RouteHost /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
   ])
   setActiveRouter(router)
-  render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { store: () => store }
+  return mountServices(<RouterProvider router={router} />)
 }
 
 function signIn() {
@@ -92,10 +80,10 @@ describe('dark-mode sweep (every route group)', () => {
   // assertion is changed (ticket 64 audit-stability note).
   it('renders dark via the shared store with token colors only outside the print simulations', async () => {
     for (const s of SWEEP) {
-      const { store } = mountApp(s.hash)
+      mountApp(s.hash)
       if (s.auth !== false) signIn()
       await s.see()
-      act(() => { store().setTheme('dark') })
+      act(() => { useThemeStore.getState().setTheme('dark') })
       expect(document.documentElement.classList.contains('dark')).toBe(true)
       expect(lightAssumingOutsidePaper()).toEqual([])
       cleanup()
@@ -107,17 +95,17 @@ describe('dark-mode sweep (every route group)', () => {
 
 describe('print simulations (intentional fixed-light surfaces)', () => {
   it('marks the report preview paper and template thumbnails with data-paper', async () => {
-    const { store } = mountApp('#/report-preview/REP-014')
+    mountApp('#/report-preview/REP-014')
     signIn()
     await screen.findByText('Table of contents')
-    act(() => { store().setTheme('dark') })
+    act(() => { useThemeStore.getState().setTheme('dark') })
     const paper = document.querySelector('[data-paper]')!
     expect(paper.querySelector('section')!.className).toContain('bg-white')
     // The scan tolerates the paper itself and nothing else.
     const outside = lightAssumingOutsidePaper()
     expect(outside).toEqual([])
     // Template thumbnails carry the same marker (reports → Templates tab).
-    act(() => { store().go('reports', { tab: 'templates' }) })
+    act(() => { go('reports', { tab: 'templates' }) })
     const cards = await screen.findAllByLabelText(/View details for/)
     expect(cards.length).toBeGreaterThanOrEqual(1)
     expect(document.querySelectorAll('[data-paper]').length).toBeGreaterThanOrEqual(1)
@@ -127,10 +115,10 @@ describe('print simulations (intentional fixed-light surfaces)', () => {
 
 describe('charts and the always-dark console', () => {
   it('maps the dashboard severity chart to --c-* tokens with no hex colors', async () => {
-    const { store } = mountApp('#/command-center')
+    mountApp('#/command-center')
     signIn()
     await screen.findByRole('heading', { name: /command center/i })
-    act(() => { store().setTheme('dark') })
+    act(() => { useThemeStore.getState().setTheme('dark') })
     const high = screen.getByText('High').closest('li')!
     expect(high.firstElementChild!.getAttribute('style')).toContain('var(--c-orange)')
     const critical = screen.getByText('Critical').closest('li')!
@@ -141,12 +129,12 @@ describe('charts and the always-dark console', () => {
   })
 
   it('keeps the operation dock fixed-dark and registers its accent tokens', async () => {
-    const { store } = mountApp('#/command-center')
+    mountApp('#/command-center')
     signIn()
     await screen.findByRole('heading', { name: /command center/i })
-    act(() => { store().go('operation', { id: 'OP-014', tab: 'live' }) })
+    act(() => { go('operation', { id: 'OP-014', tab: 'live' }) })
     await screen.findByRole('list', { name: 'Operation steps' })
-    act(() => { store().setTheme('dark') })
+    act(() => { useThemeStore.getState().setTheme('dark') })
     const dock = screen.getByRole('region', { name: 'Operation dock' })
     expect(dock.className).toContain('bg-console')
     expect(dock.className).toContain('text-console-fg')
@@ -164,7 +152,7 @@ describe('charts and the always-dark console', () => {
 
 describe('theme toggle, persistence and reset across consumers', () => {
   it('header and settings write the same store; provider remount restores light', async () => {
-    const { store } = mountApp('#/command-center')
+    mountApp('#/command-center')
     signIn()
     await screen.findByRole('heading', { name: /command center/i })
     // Header consumer (account menu segmented control).
@@ -175,7 +163,7 @@ describe('theme toggle, persistence and reset across consumers', () => {
     fireEvent.click(document.querySelector('.fixed.inset-0.z-40')!)
     await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument())
     // The choice persists across navigation (single theme authority).
-    act(() => { store().go('settings', { tab: 'notifications' }) })
+    act(() => { go('settings', { tab: 'notifications' }) })
     await screen.findByText('Notification preferences')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
     // Settings consumer applies through the same store on save. (Ticket 64:

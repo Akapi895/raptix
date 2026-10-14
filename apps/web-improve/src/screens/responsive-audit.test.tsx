@@ -12,32 +12,19 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { StoreProvider, useStore, type Store } from '../store'
-import { ConsoleProviders } from '../state/query'
+import { mountServices } from '../test/helpers'
+import { go, selectProject } from '../router/navigate'
 import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
 import { DTable } from './d-shared'
 
-function Probe({ ready }: { ready: (s: Store) => void }) {
-  ready(useStore())
-  return null
-}
-
 function mountApp(hash?: string) {
   if (hash !== undefined) window.location.hash = hash
-  let store!: Store
   const router = createHashRouter([
-    { path: '*', element: <><Probe ready={(s) => (store = s)} /><RouteHost /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
   ])
   setActiveRouter(router)
-  render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { store: () => store }
+  return mountServices(<RouterProvider router={router} />)
 }
 
 function signIn() {
@@ -169,10 +156,10 @@ describe('project wizard (planning group)', () => {
 
 describe('operation live workspace (operations group)', () => {
   it('uses the wide layout, collapse-at-xl panes and wrapped strips; the dock scrolls its console', async () => {
-    const { store } = mountApp('#/command-center')
+    mountApp('#/command-center')
     signIn()
     await screen.findByRole('heading', { name: /command center/i })
-    act(() => { store().go('operation', { id: 'OP-014', tab: 'live' }) })
+    act(() => { go('operation', { id: 'OP-014', tab: 'live' }) })
     const steps = await screen.findByRole('list', { name: 'Operation steps' })
     for (const cls of ['grid-cols-2', 'sm:grid-cols-3', 'lg:grid-cols-4', '2xl:grid-cols-6']) expect(steps.className).toContain(cls)
     const main = document.getElementById('main')!
@@ -188,10 +175,10 @@ describe('operation live workspace (operations group)', () => {
 
 describe('AI operator workspace (AI group)', () => {
   it('falls back to drawers for the rail and inspector below 1280 and keeps panes min-w-0', async () => {
-    const { store } = mountApp('#/ai-operator')
+    mountApp('#/ai-operator')
     signIn()
     await screen.findByText('All Projects view')
-    act(() => { store().setPid('RT-2026-014') })
+    act(() => { selectProject('RT-2026-014') })
     await screen.findByRole('button', { name: 'New Conversation' })
     expect(document.querySelector('[aria-label="Conversation"]')!.className).toContain('min-w-0')
     fireEvent.click(screen.getByRole('button', { name: 'Conversations' }))

@@ -13,10 +13,9 @@
  * the addressed branch's own project regardless of the active scope.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { selectProject } from '../../router/navigate'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../data'
 import { FanOutPage } from '../../screens/g-fanout'
@@ -25,34 +24,15 @@ import { getBranchGroup, listBranchGroups } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 /** Mounts the providers (optionally with the execution graph screen) and a probe. */
 function mountFanout(me = 'Taylor Chen', hash = '#/ai-fanout/BG-014-01') {
   window.location.hash = hash
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = (withScreen: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        {withScreen ? <FanOutPage /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
+  const h = mountServices(null, me)
   return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
+    ...h,
     /** Awaits one async service call inside act so the store projection flushes. */
     runA: async <T,>(fn: () => Promise<T>): Promise<T> => { let out!: T; await act(async () => { out = await fn() }); return out },
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
+    show: () => h.show(<FanOutPage />),
   }
 }
 
@@ -74,16 +54,16 @@ describe('branch service gates (ticket 43)', () => {
   it('retry transitions a failed branch into a pending approval request without executing anything', async () => {
     const h = mountFanout()
     const svc = h.svc().branches(taylor(), 'RT-2026-014')
-    const before = executionShape(h.store().db)
+    const before = executionShape(h.db())
     const res = await h.runA(() => svc.retry(ctx(taylor(), 'RT-2026-014'), 'BR-014-03', 'Transient timeout — rerun approved.'))
     expect(res.ok).toBe(true)
-    const b = h.store().db.branches.find((x) => x.id === 'BR-014-03')!
+    const b = h.db().branches.find((x) => x.id === 'BR-014-03')!
     expect(b.state).toBe('failed') // the request waits; nothing re-ran
     expect(b).toMatchObject({ pendingRequest: 'retry', approval: 'pending' })
     expect(b.lastEvent).toContain('approval and preflight')
     expect(b.timeline.at(-1)!.text).toContain('Retry requested')
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Requested branch retry', obj: 'BR-014-03', projectId: 'RT-2026-014', result: 'Pending', actor: 'Taylor Chen' })
-    expect(executionShape(h.store().db)).toBe(before)
+    expect(h.db().audit[0]).toMatchObject({ action: 'Requested branch retry', obj: 'BR-014-03', projectId: 'RT-2026-014', result: 'Pending', actor: 'Taylor Chen' })
+    expect(executionShape(h.db())).toBe(before)
     h.unmount()
   })
 
@@ -112,8 +92,8 @@ describe('branch service gates (ticket 43)', () => {
     if (!terminal.ok) expect(terminal.failure.message).toContain('already finished and cannot be cancelled')
     const ok = await h.runA(() => svc.cancel(ctx(taylor(), 'RT-2026-014'), 'BR-014-05', 'Not needed for the objective'))
     expect(ok.ok).toBe(true)
-    expect(h.store().db.branches.find((x) => x.id === 'BR-014-05')).toMatchObject({ state: 'cancelled', pendingRequest: undefined })
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Cancelled branch', result: 'Success', reason: 'Not needed for the objective' })
+    expect(h.db().branches.find((x) => x.id === 'BR-014-05')).toMatchObject({ state: 'cancelled', pendingRequest: undefined })
+    expect(h.db().audit[0]).toMatchObject({ action: 'Cancelled branch', result: 'Success', reason: 'Not needed for the objective' })
     // Viewer member: read-only context refuses with a reason (no content shown).
     const viewer = await h.runA(() => h.svc().branches(casey(), 'RT-2026-014').retry(ctx(casey(), 'RT-2026-014'), 'BR-014-03', 'why'))
     expect(viewer.ok).toBe(false)
@@ -140,10 +120,10 @@ describe('branch service gates (ticket 43)', () => {
     if (!lost.ok) expect(lost.failure.message).toContain('not connected')
     const ok = await call('AG-007')
     expect(ok.ok).toBe(true)
-    const b = h.store().db.branches.find((x) => x.id === 'BR-014-03')!
+    const b = h.db().branches.find((x) => x.id === 'BR-014-03')!
     expect(b).toMatchObject({ pendingRequest: 'reassign', approval: 'pending' })
     expect(b.assignLog.at(-1)!.text).toContain('AG-008 → AG-007')
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Requested branch reassignment', result: 'Pending' })
+    expect(h.db().audit[0]).toMatchObject({ action: 'Requested branch reassignment', result: 'Pending' })
     h.unmount()
   })
 
@@ -170,12 +150,12 @@ describe('branch service gates (ticket 43)', () => {
 
   it('writes bind to the addressed branch: an aggregate-scope action lands on the branch project even after a project switch', async () => {
     const h = mountFanout()
-    h.run(() => h.store().setPid('RT-2026-015'))
+    h.run(() => selectProject('RT-2026-015'))
     const svc = h.svc().branches(taylor(), 'all')
     const res = await h.runA(() => svc.retry(ctx(taylor(), 'all'), 'BR-014-03', 'rerun after timeout'))
     expect(res.ok).toBe(true)
-    expect(h.store().db.audit[0]).toMatchObject({ projectId: 'RT-2026-014', actor: 'Taylor Chen' })
-    expect(h.store().db.branches.find((x) => x.id === 'BR-014-03')!.pendingRequest).toBe('retry')
+    expect(h.db().audit[0]).toMatchObject({ projectId: 'RT-2026-014', actor: 'Taylor Chen' })
+    expect(h.db().branches.find((x) => x.id === 'BR-014-03')!.pendingRequest).toBe('retry')
     h.unmount()
   })
 })
@@ -221,7 +201,7 @@ describe('fanout screen on typed services (ticket 43)', () => {
     const h2 = mountFanout('Riley Brooks', '#/ai-fanout')
     h2.show()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Open branch BR-014-03, Failed' })).toBeInTheDocument())
-    h2.run(() => h2.store().setPid('RT-2026-015'))
+    h2.run(() => selectProject('RT-2026-015'))
     await waitFor(() => expect(screen.getByText('No branch group in this project')).toBeInTheDocument())
     expect(screen.queryByText(/BG-014-01/)).not.toBeInTheDocument()
     h2.unmount()
@@ -235,7 +215,7 @@ describe('fanout screen on typed services (ticket 43)', () => {
     fireEvent.change(screen.getByPlaceholderText('Why should this branch be retried?'), { target: { value: 'Transient timeout — rerun approved.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
     await waitFor(() => expect(screen.getByText('Retry pending approval')).toBeInTheDocument())
-    expect(h.store().db.branches.find((x) => x.id === 'BR-014-03')).toMatchObject({ pendingRequest: 'retry', approval: 'pending', state: 'failed' })
+    expect(h.db().branches.find((x) => x.id === 'BR-014-03')).toMatchObject({ pendingRequest: 'retry', approval: 'pending', state: 'failed' })
     expect(screen.getByText(/Requested branch retry/)).toBeInTheDocument()
     h.unmount()
   })
@@ -244,7 +224,8 @@ describe('fanout screen on typed services (ticket 43)', () => {
     const h = mountFanout()
     h.show()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Open branch BR-014-05, Queued' })).toBeInTheDocument())
-    h.run(() => h.store().A.cancelBranch('BR-014-05', 'Not needed for the objective'))
+    const res = await h.runA(() => h.svc().branches(taylor(), 'RT-2026-014').cancel(ctx(taylor(), 'RT-2026-014'), 'BR-014-05', 'Not needed for the objective'))
+    expect(res.ok).toBe(true)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Open branch BR-014-05, Cancelled' })).toBeInTheDocument())
     h.unmount()
   })
