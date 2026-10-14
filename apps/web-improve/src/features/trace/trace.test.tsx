@@ -18,12 +18,12 @@
  * database reads (grep-verified on the source).
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { mountServices } from '../../test/helpers'
+import { go, selectProject } from '../../router/navigate'
+import { decideToolEventTransaction } from './writes'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { ToolEvent, ToolState } from '../../data'
 import { seed, toolFacets } from '../../data'
@@ -33,28 +33,12 @@ import { listToolEvents, maskSensitive } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 /** Mounts the providers, a probe and the migrated trace screen. */
 function mountTrace(me = 'Taylor Chen', projectId = 'RT-2026-014') {
   window.location.hash = '#/ai-trace'
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = () => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        <AiTrace />
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui())
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  act(() => { store.setPid(projectId) })
-  return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  const h = mountServices(<AiTrace />, me)
+  act(() => { selectProject(projectId) })
+  return h
 }
 
 const taylor = (): ActorRef => ({ id: 'Taylor Chen', role: 'operator' })
@@ -223,7 +207,7 @@ describe('trace screen on the typed read (ticket 41)', () => {
     const pendingRow = () => screen.getByText('TL-03').closest('tr')!
     expect(within(pendingRow()).getByText('Pending')).toBeInTheDocument()
     expect(screen.getByText(/tool call pending approval/)).toBeInTheDocument()
-    h.run(() => { h.store().A.decideTool('TL-03', 'denied', 'Not needed for this objective') })
+    h.run(() => { expect(decideToolEventTransaction(h.svc().authority, h.svc().clock, ctx({ id: 'Pat Kim', role: 'reviewer' }, 'RT-2026-014'), 'TL-03', 'denied', 'Not needed for this objective').ok).toBe(true) })
     await waitFor(() => expect(within(screen.getByText('TL-03').closest('tr')!).getByText('Blocked')).toBeInTheDocument())
     expect(within(screen.getByText('TL-03').closest('tr')!).getByText('Denied')).toBeInTheDocument()
     expect(screen.queryByText(/tool call pending approval/)).not.toBeInTheDocument()
@@ -232,17 +216,8 @@ describe('trace screen on the typed read (ticket 41)', () => {
 
   it('a delayed superseded read never restores the old project after a scope switch', async () => {
     window.location.hash = '#/ai-trace'
-    let store!: Store
-    let svc!: ConsoleServices
-    render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <Probe ready={(s, v) => { store = s; svc = v }} />
-          <AiTrace />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    act(() => { store.setMe('Taylor Chen') })
+    const h = mountServices(<AiTrace />, 'Taylor Chen')
+    const svc = h.svc()
     // Gate the RT-2026-014 read before the project switch triggers it.
     const gate = defer()
     const base = svc.trace.bind(svc)
@@ -250,9 +225,9 @@ describe('trace screen on the typed read (ticket 41)', () => {
       const s = base(actor, project)
       return project === 'RT-2026-014' ? { ...s, list: (c: RequestContext) => gate.promise.then(() => s.list(c)) } : s
     }
-    act(() => { store.setPid('RT-2026-014') })
+    act(() => { selectProject('RT-2026-014') })
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Loading tool trace'))
-    act(() => { store.setPid('RT-2026-015') }) // Taylor is a member here too
+    act(() => { selectProject('RT-2026-015') }) // Taylor is a member here too
     expect(await screen.findByText('TL-05')).toBeInTheDocument()
     await act(async () => { gate.resolve(); await Promise.resolve() })
     expect(screen.queryByText('TL-01')).not.toBeInTheDocument()
@@ -263,7 +238,7 @@ describe('trace screen on the typed read (ticket 41)', () => {
   it('the event deep link resolves through the router route projection — no raw location writes on this surface', async () => {
     const h = mountTrace()
     await waitFor(() => expect(screen.getByText('TL-01')).toBeInTheDocument())
-    h.run(() => { h.store().go('ai-trace', { id: 'TL-03' }) })
+    h.run(() => { go('ai-trace', { id: 'TL-03' }) })
     expect(await screen.findByRole('dialog', { name: 'Tool Event Inspector — TL-03' })).toBeInTheDocument()
     expect(window.location.hash).toBe('#/ai-trace/TL-03')
     h.unmount()
@@ -301,14 +276,7 @@ describe('trace screen on the typed read (ticket 41)', () => {
    the retired raw hash write emitted. */
 describe('trace link through the guarded seam (ticket 61e)', () => {
   function mountProposalCard(tool: ToolEvent) {
-    const view = render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <ToolProposalCard tool={tool} />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    return view
+    return mountServices(<ToolProposalCard tool={tool} />)
   }
 
   it("the proposal card's View in Trace link lands on the event's path id", async () => {

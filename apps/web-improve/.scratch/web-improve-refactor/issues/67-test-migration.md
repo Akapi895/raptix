@@ -60,3 +60,16 @@ are owned by the concurrent worker and are outside this branch's edits.
   Console/UI/system rerun: 45 passed. Safety/RBAC: 17 passed. Earlier session,
   shared-store and router cases passed (30 tests).
 - Typecheck exit 0; all nine touched code files lint with zero diagnostics.
+
+## T2 plan/library/fleet/trace and Query batch
+
+- Plan compare/history, fleet, library and operations inventory: 70 tests
+  pass (five files), typecheck exit 0, zero touched-file lint diagnostics.
+- Trace/HITL/domain authority: 41 tests pass (three files), typecheck exit 0.
+  Removed the existing unused `seed` import in the HITL suite.
+- Query teardown migration exposed a harness ordering regression: six tests
+  pass, teardown test fails (`offs.length` 0, expected 1). The harness mounted
+  Query bridges before mounting the observing test component, preventing its
+  subscribe instrumentation from observing attachment. The next bounded
+  helper fix restores initial child mounting before effects; the teardown
+  assertion remains intact. This is test setup, not a runtime change.

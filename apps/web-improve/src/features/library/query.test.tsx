@@ -10,26 +10,16 @@
  * visibility rule, filters, page clamping and scoped projections.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { go, selectProject, useRoute } from '../../router/navigate'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
 import { seed } from '../../data'
-import { getPlaybook, getTechnique, listLibrary } from './service'
+import { decideRevision, getPlaybook, getTechnique, listLibrary, submitForReview } from './service'
 
 beforeEach(() => { window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
-
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
 
 /**
  * Mounts the providers with a probe plus a minimal route host (the store's
@@ -39,32 +29,13 @@ function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryCli
  */
 function mountLibrary(me = 'Alex Morgan', hash = '#/playbooks') {
   window.location.hash = hash
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const Host = () => {
-    const { route } = useStore()
+    const route = useRoute()
     const C = routes[route.page]
     return C ? <C /> : null
   }
-  const ui = (withScreen: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {withScreen ? <Host /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+  const h = mountServices(null, me)
+  return { ...h, show: () => h.show(<Host />) }
 }
 
 describe('playbook library (ticket 52)', () => {
@@ -122,9 +93,9 @@ describe('playbook library (ticket 52)', () => {
     h.show()
     await waitFor(() => expect(screen.getByText('PB-004 · v0.9')).toBeInTheDocument())
     expect(screen.getByText('Draft, not usable yet')).toBeInTheDocument()
-    h.run(() => h.store().A.setPlaybookStatus('PB-004', 'review'))
+    h.run(() => { expect(submitForReview(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'all', corr: 'library-submit' }, 'PB-004').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('In review')).toBeInTheDocument())
-    h.run(() => h.store().A.decidePlaybookRevision('PB-001', 'approve'))
+    h.run(() => { expect(decideRevision(h.svc().authority, h.svc().clock, { actor: { id: 'Pat Kim', role: 'reviewer' }, projectId: 'all', corr: 'library-decide' }, 'PB-001', 'approve', 'Independent review confirms the new steps').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('PB-001 · v2.4')).toBeInTheDocument())
     expect(screen.queryByText('v2.4 pending review · v2.3 stays approved')).not.toBeInTheDocument()
     h.unmount()
@@ -137,7 +108,7 @@ describe('playbook library (ticket 52)', () => {
     expect(screen.queryByText('PB-003 · v1.1')).not.toBeInTheDocument() // shared with RT-2026-015
     expect(screen.queryByText('PB-004 · v0.9')).not.toBeInTheDocument() // team-internal
     expect(screen.getByText('2 records')).toBeInTheDocument()
-    h.run(() => h.store().go('playbook', { id: 'PB-003' }))
+    h.run(() => go('playbook', { id: 'PB-003' }))
     await waitFor(() => expect(screen.getByText('Playbook not found')).toBeInTheDocument())
     expect(screen.getByText('No playbook “PB-003”')).toBeInTheDocument()
     h.unmount()
@@ -172,7 +143,7 @@ describe('playbook detail (ticket 52)', () => {
     const h = mountLibrary('Alex Morgan', '#/playbook/PB-001')
     h.show()
     await waitFor(() => expect(screen.getByText('Steps (12)')).toBeInTheDocument())
-    h.run(() => h.store().A.decidePlaybookRevision('PB-001', 'approve'))
+    h.run(() => { expect(decideRevision(h.svc().authority, h.svc().clock, { actor: { id: 'Pat Kim', role: 'reviewer' }, projectId: 'all', corr: 'library-decide' }, 'PB-001', 'approve', 'Independent review confirms the new steps').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('Steps (13)')).toBeInTheDocument())
     expect(screen.queryByText('v2.4 is pending review')).not.toBeInTheDocument()
     h.unmount()
@@ -197,7 +168,7 @@ describe('technique detail (ticket 52)', () => {
     const h = mountLibrary('Riley Brooks')
     h.show()
     await waitFor(() => expect(screen.getByText('PB-001 · v2.3')).toBeInTheDocument())
-    h.run(() => { h.store().setPid('RT-2026-015'); h.store().go('technique', { id: 'T1046' }) })
+    h.run(() => { selectProject('RT-2026-015'); go('technique', { id: 'T1046' }) })
     await waitFor(() => expect(screen.getByText('No test data yet')).toBeInTheDocument())
     expect(screen.queryByText('OP-015')).not.toBeInTheDocument()
     h.unmount()
