@@ -14,7 +14,7 @@ function ServicesProbe({ ready }: { ready: (services: ConsoleServices, client: Q
 }
 
 /** Mounts the actual service lifecycle and Query subscriptions, with optional rendered UI. */
-export function mountServices(ui: ReactNode = null, me = 'Alex Morgan') {
+export function mountServices(ui: ComponentType | ReactNode = null, me = 'Alex Morgan') {
   let services!: ConsoleServices
   let client!: QueryClient
   const tree = (children: ReactNode) => (
@@ -25,7 +25,7 @@ export function mountServices(ui: ReactNode = null, me = 'Alex Morgan') {
       </ConsoleProviders>
     </ServicesProvider>
   )
-  const view = render(tree(ui))
+  const view = render(tree(typeof ui === 'function' ? createElement(ui) : ui))
   act(() => { useAuthStore.getState().setMe(me) })
   return Object.assign(view, {
     svc: (): ConsoleServices => services,
