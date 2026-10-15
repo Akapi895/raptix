@@ -13,11 +13,16 @@ export class C2Service {
     private readonly grantGate?: (engagementId: string, sessionId: string, actorId: string, path?: string) => Promise<void>) {}
   public get configured(): boolean { return this.provider !== undefined; }
   private async authorize(userId: string, engagementId: string): Promise<SliverClient> {
+    await this.authorizeRead(userId, engagementId);
+    if (!this.provider) throw new ProviderUnavailableError(UNAVAILABLE);
+    return this.provider;
+  }
+
+  /** W13: read policy for the durable ledger — engagement ownership without a mounted provider. */
+  private async authorizeRead(userId: string, engagementId: string): Promise<void> {
     const engagement = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
     if (!engagement) throw new ProjectApiError(404, 'Project not found');
     if (!engagement.authorizationConfirmed) throw new ProjectApiError(403, 'Confirmed engagement authorization is required');
-    if (!this.provider) throw new ProviderUnavailableError(UNAVAILABLE);
-    return this.provider;
   }
   public async sessions(userId: string, engagementId: string): Promise<C2View> {
     const provider = await this.authorize(userId, engagementId);
@@ -82,20 +87,20 @@ export class C2Service {
     return await this.observe(reserved, response);
   }
   public async history(userId: string, engagementId: string): Promise<C2CommandView[]> {
-    await this.authorize(userId, engagementId);
+    // W13: audit reads work without a mounted provider — the ledger is durable.
+    await this.authorizeRead(userId, engagementId);
     return (await this.db.c2Command.findMany({ where: { engagementId }, orderBy: { createdAt: 'desc' }, take: 100 })).map(view);
   }
   public async reconcile(userId: string, engagementId: string, commandId: string): Promise<C2CommandView> {
-    const provider = await this.authorize(userId, engagementId);
+    // W13: reconcile is a read path — it never dispatches new work and an
+    // authorization revocation cannot hide an outcome that already happened.
+    // The three grant rechecks stay on the dispatch path only.
+    await this.authorizeRead(userId, engagementId);
     const row = await this.db.c2Command.findFirst({ where: { id: commandId, engagementId } });
     if (!row) throw new ProjectApiError(404, 'Owned command not found');
-    // Reveal the already-executed outcome first (revocation cannot cancel an
-    // invoked command), then recheck the live grant before returning it.
-    const outcome = ['succeeded','failed'].includes(row.status)
-      ? view(row)
-      : await this.observe(row, await provider.call({ op: 'commands.get', engagementId, requestId: row.requestId }));
-    if (this.grantGate !== undefined) await this.grantGate(engagementId, row.sessionId, userId, row.path);
-    return outcome;
+    if (['succeeded','failed'].includes(row.status)) return view(row);
+    if (!this.provider) throw new ProviderUnavailableError(UNAVAILABLE);
+    return await this.observe(row, await this.provider.call({ op: 'commands.get', engagementId, requestId: row.requestId }));
   }
   private async observe(row: C2Command, response: Record<string, unknown>): Promise<C2CommandView> {
     if (!['creating','succeeded','failed','uncertain'].includes(String(response.state))) throw new ProviderUnavailableError('Invalid command state');
