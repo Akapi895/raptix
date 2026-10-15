@@ -75,11 +75,14 @@ export interface EmergencyStopView {
   readonly scope: 'operation' | 'project' | 'workspace';
   readonly targetId: string | null;
   readonly requestedBy: string;
-  readonly outcome: 'requested' | 'acknowledged' | 'stopped' | 'failed' | 'unknown';
+  readonly outcome: 'requested' | 'acknowledged' | 'stopped' | 'failed' | 'unknown' | 'resolved';
   readonly reason: string;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
+
+/** Outcomes that block work start and preflight until an explicit resolution. */
+export const ACTIVE_STOP_OUTCOMES = ['requested', 'acknowledged', 'stopped', 'failed', 'unknown'] as const;
 
 function toPlanView(row: {
   id: string; engagementId: string; version: number; status: string; body: unknown;
@@ -103,9 +106,16 @@ function toPlanView(row: {
   };
 }
 
+/** W08: runtime readiness always receives the exact actor/engagement/thread selection it evaluates. */
+export interface ReadinessInput {
+  readonly actorId: string;
+  readonly engagementId: string;
+  readonly threadId: string | null;
+}
+
 export class GovernanceService {
   public constructor(private readonly db: PrismaClient, private readonly scope: ScopeService,
-    private readonly options?: { readiness?: () => Promise<PreflightCheck[]> }) {}
+    private readonly options?: { readiness?: (input: ReadinessInput) => Promise<PreflightCheck[]> }) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -180,26 +190,38 @@ export class GovernanceService {
 
   public async decidePlan(actorId: string, engagementId: string, planId: string, input: unknown): Promise<PlanView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_DECIDE);
-    const body = (input ?? {}) as { decision?: unknown; comment?: unknown };
+    const body = (input ?? {}) as { decision?: unknown; comment?: unknown; expectedVersion?: unknown };
     const decision = typeof body.decision === 'string' ? body.decision : '';
     if (decision !== 'approved' && decision !== 'rejected') throw new ProjectApiError(400, "decision must be 'approved' or 'rejected'.");
     const plan = await this.findPlan(engagementId, planId);
+    // W09: compare-and-swap on the version the reviewer actually read.
+    if (typeof body.expectedVersion === 'number' && body.expectedVersion !== plan.version) {
+      throw new ProjectApiError(409, `Plan v${plan.version} does not match the reviewed version v${String(body.expectedVersion)}; re-read the plan and decide again.`);
+    }
     if (plan.status !== 'proposed') throw new ProjectApiError(409, `Plan v${plan.version} is ${plan.status}, not proposed.`);
     requireIndependentActor(plan.requestedBy, actorId, 'The plan decision');
     const decidedAt = new Date();
-    // Supersede all other approved plans of this engagement: one authoritative plan at a time.
-    await this.db.businessPlan.updateMany({ where: { engagementId, status: 'approved' }, data: { status: 'superseded' } });
-    const updated = await this.db.businessPlan.update({
-      where: { id: plan.id },
-      data: {
-        status: decision,
-        decidedBy: actorId,
-        decidedAt,
-        decisionComment: typeof body.comment === 'string' ? body.comment : null,
-        expiresAt: decision === 'approved' ? new Date(decidedAt.getTime() + APPROVAL_TTL_MS) : null,
-      },
+    // W09: the decision write, the supersede and the audit entry share one
+    // transaction boundary, and the supersede runs ONLY on approve — a
+    // rejection must never destroy the currently approved version.
+    const updated = await this.db.$transaction(async (tx) => {
+      const client = tx as PrismaClient;
+      if (decision === 'approved') {
+        await client.businessPlan.updateMany({ where: { engagementId, status: 'approved' }, data: { status: 'superseded' } });
+      }
+      const row = await client.businessPlan.update({
+        where: { id: plan.id },
+        data: {
+          status: decision,
+          decidedBy: actorId,
+          decidedAt,
+          decisionComment: typeof body.comment === 'string' ? body.comment : null,
+          expiresAt: decision === 'approved' ? new Date(decidedAt.getTime() + APPROVAL_TTL_MS) : null,
+        },
+      });
+      await client.webAuditEntry.create({ data: { engagementId, actorId, action: `plan.${decision}`, targetType: 'business_plan', targetId: plan.id, reason: `v${plan.version} by ${actorId}` } });
+      return row;
     });
-    await this.audit(engagementId, actorId, `plan.${decision}`, 'business_plan', plan.id, `v${plan.version} by ${actorId}`);
     const planBody = plan.body as { title?: unknown } | null;
     const planTitle = typeof planBody?.title === 'string' && planBody.title.length > 0 ? planBody.title : 'untitled';
     await createNotice(this.db, { engagementId, actorId: plan.requestedBy, kind: 'plan.decided', title: `Plan "${planTitle}" v${plan.version} was ${decision}`, detail: { planId: plan.id, decision, decidedBy: actorId } });
@@ -258,11 +280,17 @@ export class GovernanceService {
     const roe = await this.scope.roeWindowAllows(engagementId, now);
     checks.push(roe.ok ? { id: 'roe', state: 'pass', detail: `Approved scope revision v${roe.version}.` } : { id: 'roe', state: 'fail', detail: roe.reason });
 
+    // W08: the target check must be truthful. An existing engagement record is
+    // not a target; with zero inventoried assets only the engagement root
+    // target (always in scope, W07) can justify a pass.
     const inScope = await this.db.webAsset.count({ where: { engagementId, classification: 'in_scope' } });
-    const engagement2 = await this.db.engagement.findFirst({ where: { id: engagementId }, select: { targetValue: true } });
-    checks.push(inScope > 0 || engagement2 !== null
-      ? { id: 'targets', state: 'pass', detail: `${inScope} inventoried target(s) in scope.` }
-      : { id: 'targets', state: 'fail', detail: 'No target is in scope.' });
+    checks.push(
+      inScope > 0
+        ? { id: 'targets', state: 'pass', detail: `${inScope} inventoried target(s) in scope.` }
+        : engagement !== null && Boolean(engagement.targetValue)
+          ? { id: 'targets', state: 'pass', detail: 'The engagement root target is in scope; no additional inventoried targets.' }
+          : { id: 'targets', state: 'fail', detail: 'No target is in scope.' },
+    );
 
     const contact = await this.db.scopeRevision.findFirst({ where: { engagementId, status: 'approved' }, orderBy: { version: 'desc' } });
     const contacts = (contact?.roe as { emergencyContacts?: unknown } | null)?.emergencyContacts;
@@ -271,13 +299,13 @@ export class GovernanceService {
       : { id: 'contact', state: 'fail', detail: 'The approved ROE revision carries no emergency contact.' });
 
     const activeEstop = await this.db.emergencyStop.findFirst({
-      where: { engagementId, outcome: { in: ['requested', 'acknowledged'] }, ...(threadId !== null ? { OR: [{ targetId: threadId }, { scope: { in: ['project', 'workspace'] } }] } : {}) },
+      where: { engagementId, outcome: { in: [...ACTIVE_STOP_OUTCOMES] }, ...(threadId !== null ? { OR: [{ targetId: threadId }, { scope: { in: ['project', 'workspace'] } }] } : {}) },
     });
     checks.push(activeEstop === null ? { id: 'estop', state: 'pass', detail: null } : { id: 'estop', state: 'fail', detail: 'An emergency stop is active; work cannot start until it is resolved.' });
 
     if (this.options?.readiness !== undefined) {
       try {
-        checks.push(...await this.options.readiness());
+        checks.push(...await this.options.readiness({ actorId, engagementId, threadId }));
       } catch (error) {
         checks.push({ id: 'runtime', state: 'unavailable', detail: error instanceof Error ? error.message : 'Runtime readiness did not report.' });
       }
@@ -296,11 +324,15 @@ export class GovernanceService {
     if (thread.kind !== 'execution') throw new ProjectApiError(400, 'Only execution threads can be bound to an operation; planning threads produce plan drafts instead.');
     const pre = await this.preflight(actorId, engagementId, threadId);
     if (!pre.ok) {
-      const failed = pre.checks.filter((c) => c.state === 'fail').map((c) => `${c.id}: ${c.detail ?? 'failed'}`).join('; ');
+      // W08: the summary must account for every non-passing state, including
+      // 'unavailable' — a missing dependency refuses the bind just like a fail.
+      const failed = pre.checks.filter((c) => c.state !== 'pass').map((c) => `${c.id}: ${c.detail ?? c.state}`).join('; ');
       throw new ProjectApiError(409, `Preflight refuses the binding — ${failed}`);
     }
     const plan = await this.findPlan(engagementId, planId);
     if (plan.status !== 'approved') throw new ProjectApiError(409, `Plan v${plan.version} is ${plan.status}; an approved plan is required.`);
+    // W08: bind enforces the same non-null approval deadline as execution.
+    if (plan.expiresAt === null) throw new ProjectApiError(409, `Plan v${plan.version} is approved but carries no expiry deadline; re-review is required.`);
     assertNotExpired(plan.expiresAt, Date.now(), `Plan v${plan.version} approval`);
     const approved = await this.scope.latestApproved(engagementId);
     if (plan.roeVersion === null || approved === null || plan.roeVersion !== approved.version) {
@@ -313,7 +345,14 @@ export class GovernanceService {
     return this.toBindingView(binding as never, plan.version);
   }
 
-  /** Emergency stop at operation/project/workspace scope with truthful runtime outcome. */
+  /**
+   * Emergency stop at operation/project/workspace scope with truthful runtime
+   * outcome. W05 ordering: the durable latch (outcome 'requested') is
+   * persisted inside a short key-1 emergency-fence transaction BEFORE the
+   * runtime cancel side effect runs — a lost runtime ack still leaves the
+   * closure blocker in place, and an in-flight mutation fence can never delay
+   * or refuse the stop.
+   */
   public async emergencyStop(actorId: string, engagementId: string, input: unknown, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>): Promise<EmergencyStopView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
     const body = (input ?? {}) as { scope?: unknown; targetId?: unknown; reason?: unknown; threadId?: unknown; runId?: unknown };
@@ -321,9 +360,31 @@ export class GovernanceService {
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
     if (scope.length === 0) throw new ProjectApiError(400, "scope must be 'operation', 'project' or 'workspace'.");
     if (reason.length === 0) throw new ProjectApiError(400, 'reason is required.');
+    if (scope === 'operation' && (typeof body.threadId !== 'string' || body.threadId.length === 0)) throw new ProjectApiError(400, 'An operation stop requires its owned threadId.');
+    // W10: Validate the operation target BEFORE any latch or cancel runs: a
+    // stop must identify an owned execution thread of this engagement.
+    if (scope === 'operation') {
+      const thread = await this.db.engagementThread.findFirst({ where: { threadId: body.threadId as string, engagementId } });
+      if (thread === null) throw new ProjectApiError(404, 'Thread not found in this engagement.');
+      if (thread.kind !== 'execution') throw new ProjectApiError(400, 'Only execution threads can be emergency-stopped; planning threads produce plan drafts instead.');
+    }
+    const latch = await this.db.$transaction(async (tx) => {
+      const [lock] = await (tx as PrismaClient).$queryRaw<{ locked: boolean }[]>`SELECT pg_try_advisory_xact_lock(hashtextextended(${engagementId}, 1)) AS locked`;
+      if (!lock?.locked) throw new ProjectApiError(409, 'Another emergency stop or closure transition is in progress. Retry with the same request identity.');
+      return await (tx as PrismaClient).emergencyStop.create({
+        data: {
+          engagementId,
+          scope,
+          targetId: typeof body.targetId === 'string' ? body.targetId : (typeof body.threadId === 'string' ? body.threadId : null),
+          requestedBy: actorId,
+          outcome: 'requested',
+          reason,
+        },
+      });
+    });
     let outcome: EmergencyStopView['outcome'] = 'requested';
     let detail = '';
-    if (scope === 'operation' && (typeof body.threadId !== 'string' || body.threadId.length === 0)) throw new ProjectApiError(400, 'An operation stop requires its owned threadId.');
+    let row = latch;
     if (cancelRun !== undefined) {
       try {
         const reported = await cancelRun(typeof body.threadId === 'string' ? body.threadId : '', typeof body.runId === 'string' ? body.runId : null, actorId, engagementId);
@@ -333,17 +394,8 @@ export class GovernanceService {
         outcome = 'unknown';
         detail = ` (${err instanceof Error ? err.message : 'the runtime did not report a terminal outcome'})`;
       }
+      row = await this.db.emergencyStop.update({ where: { id: latch.id }, data: { outcome } });
     }
-    const row = await this.db.emergencyStop.create({
-      data: {
-        engagementId,
-        scope,
-        targetId: typeof body.targetId === 'string' ? body.targetId : (typeof body.threadId === 'string' ? body.threadId : null),
-        requestedBy: actorId,
-        outcome,
-        reason,
-      },
-    });
     await this.audit(engagementId, actorId, 'estop.requested', 'emergency_stop', row.id, `${scope}: ${reason} -> ${outcome}${detail}`);
     return this.toEstopView(row as never);
   }
@@ -354,10 +406,32 @@ export class GovernanceService {
     return { engagementId, stops: rows.map((r) => this.toEstopView(r as never)), source: 'db' };
   }
 
+  /**
+   * W10 explicit stop resolution: an authorised actor records why work may
+   * restart. Resolution never resumes or restores anything by itself — it
+   * only clears the blocker, and any subsequent work start runs through the
+   * regular preflight/bind gates.
+   */
+  public async resolveEmergencyStop(actorId: string, engagementId: string, stopId: string, input: unknown): Promise<EmergencyStopView> {
+    await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_DECIDE);
+    const body = (input ?? {}) as { reason?: unknown };
+    const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+    if (reason.length === 0) throw new ProjectApiError(400, 'A reason is required to resolve an emergency stop.');
+    const row = await this.db.emergencyStop.findFirst({ where: { id: stopId, engagementId } });
+    if (row === null) throw new ProjectApiError(404, 'Emergency stop not found');
+    if (!(ACTIVE_STOP_OUTCOMES as readonly string[]).includes(row.outcome)) {
+      throw new ProjectApiError(409, `The emergency stop is already ${row.outcome}.`);
+    }
+    const updated = await this.db.emergencyStop.update({ where: { id: row.id }, data: { outcome: 'resolved' } });
+    await this.audit(engagementId, actorId, 'estop.resolved', 'emergency_stop', row.id, reason);
+    await createNotice(this.db, { engagementId, actorId: row.requestedBy, kind: 'estop.resolved', title: 'Emergency stop was resolved', detail: { stopId: row.id, resolvedBy: actorId } });
+    return this.toEstopView(updated);
+  }
+
   /** Refuses lifecycle mutations while an emergency stop is still active. */
   public async assertNoActiveStop(engagementId: string, threadId: string | null): Promise<void> {
     const active = await this.db.emergencyStop.findFirst({
-      where: { engagementId, outcome: { in: ['requested', 'acknowledged', 'stopped', 'failed', 'unknown'] }, ...(threadId !== null ? { OR: [{ targetId: threadId }, { scope: { in: ['project', 'workspace'] } }] } : {}) },
+      where: { engagementId, outcome: { in: [...ACTIVE_STOP_OUTCOMES] }, ...(threadId !== null ? { OR: [{ targetId: threadId }, { scope: { in: ['project', 'workspace'] } }] } : {}) },
     });
     if (active !== null) {
       throw new ProjectApiError(409, `An emergency stop (${active.scope}) is active; work never auto-resumes and needs explicit resolution first.`);

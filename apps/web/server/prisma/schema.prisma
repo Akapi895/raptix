@@ -353,7 +353,7 @@ model EmergencyStop {
   scope String // operation | project | workspace
   targetId String?
   requestedBy String
-  outcome String @default("requested") // requested | acknowledged | stopped | failed | unknown
+  outcome String @default("requested") // requested | acknowledged | stopped | failed | unknown | resolved
   reason String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

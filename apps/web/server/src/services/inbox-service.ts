@@ -94,7 +94,7 @@ export class InboxService {
     if (this.governance !== null) {
       try {
         const pre = await this.governance.preflight(actorId, engagementId, null);
-        readiness = { state: 'available', ok: pre.ok, failed: pre.checks.filter((c) => c.state === 'fail').map((c) => ({ id: c.id, detail: c.detail })), reason: null };
+        readiness = { state: 'available', ok: pre.ok, failed: pre.checks.filter((c) => c.state !== 'pass').map((c) => ({ id: c.id, detail: c.detail })), reason: null };
       } catch (error) {
         if (!(error instanceof ProjectApiError)) throw error;
         readiness = { state: 'unavailable', ok: null, failed: [], reason: error.message };
@@ -170,7 +170,7 @@ export class InboxService {
       }
       try {
         const pre = await this.governance.preflight(actorId, engagement.id, null);
-        engagementViews.push({ engagementId: engagement.id, name, readiness: { state: 'available', ok: pre.ok, failedChecks: pre.checks.filter((c) => c.state === 'fail').length, reason: null } });
+        engagementViews.push({ engagementId: engagement.id, name, readiness: { state: 'available', ok: pre.ok, failedChecks: pre.checks.filter((c) => c.state !== 'pass').length, reason: null } });
       } catch (error) {
         if (!(error instanceof ProjectApiError)) throw error;
         engagementViews.push({ engagementId: engagement.id, name, readiness: { state: 'unavailable', ok: null, failedChecks: 0, reason: error.message } });
