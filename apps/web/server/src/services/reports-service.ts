@@ -177,7 +177,7 @@ export class ReportsService {
   }
 
   /** Export/delivery as separate audited records with truthful outcomes. */
-  public async deliver(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView> {
+  public async deliver(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView & { artifact: ReportArtifactView }> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_EDIT);
     await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { kind?: unknown; format?: unknown; requestId?: unknown; recipient?: unknown; receipt?: unknown; expectedVersion?: unknown };
@@ -188,10 +188,27 @@ export class ReportsService {
     if (requestId.length === 0) throw new ProjectApiError(400, 'requestId is required so a retry cannot duplicate a delivery.');
     const row = await this.findOwned(engagementId, reportId);
     const existing = await this.db.reportDelivery.findFirst({ where: { reportId: row.id, requestId } });
+    // W20: the replay fingerprint covers the meaningful delivery input — a
+    // reused request id with a different payload is a conflict, not a replay.
+    const fingerprint = createHash('sha256').update(JSON.stringify({
+      kind,
+      format,
+      recipient: kind === 'delivery' ? (typeof body.recipient === 'string' ? body.recipient.trim() : '') : '',
+      receipt: kind === 'delivery' ? (typeof body.receipt === 'string' ? body.receipt.trim() : '') : '',
+      expectedVersion: kind === 'delivery' ? body.expectedVersion : null,
+    })).digest('hex');
     if (existing !== null) {
+      const replayDetail = existing.detail as { fingerprint?: unknown; artifact?: unknown } | null;
+      if (replayDetail?.fingerprint !== undefined && replayDetail.fingerprint !== fingerprint) {
+        throw new ProjectApiError(409, 'This request id was already used with a different payload; a new requestId is required.');
+      }
+      const replayArtifact = replayDetail?.artifact as ReportArtifactView | undefined;
+      if (replayArtifact === undefined || typeof replayArtifact.content !== 'string') {
+        throw new ProjectApiError(503, 'The recorded delivery is missing its artifact; a new requestId is required.');
+      }
       // Same request id: replay of an already-processed request returns the
       // recorded outcome — never a duplicate dispatch or a state re-check.
-      return this.toView(row as never, [existing as never]);
+      return { ...this.toView(row as never, [existing as never]), artifact: replayArtifact };
     }
     if (kind === 'delivery' && (row.status !== 'approved' || row.approvedVersion !== row.version)) {
       throw new ProjectApiError(409, `Delivery requires an approved report; the report is ${row.status}. An export is not a reviewed deliverable.`);
@@ -202,17 +219,56 @@ export class ReportsService {
     if (kind === 'delivery' && body.expectedVersion !== row.approvedVersion) throw new ProjectApiError(409, 'Delivery must acknowledge the exact approved version.');
     const artifact = this.artifact(this.toView(row, []), format as 'json' | 'markdown');
     const status = 'completed';
-    const detail = { ...artifact, ...(kind === 'delivery' ? { channel: 'manual-acknowledgement', recipient, receipt, acknowledgedBy: actorId } : {}) };
-    const delivery = await this.db.reportDelivery.create({
-      data: { reportId: row.id, engagementId, kind, format, status, requestId, detail: detail as object },
+    const detail = { artifact, fingerprint, ...(kind === 'delivery' ? { channel: 'manual-acknowledgement', recipient, receipt, acknowledgedBy: actorId } : {}) };
+    // W20: the delivery record, the report status transition and the audit
+    // entry commit together — no orphan "completed" delivery without its
+    // state change, and no state change without its audit trail.
+    await this.db.$transaction(async (tx) => {
+      const delivery = await tx.reportDelivery.create({
+        data: { reportId: row.id, engagementId, kind, format, status, requestId, detail: detail as object },
+      });
+      if (kind === 'delivery' && status === 'completed' && row.status === 'approved') {
+        await tx.reportRecord.update({ where: { id: row.id, version: row.version, approvedVersion: row.version, status: 'approved' }, data: { status: 'delivered' } });
+      }
+      await tx.webAuditEntry.create({ data: { engagementId, actorId, action: `report.${kind}`, targetType: 'report_delivery', targetId: delivery.id, reason: `${format} ${status}` } });
     });
-    if (kind === 'delivery' && status === 'completed' && row.status === 'approved') {
-      await this.db.reportRecord.update({ where: { id: row.id, version: row.version, approvedVersion: row.version, status: 'approved' }, data: { status: 'delivered' } });
-    }
-    await this.audit(engagementId, actorId, `report.${kind}`, 'report_delivery', delivery.id, `${format} ${status}`);
     const fresh = await this.findOwned(engagementId, reportId);
     const deliveries = await this.db.reportDelivery.findMany({ where: { reportId: row.id }, orderBy: { createdAt: 'desc' } });
-    return this.toView(fresh as never, deliveries as never[]);
+    // W20: the response carries the exact artifact this request produced —
+    // the client never re-reads a possibly-changed report.
+    return { ...this.toView(fresh as never, deliveries as never[]), artifact };
+  }
+
+  /**
+   * W20: after approval/delivery the reviewed snapshot is immutable; a
+   * revision is a fresh draft record carrying the reviewed content that must
+   * re-enter independent review before it can be exported as a deliverable.
+   */
+  public async revise(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView> {
+    await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_EDIT);
+    await assertEngagementOpen(this.db, engagementId);
+    const body = (input ?? {}) as { expectedVersion?: unknown };
+    const row = await this.findOwned(engagementId, reportId);
+    if (row.status !== 'approved' && row.status !== 'delivered') {
+      throw new ProjectApiError(409, `The report is ${row.status}; only an approved or delivered report gets a revision — edit the draft instead.`);
+    }
+    if (body.expectedVersion !== row.version) throw new ProjectApiError(409, `Concurrent edit: the report moved to version ${row.version}. Reload and retry.`);
+    const revised = await this.db.$transaction(async (tx) => {
+      const created = await tx.reportRecord.create({
+        data: {
+          engagementId,
+          title: row.title,
+          version: 1,
+          status: 'draft',
+          body: row.body as object,
+          createdBy: actorId,
+        },
+      });
+      await tx.webAuditEntry.create({ data: { engagementId, actorId, action: 'report.revised', targetType: 'report', targetId: created.id, reason: `revision of ${row.id} v${row.version}` } });
+      return created;
+    });
+    await createNotice(this.db, { engagementId, actorId: row.reviewedBy ?? row.createdBy, kind: 'report.revision_created', title: `Report "${row.title}" has a new draft revision from ${row.createdBy}`, detail: { reportId: revised.id, revisionOf: row.id } });
+    return this.toView(revised as never, []);
   }
 
   private async findOwned(engagementId: string, reportId: string) {
