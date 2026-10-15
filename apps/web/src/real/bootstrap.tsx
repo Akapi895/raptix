@@ -1,11 +1,11 @@
-﻿/**
+/**
  * Real-mode composition root (integration ticket 03, ADR-0068).
  *
  * Bootstraps the trusted server document (capabilities + deployment mode)
  * BEFORE any data read happens, then exposes the transport + identity to the
  * app through context. The mock authority, demo timers and seed data are
  * never created in this mode (R02): a bootstrap failure renders an
- * actionable error with an explicit opt-in switch back to demo mode â€” it
+ * actionable error with an explicit opt-in switch back to demo mode — it
  * never falls back automatically.
  */
 import { useQuery, QueryClientProvider } from '@tanstack/react-query'
@@ -65,7 +65,7 @@ function BootLoading() {
     <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Connecting to the Raptix API">
       <div className="flex flex-col items-center gap-3 text-muted">
         <Loader2 size={24} className="animate-spin text-cyan" aria-hidden />
-        <span className="text-sm">Connecting to the Raptix APIâ€¦</span>
+        <span className="text-sm">Connecting to the Raptix API…</span>
       </div>
     </div>
   )

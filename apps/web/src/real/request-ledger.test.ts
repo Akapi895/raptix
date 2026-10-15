@@ -1,4 +1,4 @@
-﻿/** Request-ledger semantics (ticket 04): stable ids, poll, reconcile, no re-dispatch. */
+/** Request-ledger semantics (ticket 04): stable ids, poll, reconcile, no re-dispatch. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RequestRecoveryView } from '@raptix/web-contracts'
 
@@ -32,7 +32,7 @@ describe('awaitRequest', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('polls the same request id until accepted â€” never re-dispatches', async () => {
+  it('polls the same request id until accepted — never re-dispatches', async () => {
     const { awaitRequest } = await import('./request-ledger')
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       if ((init?.method ?? 'GET') === 'GET') return jsonResponse(200, ACK({ state: 'accepted', runId: 'run-9' }))

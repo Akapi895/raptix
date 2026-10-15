@@ -11,6 +11,7 @@ import { useState, type ReactElement } from 'react'
 import { CheckCircle2, Loader2, Lock, ShieldCheck } from 'lucide-react'
 import { decideClosure, fetchClosure, requestClosure } from '../api'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Skeleton, Status } from '../../ui'
+import { utcMinute, utcMinuteOr } from '../format'
 
 const CHECK_LABEL: Record<string, string> = {
   runtime: 'Runtime requests settled',
@@ -98,8 +99,8 @@ export function RealClosurePanel({ engagementId }: { engagementId: string }): Re
                 { k: 'Requested by', v: <span className="font-mono">{row.requestedBy}</span> },
                 { k: 'Reason', v: row.reason },
                 { k: 'Decided by', v: row.decidedBy ? <span className="font-mono">{row.decidedBy}</span> : '—' },
-                { k: 'Decided at', v: row.decidedAt ? row.decidedAt.replace('T', ' ').slice(0, 16) + 'Z' : '—' },
-                { k: 'Updated', v: row.updatedAt.replace('T', ' ').slice(0, 16) + 'Z' },
+                { k: 'Decided at', v: utcMinuteOr(row.decidedAt) },
+                { k: 'Updated', v: utcMinute(row.updatedAt) },
               ]}
             />
           </div>

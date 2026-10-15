@@ -1,8 +1,8 @@
-﻿/**
+/**
  * Typed real-mode API adapters (integration tickets 03-04). Every function
  * validates its wire response with the shared web-contracts guards and maps
  * the public DTO onto the console's UI entity shape with explicit unavailable
- * fields â€” mapping never invents demo values (client, owner, ROE, dates) for
+ * fields — mapping never invents demo values (client, owner, ROE, dates) for
  * data the engagement API does not carry.
  */
 import {
@@ -334,7 +334,7 @@ function isAuthSessionView(v: unknown): v is AuthSessionView {
 
 /**
  * Resolves the trusted session. A 404 (or any failure that says the route is
- * absent) means the server runs the local single-user identity â€” the caller
+ * absent) means the server runs the local single-user identity — the caller
  * falls back to REAL_IDENTITY instead of inventing a session.
  */
 export async function fetchAuthSession(): Promise<AuthSessionView | null> {
@@ -777,18 +777,6 @@ export function reconcileC2Command(engagementId: string, commandId: string): Pro
     { method: 'POST', body: {} })
 }
 
-export function configureC2(engagementId: string, kind: 'listener' | 'profile', input: Record<string, string>): Promise<Record<string, unknown>> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/${kind === 'listener' ? 'listeners' : 'profiles'}`,
-    (v): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v),
-    { method: 'POST', body: input })
-}
-
-export function stopC2Listener(engagementId: string, jobId: number): Promise<Record<string, unknown>> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/listeners/${encodeURIComponent(String(jobId))}`,
-    (v): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v),
-    { method: 'DELETE' })
-}
-
 /* ───────────── Campaign drafts and provider jobs (integration ticket 12, D5 placement) ───────────── */
 
 export function fetchCampaignCapabilities(engagementId: string): Promise<CampaignProviderCapabilities> {
@@ -966,13 +954,9 @@ export function fetchLibraryProposals(engagementId: string): Promise<{ engagemen
     typeof v === 'object' && v !== null && Array.isArray((v as { proposals?: unknown }).proposals) && (v as { source?: unknown }).source === 'db')
 }
 
-export function fetchLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}`, isLibraryProposalView)
-}
-
 export function submitLibraryProposal(engagementId: string, input: { skillName: string; proposedBody: string; rationale?: string }): Promise<LibraryProposalView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals`, (v): v is LibraryProposalView =>
-    typeof v === 'object' && v !== null && (v as LibraryProposalView).status === 'draft' && (v as LibraryProposalView).version === 1,
+    isLibraryProposalView(v) && v.status === 'draft' && v.version === 1,
   { method: 'POST', body: input })
 }
 
@@ -983,13 +967,13 @@ export function amendLibraryProposal(engagementId: string, proposalId: string, i
 
 export function proposeLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/propose`, (v): v is LibraryProposalView =>
-    typeof v === 'object' && v !== null && (v as LibraryProposalView).status === 'proposed',
+    isLibraryProposalView(v) && v.status === 'proposed',
   { method: 'POST' })
 }
 
 export function decideLibraryProposal(engagementId: string, proposalId: string, input: { decision: 'approved' | 'rejected'; expectedVersion: number; comment?: string }): Promise<LibraryProposalView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/decision`, (v): v is LibraryProposalView =>
-    typeof v === 'object' && v !== null && ((v as LibraryProposalView).status === 'approved' || (v as LibraryProposalView).status === 'rejected'),
+    isLibraryProposalView(v) && (v.status === 'approved' || v.status === 'rejected'),
   { method: 'POST', body: input })
 }
 

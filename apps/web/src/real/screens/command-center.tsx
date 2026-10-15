@@ -14,6 +14,7 @@ import { go } from '../../router/navigate'
 import { parseHash } from '../../router/history'
 import { useRoute } from '../../router/navigate'
 import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui'
+import { utcMinute } from '../format'
 
 const KIND_LABEL: Record<string, string> = {
   'scope-revision': 'Scope review',
@@ -98,7 +99,7 @@ export function RealCommandCenter(): ReactElement {
                     {t.title}
                     <span className="text-xs text-muted"> · {t.engagementName ?? t.engagementId}{t.awaitingActor ? ' · awaiting your follow-up' : ''}</span>
                   </span>
-                  <span className="text-xs text-muted">{t.createdAt.replace('T', ' ').slice(0, 16) + 'Z'}</span>
+                  <span className="text-xs text-muted">{utcMinute(t.createdAt)}</span>
                   <Button variant="secondary" onClick={() => { const route = parseHash(t.href); go(route.page, route) }}>Open</Button>
                 </li>
               ))}

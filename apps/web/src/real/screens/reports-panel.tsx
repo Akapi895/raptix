@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Real reports panel (integration ticket 11): draft/edit with version
  * conflicts, independent version-pinned review with mandatory comments and
  * separate audited export/delivery records. Refusals preserve the form.
@@ -26,7 +26,7 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
   const create = useMutation({
     mutationFn: () => createReport(engagementId, { title, summary }),
     onSuccess: () => { setTitle(''); setSummary(''); setError(null); invalidate() },
-    onError: (err) => setError(err instanceof Error ? err.message : 'The save was refused â€” your draft is preserved.'),
+    onError: (err) => setError(err instanceof Error ? err.message : 'The save was refused — your draft is preserved.'),
   })
 
   if (list.isPending) {
@@ -67,14 +67,14 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
                     </td>
                     <td className="py-2 pr-3 font-mono text-xs">v{r.version}{r.approvedVersion !== null ? ` (pinned v${r.approvedVersion})` : ''}</td>
                     <td className="py-2 pr-3"><Status kind="gate" value={r.status === 'approved' || r.status === 'delivered' ? 'passed' : r.status === 'changes_requested' ? 'failed' : 'pending'} size="sm" label={r.status} /></td>
-                    <td className="py-2 pr-3 text-xs text-muted">{r.reviewedBy === null ? 'â€”' : `${r.reviewedBy}: ${r.reviewComment ?? ''}`}</td>
+                    <td className="py-2 pr-3 text-xs text-muted">{r.reviewedBy === null ? '—' : `${r.reviewedBy}: ${r.reviewComment ?? ''}`}</td>
                     <td className="py-2">
                       <span className="flex flex-wrap gap-1">
                          <Button variant="ghost" onClick={() => go('report', { id: r.id, engagementId })}>Open editor / review</Button>
                          <Button variant="ghost" onClick={() => go('report-preview', { id: r.id, engagementId })}>Preview</Button>
                       </span>
                       {r.deliveries.length > 0 ? (
-                        <div className="mt-1 text-xs text-muted">{r.deliveries.map((d) => `${d.kind}/${d.format}: ${d.status}`).join(' Â· ')}</div>
+                        <div className="mt-1 text-xs text-muted">{r.deliveries.map((d) => `${d.kind}/${d.format}: ${d.status}`).join(' · ')}</div>
                       ) : null}
                     </td>
                   </tr>

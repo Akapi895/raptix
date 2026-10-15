@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Real project detail (integration ticket 03). The engagement contract's
  * identity fields (server id vs display name vs workspace slug) render
  * explicitly; feature tabs without a real integration render the honest
@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
 import { getEngagement } from '../api'
+import { utcMinuteOr } from '../format'
 import { projectKeys } from '../queries'
 import { RealFindingsPanel } from './findings-panel'
 import { RealOperationsPanel } from './operations-panel'
@@ -45,10 +46,6 @@ const TABS = [
   { id: 'audit', label: 'Audit' },
   { id: 'close', label: 'Close' },
 ]
-
-function fmt(iso: string | null): string {
-  return iso ? iso.replace('T', ' ').slice(0, 16) + 'Z' : 'â€”'
-}
 
 export function RealProjectDetail(): ReactElement {
   const route = useRoute()
@@ -94,7 +91,7 @@ export function RealProjectDetail(): ReactElement {
     <>
       <PageHeader
         title={data.displayName}
-        sub={<span><span className="font-mono">{data.id}</span> Â· workspace slug <span className="font-mono">{data.workspaceSlug}</span></span>}
+        sub={<span><span className="font-mono">{data.id}</span> · workspace slug <span className="font-mono">{data.workspaceSlug}</span></span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: data.displayName }]}
         meta={<Status kind="project" value={data.lifecycleStatus} size="sm" />}
       />
@@ -138,8 +135,8 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
               { k: 'Metadata', v: <Status kind="check" value={ready ? 'pass' : 'review'} size="sm" label={ready ? 'Verified' : 'Needs review'} /> },
               { k: 'Lifecycle', v: <Status kind="project" value={d.lifecycleStatus} size="sm" /> },
               { k: 'Authorization confirmed', v: d.authorizationConfirmed ? 'Yes' : 'No' },
-              { k: 'Created', v: fmt(d.createdAt) },
-              { k: 'Updated', v: fmt(d.updatedAt) },
+              { k: 'Created', v: utcMinuteOr(d.createdAt) },
+              { k: 'Updated', v: utcMinuteOr(d.updatedAt) },
             ]}
           />
         </Card>
@@ -147,7 +144,7 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
       <div className="min-w-0 space-y-4">
         <Card>
           <CardHeader title="Planning handoff" />
-          <p className="text-sm text-muted">{d.handoffConfirmedAt ? `Confirmed at ${fmt(d.handoffConfirmedAt)}` : 'Planning handoff has not been confirmed yet.'}</p>
+          <p className="text-sm text-muted">{d.handoffConfirmedAt ? `Confirmed at ${utcMinuteOr(d.handoffConfirmedAt)}` : 'Planning handoff has not been confirmed yet.'}</p>
           <div className="mt-3">
             <Button variant="secondary" onClick={() => go('project', { id: d.id, tab: 'planning' })}>Open planning</Button>
           </div>

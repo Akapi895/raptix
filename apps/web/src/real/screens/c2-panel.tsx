@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { KeyRound, Loader2, TerminalSquare } from 'lucide-react'
 import { decideC2Grant, dispatchC2Command, fetchC2Commands, fetchC2Grants, fetchC2Sessions, reconcileC2Command, requestC2Grant } from '../api'
+import { utcMinute } from '../format'
 import type { C2CommandView } from '@raptix/web-contracts'
 import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status, Textarea } from '../../ui'
 
@@ -104,7 +105,7 @@ function RealC2Grants({ engagementId }: { engagementId: string }): ReactElement 
                     <td className="py-2 pr-3"><Status kind="gate" value={g.status === 'approved' ? 'passed' : g.status === 'requested' ? 'pending' : 'failed'} size="sm" label={STATUS_LABEL[g.status] ?? g.status} /></td>
                     <td className="py-2 pr-3 text-xs text-muted">{g.reason}</td>
                     <td className="py-2 pr-3 font-mono text-xs">{g.actorId}</td>
-                    <td className="py-2 pr-3 text-xs">{g.expiresAt.replace('T', ' ').slice(0, 16) + 'Z'}</td>
+                    <td className="py-2 pr-3 text-xs">{utcMinute(g.expiresAt)}</td>
                     <td className="py-2 text-xs">
                       {g.status === 'requested' ? (
                         <span className="flex gap-2">
@@ -217,7 +218,7 @@ function RealC2Console({ engagementId }: { engagementId: string }): ReactElement
                       <td className="py-2 pr-3 text-xs">{s.username}</td>
                       <td className="py-2 pr-3 text-xs">{s.os}/{s.arch}</td>
                       <td className="py-2 pr-3 text-xs">{s.transport}</td>
-                      <td className="py-2 pr-3 text-xs">{new Date(s.lastCheckin * 1000).toISOString().replace('T', ' ').slice(0, 16)}Z</td>
+                      <td className="py-2 pr-3 text-xs">{utcMinute(new Date(s.lastCheckin * 1000).toISOString())}</td>
                       <td className="py-2"><Status kind="gate" value={s.isDead ? 'failed' : 'passed'} size="sm" label={s.isDead ? 'dead' : 'alive'} /></td>
                     </tr>
                   ))}

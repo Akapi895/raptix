@@ -11,6 +11,7 @@ import { useState, type ReactElement } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, Trash2 } from 'lucide-react'
 import { createVaultSecret, fetchVault, revealVaultSecret, revokeVaultSecret, type CreateVaultSecretInput } from '../api'
 import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton } from '../../ui'
+import { utcMinute } from '../format'
 
 export function RealVaultPanel({ engagementId }: { engagementId: string }): ReactElement {
   const client = useQueryClient()
@@ -83,7 +84,7 @@ export function RealVaultPanel({ engagementId }: { engagementId: string }): Reac
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-fg">{s.label}</span>
                     <span className="rounded border border-line px-1.5 py-0.5 font-mono text-xs text-muted">{s.kind}</span>
-                    <span className="text-xs text-muted">revealed {s.revealCount}×{s.lastRevealedAt ? ` · last ${s.lastRevealedAt.replace('T', ' ').slice(0, 16)}Z` : ''}</span>
+                    <span className="text-xs text-muted">revealed {s.revealCount}×{s.lastRevealedAt ? ` · last ${utcMinute(s.lastRevealedAt)}` : ''}</span>
                     <span className="flex-1" />
                     {revealed[s.id] !== undefined ? (
                       <Button variant="ghost" icon={EyeOff} aria-label={`Hide ${s.label}`} onClick={() => setRevealed((r) => { const n = { ...r }; delete n[s.id]; return n })} />

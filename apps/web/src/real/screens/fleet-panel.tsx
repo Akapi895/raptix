@@ -12,6 +12,7 @@ import { Ban, Bot, Loader2 } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { fetchFleet, cancelRun } from '../api'
 import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status } from '../../ui'
+import { utcMinuteOr } from '../format'
 
 const STATE_LABEL: Record<string, string> = { running: 'running', ended: 'ended', unknown: 'unknown' }
 
@@ -122,8 +123,8 @@ export function RealFleetPanel({ engagementId }: { engagementId: string }): Reac
                     <td className="py-2 pr-3 font-mono text-xs">{b.agent}</td>
                     <td className="py-2 pr-3"><Status kind="gate" value={b.state === 'running' ? 'pending' : b.state === 'ended' ? 'passed' : 'pending'} size="sm" label={STATE_LABEL[b.state] ?? b.state} /></td>
                     <td className="py-2 pr-3 text-xs">{b.outcome ?? '—'}</td>
-                    <td className="py-2 pr-3 text-xs">{b.startedAt !== null ? b.startedAt.replace('T', ' ').slice(0, 16) + 'Z' : '—'}</td>
-                    <td className="py-2 text-xs">{b.endedAt !== null ? b.endedAt.replace('T', ' ').slice(0, 16) + 'Z' : '—'}</td>
+                    <td className="py-2 pr-3 text-xs">{utcMinuteOr(b.startedAt)}</td>
+                    <td className="py-2 text-xs">{utcMinuteOr(b.endedAt)}</td>
                   </tr>
                 ))}
               </tbody>
