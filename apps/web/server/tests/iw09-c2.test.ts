@@ -10,8 +10,9 @@ const SESSION = { id: 'session-1', name: 'Native', hostname: 'target', username:
 const input = { requestId: 'request-123', path: '/usr/bin/printf', args: ['native-output'] };
 function database(authorized = true) {
   const rows: Array<Record<string, unknown>> = [];
-  return { rows, engagement: { findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
-    ['eng-1','eng-2'].includes(where.id) && where.userId === 'local' ? { id: where.id, authorizationConfirmed: authorized } : null },
+  return { rows, engagement: { findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
+    ['eng-1','eng-2'].includes(where.id) ? { id: where.id, userId: 'local', authorizationConfirmed: authorized } : null },
+    webMembership: { findFirst: async () => null },
     c2Command: {
       findUnique: async ({ where }: { where: { engagementId_requestId: { engagementId: string; requestId: string } } }) => rows.find(r => r.engagementId === where.engagementId_requestId.engagementId && r.requestId === where.engagementId_requestId.requestId) ?? null,
       findFirst: async ({ where }: { where: { id: string; engagementId: string } }) => rows.find(r => r.id === where.id && r.engagementId === where.engagementId) ?? null,
@@ -46,11 +47,15 @@ async function setup(mode: 'valid' | 'dead' | 'fail' | 'oversized' = 'valid', au
 describe('IW-09 C2 ownership and durable command audit', () => {
   it('refuses a grant revoked during reservation before invoking the provider', async () => {
     let checks = 0;
-    const { service, executions } = await setup('valid', true, async () => {
+    const { service, db, executions } = await setup('valid', true, async () => {
       if (++checks > 1) throw new ProjectApiError(403, 'Grant revoked');
     });
     await expect(service.dispatchCommand('local', 'eng-1', 'session-1', input)).rejects.toMatchObject({ statusCode: 403 });
     expect(executions()).toBe(0);
+    // W13: the pre-invoke refusal releases the reservation slot and finalizes
+    // the command, so the session is not stuck holding an unresolved command.
+    expect(db.rows).toHaveLength(1);
+    expect(db.rows[0]).toMatchObject({ status: 'failed', activeSessionId: null });
   });
   it('retains the actual outcome when authorization expires in flight', async () => {
     let checks = 0;

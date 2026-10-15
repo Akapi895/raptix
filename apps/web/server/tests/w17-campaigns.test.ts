@@ -42,7 +42,8 @@ function buildDb() {
   return {
     campaigns,
     jobs,
-    engagement: { findFirst: async ({ where }: { where: { id: string; userId: string } }) => (where.id === ENGAGEMENT.id && where.userId === ENGAGEMENT.userId ? { ...ENGAGEMENT } : null) },
+    engagement: { findFirst: async ({ where }: { where: { id: string; userId?: string } }) => (where.id === ENGAGEMENT.id && (where.userId === undefined || where.userId === ENGAGEMENT.userId) ? { ...ENGAGEMENT } : null) },
+    webMembership: { findFirst: async () => null },
     campaign: {
       findMany: async () => campaigns.map(withJobs),
       findFirst: async ({ where }: { where: { id: string; engagementId: string } }) => {
