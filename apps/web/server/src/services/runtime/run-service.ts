@@ -174,6 +174,12 @@ export class RunService {
     const { runtime } = this.options;
     const current = await this.getRun(user, engagement, thread, runId);
     if (['pending', 'running'].includes(current.rawStatus)) {
+      // W02: cancel is a mutation. getRun is a read, so the operator gate must
+      // run here explicitly — widening reads to members must not widen cancels.
+      if (this.options.authorizeMutation !== undefined) {
+        const binding = await this.options.ownership.getBinding(user, engagement, thread);
+        await this.options.authorizeMutation(user, engagement, binding.kind, thread);
+      }
       try { await runtime.cancelRun(thread, runId); }
       catch (error) {
         if (error instanceof RuntimeRejectedError) {

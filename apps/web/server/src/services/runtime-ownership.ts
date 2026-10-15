@@ -63,7 +63,7 @@ export class RuntimeOwnershipService {
     identifier(assistantId);
     if (!['planning', 'execution'].includes(kind)) throw new ProjectPolicyError('bad_request', 'Invalid thread kind');
     return this.transaction(async tx => {
-      const project = await this.owned(tx, userId, engagementId, 'operator');
+      const project = await this.owned(tx, userId, engagementId);
       assertProjectTarget(project.targetType, project.targetValue);
       return contextHash(project, assistantId, kind);
     });
@@ -130,7 +130,7 @@ export class RuntimeOwnershipService {
   public async replay(userId: string, engagementId: string, requestId: string, operation: RequestOperation, payload: unknown, threadId: string | null = null): Promise<RequestRecoveryView | null> {
     identifier(requestId, true);
     return this.transaction(async tx => {
-      const project = await this.owned(tx, userId, engagementId, 'operator');
+      const project = await this.owned(tx, userId, engagementId);
       const bound = threadId === null ? null : await this.binding(tx, project, threadId);
       const row = await tx.webRequestLedger.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
       if (!row) return null;
@@ -238,7 +238,7 @@ export class RuntimeOwnershipService {
   public async releaseCompletedRun(userId: string, engagementId: string, requestId: string, runId: string): Promise<void> {
     identifier(requestId, true); identifier(runId);
     await this.transaction(async tx => {
-      await this.owned(tx, userId, engagementId, 'operator');
+      await this.owned(tx, userId, engagementId);
       const count = await tx.webRequestLedger.updateMany({ where: { engagementId, requestId, runId, state: 'accepted', operation: { not: 'create_thread' } }, data: { activeThreadId: null } });
       if (!count.count) throw conflict();
     });
