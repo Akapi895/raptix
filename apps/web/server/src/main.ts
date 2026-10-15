@@ -30,7 +30,7 @@ import { SliverClient } from './integrations/c2/sliver-client.js';
 import { VaultService } from './services/vault-service.js';
 import { MembersService } from './services/members-service.js';
 import { ScopeService } from './services/scope-service.js';
-import { GovernanceService } from './services/governance-service.js';
+import { GovernanceService, type PreflightCheck } from './services/governance-service.js';
 import { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import { ReportsService } from './services/reports-service.js';
 import { C2GrantsService } from './services/c2-grants-service.js';
@@ -128,16 +128,28 @@ async function main(): Promise<void> {
        return pending;
      },
    }) : undefined;
-   const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
-   const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService) : undefined;
-  const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
-    ? new RuntimeContextService({
-        config: runtimeConfig,
-        projects: projectsService,
-        ownership,
-        workspaceRoot: env.workspacePath,
-        runtime,
-      }) : undefined;
+    const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
+   const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
+     ? new RuntimeContextService({
+         config: runtimeConfig,
+         projects: projectsService,
+         ownership,
+         workspaceRoot: env.workspacePath,
+         runtime,
+       }) : undefined;
+   // W08: preflight readiness reports the actual runtime condition (agent
+   // catalog availability) and never fails open when the dependency is
+   // missing or unreachable.
+   const runtimeReadiness = async (): Promise<PreflightCheck[]> => {
+     if (runtimeContext === undefined) return [{ id: 'runtime', state: 'unavailable', detail: 'The runtime is not configured in this deployment.' }];
+     try {
+       const graphs = (await runtimeContext.agents()).graphs;
+       return [{ id: 'runtime', state: graphs.length > 0 ? 'pass' : 'unavailable', detail: graphs.length > 0 ? null : 'The runtime exposes no agent graphs.' }];
+     } catch (error) {
+       return [{ id: 'runtime', state: 'unavailable', detail: error instanceof Error ? error.message : 'The runtime is unreachable.' }];
+     }
+   };
+   const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService, { readiness: runtimeReadiness }) : undefined;
    const runsService = ownership && runtimeContext && runtime && dbClient ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime, authorizeMutation: async (actorId, engagementId, kind, threadId) => {
      await requireEngagementAccess({ db: dbClient, actorId, multiUser: env.authMode === 'multi' }, engagementId, 'operator');
      await closureService!.assertOpen(engagementId);

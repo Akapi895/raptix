@@ -56,4 +56,10 @@ export function registerGovernanceRoutes(app: FastifyInstance, governance: Gover
     const { id } = request.params as { id: string };
     return governance.emergencyStop(identity.id, id, request.body, cancelRun);
   }));
+
+  // W10: explicit resolution clears the work blocker; it never resumes runs.
+  app.post('/api/engagements/:id/estops/:stopId/resolve', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, stopId } = request.params as { id: string; stopId: string };
+    return governance.resolveEmergencyStop(identity.id, id, stopId, request.body);
+  }));
 }

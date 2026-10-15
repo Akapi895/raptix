@@ -127,8 +127,9 @@ function memoryDb() {
         find('engagementThread', (r) => r.threadId === where.threadId && r.engagementId === where.engagementId),
     },
     emergencyStop: {
-      findFirst: async ({ where }: { where: { engagementId: string; outcome: { in: string[] } } }) =>
-        find('emergencyStop', (r) => r.engagementId === where.engagementId && Array.isArray(where.outcome.in) && (where.outcome.in as string[]).includes(String(r.outcome))),
+      findFirst: async ({ where }: { where: { id?: string; engagementId: string; outcome?: { in: string[] } } }) =>
+        find('emergencyStop', (r) => r.engagementId === where.engagementId && (where.id === undefined || r.id === where.id)
+          && (where.outcome === undefined || Array.isArray(where.outcome.in!) && where.outcome.in!.includes(String(r.outcome)))),
       findMany: async ({ where, orderBy }: { where: { engagementId: string }; orderBy?: { createdAt: string } }) => {
         const rows = await listAll('emergencyStop', (r) => r.engagementId === where.engagementId);
         if (orderBy?.createdAt === 'desc') rows.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
@@ -139,6 +140,9 @@ function memoryDb() {
     },
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
+  // W05: the emergency latch transaction probes the key-1 advisory fence via
+  // $queryRaw; the in-memory store has no concurrency, so the lock is free.
+  (db as unknown as { $queryRaw: unknown }).$queryRaw = async () => [{ locked: true }];
   return db;
 }
 
@@ -282,6 +286,149 @@ describe('ticket 09 governed plans and operation controls', () => {
     await approveScope(app, owner, reviewer);
     const after = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight`, headers: { cookie: owner.cookie } });
     expect(after.json().checks.find((c: { id: string }) => c.id === 'roe').state).toBe('pass');
+  });
+
+  it('W10: refuses a foreign operation thread before any stop latch or cancel is recorded', async () => {
+    const { db, app, owner } = await setup();
+    let cancels = 0;
+    await app.close();
+    const spied = await (buildApp({
+      authMode: 'multi',
+      authDb: db as never,
+      scopeService: new ScopeService(db as never),
+      governanceService: new GovernanceService(db as never, new ScopeService(db as never)),
+      cancelRun: async () => { cancels += 1; return 'stopped'; },
+    }) as unknown as Promise<FastifyInstance>);
+    let foreign;
+    try {
+      foreign = await spied.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { scope: 'operation', reason: 'not our thread', threadId: 'th-foreign' } });
+    } finally {
+      await spied.close();
+    }
+    expect(foreign.statusCode).toBe(404);
+    expect(foreign.json().error.message).toContain('Thread not found');
+    expect([...(db.tables.get('emergencyStop')?.values() ?? [])]).toHaveLength(0);
+    expect(cancels).toBe(0);
+  });
+
+  it('W10: a runtime-confirmed stop also blocks preflight until explicit resolution (unified stop sets)', async () => {
+    const { db, app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const spied = await (buildApp({
+      authMode: 'multi',
+      authDb: db as never,
+      scopeService: new ScopeService(db as never),
+      governanceService: new GovernanceService(db as never, new ScopeService(db as never)),
+      cancelRun: async () => 'stopped',
+    }) as unknown as Promise<FastifyInstance>);
+    try {
+      const stopped = await spied.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { scope: 'project', reason: 'Blue team request' } });
+      expect(stopped.json().outcome).toBe('stopped');
+      const before = await spied.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight?threadId=th-1`, headers: { cookie: owner.cookie } });
+      expect(before.json().checks.find((c: { id: string }) => c.id === 'estop').state).toBe('fail');
+    } finally {
+      await spied.close();
+    }
+    await app.close();
+  });
+
+  it('W10: an explicitly resolved emergency stop unblocks work start without auto-resuming anything', async () => {
+    const { app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const planId = await approvedPlan(app, owner, reviewer);
+    const stopped = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { scope: 'project', reason: 'Blue team request' } });
+    expect(stopped.json().outcome).toBe('acknowledged');
+    const stopId = stopped.json().id as string;
+    const refusedBind = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId, threadId: 'th-1' } });
+    expect(refusedBind.statusCode).toBe(409);
+    const noReason = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: {} });
+    expect(noReason.statusCode).toBe(400);
+    const resolved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { reason: 'infrastructure all-clear' } });
+    expect(resolved.statusCode).toBe(200);
+    expect(resolved.json().outcome).toBe('resolved');
+    const again = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { reason: 'already done' } });
+    expect(again.statusCode).toBe(409);
+    const rebound = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId, threadId: 'th-1' } });
+    expect(rebound.statusCode).toBe(200);
+    await app.close();
+  });
+
+  it('W08: reports the target check truthfully for zero inventoried targets', async () => {
+    const { db, app, owner } = await setup();
+    const first = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight`, headers: { cookie: owner.cookie } });
+    const targets = first.json().checks.find((c: { id: string }) => c.id === 'targets');
+    expect(targets.state).toBe('pass');
+    expect(targets.detail).toContain('root target');
+    expect(targets.detail).not.toContain('0 inventoried target(s) in scope');
+    const row = db.tables.get('engagement')!.get(ENG)!;
+    db.tables.get('engagement')!.set(ENG, { ...row, targetValue: null });
+    const second = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight`, headers: { cookie: owner.cookie } });
+    expect(second.json().checks.find((c: { id: string }) => c.id === 'targets').state).toBe('fail');
+    await app.close();
+  });
+
+  it('W08: readiness receives explicit actor/engagement/thread input and its unavailable state reaches the bind refusal', async () => {
+    const { db, app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    await app.close();
+    const actorId = String(db.tables.get('engagement')!.get(ENG)!.userId);
+    const seen: unknown[] = [];
+    const governance = new GovernanceService(db as never, new ScopeService(db as never), {
+      readiness: async (input) => { seen.push(input); return [{ id: 'runtime', state: 'unavailable', detail: 'The runtime is unreachable.' }]; },
+    });
+    const pre = await governance.preflight(actorId, ENG, 'th-1');
+    expect(pre.ok).toBe(false);
+    expect(pre.checks.find((c) => c.id === 'runtime')).toMatchObject({ state: 'unavailable' });
+    expect(seen).toEqual([{ actorId, engagementId: ENG, threadId: 'th-1' }]);
+    await expect(governance.bindPlan(actorId, ENG, 'plan-any', 'th-1')).rejects.toThrow(/runtime/);
+  });
+
+  it('W08: bind refuses an approved plan whose approval carries no expiry deadline', async () => {
+    const { db, app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const planId = await approvedPlan(app, owner, reviewer);
+    const row = db.tables.get('businessPlan')!.get(planId)!;
+    db.tables.get('businessPlan')!.set(planId, { ...row, expiresAt: null });
+    const bound = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId, threadId: 'th-1' } });
+    expect(bound.statusCode).toBe(409);
+    expect(bound.json().error.message).toContain('deadline');
+    await app.close();
+  });
+
+  it('W09: rejecting a revised plan preserves the currently approved version and its binding', async () => {
+    const { app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const v1 = await approvedPlan(app, owner, reviewer);
+    const revised = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans/${v1}/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { objective: 'Revised objective', methods: ['web', 'internal'] } });
+    expect(revised.statusCode).toBe(200);
+    const v2 = String(revised.json().id);
+    const proposed = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans/${v2}/propose`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf } });
+    expect(proposed.statusCode).toBe(200);
+    const rejected = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans/${v2}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'rejected' } });
+    expect(rejected.statusCode).toBe(200);
+    const list = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/plans`, headers: { cookie: owner.cookie } });
+    const old = list.json().plans.find((p: { id: string }) => p.id === v1);
+    expect(old.status).toBe('approved');
+    expect(old.expiresAt).not.toBeNull();
+    const bound = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId: v1, threadId: 'th-1' } });
+    expect(bound.statusCode).toBe(200);
+    await app.close();
+  });
+
+  it('W09: a plan decision enforces the reviewed version and refuses a second decision', async () => {
+    const { app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const draft = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { objective: 'CAS objective', methods: [] } });
+    const planId = String(draft.json().id);
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans/${planId}/propose`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf } });
+    const stale = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans/${planId}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', expectedVersion: 99 } });
+    expect(stale.statusCode).toBe(409);
+    expect(stale.json().error.message).toContain('re-read');
+    const decided = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans/${planId}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', expectedVersion: 1 } });
+    expect(decided.statusCode).toBe(200);
+    const again = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/plans/${planId}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'rejected', expectedVersion: 1 } });
+    expect(again.statusCode).toBe(409);
+    await app.close();
   });
 });
 
