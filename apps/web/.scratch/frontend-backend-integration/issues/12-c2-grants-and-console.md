@@ -62,6 +62,17 @@ surface (`sessions.get`/`sessions.execute`); a real Sliver round-trip remains th
 explicit live-verification blocker. Server suite 33 files / 310 tests green after the
 change; web `src/real` 98 tests green; server+web typecheck and lint clean.
 
+Later addition (same day, uncommitted until this update): the c2 surface split into
+`RealC2Grants` + `RealC2Console` (sessions table, command dispatch form, command audit
+table with per-command reconcile and a truthful 503 provider-unavailable banner) and a
+`RealCampaignsPanel` (capability read, persisted drafts, generate/deploy provider jobs
+with reconcile) mounted on the c2 surfaces per the D5 placement. Server tests
+`iw09-c2.test.ts` (gate ordering: pre-reservation, post-reservation, post-invoke with
+persisted truthful outcome on gate failure; reconcile persists outcome before the gate
+recheck) and `t10-findings-workflow.test.ts` digest hardening (64-hex enforcement,
+malformed digest 400) added; the workflow live harness (`workflow-live/899a8655`)
+passes 12/12 on real PostgreSQL with the C2 TTL policy check included.
+
 ## Scope boundary
 
 Existing provider-command support is not already a timed per-user grant system.

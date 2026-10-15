@@ -65,6 +65,14 @@ required control complete while leaving only a disabled button.
   invalidation + re-review path, estop outcome + refusal, preflight
   fail/pass. Web: Governance tab in project detail (preflight checklist,
   plan lifecycle, project estop).
+- Later addition (same day, uncommitted until this update):
+  `server/tests/t09-governed-lifecycle.test.ts` (2) — approved-plan revision
+  keeps the reviewed version untouched while a new draft at version+1 carries
+  the body (compare endpoint returns both persisted bodies, `source: 'db'`),
+  and bindings refuse null/foreign/planning threads (400/404) before any
+  binding row is created. The governance panel gains the revise form,
+  revision comparison view and the bind-to-execution-thread form; preflight
+  readiness probes are pluggable via the `options.readiness` hook.
 - Named gap: deadline +1 boundary and a live runtime dispatch through the
   bound thread are covered structurally; the live dispatch probe runs in
   ticket 18's deployment smoke.

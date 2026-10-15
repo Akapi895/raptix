@@ -32,6 +32,40 @@ design; the demo `Db` is never migrated or used as a wire DTO.
 
 ## Consequences
 
+### Storage and concurrency contract
+
+The concrete storage target is `apps/web/server/prisma/schema.prisma` and the
+incremental SQL migration history under `prisma/migrations/`. Cardinalities:
+
+| Record | Identity / relationship | Concurrency and lifecycle |
+|---|---|---|
+| WebUser / WebSession | User ID; sessions belong to one user | Opaque cookie token stored hashed; absolute expiry; per-session CSRF |
+| WebMembership | Unique engagement + user | Persisted owner/operator/reviewer/viewer role; server checks every scoped action |
+| ScopeRevision | Unique engagement + version | Pending -> independently approved/rejected; submission invalidates earlier scope |
+| WebAsset | Unique engagement + identifier | Versioned managed classification, separate from observed KG assets |
+| BusinessPlan | Unique engagement + version | Draft -> proposed -> independently approved/rejected; pins ROE; absolute 24h expiry |
+| OperationBinding | ID, engagement, plan, runtime thread | No duplicate runtime operation store; binding authorization rechecked on dispatch |
+| FindingRecord / EvidenceLink | Finding ID; links belong to finding and engagement | Expected-version updates; producer lineage separate from curated claim |
+| ReportRecord / ReportDelivery | Report ID; deliveries belong to report + engagement | Conditional version/status updates; independent review pins version; unique report + request ID |
+| WebNotice / WebAuditEntry | ID; actor and optional engagement | Durable read/dismiss state; redacted consequential-action audit |
+| WorkspaceSetting | Unique key | Compare-and-set version; configured policy outages fail closed |
+| EngagementClosure | Unique engagement | Requested -> independent decision; checklist rechecked at confirmation; mutation fence |
+
+Report export is not engagement export. `GET
+/api/engagements/:id/report-records/:reportId/export?format=json|markdown`
+returns the exact report version, content, media type and SHA-256 capture digest.
+An export record retains this snapshot in `ReportDelivery.detail`; delivery is a
+separate explicit manual acknowledgement with recipient and receipt, not inferred
+from producing bytes or clicking Export. A retry reuses the original request ID.
+No PDF/email provider is implied. Conditional version/status predicates reject
+concurrent edits and approvals rather than overwriting a competing commit.
+
+Evidence uploads use `POST /api/engagements/:id/artifacts/captures` with bounded
+base64 bytes. The artifact authority generates the path, retains the bytes without
+overwriting producer files, and computes SHA-256. Artifact evidence links resolve
+that owned path and compute/compare its digest server-side; caller-supplied hashes
+without bytes remain external claims, never verified capture integrity.
+
 - **Easier:** later lifecycle tickets (09-11, 15-17) add mapped tables instead
   of redesigning storage mid-flow; concurrency/revision columns are consistent
   from the start.
