@@ -68,7 +68,10 @@ describe('IW-09 C2 ownership and durable command audit', () => {
     });
     const pending = await service.dispatchCommand('local', 'eng-1', 'session-1', input);
     revoked = true;
-    await expect(service.reconcile('local', 'eng-1', pending.id)).rejects.toMatchObject({ statusCode: 403 });
+    // W13: reconcile is a read path — the revocation neither cancels nor hides
+    // the already-recorded outcome; new dispatches stay refused.
+    await expect(service.dispatchCommand('local', 'eng-1', 'session-1', { ...input, requestId: 'request-999' })).rejects.toMatchObject({ statusCode: 403 });
+    expect((await service.reconcile('local', 'eng-1', pending.id)).status).toBe('succeeded');
     expect(await service.history('local', 'eng-1')).toMatchObject([{ status: 'succeeded' }]);
   });
   it('passes the executable path to the grant gate for prefix enforcement', async () => {
