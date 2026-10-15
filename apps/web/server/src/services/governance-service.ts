@@ -4,6 +4,9 @@ import { createNotice } from './inbox-service.js';
 import type { ScopeService } from './scope-service.js';
 import { assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 import { assertEngagementOpen } from './closure-service.js';
+import { ACTIVE_STOP_OUTCOMES } from './engagement-stop-policy.js';
+
+export { ACTIVE_STOP_OUTCOMES };
 
 /**
  * Ticket 09: governed business plans, operation bindings, preflight and
@@ -82,10 +85,9 @@ export interface EmergencyStopView {
   readonly updatedAt: string;
   /** W10/ADR-0074: sibling latches a workspace stop recorded in other owned engagements. */
   readonly related?: EmergencyStopView[];
+  /** W10/ADR-0074: owned engagements the workspace stop could not observe or latch. */
+  readonly relatedFailures?: { readonly engagementId: string; readonly reason: string }[];
 }
-
-/** Outcomes that block work start and preflight until an explicit resolution. */
-export const ACTIVE_STOP_OUTCOMES = ['requested', 'acknowledged', 'stopped', 'failed', 'unknown'] as const;
 
 function toPlanView(row: {
   id: string; engagementId: string; version: number; status: string; body: unknown;
@@ -433,7 +435,21 @@ export class GovernanceService {
         outcome = 'unknown';
         detail = ` (${err instanceof Error ? err.message : 'the runtime did not report a terminal outcome'})`;
       }
-      row = await this.db.emergencyStop.update({ where: { id: String(latch.id) }, data: { outcome } }) as Record<string, unknown>;
+      // W10: the runtime outcome lands only on the latch this call created and
+      // only while it is still un-resolved. A concurrent explicit resolution
+      // (which increments concurrencyVersion) must never be overwritten by a
+      // late cancel acknowledgement.
+      const finalized = await this.db.emergencyStop.updateMany({
+        where: { id: String(latch.id), outcome: 'requested', concurrencyVersion: Number(latch.concurrencyVersion) },
+        data: { outcome },
+      });
+      if (finalized.count === 1) {
+        row = { ...(latch as Record<string, unknown>), outcome };
+      } else {
+        const reread = await this.db.emergencyStop.findFirst({ where: { id: String(latch.id), engagementId } });
+        row = (reread as Record<string, unknown> | null) ?? row;
+        detail += ' (a concurrent resolution kept its outcome)';
+      }
     }
     await this.audit(engagementId, requestedBy, 'estop.requested', 'emergency_stop', String(row.id), `${input.scope}: ${reason} -> ${outcome}${detail}`);
     return row;
@@ -456,15 +472,27 @@ export class GovernanceService {
     for (const row of memberships) candidates.add(String(row.engagementId));
     for (const row of owned) candidates.add(String(row.id));
     const related: EmergencyStopView[] = [];
+    const relatedFailures: { engagementId: string; reason: string }[] = [];
     for (const engagementId of [...candidates].filter((id) => id !== anchorEngagementId).sort()) {
       if (hasActiveRuns === undefined) continue;
-      if (!(await hasActiveRuns(actorId, engagementId).catch(() => false))) continue;
+      // W10: a failed observation is never read as "no active work". The
+      // engagement is reported as uncontained instead of silently skipped.
+      let active: boolean;
+      try { active = await hasActiveRuns(actorId, engagementId); }
+      catch (error) { relatedFailures.push({ engagementId, reason: `runtime observation failed: ${error instanceof Error ? error.message : 'unknown error'}` }); continue; }
+      if (!active) continue;
       try {
         related.push(this.toEstopView(await this.latchAndCancel({ engagementId, scope: 'workspace', reason, requestedBy: actorId, targetId: null, threadId: '', runId: null }, cancelRun) as never));
-      } catch { /* one busy engagement never blocks containment of the rest */ }
+      } catch (error) {
+        relatedFailures.push({ engagementId, reason: error instanceof Error ? error.message : 'the stop could not be persisted' });
+      }
     }
     const view = this.toEstopView(anchor as never);
-    return related.length > 0 ? { ...view, related } : view;
+    return {
+      ...view,
+      ...(related.length > 0 ? { related } : {}),
+      ...(relatedFailures.length > 0 ? { relatedFailures } : {}),
+    };
   }
 
   public async emergencyStops(actorId: string, engagementId: string): Promise<{ engagementId: string; stops: EmergencyStopView[]; source: 'db' }> {

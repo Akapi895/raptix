@@ -97,11 +97,13 @@ function memoryDb() {
         table('operationSchedule').set(where.id, row);
         return { ...row };
       },
-      updateMany: async ({ where, data }: { where: { id?: string; status: string; executeAt?: { lt?: Date } }; data: Row }) => {
+      updateMany: async ({ where, data }: { where: { id?: string; status: string; version?: number; executeAt?: { lte?: Date; lt?: Date } }; data: Row }) => {
         let count = 0;
         for (const [id, row] of table('operationSchedule')) {
           if ((where.id === undefined || row.id === where.id) && row.status === where.status
-            && (where.executeAt === undefined || where.executeAt.lt === undefined || (row.executeAt as Date).getTime() < where.executeAt.lt.getTime())) {
+            && (where.version === undefined || Number(row.version) === where.version)
+            && (where.executeAt === undefined || ((where.executeAt.lte === undefined || (row.executeAt as Date).getTime() <= where.executeAt.lte.getTime())
+              && (where.executeAt.lt === undefined || (row.executeAt as Date).getTime() < where.executeAt.lt.getTime())))) {
             const version = typeof data.version === 'object' && data.version !== null && 'increment' in (data.version as Record<string, unknown>)
               ? Number(row.version) + Number((data.version as { increment: number }).increment)
               : Number(row.version);
@@ -215,6 +217,37 @@ describe('W11 operation schedules (durable execution intents)', () => {
     const row = db.tables.get('operationSchedule')!.get(id)!;
     expect(row.status).toBe('refused');
     expect(String(row.outcomeDetail)).toContain('expired');
+    await app.close();
+  });
+
+  it('cannot claim a due selection that a concurrent reschedule moved into the future', async () => {
+    const { db, app, owner } = await setup({ dispatchCalls: 0 });
+    const created = await post(app, owner);
+    const id = String(created.json().id);
+    db.tables.get('operationSchedule')!.set(id, { ...db.tables.get('operationSchedule')!.get(id)!, executeAt: new Date(Date.now() - 1000) });
+    // A reschedule commits between this worker's due read and its claim update.
+    const proxied = new Proxy(db as object, {
+      get(target, prop) {
+        if (prop !== 'operationSchedule') return Reflect.get(target, prop);
+        const model = (target as { operationSchedule: Record<string, unknown> }).operationSchedule;
+        return new Proxy(model, {
+          get(delegate, key) {
+            if (key !== 'findMany') return Reflect.get(delegate, key);
+            return async (args: unknown) => {
+              const rows = await (delegate as { findMany: (a: unknown) => Promise<unknown[]> }).findMany(args);
+              const row = db.tables.get('operationSchedule')!.get(id)!;
+              db.tables.get('operationSchedule')!.set(id, { ...row, executeAt: new Date(Date.now() + 3_600_000), version: Number(row.version) + 1 });
+              return rows;
+            };
+          },
+        });
+      },
+    });
+    const service = new ScheduleService(proxied as never, { authorize: async () => {}, dispatch: async () => 'run-z' });
+    const result = await service.claimDue('w1', Date.now());
+    const row = db.tables.get('operationSchedule')!.get(id)!;
+    expect(result.claimed).toHaveLength(0);
+    expect(row.status).toBe('scheduled');
     await app.close();
   });
 
