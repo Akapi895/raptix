@@ -191,19 +191,25 @@ describe('ticket 15 command center, tasks and notices', () => {
     const { app, owner } = await setup(db, inbox);
     db.tables.set('scopeRevision', new Map([['r1', { id: 'r1', engagementId: ENG, status: 'pending', version: 3, requestedBy: 'u-1', createdAt: at(30) }]]));
     db.tables.set('c2Grant', new Map([['g1', { id: 'g1', engagementId: 'eng-2', status: 'requested', sessionId: 'sess-9', actorId: 'u-2', createdAt: at(20) }]]));
-    db.tables.set('businessPlan', new Map([['p1', { id: 'p1', engagementId: 'eng-3', status: 'pending', version: 1, body: { title: 'Phase 1' }, requestedBy: 'u-9', createdAt: at(10) }]]));
+    db.tables.set('businessPlan', new Map([
+      ['p0', { id: 'p0', engagementId: ENG, status: 'proposed', version: 2, body: { objective: 'Phase 1 objective' }, requestedBy: 'u-1', createdAt: at(15) }],
+      ['p1', { id: 'p1', engagementId: 'eng-3', status: 'proposed', version: 1, body: { objective: 'Other' }, requestedBy: 'u-9', createdAt: at(10) }],
+    ]));
     const res = await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie: owner.cookie } });
     expect(res.statusCode).toBe(200);
     const view = res.json();
     const kinds = view.tasks.map((t: { kind: string }) => t.kind);
     expect(kinds).toContain('scope-revision');
     expect(kinds).toContain('c2-grant');
+    expect(kinds).toContain('business-plan');
     // eng-3 is not owned and has no membership for the owner: excluded.
-    expect(kinds).not.toContain('business-plan');
+    expect(view.tasks.filter((t: { kind: string }) => t.kind === 'business-plan')).toHaveLength(1);
     const grant = view.tasks.find((t: { refId: string }) => t.refId === 'g1');
-    expect(grant).toMatchObject({ kind: 'c2-grant', engagementId: 'eng-2', engagementName: 'eng-2', awaitingActor: false, href: '#/project/eng-2/c2' });
+    expect(grant).toMatchObject({ kind: 'c2-grant', engagementId: 'eng-2', engagementName: 'eng-2', awaitingActor: false, href: '#/project/eng-2?tab=c2' });
     const revision = view.tasks.find((t: { refId: string }) => t.refId === 'r1');
-    expect(revision).toMatchObject({ awaitingActor: true, href: '#/project/eng-1/scope' });
+    expect(revision).toMatchObject({ awaitingActor: true, href: '#/project/eng-1?tab=scope' });
+    const planTask = view.tasks.find((t: { refId: string }) => t.refId === 'p0');
+    expect(planTask).toMatchObject({ kind: 'business-plan', href: '#/project/eng-1?tab=governance', title: expect.stringContaining('Phase 1 objective') });
     expect(view.source).toBe('db');
   });
 

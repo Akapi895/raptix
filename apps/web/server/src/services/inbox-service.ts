@@ -120,11 +120,11 @@ export class InboxService {
     const ids = engagements.map((e) => e.id);
     const nameOf = new Map(engagements.map((e) => [e.id, typeof e.name === 'string' ? e.name : null]));
     const tasks: TaskItemView[] = [];
-    const href = (engagementId: string, tab: string): string => `#/project/${engagementId}/${tab}`;
+    const href = (engagementId: string, tab: string): string => `#/project/${engagementId}?tab=${tab}`;
     if (ids.length > 0) {
       const [scopeRevisions, plans, grants, reports, findings, stops] = await Promise.all([
         this.db.scopeRevision.findMany({ where: { engagementId: { in: ids }, status: 'pending' }, orderBy: { createdAt: 'desc' }, take: MAX_TASKS_PER_KIND }).catch(() => []),
-        this.db.businessPlan.findMany({ where: { engagementId: { in: ids }, status: 'pending' }, orderBy: { createdAt: 'desc' }, take: MAX_TASKS_PER_KIND }).catch(() => []),
+        this.db.businessPlan.findMany({ where: { engagementId: { in: ids }, status: 'proposed' }, orderBy: { createdAt: 'desc' }, take: MAX_TASKS_PER_KIND }).catch(() => []),
         this.db.c2Grant.findMany({ where: { engagementId: { in: ids }, status: 'requested' }, orderBy: { createdAt: 'desc' }, take: MAX_TASKS_PER_KIND }).catch(() => []),
         this.db.reportRecord.findMany({ where: { engagementId: { in: ids }, status: 'in_review' }, orderBy: { createdAt: 'desc' }, take: MAX_TASKS_PER_KIND }).catch(() => []),
         this.db.findingRecord.findMany({ where: { engagementId: { in: ids }, status: 'review' }, orderBy: { createdAt: 'desc' }, take: MAX_TASKS_PER_KIND }).catch(() => []),
@@ -147,8 +147,8 @@ export class InboxService {
       };
       push('scope-revision', 'scope', scopeRevisions, (r) => `Scope revision v${String(r.version)} awaits review`);
       push('business-plan', 'governance', plans, (r) => {
-        const body = r.body as { title?: unknown } | null;
-        const title = typeof body?.title === 'string' && body.title.length > 0 ? body.title : 'untitled';
+        const body = r.body as { objective?: unknown } | null;
+        const title = typeof body?.objective === 'string' && body.objective.length > 0 ? body.objective : 'untitled';
         return `Plan "${title}" v${String(r.version)} awaits decision`;
       });
       push('c2-grant', 'c2', grants, (r) => `C2 session grant for ${String(r.sessionId)} awaits review`);

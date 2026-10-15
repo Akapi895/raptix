@@ -87,6 +87,7 @@ describe('RealProjectCreate', () => {
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1 External Assessment')
     expect(screen.getByPlaceholderText('q1-external-assessment')).toHaveValue('q1-external-assessment')
     await user.type(screen.getByPlaceholderText('https://target.example.test or 10.20.0.0/24'), 'https://target.example.test')
+    await user.type(screen.getByPlaceholderText(/Business context, known constraints/), 'Authorized external assessment of the public surface with a documented scope.')
     expect(screen.getByRole('button', { name: /Create Engagement/ })).toBeDisabled()
     await user.click(screen.getByRole('checkbox'))
     expect(screen.getByRole('button', { name: /Create Engagement/ })).toBeEnabled()
@@ -106,6 +107,7 @@ describe('RealProjectCreate', () => {
     const user = userEvent.setup()
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1 External Assessment')
     await user.type(screen.getByPlaceholderText('https://target.example.test or 10.20.0.0/24'), 'https://target.example.test')
+    await user.type(screen.getByPlaceholderText(/Business context, known constraints/), 'Authorized external assessment of the public surface with a documented scope.')
     await user.click(screen.getByRole('checkbox'))
     await user.click(screen.getByRole('button', { name: /Create Engagement/ }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/engagements', expect.objectContaining({ method: 'POST' })))
@@ -117,6 +119,7 @@ describe('RealProjectCreate', () => {
       targetType: 'web_url',
       targetValue: 'https://target.example.test',
       authorizationConfirmed: true,
+      brief: 'Authorized external assessment of the public surface with a documented scope.',
     })
   })
 })
@@ -141,5 +144,26 @@ describe('RealProjectDetail', () => {
     // panel still renders an honest unavailable alert, never demo data.
     await userEvent.setup().click(await screen.findByRole('tab', { name: 'Reports' }))
     expect(await screen.findByText(/Reports unavailable/)).toBeTruthy()
+  })
+
+  it('composes the onboarding order (Team, Scope & ROE, Planning) with the truthful handoff status', async () => {
+    stubApi()
+    go('project', { id: 'eng-8f3c92a1' })
+    ui(<RealProjectDetail />)
+    expect(await screen.findByText('Onboarding')).toBeTruthy()
+    expect(screen.getByText(/invite the independent reviewer/)).toBeTruthy()
+    expect(screen.getByText(/submit the scope revision and ROE/)).toBeTruthy()
+    expect(screen.getByText(/confirm the planning handoff/)).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toMatch(/not confirmed yet/)
+    await userEvent.click(screen.getByRole('button', { name: /Open Team/ }))
+    expect(globalThis.location.hash).toContain('tab=team')
+  })
+
+  it('shows the confirmed planning handoff in the onboarding card when the server reports one', async () => {
+    stubApi([dto({ handoffConfirmedAt: '2026-10-14T09:00:00.000Z' })])
+    go('project', { id: 'eng-8f3c92a1' })
+    ui(<RealProjectDetail />)
+    expect(await screen.findByText(/Planning handoff:/)).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toMatch(/confirmed at/)
   })
 })

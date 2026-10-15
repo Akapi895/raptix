@@ -15,7 +15,6 @@ import { Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Texta
 export function RealGovernancePanel({ engagementId }: { engagementId: string }): ReactElement {
   const client = useQueryClient()
   const plans = useQuery({ queryKey: ['real', 'plans', engagementId], queryFn: () => fetchPlans(engagementId) })
-  const preflight = useQuery({ queryKey: ['real', 'preflight', engagementId], queryFn: () => fetchPreflight(engagementId), refetchInterval: 30_000 })
   const stops = useQuery({ queryKey: ['real', 'estops', engagementId], queryFn: () => fetchEmergencyStops(engagementId), refetchInterval: 30_000 })
   const schedules = useQuery({ queryKey: ['real', 'schedules', engagementId], queryFn: () => fetchSchedules(engagementId), refetchInterval: 30_000 })
   const [objective, setObjective] = useState('')
@@ -41,6 +40,10 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
   const [scheduleTz, setScheduleTz] = useState('UTC')
   const [scheduleReason, setScheduleReason] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  // W08: the playbook check ties the OPPLAN objective to the thread the
+  // operator has selected, so the selection travels with the preflight read.
+  const preflight = useQuery({ queryKey: ['real', 'preflight', engagementId, bindThreadId], queryFn: () => fetchPreflight(engagementId, bindThreadId || undefined), refetchInterval: 30_000 })
 
   const invalidate = (): void => {
     void client.invalidateQueries({ queryKey: ['real', 'plans', engagementId] })

@@ -57,13 +57,15 @@ export function RealProjectCreate(): ReactElement {
   const displayName = form.displayName.trim()
   const slug = form.name.trim()
   const targetValue = form.targetValue.trim()
+  const brief = form.brief.trim()
 
   const fieldErrors = {
     displayName: displayName ? undefined : 'A display name is required.',
     name: !slug ? 'A workspace slug is required.' : !SLUG_RE.test(slug) ? 'Use 3-63 lowercase letters, digits or dashes; start and end with a letter or digit.' : undefined,
     targetValue: targetValue ? undefined : 'A target is required.',
+    brief: brief.length >= 20 ? undefined : 'Provide the engagement brief (at least 20 characters) — it is required by the API.',
   }
-  const valid = !fieldErrors.displayName && !fieldErrors.name && !fieldErrors.targetValue && form.authorized
+  const valid = !fieldErrors.displayName && !fieldErrors.name && !fieldErrors.targetValue && !fieldErrors.brief && form.authorized
 
   const create = useMutation({
     mutationFn: (input: CreateEngagementInput) => createEngagement(input),
@@ -90,7 +92,7 @@ export function RealProjectCreate(): ReactElement {
       targetType: form.targetType,
       targetValue,
       authorizationConfirmed: true,
-      ...(form.brief.trim() ? { brief: form.brief.trim() } : {}),
+      brief,
     })
   }
 
@@ -149,8 +151,8 @@ export function RealProjectCreate(): ReactElement {
                 aria-invalid={!!fieldErrors.targetValue}
               />
             </Field>
-            <Field label="Operator brief" hint="Context the planner drafts scope and rules of engagement from." className="md:col-span-2">
-              <Textarea value={form.brief} onChange={(e) => set('brief', e.target.value)} placeholder="Business context, known constraints, expected outcome…" />
+            <Field label="Operator brief" required error={fieldErrors.brief} hint="Context the planner drafts scope and rules of engagement from." className="md:col-span-2">
+              <Textarea value={form.brief} onChange={(e) => set('brief', e.target.value)} placeholder="Business context, known constraints, expected outcome…" aria-invalid={!!fieldErrors.brief} />
             </Field>
           </div>
         </Card>
@@ -172,7 +174,7 @@ export function RealProjectCreate(): ReactElement {
         </div>
         <p className="flex items-start gap-2 text-xs text-muted" role="note">
           <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
-          Not integrated yet: objectives, member invitations, ROE document attachment, assessment windows and scheduling. They require the approved lifecycle tickets and are not simulated here.
+          The engagement overview composes the onboarding order (Team, Scope &amp; ROE, Planning). Not integrated yet: objectives, ROE document attachment, assessment windows and scheduling. They require the approved lifecycle tickets and are not simulated here.
         </p>
       </form>
     </>
