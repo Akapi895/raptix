@@ -23,7 +23,11 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: env.RAPTIX_WEB_BACKEND_URL || 'http://127.0.0.1:5280',
-          changeOrigin: true,
+          // W03: preserve the browser's Host (incl. port). `changeOrigin: true`
+          // rewrote Host to the backend port while Origin stayed on the UI
+          // port, so the API's same-origin check refused every browser
+          // login/mutation (403). The backend never vhosts on Host.
+          changeOrigin: false,
         },
       },
     },

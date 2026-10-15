@@ -105,6 +105,28 @@ describe('ticket 07 password/session primitives', () => {
     expect(isSameOrigin('http://evil.invalid', '127.0.0.1:5280')).toBe(false);
     expect(isSameOrigin('not a url', '127.0.0.1:5280')).toBe(false);
   });
+
+  // W03 proxy authority contract: the server never learns about the external
+  // port unless the proxy preserves it, so each supported topology must
+  // deliver a Host header equal to the browser Origin authority:
+  //  - nginx  → `proxy_set_header Host $http_host` (never `$host`, which
+  //             strips the external port);
+  //  - Vite   → `changeOrigin: false` (never rewrite Host to the backend).
+  // A stripped or rewritten Host must stay REFUSED — proxies that drop the
+  // port are misconfigured, not granted a bypass.
+  it('refuses proxy topologies that strip or rewrite the browser authority (W03)', () => {
+    // nginx with the misconfigured `Host $host`: Origin port lost → 403 expected.
+    expect(isSameOrigin('http://127.0.0.1:3001', '127.0.0.1')).toBe(false);
+    // nginx fixed with `Host $http_host`: authority preserved → allowed.
+    expect(isSameOrigin('http://127.0.0.1:3001', '127.0.0.1:3001')).toBe(true);
+    // Vite dev with the misconfigured `changeOrigin: true`: Host rewritten to
+    // the backend port while Origin stays on the UI port → refused.
+    expect(isSameOrigin('http://127.0.0.1:5273', '127.0.0.1:5280')).toBe(false);
+    // Vite fixed with `changeOrigin: false`: Host passes through → allowed.
+    expect(isSameOrigin('http://127.0.0.1:5273', '127.0.0.1:5273')).toBe(true);
+    // A different host or scheme-host spoof must never match, even on ports.
+    expect(isSameOrigin('http://127.0.0.1:3001', 'internal-api.local:3001')).toBe(false);
+  });
 });
 
 describe('ticket 07 auth boundary', () => {
