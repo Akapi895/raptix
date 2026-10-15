@@ -3,6 +3,7 @@ import type { RequestOperation, RequestRecoveryView, ThreadBindingView, ThreadKi
 import type { Prisma, PrismaClient, Engagement, EngagementThread, WebRequestLedger } from '../generated/prisma/client.js';
 import { assertProjectTarget, isProjectSlug, ProjectPolicyError } from '../security/project-policy.js';
 import { requestFingerprint } from '../security/request-fingerprint.js';
+import { isMemberRole, ROLE_RANK, type MemberRole } from '../auth/membership-policy.js';
 import { ProjectNotFoundError } from './projects-service.js';
 
 export interface BindingInput { threadId: string; assistantId: string; kind: ThreadKind; contextHash: string; runtimeConfigHash?: string }
@@ -35,11 +36,18 @@ export class RuntimeOwnershipService {
     }
   }
 
-  private async owned(tx: Prisma.TransactionClient, userId: string, engagementId: string): Promise<Engagement> {
-    const rows = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Engagement" WHERE "id" = ${engagementId} AND "userId" = ${userId} FOR UPDATE`;
+  private async owned(tx: Prisma.TransactionClient, userId: string, engagementId: string, minRole: MemberRole = 'viewer'): Promise<Engagement> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Engagement" WHERE "id" = ${engagementId} AND ("userId" = ${userId} OR EXISTS (SELECT 1 FROM "WebMembership" WHERE "engagementId" = ${engagementId} AND "userId" = ${userId})) FOR UPDATE`;
     if (!rows.length) throw new ProjectNotFoundError();
     const project = await tx.engagement.findUniqueOrThrow({ where: { id: engagementId } });
     if (!isProjectSlug(project.name)) throw new ProjectNotFoundError();
+    // W02: an invited member is an authorized runtime actor on this engagement,
+    // not just the owner. The membership role must still satisfy the action's
+    // minimum role; foreign ids keep answering 404.
+    if (project.userId !== userId) {
+      const membership = await tx.webMembership.findFirst({ where: { engagementId, userId } });
+      if (membership === null || !isMemberRole(membership.role) || ROLE_RANK[membership.role] < ROLE_RANK[minRole]) throw new ProjectNotFoundError();
+    }
     return project;
   }
 
@@ -55,7 +63,7 @@ export class RuntimeOwnershipService {
     identifier(assistantId);
     if (!['planning', 'execution'].includes(kind)) throw new ProjectPolicyError('bad_request', 'Invalid thread kind');
     return this.transaction(async tx => {
-      const project = await this.owned(tx, userId, engagementId);
+      const project = await this.owned(tx, userId, engagementId, 'operator');
       assertProjectTarget(project.targetType, project.targetValue);
       return contextHash(project, assistantId, kind);
     });
@@ -68,7 +76,7 @@ export class RuntimeOwnershipService {
     if (input.runtimeConfigHash !== undefined && !/^[a-f0-9]{64}$/.test(input.runtimeConfigHash)) throw new ProjectPolicyError('bad_request', 'Invalid trusted runtime context fingerprint');
     if (!['planning', 'execution'].includes(input.kind)) throw new ProjectPolicyError('bad_request', 'Invalid thread kind');
     return this.transaction(async tx => {
-      const project = await this.owned(tx, userId, engagementId);
+      const project = await this.owned(tx, userId, engagementId, 'operator');
       if (input.contextHash !== contextHash(project, input.assistantId, input.kind)) throw conflict();
       const existing = await tx.engagementThread.findUnique({ where: { threadId: input.threadId } });
       if (existing) {
@@ -103,7 +111,7 @@ export class RuntimeOwnershipService {
     identifier(requestId, true);
     if (!['create_thread', 'create_run', 'resume'].includes(operation) || (operation === 'create_thread') !== (threadId === null)) throw new ProjectPolicyError('bad_request', 'Invalid request operation/thread binding');
     return this.transaction(async tx => {
-      const project = await this.owned(tx, userId, engagementId);
+      const project = await this.owned(tx, userId, engagementId, 'operator');
       const bound = threadId === null ? null : await this.binding(tx, project, threadId);
       const payloadHash = requestFingerprint({ operation, threadId, payload, contextHash: bound?.contextHash ?? contextHash(project, '', 'planning') });
       const existing = await tx.webRequestLedger.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
@@ -122,7 +130,7 @@ export class RuntimeOwnershipService {
   public async replay(userId: string, engagementId: string, requestId: string, operation: RequestOperation, payload: unknown, threadId: string | null = null): Promise<RequestRecoveryView | null> {
     identifier(requestId, true);
     return this.transaction(async tx => {
-      const project = await this.owned(tx, userId, engagementId);
+      const project = await this.owned(tx, userId, engagementId, 'operator');
       const bound = threadId === null ? null : await this.binding(tx, project, threadId);
       const row = await tx.webRequestLedger.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
       if (!row) return null;
@@ -134,7 +142,7 @@ export class RuntimeOwnershipService {
 
   public async recordDispatch(userId: string, engagementId: string, requestId: string, token: string, proof: { assistantId: string; kind: ThreadKind; runtimeConfigHash: string }, candidateThreadId: string | null = null): Promise<void> {
     await this.transaction(async tx => {
-      await this.owned(tx, userId, engagementId);
+      await this.owned(tx, userId, engagementId, 'operator');
       const changed = await tx.webRequestLedger.updateMany({ where: { engagementId, requestId, reservationToken: token, state: 'creating', dispatchConfigHash: null }, data: { candidateThreadId, dispatchAssistantId: proof.assistantId, dispatchKind: proof.kind, dispatchConfigHash: proof.runtimeConfigHash } });
       if (!changed.count) throw conflict();
     });
@@ -192,7 +200,7 @@ export class RuntimeOwnershipService {
   public async accept(userId: string, engagementId: string, requestId: string, token: string, threadId: string, runId: string | null): Promise<RequestRecoveryView> {
     identifier(requestId, true); identifier(threadId); if (runId !== null) identifier(runId);
     return this.transaction(async tx => {
-      const project = await this.owned(tx, userId, engagementId);
+      const project = await this.owned(tx, userId, engagementId, 'operator');
       await this.binding(tx, project, threadId);
       const row = await tx.webRequestLedger.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
       if (!row || row.reservationToken !== token || row.state === 'rejected') throw conflict();
@@ -220,7 +228,7 @@ export class RuntimeOwnershipService {
   private async changeCreating(userId: string, engagementId: string, requestId: string, token: string, state: 'uncertain' | 'rejected'): Promise<void> {
     identifier(requestId, true);
     await this.transaction(async tx => {
-      await this.owned(tx, userId, engagementId);
+      await this.owned(tx, userId, engagementId, 'operator');
       const count = await tx.webRequestLedger.updateMany({ where: { engagementId, requestId, reservationToken: token, state: 'creating' }, data: { state, ...(state === 'rejected' ? { activeThreadId: null } : {}) } });
       if (!count.count) throw conflict();
     });
@@ -230,7 +238,7 @@ export class RuntimeOwnershipService {
   public async releaseCompletedRun(userId: string, engagementId: string, requestId: string, runId: string): Promise<void> {
     identifier(requestId, true); identifier(runId);
     await this.transaction(async tx => {
-      await this.owned(tx, userId, engagementId);
+      await this.owned(tx, userId, engagementId, 'operator');
       const count = await tx.webRequestLedger.updateMany({ where: { engagementId, requestId, runId, state: 'accepted', operation: { not: 'create_thread' } }, data: { activeThreadId: null } });
       if (!count.count) throw conflict();
     });

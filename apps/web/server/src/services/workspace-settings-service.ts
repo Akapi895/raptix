@@ -97,15 +97,18 @@ export class WorkspaceSettingsService {
   /** Only an authoritatively absent setting uses the default policy. */
   public async maxGrantHours(): Promise<number> {
     const spec = SPEC_BY_KEY.get('policy.c2_grant_max_hours')!;
+    let row: { value: unknown } | null;
     try {
-      const row = await this.db.workspaceSetting.findFirst({ where: { key: spec.key } });
-      if (row === null) return spec.defaultValue;
-      if (this.validValue(spec, row.value)) return row.value;
-      throw new ProjectApiError(503, 'The C2 grant policy is invalid; grant creation is unavailable.');
-    } catch (error) {
-      if (error instanceof ProjectApiError) throw error;
+      row = (await this.db.workspaceSetting.findFirst({ where: { key: spec.key } })) as { value: unknown } | null;
+    } catch {
       throw new ProjectApiError(503, 'The C2 grant policy could not be read; grant creation is unavailable.');
     }
+    if (row === null) return spec.defaultValue;
+    // W14: a readable-but-out-of-range persisted policy (for example a legacy
+    // 720h value) lowers to the enforced bounds instead of failing every grant
+    // read; only an unreadable store is a 503.
+    const value = typeof row.value === 'number' && Number.isSafeInteger(row.value) ? row.value : spec.defaultValue;
+    return Math.min(Math.max(value, spec.min), spec.max);
   }
 
   public async put(actorId: string, key: string, input: unknown): Promise<WorkspaceSettingView> {

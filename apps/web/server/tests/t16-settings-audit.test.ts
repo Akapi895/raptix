@@ -155,6 +155,15 @@ describe('ticket 16 workspace settings, audit and C2 policy propagation', () => 
     expect(response.statusCode).toBe(503);
     await app.close();
   });
+  it('W14: a readable but oversized persisted policy lowers to the enforced ceiling instead of 503', async () => {
+    const db = memoryDb();
+    const { app, owner } = await setup(db);
+    db.tables.set('workspaceSetting', new Map([['policy.c2_grant_max_hours', { id: 'ws-1', key: 'policy.c2_grant_max_hours', value: 720, version: 2 }]]));
+    const list = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/c2/grants`, headers: { cookie: owner.cookie } });
+    expect(list.statusCode).toBe(200);
+    expect(list.json().maxGrantHours).toBe(24);
+    await app.close();
+  });
   it('persists versioned workspace settings with owner authorization, conflicts and audit', async () => {
     const db = memoryDb();
     const { app, owner, reviewer } = await setup(db);

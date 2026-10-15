@@ -4,6 +4,7 @@ import { isC2Session, isC2Listener, isC2Profile, type C2View, type C2CommandView
 import type { PrismaClient, C2Command } from '../generated/prisma/client.js';
 import type { SliverClient } from '../integrations/c2/sliver-client.js';
 import { ProjectApiError } from './projects-service.js';
+import { requireEngagementAccess } from '../auth/membership-policy.js';
 export class ProviderUnavailableError extends ProjectApiError {
   public constructor(message: string) { super(503, message); }
 }
@@ -13,16 +14,22 @@ export class C2Service {
     private readonly grantGate?: (engagementId: string, sessionId: string, actorId: string, path?: string) => Promise<void>) {}
   public get configured(): boolean { return this.provider !== undefined; }
   private async authorize(userId: string, engagementId: string): Promise<SliverClient> {
-    await this.authorizeRead(userId, engagementId);
+    // W02: provider operations require the operator role or above on the
+    // engagement — an invited operator is authorized, a viewer is not.
+    await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'operator');
+    const engagement = await this.db.engagement.findFirst({ where: { id: engagementId } });
+    if (!engagement || !engagement.authorizationConfirmed) throw new ProjectApiError(403, 'Confirmed engagement authorization is required');
     if (!this.provider) throw new ProviderUnavailableError(UNAVAILABLE);
     return this.provider;
   }
 
-  /** W13: read policy for the durable ledger — engagement ownership without a mounted provider. */
+  /** W13: read policy for the durable ledger — any member may read without a mounted provider. */
   private async authorizeRead(userId: string, engagementId: string): Promise<void> {
-    const engagement = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
-    if (!engagement) throw new ProjectApiError(404, 'Project not found');
-    if (!engagement.authorizationConfirmed) throw new ProjectApiError(403, 'Confirmed engagement authorization is required');
+    // W02: authorized members (viewer and above) may read the scoped ledger;
+    // foreign or removed actors keep answering 404.
+    await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
+    const engagement = await this.db.engagement.findFirst({ where: { id: engagementId } });
+    if (!engagement || !engagement.authorizationConfirmed) throw new ProjectApiError(403, 'Confirmed engagement authorization is required');
   }
   public async sessions(userId: string, engagementId: string): Promise<C2View> {
     const provider = await this.authorize(userId, engagementId);
@@ -71,7 +78,16 @@ export class C2Service {
       const winner = await this.db.c2Command.findUnique({ where });
       if (!winner) throw new ProjectApiError(409, 'Session has an unresolved command');
       if (winner.payloadHash !== payloadHash) throw new ProjectApiError(409, 'Command identity conflicts'); return view(winner); }
-    if (this.grantGate !== undefined) await this.grantGate(engagementId, sessionId, userId, input.path);
+    if (this.grantGate !== undefined) {
+      try { await this.grantGate(engagementId, sessionId, userId, input.path); }
+      catch (gateError) {
+        // W13: the provider was never invoked, so the reservation slot is
+        // released and the command is finalized as failed — a refusal must not
+        // leave the session holding an unresolved command forever.
+        await this.db.c2Command.updateMany({ where: { id: reserved.id, status: { in: ['creating'] } }, data: { status: 'failed', activeSessionId: null } });
+        throw gateError;
+      }
+    }
     let response: Record<string, unknown>;
     try { response = await provider.call({ op: 'sessions.execute', engagementId, sessionId, ...input }); }
     catch (error) { if (!(error instanceof ProjectApiError)) throw error;
