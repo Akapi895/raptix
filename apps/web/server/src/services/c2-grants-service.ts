@@ -11,10 +11,27 @@ import { requireEngagementAccess, requireIndependentActor, type ActorContext, ty
  * authorization grace period; server-owned sweep marks expired grants
  * lazily on read and the gate refuses -1ms past the deadline. Independent
  * review is enforced for approve/reject decisions.
+ *
+ * W12 (plan §C2): a grant authorizes the session, never the target
+ * landscape — the optional live scope gate consumes the engagement's
+ * approved ROE revision, its time windows and the stop state at every
+ * enforcement site, so an approved grant cannot outlive governance.
+ * `commandPrefix` is an exact binary path or, with a trailing path
+ * separator, a directory boundary; a raw string prefix would silently
+ * extend scope to sibling paths.
  */
 
 const MIN_REQUEST: MemberRole = 'operator';
 const DEFAULT_MAX_GRANT_TTL_MS = 24 * 60 * 60 * 1000;
+
+const ABSOLUTE_PATH = /^(?:\/|[A-Za-z]:\\)[\x20-\x7e]{1,511}$/;
+
+/** Exact path, or a directory boundary when the prefix ends in a separator. */
+function coversPath(prefix: string, path: string): boolean {
+  if (path === prefix) return true;
+  const last = prefix.slice(-1);
+  return (last === '/' || last === '\\') && path.startsWith(prefix);
+}
 
 export interface C2GrantView {
   readonly id: string;
@@ -42,7 +59,9 @@ export class C2GrantsService {
    *   `policy.c2_grant_max_hours` loader. An unconfigured consumer uses 24h;
    *   an unavailable configured policy fails closed.
    */
-  public constructor(private readonly db: PrismaClient, private readonly maxGrantHours?: () => Promise<number | null>) {}
+  public constructor(private readonly db: PrismaClient, private readonly maxGrantHours?: () => Promise<number | null>,
+    /** W12: composed in main.ts from the approved ROE revision, its time windows and the stop state. */
+    private readonly liveScopeGate?: (engagementId: string) => Promise<void>) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -80,6 +99,10 @@ export class C2GrantsService {
     }
     const open = await this.db.c2Grant.findFirst({ where: { engagementId, sessionId, actorId, status: 'requested' } });
     if (open !== null) throw new ProjectApiError(409, 'An identical grant request is already pending review.');
+    const prefix = typeof body.commandPrefix === 'string' && body.commandPrefix.trim() !== '' ? body.commandPrefix.trim() : null;
+    if (prefix !== null && !ABSOLUTE_PATH.test(prefix)) {
+      throw new ProjectApiError(400, 'commandPrefix must be an absolute binary path, or a directory ending with a path separator.');
+    }
     const row = await this.db.c2Grant.create({
       data: {
         engagementId,
@@ -87,7 +110,7 @@ export class C2GrantsService {
         actorId,
         status: 'requested',
         reason,
-        commandPrefix: typeof body.commandPrefix === 'string' ? body.commandPrefix : null,
+        commandPrefix: prefix,
         expiresAt: new Date(expiresAt),
       },
     });
@@ -118,7 +141,10 @@ export class C2GrantsService {
   /**
    * The command gate wired into C2Service.dispatchCommand/reconcile. The
    * executable path is passed so an approved grant's `commandPrefix` is
-   * enforced here, not by the client.
+   * enforced here, not by the client. W12: after the grant checks, the
+   * composed live scope gate (approved ROE revision + time windows + stop
+   * state) runs at every enforcement site — an approved grant alone never
+   * authorizes a dispatch.
    */
   public async assertCommandAuthorized(engagementId: string, sessionId: string, actorId: string, path?: string): Promise<void> {
     await assertEngagementOpen(this.db, engagementId);
@@ -130,7 +156,7 @@ export class C2GrantsService {
     if (grant === null) {
       throw new ProjectApiError(403, 'No approved grant covers this session for your account; request access first.');
     }
-    if (grant.commandPrefix !== null && grant.commandPrefix.length > 0 && (path === undefined || !path.startsWith(grant.commandPrefix))) {
+    if (grant.commandPrefix !== null && grant.commandPrefix.length > 0 && (path === undefined || !coversPath(grant.commandPrefix, path))) {
       throw new ProjectApiError(403, `The approved grant only covers commands under ${grant.commandPrefix}.`);
     }
     // Absolute deadline check at the command site — including the in-flight
@@ -139,6 +165,7 @@ export class C2GrantsService {
       await this.db.c2Grant.updateMany({ where: { id: grant.id, status: 'approved' }, data: { status: 'expired' } });
       throw new ProjectApiError(403, `The grant for session ${sessionId} expired at ${grant.expiresAt.toISOString()}; request a renewal.`);
     }
+    if (this.liveScopeGate !== undefined) await this.liveScopeGate(engagementId);
   }
 
   /** Server-owned cleanup; runs without a console mounted. */

@@ -8,7 +8,7 @@ import { createDbClient, disconnectDb } from './db/client.js';
 import type { PrismaClient } from './generated/prisma/client.js';
 import type { DatabaseHealth } from './http/routes/health.routes.js';
 import { EngagementsRepository } from './repositories/engagements-repository.js';
-import { ProjectsService } from './services/projects-service.js';
+import { ProjectsService, ProjectApiError } from './services/projects-service.js';
 import { RuntimeOwnershipService } from './services/runtime-ownership.js';
 import { loadRuntimeConfig } from './config/runtime.js';
 import { RuntimeExecutionClient } from './integrations/runtime/execution-client.js';
@@ -192,7 +192,16 @@ async function main(): Promise<void> {
   const settingsService = dbClient ? new SettingsService(dbClient, getLocalIdentity()) : undefined;
   const campaignsService = dbClient ? new CampaignService(dbClient, env.gophish ? new GoPhishClient(env.gophish) : undefined, env.evilginx ? new EvilginxClient(env.evilginx) : undefined) : undefined;
   const workspaceSettings = dbClient ? new WorkspaceSettingsService(dbClient, env.authMode === 'multi') : undefined;
-  const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined) : undefined;
+   // W12: an approved C2 grant authorizes the session, never the target
+   // landscape — every command dispatch also consumes the engagement's live
+   // approved ROE revision, its time windows and the stop state.
+   const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined, scopeService && governanceService ? async (engagementId) => {
+     const approved = await scopeService.latestApproved(engagementId);
+     if (approved === null) throw new ProjectApiError(403, 'C2 commands require an approved scope revision for this engagement; complete the scope review first.');
+     const roe = await scopeService.roeWindowAllows(engagementId, Date.now());
+     if (!roe.ok) throw new ProjectApiError(403, roe.reason ?? 'Outside the approved ROE time windows.');
+     await governanceService.assertNoActiveStop(engagementId, null);
+   } : undefined) : undefined;
   const auditService = dbClient ? new AuditService(dbClient) : undefined;
   const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined, c2Grants?.assertCommandAuthorized.bind(c2Grants)) : undefined;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
