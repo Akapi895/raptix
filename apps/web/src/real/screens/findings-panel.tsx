@@ -10,6 +10,8 @@ import { FileSearch, FileText, FolderOpen, RefreshCw } from 'lucide-react'
 import type { ArtifactContentView, FindingView } from '@raptix/web-contracts'
 import { fetchArtifactContent, fetchArtifacts, fetchFindings } from '../api'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Skeleton, cx } from '../../ui'
+import { useRoute } from '../../router/navigate'
+import { CaptureUpload } from './capture-upload'
 
 const SEV_TONE: Record<FindingView['severity'], string> = {
   critical: 'border-bad/40 bg-bad-soft text-bad',
@@ -24,6 +26,8 @@ function kib(bytes: number): string {
 }
 
 export function RealFindingsPanel({ engagementId }: { engagementId: string }): ReactElement {
+  const route = useRoute()
+  const findingId = route.page === 'finding' ? route.id : undefined
   const findings = useQuery({ queryKey: ['real', 'findings', engagementId], queryFn: () => fetchFindings(engagementId) })
   const artifacts = useQuery({ queryKey: ['real', 'artifacts', engagementId], queryFn: () => fetchArtifacts(engagementId) })
 
@@ -44,7 +48,8 @@ export function RealFindingsPanel({ engagementId }: { engagementId: string }): R
             </Empty>
           ) : (
             <div className="space-y-3">
-              {findings.data.findings.map((f) => <FindingRow key={f.id} finding={f} />)}
+              {findingId && !findings.data.findings.some((f) => f.id === findingId) && <p>No workspace finding with this identity; curated claims are listed separately.</p>}
+              {findings.data.findings.filter((f) => !findingId || f.id === findingId).map((f) => <FindingRow key={f.id} finding={f} initiallyOpen={!!findingId} />)}
             </div>
           )}
       </Card>
@@ -56,15 +61,16 @@ export function RealFindingsPanel({ engagementId }: { engagementId: string }): R
           : artifacts.data.folders.length === 0 ? (
             <p className="text-sm text-muted">No artifacts recorded for this engagement yet.</p>
           ) : (
-            <ArtifactBrowser engagementId={engagementId} folders={artifacts.data.folders} />
+            <ArtifactBrowser engagementId={engagementId} folders={artifacts.data.folders} initialPath={route.page === 'evidence-inspector' ? route.id : undefined} />
           )}
+        <CaptureUpload engagementId={engagementId} />
       </Card>
     </div>
   )
 }
 
-function FindingRow({ finding }: { finding: FindingView }): ReactElement {
-  const [open, setOpen] = useState(false)
+function FindingRow({ finding, initiallyOpen = false }: { finding: FindingView; initiallyOpen?: boolean }): ReactElement {
+  const [open, setOpen] = useState(initiallyOpen)
   const q = finding.quality
   return (
     <div className="rounded-xl border border-line bg-subtle" data-testid={`finding-${finding.id}`}>
@@ -115,8 +121,8 @@ function FindingRow({ finding }: { finding: FindingView }): ReactElement {
   )
 }
 
-function ArtifactBrowser({ engagementId, folders }: { engagementId: string; folders: { folder: string; files: { name: string; path: string; sizeBytes: number }[] }[] }): ReactElement {
-  const [selected, setSelected] = useState<string | null>(null)
+function ArtifactBrowser({ engagementId, folders, initialPath }: { engagementId: string; folders: { folder: string; files: { name: string; path: string; sizeBytes: number }[] }[]; initialPath?: string }): ReactElement {
+  const [selected, setSelected] = useState<string | null>(initialPath ?? null)
   const content = useQuery({
     queryKey: ['real', 'artifact', engagementId, selected],
     queryFn: () => fetchArtifactContent(engagementId, selected!),

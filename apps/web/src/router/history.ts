@@ -7,7 +7,7 @@
  * The React Router data router is the single location writer; the store's
  * `route` is a projection of the router location.
  */
-export interface Route { page: string; id?: string; tab?: string }
+export interface Route { page: string; id?: string; tab?: string; engagementId?: string }
 
 /** Pages that render outside the console shell (public, own full-page layout). */
 export const OUTSIDE_SHELL: ReadonlySet<string> = new Set(['scenarios', 'workspaces'])
@@ -25,12 +25,16 @@ export function parseHash(hash = window.location.hash): Route {
   const [path, qs] = h.split('?')
   const [page, id] = path.split('/')
   const tab = qs ? new URLSearchParams(qs).get('tab') || undefined : undefined
-  return { page: page || 'login', id: id ? decodeURIComponent(id) : undefined, tab }
+  const engagementId = qs ? new URLSearchParams(qs).get('engagement') || undefined : undefined
+  return { page: page || 'login', id: id ? decodeURIComponent(id) : undefined, tab, ...(engagementId ? { engagementId } : {}) }
 }
 
 /** Serializes a Route back into the legacy hash format. */
 export function toHash(r: Route): string {
-  return `#/${r.page}${r.id ? '/' + encodeURIComponent(r.id) : ''}${r.tab ? '?tab=' + r.tab : ''}`
+  const query = new URLSearchParams()
+  if (r.tab) query.set('tab', r.tab)
+  if (r.engagementId) query.set('engagement', r.engagementId)
+  return `#/${r.page}${r.id ? '/' + encodeURIComponent(r.id) : ''}${query.size ? '?' + query.toString() : ''}`
 }
 
 /** Serializes a Route into the path form `router.navigate` expects (same URL, without the leading `#`). */
@@ -45,7 +49,8 @@ export function parseLocation(loc: { pathname: string; search: string }): Route 
     page: seg[0] ? decodeURIComponent(seg[0]) : 'login',
     id: seg[1] ? decodeURIComponent(seg[1]) : undefined,
     tab: new URLSearchParams(loc.search).get('tab') || undefined,
+    ...(new URLSearchParams(loc.search).get('engagement') ? { engagementId: new URLSearchParams(loc.search).get('engagement')! } : {}),
   }
 }
 
-export const sameRoute = (a: Route, b: Route) => a.page === b.page && a.id === b.id && a.tab === b.tab
+export const sameRoute = (a: Route, b: Route) => a.page === b.page && a.id === b.id && a.tab === b.tab && a.engagementId === b.engagementId

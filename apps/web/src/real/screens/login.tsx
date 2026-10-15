@@ -17,13 +17,13 @@ export const SESSION_KEY = ['real', 'session'] as const
 
 /** Resolves the trusted session (null when the server is single-user local). */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useSession(): { session: AuthSessionView | null; pending: boolean } {
+export function useSession(): { session: AuthSessionView | null; pending: boolean; error: Error | null; retry: () => void } {
   const list = useQuery({
     queryKey: SESSION_KEY,
     queryFn: () => fetchAuthSession(),
     staleTime: 60_000,
   })
-  return { session: list.data ?? null, pending: list.isPending }
+  return { session: list.data ?? null, pending: list.isPending, error: list.error, retry: () => { void list.refetch() } }
 }
 
 function LoginForm({ onDone }: { onDone: () => void }): ReactElement {
@@ -39,6 +39,7 @@ function LoginForm({ onDone }: { onDone: () => void }): ReactElement {
     setError(null)
     try {
       await login({ username, password })
+      client.removeQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
       await client.invalidateQueries({ queryKey: SESSION_KEY })
       onDone()
     } catch (err) {
@@ -72,12 +73,13 @@ function LoginForm({ onDone }: { onDone: () => void }): ReactElement {
 
 /** Wraps the real console: local mode passes through, multi-user mode gates on a live session. */
 export function RealLoginGate({ children }: { children: ReactNode }): ReactElement {
-  const { session, pending } = useSession()
+  const { session, pending, error, retry } = useSession()
   if (pending) {
     return <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Checking session"><Loader2 size={22} className="animate-spin text-muted" aria-hidden /></div>
   }
+  if (error) return <div role="alert" className="p-6 text-bad">Session check failed: {error.message}<Button onClick={retry}>Retry session</Button></div>
   if (session === null || session.authenticated) {
-    return <>{children}</>
+    return <div key={session?.actor?.id ?? 'local'} className="contents">{children}</div>
   }
   return <LoginForm onDone={() => { /* session query invalidation re-renders the gate */ }} />
 }
@@ -96,7 +98,10 @@ export function RealLogin(): ReactElement {
             icon={LogOut}
             className="mt-4"
             onClick={() => {
-              void logout().then(() => client.invalidateQueries({ queryKey: SESSION_KEY }))
+               void logout().then(() => {
+                 client.removeQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
+                 return client.invalidateQueries({ queryKey: SESSION_KEY })
+               })
             }}
           >
             Sign out

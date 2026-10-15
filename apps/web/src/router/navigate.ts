@@ -73,8 +73,8 @@ export function navRawRoute(r: Route, epoch?: number) {
 }
 
 /** The guarded navigate: holds the redirect behind the unsaved-changes modal while a form is dirty. */
-export function go(page: string, opts?: { id?: string; tab?: string }, epoch?: number) {
-  useSessionStore.getState().guarded(() => navRawRoute({ page, id: opts?.id, tab: opts?.tab }, epoch))
+export function go(page: string, opts?: { id?: string; tab?: string; engagementId?: string }, epoch?: number) {
+  useSessionStore.getState().guarded(() => navRawRoute({ page, id: opts?.id, tab: opts?.tab, ...(opts?.engagementId ? { engagementId: opts.engagementId } : {}) }, epoch))
 }
 
 /* Project-switch redirect: a detail route of another entity kind falls back

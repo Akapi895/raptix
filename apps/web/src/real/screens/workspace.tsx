@@ -61,8 +61,8 @@ function traceLineFor(id: string, p: TraceLikePayload): TraceLine | null {
 export function RealWorkspace(): ReactElement {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
-  const engagementId = route.id || (pid !== 'all' ? pid : '')
-  return engagementId ? <Workspace key={engagementId} engagementId={engagementId} /> : (
+  const engagementId = route.engagementId || (route.page === 'ai-operator' ? route.id : undefined) || (pid !== 'all' ? pid : '')
+  return engagementId ? <RealConversation key={`${engagementId}/${route.id ?? ''}`} engagementId={engagementId} initialThreadId={route.page !== 'ai-operator' ? route.id : undefined} /> : (
     <>
       <PageHeader title="AI Workspace" sub="Planning and execution conversations are scoped to a real engagement." />
       <Empty icon={MessagesSquare} title="No engagement selected" action={<Button variant="primary" onClick={() => go('projects')}>Go to Projects</Button>}>
@@ -72,11 +72,11 @@ export function RealWorkspace(): ReactElement {
   )
 }
 
-function Workspace({ engagementId }: { engagementId: string }): ReactElement {
+export function RealConversation({ engagementId, initialThreadId }: { engagementId: string; initialThreadId?: string }): ReactElement {
   const client = useQueryClient()
   const agents = useCapabilityReady('agents')
   const [kindFilter, setKindFilter] = useState<ThreadKind>(() => readSelection(engagementId)?.kind ?? 'planning')
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => readSelection(engagementId)?.threadId ?? null)
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => initialThreadId ?? readSelection(engagementId)?.threadId ?? null)
   const [draft, setDraft] = useState('')
   const [dispatchError, setDispatchError] = useState<string | null>(null)
   const [unconfirmed, setUnconfirmed] = useState<PendingRequest | null>(() => readPending(engagementId))
@@ -102,10 +102,11 @@ function Workspace({ engagementId }: { engagementId: string }): ReactElement {
   const selectedKind: ThreadKind = selectedThread?.kind ?? kindFilter
 
   useEffect(() => {
+    if (threads.isPending || initialThreadId) return
     if (!selectedThreadId || !allThreads.some((t) => t.threadId === selectedThreadId)) {
       setSelectedThreadId(filteredThreads[0]?.threadId ?? null)
     }
-  }, [allThreads, filteredThreads, selectedThreadId])
+  }, [allThreads, filteredThreads, selectedThreadId, threads.isPending, initialThreadId])
   useEffect(() => {
     if (selectedThread) {
       try { saveSelection(engagementId, selectedThread) }
@@ -186,6 +187,7 @@ function Workspace({ engagementId }: { engagementId: string }): ReactElement {
 
   /* Scoped SSE for the active run. */
   const streamRef = useRef({ engagementId, threadId: selectedThreadId })
+  const checkpointReadAt = useRef(0)
   streamRef.current = { engagementId, threadId: selectedThreadId }
   const stream = useRunStream({
     engagementId,
@@ -194,7 +196,12 @@ function Workspace({ engagementId }: { engagementId: string }): ReactElement {
     onEvent: (event) => {
       const p = event.payload
       if (event.source === 'checkpoint') {
-        void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId, selectedThreadId] })
+        // A replay can contain thousands of checkpoint frames. Coalesce their
+        // snapshot reads; final status/control reconciliation still refetches.
+        if (Date.now() - checkpointReadAt.current >= 1000) {
+          checkpointReadAt.current = Date.now()
+          void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId, selectedThreadId] }, { cancelRefetch: false })
+        }
         return
       }
       if (p.type === 'message') {

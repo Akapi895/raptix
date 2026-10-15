@@ -23,11 +23,13 @@ vi.mock('../api', () => ({
 const SETTLED = {
   engagementId: 'eng-1',
   closure: null,
+  checklist: { entries: [{ id: 'reports', state: 'fail', detail: '1 report not delivered' }], ok: false },
   readOnly: false,
   source: 'db',
 }
 
 const PENDING = {
+  checklist: { entries: [{ id: 'runtime', state: 'pass', detail: 'no in-flight runtime requests' }], ok: true },
   engagementId: 'eng-1',
   closure: {
     id: 'c-1',
@@ -53,6 +55,7 @@ const PENDING = {
 }
 
 const CLOSED = {
+  checklist: PENDING.checklist,
   engagementId: 'eng-1',
   closure: { ...PENDING.closure, status: 'closed', decidedBy: 'u-reviewer', decidedAt: '2026-10-15T02:00:00.000Z' },
   readOnly: true,
@@ -82,6 +85,7 @@ describe('RealClosurePanel (ticket 17)', () => {
     requestClosure.mockRejectedValue(new Error('Closure prerequisites are not met: c2 (fail: 1 approved C2 session grant(s) still live); reports (fail: 1 report(s) not delivered).'))
     await renderPanel()
     expect(await screen.findByText('No closure has been requested for this engagement.')).toBeInTheDocument()
+    expect(screen.getByText('1 report not delivered')).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText(/reason/i), 'trying to close with live sessions')
     await userEvent.click(screen.getByRole('button', { name: /request closure/i }))
     await waitFor(() => expect(requestClosure).toHaveBeenCalledWith('eng-1', 'trying to close with live sessions'))

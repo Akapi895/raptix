@@ -7,30 +7,21 @@
  * search, AI-mode preference or demo Emergency Stop are rendered.
  */
 import { useState, type ReactElement } from 'react'
-import { Bell, ChevronDown, FolderKanban, Layers, Menu as MenuIcon, PlugZap } from 'lucide-react'
+import { ChevronDown, FolderKanban, Layers, Menu as MenuIcon, PlugZap } from 'lucide-react'
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject } from '../state/console'
-import { useProjectStore, useThemeStore } from '../state/stores'
-import { REAL_IDENTITY, REAL_PERSONA } from './bootstrap'
+import { useProjectStore, useThemeStore, useUiStore } from '../state/stores'
+import { REAL_IDENTITY } from './bootstrap'
+import { useSession } from './screens/login'
+import { RealHeaderNotices } from './screens/notices-bell'
+import { RealSearch } from './screens/search'
 import { switchDataMode } from './mode'
 import { ProjectSwitcher } from '../shell/project-switcher'
-import { Pop } from '../shell/pop'
 import { Avatar, Button, IconButton, Segmented, Status, cx } from '../ui'
 
-function RealNotices(): ReactElement {
-  const [open, setOpen] = useState(false)
-  return (
-    <span className="relative">
-      <IconButton icon={Bell} label="Notifications (not integrated in real mode)" onClick={() => setOpen(!open)} aria-expanded={open} />
-      <Pop open={open} onClose={() => setOpen(false)} label="Notifications" align="right" width={340}>
-        <div className="text-sm font-semibold">Notifications are not integrated yet</div>
-        <p className="mt-1 text-xs text-muted">Real mode does not generate demo notices. Notification integration arrives with a later ticket of the approved plan.</p>
-      </Pop>
-    </span>
-  )
-}
-
 function RealProfileMenu(): ReactElement {
+  const { session } = useSession()
+  const name = session?.actor?.displayName ?? REAL_IDENTITY.name
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
   const [open, setOpen] = useState(false)
@@ -38,10 +29,10 @@ function RealProfileMenu(): ReactElement {
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open} aria-label="Account menu" className="ml-1 flex h-10 items-center gap-2 rounded-[10px] px-2 hover:bg-hover">
-        <Avatar name={REAL_PERSONA.name} size={30} />
+        <Avatar name={name} size={30} />
         <div className="hidden text-left leading-tight xl:block">
-          <div className="text-sm font-medium">{REAL_IDENTITY.name}</div>
-          <div className="text-xs text-muted">Single-user deployment</div>
+          <div className="text-sm font-medium">{name}</div>
+          <div className="text-xs text-muted">{session ? 'Multi-user deployment' : 'Single-user deployment'}</div>
         </div>
         <ChevronDown size={14} className="text-muted max-xl:hidden" aria-hidden />
       </button>
@@ -50,14 +41,15 @@ function RealProfileMenu(): ReactElement {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-[320px] rounded-2xl border border-line bg-panel p-2 shadow-xl">
             <div className="px-3 pb-1 pt-2">
-              <div className="text-sm font-semibold">{REAL_IDENTITY.name}</div>
-              <div className="text-xs text-muted">Local single-user mode · no sign-in</div>
+              <div className="text-sm font-semibold">{name}</div>
+              <div className="text-xs text-muted">{session ? `Signed in as ${session.actor?.username}` : 'Local single-user mode · no sign-in'}</div>
             </div>
             <div className="flex items-center justify-between px-3 py-1">
               <span className="text-sm">Theme</span>
               <Segmented value={theme} onChange={(v) => setTheme(v)} options={[{ id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }]} />
             </div>
             <div className="my-2 border-t border-line" />
+            {session && <button role="menuitem" className={item} onClick={() => { setOpen(false); go('login') }}>Account / sign out</button>}
             <button role="menuitem" className={item} onClick={() => { setOpen(false); switchDataMode('mock') }}>
               <PlugZap size={15} aria-hidden />Switch to demo mode
             </button>
@@ -70,13 +62,16 @@ function RealProfileMenu(): ReactElement {
 }
 
 export function RealTopbar({ openMobile }: { openMobile: () => void }): ReactElement {
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-side px-4 lg:px-6 xl:gap-3">
       <IconButton icon={MenuIcon} label="Open menu" onClick={openMobile} className="lg:hidden" />
       <ProjectSwitcher />
       <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>
+      <RealSearch />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
-        <RealNotices />
+        <Button onClick={() => setCopilotOpen(true)}>Ask AI</Button>
+        <RealHeaderNotices />
         <RealProfileMenu />
       </div>
     </header>

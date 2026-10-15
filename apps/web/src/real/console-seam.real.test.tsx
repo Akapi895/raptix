@@ -31,6 +31,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input)
     if (url.endsWith('/api/capabilities')) return new Response(JSON.stringify(capabilities), { status: 200 })
+    if (url.endsWith('/api/auth/session')) return new Response('not found', { status: 404 })
     return new Response(JSON.stringify([engagement]), { status: 200 })
   }))
 })

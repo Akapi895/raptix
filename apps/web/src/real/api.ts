@@ -43,6 +43,19 @@ import {
   type VaultView,
   type VaultSecretView,
   type VaultRevealView,
+  type C2View,
+  type C2CommandView,
+  type CampaignProviderCapabilities,
+  type CampaignsView,
+  type CampaignView,
+  type CampaignJobView,
+  type CampaignVector,
+  isC2View,
+  isC2CommandView,
+  isCampaignProviderCapabilities,
+  isCampaignsView,
+  isCampaignView,
+  isCampaignJobView,
 } from '@raptix/web-contracts'
 import { apiFetch, ApiTransportError, setCsrfToken } from './transport'
 
@@ -254,6 +267,11 @@ export function fetchArtifactContent(engagementId: string, path: string): Promis
   )
 }
 
+export interface RetainedCaptureView { engagementId: string; path: string; digest: string; sizeBytes: number; producer: string | null }
+export function uploadCapture(engagementId: string, input: { base64: string; mediaType: string }): Promise<RetainedCaptureView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/artifacts/captures`, owned(engagementId, (v): v is RetainedCaptureView => typeof v === 'object' && v !== null && typeof (v as RetainedCaptureView).path === 'string' && /^[a-f0-9]{64}$/.test((v as RetainedCaptureView).digest)), { method: 'POST', body: input })
+}
+
 export function fetchTimeline(engagementId: string): Promise<TimelineView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/timeline`, owned(engagementId, isTimelineView))
 }
@@ -321,9 +339,12 @@ function isAuthSessionView(v: unknown): v is AuthSessionView {
  */
 export async function fetchAuthSession(): Promise<AuthSessionView | null> {
   try {
-    return await apiFetch('/auth/session', isAuthSessionView)
+    const session = await apiFetch('/auth/session', isAuthSessionView)
+    setCsrfToken(session.authenticated ? session.csrfToken ?? null : null)
+    return session
   } catch (error) {
-    if (error instanceof ApiTransportError && (error.status === 404 || error.status === 0)) return null
+    setCsrfToken(null)
+    if (error instanceof ApiTransportError && error.status === 404) return null
     throw error
   }
 }
@@ -505,6 +526,24 @@ export function decidePlan(engagementId: string, planId: string, decision: 'appr
   { method: 'POST', body: { decision } })
 }
 
+/** Revises a reviewed plan: the reviewed version stays untouched; a new draft at the next version carries the body. */
+export function revisePlan(engagementId: string, planId: string, input: { objective: string; methods: string[] }): Promise<PlanView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plans/${encodeURIComponent(planId)}/revisions`, (v): v is PlanView =>
+    typeof v === 'object' && v !== null && (v as PlanView).status === 'draft',
+    { method: 'POST', body: input })
+}
+
+export interface PlanComparisonView {
+  base: PlanView
+  revision: PlanView
+  source: 'db'
+}
+
+export function comparePlans(engagementId: string, planId: string, baseId: string): Promise<PlanComparisonView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plans/${encodeURIComponent(planId)}/compare?baseId=${encodeURIComponent(baseId)}`, (v): v is PlanComparisonView =>
+    typeof v === 'object' && v !== null && typeof (v as PlanComparisonView).base === 'object' && typeof (v as PlanComparisonView).revision === 'object')
+}
+
 export interface PreflightView {
   engagementId: string
   ok: boolean
@@ -522,10 +561,22 @@ export function fetchPreflight(engagementId: string): Promise<PreflightView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/preflight`, owned(engagementId, isPreflightView))
 }
 
-export function bindPlan(engagementId: string, planId: string, threadId: string | null): Promise<{ id: string; planId: string; status: string }> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/bindings`, (v): v is { id: string; planId: string; status: string } =>
-    typeof v === 'object' && v !== null && typeof (v as { id?: unknown }).id === 'string' && typeof (v as { planId?: unknown }).planId === 'string',
-  { method: 'POST', body: { planId, threadId } })
+export interface OperationBindingView {
+  id: string
+  engagementId: string
+  planId: string
+  planVersion: number
+  threadId: string | null
+  status: string
+  concurrencyVersion: number
+  createdBy: string
+  createdAt: string
+}
+
+export function bindPlan(engagementId: string, planId: string, threadId: string): Promise<OperationBindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/bindings`, (v): v is OperationBindingView =>
+    typeof v === 'object' && v !== null && typeof (v as OperationBindingView).id === 'string' && (v as OperationBindingView).status === 'bound',
+    { method: 'POST', body: { planId, threadId } })
 }
 
 export interface EmergencyStopView {
@@ -587,6 +638,14 @@ export function createCuratedFinding(engagementId: string, input: { title: strin
   { method: 'POST', body: input })
 }
 
+export function importCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string; producerRef: string }): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/import`, owned(engagementId, (v): v is CuratedFindingView => typeof v === 'object' && v !== null && (v as CuratedFindingView).sourceType === 'imported' && (v as CuratedFindingView).status === 'draft'), { method: 'POST', body: input })
+}
+
+export function updateCuratedFinding(engagementId: string, findingId: string, input: { expectedVersion: number; title: string; severity: string; detail: string }): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}`, owned(engagementId, (v): v is CuratedFindingView => typeof v === 'object' && v !== null && (v as CuratedFindingView).id === findingId && Number.isInteger((v as CuratedFindingView).expectedVersion)), { method: 'PATCH', body: input })
+}
+
 export function transitionCuratedFinding(engagementId: string, findingId: string, to: string): Promise<CuratedFindingView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/transition`, (v): v is CuratedFindingView =>
     typeof v === 'object' && v !== null && typeof (v as CuratedFindingView).status === 'string',
@@ -646,7 +705,7 @@ export function decideReportReview(engagementId: string, reportId: string, body:
   { method: 'POST', body })
 }
 
-export function deliverReport(engagementId: string, reportId: string, input: { kind: 'export' | 'delivery'; format: string; requestId: string }): Promise<ReportView> {
+export function deliverReport(engagementId: string, reportId: string, input: { kind: 'export' | 'delivery'; format: string; requestId: string; expectedVersion?: number; recipient?: string; receipt?: string }): Promise<ReportView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/deliveries`, (v): v is ReportView =>
     typeof v === 'object' && v !== null && Array.isArray((v as ReportView).deliveries),
   { method: 'POST', body: input })
@@ -694,6 +753,68 @@ export function decideC2Grant(engagementId: string, grantId: string, decision: '
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/grants/${encodeURIComponent(grantId)}/decision`, (v): v is C2GrantView =>
     typeof v === 'object' && v !== null && typeof (v as C2GrantView).status === 'string',
   { method: 'POST', body: { decision } })
+}
+
+/* ───────────── C2 provider console (integration ticket 12): real sessions and the durable command audit ───────────── */
+
+export function fetchC2Sessions(engagementId: string): Promise<C2View> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/sessions`, (v): v is C2View =>
+    isC2View(v) && v.engagementId === engagementId)
+}
+
+export function dispatchC2Command(engagementId: string, sessionId: string, input: { requestId: string; path: string; args: string[] }): Promise<C2CommandView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/sessions/${encodeURIComponent(sessionId)}/commands`, isC2CommandView,
+    { method: 'POST', body: input })
+}
+
+export function fetchC2Commands(engagementId: string): Promise<C2CommandView[]> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/commands`, (v): v is C2CommandView[] =>
+    Array.isArray(v) && v.every(isC2CommandView))
+}
+
+export function reconcileC2Command(engagementId: string, commandId: string): Promise<C2CommandView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/commands/${encodeURIComponent(commandId)}/reconcile`, isC2CommandView,
+    { method: 'POST', body: {} })
+}
+
+export function configureC2(engagementId: string, kind: 'listener' | 'profile', input: Record<string, string>): Promise<Record<string, unknown>> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/${kind === 'listener' ? 'listeners' : 'profiles'}`,
+    (v): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v),
+    { method: 'POST', body: input })
+}
+
+export function stopC2Listener(engagementId: string, jobId: number): Promise<Record<string, unknown>> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/listeners/${encodeURIComponent(String(jobId))}`,
+    (v): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v),
+    { method: 'DELETE' })
+}
+
+/* ───────────── Campaign drafts and provider jobs (integration ticket 12, D5 placement) ───────────── */
+
+export function fetchCampaignCapabilities(engagementId: string): Promise<CampaignProviderCapabilities> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/campaigns/capabilities`, (v): v is CampaignProviderCapabilities =>
+    isCampaignProviderCapabilities(v) && v.engagementId === engagementId)
+}
+
+export function fetchCampaigns(engagementId: string): Promise<CampaignsView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/campaigns`, (v): v is CampaignsView =>
+    isCampaignsView(v) && v.engagementId === engagementId)
+}
+
+export function createCampaign(engagementId: string, input: { name: string; vector: CampaignVector; scenario?: string }): Promise<CampaignView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/campaigns`, (v): v is CampaignView =>
+    isCampaignView(v) && v.status === 'draft',
+    { method: 'POST', body: input })
+}
+
+export function runCampaignJob(engagementId: string, campaignId: string, kind: 'generate' | 'deploy'): Promise<CampaignJobView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/campaigns/${encodeURIComponent(campaignId)}/${kind}`, isCampaignJobView,
+    { method: 'POST', body: {} })
+}
+
+export function reconcileCampaignJob(engagementId: string, campaignId: string, jobId: string): Promise<CampaignJobView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/campaigns/${encodeURIComponent(campaignId)}/jobs/${encodeURIComponent(jobId)}/reconcile`, isCampaignJobView,
+    { method: 'POST', body: {} })
 }
 
 /* ───────────── Agent fleet/fanout projection (integration ticket 13) ───────────── */
@@ -771,6 +892,120 @@ function isLibraryView(v: unknown): v is LibraryView {
 
 export function fetchLibrary(): Promise<LibraryView> {
   return apiFetch('/library', isLibraryView)
+}
+
+/** Canonical single-skill detail (the graph Skill node is the only publication). */
+export interface LibrarySkillDetailView {
+  name: string
+  description: string | null
+  subdomain: string | null
+  mitreIds: string[]
+  whenToUse: string | null
+  path: string | null
+  body: string
+  contentSha256: string | null
+  commitSha: string | null
+  allowedTools: string[]
+  publication: 'canonical'
+}
+
+export function fetchLibrarySkill(name: string): Promise<LibrarySkillDetailView> {
+  return apiFetch(`/library/skills/${encodeURIComponent(name)}`, (v): v is LibrarySkillDetailView =>
+    typeof v === 'object' && v !== null && (v as LibrarySkillDetailView).publication === 'canonical' && typeof (v as LibrarySkillDetailView).body === 'string')
+}
+
+export interface LibraryTechniqueDetailView {
+  id: string
+  name: string | null
+  description: string | null
+  url: string | null
+  skills: { name: string }[]
+}
+
+export function fetchLibraryTechnique(id: string): Promise<LibraryTechniqueDetailView> {
+  return apiFetch(`/library/techniques/${encodeURIComponent(id)}`, (v): v is LibraryTechniqueDetailView =>
+    typeof v === 'object' && v !== null && typeof (v as LibraryTechniqueDetailView).id === 'string' && Array.isArray((v as LibraryTechniqueDetailView).skills))
+}
+
+/** ADR-0070 engagement-scoped library review proposals (never a corpus mutation API). */
+export interface LibraryProposalReviewView {
+  id: string
+  proposalVersion: number
+  decision: 'approved' | 'rejected'
+  comment: string | null
+  reviewerId: string
+  createdAt: string
+}
+
+export interface LibraryProposalView {
+  id: string
+  engagementId: string
+  skillName: string
+  skillPath: string
+  baseRevision: string
+  status: 'draft' | 'proposed' | 'approved' | 'rejected'
+  version: number
+  proposedBody: string
+  baseBody: string
+  rationale: string | null
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  reviews: LibraryProposalReviewView[]
+  canonicalCurrent?: boolean
+}
+
+function isLibraryProposalView(v: unknown): v is LibraryProposalView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as LibraryProposalView
+  return typeof doc.id === 'string' && typeof doc.skillName === 'string' && typeof doc.version === 'number' && Array.isArray(doc.reviews)
+}
+
+export function fetchLibraryProposals(engagementId: string): Promise<{ engagementId: string; proposals: LibraryProposalView[]; source: 'db' }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals`, (v): v is { engagementId: string; proposals: LibraryProposalView[]; source: 'db' } =>
+    typeof v === 'object' && v !== null && Array.isArray((v as { proposals?: unknown }).proposals) && (v as { source?: unknown }).source === 'db')
+}
+
+export function fetchLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}`, isLibraryProposalView)
+}
+
+export function submitLibraryProposal(engagementId: string, input: { skillName: string; proposedBody: string; rationale?: string }): Promise<LibraryProposalView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals`, (v): v is LibraryProposalView =>
+    typeof v === 'object' && v !== null && (v as LibraryProposalView).status === 'draft' && (v as LibraryProposalView).version === 1,
+  { method: 'POST', body: input })
+}
+
+export function amendLibraryProposal(engagementId: string, proposalId: string, input: { proposedBody: string; expectedVersion: number; rationale?: string }): Promise<LibraryProposalView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/amendments`, isLibraryProposalView,
+    { method: 'POST', body: input })
+}
+
+export function proposeLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/propose`, (v): v is LibraryProposalView =>
+    typeof v === 'object' && v !== null && (v as LibraryProposalView).status === 'proposed',
+  { method: 'POST' })
+}
+
+export function decideLibraryProposal(engagementId: string, proposalId: string, input: { decision: 'approved' | 'rejected'; expectedVersion: number; comment?: string }): Promise<LibraryProposalView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/decision`, (v): v is LibraryProposalView =>
+    typeof v === 'object' && v !== null && ((v as LibraryProposalView).status === 'approved' || (v as LibraryProposalView).status === 'rejected'),
+  { method: 'POST', body: input })
+}
+
+export interface LibraryProposalExportView {
+  kind: 'library-body-replacement-proposal'
+  proposal: { id: string; engagementId: string; skillName: string; skillPath: string; baseRevision: string; status: string; version: number; createdBy: string }
+  base: { body: string; revision: string }
+  proposed: { body: string }
+  diff: { before: string; after: string }
+  reviews: LibraryProposalReviewView[]
+  publicationContract: string[]
+}
+
+export function exportLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalExportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/export`, (v): v is LibraryProposalExportView =>
+    typeof v === 'object' && v !== null && (v as LibraryProposalExportView).kind === 'library-body-replacement-proposal' && Array.isArray((v as LibraryProposalExportView).publicationContract))
 }
 
 export interface ObservedTechniqueView {
@@ -1018,6 +1253,7 @@ export interface ClosureSurfaceView {
   engagementId: string
   closure: ClosureView | null
   readOnly: boolean
+  checklist: { entries: ClosureChecklistEntryView[]; ok: boolean }
   source: 'db'
 }
 
@@ -1041,4 +1277,13 @@ export function decideClosure(engagementId: string, decision: 'confirmed' | 'rej
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/closure/decision`, (v): v is ClosureView =>
     typeof v === 'object' && v !== null && typeof (v as ClosureView).status === 'string',
   { method: 'POST', body: { decision } })
+}
+
+export function updateReport(engagementId: string, reportId: string, input: { expectedVersion: number; title: string; summary: string; sections: { title: string; content: string }[] }): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}`, owned(engagementId, (v): v is ReportView => typeof v === 'object' && v !== null && (v as ReportView).id === reportId && Number.isInteger((v as ReportView).version)), { method: 'PATCH', body: input })
+}
+
+export interface ReportArtifactView { engagementId: string; reportId: string; version: number; format: string; mediaType: string; content: string; digest: string }
+export function exportReport(engagementId: string, reportId: string, format: 'json' | 'markdown'): Promise<ReportArtifactView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/export?format=${format}`, owned(engagementId, (v): v is ReportArtifactView => typeof v === 'object' && v !== null && (v as ReportArtifactView).reportId === reportId && typeof (v as ReportArtifactView).content === 'string' && /^[a-f0-9]{64}$/.test((v as ReportArtifactView).digest)))
 }

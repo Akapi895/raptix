@@ -122,6 +122,14 @@ describe('RealProjectCreate', () => {
 })
 
 describe('RealProjectDetail', () => {
+  it('restores the requested tab from a project deep link', async () => {
+    stubApi()
+    go('project', { id: 'eng-8f3c92a1', tab: 'reports' })
+    ui(<RealProjectDetail />)
+    expect(await screen.findByText(/Reports unavailable/)).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Reports' })).toHaveAttribute('aria-selected', 'true')
+  })
+
   it('renders the server identity explicitly and honest unavailability when a tab data source is absent', async () => {
     stubApi()
     go('project', { id: 'eng-8f3c92a1' })

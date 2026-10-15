@@ -2,16 +2,90 @@
  * Real tradecraft library (integration ticket 14). Skill and technique
  * concepts resolve through the knowledge graph's public contract — the
  * canonical runtime corpus — so no second browser corpus is created here.
- * Revision writes have no web contract on purpose (the corpus changes through
+ * Detail reads fetch the canonical node (body, commit, digest); revision
+ * proposals are not a web contract on purpose (the corpus changes through
  * the runtime's own git-based workflow) and render as a recorded exclusion.
  */
 import { useQuery } from '@tanstack/react-query'
 import { BookOpen } from 'lucide-react'
 import { useState, type ReactElement } from 'react'
-import { fetchLibrary } from '../api'
+import { fetchLibrary, fetchLibrarySkill, fetchLibraryTechnique } from '../api'
+import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, Empty, Input, PageHeader, Skeleton } from '../../ui'
 
 export function RealLibrary(): ReactElement {
+  const route = useRoute()
+  if ((route.page === 'playbook' || route.page === 'technique') && route.id) {
+    return route.page === 'playbook'
+      ? <SkillDetail name={route.id} />
+      : <TechniqueDetail id={route.id} />
+  }
+  return <LibraryList />
+}
+
+function SkillDetail({ name }: { name: string }): ReactElement {
+  const detail = useQuery({ queryKey: ['real', 'library-skill', name], queryFn: () => fetchLibrarySkill(name), retry: false })
+  if (detail.isPending) {
+    return <Card><CardHeader title={`Skill ${name}`} /><div className="p-4"><Skeleton className="h-24" /></div></Card>
+  }
+  if (detail.isError || !detail.data) {
+    return <Empty icon={BookOpen} title={`Skill ${name} is unavailable`} action={<Button onClick={() => void detail.refetch()}>Retry</Button>}>
+      {detail.error instanceof Error ? detail.error.message : 'The canonical skill read failed.'}
+    </Empty>
+  }
+  const d = detail.data
+  return (
+    <div className="space-y-4">
+      <PageHeader title={`Skill: ${d.name}`} sub={`${d.subdomain ?? 'no subdomain'} · publication ${d.publication}${d.commitSha === null ? '' : ` · commit ${d.commitSha}`}${d.contentSha256 === null ? '' : ` · sha256 ${d.contentSha256.slice(0, 16)}…`}`} />
+      <div className="flex gap-2 text-xs">
+        {d.mitreIds.map((id) => <Button key={id} variant="secondary" onClick={() => go('technique', { id })}>{id}</Button>)}
+      </div>
+      {d.whenToUse !== null && <Banner tone="info" title="When to use">{d.whenToUse}</Banner>}
+      <Card>
+        <CardHeader title="Canonical SKILL.md body" sub={d.path ?? 'path unavailable in the graph'} />
+        <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap p-4 font-mono text-xs">{d.body}</pre>
+      </Card>
+      <p className="text-xs text-neutral">A displayed skill is reference material only — availability in the library never implies execution authorization.</p>
+    </div>
+  )
+}
+
+function TechniqueDetail({ id }: { id: string }): ReactElement {
+  const detail = useQuery({ queryKey: ['real', 'library-technique', id], queryFn: () => fetchLibraryTechnique(id), retry: false })
+  if (detail.isPending) {
+    return <Card><CardHeader title={`Technique ${id}`} /><div className="p-4"><Skeleton className="h-24" /></div></Card>
+  }
+  if (detail.isError || !detail.data) {
+    return <Empty icon={BookOpen} title={`Technique ${id} is unavailable`} action={<Button onClick={() => void detail.refetch()}>Retry</Button>}>
+      {detail.error instanceof Error ? detail.error.message : 'The canonical technique read failed.'}
+    </Empty>
+  }
+  const d = detail.data
+  return (
+    <div className="space-y-4">
+      <PageHeader title={`Technique ${d.id}${d.name === null ? '' : `: ${d.name}`}`} sub={d.url ?? 'Canonical MITRE technique reference from the knowledge graph'} />
+      <Card>
+        <CardHeader title="Description" />
+        <p className="p-4 text-sm">{d.description ?? 'No description is published for this technique node.'}</p>
+      </Card>
+      <Card>
+        <CardHeader title={`Corpus skills covering this technique (${d.skills.length})`} />
+        <div className="p-4">
+          {d.skills.length === 0 ? (
+            <p className="text-sm text-muted">No skill in the canonical corpus declares this technique.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {d.skills.map((s) => <li key={s.name}><Button variant="secondary" onClick={() => go('playbook', { id: s.name })}>{s.name}</Button></li>)}
+            </ul>
+          )}
+        </div>
+      </Card>
+      <p className="text-xs text-neutral">A displayed technique is reference material only — availability in the library never implies execution authorization.</p>
+    </div>
+  )
+}
+
+function LibraryList(): ReactElement {
   const library = useQuery({
     queryKey: ['real', 'library'],
     queryFn: () => fetchLibrary(),
@@ -64,9 +138,9 @@ export function RealLibrary(): ReactElement {
               <tbody>
                 {skills.slice(0, 100).map((s) => (
                   <tr key={s.name} className="border-t border-line">
-                    <td className="py-2 pr-3 font-mono text-xs">{s.name}</td>
+                    <td className="py-2 pr-3 font-mono text-xs"><button onClick={() => go('playbook', { id: s.name })}>{s.name}</button></td>
                     <td className="py-2 pr-3 text-xs">{s.subdomain ?? '—'}</td>
-                    <td className="py-2 pr-3 text-xs">{s.mitreIds.length === 0 ? '—' : s.mitreIds.join(', ')}</td>
+                    <td className="py-2 pr-3 text-xs">{s.mitreIds.length === 0 ? '—' : s.mitreIds.map((id) => <button className="mr-2 underline" key={id} onClick={() => go('technique', { id })}>{id}</button>)}</td>
                     <td className="py-2 text-xs text-muted">{s.description === null ? '—' : s.description.slice(0, 160)}</td>
                   </tr>
                 ))}

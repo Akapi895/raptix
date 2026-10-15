@@ -27,6 +27,7 @@ import { can as policyCan, projectAccessible, readOnlyContext } from '../auth/po
 import type { CanAction } from '../domain/permissions'
 import { DATA_MODE } from '../real/mode'
 import { REAL_PERSONA } from '../real/identity'
+import { useSession } from '../real/screens/login'
 import { useRealProjectList } from '../real/queries'
 import { useServices, useServicesOrNull } from './services'
 import { useAuthStore, useProjectStore } from './stores'
@@ -60,7 +61,10 @@ export function useDb(): Db {
  * UI hints — the server enforces every real authorization.
  */
 export function useMe(): Persona {
-  if (DATA_MODE === 'real') return REAL_PERSONA
+  if (DATA_MODE === 'real') {
+    const { session } = useSession()
+    return session?.actor ? { name: session.actor.displayName, email: session.actor.username, role: 'viewer' } : REAL_PERSONA
+  }
   const meName = useAuthStore((s) => s.meName)
   const services = useServices()
   const subscribe = useSubscribe()
@@ -79,7 +83,7 @@ export function useAccessible(): Project[] {
   const projects = usePolicyProjects()
   const me = useMe()
   return useMemo(
-    () => projects.filter((p) => projectAccessible(p, { id: me.name, role: me.role })),
+    () => DATA_MODE === 'real' ? projects : projects.filter((p) => projectAccessible(p, { id: me.name, role: me.role })),
     [projects, me],
   )
 }
