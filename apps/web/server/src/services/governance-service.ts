@@ -314,9 +314,23 @@ export class GovernanceService {
       const binding = await this.db.operationBinding.findFirst({ where: { engagementId, threadId } });
       const pinned = binding === null ? null : await this.db.businessPlan.findFirst({ where: { id: binding.planId, engagementId } });
       const objective = (pinned?.body as { objective?: unknown } | null)?.objective;
-      checks.push(pinned === null
-        ? { id: 'playbook', state: 'pass', detail: 'No plan pinned yet; the next bind pins its objective to this thread.' }
-        : { id: 'playbook', state: 'pass', detail: `Pinned to plan objective: ${typeof objective === 'string' ? objective : `plan v${pinned.version}`}` });
+      if (pinned === null) {
+        checks.push({ id: 'playbook', state: 'pass', detail: 'No plan pinned yet; the next bind pins its objective to this thread.' });
+      } else {
+        // W08: a pinned objective only passes when the pinned plan is actually
+        // executable — execution rejects expired/stale/unapproved plans, so a
+        // green preflight must not disagree with that gate.
+        const approved = await this.scope.latestApproved(engagementId);
+        const now = Date.now();
+        const problems: string[] = [];
+        if (pinned.status !== 'approved') problems.push(`plan v${pinned.version} is ${pinned.status}`);
+        if (pinned.expiresAt === null) problems.push('it carries no expiry deadline');
+        else if (pinned.expiresAt.getTime() <= now) problems.push(`its approval expired at ${pinned.expiresAt.toISOString()}`);
+        if (pinned.roeVersion === null || approved === null || pinned.roeVersion !== approved.version) problems.push(`its scope pin v${pinned.roeVersion ?? 'none'} is not the approved v${approved?.version ?? 'none'}`);
+        checks.push(problems.length === 0
+          ? { id: 'playbook', state: 'pass', detail: `Pinned to plan objective: ${typeof objective === 'string' ? objective : `plan v${pinned.version}`}` }
+          : { id: 'playbook', state: 'fail', detail: `The pinned plan is not executable: ${problems.join('; ')}.` });
+      }
     }
 
     const activeEstop = await this.db.emergencyStop.findFirst({

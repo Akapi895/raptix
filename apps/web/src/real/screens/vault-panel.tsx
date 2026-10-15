@@ -7,7 +7,7 @@
  * vault key answers 503 with the server's reason — shown, never worked around.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState, type ReactElement } from 'react'
+import { useRef, useState, type ReactElement } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, Trash2 } from 'lucide-react'
 import { createVaultSecret, fetchVault, revealVaultSecret, revokeVaultSecret, type CreateVaultSecretInput } from '../api'
 import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton } from '../../ui'
@@ -20,6 +20,9 @@ export function RealVaultPanel({ engagementId }: { engagementId: string }): Reac
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [revealed, setRevealed] = useState<Record<string, string>>({})
+  // W25: a revoke invalidates any reveal response still in flight; a late ACK
+  // must not repopulate plaintext for a secret that no longer exists.
+  const revoked = useRef<Set<string>>(new Set())
 
   const invalidate = (): void => { void client.invalidateQueries({ queryKey: ['real', 'vault', engagementId] }) }
 
@@ -37,6 +40,8 @@ export function RealVaultPanel({ engagementId }: { engagementId: string }): Reac
     mutationFn: (secretId: string) => revealVaultSecret(engagementId, secretId),
     onSuccess: (view) => {
       setError(null)
+      // Ignore a reveal ACK that arrives after the secret was revoked.
+      if (revoked.current.has(view.secretId)) { invalidate(); return }
       setRevealed((r) => ({ ...r, [view.secretId]: view.plaintext }))
       invalidate()
     },
@@ -48,6 +53,7 @@ export function RealVaultPanel({ engagementId }: { engagementId: string }): Reac
       setError(null)
       setNotice('Secret revoked; the encrypted material was deleted and the action audited.')
       // W25: a revoked secret's plaintext must not linger in this browser session.
+      revoked.current.add(secretId)
       setRevealed((r) => {
         const next = { ...r }
         delete next[secretId]

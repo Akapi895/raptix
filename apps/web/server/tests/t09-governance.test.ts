@@ -295,7 +295,7 @@ describe('ticket 09 governed plans and operation controls', () => {
   });
 
   it('W08: the playbook check ties the OPPLAN objective to the selected thread binding', async () => {
-    const { app, owner, reviewer } = await setup();
+    const { db, app, owner, reviewer } = await setup();
     await approveScope(app, owner, reviewer);
     const planId = await approvedPlan(app, owner, reviewer);
     // No thread selected: the check reports unverifiable selection honestly.
@@ -308,6 +308,11 @@ describe('ticket 09 governed plans and operation controls', () => {
     await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId, threadId: 'th-1' } });
     const bound = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight?threadId=th-1`, headers: { cookie: owner.cookie } });
     expect(bound.json().checks.find((c: { id: string }) => c.id === 'playbook')).toMatchObject({ state: 'pass', detail: expect.stringMatching(/Validate the staging login flow/) });
+    // An expired pinned approval must fail the playbook check, not pass it.
+    const planRow = db.tables.get('businessPlan')!.get(planId)!;
+    db.tables.get('businessPlan')!.set(planId, { ...planRow, expiresAt: new Date(Date.now() - 1000) });
+    const expired = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight?threadId=th-1`, headers: { cookie: owner.cookie } });
+    expect(expired.json().checks.find((c: { id: string }) => c.id === 'playbook')).toMatchObject({ state: 'fail', detail: expect.stringMatching(/not executable/i) });
     await app.close();
   });
 

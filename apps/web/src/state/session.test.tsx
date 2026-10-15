@@ -41,15 +41,18 @@ describe('confirm dialog subscriptions', () => {
 })
 
 describe('dirty/unsaved navigation guard', () => {
-  it('a dirty session holds navigation and captures its save callback', () => {
+  it('a dirty session holds navigation and captures its save callback', async () => {
     const h = mountServices()
-    const save = () => {}
+    let saved = 0
+    const save = () => { saved += 1 }
     act(() => { useSessionStore.getState().setDirty(true, save) })
     expect(useSessionStore.getState().dirty).toBe(true)
     h.run(() => { go('projects') })
     const unsaved = useSessionStore.getState().unsaved
     expect(unsaved).not.toBeNull()
-    expect(unsaved?.save).toBe(save)
+    expect(typeof unsaved?.save).toBe('function')
+    await act(async () => { await unsaved!.save!() })
+    expect(saved).toBe(1)
     expect(currentRoute().page).toBe('login')
     act(() => { unsaved!.next() })
     expect(currentRoute().page).toBe('projects')

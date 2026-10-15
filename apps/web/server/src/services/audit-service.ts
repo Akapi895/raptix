@@ -4,11 +4,12 @@ import { requireEngagementAccess, type ActorContext } from '../auth/membership-p
 /**
  * Ticket 16: authoritative audit projection over the records this server
  * actually writes. `webAuditEntry` rows carry `source: 'web'`; vault
- * lifecycle rows (which have no actor column) project with `source: 'vault'`
- * and `actorId: null` — missing facts are never fabricated. `detail` is
- * omitted from the projection: it is written sensitive-free by construction,
- * and the audit surface does not need it. Workspace views only include
- * engagement rows from engagements the actor is authorized on.
+ * lifecycle rows project with `source: 'vault'` and their actor id when the
+ * row carries one (W25 added `VaultAudit.actorId`); historical rows without
+ * an actor project `actorId: null` — missing facts are never fabricated.
+ * `detail` is omitted from the projection: it is written sensitive-free by
+ * construction, and the audit surface does not need it. Workspace views only
+ * include engagement rows from engagements the actor is authorized on.
  */
 
 export interface AuditEntryView {
@@ -60,6 +61,7 @@ interface VaultRow {
   engagementId: string;
   secretId: string;
   action: string;
+  actorId?: string | null;
   createdAt: Date;
 }
 
@@ -136,12 +138,12 @@ export class AuditService {
     };
   }
 
-  /** Vault audit rows carry no actor; projecting one would fabricate attribution. */
+  /** Vault audit rows project their recorded actor; legacy rows stay null. */
   private toVaultEntry(row: VaultRow): AuditEntryView {
     return {
       id: row.id,
       engagementId: row.engagementId,
-      actorId: null,
+      actorId: row.actorId ?? null,
       action: `vault.secret_${row.action}`,
       targetType: 'vault_secret',
       targetId: row.secretId,
