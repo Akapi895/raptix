@@ -5,6 +5,16 @@ import { decideReportReview, deliverReport, exportReport, reviseReport, updateRe
 import { useDirty } from '../../state/session'
 import { Banner, Button, Card, CardHeader, Input, Textarea } from '../../ui'
 
+/** Triggers a real browser download of the exact artifact bytes. */
+function downloadArtifact(artifact: { reportId: string; version: number; mediaType: string; content: string }): void {
+  const url = URL.createObjectURL(new Blob([artifact.content], { type: artifact.mediaType }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `report-${artifact.reportId}-v${artifact.version}.md`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export function RealReportEditor({ report, preview = false }: { report: ReportView; preview?: boolean }): ReactElement {
   const client = useQueryClient()
   const [title, setTitle] = useState(report.title)
@@ -28,24 +38,19 @@ export function RealReportEditor({ report, preview = false }: { report: ReportVi
       if (kind === 'submit') return decideReportReview(report.engagementId, report.id, { action: 'submit' })
       if (kind === 'approved' || kind === 'changes_requested') return decideReportReview(report.engagementId, report.id, { decision: kind, comment, expectedVersion: report.version })
       if (kind === 'revision') return reviseReport(report.engagementId, report.id, { expectedVersion: report.version })
-      // W20: a reader downloads through the read export contract; only the
-      // editor records an audited delivery-carrying export.
-      if (kind === 'export' && preview) return exportReport(report.engagementId, report.id, 'markdown')
+      // W20: a reader downloads through the read export contract (a second
+      // read could otherwise differ); only the editor records an audited
+      // delivery-carrying export.
+      if (kind === 'export' && preview) {
+        const artifact = await exportReport(report.engagementId, report.id, 'markdown')
+        downloadArtifact(artifact)
+        return artifact
+      }
       const key = `${kind}/${report.version}`
       const requestId = requestIds.current.get(key) ?? crypto.randomUUID()
       requestIds.current.set(key, requestId)
       const updated = await deliverReport(report.engagementId, report.id, { kind, format: 'markdown', requestId, expectedVersion: report.version, recipient, receipt })
-      if (kind === 'export') {
-        // W20: download the artifact carried by this very request — a second
-        // read could return a different version than the recorded export.
-        const artifact = updated.artifact
-        const url = URL.createObjectURL(new Blob([artifact.content], { type: artifact.mediaType }))
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `report-${artifact.reportId}-v${artifact.version}.md`
-        link.click()
-        URL.revokeObjectURL(url)
-      }
+      if (kind === 'export') downloadArtifact(updated.artifact)
       return updated
     },
     onSuccess: () => { setError(null); void client.invalidateQueries({ queryKey: ['real', 'report-records', report.engagementId] }); void client.invalidateQueries({ queryKey: ['real', 'tasks'] }) },
