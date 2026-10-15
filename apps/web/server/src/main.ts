@@ -12,7 +12,7 @@ import { ProjectsService, ProjectApiError } from './services/projects-service.js
 import { RuntimeOwnershipService } from './services/runtime-ownership.js';
 import { loadRuntimeConfig } from './config/runtime.js';
 import { RuntimeExecutionClient } from './integrations/runtime/execution-client.js';
-import { RuntimeContextService } from './services/runtime/runtime-context.js';
+import { RuntimeContextService, EXECUTION_ASSISTANTS } from './services/runtime/runtime-context.js';
 import { RunService } from './services/runtime/run-service.js';
 import { StreamService } from './services/runtime/stream-service.js';
 import { RuntimeJoinClient } from './integrations/runtime/join-client.js';
@@ -141,12 +141,18 @@ async function main(): Promise<void> {
        }) : undefined;
    // W08: preflight readiness reports the actual runtime condition (agent
    // catalog availability) and never fails open when the dependency is
-   // missing or unreachable.
+   // missing or unreachable. The assistant check is the catalog execution
+   // role, reported separately from the runtime itself; the model fallback
+   // chain is runtime-internal and is deliberately not claimed here.
    const runtimeReadiness = async (): Promise<PreflightCheck[]> => {
      if (runtimeContext === undefined) return [{ id: 'runtime', state: 'unavailable', detail: 'The runtime is not configured in this deployment.' }];
      try {
        const graphs = (await runtimeContext.agents()).graphs;
-       return [{ id: 'runtime', state: graphs.length > 0 ? 'pass' : 'unavailable', detail: graphs.length > 0 ? null : 'The runtime exposes no agent graphs.' }];
+       const executors = EXECUTION_ASSISTANTS.filter((g) => graphs.includes(g));
+       return [
+         { id: 'runtime', state: graphs.length > 0 ? 'pass' : 'unavailable', detail: graphs.length > 0 ? null : 'The runtime exposes no agent graphs.' },
+         { id: 'assistant', state: executors.length > 0 ? 'pass' : 'unavailable', detail: executors.length > 0 ? `Execution assistant graphs: ${executors.join(', ')}.` : 'The runtime exposes no execution assistant graph; operations cannot start.' },
+       ];
      } catch (error) {
        return [{ id: 'runtime', state: 'unavailable', detail: error instanceof Error ? error.message : 'The runtime is unreachable.' }];
      }

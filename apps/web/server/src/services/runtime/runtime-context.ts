@@ -11,6 +11,10 @@ import type { ProjectsService } from '../projects-service.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 
 export interface ContextSelection { kind: ThreadKind; assistantId?: string; threadId?: string }
+/** The singular planning assistant graph. */
+export const PLANNING_ASSISTANT = 'soundwave';
+/** Assistant graphs accepted for execution threads, in preference order. */
+export const EXECUTION_ASSISTANTS = ['decepticon', 'raptix'] as const;
 export interface TrustedRuntimeContext {
   engagementId: string; workspaceSlug: string; assistantId: string; kind: ThreadKind
   configurable: { engagement_name: string; workspace_path: string; target_type: ProjectViewModel['targetType']; target_value: string; authorization_confirmed: boolean; language?: string; sandbox_url?: string }
@@ -46,7 +50,7 @@ export class RuntimeContextService {
     const bound = selection.threadId ? await ownership.getBinding(userId, engagementId, selection.threadId) : undefined;
     if (bound && (bound.kind !== selection.kind || selection.assistantId !== undefined && bound.assistantId !== selection.assistantId)) throw mismatch();
     const { graphs } = await this.agents();
-    const assistantId = bound?.assistantId ?? selection.assistantId ?? (selection.kind === 'planning' ? 'soundwave' : ['decepticon', 'raptix'].find(g => graphs.includes(g)));
+    const assistantId = bound?.assistantId ?? selection.assistantId ?? (selection.kind === 'planning' ? PLANNING_ASSISTANT : EXECUTION_ASSISTANTS.find(g => graphs.includes(g)));
     if (!assistantId || !graphs.includes(assistantId)) throw new RuntimeUnavailableError();
     if (selection.kind === 'planning' && assistantId !== 'soundwave' || selection.kind === 'execution' && assistantId === 'soundwave') throw mismatch();
     const configurable = { engagement_name: project.workspaceSlug, workspace_path: config.pinnedSlug ? config.workspaceRoot : path.posix.join(config.workspaceRoot, project.workspaceSlug), target_type: project.targetType, target_value: project.targetValue, authorization_confirmed: project.authorizationConfirmed, ...(config.language ? { language: config.language } : {}), ...(config.sandboxUrl ? { sandbox_url: config.sandboxUrl } : {}) };
