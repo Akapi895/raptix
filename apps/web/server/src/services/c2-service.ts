@@ -11,7 +11,7 @@ export class ProviderUnavailableError extends ProjectApiError {
 const UNAVAILABLE = 'C2 session provider not configured; no session registry exists in this build';
 export class C2Service {
   public constructor(private readonly db: PrismaClient, private readonly provider?: SliverClient,
-    private readonly grantGate?: (engagementId: string, sessionId: string, actorId: string, path?: string) => Promise<void>) {}
+    private readonly grantGate?: (engagementId: string, sessionId: string, actorId: string, path?: string, target?: string) => Promise<void>) {}
   public get configured(): boolean { return this.provider !== undefined; }
   private async authorize(userId: string, engagementId: string): Promise<SliverClient> {
     // W02: provider operations require the operator role or above on the
@@ -79,7 +79,7 @@ export class C2Service {
       if (!winner) throw new ProjectApiError(409, 'Session has an unresolved command');
       if (winner.payloadHash !== payloadHash) throw new ProjectApiError(409, 'Command identity conflicts'); return view(winner); }
     if (this.grantGate !== undefined) {
-      try { await this.grantGate(engagementId, sessionId, userId, input.path); }
+      try { await this.grantGate(engagementId, sessionId, userId, input.path, owned.session.remoteAddress); }
       catch (gateError) {
         // W13: the provider was never invoked, so the reservation slot is
         // released and the command is finalized as failed — a refusal must not
@@ -94,7 +94,7 @@ export class C2Service {
       await this.db.c2Command.updateMany({ where: { id: reserved.id, status: { in: ['creating','uncertain'] } }, data: { status: 'uncertain' } });
       return view(await this.db.c2Command.findUniqueOrThrow({ where: { id: reserved.id } })); }
     if (this.grantGate !== undefined) {
-      try { await this.grantGate(engagementId, sessionId, userId, input.path); }
+      try { await this.grantGate(engagementId, sessionId, userId, input.path, owned.session.remoteAddress); }
       catch (gateError) {
         await this.observe(reserved, response).catch(() => undefined);
         throw gateError;
