@@ -117,6 +117,14 @@ export function confirmHandoff(engagementId: string): Promise<ProjectViewModel> 
   })
 }
 
+/** W22: edit the display name, primary target and brief on the project detail Settings tab. */
+export function patchEngagement(engagementId: string, input: { displayName?: string; targetValue?: string; brief?: string }): Promise<ProjectViewModel> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}`, (v): v is ProjectViewModel => isProjectViewModel(v) && v.id === engagementId, {
+    method: 'PATCH',
+    body: input,
+  })
+}
+
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Planning documents (ticket 04) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function fetchPlanning(engagementId: string): Promise<PlanningView> {
