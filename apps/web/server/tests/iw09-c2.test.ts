@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { C2Service } from '../src/services/c2-service.js';
 import { SliverClient } from '../src/integrations/c2/sliver-client.js';
 import { loadServerEnv } from '../src/config/env.js';
+import { ProjectApiError } from '../src/services/projects-service.js';
 const closes: Array<() => Promise<void>> = [];
 afterEach(async () => { for (const close of closes.splice(0)) await close(); });
 const SESSION = { id: 'session-1', name: 'Native', hostname: 'target', username: 'operator', os: 'linux', arch: 'amd64', transport: 'http', remoteAddress: '172.18.0.3', activeC2: 'http://sliver:18081', version: '1.7.7', pid: 123, listenerPort: 18081, lastCheckin: Math.floor(Date.now()/1000), isDead: false };
@@ -25,7 +26,7 @@ function database(authorized = true) {
       findUniqueOrThrow: async ({ where }: { where: { id: string } }) => rows.find(r => r.id === where.id),
     } };
 }
-async function setup(mode: 'valid' | 'dead' | 'fail' | 'oversized' = 'valid', authorized = true) {
+async function setup(mode: 'valid' | 'dead' | 'fail' | 'oversized' = 'valid', authorized = true, gate = async (_eng: string, _session: string, _actor: string, _path?: string): Promise<void> => {}) {
   const app = Fastify({ logger: false, forceCloseConnections: true }); let executions = 0;
   app.post('/v1/c2', async (request, reply) => {
     const body = request.body as Record<string, unknown>;
@@ -39,10 +40,44 @@ async function setup(mode: 'valid' | 'dead' | 'fail' | 'oversized' = 'valid', au
     return { state: 'succeeded', outcome: { status: 0, pid: 333, stdout: { text: 'native-output', truncated: false }, stderr: { text: '', truncated: false } } };
   });
   const apiUrl = await app.listen({ host: '127.0.0.1', port: 0 }); closes.push(() => app.close());
-  const db = database(authorized); const service = new C2Service(db as never, new SliverClient({ apiUrl, apiKey: 'a'.repeat(64) }));
+   const db = database(authorized); const service = new C2Service(db as never, new SliverClient({ apiUrl, apiKey: 'a'.repeat(64) }), gate);
   return { service, db, executions: () => executions };
 }
 describe('IW-09 C2 ownership and durable command audit', () => {
+  it('refuses a grant revoked during reservation before invoking the provider', async () => {
+    let checks = 0;
+    const { service, executions } = await setup('valid', true, async () => {
+      if (++checks > 1) throw new ProjectApiError(403, 'Grant revoked');
+    });
+    await expect(service.dispatchCommand('local', 'eng-1', 'session-1', input)).rejects.toMatchObject({ statusCode: 403 });
+    expect(executions()).toBe(0);
+  });
+  it('retains the actual outcome when authorization expires in flight', async () => {
+    let checks = 0;
+    const { service, executions } = await setup('valid', true, async () => {
+      if (++checks > 2) throw new ProjectApiError(403, 'Grant expired');
+    });
+    await expect(service.dispatchCommand('local', 'eng-1', 'session-1', input)).rejects.toMatchObject({ statusCode: 403 });
+    expect(executions()).toBe(1);
+    expect(await service.history('local', 'eng-1')).toMatchObject([{ status: 'succeeded', stdout: 'native-output' }]);
+  });
+  it('reconciles an already invoked command without pretending revocation cancelled it', async () => {
+    let revoked = false;
+    const { service } = await setup('fail', true, async () => {
+      if (revoked) throw new ProjectApiError(403, 'Grant revoked');
+    });
+    const pending = await service.dispatchCommand('local', 'eng-1', 'session-1', input);
+    revoked = true;
+    await expect(service.reconcile('local', 'eng-1', pending.id)).rejects.toMatchObject({ statusCode: 403 });
+    expect(await service.history('local', 'eng-1')).toMatchObject([{ status: 'succeeded' }]);
+  });
+  it('passes the executable path to the grant gate for prefix enforcement', async () => {
+    const { service, executions } = await setup('valid', true, async (_eng, _session, _actor, path) => {
+      if (path !== '/usr/bin/printf') throw new ProjectApiError(403, 'Prefix mismatch');
+    });
+    expect((await service.dispatchCommand('local', 'eng-1', 'session-1', input)).status).toBe('succeeded');
+    expect(executions()).toBe(1);
+  });
   it('lists only sessions in the authorized engagement namespace', async () => {
     const {service} = await setup(); expect((await service.sessions('local','eng-1')).sessions).toHaveLength(1); expect((await service.sessions('local','eng-2')).sessions).toEqual([]);
   });

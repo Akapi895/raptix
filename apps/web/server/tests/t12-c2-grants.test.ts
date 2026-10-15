@@ -42,6 +42,7 @@ function memoryDb() {
     (where.status === undefined || !(typeof where.status === 'object' && where.status !== null && 'in' in (where.status as Record<string, unknown>) && !(where.status as { in: string[] }).in.includes(String(row.status))));
   const db = {
     tables,
+    engagementClosure: { findFirst: async () => null },
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         find('engagement', (r) => r.id === where.id && (where.userId === undefined || r.userId === where.userId)),

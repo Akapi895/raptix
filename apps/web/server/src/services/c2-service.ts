@@ -10,7 +10,7 @@ export class ProviderUnavailableError extends ProjectApiError {
 const UNAVAILABLE = 'C2 session provider not configured; no session registry exists in this build';
 export class C2Service {
   public constructor(private readonly db: PrismaClient, private readonly provider?: SliverClient,
-    private readonly grantGate?: (engagementId: string, sessionId: string, actorId: string) => Promise<void>) {}
+    private readonly grantGate?: (engagementId: string, sessionId: string, actorId: string, path?: string) => Promise<void>) {}
   public get configured(): boolean { return this.provider !== undefined; }
   private async authorize(userId: string, engagementId: string): Promise<SliverClient> {
     const engagement = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
@@ -44,10 +44,15 @@ export class C2Service {
   public async dispatchCommand(userId: string, engagementId: string, sessionId: string, body?: unknown): Promise<C2CommandView> {
     if (!sessionId.trim()) throw new ProjectApiError(400, 'sessionId is required');
     const provider = await this.authorize(userId, engagementId);
-    // Ticket 12: a connected session is not an authorization — every command
-    // authorizes against the actor's live approved grant, including at expiry.
-    if (this.grantGate !== undefined) await this.grantGate(engagementId, sessionId, userId);
     const input = command(body);
+    // Ticket 12 / IW-09: a connected session is not an authorization. Every
+    // command authorizes against the actor's live approved grant at three
+    // points — before reservation, after reservation (before the provider is
+    // invoked) and after the provider answered (before the result is handed
+    // back). A command that already executed is never "un-executed" by a
+    // later revocation: the truthful outcome is retained in the durable audit
+    // and the authorization failure is surfaced to the caller.
+    if (this.grantGate !== undefined) await this.grantGate(engagementId, sessionId, userId, input.path);
     const payloadHash = createHash('sha256').update(JSON.stringify([sessionId,input.path,input.args])).digest('hex');
     const where = { engagementId_requestId: { engagementId, requestId: input.requestId } };
     const previous = await this.db.c2Command.findUnique({ where });
@@ -61,10 +66,20 @@ export class C2Service {
       const winner = await this.db.c2Command.findUnique({ where });
       if (!winner) throw new ProjectApiError(409, 'Session has an unresolved command');
       if (winner.payloadHash !== payloadHash) throw new ProjectApiError(409, 'Command identity conflicts'); return view(winner); }
-    try { return await this.observe(reserved, await provider.call({ op: 'sessions.execute', engagementId, sessionId, ...input })); }
+    if (this.grantGate !== undefined) await this.grantGate(engagementId, sessionId, userId, input.path);
+    let response: Record<string, unknown>;
+    try { response = await provider.call({ op: 'sessions.execute', engagementId, sessionId, ...input }); }
     catch (error) { if (!(error instanceof ProjectApiError)) throw error;
       await this.db.c2Command.updateMany({ where: { id: reserved.id, status: { in: ['creating','uncertain'] } }, data: { status: 'uncertain' } });
       return view(await this.db.c2Command.findUniqueOrThrow({ where: { id: reserved.id } })); }
+    if (this.grantGate !== undefined) {
+      try { await this.grantGate(engagementId, sessionId, userId, input.path); }
+      catch (gateError) {
+        await this.observe(reserved, response).catch(() => undefined);
+        throw gateError;
+      }
+    }
+    return await this.observe(reserved, response);
   }
   public async history(userId: string, engagementId: string): Promise<C2CommandView[]> {
     await this.authorize(userId, engagementId);
@@ -74,8 +89,13 @@ export class C2Service {
     const provider = await this.authorize(userId, engagementId);
     const row = await this.db.c2Command.findFirst({ where: { id: commandId, engagementId } });
     if (!row) throw new ProjectApiError(404, 'Owned command not found');
-    if (['succeeded','failed'].includes(row.status)) return view(row);
-    return this.observe(row, await provider.call({ op: 'commands.get', engagementId, requestId: row.requestId }));
+    // Reveal the already-executed outcome first (revocation cannot cancel an
+    // invoked command), then recheck the live grant before returning it.
+    const outcome = ['succeeded','failed'].includes(row.status)
+      ? view(row)
+      : await this.observe(row, await provider.call({ op: 'commands.get', engagementId, requestId: row.requestId }));
+    if (this.grantGate !== undefined) await this.grantGate(engagementId, row.sessionId, userId, row.path);
+    return outcome;
   }
   private async observe(row: C2Command, response: Record<string, unknown>): Promise<C2CommandView> {
     if (!['creating','succeeded','failed','uncertain'].includes(String(response.state))) throw new ProviderUnavailableError('Invalid command state');
