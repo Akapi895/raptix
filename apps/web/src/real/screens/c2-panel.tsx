@@ -9,7 +9,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { KeyRound, Loader2, TerminalSquare } from 'lucide-react'
-import { decideC2Grant, dispatchC2Command, fetchC2Commands, fetchC2Grants, fetchC2Sessions, reconcileC2Command, requestC2Grant } from '../api'
+import { decideC2Grant, configureC2Listener, configureC2Profile, dispatchC2Command, fetchC2Commands, fetchC2Grants, fetchC2Sessions, reconcileC2Command, requestC2Grant, stopC2Listener } from '../api'
 import { utcMinute } from '../format'
 import type { C2CommandView } from '@raptix/web-contracts'
 import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status, Textarea } from '../../ui'
@@ -26,8 +26,89 @@ export function RealC2Panel({ engagementId }: { engagementId: string }): ReactEl
   return (
     <div className="space-y-4">
       <RealC2Grants engagementId={engagementId} />
+      <RealC2Infrastructure engagementId={engagementId} />
       <RealC2Console engagementId={engagementId} />
     </div>
+  )
+}
+
+/** W15: real listener/profile management per the provider contract (isolated lab). */
+function RealC2Infrastructure({ engagementId }: { engagementId: string }): ReactElement {
+  const client = useQueryClient()
+  const sessions = useQuery({ queryKey: ['real', 'c2-sessions', engagementId], queryFn: () => fetchC2Sessions(engagementId), retry: false })
+  const [profileName, setProfileName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const invalidate = (): void => {
+    void client.invalidateQueries({ queryKey: ['real', 'c2-sessions', engagementId] })
+  }
+  const startListener = useMutation({
+    mutationFn: (protocol: 'mtls' | 'http') => configureC2Listener(engagementId, protocol),
+    onSuccess: () => { setError(null); invalidate() },
+    onError: (err) => setError(err instanceof Error ? err.message : 'The listener start was refused or the provider is unavailable.'),
+  })
+  const stop = useMutation({
+    mutationFn: (jobId: number) => stopC2Listener(engagementId, jobId),
+    onSuccess: () => { setError(null); invalidate() },
+    onError: (err) => setError(err instanceof Error ? err.message : 'The listener stop was refused.'),
+  })
+  const createProfile = useMutation({
+    mutationFn: () => configureC2Profile(engagementId, profileName.trim()),
+    onSuccess: () => { setProfileName(''); setError(null); invalidate() },
+    onError: (err) => setError(err instanceof Error ? err.message : 'The profile creation was refused.'),
+  })
+
+  return (
+    <Card>
+      <CardHeader title="Listeners & profiles" sub="Real provider registry (isolated lab): start an mTLS or HTTP listener, stop by job id, and create lab HTTP profiles" />
+      {sessions.isPending ? <div className="p-4" aria-busy="true" role="status"><Skeleton className="h-12" /></div>
+        : sessions.isError || !sessions.data ? (
+          <div className="p-4">
+            <Banner tone="warn" title="C2 provider unavailable">
+              {sessions.error instanceof Error ? sessions.error.message : 'The scoped provider registry is not reachable.'} No substitute listener state is shown.
+            </Banner>
+          </div>
+        ) : (
+          <div className="p-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted">
+                  <th className="pb-2">Listeners</th><th className="pb-2">State</th><th className="pb-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sessions.data.listeners.length === 0 ? (
+                  <tr><td colSpan={3} className="py-2 text-xs text-muted">No active listeners.</td></tr>
+                ) : sessions.data.listeners.map((l) => (
+                  <tr key={l.jobId} className="border-t border-line">
+                    <td className="py-2 pr-3 text-xs">{l.protocol} · port {l.port} · job {l.jobId}</td>
+                    <td className="py-2 pr-3"><Status kind="gate" value={l.active ? 'passed' : 'failed'} size="sm" label={l.active ? 'active' : 'stopped'} /></td>
+                    <td className="py-2"><Button variant="secondary" disabled={!l.active || stop.isPending} onClick={() => stop.mutate(l.jobId)}>Stop listener {l.jobId}</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="secondary" disabled={startListener.isPending} onClick={() => startListener.mutate('mtls')}>Start mTLS listener</Button>
+              <Button variant="secondary" disabled={startListener.isPending} onClick={() => startListener.mutate('http')}>Start HTTP listener</Button>
+            </div>
+            {sessions.data.profiles.length > 0 && (
+              <p className="mt-3 text-xs text-muted">
+                Profiles: {sessions.data.profiles.map((p) => `${p.name} (${p.userAgent})`).join(' · ')}
+              </p>
+            )}
+            <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); createProfile.mutate() }}>
+              <label className="text-sm text-muted" htmlFor="c2-profile-name">Profile name
+                <Input id="c2-profile-name" required maxLength={48} pattern="[a-z0-9-]{1,48}" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="lab-profile" />
+              </label>
+              <div className="flex items-end">
+                <Button type="submit" variant="secondary" disabled={createProfile.isPending}>Create profile</Button>
+              </div>
+            </form>
+          </div>
+        )}
+      {error !== null && <p className="px-4 pb-4 text-sm text-bad" role="alert">{error}</p>}
+    </Card>
   )
 }
 
