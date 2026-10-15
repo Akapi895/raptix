@@ -16,7 +16,7 @@
  * provider mount never inherits a previous mount's session state.
  */
 import { create } from 'zustand'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /* ───────────── Live log ───────────── */
 export interface LogLine { id: string; ts: string; level: 'INFO' | 'WARN' | 'ERROR'; agent: string; stepId: string; text: string }
@@ -29,7 +29,8 @@ export interface ConfirmOpts {
 }
 
 /** Navigation held behind the unsaved-changes modal by the dirty guard. */
-export interface UnsavedNav { next: () => void; save?: () => void }
+/** W21: a save is an async contract — the guard waits for the outcome before navigating. */
+export interface UnsavedNav { next: () => void; save?: () => Promise<unknown> | unknown }
 
 export interface SessionState {
   /* confirm dialog */
@@ -38,8 +39,12 @@ export interface SessionState {
   closeConfirm(): void
   /* dirty/unsaved navigation guard */
   dirty: boolean
-  save: (() => void) | undefined
-  setDirty(on: boolean, save?: () => void): void
+  save: (() => Promise<unknown> | unknown) | undefined
+  /** W21: which form owns the current dirty flag (undefined owner = legacy). */
+  dirtyOwner: string | null
+  setDirty(on: boolean, save?: () => Promise<unknown> | unknown, owner?: string): void
+  /** W21: only the owning form's unmount clears the shared dirty flag. */
+  clearDirtyIf(owner: string): void
   clearDirty(): void
   unsaved: UnsavedNav | null
   closeUnsaved(): void
@@ -67,7 +72,8 @@ export interface SessionState {
 const initialSession = {
   confirmState: null as ConfirmOpts | null,
   dirty: false,
-  save: undefined as (() => void) | undefined,
+  save: undefined as (() => Promise<unknown> | unknown) | undefined,
+  dirtyOwner: null as string | null,
   unsaved: null as UnsavedNav | null,
   logs: {} as Record<string, LogLine[]>,
   staleOps: {} as Record<string, boolean>,
@@ -87,8 +93,19 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
      redirect") before any re-render. zustand's set is synchronous, so the
      clear is visible to the next guarded() call without ref bookkeeping —
      the old dirtyRef staleness hazard cannot recur. */
-  setDirty: (on, save) => set(on ? { dirty: true, save } : { dirty: false, save: undefined }),
-  clearDirty: () => set({ dirty: false, save: undefined }),
+  /* W21: dirty ownership — an `on` claim takes over the flag; a `clear` only
+     lands when the caller owns the current flag, so two mounted forms never
+     erase each other's unsaved state. */
+  setDirty: (on, save, owner) => {
+    const s = get()
+    if (on) set({ dirty: true, save, dirtyOwner: owner ?? s.dirtyOwner ?? null })
+    else if (owner === undefined || s.dirtyOwner === null || s.dirtyOwner === owner) set({ dirty: false, save: undefined, dirtyOwner: null })
+  },
+  clearDirtyIf: (owner) => {
+    const s = get()
+    if (s.dirtyOwner === owner) set({ dirty: false, save: undefined, dirtyOwner: null })
+  },
+  clearDirty: () => set({ dirty: false, save: undefined, dirtyOwner: null }),
   closeUnsaved: () => set({ unsaved: null }),
   guarded: (fn) => {
     const s = get()
@@ -112,13 +129,15 @@ export function resetSessionStores() {
   useSessionStore.setState({ ...initialSession })
 }
 
-/** Registers unsaved changes and the latest draft save callback. */
-export function useDirty(isDirty: boolean, save?: () => void): void {
+/** Registers unsaved changes and the latest draft save callback (W21: async outcome, form-owned flag). */
+export function useDirty(isDirty: boolean, save?: () => Promise<unknown> | unknown): void {
   const setDirty = useSessionStore((s) => s.setDirty)
+  const clearDirtyIf = useSessionStore((s) => s.clearDirtyIf)
+  const [owner] = useState(`form-${Math.random().toString(36).slice(2)}`)
   const saveRef = useRef(save)
   saveRef.current = save
   useEffect(() => {
-    setDirty(isDirty, () => saveRef.current?.())
-    return () => setDirty(false)
-  }, [isDirty, setDirty])
+    setDirty(isDirty, () => saveRef.current?.(), owner)
+    return () => { clearDirtyIf(owner) }
+  }, [isDirty, setDirty, clearDirtyIf, owner])
 }

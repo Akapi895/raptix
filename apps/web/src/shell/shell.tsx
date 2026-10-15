@@ -33,7 +33,8 @@ export interface ShellSlots extends HeaderSlots {
 }
 
 /* ───────────── Global modals ───────────── */
-function GlobalModals() {
+/** Exported for the W21 save-contract tests; the Shell renders it once. */
+export function GlobalModals() {
   const confirmState = useSessionStore((s) => s.confirmState)
   const closeConfirm = useSessionStore((s) => s.closeConfirm)
   const unsaved = useSessionStore((s) => s.unsaved)
@@ -41,6 +42,8 @@ function GlobalModals() {
   const toast = useToastStore((s) => s.toast)
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
+  // W21: Save Draft waits for the save outcome before leaving.
+  const [savingDraft, setSavingDraft] = useState(false)
   useEffect(() => { setReason(''); setErr('') }, [confirmState])
   return (
     <>
@@ -70,7 +73,24 @@ function GlobalModals() {
           <>
             <Button variant="ghost" onClick={closeUnsaved}>Stay</Button>
             <Button variant="danger" onClick={() => { const n = unsaved.next; closeUnsaved(); n() }}>Discard &amp; Leave</Button>
-            <Button variant="primary" onClick={() => { const u = unsaved; closeUnsaved(); u.save?.(); toast('Draft saved.'); u.next() }}>Save Draft</Button>
+            {unsaved.save !== undefined && (
+              <Button
+                variant="primary"
+                disabled={savingDraft}
+                onClick={async () => {
+                  const u = unsaved
+                  setSavingDraft(true)
+                  try {
+                    await u.save?.()
+                    closeUnsaved()
+                    toast('Draft saved.')
+                    u.next()
+                  } catch (err) {
+                    toast(err instanceof Error ? `The draft was not saved: ${err.message}` : 'The draft was not saved.', 'bad')
+                  } finally { setSavingDraft(false) }
+                }}
+              >Save Draft</Button>
+            )}
           </>
         )}
       >

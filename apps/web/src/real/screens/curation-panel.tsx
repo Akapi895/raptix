@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { ClipboardList, Loader2 } from 'lucide-react'
 import { attachEvidence, createCuratedFinding, fetchCuratedFindings, transitionCuratedFinding, importCuratedFinding, updateCuratedFinding, type CuratedFindingView } from '../api'
+import { useDirty } from '../../state/session'
 import { Button, Card, CardHeader, Input, Select, Skeleton, Status, Textarea } from '../../ui'
 import { go, useRoute } from '../../router/navigate'
 
@@ -21,6 +22,8 @@ export function RealCurationPanel({ engagementId }: { engagementId: string }): R
   const [producerRef, setProducerRef] = useState('')
   const [editing, setEditing] = useState<CuratedFindingView | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // W21: the finding draft registers as dirty so navigation can guard it.
+  useDirty(title.trim() !== '' || detail.trim() !== '' || producerRef.trim() !== '')
 
   const invalidate = (): void => {
     void client.invalidateQueries({ queryKey: ['real', 'curated-findings', engagementId] })

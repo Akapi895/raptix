@@ -16,7 +16,12 @@ export function RealReportEditor({ report, preview = false }: { report: ReportVi
   const [error, setError] = useState<string | null>(null)
   const requestIds = useRef(new Map<string, string>())
   const dirty = title !== report.title || summary !== report.body.summary || JSON.stringify(sections) !== JSON.stringify(report.body.sections)
-  useDirty(dirty)
+  // W21: the modal's Save Draft must call a real save with an awaited outcome.
+  const saveDraft = async (): Promise<void> => {
+    await updateReport(report.engagementId, report.id, { expectedVersion: report.version, title, summary, sections })
+    void client.invalidateQueries({ queryKey: ['real', 'report-records', report.engagementId] })
+  }
+  useDirty(dirty, dirty ? saveDraft : undefined)
   const action = useMutation({
     mutationFn: async (kind: 'save' | 'submit' | 'approved' | 'changes_requested' | 'export' | 'delivery' | 'revision') => {
       if (kind === 'save') return updateReport(report.engagementId, report.id, { expectedVersion: report.version, title, summary, sections })
