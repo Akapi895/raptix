@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Route host (ticket 07): resolves the store route to a page inside the React
  * Router data router. Owns the auth guard (login rendered in place so the
  * requested protected URL survives sign-in as the safe return destination),
@@ -120,7 +120,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
   const key = pageKey(route)
   if (DATA_MODE === 'real') {
     // Real mode (integration ticket 03, ADR-0068): there is no sign-in and no
-    // demo identity â€” every route either has a real implementation, renders
+    // demo identity — every route either has a real implementation, renders
     // itself (system pages that read no console data), or renders the honest
     // unavailable panel (D4). Mock screens are never reached.
     const Real = REAL_PAGES[route.page] ?? undefined

@@ -12,6 +12,7 @@ import { useRealProjects } from '../queries'
 import { go } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { Button, Empty, Input, PageHeader, Skeleton, Status, Table, type Col } from '../../ui'
+import { utcMinute } from '../format'
 
 function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const message = error instanceof Error ? error.message : 'The projects request failed.'
@@ -62,7 +63,7 @@ export function RealPortfolio(): ReactElement {
     { key: 'metadata', header: 'Metadata', render: (p) => <Status kind="check" value={p.metadataState === 'verified' ? 'pass' : 'review'} size="sm" label={p.metadataState === 'verified' ? 'Verified' : 'Needs review'} /> },
     { key: 'status', header: 'Status', render: (p) => <Status kind="project" value={p.lifecycleStatus} size="sm" /> },
     { key: 'client', header: 'Client', className: 'max-lg:hidden', render: () => <span className="text-neutral" title="Not carried by the engagement API">—</span> },
-    { key: 'updated', header: 'Updated', className: 'max-xl:hidden', render: (p) => <span className="whitespace-nowrap text-xs text-muted">{p.updatedAt.replace('T', ' ').slice(0, 16)}Z</span> },
+    { key: 'updated', header: 'Updated', className: 'max-xl:hidden', render: (p) => <span className="whitespace-nowrap text-xs text-muted">{utcMinute(p.updatedAt)}</span> },
   ]
 
   return (

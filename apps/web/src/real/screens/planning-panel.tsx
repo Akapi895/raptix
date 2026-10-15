@@ -1,7 +1,7 @@
-﻿/**
+/**
  * Real planning panel (integration ticket 04): the engagement's actual plan
  * documents, bundle states, readiness and the one-way handoff confirmation.
- * Readiness is a runtime signal only â€” it never grants execution permission,
+ * Readiness is a runtime signal only — it never grants execution permission,
  * and an OPPLAN document is never presented as business plan approval (D2).
  */
 import { useState, type ReactElement } from 'react'
@@ -12,13 +12,10 @@ import { confirmHandoff, fetchPlanning } from '../api'
 import { projectKeys } from '../queries'
 import { go } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, DescList, Skeleton, Status, cx } from '../../ui'
+import { utcMinuteOr } from '../format'
 
 const STATE_TONE: Record<PlanningState, 'ok' | 'bad' | 'warn' | 'neutral'> = { ready: 'ok', missing: 'neutral', invalid: 'bad', unavailable: 'warn' }
 const STATE_LABEL: Record<PlanningState, string> = { ready: 'Ready', missing: 'Missing', invalid: 'Invalid', unavailable: 'Unavailable' }
-
-function fmt(iso: string | null): string {
-  return iso ? iso.replace('T', ' ').slice(0, 16) + 'Z' : 'â€”'
-}
 
 export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engagementId: string; handoffConfirmedAt: string | null }): ReactElement {
   const client = useQueryClient()
@@ -53,7 +50,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
     <div className="space-y-4">
       {view.readiness.state === 'ready' ? (
         <Banner tone="ok" icon={CheckCircle2} title="Planning documents ready">
-          All required documents are present and valid. Readiness is a runtime signal â€” execution still requires the approved lifecycle steps and never follows from this banner alone.
+          All required documents are present and valid. Readiness is a runtime signal — execution still requires the approved lifecycle steps and never follows from this banner alone.
         </Banner>
       ) : (
         <Banner tone="warn" icon={CircleAlert} title="Planning is blocked">
@@ -67,7 +64,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-4">
           <Card>
-            <CardHeader title="Plan documents" sub="Generated in the AI workspace and stored in the engagement workspace. OPPLAN is the operational plan document â€” not a business plan approval." />
+            <CardHeader title="Plan documents" sub="Generated in the AI workspace and stored in the engagement workspace. OPPLAN is the operational plan document — not a business plan approval." />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <PlanCard name="roe" title="Rules of Engagement" doc={view.documents.roe} render={(c) => (
                 <DescList
@@ -102,7 +99,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
                   {(c.objectives ?? []).length > 0 && (
                     <ul className="space-y-1">
                       {(c.objectives ?? []).map((o) => (
-                        <li key={o.id} className="text-fg"><span className="font-mono">{o.id}</span> Â· {o.title} <span className="text-muted">({o.phase}{o.status ? `, ${o.status}` : ''}{o.blocked_by?.length ? `, blocked by ${o.blocked_by.join(', ')}` : ''})</span></li>
+                        <li key={o.id} className="text-fg"><span className="font-mono">{o.id}</span> · {o.title} <span className="text-muted">({o.phase}{o.status ? `, ${o.status}` : ''}{o.blocked_by?.length ? `, blocked by ${o.blocked_by.join(', ')}` : ''})</span></li>
                       ))}
                     </ul>
                   )}
@@ -131,13 +128,13 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
           <Card>
             <CardHeader title="Planning handoff" sub="One-way confirmation that planning moved from drafting to the AI workspace. It can be set once and is never unset by the UI." />
             <p className="text-sm">
-              {handoffConfirmedAt ? <span className="text-ok">Confirmed at {fmt(handoffConfirmedAt)}</span> : <span className="text-muted">Not confirmed yet.</span>}
+              {handoffConfirmedAt ? <span className="text-ok">Confirmed at {utcMinuteOr(handoffConfirmedAt)}</span> : <span className="text-muted">Not confirmed yet.</span>}
             </p>
             {!handoffConfirmedAt && (
               <div className="mt-3">
                 <Button variant="primary" icon={Lock} disabled={confirm.isPending || view.readiness.state !== 'ready'} title={view.readiness.state === 'ready' ? 'Confirms planning handoff on the server (one-way)' : 'Required planning documents must be ready before handoff'}
                   onClick={() => { setPatchError(null); confirm.mutate() }}>
-                  {confirm.isPending ? 'Confirmingâ€¦' : 'Confirm planning handoff'}
+                  {confirm.isPending ? 'Confirming…' : 'Confirm planning handoff'}
                 </Button>
               </div>
             )}
@@ -173,7 +170,7 @@ function DocUnavailable({ name, title, state }: { name: string; title: string; s
         <Status kind="gate" value={state === 'invalid' ? 'failed' : 'pending'} size="sm" label={STATE_LABEL[state]} />
       </div>
       <p className="mt-2 text-xs text-muted">
-        {state === 'missing' ? 'This document has not been generated yet.' : state === 'invalid' ? 'The stored document failed validation â€” regenerate it in the AI workspace.' : 'The document source is unavailable right now.'}
+        {state === 'missing' ? 'This document has not been generated yet.' : state === 'invalid' ? 'The stored document failed validation — regenerate it in the AI workspace.' : 'The document source is unavailable right now.'}
       </p>
     </div>
   )

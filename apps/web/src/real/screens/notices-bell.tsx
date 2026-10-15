@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, CheckCheck, MailOpen, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { dismissNotice, fetchNotices, markAllNoticesRead, markNoticeRead } from '../api'
+import { utcMinute } from '../format'
 
 export function RealHeaderNotices(): ReactElement {
   const client = useQueryClient()
@@ -71,7 +72,7 @@ export function RealHeaderNotices(): ReactElement {
                   <div className="flex items-start gap-2">
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium">{n.title}</span>
-                      <span className="block text-xs text-muted">{n.engagementId !== null ? `${n.engagementId} · ` : ''}{n.createdAt.replace('T', ' ').slice(0, 16) + 'Z'}{n.readAt === null ? ' · unread' : ''}</span>
+                      <span className="block text-xs text-muted">{n.engagementId !== null ? `${n.engagementId} · ` : ''}{utcMinute(n.createdAt)}{n.readAt === null ? ' · unread' : ''}</span>
                     </span>
                     <button aria-label="Mark notice read" className="text-muted hover:text-fg" onClick={() => markRead.mutate(n.id)}><MailOpen size={14} aria-hidden /></button>
                     <button aria-label="Dismiss notice" className="text-muted hover:text-fg" onClick={() => dismiss.mutate(n.id)}><X size={14} aria-hidden /></button>

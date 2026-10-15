@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Real operations panel (integration ticket 05): the engagement's owned
  * execution threads and their runtime runs with truthful raw statuses and
  * retained engagement/thread/run/request identities (D2 - no separate
@@ -10,12 +10,9 @@ import { Bot } from 'lucide-react'
 import type { ScopedRunView, ThreadBindingView } from '@raptix/web-contracts'
 import { listRunsOfThread, listThreads } from '../api'
 import { fetchTimeline } from '../api'
+import { utcMinute } from '../format'
 import { go } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, Skeleton, Status, cx } from '../../ui'
-
-function fmt(iso: string): string {
-  return iso.replace('T', ' ').slice(0, 16) + 'Z'
-}
 
 const STATUS_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = {
   completed: 'ok', failed: 'bad', cancelled: 'neutral', interrupted: 'warn',
@@ -101,7 +98,7 @@ function ThreadRuns({ thread }: { thread: ThreadBindingView }): ReactElement {
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-xs font-medium text-fg">{thread.threadId}</span>
         <span className="text-xs text-muted">assistant {thread.assistantId}</span>
-        <span className="text-xs text-neutral">bound {fmt(thread.createdAt)}</span>
+        <span className="text-xs text-neutral">bound {utcMinute(thread.createdAt)}</span>
       </div>
       {runs.isPending ? <div className="mt-2" aria-busy="true" role="status"><Skeleton className="h-8" /></div>
         : runs.isError ? <p className="mt-2 text-sm text-bad" role="alert">{runs.error instanceof Error ? runs.error.message : 'Runs could not be loaded.'}</p>
@@ -135,8 +132,8 @@ function RunRow({ run }: { run: ScopedRunView }): ReactElement {
       <td className={cx('py-1.5 pr-3', {
         ok: 'text-ok', bad: 'text-bad', warn: 'text-warn', neutral: 'text-muted',
       }[tone])}><Status kind="gate" value={tone === 'ok' ? 'passed' : tone === 'bad' ? 'failed' : 'pending'} size="sm" label={run.rawStatus} /></td>
-      <td className="py-1.5 pr-3 text-muted">{fmt(run.createdAt)}</td>
-      <td className="py-1.5 text-muted">{fmt(run.updatedAt)}</td>
+      <td className="py-1.5 pr-3 text-muted">{utcMinute(run.createdAt)}</td>
+      <td className="py-1.5 text-muted">{utcMinute(run.updatedAt)}</td>
     </tr>
   )
 }

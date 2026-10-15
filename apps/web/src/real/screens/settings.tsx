@@ -22,6 +22,7 @@ import {
 import { REAL_IDENTITY } from '../identity'
 import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Input, PageHeader, Skeleton, Status, Tabs } from '../../ui'
+import { utcMinute, utcMinuteOr } from '../format'
 
 const TABS = [
   { id: 'profile', label: 'Profile' },
@@ -203,7 +204,7 @@ function WorkspaceSettingsTab({ kind }: { kind: 'policy' | 'retention' }): React
                   { k: 'Persisted value', v: <span className="font-mono">{s.value}</span> },
                   { k: 'Version', v: <span className="font-mono">{s.version}</span> },
                   { k: 'Last updated by', v: s.updatedBy ? <span className="font-mono">{s.updatedBy}</span> : 'default (never changed)' },
-                  { k: 'Last updated at', v: s.updatedAt ? s.updatedAt.replace('T', ' ').slice(0, 16) + 'Z' : '—' },
+                  { k: 'Last updated at', v: utcMinuteOr(s.updatedAt) },
                   { k: 'Consumer', v: s.consumer ? <span className="font-mono">{s.consumer}</span> : 'none yet — configuration only' },
                   { k: 'Enforcement', v: s.enforcement },
                 ]}
@@ -284,7 +285,7 @@ export function AuditTable({ entries }: { entries: readonly AuditEntryView[] }):
       <tbody>
         {entries.map((e) => (
           <tr key={e.id} className="border-t border-line align-top">
-            <td className="whitespace-nowrap py-2 pr-3 font-mono text-xs">{e.createdAt.replace('T', ' ').slice(0, 16) + 'Z'}</td>
+            <td className="whitespace-nowrap py-2 pr-3 font-mono text-xs">{utcMinute(e.createdAt)}</td>
             <td className="py-2 pr-3 font-mono text-xs text-fg">{e.action}</td>
             <td className="py-2 pr-3 text-xs">{e.actorId ?? <span className="text-muted">not recorded</span>}</td>
             <td className="py-2 pr-3 text-xs">

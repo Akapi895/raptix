@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Real AI workspace (integration tickets 04-05, decision D6): the planning and
  * execution conversation surface. Every conversation is an owned server thread
  * bound to the engagement; sends/resumes go through the request ledger
@@ -23,6 +23,7 @@ import { projectKeys } from '../queries'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { Banner, Button, Card, CardHeader, Empty, PageHeader, Skeleton, Textarea, cx } from '../../ui'
+import { utcMinute } from '../format'
 
 interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
 interface TraceLine { id: string; label: string; status?: string; error?: boolean }
@@ -428,7 +429,7 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
                           <span className="truncate font-mono text-xs font-medium text-fg">{t.threadId}</span>
                           <span className={cx('shrink-0 rounded-full border px-1.5 text-[10px] uppercase', t.kind === 'planning' ? 'border-line text-muted' : 'border-warn/40 text-warn')}>{t.kind}</span>
                         </div>
-                        <div className="text-xs text-muted">assistant {t.assistantId} | {t.updatedAt.replace('T', ' ').slice(0, 16)}Z</div>
+                        <div className="text-xs text-muted">assistant {t.assistantId} | {utcMinute(t.updatedAt)}</div>
                       </button>
                     </li>
                   ))}

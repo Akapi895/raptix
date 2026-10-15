@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Real AI workspace tests (tickets 04-05): owned planning/execution threads,
  * request-ledger dispatch, streamed messages, pending interrupts, execution
  * readiness gates, workspace HITL approvals and honest unavailability.
@@ -31,7 +31,7 @@ const ENGAGEMENT = (handoff: string | null) => ({
 const SNAPSHOT = {
   binding: PLANNING_THREAD, rawStatus: null, messages: [
     { role: 'user', content: 'Plan the Q1 external assessment.' },
-    { role: 'assistant', content: 'Here is a draft scope outlineâ€¦' },
+    { role: 'assistant', content: 'Here is a draft scope outline…' },
   ],
   messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime',
   pendingQuestions: [{
@@ -160,7 +160,7 @@ describe('RealWorkspace', () => {
     ui(<RealWorkspace />)
     expect(await screen.findByText('th-plan')).toBeTruthy()
     expect(await screen.findByText('Plan the Q1 external assessment.')).toBeTruthy()
-    expect(await screen.findByText('Here is a draft scope outlineâ€¦')).toBeTruthy()
+    expect(await screen.findByText('Here is a draft scope outline…')).toBeTruthy()
     expect(await screen.findByText('Which target set should the plan cover?')).toBeTruthy()
     expect(await screen.findByText(/assistant soundwave/)).toBeTruthy()
   })

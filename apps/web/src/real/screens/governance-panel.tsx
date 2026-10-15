@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { ClipboardCheck, GitCompareArrows, Loader2, OctagonX, ShieldCheck } from 'lucide-react'
 import { bindPlan, comparePlans, decidePlan, fetchPlans, fetchPreflight, listThreads, proposePlan, requestEmergencyStop, revisePlan, savePlan, type PlanView } from '../api'
+import { utcMinuteOr } from '../format'
 import { Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
 
 export function RealGovernancePanel({ engagementId }: { engagementId: string }): ReactElement {
@@ -114,7 +115,7 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
                     <td className="py-2 pr-3"><Status kind="gate" value={p.status === 'approved' ? 'passed' : p.status === 'proposed' || p.status === 'draft' ? 'pending' : 'failed'} size="sm" label={p.status} /></td>
                     <td className="py-2 pr-3">{p.objective}</td>
                     <td className="py-2 pr-3 font-mono text-xs">{p.roeVersion === null ? '—' : `v${p.roeVersion}`}</td>
-                    <td className="py-2 pr-3 font-mono text-xs text-muted">{p.expiresAt === null ? '—' : p.expiresAt.replace('T', ' ').slice(0, 16) + 'Z'}</td>
+                    <td className="py-2 pr-3 font-mono text-xs text-muted">{utcMinuteOr(p.expiresAt)}</td>
                     <td className="py-2">
                       {p.status === 'draft' ? <Button onClick={() => propose.mutate(p.id)}>Propose</Button>
                         : p.status === 'proposed' ? (
@@ -260,7 +261,7 @@ function PlanComparison({ engagementId, planId, baseId }: { engagementId: string
     { label: 'Objective', base: base.objective || '—', revision: revision.objective || '—' },
     { label: 'Pinned ROE', base: base.roeVersion === null ? '—' : `v${base.roeVersion}`, revision: revision.roeVersion === null ? '—' : `v${revision.roeVersion}` },
     { label: 'Decided by', base: base.decidedBy ?? '—', revision: revision.decidedBy ?? '—' },
-    { label: 'Expires', base: base.expiresAt === null ? '—' : base.expiresAt.replace('T', ' ').slice(0, 16) + 'Z', revision: revision.expiresAt === null ? '—' : revision.expiresAt.replace('T', ' ').slice(0, 16) + 'Z' },
+    { label: 'Expires', base: utcMinuteOr(base.expiresAt), revision: utcMinuteOr(revision.expiresAt) },
   ]
   return (
     <table className="w-full text-sm">

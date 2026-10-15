@@ -126,7 +126,7 @@ describe('assignAgentTransaction eligibility (ticket 49)', () => {
   it('a pending assignment request refuses the immediate path — pending approval does not silently allocate', () => {
     const { authority } = rig()
     authority.commit('t', (d) => {
-      d.approvals.unshift({ id: 'APR-T49', projectId: P14, type: 'Agent assignment', by: 'Taylor Chen', reviewer: 'Pat Kim', at: d.agents[0].lastSeen, status: 'pending', note: '', diff: 'AG-012 â†’ RT-2026-014' })
+      d.approvals.unshift({ id: 'APR-T49', projectId: P14, type: 'Agent assignment', by: 'Taylor Chen', reviewer: 'Pat Kim', at: d.agents[0].lastSeen, status: 'pending', note: '', diff: 'AG-012 → RT-2026-014' })
     })
     const res = assignAgentTransaction(authority, new MockClock(), ctxOf(ALEX, 'all'), 'AG-012', { projectId: P14 })
     expect(res.ok).toBe(false)
@@ -287,7 +287,7 @@ describe('removeFromGroupTransaction (ticket 49)', () => {
   })
 })
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Mounted screens: ChangeSet â†’ fleet + detail refetch, bridge both directions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ───────────── Mounted screens: ChangeSet → fleet + detail refetch, bridge both directions ───────────── */
 
 function mountAgents(page: 'agents' | 'agent', me = 'Alex Morgan') {
   const Screen = routes[page]

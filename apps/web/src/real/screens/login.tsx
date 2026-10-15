@@ -1,9 +1,9 @@
-﻿/**
+/**
  * Real-mode session gate (integration ticket 07). Local single-user
  * deployments answer 404 on /api/auth/session and render children directly.
  * Multi-user deployments require a valid session: unauthenticated boots
  * render the sign-in form, and every mutation carries the per-session CSRF
- * token delivered here. The actor is trusted from the server session only â€”
+ * token delivered here. The actor is trusted from the server session only —
  * the browser never posts a persona or role as authorization.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'

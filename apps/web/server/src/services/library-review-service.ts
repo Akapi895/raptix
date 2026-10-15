@@ -81,6 +81,10 @@ interface ProposalRow {
   status: string; version: number; createdBy: string; createdAt: Date; updatedAt: Date;
 }
 
+type ReviewRow = {
+  id: string; proposalVersion: number; decision: string; comment: string | null; reviewerId: string; createdAt: Date;
+};
+
 export class LibraryReviewService {
   public constructor(private readonly db: PrismaClient, private readonly library: Pick<LibraryService, 'skillDetail'>) {}
 
@@ -224,7 +228,7 @@ export class LibraryReviewService {
       base: { body: row.baseBody, revision: row.baseRevision },
       proposed: { body: row.proposedBody },
       diff: { before: row.baseBody, after: row.proposedBody },
-      reviews: reviews.map((r) => ({ id: r.id, proposalVersion: r.proposalVersion, decision: r.decision as LibraryProposalReviewView['decision'], comment: r.comment, reviewerId: r.reviewerId, createdAt: r.createdAt.toISOString() })),
+      reviews: reviews.map((r) => this.toReviewView(r)),
       publicationContract: [
         'Preserve the SKILL.md frontmatter; this export replaces the body only.',
         'Publication still requires the existing corpus audit, graph and OPSEC review gates.',
@@ -260,11 +264,22 @@ export class LibraryReviewService {
     return row as never as ProposalRow;
   }
 
-  private async reviewsOf(proposalId: string): Promise<Array<{ id: string; proposalVersion: number; decision: string; comment: string | null; reviewerId: string; createdAt: Date }>> {
-    return (await this.db.libraryProposalReview.findMany({ where: { proposalId }, orderBy: { createdAt: 'desc' } })) as never as Array<{ id: string; proposalVersion: number; decision: string; comment: string | null; reviewerId: string; createdAt: Date }>;
+  private async reviewsOf(proposalId: string): Promise<ReviewRow[]> {
+    return (await this.db.libraryProposalReview.findMany({ where: { proposalId }, orderBy: { createdAt: 'desc' } })) as never as ReviewRow[];
   }
 
-  private toView(row: ProposalRow, reviews: Array<{ id: string; proposalVersion: number; decision: string; comment: string | null; reviewerId: string; createdAt: Date }>, canonicalCurrent?: boolean): LibraryProposalView {
+  private toReviewView(r: ReviewRow): LibraryProposalReviewView {
+    return {
+      id: r.id,
+      proposalVersion: r.proposalVersion,
+      decision: r.decision as LibraryProposalReviewView['decision'],
+      comment: r.comment,
+      reviewerId: r.reviewerId,
+      createdAt: r.createdAt.toISOString(),
+    };
+  }
+
+  private toView(row: ProposalRow, reviews: ReviewRow[], canonicalCurrent?: boolean): LibraryProposalView {
     return {
       id: row.id,
       engagementId: row.engagementId,
@@ -279,14 +294,7 @@ export class LibraryReviewService {
       createdBy: row.createdBy,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
-      reviews: reviews.map((r) => ({
-        id: r.id,
-        proposalVersion: r.proposalVersion,
-        decision: r.decision as LibraryProposalReviewView['decision'],
-        comment: r.comment,
-        reviewerId: r.reviewerId,
-        createdAt: r.createdAt.toISOString(),
-      })),
+      reviews: reviews.map((r) => this.toReviewView(r)),
       canonicalCurrent,
     };
   }
