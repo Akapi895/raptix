@@ -1,8 +1,9 @@
-﻿import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
 import { FindingsWorkflowService } from '../src/services/findings-workflow-service.js';
+import type { ArtifactsService } from '../src/services/artifacts-service.js';
 
 /**
  * Ticket 10 acceptance: server-enforced transitions (confirmation needs the
@@ -84,19 +85,21 @@ function memoryDb() {
 
 const ENG = 'eng-1';
 
-async function setup(): Promise<{ app: FastifyInstance; owner: { cookie: string; csrf: string }; viewer: { cookie: string; csrf: string } }> {
+async function setup(artifacts?: Pick<ArtifactsService, 'capture'>): Promise<{ app: FastifyInstance; owner: { cookie: string; csrf: string }; viewer: { cookie: string; csrf: string }; reviewer: { cookie: string; csrf: string } }> {
   const db = memoryDb();
   const owner = await db.webUser.create({ data: { username: 'owner', displayName: 'Owner', passwordHash: hashPassword('correct horse battery'), status: 'active' } });
   const viewer = await db.webUser.create({ data: { username: 'look', displayName: 'Look', passwordHash: hashPassword('longenough1'), status: 'active' } });
+  const reviewer = await db.webUser.create({ data: { username: 'rev', displayName: 'Rev', passwordHash: hashPassword('longenough2'), status: 'active' } });
   db.tables.set('engagement', new Map([[ENG, { id: ENG, userId: owner.id, name: ENG, targetValue: 'https://t.invalid' }]]));
   await db.webMembership.create({ data: { engagementId: ENG, userId: viewer.id, role: 'viewer' } });
-  const app = await (buildApp({ authMode: 'multi', authDb: db as never, findingsWorkflow: new FindingsWorkflowService(db as never) }) as unknown as Promise<FastifyInstance>);
+  await db.webMembership.create({ data: { engagementId: ENG, userId: reviewer.id, role: 'reviewer' } });
+  const app = await (buildApp({ authMode: 'multi', authDb: db as never, findingsWorkflow: new FindingsWorkflowService(db as never, artifacts) }) as unknown as Promise<FastifyInstance>);
   const login = async (username: string, password: string): Promise<{ cookie: string; csrf: string }> => {
     const res = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { username, password } });
     expect(res.statusCode).toBe(200);
     return { cookie: `raptix_web_session=${res.cookies.find((c) => c.name === 'raptix_web_session')!.value}`, csrf: res.json().csrfToken };
   };
-  return { app, owner: await login('owner', 'correct horse battery'), viewer: await login('look', 'longenough1') };
+  return { app, owner: await login('owner', 'correct horse battery'), viewer: await login('look', 'longenough1'), reviewer: await login('rev', 'longenough2') };
 }
 
 describe('ticket 10 finding lifecycle and evidence', () => {
@@ -107,7 +110,7 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     expect(created.json().status).toBe('draft');
     expect(created.json().sourceType).toBe('authored');
 
-    const imported = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Scanner claim: XSS', producerRef: 'findings/FIND-9.md#claim-1', detail: 'AI claim â€” unverified.' } });
+    const imported = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Scanner claim: XSS', producerRef: 'findings/FIND-9.md#claim-1', detail: 'AI claim — unverified.' } });
     expect(imported.statusCode).toBe(200);
     expect(imported.json().sourceType).toBe('imported');
     expect(imported.json().producerRef).toBe('findings/FIND-9.md#claim-1');
@@ -117,20 +120,66 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     expect(denied.statusCode).toBe(403);
   });
 
-  it('enforces the transition map and reviewer-only confirmation', async () => {
-    const { app, owner } = await setup();
+  it('enforces the transition map, version-pinned transitions and independent confirmation', async () => {
+    const { app, owner, reviewer } = await setup();
     const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'F1' } });
     const id = created.json().id;
-    const skip = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'resolved' } });
+    const skip = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'resolved', expectedVersion: 1 } });
     expect(skip.statusCode).toBe(409);
     expect(skip.json().error.message).toContain('not allowed');
-    const review = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'review' } });
+    const unversioned = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'review' } });
+    expect(unversioned.statusCode).toBe(400);
+    const stale = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'review', expectedVersion: 9 } });
+    expect(stale.statusCode).toBe(409);
+    const review = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'review', expectedVersion: 1 } });
     expect(review.statusCode).toBe(200);
-    // The engagement owner is not automatically a reviewer here: the membership grants owner via ownership...
-    // owner role ranks above reviewer, so confirmation succeeds; a plain operator would be refused.
-    const confirmed = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'confirmed' } });
+    expect(review.json().expectedVersion).toBe(2);
+    // W19: four-eyes � the author (here the engagement owner) cannot confirm their own finding.
+    const selfConfirm = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'confirmed', expectedVersion: 2 } });
+    expect(selfConfirm.statusCode).toBe(403);
+    expect(selfConfirm.json().error.message).toMatch(/independent/i);
+    const confirmed = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { to: 'confirmed', expectedVersion: 2 } });
     expect(confirmed.statusCode).toBe(200);
     expect(confirmed.json().status).toBe('confirmed');
+  });
+
+  it('W19: editing a confirmed finding invalidates the confirmation; resolved findings refuse edits', async () => {
+    const { app, owner, reviewer } = await setup();
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'F1', detail: 'v1' } });
+    const id = created.json().id;
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'review', expectedVersion: 1 } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { to: 'confirmed', expectedVersion: 2 } });
+    const edited = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/curated-findings/${id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { expectedVersion: 3, detail: 'edited after confirm' } });
+    expect(edited.statusCode).toBe(200);
+    expect(edited.json().status).toBe('review');
+    expect(edited.json().expectedVersion).toBe(4);
+    const listed = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/curated-findings`, headers: { cookie: owner.cookie } });
+    expect(listed.json().findings.find((f: { id: string }) => f.id === id).status).toBe('review');
+    // Push to resolved, then the terminal state refuses content edits.
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { to: 'confirmed', expectedVersion: 4 } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'remediation', expectedVersion: 5 } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'retest', expectedVersion: 6 } });
+    const resolved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'resolved', expectedVersion: 7 } });
+    expect(resolved.statusCode).toBe(200);
+    const refused = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/curated-findings/${id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { expectedVersion: 8, detail: 'too late' } });
+    expect(refused.statusCode).toBe(409);
+  });
+
+  it('W19: import resolves the producer reference through the retained authority and flags unverified claims', async () => {
+    const retained: Pick<ArtifactsService, 'capture'> = {
+      capture: async (_actor: string, _engagement: string, path: string) => {
+        if (path === 'findings/FIND-9.md') return { digest: 'a'.repeat(64), producer: 'runtime:scanner-1' } as never;
+        throw new (await import('../src/services/projects-service.js')).ProjectApiError(404, 'Artifact not retained.');
+      },
+    };
+    const { app, owner } = await setup(retained);
+    const resolved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Scanner claim', producerRef: 'findings/FIND-9.md', detail: 'claim' } });
+    expect(resolved.statusCode).toBe(200);
+    expect(resolved.json().producerRef).toBe('findings/FIND-9.md');
+    expect(resolved.json().producerResolved).toBe(true);
+    const unverified = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Foreign claim', producerRef: 'findings/FOREIGN-77.md', detail: 'claim' } });
+    expect(unverified.statusCode).toBe(200);
+    expect(unverified.json().producerResolved).toBe(false);
   });
 
   it('rejects stale expectedVersion writes with a conflict and preserves the row', async () => {
