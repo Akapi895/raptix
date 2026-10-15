@@ -104,7 +104,8 @@ function toPlanView(row: {
 }
 
 export class GovernanceService {
-  public constructor(private readonly db: PrismaClient, private readonly scope: ScopeService) {}
+  public constructor(private readonly db: PrismaClient, private readonly scope: ScopeService,
+    private readonly options?: { readiness?: () => Promise<PreflightCheck[]> }) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -121,6 +122,27 @@ export class GovernanceService {
       deadlineHours: 24,
       source: 'db',
     };
+  }
+
+  /** Revalidate the binding on every execution submit/resume, not only at bind time. */
+  public async assertExecutionAuthorized(actorId: string, engagementId: string, threadId: string, requirePlan = true): Promise<void> {
+    await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
+    await assertEngagementOpen(this.db, engagementId);
+    await this.assertNoActiveStop(engagementId, threadId);
+    const plans = await this.db.businessPlan.findMany({ where: { engagementId } });
+    // Local R06 supports the pre-governance handoff flow. Once a business plan
+    // exists, local deployments are subject to exactly the same binding gates.
+    if (!requirePlan && plans.length === 0) return;
+    const bindings = await this.db.operationBinding.findMany({ where: { engagementId, threadId }, orderBy: { createdAt: 'desc' } });
+    const binding = bindings.find((b) => b.threadId === threadId && ['bound', 'running'].includes(b.status));
+    if (!binding) throw new ProjectApiError(409, 'Execution requires a current approved plan binding for this thread.');
+    const plan = await this.findPlan(engagementId, binding.planId);
+    if (plan.status !== 'approved' || plan.expiresAt === null) throw new ProjectApiError(409, 'The bound plan is not approved; re-review is required.');
+    assertNotExpired(plan.expiresAt, Date.now(), 'Bound plan approval');
+    const approved = await this.scope.latestApproved(engagementId);
+    if (!approved || approved.version !== plan.roeVersion) throw new ProjectApiError(409, 'The bound ROE version is stale; re-review is required.');
+    const preflight = await this.preflight(actorId, engagementId, threadId);
+    if (!preflight.ok) throw new ProjectApiError(409, `Preflight refuses execution: ${preflight.checks.filter((c) => c.state !== 'pass').map((c) => `${c.id}: ${c.detail}`).join('; ')}`);
   }
 
   public async savePlan(actorId: string, engagementId: string, input: unknown): Promise<PlanView> {
@@ -184,6 +206,42 @@ export class GovernanceService {
     return toPlanView(updated as never);
   }
 
+  /**
+   * Revises an existing plan: the reviewed version stays untouched (its
+   * approval keeps applying until superseded through the decision path) and a
+   * NEW draft at the next version carries the proposed body for review.
+   */
+  public async revisePlan(actorId: string, engagementId: string, planId: string, input: unknown): Promise<PlanView> {
+    await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
+    await assertEngagementOpen(this.db, engagementId);
+    const base = await this.findPlan(engagementId, planId);
+    const body = (input ?? {}) as { objective?: unknown; methods?: unknown };
+    const objective = typeof body.objective === 'string' ? body.objective.trim() : '';
+    const methods = Array.isArray(body.methods) ? body.methods.filter((m): m is string => typeof m === 'string') : [];
+    if (objective.length === 0) throw new ProjectApiError(400, 'objective is required.');
+    const last = await this.db.businessPlan.findFirst({ where: { engagementId }, orderBy: { version: 'desc' } });
+    const created = await this.db.businessPlan.create({
+      data: {
+        engagementId,
+        version: (last?.version ?? 0) + 1,
+        status: 'draft',
+        body: { objective, methods } as object,
+        requestedBy: actorId,
+      },
+    });
+    await this.audit(engagementId, actorId, 'plan.revised', 'business_plan', created.id, `revision of ${base.id} v${base.version}`);
+    return toPlanView(created as never);
+  }
+
+  /** Side-by-side comparison of two persisted plan versions (both engagement-owned). */
+  public async comparePlans(actorId: string, engagementId: string, planId: string, baseId: string): Promise<{ base: PlanView; revision: PlanView; source: 'db' }> {
+    await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
+    if (baseId.length === 0) throw new ProjectApiError(400, 'baseId (the reviewed plan version) is required.');
+    const base = await this.findPlan(engagementId, baseId);
+    const revision = await this.findPlan(engagementId, planId);
+    return { base: toPlanView(base as never), revision: toPlanView(revision as never), source: 'db' };
+  }
+
   /** Preflight: the readiness checklist consumed by the operation wizard/start. */
   public async preflight(actorId: string, engagementId: string, threadId: string | null): Promise<PreflightView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
@@ -217,6 +275,14 @@ export class GovernanceService {
     });
     checks.push(activeEstop === null ? { id: 'estop', state: 'pass', detail: null } : { id: 'estop', state: 'fail', detail: 'An emergency stop is active; work cannot start until it is resolved.' });
 
+    if (this.options?.readiness !== undefined) {
+      try {
+        checks.push(...await this.options.readiness());
+      } catch (error) {
+        checks.push({ id: 'runtime', state: 'unavailable', detail: error instanceof Error ? error.message : 'Runtime readiness did not report.' });
+      }
+    }
+
     return { engagementId, ok: checks.every((c) => c.state === 'pass'), checks, source: 'db' };
   }
 
@@ -224,6 +290,10 @@ export class GovernanceService {
   public async bindPlan(actorId: string, engagementId: string, planId: string, threadId: string | null): Promise<BindingView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
     await assertEngagementOpen(this.db, engagementId);
+    if (threadId === null) throw new ProjectApiError(400, 'An operation binding requires its owned execution threadId.');
+    const thread = await this.db.engagementThread.findFirst({ where: { threadId, engagementId } });
+    if (thread === null) throw new ProjectApiError(404, 'Thread not found in this engagement.');
+    if (thread.kind !== 'execution') throw new ProjectApiError(400, 'Only execution threads can be bound to an operation; planning threads produce plan drafts instead.');
     const pre = await this.preflight(actorId, engagementId, threadId);
     if (!pre.ok) {
       const failed = pre.checks.filter((c) => c.state === 'fail').map((c) => `${c.id}: ${c.detail ?? 'failed'}`).join('; ');
@@ -244,7 +314,7 @@ export class GovernanceService {
   }
 
   /** Emergency stop at operation/project/workspace scope with truthful runtime outcome. */
-  public async emergencyStop(actorId: string, engagementId: string, input: unknown, cancelRun?: (threadId: string, runId: string | null) => Promise<string>): Promise<EmergencyStopView> {
+  public async emergencyStop(actorId: string, engagementId: string, input: unknown, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>): Promise<EmergencyStopView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
     const body = (input ?? {}) as { scope?: unknown; targetId?: unknown; reason?: unknown; threadId?: unknown; runId?: unknown };
     const scope = typeof body.scope === 'string' && ['operation', 'project', 'workspace'].includes(body.scope) ? body.scope : '';
@@ -253,9 +323,10 @@ export class GovernanceService {
     if (reason.length === 0) throw new ProjectApiError(400, 'reason is required.');
     let outcome: EmergencyStopView['outcome'] = 'requested';
     let detail = '';
-    if (cancelRun !== undefined && typeof body.threadId === 'string' && body.threadId.length > 0) {
+    if (scope === 'operation' && (typeof body.threadId !== 'string' || body.threadId.length === 0)) throw new ProjectApiError(400, 'An operation stop requires its owned threadId.');
+    if (cancelRun !== undefined) {
       try {
-        const reported = await cancelRun(body.threadId, typeof body.runId === 'string' ? body.runId : null);
+        const reported = await cancelRun(typeof body.threadId === 'string' ? body.threadId : '', typeof body.runId === 'string' ? body.runId : null, actorId, engagementId);
         outcome = reported === 'stopped' ? 'stopped' : 'acknowledged';
         detail = ` (${reported})`;
       } catch (err) {
@@ -286,7 +357,7 @@ export class GovernanceService {
   /** Refuses lifecycle mutations while an emergency stop is still active. */
   public async assertNoActiveStop(engagementId: string, threadId: string | null): Promise<void> {
     const active = await this.db.emergencyStop.findFirst({
-      where: { engagementId, outcome: { in: ['requested', 'acknowledged'] }, ...(threadId !== null ? { OR: [{ targetId: threadId }, { scope: { in: ['project', 'workspace'] } }] } : {}) },
+      where: { engagementId, outcome: { in: ['requested', 'acknowledged', 'stopped', 'failed', 'unknown'] }, ...(threadId !== null ? { OR: [{ targetId: threadId }, { scope: { in: ['project', 'workspace'] } }] } : {}) },
     });
     if (active !== null) {
       throw new ProjectApiError(409, `An emergency stop (${active.scope}) is active; work never auto-resumes and needs explicit resolution first.`);
