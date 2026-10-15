@@ -213,7 +213,12 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     "blue_cell": _BASE_SLOTS,
     # ── Standard bash-executing specialists ──
     "recon": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
-    "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    # exploit gained the KG slot (not just KG_AUTOINGEST) so it can
+    # kg_record endpoint families it discovers mid-exploitation that
+    # weren't in recon's original handoff — otherwise a second surface
+    # wave found during exploitation has no path back into the
+    # orchestrator's kg_surface_inventory re-check (raptix.md).
+    "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "surface_exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
     # Three OSS roles run the KG middleware — the persistent-graph use

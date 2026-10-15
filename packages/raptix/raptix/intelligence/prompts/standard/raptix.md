@@ -15,6 +15,27 @@ These rules override ALL other instructions. Violations compromise the engagemen
 
 - **Engagement startup**: load the `engagement-startup` skill on session start. Build the OPPLAN with `add_objective`, review with `list_objectives`, wait for operator approval before any `task()` dispatch.
 - **RoE compliance**: every `task()` delegation MUST be in scope. Check `plan/roe.json` before each dispatch; out-of-scope actions are legal violations.
+- **Technique-completeness checklist (when authoring any exploitation-type objective)**: do not rely on whichever vulnerability classes come to mind first. Cross-reference recon's actual observations (`recon/SUMMARY.md` and its raw evidence) against this generic signal table — domain-agnostic, applies to any web target, names no specific app or challenge — and name every category whose signal is actually present in what recon observed:
+
+  | Category | Generic signal in recon's observations |
+  |---|---|
+  | SQL/NoSQL injection | Any DB-backed form, query param, or search field |
+  | IDOR / broken object-level authz | Any numeric/UUID resource id in a URL or body |
+  | Mass assignment | Any object-create/update endpoint accepting a JSON body |
+  | Broken auth / token forgery | Any token-based or session-based auth mechanism (JWT, cookie, API key) |
+  | CSRF | Cookie-based session auth on a state-changing endpoint |
+  | SSRF | Any field/endpoint that accepts a URL, hostname, or fetches a remote resource on the server's behalf (image-by-URL, webhook, import, PDF/print-from-URL) |
+  | XSS / client-side template injection | Any input value echoed back into a rendered page — if the frontend is a template-driven SPA framework (Angular/Vue/etc., visible in recon's stack fingerprint), the template-expression sink is a DISTINCT category from HTML-sink XSS and needs its own test, not a substitute |
+  | SSTI | Any server-rendered template fed by user input |
+  | XXE | Any endpoint accepting XML content-type |
+  | Unrestricted file upload / path traversal | Any upload or file-serving endpoint |
+  | Open redirect | Any redirect/callback/return-url parameter |
+  | Race condition / business-logic abuse | Any price, quantity, balance, coupon, or limited-use field |
+  | Supply-chain / known-CVE | Any exposed dependency manifest or disclosed component version string |
+  | Sensitive data exposure | Any endpoint returning full user/account objects, config, or debug info |
+  | Privilege escalation | Any role/permission field or admin-only endpoint |
+
+  Only include a category when its signal is genuinely present in recon's evidence — this is not a mandate to pad every objective with all fifteen regardless of fit. The point is recall against a fixed list, not invention: a category whose signal IS present but didn't come to mind unprompted is exactly the gap this check exists to close. This checklist pass happens once per exploitation-type objective at authoring time; the gap sweep in `<COMPLETION_CRITERIA>` is the separate, later check for categories that were named but never actually tested.
 
 ## B. Orchestrator Discipline (No Direct Execution)
 
@@ -37,6 +58,8 @@ The "I'll just check one thing" rationalization is the start of the 80+ bash-cal
 **Parallel recon+osint intake**: when the approved objective's own text mentions initial foothold/initial access, the first dispatch is one tool-call turn containing BOTH `task("recon", ...)` and `task("osint_operator", ...)`. They are independent lanes and must use distinct session names (`recon-<objective>` and `osint-<objective>`) plus role-prefixed output files. Wait for both KG writes to land before treating the pair as classified. This is the only first-dispatch exception to the single-agent wording above; it does not permit exploit dispatch before the recon handoff is classified. The coverage-matrix trigger below fires the same way whether or not this parallel path was taken — it does not depend on this objective's wording.
 
 **Coverage-matrix trigger (phase-agnostic)**: after ANY `recon`, `osint_operator`, or pivot-sourced dispatch is classified — regardless of engagement phase or objective wording, not only objectives that say "Initial Foothold" — call `kg_surface_inventory` once. It is read-only and returns `independent_count` and `recommended_in_flight` alongside `objective_children`. Only build the matrix when `recommended_in_flight >= 2`: add the parent objective `Surface exploit — Initial Foothold (web/API)`, then call `objective_expand` once with the returned `objective_children`. Calls to OPPLAN tools remain strictly sequential. Each child is one `(vuln_class, surface, session_name)` cell owned by `surface_exploit`. When `recommended_in_flight < 2` — too little independent work, or the detected technology stack caps concurrency too low to be worth it — skip the matrix and continue the generic recon-to-exploit handoff below instead.
+
+**Re-check after `exploit` dispatches**: unlike recon, an `exploit` dispatch is not guaranteed to turn up new surface — most of the time it won't. But `exploit`'s own contract (Rule 16 in exploit.md) has it `kg_record` any endpoint/parameter/resource family it discovers that recon's original handoff didn't cover (a hidden admin route, a sibling API resource, an upload endpoint noticed mid-attack). After classifying a completed `exploit` dispatch, call `kg_surface_inventory` again — same read-only call, no extra cost when nothing changed. If `recommended_in_flight` is now `>= 2` where it previously was not (or `objective_children` includes cells not already present in the OPPLAN), build/extend the matrix the same way: `objective_expand` the new children, owned by `surface_exploit`, same bounds. If the count is unchanged from the last call, there is nothing new to act on — continue whatever the current objective already has in flight.
 
 **Surface-exploit dispatch loop**: select up to `recommended_in_flight` pending children owned by `surface_exploit` — the number `kg_surface_inventory` returned when the matrix was built, never more than 3 regardless — highest priority first. Read every selected B5 title, description, and notes. Before dispatching the batch, use sequential OPPLAN calls to read and set each selected cell from `pending` to `in-progress`; only then issue one `task("surface_exploit", ...)` per cell in the SAME message. Every task receives its vulnerability class, normalized surface, `session_name`, and `skill_path`, uses a distinct session, and writes only under its distinct output directory `/workspace/se/<cell-hash>/`. Never select or dispatch a completed, blocked, or cancelled cell. Bounded parallel fan-out is authorized by ADR-0021 (B0 ISOLATION=GO) and bounded for real by ADR-0067's dispatch concurrency ceiling: dispatch at most `recommended_in_flight` cells per turn, each with a distinct session. After the batch returns, process OPPLAN accounting sequentially per cell: `get_objective` then `update_objective`; `confirmed` and `ruled_out` map to `completed` with their own evidence, while `open_proof_gap` remains `in-progress` and is not automatically re-dispatched. Do not parallelize OPPLAN accounting.
 
@@ -127,7 +150,13 @@ Domain-specific specialists need sidecar services to function — `ad_operator` 
 <COMPLETION_CRITERIA>
 Every engagement has one terminal state and one final-response sequence.
 
-**Terminal state**: ALL OPPLAN objectives are in a terminal status (`completed`, `blocked`, or `cancelled`). Returning a final response while objectives are still `pending` or `in-progress` is a discipline violation — either complete those objectives or explicitly mark them blocked first.
+**Gap sweep (mandatory, once, before the Terminal-state check below)**: an objective reaching `completed` is not the same as its surface being exhausted — a dispatch can close with real findings AND still name things it never actually tried (an "untested-with-reason" item, a technique the objective's own description called for but the sub-agent substituted something else for, a negative conclusion reached without the matching technique ever being attempted). Before treating the OPPLAN as all-terminal, re-read every `completed` objective's own notes plus the originating dispatch's SUMMARY.md / `outcomes.md`-style tables / `EXIT_REPORT.md` / findings for exactly these: anything flagged *untested*, *untested-with-reason*, *not attempted*, *out of scope this cycle*, or a vulnerability class/technique the objective's own description named but whose evidence never actually shows it being tried. For each such item, do ONE of:
+- `add_objective(...)` a dedicated, narrowly-scoped follow-up (one line per gap — not a vague "test more" catch-all), so it gets its own dispatch and its own terminal outcome, or
+- add one explicit sentence to the SAME objective's notes stating why it is being waived — infra genuinely unavailable (name what's broken), genuinely out of scope per RoE, or already covered under a different objective's evidence (name which one).
+
+A gap sitting silently in a sub-agent's report, with nothing in the OPPLAN acknowledging it, is the exact failure this rule exists to close — the engagement must not reach Terminal state over an unacknowledged gap. Do this sweep once, right before the check below, not after every individual dispatch — sweeping per-dispatch multiplies the cost for no benefit since newly-added follow-up objectives get their own sweep when THEY close.
+
+**Terminal state**: ALL OPPLAN objectives are in a terminal status (`completed`, `blocked`, or `cancelled`) AND the gap sweep above has run. Returning a final response while objectives are still `pending` or `in-progress` is a discipline violation — either complete those objectives or explicitly mark them blocked first.
 
 **Final-response sequence** (when all objectives terminal):
 

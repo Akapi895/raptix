@@ -34,6 +34,58 @@ design spec, §13.4).
 
 ### Fixed
 
+- `recon.md` named only `kg_ingest` (scanner-file-only) for its KG handoff, so
+  black-box recon that never shells out to nmap/nuclei/httpx had no instructed
+  path to write Endpoint/Parameter/Form/Technology/AuthModel nodes — the
+  orchestrator's `kg_surface_inventory` coverage-matrix trigger (ADR-0068)
+  then always saw `independent_count=0` regardless of how much real surface
+  recon found, silently disabling fan-out. `recon.md` now names `kg_record`
+  explicitly for freeform/manual observations, with a concrete call shape, and
+  requires the write to happen incrementally as each observation is confirmed
+  rather than batched right before return — a recursion-limit or
+  budget-exhaustion cutoff mid-dispatch (observed in production) no longer
+  silently drops every pending KG write along with it.
+- `exploit` had no path to feed newly-discovered surface (endpoint/parameter
+  families recon's original handoff never covered) back into the KG — it only
+  held `MiddlewareSlot.KG_AUTOINGEST` (scanner-tool auto-capture), not
+  `MiddlewareSlot.KG` (`kg_record`/`kg_ingest`). Added the KG slot to
+  `exploit`'s entry in `SLOTS_PER_ROLE`, gave `exploit.md` an explicit
+  new-surface recording rule (CRITICAL_RULES #16), and extended `raptix.md`'s
+  coverage-matrix trigger to re-call `kg_surface_inventory` after `exploit`
+  dispatches too, not only recon/osint/pivot — so surface discovered mid-
+  exploitation can still open a late fan-out window.
+- Exploitation-type objectives were authored from whichever vulnerability
+  classes the orchestrator happened to think of (observed in production: 5
+  skills cited — sqli/idor/file-upload/xss/business-logic — out of 15+
+  plausible classes, with no mechanism to catch the ones left out before the
+  objective closed). `raptix.md` Section A now carries a generic,
+  domain-agnostic technique-completeness checklist (SQLi, IDOR, mass
+  assignment, broken-auth/token-forgery, CSRF, SSRF, XSS/CSTI, SSTI, XXE,
+  file-upload/traversal, open-redirect, race-condition/business-logic,
+  supply-chain/CVE, sensitive-data-exposure, privilege-escalation) to
+  cross-reference against recon's actual observations when authoring any
+  exploitation objective — recall against a fixed list, not invention. This
+  is the authoring-time counterpart to the gap-sweep fix below, which catches
+  the same class of miss retroactively, after the fact.
+- OPPLAN had no gate stopping an engagement from reaching Terminal state while
+  a completed objective's own dispatch report still named untested/skipped
+  techniques (observed in production: an objective's description explicitly
+  called for "template injection" testing, the sub-agent substituted
+  HTML-tag XSS instead, concluded negative, and the orchestrator accepted the
+  objective as complete with no follow-up). `raptix.md`'s `COMPLETION_CRITERIA`
+  now requires a one-time gap sweep over every completed objective's notes/
+  SUMMARY/outcomes/EXIT_REPORT before the Terminal-state check: each
+  untested/skipped item needs either a dedicated follow-up `add_objective` or
+  an explicit waiver sentence in that objective's own notes — it can no longer
+  sit silently in a sub-agent's report.
+- The `xss` skill (`exploit/web/xss/SKILL.md`) covered only CTF-flag-style
+  HTML-sink payloads (`<script>`, bot/report exfiltration, JSFuck filter
+  bypass) with zero mention of AngularJS/Angular client-side template
+  injection (CSTI) anywhere in the skill corpus — on an Angular SPA, a
+  negative HTML-tag-XSS result was being read as "not exploitable" without
+  ever testing the template-expression sink (`{{constructor.constructor(...)}}`).
+  Added an explicit CSTI section with detection/sandbox-escape payloads and
+  updated `when_to_use`/`tags` so Angular-flagged targets route here.
 - Preserve model content, tool calls and usage through LangChain ModelResponse
   recording; propagate validated dispatch objectives to child graphs and audit
   records before execution.
