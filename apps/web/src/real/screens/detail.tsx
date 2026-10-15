@@ -5,7 +5,7 @@
  * unavailable panel instead of demo data (D4). Planning readiness arrives
  * with ticket 04.
  */
-import { useEffect, useMemo, useState, type ReactElement } from 'react'
+import { useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
@@ -56,7 +56,7 @@ export function RealProjectDetail(): ReactElement {
   const setPid = useProjectStore((s) => s.setPid)
   useEffect(() => { if (id) setPid(id) }, [id, setPid])
 
-  const [tab, setTab] = useState('overview')
+  const tab = TABS.some((t) => t.id === route.tab) ? route.tab! : 'overview'
   const detail = useQuery({
     queryKey: projectKeys.detail(id),
     queryFn: () => getEngagement(id),
@@ -100,7 +100,7 @@ export function RealProjectDetail(): ReactElement {
       />
       <Tabs
         value={tab}
-        onChange={setTab}
+        onChange={(next) => go('project', { id, tab: next })}
         tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
       />
       <div className="mt-5">

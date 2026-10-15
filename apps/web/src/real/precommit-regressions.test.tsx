@@ -136,6 +136,7 @@ function workspaceNetwork(questions: unknown[] = [], options: { lostAck?: boolea
     const body = typeof init?.body === 'string' ? JSON.parse(init.body) as Record<string, unknown> : undefined
     calls.push({ url, method, body })
     if (url.endsWith('/capabilities')) return response({ version: 1, mode: 'local-single-user', capabilities: { projects: { supported: true, available: true }, agents: { supported: true, available: true } } })
+    if (url.endsWith('/auth/session')) return new Response('not found', { status: 404 })
     if (url.endsWith('/engagements/eng-1')) return response({ id: 'eng-1', workspaceSlug: 'w', displayName: 'Test', targetType: 'web_url', targetValue: 'https://example.test', authorizationConfirmed: true, brief: null, handoffConfirmedAt: AT, metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null, activeAgentCount: null, createdAt: AT, updatedAt: AT })
     if (url.endsWith('/threads')) return response({ engagementId: 'eng-1', threads: options.secondThread ? [binding, { ...binding, threadId: 'thread-2' }] : [binding], source: 'runtime' })
     if (url.endsWith('/approvals')) return response({ engagementId: 'eng-1', approvals: [], source: 'workspace' })

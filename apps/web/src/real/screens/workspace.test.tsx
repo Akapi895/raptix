@@ -6,7 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PublicStreamEvent } from '@raptix/web-contracts'
 
-const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
+const { act, cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
 const { RealModeProvider } = await import('../bootstrap')
 const { RealWorkspace } = await import('./workspace')
@@ -119,6 +119,8 @@ function ui(node: React.ReactElement) {
 
 beforeEach(() => {
   window.localStorage.clear()
+  go('ai-operator')
+  FakeEventSource.instances = []
   vi.stubGlobal('EventSource', FakeEventSource as unknown as typeof EventSource)
 })
 afterEach(() => {
@@ -127,6 +129,24 @@ afterEach(() => {
 })
 
 describe('RealWorkspace', () => {
+  it('bounds checkpoint snapshot reads during a replay burst', async () => {
+    const calls = stubApi()
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const composer = await screen.findByLabelText('Workspace message')
+    await waitFor(() => expect(composer).toBeEnabled())
+    await user.type(composer, 'Local replay test')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0] })
+    const before = calls.filter((c) => c.url.endsWith('/threads/th-plan')).length
+    for (let i = 0; i < 30; i++) {
+      await act(async () => source.emit('run-event', event({ eventId: `checkpoint-${i}`, source: 'checkpoint', runId: null })))
+    }
+    expect(calls.filter((c) => c.url.endsWith('/threads/th-plan')).length - before).toBeLessThan(4)
+  })
+
   it('prompts for an engagement when none is selected', async () => {
     stubApi()
     ui(<RealWorkspace />)

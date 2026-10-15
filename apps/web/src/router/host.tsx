@@ -11,7 +11,7 @@
  * Ticket 60 (append): the `copilotDrawer` slot is filled with the migrated
  * copilot drawer the same way; the `askAi` trigger keeps the legacy default.
  */
-import { Component, Suspense, useEffect, useRef, type ComponentType, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useEffect, useRef, type ComponentType, type ReactNode } from 'react'
 import { useBlocker, useRouteError } from 'react-router'
 import { Loader2, RefreshCw, ServerCrash } from 'lucide-react'
 import { useSessionStore } from '../state/session'
@@ -37,6 +37,7 @@ import { OUTSIDE_SHELL, type Route } from './history'
 import { routeComponent } from './registry'
 
 const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
+const RealFeatureRoute = lazy(() => import('../real/screens/feature-route').then((m) => ({ default: m.RealFeatureRoute })))
 
 /** Route keys with a real implementation mounted directly (integration tickets 03-06). */
 const REAL_PAGES: Record<string, ComponentType | undefined> = {
@@ -47,6 +48,19 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   assets: RealAssets,
   playbooks: RealLibrary,
   'command-center': RealCommandCenter,
+  tasks: RealCommandCenter,
+  ...Object.fromEntries([
+    'operations', 'operation', 'operation-new', 'preflight', 'operation-schedule',
+    'agents', 'agent', 'ai-fanout', 'ai-branch', 'asset', 'asset-new', 'asset-scope',
+    'findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'analysis',
+    'reports', 'report-new', 'report', 'report-preview', 'report-review',
+    'ai-plan', 'ai-plan-review', 'ai-plan-compare', 'c2', 'c2-channel', 'c2-session', 'c2-console',
+  ].map((key) => [key, RealFeatureRoute])),
+  'ai-history': RealWorkspace,
+  'ai-trace': RealWorkspace,
+  playbook: RealLibrary,
+  technique: RealLibrary,
+  'playbook-review': RealFeatureRoute,
   settings: RealSettings,
   login: RealLogin,
 }
@@ -114,7 +128,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
       return (
         <Shell slots={{ notifications: RealHeaderNotices }}>
           <PageBoundary key={key}>
-            <Real />
+            <Suspense fallback={<PageFallback />}><Real /></Suspense>
           </PageBoundary>
         </Shell>
       )

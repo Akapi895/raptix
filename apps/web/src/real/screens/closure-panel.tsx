@@ -19,6 +19,11 @@ const CHECK_LABEL: Record<string, string> = {
   findings: 'No findings left in review',
   reports: 'All reports delivered',
   approvals: 'No pending approvals',
+  'scope-reviews': 'No pending scope reviews',
+  'plan-reviews': 'No pending plan reviews',
+  'grant-reviews': 'No pending grant reviews',
+  'provider-sessions': 'Provider sessions disconnected',
+  'runtime-questions': 'Runtime runs and questions settled',
 }
 
 export function RealClosurePanel({ engagementId }: { engagementId: string }): ReactElement {
@@ -69,18 +74,17 @@ export function RealClosurePanel({ engagementId }: { engagementId: string }): Re
       <Card>
         <CardHeader title="Closure checklist" sub="Read live from the authoritative sources at request time — unavailable sources block closure instead of passing silently" />
         <div className="p-4">
-          {row === null ? (
+          {row === null && (
             <p className="text-sm text-muted">No closure has been requested for this engagement.</p>
-          ) : (
+          )}
             <ul className="space-y-2">
-              {row.checklist.entries.map((e) => (
+              {view.checklist.entries.map((e) => (
                 <li key={e.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-line px-3 py-2">
                   <Status kind="gate" value={e.state === 'pass' ? 'passed' : e.state === 'fail' ? 'failed' : 'pending'} size="sm" label={CHECK_LABEL[e.id] ?? e.id} />
                   <span className="min-w-0 flex-1 text-xs text-muted">{e.detail ?? (e.state === 'pass' ? 'settled' : 'unknown state')}</span>
                 </li>
               ))}
             </ul>
-          )}
         </div>
       </Card>
 

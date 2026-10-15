@@ -6,10 +6,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { FileText, Loader2 } from 'lucide-react'
-import { createReport, decideReportReview, deliverReport, fetchReports } from '../api'
+import { createReport, fetchReports } from '../api'
+import { go, useRoute } from '../../router/navigate'
+import { RealReportEditor } from './report-editor'
 import { Button, Card, CardHeader, Input, Skeleton, Status, Textarea } from '../../ui'
 
 export function RealReportsPanel({ engagementId }: { engagementId: string }): ReactElement {
+  const route = useRoute()
   const client = useQueryClient()
   const list = useQuery({ queryKey: ['real', 'report-records', engagementId], queryFn: () => fetchReports(engagementId) })
   const [title, setTitle] = useState('')
@@ -25,22 +28,16 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
     onSuccess: () => { setTitle(''); setSummary(''); setError(null); invalidate() },
     onError: (err) => setError(err instanceof Error ? err.message : 'The save was refused â€” your draft is preserved.'),
   })
-  const review = useMutation({
-    mutationFn: (input: { id: string; body: Record<string, unknown> }) => decideReportReview(engagementId, input.id, input.body),
-    onSuccess: () => { setError(null); invalidate() },
-    onError: (err) => setError(err instanceof Error ? err.message : 'The review was refused.'),
-  })
-  const deliver = useMutation({
-    mutationFn: (input: { id: string; kind: 'export' | 'delivery'; format: string }) => deliverReport(engagementId, input.id, { kind: input.kind, format: input.format, requestId: crypto.randomUUID() }),
-    onSuccess: () => { setError(null); invalidate() },
-    onError: (err) => setError(err instanceof Error ? err.message : 'The delivery was refused.'),
-  })
 
   if (list.isPending) {
     return <Card><CardHeader title="Reports" /><div className="p-4"><Skeleton className="h-20" /></div></Card>
   }
   if (list.isError || !list.data) {
     return <p className="text-sm text-bad" role="alert">Reports unavailable: {list.error instanceof Error ? list.error.message : 'read failed'}</p>
+  }
+  if (route.id && ['report', 'report-review', 'report-preview'].includes(route.page)) {
+    const report = list.data.reports.find((r) => r.id === route.id)
+    return report ? <RealReportEditor key={`${report.id}/${report.version}/${report.status}`} report={report} preview={route.page === 'report-preview'} /> : <p role="alert">Report not found in this engagement.</p>
   }
 
   return (
@@ -73,17 +70,8 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
                     <td className="py-2 pr-3 text-xs text-muted">{r.reviewedBy === null ? 'â€”' : `${r.reviewedBy}: ${r.reviewComment ?? ''}`}</td>
                     <td className="py-2">
                       <span className="flex flex-wrap gap-1">
-                        {r.status === 'draft' || r.status === 'changes_requested' ? (
-                          <Button variant="ghost" onClick={() => review.mutate({ id: r.id, body: { action: 'submit' } })}>Submit for review</Button>
-                        ) : null}
-                        {r.status === 'in_review' ? (
-                          <>
-                            <Button variant="primary" onClick={() => review.mutate({ id: r.id, body: { decision: 'approved', comment: 'Approved from the real review pane.' } })}>Approve</Button>
-                            <Button variant="secondary" onClick={() => review.mutate({ id: r.id, body: { decision: 'changes_requested', comment: 'Changes requested from the real review pane.' } })}>Request changes</Button>
-                          </>
-                        ) : null}
-                        <Button variant="ghost" onClick={() => deliver.mutate({ id: r.id, kind: 'export', format: 'markdown' })}>Export MD</Button>
-                        {r.status === 'approved' ? <Button variant="ghost" onClick={() => deliver.mutate({ id: r.id, kind: 'delivery', format: 'markdown' })}>Record delivery</Button> : null}
+                         <Button variant="ghost" onClick={() => go('report', { id: r.id, engagementId })}>Open editor / review</Button>
+                         <Button variant="ghost" onClick={() => go('report-preview', { id: r.id, engagementId })}>Preview</Button>
                       </span>
                       {r.deliveries.length > 0 ? (
                         <div className="mt-1 text-xs text-muted">{r.deliveries.map((d) => `${d.kind}/${d.format}: ${d.status}`).join(' Â· ')}</div>
@@ -118,4 +106,3 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
     </div>
   )
 }
-

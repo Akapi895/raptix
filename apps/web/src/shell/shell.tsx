@@ -19,7 +19,8 @@ import { useToastStore, useUiStore } from '../state/stores'
 import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../ui'
 import { LazyCopilotDrawer } from '../features/copilot/lazy'
 import { DATA_MODE } from '../real/mode'
-import { RealContextRibbon, RealCopilotStub, RealTopbar } from '../real/shell-parts'
+import { RealContextRibbon, RealTopbar } from '../real/shell-parts'
+import { RealCopilotDrawer } from '../real/screens/copilot'
 import { isWide, NAV } from './nav'
 import { Sidebar } from './sidebar'
 import { Topbar, type HeaderSlots } from './header'
@@ -127,7 +128,7 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
   useEffect(() => { if (copilotOpen) setNoticesOpen(false) }, [copilotOpen, setNoticesOpen])
   const wide = isWide(route)
   const real = DATA_MODE === 'real'
-  const CopilotDrawerSlot = real ? RealCopilotStub : (slots.copilotDrawer ?? LazyCopilotDrawer)
+  const CopilotDrawerSlot = real ? RealCopilotDrawer : (slots.copilotDrawer ?? LazyCopilotDrawer)
   return (
     <div className="flex h-full bg-bg text-fg">
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }} className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[200] focus:rounded-[10px] focus:bg-accent focus:px-4 focus:py-2 focus:text-white">Skip to main content</a>

@@ -11,6 +11,8 @@ import { Gauge } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { fetchTasks } from '../api'
 import { go } from '../../router/navigate'
+import { parseHash } from '../../router/history'
+import { useRoute } from '../../router/navigate'
 import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui'
 
 const KIND_LABEL: Record<string, string> = {
@@ -23,6 +25,7 @@ const KIND_LABEL: Record<string, string> = {
 }
 
 export function RealCommandCenter(): ReactElement {
+  const route = useRoute()
   const tasks = useQuery({
     queryKey: ['real', 'tasks'],
     queryFn: () => fetchTasks(),
@@ -42,7 +45,7 @@ export function RealCommandCenter(): ReactElement {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Command center"
+        title={route.page === 'tasks' ? 'Tasks' : 'Command center'}
         sub={`${view.engagements.length} authorized engagement(s) · aggregated live from the API — sources without data show as unavailable, never as zeros`}
       />
       <Card>
@@ -96,7 +99,7 @@ export function RealCommandCenter(): ReactElement {
                     <span className="text-xs text-muted"> · {t.engagementName ?? t.engagementId}{t.awaitingActor ? ' · awaiting your follow-up' : ''}</span>
                   </span>
                   <span className="text-xs text-muted">{t.createdAt.replace('T', ' ').slice(0, 16) + 'Z'}</span>
-                  <Button variant="secondary" onClick={() => { window.location.hash = t.href }}>Open</Button>
+                  <Button variant="secondary" onClick={() => { const route = parseHash(t.href); go(route.page, route) }}>Open</Button>
                 </li>
               ))}
             </ul>

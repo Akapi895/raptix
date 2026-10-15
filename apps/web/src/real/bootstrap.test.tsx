@@ -26,7 +26,11 @@ afterEach(() => {
 
 describe('RealModeProvider', () => {
   it('bootstraps the capability document before exposing children', async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify(CAPABILITIES), { status: 200 }))
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return new Response('not found', { status: 404 })
+      return new Response(JSON.stringify(CAPABILITIES), { status: 200 })
+    })
     vi.stubGlobal('fetch', fetchMock)
     render(<RealModeProvider><Probe name="projects" /><Probe name="agents" /></RealModeProvider>)
     await waitFor(() => expect(screen.getAllByTestId('probe')[0]).toHaveTextContent('ready'))
