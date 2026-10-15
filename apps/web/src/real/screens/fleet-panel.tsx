@@ -23,6 +23,9 @@ export function RealFleetPanel({ engagementId }: { engagementId: string }): Reac
   const fleet = useQuery({
     queryKey: ['real', 'fleet', engagementId],
     queryFn: () => fetchFleet(engagementId),
+    // W13 read-only v1: live read only — the panel re-reads the runtime on an
+    // interval; every mutation surface stays a recorded exclusion.
+    refetchInterval: 15_000,
   })
   const cancel = useMutation({
     mutationFn: (input: { threadId: string; runId: string }) => cancelRun(engagementId, input.threadId, input.runId),
