@@ -9,6 +9,7 @@ import { useState, type ReactElement } from 'react'
 import { Megaphone, Loader2 } from 'lucide-react'
 import { createCampaign, fetchCampaignCapabilities, fetchCampaigns, reconcileCampaignJob, runCampaignJob } from '../api'
 import type { CampaignView } from '@raptix/web-contracts'
+import { useDirty } from '../../state/session'
 import { Banner, Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
 
 export function RealCampaignsPanel({ engagementId }: { engagementId: string }): ReactElement {
@@ -21,6 +22,8 @@ export function RealCampaignsPanel({ engagementId }: { engagementId: string }): 
   const [gophish, setGophish] = useState({ templateId: '', pageId: '', groupId: '', smtpId: '' })
   const [evilginxLab, setEvilginxLab] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // W21: the campaign draft registers as dirty so navigation can guard it.
+  useDirty(name.trim() !== '' || scenario.trim() !== '')
 
   const invalidate = (): void => {
     void client.invalidateQueries({ queryKey: ['real', 'campaigns', engagementId] })

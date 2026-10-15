@@ -57,8 +57,7 @@ describe('dirty/unsaved navigation guard', () => {
     h.unmount()
   })
 
-  it('clear-then-navigate in the same tick is not held by the guard', () => {
-    const h = mountServices()
+  it('clear-then-navigate in the same tick is not held by the guard', () => {    const h = mountServices()
     h.run(() => {
       useSessionStore.getState().setDirty(true, () => {})
       useSessionStore.getState().setDirty(false)
@@ -76,6 +75,20 @@ describe('dirty/unsaved navigation guard', () => {
     expect(useSessionStore.getState().dirty).toBe(true)
     expect(useSessionStore.getState().save).toBe(save)
     act(() => { useSessionStore.getState().setDirty(false) })
+    expect(useSessionStore.getState().dirty).toBe(false)
+    expect(useSessionStore.getState().save).toBeUndefined()
+    h.unmount()
+  })
+
+  it('W21: one form unmounting never clears another form\'s dirty state', () => {
+    const h = mountServices()
+    act(() => { useSessionStore.getState().setDirty(true, undefined, 'form-a') })
+    expect(useSessionStore.getState().dirty).toBe(true)
+    act(() => { useSessionStore.getState().setDirty(false, undefined, 'form-b') })
+    expect(useSessionStore.getState().dirty).toBe(true)
+    act(() => { useSessionStore.getState().clearDirtyIf('form-b') })
+    expect(useSessionStore.getState().dirty).toBe(true)
+    act(() => { useSessionStore.getState().clearDirtyIf('form-a') })
     expect(useSessionStore.getState().dirty).toBe(false)
     expect(useSessionStore.getState().save).toBeUndefined()
     h.unmount()
