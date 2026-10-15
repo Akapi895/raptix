@@ -1,7 +1,8 @@
 import { createServer, type Server } from 'node:http';
 import { afterEach, describe, expect, it } from 'vitest';
 import { isAssetsView, isGraphView } from '@raptix/web-contracts';
-import { GraphService, toAssetSummaries } from '../src/services/graph-service.js';
+import { GraphService, neo4jQuery, toAssetSummaries } from '../src/services/graph-service.js';
+import type { GraphConfig } from '../src/services/graph-service.js';
 
 /** Minimal Neo4j HTTP tx endpoint stub: echoes canned rows for the scoped query. */
 function neo4jStub(rows: unknown, statusCode = 200, body?: unknown): Promise<{ server: Server; url: Promise<string> }> {
@@ -147,5 +148,38 @@ describe('W13 scoped graph projection', () => {
     expect(isAssetsView((await app.inject({ method: 'GET', url: '/api/engagements/eng-1/assets' })).json())).toBe(true);
     await app.close();
     await broken.close();
+  });
+});
+
+describe('W16 graph result semantics', () => {
+  const cfg = (uri: string): GraphConfig => ({ httpUri: uri, user: 'neo4j', password: 'gate-secret' });
+
+  it('resolves a successful empty result and rejects malformed responses and Neo4j query errors as distinct classes', async () => {
+    const empty = await neo4jStub(null, 200, { results: [{ data: [] }] });
+    servers.push(empty.server);
+    await expect(neo4jQuery(cfg(await empty.url), 'RETURN 1', {})).resolves.toEqual([]);
+
+    const malformed = await neo4jStub(null, 200, { unexpected: true });
+    servers.push(malformed.server);
+    await expect(neo4jQuery(cfg(await malformed.url), 'RETURN 1', {})).rejects.toMatchObject({ name: 'GraphQueryError', message: expect.stringMatching(/malformed/i) });
+
+    const queryError = await neo4jStub(null, 200, { errors: [{ code: 'Neo.ClientError.Statement.SyntaxError', message: 'Invalid syntax' }], results: [] });
+    servers.push(queryError.server);
+    await expect(neo4jQuery(cfg(await queryError.url), 'RETURN 1', {})).rejects.toMatchObject({
+      name: 'GraphQueryError',
+      message: expect.stringMatching(/Neo\.ClientError\.Statement\.SyntaxError/),
+    });
+
+    const auth = await neo4jStub(null, 401, { errors: ['unauthorized'] });
+    servers.push(auth.server);
+    await expect(neo4jQuery(cfg(await auth.url), 'RETURN 1', {})).rejects.toMatchObject({ name: 'GraphUnavailableError', message: /authentication/i });
+  });
+
+  it('keeps a successful empty graph projection truthful after the result-semantics change', async () => {
+    const empty = await neo4jStub([[], []]);
+    servers.push(empty.server);
+    const view = await new GraphService(db, cfg(await empty.url)).graph('local', 'eng-1');
+    expect(view.nodes).toEqual([]);
+    expect(view.edges).toEqual([]);
   });
 });

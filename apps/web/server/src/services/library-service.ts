@@ -1,6 +1,6 @@
 import type { GraphView } from '@raptix/web-contracts';
 import type { GraphConfig, GraphService } from './graph-service.js';
-import { GraphUnavailableError, neo4jQuery } from './graph-service.js';
+import { neo4jQuery } from './graph-service.js';
 import { ProjectApiError } from './projects-service.js';
 
 /**
@@ -83,7 +83,7 @@ const SKILL_STATEMENT = 'MATCH (n:Skill) RETURN n.name AS name, n.description AS
 const COUNT_STATEMENT = 'MATCH (n:Skill) WITH count(n) AS skills OPTIONAL MATCH (t:Technique) RETURN skills, count(t) AS techniques';
 const CORPUS_MATCH_STATEMENT = 'MATCH (t:Technique) WHERE t.id IN $ids RETURN collect(t.id) AS found';
 const SKILL_DETAIL_STATEMENT = 'MATCH (n:Skill) WHERE n.name = $name RETURN n ORDER BY n.name LIMIT 1';
-const TECHNIQUE_DETAIL_STATEMENT = 'MATCH (t:Technique) WHERE t.id = $id OPTIONAL MATCH (s:Skill)-[:COVERS]->(t) RETURN t, collect(s) AS skills LIMIT 1';
+const TECHNIQUE_DETAIL_STATEMENT = 'MATCH (t:Technique) WHERE t.id = $id OPTIONAL MATCH (s:Skill)-[:IMPLEMENTS]->(t) RETURN t, collect(s) AS skills LIMIT 1';
 
 const MAX_SKILLS = 500;
 const MAX_OBSERVED = 100;
@@ -155,13 +155,13 @@ export class LibraryService {
    * result means "not found" here (the shared query helper cannot distinguish
    * it), while transport/auth failures still surface as unavailable.
    */
+  /**
+   * W16: a successful empty result resolves to no rows (the caller decides
+   * not-found); query/schema failures throw and surface as unavailable —
+   * never collapsed into "not found" by matching error message text.
+   */
   private async detailRows(statement: string, parameters: Record<string, unknown>): Promise<unknown[][]> {
-    try {
-      return await neo4jQuery(this.config, statement, parameters);
-    } catch (error) {
-      if (error instanceof GraphUnavailableError && error.message.includes('unreadable result')) return [];
-      throw error;
-    }
+    return await neo4jQuery(this.config, statement, parameters);
   }
 
   public async skillDetail(name: unknown): Promise<LibrarySkillDetailView> {

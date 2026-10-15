@@ -17,7 +17,17 @@ export interface GraphConfig {
   readonly password: string;
 }
 
-export class GraphUnavailableError extends Error {}
+export class GraphUnavailableError extends Error {
+  public constructor(message: string) { super(message); this.name = 'GraphUnavailableError'; }
+}
+/**
+ * W16: a Neo4j-level query failure (malformed envelope, query errors) —
+ * distinct from transport/auth unavailability so callers cannot mistake a
+ * broken query or schema for "nothing exists".
+ */
+export class GraphQueryError extends GraphUnavailableError {
+  public constructor(message: string) { super(message); this.name = 'GraphQueryError'; }
+}
 
 const MAX_NODES = 400;
 const MAX_EDGES = 1200;
@@ -90,10 +100,17 @@ export async function neo4jQuery(config: GraphConfig, statement: string, paramet
   }
   if (response.status === 401 || response.status === 403) throw new GraphUnavailableError('Graph store rejected authentication');
   if (!response.ok) throw new GraphUnavailableError(`Graph store responded ${response.status}`);
-  const body = (await response.json().catch(() => null)) as { results?: Array<{ data?: Array<{ row?: unknown[] }> }> } | null;
-  const rows = body?.results?.[0]?.data?.map((entry) => entry.row ?? []).filter(Array.isArray) ?? [];
-  if (rows.length === 0) throw new GraphUnavailableError('Graph store returned an unreadable result');
-  return rows as unknown[][];
+  const body = (await response.json().catch(() => null)) as { results?: Array<{ data?: Array<{ row?: unknown[] }> }>; errors?: Array<{ code?: unknown; message?: unknown }> } | null;
+  // W16: the four result states stay distinct — transport/auth (above), a
+  // Neo4j query error, a malformed envelope, and a successful empty result.
+  if (body !== null && Array.isArray(body.errors) && body.errors.length > 0) {
+    const first = body.errors[0];
+    const code = typeof first?.code === 'string' ? first.code : 'Neo.DatabaseError.General.UnknownError';
+    const message = typeof first?.message === 'string' ? first.message : 'no detail';
+    throw new GraphQueryError(`Graph query failed: ${code}: ${message}`);
+  }
+  if (body === null || !Array.isArray(body.results) || body.results.length === 0) throw new GraphQueryError('Graph store returned a malformed response');
+  return (body.results[0]?.data?.map((entry) => entry.row ?? []).filter(Array.isArray) ?? []) as unknown[][];
 }
 
 async function runScopedQuery(config: GraphConfig, engagementName: string): Promise<ScopedRawGraph> {
