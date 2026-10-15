@@ -34,4 +34,8 @@ export function registerReportsRoutes(app: FastifyInstance, reports: ReportsServ
     const { id, reportId } = request.params as { id: string; reportId: string };
     return reports.deliver(identity.id, id, reportId, request.body);
   }));
+  app.post('/api/engagements/:id/report-records/:reportId/revision', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, reportId } = request.params as { id: string; reportId: string };
+    return reports.revise(identity.id, id, reportId, request.body);
+  }));
 }

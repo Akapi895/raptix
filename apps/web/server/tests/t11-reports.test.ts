@@ -173,10 +173,38 @@ describe('ticket 11 report lifecycle and delivery', () => {
     const delivered = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1', expectedVersion: 1, recipient: 'local client', receipt: 'Signed receipt TEST-1' } });
     expect(delivered.statusCode).toBe(200);
     expect(delivered.json().status).toBe('delivered');
-    // replay with the same request id: no duplicate row, no double state change
-    const replay = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1' } });
+    // replay with the same request id AND the same payload: no duplicate row, no double state change
+    const replay = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1', expectedVersion: 1, recipient: 'local client', receipt: 'Signed receipt TEST-1' } });
     expect(replay.statusCode).toBe(200);
     expect(replay.json().deliveries.filter((d: { requestId?: string; kind?: string }) => d.kind === 'delivery')).toHaveLength(1);
+  });
+
+  it('W20: a request id replayed with a different payload is a conflict, and a revision starts fresh review', async () => {
+    const { app, author, reviewer } = await setup();
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Revise me' } });
+    const id = created.json().id;
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'ok', expectedVersion: 1 } });
+    const first = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-d1', expectedVersion: 1, recipient: 'client', receipt: 'R-1' } });
+    expect(first.statusCode).toBe(200);
+    // Same request id, different payload: the recorded outcome must not mask the mismatch.
+    const mismatch = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-d1', expectedVersion: 1, recipient: 'client', receipt: 'R-FORGED' } });
+    expect(mismatch.statusCode).toBe(409);
+    expect(mismatch.json().error.message).toMatch(/different payload/i);
+
+    // A delivered report cannot be edited in place, but a revision can start a fresh review.
+    const edited = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: 1, summary: 'sneak' } });
+    expect(edited.statusCode).toBe(409);
+    const revision = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/revision`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: 1 } });
+    expect(revision.statusCode).toBe(200);
+    expect(revision.json().id).not.toBe(id);
+    expect(revision.json().status).toBe('draft');
+    expect(revision.json().version).toBe(1);
+    // The reviewed snapshot stays immutable; only the fresh revision re-enters review.
+    const original = (await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie } })).json();
+    const oldRow = original.reports.find((r: { id: string }) => r.id === id);
+    expect(oldRow.status).toBe('delivered');
+    expect(oldRow.approvedVersion).toBe(1);
   });
 
   it('answers 404 for foreign reports and engagements', async () => {

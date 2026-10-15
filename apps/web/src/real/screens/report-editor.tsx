@@ -1,7 +1,7 @@
 /** Versioned report editing, explicit review and manual receipt acknowledgement. */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState, type ReactElement } from 'react'
-import { decideReportReview, deliverReport, exportReport, updateReport, type ReportView } from '../api'
+import { decideReportReview, deliverReport, reviseReport, updateReport, type ReportView } from '../api'
 import { useDirty } from '../../state/session'
 import { Banner, Button, Card, CardHeader, Input, Textarea } from '../../ui'
 
@@ -18,16 +18,19 @@ export function RealReportEditor({ report, preview = false }: { report: ReportVi
   const dirty = title !== report.title || summary !== report.body.summary || JSON.stringify(sections) !== JSON.stringify(report.body.sections)
   useDirty(dirty)
   const action = useMutation({
-    mutationFn: async (kind: 'save' | 'submit' | 'approved' | 'changes_requested' | 'export' | 'delivery') => {
+    mutationFn: async (kind: 'save' | 'submit' | 'approved' | 'changes_requested' | 'export' | 'delivery' | 'revision') => {
       if (kind === 'save') return updateReport(report.engagementId, report.id, { expectedVersion: report.version, title, summary, sections })
       if (kind === 'submit') return decideReportReview(report.engagementId, report.id, { action: 'submit' })
       if (kind === 'approved' || kind === 'changes_requested') return decideReportReview(report.engagementId, report.id, { decision: kind, comment, expectedVersion: report.version })
+      if (kind === 'revision') return reviseReport(report.engagementId, report.id, { expectedVersion: report.version })
       const key = `${kind}/${report.version}`
       const requestId = requestIds.current.get(key) ?? crypto.randomUUID()
       requestIds.current.set(key, requestId)
       const updated = await deliverReport(report.engagementId, report.id, { kind, format: 'markdown', requestId, expectedVersion: report.version, recipient, receipt })
       if (kind === 'export') {
-        const artifact = await exportReport(report.engagementId, report.id, 'markdown')
+        // W20: download the artifact carried by this very request — a second
+        // read could return a different version than the recorded export.
+        const artifact = updated.artifact
         const url = URL.createObjectURL(new Blob([artifact.content], { type: artifact.mediaType }))
         const link = document.createElement('a')
         link.href = url
@@ -54,6 +57,9 @@ export function RealReportEditor({ report, preview = false }: { report: ReportVi
         {report.status === 'in_review' && <><label className="block">Review comment<Textarea value={comment} onChange={(e) => setComment(e.target.value)} /></label><Button disabled={!comment.trim() || action.isPending} onClick={() => action.mutate('approved')}>Approve this version</Button><Button disabled={!comment.trim() || action.isPending} onClick={() => action.mutate('changes_requested')}>Request changes</Button></>}
       </>}
       <Button disabled={dirty || action.isPending} onClick={() => action.mutate('export')}>Download report Markdown</Button>
+      {(report.status === 'approved' || report.status === 'delivered') && !preview && (
+        <Button variant="secondary" disabled={action.isPending} onClick={() => action.mutate('revision')}>Start a revision</Button>
+      )}
       {report.status === 'approved' && !preview && <>
         <Banner tone="info" title="Manual delivery acknowledgement">This records a receipt for delivery you performed. It does not send email or transmit the report.</Banner>
         <label className="block">Recipient<Input value={recipient} onChange={(e) => setRecipient(e.target.value)} /></label>

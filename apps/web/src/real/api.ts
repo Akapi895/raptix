@@ -813,9 +813,16 @@ export function decideReportReview(engagementId: string, reportId: string, body:
   { method: 'POST', body })
 }
 
-export function deliverReport(engagementId: string, reportId: string, input: { kind: 'export' | 'delivery'; format: string; requestId: string; expectedVersion?: number; recipient?: string; receipt?: string }): Promise<ReportView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/deliveries`, (v): v is ReportView =>
-    typeof v === 'object' && v !== null && Array.isArray((v as ReportView).deliveries),
+export function deliverReport(engagementId: string, reportId: string, input: { kind: 'export' | 'delivery'; format: string; requestId: string; expectedVersion?: number; recipient?: string; receipt?: string }): Promise<ReportView & { artifact: { reportId: string; version: number; format: string; mediaType: string; content: string; digest: string } }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/deliveries`, (v): v is ReportView & { artifact: { reportId: string; version: number; format: string; mediaType: string; content: string; digest: string } } =>
+    typeof v === 'object' && v !== null && typeof (v as { artifact?: { content?: unknown } }).artifact?.content === 'string' && typeof (v as { artifact?: { digest?: unknown } }).artifact?.digest === 'string',
+  { method: 'POST', body: input })
+}
+
+/** W20: a fresh draft revision of an approved/delivered report; the reviewed snapshot stays immutable. */
+export function reviseReport(engagementId: string, reportId: string, input: { expectedVersion: number }): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/revision`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && (v as ReportView).status === 'draft' && (v as ReportView).version === 1,
   { method: 'POST', body: input })
 }
 
