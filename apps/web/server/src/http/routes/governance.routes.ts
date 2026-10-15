@@ -4,7 +4,7 @@ import { runProjectsHandler } from './projects.routes.js';
 import type { GovernanceService } from '../../services/governance-service.js';
 
 /** Ticket 09 routes: business plans, preflight, operation bindings and emergency stops. */
-export function registerGovernanceRoutes(app: FastifyInstance, governance: GovernanceService, identity: LocalIdentity, cancelRun?: (threadId: string, runId: string | null) => Promise<string>): void {
+export function registerGovernanceRoutes(app: FastifyInstance, governance: GovernanceService, identity: LocalIdentity, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>): void {
   app.get('/api/engagements/:id/plans', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };
@@ -21,6 +21,16 @@ export function registerGovernanceRoutes(app: FastifyInstance, governance: Gover
   app.post('/api/engagements/:id/plans/:planId/decision', (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id, planId } = request.params as { id: string; planId: string };
     return governance.decidePlan(identity.id, id, planId, request.body);
+  }));
+  app.post('/api/engagements/:id/plans/:planId/revisions', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, planId } = request.params as { id: string; planId: string };
+    return governance.revisePlan(identity.id, id, planId, request.body);
+  }));
+  app.get('/api/engagements/:id/plans/:planId/compare', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id, planId } = request.params as { id: string; planId: string };
+    const query = request.query as { baseId?: string };
+    return governance.comparePlans(identity.id, id, planId, query.baseId ?? '');
   }));
   app.get('/api/engagements/:id/preflight', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');

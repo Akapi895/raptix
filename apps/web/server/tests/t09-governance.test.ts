@@ -33,6 +33,7 @@ function memoryDb() {
   const listAll = async (name: string, pred: (row: Row) => boolean): Promise<Row[]> => [...table(name).values()].filter(pred).map((r) => ({ ...r }));
   const db = {
     tables,
+    engagementClosure: { findFirst: async () => null },
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         find('engagement', (r) => r.id === where.id && (where.userId === undefined || r.userId === where.userId)),
@@ -121,6 +122,10 @@ function memoryDb() {
       create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('binding'), status: data.status ?? 'bound', concurrencyVersion: 1, createdAt: new Date(), updatedAt: new Date() }; table('operationBinding').set(String(row.id), row); return { ...row }; },
       findMany: async ({ where }: { where: { engagementId: string } }) => listAll('operationBinding', (r) => r.engagementId === where.engagementId),
     },
+    engagementThread: {
+      findFirst: async ({ where }: { where: { threadId: string; engagementId: string } }) =>
+        find('engagementThread', (r) => r.threadId === where.threadId && r.engagementId === where.engagementId),
+    },
     emergencyStop: {
       findFirst: async ({ where }: { where: { engagementId: string; outcome: { in: string[] } } }) =>
         find('emergencyStop', (r) => r.engagementId === where.engagementId && Array.isArray(where.outcome.in) && (where.outcome.in as string[]).includes(String(r.outcome))),
@@ -147,6 +152,9 @@ async function setup(): Promise<{ db: Db; app: FastifyInstance; owner: { cookie:
   const owner = await db.webUser.create({ data: { username: 'owner', displayName: 'Owner', passwordHash: hashPassword('correct horse battery'), status: 'active' } });
   const reviewer = await db.webUser.create({ data: { username: 'rev', displayName: 'Rev', passwordHash: hashPassword('longenough1'), status: 'active' } });
   db.tables.set('engagement', new Map([[ENG, { id: ENG, userId: owner.id, name: ENG, targetValue: 'https://target.invalid', handoffConfirmedAt: new Date() }]]));
+  const threads = new Map<string, Row>();
+  for (const threadId of ['th-1', 'th-2', 'th-3', 'th-4', 'th-9']) threads.set(threadId, { threadId, engagementId: ENG, kind: 'execution' });
+  db.tables.set('engagementThread', threads);
   await db.webMembership.create({ data: { engagementId: ENG, userId: reviewer.id, role: 'reviewer' } });
   const app = await (buildApp({
     authMode: 'multi',
@@ -181,6 +189,18 @@ async function approvedPlan(app: FastifyInstance, owner: { cookie: string; csrf:
 }
 
 describe('ticket 09 governed plans and operation controls', () => {
+  it('rechecks a bound approval at dispatch after its absolute deadline', async () => {
+    const { db, app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const planId = await approvedPlan(app, owner, reviewer);
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId, threadId: 'th-1' } });
+    const governance = new GovernanceService(db as never, new ScopeService(db as never));
+    const actorId = String(db.tables.get('engagement')!.get(ENG)!.userId);
+    const plan = db.tables.get('businessPlan')!.get(planId)!;
+    db.tables.get('businessPlan')!.set(planId, { ...plan, expiresAt: new Date(Date.now() - 1) });
+    await expect(governance.assertExecutionAuthorized(actorId, ENG, 'th-1')).rejects.toThrow(/expired/);
+    await app.close();
+  });
   it('runs the four-eyes plan lifecycle: draft -> propose (pins scope) -> independent approve with 24h deadline', async () => {
     const { app, owner, reviewer } = await setup();
     await approveScope(app, owner, reviewer);
