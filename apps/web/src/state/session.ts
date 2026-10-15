@@ -47,6 +47,8 @@ export interface SessionState {
   setDirty(on: boolean, save?: () => Promise<unknown> | unknown, owner?: string): void
   /** W21: only the owning form's unmount clears the shared dirty flag. */
   clearDirtyIf(owner: string): void
+  /** W21: awaits every currently-dirty form's save callback (no form's draft is silently dropped). */
+  saveAllDirty(): Promise<void>
   clearDirty(): void
   unsaved: UnsavedNav | null
   closeUnsaved(): void
@@ -131,11 +133,16 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
     })
   },
   clearDirty: () => set({ dirty: false, save: undefined, dirtyOwner: null, owners: {} }),
+  saveAllDirty: async () => {
+    for (const callback of Object.values(get().owners)) if (callback) await callback()
+  },
   closeUnsaved: () => set({ unsaved: null }),
   guarded: (fn) => {
     const s = get()
-    if (s.dirty) set({ unsaved: { next: fn, save: s.save } })
-    else fn()
+    if (s.dirty) {
+      const hasSave = Object.values(s.owners).some((callback) => callback !== null && callback !== undefined)
+      set({ unsaved: { next: fn, save: hasSave ? () => get().saveAllDirty() : undefined } })
+    } else fn()
   },
   setLogs: (logs) => set({ logs }),
   pushLog: (opId, line, ts) =>

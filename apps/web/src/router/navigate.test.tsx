@@ -33,15 +33,18 @@ afterEach(() => {
 })
 
 describe('guarded go (session dirty guard)', () => {
-  it('a dirty navigation is held behind the unsaved guard and proceeds through its next()', () => {
-    const save = () => {}
+  it('a dirty navigation is held behind the unsaved guard and proceeds through its next()', async () => {
+    let saved = 0
+    const save = () => { saved += 1 }
     act(() => { useSessionStore.getState().setDirty(true, save) })
     act(() => { go('projects') })
     expect(currentRoute().page).toBe('login')
     expect(window.location.hash).toBe('')
     const unsaved = useSessionStore.getState().unsaved
     expect(unsaved).not.toBeNull()
-    expect(unsaved?.save).toBe(save)
+    expect(typeof unsaved?.save).toBe('function')
+    await act(async () => { await unsaved!.save!() })
+    expect(saved).toBe(1)
     act(() => { unsaved!.next() })
     expect(currentRoute().page).toBe('projects')
     expect(useSessionStore.getState().dirty).toBe(false)

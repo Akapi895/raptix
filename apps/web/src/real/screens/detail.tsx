@@ -103,7 +103,7 @@ export function RealProjectDetail(): ReactElement {
         tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
       />
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><RealFindingsPanel engagementId={data.id} /><RealCurationPanel engagementId={data.id} /></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : tab === 'vault' ? <RealVaultPanel engagementId={data.id} /> : tab === 'audit' ? <RealAuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><RealFindingsPanel engagementId={data.id} /><RealCurationPanel engagementId={data.id} /></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : tab === 'vault' ? <RealVaultPanel key={data.id} engagementId={data.id} /> : tab === 'audit' ? <RealAuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
       </div>
     </>
   )
@@ -119,6 +119,7 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
             The stored target is not policy-verified yet. Fix the target or confirm authorization before planning starts.
           </Banner>
         )}
+        <Onboarding d={d} />
         {d.brief && (
           <Card>
             <CardHeader title="Operator brief" />
@@ -163,6 +164,38 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
         </Card>
       </div>
     </div>
+  )
+}
+
+/**
+ * W22 onboarding: composes the real workflows in the order the governance
+ * lifecycle expects. No wizard state is persisted — each step opens the tab
+ * that owns the real workflow, and only server-known state (the planning
+ * handoff) renders a truthful status.
+ */
+function Onboarding({ d }: { d: ProjectViewModel }): ReactElement {
+  const steps: { label: string; why: string; tab: string }[] = [
+    { label: 'Team', why: 'invite the independent reviewer who decides approvals (four-eyes)', tab: 'team' },
+    { label: 'Scope & ROE', why: 'submit the scope revision and ROE that approvals pin', tab: 'scope' },
+    { label: 'Planning', why: 'confirm the planning handoff, then draft the business plan', tab: 'planning' },
+  ]
+  return (
+    <Card>
+      <CardHeader title="Onboarding" sub="Compose the real workflows in order — there is no separate wizard and nothing is persisted outside each workflow's own contract" />
+      <ol className="space-y-2 p-4 text-sm">
+        {steps.map((s, i) => (
+          <li key={s.tab} className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2 last:border-b-0 last:pb-0">
+            <span>{i + 1}. <span className="font-medium">{s.label}</span> — <span className="text-muted">{s.why}</span></span>
+            <Button variant="secondary" onClick={() => go('project', { id: d.id, tab: s.tab })}>Open {s.label}</Button>
+          </li>
+        ))}
+      </ol>
+      <div className="border-t border-line px-4 py-3">
+        <p className="text-xs text-muted" role="status">
+          Planning handoff: {d.handoffConfirmedAt === null ? 'not confirmed yet — step 3 completes it' : `confirmed at ${utcMinuteOr(d.handoffConfirmedAt)}`}
+        </p>
+      </div>
+    </Card>
   )
 }
 

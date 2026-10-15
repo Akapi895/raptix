@@ -287,6 +287,7 @@ describe('ticket 16 workspace settings, audit and C2 policy propagation', () => 
     ]));
     db.tables.set('vaultAudit', new Map([
       ['va-1', { id: 'va-1', engagementId: ENG, secretId: 'sec-1', action: 'revealed', createdAt: at(2) }],
+      ['va-2', { id: 'va-2', engagementId: ENG, secretId: 'sec-2', action: 'created', actorId: 'u-1', createdAt: at(2) }],
     ]));
 
     const engagement = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/audit`, headers: { cookie: owner.cookie } });
@@ -300,6 +301,9 @@ describe('ticket 16 workspace settings, audit and C2 policy propagation', () => 
     expect(actions).not.toContain('workspace.setting_updated:web');
     const vaultRow = (engView.entries as { action: string; actorId: string | null }[]).find((e) => e.action === 'vault.secret_revealed');
     expect(vaultRow!.actorId).toBeNull();
+    // W25: a vault row that recorded an actor projects it instead of null.
+    const createdRow = (engView.entries as { action: string; actorId: string | null }[]).find((e) => e.action === 'vault.secret_created');
+    expect(createdRow!.actorId).toBe('u-1');
     const foreign = await app.inject({ method: 'GET', url: '/api/engagements/eng-3/audit', headers: { cookie: owner.cookie } });
     expect(foreign.statusCode).toBe(404);
 

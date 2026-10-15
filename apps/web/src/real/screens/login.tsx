@@ -75,17 +75,20 @@ function LoginForm({ onDone }: { onDone: () => void }): ReactElement {
 export function RealLoginGate({ children }: { children: ReactNode }): ReactElement {
   const client = useQueryClient()
   const { session, pending, error, retry } = useSession()
-  // W04: a 401 anywhere in the app disposes actor-scoped reads and drops the
-  // cached session so the gate renders sign-in immediately.
+  // W04: a 401 anywhere re-probes the trusted session instead of declaring the
+  // current actor unauthenticated. A late 401 from a previous actor must not
+  // tear down a newer valid session; only a probe that says "not authenticated"
+  // drops the actor-scoped reads.
   useEffect(() => {
-    const onExpired = (): void => {
-      client.setQueryData(SESSION_KEY, (prev: AuthSessionView | null | undefined) => (prev === undefined ? prev : { ...prev, authenticated: false }))
-      client.removeQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
-      void client.invalidateQueries({ queryKey: SESSION_KEY })
-    }
+    const onExpired = (): void => { void client.invalidateQueries({ queryKey: SESSION_KEY }) }
     window.addEventListener('raptix:session-expired', onExpired)
     return () => window.removeEventListener('raptix:session-expired', onExpired)
   }, [client])
+  useEffect(() => {
+    if (session !== null && !session.authenticated) {
+      client.removeQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
+    }
+  }, [session, client])
   if (pending) {
     return <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Checking session"><Loader2 size={22} className="animate-spin text-muted" aria-hidden /></div>
   }

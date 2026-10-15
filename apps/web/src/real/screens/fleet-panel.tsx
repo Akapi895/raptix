@@ -17,12 +17,13 @@ import { utcMinuteOr } from '../format'
 
 const STATE_LABEL: Record<string, string> = { running: 'running', ended: 'ended', unknown: 'unknown' }
 
-/** W24: an ended branch is only "passed" when its outcome is not failed/cancelled. */
+/** W24: an ended branch is "passed" only for a known success outcome; unknown/error/timeout stay non-success. */
 function branchStatusValue(branch: { state: 'running' | 'ended' | 'unknown'; outcome: string | null }): 'passed' | 'failed' | 'pending' {
   if (branch.state !== 'ended') return 'pending'
-  if (branch.outcome === 'failed') return 'failed'
-  if (branch.outcome === 'cancelled' || branch.outcome === 'canceled') return 'pending'
-  return 'passed'
+  const outcome = (branch.outcome ?? '').toLowerCase()
+  if (outcome === 'failed' || outcome === 'error' || outcome === 'timeout') return 'failed'
+  if (outcome === 'completed' || outcome === 'passed' || outcome === 'success') return 'passed'
+  return 'pending'
 }
 
 export function RealFleetPanel({ engagementId }: { engagementId: string }): ReactElement {
