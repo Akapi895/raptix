@@ -167,13 +167,16 @@ export class ScheduleService {
     }
     const { executeAt } = assertAbsoluteFutureInstant(body.executeAt, Date.now());
     const timezone = assertZone(body.timezone);
-    await this.db.operationSchedule.updateMany({
-      where: { id: row.id, status: 'scheduled' },
+    const updated = await this.db.operationSchedule.updateMany({
+      where: { id: row.id, status: 'scheduled', version: row.version },
       data: { executeAt, timezone, version: { increment: 1 } },
     });
-    const updated = await this.find(engagementId, scheduleId);
-    await this.audit(engagementId, actorId, 'schedule.rescheduled', 'operation_schedule', row.id, `v${updated.version} at ${executeAt.toISOString()} (${timezone})`);
-    return toView(updated as never);
+    // W11: the version this caller read must still be current — a concurrent
+    // cancel/dispatch/further edit must not be silently overwritten.
+    if (updated.count !== 1) throw new ProjectApiError(409, 'The schedule changed since you read it; re-read it and reschedule again.');
+    const reread = await this.find(engagementId, scheduleId);
+    await this.audit(engagementId, actorId, 'schedule.rescheduled', 'operation_schedule', row.id, `v${reread.version} at ${executeAt.toISOString()} (${timezone})`);
+    return toView(reread as never);
   }
 
   public async list(actorId: string, engagementId: string): Promise<{ engagementId: string; schedules: ScheduleView[]; source: 'db' }> {
@@ -196,8 +199,11 @@ export class ScheduleService {
     const due = await this.db.operationSchedule.findMany({ where: { status: 'scheduled', executeAt: { lte: new Date(now) } } });
     const claimed: ClaimOutcome['claimed'] = [];
     for (const row of due) {
+      // W11: claim only the version that is still due at the moment of the
+      // update — a reschedule committed after this worker read the row moves
+      // executeAt into the future and the conditional update loses.
       const won = await this.db.operationSchedule.updateMany({
-        where: { id: row.id, status: 'scheduled' },
+        where: { id: row.id, status: 'scheduled', version: row.version, executeAt: { lte: new Date(now) } },
         data: { status: 'claimed', claimedBy: workerId, claimedAt: new Date() },
       });
       if (won.count === 1) {

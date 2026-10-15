@@ -453,6 +453,40 @@ describe('ticket 09 governed plans and operation controls', () => {
     await app.close();
   });
 
+  it('W10: stop finalization cannot overwrite a newer explicit resolution', async () => {
+    const { db, app } = await setup();
+    const actorId = String(db.tables.get('engagement')!.get(ENG)!.userId);
+    const governance = new GovernanceService(db as never, new ScopeService(db as never));
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r });
+    let entered!: () => void;
+    const enteredP = new Promise<void>((r) => { entered = r });
+    const stopping = governance.emergencyStop(actorId, ENG, { scope: 'project', reason: 'late ack race' }, async () => { entered(); await gate; return 'stopped' });
+    await enteredP;
+    const latch = [...(db.tables.get('emergencyStop')?.values() ?? [])][0]!;
+    const resolved = await governance.resolveEmergencyStop(actorId, ENG, String(latch.id), { reason: 'observed all clear', concurrencyVersion: Number(latch.concurrencyVersion) });
+    expect(resolved.outcome).toBe('resolved');
+    release();
+    const finished = await stopping;
+    const final = db.tables.get('emergencyStop')!.get(String(latch.id))!;
+    await app.close();
+    expect(final.outcome).toBe('resolved');
+    expect(finished.outcome).toBe('resolved');
+  });
+
+  it('W10: workspace stop reports engagements whose containment could not be observed', async () => {
+    const { db, app, owner } = await setup({
+      hasActiveRuns: async (_actorId, engagementId) => { if (engagementId === 'eng-2') throw new Error('runtime unreachable'); return false },
+    });
+    const ownerId = String(db.tables.get('engagement')!.get(ENG)!.userId);
+    db.tables.get('engagement')!.set('eng-2', { id: 'eng-2', userId: 'someone-else', name: 'eng-2', targetValue: 'https://two.invalid' });
+    await db.webMembership.create({ data: { engagementId: 'eng-2', userId: ownerId, role: 'operator' } });
+    const body = (await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { scope: 'workspace', reason: 'portfolio incident' } })).json();
+    await app.close();
+    expect(body.related ?? []).toHaveLength(0);
+    expect(body.relatedFailures).toEqual([expect.objectContaining({ engagementId: 'eng-2', reason: expect.stringContaining('runtime observation failed') })]);
+  });
+
   it('W10: resolution is guarded by an optimistic concurrency version', async () => {
     const { app, owner } = await setup();
     const stopped = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { scope: 'project', reason: 'Blue team request', threadId: 'th-1' } });

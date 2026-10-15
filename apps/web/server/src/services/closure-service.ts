@@ -2,6 +2,7 @@ import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext } from '../auth/membership-policy.js';
+import { ACTIVE_STOP_OUTCOMES } from './engagement-stop-policy.js';
 
 /**
  * Ticket 17: real engagement closure. The closure checklist reads the
@@ -165,10 +166,15 @@ export class ClosureService {
       }
     };
     await push('runtime', client.webRequestLedger.count({ where: { engagementId, activeThreadId: { not: null }, operation: { not: 'create_thread' } } }), 'no in-flight runtime requests', (n) => `${n} runtime request(s) still hold an active run`);
-    await push('estop', client.emergencyStop.count({ where: { engagementId, outcome: { in: ['requested', 'acknowledged', 'failed', 'unknown'] } } }), 'no unresolved emergency stops', (n) => `${n} unresolved emergency stop(s)`);
+    await push('estop', client.emergencyStop.count({ where: { engagementId, outcome: { in: [...ACTIVE_STOP_OUTCOMES] } } }), 'no unresolved emergency stops', (n) => `${n} unresolved emergency stop(s)`);
     await push('scope-reviews', client.scopeRevision.count({ where: { engagementId, status: 'pending' } }), 'no pending scope reviews', (n) => `${n} pending scope review(s)`);
     await push('plan-reviews', client.businessPlan.count({ where: { engagementId, status: 'proposed' } }), 'no pending plan reviews', (n) => `${n} pending plan review(s)`);
     await push('grant-reviews', client.c2Grant.count({ where: { engagementId, status: 'requested' } }), 'no pending grant reviews', (n) => `${n} pending grant review(s)`);
+    // W06: the library review and durable schedule intents are workflow
+    // blockers too — closure must not slip past a pending proposal or a
+    // scheduled start that has not settled.
+    await push('library-reviews', client.libraryReviewProposal.count({ where: { engagementId, status: 'proposed' } }), 'no pending library review proposals', (n) => `${n} library proposal(s) still awaiting review`);
+    await push('scheduled-intents', client.operationSchedule.count({ where: { engagementId, status: { in: ['scheduled', 'claimed'] } } }), 'no unsettled scheduled starts', (n) => `${n} scheduled start intent(s) not settled`);
     if (this.sources) {
       await push('provider-sessions', this.sources.sessions(userId, engagementId), 'no connected provider sessions', (n) => `${n} provider session(s) not disconnected`);
       await push('runtime-questions', this.sources.runtime(userId, engagementId), 'no unresolved runtime questions', (n) => `${n} runtime question(s) still pending`);

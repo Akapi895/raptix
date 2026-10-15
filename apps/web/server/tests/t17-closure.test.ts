@@ -116,6 +116,8 @@ function memoryDb() {
     reportRecord: listModel('reportRecord'),
     scopeRevision: listModel('scopeRevision'),
     businessPlan: listModel('businessPlan'),
+    libraryReviewProposal: listModel('libraryReviewProposal'),
+    operationSchedule: listModel('operationSchedule'),
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
   return db;
@@ -198,6 +200,21 @@ describe('ticket 17 engagement closure', () => {
     const res3 = await requestClosure(none.app, none.owner);
     expect(res3.statusCode).toBe(409);
     expect(String((res3.json() as { error: { message: string } }).error.message)).toContain('approvals (unavailable');
+  });
+
+  it('W06: pending library reviews, scheduled intents and a stopped latch block closure', async () => {
+    const db = memoryDb();
+    const { app, owner } = await setup(db, async () => 0);
+    db.tables.set('libraryReviewProposal', new Map([['p1', { id: 'p1', engagementId: ENG, status: 'proposed' }]]));
+    db.tables.set('operationSchedule', new Map([['sc1', { id: 'sc1', engagementId: ENG, status: 'scheduled' }]]));
+    db.tables.set('emergencyStop', new Map([['s1', { id: 's1', engagementId: ENG, outcome: 'stopped' }]]));
+    const res = await requestClosure(app, owner);
+    expect(res.statusCode).toBe(409);
+    const message = String((res.json() as { error: { message: string } }).error.message);
+    expect(message).toContain('estop (fail');
+    expect(message).toContain('library-reviews (fail');
+    expect(message).toContain('scheduled-intents (fail');
+    await app.close();
   });
 
   it('persists request -> independent confirm with an atomic recheck, and retains state across refresh', async () => {
