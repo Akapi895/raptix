@@ -8,8 +8,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { ClipboardCheck, GitCompareArrows, Loader2, OctagonX, ShieldCheck } from 'lucide-react'
-import { ACTIVE_STOP_OUTCOMES, bindPlan, comparePlans, decidePlan, fetchEmergencyStops, fetchPlans, fetchPreflight, listThreads, proposePlan, requestEmergencyStop, resolveEmergencyStop, revisePlan, savePlan, type PlanView } from '../api'
-import { utcMinuteOr } from '../format'
+import { ACTIVE_STOP_OUTCOMES, bindPlan, cancelSchedule, comparePlans, createSchedule, decidePlan, fetchEmergencyStops, fetchPlans, fetchPreflight, fetchSchedules, listThreads, proposePlan, requestEmergencyStop, rescheduleSchedule, resolveEmergencyStop, revisePlan, savePlan, type PlanView } from '../api'
+import { utcMinuteOr, zonedToIso } from '../format'
 import { Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
 
 export function RealGovernancePanel({ engagementId }: { engagementId: string }): ReactElement {
@@ -17,6 +17,7 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
   const plans = useQuery({ queryKey: ['real', 'plans', engagementId], queryFn: () => fetchPlans(engagementId) })
   const preflight = useQuery({ queryKey: ['real', 'preflight', engagementId], queryFn: () => fetchPreflight(engagementId), refetchInterval: 30_000 })
   const stops = useQuery({ queryKey: ['real', 'estops', engagementId], queryFn: () => fetchEmergencyStops(engagementId), refetchInterval: 30_000 })
+  const schedules = useQuery({ queryKey: ['real', 'schedules', engagementId], queryFn: () => fetchSchedules(engagementId), refetchInterval: 30_000 })
   const [objective, setObjective] = useState('')
   const [methods, setMethods] = useState('')
   const [stopReason, setStopReason] = useState('')
@@ -30,12 +31,18 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
   const [bindThreadId, setBindThreadId] = useState('')
   const [binding, setBinding] = useState<{ id: string; planVersion: number; threadId: string; status: string } | null>(null)
   const [resolveReason, setResolveReason] = useState('')
+  const [schedulePlanId, setSchedulePlanId] = useState('')
+  const [scheduleThreadId, setScheduleThreadId] = useState('')
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTz, setScheduleTz] = useState('UTC')
+  const [scheduleReason, setScheduleReason] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const invalidate = (): void => {
     void client.invalidateQueries({ queryKey: ['real', 'plans', engagementId] })
     void client.invalidateQueries({ queryKey: ['real', 'preflight', engagementId] })
     void client.invalidateQueries({ queryKey: ['real', 'estops', engagementId] })
+    void client.invalidateQueries({ queryKey: ['real', 'schedules', engagementId] })
   }
 
   const parseMethods = (value: string): string[] => value.split('\n').map((s) => s.trim()).filter(Boolean)
@@ -71,6 +78,24 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
     mutationFn: (input: { stopId: string }) => resolveEmergencyStop(engagementId, input.stopId, resolveReason.trim()),
     onSuccess: () => { setResolveReason(''); setError(null); invalidate() },
     onError: (err) => setError(err instanceof Error ? err.message : 'The resolution was refused.'),
+  })
+  // W11: a durable start intent — the server worker dispatches it at due time through the same gates.
+  const schedule = useMutation({
+    mutationFn: () => createSchedule(engagementId, {
+      planId: schedulePlanId, threadId: scheduleThreadId, executeAt: zonedToIso(scheduleDate, scheduleTz), timezone: scheduleTz, reason: scheduleReason, requestId: crypto.randomUUID(),
+    }),
+    onSuccess: () => { setSchedulePlanId(''); setScheduleThreadId(''); setScheduleDate(''); setScheduleReason(''); setError(null); invalidate() },
+    onError: (err) => setError(err instanceof Error ? err.message : 'The schedule was refused.'),
+  })
+  const scheduleCancel = useMutation({
+    mutationFn: (scheduleId: string) => cancelSchedule(engagementId, scheduleId),
+    onSuccess: () => { setError(null); invalidate() },
+    onError: (err) => setError(err instanceof Error ? err.message : 'The cancellation was refused.'),
+  })
+  const scheduleMove = useMutation({
+    mutationFn: (input: { scheduleId: string; expectedVersion: number }) => rescheduleSchedule(engagementId, input.scheduleId, { executeAt: zonedToIso(scheduleDate, scheduleTz), timezone: scheduleTz, expectedVersion: input.expectedVersion }),
+    onSuccess: () => { setScheduleDate(''); setError(null); invalidate() },
+    onError: (err) => setError(err instanceof Error ? err.message : 'The reschedule was refused.'),
   })
   const bind = useMutation({
     mutationFn: () => bindPlan(engagementId, bindPlanId, bindThreadId),
@@ -237,6 +262,88 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
             </p>
           )}
           {threads.isError && <p className="sm:col-span-2 text-sm text-bad" role="alert">{threads.error instanceof Error ? threads.error.message : 'Threads could not be loaded.'}</p>}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Schedule a start" sub="A durable execution intent (ADR-0073): the server worker dispatches it at due time through the same gates as a manual start — no browser timer involved" />
+        <form
+          className="grid gap-3 p-4 sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (scheduleDate === '') { setError('Pick a start time.'); return }
+            schedule.mutate()
+          }}
+        >
+          <label className="text-sm text-muted" htmlFor="schedule-plan">Approved plan
+            <Select id="schedule-plan" aria-label="Approved plan to schedule" value={schedulePlanId} onChange={(e) => setSchedulePlanId(e.target.value)}>
+              <option value="">Select…</option>
+              {plans.data.plans.filter((p) => p.status === 'approved').map((p) => <option key={p.id} value={p.id}>v{p.version} — {p.objective.slice(0, 60)}</option>)}
+            </Select>
+          </label>
+          <label className="text-sm text-muted" htmlFor="schedule-thread">Execution thread
+            <Select id="schedule-thread" aria-label="Execution thread to schedule" value={scheduleThreadId} onChange={(e) => setScheduleThreadId(e.target.value)}>
+              <option value="">Select…</option>
+              {executionThreads.map((t) => <option key={t.threadId} value={t.threadId}>{t.threadId}</option>)}
+            </Select>
+          </label>
+          <label className="text-sm text-muted" htmlFor="schedule-date">Start at (entered in the selected timezone)
+            <Input id="schedule-date" type="datetime-local" required value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
+          </label>
+          <label className="text-sm text-muted" htmlFor="schedule-tz">Timezone (submitted as an absolute ISO instant)
+            <Select id="schedule-tz" aria-label="Schedule timezone" value={scheduleTz} onChange={(e) => setScheduleTz(e.target.value)}>
+              {['UTC', 'Asia/Ho_Chi_Minh', 'Asia/Singapore', 'Asia/Tokyo', 'Europe/London', 'Europe/Berlin', 'America/New_York'].map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+            </Select>
+          </label>
+          <label className="text-sm text-muted" htmlFor="schedule-reason">Reason</label>
+          <Input id="schedule-reason" required value={scheduleReason} onChange={(e) => setScheduleReason(e.target.value)} />
+          <p className="sm:col-span-2 text-xs text-muted" role="status">
+            Preview: {scheduleDate === '' ? '—' : <span className="font-mono">{zonedToIso(scheduleDate, scheduleTz)}</span>} ({scheduleTz}) — the due-time recheck can still refuse it (expired approval, stale scope pin, active stop, closed engagement).
+          </p>
+          <div className="sm:col-span-2">
+            <Button type="submit" variant="primary" disabled={schedule.isPending || schedulePlanId === '' || scheduleThreadId === ''}>
+              {schedule.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
+              Schedule start
+            </Button>
+          </div>
+        </form>
+        <div className="border-t border-line p-4">
+          {schedules.isError && <p className="text-sm text-bad" role="alert">{schedules.error instanceof Error ? schedules.error.message : 'The schedule list could not be loaded.'}</p>}
+          {schedules.data === undefined || schedules.data.schedules.length === 0 ? (
+            <p className="text-sm text-muted">No scheduled starts.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted">
+                  <th className="pb-2">Status</th>
+                  <th className="pb-2">Due</th>
+                  <th className="pb-2">Plan / thread</th>
+                  <th className="pb-2">Reason</th>
+                  <th className="pb-2">Outcome</th>
+                  <th className="pb-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {schedules.data.schedules.map((s) => (
+                  <tr key={s.id} className="border-t border-line">
+                    <td className="py-2 pr-3"><Status kind="gate" value={s.status === 'dispatched' ? 'passed' : s.status === 'scheduled' ? 'pending' : 'failed'} size="sm" label={s.status} /></td>
+                    <td className="py-2 pr-3 font-mono text-xs">{s.executeAt} ({s.timezone})</td>
+                    <td className="py-2 pr-3 text-xs font-mono">v{s.planId.slice(-6)} / {s.threadId}</td>
+                    <td className="py-2 pr-3 text-xs text-muted">{s.reason}</td>
+                    <td className="py-2 pr-3 text-xs text-muted">{s.runId !== null ? <span className="font-mono">{s.runId}</span> : s.outcomeDetail ?? '—'}</td>
+                    <td className="py-2 text-xs">
+                      {s.status === 'scheduled' ? (
+                        <span className="flex gap-2">
+                          <Button variant="secondary" disabled={scheduleCancel.isPending} onClick={() => scheduleCancel.mutate(s.id)}>Cancel</Button>
+                          <Button variant="secondary" disabled={scheduleDate === '' || scheduleMove.isPending} onClick={() => scheduleMove.mutate({ scheduleId: s.id, expectedVersion: s.version })}>Move to picked time</Button>
+                        </span>
+                      ) : <span className="text-muted">—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </Card>
 

@@ -357,7 +357,35 @@ model EmergencyStop {
   reason String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  @@index([engagementId, createdAt])
+
+  @@index([engagementId])
+}
+
+// W11 (ADR-0073): durable execution intent tied to an existing engagement,
+// owned execution thread and approved plan. Claimed/dispatched transitions
+// are worker bookkeeping; the dispatch itself always re-runs the same
+// execution gate a manual start runs.
+model OperationSchedule {
+  id            String   @id @default(cuid())
+  engagementId  String
+  planId        String
+  threadId      String
+  requestId     String   @unique
+  status        String   @default("scheduled") // scheduled | claimed | dispatched | refused | canceled | missed | uncertain
+  version       Int      @default(1)
+  executeAt     DateTime
+  timezone      String
+  reason        String
+  claimedBy     String?
+  claimedAt     DateTime?
+  dispatchedAt  DateTime?
+  runId         String?
+  outcomeDetail String?
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([engagementId, status])
 }
 
 // Ticket 10: curated finding records (runtime findings stay the evidence
