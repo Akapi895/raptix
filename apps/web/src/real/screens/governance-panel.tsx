@@ -8,7 +8,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { ClipboardCheck, GitCompareArrows, Loader2, OctagonX, ShieldCheck } from 'lucide-react'
-import { ACTIVE_STOP_OUTCOMES, bindPlan, cancelSchedule, comparePlans, createSchedule, decidePlan, fetchEmergencyStops, fetchPlans, fetchPreflight, fetchSchedules, listThreads, proposePlan, requestEmergencyStop, rescheduleSchedule, resolveEmergencyStop, revisePlan, savePlan, type PlanView } from '../api'
+import { ACTIVE_STOP_OUTCOMES, bindPlan, cancelSchedule, comparePlans, createSchedule, decidePlan, fetchEmergencyStops, fetchPlans, fetchPreflight, fetchSchedules, listThreads, proposePlan, requestEmergencyStop, rescheduleSchedule, resolveEmergencyStop, revisePlan, savePlan, type EmergencyStopView, type PlanView } from '../api'
 import { utcMinuteOr, zonedToIso } from '../format'
 import { Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
 
@@ -21,6 +21,10 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
   const [objective, setObjective] = useState('')
   const [methods, setMethods] = useState('')
   const [stopReason, setStopReason] = useState('')
+  /** W10/ADR-0074: project stops contain one engagement; workspace stops enumerate owned engagements with active work. */
+  const [stopScope, setStopScope] = useState<'project' | 'workspace'>('project')
+  /** Sibling latches a workspace stop recorded in other owned engagements. */
+  const [workspaceStops, setWorkspaceStops] = useState<EmergencyStopView[] | null>(null)
   /** planId being revised (approved plans only); its revision body is drafted below the table. */
   const [reviseTarget, setReviseTarget] = useState<PlanView | null>(null)
   const [revisionObjective, setRevisionObjective] = useState('')
@@ -30,7 +34,7 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
   const [bindPlanId, setBindPlanId] = useState('')
   const [bindThreadId, setBindThreadId] = useState('')
   const [binding, setBinding] = useState<{ id: string; planVersion: number; threadId: string; status: string } | null>(null)
-  const [resolveReason, setResolveReason] = useState('')
+  const [resolveDraft, setResolveDraft] = useState<{ stopId: string; reason: string } | null>(null)
   const [schedulePlanId, setSchedulePlanId] = useState('')
   const [scheduleThreadId, setScheduleThreadId] = useState('')
   const [scheduleDate, setScheduleDate] = useState('')
@@ -69,14 +73,19 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
     onError: (err) => setError(err instanceof Error ? err.message : 'The revision was refused; the reviewed version is unchanged.'),
   })
   const estop = useMutation({
-    mutationFn: () => requestEmergencyStop(engagementId, { scope: 'project', reason: stopReason }),
-    onSuccess: () => { setStopReason(''); setError(null); invalidate() },
+    mutationFn: () => requestEmergencyStop(engagementId, { scope: stopScope, reason: stopReason }),
+    onSuccess: (view) => {
+      setStopReason('')
+      setWorkspaceStops(view.related ?? null)
+      setError(null)
+      invalidate()
+    },
     onError: (err) => setError(err instanceof Error ? err.message : 'The emergency stop was refused.'),
   })
-  // W10: explicit resolution with a recorded reason — never an auto-resume.
+  // W10: explicit resolution with a recorded reason and a stale-view guard — never an auto-resume.
   const resolveStop = useMutation({
-    mutationFn: (input: { stopId: string }) => resolveEmergencyStop(engagementId, input.stopId, resolveReason.trim()),
-    onSuccess: () => { setResolveReason(''); setError(null); invalidate() },
+    mutationFn: (input: { stopId: string; reason: string; concurrencyVersion: number }) => resolveEmergencyStop(engagementId, input.stopId, input.reason, input.concurrencyVersion),
+    onSuccess: () => { setResolveDraft(null); setError(null); invalidate() },
     onError: (err) => setError(err instanceof Error ? err.message : 'The resolution was refused.'),
   })
   // W11: a durable start intent — the server worker dispatches it at due time through the same gates.
@@ -348,7 +357,7 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
       </Card>
 
       <Card>
-        <CardHeader title="Emergency stop" sub="Outcomes are truthful; work stays blocked until an explicit resolution with a reason — resolution never auto-resumes anything" />
+        <CardHeader title="Emergency stop" sub="Outcomes are truthful; work stays blocked until an explicit resolution with a reason — resolution never auto-resumes anything. A workspace stop latches every owned engagement that is actually running work (ADR-0074)" />
         <form
           className="grid gap-3 p-4 sm:grid-cols-2"
           onSubmit={(e) => {
@@ -356,11 +365,27 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
             estop.mutate()
           }}
         >
+          <label className="text-sm text-muted" htmlFor="estop-scope">Scope</label>
+          <Select id="estop-scope" aria-label="Stop scope" value={stopScope} onChange={(e) => { setStopScope(e.target.value as 'project' | 'workspace'); setWorkspaceStops(null) }}>
+            <option value="project">project — this engagement</option>
+            <option value="workspace">workspace — every owned engagement with active work</option>
+          </Select>
           <label className="text-sm text-muted" htmlFor="estop-reason">Reason</label>
           <Input id="estop-reason" required value={stopReason} onChange={(e) => setStopReason(e.target.value)} />
           <div className="sm:col-span-2">
-            <Button type="submit" variant="danger" icon={OctagonX} disabled={estop.isPending}>Emergency stop (project)</Button>
+            <Button type="submit" variant="danger" icon={OctagonX} disabled={estop.isPending}>Emergency stop ({stopScope})</Button>
           </div>
+          {workspaceStops !== null && (
+            <div className="sm:col-span-2 rounded border border-line p-3 text-xs" role="status">
+              <p className="font-medium">Workspace stop recorded sibling latches:</p>
+              <ul className="mt-1 space-y-1">
+                {workspaceStops.map((s) => (
+                  <li key={s.id}><span className="font-mono">{s.engagementId}</span> — {s.outcome} <span className="text-muted">({s.reason})</span></li>
+                ))}
+              </ul>
+              <p className="mt-1 text-muted">Each engagement must be resolved separately from its own stop list.</p>
+            </div>
+          )}
         </form>
         <div className="border-t border-line p-4">
           {stops.isError && <p className="text-sm text-bad" role="alert">{stops.error instanceof Error ? stops.error.message : 'The stop list could not be loaded.'}</p>}
@@ -387,8 +412,14 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
                     <td className="py-2 text-xs">
                       {ACTIVE_STOP_OUTCOMES.includes(s.outcome as typeof ACTIVE_STOP_OUTCOMES[number]) ? (
                         <span className="flex items-center gap-2">
-                          <Input aria-label={`Resolution reason for stop ${s.id}`} placeholder="why work may restart" value={resolveReason} onChange={(e) => setResolveReason(e.target.value)} className="max-w-56" />
-                          <Button variant="secondary" disabled={resolveReason.trim() === '' || resolveStop.isPending} onClick={() => resolveStop.mutate({ stopId: s.id })}>Resolve</Button>
+                          <Input
+                            aria-label={`Resolution reason for stop ${s.id}`}
+                            placeholder="why work may restart"
+                            value={resolveDraft?.stopId === s.id ? resolveDraft.reason : ''}
+                            onChange={(e) => setResolveDraft({ stopId: s.id, reason: e.target.value })}
+                            className="max-w-56"
+                          />
+                          <Button variant="secondary" disabled={(resolveDraft?.stopId !== s.id || resolveDraft.reason.trim() === '') || resolveStop.isPending} onClick={() => resolveStop.mutate({ stopId: s.id, reason: resolveDraft!.reason.trim(), concurrencyVersion: s.concurrencyVersion })}>Resolve</Button>
                         </span>
                       ) : (
                         <span className="text-muted">—</span>

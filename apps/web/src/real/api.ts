@@ -617,8 +617,11 @@ export interface EmergencyStopView {
   requestedBy: string
   outcome: 'requested' | 'acknowledged' | 'stopped' | 'failed' | 'unknown' | 'resolved'
   reason: string
+  concurrencyVersion: number
   createdAt: string
   updatedAt: string
+  /** W10/ADR-0074: sibling latches a workspace stop recorded in other owned engagements. */
+  related?: EmergencyStopView[]
 }
 
 /** Outcomes that block work start until an explicit resolution (server contract). */
@@ -646,11 +649,11 @@ export function fetchEmergencyStops(engagementId: string): Promise<EmergencyStop
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/estops`, owned(engagementId, isEmergencyStopsView))
 }
 
-/** W10: explicit resolution records why work may restart; it never resumes anything. */
-export function resolveEmergencyStop(engagementId: string, stopId: string, reason: string): Promise<EmergencyStopView> {
+/** W10: explicit resolution records why work may restart; it never resumes anything. The version guards against stale resolvers. */
+export function resolveEmergencyStop(engagementId: string, stopId: string, reason: string, concurrencyVersion: number): Promise<EmergencyStopView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/estops/${encodeURIComponent(stopId)}/resolve`, (v): v is EmergencyStopView =>
     typeof v === 'object' && v !== null && (v as EmergencyStopView).outcome === 'resolved',
-  { method: 'POST', body: { reason } })
+  { method: 'POST', body: { reason, concurrencyVersion } })
 }
 
 /* ───────────── W11 operation schedules (ADR-0073 durable execution intents) ───────────── */
