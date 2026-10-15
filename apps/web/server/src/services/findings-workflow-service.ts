@@ -1,6 +1,6 @@
 ﻿import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
-import { requireEngagementAccess, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 import { assertEngagementOpen } from './closure-service.js';
 import type { ArtifactsService } from './artifacts-service.js';
 
@@ -35,6 +35,8 @@ export interface CuratedFindingView {
   readonly expectedVersion: number;
   readonly sourceType: 'authored' | 'imported';
   readonly producerRef: string | null;
+  /** W19: true when the producer reference resolved through the retained artifact authority. */
+  readonly producerResolved?: boolean;
   readonly createdBy: string;
   readonly updatedBy: string | null;
   readonly updatedAt: string;
@@ -99,6 +101,17 @@ export class FindingsWorkflowService {
     const producerRef = typeof body.producerRef === 'string' ? body.producerRef.trim() : '';
     if (title.length === 0) throw new ProjectApiError(400, 'title is required.');
     if (producerRef.length === 0) throw new ProjectApiError(400, 'producerRef (the runtime evidence reference) is required.');
+    // W19: a producer reference is only provenance when the retained artifact
+    // authority resolves it; anything else stays an unverified claim.
+    let producerResolved: boolean | undefined;
+    if (this.artifacts !== undefined) {
+      try {
+        await this.artifacts.capture(actorId, engagementId, producerRef);
+        producerResolved = true;
+      } catch {
+        producerResolved = false;
+      }
+    }
     const row = await this.db.findingRecord.create({
       data: {
         engagementId,
@@ -111,8 +124,8 @@ export class FindingsWorkflowService {
         createdBy: actorId,
       },
     });
-    await this.audit(engagementId, actorId, 'finding.imported', 'finding', row.id, `${title} <- ${producerRef}`);
-    return this.toView(row as never, []);
+    await this.audit(engagementId, actorId, 'finding.imported', 'finding', row.id, `${title} <- ${producerRef}${producerResolved === true ? ' (resolved)' : producerResolved === false ? ' (unverified)' : ''}`);
+    return this.toView(row as never, [], producerResolved);
   }
 
   public async update(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
@@ -125,6 +138,11 @@ export class FindingsWorkflowService {
     if (row.expectedVersion !== expectedVersion) {
       throw new ProjectApiError(409, `Concurrent edit: the finding moved to version ${row.expectedVersion} while you edited version ${expectedVersion}. Reload and reapply.`);
     }
+    // W19: a terminal finding is immutable; editing a confirmed finding
+    // invalidates the confirmation — content changes never keep it.
+    if (row.status === 'resolved') throw new ProjectApiError(409, 'The finding is resolved; its content is frozen and cannot be edited.');
+    const invalidated = row.status === 'confirmed' || row.status === 'remediation' || row.status === 'retest';
+    const nextStatus = invalidated ? 'review' : row.status;
     const updated = await this.db.findingRecord.update({
       where: { id: row.id, expectedVersion },
       data: {
@@ -132,20 +150,29 @@ export class FindingsWorkflowService {
         severity: typeof body.severity === 'string' ? body.severity : row.severity,
         body: typeof body.detail === 'string' ? ({ detail: body.detail } as object) : (row.body as object),
         expectedVersion: { increment: 1 },
+        status: nextStatus,
         updatedBy: actorId,
       },
     });
-    await this.audit(engagementId, actorId, 'finding.updated', 'finding', row.id, `v${row.expectedVersion} -> v${row.expectedVersion + 1}`);
+    await this.audit(engagementId, actorId, 'finding.updated', 'finding', row.id, `v${row.expectedVersion} -> v${row.expectedVersion + 1}${invalidated ? ` (confirmation invalidated, back to review)` : ''}`);
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
     return this.toView(updated as never, evidence as never[]);
   }
 
   public async transition(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
-    const body = (input ?? {}) as { to?: unknown };
+    const body = (input ?? {}) as { to?: unknown; expectedVersion?: unknown };
     const to = typeof body.to === 'string' ? body.to : '';
     const access = await requireEngagementAccess(this.ctx(actorId), engagementId, to === 'confirmed' ? 'reviewer' : MIN_CURATE);
     await assertEngagementOpen(this.db, engagementId);
     const row = await this.findOwned(engagementId, findingId);
+    // W19: every transition pins the version the caller actually read -
+    // confirmation is a four-eyes act, so it never races a content edit.
+    const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : null;
+    if (expectedVersion === null) throw new ProjectApiError(400, 'expectedVersion is required so a transition pins the reviewed content.');
+    if (!Number.isSafeInteger(expectedVersion) || expectedVersion <= 0) throw new ProjectApiError(400, 'expectedVersion must be a positive integer.');
+    if (row.expectedVersion !== expectedVersion) {
+      throw new ProjectApiError(409, `Concurrent edit: the finding moved to version ${row.expectedVersion} while you acted on version ${expectedVersion}. Reload and reapply.`);
+    }
     const allowed = TRANSITIONS[row.status] ?? [];
     if (!allowed.includes(to)) {
       throw new ProjectApiError(409, `Transition ${row.status} -> ${to} is not allowed; permitted: ${allowed.length > 0 ? allowed.join(', ') : 'none (terminal)'}.`);
@@ -153,8 +180,10 @@ export class FindingsWorkflowService {
     if (to === 'confirmed' && !['owner', 'reviewer'].includes(access.role)) {
       throw new ProjectApiError(403, `Confirming a finding requires the reviewer role; the persisted membership grants ${access.role}.`);
     }
+    // W19: four-eyes confirmation — the author can never confirm their own finding.
+    if (to === 'confirmed') requireIndependentActor(row.createdBy, actorId, 'Finding confirmation');
     const updated = await this.db.findingRecord.update({ where: { id: row.id, expectedVersion: row.expectedVersion, status: row.status }, data: { status: to, updatedBy: actorId, expectedVersion: { increment: 1 } } });
-    await this.audit(engagementId, actorId, 'finding.transitioned', 'finding', row.id, `${row.status} -> ${to}`);
+    await this.audit(engagementId, actorId, 'finding.transitioned', 'finding', row.id, `${row.status} -> ${to} @ v${row.expectedVersion}`);
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
     return this.toView(updated as never, evidence as never[]);
   }
@@ -196,10 +225,10 @@ export class FindingsWorkflowService {
   private async findOwned(engagementId: string, findingId: string) {
     const row = await this.db.findingRecord.findFirst({ where: { id: findingId, engagementId } });
     if (row === null) throw new ProjectApiError(404, 'Finding not found');
-    return row as never as { id: string; expectedVersion: number; title: string; severity: string; status: string; body: unknown };
+    return row as never as { id: string; expectedVersion: number; title: string; severity: string; status: string; body: unknown; createdBy: string };
   }
 
-  private toView(row: { id: string; engagementId: string; title: string; severity: string; status: string; body: unknown; expectedVersion: number; sourceType: string; producerRef: string | null; createdBy: string; updatedBy: string | null; updatedAt: Date }, evidence: { id: string; kind: string; artifactPath: string | null; digest: string | null; producer: string | null; createdAt: Date }[]): CuratedFindingView {
+  private toView(row: { id: string; engagementId: string; title: string; severity: string; status: string; body: unknown; expectedVersion: number; sourceType: string; producerRef: string | null; createdBy: string; updatedBy: string | null; updatedAt: Date }, evidence: { id: string; kind: string; artifactPath: string | null; digest: string | null; producer: string | null; createdAt: Date }[], producerResolved?: boolean): CuratedFindingView {
     const body = row.body as { detail?: unknown };
     return {
       id: row.id,
@@ -211,6 +240,7 @@ export class FindingsWorkflowService {
       expectedVersion: row.expectedVersion,
       sourceType: row.sourceType as CuratedFindingView['sourceType'],
       producerRef: row.producerRef,
+      ...(row.sourceType === 'imported' ? { producerResolved } : {}),
       createdBy: row.createdBy,
       updatedBy: row.updatedBy,
       updatedAt: row.updatedAt.toISOString(),

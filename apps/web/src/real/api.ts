@@ -715,6 +715,8 @@ export interface CuratedFindingView {
   expectedVersion: number
   sourceType: 'authored' | 'imported'
   producerRef: string | null
+  /** W19: true when the producer reference resolved through the retained artifact authority. */
+  producerResolved?: boolean
   createdBy: string
   updatedBy: string | null
   updatedAt: string
@@ -752,10 +754,10 @@ export function updateCuratedFinding(engagementId: string, findingId: string, in
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}`, owned(engagementId, (v): v is CuratedFindingView => typeof v === 'object' && v !== null && (v as CuratedFindingView).id === findingId && Number.isInteger((v as CuratedFindingView).expectedVersion)), { method: 'PATCH', body: input })
 }
 
-export function transitionCuratedFinding(engagementId: string, findingId: string, to: string): Promise<CuratedFindingView> {
+export function transitionCuratedFinding(engagementId: string, findingId: string, to: string, expectedVersion: number): Promise<CuratedFindingView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/transition`, (v): v is CuratedFindingView =>
     typeof v === 'object' && v !== null && typeof (v as CuratedFindingView).status === 'string',
-  { method: 'POST', body: { to } })
+  { method: 'POST', body: { to, expectedVersion } })
 }
 
 export function attachEvidence(engagementId: string, findingId: string, input: { kind: 'artifact' | 'digest'; artifactPath?: string; digest?: string; producer?: string }): Promise<{ id: string; kind: string }> {

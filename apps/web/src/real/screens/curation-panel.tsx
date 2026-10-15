@@ -32,7 +32,7 @@ export function RealCurationPanel({ engagementId }: { engagementId: string }): R
     onError: (err) => setError(err instanceof Error ? err.message : 'The save was refused.'),
   })
   const transition = useMutation({
-    mutationFn: (input: { id: string; to: string }) => transitionCuratedFinding(engagementId, input.id, input.to),
+    mutationFn: (input: { id: string; to: string; expectedVersion: number }) => transitionCuratedFinding(engagementId, input.id, input.to, input.expectedVersion),
     onSuccess: () => { setError(null); invalidate() },
     onError: (err) => setError(err instanceof Error ? err.message : 'The transition was refused.'),
   })
@@ -71,7 +71,7 @@ export function RealCurationPanel({ engagementId }: { engagementId: string }): R
                 <tr key={f.id} className="border-t border-line align-top">
                   <td className="py-2 pr-3">
                     <button className="font-medium text-fg underline" onClick={() => go('finding', { id: f.id, engagementId })}>{f.title}</button>
-                     <span className="ml-2 font-mono text-xs text-muted">v{f.expectedVersion}{f.sourceType === 'imported' ? ` · ${f.producerRef ?? ''}` : ''}</span>
+                     <span className="ml-2 font-mono text-xs text-muted">v{f.expectedVersion}{f.sourceType === 'imported' ? ` · ${f.producerRef ?? ''}${f.producerResolved === true ? ' · resolved' : f.producerResolved === false ? ' · unverified claim' : ''}` : ''}</span>
                      <p className="whitespace-pre-wrap">{f.body.detail}</p>
                      <Button variant="ghost" onClick={() => { setEditing(f); setTitle(f.title); setSeverity(f.severity); setDetail(f.body.detail); setProducerRef(''); setError(null) }}>Edit finding</Button>
                   </td>
@@ -100,7 +100,7 @@ export function RealCurationPanel({ engagementId }: { engagementId: string }): R
                     ) : (
                       <span className="flex flex-wrap gap-1">
                         {list.data.transitions[f.status].map((to) => (
-                          <Button key={to} variant="ghost" onClick={() => transition.mutate({ id: f.id, to })}>{to}</Button>
+                          <Button key={to} variant="ghost" onClick={() => transition.mutate({ id: f.id, to, expectedVersion: f.expectedVersion })}>{to}</Button>
                         ))}
                       </span>
                     )}
