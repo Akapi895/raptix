@@ -473,3 +473,39 @@ model EngagementClosure {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ADR-0070: engagement-scoped library review proposals. A proposal references
+// the canonical corpus skill by name/path and pins a snapshot revision; it
+// never becomes a second executable corpus and is never read by the runtime
+// skill loader or graph builder.
+model LibraryReviewProposal {
+  id String @id @default(cuid())
+  engagementId String
+  skillName String
+  skillPath String
+  baseRevision String
+  baseBody String
+  proposedBody String
+  rationale String?
+  status String @default("draft") // draft | proposed | approved | rejected
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reviews LibraryProposalReview[]
+  @@unique([engagementId, skillName, version])
+  @@index([engagementId, status])
+}
+
+// Version-pinned independent review of one proposal version.
+model LibraryProposalReview {
+  id String @id @default(cuid())
+  proposalId String
+  proposalVersion Int
+  decision String // approved | rejected
+  comment String?
+  reviewerId String
+  createdAt DateTime @default(now())
+  proposal LibraryReviewProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  @@index([proposalId])
+}
