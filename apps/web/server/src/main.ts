@@ -1,4 +1,5 @@
 ﻿import { mkdir } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import type { ScopedRunView } from '@raptix/web-contracts';
 import { getLocalIdentity } from './auth/identity-provider.js';
 import { buildApp } from './app.js';
@@ -31,6 +32,7 @@ import { VaultService } from './services/vault-service.js';
 import { MembersService } from './services/members-service.js';
 import { ScopeService } from './services/scope-service.js';
 import { GovernanceService, type PreflightCheck } from './services/governance-service.js';
+import { ScheduleService } from './services/schedule-service.js';
 import { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import { ReportsService } from './services/reports-service.js';
 import { C2GrantsService } from './services/c2-grants-service.js';
@@ -155,8 +157,19 @@ async function main(): Promise<void> {
      await closureService!.assertOpen(engagementId);
      await governanceService!.assertNoActiveStop(engagementId, threadId);
      if (kind === 'execution' && threadId) await governanceService!.assertExecutionAuthorized(actorId, engagementId, threadId, env.authMode === 'multi');
-   } }) : undefined;
-   async function ownedRuns(actorId: string, engagementId: string, threadId: string): Promise<ScopedRunView[]> {
+    } }) : undefined;
+   // W11 (ADR-0073): scheduled starts dispatch through the same run ledger and
+   // re-run the identical execution gate a manual start runs.
+   const scheduleService = dbClient && governanceService ? new ScheduleService(dbClient, {
+     authorize: async (actorId, engagementId, threadId) => {
+       await governanceService.assertExecutionAuthorized(actorId, engagementId, threadId, env.authMode === 'multi');
+     },
+     dispatch: runsService ? async (actorId, engagementId, threadId, requestId, reason) => {
+       const view = await runsService.submit(actorId, engagementId, threadId, { requestId, message: reason });
+       return view.runId ?? null;
+     } : undefined,
+   }, scopeService ?? undefined) : undefined;
+    async function ownedRuns(actorId: string, engagementId: string, threadId: string): Promise<ScopedRunView[]> {
      if (!runsService) throw new TypeError('Runtime run reads are unavailable.');
      const runs: ScopedRunView[] = [];
      let offset = 0;
@@ -216,6 +229,7 @@ async function main(): Promise<void> {
   membersService,
   scopeService,
   governanceService,
+  scheduleService,
   findingsWorkflow,
     reportsService,
     cancelRun: runsService ? async (threadId, runId, actorId, engagementId) => {
@@ -242,9 +256,25 @@ async function main(): Promise<void> {
     await ensureBootstrapAdmin(dbClient, env.adminBootstrap.username, env.adminBootstrap.password, env.adminBootstrap.displayName);
   }
 
+  // W11 worker: claims due schedule intents and dispatches them through the
+  // runtime ledger. Server-side only — no browser timer ever controls this.
+  let scheduleTimer: NodeJS.Timeout | undefined;
+  if (scheduleService) {
+    const workerId = randomUUID();
+    scheduleTimer = setInterval(() => {
+      void (async () => {
+        await scheduleService.recoverStaleClaims(10 * 60 * 1000);
+        const { claimed } = await scheduleService.claimDue(workerId);
+        for (const intent of claimed) await scheduleService.runClaimed(intent);
+      })().catch((error) => app.log.warn({ error }, 'schedule worker tick failed'));
+    }, 15_000);
+    scheduleTimer.unref();
+  }
+
   const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
     if (closing) return;
     closing = true;
+    if (scheduleTimer !== undefined) clearInterval(scheduleTimer);
     app.log.info({ signal }, 'shutdown signal received, closing HTTP server');
     try {
       await app.close();

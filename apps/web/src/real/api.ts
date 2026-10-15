@@ -643,6 +643,64 @@ export function resolveEmergencyStop(engagementId: string, stopId: string, reaso
   { method: 'POST', body: { reason } })
 }
 
+/* ───────────── W11 operation schedules (ADR-0073 durable execution intents) ───────────── */
+
+export type ScheduleStatus = 'scheduled' | 'claimed' | 'dispatched' | 'refused' | 'canceled' | 'missed' | 'uncertain'
+
+export interface ScheduleView {
+  id: string
+  engagementId: string
+  planId: string
+  threadId: string
+  requestId: string
+  status: ScheduleStatus
+  version: number
+  executeAt: string
+  timezone: string
+  reason: string
+  runId: string | null
+  outcomeDetail: string | null
+  claimedBy: string | null
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SchedulesView {
+  engagementId: string
+  schedules: ScheduleView[]
+  source: 'db'
+}
+
+function isSchedulesView(v: unknown): v is SchedulesView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as SchedulesView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.schedules) && doc.source === 'db'
+    && doc.schedules.every((s) => typeof s.id === 'string' && typeof s.status === 'string' && typeof s.version === 'number')
+}
+
+export function fetchSchedules(engagementId: string): Promise<SchedulesView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/schedules`, owned(engagementId, isSchedulesView))
+}
+
+export function createSchedule(engagementId: string, input: { planId: string; threadId: string; executeAt: string; timezone: string; reason: string; requestId: string }): Promise<ScheduleView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/schedules`, (v): v is ScheduleView =>
+    typeof v === 'object' && v !== null && (v as ScheduleView).status === 'scheduled',
+  { method: 'POST', body: input })
+}
+
+export function cancelSchedule(engagementId: string, scheduleId: string): Promise<ScheduleView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/schedules/${encodeURIComponent(scheduleId)}/cancel`, (v): v is ScheduleView =>
+    typeof v === 'object' && v !== null && (v as ScheduleView).status === 'canceled',
+  { method: 'POST' })
+}
+
+export function rescheduleSchedule(engagementId: string, scheduleId: string, input: { executeAt: string; timezone: string; expectedVersion: number }): Promise<ScheduleView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/schedules/${encodeURIComponent(scheduleId)}/reschedule`, (v): v is ScheduleView =>
+    typeof v === 'object' && v !== null && typeof (v as ScheduleView).version === 'number',
+  { method: 'POST', body: input })
+}
+
 /* ───────────── Curated findings/evidence (integration ticket 10) ───────────── */
 
 export interface CuratedFindingView {
