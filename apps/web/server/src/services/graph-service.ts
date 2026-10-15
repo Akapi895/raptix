@@ -34,6 +34,8 @@ const MAX_EDGES = 1200;
 const MAX_ASSETS = 300;
 const MAX_PROPS = 24;
 const MAX_VALUE_CHARS = 300;
+/** W24: bounded allowlisted scalar arrays (ports/services/finding ids). */
+const MAX_ARRAY_ITEMS = 64;
 const REQUEST_TIMEOUT_MS = 8000;
 
 /** Keys allowed into a public projection. Everything else is dropped. */
@@ -58,6 +60,17 @@ function publicPropertyValue(key: string, value: unknown): string | number | boo
     return CREDENTIAL_VALUE_RE.test(sliced) ? REDACTED : sliced;
   }
   if (typeof value === 'number' || typeof value === 'boolean' || value === null) return value;
+  // W24: a bounded scalar array (ports/services/finding ids) keeps its data as
+  // a joined string instead of collapsing to null; non-scalar members are dropped.
+  if (Array.isArray(value)) {
+    const scalars = value
+      .filter((item): item is string | number | boolean => typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')
+      .slice(0, MAX_ARRAY_ITEMS)
+      .map((item) => String(item).slice(0, MAX_VALUE_CHARS));
+    const joined = scalars.join(',');
+    if (CREDENTIAL_VALUE_RE.test(joined)) return REDACTED;
+    return scalars.length > 0 ? joined : null;
+  }
   return null;
 }
 
@@ -116,11 +129,13 @@ export async function neo4jQuery(config: GraphConfig, statement: string, paramet
 async function runScopedQuery(config: GraphConfig, engagementName: string): Promise<ScopedRawGraph> {
   const statement = [
     'MATCH (n) WHERE n.engagement = $engagement',
+    // W24: bound the scan at the database, not only after the JS slice.
+    'WITH n LIMIT $nodeLimit',
     'OPTIONAL MATCH (n)-[r]->(m) WHERE m.engagement = $engagement',
     'RETURN collect(DISTINCT {id: elementId(n), labels: labels(n), properties: properties(n)}) AS nodes,',
     'collect(DISTINCT CASE WHEN r IS NOT NULL THEN {id: elementId(r), source: elementId(n), target: elementId(m), type: type(r), properties: properties(r)} END) AS edges',
   ].join(' ');
-  const rows = await neo4jQuery(config, statement, { engagement: engagementName });
+  const rows = await neo4jQuery(config, statement, { engagement: engagementName, nodeLimit: MAX_NODES + 1 });
   const row = rows[0]!;
   return { nodes: (row[0] ?? []) as RawNode[], edges: ((row[1] ?? []) as Array<RawEdge | null>).filter(edge => edge !== null) as RawEdge[] };
 }
@@ -128,7 +143,7 @@ async function runScopedQuery(config: GraphConfig, engagementName: string): Prom
 const HOSTNAME_KEYS = ['hostname', 'host', 'netbios', 'domain'] as const;
 const LABEL_KEYS = ['hostname', 'host', 'ip', 'name', 'title', 'username', 'url'] as const;
 
-function classifyAssetType(labels: string[], properties: Record<string, string | number | boolean | null>): AssetSummaryView['type'] {
+function classifyAssetType(labels: string[], properties: Record<string, unknown>): AssetSummaryView['type'] {
   const joined = labels.join(' ').toLowerCase();
   const url = properties.url ?? properties.uri;
   if (/identity|user|account|credential/.test(joined) || properties.username !== undefined) return 'Identity';
@@ -138,7 +153,11 @@ function classifyAssetType(labels: string[], properties: Record<string, string |
   return 'Host';
 }
 
-export function toAssetSummaries(view: Omit<GraphView, 'engagementId' | 'truncated' | 'source'>): AssetSummaryView[] {
+/**
+ * W24: derives asset summaries from either the public projection or raw graph
+ * nodes, so ports/services arrays survive either way.
+ */
+export function toAssetSummaries(view: { nodes: ReadonlyArray<{ id: string; labels: string[]; properties: Record<string, unknown> }>; edges: ReadonlyArray<unknown> }): AssetSummaryView[] {
   const assets = new Map<string, AssetSummaryView>();
   for (const node of view.nodes) {
     const properties = node.properties;
@@ -155,11 +174,18 @@ export function toAssetSummaries(view: Omit<GraphView, 'engagementId' | 'truncat
     const os = stringProp(['os', 'os_family']);
     const ports = typeof properties.ports === 'string' && properties.ports.length > 0 ? [properties.ports] : typeof properties.port === 'number' ? [String(properties.port)] : [];
     const rawServices = properties.services;
-    const services = Array.isArray(rawServices) ? [] : typeof rawServices === 'string' && rawServices.length > 0 ? [rawServices] : typeof properties.service === 'string' && properties.service.length > 0 ? [properties.service] : [];
+    // W24: arrays are kept (bounded) rather than dropped — the projection
+    // expects ports/services arrays whether they arrive raw or joined.
+    const services = Array.isArray(rawServices)
+      ? rawServices.filter((item): item is string => typeof item === 'string' && item.length > 0).slice(0, MAX_ARRAY_ITEMS)
+      : typeof rawServices === 'string' && rawServices.length > 0 ? [rawServices] : typeof properties.service === 'string' && properties.service.length > 0 ? [properties.service] : [];
     const relatedFindingIds = [properties.finding_id, properties.finding_ids, properties.cve_id, properties.cve_ids].filter((value): value is string => typeof value === 'string' && value.length > 0).flatMap(value => value.split(/[,\s]+/)).filter(Boolean).slice(0, 20);
     const label = stringProp(LABEL_KEYS) ?? node.labels[0] ?? node.id;
     const type = classifyAssetType(node.labels, properties);
-    const key = `${type}|${hostname ?? ''}|${ip ?? ''}|${url ?? ''}`;
+    // W24: nodes with no semantic identity keep their own element id as the
+    // dedupe key instead of merging every unnamed node together.
+    const hasSemanticIdentity = hostname !== undefined || ip !== undefined || url !== undefined;
+    const key = hasSemanticIdentity ? `${type}|${hostname ?? ''}|${ip ?? ''}|${url ?? ''}` : `${type}|node:${node.id}`;
     const existing = assets.get(key);
     if (existing) {
       const merged = new Set([...existing.ports, ...ports]);

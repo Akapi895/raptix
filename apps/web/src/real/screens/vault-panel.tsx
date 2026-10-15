@@ -44,11 +44,13 @@ export function RealVaultPanel({ engagementId }: { engagementId: string }): Reac
   })
   const revoke = useMutation({
     mutationFn: (secretId: string) => revokeVaultSecret(engagementId, secretId),
-    onSuccess: () => {
+    onSuccess: (_, secretId) => {
       setError(null)
       setNotice('Secret revoked; the encrypted material was deleted and the action audited.')
+      // W25: a revoked secret's plaintext must not linger in this browser session.
       setRevealed((r) => {
         const next = { ...r }
+        delete next[secretId]
         return next
       })
       invalidate()

@@ -26,6 +26,7 @@ function fleet(): FleetView {
     branches: [
       { threadId: 'th-1', key: 'br-recon-1', agent: 'recon', state: 'ended', outcome: 'PASSED', startedAt: '2026-10-14T09:00:00.000Z', endedAt: '2026-10-14T09:04:00.000Z', provenance: 'checkpoint' },
       { threadId: 'th-1', key: 'br-exploit-2', agent: 'exploit', state: 'running', outcome: null, startedAt: '2026-10-14T09:10:00.000Z', endedAt: null, provenance: 'checkpoint' },
+      { threadId: 'th-1', key: 'br-failed-3', agent: 'exploit', state: 'ended', outcome: 'failed', startedAt: '2026-10-14T09:20:00.000Z', endedAt: '2026-10-14T09:21:00.000Z', provenance: 'checkpoint' },
     ],
     counts: { threads: 0, threadsTruncated: false, activeRuns: 0, branches: 2, runningBranches: 1 },
     excludedActions: ['branch retry', 'agent allocation'],
@@ -79,5 +80,13 @@ describe('RealFleetPanel detail routes (W22)', () => {
     await renderDetail('#/ai-branch/br-foreign?engagement=eng-1')
     expect(await screen.findByText('Branch not found')).toBeInTheDocument()
     expect(screen.queryByText('br-recon-1')).not.toBeInTheDocument()
+  })
+
+  it('W24: an ended branch with a failed outcome is not rendered as passed', async () => {
+    await renderDetail('#/agents?engagement=eng-1')
+    const failedRow = (await screen.findByText('failed')).closest('tr')!
+    expect(failedRow.querySelector('.text-bad')).not.toBeNull()
+    const passedRow = (await screen.findByText('recon')).closest('tr')!
+    expect(passedRow.querySelector('.text-ok')).not.toBeNull()
   })
 })

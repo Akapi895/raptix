@@ -126,6 +126,22 @@ describe('W13 scoped graph projection', () => {
     expect(assets[3]).toMatchObject({ type: 'Identity', label: 'CORP\\svc_backup' });
     expect(assets[4]).toMatchObject({ type: 'Mobile', label: 'com.corp.app' });
   });
+  it('W24: keeps bounded service arrays and does not collapse unnamed nodes', () => {
+    const assets = toAssetSummaries({
+      nodes: [
+        { id: 'u1', labels: ['Host'], properties: { services: ['http', 'https'] } },
+        { id: 'u2', labels: ['Host'], properties: {} },
+        { id: 'h1', labels: ['Host'], properties: { ip: '10.0.0.7', services: ['ssh'] } },
+      ],
+      edges: [],
+    });
+    const withServices = assets.find((a) => a.ip === '10.0.0.7')
+    expect(withServices?.services).toEqual(['ssh'])
+    const arrayServices = assets.find((a) => Array.isArray(a.services) && a.services.includes('http'))
+    expect(arrayServices?.services).toEqual(['http', 'https'])
+    // Two identity-less nodes stay distinct rather than merging into one.
+    expect(assets.filter((a) => a.ip === undefined).length).toBeGreaterThanOrEqual(2)
+  });
   it('serves graph and assets routes with 503 unavailable vs 404 foreign scoping', async () => {
     const { registerGraphRoutes } = await import('../src/http/routes/graph.routes.js');
     const stub = await neo4jStub([[], []]);
