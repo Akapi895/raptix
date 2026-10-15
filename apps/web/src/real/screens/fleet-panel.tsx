@@ -17,6 +17,14 @@ import { utcMinuteOr } from '../format'
 
 const STATE_LABEL: Record<string, string> = { running: 'running', ended: 'ended', unknown: 'unknown' }
 
+/** W24: an ended branch is only "passed" when its outcome is not failed/cancelled. */
+function branchStatusValue(branch: { state: 'running' | 'ended' | 'unknown'; outcome: string | null }): 'passed' | 'failed' | 'pending' {
+  if (branch.state !== 'ended') return 'pending'
+  if (branch.outcome === 'failed') return 'failed'
+  if (branch.outcome === 'cancelled' || branch.outcome === 'canceled') return 'pending'
+  return 'passed'
+}
+
 export function RealFleetPanel({ engagementId }: { engagementId: string }): ReactElement {
   const client = useQueryClient()
   const route = useRoute()
@@ -71,7 +79,7 @@ export function RealFleetPanel({ engagementId }: { engagementId: string }): Reac
         <CardHeader title={`Branch ${branch.key}`} sub={`Thread ${branch.threadId} — observed start/end pairing from durable checkpoint transcripts`} />
         <dl className="grid gap-2 p-4 text-sm sm:grid-cols-2">
           <dt className="text-muted">Agent</dt><dd className="font-mono text-xs">{branch.agent}</dd>
-          <dt className="text-muted">State</dt><dd><Status kind="gate" value={branch.state === 'ended' ? 'passed' : 'pending'} size="sm" label={STATE_LABEL[branch.state] ?? branch.state} /></dd>
+          <dt className="text-muted">State</dt><dd><Status kind="gate" value={branchStatusValue(branch)} size="sm" label={STATE_LABEL[branch.state] ?? branch.state} /></dd>
           <dt className="text-muted">Outcome</dt><dd className="text-xs">{branch.outcome ?? '—'}</dd>
           <dt className="text-muted">Started</dt><dd className="font-mono text-xs">{utcMinuteOr(branch.startedAt)}</dd>
           <dt className="text-muted">Ended</dt><dd className="font-mono text-xs">{utcMinuteOr(branch.endedAt)}</dd>
@@ -163,7 +171,7 @@ export function RealFleetPanel({ engagementId }: { engagementId: string }): Reac
                   <tr key={`${b.threadId}::${b.key}`} className="border-t border-line">
                     <td className="py-2 pr-3 font-mono text-xs">{b.threadId}</td>
                     <td className="py-2 pr-3 font-mono text-xs">{b.agent}</td>
-                    <td className="py-2 pr-3"><Status kind="gate" value={b.state === 'running' ? 'pending' : b.state === 'ended' ? 'passed' : 'pending'} size="sm" label={STATE_LABEL[b.state] ?? b.state} /></td>
+                    <td className="py-2 pr-3"><Status kind="gate" value={branchStatusValue(b)} size="sm" label={STATE_LABEL[b.state] ?? b.state} /></td>
                     <td className="py-2 pr-3 text-xs">{b.outcome ?? '—'}</td>
                     <td className="py-2 pr-3 text-xs">{utcMinuteOr(b.startedAt)}</td>
                     <td className="py-2 text-xs">{utcMinuteOr(b.endedAt)}</td>

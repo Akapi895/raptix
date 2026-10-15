@@ -15,8 +15,12 @@ import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status, cx } from '../../ui'
 
 const STATUS_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = {
-  completed: 'ok', failed: 'bad', cancelled: 'neutral', interrupted: 'warn',
-  running: 'warn', pending: 'warn', awaiting_approval: 'warn',
+  // W24: the runtime reports success/error/timeout/interrupted; unknown
+  // statuses must never be rendered as success.
+  success: 'ok', completed: 'ok',
+  failed: 'bad', error: 'bad', timeout: 'bad', rejected: 'bad',
+  interrupted: 'warn', running: 'warn', pending: 'warn', submitting: 'warn', submitted: 'warn', awaiting_approval: 'warn', uncertain: 'warn',
+  cancelled: 'neutral', canceled: 'neutral',
 }
 
 export function RealOperationsPanel({ engagementId }: { engagementId: string }): ReactElement {

@@ -75,6 +75,21 @@ function buildApp(key: Buffer | null = KEY): FastifyInstance {
 }
 
 describe('W18 vault storage', () => {
+  it('W25: records the trusted session actor on the secret and its audit row', async () => {
+    const audits: Array<Record<string, unknown>> = [];
+    const db = {
+      engagement: { findFirst: async ({ where }: { where: { id: string } }) => where.id === 'eng-1' ? { id: 'eng-1', userId: 'operator-9', authorizationConfirmed: true } : null },
+      engagementClosure: { findFirst: async () => null },
+      vaultSecret: { create: async ({ data }: { data: Record<string, unknown> }) => ({ ...data, id: 'sec-1', createdAt: new Date(), updatedAt: new Date() }) },
+      vaultAudit: {
+        create: async ({ data }: { data: Record<string, unknown> }) => { audits.push(data); return data },
+        aggregate: async () => ({ _count: { _all: 0 }, _max: { createdAt: null } }),
+      },
+    };
+    const view = await new VaultService(db as never, KEY).create('operator-9', 'eng-1', { kind: 'api-key', label: 'Grafana', plaintext: 'value-1234' });
+    expect(view.createdBy).toBe('operator-9');
+    expect(audits[0]).toMatchObject({ action: 'created', actorId: 'operator-9' });
+  });
   it('stores secrets encrypted and returns redacted metadata only', async () => {
     const app = buildApp();
     const created = await app.inject({ method: 'POST', url: '/api/engagements/eng-1/vault/secrets', payload: { kind: 'api-key', label: 'Grafana admin', plaintext: 'hunter2-super-secret' } });

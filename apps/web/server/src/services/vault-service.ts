@@ -56,11 +56,11 @@ export class VaultService {
         ciphertext: ciphertext.toString('base64'),
         iv: iv.toString('base64'),
         authTag: cipher.getAuthTag().toString('base64'),
-        createdBy: 'local',
+        createdBy: userId,
       },
     });
     await this.db.vaultAudit.create({
-      data: { engagementId: engagement.id, secretId: row.id, action: 'created' },
+      data: { engagementId: engagement.id, secretId: row.id, action: 'created', actorId: userId },
     });
     return this.toSecretView(engagement.id, row as unknown as VaultSecretRow);
   }
@@ -82,7 +82,7 @@ export class VaultService {
     }
     const revealedAt = new Date();
     await this.db.vaultAudit.create({
-      data: { engagementId: engagement.id, secretId: row.id, action: 'revealed' },
+      data: { engagementId: engagement.id, secretId: row.id, action: 'revealed', actorId: userId },
     });
     return { secretId: row.id, engagementId: engagement.id, plaintext, revealedAt: revealedAt.toISOString() };
   }
@@ -92,7 +92,7 @@ export class VaultService {
     const row = await this.db.vaultSecret.findFirst({ where: { id: secretId, engagementId: engagement.id } });
     if (!row) throw new ProjectApiError(404, 'Secret not found');
     await this.db.vaultAudit.create({
-      data: { engagementId: engagement.id, secretId: row.id, action: 'revoked' },
+      data: { engagementId: engagement.id, secretId: row.id, action: 'revoked', actorId: userId },
     });
     await this.db.vaultSecret.delete({ where: { id: row.id } });
     return { ok: true };

@@ -196,6 +196,9 @@ model VaultAudit {
   engagementId String
   secretId     String
   action       String
+  // W25: the trusted session actor for new rows; historical rows stay null
+  // (never backfilled with an invented identity).
+  actorId      String?
   createdAt    DateTime @default(now())
 
   @@index([engagementId, createdAt])

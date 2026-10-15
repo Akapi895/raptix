@@ -55,6 +55,15 @@ describe('RealOperationsPanel', () => {
     renderPanel()
     expect(await screen.findByRole('button', { name: 'Open AI workspace' })).toBeTruthy()
   })
+
+  it('W24: maps raw runtime statuses truthfully (success is ok, error is failed)', async () => {
+    stubApi({ runs: [{ ...RUN, runId: 'run-ok', rawStatus: 'success' }, { ...RUN, runId: 'run-err', rawStatus: 'error' }] })
+    renderPanel()
+    const okLabel = await screen.findByText('success')
+    const errLabel = await screen.findByText('error')
+    expect(okLabel.className).toContain('text-ok')
+    expect(errLabel.className).toContain('text-bad')
+  })
 })
 
 describe('RealOperationsPanel (W22 operation detail route)', () => {
