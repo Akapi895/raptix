@@ -190,9 +190,12 @@ def build_kg_tools(
             """Read the Endpoint inventory and derive bounded coverage cells.
 
             This is read-only. The returned ``objective_children`` are inputs
-            for the orchestrator's sequential ``objective_expand`` call. On
-            re-expansion, ``base_generation`` stamps children with the next
-            code-owned generation before the bounds are applied.
+            for the orchestrator's sequential ``objective_expand`` call — but
+            only worth calling when ``recommended_in_flight`` is 2 or more;
+            below that, continue the single-agent recon-to-exploit handoff
+            instead of building the matrix. On re-expansion, ``base_generation``
+            stamps children with the next code-owned generation before the
+            bounds are applied.
             """
             engagement = _resolve_engagement(state)
             if not engagement:
@@ -203,6 +206,8 @@ def build_kg_tools(
                 from raptix.intelligence.agents.standard._surface_registry import (
                     build_coverage_matrix,
                     build_objective_expand_payload,
+                    independent_cell_count,
+                    recommended_in_flight,
                     surfaces_from_kg_inventory,
                 )
 
@@ -234,6 +239,8 @@ def build_kg_tools(
                         "surfaces": surfaces,
                         "cells": cells,
                         "objective_children": payload["children"],
+                        "independent_count": independent_cell_count(cells),
+                        "recommended_in_flight": recommended_in_flight(cells, surfaces),
                     }
                 )
             except Exception as exc:  # noqa: BLE001 — surface read failures to the orchestrator

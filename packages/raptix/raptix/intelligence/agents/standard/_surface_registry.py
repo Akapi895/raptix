@@ -220,6 +220,70 @@ def session_name_for_cell(cell_id: str) -> str:
     return f"se-{digest}"
 
 
+# Technologies observed, in a real engagement, to wedge permanently under
+# concurrent load — single-worker dev servers with no request queue, where
+# one blocked request starves every sibling dispatch probing the same host
+# (see docs/design/2026-10-12-p4-system-optimization-research.md, "self-DoS
+# wedge"). Keep this list short and evidence-anchored: add an entry only
+# after a real incident confirms it, never on suspicion that a technology
+# is "probably" single-threaded.
+FRAGILE_UNDER_CONCURRENCY: frozenset[str] = frozenset({"werkzeug"})
+
+DEFAULT_RESILIENCE_CAP = 3
+FRAGILE_RESILIENCE_CAP = 1
+
+
+def independent_cell_count(cells: Sequence[Mapping[str, Any]]) -> int:
+    """Count cells with no ``via_cell`` lineage (not chain-dependent).
+
+    A cell carrying ``via_cell`` was produced by re-expanding a just-confirmed
+    parent cell — it depends on that parent's outcome and must not be counted
+    toward "independent work available to fan out".
+    """
+    return sum(1 for cell in cells if not cell.get("via_cell"))
+
+
+def _surface_technology_names(surface: Surface) -> set[str]:
+    props = _props(surface)
+    raw = surface.get("technologies", props.get("technologies", []))
+    if not isinstance(raw, (list, tuple)):
+        return set()
+    names: set[str] = set()
+    for item in raw:
+        label = item.get("label") if isinstance(item, Mapping) else item
+        if label:
+            names.add(str(label).lower())
+    return names
+
+
+def server_resilience_cap(surfaces: Sequence[Surface]) -> int:
+    """Return the fan-out width a detected technology can safely tolerate.
+
+    Narrow and evidence-anchored: only a technology in
+    ``FRAGILE_UNDER_CONCURRENCY`` caps below the prior default of 3. Matching
+    is substring-based (technology labels carry versions, e.g. "Werkzeug/3.0")
+    rather than exact, but the fragile set itself stays short and specific.
+    Unknown or unmatched technology is not assumed safe for wider fan-out —
+    it stays at the default instead.
+    """
+    for surface in surfaces:
+        names = _surface_technology_names(surface)
+        if any(fragile in name for name in names for fragile in FRAGILE_UNDER_CONCURRENCY):
+            return FRAGILE_RESILIENCE_CAP
+    return DEFAULT_RESILIENCE_CAP
+
+
+def recommended_in_flight(cells: Sequence[Mapping[str, Any]], surfaces: Sequence[Surface]) -> int:
+    """Advisory fan-out width: independent cells, bounded by server resilience.
+
+    Advisory only — ``DispatchMiddleware`` (ADR-0067) enforces the real
+    per-engagement concurrency ceiling at the dispatch chokepoint regardless
+    of this number; this value only tells the orchestrator whether building
+    the coverage matrix is worth the coordination cost in the first place.
+    """
+    return min(independent_cell_count(cells), server_resilience_cap(surfaces))
+
+
 def _surface_generation(surface: Surface) -> int:
     props = _props(surface)
     raw = surface.get("gen", props.get("gen", 0))
