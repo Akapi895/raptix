@@ -128,7 +128,7 @@ try {
   const reads = control.runReads;
   await http('GET', `${base}/threads/${thread}/runs/${randomUUID()}`, undefined, 404);
   assert.equal(control.runReads, reads);
-  const foreign = await db.engagement.create({ data: { name: `w07-foreign-${suffix}`, userId: 'foreign', targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
+  const foreign = await db.engagement.create({ data: { name: `w07-foreign-${suffix}`, workspaceSlug: `w07-foreign-${suffix}`, userId: 'foreign', targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
   await http('POST', `/api/engagements/${foreign.id}/threads`, { requestId: `foreign-${suffix}`, kind: 'planning' }, 404);
   await http('POST', `${base}/threads/${thread}/runs`, { requestId: `unsafe-${suffix}`, message: 'hello', command: { goto: 'unsafe' } }, 400);
   checks.push('8 simultaneous run intents dispatch once; stable replay, active-run conflict, strict input, redaction and pre-network ownership');

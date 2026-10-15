@@ -32,7 +32,7 @@ let lastParameters: Record<string, unknown> = {};
 const db = {
   engagement: {
     findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
-      where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: 'w13-graph-proj' } : null,
+      where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: 'w13-graph-proj', workspaceSlug: 'w13-graph-proj' } : null,
   },
 } as never;
 
@@ -42,6 +42,22 @@ afterEach(async () => {
 });
 
 const config = (uri: string) => ({ httpUri: uri, user: 'neo4j', password: 'gate-secret' });
+
+it('W01: scopes the KG query by the global workspace slug, not the per-owner display name', async () => {
+  const stub = await neo4jStub([[{ id: '4:a:1', labels: ['Host'], properties: { hostname: 'dc01' } }], []]);
+  servers.push(stub.server);
+  const url = await stub.url;
+  const db = {
+    engagement: {
+      findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
+        where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: 'shared-display-name', workspaceSlug: 'unique-partition' } : null,
+    },
+  } as never;
+  const view = await new GraphService(db, config(url)).graph('local', 'eng-1');
+  expect(view.engagementId).toBe('eng-1');
+  expect(lastParameters.engagement).toBe('unique-partition');
+  expect(lastParameters.engagement).not.toBe('shared-display-name');
+});
 
 describe('W13 scoped graph projection', () => {
   it('projects an engagement-scoped graph with whitelisted, redacted properties and bounded edges', async () => {

@@ -29,7 +29,7 @@ export class FindingsService {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId } });
     if (!project) throw new ProjectNotFoundError();
     if (project.userId !== userId) await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
-    return resolveEngagementWorkspaceDir(this.workspaceRoot, project.name);
+    return resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
   }
 
   public async list(userId: string, engagementId: string): Promise<FindingsView> {

@@ -37,7 +37,7 @@ export class ArtifactsService {
       project = await this.db.engagement.findFirst({ where: { id: engagementId } });
       if (project === null) throw new ProjectNotFoundError();
     }
-    return resolveEngagementWorkspaceDir(this.workspaceRoot, project.name);
+    return resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
   }
 
   private async safeRealPath(target: string): Promise<string | null> {

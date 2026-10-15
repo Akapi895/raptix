@@ -31,9 +31,9 @@ async function http(url: string, status: number, method: 'GET' | 'PATCH' | 'POST
 
 try {
   const suffix = randomUUID();
-  const project = await db.engagement.create({ data: { name: `w05-${suffix}`, targetType: 'web_url', targetValue: 'http://authorized-w05.invalid', authorizationConfirmed: true } });
-  const other = await db.engagement.create({ data: { name: `w05-other-${suffix}`, targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
-  const foreign = await db.engagement.create({ data: { name: `w05-foreign-${suffix}`, userId: 'other-owner', targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
+  const project = await db.engagement.create({ data: { name: `w05-${suffix}`, workspaceSlug: `w05-${suffix}`, targetType: 'web_url', targetValue: 'http://authorized-w05.invalid', authorizationConfirmed: true } });
+  const other = await db.engagement.create({ data: { name: `w05-other-${suffix}`, workspaceSlug: `w05-other-${suffix}`, targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
+  const foreign = await db.engagement.create({ data: { name: `w05-foreign-${suffix}`, workspaceSlug: `w05-foreign-${suffix}`, userId: 'other-owner', targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
   const threadId = randomUUID();
   const proof = await service.prepareBinding('local', project.id, 'soundwave', 'planning');
   await failure(() => service.prepareBinding('other-owner', project.id, 'soundwave', 'planning'), 404);
@@ -56,7 +56,7 @@ try {
   checks.push('owned immutable/context-bound thread identity, concurrent binding, unproven legacy pointer and target lock');
 
   for (let i = 0; i < 6; i++) {
-    const racing = await db.engagement.create({ data: { name: `w05-race-${i}-${suffix}`, targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
+    const racing = await db.engagement.create({ data: { name: `w05-race-${i}-${suffix}`, workspaceSlug: `w05-race-${i}-${suffix}`, targetType: 'web_url', targetValue: project.targetValue, authorizationConfirmed: true } });
     const raceProof = await service.prepareBinding('local', racing.id, 'soundwave', 'planning');
     const results = await Promise.allSettled([
       service.bindThread('local', racing.id, { ...binding, threadId: randomUUID(), contextHash: raceProof }),

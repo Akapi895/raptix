@@ -16,6 +16,7 @@ import { ProjectsService } from '../src/services/projects-service.js';
 /** In-memory owner-scoped repository satisfying ProjectRepositoryPort. */
 function makeInMemoryRepository(): ProjectRepositoryPort {
   const store = new Map<string, ProjectRecord>();
+  const takenSlugs = new Set<string>();
   return {
     async list(userId) {
       return [...store.values()].filter((row) => row.userId === userId);
@@ -24,11 +25,18 @@ function makeInMemoryRepository(): ProjectRepositoryPort {
       const row = store.get(id);
       return row !== undefined && row.userId === userId ? row : null;
     },
+    async allocateWorkspaceSlug(name) {
+      if (!takenSlugs.has(name)) return name;
+      let attempt = 0;
+      while (takenSlugs.has(`${name}-${attempt}`)) attempt += 1;
+      return `${name}-${attempt}`;
+    },
     async create(userId, data) {
       const now = new Date();
       const row: ProjectRecord = {
         id: `eng-${store.size + 1}`,
         name: data.name,
+        workspaceSlug: data.workspaceSlug,
         displayName: data.displayName ?? null,
         targetType: data.targetType,
         targetValue: data.targetValue,
@@ -41,6 +49,7 @@ function makeInMemoryRepository(): ProjectRepositoryPort {
         updatedAt: now,
       };
       store.set(row.id, row);
+      takenSlugs.add(data.workspaceSlug);
       return row;
     },
     async update(userId, id, data) {

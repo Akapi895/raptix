@@ -15,6 +15,7 @@ import type {
   ProjectRepositoryPort,
   UpdateProjectData,
 } from '../src/services/projects-service.js';
+import { WorkspaceSlugConflictError } from '../src/services/projects-service.js';
 
 class FakeEngagementNameConflictError extends Error {
   public constructor(slug: string) {
@@ -29,6 +30,7 @@ type MutableProjectRecord = {
 
 class InMemoryProjectRepository implements ProjectRepositoryPort {
   private readonly store: MutableProjectRecord[] = [];
+  private readonly takenSlugs = new Set<string>();
   public get records(): ProjectRecord[] {
     return this.store;
   }
@@ -49,6 +51,14 @@ class InMemoryProjectRepository implements ProjectRepositoryPort {
     return found ? { ...found } : null;
   }
 
+  public async allocateWorkspaceSlug(name: string): Promise<string> {
+    const used = new Set(this.store.map((record) => record.workspaceSlug));
+    if (!used.has(name)) return name;
+    let attempt = 0;
+    while (used.has(`${name}-${attempt}`)) attempt += 1;
+    return `${name}-${attempt}`;
+  }
+
   public async create(userId: string, data: CreateProjectData): Promise<ProjectRecord> {
     this.created.push({ ...data });
     if (this.createError !== null) throw this.createError;
@@ -59,10 +69,14 @@ class InMemoryProjectRepository implements ProjectRepositoryPort {
     ) {
       throw new FakeEngagementNameConflictError(data.name);
     }
+    if (this.store.some((record) => record.workspaceSlug === data.workspaceSlug)) {
+      throw new WorkspaceSlugConflictError(data.workspaceSlug);
+    }
     const now = new Date();
     const record: ProjectRecord = {
       id: `eng_${String(this.created.length).padStart(3, '0')}`,
       name: data.name,
+      workspaceSlug: data.workspaceSlug,
       displayName: data.displayName ?? null,
       targetType: data.targetType,
       targetValue: data.targetValue,
@@ -101,9 +115,11 @@ let recordSeq = 0;
 
 function makeRecord(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
   recordSeq += 1;
+  const name = overrides.name ?? 'seed-project';
   return {
     id: overrides.id ?? `eng_${String(recordSeq).padStart(3, '0')}`,
-    name: 'seed-project',
+    name,
+    workspaceSlug: overrides.workspaceSlug ?? name,
     displayName: null,
     targetType: 'web_url',
     targetValue: 'http://authorized-local-target:3010',
@@ -798,6 +814,70 @@ describe('PATCH /api/engagements/:id', () => {
 
     expect(response.statusCode).toBe(400);
     expect(ctx.repo.updated).toHaveLength(0);
+  });
+});
+
+describe('W01 workspace identity isolation', () => {
+  it('gives two owners with the same name distinct workspace slugs and directories', async () => {
+    const payload = {
+      name: 'acme-web',
+      targetType: 'web_url',
+      targetValue: 'http://authorized-local-target:3010',
+      authorizationConfirmed: true,
+      brief: BRIEF,
+    };
+    const createdA = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/engagements',
+      payload,
+    });
+    expect(createdA.statusCode).toBe(201);
+
+    const ownerB = new ProjectsService({
+      repository: ctx.repo,
+      workspaceRoot: ctx.workspaceRoot,
+      identity: { id: 'operator-b', mode: 'local-single-user' },
+    });
+    const appB = Fastify({ logger: false });
+    registerErrorHandler(appB);
+    registerProjectRoutes(appB, {
+      service: ownerB,
+      identity: { id: 'operator-b', mode: 'local-single-user' },
+    });
+    try {
+      const createdB = await appB.inject({
+        method: 'POST',
+        url: '/api/engagements',
+        payload,
+      });
+      expect(createdB.statusCode).toBe(201);
+
+      const a = createdA.json();
+      const b = createdB.json();
+      expect(b.workspaceSlug).not.toBe(a.workspaceSlug);
+      expect(ctx.repo.created).toHaveLength(2);
+      expect(ctx.repo.created[1]?.workspacePath).toBeDefined();
+      expect(ctx.repo.created[1]?.workspacePath).not.toBe(
+        ctx.repo.created[0]?.workspacePath,
+      );
+
+      await writeFile(
+        path.join(ctx.workspaceRoot, a.workspaceSlug, 'plan', 'marker-a'),
+        'owner A',
+      );
+      expect(
+        existsSync(
+          path.join(ctx.workspaceRoot, b.workspaceSlug, 'plan', 'marker-a'),
+        ),
+      ).toBe(false);
+
+      const listB = await appB.inject({ method: 'GET', url: '/api/engagements' });
+      expect(listB.statusCode).toBe(200);
+      expect(listB.json()).toHaveLength(1);
+      expect(listB.json()[0]).toMatchObject({ id: b.id });
+    } finally {
+      await appB.close();
+    }
   });
 });
 

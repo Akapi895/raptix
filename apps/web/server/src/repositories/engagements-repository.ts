@@ -1,9 +1,11 @@
+import { randomBytes } from 'node:crypto';
 import type {
   EngagementStatus,
   EngagementTargetType,
 } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectPolicyError } from '../security/project-policy.js';
+import { WorkspaceSlugConflictError } from '../services/projects-service.js';
 
 type EngagementDelegate = PrismaClient['engagement'];
 type EngagementRow = Awaited<ReturnType<EngagementDelegate['findFirstOrThrow']>>;
@@ -17,6 +19,7 @@ type EngagementRow = Awaited<ReturnType<EngagementDelegate['findFirstOrThrow']>>
 export interface EngagementRecord {
   readonly id: string;
   readonly name: string;
+  readonly workspaceSlug: string;
   readonly displayName: string | null;
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
@@ -34,6 +37,7 @@ export interface EngagementRecord {
 
 export interface CreateEngagementData {
   readonly name: string;
+  readonly workspaceSlug: string;
   readonly displayName?: string | null;
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
@@ -81,10 +85,33 @@ function isUniqueConstraintViolation(error: unknown): boolean {
   );
 }
 
+/**
+ * Serialized P2002 metadata. Shape differs by stack: classic Prisma exposes
+ * `meta.target`; the pg driver adapter nests the violated constraint under
+ * `meta.driverAdapterError.cause`. Serializing covers both without coupling
+ * to either internal shape.
+ */
+function uniqueViolationDetail(error: unknown): string {
+  const meta = (error as { meta?: unknown }).meta;
+  try {
+    return JSON.stringify(meta ?? {}).toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function isWorkspaceSlugViolation(error: unknown): boolean {
+  return (
+    isUniqueConstraintViolation(error) &&
+    uniqueViolationDetail(error).includes('workspaceslug')
+  );
+}
+
 function toRecord(row: EngagementRow): EngagementRecord {
   return {
     id: row.id,
     name: row.name,
+    workspaceSlug: row.workspaceSlug,
     displayName: row.displayName,
     targetType: row.targetType as EngagementTargetType,
     targetValue: row.targetValue,
@@ -139,6 +166,25 @@ export class EngagementsRepository {
     return row ? toRecord(row) : null;
   }
 
+  /**
+   * Pure-read slug allocation (W01): `name` when globally unused, else a
+   * bounded random suffix derived from it. The `workspaceSlug` unique index
+   * remains the authoritative backstop against concurrent creators.
+   */
+  public async allocateWorkspaceSlug(name: string): Promise<string> {
+    const rows = await this.db.findMany({
+      where: { workspaceSlug: { startsWith: name } },
+      select: { workspaceSlug: true },
+    });
+    const taken = new Set(rows.map((row) => row.workspaceSlug));
+    if (!taken.has(name)) return name;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const candidate = `${name.slice(0, 57)}-${randomBytes(3).toString('hex')}`;
+      if (!taken.has(candidate)) return candidate;
+    }
+    throw new WorkspaceSlugConflictError(name);
+  }
+
   public async create(
     userId: string,
     data: CreateEngagementData,
@@ -148,6 +194,7 @@ export class EngagementsRepository {
         data: {
           userId,
           name: data.name,
+          workspaceSlug: data.workspaceSlug,
           displayName: data.displayName ?? null,
           targetType: data.targetType,
           targetValue: data.targetValue,
@@ -160,6 +207,9 @@ export class EngagementsRepository {
       return toRecord(row);
     } catch (error) {
       if (isUniqueConstraintViolation(error)) {
+        if (isWorkspaceSlugViolation(error)) {
+          throw new WorkspaceSlugConflictError(data.workspaceSlug);
+        }
         throw new EngagementNameConflictError(userId, data.name);
       }
       throw error;

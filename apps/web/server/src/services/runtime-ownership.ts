@@ -12,7 +12,10 @@ function identifier(value: string, request = false): void {
   if (typeof value !== 'string' || !(request ? /^[A-Za-z0-9][A-Za-z0-9_-]{7,127}$/ : /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/).test(value)) throw new ProjectPolicyError('bad_request', 'Invalid runtime identifier');
 }
 function contextHash(project: Engagement, assistantId: string, kind: ThreadKind): string {
-  return requestFingerprint({ engagementId: project.id, workspaceSlug: project.name, targetType: project.targetType, targetValue: project.targetValue, authorizationConfirmed: project.authorizationConfirmed, assistantId, kind });
+  // W01: partition identity, not the per-owner display name. Backfilled rows
+  // carry workspaceSlug === name, so existing persisted thread hashes stay
+  // byte-identical across the migration.
+  return requestFingerprint({ engagementId: project.id, workspaceSlug: project.workspaceSlug, targetType: project.targetType, targetValue: project.targetValue, authorizationConfirmed: project.authorizationConfirmed, assistantId, kind });
 }
 function bindingView(row: EngagementThread): ThreadBindingView {
   return { engagementId: row.engagementId, threadId: row.threadId, assistantId: row.assistantId, kind: row.kind, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };

@@ -80,7 +80,7 @@ export class ApprovalsService {
   private async ownedPaths(userId: string, engagementId: string): Promise<{ requests: string; decisions: string; dir: string }> {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
     if (!project) throw new ProjectNotFoundError();
-    const dir = await resolveEngagementWorkspaceDir(this.workspaceRoot, project.name);
+    const dir = await resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
     const approvals = path.join(dir, 'approvals');
     return { dir: approvals, requests: path.join(approvals, 'requests.jsonl'), decisions: path.join(approvals, 'decisions.jsonl') };
   }

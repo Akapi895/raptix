@@ -79,7 +79,7 @@ export class TimelineService {
     for (const folder of artifacts.folders) {
       for (const file of folder.files) {
         if (artifactCount >= MAX_ARTIFACTS) { truncated = true; break; }
-        const at = await this.artifactMtime(project.name, file.path);
+        const at = await this.artifactMtime(project.workspaceSlug, file.path);
         if (at === null) continue;
         artifactCount += 1;
         entries.push({
