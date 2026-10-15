@@ -43,6 +43,25 @@ design spec, §13.4).
 - Repair lab runner input creation, canonical injection audit and turn delivery,
   delivered-versus-planned counters, failed reset/log handling, cancellation
   event pairs and unknown-checkout provenance refusal.
+- Bound a sub-agent dispatch's wall clock (default 45 minutes, override
+  `RAPTIX_DISPATCH_TIMEOUT_SECONDS`) so a runaway probe loop fails in minutes
+  instead of up to ~70; classify the resulting `TimeoutError` as an
+  `EXECUTION` failure, not `TOOL` (it is an `OSError` subclass and would
+  otherwise be silently misbucketed).
+- Enforce a real per-engagement concurrency ceiling on simultaneous dispatches
+  (default 3, override `RAPTIX_MAX_CONCURRENT_DISPATCHES`) — the prior "up to
+  3 at a time" bound was prompt-text convention only; nothing in code stopped
+  an unbounded number of concurrent dispatches from piling up against the same
+  target (ADR-0067).
+- Trigger the surface-exploit coverage matrix on KG data instead of an
+  objective-wording match: the prior "Initial Foothold" literal-text gate
+  never matched real engagement phrasing ("initial access and foothold"),
+  so `kg_surface_inventory` was never called in 9 real engagements analyzed.
+  `kg_surface_inventory` now also returns `independent_count` and
+  `recommended_in_flight` (chain-dependent cells excluded, capped to 1 when a
+  known single-worker-fragile technology such as `werkzeug` is detected,
+  else 3); the orchestrator builds the matrix only when
+  `recommended_in_flight >= 2`, regardless of phase or wording (ADR-0068).
 
 ## [1.1.47] — 2026-09-26
 

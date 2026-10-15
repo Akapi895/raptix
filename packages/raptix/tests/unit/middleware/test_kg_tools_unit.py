@@ -109,6 +109,8 @@ def test_surface_inventory_preserves_b5_initial_matrix() -> None:
     ]
     assert {cell["gen"] for cell in payload["cells"]} == {0}
     assert all("gen=0" in child["notes"] for child in payload["objective_children"])
+    assert payload["independent_count"] == 2
+    assert payload["recommended_in_flight"] == 2
 
 
 def test_surface_inventory_reexpansion_deduplicates_and_enforces_generation_bound() -> None:
@@ -134,6 +136,8 @@ def test_surface_inventory_reexpansion_deduplicates_and_enforces_generation_boun
     ]
     assert payload["cells"][0]["gen"] == 1
     assert "gen=1" in payload["objective_children"][0]["notes"]
+    assert payload["independent_count"] == 1
+    assert payload["recommended_in_flight"] == 1
 
     capped = _call(inventory, {"base_generation": 3}, state=state)
     assert json.loads(capped.content)["cells"] == []
