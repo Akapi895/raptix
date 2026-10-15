@@ -1,6 +1,7 @@
 import type { GraphView } from '@raptix/web-contracts';
 import type { GraphConfig, GraphService } from './graph-service.js';
-import { neo4jQuery } from './graph-service.js';
+import { GraphUnavailableError, neo4jQuery } from './graph-service.js';
+import { ProjectApiError } from './projects-service.js';
 
 /**
  * Ticket 14: tradecraft library and observed analysis.
@@ -33,6 +34,30 @@ export interface LibraryView {
   readonly source: 'graph';
 }
 
+/** Canonical single-skill read: the graph's Skill node is the only publication. */
+export interface LibrarySkillDetailView {
+  readonly name: string;
+  readonly description: string | null;
+  readonly subdomain: string | null;
+  readonly mitreIds: readonly string[];
+  readonly whenToUse: string | null;
+  readonly path: string | null;
+  readonly body: string;
+  readonly contentSha256: string | null;
+  readonly commitSha: string | null;
+  readonly allowedTools: readonly string[];
+  readonly publication: 'canonical';
+}
+
+/** Canonical single-technique read with the corpus skills that cover it. */
+export interface LibraryTechniqueView {
+  readonly id: string;
+  readonly name: string | null;
+  readonly description: string | null;
+  readonly url: string | null;
+  readonly skills: readonly { readonly name: string }[];
+}
+
 export interface ObservedTechniqueView {
   readonly techniqueId: string;
   readonly label: string | null;
@@ -57,6 +82,8 @@ export interface AnalysisView {
 const SKILL_STATEMENT = 'MATCH (n:Skill) RETURN n.name AS name, n.description AS description, n.subdomain AS subdomain, n.mitre_attack_raw AS mitre, n.when_to_use AS whenToUse, n.path AS path ORDER BY n.name LIMIT $limit';
 const COUNT_STATEMENT = 'MATCH (n:Skill) WITH count(n) AS skills OPTIONAL MATCH (t:Technique) RETURN skills, count(t) AS techniques';
 const CORPUS_MATCH_STATEMENT = 'MATCH (t:Technique) WHERE t.id IN $ids RETURN collect(t.id) AS found';
+const SKILL_DETAIL_STATEMENT = 'MATCH (n:Skill) WHERE n.name = $name RETURN n ORDER BY n.name LIMIT 1';
+const TECHNIQUE_DETAIL_STATEMENT = 'MATCH (t:Technique) WHERE t.id = $id OPTIONAL MATCH (s:Skill)-[:COVERS]->(t) RETURN t, collect(s) AS skills LIMIT 1';
 
 const MAX_SKILLS = 500;
 const MAX_OBSERVED = 100;
@@ -122,6 +149,63 @@ export function projectAnalysisPaths(view: Omit<GraphView, 'engagementId' | 'tru
 
 export class LibraryService {
   public constructor(private readonly graphs: GraphService, private readonly config: GraphConfig) {}
+
+  /**
+   * Detail reads resolve a single canonical record. A well-formed EMPTY graph
+   * result means "not found" here (the shared query helper cannot distinguish
+   * it), while transport/auth failures still surface as unavailable.
+   */
+  private async detailRows(statement: string, parameters: Record<string, unknown>): Promise<unknown[][]> {
+    try {
+      return await neo4jQuery(this.config, statement, parameters);
+    } catch (error) {
+      if (error instanceof GraphUnavailableError && error.message.includes('unreadable result')) return [];
+      throw error;
+    }
+  }
+
+  public async skillDetail(name: unknown): Promise<LibrarySkillDetailView> {
+    const skillName = typeof name === 'string' ? name.trim() : '';
+    if (!/^[a-z0-9][a-z0-9._-]{0,127}$/i.test(skillName)) throw new ProjectApiError(400, 'A skill name is required.');
+    const rows = await this.detailRows(SKILL_DETAIL_STATEMENT, { name: skillName });
+    const props = (rows[0]?.[0] ?? null) as Record<string, unknown> | null;
+    if (props === null || typeof props !== 'object') throw new ProjectApiError(404, `Skill ${skillName} is not in the canonical corpus.`);
+    const body = typeof props.body === 'string' ? props.body : null;
+    if (body === null) throw new ProjectApiError(503, 'The canonical skill body is unreadable in the knowledge graph.');
+    return {
+      name: skillName,
+      description: typeof props.description === 'string' ? props.description : null,
+      subdomain: typeof props.subdomain === 'string' ? props.subdomain : null,
+      mitreIds: Array.isArray(props.mitre_attack_raw) ? props.mitre_attack_raw.filter((m): m is string => typeof m === 'string').slice(0, 24) : [],
+      whenToUse: typeof props.when_to_use === 'string' ? props.when_to_use : null,
+      path: typeof props.path === 'string' ? props.path : null,
+      body,
+      contentSha256: typeof props.content_sha256 === 'string' ? props.content_sha256 : null,
+      commitSha: typeof props.commit_sha === 'string' ? props.commit_sha : null,
+      allowedTools: Array.isArray(props.allowed_tools) ? props.allowed_tools.filter((t): t is string => typeof t === 'string').slice(0, 32) : [],
+      publication: 'canonical',
+    };
+  }
+
+  public async techniqueDetail(id: unknown): Promise<LibraryTechniqueView> {
+    const techniqueId = typeof id === 'string' ? id.trim().toUpperCase() : '';
+    if (!/^T\d{4}(?:\.\d{3})?$/.test(techniqueId)) throw new ProjectApiError(400, 'A MITRE technique id such as T1003.006 is required.');
+    const rows = await this.detailRows(TECHNIQUE_DETAIL_STATEMENT, { id: techniqueId });
+    const props = (rows[0]?.[0] ?? null) as Record<string, unknown> | null;
+    if (props === null || typeof props !== 'object' || typeof props.id !== 'string') throw new ProjectApiError(404, `Technique ${techniqueId} is not in the canonical corpus.`);
+    const related = Array.isArray(rows[0]?.[1]) ? (rows[0]![1] as unknown[]) : [];
+    const skills = related
+      .filter((s): s is { name: string } => typeof s === 'object' && s !== null && typeof (s as { name?: unknown }).name === 'string')
+      .slice(0, 100)
+      .map((s) => ({ name: s.name }));
+    return {
+      id: props.id,
+      name: typeof props.name === 'string' ? props.name : null,
+      description: typeof props.description === 'string' ? props.description : null,
+      url: typeof props.url === 'string' ? props.url : null,
+      skills,
+    };
+  }
 
   public async library(): Promise<LibraryView> {
     const [skillRows, countRows] = await Promise.all([
