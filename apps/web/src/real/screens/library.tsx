@@ -37,8 +37,9 @@ function SkillDetail({ name }: { name: string }): ReactElement {
   return (
     <div className="space-y-4">
       <PageHeader title={`Skill: ${d.name}`} sub={`${d.subdomain ?? 'no subdomain'} · publication ${d.publication}${d.commitSha === null ? '' : ` · commit ${d.commitSha}`}${d.contentSha256 === null ? '' : ` · sha256 ${d.contentSha256.slice(0, 16)}…`}`} />
-      <div className="flex gap-2 text-xs">
+      <div className="flex flex-wrap gap-2 text-xs">
         {d.mitreIds.map((id) => <Button key={id} variant="secondary" onClick={() => go('technique', { id })}>{id}</Button>)}
+        <Button variant="secondary" onClick={() => go('playbook-review')}>Propose a body replacement</Button>
       </div>
       {d.whenToUse !== null && <Banner tone="info" title="When to use">{d.whenToUse}</Banner>}
       <Card>
@@ -91,6 +92,8 @@ function LibraryList(): ReactElement {
     queryFn: () => fetchLibrary(),
   })
   const [filter, setFilter] = useState('')
+  // W18: an explicit load-more pages long lists instead of silently cutting at 100.
+  const [visible, setVisible] = useState(100)
 
   if (library.isPending) {
     return <Card><CardHeader title="Tradecraft library" /><div className="p-4"><Skeleton className="h-24" /></div></Card>
@@ -114,8 +117,11 @@ function LibraryList(): ReactElement {
         title="Tradecraft library"
         sub={`${view.counts.skills} skill document(s)${view.counts.techniques === null ? '' : ` · ${view.counts.techniques} corpus technique(s)`} — resolved from the knowledge graph (source: ${view.sources.skills}); the corpus stays owned by the runtime`}
       />
-      <Banner tone="warn" title="Library revisions are excluded by corpus ownership">
-        Skill corpus data changes through the runtime's own git-based workflow, not through the browser. Submitting or reviewing library revisions from this surface has no contract on purpose — recording this exclusion beats forking a second corpus. Excluded: {view.excludedActions.join(', ')}.
+      <Banner tone="info" title="Body-replacement proposals run through the engagement-scoped review workflow">
+        Skill corpus data still changes only through the runtime's git-based publication gates. A review surface submits, amends and reviews pinned body-replacement proposals per engagement; an approved export feeds that git workflow — the browser never mutates the corpus. Proposal actions excluded from the library surface itself: {view.excludedActions.join(', ')}.
+        <div className="mt-2">
+          <Button variant="secondary" onClick={() => go('playbook-review')}>Open proposal queue</Button>
+        </div>
       </Banner>
       <Card>
         <CardHeader title={`Skill documents${view.counts.skills > view.skills.length ? ` (showing ${view.skills.length} of ${view.counts.skills})` : ''}`} />
@@ -136,7 +142,7 @@ function LibraryList(): ReactElement {
                 </tr>
               </thead>
               <tbody>
-                {skills.slice(0, 100).map((s) => (
+                {skills.slice(0, visible).map((s) => (
                   <tr key={s.name} className="border-t border-line">
                     <td className="py-2 pr-3 font-mono text-xs"><button onClick={() => go('playbook', { id: s.name })}>{s.name}</button></td>
                     <td className="py-2 pr-3 text-xs">{s.subdomain ?? '—'}</td>
@@ -146,6 +152,11 @@ function LibraryList(): ReactElement {
                 ))}
               </tbody>
             </table>
+          )}
+          {skills.length > visible && (
+            <div className="mt-3">
+              <Button variant="secondary" onClick={() => setVisible((v) => v + 100)}>Show more skills ({visible} of {skills.length})</Button>
+            </div>
           )}
         </div>
       </Card>
