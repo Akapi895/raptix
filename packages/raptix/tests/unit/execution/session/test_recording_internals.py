@@ -527,6 +527,32 @@ def test_model_call_failure_recorded_then_reraised(tmp_path: Path):
     assert "provider down" in line["response"]["detail"]
 
 
+def test_repeated_identical_failure_collapses_to_one_summary(tmp_path: Path):
+    rec_path = tmp_path / "rec.jsonl"
+    rec = RecordingMiddleware(path=rec_path)
+
+    def _boom(_r):
+        raise RuntimeError("provider down")
+
+    same_request = _model_request("same", "m1")
+    for _ in range(3):
+        with pytest.raises(RuntimeError, match="provider down"):
+            rec.wrap_model_call(same_request, _boom)
+    rec.wrap_model_call(_model_request("ok", "m1"), lambda _r: AIMessage(content="fine"))
+    _close(rec)
+
+    lines = [json.loads(line) for line in rec_path.read_text(encoding="utf-8").splitlines()]
+    assert len(lines) == 3
+    assert lines[0]["response"]["type"] == "error"
+    assert lines[1]["kind"] == "duplicate_collapsed"
+    assert lines[1]["count"] == 2
+    assert lines[1]["original_kind"] == "model_call"
+    assert lines[1]["req_hash"] == lines[0]["req_hash"]
+    assert lines[2]["response"]["type"] == "ai"
+    # seq stays contiguous — the two suppressed duplicates never consumed one.
+    assert [line["seq"] for line in lines] == [0, 1, 2]
+
+
 def test_tool_call_failure_recorded_then_reraised(tmp_path: Path):
     rec_path = tmp_path / "rec.jsonl"
     rec = RecordingMiddleware(path=rec_path)

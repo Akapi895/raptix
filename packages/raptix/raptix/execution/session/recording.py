@@ -265,6 +265,28 @@ class _Sink:
         self._seq = self._count_lines(path)
         self._fh = path.open("a", encoding="utf-8")
         self._poisoned = False
+        # Collapse a run of back-to-back identical failures (observed in
+        # production: the same GraphRecursionError re-recorded 215 times as
+        # a dispatch repeatedly re-entered a doomed call) into one summary
+        # line instead of N full copies of the same ~3MB serialized request.
+        self._last_fail_sig: tuple[str, str, str, str] | None = None
+        self._collapsed_count = 0
+        self._collapsed_first_seq: int | None = None
+
+    @staticmethod
+    def _failure_sig(entry: dict[str, Any]) -> tuple[str, str, str, str] | None:
+        kind = entry.get("kind")
+        response = entry.get("response")
+        if kind not in ("model_call", "tool_call") or not isinstance(response, dict):
+            return None
+        if response.get("type") != "error":
+            return None
+        return (
+            kind,
+            entry.get("req_hash", ""),
+            response.get("error", ""),
+            response.get("detail", ""),
+        )
 
     @staticmethod
     def _count_lines(path: Path) -> int:
@@ -292,6 +314,29 @@ class _Sink:
         """Append one entry. Never raises; returns False once poisoned."""
         if self._poisoned:
             return False
+        sig = self._failure_sig(entry)
+        if sig is not None and sig == self._last_fail_sig:
+            self._collapsed_count += 1
+            return True
+        if self._collapsed_count:
+            self._write_line(
+                {
+                    "kind": "duplicate_collapsed",
+                    "req_hash": self._last_fail_sig[1] if self._last_fail_sig else "",
+                    "original_kind": self._last_fail_sig[0] if self._last_fail_sig else "",
+                    "count": self._collapsed_count,
+                    "first_seq": self._collapsed_first_seq,
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            self._collapsed_count = 0
+            self._collapsed_first_seq = None
+        self._last_fail_sig = sig
+        if sig is not None:
+            self._collapsed_first_seq = self._seq
+        return self._write_line(entry)
+
+    def _write_line(self, entry: dict[str, Any]) -> bool:
         entry["seq"] = self._seq
         self._seq += 1
         try:
