@@ -5,7 +5,7 @@ revisions independently and analyze engagement technique coverage and paths
 derived from observed execution/evidence.
 
 **Blocked by:** 06 (observed results/graph reads), 08 (scope governance).
-**Status:** complete (KG-backed library reads + observed analysis; revision writes excluded by recorded decision, see Evidence)
+**Status:** complete (KG-backed library reads + canonical detail + observed analysis; revision writes excluded by recorded decision; ADR-0070 engagement-scoped review proposals added on top — see Evidence)
 **Requirements:** R03-R05, R08-R10.
 **Contract:** [execution.md](../execution.md).
 
@@ -27,7 +27,14 @@ derived from observed execution/evidence.
   corpus ownership, which acceptance bullet 1 forbids ("no second browser corpus").
   The exclusion is returned by the API (`excludedActions`) and rendered as a banner.
   The panel states reference-only semantics: library presence never implies execution
-  authorization — invocation authorization is a separate runtime concern.)*
+  authorization — invocation authorization is a separate runtime concern.
+  ADR-0070 (Accepted) adds engagement-scoped review PROPOSALS on top without
+  violating this boundary: a proposal pins the canonical skill snapshot
+  (SHA-256 of the canonical detail projection), amendment is author-only and
+  version-pinned, decisions require an independent reviewer, canonical drift
+  blocks review/export, and the only output is a reviewed JSON export for the
+  EXISTING git publication workflow — the runtime loader and graph builder
+  never read these records, so no second executable corpus exists.)*
 - [x] Coverage, heatmap and attack-path views use defined observed sources and
   source-quality/missing-data states. No inferred execution or detection is
   fabricated when records are absent.
@@ -61,12 +68,18 @@ from 06. No full suite or automatic skill-graph rebuild for a browser-only edit.
 library read + recorded revision-write exclusions; observed coverage/paths from scoped
 nodes with corpus enrichment and foreign-engagement 404; empty graph explicit state +
 unreachable corpus stays null; path projection bounds/dedupe/start-node invariants).
-Corpus and skill-graph sources unchanged — no Python/corpus checks needed and no
-skill-graph rebuild. Graph reads from 06 reused unchanged (shared `neo4jQuery`
-extraction is behavior-preserving; graph-service tests still pass). Server suite
-35 files / 317 tests green; web `src/real` 98 tests green; server+web typecheck and
-lint clean. Live Sliver/KG smoke stays a named environment gap (no Neo4j in this
-checkout's test run).
+`apps/web/server/tests/t14-library-review.test.ts` (3 tests: canonical skill/technique
+detail over the exact graph projection with 404 for unknown names; ADR-0070 proposal
+lifecycle — canonical pinning, author-only amendment, wrong-version and self-review
+refusals, duplicate-in-review 409, export contract — and drift/closed-engagement/role
+blocks). ADR-0070 (`docs/adr/0070-web-library-review-proposals.md`) is Accepted with
+service (`library-review-service.ts`), routes, `library-review-panel.tsx` and a
+`playbook-review` engagement-scoped surface. Corpus and skill-graph sources unchanged —
+no Python/corpus checks needed and no skill-graph rebuild. Live workflow acceptance
+(`tests/local/artifacts/workflow-live/899a8655/state.json`) passed 12/12 checks on real
+PostgreSQL incl. restart persistence with image `raptix-web-verification-api:20261015`.
+Server suite 40 files / 339 tests green; web 96 files / 1079 tests green; server+web
+typecheck and lint clean.
 
 ## Scope boundary
 

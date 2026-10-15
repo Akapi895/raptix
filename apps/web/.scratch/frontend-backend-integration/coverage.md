@@ -303,11 +303,25 @@ the CI `web-raptix` lane (the authoritative reproducible deployment smoke).
    Docker real-mode smoke runs in CI, not locally; persistence across API
    restart, `prisma migrate deploy` on a real volume and the preserved-data
    cutover probe remain CI/deployment-time checks.
+   *(Addendum 2026-10-15, later the same day: this gap is now CLOSED for the
+   workflow lane. Docker Desktop became available locally and the workflow
+   harness `tools/verify-workflows-live.mjs` passed 12/12 checks twice against
+   real PostgreSQL with the multi-user API container, invited reviewer
+   membership, real runtime/sandbox containers and an actual API container
+   restart: `tests/local/artifacts/workflow-live/c3171c62/state.json` (image
+   `20261014`) and `tests/local/artifacts/workflow-live/899a8655/state.json`
+   (image `20261015`, includes the ADR-0070 schema migration applied via
+   `prisma migrate deploy` on container start). Playwright is now a real
+   devDependency of `@raptix/web-raptix` so the docker real-mode smoke can run
+   locally too; the browser smoke itself still runs in CI.)*
 2. **No live runtime/provider round-trips** (LangGraph runtime, Sliver, Neo4j
    KG, GoPhish/Evilginx, LLM): R06 execution, C2 command dispatch, KG-backed
    analysis and campaign generation are verified against server-owned fakes,
-   stub client surfaces and recorded fixtures — never presented as live
+   stub client surfaces and recorded fixtures - never presented as live
    provider evidence.
+   *(Addendum 2026-10-15: the workflow lane now rides a real LangGraph runtime
+   container for thread/run lifecycle; provider round-trips (Sliver, GoPhish,
+   Evilginx, LLM completion) remain faked/stubbed by design and stay a gap.)*
 3. **Performance probe not executed** (cold authenticated asset closure, five
    interactive samples, API latency, quiet-window TTI): requires the deployed
    environment; recorded budget targets stay targets, no selective accounting.
