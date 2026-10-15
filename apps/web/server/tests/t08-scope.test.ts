@@ -203,4 +203,98 @@ describe('ticket 08 scope governance', () => {
     const noDiff = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: [], removed: [], rationale: 'x' }, roe: ROE } });
     expect(noDiff.statusCode).toBe(400);
   });
+
+  // W07: the approved diff is a fold — added promotes, removed demotes. An
+  // approved removal must take real effect on the asset inventory (evidence
+  // stays untouched), and prior additions must never be silently lost.
+  it('W07: an approved removal flips the removed asset out of scope while earlier additions stay in scope', async () => {
+    const { app, owner, reviewer } = await setup();
+    const importA = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/assets/inventory/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { identifiers: ['10.0.0.5', '10.0.0.6'], kind: 'ip_range' } });
+    expect(importA.json()).toEqual({ imported: 2, skipped: 0 });
+    const addBoth = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: ['10.0.0.5', '10.0.0.6'], removed: [], rationale: 'initial scope' }, roe: ROE } });
+    expect(addBoth.statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${addBoth.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } })).statusCode).toBe(200);
+    const inventory = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/assets/inventory`, headers: { cookie: owner.cookie } });
+    const scopeOf = (identifier: string): string => inventory.json().assets.find((a: { identifier: string }) => a.identifier === identifier).classification;
+    expect(scopeOf('10.0.0.5')).toBe('in_scope');
+
+    const removeOne = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: [], removed: ['10.0.0.5'], rationale: 'customer narrowed the scope' }, roe: ROE } });
+    expect(removeOne.statusCode).toBe(200);
+    const decided = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${removeOne.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    expect(decided.statusCode).toBe(200);
+
+    const after = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/assets/inventory`, headers: { cookie: owner.cookie } });
+    const scopeAfter = (identifier: string): string => after.json().assets.find((a: { identifier: string }) => a.identifier === identifier).classification;
+    expect(scopeAfter('10.0.0.5')).toBe('out_of_scope');
+    expect(scopeAfter('10.0.0.6')).toBe('in_scope');
+  });
+
+  it('W07: refusing a stale decision — an older pending revision cannot be approved after a newer submission', async () => {
+    const { app, owner, reviewer } = await setup();
+    const v1 = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: ['10.0.0.5'], removed: [], rationale: 'v1' }, roe: ROE } });
+    const v2 = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: ['10.0.0.9'], removed: [], rationale: 'v2 supersedes' }, roe: ROE } });
+    const stale = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${v1.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    expect(stale.statusCode).toBe(409);
+    expect(stale.json().error.message).toContain('stale');
+    // The fresh decision path still works and leaves one authoritative approval.
+    const fresh = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${v2.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    expect(fresh.statusCode).toBe(200);
+    const list = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie } });
+    expect(list.json().latestApprovedVersion).toBe(2);
+    const approvals = list.json().revisions.filter((r: { status: string }) => r.status === 'approved');
+    expect(approvals).toHaveLength(1);
+  });
+
+  it('W07: the engagement root target can never be removed from scope', async () => {
+    const { app, owner } = await setup();
+    const submission = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: [], removed: ['https://target.invalid'], rationale: 'try to unbind the root' }, roe: ROE } });
+    expect(submission.statusCode).toBe(409);
+    expect(submission.json().error.message).toContain('engagement target');
+  });
+
+  // W07: a stored window must be an absolute instant. A timestamp without an
+  // explicit offset silently follows the API machine's clock; an unknown zone
+  // or blank contact entry is never acceptable in a persisted ROE.
+  it('W07: refuses naive window timestamps, unknown timezones and blank contact entries', async () => {
+    const { app, owner } = await setup();
+    const naive = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: DIFF, roe: { windows: [{ start: '2026-10-15T10:00:00', end: '2026-10-16T10:00:00', tz: 'Asia/Ho_Chi_Minh' }], emergencyContacts: ['blue-team@example.invalid'], restrictions: [] } } });
+    expect(naive.statusCode).toBe(400);
+    expect(naive.json().error.message).toContain('offset');
+    const badTz = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: DIFF, roe: { windows: [{ start: '2026-10-15T10:00:00Z', end: '2026-10-16T10:00:00Z', tz: 'Mars/Olympus' }], emergencyContacts: ['blue-team@example.invalid'], restrictions: [] } } });
+    expect(badTz.statusCode).toBe(400);
+    const blankContact = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: DIFF, roe: { windows: [], emergencyContacts: ['  '], restrictions: [] } } });
+    expect(blankContact.statusCode).toBe(400);
+  });
+
+  // W07: classification is a compare-and-swap on the asset version a caller read.
+  it('W07: classification refuses a stale expectedVersion and accepts the current one', async () => {
+    const { app, owner, reviewer } = await setup();
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/assets/inventory/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { identifiers: ['10.0.0.5'], kind: 'ip_range' } });
+    const revision = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: DIFF, roe: ROE } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${revision.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    const list = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/assets/inventory`, headers: { cookie: owner.cookie } });
+    const asset = list.json().assets[0];
+    const stale = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/assets/inventory/${asset.id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { classification: 'in_scope', expectedVersion: 99 } });
+    expect(stale.statusCode).toBe(409);
+    expect(stale.json().error.message).toContain('changed');
+    const ok = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/assets/inventory/${asset.id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { classification: 'in_scope', expectedVersion: asset.version } });
+    expect(ok.statusCode).toBe(200);
+  });
+
+  // W07-3: the effective scope snapshot is the read-side bridge contract the
+  // runtime consumes: cumulative in-scope identifiers + root target + the
+  // authoritative approved ROE. Never a runtime guardrail mutation.
+  it('W07: the effective scope snapshot exposes the cumulative in-scope identifiers and approved ROE', async () => {
+    const { app, owner, reviewer } = await setup();
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/assets/inventory/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { identifiers: ['10.0.0.5', '10.0.0.6'], kind: 'ip_range' } });
+    const addBoth = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: ['10.0.0.5', '10.0.0.6'], removed: [], rationale: 'initial' }, roe: ROE } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${addBoth.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    const removeOne = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: [], removed: ['10.0.0.5'], rationale: 'narrow' }, roe: ROE } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${removeOne.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    const effective = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/scope/effective`, headers: { cookie: owner.cookie } });
+    expect(effective.statusCode).toBe(200);
+    expect(effective.json()).toMatchObject({ engagementId: ENG, version: 2, rootTarget: 'https://target.invalid', inScope: ['10.0.0.6'], source: 'db' });
+    expect(effective.json().roe.emergencyContacts).toEqual(['blue-team@example.invalid']);
+    expect((await app.inject({ method: 'GET', url: '/api/engagements/eng-other/scope/effective', headers: { cookie: owner.cookie } })).statusCode).toBe(404);
+  });
 });

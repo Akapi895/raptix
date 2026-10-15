@@ -67,6 +67,16 @@ export interface AssetsInventoryView {
   readonly source: 'db';
 }
 
+/** W07-3: cumulative effective scope snapshot consumed through the public read bridge. */
+export interface EffectiveScopeView {
+  readonly engagementId: string;
+  readonly version: number | null;
+  readonly rootTarget: string | null;
+  readonly inScope: readonly string[];
+  readonly roe: RoeWindows;
+  readonly source: 'db';
+}
+
 const MIN_WRITE: MemberRole = 'operator';
 const MIN_REVIEW: MemberRole = 'reviewer';
 
@@ -129,6 +139,10 @@ export class ScopeService {
     const body = (input ?? {}) as { diff?: unknown; roe?: unknown };
     const diff = normalizeDiff(body.diff);
     const roe = normalizeRoe(body.roe);
+    const engagement = await this.db.engagement.findFirst({ where: { id: engagementId }, select: { targetValue: true } });
+    if (engagement !== null && typeof engagement.targetValue === 'string' && diff.removed.includes(engagement.targetValue)) {
+      throw new ProjectApiError(409, 'The engagement target cannot be removed from scope; close the engagement instead.');
+    }
     const last = await this.db.scopeRevision.findFirst({ where: { engagementId }, orderBy: { version: 'desc' } });
     const nextVersion = (last?.version ?? 0) + 1;
     const created = await this.db.$transaction(async (tx) => {
@@ -161,6 +175,18 @@ export class ScopeService {
     requireIndependentActor(revision.requestedBy, actorId, 'The scope revision decision');
     const comment = typeof body.comment === 'string' ? body.comment : null;
     const updated = await this.db.$transaction(async (tx) => {
+      // W07 CAS: a decision is only authoritative for the newest submitted
+      // version. An older pending revision must not be approved after a
+      // newer one exists (no implicit rebase — resubmit instead).
+      const siblings = await tx.scopeRevision.findMany({ where: { engagementId } });
+      if (siblings.some((r) => r.version > revision.version)) {
+        throw new ProjectApiError(409, `Scope revision v${revision.version} is stale — revision v${Math.max(...siblings.map((r) => r.version))} was submitted after it. Re-submit the change against the current version.`);
+      }
+      if (decision === 'approved') {
+        // One authoritative approved version per engagement: an older
+        // approval never survives a newer one.
+        await tx.scopeRevision.updateMany({ where: { engagementId, status: 'approved' }, data: { status: 'superseded' } });
+      }
       const row = await tx.scopeRevision.update({
         where: { id: revision.id },
         data: { status: decision, decidedBy: actorId, decidedAt: new Date(), decisionComment: comment },
@@ -170,6 +196,13 @@ export class ScopeService {
         for (const identifier of diff.added ?? []) {
           // Newly added targets become executable only through this governance path.
           await tx.webAsset.updateMany({ where: { engagementId, identifier, classification: 'pending' }, data: { classification: 'in_scope', updatedBy: actorId, version: { increment: 1 } } });
+        }
+        for (const identifier of diff.removed ?? []) {
+          // W07: approved removals take real effect inside the same
+          // transaction — earlier additions are never silently lost, and
+          // observed runtime evidence stays untouched.
+          await tx.webAsset.updateMany({ where: { engagementId, identifier, classification: 'in_scope' }, data: { classification: 'out_of_scope', updatedBy: actorId, version: { increment: 1 } } });
+          await tx.webAsset.updateMany({ where: { engagementId, identifier, classification: 'pending' }, data: { classification: 'out_of_scope', updatedBy: actorId, version: { increment: 1 } } });
         }
       }
       return row;
@@ -224,13 +257,18 @@ export class ScopeService {
   public async classifyAsset(actorId: string, engagementId: string, assetId: string, input: unknown): Promise<AssetView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_WRITE);
     await assertEngagementOpen(this.db, engagementId);
-    const body = (input ?? {}) as { classification?: unknown };
+    const body = (input ?? {}) as { classification?: unknown; expectedVersion?: unknown };
     const classification = typeof body.classification === 'string' ? body.classification : '';
     if (classification !== 'in_scope' && classification !== 'out_of_scope' && classification !== 'pending') {
       throw new ProjectApiError(400, "classification must be 'in_scope', 'out_of_scope' or 'pending'.");
     }
     const asset = await this.db.webAsset.findFirst({ where: { id: assetId, engagementId } });
     if (asset === null) throw new ProjectApiError(404, 'Asset not found');
+    // W07 CAS: the classification applies to the inventory version the caller
+    // actually read; a stale read must re-read instead of overwriting.
+    if (typeof body.expectedVersion === 'number' && body.expectedVersion !== asset.version) {
+      throw new ProjectApiError(409, `${asset.identifier} changed since you read it (now v${asset.version}); re-read the inventory and classify again.`);
+    }
     if (classification === 'in_scope' && asset.classification !== 'in_scope') {
       const approved = await this.latestApproved(engagementId);
       const diff = approved?.diff as ScopeDiff | undefined;
@@ -249,6 +287,28 @@ export class ScopeService {
   private async engagementTargetIncludes(engagementId: string, identifier: string): Promise<boolean> {
     const engagement = await this.db.engagement.findFirst({ where: { id: engagementId }, select: { targetValue: true } });
     return engagement?.targetValue === identifier;
+  }
+
+  /**
+   * W07-3 read-side bridge: the cumulative effective scope for the runtime —
+   * the approved revision version, the always-in-scope root target, the
+   * cumulative in-scope identifiers and the authoritative approved ROE.
+   * Consumers apply it through their own guardrails; this endpoint never
+   * mutates runtime state.
+   */
+  public async effectiveScope(actorId: string, engagementId: string): Promise<EffectiveScopeView> {
+    await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
+    const approved = await this.latestApproved(engagementId);
+    const rows = await this.db.webAsset.findMany({ where: { engagementId }, orderBy: { identifier: 'asc' } });
+    const engagement = await this.db.engagement.findFirst({ where: { id: engagementId }, select: { targetValue: true } });
+    return {
+      engagementId,
+      version: approved?.version ?? null,
+      rootTarget: typeof engagement?.targetValue === 'string' ? engagement.targetValue : null,
+      inScope: rows.filter((r) => r.classification === 'in_scope').map((r) => r.identifier),
+      roe: approved !== null ? approved.roe as unknown as RoeWindows : { windows: [], emergencyContacts: [], restrictions: [] },
+      source: 'db',
+    };
   }
 
   /** Checks a stored approved ROE revision window at `now` (edited windows, tz-ISO). */
@@ -290,20 +350,43 @@ function normalizeDiff(raw: unknown): ScopeDiff {
   return { added, removed, rationale };
 }
 
+/** W07: a persisted window must name a real IANA zone (or UTC). */
+function isKnownTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** W07: accepts only absolute ISO-8601 timestamps (Z or ±HH:MM/±HHMM offset). */
+const OFFSET_SUFFIX = /(?:Z|[+-]\d{2}:?\d{2})$/i;
+
 function normalizeRoe(raw: unknown): RoeWindows {
   const body = (raw ?? {}) as { windows?: unknown; emergencyContacts?: unknown; restrictions?: unknown };
   const windows = Array.isArray(body.windows)
     ? body.windows.map((w) => {
       const item = (w ?? {}) as { start?: unknown; end?: unknown; tz?: unknown };
-      const start = typeof item.start === 'string' ? item.start : '';
-      const end = typeof item.end === 'string' ? item.end : '';
-      if (Number.isNaN(Date.parse(start)) || Number.isNaN(Date.parse(end)) || Date.parse(end) <= Date.parse(start)) {
-        throw new ProjectApiError(400, 'Each ROE window needs a valid start/end pair with end after start.');
+      const start = typeof item.start === 'string' ? item.start.trim() : '';
+      const end = typeof item.end === 'string' ? item.end.trim() : '';
+      // A timestamp without an explicit offset would silently follow the API
+      // machine's timezone and change the real authorized window.
+      if (!OFFSET_SUFFIX.test(start) || !OFFSET_SUFFIX.test(end) || Number.isNaN(Date.parse(start)) || Number.isNaN(Date.parse(end)) || Date.parse(end) <= Date.parse(start)) {
+        throw new ProjectApiError(400, 'Each ROE window needs absolute ISO-8601 start/end timestamps (with a Z or ±HH:MM offset) with end after start.');
       }
-      return { start, end, tz: typeof item.tz === 'string' && item.tz.trim().length > 0 ? item.tz : 'UTC' };
+      const tz = typeof item.tz === 'string' && item.tz.trim().length > 0 ? item.tz.trim() : 'UTC';
+      if (!isKnownTimeZone(tz)) throw new ProjectApiError(400, `Unknown ROE window timezone: ${tz}.`);
+      return { start, end, tz };
     })
     : [];
-  const emergencyContacts = Array.isArray(body.emergencyContacts) ? body.emergencyContacts.filter((v): v is string => typeof v === 'string') : [];
-  const restrictions = Array.isArray(body.restrictions) ? body.restrictions.filter((v): v is string => typeof v === 'string') : [];
+  const stringList = (value: unknown, what: string): string[] => {
+    if (!Array.isArray(value)) return [];
+    const list = value.map((v) => (typeof v === 'string' ? v.trim() : ''));
+    if (list.some((v) => v.length === 0)) throw new ProjectApiError(400, `${what} entries must be non-empty strings.`);
+    return list;
+  };
+  const emergencyContacts = stringList(body.emergencyContacts, 'emergencyContacts');
+  const restrictions = stringList(body.restrictions, 'restrictions');
   return { windows, emergencyContacts, restrictions };
 }

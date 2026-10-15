@@ -22,6 +22,13 @@ export function registerScopeRoutes(app: FastifyInstance, scope: ScopeService, i
     const { id, revisionId } = request.params as { id: string; revisionId: string };
     return scope.decideRevision(identity.id, id, revisionId, request.body);
   }));
+  // W07-3: read-only effective scope snapshot — the bridge contract the
+  // runtime consumes through its own guardrails.
+  app.get('/api/engagements/:id/scope/effective', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id } = request.params as { id: string };
+    return scope.effectiveScope(identity.id, id);
+  }));
   app.get('/api/engagements/:id/assets/inventory', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };
