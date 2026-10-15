@@ -102,6 +102,8 @@ export interface AppOptions {
   readonly closureService?: ClosureService;
   /** Runtime cancel bridge for emergency stops (operation scope). */
   readonly cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>;
+  /** W10/ADR-0074: runtime observation bridge for workspace-scope stop authority. */
+  readonly hasActiveRuns?: (actorId: string, engagementId: string) => Promise<boolean>;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
   readonly vaultKeyConfigured?: boolean;
   /** Local single-user identity; defaults to getLocalIdentity(). */
@@ -184,7 +186,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.vaultService) registerVaultRoutes(app, options.vaultService, identity);
   if (options.membersService) registerMembersRoutes(app, options.membersService, identity);
   if (options.scopeService) registerScopeRoutes(app, options.scopeService, identity);
-  if (options.governanceService) registerGovernanceRoutes(app, options.governanceService, identity, options.cancelRun);
+  if (options.governanceService) registerGovernanceRoutes(app, options.governanceService, identity, options.cancelRun, options.hasActiveRuns);
   if (options.scheduleService) registerScheduleRoutes(app, options.scheduleService, identity);
   if (options.findingsWorkflow) registerFindingsWorkflowRoutes(app, options.findingsWorkflow, identity);
   if (options.reportsService) registerReportsRoutes(app, options.reportsService, identity);

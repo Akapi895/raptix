@@ -77,8 +77,11 @@ export interface EmergencyStopView {
   readonly requestedBy: string;
   readonly outcome: 'requested' | 'acknowledged' | 'stopped' | 'failed' | 'unknown' | 'resolved';
   readonly reason: string;
+  readonly concurrencyVersion: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+  /** W10/ADR-0074: sibling latches a workspace stop recorded in other owned engagements. */
+  readonly related?: EmergencyStopView[];
 }
 
 /** Outcomes that block work start and preflight until an explicit resolution. */
@@ -353,13 +356,18 @@ export class GovernanceService {
    * closure blocker in place, and an in-flight mutation fence can never delay
    * or refuse the stop.
    */
-  public async emergencyStop(actorId: string, engagementId: string, input: unknown, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>): Promise<EmergencyStopView> {
+  public async emergencyStop(actorId: string, engagementId: string, input: unknown, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>, hasActiveRuns?: (actorId: string, engagementId: string) => Promise<boolean>): Promise<EmergencyStopView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
     const body = (input ?? {}) as { scope?: unknown; targetId?: unknown; reason?: unknown; threadId?: unknown; runId?: unknown };
     const scope = typeof body.scope === 'string' && ['operation', 'project', 'workspace'].includes(body.scope) ? body.scope : '';
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
     if (scope.length === 0) throw new ProjectApiError(400, "scope must be 'operation', 'project' or 'workspace'.");
     if (reason.length === 0) throw new ProjectApiError(400, 'reason is required.');
+    // W10/ADR-0074: a workspace stop never borrows global authority from one
+    // engagement — enumerate owned/operated engagements and latch each one
+    // that is actually running work, instead of latching the whole workspace
+    // from a single engagement record.
+    if (scope === 'workspace') return this.workspaceStop(actorId, engagementId, reason, cancelRun, hasActiveRuns);
     if (scope === 'operation' && (typeof body.threadId !== 'string' || body.threadId.length === 0)) throw new ProjectApiError(400, 'An operation stop requires its owned threadId.');
     // W10: Validate the operation target BEFORE any latch or cancel runs: a
     // stop must identify an owned execution thread of this engagement.
@@ -368,15 +376,30 @@ export class GovernanceService {
       if (thread === null) throw new ProjectApiError(404, 'Thread not found in this engagement.');
       if (thread.kind !== 'execution') throw new ProjectApiError(400, 'Only execution threads can be emergency-stopped; planning threads produce plan drafts instead.');
     }
+    const row = await this.latchAndCancel({
+      engagementId,
+      scope,
+      reason,
+      requestedBy: actorId,
+      targetId: typeof body.targetId === 'string' ? body.targetId : (typeof body.threadId === 'string' ? body.threadId : null),
+      threadId: typeof body.threadId === 'string' ? body.threadId : '',
+      runId: typeof body.runId === 'string' ? body.runId : null,
+    }, cancelRun);
+    return this.toEstopView(row as never);
+  }
+
+  /** Persists the stop latch first, then cancels and records the truthful outcome. */
+  private async latchAndCancel(input: { engagementId: string; scope: string; reason: string; requestedBy: string; targetId: string | null; threadId: string; runId: string | null }, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>): Promise<Record<string, unknown>> {
+    const { engagementId, reason, requestedBy, threadId, runId } = input;
     const latch = await this.db.$transaction(async (tx) => {
       const [lock] = await (tx as PrismaClient).$queryRaw<{ locked: boolean }[]>`SELECT pg_try_advisory_xact_lock(hashtextextended(${engagementId}, 1)) AS locked`;
       if (!lock?.locked) throw new ProjectApiError(409, 'Another emergency stop or closure transition is in progress. Retry with the same request identity.');
       return await (tx as PrismaClient).emergencyStop.create({
         data: {
           engagementId,
-          scope,
-          targetId: typeof body.targetId === 'string' ? body.targetId : (typeof body.threadId === 'string' ? body.threadId : null),
-          requestedBy: actorId,
+          scope: input.scope,
+          targetId: input.targetId,
+          requestedBy,
           outcome: 'requested',
           reason,
         },
@@ -384,20 +407,48 @@ export class GovernanceService {
     });
     let outcome: EmergencyStopView['outcome'] = 'requested';
     let detail = '';
-    let row = latch;
+    let row: Record<string, unknown> = latch as Record<string, unknown>;
     if (cancelRun !== undefined) {
       try {
-        const reported = await cancelRun(typeof body.threadId === 'string' ? body.threadId : '', typeof body.runId === 'string' ? body.runId : null, actorId, engagementId);
+        const reported = await cancelRun(threadId, runId, requestedBy, engagementId);
         outcome = reported === 'stopped' ? 'stopped' : 'acknowledged';
         detail = ` (${reported})`;
       } catch (err) {
         outcome = 'unknown';
         detail = ` (${err instanceof Error ? err.message : 'the runtime did not report a terminal outcome'})`;
       }
-      row = await this.db.emergencyStop.update({ where: { id: latch.id }, data: { outcome } });
+      row = await this.db.emergencyStop.update({ where: { id: String(latch.id) }, data: { outcome } }) as Record<string, unknown>;
     }
-    await this.audit(engagementId, actorId, 'estop.requested', 'emergency_stop', row.id, `${scope}: ${reason} -> ${outcome}${detail}`);
-    return this.toEstopView(row as never);
+    await this.audit(engagementId, requestedBy, 'estop.requested', 'emergency_stop', String(row.id), `${input.scope}: ${reason} -> ${outcome}${detail}`);
+    return row;
+  }
+
+  /**
+   * W10/ADR-0074 workspace authority: the requesting engagement always
+   * records the anchor latch. Every other engagement this actor owns or
+   * operates is latched and cancelled only when the runtime observes active
+   * work there; engagements that are quiet (or whose state cannot be
+   * observed) are left untouched. Each latch resolves independently.
+   */
+  private async workspaceStop(actorId: string, anchorEngagementId: string, reason: string, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>, hasActiveRuns?: (actorId: string, engagementId: string) => Promise<boolean>): Promise<EmergencyStopView> {
+    // The anchor engagement latches first: the requester's own engagement is
+    // contained immediately, before any enumeration work.
+    const anchor = await this.latchAndCancel({ engagementId: anchorEngagementId, scope: 'workspace', reason, requestedBy: actorId, targetId: null, threadId: '', runId: null }, cancelRun);
+    const memberships = await this.db.webMembership.findMany({ where: { userId: actorId, role: { in: ['owner', 'operator'] } } });
+    const owned = await this.db.engagement.findMany({ where: { userId: actorId } });
+    const candidates = new Set<string>();
+    for (const row of memberships) candidates.add(String(row.engagementId));
+    for (const row of owned) candidates.add(String(row.id));
+    const related: EmergencyStopView[] = [];
+    for (const engagementId of [...candidates].filter((id) => id !== anchorEngagementId).sort()) {
+      if (hasActiveRuns === undefined) continue;
+      if (!(await hasActiveRuns(actorId, engagementId).catch(() => false))) continue;
+      try {
+        related.push(this.toEstopView(await this.latchAndCancel({ engagementId, scope: 'workspace', reason, requestedBy: actorId, targetId: null, threadId: '', runId: null }, cancelRun) as never));
+      } catch { /* one busy engagement never blocks containment of the rest */ }
+    }
+    const view = this.toEstopView(anchor as never);
+    return related.length > 0 ? { ...view, related } : view;
   }
 
   public async emergencyStops(actorId: string, engagementId: string): Promise<{ engagementId: string; stops: EmergencyStopView[]; source: 'db' }> {
@@ -414,18 +465,27 @@ export class GovernanceService {
    */
   public async resolveEmergencyStop(actorId: string, engagementId: string, stopId: string, input: unknown): Promise<EmergencyStopView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_DECIDE);
-    const body = (input ?? {}) as { reason?: unknown };
+    const body = (input ?? {}) as { reason?: unknown; concurrencyVersion?: unknown };
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
     if (reason.length === 0) throw new ProjectApiError(400, 'A reason is required to resolve an emergency stop.');
+    const expectedVersion = typeof body.concurrencyVersion === 'number' && Number.isInteger(body.concurrencyVersion) && body.concurrencyVersion > 0 ? body.concurrencyVersion : 0;
+    if (expectedVersion === 0) throw new ProjectApiError(400, 'A positive integer concurrencyVersion is required to resolve an emergency stop.');
     const row = await this.db.emergencyStop.findFirst({ where: { id: stopId, engagementId } });
     if (row === null) throw new ProjectApiError(404, 'Emergency stop not found');
     if (!(ACTIVE_STOP_OUTCOMES as readonly string[]).includes(row.outcome)) {
       throw new ProjectApiError(409, `The emergency stop is already ${row.outcome}.`);
     }
-    const updated = await this.db.emergencyStop.update({ where: { id: row.id }, data: { outcome: 'resolved' } });
+    // W10: optimistic concurrency — a resolver acting on a stale view must
+    // reload the stop list instead of silently overwriting a newer outcome.
+    const cas = await this.db.emergencyStop.updateMany({
+      where: { id: row.id, concurrencyVersion: expectedVersion },
+      data: { outcome: 'resolved', concurrencyVersion: { increment: 1 } },
+    });
+    if (cas.count === 0) throw new ProjectApiError(409, 'The emergency stop changed concurrently; reload the stop list and retry.');
+    const updated = await this.db.emergencyStop.findFirst({ where: { id: stopId, engagementId } });
     await this.audit(engagementId, actorId, 'estop.resolved', 'emergency_stop', row.id, reason);
     await createNotice(this.db, { engagementId, actorId: row.requestedBy, kind: 'estop.resolved', title: 'Emergency stop was resolved', detail: { stopId: row.id, resolvedBy: actorId } });
-    return this.toEstopView(updated);
+    return this.toEstopView(updated as never);
   }
 
   /** Refuses lifecycle mutations while an emergency stop is still active. */
@@ -452,7 +512,7 @@ export class GovernanceService {
     };
   }
 
-  private toEstopView(row: { id: string; engagementId: string; scope: string; targetId: string | null; requestedBy: string; outcome: string; reason: string; createdAt: Date; updatedAt: Date }): EmergencyStopView {
+  private toEstopView(row: { id: string; engagementId: string; scope: string; targetId: string | null; requestedBy: string; outcome: string; reason: string; concurrencyVersion?: number; createdAt: Date; updatedAt: Date }): EmergencyStopView {
     return {
       id: row.id,
       engagementId: row.engagementId,
@@ -461,6 +521,7 @@ export class GovernanceService {
       requestedBy: row.requestedBy,
       outcome: row.outcome as EmergencyStopView['outcome'],
       reason: row.reason,
+      concurrencyVersion: Number(row.concurrencyVersion ?? 1),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

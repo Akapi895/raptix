@@ -37,6 +37,8 @@ function memoryDb() {
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         find('engagement', (r) => r.id === where.id && (where.userId === undefined || r.userId === where.userId)),
+      findMany: async ({ where }: { where: { userId?: string } }) =>
+        listAll('engagement', (r) => where.userId === undefined || r.userId === where.userId),
     },
     webUser: {
       findUnique: async ({ where }: { where: { id?: string; username?: string } }) =>
@@ -50,7 +52,10 @@ function memoryDb() {
     },
     webMembership: {
       findFirst: async ({ where }: { where: { engagementId: string; userId: string } }) => find('webMembership', (r) => r.engagementId === where.engagementId && r.userId === where.userId),
-      findMany: async ({ where }: { where: { engagementId: string } }) => listAll('webMembership', (r) => r.engagementId === where.engagementId),
+      findMany: async ({ where }: { where: { engagementId?: string; userId?: string; role?: { in: string[] } } }) =>
+        listAll('webMembership', (r) => (where.engagementId === undefined || r.engagementId === where.engagementId)
+          && (where.userId === undefined || r.userId === where.userId)
+          && (where.role === undefined || Array.isArray(where.role.in!) && where.role.in!.includes(String(r.role)))),
       create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('m') }; table('webMembership').set(String(row.id), row); return { ...row }; },
       delete: async ({ where }: { where: { id: string } }) => { table('webMembership').delete(where.id); return {}; },
       update: async ({ where, data }: { where: { id: string }; data: Row }) => { const row: Row = { ...table('webMembership').get(where.id)!, ...data }; table('webMembership').set(where.id, row); return { ...row }; },
@@ -135,8 +140,15 @@ function memoryDb() {
         if (orderBy?.createdAt === 'desc') rows.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
         return rows;
       },
-      create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('estop'), createdAt: new Date(), updatedAt: new Date() }; table('emergencyStop').set(String(row.id), row); return { ...row }; },
+      create: async ({ data }: { data: Row }) => { const row: Row = { concurrencyVersion: 1, ...data, id: seq('estop'), createdAt: new Date(), updatedAt: new Date() }; table('emergencyStop').set(String(row.id), row); return { ...row }; },
       update: async ({ where, data }: { where: { id: string }; data: Row }) => { const row: Row = { ...table('emergencyStop').get(where.id)!, ...data, updatedAt: new Date() }; table('emergencyStop').set(where.id, row); return { ...row }; },
+      updateMany: async ({ where, data }: { where: { id: string; concurrencyVersion: number }; data: Row }) => {
+        const row = table('emergencyStop').get(where.id);
+        if (row === undefined || Number(row.concurrencyVersion) !== where.concurrencyVersion) return { count: 0 };
+        const increment = typeof data.concurrencyVersion === 'object' && data.concurrencyVersion !== null && 'increment' in (data.concurrencyVersion as Record<string, unknown>) ? Number((data.concurrencyVersion as { increment: number }).increment) : 0;
+        table('emergencyStop').set(where.id, { ...row, ...data, concurrencyVersion: Number(row.concurrencyVersion) + increment, updatedAt: new Date() });
+        return { count: 1 };
+      },
     },
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
@@ -151,7 +163,10 @@ type Db = ReturnType<typeof memoryDb>;
 const ENG = 'eng-1';
 const ROE = { windows: [], emergencyContacts: ['blue-team@example.invalid'], restrictions: [] };
 
-async function setup(): Promise<{ db: Db; app: FastifyInstance; owner: { cookie: string; csrf: string }; reviewer: { cookie: string; csrf: string } }> {
+async function setup(opts: {
+  cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>;
+  hasActiveRuns?: (actorId: string, engagementId: string) => Promise<boolean>;
+} = {}): Promise<{ db: Db; app: FastifyInstance; owner: { cookie: string; csrf: string }; reviewer: { cookie: string; csrf: string } }> {
   const db = memoryDb();
   const owner = await db.webUser.create({ data: { username: 'owner', displayName: 'Owner', passwordHash: hashPassword('correct horse battery'), status: 'active' } });
   const reviewer = await db.webUser.create({ data: { username: 'rev', displayName: 'Rev', passwordHash: hashPassword('longenough1'), status: 'active' } });
@@ -165,7 +180,8 @@ async function setup(): Promise<{ db: Db; app: FastifyInstance; owner: { cookie:
     authDb: db as never,
     scopeService: new ScopeService(db as never),
     governanceService: new GovernanceService(db as never, new ScopeService(db as never)),
-    cancelRun: async () => 'acknowledged',
+    cancelRun: opts.cancelRun ?? (async () => 'acknowledged'),
+    hasActiveRuns: opts.hasActiveRuns,
   }) as unknown as Promise<FastifyInstance>);
   const login = async (username: string, password: string): Promise<{ cookie: string; csrf: string }> => {
     const res = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { username, password } });
@@ -343,13 +359,68 @@ describe('ticket 09 governed plans and operation controls', () => {
     expect(refusedBind.statusCode).toBe(409);
     const noReason = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: {} });
     expect(noReason.statusCode).toBe(400);
-    const resolved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { reason: 'infrastructure all-clear' } });
+    const resolved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { reason: 'infrastructure all-clear', concurrencyVersion: 1 } });
     expect(resolved.statusCode).toBe(200);
     expect(resolved.json().outcome).toBe('resolved');
-    const again = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { reason: 'already done' } });
+    const again = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { reason: 'already done', concurrencyVersion: 2 } });
     expect(again.statusCode).toBe(409);
     const rebound = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId, threadId: 'th-1' } });
     expect(rebound.statusCode).toBe(200);
+    await app.close();
+  });
+
+  it('W10/ADR-0074: a workspace stop latches every owned engagement with active work and leaves the rest untouched', async () => {
+    const cancelled: string[] = [];
+    const { db, app, owner } = await setup({
+      cancelRun: async (_threadId, _runId, _actorId, engagementId) => { cancelled.push(engagementId); return engagementId === ENG ? 'stopped' : 'acknowledged'; },
+      hasActiveRuns: async (_actorId, engagementId) => engagementId === 'eng-2',
+    });
+    const ownerId = String(db.tables.get('engagement')!.get(ENG)!.userId);
+    // eng-2: operator membership with active work; eng-3: reviewer-only;
+    // eng-4: operator membership but no active work observed.
+    db.tables.get('engagement')!.set('eng-2', { id: 'eng-2', userId: 'someone-else', name: 'eng-2', targetValue: 'https://two.invalid' });
+    db.tables.get('engagement')!.set('eng-3', { id: 'eng-3', userId: 'someone-else', name: 'eng-3', targetValue: 'https://three.invalid' });
+    db.tables.get('engagement')!.set('eng-4', { id: 'eng-4', userId: 'someone-else', name: 'eng-4', targetValue: 'https://four.invalid' });
+    await db.webMembership.create({ data: { engagementId: 'eng-2', userId: ownerId, role: 'operator' } });
+    await db.webMembership.create({ data: { engagementId: 'eng-3', userId: ownerId, role: 'reviewer' } });
+    await db.webMembership.create({ data: { engagementId: 'eng-4', userId: ownerId, role: 'operator' } });
+    const stop = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { scope: 'workspace', reason: 'major incident across the portfolio' } });
+    expect(stop.statusCode).toBe(200);
+    const body = stop.json();
+    expect(body).toMatchObject({ engagementId: ENG, scope: 'workspace', outcome: 'stopped', reason: 'major incident across the portfolio' });
+    expect(body.related).toHaveLength(1);
+    expect(body.related[0]).toMatchObject({ engagementId: 'eng-2', scope: 'workspace', outcome: 'acknowledged', reason: 'major incident across the portfolio' });
+    expect(cancelled).toEqual([ENG, 'eng-2']);
+    const stopsIn = (id: string) => [...(db.tables.get('emergencyStop')?.values() ?? [])].filter((r) => r.engagementId === id);
+    expect(stopsIn(ENG)).toHaveLength(1);
+    expect(stopsIn('eng-2')).toHaveLength(1);
+    expect(stopsIn('eng-3')).toHaveLength(0);
+    expect(stopsIn('eng-4')).toHaveLength(0);
+    // Each latch blocks only its own engagement until it is resolved there.
+    const governance = new GovernanceService(db as never, new ScopeService(db as never));
+    await expect(governance.assertNoActiveStop('eng-2', null)).rejects.toThrow(/emergency stop/);
+    await expect(governance.assertNoActiveStop('eng-4', null)).resolves.toBeUndefined();
+    await app.close();
+  });
+
+  it('W10: resolution is guarded by an optimistic concurrency version', async () => {
+    const { app, owner } = await setup();
+    const stopped = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { scope: 'project', reason: 'Blue team request', threadId: 'th-1' } });
+    expect(stopped.statusCode).toBe(200);
+    expect(stopped.json().concurrencyVersion).toBe(1);
+    const stopId = stopped.json().id as string;
+    const resolve = (payload: Record<string, unknown>) => app.inject({ method: 'POST', url: `/api/engagements/${ENG}/estops/${stopId}/resolve`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload });
+    const missing = await resolve({ reason: 'all-clear' });
+    expect(missing.statusCode).toBe(400);
+    expect(missing.json().error.message).toContain('concurrencyVersion');
+    const stale = await resolve({ reason: 'all-clear', concurrencyVersion: 7 });
+    expect(stale.statusCode).toBe(409);
+    const resolved = await resolve({ reason: 'all-clear', concurrencyVersion: 1 });
+    expect(resolved.statusCode).toBe(200);
+    expect(resolved.json().outcome).toBe('resolved');
+    expect(resolved.json().concurrencyVersion).toBe(2);
+    const racing = await resolve({ reason: 'racing edit', concurrencyVersion: 1 });
+    expect(racing.statusCode).toBe(409);
     await app.close();
   });
 

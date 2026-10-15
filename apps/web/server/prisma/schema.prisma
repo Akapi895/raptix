@@ -355,6 +355,7 @@ model EmergencyStop {
   requestedBy String
   outcome String @default("requested") // requested | acknowledged | stopped | failed | unknown | resolved
   reason String
+  concurrencyVersion Int @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
