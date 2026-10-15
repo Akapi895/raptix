@@ -221,8 +221,25 @@ describe('ticket 16 workspace settings, audit and C2 policy propagation', () => 
     expect(entries[0]!.reason).toContain('shorter grant windows');
   });
 
-  it('propagates the C2 grant policy to its consumer and survives re-reads', async () => {
+  it('keeps the C2 grant policy registry inside the enforced 1-24h window', async () => {
     const db = memoryDb();
+    const { app, owner } = await setup(db);
+    const put = async (value: number, expectedVersion: number): Promise<number> =>
+      (await app.inject({
+        method: 'PUT', url: '/api/workspace/settings/policy.c2_grant_max_hours',
+        headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf },
+        payload: { value, expectedVersion, reason: 'range check' },
+      })).statusCode;
+    // W14: the registry no longer advertises a 720h window the consumer would
+    // fail closed on — the enforced policy range is 1..24 hours.
+    expect(await put(720, 1)).toBe(400);
+    expect(await put(25, 1)).toBe(400);
+    expect(await put(24, 1)).toBe(200);
+    expect(await put(1, 2)).toBe(200);
+    expect(await put(0, 3)).toBe(400);
+  });
+
+  it('propagates the C2 grant policy to its consumer and survives re-reads', async () => {    const db = memoryDb();
     const { app, owner } = await setup(db);
     const put = await app.inject({
       method: 'PUT', url: '/api/workspace/settings/policy.c2_grant_max_hours',
