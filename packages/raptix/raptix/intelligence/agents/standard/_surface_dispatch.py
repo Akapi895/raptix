@@ -12,6 +12,12 @@ SURFACE_EXPLOIT_OUTCOME_STATUS = {
     "confirmed": "completed",
     "ruled_out": "completed",
     "open_proof_gap": "in-progress",
+    # Only ever returned by a cell whose task description carried an
+    # `Oracle:` line (raptix.md "Win-condition oracle") — a confirmed
+    # vulnerability that did not trip the named win condition is not a
+    # finished cell, same as an open proof gap.
+    "confirmed_solved": "completed",
+    "confirmed_unsolved": "in-progress",
 }
 
 _TITLE_RE = re.compile(r"^Surface exploit: (?P<vuln_class>[a-z0-9_]+) @ (?P<surface_key>.+)$")
@@ -41,7 +47,17 @@ def _pending_surface_exploit_cells(
     )
 
 
-def _surface_exploit_payload(objective: Mapping[str, Any]) -> dict[str, str]:
+def _surface_exploit_payload(
+    objective: Mapping[str, Any], *, oracle: str | None = None
+) -> dict[str, str]:
+    """Build one cell's dispatch payload.
+
+    ``oracle``, when set, names the endpoint the mission's own conops.json
+    text designates as the authoritative win-condition meter (see raptix.md
+    "Win-condition oracle") — e.g. ``"GET /api/Challenges (field: solved)"``.
+    Real engagements never set it; the task description is identical to
+    before for them.
+    """
     title = str(objective.get("title", ""))
     description = str(objective.get("description", ""))
     notes = str(objective.get("notes", ""))
@@ -58,39 +74,48 @@ def _surface_exploit_payload(objective: Mapping[str, Any]) -> dict[str, str]:
     surface_key = title_match["surface_key"]
     session_name = session_match["session_name"]
     skill_path = skill_match["skill_path"]
+    task_description = (
+        f"Coverage cell {objective_id}: test only {vuln_class} against {surface_key}. "
+        f"Use bash session {session_name} for every command. Load {skill_path} before "
+        "the first probe. Return exactly one outcome: confirmed, ruled_out, or "
+        "open_proof_gap, with KG evidence."
+    )
+    if oracle:
+        task_description += (
+            f" Oracle: after a confirmed result, {oracle} once and report "
+            "confirmed_solved or confirmed_unsolved instead of confirmed."
+        )
     return {
         "objective_id": objective_id,
         "vuln_class": vuln_class,
         "surface_key": surface_key,
         "session_name": session_name,
         "skill_path": skill_path,
-        "task_description": (
-            f"Coverage cell {objective_id}: test only {vuln_class} against {surface_key}. "
-            f"Use bash session {session_name} for every command. Load {skill_path} before "
-            "the first probe. Return exactly one outcome: confirmed, ruled_out, or "
-            "open_proof_gap, with KG evidence."
-        ),
+        "task_description": task_description,
     }
 
 
-def next_surface_exploit_dispatch(objectives: Sequence[Mapping[str, Any]]) -> dict[str, str] | None:
+def next_surface_exploit_dispatch(
+    objectives: Sequence[Mapping[str, Any]], *, oracle: str | None = None
+) -> dict[str, str] | None:
     """Return the one highest-priority pending surface-exploit task payload."""
     pending = _pending_surface_exploit_cells(objectives)
     if not pending:
         return None
-    return _surface_exploit_payload(pending[0])
+    return _surface_exploit_payload(pending[0], oracle=oracle)
 
 
 def next_surface_exploit_batch(
     objectives: Sequence[Mapping[str, Any]],
     *,
     max_in_flight: int = DEFAULT_MAX_IN_FLIGHT,
+    oracle: str | None = None,
 ) -> list[dict[str, str]]:
     """Return a bounded, priority-ordered batch of pending surface-exploit cells."""
     if max_in_flight < 1:
         raise ValueError("max_in_flight must be at least one")
     payloads = [
-        _surface_exploit_payload(objective)
+        _surface_exploit_payload(objective, oracle=oracle)
         for objective in _pending_surface_exploit_cells(objectives)[:max_in_flight]
     ]
     sessions = [payload["session_name"] for payload in payloads]
