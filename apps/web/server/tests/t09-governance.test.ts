@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
 import { ScopeService } from '../src/services/scope-service.js';
-import { GovernanceService } from '../src/services/governance-service.js';
+import { GovernanceService, type ReadinessInput } from '../src/services/governance-service.js';
 
 /**
  * Ticket 09 acceptance: plan draft/propose/approve with four-eyes + absolute
@@ -125,6 +125,8 @@ function memoryDb() {
     },
     operationBinding: {
       create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('binding'), status: data.status ?? 'bound', concurrencyVersion: 1, createdAt: new Date(), updatedAt: new Date() }; table('operationBinding').set(String(row.id), row); return { ...row }; },
+      findFirst: async ({ where }: { where: { engagementId: string; threadId: string } }) =>
+        find('operationBinding', (r) => r.engagementId === where.engagementId && r.threadId === where.threadId),
       findMany: async ({ where }: { where: { engagementId: string } }) => listAll('operationBinding', (r) => r.engagementId === where.engagementId),
     },
     engagementThread: {
@@ -290,6 +292,54 @@ describe('ticket 09 governed plans and operation controls', () => {
     expect(refusedOther.statusCode).toBe(409);
     const list = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/estops`, headers: { cookie: reviewer.cookie } });
     expect(list.json().stops[0].outcome).toBe('acknowledged');
+  });
+
+  it('W08: the playbook check ties the OPPLAN objective to the selected thread binding', async () => {
+    const { app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const planId = await approvedPlan(app, owner, reviewer);
+    // No thread selected: the check reports unverifiable selection honestly.
+    const bare = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight`, headers: { cookie: owner.cookie } });
+    expect(bare.json().checks.find((c: { id: string }) => c.id === 'playbook')).toMatchObject({ state: 'unavailable' });
+    // Thread selected, no binding yet: no requirement is invented — the next bind pins it.
+    const unbound = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight?threadId=th-1`, headers: { cookie: owner.cookie } });
+    expect(unbound.json().checks.find((c: { id: string }) => c.id === 'playbook')).toMatchObject({ state: 'pass' });
+    // Bind, then the check reports the pinned objective.
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/bindings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { planId, threadId: 'th-1' } });
+    const bound = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/preflight?threadId=th-1`, headers: { cookie: owner.cookie } });
+    expect(bound.json().checks.find((c: { id: string }) => c.id === 'playbook')).toMatchObject({ state: 'pass', detail: expect.stringMatching(/Validate the staging login flow/) });
+    await app.close();
+  });
+
+  it('W08: the assistant readiness check reports the catalog execution role separately from the runtime', async () => {
+    const { db, app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    await app.close();
+    const actorId = String(db.tables.get('engagement')!.get(ENG)!.userId);
+    const seen: ReadinessInput[] = [];
+    // Catalog without any execution-capable assistant: report unavailable, never fail open.
+    const withoutExecutor = new GovernanceService(db as never, new ScopeService(db as never), {
+      readiness: async (input) => {
+        seen.push(input);
+        return [
+          { id: 'runtime', state: 'pass', detail: null },
+          { id: 'assistant', state: 'unavailable', detail: 'The runtime exposes no execution assistant graph.' },
+        ];
+      },
+    });
+    const pre = await withoutExecutor.preflight(actorId, ENG, 'th-1');
+    expect(pre.ok).toBe(false);
+    expect(pre.checks.find((c) => c.id === 'assistant')).toMatchObject({ state: 'unavailable' });
+    expect(seen).toEqual([{ actorId, engagementId: ENG, threadId: 'th-1' }]);
+    // With the assistant role in the catalog the whole preflight passes.
+    const governance = new GovernanceService(db as never, new ScopeService(db as never), {
+      readiness: async () => [
+        { id: 'runtime', state: 'pass', detail: null },
+        { id: 'assistant', state: 'pass', detail: 'Execution assistant graphs: raptix.' },
+      ],
+    });
+    const okPre = await governance.preflight(actorId, ENG, 'th-1');
+    expect(okPre.ok).toBe(true);
   });
 
   it('preflight fails honestly while no approved ROE exists and passes after governance', async () => {

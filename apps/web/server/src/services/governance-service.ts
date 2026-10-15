@@ -301,6 +301,22 @@ export class GovernanceService {
       ? { id: 'contact', state: 'pass', detail: null }
       : { id: 'contact', state: 'fail', detail: 'The approved ROE revision carries no emergency contact.' });
 
+    // W08: The playbook selection ties the selected operation thread to the
+    // OPPLAN objective its bound plan carries. Nothing is invented when no
+    // thread is selected (the check reports unverifiable, not success), and
+    // an unpinned thread does not block the next bind — the bind itself is
+    // what pins the objective.
+    if (threadId === null) {
+      checks.push({ id: 'playbook', state: 'unavailable', detail: 'Select the operation thread to verify which plan objective it is pinned to.' });
+    } else {
+      const binding = await this.db.operationBinding.findFirst({ where: { engagementId, threadId } });
+      const pinned = binding === null ? null : await this.db.businessPlan.findFirst({ where: { id: binding.planId, engagementId } });
+      const objective = (pinned?.body as { objective?: unknown } | null)?.objective;
+      checks.push(pinned === null
+        ? { id: 'playbook', state: 'pass', detail: 'No plan pinned yet; the next bind pins its objective to this thread.' }
+        : { id: 'playbook', state: 'pass', detail: `Pinned to plan objective: ${typeof objective === 'string' ? objective : `plan v${pinned.version}`}` });
+    }
+
     const activeEstop = await this.db.emergencyStop.findFirst({
       where: { engagementId, outcome: { in: [...ACTIVE_STOP_OUTCOMES] }, ...(threadId !== null ? { OR: [{ targetId: threadId }, { scope: { in: ['project', 'workspace'] } }] } : {}) },
     });
