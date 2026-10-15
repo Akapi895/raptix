@@ -11,6 +11,7 @@ import { useState, type ReactElement } from 'react'
 import { KeyRound, Loader2, TerminalSquare } from 'lucide-react'
 import { decideC2Grant, configureC2Listener, configureC2Profile, dispatchC2Command, fetchC2Commands, fetchC2Grants, fetchC2Sessions, reconcileC2Command, requestC2Grant, stopC2Listener } from '../api'
 import { utcMinute } from '../format'
+import { go, useRoute } from '../../router/navigate'
 import type { C2CommandView } from '@raptix/web-contracts'
 import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status, Textarea } from '../../ui'
 
@@ -23,12 +24,130 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export function RealC2Panel({ engagementId }: { engagementId: string }): ReactElement {
+  const route = useRoute()
+  // W22: c2-session/c2-channel detail routes consume the resource id from the
+  // URL with owned reads; unknown or foreign ids never render the full console.
+  if (route.page === 'c2-session' && route.id) return <RealC2SessionDetail engagementId={engagementId} sessionId={route.id} />
+  if (route.page === 'c2-channel' && route.id) return <RealC2ChannelDetail engagementId={engagementId} transport={route.id} />
   return (
     <div className="space-y-4">
       <RealC2Grants engagementId={engagementId} />
       <RealC2Infrastructure engagementId={engagementId} />
       <RealC2Console engagementId={engagementId} />
     </div>
+  )
+}
+
+/** W22: one owned session — its attributes and its own command audit. */
+function RealC2SessionDetail({ engagementId, sessionId }: { engagementId: string; sessionId: string }): ReactElement {
+  const sessions = useQuery({ queryKey: ['real', 'c2-sessions', engagementId], queryFn: () => fetchC2Sessions(engagementId), retry: false })
+  const commands = useQuery({ queryKey: ['real', 'c2-commands', engagementId], queryFn: () => fetchC2Commands(engagementId), refetchInterval: 15_000, retry: false })
+  const session = sessions.data?.sessions.find((s) => s.id === sessionId)
+  const sessionCommands = (commands.data ?? []).filter((c) => c.sessionId === sessionId)
+  return (
+    <Card>
+      <CardHeader title={`C2 session ${sessionId}`} sub="Reads the real provider registry; a session id outside this engagement namespace is not found, never substituted" />
+      {sessions.isPending ? <div className="p-4" aria-busy="true" role="status"><Skeleton className="h-12" /></div>
+        : sessions.isError || !sessions.data ? (
+          <div className="p-4">
+            <Banner tone="warn" title="C2 provider unavailable">
+              {sessions.error instanceof Error ? sessions.error.message : 'The scoped provider registry is not reachable.'} No substitute session view is shown.
+            </Banner>
+          </div>
+        )
+        : session === undefined ? (
+          <Empty icon={TerminalSquare} title="Session not found" action={<Button onClick={() => go('c2', { engagementId })}>Open the C2 console</Button>}>
+            The provider reports no session <span className="font-mono">{sessionId}</span> in this engagement namespace.
+          </Empty>
+        ) : (
+          <div className="p-4">
+            <dl className="grid gap-2 text-sm sm:grid-cols-2">
+              <dt className="text-muted">Host</dt><dd className="text-xs font-mono">{session.hostname}</dd>
+              <dt className="text-muted">User</dt><dd className="text-xs">{session.username}</dd>
+              <dt className="text-muted">Platform</dt><dd className="text-xs">{session.os}/{session.arch}</dd>
+              <dt className="text-muted">Transport / active channel</dt><dd className="text-xs">{session.transport} / {session.activeC2}</dd>
+              <dt className="text-muted">Remote address</dt><dd className="text-xs font-mono">{session.remoteAddress}</dd>
+              <dt className="text-muted">Listener port</dt><dd className="text-xs">{session.listenerPort}</dd>
+              <dt className="text-muted">Last check-in</dt><dd className="text-xs">{utcMinute(new Date(session.lastCheckin * 1000).toISOString())}</dd>
+              <dt className="text-muted">State</dt><dd><Status kind="gate" value={session.isDead ? 'failed' : 'passed'} size="sm" label={session.isDead ? 'dead' : 'alive'} /></dd>
+            </dl>
+          </div>
+        )}
+      {session !== undefined && (
+        <div className="border-t border-line p-4">
+          <h3 className="mb-2 text-sm font-medium">Command audit for this session</h3>
+          {commands.isPending ? <Skeleton className="h-10" />
+            : commands.isError ? <p className="text-sm text-bad" role="alert">{commands.error instanceof Error ? commands.error.message : 'The command ledger is unavailable.'}</p>
+            : sessionCommands.length === 0 ? <p className="text-sm text-muted">No commands recorded for this session.</p>
+            : <CommandTable commands={sessionCommands} />}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+/** W22: a transport channel — the sessions observed on it; the id is never reused as a session id. */
+function RealC2ChannelDetail({ engagementId, transport }: { engagementId: string; transport: string }): ReactElement {
+  const sessions = useQuery({ queryKey: ['real', 'c2-sessions', engagementId], queryFn: () => fetchC2Sessions(engagementId), retry: false })
+  const onChannel = (sessions.data?.sessions ?? []).filter((s) => s.transport === transport)
+  return (
+    <Card>
+      <CardHeader title={`C2 channel ${transport}`} sub="A channel id names a transport, never a session; sessions are listed by their observed transport only" />
+      {sessions.isPending ? <div className="p-4" aria-busy="true" role="status"><Skeleton className="h-12" /></div>
+        : sessions.isError || !sessions.data ? (
+          <div className="p-4">
+            <Banner tone="warn" title="C2 provider unavailable">
+              {sessions.error instanceof Error ? sessions.error.message : 'The scoped provider registry is not reachable.'} No substitute channel view is shown.
+            </Banner>
+          </div>
+        )
+        : onChannel.length === 0 ? (
+          <Empty icon={TerminalSquare} title="No sessions on this channel" action={<Button onClick={() => go('c2', { engagementId })}>Open the C2 console</Button>}>
+            The provider reports no session transported over <span className="font-mono">{transport}</span> in this engagement namespace.
+          </Empty>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted">
+                <th className="pb-2">Session</th><th className="pb-2">Host</th><th className="pb-2">State</th><th className="pb-2">Last check-in</th>
+              </tr>
+            </thead>
+            <tbody>
+              {onChannel.map((s) => (
+                <tr key={s.id} className="border-t border-line">
+                  <td className="py-2 pr-3 font-mono text-xs">{s.id}</td>
+                  <td className="py-2 pr-3 text-xs">{s.hostname}</td>
+                  <td className="py-2 pr-3"><Status kind="gate" value={s.isDead ? 'failed' : 'passed'} size="sm" label={s.isDead ? 'dead' : 'alive'} /></td>
+                  <td className="py-2 text-xs">{utcMinute(new Date(s.lastCheckin * 1000).toISOString())}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+    </Card>
+  )
+}
+
+/** Shared bounded command-audit rows (status, exit code, stdout/stderr with truncation flags). */
+function CommandTable({ commands }: { commands: C2CommandView[] }): ReactElement {
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="text-left text-xs text-muted">
+          <th className="pb-2">Command</th><th className="pb-2">Status</th><th className="pb-2">Exit</th><th className="pb-2">Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {commands.map((c) => (
+          <tr key={c.id} className="border-t border-line">
+            <td className="py-2 pr-3 font-mono text-xs">{c.path} {c.args.join(' ')}</td>
+            <td className="py-2 pr-3"><Status kind="gate" value={c.status === 'succeeded' ? 'passed' : c.status === 'failed' ? 'failed' : 'pending'} size="sm" label={c.status} /></td>
+            <td className="py-2 pr-3 text-xs">{c.exitCode ?? '—'}</td>
+            <td className="py-2 text-xs">{utcMinute(c.createdAt)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 }
 

@@ -10,7 +10,7 @@ import { resetSharedStores, useProjectStore, useUiStore } from '../state/stores'
 import { setActiveRouter } from './active'
 import { RouteHost, RouteErrorBoundary } from './host'
 import { currentRoute, go, navigationEpoch, navRawRoute, resetNavStores, selectProject, useRoute } from './navigate'
-import type { Route } from './history'
+import { parseHash, type Route } from './history'
 
 let latest: Route
 function RouteProbe() {
@@ -79,6 +79,15 @@ describe('route projection (useRoute)', () => {
     act(() => { navRawRoute({ page: 'settings', tab: 'policies' }) })
     expect(window.location.hash).toBe('#/settings?tab=policies')
     expect(latest).toEqual({ page: 'settings', tab: 'policies' })
+  })
+
+  it('W22: parses malformed percent-encoding safely instead of throwing (W22 history safety)', () => {
+    window.location.hash = '#/asset/%zz-broken?engagement=eng-1'
+    expect(parseHash()).toEqual({ page: 'asset', id: '%zz-broken', engagementId: 'eng-1' })
+    window.location.hash = '#/report/Report%20One?engagement=eng-1'
+    expect(parseHash()).toEqual({ page: 'report', id: 'Report One', engagementId: 'eng-1' })
+    resetNavStores()
+    expect(currentRoute()).toEqual({ page: 'report', id: 'Report One', engagementId: 'eng-1' })
   })
 })
 

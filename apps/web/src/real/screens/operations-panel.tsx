@@ -11,8 +11,8 @@ import type { ScopedRunView, ThreadBindingView } from '@raptix/web-contracts'
 import { listRunsOfThread, listThreads } from '../api'
 import { fetchTimeline } from '../api'
 import { utcMinute } from '../format'
-import { go } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, Skeleton, Status, cx } from '../../ui'
+import { go, useRoute } from '../../router/navigate'
+import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status, cx } from '../../ui'
 
 const STATUS_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = {
   completed: 'ok', failed: 'bad', cancelled: 'neutral', interrupted: 'warn',
@@ -20,8 +20,33 @@ const STATUS_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = {
 }
 
 export function RealOperationsPanel({ engagementId }: { engagementId: string }): ReactElement {
+  const route = useRoute()
+  // W22: the operation detail route consumes the thread id from the URL — a
+  // foreign or unknown id renders an explicit not-found, never the full list.
+  const detailThreadId = route.page === 'operation' && route.id ? route.id : null
   const threads = useQuery({ queryKey: ['real', 'threads', engagementId], queryFn: () => listThreads(engagementId) })
   const executionThreads = (threads.data?.threads ?? []).filter((t) => t.kind === 'execution')
+
+  if (detailThreadId !== null) {
+    const selected = executionThreads.find((t) => t.threadId === detailThreadId)
+    return (
+      <div className="space-y-4">
+        {threads.isPending ? <Card><CardHeader title={`Operation ${detailThreadId}`} /><div className="p-4 space-y-2" aria-busy="true" role="status"><Skeleton className="h-10" /><Skeleton className="h-10" /></div></Card>
+          : threads.isError ? <Banner tone="warn" title="Threads source unavailable">{threads.error instanceof Error ? threads.error.message : 'Threads could not be loaded.'} No substitute operation view is shown.</Banner>
+          : selected === undefined ? (
+            <Empty icon={Bot} title="Operation thread not found" action={<Button onClick={() => go('operations', { engagementId })}>Open operations</Button>}>
+              No execution thread <span className="font-mono">{detailThreadId}</span> is owned by this engagement. Planning threads and foreign ids are not operation resources.
+            </Empty>
+          ) : (
+            <Card>
+              <CardHeader title={`Operation thread ${selected.threadId}`} sub={`Assistant ${selected.assistantId ?? '—'} — bound runtime runs for this thread only`} />
+              <div className="p-4"><ThreadRuns thread={selected} /></div>
+            </Card>
+          )}
+        <TimelineCard engagementId={engagementId} />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
