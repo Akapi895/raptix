@@ -5,6 +5,7 @@ import { hashPassword } from '../src/auth/multi-user.js';
 import { C2GrantsService } from '../src/services/c2-grants-service.js';
 import { C2Service } from '../src/services/c2-service.js';
 import { CampaignService } from '../src/services/campaign-service.js';
+import { ProjectApiError } from '../src/services/projects-service.js';
 
 /**
  * Ticket 12 acceptance: request/review grant workflow persists actor, session,
@@ -131,8 +132,8 @@ function tbl(db: Db, name: string): Map<string, Row> {
 function fakeProvider(executeCalls: { count: number }): never {
   const session = { id: SESSION, name: SESSION, hostname: 'host-1', username: 'svc', os: 'windows', arch: 'x64', transport: 'mtls', remoteAddress: '10.0.0.8:49152', activeC2: 'mtls', version: '1.5.42', pid: 4100, listenerPort: 8888, lastCheckin: Math.floor(Date.now() / 1000), isDead: false };
   return {
-    call: async ({ op }: { op: string }) => {
-      if (op === 'sessions.get') return { session } as Record<string, unknown>;
+    call: async ({ op, sessionId }: { op: string; sessionId?: string }) => {
+      if (op === 'sessions.get') return { session: { ...session, id: sessionId ?? SESSION } } as Record<string, unknown>;
       if (op === 'sessions.execute') {
         executeCalls.count += 1;
         return { state: 'succeeded', outcome: { status: 0, pid: 4242, stdout: { text: 'done', truncated: false }, stderr: { text: '', truncated: false } } } as Record<string, unknown>;
@@ -142,7 +143,7 @@ function fakeProvider(executeCalls: { count: number }): never {
   } as never;
 }
 
-async function setup(executeCalls: { count: number }): Promise<{ db: Db; app: FastifyInstance; owner: { cookie: string; csrf: string }; reviewer: { cookie: string; csrf: string }; operator: { cookie: string; csrf: string }; viewer: { cookie: string; csrf: string }; grants: C2GrantsService }> {
+async function setup(executeCalls: { count: number }, liveScopeGate?: (engagementId: string) => Promise<void>): Promise<{ db: Db; app: FastifyInstance; owner: { cookie: string; csrf: string }; reviewer: { cookie: string; csrf: string }; operator: { cookie: string; csrf: string }; viewer: { cookie: string; csrf: string }; grants: C2GrantsService }> {
   const db = memoryDb();
   const owner = await db.webUser.create({ data: { username: 'owner', displayName: 'Owner', passwordHash: hashPassword('correct horse battery'), status: 'active' } });
   const reviewer = await db.webUser.create({ data: { username: 'rev', displayName: 'Rev', passwordHash: hashPassword('longenough1'), status: 'active' } });
@@ -152,7 +153,7 @@ async function setup(executeCalls: { count: number }): Promise<{ db: Db; app: Fa
   await db.webMembership.create({ data: { engagementId: ENG, userId: reviewer.id, role: 'reviewer' } });
   await db.webMembership.create({ data: { engagementId: ENG, userId: operator.id, role: 'operator' } });
   await db.webMembership.create({ data: { engagementId: ENG, userId: viewer.id, role: 'viewer' } });
-  const grants = new C2GrantsService(db as never);
+  const grants = new C2GrantsService(db as never, undefined, liveScopeGate);
   const app = await (buildApp({
     logger: { level: 'error' },
     authMode: 'multi',
@@ -239,5 +240,56 @@ describe('ticket 12 c2 grants and authorized dispatch', () => {
     expect(foreign.statusCode).toBe(404);
     const foreignDecision = await app.inject({ method: 'POST', url: `/api/engagements/eng-other/c2/grants/g-seed/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
     expect(foreignDecision.statusCode).toBe(404);
+  });
+
+  it('W12: the grant gate consumes the live scope, ROE window and stop state before dispatch', async () => {
+    const executeCalls = { count: 0 };
+    const refusal = new ProjectApiError(403, 'Outside the approved ROE time windows.');
+    const gate = { refuse: true };
+    const { app, owner, reviewer } = await setup(executeCalls, async (engagementId) => {
+      if (engagementId === ENG && gate.refuse) throw refusal;
+    });
+    const requested = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { sessionId: SESSION, reason: 'recon under live scope', expiresAt: future(60_000) } });
+    expect(requested.statusCode).toBe(200);
+    const grantId = requested.json().id as string;
+    const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants/${grantId}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    expect(approved.statusCode).toBe(200);
+    // An approved grant is not enough: the live scope/ROE/stop gate refuses
+    // pre-dispatch and the provider is never invoked.
+    const blocked = await dispatch(app, owner, SESSION);
+    expect(blocked.statusCode).toBe(403);
+    expect(String(blocked.json().error.message ?? '')).toMatch(/ROE/);
+    expect(executeCalls.count).toBe(0);
+    gate.refuse = false;
+    const allowed = await dispatch(app, owner, SESSION);
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.json().status).toBe('succeeded');
+    expect(executeCalls.count).toBe(1);
+  });
+
+  it('W12: commandPrefix is an exact binary path or a directory boundary, never a raw string prefix', async () => {
+    const executeCalls = { count: 0 };
+    const { app, owner, reviewer } = await setup(executeCalls);
+    const requestGrant = async (sessionId: string, commandPrefix: string): Promise<{ statusCode: number; json(): Record<string, unknown> }> =>
+      app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { sessionId, reason: 'prefix contract', expiresAt: future(60_000), commandPrefix } });
+    const relative = await requestGrant('sess-rel', 'apps/tool');
+    expect(relative.statusCode).toBe(400);
+    const run = async (sessionId: string, requestId: string, path: string): Promise<number> =>
+      (await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/sessions/${sessionId}/commands`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { requestId, path, args: [] } })).statusCode;
+    // Exact-path grant: siblings sharing the string prefix stay out of scope.
+    const exact = await requestGrant('sess-2', 'C:\\apps\\evil');
+    expect(exact.statusCode).toBe(200);
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants/${String(exact.json().id)}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    expect(await run('sess-2', 'req-w12-e1', 'C:\\apps\\evil2\\x.exe')).toBe(403);
+    expect(executeCalls.count).toBe(0);
+    expect(await run('sess-2', 'req-w12-e2', 'C:\\apps\\evil')).toBe(200);
+    expect(executeCalls.count).toBe(1);
+    // Directory boundary: the trailing separator is part of the contract.
+    const dir = await requestGrant('sess-3', 'C:\\apps\\');
+    expect(dir.statusCode).toBe(200);
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants/${String(dir.json().id)}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    expect(await run('sess-3', 'req-w12-d1', 'C:\\apps2\\x.exe')).toBe(403);
+    expect(await run('sess-3', 'req-w12-d2', 'C:\\apps\\tool.exe')).toBe(200);
+    expect(executeCalls.count).toBe(2);
   });
 });
