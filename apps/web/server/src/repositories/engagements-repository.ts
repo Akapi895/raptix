@@ -109,13 +109,14 @@ function toRecord(row: EngagementRow): EngagementRecord {
 export class EngagementsRepository {
   private readonly db: EngagementDelegate;
 
-  public constructor(db: EngagementDelegate) {
+  public constructor(db: EngagementDelegate, private readonly memberships?: PrismaClient['webMembership']) {
     this.db = db;
   }
 
   public async list(userId: string): Promise<EngagementRecord[]> {
+    const memberships = this.memberships ? await this.memberships.findMany({ where: { userId }, select: { engagementId: true } }) : [];
     const rows = await this.db.findMany({
-      where: { userId },
+      where: memberships.length ? { OR: [{ userId }, { id: { in: memberships.map((m) => m.engagementId) } }] } : { userId },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(toRecord);
@@ -125,7 +126,8 @@ export class EngagementsRepository {
     userId: string,
     id: string,
   ): Promise<EngagementRecord | null> {
-    const row = await this.db.findFirst({ where: { id, userId } });
+    const membership = this.memberships ? await this.memberships.findFirst({ where: { userId, engagementId: id } }) : null;
+    const row = await this.db.findFirst({ where: membership ? { id } : { id, userId } });
     return row ? toRecord(row) : null;
   }
 

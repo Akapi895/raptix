@@ -33,6 +33,7 @@ function memoryDb() {
   };
   const db = {
     tables,
+    engagementClosure: { findFirst: async () => null },
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         find('engagement', (r) => r.id === where.id && (where.userId === undefined || r.userId === where.userId)),
@@ -187,6 +188,8 @@ describe('ticket 08 scope governance', () => {
     const ok = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/assets/inventory/${asset.id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { classification: 'in_scope' } });
     expect(ok.statusCode).toBe(200);
     expect(ok.json().classification).toBe('in_scope');
+    const uncovered = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/assets/inventory/${list.json().assets[1].id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { classification: 'in_scope' } });
+    expect(uncovered.statusCode).toBe(409);
     // out-of-scope narrowing is always allowed
     const out = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/assets/inventory/${list.json().assets[1].id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { classification: 'out_of_scope' } });
     expect(out.statusCode).toBe(200);

@@ -94,20 +94,18 @@ export class WorkspaceSettingsService {
     return { settings, source: 'db' };
   }
 
-  /**
-   * The C2 grant consumer reads the policy through this loader. A missing,
-   * malformed value or read failure falls back to the default — a settings
-   * outage must never break the grant path, and never widens the window.
-   */
+  /** Only an authoritatively absent setting uses the default policy. */
   public async maxGrantHours(): Promise<number> {
     const spec = SPEC_BY_KEY.get('policy.c2_grant_max_hours')!;
     try {
       const row = await this.db.workspaceSetting.findFirst({ where: { key: spec.key } });
-      if (row !== null && this.validValue(spec, (row as unknown as { value: unknown }).value)) {
-        return (row as unknown as { value: number }).value;
-      }
-    } catch { /* fall through to the default */ }
-    return spec.defaultValue;
+      if (row === null) return spec.defaultValue;
+      if (this.validValue(spec, row.value)) return row.value;
+      throw new ProjectApiError(503, 'The C2 grant policy is invalid; grant creation is unavailable.');
+    } catch (error) {
+      if (error instanceof ProjectApiError) throw error;
+      throw new ProjectApiError(503, 'The C2 grant policy could not be read; grant creation is unavailable.');
+    }
   }
 
   public async put(actorId: string, key: string, input: unknown): Promise<WorkspaceSettingView> {
@@ -136,7 +134,7 @@ export class WorkspaceSettingsService {
     if (Number(row.version) !== expectedVersion) {
       throw new ProjectApiError(409, `Version conflict: ${key} is at version ${row.version}, not ${expectedVersion}. Reload and retry.`);
     }
-    await this.db.workspaceSetting.update({ where: { key }, data: { value: body.value as number, version: expectedVersion + 1, updatedBy: actorId } });
+    await this.db.workspaceSetting.update({ where: { key, version: expectedVersion }, data: { value: body.value as number, version: expectedVersion + 1, updatedBy: actorId } });
     await this.audit(actorId, key, `v${expectedVersion} -> v${expectedVersion + 1}; ${reason}`);
     const updated = await this.db.workspaceSetting.findFirst({ where: { key } }) as unknown as { value: unknown; version: number; updatedBy: string | null; updatedAt: Date };
     return this.toView(spec, updated);

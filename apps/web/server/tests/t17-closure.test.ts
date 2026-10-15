@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
 import { ClosureService } from '../src/services/closure-service.js';
@@ -114,6 +114,8 @@ function memoryDb() {
     c2Grant: listModel('c2Grant'),
     findingRecord: listModel('findingRecord'),
     reportRecord: listModel('reportRecord'),
+    scopeRevision: listModel('scopeRevision'),
+    businessPlan: listModel('businessPlan'),
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
   return db;
@@ -137,7 +139,7 @@ async function setup(db: Db, pendingApprovals?: (userId: string, engagementId: s
   const owner = await db.webUser.create({ data: { username: 'owner', displayName: 'Owner', passwordHash: hashPassword('correct horse battery'), status: 'active' } });
   const reviewer = await db.webUser.create({ data: { username: 'rev', displayName: 'Rev', passwordHash: hashPassword('longenough1'), status: 'active' } });
   seed(db, String(owner.id), String(reviewer.id));
-  const closure = new ClosureService(db as never, pendingApprovals);
+  const closure = new ClosureService(db as never, pendingApprovals, { sessions: async () => 0, runtime: async () => 0 });
   const app = await (buildApp({
     logger: { level: 'error' },
     authMode: 'multi',
@@ -147,7 +149,7 @@ async function setup(db: Db, pendingApprovals?: (userId: string, engagementId: s
     c2Grants: new C2GrantsService(db as never),
     scopeService: new ScopeService(db as never),
     findingsWorkflow: new FindingsWorkflowService(db as never),
-    reportsService: new ReportsService(db as never, async () => ({ ok: true, format: 'json' })),
+    reportsService: new ReportsService(db as never),
     vaultService: new VaultService(db as never, null),
     auditService: new AuditService(db as never),
   }) as unknown as Promise<FastifyInstance>);
@@ -159,10 +161,10 @@ async function setup(db: Db, pendingApprovals?: (userId: string, engagementId: s
   return { app, owner: await login('owner', 'correct horse battery'), reviewer: await login('rev', 'longenough1') };
 }
 
-const requestClosure = (app: FastifyInstance, actor: { cookie: string; csrf: string }, reason = 'work completed'): Promise<unknown> =>
+const requestClosure = (app: FastifyInstance, actor: { cookie: string; csrf: string }, reason = 'work completed'): Promise<LightMyRequestResponse> =>
   app.inject({ method: 'POST', url: `/api/engagements/${ENG}/closure/request`, headers: { cookie: actor.cookie, 'x-csrf-token': actor.csrf }, payload: { reason } });
 
-const decideClosure = (app: FastifyInstance, actor: { cookie: string; csrf: string }, decision: string): Promise<unknown> =>
+const decideClosure = (app: FastifyInstance, actor: { cookie: string; csrf: string }, decision: string): Promise<LightMyRequestResponse> =>
   app.inject({ method: 'POST', url: `/api/engagements/${ENG}/closure/decision`, headers: { cookie: actor.cookie, 'x-csrf-token': actor.csrf }, payload: { decision } });
 
 describe('ticket 17 engagement closure', () => {

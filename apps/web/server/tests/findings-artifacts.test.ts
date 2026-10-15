@@ -48,8 +48,8 @@ async function buildHarness(): Promise<Harness> {
   const slug = `w12-proj-${Date.now().toString(36)}`;
   const db = {
     engagement: {
-      findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
-        where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: slug } : null,
+      findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
+        where.id === 'eng-1' && (where.userId === undefined || where.userId === 'local') ? { id: 'eng-1', name: slug, userId: 'local' } : null,
     },
   };
   const app = Fastify({ logger: false });

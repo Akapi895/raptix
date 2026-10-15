@@ -5,6 +5,12 @@ import type { ReportsService } from '../../services/reports-service.js';
 
 /** Ticket 11 routes: report lifecycle, independent review and delivery records. */
 export function registerReportsRoutes(app: FastifyInstance, reports: ReportsService, identity: LocalIdentity): void {
+  app.get('/api/engagements/:id/report-records/:reportId/export', (request, reply) => runProjectsHandler(request, reply, () => {
+    const { id, reportId } = request.params as { id: string; reportId: string };
+    const { format } = request.query as { format?: string };
+    reply.header('Cache-Control', 'no-store');
+    return reports.exportReport(identity.id, id, reportId, format ?? 'markdown');
+  }));
   app.get('/api/engagements/:id/report-records', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };

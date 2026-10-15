@@ -5,7 +5,7 @@ import type { RuntimeContextService } from '../../services/runtime/runtime-conte
 
 export const CAPABILITIES_VERSION = 1;
 
-export type CapabilityMode = 'local-single-user';
+export type CapabilityMode = 'local-single-user' | 'multi-user';
 
 export type CapabilityState =
   | {
@@ -73,6 +73,7 @@ export async function buildCapabilitiesResponse(
   vaultKeyConfigured = false,
   membersSupported = false,
   c2ProviderConfigured = false,
+  mode: CapabilityMode = 'local-single-user',
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
   if (!projectsSupported) {
@@ -128,7 +129,7 @@ export async function buildCapabilitiesResponse(
   const members: CapabilityState = !membersSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
   return {
     version: CAPABILITIES_VERSION,
-    mode: 'local-single-user',
+    mode,
     capabilities: {
       agents,
       projects,
@@ -150,6 +151,7 @@ export async function buildCapabilitiesResponse(
 }
 
 export interface CapabilitiesRouteOptions {
+  readonly mode?: CapabilityMode;
   readonly projectsSupported?: boolean;
   readonly databaseHealth?: DatabaseHealth;
   readonly runtimeContext?: RuntimeContextService;
@@ -190,6 +192,7 @@ export function registerCapabilitiesRoutes(
       options.vaultKeyConfigured === true,
       options.membersSupported === true,
       options.c2ProviderConfigured === true,
+      options.mode,
     ),
   );
 }

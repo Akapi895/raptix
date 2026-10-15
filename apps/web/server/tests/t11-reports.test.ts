@@ -31,6 +31,7 @@ function memoryDb() {
   };
   const db = {
     tables,
+    engagementClosure: { findFirst: async () => null },
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         find('engagement', (r) => r.id === where.id && (where.userId === undefined || r.userId === where.userId)),
@@ -101,7 +102,7 @@ async function setup(): Promise<{ db: Db; app: FastifyInstance; author: { cookie
     logger: { level: 'error' },
     authMode: 'multi',
     authDb: db as never,
-    reportsService: new ReportsService(db as never, async () => ({ ok: true, format: 'markdown' })),
+    reportsService: new ReportsService(db as never),
   }) as unknown as Promise<FastifyInstance>);
   const login = async (username: string, password: string): Promise<{ cookie: string; csrf: string }> => {
     const res = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { username, password } });
@@ -112,6 +113,15 @@ async function setup(): Promise<{ db: Db; app: FastifyInstance; author: { cookie
 }
 
 describe('ticket 11 report lifecycle and delivery', () => {
+  it('exports the exact report content with a capture digest instead of an engagement export', async () => {
+    const { app, author } = await setup();
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Exact reviewed content', summary: 'Only this report summary' } });
+    const exported = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records/${created.json().id}/export?format=markdown`, headers: { cookie: author.cookie } });
+    expect(exported.statusCode).toBe(200);
+    expect(exported.json().content).toContain('Only this report summary');
+    expect(exported.json().digest).toMatch(/^[a-f0-9]{64}$/);
+    await app.close();
+  });
   it('creates a draft, refuses stale edits with a conflict and preserves the stored body', async () => {
     const { app, author } = await setup();
     const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Q3 staging report', summary: 'Draft summary' } });
@@ -135,7 +145,7 @@ describe('ticket 11 report lifecycle and delivery', () => {
     expect(self.json().error.message).toContain('independent actor');
     const noComment = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: '   ' } });
     expect(noComment.statusCode).toBe(400);
-    const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'Verified against findings.' } });
+    const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'Verified against findings.', expectedVersion: 1 } });
     expect(approved.statusCode).toBe(200);
     expect(approved.json().status).toBe('approved');
     expect(approved.json().approvedVersion).toBe(approved.json().version);
@@ -157,8 +167,10 @@ describe('ticket 11 report lifecycle and delivery', () => {
         expect(exported.statusCode).toBe(200);
     expect(exported.json().deliveries[0].status).toBe('completed');
     await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
-    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'ok' } });
-    const delivered = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1' } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'ok', expectedVersion: 1 } });
+    const missingReceipt = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1' } });
+    expect(missingReceipt.statusCode).toBe(400);
+    const delivered = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1', expectedVersion: 1, recipient: 'local client', receipt: 'Signed receipt TEST-1' } });
     expect(delivered.statusCode).toBe(200);
     expect(delivered.json().status).toBe('delivered');
     // replay with the same request id: no duplicate row, no double state change

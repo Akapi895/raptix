@@ -31,6 +31,7 @@ function memoryDb() {
   };
   const db = {
     tables,
+    engagementClosure: { findFirst: async () => null },
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         find('engagement', (r) => r.id === where.id && (where.userId === undefined || r.userId === where.userId)),
@@ -151,10 +152,12 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     const { app, owner } = await setup();
     const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'With evidence' } });
     const id = created.json().id;
-    const attached = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/evidence`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { kind: 'digest', digest: 'sha256:abc123', producer: 'runtime:soundwave' } });
+    const attached = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/evidence`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { kind: 'digest', digest: 'a'.repeat(64), producer: 'runtime:soundwave' } });
     expect(attached.statusCode).toBe(200);
-    expect(attached.json().digest).toBe('sha256:abc123');
+    expect(attached.json().digest).toBe('a'.repeat(64));
     expect(attached.json().producer).toBe('runtime:soundwave');
+    const malformed = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/evidence`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { kind: 'digest', digest: 'sha256:abc123' } });
+    expect(malformed.statusCode).toBe(400);
     const missing = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/evidence`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { kind: 'artifact' } });
     expect(missing.statusCode).toBe(400);
     const foreign = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/f-999/transition`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { to: 'review' } });

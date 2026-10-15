@@ -13,6 +13,10 @@ export function registerFindingsRoutes(
   identity: LocalIdentity,
 ): void {
   const prefix = '/api/engagements/:id';
+  app.post(`${prefix}/artifacts/captures`, (request, reply) => runProjectsHandler(request, reply, () => {
+    const { id } = request.params as { id: string };
+    return artifacts.upload(identity.id, id, request.body);
+  }));
   app.get(`${prefix}/findings`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };

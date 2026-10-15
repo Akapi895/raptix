@@ -136,7 +136,7 @@ export class FleetService {
       if (rawStatus === 'busy' && activeLookups < MAX_ACTIVE_RUN_LOOKUPS) {
         activeLookups += 1;
         try {
-          const runs = await this.runs.listRuns(actorId, engagementId, binding.threadId, { offset: 0, limit: 5 });
+          const runs = await this.runs.listRuns(actorId, engagementId, binding.threadId, { offset: '0', limit: '5' });
           activeRunId = runs.runs.find((r) => ACTIVE_RUN_STATUSES.includes(r.rawStatus))?.runId ?? null;
         } catch { /* keep null */ }
       }

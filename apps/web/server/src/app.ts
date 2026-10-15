@@ -5,6 +5,7 @@ import type { LocalIdentity } from './auth/identity-provider.js';
 import type { PrismaClient } from './generated/prisma/client.js';
 import { ActorContextStore, registerMultiUserAuth, sessionAwareIdentity } from './auth/request-identity.js';
 import { registerAuthRoutes } from './http/routes/auth.routes.js';
+import { registerEngagementMutationFence } from './security/engagement-mutation-fence.js';
 import { registerErrorHandler } from './http/error-handler.js';
 import { registerCapabilitiesRoutes } from './http/routes/capabilities.routes.js';
 import { registerHealthRoutes } from './http/routes/health.routes.js';
@@ -30,6 +31,7 @@ import { registerReportsRoutes } from './http/routes/reports.routes.js';
 import { registerC2GrantRoutes } from './http/routes/c2-grants.routes.js';
 import { registerFleetRoutes } from './http/routes/fleet.routes.js';
 import { registerLibraryRoutes } from './http/routes/library.routes.js';
+import { registerLibraryReviewRoutes } from './http/routes/library-review.routes.js';
 import { registerInboxRoutes } from './http/routes/inbox.routes.js';
 import { registerWorkspaceSettingsRoutes, registerAuditRoutes } from './http/routes/workspace.routes.js';
 import { registerClosureRoutes } from './http/routes/closure.routes.js';
@@ -53,6 +55,7 @@ import type { ReportsService } from './services/reports-service.js';
 import type { C2GrantsService } from './services/c2-grants-service.js';
 import type { FleetService } from './services/fleet-service.js';
 import type { LibraryService } from './services/library-service.js';
+import type { LibraryReviewService } from './services/library-review-service.js';
 import type { InboxService } from './services/inbox-service.js';
 import type { WorkspaceSettingsService } from './services/workspace-settings-service.js';
 import type { AuditService } from './services/audit-service.js';
@@ -89,12 +92,13 @@ export interface AppOptions {
   readonly c2Grants?: C2GrantsService;
   readonly fleetService?: FleetService;
   readonly libraryService?: LibraryService;
+  readonly libraryReviewService?: LibraryReviewService;
   readonly inboxService?: InboxService;
   readonly workspaceSettings?: WorkspaceSettingsService;
   readonly auditService?: AuditService;
   readonly closureService?: ClosureService;
   /** Runtime cancel bridge for emergency stops (operation scope). */
-  readonly cancelRun?: (threadId: string, runId: string | null) => Promise<string>;
+  readonly cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
   readonly vaultKeyConfigured?: boolean;
   /** Local single-user identity; defaults to getLocalIdentity(). */
@@ -103,6 +107,7 @@ export interface AppOptions {
   readonly authMode?: 'local' | 'multi';
   /** Prisma client for session lookup + bootstrap admin; required in multi mode. */
   readonly authDb?: PrismaClient;
+  readonly workflowDb?: PrismaClient;
   readonly secureCookies?: boolean;
   readonly adminBootstrap?: { readonly username: string; readonly password: string; readonly displayName: string };
   /**
@@ -121,20 +126,23 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   // route so every handler (including previously registered ones is not a
   // thing â€” registration order below) runs behind the same-origin/CSRF check.
   const actors = new ActorContextStore();
+  if (options.authMode === 'multi' && !options.authDb) throw new Error('Multi-user authentication requires a database.');
   let identity: LocalIdentity = options.identity ?? getLocalIdentity();
   const multiAuth = options.authMode === 'multi' && options.authDb !== undefined;
   if (multiAuth && options.authDb) {
     registerMultiUserAuth(app, actors, {
       db: options.authDb,
-      publicUrls: ['/api/auth/login', '/api/auth/session', '/api/auth/logout', '/api/health', '/api/health/ready'],
+      publicUrls: ['/api/auth/login', '/api/auth/session', '/api/capabilities', '/api/health', '/api/health/ready'],
     });
     identity = sessionAwareIdentity(actors);
     registerAuthRoutes(app, options.authDb, actors, options.secureCookies ?? false);
   }
 
   registerErrorHandler(app);
+  if (options.workflowDb) registerEngagementMutationFence(app, options.workflowDb, () => identity.id);
   registerHealthRoutes(app, { databaseHealth: options.databaseHealth, runtimeContext: options.runtimeContext });
   registerCapabilitiesRoutes(app, {
+    mode: multiAuth ? 'multi-user' : 'local-single-user',
     projectsSupported: options.projectsService !== undefined,
     databaseHealth: options.databaseHealth,
     runtimeContext: options.runtimeContext,
@@ -179,6 +187,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.c2Grants) registerC2GrantRoutes(app, options.c2Grants, identity);
   if (options.fleetService) registerFleetRoutes(app, options.fleetService, identity);
   if (options.libraryService) registerLibraryRoutes(app, options.libraryService, identity);
+  if (options.libraryReviewService) registerLibraryReviewRoutes(app, options.libraryReviewService, identity);
   if (options.inboxService) registerInboxRoutes(app, options.inboxService, identity);
   if (options.workspaceSettings) registerWorkspaceSettingsRoutes(app, options.workspaceSettings, identity);
   if (options.auditService) registerAuditRoutes(app, options.auditService, identity);

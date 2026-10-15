@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
+import { createHash } from 'node:crypto';
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
@@ -39,11 +40,18 @@ export interface ReportsView {
   readonly source: 'db';
 }
 
+export interface ReportArtifactView {
+  readonly engagementId: string;
+  readonly reportId: string;
+  readonly version: number;
+  readonly format: 'json' | 'markdown';
+  readonly mediaType: string;
+  readonly content: string;
+  readonly digest: string;
+}
+
 export class ReportsService {
-  public constructor(
-    private readonly db: PrismaClient,
-    private readonly exportEngagement?: (userId: string, engagementId: string, format: string) => Promise<{ ok: boolean; format: string }>,
-  ) {}
+  public constructor(private readonly db: PrismaClient) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -101,8 +109,9 @@ export class ReportsService {
       })
       : undefined;
     const updated = await this.db.reportRecord.update({
-      where: { id: row.id },
+      where: { id: row.id, version: expectedVersion, status: row.status },
       data: {
+        status: row.status === 'in_review' ? 'draft' : row.status,
         title: typeof body.title === 'string' && body.title.trim().length > 0 ? body.title.trim() : row.title,
         body: {
           summary: typeof body.summary === 'string' ? body.summary : (row.body as { summary?: string }).summary ?? '',
@@ -130,7 +139,7 @@ export class ReportsService {
   public async decideReview(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_REVIEW);
     await assertEngagementOpen(this.db, engagementId);
-    const body = (input ?? {}) as { decision?: unknown; comment?: unknown };
+    const body = (input ?? {}) as { decision?: unknown; comment?: unknown; expectedVersion?: unknown };
     const decision = typeof body.decision === 'string' ? body.decision : '';
     const comment = typeof body.comment === 'string' ? body.comment.trim() : '';
     if (decision !== 'approved' && decision !== 'changes_requested') throw new ProjectApiError(400, "decision must be 'approved' or 'changes_requested'.");
@@ -138,8 +147,9 @@ export class ReportsService {
     const row = await this.findOwned(engagementId, reportId);
     if (row.status !== 'in_review') throw new ProjectApiError(409, `The report is ${row.status}, not in review.`);
     requireIndependentActor(row.createdBy, actorId, 'The report review');
+    if (body.expectedVersion !== row.version) throw new ProjectApiError(409, 'The reviewed version changed; reload the report before deciding.');
     const updated = await this.db.reportRecord.update({
-      where: { id: row.id },
+      where: { id: row.id, version: row.version, status: 'in_review' },
       data: {
         status: decision === 'approved' ? 'approved' : 'changes_requested',
         reviewedBy: actorId,
@@ -153,11 +163,24 @@ export class ReportsService {
     return this.toView(updated as never, []);
   }
 
+  public async exportReport(actorId: string, engagementId: string, reportId: string, format: string): Promise<ReportArtifactView> {
+    await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
+    if (format !== 'json' && format !== 'markdown') throw new ProjectApiError(400, 'format must be json or markdown.');
+    const row = await this.findOwned(engagementId, reportId);
+    return this.artifact(this.toView(row, []), format);
+  }
+
+  private artifact(report: ReportView, format: 'json' | 'markdown'): ReportArtifactView {
+    const content = format === 'json' ? JSON.stringify({ reportId: report.id, engagementId: report.engagementId, version: report.version, title: report.title, body: report.body, approvedVersion: report.approvedVersion }, null, 2)
+      : `# ${report.title}\n\nReport ${report.id}, version ${report.version}\n\n${report.body.summary}\n\n${report.body.sections.map((s) => `## ${s.title}\n\n${s.content}`).join('\n\n')}\n`;
+    return { engagementId: report.engagementId, reportId: report.id, version: report.version, format, mediaType: format === 'json' ? 'application/json' : 'text/markdown', content, digest: createHash('sha256').update(content).digest('hex') };
+  }
+
   /** Export/delivery as separate audited records with truthful outcomes. */
   public async deliver(actorId: string, engagementId: string, reportId: string, input: unknown): Promise<ReportView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_EDIT);
     await assertEngagementOpen(this.db, engagementId);
-    const body = (input ?? {}) as { kind?: unknown; format?: unknown; requestId?: unknown };
+    const body = (input ?? {}) as { kind?: unknown; format?: unknown; requestId?: unknown; recipient?: unknown; receipt?: unknown; expectedVersion?: unknown };
     const kind = typeof body.kind === 'string' && ['export', 'delivery'].includes(body.kind) ? body.kind : '';
     const format = typeof body.format === 'string' && ['json', 'markdown'].includes(body.format) ? body.format : '';
     const requestId = typeof body.requestId === 'string' && body.requestId.trim().length > 0 ? body.requestId.trim() : '';
@@ -170,29 +193,21 @@ export class ReportsService {
       // recorded outcome — never a duplicate dispatch or a state re-check.
       return this.toView(row as never, [existing as never]);
     }
-    if (kind === 'delivery' && row.status !== 'approved') {
+    if (kind === 'delivery' && (row.status !== 'approved' || row.approvedVersion !== row.version)) {
       throw new ProjectApiError(409, `Delivery requires an approved report; the report is ${row.status}. An export is not a reviewed deliverable.`);
     }
-    let status: 'completed' | 'failed' = 'completed';
-    let detail: Record<string, unknown> | null = null;
-    if (this.exportEngagement !== undefined) {
-      try {
-        const result = await this.exportEngagement(actorId, engagementId, format);
-        status = result.ok ? 'completed' : 'failed';
-        detail = { format: result.format };
-      } catch (err) {
-        status = 'failed';
-        detail = { error: err instanceof Error ? err.message : 'export failed' };
-      }
-    } else {
-      status = 'failed';
-      detail = { error: 'The engagement export service is unavailable in this deployment.' };
-    }
+    const recipient = typeof body.recipient === 'string' ? body.recipient.trim() : '';
+    const receipt = typeof body.receipt === 'string' ? body.receipt.trim() : '';
+    if (kind === 'delivery' && (!recipient || !receipt)) throw new ProjectApiError(400, 'Manual delivery requires a recipient and an acknowledgement receipt; export alone is not delivery.');
+    if (kind === 'delivery' && body.expectedVersion !== row.approvedVersion) throw new ProjectApiError(409, 'Delivery must acknowledge the exact approved version.');
+    const artifact = this.artifact(this.toView(row, []), format as 'json' | 'markdown');
+    const status = 'completed';
+    const detail = { ...artifact, ...(kind === 'delivery' ? { channel: 'manual-acknowledgement', recipient, receipt, acknowledgedBy: actorId } : {}) };
     const delivery = await this.db.reportDelivery.create({
       data: { reportId: row.id, engagementId, kind, format, status, requestId, detail: detail as object },
     });
     if (kind === 'delivery' && status === 'completed' && row.status === 'approved') {
-      await this.db.reportRecord.update({ where: { id: row.id }, data: { status: 'delivered' } });
+      await this.db.reportRecord.update({ where: { id: row.id, version: row.version, approvedVersion: row.version, status: 'approved' }, data: { status: 'delivered' } });
     }
     await this.audit(engagementId, actorId, `report.${kind}`, 'report_delivery', delivery.id, `${format} ${status}`);
     const fresh = await this.findOwned(engagementId, reportId);
