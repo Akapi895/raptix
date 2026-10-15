@@ -51,6 +51,8 @@ import {
   type CampaignJobView,
   type CampaignVector,
   isC2View,
+isC2Listener,
+isC2Profile,
   isC2CommandView,
   isCampaignProviderCapabilities,
   isCampaignsView,
@@ -881,6 +883,26 @@ export function fetchC2Commands(engagementId: string): Promise<C2CommandView[]> 
 export function reconcileC2Command(engagementId: string, commandId: string): Promise<C2CommandView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/commands/${encodeURIComponent(commandId)}/reconcile`, isC2CommandView,
     { method: 'POST', body: {} })
+}
+
+/* W15: real provider management — listeners and lab profiles, per the provider contract. */
+
+export function configureC2Listener(engagementId: string, protocol: 'mtls' | 'http'): Promise<Record<string, unknown>> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/listeners`, (v): v is Record<string, unknown> =>
+    typeof v === 'object' && v !== null && isC2Listener((v as { listener?: unknown }).listener),
+  { method: 'POST', body: { protocol } })
+}
+
+export function configureC2Profile(engagementId: string, name: string): Promise<Record<string, unknown>> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/profiles`, (v): v is Record<string, unknown> =>
+    typeof v === 'object' && v !== null && isC2Profile((v as { profile?: unknown }).profile),
+  { method: 'POST', body: { name } })
+}
+
+export function stopC2Listener(engagementId: string, jobId: number): Promise<Record<string, unknown>> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/listeners/${encodeURIComponent(String(jobId))}`, (v): v is Record<string, unknown> =>
+    typeof v === 'object' && v !== null,
+  { method: 'DELETE' })
 }
 
 /* ───────────── Campaign drafts and provider jobs (integration ticket 12, D5 placement) ───────────── */
