@@ -1093,6 +1093,12 @@ export function fetchLibraryProposals(engagementId: string): Promise<{ engagemen
     typeof v === 'object' && v !== null && Array.isArray((v as { proposals?: unknown }).proposals) && (v as { source?: unknown }).source === 'db')
 }
 
+/** W18: detail read by proposal id — the only place canonicalCurrent is authoritative. */
+export function fetchLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}`, (v): v is LibraryProposalView =>
+    isLibraryProposalView(v) && (v as LibraryProposalView).engagementId === engagementId)
+}
+
 export function submitLibraryProposal(engagementId: string, input: { skillName: string; proposedBody: string; rationale?: string }): Promise<LibraryProposalView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals`, (v): v is LibraryProposalView =>
     isLibraryProposalView(v) && v.status === 'draft' && v.version === 1,

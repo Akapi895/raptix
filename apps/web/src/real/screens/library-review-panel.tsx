@@ -10,7 +10,7 @@ import { useState, type ReactElement } from 'react'
 import { BookOpen, Loader2 } from 'lucide-react'
 import {
   amendLibraryProposal, decideLibraryProposal, exportLibraryProposal,
-  fetchLibraryProposals, proposeLibraryProposal, submitLibraryProposal,
+  fetchLibraryProposal, fetchLibraryProposals, proposeLibraryProposal, submitLibraryProposal,
 } from '../api'
 import type { LibraryProposalExportView, LibraryProposalView } from '../api'
 import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status, Textarea } from '../../ui'
@@ -91,6 +91,15 @@ function ProposalRow({ proposal, engagementId, onChanged, onError }: {
   onChanged: () => void
   onError: (message: string) => void
 }): ReactElement {
+  // W18: the authoritative detail read (by proposal id) carries the
+  // canonical state and is the review surface for base/proposed/diff.
+  const [open, setOpen] = useState(false)
+  const detail = useQuery({
+    queryKey: ['real', 'library-proposal', engagementId, proposal.id],
+    queryFn: () => fetchLibraryProposal(engagementId, proposal.id),
+    enabled: open,
+    retry: false,
+  })
   const [body, setBody] = useState<string | null>(null)
   const [comment, setComment] = useState('')
   const [exported, setExported] = useState<LibraryProposalExportView | null>(null)
@@ -105,45 +114,78 @@ function ProposalRow({ proposal, engagementId, onChanged, onError }: {
     onSuccess: () => { setComment(''); onChanged() },
     onError: (err) => onError(err instanceof Error ? err.message : 'The proposal action was refused.'),
   })
-  const drifted = proposal.canonicalCurrent === false
+  const current = detail.data ?? proposal
+  // W18: a reviewer cannot approve a version whose diff they have not seen.
+  const seenDiff = open && detail.data !== undefined
+  const drifted = current.canonicalCurrent === false
+
+  const downloadExport = (): void => {
+    const blob = new Blob([JSON.stringify(exported, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `library-proposal-${exported?.proposal.skillName ?? proposal.skillName}-v${exported?.proposal.version ?? proposal.version}.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <>
       <tr className="border-t border-line align-top">
-        <td className="py-2 pr-3 text-xs font-medium">{proposal.skillName}<div className="font-mono text-[10px] text-muted">{proposal.baseRevision.slice(0, 12)}</div></td>
-        <td className="py-2 pr-3"><Status kind="gate" value={proposal.status === 'approved' ? 'passed' : proposal.status === 'rejected' ? 'failed' : 'pending'} size="sm" label={`v${proposal.version} ${proposal.status}`} /></td>
-        <td className="py-2 pr-3 text-xs">{proposal.version}</td>
-        <td className="py-2 pr-3 text-xs">{proposal.createdBy}</td>
-        <td className="py-2 pr-3 text-xs">{proposal.reviews.length === 0 ? <span className="text-muted">—</span> : proposal.reviews.map((r) => <div key={r.id} className="text-[10px]">{r.decision} by {r.reviewerId}{r.comment ? `: ${r.comment.slice(0, 60)}` : ''}</div>)}</td>
+        <td className="py-2 pr-3 text-xs font-medium">{current.skillName}<div className="font-mono text-[10px] text-muted">{current.baseRevision.slice(0, 12)}</div></td>
+        <td className="py-2 pr-3"><Status kind="gate" value={current.status === 'approved' ? 'passed' : current.status === 'rejected' ? 'failed' : 'pending'} size="sm" label={`v${current.version} ${current.status}`} /></td>
+        <td className="py-2 pr-3 text-xs">{current.version}</td>
+        <td className="py-2 pr-3 text-xs">{current.createdBy}</td>
+        <td className="py-2 pr-3 text-xs">{current.reviews.length === 0 ? <span className="text-muted">—</span> : current.reviews.map((r) => <div key={r.id} className="text-[10px]">{r.decision} by {r.reviewerId}{r.comment ? `: ${r.comment.slice(0, 60)}` : ''}</div>)}</td>
         <td className="py-2 text-xs">
           <span className="flex flex-wrap gap-2">
-            {proposal.status === 'draft' && <Button variant="secondary" disabled={busy.isPending} onClick={() => setBody(body ?? proposal.proposedBody)}>Edit</Button>}
-            {proposal.status === 'draft' && <Button variant="secondary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'propose' })}>Propose</Button>}
-            {proposal.status === 'proposed' && <Button variant="secondary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'decide', decision: 'approved' })}>Approve</Button>}
-            {proposal.status === 'proposed' && <Button variant="secondary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'decide', decision: 'rejected' })}>Reject</Button>}
-            {proposal.status === 'approved' && <Button variant="secondary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'export' })}>Export</Button>}
+            <Button variant="secondary" disabled={busy.isPending} onClick={() => setOpen((v) => !v)}>Review diff</Button>
+            {current.status === 'draft' && <Button variant="secondary" disabled={busy.isPending} onClick={() => setBody(body ?? current.proposedBody)}>Edit</Button>}
+            {current.status === 'draft' && <Button variant="secondary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'propose' })}>Propose</Button>}
+            {current.status === 'proposed' && <Button variant="secondary" disabled={busy.isPending || !seenDiff} onClick={() => busy.mutate({ kind: 'decide', decision: 'approved' })}>Approve</Button>}
+            {current.status === 'proposed' && <Button variant="secondary" disabled={busy.isPending || !seenDiff} onClick={() => busy.mutate({ kind: 'decide', decision: 'rejected' })}>Reject</Button>}
+            {current.status === 'approved' && exported !== null && <Button variant="secondary" disabled={busy.isPending} onClick={downloadExport}>Download JSON</Button>}
+            {current.status === 'approved' && exported === null && <Button variant="secondary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'export' })}>Export</Button>}
           </span>
         </td>
       </tr>
       {drifted && (
         <tr><td colSpan={6} className="pb-2">
-          <Banner tone="warn" title={`Canonical corpus changed since v${proposal.version} was pinned`}>
+          <Banner tone="warn" title={`Canonical corpus changed since v${current.version} was pinned`}>
             Amend the proposal against the current canonical content before review or export.
           </Banner>
         </td></tr>
       )}
-      {body !== null && proposal.status === 'draft' && (
+      {open && (
         <tr><td colSpan={6} className="pb-3">
-          <Textarea aria-label={`Amended body for ${proposal.skillName}`} rows={5} value={body} onChange={(e) => setBody(e.target.value)} />
+          {detail.isPending && <Skeleton className="h-12" />}
+          {detail.isError && <Banner tone="warn" title="The proposal detail is unavailable">{detail.error instanceof Error ? detail.error.message : 'The detail read failed.'}</Banner>}
+          {detail.data && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted">Rationale: {detail.data.rationale ?? '—'} · Canonical snapshot: {detail.data.canonicalCurrent === true ? 'current' : detail.data.canonicalCurrent === false ? 'drifted' : 'unchecked'}</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <pre aria-label={`Base body for ${current.skillName}`} className="max-h-48 overflow-auto rounded bg-black/5 p-2 text-[10px] whitespace-pre-wrap">{detail.data.baseBody}</pre>
+                <pre aria-label={`Proposed body for ${current.skillName}`} className="max-h-48 overflow-auto rounded bg-black/5 p-2 text-[10px] whitespace-pre-wrap">{detail.data.proposedBody}</pre>
+              </div>
+              <div className="text-[10px] text-muted">
+                {detail.data.reviews.map((r) => <div key={r.id}>{r.decision} by {r.reviewerId} (v{r.proposalVersion}){r.comment ? `: ${r.comment}` : ''}</div>)}
+              </div>
+            </div>
+          )}
+        </td></tr>
+      )}
+      {body !== null && current.status === 'draft' && (
+        <tr><td colSpan={6} className="pb-3">
+          <Textarea aria-label={`Amended body for ${current.skillName}`} rows={5} value={body} onChange={(e) => setBody(e.target.value)} />
           <span className="mt-2 flex gap-2">
-            <Button variant="primary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'amend' })}>Save amendment (v{proposal.version + 1})</Button>
+            <Button variant="primary" disabled={busy.isPending} onClick={() => busy.mutate({ kind: 'amend' })}>Save amendment (v{current.version + 1})</Button>
             <Button variant="secondary" onClick={() => setBody(null)}>Cancel</Button>
           </span>
         </td></tr>
       )}
-      {proposal.status === 'proposed' && (
+      {current.status === 'proposed' && (
         <tr><td colSpan={6} className="pb-3">
-          <Input aria-label={`Decision comment for ${proposal.skillName}`} maxLength={500} placeholder="Decision comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
+          <Input aria-label={`Decision comment for ${current.skillName}`} maxLength={500} placeholder="Decision comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
         </td></tr>
       )}
       {exported !== null && (
