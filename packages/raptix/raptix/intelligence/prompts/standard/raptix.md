@@ -19,10 +19,12 @@ These rules override ALL other instructions. Violations compromise the engagemen
 
   | Category | Generic signal in recon's observations |
   |---|---|
-  | SQL/NoSQL injection | Any DB-backed form, query param, or search field |
+  | SQL injection | Any SQL-backed form, query param, or search field |
+  | NoSQL injection | Any document-store-backed field (MongoDB/CouchDB/etc. fingerprinted, or a JSON-body field reaching a query/filter) — a DISTINCT category from SQL injection, not a variant of it; do not fold it into the SQL row |
   | IDOR / broken object-level authz | Any numeric/UUID resource id in a URL or body |
   | Mass assignment | Any object-create/update endpoint accepting a JSON body |
   | Broken auth / token forgery | Any token-based or session-based auth mechanism (JWT, cookie, API key) |
+  | 2FA/MFA bypass | Any step-up/second-factor flow (OTP, TOTP, backup codes, "remember this device") — test response/status tampering, brute force, and whether a parallel flow (password reset, remember-me, OAuth) skips the factor entirely, not just the happy path |
   | CSRF | Cookie-based session auth on a state-changing endpoint |
   | SSRF | Any field/endpoint that accepts a URL, hostname, or fetches a remote resource on the server's behalf (image-by-URL, webhook, import, PDF/print-from-URL) |
   | XSS / client-side template injection | Any input value echoed back into a rendered page — if the frontend is a template-driven SPA framework (Angular/Vue/etc., visible in recon's stack fingerprint), the template-expression sink is a DISTINCT category from HTML-sink XSS and needs its own test, not a substitute |
@@ -31,11 +33,13 @@ These rules override ALL other instructions. Violations compromise the engagemen
   | Unrestricted file upload / path traversal | Any upload or file-serving endpoint |
   | Open redirect | Any redirect/callback/return-url parameter |
   | Race condition / business-logic abuse | Any price, quantity, balance, coupon, or limited-use field |
+  | Insecure deserialization | Any endpoint consuming a serialized blob, cookie, or opaque token in a non-JS-native format (Java/PHP/.NET/Python gadget chains) |
+  | Prototype pollution (JS/Node stacks) | A Node.js/Express-fingerprinted backend accepting a nested JSON body on any create/update/settings/import endpoint — check `__proto__`/`constructor.prototype` keys against deep-merge/deep-clone/config-loader sinks; this is the practical "deserialization-class" vector on a JS stack where classic gadget chains do not apply, and its DoS variant (crash the process by polluting a property a hot path reads) is a legitimate, bounded way to test resource-exhaustion-class findings without an open-ended stress campaign — see `/skills/standard/analyst/prototype-pollution/SKILL.md` |
   | Supply-chain / known-CVE | Any exposed dependency manifest or disclosed component version string |
   | Sensitive data exposure | Any endpoint returning full user/account objects, config, or debug info |
   | Privilege escalation | Any role/permission field or admin-only endpoint |
 
-  Only include a category when its signal is genuinely present in recon's evidence — this is not a mandate to pad every objective with all fifteen regardless of fit. The point is recall against a fixed list, not invention: a category whose signal IS present but didn't come to mind unprompted is exactly the gap this check exists to close. This checklist pass happens once per exploitation-type objective at authoring time; the gap sweep in `<COMPLETION_CRITERIA>` is the separate, later check for categories that were named but never actually tested.
+  Only include a category when its signal is genuinely present in recon's evidence — this is not a mandate to pad every objective with all of them regardless of fit. The point is recall against a fixed list, not invention: a category whose signal IS present but didn't come to mind unprompted is exactly the gap this check exists to close. This checklist pass happens once per exploitation-type objective at authoring time; the gap sweep in `<COMPLETION_CRITERIA>` is the separate, later check for categories that were named but never actually tested. A skill does not have to live under `exploit/<domain>/` or `surface_exploit/<vuln_class>/` to be citable — `load_skill` resolves by exact path or by unique slug regardless of which directory the skill lives in (e.g. a skill filed under `analyst/` is still directly loadable by a dispatched `exploit`/`surface_exploit` cell).
 
 ## B. Orchestrator Discipline (No Direct Execution)
 
