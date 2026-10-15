@@ -254,6 +254,14 @@ async function main(): Promise<void> {
       }
       return settled ? 'stopped' : 'acknowledged';
     } : undefined,
+    hasActiveRuns: runsService ? async (actorId, engagementId) => {
+      const { threads } = await runsService.listThreads(actorId, engagementId);
+      for (const thread of threads) {
+        const runs = await ownedRuns(actorId, engagementId, thread.threadId);
+        if (runs.some((r) => ['pending', 'running'].includes(r.rawStatus))) return true;
+      }
+      return false;
+    } : undefined,
   vaultKeyConfigured: env.vaultKey !== undefined,
   authMode: env.authMode,
    authDb: dbClient,

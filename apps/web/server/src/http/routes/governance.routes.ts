@@ -4,7 +4,7 @@ import { runProjectsHandler } from './projects.routes.js';
 import type { GovernanceService } from '../../services/governance-service.js';
 
 /** Ticket 09 routes: business plans, preflight, operation bindings and emergency stops. */
-export function registerGovernanceRoutes(app: FastifyInstance, governance: GovernanceService, identity: LocalIdentity, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>): void {
+export function registerGovernanceRoutes(app: FastifyInstance, governance: GovernanceService, identity: LocalIdentity, cancelRun?: (threadId: string, runId: string | null, actorId: string, engagementId: string) => Promise<string>, hasActiveRuns?: (actorId: string, engagementId: string) => Promise<boolean>): void {
   app.get('/api/engagements/:id/plans', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };
@@ -54,7 +54,7 @@ export function registerGovernanceRoutes(app: FastifyInstance, governance: Gover
   }));
   app.post('/api/engagements/:id/estops', (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id } = request.params as { id: string };
-    return governance.emergencyStop(identity.id, id, request.body, cancelRun);
+    return governance.emergencyStop(identity.id, id, request.body, cancelRun, hasActiveRuns);
   }));
 
   // W10: explicit resolution clears the work blocker; it never resumes runs.
