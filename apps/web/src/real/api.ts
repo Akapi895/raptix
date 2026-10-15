@@ -485,10 +485,10 @@ export function importAssets(engagementId: string, identifiers: string[], kind: 
   { method: 'POST', body: { identifiers, kind } })
 }
 
-export function classifyAsset(engagementId: string, assetId: string, classification: 'in_scope' | 'out_of_scope' | 'pending'): Promise<unknown> {
+export function classifyAsset(engagementId: string, assetId: string, classification: 'in_scope' | 'out_of_scope' | 'pending', expectedVersion?: number): Promise<unknown> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/assets/inventory/${encodeURIComponent(assetId)}`, (v): v is { ok: true } =>
     typeof v === 'object' && v !== null && (v as { ok?: unknown }).ok === true,
-  { method: 'PATCH', body: { classification } })
+  { method: 'PATCH', body: { classification, ...(expectedVersion === undefined ? {} : { expectedVersion }) } })
 }
 
 /* ───────────── Governed plans/preflight/estop (integration ticket 09) ───────────── */
@@ -540,10 +540,10 @@ export function proposePlan(engagementId: string, planId: string): Promise<PlanV
   { method: 'POST' })
 }
 
-export function decidePlan(engagementId: string, planId: string, decision: 'approved' | 'rejected'): Promise<PlanView> {
+export function decidePlan(engagementId: string, planId: string, decision: 'approved' | 'rejected', expectedVersion: number): Promise<PlanView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plans/${encodeURIComponent(planId)}/decision`, (v): v is PlanView =>
     typeof v === 'object' && v !== null && (v as PlanView).status === decision,
-  { method: 'POST', body: { decision } })
+  { method: 'POST', body: { decision, expectedVersion } })
 }
 
 /** Revises a reviewed plan: the reviewed version stays untouched; a new draft at the next version carries the body. */
@@ -605,16 +605,42 @@ export interface EmergencyStopView {
   scope: 'operation' | 'project' | 'workspace'
   targetId: string | null
   requestedBy: string
-  outcome: 'requested' | 'acknowledged' | 'stopped' | 'failed' | 'unknown'
+  outcome: 'requested' | 'acknowledged' | 'stopped' | 'failed' | 'unknown' | 'resolved'
   reason: string
   createdAt: string
   updatedAt: string
 }
 
+/** Outcomes that block work start until an explicit resolution (server contract). */
+export const ACTIVE_STOP_OUTCOMES = ['requested', 'acknowledged', 'stopped', 'failed', 'unknown'] as const
+
 export function requestEmergencyStop(engagementId: string, input: { scope: 'operation' | 'project' | 'workspace'; reason: string; threadId?: string }): Promise<EmergencyStopView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/estops`, (v): v is EmergencyStopView =>
     typeof v === 'object' && v !== null && typeof (v as EmergencyStopView).id === 'string' && typeof (v as EmergencyStopView).outcome === 'string',
   { method: 'POST', body: input })
+}
+
+export interface EmergencyStopsView {
+  engagementId: string
+  stops: EmergencyStopView[]
+  source: 'db'
+}
+
+function isEmergencyStopsView(v: unknown): v is EmergencyStopsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as EmergencyStopsView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.stops) && doc.source === 'db'
+}
+
+export function fetchEmergencyStops(engagementId: string): Promise<EmergencyStopsView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/estops`, owned(engagementId, isEmergencyStopsView))
+}
+
+/** W10: explicit resolution records why work may restart; it never resumes anything. */
+export function resolveEmergencyStop(engagementId: string, stopId: string, reason: string): Promise<EmergencyStopView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/estops/${encodeURIComponent(stopId)}/resolve`, (v): v is EmergencyStopView =>
+    typeof v === 'object' && v !== null && (v as EmergencyStopView).outcome === 'resolved',
+  { method: 'POST', body: { reason } })
 }
 
 /* ───────────── Curated findings/evidence (integration ticket 10) ───────────── */
