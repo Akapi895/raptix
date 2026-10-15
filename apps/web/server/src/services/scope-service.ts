@@ -351,7 +351,7 @@ function normalizeDiff(raw: unknown): ScopeDiff {
 }
 
 /** W07: a persisted window must name a real IANA zone (or UTC). */
-function isKnownTimeZone(tz: string): boolean {
+export function isKnownTimeZone(tz: string): boolean {
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: tz });
     return true;
@@ -361,7 +361,7 @@ function isKnownTimeZone(tz: string): boolean {
 }
 
 /** W07: accepts only absolute ISO-8601 timestamps (Z or ±HH:MM/±HHMM offset). */
-const OFFSET_SUFFIX = /(?:Z|[+-]\d{2}:?\d{2})$/i;
+export const OFFSET_SUFFIX = /(?:Z|[+-]\d{2}:?\d{2})$/i;
 
 function normalizeRoe(raw: unknown): RoeWindows {
   const body = (raw ?? {}) as { windows?: unknown; emergencyContacts?: unknown; restrictions?: unknown };
