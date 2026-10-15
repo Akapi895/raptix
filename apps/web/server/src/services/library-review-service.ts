@@ -19,6 +19,11 @@ import type { LibraryService } from './library-service.js';
 
 const MIN_SUBMIT: MemberRole = 'operator';
 const MIN_DECIDE: MemberRole = 'reviewer';
+const MAX_BODY_BYTES = 256 * 1024;
+
+const bodyTooLarge = (): ProjectApiError => new ProjectApiError(400, 'proposedBody exceeds the 256 KiB bound.');
+
+const byteLength = (value: string): number => Buffer.byteLength(value, 'utf8');
 
 export interface LibraryProposalReviewView {
   readonly id: string;
@@ -96,14 +101,14 @@ export class LibraryReviewService {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
     const rows = await this.db.libraryReviewProposal.findMany({ where: { engagementId }, orderBy: { updatedAt: 'desc' } });
     const proposals: LibraryProposalView[] = [];
-    for (const row of rows) proposals.push(this.toView(row as never as ProposalRow, await this.reviewsOf(row.id)));
+    for (const row of rows) proposals.push(this.toView(row as never as ProposalRow, await this.reviewsOf(row.id, (row as { version: number }).version)));
     return { engagementId, proposals, source: 'db' };
   }
 
   public async get(actorId: string, engagementId: string, proposalId: string): Promise<LibraryProposalView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
     const row = await this.findOwned(engagementId, proposalId);
-    return this.toView(row, await this.reviewsOf(row.id), await this.canonicalCurrent(row));
+    return this.toView(row, await this.reviewsOf(proposalId, row.version), await this.canonicalCurrent(row));
   }
 
   /** Submits a body-replacement proposal pinned to the CURRENT canonical snapshot. */
@@ -115,29 +120,42 @@ export class LibraryReviewService {
     const proposedBody = typeof body.proposedBody === 'string' ? body.proposedBody : '';
     if (skillName.length === 0) throw new ProjectApiError(400, 'skillName (the canonical corpus skill) is required.');
     if (proposedBody.trim().length === 0) throw new ProjectApiError(400, 'proposedBody (the replacement SKILL.md body) is required.');
-    if (proposedBody.length > 256 * 1024) throw new ProjectApiError(400, 'proposedBody exceeds the 256 KiB bound.');
+    if (byteLength(proposedBody) > MAX_BODY_BYTES) throw bodyTooLarge();
     const canonical = await this.canonical(skillName);
     const existing = await this.db.libraryReviewProposal.findFirst({ where: { engagementId, skillName, status: 'proposed' } });
     if (existing !== null) throw new ProjectApiError(409, `A proposal for ${skillName} is already in independent review.`);
-    const row = await this.db.libraryReviewProposal.create({
-      data: {
-        engagementId,
-        skillName: canonical.name,
-        skillPath: canonical.path ?? '',
-        baseRevision: canonical.revision,
-        baseBody: canonical.body,
-        proposedBody,
-        rationale: typeof body.rationale === 'string' && body.rationale.trim().length > 0 ? body.rationale.trim() : null,
-        status: 'draft',
-        version: 1,
-        createdBy: actorId,
-      },
-    });
+    let row;
+    try {
+      row = await this.db.libraryReviewProposal.create({
+        data: {
+          engagementId,
+          skillName: canonical.name,
+          skillPath: canonical.path ?? '',
+          baseRevision: canonical.revision,
+          baseBody: canonical.body,
+          proposedBody,
+          rationale: typeof body.rationale === 'string' && body.rationale.trim().length > 0 ? body.rationale.trim() : null,
+          status: 'draft',
+          version: 1,
+          createdBy: actorId,
+        },
+      });
+    } catch (error) {
+      // W17: the partial DB index is the race-proof authority for one
+      // in-review proposal per (engagement, skill); find-before-create only
+      // gives the friendly fast path.
+      if ((error as { code?: string }).code === 'P2002') throw new ProjectApiError(409, `A proposal for ${skillName} is already in independent review.`);
+      throw error;
+    }
     await this.audit(engagementId, actorId, 'library.proposal_submitted', 'library_proposal', row.id, `${canonical.name} @ ${canonical.revision.slice(0, 12)}`);
     return this.toView(row as never as ProposalRow, []);
   }
 
-  /** Author-only amendment: increments the version, resets approval and re-pins the canonical snapshot. */
+  /**
+   * Author-only amendment: increments the version and resets approval. W17
+   * (ADR-0070): the pinned canonical snapshot is never re-pinned here — a
+   * drifted corpus refuses the amendment and demands a fresh proposal.
+   */
   public async amend(actorId: string, engagementId: string, proposalId: string, input: unknown): Promise<LibraryProposalView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_SUBMIT);
     await assertEngagementOpen(this.db, engagementId);
@@ -145,11 +163,13 @@ export class LibraryReviewService {
     const proposedBody = typeof body.proposedBody === 'string' ? body.proposedBody : '';
     const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : null;
     if (expectedVersion === null) throw new ProjectApiError(400, 'expectedVersion is required for concurrent-edit safety.');
+    if (!Number.isSafeInteger(expectedVersion) || expectedVersion <= 0) throw new ProjectApiError(400, 'expectedVersion must be a positive integer.');
     if (proposedBody.trim().length === 0) throw new ProjectApiError(400, 'proposedBody (the replacement SKILL.md body) is required.');
+    if (byteLength(proposedBody) > MAX_BODY_BYTES) throw bodyTooLarge();
     const row = await this.findOwned(engagementId, proposalId);
     if (row.createdBy !== actorId) throw new ProjectApiError(403, 'Only the original author can amend a library proposal.');
     if (row.version !== expectedVersion) throw new ProjectApiError(409, `Concurrent edit: the proposal moved to version ${row.version} while you edited version ${expectedVersion}.`);
-    const canonical = await this.canonical(row.skillName);
+    await this.assertCanonicalCurrent(row);
     const updated = await this.db.libraryReviewProposal.updateMany({
       where: { id: row.id, version: row.version },
       data: {
@@ -157,23 +177,12 @@ export class LibraryReviewService {
         ...(typeof body.rationale === 'string' && body.rationale.trim().length > 0 ? { rationale: body.rationale.trim() } : {}),
         version: row.version + 1,
         status: 'draft',
-        baseRevision: canonical.revision,
-        baseBody: canonical.body,
-        skillPath: canonical.path ?? row.skillPath,
       },
     });
     if (updated.count !== 1) throw new ProjectApiError(409, 'The proposal changed concurrently; reload and retry.');
     await this.audit(engagementId, actorId, 'library.proposal_amended', 'library_proposal', row.id, `v${row.version} -> v${row.version + 1}`);
-    return this.toView({
-      ...row,
-      proposedBody,
-      ...(typeof body.rationale === 'string' && body.rationale.trim().length > 0 ? { rationale: body.rationale.trim() } : {}),
-      version: row.version + 1,
-      status: 'draft',
-      baseRevision: canonical.revision,
-      baseBody: canonical.body,
-      skillPath: canonical.path ?? row.skillPath,
-    }, []);
+    const fresh = await this.findOwned(engagementId, proposalId);
+    return this.toView(fresh, await this.reviewsOf(proposalId, fresh.version));
   }
 
   /** Moves a draft into independent review against the pinned canonical snapshot. */
@@ -186,7 +195,8 @@ export class LibraryReviewService {
     const updated = await this.db.libraryReviewProposal.updateMany({ where: { id: row.id, version: row.version, status: 'draft' }, data: { status: 'proposed' } });
     if (updated.count !== 1) throw new ProjectApiError(409, 'The proposal changed concurrently; reload and retry.');
     await this.audit(engagementId, actorId, 'library.proposal_proposed', 'library_proposal', row.id, `v${row.version} into review`);
-    return this.toView({ ...row, status: 'proposed' }, await this.reviewsOf(row.id));
+    const fresh = await this.findOwned(engagementId, proposalId);
+    return this.toView(fresh, await this.reviewsOf(proposalId, fresh.version));
   }
 
   /** Independent reviewer decision, atomically pinned to the proposal version. */
@@ -197,6 +207,7 @@ export class LibraryReviewService {
     if (decision !== 'approved' && decision !== 'rejected') throw new ProjectApiError(400, "decision must be 'approved' or 'rejected'.");
     const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : null;
     if (expectedVersion === null) throw new ProjectApiError(400, 'expectedVersion is required so the decision pins one proposal version.');
+    if (!Number.isSafeInteger(expectedVersion) || expectedVersion <= 0) throw new ProjectApiError(400, 'expectedVersion must be a positive integer.');
     const row = await this.findOwned(engagementId, proposalId);
     if (row.status !== 'proposed') throw new ProjectApiError(409, `Proposal is ${row.status}, not in review.`);
     requireIndependentActor(row.createdBy, actorId, 'The library proposal decision');
@@ -212,7 +223,8 @@ export class LibraryReviewService {
       if (updated.count !== 1) throw new ProjectApiError(409, 'The proposal changed concurrently; the decision was not recorded.');
     });
     await this.audit(engagementId, actorId, `library.proposal_${decision}`, 'library_proposal', row.id, `v${row.version} by ${actorId}`);
-    return this.toView({ ...row, status: decision }, await this.reviewsOf(row.id));
+    const fresh = await this.findOwned(engagementId, proposalId);
+    return this.toView(fresh, await this.reviewsOf(proposalId, fresh.version));
   }
 
   /** Reviewed JSON export for the existing git publication workflow (never an automatic publication). */
@@ -221,7 +233,7 @@ export class LibraryReviewService {
     const row = await this.findOwned(engagementId, proposalId);
     if (row.status !== 'approved') throw new ProjectApiError(409, 'Only an approved proposal can be exported for the git publication workflow.');
     await this.assertCanonicalCurrent(row);
-    const reviews = await this.reviewsOf(row.id);
+    const reviews = await this.reviewsOf(proposalId, row.version);
     return {
       kind: 'library-body-replacement-proposal',
       proposal: { id: row.id, engagementId: row.engagementId, skillName: row.skillName, skillPath: row.skillPath, baseRevision: row.baseRevision, status: row.status, version: row.version, createdBy: row.createdBy },
@@ -247,8 +259,10 @@ export class LibraryReviewService {
     try {
       const canonical = await this.canonical(row.skillName);
       return canonical.revision === row.baseRevision;
-    } catch {
-      return false;
+    } catch (error) {
+      // W17: a canonical source outage is unavailable, never "drifted".
+      if (error instanceof ProjectApiError && error.statusCode === 404) return false;
+      throw error;
     }
   }
 
@@ -264,8 +278,10 @@ export class LibraryReviewService {
     return row as never as ProposalRow;
   }
 
-  private async reviewsOf(proposalId: string): Promise<ReviewRow[]> {
-    return (await this.db.libraryProposalReview.findMany({ where: { proposalId }, orderBy: { createdAt: 'desc' } })) as never as ReviewRow[];
+  /** Reviews are version-pinned: W17 reads never expose prior-version history. */
+  private async reviewsOf(proposalId: string, version?: number): Promise<ReviewRow[]> {
+    const rows = (await this.db.libraryProposalReview.findMany({ where: { proposalId }, orderBy: { createdAt: 'desc' } })) as never as ReviewRow[];
+    return version === undefined ? rows : rows.filter((r) => r.proposalVersion === version);
   }
 
   private toReviewView(r: ReviewRow): LibraryProposalReviewView {
