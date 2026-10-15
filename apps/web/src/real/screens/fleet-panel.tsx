@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Ban, Bot, Loader2 } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { fetchFleet, cancelRun } from '../api'
+import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status } from '../../ui'
 import { utcMinuteOr } from '../format'
 
@@ -18,6 +19,7 @@ const STATE_LABEL: Record<string, string> = { running: 'running', ended: 'ended'
 
 export function RealFleetPanel({ engagementId }: { engagementId: string }): ReactElement {
   const client = useQueryClient()
+  const route = useRoute()
   const fleet = useQuery({
     queryKey: ['real', 'fleet', engagementId],
     queryFn: () => fetchFleet(engagementId),
@@ -37,6 +39,43 @@ export function RealFleetPanel({ engagementId }: { engagementId: string }): Reac
     </Empty>
   }
   const view = fleet.data
+
+  // W22: the agent and branch detail routes consume the resource id from the
+  // URL. Unknown or foreign ids render an explicit not-found, never the fleet.
+  if (route.page === 'agent' && route.id) {
+    const agent = view.agents.find((a) => a.graphId === route.id)
+    return agent === undefined ? (
+      <Empty icon={Bot} title="Assistant graph not found" action={<Button onClick={() => go('agents', { engagementId })}>Open the fleet</Button>}>
+        No assistant graph <span className="font-mono">{route.id}</span> exists in this deployment catalog.
+      </Empty>
+    ) : (
+      <Card>
+        <CardHeader title={`Assistant graph ${agent.graphId}`} sub={`Source: ${view.sources.agents} — catalog identity only; no endpoint health or heartbeat exists at this layer`} />
+        <dl className="grid gap-2 p-4 text-sm sm:grid-cols-2">
+          <dt className="text-muted">Graph id</dt><dd className="font-mono text-xs">{agent.graphId}</dd>
+        </dl>
+      </Card>
+    )
+  }
+  if (route.page === 'ai-branch' && route.id) {
+    const branch = view.branches.find((b) => b.key === route.id || `${b.threadId}::${b.key}` === route.id)
+    return branch === undefined ? (
+      <Empty icon={Bot} title="Branch not found" action={<Button onClick={() => go('agents', { engagementId })}>Open the fleet</Button>}>
+        No subagent branch <span className="font-mono">{route.id}</span> is recorded in this engagement's checkpoint transcripts.
+      </Empty>
+    ) : (
+      <Card>
+        <CardHeader title={`Branch ${branch.key}`} sub={`Thread ${branch.threadId} — observed start/end pairing from durable checkpoint transcripts`} />
+        <dl className="grid gap-2 p-4 text-sm sm:grid-cols-2">
+          <dt className="text-muted">Agent</dt><dd className="font-mono text-xs">{branch.agent}</dd>
+          <dt className="text-muted">State</dt><dd><Status kind="gate" value={branch.state === 'ended' ? 'passed' : 'pending'} size="sm" label={STATE_LABEL[branch.state] ?? branch.state} /></dd>
+          <dt className="text-muted">Outcome</dt><dd className="text-xs">{branch.outcome ?? '—'}</dd>
+          <dt className="text-muted">Started</dt><dd className="font-mono text-xs">{utcMinuteOr(branch.startedAt)}</dd>
+          <dt className="text-muted">Ended</dt><dd className="font-mono text-xs">{utcMinuteOr(branch.endedAt)}</dd>
+        </dl>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-4">

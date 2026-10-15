@@ -56,3 +56,28 @@ describe('RealOperationsPanel', () => {
     expect(await screen.findByRole('button', { name: 'Open AI workspace' })).toBeTruthy()
   })
 })
+
+describe('RealOperationsPanel (W22 operation detail route)', () => {
+  it('renders only the URL-selected thread as the operation detail', async () => {
+    stubApi()
+    window.location.hash = '#/operation/th-exec?engagement=eng-1'
+    const { resetNavStores } = await import('../../router/navigate')
+    resetNavStores()
+    renderPanel()
+    expect(await screen.findByText(/Operation thread th-exec/)).toBeTruthy()
+    expect(await screen.findByText('run-9')).toBeTruthy()
+    expect(screen.queryByText(/Execution threads/)).toBeNull()
+    expect(screen.queryByText('th-plan')).toBeNull()
+  })
+
+  it('renders an explicit not-found for a foreign or unknown operation id', async () => {
+    stubApi()
+    window.location.hash = '#/operation/th-foreign?engagement=eng-1'
+    const { resetNavStores } = await import('../../router/navigate')
+    resetNavStores()
+    renderPanel()
+    expect(await screen.findByText('Operation thread not found')).toBeTruthy()
+    expect(screen.getByText(/th-foreign/)).toBeTruthy()
+    expect(screen.queryByText('th-exec')).toBeNull()
+  })
+})

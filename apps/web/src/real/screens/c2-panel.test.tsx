@@ -85,3 +85,61 @@ describe('RealC2Panel infrastructure (W15)', () => {
     await waitFor(() => expect(configureC2Profile).toHaveBeenCalledWith('eng-1', 'lab-prof'))
   })
 })
+
+const LIVE_SESSION = {
+  id: 'sess-1', name: 's1', hostname: 'host-9', username: 'svc', os: 'linux', arch: 'amd64',
+  transport: 'mtls', remoteAddress: '10.0.0.9:443', activeC2: 'mtls', version: '1.5', pid: 42,
+  listenerPort: 8888, lastCheckin: 1_700_000_000, isDead: false,
+}
+const OTHER_SESSION = { ...LIVE_SESSION, id: 'sess-other', hostname: 'host-2' }
+const SESSION_COMMAND = {
+  id: 'cmd-1', engagementId: 'eng-1', sessionId: 'sess-1', requestId: 'req-1', path: '/usr/bin/printf',
+  args: ['native-output'], status: 'succeeded' as const, exitCode: 0, pid: 7, stdout: 'x', stderr: '',
+  stdoutTruncated: false, stderrTruncated: false, createdAt: '2026-10-14T09:00:00.000Z',
+}
+
+async function renderDetail(hash: string): Promise<void> {
+  const { RealC2Panel } = await import('./c2-panel')
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const wrapper = ({ children }: { children: ReactNode }): ReactElement => <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  window.location.hash = hash
+  const { resetNavStores } = await import('../../router/navigate')
+  resetNavStores()
+  render(<RealC2Panel engagementId="eng-1" />, { wrapper })
+}
+
+describe('RealC2Panel detail routes (W22)', () => {
+  beforeEach(() => {
+    fetchC2Sessions.mockResolvedValue({ ...SESSIONS, sessions: [LIVE_SESSION, OTHER_SESSION] })
+    fetchC2Commands.mockResolvedValue([SESSION_COMMAND])
+  })
+
+  it('renders a single owned session with its own command audit', async () => {
+    await renderDetail('#/c2-session/sess-1?engagement=eng-1')
+    expect(await screen.findByText(/C2 session sess-1/)).toBeInTheDocument()
+    expect(screen.getByText('host-9')).toBeInTheDocument()
+    expect(screen.getByText(/native-output/)).toBeInTheDocument()
+    expect(screen.queryByText('sess-other')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Listeners & profiles/i)).not.toBeInTheDocument()
+  })
+
+  it('renders an explicit not-found for a session id outside the engagement namespace', async () => {
+    await renderDetail('#/c2-session/sess-foreign?engagement=eng-1')
+    expect(await screen.findByText('Session not found')).toBeInTheDocument()
+    expect(screen.getByText(/The provider reports no session/)).toBeInTheDocument()
+    expect(screen.queryByText('host-9')).not.toBeInTheDocument()
+  })
+
+  it('lists the sessions observed on a transport channel without reusing the id as a session', async () => {
+    await renderDetail('#/c2-channel/mtls?engagement=eng-1')
+    expect(await screen.findByText(/C2 channel mtls/)).toBeInTheDocument()
+    expect(screen.getByText('sess-1')).toBeInTheDocument()
+    expect(screen.getByText('sess-other')).toBeInTheDocument()
+    expect(screen.queryByText(/native-output/)).not.toBeInTheDocument()
+  })
+
+  it('renders an honest empty state for a channel with no observed sessions', async () => {
+    await renderDetail('#/c2-channel/smb?engagement=eng-1')
+    expect(await screen.findByText('No sessions on this channel')).toBeInTheDocument()
+  })
+})

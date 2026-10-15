@@ -18,6 +18,11 @@ export function setKnownPages(pages: ReadonlySet<string>) { knownPages = pages }
 /** Whether a page key is a registered route; false before the registry loads. */
 export function isKnownPage(page: string) { return knownPages?.has(page) ?? false }
 
+/** Percent-decodes a path segment; malformed encodings keep the raw value instead of throwing. */
+function safeDecode(value: string): string {
+  try { return decodeURIComponent(value) } catch { return value }
+}
+
 /** Parses a legacy `#/page/id?tab=` hash into a Route (empty hash is the login route). */
 export function parseHash(hash = window.location.hash): Route {
   const h = hash.replace(/^#\/?/, '')
@@ -26,7 +31,7 @@ export function parseHash(hash = window.location.hash): Route {
   const [page, id] = path.split('/')
   const tab = qs ? new URLSearchParams(qs).get('tab') || undefined : undefined
   const engagementId = qs ? new URLSearchParams(qs).get('engagement') || undefined : undefined
-  return { page: page || 'login', id: id ? decodeURIComponent(id) : undefined, tab, ...(engagementId ? { engagementId } : {}) }
+  return { page: page || 'login', id: id ? safeDecode(id) : undefined, tab, ...(engagementId ? { engagementId } : {}) }
 }
 
 /** Serializes a Route back into the legacy hash format. */
@@ -46,8 +51,8 @@ export function toHref(r: Route): string {
 export function parseLocation(loc: { pathname: string; search: string }): Route {
   const seg = loc.pathname.split('/').filter(Boolean)
   return {
-    page: seg[0] ? decodeURIComponent(seg[0]) : 'login',
-    id: seg[1] ? decodeURIComponent(seg[1]) : undefined,
+    page: seg[0] ? safeDecode(seg[0]) : 'login',
+    id: seg[1] ? safeDecode(seg[1]) : undefined,
     tab: new URLSearchParams(loc.search).get('tab') || undefined,
     ...(new URLSearchParams(loc.search).get('engagement') ? { engagementId: new URLSearchParams(loc.search).get('engagement')! } : {}),
   }
