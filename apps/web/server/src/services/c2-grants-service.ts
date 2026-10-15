@@ -62,8 +62,8 @@ export class C2GrantsService {
    *   an unavailable configured policy fails closed.
    */
   public constructor(private readonly db: PrismaClient, private readonly maxGrantHours?: () => Promise<number | null>,
-    /** W12: composed in main.ts from the approved ROE revision, its time windows and the stop state. */
-    private readonly liveScopeGate?: (engagementId: string) => Promise<void>) {}
+    /** W12: composed in main.ts from the approved ROE revision, its time windows, the stop state and the session→target scope mapping. */
+    private readonly liveScopeGate?: (engagementId: string, target?: string) => Promise<void>) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -153,7 +153,7 @@ export class C2GrantsService {
    * state) runs at every enforcement site — an approved grant alone never
    * authorizes a dispatch.
    */
-  public async assertCommandAuthorized(engagementId: string, sessionId: string, actorId: string, path?: string): Promise<void> {
+  public async assertCommandAuthorized(engagementId: string, sessionId: string, actorId: string, path?: string, target?: string): Promise<void> {
     await assertEngagementOpen(this.db, engagementId);
     await this.sweep(engagementId);
     const grant = await this.db.c2Grant.findFirst({
@@ -172,7 +172,7 @@ export class C2GrantsService {
       await this.db.c2Grant.updateMany({ where: { id: grant.id, status: 'approved' }, data: { status: 'expired' } });
       throw new ProjectApiError(403, `The grant for session ${sessionId} expired at ${grant.expiresAt.toISOString()}; request a renewal.`);
     }
-    if (this.liveScopeGate !== undefined) await this.liveScopeGate(engagementId);
+    if (this.liveScopeGate !== undefined) await this.liveScopeGate(engagementId, target);
   }
 
   /** Server-owned cleanup; runs without a console mounted. */

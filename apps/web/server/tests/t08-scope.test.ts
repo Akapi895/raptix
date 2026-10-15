@@ -85,7 +85,7 @@ function memoryDb() {
     webAsset: {
       findFirst: async ({ where }: { where: { id?: string; engagementId: string; identifier?: string } }) =>
         find('webAsset', (r) => r.engagementId === where.engagementId && (where.id === undefined || r.id === where.id) && (where.identifier === undefined || r.identifier === where.identifier)),
-      findMany: async ({ where }: { where: { engagementId: string } }) => [...table('webAsset').values()].filter((r) => r.engagementId === where.engagementId).map((r) => ({ ...r })),
+      findMany: async ({ where }: { where: { engagementId: string; classification?: string } }) => [...table('webAsset').values()].filter((r) => r.engagementId === where.engagementId && (where.classification === undefined || r.classification === where.classification)).map((r) => ({ ...r })),
       create: async ({ data }: { data: Row }) => { const row: Row = { version: 1, observed: false, updatedBy: null, classification: 'pending', kind: 'host', ...data, id: seq('asset'), updatedAt: new Date() }; table('webAsset').set(String(row.id), row); return { ...row }; },
       update: async ({ where, data }: { where: { id: string }; data: Row }) => {
         const prev = table('webAsset').get(where.id)!;
@@ -138,6 +138,23 @@ const ROE = { windows: [{ start: '2026-10-15T00:00:00Z', end: '2026-10-16T00:00:
 const DIFF = { added: ['10.0.0.5'], removed: [], rationale: 'customer asked to include the staging host' };
 
 describe('ticket 08 scope governance', () => {
+  it('W12: maps a provider session target into the approved effective scope', async () => {
+    const { db } = await setup();
+    const scope = new ScopeService(db as never);
+    db.tables.set('webAsset', new Map([
+      ['a1', { id: 'a1', engagementId: ENG, identifier: '10.0.0.0/24', kind: 'ip_range', classification: 'in_scope' }],
+      ['a2', { id: 'a2', engagementId: ENG, identifier: 'https://app.target.invalid', kind: 'web_url', classification: 'in_scope' }],
+      ['a3', { id: 'a3', engagementId: ENG, identifier: '10.9.9.9', kind: 'host', classification: 'out_of_scope' }],
+    ]));
+    expect((await scope.targetInScope(ENG, '10.0.0.5:4444')).ok).toBe(true);
+    expect((await scope.targetInScope(ENG, 'https://app.target.invalid')).ok).toBe(true);
+    const outside = await scope.targetInScope(ENG, '192.168.1.5');
+    expect(outside.ok).toBe(false);
+    expect(outside.reason).toContain('outside the approved effective scope');
+    // An owned-but-out-of-scope asset address is never authorized.
+    expect((await scope.targetInScope(ENG, '10.9.9.9')).ok).toBe(false);
+    expect((await scope.targetInScope(ENG, '')).ok).toBe(false);
+  });
   it('submits a pending revision with a persisted version and supersedes the previous approval at submission', async () => {
     const { app, owner, reviewer } = await setup();
     const first = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: DIFF, roe: ROE } });

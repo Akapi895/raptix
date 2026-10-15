@@ -330,6 +330,27 @@ export class ScopeService {
     return { ok: true, reason: null, version: approved.version };
   }
 
+  /**
+   * W12: freeze provider session → authorized target mapping. A C2 session's
+   * observed target address is only authorized when it falls inside the
+   * engagement's approved effective scope (in-scope assets plus the immutable
+   * root target). The address is never trusted as authority by itself.
+   */
+  public async targetInScope(engagementId: string, target: string): Promise<{ ok: boolean; reason: string | null }> {
+    const host = sessionHost(target);
+    if (host.length === 0) return { ok: false, reason: 'The provider session reports no usable target address.' };
+    const rows = await this.db.webAsset.findMany({ where: { engagementId, classification: 'in_scope' } });
+    const engagement = await this.db.engagement.findFirst({ where: { id: engagementId }, select: { targetType: true, targetValue: true } });
+    const rootTarget = typeof engagement?.targetValue === 'string' ? engagement.targetValue : '';
+    const rootType = typeof engagement?.targetType === 'string' ? engagement.targetType : '';
+    const matchesRoot = rootTarget.length > 0
+      && (rootType === 'ip_range' ? ipInCidr(host, rootTarget) : sessionHost(rootTarget) === host);
+    const matched = rows.some((r) => identifierCovers(r.identifier, r.kind, host));
+    if (matched || matchesRoot) return { ok: true, reason: null };
+    const inScope = rows.map((r) => `${r.identifier} (${r.kind})`).join(', ');
+    return { ok: false, reason: `Session target ${target} is outside the approved effective scope${inScope.length > 0 ? `: ${inScope}` : ' (no in-scope assets)'}.` };
+  }
+
   /** Guard reused by tickets 09/12/17: absolute deadline check with the shared policy helper. */
   public static checkDeadline(expiresAt: Date | null, now: number, what: string): void {
     assertNotExpired(expiresAt, now, what);
@@ -338,6 +359,82 @@ export class ScopeService {
   private async audit(engagementId: string, actorId: string, action: string, targetType: string, targetId: string, reason: string): Promise<void> {
     await this.db.webAuditEntry.create({ data: { engagementId, actorId, action, targetType, targetId, reason } });
   }
+}
+
+/** Extracts the host from a session target address ('10.0.0.5', '10.0.0.5:4444', '[::1]:4444') or a URL. */
+function sessionHost(target: string): string {
+  const value = target.trim();
+  if (value.includes('://')) {
+    try { return new URL(value).hostname.toLowerCase(); } catch { return ''; }
+  }
+  if (value.startsWith('[')) { const end = value.indexOf(']'); return end > 0 ? value.slice(1, end).toLowerCase() : ''; }
+  const colon = value.lastIndexOf(':');
+  if (colon > 0 && value.indexOf(':') === colon && /^\d+$/.test(value.slice(colon + 1))) return value.slice(0, colon).toLowerCase();
+  return value.toLowerCase();
+}
+
+/** Whether an in-scope identifier of the given kind covers the target host. */
+function identifierCovers(identifier: string, kind: string, host: string): boolean {
+  if (kind === 'ip_range') return ipInCidr(host, identifier);
+  if (kind === 'web_url') return sessionHost(identifier) === host;
+  return identifier.trim().toLowerCase() === host;
+}
+
+function ipv4ToInt(ip: string): number | null {
+  const parts = ip.split('.');
+  if (parts.length !== 4) return null;
+  let value = 0;
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part)) return null;
+    const octet = Number(part);
+    if (octet > 255) return null;
+    value = value * 256 + octet;
+  }
+  return value;
+}
+
+function ipv6ToBigInt(ip: string): bigint | null {
+  const value = ip.trim().toLowerCase();
+  if (value.includes('%')) return null;
+  if (value.split('::').length > 2) return null;
+  const [head, tail] = value.split('::');
+  const toGroups = (segment: string): string[] => segment.length === 0 ? [] : segment.split(':');
+  const headGroups = toGroups(head ?? '');
+  const tailGroups = tail === undefined ? [] : toGroups(tail);
+  const missing = 8 - headGroups.length - tailGroups.length;
+  if (tail !== undefined && missing < 0) return null;
+  if (tail === undefined && headGroups.length !== 8) return null;
+  const groups = tail === undefined ? headGroups : [...headGroups, ...Array(missing).fill('0'), ...tailGroups];
+  let result = 0n;
+  for (const group of groups) {
+    if (!/^[0-9a-f]{1,4}$/.test(group)) return null;
+    result = (result << 16n) + BigInt(parseInt(group, 16));
+  }
+  return result;
+}
+
+/** IPv4 or IPv6 CIDR/address containment. */
+function ipInCidr(ip: string, cidr: string): boolean {
+  const slash = cidr.indexOf('/');
+  const range = slash === -1 ? cidr : cidr.slice(0, slash);
+  const prefixText = slash === -1 ? undefined : cidr.slice(slash + 1);
+  const v4ip = ipv4ToInt(ip);
+  const v4range = ipv4ToInt(range);
+  if (v4ip !== null && v4range !== null) {
+    const prefix = prefixText === undefined ? 32 : Number(prefixText);
+    if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
+    const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+    return ((v4ip & mask) >>> 0) === ((v4range & mask) >>> 0);
+  }
+  const v6ip = ipv6ToBigInt(ip);
+  const v6range = ipv6ToBigInt(range);
+  if (v6ip !== null && v6range !== null) {
+    const prefix = prefixText === undefined ? 128 : Number(prefixText);
+    if (!Number.isInteger(prefix) || prefix < 0 || prefix > 128) return false;
+    const shift = BigInt(128 - prefix);
+    return (v6ip >> shift) === (v6range >> shift);
+  }
+  return false;
 }
 
 function normalizeDiff(raw: unknown): ScopeDiff {

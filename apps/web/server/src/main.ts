@@ -31,7 +31,7 @@ import { SliverClient } from './integrations/c2/sliver-client.js';
 import { VaultService } from './services/vault-service.js';
 import { MembersService } from './services/members-service.js';
 import { ScopeService } from './services/scope-service.js';
-import { GovernanceService, type PreflightCheck } from './services/governance-service.js';
+import { GovernanceService, type PreflightCheck, type ReadinessInput } from './services/governance-service.js';
 import { ScheduleService } from './services/schedule-service.js';
 import { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import { ReportsService } from './services/reports-service.js';
@@ -144,15 +144,23 @@ async function main(): Promise<void> {
    // missing or unreachable. The assistant check is the catalog execution
    // role, reported separately from the runtime itself; the model fallback
    // chain is runtime-internal and is deliberately not claimed here.
-   const runtimeReadiness = async (): Promise<PreflightCheck[]> => {
+   const runtimeReadiness = async (input: ReadinessInput): Promise<PreflightCheck[]> => {
      if (runtimeContext === undefined) return [{ id: 'runtime', state: 'unavailable', detail: 'The runtime is not configured in this deployment.' }];
      try {
        const graphs = (await runtimeContext.agents()).graphs;
        const executors = EXECUTION_ASSISTANTS.filter((g) => graphs.includes(g));
-       return [
+       const checks: PreflightCheck[] = [
          { id: 'runtime', state: graphs.length > 0 ? 'pass' : 'unavailable', detail: graphs.length > 0 ? null : 'The runtime exposes no agent graphs.' },
          { id: 'assistant', state: executors.length > 0 ? 'pass' : 'unavailable', detail: executors.length > 0 ? `Execution assistant graphs: ${executors.join(', ')}.` : 'The runtime exposes no execution assistant graph; operations cannot start.' },
        ];
+       // W08: the selected thread's bound assistant must exist in the catalogue.
+       if (dbClient !== undefined && input.threadId !== null) {
+         const bound = await dbClient.engagementThread.findFirst({ where: { engagementId: input.engagementId, threadId: input.threadId }, select: { assistantId: true } });
+         if (bound !== null && !graphs.includes(bound.assistantId)) {
+           checks.push({ id: 'assistant-binding', state: 'unavailable', detail: `The selected thread is bound to assistant ${bound.assistantId}, which is not in the runtime catalogue.` });
+         }
+       }
+       return checks;
      } catch (error) {
        return [{ id: 'runtime', state: 'unavailable', detail: error instanceof Error ? error.message : 'The runtime is unreachable.' }];
      }
@@ -201,12 +209,18 @@ async function main(): Promise<void> {
    // W12: an approved C2 grant authorizes the session, never the target
    // landscape — every command dispatch also consumes the engagement's live
    // approved ROE revision, its time windows and the stop state.
-   const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined, scopeService && governanceService ? async (engagementId) => {
+   const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined, scopeService && governanceService ? async (engagementId, target) => {
      const approved = await scopeService.latestApproved(engagementId);
      if (approved === null) throw new ProjectApiError(403, 'C2 commands require an approved scope revision for this engagement; complete the scope review first.');
      const roe = await scopeService.roeWindowAllows(engagementId, Date.now());
      if (!roe.ok) throw new ProjectApiError(403, roe.reason ?? 'Outside the approved ROE time windows.');
      await governanceService.assertNoActiveStop(engagementId, null);
+     // W12: once the provider session address is known, it must map into the
+     // approved effective scope — a grant never authorizes an out-of-scope target.
+     if (target !== undefined) {
+       const decision = await scopeService.targetInScope(engagementId, target);
+       if (!decision.ok) throw new ProjectApiError(403, decision.reason ?? `Session target ${target} is outside the approved scope.`);
+     }
    } : undefined) : undefined;
   const auditService = dbClient ? new AuditService(dbClient) : undefined;
   const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined, c2Grants?.assertCommandAuthorized.bind(c2Grants)) : undefined;
