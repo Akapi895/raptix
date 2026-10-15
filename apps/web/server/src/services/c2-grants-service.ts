@@ -49,6 +49,8 @@ export interface C2GrantView {
 export interface C2GrantsView {
   readonly engagementId: string;
   readonly grants: C2GrantView[];
+  /** W14: effective enforced bounds, reported so the form never clamps to a hard-coded number. */
+  readonly minGrantHours: number;
   readonly maxGrantHours: number;
   readonly source: 'db';
 }
@@ -67,11 +69,16 @@ export class C2GrantsService {
     return { db: this.db, actorId, multiUser: true };
   }
 
+  /** W14: the enforced policy range is 1-24h — the registry states exactly this. */
+  private static readonly MAX_TTL_MS = DEFAULT_MAX_GRANT_TTL_MS;
+
   private async maxTtlMs(): Promise<number> {
-    if (this.maxGrantHours === undefined) return DEFAULT_MAX_GRANT_TTL_MS;
+    if (this.maxGrantHours === undefined) return C2GrantsService.MAX_TTL_MS;
     const hours = await this.maxGrantHours();
-    if (hours === null || !Number.isFinite(hours) || hours <= 0 || hours > 24) throw new ProjectApiError(503, 'The C2 grant policy is unavailable.');
-    return hours * 60 * 60 * 1000;
+    if (hours === null || !Number.isFinite(hours) || hours <= 0) throw new ProjectApiError(503, 'The C2 grant policy is unavailable.');
+    // A legacy persisted value above the enforced ceiling lowers the ceiling
+    // (fail toward less authority) instead of failing every grant read with a 503.
+    return Math.min(hours, 24) * 60 * 60 * 1000;
   }
 
   public async list(actorId: string, engagementId: string): Promise<C2GrantsView> {
@@ -79,7 +86,7 @@ export class C2GrantsService {
     await this.sweep(engagementId);
     const rows = await this.db.c2Grant.findMany({ where: { engagementId }, orderBy: { createdAt: 'desc' } });
     const maxHours = Math.round((await this.maxTtlMs()) / (60 * 60 * 1000));
-    return { engagementId, grants: rows.map((r) => this.toView(r)), maxGrantHours: maxHours, source: 'db' };
+    return { engagementId, grants: rows.map((r) => this.toView(r)), minGrantHours: 1, maxGrantHours: maxHours, source: 'db' };
   }
 
   public async request(actorId: string, engagementId: string, input: unknown): Promise<C2GrantView> {

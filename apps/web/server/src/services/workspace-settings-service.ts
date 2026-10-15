@@ -31,10 +31,10 @@ export const WORKSPACE_SETTING_SPECS: readonly WorkspaceSettingSpec[] = [
     kind: 'policy',
     valueType: 'number',
     min: 1,
-    max: 720,
+    max: 24,
     defaultValue: 24,
     consumer: 'c2-grants',
-    enforcement: 'Enforced by the C2 grants service on every grant request and surfaced by the grants view.',
+    enforcement: 'Enforced by the C2 grants service on every grant request and surfaced by the grants view. W14: the registry states the enforced 1-24h policy range; the service lowers an oversized legacy persisted value instead of failing reads.',
     description: 'Maximum C2 session grant window in hours.',
   },
   {

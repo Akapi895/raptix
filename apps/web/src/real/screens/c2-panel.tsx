@@ -46,11 +46,14 @@ function RealC2Grants({ engagementId }: { engagementId: string }): ReactElement 
     void client.invalidateQueries({ queryKey: ['real', 'c2-grants', engagementId] })
   }
 
+  // W14: the server reports the effective enforced bounds; the form clamps to those.
+  const bounds = { min: grants.data?.minGrantHours ?? 1, max: grants.data?.maxGrantHours ?? 24 }
+
   const request = useMutation({
     mutationFn: () => requestC2Grant(engagementId, {
       sessionId: sessionId.trim(),
       reason: reason.trim(),
-      expiresAt: new Date(Date.now() + Math.min(24, Math.max(1, Number(hours) || 1)) * 3_600_000).toISOString(),
+      expiresAt: new Date(Date.now() + Math.min(bounds.max, Math.max(bounds.min, Number(hours) || bounds.min)) * 3_600_000).toISOString(),
     }),
     onSuccess: () => {
       setSessionId('')
@@ -139,8 +142,8 @@ function RealC2Grants({ engagementId }: { engagementId: string }): ReactElement 
           <Input id="c2-session" required value={sessionId} onChange={(e) => setSessionId(e.target.value)} placeholder="sess-1" />
           <label className="text-sm text-muted" htmlFor="c2-reason">Reason</label>
           <Textarea id="c2-reason" required value={reason} onChange={(e) => setReason(e.target.value)} placeholder="whoami on web-1 for lateral check" />
-          <label className="text-sm text-muted" htmlFor="c2-hours">Duration (hours, 1-24)</label>
-          <Input id="c2-hours" type="number" min={1} max={24} value={hours} onChange={(e) => setHours(e.target.value)} />
+          <label className="text-sm text-muted" htmlFor="c2-hours">Duration (hours, {bounds.min}-{bounds.max})</label>
+          <Input id="c2-hours" type="number" min={bounds.min} max={bounds.max} value={hours} onChange={(e) => setHours(e.target.value)} />
           <div className="sm:col-span-2">
             <Button type="submit" variant="primary" icon={KeyRound} disabled={request.isPending}>
               {request.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}

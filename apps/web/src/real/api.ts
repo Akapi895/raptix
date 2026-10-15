@@ -833,6 +833,8 @@ export interface C2GrantView {
 export interface C2GrantsView {
   engagementId: string
   grants: C2GrantView[]
+  /** W14: effective enforced bounds from the server — never a hard-coded clamp. */
+  minGrantHours: number
   maxGrantHours: number
   source: 'db'
 }

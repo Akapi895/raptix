@@ -292,4 +292,21 @@ describe('ticket 12 c2 grants and authorized dispatch', () => {
     expect(await run('sess-3', 'req-w12-d2', 'C:\\apps\\tool.exe')).toBe(200);
     expect(executeCalls.count).toBe(2);
   });
+
+  it('W14: exposes effective TTL bounds and safely lowers a legacy oversized policy without a 503', async () => {
+    const { app, owner, grants } = await setup({ count: 0 });
+    // Legacy persisted policy (720h) predating the narrowed registry: the
+    // grants view stays readable and reports the enforced 24h ceiling.
+    (grants as unknown as { maxGrantHours: () => Promise<number | null> }).maxGrantHours = async () => 720;
+    const list = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/c2/grants`, headers: { cookie: owner.cookie } });
+    expect(list.statusCode).toBe(200);
+    expect(list.json().maxGrantHours).toBe(24);
+    expect(list.json().minGrantHours).toBe(1);
+    // Requesting past the enforced ceiling is a validation error, not an outage.
+    const over = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { sessionId: SESSION, reason: 'too long', expiresAt: new Date(Date.now() + 25 * 3_600_000).toISOString() } });
+    expect(over.statusCode).toBe(400);
+    expect(String(over.json().error.message ?? '')).toMatch(/24 hours/);
+    const atCeiling = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { sessionId: SESSION, reason: 'ceiling', expiresAt: new Date(Date.now() + 24 * 3_600_000).toISOString() } });
+    expect(atCeiling.statusCode).toBe(200);
+  });
 });
