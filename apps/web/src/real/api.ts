@@ -895,15 +895,26 @@ export function fetchCampaigns(engagementId: string): Promise<CampaignsView> {
     isCampaignsView(v) && v.engagementId === engagementId)
 }
 
-export function createCampaign(engagementId: string, input: { name: string; vector: CampaignVector; scenario?: string }): Promise<CampaignView> {
+export interface GoPhishAssetsInput { templateId: number; pageId: number; groupId: number; smtpId: number }
+
+export function createCampaign(engagementId: string, input: { name: string; vector: CampaignVector; scenario?: string; gophish?: GoPhishAssetsInput; evilginxLab?: boolean }): Promise<CampaignView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/campaigns`, (v): v is CampaignView =>
     isCampaignView(v) && v.status === 'draft',
-    { method: 'POST', body: input })
+    {
+      method: 'POST',
+      body: {
+        name: input.name,
+        vector: input.vector,
+        ...(input.scenario !== undefined ? { scenario: input.scenario } : {}),
+        ...(input.gophish !== undefined ? { gophish: input.gophish } : {}),
+        ...(input.evilginxLab === true ? { evilginx: { profile: 'lab' } } : {}),
+      },
+    })
 }
 
-export function runCampaignJob(engagementId: string, campaignId: string, kind: 'generate' | 'deploy'): Promise<CampaignJobView> {
+export function runCampaignJob(engagementId: string, campaignId: string, kind: 'generate' | 'deploy', intent: { requestId: string; version: number }): Promise<CampaignJobView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/campaigns/${encodeURIComponent(campaignId)}/${kind}`, isCampaignJobView,
-    { method: 'POST', body: {} })
+    { method: 'POST', body: intent })
 }
 
 export function reconcileCampaignJob(engagementId: string, campaignId: string, jobId: string): Promise<CampaignJobView> {
