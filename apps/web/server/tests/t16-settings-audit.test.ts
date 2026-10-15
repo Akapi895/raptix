@@ -53,6 +53,7 @@ function memoryDb() {
   };
   const db = {
     tables,
+    engagementClosure: { findFirst: async () => null },
     engagement: {
       findFirst: async ({ where }: { where: Row }) => find('engagement', (r) => matches(r, where)),
       findMany: async ({ where }: { where?: Row } = {}) => listMany('engagement', { where }),
@@ -146,6 +147,14 @@ async function setup(db: Db): Promise<{ app: FastifyInstance; owner: { cookie: s
 }
 
 describe('ticket 16 workspace settings, audit and C2 policy propagation', () => {
+  it('refuses grant requests while the policy store cannot be read', async () => {
+    const db = memoryDb();
+    const { app, owner } = await setup(db);
+    db.workspaceSetting.findFirst = async () => { throw new Error('policy store unavailable'); };
+    const response = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/c2/grants`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { sessionId: 's', reason: 'test', expiresAt: new Date(Date.now() + 7200000).toISOString() } });
+    expect(response.statusCode).toBe(503);
+    await app.close();
+  });
   it('persists versioned workspace settings with owner authorization, conflicts and audit', async () => {
     const db = memoryDb();
     const { app, owner, reviewer } = await setup(db);

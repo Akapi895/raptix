@@ -33,6 +33,7 @@ function buildDb() {
   const now = () => new Date('2026-10-02T00:00:00Z');
   return {
     secrets,
+    engagementClosure: { findFirst: async () => null },
     audits,
     engagement: { findFirst: async ({ where }: { where: { id: string; userId: string } }) => (where.id === ENGAGEMENT.id && where.userId === ENGAGEMENT.userId ? { ...ENGAGEMENT } : null) },
     vaultSecret: {

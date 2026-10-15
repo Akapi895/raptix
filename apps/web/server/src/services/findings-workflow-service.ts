@@ -2,6 +2,7 @@
 import { ProjectApiError } from './projects-service.js';
 import { requireEngagementAccess, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 import { assertEngagementOpen } from './closure-service.js';
+import type { ArtifactsService } from './artifacts-service.js';
 
 /**
  * Ticket 10: curated finding records with the review/remediation lifecycle and
@@ -57,7 +58,7 @@ export interface CuratedFindingsView {
 }
 
 export class FindingsWorkflowService {
-  public constructor(private readonly db: PrismaClient) {}
+  public constructor(private readonly db: PrismaClient, private readonly artifacts?: Pick<ArtifactsService, 'capture'>) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -125,7 +126,7 @@ export class FindingsWorkflowService {
       throw new ProjectApiError(409, `Concurrent edit: the finding moved to version ${row.expectedVersion} while you edited version ${expectedVersion}. Reload and reapply.`);
     }
     const updated = await this.db.findingRecord.update({
-      where: { id: row.id },
+      where: { id: row.id, expectedVersion },
       data: {
         title: typeof body.title === 'string' && body.title.trim().length > 0 ? body.title.trim() : row.title,
         severity: typeof body.severity === 'string' ? body.severity : row.severity,
@@ -142,7 +143,7 @@ export class FindingsWorkflowService {
   public async transition(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
     const body = (input ?? {}) as { to?: unknown };
     const to = typeof body.to === 'string' ? body.to : '';
-    const access = await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    const access = await requireEngagementAccess(this.ctx(actorId), engagementId, to === 'confirmed' ? 'reviewer' : MIN_CURATE);
     await assertEngagementOpen(this.db, engagementId);
     const row = await this.findOwned(engagementId, findingId);
     const allowed = TRANSITIONS[row.status] ?? [];
@@ -152,7 +153,7 @@ export class FindingsWorkflowService {
     if (to === 'confirmed' && !['owner', 'reviewer'].includes(access.role)) {
       throw new ProjectApiError(403, `Confirming a finding requires the reviewer role; the persisted membership grants ${access.role}.`);
     }
-    const updated = await this.db.findingRecord.update({ where: { id: row.id }, data: { status: to, updatedBy: actorId } });
+    const updated = await this.db.findingRecord.update({ where: { id: row.id, expectedVersion: row.expectedVersion, status: row.status }, data: { status: to, updatedBy: actorId, expectedVersion: { increment: 1 } } });
     await this.audit(engagementId, actorId, 'finding.transitioned', 'finding', row.id, `${row.status} -> ${to}`);
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
     return this.toView(updated as never, evidence as never[]);
@@ -166,12 +167,18 @@ export class FindingsWorkflowService {
     const kind = typeof body.kind === 'string' && ['artifact', 'digest'].includes(body.kind) ? body.kind : '';
     if (kind.length === 0) throw new ProjectApiError(400, "kind must be 'artifact' or 'digest'.");
     const artifactPath = typeof body.artifactPath === 'string' ? body.artifactPath.trim() : null;
-    const digest = typeof body.digest === 'string' ? body.digest.trim() : null;
+    let digest = typeof body.digest === 'string' ? body.digest.trim() : null;
     if (kind === 'artifact' && (artifactPath === null || artifactPath.length === 0)) throw new ProjectApiError(400, 'artifactPath is required for artifact evidence.');
     if (kind === 'digest' && (digest === null || digest.length === 0)) throw new ProjectApiError(400, 'digest is required for digest evidence.');
     const row = await this.findOwned(engagementId, findingId);
-    // A finding id is not a substitute for an evidence reference: the link
-    // stores the opaque identity/digest/producer lineage verbatim.
+    let producer = typeof body.producer === 'string' ? body.producer : null;
+    if (kind === 'artifact') {
+      if (!this.artifacts) throw new ProjectApiError(503, 'The retained artifact authority is unavailable.');
+      const capture = await this.artifacts.capture(actorId, engagementId, artifactPath!);
+      if (digest !== null && digest !== capture.digest) throw new ProjectApiError(409, 'The claimed digest does not match the retained capture bytes.');
+      digest = capture.digest;
+      producer = capture.producer;
+    } else if (!/^[a-fA-F0-9]{64}$/.test(digest!)) throw new ProjectApiError(400, 'External digest references require a SHA-256 digest; their bytes are not verified.');
     const link = await this.db.evidenceLink.create({
       data: {
         findingId: row.id,
@@ -179,7 +186,7 @@ export class FindingsWorkflowService {
         kind,
         artifactPath,
         digest,
-        producer: typeof body.producer === 'string' ? body.producer : null,
+        producer,
       },
     });
     await this.audit(engagementId, actorId, 'evidence.attached', 'evidence', link.id, `${kind} on ${row.id}`);

@@ -235,7 +235,7 @@ export class ScopeService {
       const approved = await this.latestApproved(engagementId);
       const diff = approved?.diff as ScopeDiff | undefined;
       const covered = diff?.added?.includes(asset.identifier) === true
-        || (approved !== null && this.engagementTargetIncludes(engagementId, asset.identifier));
+        || (approved !== null && await this.engagementTargetIncludes(engagementId, asset.identifier));
       if (!covered) {
         throw new ProjectApiError(409, `Marking ${asset.identifier} in scope requires an approved scope revision that adds it; newly added targets stay pending.`);
       }

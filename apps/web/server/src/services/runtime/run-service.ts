@@ -16,7 +16,7 @@ function metadata(actual: Record<string, unknown>, expected: Record<string, stri
   if (Object.entries(expected).some(([k, v]) => actual[k] !== v)) throw conflict();
 }
 export class RunService {
-  public constructor(private readonly options: { ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort }) {}
+  public constructor(private readonly options: { ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort; authorizeMutation?: (user: string, engagement: string, kind: 'planning' | 'execution', threadId: string | null) => Promise<void> }) {}
   private async threadState(user: string, engagement: string, thread: string): ReturnType<RuntimeReadPort['state']> {
     const state = await this.options.reads.state(thread);
     if (!Object.keys(state.values).length && !findPendingQuestions(state.values, state.tasks).length) {
@@ -41,6 +41,7 @@ export class RunService {
     let trusted: TrustedRuntimeContext;
     try {
       trusted = await context.resolve(user, engagement, selection);
+      await this.options.authorizeMutation?.(user, engagement, trusted.kind, null);
       if (!trusted.configurable.authorization_confirmed) throw conflict();
     } catch (error) {
       const winner = await ownership.replay(user, engagement, requestId, 'create_thread', intent);
@@ -68,6 +69,7 @@ export class RunService {
     try {
       const binding = await ownership.getBinding(user, engagement, thread);
       trusted = await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
+      await this.options.authorizeMutation?.(user, engagement, trusted.kind, thread);
       if (!trusted.configurable.authorization_confirmed || binding.kind === 'execution' && !trusted.publicView.executionReady) throw conflict();
       await this.threadState(user, engagement, thread);
       const active = await ownership.active(user, engagement, thread);
@@ -123,6 +125,7 @@ export class RunService {
     try {
       const binding = await ownership.getBinding(user, engagement, thread);
       trusted = await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
+      await this.options.authorizeMutation?.(user, engagement, trusted.kind, thread);
       if (!trusted.configurable.authorization_confirmed) throw conflict();
       const state = await this.threadState(user, engagement, thread);
       const pending = findPendingQuestions(state.values, state.tasks);

@@ -17,6 +17,7 @@ interface Row { id: string; [key: string]: unknown }
 
 interface FakeDb {
   tables: Map<string, Map<string, Row>>;
+  engagementClosure: { findFirst: () => Promise<Row | null> };
   engagement: { findFirst: (q: { where: { id: string } }) => Promise<Row | null> };
   webUser: { findUnique: (q: { where: { id?: string; username?: string } }) => Promise<Row | null>; create: (q: { data: { [key: string]: unknown } }) => Promise<Row> };
   webSession: { findUnique: (q: { where: { id: string } }) => Promise<Row | null>; create: (q: { data: { [key: string]: unknown } }) => Promise<Row>; deleteMany: (q: { where: { id: string } }) => Promise<{ count: number }> };
@@ -37,6 +38,7 @@ function memoryDb(): FakeDb {
   };
   return {
     tables,
+    engagementClosure: { findFirst: async () => null },
     engagement: {
       findFirst: async ({ where }) => find('engagement', (r) => r.id === where.id),
     },
@@ -130,8 +132,8 @@ describe('ticket 07 auth boundary', () => {
     const ghost = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { username: 'nobody', password: 'nope-nope' } });
     expect(ghost.statusCode).toBe(401);
     // logout invalidates the session server-side
-    const { cookie } = await login(app, 'owner');
-    await app.inject({ method: 'POST', url: '/api/auth/logout', headers: { cookie } });
+    const { cookie, csrf } = await login(app, 'owner');
+    await app.inject({ method: 'POST', url: '/api/auth/logout', headers: { cookie, 'x-csrf-token': csrf } });
     const after = await app.inject({ method: 'GET', url: '/api/auth/session', headers: { cookie } });
     expect(after.json().authenticated).toBe(false);
   });

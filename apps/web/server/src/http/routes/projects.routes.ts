@@ -41,6 +41,9 @@ async function sendProjectsError(
       .status(error.statusCode)
       .send(apiErrorBody(error.statusCode, error.message));
   }
+  if (typeof error === 'object' && error !== null && 'code' in error && ['P2025', 'P2002'].includes(String(error.code))) {
+    return reply.status(409).send(apiErrorBody(409, 'The record changed concurrently. Reload and retry; your draft is preserved.'));
+  }
   request.log.error({ err: error }, 'projects request failed');
   return reply.status(500).send(apiErrorBody(500, 'Internal server error'));
 }

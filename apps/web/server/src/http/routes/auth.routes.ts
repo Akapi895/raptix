@@ -43,7 +43,6 @@ export function registerAuthRoutes(app: FastifyInstance, db: PrismaClient, actor
       throw new ProjectApiError(400, 'username and password are required (1-200 characters).');
     }
     const user = await db.webUser.findUnique({ where: { username } });
-    if (process.env.RAPTIX_DEBUG_LOGIN === '1') console.error('DEBUG-LOGIN', username, JSON.stringify(user));
     if (user === null || user.status !== 'active' || !verifyPassword(password, user.passwordHash)) {
       // Uniform refusal: no user-existence oracle.
       throw new ProjectApiError(401, 'Invalid username or password.');

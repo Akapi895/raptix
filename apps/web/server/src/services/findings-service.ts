@@ -1,9 +1,10 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir, stat, realpath } from 'node:fs/promises';
 import * as path from 'node:path';
 import type { FindingsView, FindingView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
 import { ProjectNotFoundError } from './projects-service.js';
+import { requireEngagementAccess } from '../auth/membership-policy.js';
 
 /**
  * W12 findings projection: parse `FIND-*.md` files from the engagement
@@ -25,8 +26,9 @@ export class FindingsService {
   public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
 
   private async workspaceDir(userId: string, engagementId: string): Promise<string> {
-    const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
+    const project = await this.db.engagement.findFirst({ where: { id: engagementId } });
     if (!project) throw new ProjectNotFoundError();
+    if (project.userId !== userId) await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
     return resolveEngagementWorkspaceDir(this.workspaceRoot, project.name);
   }
 
@@ -36,6 +38,8 @@ export class FindingsService {
     const findings: FindingView[] = [];
     let truncated = false;
     let names: string[] = [];
+    const realDir = await realpath(dir).catch(() => null);
+    if (realDir === null) return { engagementId, findings, truncated: false, source: 'workspace' };
     try {
       names = (await readdir(findingsDir)).filter(name => name.startsWith('FIND-') && name.endsWith('.md')).sort();
     } catch { return { engagementId, findings, truncated: false, source: 'workspace' }; }
@@ -43,6 +47,8 @@ export class FindingsService {
     for (const name of names) {
       const file = path.join(findingsDir, name);
       try {
+        const realFile = await realpath(file);
+        if (!realFile.startsWith(realDir + path.sep)) { truncated = true; continue; }
         const info = await stat(file);
         if (!info.isFile() || info.size > MAX_FILE_BYTES) { truncated = true; continue; }
         const content = await readFile(file, 'utf8');

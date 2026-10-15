@@ -45,6 +45,7 @@ export interface ClosureSurfaceView {
   readonly engagementId: string;
   readonly closure: ClosureView | null;
   readonly readOnly: boolean;
+  readonly checklist: ClosureChecklist;
   readonly source: 'db';
 }
 
@@ -63,20 +64,15 @@ interface ClosureRow {
 
 /** The post-close gate shared by every mutation/execution entrypoint. */
 export async function assertEngagementOpen(db: PrismaClient, engagementId: string): Promise<void> {
-  // The closure table ships with the current migration set, so the store is
-  // always present in production; the optional lookup only tolerates clients
-  // that predate it (legacy test fakes), never weakens a live deployment.
-  const store = (db as unknown as { engagementClosure?: { findFirst: (args: unknown) => Promise<unknown> } }).engagementClosure;
-  if (store === undefined) return;
-  const row = await store.findFirst({ where: { engagementId } });
-  if (row !== null && row !== undefined && (row as { status: string }).status === 'closed') {
+  const row = await db.engagementClosure.findFirst({ where: { engagementId } });
+  if (row?.status === 'closed') {
     throw new ProjectApiError(409, 'This engagement is closed and read-only; mutations and execution are refused. Closure records remain available.');
   }
 }
 
 export class ClosureService {
   /** @param pendingApprovals counts outstanding workspace HITL approvals; absent → the checklist blocks as unavailable. */
-  public constructor(private readonly db: PrismaClient, private readonly pendingApprovals?: (userId: string, engagementId: string) => Promise<number>) {}
+  public constructor(private readonly db: PrismaClient, private readonly pendingApprovals?: (userId: string, engagementId: string) => Promise<number>, private readonly sources?: { sessions: (userId: string, engagementId: string) => Promise<number>; runtime: (userId: string, engagementId: string) => Promise<number> }) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -89,7 +85,7 @@ export class ClosureService {
   public async get(actorId: string, engagementId: string): Promise<ClosureSurfaceView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
     const row = await this.findRow(engagementId);
-    return { engagementId, closure: row === null ? null : this.toView(row), readOnly: row?.status === 'closed', source: 'db' };
+    return { engagementId, closure: row === null ? null : this.toView(row), checklist: await this.checklist(actorId, engagementId, this.db), readOnly: row?.status === 'closed', source: 'db' };
   }
 
   public async request(actorId: string, engagementId: string, input: unknown): Promise<ClosureView> {
@@ -169,7 +165,16 @@ export class ClosureService {
       }
     };
     await push('runtime', client.webRequestLedger.count({ where: { engagementId, activeThreadId: { not: null }, operation: { not: 'create_thread' } } }), 'no in-flight runtime requests', (n) => `${n} runtime request(s) still hold an active run`);
-    await push('estop', client.emergencyStop.count({ where: { engagementId, outcome: { in: ['requested', 'acknowledged'] } } }), 'no unresolved emergency stops', (n) => `${n} unresolved emergency stop(s)`);
+    await push('estop', client.emergencyStop.count({ where: { engagementId, outcome: { in: ['requested', 'acknowledged', 'failed', 'unknown'] } } }), 'no unresolved emergency stops', (n) => `${n} unresolved emergency stop(s)`);
+    await push('scope-reviews', client.scopeRevision.count({ where: { engagementId, status: 'pending' } }), 'no pending scope reviews', (n) => `${n} pending scope review(s)`);
+    await push('plan-reviews', client.businessPlan.count({ where: { engagementId, status: 'proposed' } }), 'no pending plan reviews', (n) => `${n} pending plan review(s)`);
+    await push('grant-reviews', client.c2Grant.count({ where: { engagementId, status: 'requested' } }), 'no pending grant reviews', (n) => `${n} pending grant review(s)`);
+    if (this.sources) {
+      await push('provider-sessions', this.sources.sessions(userId, engagementId), 'no connected provider sessions', (n) => `${n} provider session(s) not disconnected`);
+      await push('runtime-questions', this.sources.runtime(userId, engagementId), 'no unresolved runtime questions', (n) => `${n} runtime question(s) still pending`);
+    } else {
+      entries.push({ id: 'provider-sessions', state: 'unavailable', detail: 'Provider/session and runtime sources have not been configured.' });
+    }
     try {
       await client.c2Grant.updateMany({ where: { engagementId, status: 'approved', expiresAt: { lte: new Date() } }, data: { status: 'expired' } });
     } catch { /* the count below still gates */ }

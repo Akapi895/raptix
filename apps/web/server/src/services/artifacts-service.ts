@@ -1,10 +1,14 @@
-import { realpath, readFile, readdir, stat } from 'node:fs/promises';
+import { realpath, readFile, readdir, stat, mkdir, writeFile, open } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
 import * as path from 'node:path';
 import type { ArtifactContentView, ArtifactsView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectPolicyError } from '../security/project-policy.js';
 import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
 import { ProjectNotFoundError } from './projects-service.js';
+import { ProjectApiError } from './projects-service.js';
+import { requireEngagementAccess } from '../auth/membership-policy.js';
+import { assertEngagementOpen } from './closure-service.js';
 
 /**
  * W12 artifact browser: engagement-scoped, allowlisted, non-recursive file
@@ -19,12 +23,20 @@ export const ARTIFACT_FOLDERS = ['recon', 'exploit', 'post-exploit', 'findings',
 const MAX_FILES_PER_FOLDER = 200;
 const MAX_CONTENT_BYTES = 256 * 1024;
 
+export interface RetainedCaptureView { engagementId: string; path: string; digest: string; sizeBytes: number; producer: string | null }
+
 export class ArtifactsService {
   public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
 
   private async workspaceDir(userId: string, engagementId: string): Promise<string> {
-    const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
-    if (!project) throw new ProjectNotFoundError();
+    // Ownership-scoped first; a non-owner member resolves through the persisted
+    // membership gate before the workspace path is disclosed at all.
+    let project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
+    if (project === null) {
+      await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
+      project = await this.db.engagement.findFirst({ where: { id: engagementId } });
+      if (project === null) throw new ProjectNotFoundError();
+    }
     return resolveEngagementWorkspaceDir(this.workspaceRoot, project.name);
   }
 
@@ -55,7 +67,7 @@ export class ArtifactsService {
     return { engagementId, folders, source: 'workspace' };
   }
 
-  public async content(userId: string, engagementId: string, rawPath: string): Promise<ArtifactContentView> {
+  private async artifactFile(userId: string, engagementId: string, rawPath: string): Promise<string> {
     const rawSegments = rawPath.split('/');
     if (rawSegments.some(segment => segment.length === 0 || segment === '.' || segment === '..')) {
       throw new ProjectPolicyError('bad_request', 'Invalid artifact path');
@@ -73,19 +85,56 @@ export class ArtifactsService {
     if (!realTarget.startsWith(realDir + path.sep)) throw new ProjectPolicyError('bad_request', 'Invalid artifact path');
     const info = await stat(realTarget).catch(() => null);
     if (!info || !info.isFile()) throw new ProjectPolicyError('not_found', 'Artifact not found');
+    return realTarget;
+  }
+
+  public async content(userId: string, engagementId: string, rawPath: string): Promise<ArtifactContentView> {
+    const realTarget = await this.artifactFile(userId, engagementId, rawPath);
+    const info = await stat(realTarget);
     const truncated = info.size > MAX_CONTENT_BYTES;
-    const buffer = await readFile(realTarget);
-    const slice = truncated ? buffer.subarray(0, MAX_CONTENT_BYTES) : buffer;
-    const content = new TextDecoder('utf-8', { fatal: true }).decode(slice);
+    const file = await open(realTarget, 'r');
+    let content: string;
+    try {
+      const buffer = Buffer.alloc(Math.min(info.size, MAX_CONTENT_BYTES));
+      const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
+      content = new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, bytesRead));
+    } finally { await file.close(); }
     const isJson = realTarget.toLowerCase().endsWith('.json');
     return {
       engagementId,
-      path: `${segments[0]}/${segments[1]}`,
+      path: rawPath,
       content: content.slice(0, MAX_CONTENT_BYTES),
       mediaType: isJson ? 'json' : 'text',
       sizeBytes: info.size,
       truncated,
       source: 'workspace',
     };
+  }
+
+  public async capture(userId: string, engagementId: string, artifactPath: string): Promise<RetainedCaptureView> {
+    const file = await this.artifactFile(userId, engagementId, artifactPath);
+    const info = await stat(file);
+    if (info.size > MAX_CONTENT_BYTES) throw new ProjectApiError(400, 'Evidence capture exceeds the 256 KiB bound.');
+    const bytes = await readFile(file);
+    if (bytes.length > MAX_CONTENT_BYTES) throw new ProjectApiError(400, 'Evidence capture exceeds the 256 KiB bound.');
+    return { engagementId, path: artifactPath, digest: createHash('sha256').update(bytes).digest('hex'), sizeBytes: bytes.length, producer: null };
+  }
+
+  public async upload(userId: string, engagementId: string, input: unknown): Promise<RetainedCaptureView> {
+    await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'operator');
+    await assertEngagementOpen(this.db, engagementId);
+    const body = (input ?? {}) as { base64?: unknown; mediaType?: unknown };
+    if (typeof body.base64 !== 'string' || !body.base64.length || body.base64.length > 349528 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(body.base64)) throw new ProjectApiError(400, 'A base64 capture of 1-262144 bytes is required.');
+    const bytes = Buffer.from(body.base64, 'base64');
+    if (!bytes.length || bytes.length > MAX_CONTENT_BYTES) throw new ProjectApiError(400, 'A capture of 1-262144 bytes is required.');
+    const dir = await this.workspaceDir(userId, engagementId);
+    const folder = path.join(dir, 'findings');
+    await mkdir(folder, { recursive: true });
+    const root = await realpath(dir);
+    const realFolder = await realpath(folder);
+    if (!realFolder.startsWith(root + path.sep)) throw new ProjectPolicyError('bad_request', 'Invalid capture folder');
+    const name = `capture-${randomUUID()}.${body.mediaType === 'application/json' ? 'json' : body.mediaType === 'text/plain' ? 'txt' : 'bin'}`;
+    await writeFile(path.join(realFolder, name), bytes, { flag: 'wx' });
+    return { engagementId, path: `findings/${name}`, digest: createHash('sha256').update(bytes).digest('hex'), sizeBytes: bytes.length, producer: `web-user:${userId}` };
   }
 }

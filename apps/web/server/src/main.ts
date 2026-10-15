@@ -1,4 +1,5 @@
 ﻿import { mkdir } from 'node:fs/promises';
+import type { ScopedRunView } from '@raptix/web-contracts';
 import { getLocalIdentity } from './auth/identity-provider.js';
 import { buildApp } from './app.js';
 import { EnvValidationError, readServerEnv } from './config/env.js';
@@ -35,11 +36,13 @@ import { ReportsService } from './services/reports-service.js';
 import { C2GrantsService } from './services/c2-grants-service.js';
 import { FleetService } from './services/fleet-service.js';
 import { LibraryService } from './services/library-service.js';
+import { LibraryReviewService } from './services/library-review-service.js';
 import { InboxService } from './services/inbox-service.js';
 import { WorkspaceSettingsService } from './services/workspace-settings-service.js';
 import { AuditService } from './services/audit-service.js';
 import { ClosureService } from './services/closure-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
+import { requireEngagementAccess } from './auth/membership-policy.js';
 
 let closing = false;
 
@@ -91,7 +94,7 @@ async function main(): Promise<void> {
     dbClient = createDbClient({ connectionString: env.databaseUrl });
     databaseHealth = createDatabaseHealth(dbClient);
     projectsService = new ProjectsService({
-      repository: new EngagementsRepository(dbClient.engagement),
+      repository: new EngagementsRepository(dbClient.engagement, env.authMode === 'multi' ? dbClient.webMembership : undefined),
       workspaceRoot: env.workspacePath,
       identity: getLocalIdentity(),
     });
@@ -100,7 +103,33 @@ async function main(): Promise<void> {
   const ownership = dbClient ? new RuntimeOwnershipService(dbClient) : undefined;
   const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
   const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
-  const closureService = dbClient ? new ClosureService(dbClient, approvalsService ? async (userId, engagementId) => (await approvalsService.list(userId, engagementId)).approvals.length : undefined) : undefined;
+   const closureService = dbClient ? new ClosureService(dbClient, approvalsService ? async (_userId, engagementId) => {
+     const engagement = await dbClient.engagement.findUniqueOrThrow({ where: { id: engagementId } });
+     return (await approvalsService.list(engagement.userId, engagementId)).approvals.length;
+   } : undefined, {
+     sessions: async (_actorId, engagementId) => {
+       if (!c2Service?.configured) {
+         const commands = await dbClient.c2Command.count({ where: { engagementId } });
+         if (commands > 0) throw new TypeError('The provider is unavailable for previously used C2 sessions.');
+         return 0;
+       }
+       const engagement = await dbClient.engagement.findUniqueOrThrow({ where: { id: engagementId } });
+       return (await c2Service.sessions(engagement.userId, engagementId)).sessions.filter((s) => !s.isDead).length;
+     },
+     runtime: async (_actorId, engagementId) => {
+       const engagement = await dbClient.engagement.findUniqueOrThrow({ where: { id: engagementId } });
+       const bindings = await dbClient.engagementThread.findMany({ where: { engagementId } });
+       if (bindings.length && !runsService) throw new TypeError('Runtime checkpoints are unavailable.');
+       let pending = 0;
+       for (const binding of bindings) {
+         pending += (await runsService!.snapshot(engagement.userId, engagementId, binding.threadId)).pendingQuestions?.length ?? 0;
+          pending += (await ownedRuns(engagement.userId, engagementId, binding.threadId)).filter((r) => ['pending', 'running'].includes(r.rawStatus)).length;
+       }
+       return pending;
+     },
+   }) : undefined;
+   const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
+   const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService) : undefined;
   const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
     ? new RuntimeContextService({
         config: runtimeConfig,
@@ -108,16 +137,31 @@ async function main(): Promise<void> {
         ownership,
         workspaceRoot: env.workspacePath,
         runtime,
-        // Ticket 17: every create-thread/submit/resume resolves context first —
-        // this is the atomic post-close execution gate.
-        assertEngagementOpen: closureService ? (engagementId) => closureService.assertOpen(engagementId) : undefined,
       }) : undefined;
-  const runsService = ownership && runtimeContext && runtime ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime }) : undefined;
+   const runsService = ownership && runtimeContext && runtime && dbClient ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime, authorizeMutation: async (actorId, engagementId, kind, threadId) => {
+     await requireEngagementAccess({ db: dbClient, actorId, multiUser: env.authMode === 'multi' }, engagementId, 'operator');
+     await closureService!.assertOpen(engagementId);
+     await governanceService!.assertNoActiveStop(engagementId, threadId);
+     if (kind === 'execution' && threadId) await governanceService!.assertExecutionAuthorized(actorId, engagementId, threadId, env.authMode === 'multi');
+   } }) : undefined;
+   async function ownedRuns(actorId: string, engagementId: string, threadId: string): Promise<ScopedRunView[]> {
+     if (!runsService) throw new TypeError('Runtime run reads are unavailable.');
+     const runs: ScopedRunView[] = [];
+     let offset = 0;
+     while (offset < 1000) {
+       const page = await runsService.listRuns(actorId, engagementId, threadId, { limit: '25', offset: String(offset) });
+       runs.push(...page.runs);
+       if (page.nextOffset === null) return runs;
+       offset = page.nextOffset;
+     }
+     throw new TypeError('Runtime run inventory exceeds the bounded reconciliation limit.');
+   }
   const fleetService = dbClient && runtimeContext && runsService ? new FleetService(dbClient, runtimeContext, runsService) : undefined;
   const findingsService = dbClient && env.workspacePath ? new FindingsService(dbClient, env.workspacePath) : undefined;
   const artifactsService = dbClient && env.workspacePath ? new ArtifactsService(dbClient, env.workspacePath) : undefined;
   const graphService = dbClient && env.graph ? new GraphService(dbClient, env.graph) : undefined;
   const libraryService = graphService && env.graph ? new LibraryService(graphService, env.graph) : undefined;
+  const libraryReviewService = libraryService && dbClient ? new LibraryReviewService(dbClient, libraryService) : undefined;
   const timelineService = runsService && artifactsService && dbClient && env.workspacePath ? new TimelineService(dbClient, runsService, artifactsService, env.workspacePath) : undefined;
   const exportService = dbClient && env.workspacePath ? new ExportService(dbClient, env.workspacePath) : undefined;
   const settingsService = dbClient ? new SettingsService(dbClient, getLocalIdentity()) : undefined;
@@ -128,14 +172,9 @@ async function main(): Promise<void> {
   const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined, c2Grants?.assertCommandAuthorized.bind(c2Grants)) : undefined;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
-  const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
-  const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService) : undefined;
   const inboxService = dbClient && governanceService ? new InboxService(dbClient, governanceService) : undefined;
-  const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient) : undefined;
-  const reportsService = dbClient && exportService ? new ReportsService(dbClient, async (userId, engagementId, format) => {
-    const result = await exportService.export(userId, engagementId, format as 'json' | 'markdown');
-    return { ok: result.body.length > 0, format };
-  }) : undefined;
+  const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient, artifactsService) : undefined;
+  const reportsService = dbClient ? new ReportsService(dbClient) : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
@@ -156,6 +195,7 @@ async function main(): Promise<void> {
   c2Grants,
   fleetService,
   libraryService,
+  libraryReviewService,
   inboxService,
   workspaceSettings,
   auditService,
@@ -165,10 +205,24 @@ async function main(): Promise<void> {
   scopeService,
   governanceService,
   findingsWorkflow,
-  reportsService,
+    reportsService,
+    cancelRun: runsService ? async (threadId, runId, actorId, engagementId) => {
+      const threads = threadId ? [{ threadId }] : (await runsService.listThreads(actorId, engagementId)).threads;
+      let settled = true;
+      for (const thread of threads) {
+        const runs = await ownedRuns(actorId, engagementId, thread.threadId);
+        for (const run of runs.filter((r) => !runId || r.runId === runId)) {
+          if (!['pending', 'running'].includes(run.rawStatus)) continue;
+          const stopped = await runsService.cancelRun(actorId, engagementId, thread.threadId, run.runId);
+          if (['pending', 'running'].includes(stopped.rawStatus)) settled = false;
+        }
+      }
+      return settled ? 'stopped' : 'acknowledged';
+    } : undefined,
   vaultKeyConfigured: env.vaultKey !== undefined,
   authMode: env.authMode,
-  authDb: dbClient,
+   authDb: dbClient,
+   workflowDb: dbClient,
   secureCookies: env.secureCookies,
   adminBootstrap: env.adminBootstrap,
   });
