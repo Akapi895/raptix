@@ -56,6 +56,7 @@ facing ``kg_record`` / ``kg_ingest`` tools.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -94,7 +95,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 
 
 _ROLE = "analyst"
-_RECURSION_LIMIT = 1000
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_ANALYST_RECURSION_LIMIT", "1000"))
 
 
 def create_analyst_agent(

@@ -41,6 +41,7 @@ No SubAgent / OPPLAN (standalone, not an orchestrator).
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -76,7 +77,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 
 
 _ROLE = "recon"
-_RECURSION_LIMIT = 1000
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_RECON_RECURSION_LIMIT", "1000"))
 
 
 def create_recon_agent(

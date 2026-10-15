@@ -21,6 +21,7 @@ in the engagement workspace, it does not attack.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -51,7 +52,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 
 
 _ROLE = "forensicator"
-_RECURSION_LIMIT = 250
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_FORENSICATOR_RECURSION_LIMIT", "250"))
 _SKILL_SOURCES: list[str] = ["/skills/standard/dfir/", "/skills/shared/"]
 
 

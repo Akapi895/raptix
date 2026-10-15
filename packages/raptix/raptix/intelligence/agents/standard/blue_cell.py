@@ -38,6 +38,7 @@ No SandboxNotification (no bash tool). No SubAgent / OPPLAN (specialist).
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -64,7 +65,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 
 
 _ROLE = "blue_cell"
-_RECURSION_LIMIT = 120
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_BLUE_CELL_RECURSION_LIMIT", "120"))
 
 
 def create_blue_cell_agent(

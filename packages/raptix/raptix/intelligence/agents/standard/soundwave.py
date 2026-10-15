@@ -43,6 +43,7 @@ No SandboxNotification (document-only, no bash tool).
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -63,7 +64,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 }
 
 _ROLE = "soundwave"
-_RECURSION_LIMIT = 200
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_SOUNDWAVE_RECURSION_LIMIT", "200"))
 
 
 def create_soundwave_agent(

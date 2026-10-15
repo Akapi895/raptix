@@ -34,6 +34,49 @@ design spec, §13.4).
 
 ### Fixed
 
+- Every bash-driven specialist except the orchestrator hardcoded its LangGraph
+  `recursion_limit` with no env override; a production run showed 18 of 20
+  dispatch crashes landing at exactly `surface_exploit`'s old ceiling of 300 —
+  a cell's own register-user/login/captcha preamble alone can approach that
+  budget before any evidence is gathered. All 11 specialist roles
+  (`analyst`, `autohunt`, `blue_cell`, `exploit`, `forensicator`,
+  `osint_operator`, `postexploit`, `recon`, `soundwave`,
+  `supply_chain_operator`, `surface_exploit`) now read
+  `RAPTIX_<ROLE>_RECURSION_LIMIT`, matching the pattern `raptix.py` already
+  used for the orchestrator; every default is unchanged except
+  `surface_exploit`'s, raised from 300 to 1000 to match its sibling bash
+  specialists (`recon`/`exploit`).
+- `record.jsonl` could grow by hundreds of MB from a single stuck dispatch:
+  each time the same `GraphRecursionError` got re-recorded for the same
+  request (observed: 215 copies of one ~3MB serialized failure in production),
+  the sink wrote a full duplicate line. `RecordingMiddleware`'s sink now
+  collapses a run of back-to-back identical failures (same kind, req_hash,
+  exception type and message) into one `duplicate_collapsed` summary line;
+  `_Replay` already ignores unrecognized `kind` values, so replay is
+  unaffected.
+- No agent role had a way to prove a client-side payload actually executes in
+  a rendered page — only that it survives unescaped in an API response. The
+  sandbox already vendors a working Node Playwright install (reused by
+  `web_fetch`'s anti-bot chain) and a working system Chromium binary; added
+  `execution/sandbox/web/templates/xss_probe.js`, a one-shot render-navigate-
+  evaluate-capture script reusing that existing install (no new dependency),
+  and rewrote the `xss` skill's CSTI section to (a) gate the AngularJS-1.x-only
+  sandbox-escape technique behind an explicit version check — it does not
+  apply to modern Angular 2+, which Juice Shop's current build uses — and
+  (b) make the new script the framework-agnostic render-and-execute
+  verification step for any DOM-sink class, before concluding `ruled_out`.
+- The exploitation-cell protocol (`surface_exploit.md`) had no step
+  connecting a `confirmed` vulnerability to a benchmark's own win-condition
+  oracle (e.g. Juice Shop's `GET /api/Challenges` scoreboard) — a run produced
+  many well-evidenced findings that scored zero challenge-points because
+  "the vulnerability class is real" and "this specific named challenge's
+  trigger fired" are different bars. `raptix.md`'s dispatch loop now appends
+  one `Oracle: ...` line to a cell's task description only when the mission's
+  own `conops.json` names such an endpoint (real engagements never see this —
+  the line is absent, not merely inert); `surface_exploit.md` gained a
+  `confirmed_solved`/`confirmed_unsolved` outcome pair for that case; OPPLAN
+  accounting treats `confirmed_unsolved` as `in-progress`, same as an open
+  proof gap, instead of silently closing the objective.
 - `recon.md` named only `kg_ingest` (scanner-file-only) for its KG handoff, so
   black-box recon that never shells out to nmap/nuclei/httpx had no instructed
   path to write Endpoint/Parameter/Form/Technology/AuthModel nodes — the

@@ -6,6 +6,7 @@ interview-first planner and keeps its existing graph identifier and behavior.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -19,7 +20,7 @@ from raptix_core.plugin_loader import is_bundle_enabled, load_plugin_callbacks
 
 _ROLE = "soundwave"
 _GRAPH_NAME = "autohunt"
-_RECURSION_LIMIT = 200
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_AUTOHUNT_RECURSION_LIMIT", "200"))
 
 
 def create_autohunt_agent(
