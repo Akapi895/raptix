@@ -1,7 +1,7 @@
 /** Versioned report editing, explicit review and manual receipt acknowledgement. */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState, type ReactElement } from 'react'
-import { decideReportReview, deliverReport, reviseReport, updateReport, type ReportView } from '../api'
+import { decideReportReview, deliverReport, exportReport, reviseReport, updateReport, type ReportView } from '../api'
 import { useDirty } from '../../state/session'
 import { Banner, Button, Card, CardHeader, Input, Textarea } from '../../ui'
 
@@ -28,6 +28,9 @@ export function RealReportEditor({ report, preview = false }: { report: ReportVi
       if (kind === 'submit') return decideReportReview(report.engagementId, report.id, { action: 'submit' })
       if (kind === 'approved' || kind === 'changes_requested') return decideReportReview(report.engagementId, report.id, { decision: kind, comment, expectedVersion: report.version })
       if (kind === 'revision') return reviseReport(report.engagementId, report.id, { expectedVersion: report.version })
+      // W20: a reader downloads through the read export contract; only the
+      // editor records an audited delivery-carrying export.
+      if (kind === 'export' && preview) return exportReport(report.engagementId, report.id, 'markdown')
       const key = `${kind}/${report.version}`
       const requestId = requestIds.current.get(key) ?? crypto.randomUUID()
       requestIds.current.set(key, requestId)

@@ -1,27 +1,26 @@
 /**
- * W22: the project detail Settings tab edits the display name, primary
- * target and brief through the real PATCH contract. Target changes are
- * lifecycle-gated by the server; a refusal keeps the form and surfaces the
- * reason instead of silently claiming success.
+ * W22: the project detail Settings tab edits the display name and primary
+ * target through the real PATCH contract. Target changes are lifecycle-gated
+ * by the server; a refusal keeps the form and surfaces the reason instead of
+ * silently claiming success. The operator brief is not PATCH-editable by the
+ * engagement contract, so it is not offered here.
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { patchEngagement, type ProjectViewModel } from '../api'
 import { useDirty } from '../../state/session'
-import { Banner, Button, Card, CardHeader, Input, Textarea } from '../../ui'
+import { Banner, Button, Card, CardHeader, Input } from '../../ui'
 
 export function ProjectSettingsPanel({ project }: { project: ProjectViewModel }): ReactElement {
   const client = useQueryClient()
   const [displayName, setDisplayName] = useState(project.displayName)
   const [targetValue, setTargetValue] = useState(project.targetValue)
-  const [brief, setBrief] = useState(project.brief ?? '')
   const [error, setError] = useState<string | null>(null)
-  const dirty = displayName !== project.displayName || targetValue !== project.targetValue || brief !== (project.brief ?? '')
+  const dirty = displayName !== project.displayName || targetValue !== project.targetValue
   const save = useMutation({
     mutationFn: () => patchEngagement(project.id, {
       displayName: displayName.trim(),
       targetValue: targetValue.trim(),
-      ...(brief.trim() === '' ? {} : { brief: brief.trim() }),
     }),
     onSuccess: () => {
       setError(null)
@@ -39,8 +38,6 @@ export function ProjectSettingsPanel({ project }: { project: ProjectViewModel })
         <Input id="settings-display-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
         <label className="text-sm text-muted" htmlFor="settings-target">Primary target</label>
         <Input id="settings-target" value={targetValue} onChange={(e) => setTargetValue(e.target.value)} />
-        <label className="text-sm text-muted sm:col-span-2" htmlFor="settings-brief">Operator brief</label>
-        <div className="sm:col-span-2"><Textarea id="settings-brief" rows={4} value={brief} onChange={(e) => setBrief(e.target.value)} /></div>
         <div className="sm:col-span-2">
           <Button type="button" variant="primary" disabled={!dirty || save.isPending} onClick={() => save.mutate()}>Save settings</Button>
         </div>

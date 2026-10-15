@@ -1,7 +1,8 @@
 /**
- * W22: the project detail Settings tab edits the display name, target and
- * brief through the real PATCH contract — a refused save keeps the form and
- * surfaces the reason instead of silently claiming success.
+ * W22: the project detail Settings tab edits the display name and target
+ * through the real PATCH contract — a refused save keeps the form and
+ * surfaces the reason instead of silently claiming success. The operator
+ * brief is not PATCH-editable and must never be sent (the server rejects it).
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
@@ -49,7 +50,7 @@ afterEach(() => {
 })
 
 describe('ProjectSettingsPanel (W22 project edit)', () => {
-  it('saves display name, target and brief through the engagement PATCH', async () => {
+  it('saves display name and target through the engagement PATCH without the non-patchable brief', async () => {
     await renderSettings(project())
     const target = await screen.findByLabelText(/primary target/i)
     await userEvent.clear(target)
@@ -58,7 +59,10 @@ describe('ProjectSettingsPanel (W22 project edit)', () => {
     await userEvent.clear(name)
     await userEvent.type(name, 'Acme staging (v2)')
     await userEvent.click(screen.getByRole('button', { name: /save settings/i }))
-    await waitFor(() => expect(patchEngagement).toHaveBeenCalledWith('proj-1', expect.objectContaining({ displayName: 'Acme staging (v2)', targetValue: 'https://prod.acme.test', brief: 'Original brief.' })))
+    await waitFor(() => expect(patchEngagement).toHaveBeenCalledWith('proj-1', { displayName: 'Acme staging (v2)', targetValue: 'https://prod.acme.test' }))
+    const payload = patchEngagement.mock.calls[0]![1] as Record<string, unknown>
+    expect(payload).not.toHaveProperty('brief')
+    expect(screen.queryByLabelText(/operator brief/i)).toBeNull()
   })
 
   it('keeps the form and surfaces the server reason when the patch is refused', async () => {

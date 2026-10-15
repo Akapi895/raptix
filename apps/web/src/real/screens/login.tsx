@@ -7,7 +7,7 @@
  * the browser never posts a persona or role as authorization.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
 import { KeyRound, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { fetchAuthSession, login, logout, type AuthSessionView } from '../api'
 import { Button, Input } from '../../ui'
@@ -73,7 +73,19 @@ function LoginForm({ onDone }: { onDone: () => void }): ReactElement {
 
 /** Wraps the real console: local mode passes through, multi-user mode gates on a live session. */
 export function RealLoginGate({ children }: { children: ReactNode }): ReactElement {
+  const client = useQueryClient()
   const { session, pending, error, retry } = useSession()
+  // W04: a 401 anywhere in the app disposes actor-scoped reads and drops the
+  // cached session so the gate renders sign-in immediately.
+  useEffect(() => {
+    const onExpired = (): void => {
+      client.setQueryData(SESSION_KEY, (prev: AuthSessionView | null | undefined) => (prev === undefined ? prev : { ...prev, authenticated: false }))
+      client.removeQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
+      void client.invalidateQueries({ queryKey: SESSION_KEY })
+    }
+    window.addEventListener('raptix:session-expired', onExpired)
+    return () => window.removeEventListener('raptix:session-expired', onExpired)
+  }, [client])
   if (pending) {
     return <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Checking session"><Loader2 size={22} className="animate-spin text-muted" aria-hidden /></div>
   }

@@ -105,9 +105,12 @@ function ProposalRow({ proposal, engagementId, onChanged, onError }: {
   const [exported, setExported] = useState<LibraryProposalExportView | null>(null)
   const busy = useMutation({
     mutationFn: async (action: { kind: 'amend' } | { kind: 'propose' } | { kind: 'decide'; decision: 'approved' | 'rejected' } | { kind: 'export' }) => {
-      if (action.kind === 'amend') return amendLibraryProposal(engagementId, proposal.id, { proposedBody: body ?? proposal.proposedBody, expectedVersion: proposal.version })
+      // W18: decisions and amendments pin the version whose diff the reviewer
+      // actually has open, never the possibly-stale list-row version.
+      const reviewedVersion = detail.data?.version ?? proposal.version
+      if (action.kind === 'amend') return amendLibraryProposal(engagementId, proposal.id, { proposedBody: body ?? proposal.proposedBody, expectedVersion: reviewedVersion })
       if (action.kind === 'propose') return proposeLibraryProposal(engagementId, proposal.id)
-      if (action.kind === 'decide') return decideLibraryProposal(engagementId, proposal.id, { decision: action.decision, expectedVersion: proposal.version, ...(comment.trim() === '' ? {} : { comment: comment.trim() }) })
+      if (action.kind === 'decide') return decideLibraryProposal(engagementId, proposal.id, { decision: action.decision, expectedVersion: reviewedVersion, ...(comment.trim() === '' ? {} : { comment: comment.trim() }) })
       setExported(await exportLibraryProposal(engagementId, proposal.id))
       return null
     },

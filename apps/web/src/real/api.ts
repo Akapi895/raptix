@@ -587,8 +587,9 @@ function isPreflightView(v: unknown): v is PreflightView {
   return typeof doc.engagementId === 'string' && typeof doc.ok === 'boolean' && Array.isArray(doc.checks) && doc.source === 'db'
 }
 
-export function fetchPreflight(engagementId: string): Promise<PreflightView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/preflight`, owned(engagementId, isPreflightView))
+export function fetchPreflight(engagementId: string, threadId?: string): Promise<PreflightView> {
+  const qs = threadId !== undefined && threadId !== '' ? `?threadId=${encodeURIComponent(threadId)}` : ''
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/preflight${qs}`, owned(engagementId, isPreflightView))
 }
 
 export interface OperationBindingView {

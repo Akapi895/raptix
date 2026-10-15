@@ -42,6 +42,8 @@ export interface SessionState {
   save: (() => Promise<unknown> | unknown) | undefined
   /** W21: which form owns the current dirty flag (undefined owner = legacy). */
   dirtyOwner: string | null
+  /** W21: every currently-dirty owner and its save callback; the public `dirty`/`save` derive from this so one form's unmount never clears another's draft. */
+  owners: Record<string, (() => Promise<unknown> | unknown) | null>
   setDirty(on: boolean, save?: () => Promise<unknown> | unknown, owner?: string): void
   /** W21: only the owning form's unmount clears the shared dirty flag. */
   clearDirtyIf(owner: string): void
@@ -74,6 +76,7 @@ const initialSession = {
   dirty: false,
   save: undefined as (() => Promise<unknown> | unknown) | undefined,
   dirtyOwner: null as string | null,
+  owners: {} as Record<string, (() => Promise<unknown> | unknown) | null>,
   unsaved: null as UnsavedNav | null,
   logs: {} as Record<string, LogLine[]>,
   staleOps: {} as Record<string, boolean>,
@@ -98,14 +101,36 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
      erase each other's unsaved state. */
   setDirty: (on, save, owner) => {
     const s = get()
-    if (on) set({ dirty: true, save, dirtyOwner: owner ?? s.dirtyOwner ?? null })
-    else if (owner === undefined || s.dirtyOwner === null || s.dirtyOwner === owner) set({ dirty: false, save: undefined, dirtyOwner: null })
+    const key = owner ?? ''
+    const owners = { ...s.owners }
+    if (on) owners[key] = save ?? null
+    else if (owner === undefined) for (const existing of Object.keys(owners)) delete owners[existing]
+    else delete owners[key]
+    const keys = Object.keys(owners)
+    const last = keys.length > 0 ? keys[keys.length - 1]! : null
+    set({
+      owners,
+      dirty: keys.length > 0,
+      save: last === null ? undefined : owners[last] ?? undefined,
+      dirtyOwner: last === null || last === '' ? null : last,
+    })
   },
   clearDirtyIf: (owner) => {
     const s = get()
-    if (s.dirtyOwner === owner) set({ dirty: false, save: undefined, dirtyOwner: null })
+    const key = owner ?? ''
+    if (s.owners[key] === undefined) return
+    const owners = { ...s.owners }
+    delete owners[key]
+    const keys = Object.keys(owners)
+    const last = keys.length > 0 ? keys[keys.length - 1]! : null
+    set({
+      owners,
+      dirty: keys.length > 0,
+      save: last === null ? undefined : owners[last] ?? undefined,
+      dirtyOwner: last === null || last === '' ? null : last,
+    })
   },
-  clearDirty: () => set({ dirty: false, save: undefined, dirtyOwner: null }),
+  clearDirty: () => set({ dirty: false, save: undefined, dirtyOwner: null, owners: {} }),
   closeUnsaved: () => set({ unsaved: null }),
   guarded: (fn) => {
     const s = get()
@@ -121,7 +146,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
   setAiBusy: (v) => set({ aiBusy: v }),
   setLoading: (v) => set({ loading: v }),
   clearTransient: () =>
-    set({ dirty: false, save: undefined, confirmState: null, unsaved: null, aiBusy: null, staleOps: {}, persistFilters: {} }),
+    set({ dirty: false, save: undefined, dirtyOwner: null, owners: {}, confirmState: null, unsaved: null, aiBusy: null, staleOps: {}, persistFilters: {} }),
 }))
 
 /** Restores every session value's initial state (provider-mount safety). */
@@ -136,8 +161,11 @@ export function useDirty(isDirty: boolean, save?: () => Promise<unknown> | unkno
   const [owner] = useState(`form-${Math.random().toString(36).slice(2)}`)
   const saveRef = useRef(save)
   saveRef.current = save
+  // W21: a form without a real save callback registers no save — the guard
+  // must not offer "Save Draft" (and toast success) when nothing persists.
+  const hasSave = save !== undefined
   useEffect(() => {
-    setDirty(isDirty, () => saveRef.current?.(), owner)
+    setDirty(isDirty, hasSave ? () => saveRef.current?.() : undefined, owner)
     return () => { clearDirtyIf(owner) }
-  }, [isDirty, setDirty, clearDirtyIf, owner])
+  }, [isDirty, hasSave, setDirty, clearDirtyIf, owner])
 }

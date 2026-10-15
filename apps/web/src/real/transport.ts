@@ -122,7 +122,13 @@ export async function apiFetch<T>(
       signal: composed,
     })
     const parsed = await parseBody(response)
-    if (!response.ok) throw failureFrom(response, parsed)
+    if (!response.ok) {
+      // W04: any 401 means the session is no longer trusted. Signal the shell
+      // so it drops actor-scoped state and re-renders sign-in instead of
+      // keeping a stale authenticated view on screen.
+      if (response.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event('raptix:session-expired'))
+      throw failureFrom(response, parsed)
+    }
     if (!validate(parsed)) {
       throw new ApiTransportError(response.status, 'internal_error', 'The API returned a response with an unexpected shape.')
     }
