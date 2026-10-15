@@ -442,6 +442,26 @@ export function decideScopeRevision(engagementId: string, revisionId: string, de
   { method: 'POST', body: { decision } })
 }
 
+/** W07-3: cumulative effective scope snapshot (ADR-0072 read bridge). */
+export interface EffectiveScopeView {
+  engagementId: string
+  version: number | null
+  rootTarget: string | null
+  inScope: string[]
+  roe: { windows: { start: string; end: string; tz: string }[]; emergencyContacts: string[]; restrictions: string[] }
+  source: 'db'
+}
+
+function isEffectiveScopeView(v: unknown): v is EffectiveScopeView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as EffectiveScopeView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.inScope) && doc.source === 'db'
+}
+
+export function fetchEffectiveScope(engagementId: string): Promise<EffectiveScopeView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/scope/effective`, owned(engagementId, isEffectiveScopeView))
+}
+
 export interface AssetInventoryView {
   engagementId: string
   assets: { id: string; engagementId: string; identifier: string; kind: string; classification: 'pending' | 'in_scope' | 'out_of_scope'; observed: boolean; version: number; updatedAt: string }[]
