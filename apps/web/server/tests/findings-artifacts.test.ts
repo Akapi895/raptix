@@ -173,7 +173,10 @@ describe('W12 artifact browser', () => {
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content', query: { path: 'exploit/missing.txt' } })).statusCode).toBe(404);
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content' })).statusCode).toBe(400);
       await writeFile(path.join(root, 'exploit', 'payload.bin'), Buffer.from([0x00, 0xff, 0xfe]));
-      expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content', query: { path: 'exploit/payload.bin' } })).statusCode).toBe(500);
+      const binary = await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content', query: { path: 'exploit/payload.bin' } });
+      // W19: binary stays explicit — an unavailable text view, never a fake decode or a 500.
+      expect(binary.statusCode).toBe(503);
+      expect(binary.json().error.message).toMatch(/utf-8/i);
       await writeFile(path.join(h.workspaceRoot, 'outside.txt'), 'outside', 'utf8');
       const linked = await symlink(path.join(h.workspaceRoot, 'outside.txt'), path.join(root, 'recon', 'leak.txt'), 'file').then(() => true, () => false);
       if (linked) expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content', query: { path: 'recon/leak.txt' } })).statusCode).toBe(400);
@@ -189,6 +192,22 @@ describe('W12 artifact browser', () => {
       expect(content.sizeBytes).toBe(300 * 1024);
       expect(content.content).toHaveLength(256 * 1024);
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-other/artifacts/content', query: { path: 'recon/big.txt' } })).statusCode).toBe(404);
+    });
+  });
+  it('W19: decodes a truncated multibyte tail safely without replacement characters or a 500', async () => {
+    await withHarness(async (h) => {
+      const root = path.join(h.workspaceRoot, h.slug);
+      await mkdir(path.join(root, 'recon'), { recursive: true });
+      // '€' is 3 bytes in UTF-8: 262144 % 3 !== 0, so the retained slice splits a codepoint.
+      await writeFile(path.join(root, 'recon', 'euro.txt'), '€'.repeat(100_000), 'utf8');
+      const response = await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content', query: { path: 'recon/euro.txt' } });
+      expect(response.statusCode).toBe(200);
+      const content = response.json();
+      expect(content.mediaType).toBe('text');
+      expect(content.truncated).toBe(true);
+      expect(content.content.length).toBeGreaterThan(87_000);
+      expect(content.content.endsWith('€')).toBe(true);
+      expect(content.content.includes('\uFFFD')).toBe(false);
     });
   });
 });
