@@ -23,6 +23,7 @@ Recon's job once a scope is confirmed).
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -57,7 +58,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 
 
 _ROLE = "osint_operator"
-_RECURSION_LIMIT = 200
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_OSINT_OPERATOR_RECURSION_LIMIT", "200"))
 _SKILL_SOURCES: list[str] = ["/skills/standard/osint/", "/skills/shared/"]
 
 

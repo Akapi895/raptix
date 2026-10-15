@@ -21,6 +21,7 @@ Tool surface (all via bash for the OSS bootstrap):
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -51,7 +52,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 
 
 _ROLE = "supply_chain_operator"
-_RECURSION_LIMIT = 250
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_SUPPLY_CHAIN_OPERATOR_RECURSION_LIMIT", "250"))
 _SKILL_SOURCES: list[str] = ["/skills/standard/supply-chain/", "/skills/shared/"]
 
 
