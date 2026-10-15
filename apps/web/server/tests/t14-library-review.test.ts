@@ -60,7 +60,12 @@ function reviewFixture() {
       findFirst: async (args: QueryArgs) => (await findMany(args))[0] ?? null,
       count: async (args: QueryArgs) => (await findMany(args)).length,
       create: async ({ data }: QueryArgs) => {
-        const row = { id: randomUUID(), createdAt: new Date(), updatedAt: new Date(), comment: null, ...data };
+        // W17: the DB enforces one in-review proposal per (engagement, skill).
+        const payload = data ?? {};
+        if (payload.status === 'proposed' && rows.some((row) => row.engagementId === payload.engagementId && row.skillName === payload.skillName && row.status === 'proposed')) {
+          throw Object.assign(new Error('Unique constraint failed'), { code: 'P2002' });
+        }
+        const row = { id: randomUUID(), createdAt: new Date(), updatedAt: new Date(), comment: null, ...payload };
         rows.push(row);
         return { ...row };
       },
@@ -167,5 +172,81 @@ describe('library proposal lifecycle (ADR-0070)', () => {
     expect((await author.inject({ method: 'POST', url: '/api/engagements/eng/library-proposals', payload: { skillName: 'dcsync', proposedBody: 'Closed.\n' } })).statusCode).toBe(409);
     await author.close();
     await spectator.close();
+  });
+});
+
+describe('W17 proposal identity, drift and bounds', () => {
+  const submit = (app: FastifyInstance, proposedBody: string) =>
+    app.inject({ method: 'POST', url: '/api/engagements/eng/library-proposals', payload: { skillName: 'dcsync', proposedBody } });
+
+  it('versions are proposal-local: concurrent proposals for one skill never collide on version', async () => {
+    graphSource();
+    const { appFor } = reviewFixture();
+    const author = appFor('author');
+    const first = await submit(author, 'Body one.\n');
+    expect(first.statusCode).toBe(200);
+    const firstId = first.json().id as string;
+    const amended = await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${firstId}/amendments`, payload: { proposedBody: 'Body two.\n', expectedVersion: 1 } });
+    expect(amended.statusCode).toBe(200);
+    expect(amended.json().version).toBe(2);
+    // A fresh proposal for the same skill shares nothing with the first one's version counter.
+    const second = await submit(author, 'Second proposal.\n');
+    expect(second.statusCode).toBe(200);
+    expect(second.json().version).toBe(1);
+    expect(second.json().id).not.toBe(firstId);
+    await author.close();
+  });
+
+  it('amendment never re-pins the canonical snapshot; drift demands a fresh proposal (ADR-0070)', async () => {
+    graphSource();
+    const { appFor } = reviewFixture();
+    const author = appFor('author');
+    const submitted = await submit(author, 'Body one.\n');
+    const proposalId = submitted.json().id as string;
+    const before = (await author.inject(`/api/engagements/eng/library-proposals/${proposalId}`)).json();
+    canonical.body = 'Drifted canonical body.\n';
+    const amended = await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/amendments`, payload: { proposedBody: 'Amended body.\n', expectedVersion: 1 } });
+    expect(amended.statusCode).toBe(409);
+    const after = (await author.inject(`/api/engagements/eng/library-proposals/${proposalId}`)).json();
+    expect(after.baseRevision).toBe(before.baseRevision);
+    expect(after.baseBody).toBe(before.baseBody);
+    canonical.body = 'Keep OPSEC checks.\nRead the RoE.\n';
+    await author.close();
+  });
+
+  it('a canonical source outage is unavailable (503), never silent drift', async () => {
+    graphSource();
+    const { appFor } = reviewFixture();
+    const author = appFor('author');
+    const submitted = await submit(author, 'Body one.\n');
+    const proposalId = submitted.json().id as string;
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('fetch failed'); }));
+    const proposed = await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/propose` });
+    expect(proposed.statusCode).toBe(503);
+    expect(String(proposed.json().error?.message ?? proposed.body)).toMatch(/unreachable|unavailable/i);
+    await author.close();
+  });
+
+  it('byte bounds and positive expectedVersion apply to submit, amend and decide; prior-version reviews stay hidden', async () => {
+    graphSource();
+    const { appFor } = reviewFixture();
+    const author = appFor('author');
+    const reviewer = appFor('solomon');
+    const oversized = 'é'.repeat(140_000); // 280_000 UTF-8 bytes > 256 KiB
+    expect((await submit(author, oversized)).statusCode).toBe(400);
+    const submitted = await submit(author, 'Body one.\n');
+    const proposalId = submitted.json().id as string;
+    expect((await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/amendments`, payload: { proposedBody: oversized, expectedVersion: 1 } })).statusCode).toBe(400);
+    expect((await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/amendments`, payload: { proposedBody: 'x\n', expectedVersion: 0 } })).statusCode).toBe(400);
+    expect((await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/decision`, payload: { decision: 'approved', expectedVersion: 0 } })).statusCode).toBe(400);
+    await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/propose` });
+    await reviewer.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/decision`, payload: { decision: 'rejected', expectedVersion: 1, comment: 'not yet' } });
+    const amended = await author.inject({ method: 'POST', url: `/api/engagements/eng/library-proposals/${proposalId}/amendments`, payload: { proposedBody: 'Amended body.\n', expectedVersion: 1 } });
+    expect(amended.statusCode).toBe(200);
+    const detail = (await author.inject(`/api/engagements/eng/library-proposals/${proposalId}`)).json();
+    expect(detail.version).toBe(2);
+    expect(detail.reviews.every((r: { proposalVersion: number }) => r.proposalVersion === 2)).toBe(true);
+    await author.close();
+    await reviewer.close();
   });
 });

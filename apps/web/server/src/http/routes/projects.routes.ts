@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { LocalIdentity } from '../../auth/identity-provider.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
 import { ProjectApiError } from '../../services/projects-service.js';
+import { GraphUnavailableError } from '../../services/graph-service.js';
 import type { ProjectsService } from '../../services/projects-service.js';
 import type { RuntimeOwnershipService } from '../../services/runtime-ownership.js';
 import type { RuntimeContextService } from '../../services/runtime/runtime-context.js';
@@ -43,6 +44,12 @@ async function sendProjectsError(
   }
   if (typeof error === 'object' && error !== null && 'code' in error && ['P2025', 'P2002'].includes(String(error.code))) {
     return reply.status(409).send(apiErrorBody(409, 'The record changed concurrently. Reload and retry; your draft is preserved.'));
+  }
+  // W16: graph transport/auth/query failures are an explicit unavailability,
+  // never a generic 500 or a "not found".
+  if (error instanceof GraphUnavailableError) {
+    request.log.error({ err: error }, 'knowledge graph request failed');
+    return reply.status(503).send(apiErrorBody(503, 'The knowledge graph is unavailable.'));
   }
   request.log.error({ err: error }, 'projects request failed');
   return reply.status(500).send(apiErrorBody(500, 'Internal server error'));

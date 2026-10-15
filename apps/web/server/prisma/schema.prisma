@@ -525,7 +525,10 @@ model LibraryReviewProposal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   reviews LibraryProposalReview[]
-  @@unique([engagementId, skillName, version])
+  // W17: versions are proposal-local; proposal id is the identity. One
+  // in-review proposal per (engagementId, skillName) is enforced by the
+  // partial unique index in migration 20261018000000_library_proposal_identity
+  // (not expressible in the Prisma schema).
   @@index([engagementId, status])
 }
 
