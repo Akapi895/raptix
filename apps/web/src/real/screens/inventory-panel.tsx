@@ -13,8 +13,9 @@ export function RealInventoryPanel({ engagementId }: { engagementId: string }): 
   const [kind, setKind] = useState<'host' | 'web_url' | 'ip_range'>('host')
   const [error, setError] = useState<string | null>(null)
   const write = useMutation({
-    mutationFn: (action: { id: string; classification: 'pending' | 'in_scope' | 'out_of_scope' } | null) => action
-      ? classifyAsset(engagementId, action.id, action.classification)
+    mutationFn: (action: { id: string; version: number; classification: 'pending' | 'in_scope' | 'out_of_scope' } | null) => action
+      // W07 CAS: classify against the inventory version actually displayed.
+      ? classifyAsset(engagementId, action.id, action.classification, action.version)
       : importAssets(engagementId, identifiers.split(/[\n,]/).map((s) => s.trim()).filter(Boolean), kind),
     onSuccess: () => { setError(null); setIdentifiers(''); void client.invalidateQueries({ queryKey: ['real', 'asset-inventory', engagementId] }) },
     onError: (err) => setError(err.message),
@@ -25,7 +26,7 @@ export function RealInventoryPanel({ engagementId }: { engagementId: string }): 
   return <Card><CardHeader title="Managed asset inventory" sub="New assets stay pending until approved scope permits them. Graph observations are never overwritten." />
     {rows.length === 0 ? <p>{route.id ? 'Asset not found in this engagement.' : 'No managed assets yet.'}</p> : <ul className="space-y-3">{rows.map((asset) => <li key={asset.id} className="flex flex-wrap items-center gap-3">
       <Button onClick={() => go('asset', { id: asset.id, engagementId })}>{asset.identifier}</Button><span>{asset.kind} · v{asset.version} · {asset.classification}</span>
-      <Select aria-label={`Classification for ${asset.identifier}`} value={asset.classification} disabled={write.isPending} onChange={(e) => write.mutate({ id: asset.id, classification: e.target.value as 'pending' | 'in_scope' | 'out_of_scope' })}>
+      <Select aria-label={`Classification for ${asset.identifier}`} value={asset.classification} disabled={write.isPending} onChange={(e) => write.mutate({ id: asset.id, version: asset.version, classification: e.target.value as 'pending' | 'in_scope' | 'out_of_scope' })}>
         <option value="pending">Pending</option><option value="in_scope">In scope</option><option value="out_of_scope">Out of scope</option>
       </Select>
     </li>)}</ul>}
