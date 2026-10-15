@@ -39,8 +39,8 @@ export interface C2GrantsView {
 export class C2GrantsService {
   /**
    * @param maxGrantHours  Ticket 16 consumer hook: the workspace policy
-   *   `policy.c2_grant_max_hours` loader. Absent/failed loads fall back to
-   *   the 24h default — a settings outage never widens or breaks the grant path.
+   *   `policy.c2_grant_max_hours` loader. An unconfigured consumer uses 24h;
+   *   an unavailable configured policy fails closed.
    */
   public constructor(private readonly db: PrismaClient, private readonly maxGrantHours?: () => Promise<number | null>) {}
 
@@ -50,13 +50,9 @@ export class C2GrantsService {
 
   private async maxTtlMs(): Promise<number> {
     if (this.maxGrantHours === undefined) return DEFAULT_MAX_GRANT_TTL_MS;
-    try {
-      const hours = await this.maxGrantHours();
-      if (hours === null || !Number.isFinite(hours) || hours <= 0) return DEFAULT_MAX_GRANT_TTL_MS;
-      return hours * 60 * 60 * 1000;
-    } catch {
-      return DEFAULT_MAX_GRANT_TTL_MS;
-    }
+    const hours = await this.maxGrantHours();
+    if (hours === null || !Number.isFinite(hours) || hours <= 0 || hours > 24) throw new ProjectApiError(503, 'The C2 grant policy is unavailable.');
+    return hours * 60 * 60 * 1000;
   }
 
   public async list(actorId: string, engagementId: string): Promise<C2GrantsView> {
@@ -119,8 +115,12 @@ export class C2GrantsService {
     return this.toView(updated);
   }
 
-  /** The command gate wired into C2Service.dispatchCommand. */
-  public async assertCommandAuthorized(engagementId: string, sessionId: string, actorId: string): Promise<void> {
+  /**
+   * The command gate wired into C2Service.dispatchCommand/reconcile. The
+   * executable path is passed so an approved grant's `commandPrefix` is
+   * enforced here, not by the client.
+   */
+  public async assertCommandAuthorized(engagementId: string, sessionId: string, actorId: string, path?: string): Promise<void> {
     await assertEngagementOpen(this.db, engagementId);
     await this.sweep(engagementId);
     const grant = await this.db.c2Grant.findFirst({
@@ -129,6 +129,9 @@ export class C2GrantsService {
     });
     if (grant === null) {
       throw new ProjectApiError(403, 'No approved grant covers this session for your account; request access first.');
+    }
+    if (grant.commandPrefix !== null && grant.commandPrefix.length > 0 && (path === undefined || !path.startsWith(grant.commandPrefix))) {
+      throw new ProjectApiError(403, `The approved grant only covers commands under ${grant.commandPrefix}.`);
     }
     // Absolute deadline check at the command site — including the in-flight
     // completion case below, new dispatch locks at expiry with no grace.
