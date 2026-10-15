@@ -11,10 +11,11 @@ afterEach(async () => { if (root) await rm(root, { recursive: true, force: true 
 async function setup() {
   root = await mkdtemp(path.join(tmpdir(), 'raptix-w04-'));
   await mkdir(path.join(root, 'test-project', 'plan'), { recursive: true });
-  const record: ProjectRecord = { id: 'owned', name: 'test-project', displayName: null, targetType: 'web_url', targetValue: 'http://authorized.invalid', authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, workspacePath: '/ignored', createdAt: new Date(), updatedAt: new Date() };
+  const record: ProjectRecord = { id: 'owned', name: 'test-project', workspaceSlug: 'test-project', displayName: null, targetType: 'web_url', targetValue: 'http://authorized.invalid', authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, workspacePath: '/ignored', createdAt: new Date(), updatedAt: new Date() };
   const repository: ProjectRepositoryPort = {
     async list() { return [record]; },
     async findById(owner, id) { return owner === record.userId && id === record.id ? record : null; },
+    async allocateWorkspaceSlug() { throw new Error('Read-only test'); },
     async create() { throw new Error('Read-only test'); }, async update() { throw new Error('Read-only test'); },
   };
   const app = await buildApp({ projectsService: new ProjectsService({ repository, workspaceRoot: root, identity: { id: 'local', mode: 'local-single-user' } }) });

@@ -30,6 +30,10 @@ model Engagement {
   name                   String
   // Operator-facing display label; falls back to `name` when unset.
   displayName            String?
+  // Server-issued, globally unique workspace partition identity. Every
+  // filesystem/sandbox/KG partition keys off this value — never the
+  // per-owner `name`, which may repeat across owners.
+  workspaceSlug          String           @unique
   targetType             TargetType
   targetValue            String
   authorizationConfirmed Boolean          @default(false)

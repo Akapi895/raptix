@@ -7,7 +7,7 @@ import { registerSettingsRoutes } from '../src/http/routes/settings.routes.js';
 import { EngagementDeleteConflictError, SettingsService, toSettingsView } from '../src/services/settings-service.js';
 import { ProjectNotFoundError } from '../src/services/projects-service.js';
 
-const BASE = { id: 'eng-1', name: 'w15-slug', displayName: 'W15 Settings', targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, workspacePath: null, runtimeContextLockedAt: null, createdAt: new Date('2026-10-01T00:00:00Z'), updatedAt: new Date('2026-10-01T00:00:00Z') } as const;
+const BASE = { id: 'eng-1', name: 'w15-slug', workspaceSlug: 'w15-slug', displayName: 'W15 Settings', targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, workspacePath: null, runtimeContextLockedAt: null, createdAt: new Date('2026-10-01T00:00:00Z'), updatedAt: new Date('2026-10-01T00:00:00Z') } as const;
 
 function buildDb(record: Record<string, unknown> | null) {
   return {

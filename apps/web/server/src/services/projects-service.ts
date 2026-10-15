@@ -28,6 +28,8 @@ import type { PlanningView } from '@raptix/web-contracts';
 export interface ProjectRecord {
   readonly id: string;
   readonly name: string;
+  /** Server-issued, globally unique workspace partition identity (W01). */
+  readonly workspaceSlug: string;
   readonly displayName: string | null;
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
@@ -45,6 +47,8 @@ export interface ProjectRecord {
 
 export interface CreateProjectData {
   readonly name: string;
+  /** Server-issued by `allocateWorkspaceSlug`; immutable after create. */
+  readonly workspaceSlug: string;
   readonly displayName?: string | null;
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
@@ -70,6 +74,12 @@ export interface UpdateProjectData {
 export interface ProjectRepositoryPort {
   list(userId: string): Promise<ProjectRecord[]>;
   findById(userId: string, id: string): Promise<ProjectRecord | null>;
+  /**
+   * Reserve a globally unique workspace slug derived from `name`. Pure read
+   * allocation: the `workspaceSlug` unique constraint remains the backstop
+   * for concurrent creators.
+   */
+  allocateWorkspaceSlug(name: string): Promise<string>;
   create(userId: string, data: CreateProjectData): Promise<ProjectRecord>;
   update(
     userId: string,
@@ -97,6 +107,21 @@ export class ProjectNotFoundError extends ProjectApiError {
 export class ProjectNameConflictError extends ProjectApiError {
   public constructor(slug: string) {
     super(409, `An engagement named "${slug}" already exists for this owner`);
+  }
+}
+
+/**
+ * Signalled by the repository when the globally unique `workspaceSlug`
+ * constraint rejects an insert (concurrent allocation raced past the
+ * pre-check). The service retries with a freshly allocated slug.
+ */
+export class WorkspaceSlugConflictError extends Error {
+  public readonly slug: string;
+
+  public constructor(slug: string) {
+    super(`Workspace slug "${slug}" is already in use`);
+    this.name = 'WorkspaceSlugConflictError';
+    this.slug = slug;
   }
 }
 
@@ -137,7 +162,7 @@ function toMetadataState(record: ProjectRecord): MetadataState {
 function toProjectViewModel(record: ProjectRecord): ProjectViewModel {
   return {
     id: record.id,
-    workspaceSlug: record.name,
+    workspaceSlug: record.workspaceSlug,
     displayName: record.displayName ?? record.name,
     targetType: record.targetType,
     targetValue: record.targetValue,
@@ -210,42 +235,59 @@ export class ProjectsService {
   }
 
   /**
-   * Create order matters: parse, then containment-check and mkdir the plan
-   * dir, then persist. A filesystem failure therefore never leaves a DB row
-   * and never yields a fake 201; a DB failure (e.g. 409 on the per-owner
-   * unique name) can leave an idempotent empty slug dir that the same slug
-   * reuses — accepted residue, no compensation needed.
+   * Create order matters: parse, then allocate a globally unique workspace
+   * slug (W01 — the per-owner `name` alone is not a safe partition identity),
+   * then containment-check and mkdir the plan dir, then persist. A filesystem
+   * failure therefore never leaves a DB row and never yields a fake 201; a DB
+   * failure (409 on the per-owner unique name, or a lost `workspaceSlug`
+   * allocation race) retries allocation on the slug conflict only — an
+   * idempotent empty slug dir may remain, accepted residue, no compensation
+   * needed.
    */
   public async createProject(
     userId: string | undefined,
     raw: unknown,
   ): Promise<ProjectViewModel> {
     const parsed = parseCreateProject(raw);
-    const workspacePath = await resolveEngagementWorkspaceDir(
-      this.workspaceRoot,
-      parsed.name,
-    );
-    await prepareEngagementPlanDir(this.workspaceRoot, parsed.name);
-    let record: ProjectRecord;
-    try {
-      record = await this.repository.create(this.ownerId(userId), {
-        name: parsed.name,
-        ...(parsed.displayName === undefined
-          ? {}
-          : { displayName: parsed.displayName }),
-        targetType: parsed.targetType,
-        targetValue: parsed.targetValue,
-        authorizationConfirmed: parsed.authorizationConfirmed,
-        brief: parsed.brief,
-        workspacePath,
-      });
-    } catch (error) {
-      if (isOwnerNameConflict(error)) {
-        throw new ProjectNameConflictError(parsed.name);
+    let slugConflict: WorkspaceSlugConflictError | null = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const workspaceSlug = await this.repository.allocateWorkspaceSlug(
+        parsed.name,
+      );
+      const workspacePath = await resolveEngagementWorkspaceDir(
+        this.workspaceRoot,
+        workspaceSlug,
+      );
+      await prepareEngagementPlanDir(this.workspaceRoot, workspaceSlug);
+      try {
+        const record = await this.repository.create(this.ownerId(userId), {
+          name: parsed.name,
+          ...(parsed.displayName === undefined
+            ? {}
+            : { displayName: parsed.displayName }),
+          targetType: parsed.targetType,
+          targetValue: parsed.targetValue,
+          authorizationConfirmed: parsed.authorizationConfirmed,
+          brief: parsed.brief,
+          workspaceSlug,
+          workspacePath,
+        });
+        return toProjectViewModel(record);
+      } catch (error) {
+        if (error instanceof WorkspaceSlugConflictError) {
+          slugConflict = error;
+          continue;
+        }
+        if (isOwnerNameConflict(error)) {
+          throw new ProjectNameConflictError(parsed.name);
+        }
+        throw error;
       }
-      throw error;
     }
-    return toProjectViewModel(record);
+    throw (
+      slugConflict ??
+      new Error('Workspace slug allocation raced repeatedly; giving up')
+    );
   }
 
   /**

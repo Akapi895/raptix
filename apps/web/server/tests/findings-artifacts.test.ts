@@ -49,7 +49,7 @@ async function buildHarness(): Promise<Harness> {
   const db = {
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
-        where.id === 'eng-1' && (where.userId === undefined || where.userId === 'local') ? { id: 'eng-1', name: slug, userId: 'local' } : null,
+        where.id === 'eng-1' && (where.userId === undefined || where.userId === 'local') ? { id: 'eng-1', name: slug, workspaceSlug: slug, userId: 'local' } : null,
     },
   };
   const app = Fastify({ logger: false });
@@ -71,6 +71,31 @@ afterEach(async () => {
 });
 
 describe('W12 findings projection', () => {
+  it('W01: resolves workspace contents by the global workspace slug, not the owner name', async () => {
+    const workspaceRoot = await mkdtemp(path.join(tmpdir(), 'w12-slug-'));
+    harnesses.push({ app: { close: async () => undefined } as unknown as FastifyInstance, workspaceRoot, slug: 'dup-name' });
+    const slugDir = `dup-name-${Date.now().toString(36)}`;
+    const db = {
+      engagement: {
+        findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
+          where.id === 'eng-1' ? { id: 'eng-1', name: 'dup-name', workspaceSlug: slugDir, userId: 'local' } : null,
+      },
+    };
+    const app = Fastify({ logger: false });
+    registerErrorHandler(app);
+    registerFindingsRoutes(app, new FindingsService(db as never, workspaceRoot), new ArtifactsService(db as never, workspaceRoot), { id: 'local', mode: 'local-single-user' });
+    await app.ready();
+    try {
+      await mkdir(path.join(workspaceRoot, slugDir, 'findings'), { recursive: true });
+      await writeFile(path.join(workspaceRoot, slugDir, 'findings', 'FIND-2026-009.md'), FINDING_MD, 'utf8');
+      await mkdir(path.join(workspaceRoot, 'dup-name', 'findings'), { recursive: true });
+      const response = await app.inject({ method: 'GET', url: '/api/engagements/eng-1/findings' });
+      expect(response.statusCode).toBe(200);
+      const view = response.json();
+      expect(view.findings).toHaveLength(1);
+      expect(view.findings[0]).toMatchObject({ id: 'FIND-2026-009' });
+    } finally { await app.close(); }
+  });
   it('parses FIND-*.md into public views with quality flags and bounded raw source', async () => {
     await withHarness(async (h) => {
       const dir = path.join(h.workspaceRoot, h.slug, 'findings');

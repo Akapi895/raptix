@@ -43,7 +43,9 @@ export class ExportService {
   public async export(userId: string, engagementId: string, format: ExportFormat): Promise<ExportResult> {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
     if (!project) throw new ProjectNotFoundError();
-    const payload = await this.collect(project.name, engagementId);
+    // Workspace contents resolve by the globally unique partition slug (W01);
+    // filenames/labels keep the per-owner engagement name.
+    const payload = await this.collect(project, engagementId);
     if (format === 'json') {
       return {
         filename: `${project.name}-export.json`,
@@ -58,8 +60,8 @@ export class ExportService {
     };
   }
 
-  private async collect(slug: string, engagementId: string): Promise<ExportPayload> {
-    const dir = await resolveEngagementWorkspaceDir(this.workspaceRoot, slug);
+  private async collect(project: { workspaceSlug: string; name: string }, engagementId: string): Promise<ExportPayload> {
+    const dir = await resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
     const planDocs: Record<string, unknown> = {};
     for (const docName of PLAN_DOC_NAMES) {
       try {
@@ -84,7 +86,7 @@ export class ExportService {
       }
     }
     return {
-      engagement: { id: engagementId, name: slug },
+      engagement: { id: engagementId, name: project.name },
       planDocs,
       findings,
       findingsUnreadable,

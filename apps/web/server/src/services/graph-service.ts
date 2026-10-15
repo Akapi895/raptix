@@ -170,7 +170,10 @@ export class GraphService {
   private async engagementName(userId: string, engagementId: string): Promise<string> {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
     if (!project) throw new ProjectNotFoundError();
-    return project.name;
+    // W01: the KG partition key is the globally unique workspace slug that
+    // runtime hydration writes as `engagement_name` — never the per-owner
+    // display name, which may repeat across owners.
+    return project.workspaceSlug;
   }
 
   public async graph(userId: string, engagementId: string): Promise<GraphView> {

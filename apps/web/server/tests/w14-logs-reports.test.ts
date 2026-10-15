@@ -22,7 +22,7 @@ async function buildHarness(): Promise<Harness> {
   const db = {
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
-        where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: slug } : null,
+        where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: slug, workspaceSlug: slug } : null,
     },
   };
   const binding = { threadId: 'th-1', assistantId: 'soundwave', kind: 'planning', runtimeConfigHash: 'h1' } as unknown as ThreadBindingView;

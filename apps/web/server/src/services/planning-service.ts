@@ -76,7 +76,7 @@ async function readDocument(root: string, slug: string, name: PlanningDocumentNa
 }
 
 export async function readPlanningView(workspaceRoot: string, project: ProjectRecord, metadataVerified: boolean): Promise<PlanningView> {
-  const entries = await Promise.all(PLANNING_DOCUMENTS.map(async name => [name, await readDocument(workspaceRoot, project.name, name)] as const));
+  const entries = await Promise.all(PLANNING_DOCUMENTS.map(async name => [name, await readDocument(workspaceRoot, project.workspaceSlug, name)] as const));
   const reads = Object.fromEntries(entries) as Record<PlanningDocumentName, ReadDocument>;
   const reasons: string[] = [];
   if (!project.authorizationConfirmed) reasons.push('authorization_not_confirmed');
