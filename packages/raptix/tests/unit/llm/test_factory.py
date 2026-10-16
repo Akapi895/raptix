@@ -1,4 +1,4 @@
-﻿"""Unit tests for raptix.intelligence.llm.factory."""
+"""Unit tests for raptix.intelligence.llm.factory."""
 
 import asyncio
 import logging
@@ -1619,3 +1619,83 @@ class TestLLMTimeout:
         with pytest.raises(ValueError, match="greater than 0"):
             asyncio.run(model.ainvoke("hi"))
         assert called is False, "upstream request coroutine must not be created on bad timeout"
+
+
+class TestTransportTimeoutRetries:
+    """One transient APITimeoutError must not kill the whole run."""
+
+    @staticmethod
+    def _make_model(monkeypatch, retries: int = 2) -> _ProxiedChatOpenAI:
+        from pydantic import SecretStr
+
+        import raptix.intelligence.llm.factory as factory_module
+
+        monkeypatch.setattr(factory_module, "_TRANSPORT_RETRIES", retries)
+        monkeypatch.setattr(factory_module, "_TRANSPORT_RETRY_BACKOFF_S", 0.0)
+        return _ProxiedChatOpenAI(
+            model="openai/gpt-5.5",
+            base_url="http://localhost:4000",
+            api_key=SecretStr("test-key"),
+        )
+
+    def test_timeout_is_retried_then_succeeds(self, monkeypatch) -> None:
+        import httpx as _httpx
+        from openai import APITimeoutError as _Timeout
+
+        model = self._make_model(monkeypatch, retries=2)
+        calls = 0
+
+        def _call():
+            nonlocal calls
+            calls += 1
+            if calls < 3:
+                raise _Timeout(request=_httpx.Request("POST", "http://litellm:4000"))
+            return "ok"
+
+        assert model._call_retrying_transport(_call) == "ok"
+        assert calls == 3, "must retry twice before succeeding"
+
+    def test_timeout_raises_after_exhausting_retries(self, monkeypatch) -> None:
+        import httpx as _httpx
+        from openai import APITimeoutError as _Timeout
+
+        model = self._make_model(monkeypatch, retries=1)
+        calls = 0
+
+        def _call():
+            nonlocal calls
+            calls += 1
+            raise _Timeout(request=_httpx.Request("POST", "http://litellm:4000"))
+
+        with pytest.raises(_Timeout):
+            model._call_retrying_transport(_call)
+        assert calls == 2, "retries=1 means exactly two attempts"
+
+    def test_non_transport_error_raises_immediately(self, monkeypatch) -> None:
+        model = self._make_model(monkeypatch, retries=2)
+        calls = 0
+
+        def _call():
+            nonlocal calls
+            calls += 1
+            raise ValueError("not a transport error")
+
+        with pytest.raises(ValueError):
+            model._call_retrying_transport(_call)
+        assert calls == 1, "non-transport errors must not be retried"
+
+    def test_async_timeout_is_retried(self, monkeypatch) -> None:
+        import httpx as _httpx
+
+        model = self._make_model(monkeypatch, retries=2)
+        calls = 0
+
+        async def _call():
+            nonlocal calls
+            calls += 1
+            if calls < 2:
+                raise _httpx.ReadTimeout("timed out", request=_httpx.Request("POST", "http://x"))
+            return "ok"
+
+        assert asyncio.run(model._acall_retrying_transport(_call)) == "ok"
+        assert calls == 2

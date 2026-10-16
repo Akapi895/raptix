@@ -10,8 +10,9 @@ design spec, §13.4).
 
 ### Added
 
-- Web console: project Execution now combines a recipient-aware conversation
-  with an Agents/Context panel and an execution-history drawer. Mock instances
+- Web console: the project AI Workspace combines a recipient-aware conversation
+  with an Agents/Context panel and an execution-history drawer; the Execution
+  surface keeps the operations/runs table plus the tool-call trace. Mock instances
   have isolated drafts, questions, delivery/recovery states and ACK-gated controls
   in the shared authority. Real mode reuses owned thread/run/interrupt contracts
   and renders checkpoint invocations observe-only when per-instance identity,
@@ -92,6 +93,14 @@ design spec, §13.4).
 
 ### Fixed
 
+- A transient `APITimeoutError` from the LLM proxy escaped every retry layer
+  and tore down the whole engagement run ("LLM proxy unreachable") — observed
+  twice in one benchmark session, including a resumed run wedged mid-graph
+  with zero traffic for 18 minutes. Model calls now retry transport-level
+  timeouts (`openai.APITimeoutError`, `APIConnectionError`, `httpx`
+  timeout/connect/protocol errors) up to `RAPTIX_LLM_TIMEOUT_RETRIES`
+  (default 2) with linear `RAPTIX_LLM_TIMEOUT_RETRY_BACKOFF_S` backoff before
+  the actionable error is raised.
 - Every bash-driven specialist except the orchestrator hardcoded its LangGraph
   `recursion_limit` with no env override; a production run showed 18 of 20
   dispatch crashes landing at exactly `surface_exploit`'s old ceiling of 300 —
