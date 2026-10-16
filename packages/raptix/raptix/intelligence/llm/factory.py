@@ -27,7 +27,7 @@ from collections.abc import Awaitable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import httpx
 from langchain_core.exceptions import ContextOverflowError
@@ -897,6 +897,34 @@ def auth_inventory() -> AuthInventory:
     )
 
 
+_EMPTY_COMPLETION_RETRIES = 1
+
+
+class EmptyCompletionError(RuntimeError):
+    """Raised when a model returns neither content nor tool calls.
+
+    Reasoning-heavy models occasionally end a turn with a pure
+    chain-of-thought and zero content tokens (observed in production:
+    23k-43k reasoning tokens, ``output_tokens`` 0, ``stop='stop'``).
+    Such a response dead-ends the agent loop, so it is treated as a
+    retryable model failure: one same-model retry, then this exception.
+    ``ModelFallbackMiddleware`` catches it and reroutes down the
+    fallback chain, which is exactly the behaviour a transient empty
+    completion needs.
+    """
+
+
+def _has_usable_output(message: object) -> bool:
+    """True when a model turn carries content or tool calls."""
+    content = getattr(message, "content", "")
+    if isinstance(content, str):
+        if content.strip():
+            return True
+    elif content:
+        return True
+    return bool(getattr(message, "tool_calls", None))
+
+
 class _ProxiedChatOpenAI(ChatOpenAI):
     """Translate opaque transport/upstream errors into actionable RuntimeError
     messages so LangGraph's serde surfaces something the user can fix instead
@@ -914,11 +942,50 @@ class _ProxiedChatOpenAI(ChatOpenAI):
          a generic ``openai.BadRequestError`` whose serialized form gets
          flattened to 'internal error' on the way back to the CLI. We pull
          out the original message and rewrap it.
+
+    A third, softer failure surface is also handled here: a *successful*
+    response that carries no content and no tool calls (see
+    :class:`EmptyCompletionError`). One same-model retry, then the error.
     """
 
+    def _retry_when_empty(self, call):
+        result = call()
+        for _ in range(_EMPTY_COMPLETION_RETRIES):
+            if _has_usable_output(result):
+                return result
+            log.warning(
+                "empty completion from %s (no content, no tool calls); retrying",
+                self.model_name,
+            )
+            result = call()
+        if not _has_usable_output(result):
+            raise EmptyCompletionError(
+                f"model {self.model_name!r} returned no content and no tool calls"
+            )
+        return result
+
+    async def _aretry_when_empty(self, call):
+        result = await call()
+        for _ in range(_EMPTY_COMPLETION_RETRIES):
+            if _has_usable_output(result):
+                return result
+            log.warning(
+                "empty completion from %s (no content, no tool calls); retrying",
+                self.model_name,
+            )
+            result = await call()
+        if not _has_usable_output(result):
+            raise EmptyCompletionError(
+                f"model {self.model_name!r} returned no content and no tool calls"
+            )
+        return result
+
     def invoke(self, *args, **kwargs):
+        sup = super()
         try:
-            result = super().invoke(*args, **kwargs)
+            result = self._retry_when_empty(lambda: sup.invoke(*args, **kwargs))
+        except EmptyCompletionError:
+            raise
         except Exception as exc:
             _reraise_with_actionable_message(exc, self.model_name)
             raise
@@ -932,9 +999,14 @@ class _ProxiedChatOpenAI(ChatOpenAI):
         # ``call_with_timeout`` the ``super().ainvoke(...)`` coroutine would
         # already exist and leak un-awaited ("coroutine was never awaited").
         timeout = _resolve_llm_timeout_seconds()
+        sup = super()
         try:
-            result = await call_with_timeout(super().ainvoke(*args, **kwargs), timeout)
+            result = await self._aretry_when_empty(
+                lambda: call_with_timeout(sup.ainvoke(*args, **kwargs), timeout)
+            )
         except LLMTimeoutError:
+            raise
+        except EmptyCompletionError:
             raise
         except Exception as exc:
             _reraise_with_actionable_message(exc, self.model_name)
@@ -1029,7 +1101,111 @@ def _model_is_nvidia_nim(model: str) -> bool:
     return model.lower().startswith("nvidia_nim/")
 
 
-class _DeepSeekThinkingChatOpenAI(_ProxiedChatOpenAI):
+def _model_preserves_reasoning(model: str) -> bool:
+    """Return True for models whose thinking trace arrives as ``reasoning_content``.
+
+    GLM (``zai-org/GLM-*``) and MiniMax thinking models emit the trace in a
+    separate ``reasoning_content`` field (non-streaming) and
+    ``choices[].delta.reasoning_content`` (streaming). LangChain's default
+    converters drop it, so the class below re-attaches it to
+    ``AIMessage.additional_kwargs`` for display surfaces. Unlike DeepSeek,
+    these models do NOT require the trace to be passed back on subsequent
+    turns, so only extraction is needed.
+    """
+    slug = model.rsplit("/", 1)[-1].lower()
+    return slug.startswith("glm") or slug.startswith("minimax")
+
+
+# Display-only cap on the stowed thinking trace. Long traces bloat the
+# checkpoint state; the web console's own preview cap is 16000 chars, so
+# stowing more than that wastes checkpoint bytes for nothing.
+REASONING_STORE_CAP = 16000
+
+
+class _ReasoningContentChatOpenAI(_ProxiedChatOpenAI):
+    """ChatOpenAI subclass that preserves ``reasoning_content`` thinking traces.
+
+    Thinking-mode models (DeepSeek V4, GLM, MiniMax) return the trace in a
+    ``reasoning_content`` field beside ``content``. LangChain's default
+    converters silently drop it in both directions. This base class only
+    re-attaches it to ``AIMessage.additional_kwargs``:
+
+    - Streaming: ``_convert_chunk_to_generation_chunk`` fishes the field out
+      of the raw delta dict; ``AIMessageChunk.__add__`` then concatenates the
+      fragments into the full trace.
+    - Non-streaming: ``_create_chat_result`` pulls it from the response dict.
+
+    Subclasses decide whether the trace must also be re-injected into
+    outbound requests (DeepSeek requires it; GLM/MiniMax do not).
+    """
+
+    #: Default cap keeps long traces from bloating checkpoint state; the
+    #: web console's own preview cap is 16000 chars. ``None`` keeps the
+    #: full trace (pass-back models). ClassVar: plain class attribute,
+    #: deliberately not a pydantic field.
+    reasoning_store_cap: ClassVar[int | None] = REASONING_STORE_CAP
+
+    def _convert_chunk_to_generation_chunk(
+        self,
+        chunk: dict,
+        default_chunk_class: type,
+        base_generation_info: dict | None,
+    ) -> Any:
+        gen_chunk = super()._convert_chunk_to_generation_chunk(
+            chunk, default_chunk_class, base_generation_info
+        )
+        if gen_chunk is None:
+            return None
+
+        choices = chunk.get("choices") or chunk.get("chunk", {}).get("choices", [])
+        if choices:
+            delta = choices[0].get("delta") or {}
+            rc = delta.get("reasoning_content")
+            if rc and isinstance(gen_chunk.message, AIMessage):
+                kwargs = gen_chunk.message.additional_kwargs
+                stowed = kwargs.get("reasoning_content", "")
+                cap = self.reasoning_store_cap
+                if cap is None or len(stowed) < cap:
+                    kwargs["reasoning_content"] = (stowed + rc)[: cap or None]
+        return gen_chunk
+
+    def _create_chat_result(self, response: Any, generation_info: dict | None = None) -> Any:
+        """Capture ``reasoning_content`` from the response dict.
+
+        ``_create_chat_result`` receives either the raw OpenAI
+        ``ChatCompletion`` object or its ``.model_dump()`` dict. Either way,
+        each choice's ``message`` dict contains ``reasoning_content`` (the
+        OpenAI SDK v1.x preserves it via ``model_extra``).
+        """
+        import openai as _openai
+
+        if isinstance(response, _openai.BaseModel):
+            response_dict = response.model_dump(
+                exclude={"choices": {"__all__": {"message": {"parsed"}}}}
+            )
+        elif isinstance(response, dict):
+            response_dict = response
+        else:
+            response_dict = {}
+
+        result = super()._create_chat_result(response, generation_info)
+
+        choices = response_dict.get("choices") or []
+        for choice, generation in zip(choices, result.generations):
+            msg = getattr(generation, "message", None)
+            if not isinstance(msg, AIMessage):
+                continue
+            if msg.additional_kwargs.get("reasoning_content"):
+                continue
+            rc = (choice.get("message") or {}).get("reasoning_content")
+            if rc:
+                cap = self.reasoning_store_cap
+                msg.additional_kwargs["reasoning_content"] = rc[:cap] if cap else rc
+
+        return result
+
+
+class _DeepSeekThinkingChatOpenAI(_ReasoningContentChatOpenAI):
     """ChatOpenAI subclass that preserves DeepSeek ``reasoning_content``.
 
     DeepSeek V4 Pro's thinking mode returns ``reasoning_content`` alongside
@@ -1040,12 +1216,19 @@ class _DeepSeekThinkingChatOpenAI(_ProxiedChatOpenAI):
     1. Response → AIMessage: ``reasoning_content`` is not extracted
     2. AIMessage → request dict: ``reasoning_content`` is not serialized
 
-    This class patches both directions by:
+    Extraction is inherited from :class:`_ReasoningContentChatOpenAI`; this
+    subclass adds the request-side half:
+
     - Storing ``reasoning_content`` in ``AIMessage.additional_kwargs``
     - Injecting it back into request dicts for assistant messages
     - Passing ``extra_body={"thinking": {"type": "enabled"}}`` and
       ``reasoning_effort="high"`` on every request
+
+    The full (uncapped) trace is kept because the upstream API rejects
+    truncated pass-back.
     """
+
+    reasoning_store_cap: ClassVar[int | None] = None
 
     def _get_request_payload(
         self,
@@ -1110,82 +1293,6 @@ class _DeepSeekThinkingChatOpenAI(_ProxiedChatOpenAI):
             super()._agenerate(messages, *args, **kwargs),
             timeout,
         )
-        return result
-
-    def _convert_chunk_to_generation_chunk(
-        self,
-        chunk: dict,
-        default_chunk_class: type,
-        base_generation_info: dict | None,
-    ) -> Any:
-        """Intercept streaming chunks to capture ``reasoning_content``.
-
-        DeepSeek sends ``reasoning_content`` inside ``choices[0].delta``
-        during streaming.  LangChain's ``_convert_delta_to_message_chunk``
-        ignores it, so it never reaches ``AIMessageChunk.additional_kwargs``.
-
-        We call the parent to build the ``ChatGenerationChunk`` normally,
-        then fish ``reasoning_content`` out of the raw delta dict and inject
-        it into the chunk message's ``additional_kwargs``.  When LangChain
-        aggregates chunks via ``AIMessageChunk.__add__``, ``merge_dicts``
-        concatenates the string fragments into the full reasoning trace,
-        which ``_get_request_payload`` then injects back into the API
-        request on subsequent turns.
-        """
-        gen_chunk = super()._convert_chunk_to_generation_chunk(
-            chunk, default_chunk_class, base_generation_info
-        )
-        if gen_chunk is None:
-            return None
-
-        # Extract reasoning_content from the raw delta
-        choices = chunk.get("choices") or chunk.get("chunk", {}).get("choices", [])
-        if choices:
-            delta = choices[0].get("delta") or {}
-            rc = delta.get("reasoning_content")
-            if rc and isinstance(gen_chunk.message, AIMessage):
-                gen_chunk.message.additional_kwargs.setdefault("reasoning_content", "")
-                gen_chunk.message.additional_kwargs["reasoning_content"] += rc
-
-        return gen_chunk
-
-    def _create_chat_result(self, response: Any, generation_info: dict | None = None) -> Any:
-        """Override to capture ``reasoning_content`` from the response dict.
-
-        ``_create_chat_result`` receives either the raw OpenAI ``ChatCompletion``
-        object or its ``.model_dump()`` dict.  Either way, each choice's
-        ``message`` dict contains ``reasoning_content`` (the OpenAI SDK v1.x
-        preserves it via ``model_extra``).  LangChain's ``_convert_dict_to_message``
-        ignores it, so we fish it out of the response dict and inject it into
-        the resulting ``AIMessage.additional_kwargs`` after the parent builds
-        the ``ChatResult``.
-        """
-        # Get the response as a dict so we can access reasoning_content
-        import openai as _openai
-
-        if isinstance(response, _openai.BaseModel):
-            response_dict = response.model_dump(
-                exclude={"choices": {"__all__": {"message": {"parsed"}}}}
-            )
-        elif isinstance(response, dict):
-            response_dict = response
-        else:
-            response_dict = {}
-
-        result = super()._create_chat_result(response, generation_info)
-
-        # Pair up choices with generations and inject reasoning_content
-        choices = response_dict.get("choices") or []
-        for choice, generation in zip(choices, result.generations):
-            msg = getattr(generation, "message", None)
-            if not isinstance(msg, AIMessage):
-                continue
-            if msg.additional_kwargs.get("reasoning_content"):
-                continue
-            rc = (choice.get("message") or {}).get("reasoning_content")
-            if rc:
-                msg.additional_kwargs["reasoning_content"] = rc
-
         return result
 
 
@@ -1788,6 +1895,11 @@ class LLMFactory:
             kwargs["temperature"] = temperature
         if _model_is_deepseek_thinking(model):
             return _DeepSeekThinkingChatOpenAI(**kwargs)
+        if _model_preserves_reasoning(model):
+            # GLM / MiniMax thinking traces: display-only preservation. The
+            # trace must NOT be passed back upstream, and it is capped so
+            # long reasoning never bloats the checkpoint state.
+            return _ReasoningContentChatOpenAI(**kwargs)
         if _model_is_nvidia_nim(model):
             return _NvidiaNIMChatOpenAI(**kwargs)
         return _ProxiedChatOpenAI(**kwargs)

@@ -1,4 +1,4 @@
-"""Unit tests for raptix.intelligence.llm.factory."""
+﻿"""Unit tests for raptix.intelligence.llm.factory."""
 
 import asyncio
 import logging
@@ -14,6 +14,7 @@ from raptix.intelligence.llm.factory import (
     _model_max_output_tokens,
     _oauth_credentials_present,
     _oauth_env_credentials_present,
+    _ProxiedChatOpenAI,
     _resolve_credentials,
     _resolve_max_tokens,
 )
@@ -29,7 +30,7 @@ from raptix_core.types.llm import (
 class TestIsRealKey:
     """Vendor-aware API key validation.
 
-    The launcher writes ``your-…-key-here`` placeholders into .env so the
+    The launcher writes ``your-â€¦-key-here`` placeholders into .env so the
     user can later swap in a real key. The factory needs to reject those
     plus any obvious junk (short strings, ``placeholder``/``not-used``
     markers, vendor-prefix mismatches) so the credentials inventory
@@ -43,7 +44,7 @@ class TestIsRealKey:
         assert _is_real_key("YOUR-OPENAI-KEY-HERE") is False  # case-insensitive
 
     def test_rejects_short_strings(self) -> None:
-        # Under 24 chars — every vendor-issued key exceeds this.
+        # Under 24 chars â€” every vendor-issued key exceeds this.
         assert _is_real_key("sk-tooshort") is False
 
     def test_rejects_placeholder_tokens_in_value(self) -> None:
@@ -60,7 +61,7 @@ class TestIsRealKey:
         # An OpenAI-shaped key in the Anthropic slot must be caught.
         openai_key = "sk-proj-realopenaitokenfortestingauthrouting12345"
         assert _is_real_key(openai_key, AuthMethod.ANTHROPIC_API) is False
-        # …and vice versa.
+        # â€¦and vice versa.
         anthropic_key = "sk-ant-api03-realtokenfortestingauthrouting12345"
         assert _is_real_key(anthropic_key, AuthMethod.GOOGLE_API) is False
 
@@ -85,7 +86,7 @@ class TestOAuthCredentialsPresent:
         assert _oauth_credentials_present(AuthMethod.ANTHROPIC_OAUTH) is False
 
     def test_returns_false_when_file_is_empty(self, monkeypatch, tmp_path) -> None:
-        # ``/dev/null``-style mounts read as empty — must fail closed.
+        # ``/dev/null``-style mounts read as empty â€” must fail closed.
         empty = tmp_path / "empty.json"
         empty.write_text("")
         monkeypatch.setenv("HOME", str(tmp_path))
@@ -118,7 +119,7 @@ class TestOAuthEnvCredentials:
     """B12: env-backed OAuth creds count as configured, not just on-disk files.
     Before the fix, ``_method_is_configured`` required a credential *file* even
     though the LiteLLM handlers also accept env-var tokens (GEMINI_ACCESS_TOKEN,
-    GROK_SESSION_TOKEN, COPILOT_REFRESH_TOKEN, …). Env-only setups were silently
+    GROK_SESSION_TOKEN, COPILOT_REFRESH_TOKEN, â€¦). Env-only setups were silently
     dropped from the fallback chain.
     """
 
@@ -153,7 +154,7 @@ class TestOAuthEnvCredentials:
         assert _method_is_configured(AuthMethod.GOOGLE_OAUTH) is False
 
     def test_env_creds_still_require_intent_flag(self, monkeypatch, tmp_path) -> None:
-        # Env token present but the boolean intent flag is off → not configured.
+        # Env token present but the boolean intent flag is off â†’ not configured.
         monkeypatch.setenv("HOME", str(tmp_path))
         monkeypatch.setenv("GEMINI_TOKENS_PATH", str(tmp_path / "absent.json"))
         monkeypatch.delenv("RAPTIX_AUTH_GEMINI", raising=False)
@@ -262,7 +263,7 @@ class TestLLMFactory:
         ]
 
     def test_get_fallback_models_without_fallback(self):
-        # Single-credential mapping → no fallback.
+        # Single-credential mapping â†’ no fallback.
         creds = Credentials(methods=[AuthMethod.OPENAI_API])
         mapping = LLMModelMapping.from_credentials_and_profile(creds, ModelProfile.ECO)
         factory = LLMFactory(self.proxy, mapping)
@@ -279,7 +280,7 @@ class TestLLMFactoryEmptyChainValidation:
     """A credentials inventory whose AuthMethods lack a (method, tier) entry
     for some required tier resolves to an EMPTY model chain at that tier.
     ``LLMModelMapping.from_credentials_and_profile`` silently skips such
-    roles, so the failure surfaces much later — either as a confusing
+    roles, so the failure surfaces much later â€” either as a confusing
     ``KeyError: No model assignment for role: ...`` at ``get_model`` time
     or, when a caller routes through middleware, as a primary-less
     ``ModelFallbackMiddleware([])``. Validate at construction so the
@@ -290,7 +291,7 @@ class TestLLMFactoryEmptyChainValidation:
         self.proxy = ProxyConfig(url="http://localhost:4000", api_key="test-key")
 
     def test_empty_tier_raises_at_init_with_inventory_listed(self) -> None:
-        # MINIMAX_API has only HIGH+MID entries in METHOD_MODELS — no LOW.
+        # MINIMAX_API has only HIGH+MID entries in METHOD_MODELS â€” no LOW.
         # ECO routes ``recon`` (and other LOW roles) to Tier.LOW, so the
         # LOW chain resolves to []. The factory must refuse to construct.
         creds = Credentials(methods=[AuthMethod.MINIMAX_API])
@@ -305,20 +306,20 @@ class TestLLMFactoryEmptyChainValidation:
 
     def test_test_profile_empty_high_chain_raises(self) -> None:
         # MINIMAX_API covers HIGH+MID but not LOW; TEST profile forces every
-        # role to LOW → empty chain across the board.
+        # role to LOW â†’ empty chain across the board.
         creds = Credentials(methods=[AuthMethod.MINIMAX_API])
         with pytest.raises(ValueError, match="(?i)low"):
             LLMFactory(self.proxy, credentials=creds, profile=ModelProfile.TEST)
 
     def test_valid_inventory_still_constructs(self) -> None:
-        # OPENAI_API covers all three tiers — no empty chain, no regression.
+        # OPENAI_API covers all three tiers â€” no empty chain, no regression.
         creds = Credentials(methods=[AuthMethod.OPENAI_API])
         factory = LLMFactory(self.proxy, credentials=creds, profile=ModelProfile.ECO)
         assert factory.get_model("recon").model_name == "openai/gpt-5-nano"
         assert factory.get_model("decepticon").model_name == "openai/gpt-5.5"
 
     def test_explicit_mapping_bypasses_validation(self) -> None:
-        # When the caller supplies a mapping directly, they own its shape —
+        # When the caller supplies a mapping directly, they own its shape â€”
         # the credentials-based validation does not apply (existing tests
         # build empty/partial mappings explicitly).
         factory = LLMFactory(self.proxy, mapping=LLMModelMapping())
@@ -363,7 +364,7 @@ class TestResolveCredentials:
 
     def test_oauth_only(self, monkeypatch, tmp_path):
         # OAuth detection requires the credential FILE alongside the
-        # boolean — point Claude Code at a temp credentials file so the
+        # boolean â€” point Claude Code at a temp credentials file so the
         # test runs deterministically regardless of host state.
         cred_file = tmp_path / "credentials.json"
         cred_file.write_text('{"claudeAiOauth": {"accessToken": "sk-ant-oat01-deadbeefdeadbeef"}}')
@@ -398,7 +399,7 @@ class TestResolveCredentials:
     def test_oauth_flag_without_credential_file_is_dropped(self, monkeypatch, tmp_path):
         """Stale ``RAPTIX_AUTH_CLAUDE_CODE=true`` after ``codex logout``
         (or after the user deleted ``~/.claude/.credentials.json``) must
-        not place the OAuth method into the chain — otherwise every
+        not place the OAuth method into the chain â€” otherwise every
         request 401s before falling back to the next provider.
         """
         # Point both the primary and legacy fallback paths at tmp_path so
@@ -512,13 +513,13 @@ class TestResolveCredentials:
     def test_explicit_priority_no_creds_logs_error(self, monkeypatch, tmp_path, caplog):
         """An explicit ``RAPTIX_AUTH_PRIORITY`` whose every listed
         method fails detection (typical of a broken OAuth credentials
-        mount — e.g. ``CLAUDE_CREDENTIALS_VOLUME`` unset and the
+        mount â€” e.g. ``CLAUDE_CREDENTIALS_VOLUME`` unset and the
         compose file bound ``/dev/null`` into the container) must
         surface the root cause at ERROR level.
 
         Otherwise the silent fallback to ``all_api_methods()`` runs
         through nine unrelated providers and the operator only sees a
-        downstream 401-cascade — confusingly masked as a 429 once the
+        downstream 401-cascade â€” confusingly masked as a 429 once the
         routed-to provider (e.g. NVIDIA NIM) cools down. Backward
         compat is preserved: the resolver still returns
         ``all_api_methods()`` so module imports remain green; the
@@ -609,7 +610,7 @@ class TestResolveCredentials:
         monkeypatch.delenv("RAPTIX_AUTH_CLAUDE_CODE", raising=False)
 
         # Match the explicit-priority test's pattern so caplog sees the
-        # records — the decepticon parent logger defaults to
+        # records â€” the decepticon parent logger defaults to
         # ``propagate=False`` per ``raptix_core.utils.logging``.
         decepticon_log = logging.getLogger("raptix")
         monkeypatch.setattr(decepticon_log, "propagate", True)
@@ -618,7 +619,7 @@ class TestResolveCredentials:
             creds = _resolve_credentials()
 
         assert creds.methods == Credentials.all_api_methods().methods
-        # No ERROR records — this case stays informational.
+        # No ERROR records â€” this case stays informational.
         error_records = [r for r in caplog.records if r.levelname == "ERROR"]
         assert not error_records, (
             f"Unexpected ERROR logs in implicit-priority path: "
@@ -627,7 +628,7 @@ class TestResolveCredentials:
 
     def test_ollama_local_only_returns_ollama_chain(self, monkeypatch):
         """Issue #106: a user with only OLLAMA_API_BASE / OLLAMA_MODEL set
-        (no API keys, no OAuth) must get a chain of one — Ollama only.
+        (no API keys, no OAuth) must get a chain of one â€” Ollama only.
         Falling back to all-API-methods would produce 401 errors on every
         provider the user doesn't have."""
         for k in (
@@ -651,7 +652,7 @@ class TestResolveCredentials:
         assert creds.methods == [AuthMethod.OLLAMA_LOCAL]
 
     def test_explicit_priority_with_ollama_local(self, monkeypatch):
-        """User opts into Ollama via explicit priority — the resolver
+        """User opts into Ollama via explicit priority â€” the resolver
         recognizes it as configured when OLLAMA_API_BASE is set."""
         monkeypatch.setenv("RAPTIX_AUTH_PRIORITY", "ollama_local,anthropic_api")
         monkeypatch.setenv("OLLAMA_API_BASE", "http://host.docker.internal:11434")
@@ -674,7 +675,7 @@ class TestResolveCredentials:
         assert creds.methods == [AuthMethod.OLLAMA_LOCAL, AuthMethod.ANTHROPIC_API]
 
 
-# ── Temperature handling (issue #107) ───────────────────────────────────
+# â”€â”€ Temperature handling (issue #107) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 class TestTemperatureDrop:
@@ -728,7 +729,7 @@ class TestTemperatureDrop:
         assert self._drops("custom/kimi-for-coding") is True
 
 
-# ── Actionable error translation (issue #107 + community feedback) ──────
+# â”€â”€ Actionable error translation (issue #107 + community feedback) â”€â”€â”€â”€â”€â”€
 
 
 class TestActionableErrorTranslation:
@@ -758,7 +759,7 @@ class TestActionableErrorTranslation:
     def test_400_bad_request_branch(self):
         # openai.BadRequestError carries 'Error code: 400' in repr.
         exc = Exception("Error code: 400 - {'error': {'message': 'temperature is deprecated'}}")
-        type(exc).__name__  # noqa: B018 — sanity, ensures Exception default name
+        type(exc).__name__  # noqa: B018 â€” sanity, ensures Exception default name
         with pytest.raises(RuntimeError) as info:
             self._translate(exc, "anthropic/claude-opus-4-7")
         assert "rejected the request (400)" in str(info.value)
@@ -788,7 +789,7 @@ class TestActionableErrorTranslation:
         assert "OLLAMA_MODEL" in msg
 
     def test_unmatched_error_passes_through(self):
-        # Anything we don't recognize must NOT raise — the caller's
+        # Anything we don't recognize must NOT raise â€” the caller's
         # ``raise`` follows and re-raises the original exception with
         # full traceback.
         exc = ValueError("something completely unrelated")
@@ -828,7 +829,7 @@ class TestActionableErrorTranslation:
         assert _redact_secrets(text) == text
 
 
-# ── DeepSeek V4 Pro reasoning_content passthrough ────────────────────────
+# â”€â”€ DeepSeek V4 Pro reasoning_content passthrough â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 class TestDeepSeekReasoningContent:
@@ -865,7 +866,7 @@ class TestDeepSeekReasoningContent:
         parent_result = ChatResult(generations=[ChatGeneration(message=msg)])
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_create_chat_result",
             return_value=parent_result,
         ):
@@ -897,7 +898,7 @@ class TestDeepSeekReasoningContent:
         parent_result = ChatResult(generations=[ChatGeneration(message=msg)])
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_create_chat_result",
             return_value=parent_result,
         ):
@@ -939,11 +940,12 @@ class TestDeepSeekReasoningContent:
         base_chunk = ChatGenerationChunk(message=base_msg)
 
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
+        instance.reasoning_store_cap = None
         # Bind the real method to our mock instance
         method = _DeepSeekThinkingChatOpenAI._convert_chunk_to_generation_chunk
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_convert_chunk_to_generation_chunk",
             return_value=base_chunk,
         ):
@@ -975,10 +977,11 @@ class TestDeepSeekReasoningContent:
         base_chunk = ChatGenerationChunk(message=base_msg)
 
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
+        instance.reasoning_store_cap = None
         method = _DeepSeekThinkingChatOpenAI._convert_chunk_to_generation_chunk
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_convert_chunk_to_generation_chunk",
             return_value=base_chunk,
         ):
@@ -1027,7 +1030,7 @@ class TestDeepSeekReasoningContent:
         }
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_get_request_payload",
             return_value=mock_payload,
         ):
@@ -1064,16 +1067,17 @@ class TestDeepSeekReasoningContent:
         base_msg = AIMessageChunk(content="hi", additional_kwargs={})
         base_chunk = ChatGenerationChunk(message=base_msg)
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
+        instance.reasoning_store_cap = None
         method = _DeepSeekThinkingChatOpenAI._convert_chunk_to_generation_chunk
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_convert_chunk_to_generation_chunk",
             return_value=base_chunk,
         ):
             result = method(instance, raw_chunk, AIMessageChunk, None)
 
-        # Empty string is falsy — should not pollute additional_kwargs
+        # Empty string is falsy â€” should not pollute additional_kwargs
         assert "reasoning_content" not in result.message.additional_kwargs
 
     def test_convert_chunk_none_delta_no_crash(self):
@@ -1097,10 +1101,11 @@ class TestDeepSeekReasoningContent:
         base_msg = AIMessageChunk(content="", additional_kwargs={})
         base_chunk = ChatGenerationChunk(message=base_msg)
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
+        instance.reasoning_store_cap = None
         method = _DeepSeekThinkingChatOpenAI._convert_chunk_to_generation_chunk
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_convert_chunk_to_generation_chunk",
             return_value=base_chunk,
         ):
@@ -1123,10 +1128,11 @@ class TestDeepSeekReasoningContent:
         base_msg = AIMessageChunk(content="", additional_kwargs={})
         base_chunk = ChatGenerationChunk(message=base_msg)
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
+        instance.reasoning_store_cap = None
         method = _DeepSeekThinkingChatOpenAI._convert_chunk_to_generation_chunk
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_convert_chunk_to_generation_chunk",
             return_value=base_chunk,
         ):
@@ -1145,10 +1151,11 @@ class TestDeepSeekReasoningContent:
 
         raw_chunk = {"type": "content.delta"}  # parent returns None for these
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
+        instance.reasoning_store_cap = None
         method = _DeepSeekThinkingChatOpenAI._convert_chunk_to_generation_chunk
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_convert_chunk_to_generation_chunk",
             return_value=None,
         ):
@@ -1184,10 +1191,11 @@ class TestDeepSeekReasoningContent:
         base_msg = AIMessageChunk(content="", additional_kwargs={})
         base_chunk = ChatGenerationChunk(message=base_msg)
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
+        instance.reasoning_store_cap = None
         method = _DeepSeekThinkingChatOpenAI._convert_chunk_to_generation_chunk
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_convert_chunk_to_generation_chunk",
             return_value=base_chunk,
         ):
@@ -1223,7 +1231,7 @@ class TestDeepSeekReasoningContent:
         }
 
         with patch.object(
-            _DeepSeekThinkingChatOpenAI.__bases__[0],
+            _ProxiedChatOpenAI,
             "_get_request_payload",
             return_value=mock_payload,
         ):
@@ -1252,7 +1260,92 @@ class TestDeepSeekReasoningContent:
         assert _model_is_deepseek_thinking("openai/gpt-5.5") is False
 
 
-# ── LLAMACPP_LOCAL credential detection (issue #151) ────────────────────
+class TestReasoningContentPreservation:
+    """GLM / MiniMax thinking traces survive via ``_ReasoningContentChatOpenAI``.
+
+    Unlike DeepSeek these models never need the trace passed back, so the
+    shared extraction class only stows the trace (capped) in
+    ``additional_kwargs`` for display surfaces.
+    """
+
+    def test_model_preserves_reasoning_matching(self):
+        from raptix.intelligence.llm.factory import _model_preserves_reasoning
+
+        assert _model_preserves_reasoning("custom/zai-org/GLM-5.3-Flash") is True
+        assert _model_preserves_reasoning("custom/zai-org/GLM-5.2") is True
+        assert _model_preserves_reasoning("custom/MiniMax/MiniMax-M3") is True
+        assert _model_preserves_reasoning("openai/gpt-5.5") is False
+        assert _model_preserves_reasoning("deepseek/deepseek-v4-pro") is False
+
+    def test_create_chat_result_captures_and_caps(self):
+        from unittest.mock import patch
+
+        from langchain_core.messages import AIMessage
+        from langchain_core.outputs import ChatGeneration, ChatResult
+
+        from raptix.intelligence.llm.factory import (
+            REASONING_STORE_CAP,
+            _ReasoningContentChatOpenAI,
+        )
+
+        long_trace = "x" * (REASONING_STORE_CAP + 500)
+        response_dict = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "Four",
+                        "reasoning_content": long_trace,
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {},
+        }
+        msg = AIMessage(content="Four", additional_kwargs={})
+        with patch.object(
+            _ProxiedChatOpenAI,
+            "_create_chat_result",
+            return_value=ChatResult(generations=[ChatGeneration(message=msg)]),
+        ):
+            instance = object.__new__(_ReasoningContentChatOpenAI)
+            result = instance._create_chat_result(response_dict)
+
+        stowed = result.generations[0].message.additional_kwargs["reasoning_content"]
+        assert len(stowed) == REASONING_STORE_CAP
+
+    def test_chunk_extraction_accumulates_under_cap(self):
+        from unittest.mock import patch
+
+        from langchain_core.messages import AIMessageChunk
+        from langchain_core.outputs import ChatGenerationChunk
+
+        from raptix.intelligence.llm.factory import (
+            REASONING_STORE_CAP,
+            _ReasoningContentChatOpenAI,
+        )
+
+        def base_chunk_with():
+            return ChatGenerationChunk(message=AIMessageChunk(content="", additional_kwargs={}))
+
+        instance = object.__new__(_ReasoningContentChatOpenAI)
+        chunk = {"choices": [{"delta": {"reasoning_content": "a" * 100}}]}
+        with patch.object(
+            _ProxiedChatOpenAI,
+            "_convert_chunk_to_generation_chunk",
+            side_effect=lambda *a, **k: base_chunk_with(),
+        ):
+            first = instance._convert_chunk_to_generation_chunk(chunk, dict, None)
+            second = instance._convert_chunk_to_generation_chunk(chunk, dict, None)
+
+        # Per-chunk extraction: each delta chunk carries only its own
+        # fragment; LangChain concatenates fragments when aggregating chunks.
+        assert first.message.additional_kwargs["reasoning_content"] == "a" * 100
+        assert second.message.additional_kwargs["reasoning_content"] == "a" * 100
+        assert len(second.message.additional_kwargs["reasoning_content"]) <= REASONING_STORE_CAP
+
+
+# â”€â”€ LLAMACPP_LOCAL credential detection (issue #151) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 _LLAMACPP_RELATED_ENV = (
@@ -1313,7 +1406,7 @@ def _scrub_other_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
 class TestLlamacppLocalConfigured:
     """``_llamacpp_local_configured`` is the gate for adding
     ``LLAMACPP_LOCAL`` to the credentials chain. Either env var being
-    set is enough — neither requires the other, mirroring the
+    set is enough â€” neither requires the other, mirroring the
     LM Studio / Ollama detection contract.
     """
 
@@ -1336,7 +1429,7 @@ class TestLlamacppLocalConfigured:
 
     def test_whitespace_does_not_count_as_set(self, monkeypatch):
         """Stray ``LLAMACPP_API_BASE=`` lines in .env must not silently
-        opt the user in — same fail-soft as the Ollama detector."""
+        opt the user in â€” same fail-soft as the Ollama detector."""
         monkeypatch.setenv("LLAMACPP_API_BASE", "   ")
         monkeypatch.setenv("LLAMACPP_MODEL", "")
         assert _llamacpp_local_configured() is False
@@ -1344,7 +1437,7 @@ class TestLlamacppLocalConfigured:
 
 class TestResolveCredentialsForLlamacpp:
     """End-to-end check that ``_resolve_credentials`` picks up the
-    user's llama.cpp config — both the explicit-priority path and the
+    user's llama.cpp config â€” both the explicit-priority path and the
     "only LLAMACPP_* detected" auto-fallback at the bottom of
     ``_resolve_credentials``.
     """
@@ -1361,7 +1454,7 @@ class TestResolveCredentialsForLlamacpp:
 
     def test_priority_list_with_llamacpp_picks_it_up(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """User wrote an explicit RAPTIX_AUTH_PRIORITY listing
-        llamacpp_local — the resolver must respect that ordering."""
+        llamacpp_local â€” the resolver must respect that ordering."""
         _scrub_other_credentials(monkeypatch)
         monkeypatch.setenv("LLAMACPP_API_BASE", "http://localhost:8080/v1")
         monkeypatch.setenv("LLAMACPP_MODEL", "qwen-coder")
@@ -1502,7 +1595,7 @@ class TestLLMTimeout:
         (and leaking un-awaited) the upstream request coroutine. Regression:
         the timeout was previously resolved as the second argument to
         ``call_with_timeout``, so ``super().ainvoke(...)`` was already
-        evaluated — a ValueError then left that coroutine never awaited."""
+        evaluated â€” a ValueError then left that coroutine never awaited."""
         from langchain_openai import ChatOpenAI
         from pydantic import SecretStr
 
