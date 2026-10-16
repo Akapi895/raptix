@@ -28,9 +28,19 @@ import type { CanAction } from '../domain/permissions'
 import { DATA_MODE } from '../real/mode'
 import { REAL_PERSONA } from '../real/identity'
 import { useSession } from '../real/session'
-import { useRealProjectList } from '../real/queries'
+import { useRealMembershipRole, useRealProjectList } from '../real/queries'
+import { REAL_CONTROL_GAPS } from '../real/service-adapter/control-gaps'
 import { useServices, useServicesOrNull } from './services'
 import { useAuthStore, useProjectStore } from './stores'
+
+/**
+ * Why a control is absent in real mode (ADR-0084 control-gap registry). Null in
+ * mock mode and for every control the real backend supports; screens render
+ * the reason in place of the control instead of simulating it.
+ */
+export function realControlGap(id: string): string | null {
+  return DATA_MODE === 'real' ? REAL_CONTROL_GAPS[id] ?? null : null
+}
 
 /** A seeded console persona (the org settings can override the role). */
 export type { Persona } from '../auth/identity'
@@ -63,7 +73,10 @@ export function useDb(): Db {
 export function useMe(): Persona {
   if (DATA_MODE === 'real') {
     const { session } = useSession()
-    return session?.actor ? { name: session.actor.displayName, email: session.actor.username, role: 'viewer' } : REAL_PERSONA
+    const pid = useProjectStore((s) => s.pid)
+    const membershipRole = useRealMembershipRole(pid === 'all' ? '' : pid, session?.actor?.id)
+    if (!session?.actor) return REAL_PERSONA
+    return { name: session.actor.displayName, email: session.actor.username, role: membershipRole ?? 'viewer' }
   }
   const meName = useAuthStore((s) => s.meName)
   const services = useServices()
