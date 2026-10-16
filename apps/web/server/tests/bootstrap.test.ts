@@ -76,6 +76,14 @@ function makeInMemoryRepository(): ProjectRepositoryPort {
 
 const tempRoots: string[] = [];
 
+it('publishes the configured non-secret deployment identity for browser recovery', async () => {
+  const app = await buildApp({ deploymentId: 'installation-a' });
+  try {
+    const response = await app.inject('/api/capabilities');
+    expect(response.json().deploymentId).toBe('installation-a');
+  } finally { await app.close(); }
+});
+
 /** Real service over the in-memory port: exercises the registration seam. */
 function makeProjectsService(): ProjectsService {
   const workspaceRoot = mkdtempSync(path.join(os.tmpdir(), 'w02-bootstrap-'));

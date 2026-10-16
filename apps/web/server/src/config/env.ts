@@ -55,6 +55,8 @@ export interface ServerEnv {
   readonly adminBootstrap?: { readonly username: string; readonly password: string; readonly displayName: string };
   /** Issue session cookies with the Secure flag (RAPTIX_WEB_SECURE_COOKIES=1). */
   readonly secureCookies?: boolean;
+  /** Stable non-secret namespace for browser recovery across image upgrades. */
+  readonly deploymentId?: string;
 }
 
 export const SERVER_ENV_DEFAULTS: Readonly<
@@ -278,6 +280,8 @@ export function loadServerEnv(
   const authMode = readAuthMode(source, issues);
   const adminBootstrap = readAdminBootstrap(source, issues, authMode);
   const secureCookies = source.RAPTIX_WEB_SECURE_COOKIES === '1';
+  const deploymentId = source.RAPTIX_WEB_DEPLOYMENT_ID;
+  if (deploymentId !== undefined && !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deploymentId)) issues.push('RAPTIX_WEB_DEPLOYMENT_ID must be a non-secret installation identifier (1-128 characters).');
   if (issues.length > 0) {
     throw new EnvValidationError(issues);
   }
@@ -287,6 +291,7 @@ export function loadServerEnv(
     nodeEnv,
     logLevel,
     ...(secureCookies ? { secureCookies: true } : {}),
+    ...(deploymentId === undefined ? {} : { deploymentId }),
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
     ...(workspacePath === undefined ? {} : { workspacePath }),
     ...(graph === undefined ? {} : { graph }),

@@ -248,9 +248,9 @@ try {
     assert.ok(isScopedThreadView(history)); assert.equal(history.binding.threadId, bootstrap.threadId);
     const entries = history.transcripts ?? [];
     assert.ok(entries.length > 0 && entries.every(t => t.runId === null && t.source === 'checkpoint'), 'Checkpoint history must stay thread-level, never assigned to a run');
-    assert.equal(entries.filter(t => t.payload.toolId === 'w09-call-dup').length, 1, 'Parallel duplicate emissions must dedupe by provenance key');
-    assert.equal(entries.find(t => t.payload.toolId === 'w09-call-capped')?.truncated, true, 'Producer-capped results must surface truncated:true');
-    assert.equal(entries.find(t => t.payload.toolId === 'w09-call-full')?.truncated, false);
+    assert.equal(entries.filter(t => 'toolId' in t.payload && t.payload.toolId === 'w09-call-dup').length, 1, 'Parallel duplicate emissions must dedupe by provenance key');
+    assert.equal(entries.find(t => 'toolId' in t.payload && t.payload.toolId === 'w09-call-capped')?.truncated, true, 'Producer-capped results must surface truncated:true');
+    assert.equal(entries.find(t => 'toolId' in t.payload && t.payload.toolId === 'w09-call-full')?.truncated, false);
     assert.equal(entries.find(t => t.payload.type === 'subagent_message')?.key, null, 'Unprovable identity stays null instead of invented attribution');
     assert.ok(!JSON.stringify(history).includes('SECRET-W09'), 'History projection must redact credential-shaped args');
     const repeat = (await http('GET', `${base}/threads/${bootstrap.threadId}`, undefined, 200)).body;

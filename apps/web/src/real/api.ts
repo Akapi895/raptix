@@ -361,15 +361,22 @@ export async function fetchAuthSession(): Promise<AuthSessionView | null> {
 
 export interface LoginInput { username: string; password: string }
 
+function announceSessionChange(): void {
+  try { localStorage.setItem('raptix.session-change', crypto.randomUUID()) } catch { /* focus revalidation also covers unavailable storage */ }
+  window.dispatchEvent(new Event('raptix:session-change'))
+}
+
 export async function login(input: LoginInput): Promise<AuthSessionView> {
   const view = await apiFetch('/auth/login', isAuthSessionView, { method: 'POST', body: input })
   setCsrfToken(view.csrfToken ?? null)
+  announceSessionChange()
   return view
 }
 
 export async function logout(): Promise<void> {
   try {
     await apiFetch('/auth/logout', (v): v is { authenticated: boolean } => typeof v === 'object' && v !== null && typeof (v as { authenticated: unknown }).authenticated === 'boolean', { method: 'POST' })
+    announceSessionChange()
   } finally {
     setCsrfToken(null)
   }

@@ -230,6 +230,7 @@ async function main(): Promise<void> {
   const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient, artifactsService) : undefined;
   const reportsService = dbClient ? new ReportsService(dbClient) : undefined;
   const app = await buildApp({
+    deploymentId: env.deploymentId,
     logger: { level: env.logLevel },
     projectsService,
     databaseHealth,
