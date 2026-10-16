@@ -3,8 +3,9 @@
 - **Status:** Proposed
 - **Date:** 2026-10-13
 - **Deciders:** @Akapi895
-- **Related:** `apps/web-improve/.scratch/web-improve-refactor/spec.md` and
-  `execution.md` (the migration contract this ADR underwrites); the root
+- **Related:** `apps/web/.scratch/web-improve-refactor/spec.md` and
+  `execution.md` (the migration contract this ADR underwrites; the console is
+  canonical at `apps/web` since the ticket-02 cutover); the root
   `GLOSSARY.md` evidence vocabulary; ADR-0009 (outside-the-LLM-trust-boundary
   HITL principle, whose approval-gating surface the console mirrors);
   ADR-0039 (handlers stay outside the runtime — the same boundary discipline
@@ -12,8 +13,8 @@
 
 ## Context
 
-The web console (`apps/web-improve`) is a Figma Make export whose entire
-"backend" is one React Context holding a seeded in-memory database plus ~70
+Before its refactor, the web console's entire "backend" was one React Context
+holding a seeded in-memory database plus ~70
 action methods. Screens import the store, the seed module and the UI kit
 directly; navigation is hand-parsed hashes; there are no tests. The refactor
 spec introduces a feature-first architecture with TanStack Query for entity

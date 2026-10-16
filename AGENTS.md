@@ -6,6 +6,13 @@
 - Use manifests, `langgraph.json`, `Makefile`, and [.github/workflows/ci.yml](.github/workflows/ci.yml) to resolve conflicts with prose. `README.md`, `CLAUDE.md`, and architecture docs still contain obsolete paths or wiring.
 - For ownership/import changes, read [runtime boundaries](docs/architecture/runtime-boundaries.md) and [dependency rules](docs/architecture/dependency-rules.md). For browser or Web API work, follow [apps/web/AGENTS.md](apps/web/AGENTS.md).
 
+## Current focus: web console frontend, mock mode first
+
+- Active work-stream: optimize the web console frontend flow in `apps/web`, validated against mock data before wiring real APIs. Keep changes frontend-scoped; backend/Prisma/Python runtime changes are out of scope unless the covering ticket requires them.
+- Data-mode seam: `src/real/mode.ts` — precedence is `?dataMode=` query > localStorage `raptix.dataMode` > `VITE_DATA_MODE` build default > `mock`; switching modes reloads the app so providers/caches are disposed. Mock authority: `src/domain/service-factory.ts` (+ `src/data.ts` seed). Real-mode transport lives in `src/real/` and must never fall back to demo data.
+- Trackers under `apps/web/.scratch/`: `frontend-backend-integration/` (mock→real integration, active ticket graph) and `web-improve-refactor/` (production refactor spec). Read the relevant `spec.md`/`execution.md` before changing a flow they cover.
+- Quick loop: root `npm run dev` serves the console at `127.0.0.1:5273` in standalone mock mode — no backend, database or Docker needed. Gates and conventions: [apps/web/AGENTS.md](apps/web/AGENTS.md).
+
 ## Boundaries and runtime wiring
 
 - Root `pyproject.toml` is a virtual uv workspace with shared tooling, not a distributable package. Add runtime dependencies to the owning package. `raptix-core` is contracts-only (stdlib, Pydantic/settings, typing-extensions); SDK/plugins import Core/SDK, never runtime internals. Plugins own domain definitions/prompts/offline analyzers; runtime owns framework execution. `raptix_sdk.create_domain_agent` bridges via `raptix.agent_composers`.
