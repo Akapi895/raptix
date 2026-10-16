@@ -8,7 +8,23 @@ import { useQuery } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { fetchAnalysis } from '../api'
+import { ApiTransportError } from '../transport'
 import { Button, Card, CardHeader, Empty, Skeleton } from '../../ui'
+
+/**
+ * The server's own error text is not shown: a 404 here means the graph route
+ * is not registered on this deployment (no Neo4j), which is an honest
+ * "not available", not a missing page. Other failures keep their server message.
+ */
+export function describeAnalysisError(error: unknown): string {
+  if (error instanceof ApiTransportError && error.code === 'not_found') {
+    return 'Analysis is not available on this server: the knowledge graph is not configured here.'
+  }
+  if (error instanceof ApiTransportError && error.code === 'unavailable') {
+    return 'The knowledge graph is unavailable right now. Analysis loads again once it is reachable.'
+  }
+  return error instanceof Error ? error.message : 'The observed read failed.'
+}
 
 export function RealAnalysisPanel({ engagementId }: { engagementId: string }): ReactElement {
   const analysis = useQuery({
@@ -21,7 +37,7 @@ export function RealAnalysisPanel({ engagementId }: { engagementId: string }): R
   }
   if (analysis.isError || !analysis.data) {
     return <Empty icon={Radar} title="Analysis data is unavailable" action={<Button onClick={() => void analysis.refetch()}>Retry</Button>}>
-      {analysis.error instanceof Error ? analysis.error.message : 'The observed read failed.'}
+      {describeAnalysisError(analysis.error)}
     </Empty>
   }
   const view = analysis.data
