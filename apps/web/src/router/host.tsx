@@ -19,7 +19,7 @@ import { useAuthStore, useProjectStore } from '../state/stores'
 import { go, useRoute } from './navigate'
 import { DATA_MODE } from '../real/mode'
 import { REAL_INTEGRATED_ROUTES, RealNotIntegrated } from '../real/not-integrated'
-import { FEATURE_ROUTE_SURFACES } from './route-table'
+import { FEATURE_ROUTE_SURFACES, MIGRATED_ROUTES } from './route-table'
 import { RealPortfolio } from '../real/screens/portfolio'
 import { RealProjectCreate } from '../real/screens/create'
 import { RealProjectDetail } from '../real/screens/detail'
@@ -127,6 +127,16 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
     // itself (system pages that read no console data), or renders the honest
     // unavailable panel (D4). Mock screens are never reached.
     const globalResource = !route.id && !route.engagementId && (route.page === 'infrastructure' || pid === 'all' && ['findings', 'reports', 'operations', 'analysis', 'agents', 'c2'].includes(route.page))
+    if (!globalResource && MIGRATED_ROUTES.has(route.page)) {
+      const Migrated = routeComponent(route.page)
+      return (
+        <Shell slots={{ notifications: RealHeaderNotices }}>
+          <PageBoundary key={key}>
+            <Suspense fallback={<PageFallback />}>{Migrated ? <Migrated /> : null}</Suspense>
+          </PageBoundary>
+        </Shell>
+      )
+    }
     const Real = globalResource ? RealGlobalResource : REAL_PAGES[route.page]
     if (Real) {
       return (

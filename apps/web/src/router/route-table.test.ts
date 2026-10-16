@@ -6,7 +6,7 @@
  * copy of the key list.
  */
 import { describe, expect, it } from 'vitest'
-import { FEATURE_ROUTE_SURFACES, type PanelGroup } from './route-table'
+import { FEATURE_ROUTE_SURFACES, MIGRATED_ROUTES, type PanelGroup } from './route-table'
 import { hasRoute } from './registry'
 
 const KNOWN_PANEL_GROUPS: ReadonlySet<PanelGroup> = new Set([
@@ -45,10 +45,13 @@ describe('FEATURE_ROUTE_SURFACES', () => {
     expect(Object.keys(FEATURE_ROUTE_SURFACES).sort()).toEqual([
       'agent', 'agents', 'ai-branch', 'ai-fanout', 'ai-plan', 'ai-plan-compare', 'ai-plan-review',
       'analysis', 'asset', 'asset-new', 'asset-scope', 'c2', 'c2-channel', 'c2-console', 'c2-session',
-      'evidence', 'evidence-inspector', 'finding', 'finding-new', 'findings', 'operation',
+      'evidence', 'evidence-inspector', 'operation',
       'operation-new', 'operation-schedule', 'operations', 'playbook-review', 'preflight',
       'report', 'report-new', 'report-preview', 'report-review', 'reports',
     ].sort())
   })
 
+  it('never routes a migrated key through the real feature panels', () => {
+    for (const key of MIGRATED_ROUTES) expect(key in FEATURE_ROUTE_SURFACES, key).toBe(false)
+  })
 })

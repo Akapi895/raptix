@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
 /** Finding form and attachment choices are service-scoped relationships. */
 import type { Asset, Evidence, Finding, Operation, Project, Report } from '../../domain/entities'
 import { projectAccessible } from '../../auth/policy'
@@ -5,6 +6,8 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
+import { DATA_MODE } from '../../real/mode'
+import { usePolicyProjects } from '../../state/console'
 
 export interface FindingFormRead { findings: Finding[]; projects: Project[]; assets: Asset[]; operations: Operation[]; evidence: Evidence[] }
 
@@ -25,6 +28,15 @@ export function readFindingEvidence(services: ConsoleServices, ctx: RequestConte
   return projectView(services, ctx, 'finding-evidence-choices', (db) => ({ evidence: scopedRows(db, ctx, db.evidence) }))
 }
 
-export function useFindingFormRead(id?: string): FindingFormRead { return useServiceProjection((services, ctx) => readFindingForm(services, ctx, id)) }
-export function useFindingReportChoices(): { reports: Report[] } { return useServiceProjection(readFindingReports, 'all') }
-export function useFindingEvidenceChoices(projectId: string): { evidence: Evidence[] } { return useServiceProjection(readFindingEvidence, projectId) }
+export function useFindingFormRead(id?: string): FindingFormRead {
+  if (DATA_MODE === 'real') return { findings: [], projects: usePolicyProjects(), assets: [], operations: [], evidence: [] }
+  return useServiceProjection((services, ctx) => readFindingForm(services, ctx, id))
+}
+export function useFindingReportChoices(): { reports: Report[] } {
+  if (DATA_MODE === 'real') return { reports: [] }
+  return useServiceProjection(readFindingReports, 'all')
+}
+export function useFindingEvidenceChoices(projectId: string): { evidence: Evidence[] } {
+  if (DATA_MODE === 'real') return { evidence: [] }
+  return useServiceProjection(readFindingEvidence, projectId)
+}
