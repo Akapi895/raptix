@@ -8,12 +8,14 @@ import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { ScrollText } from 'lucide-react'
 import { fetchEngagementAudit } from '../api'
+import { useMemberLabels } from '../member-labels'
 import { AuditTable } from './settings'
 import { Button, Card, CardHeader, Empty, Input, Skeleton } from '../../ui'
 
 export function RealAuditPanel({ engagementId }: { engagementId: string }): ReactElement {
   const [action, setAction] = useState('')
   const [q, setQ] = useState('')
+  const memberLabel = useMemberLabels(engagementId)
   const audit = useQuery({
     queryKey: ['real', 'engagement-audit', engagementId, action, q],
     queryFn: () => fetchEngagementAudit(engagementId, { action: action || undefined, q: q || undefined }),
@@ -33,7 +35,7 @@ export function RealAuditPanel({ engagementId }: { engagementId: string }): Reac
         ) : (
           <>
             {audit.data.truncated && <p className="text-xs text-muted" role="note">Showing the newest {audit.data.entries.length} of {audit.data.total} matching entries; narrow the filters for more.</p>}
-            <AuditTable entries={audit.data.entries} />
+            <AuditTable entries={audit.data.entries} labelFor={memberLabel} />
           </>
         )}
       </div>

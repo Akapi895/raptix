@@ -12,6 +12,7 @@ import { FileDiff, Loader2 } from 'lucide-react'
 import { decideScopeRevision, fetchAssetInventory, fetchEffectiveScope, fetchScopeRevisions, submitScopeRevision } from '../api'
 import { zonedToIso } from '../format'
 import { useSession } from '../session'
+import { useMemberLabels } from '../member-labels'
 import { Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -38,6 +39,7 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
     queryFn: () => fetchEffectiveScope(engagementId),
   })
   const actorId = useSession().session?.actor?.id ?? null
+  const memberLabel = useMemberLabels(engagementId)
   const [added, setAdded] = useState('')
   const [removed, setRemoved] = useState('')
   const [rationale, setRationale] = useState('')
@@ -168,7 +170,7 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
                         </div>
                       </details>
                     </td>
-                    <td className="py-2 pr-3 font-mono text-xs">{r.requestedBy}</td>
+                    <td className="py-2 pr-3 text-xs" title={r.requestedBy}>{memberLabel(r.requestedBy)}</td>
                     <td className="py-2 text-xs">
                       {r.status === 'pending' && r.requestedBy !== actorId ? (
                         <span className="flex gap-2">
@@ -178,7 +180,7 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
                       ) : r.status === 'pending' ? (
                         <span className="text-muted" title="The requester cannot decide their own revision">Awaiting an independent reviewer</span>
                       ) : (
-                        <span className="text-muted">{r.decidedBy ?? '—'}{r.decisionComment !== null ? `: ${r.decisionComment}` : ''}</span>
+                        <span className="text-muted">{r.decidedBy === null ? '—' : memberLabel(r.decidedBy)}{r.decisionComment !== null ? `: ${r.decisionComment}` : ''}</span>
                       )}
                     </td>
                   </tr>

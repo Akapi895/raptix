@@ -4,6 +4,7 @@
  * separate audited export/delivery records. Refusals preserve the form.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemberLabels } from '../member-labels'
 import { useState, type ReactElement } from 'react'
 import { FileText, Loader2 } from 'lucide-react'
 import { createReport, fetchReports } from '../api'
@@ -15,6 +16,7 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
   const route = useRoute()
   const client = useQueryClient()
   const list = useQuery({ queryKey: ['real', 'report-records', engagementId], queryFn: () => fetchReports(engagementId) })
+  const memberLabel = useMemberLabels(engagementId)
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -67,7 +69,7 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
                     </td>
                     <td className="py-2 pr-3 font-mono text-xs">v{r.version}{r.approvedVersion !== null ? ` (pinned v${r.approvedVersion})` : ''}</td>
                     <td className="py-2 pr-3"><Status kind="gate" value={r.status === 'approved' || r.status === 'delivered' ? 'passed' : r.status === 'changes_requested' ? 'failed' : 'pending'} size="sm" label={r.status} /></td>
-                    <td className="py-2 pr-3 text-xs text-muted">{r.reviewedBy === null ? '—' : `${r.reviewedBy}: ${r.reviewComment ?? ''}`}</td>
+                    <td className="py-2 pr-3 text-xs text-muted">{r.reviewedBy === null ? '—' : `${memberLabel(r.reviewedBy)}: ${r.reviewComment ?? ''}`}</td>
                     <td className="py-2">
                       <span className="flex flex-wrap gap-1">
                          <Button variant="ghost" onClick={() => go('report', { id: r.id, engagementId })}>Open editor / review</Button>

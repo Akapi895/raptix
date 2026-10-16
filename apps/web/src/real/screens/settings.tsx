@@ -268,7 +268,8 @@ function AuditTab(): ReactElement {
   )
 }
 
-export function AuditTable({ entries }: { entries: readonly AuditEntryView[] }): ReactElement {
+/** `labelFor` resolves an actor id to a name where the caller can (engagement members); by default the id is shown as recorded. */
+export function AuditTable({ entries, labelFor = (actorId: string) => actorId }: { entries: readonly AuditEntryView[]; labelFor?: (actorId: string) => string }): ReactElement {
   if (entries.length === 0) return <p className="text-sm text-muted">No audit entries match.</p>
   return (
     <table className="w-full text-sm">
@@ -287,7 +288,7 @@ export function AuditTable({ entries }: { entries: readonly AuditEntryView[] }):
           <tr key={e.id} className="border-t border-line align-top">
             <td className="whitespace-nowrap py-2 pr-3 font-mono text-xs">{utcMinute(e.createdAt)}</td>
             <td className="py-2 pr-3 font-mono text-xs text-fg">{e.action}</td>
-            <td className="py-2 pr-3 text-xs">{e.actorId ?? <span className="text-muted">not recorded</span>}</td>
+            <td className="py-2 pr-3 text-xs" title={e.actorId ?? undefined}>{e.actorId === null ? <span className="text-muted">not recorded</span> : labelFor(e.actorId)}</td>
             <td className="py-2 pr-3 text-xs">
               {e.engagementId === null ? <span className="text-muted">workspace</span> : (
                 <button className="font-mono text-xs text-fg hover:text-accent hover:underline" onClick={() => go('project', { id: e.engagementId as string })}>{e.engagementId}</button>

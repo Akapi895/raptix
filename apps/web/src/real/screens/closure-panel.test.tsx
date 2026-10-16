@@ -13,11 +13,13 @@ import type { ReactElement, ReactNode } from 'react'
 const fetchClosure = vi.fn()
 const requestClosure = vi.fn()
 const decideClosure = vi.fn()
+const fetchMembers = vi.fn()
 
 vi.mock('../api', () => ({
   fetchClosure: (...a: unknown[]) => fetchClosure(...a),
   requestClosure: (...a: unknown[]) => requestClosure(...a),
   decideClosure: (...a: unknown[]) => decideClosure(...a),
+  fetchMembers: (...a: unknown[]) => fetchMembers(...a),
 }))
 
 const SETTLED = {
@@ -73,6 +75,8 @@ beforeEach(() => {
   fetchClosure.mockReset()
   requestClosure.mockReset()
   decideClosure.mockReset()
+  fetchMembers.mockReset()
+  fetchMembers.mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', members: [{ id: 'u-owner', label: 'Owner Lee', role: 'owner', source: 'membership' }], inviteSupported: true, reason: null, source: 'db' })
 })
 
 afterEach(() => {
@@ -90,6 +94,13 @@ describe('RealClosurePanel (ticket 17)', () => {
     await userEvent.click(screen.getByRole('button', { name: /request closure/i }))
     await waitFor(() => expect(requestClosure).toHaveBeenCalledWith('eng-1', 'trying to close with live sessions'))
     expect(await screen.findByRole('alert')).toHaveTextContent('c2 (fail')
+  })
+
+  it('names the requester by their member label rather than the raw user id', async () => {
+    fetchClosure.mockResolvedValue(PENDING)
+    await renderPanel()
+    expect(await screen.findByText('Owner Lee')).toBeInTheDocument()
+    expect(screen.queryByText('u-owner')).not.toBeInTheDocument()
   })
 
   it('shows the pending request with its checklist and submits the independent decision', async () => {
