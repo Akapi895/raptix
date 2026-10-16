@@ -1,6 +1,6 @@
 # Implementation plan — Execution: hội thoại và điều hành subagent
 
-- **Trạng thái:** Đã chốt hướng UX; chưa triển khai qua tài liệu này.
+- **Trạng thái:** Đã triển khai UI mock và real presentation theo capability; mock đã kiểm chứng trên Docker `:3001`. Direct/forward messaging và control từng subagent real còn thiếu runtime contract; xem §11.
 - **Ngày:** 2026-10-16.
 - **Quyết định:** giữ tên **Execution**; hội thoại ở giữa; cột phải hiển thị cây
   agent được spawn, thông tin chi tiết và các thao tác được hỗ trợ.
@@ -278,3 +278,93 @@ chỉ để cập nhật UI, và không giả capability bằng mock trong real.
 - Bàn giao theo ba giai đoạn: phần đã chạy, commands/evidence, URL/image hiện tại,
   capability gaps. Cập nhật tiến độ trong tài liệu này khi thực hiện, không tạo
   thêm nhiều plan nhỏ cho từng component.
+
+## 11. Tiến độ triển khai và bằng chứng — 2026-10-16
+
+### Ba giai đoạn
+
+1. **Shell + Agents panel:** Execution của project mở workspace hội thoại, mặc
+   định Raptix; cột phải Agents/Context, resize/thu gọn, Needs you, mobile drawer.
+   Lịch sử và operation/preflight controls nằm trong drawer, không tạo sidebar
+   thứ hai. Hai Recon có instance identity riêng; fixture có queued, waiting,
+   blocked/missing dependency, completed, failed, cancelled và stale/unknown.
+   Đã deploy bản review đầu tiên lên `:3001`.
+2. **Communication/control mock:** `features/execution/` có model/handlers và
+   recovery mirror. `Db.agentWorkspaces` nằm trong authority hiện có, publication
+   dùng `agent-workspace` ChangeSet. Draft/transcript/request tách theo actor,
+   project, execution và recipient; câu trả lời gắn question identity. Direct và
+   forward qua Raptix có nhãn/receipt mô phỏng khác nhau. Queued/failed/uncertain
+   có kịch bản demo; Observe ACK reconcile request cũ, không submit lại. Control
+   có reason/confirmation và kiểm tra quyền/state; pause/cancel chờ observed ACK;
+   retry/reassign tạo attempt mới liên kết bản trước. Tool approval dùng lại
+   `ToolProposalCard`/trace writes, tách khỏi câu hỏi và composer. Không có mock
+   action nào dispatch runtime. Đã deploy bản review tiếp theo.
+3. **Real presentation + recovery:** project Execution compose `RealConversation`
+   với thread kind execution; mở trang không auto-create thread/dispatch run.
+   Request ledger, SSE, interrupt và run cancellation hiện hữu được tái sử dụng.
+   Agent panel đọc checkpoint invocations của thread đang chọn; ghi rõ không có
+   current-run/parent attribution, observe-only, không dựng spawn tree giả.
+   Reader của invocation không dùng transcript của root làm cuộc chat riêng.
+   Draft real có actor ID từ authenticated session trong storage key. Shared
+   resize/viewport primitives chuyển sang `ui/panel-sizing.tsx`, tránh real
+   workspace import toàn bộ mock workspace. Proposed boundary: ADR-0078.
+
+### Capability real đã đối chiếu
+
+Các endpoint dưới đây tương đối với `/api`; quyền thực thi do server/session,
+owned engagement/thread và domain checks hiện có quyết định, không từ nhãn UI.
+
+| Capability | Source / scope / ACK | Kết luận UI |
+|---|---|---|
+| Observed agents | `GET /engagements/:id/fleet`, `branches[].threadId/key`, checkpoint provenance; không có run ID/parent/instance objective | Đọc invocation theo thread, raw state/outcome; không coi là live roster hoặc spawn tree đầy đủ |
+| Direct message | Root owned-thread `POST .../threads/:thread/runs`, request ledger → accepted/rejected/unconfirmed; send bị chặn khi run đang active/context chưa verified | Root conversation dùng contract hiện có; direct tới subagent **unavailable** |
+| Forward | Không có instance-addressed forwarding endpoint/ACK được xác minh | **Unavailable** trong real; không giả forward bằng root text |
+| Answer interrupt | `GET .../threads/:thread` pendingQuestions; `POST .../threads/:thread/resume` với question identity, request ledger | Giữ câu hỏi của đúng thread; chưa suy ra một private subagent channel |
+| Pause / Resume instance | Không có per-instance pause/resume contract | **Unavailable**; resume interrupt không bị đổi nhãn thành resume agent |
+| Cancel | `POST .../threads/:thread/runs/:run/cancel`; observed run status/poll, request thành công chưa xác nhận stopped | Chỉ **Cancel run** theo contract cũ; cancel subagent unavailable |
+| Retry / Reassign instance | Không có linked-attempt/assignment endpoint và ACK | **Unavailable** trong real; không dùng run dispatch làm retry subagent |
+
+### Kiểm chứng đã thực hiện
+
+- Typecheck/lint của `@raptix/web-raptix` pass; image build chạy Linux Node 22,
+  shared streaming/web-contracts build, UI typecheck và Vite production build.
+- Chỉ chạy các owning suites có ảnh hưởng: `features/execution/service.test.ts`
+  (10), `screens/project-detail/detail.test.tsx` (29),
+  `real/screens/workspace.test.tsx` (14), `real/precommit-regressions.test.tsx`
+  (16), `features/aichat/query.test.tsx` (15): **84 tests**, kết quả cuối từng
+  suite đều pass. Không chạy full suite. Chỉ chạy lại khi đã sửa lỗi hoặc đổi
+  consumer tương ứng.
+- Regression đã bắt và sửa: resume ACK đến sau project stop không được chuyển
+  agent sang queued; operation mới phải có workspace read mà không tự start;
+  draft real không được phục hồi cho actor khác; fixture/mount isolation và
+  các import nối real workspace.
+- Browser Playwright trên Docker: 1440/1024/390px, light/dark, keyboard resize,
+  Escape/focus return; hai recipient/draft riêng, hai câu hỏi đồng thời, explicit
+  forward, failed send/new-request retry, uncertain request reload/reconcile,
+  ACK-gated pause/cancel, linked retry giữ bản cũ và selection, observe-only,
+  project/persona isolation. Không có page runtime errors hoặc `/api` request
+  trong mock scenarios.
+- Real live probe: `/api/capabilities` trả `mode=multi-user`; browser real dừng ở
+  authenticated login gate, không fallback mock, không POST. Chưa có phiên đăng
+  nhập để nghiệm thu E2E real thread/instance; tests dùng API contract fixtures
+  không thay thế chứng cứ runtime này.
+- Screenshot local: `%TEMP%/opencode/execution-{desktop,desktop-dark,mobile,tablet,
+  agents-mobile,delivery-failed,real-login-gate}.png`. Browser scripts tạm ở cùng
+  thư mục; không đưa generated screenshots vào fixtures nguồn.
+
+### Image đang phục vụ
+
+- URL: **http://127.0.0.1:3001/?dataMode=mock#/project/RT-2026-014?tab=operations**.
+- Image ID: `sha256:0fdddb5ed1a733fdd518ffa2a91e69690fdef0e10330aad68d9ec50bbef5d0ec`.
+- Entry asset: `/assets/index-B7_PfONI.js`; CSS `/assets/index-IZcjzTHc.css`.
+- Build cuối dùng `docker build -f infra/containers/web-raptix.Dockerfile
+  --build-arg VITE_DATA_MODE=mock -t ghcr.io/akapi895/raptix-web-raptix-ui:stable .`.
+  Compose gốc bị lỗi BOM trong `.env`; deploy dùng compose UI-only tạm ở
+  `%TEMP%/opencode/execution-ui-deploy.yml`, cùng project/service/container/network
+  và port hiện có, `--env-file NUL --no-deps --wait`. Không sửa `.env`, recreate
+  API/runtime hoặc reset DB.
+
+**Kết luận:** mock sẵn sàng để người dùng nghiệm thu giao diện. Real đã nối
+presentation với các nguồn hiện có nhưng chưa đạt mốc real instance observation
+đầy đủ hoặc communication/control per-instance; các dependency được ghi ở bảng
+capability trên, không đánh dấu supported từ fixture mock.

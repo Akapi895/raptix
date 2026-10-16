@@ -7,7 +7,7 @@
  * highlight matching stays `route.page` membership, exactly as before.
  */
 import {
-  Activity, Archive, BookOpen, ClipboardList, Crosshair, FileText, FolderKanban, Gauge, KeyRound, LayoutDashboard, Lock, Network, RadioTower, Scale, ScrollText, Server, Settings, ShieldAlert, Monitor, Users, type LucideIcon,
+  Activity, Archive, BookOpen, Bot, ClipboardList, Crosshair, FileText, FolderKanban, Gauge, KeyRound, LayoutDashboard, Lock, Network, RadioTower, Scale, ScrollText, Server, Settings, ShieldAlert, Monitor, Users, type LucideIcon,
 } from 'lucide-react'
 import { useServiceProjection } from '../state/projection'
 import { DATA_MODE } from '../real/mode'
@@ -55,6 +55,7 @@ export const MOCK_PROJECT_TABS = [
   { id: 'overview', label: 'Overview', icon: Gauge },
   { id: 'scope', label: 'Scope & ROE', icon: Crosshair },
   { id: 'operations', label: 'Operations', icon: Activity },
+  { id: 'ai-workspace', label: 'AI Workspace', icon: Bot },
   { id: 'plans', label: 'Planning', icon: ClipboardList },
   { id: 'findings', label: 'Findings', icon: ShieldAlert },
   { id: 'reports', label: 'Reports', icon: FileText },
@@ -64,6 +65,7 @@ export const MOCK_PROJECT_TABS = [
   { id: 'sessions', label: 'C2 Sessions', icon: RadioTower },
   { id: 'evidence', label: 'Evidence', icon: FileText },
   { id: 'audit', label: 'Audit', icon: ScrollText },
+  { id: 'vault', label: 'Vault', icon: KeyRound },
   { id: 'close', label: 'Closeout', icon: Lock },
 ]
 
@@ -89,13 +91,14 @@ export const MOCK_PROJECT_NAV: ProjectNavGroup[] = [
     group: 'PREPARATION',
     items: [
       { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope', 'asset', 'asset-new', 'asset-scope', 'document'] },
-      { to: 'plans', label: 'Planning', icon: ClipboardList, match: ['plans', 'ai-operator', 'ai-plan', 'ai-plan-review', 'ai-plan-compare', 'ai-trace', 'ai-history'] },
+      { to: 'plans', label: 'Planning', icon: ClipboardList, match: ['plans', 'ai-plan', 'ai-plan-review', 'ai-plan-compare'] },
     ],
   },
   {
     group: 'EXECUTION',
     items: [
-      { to: 'operations', label: 'Execution', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule'] },
+      { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
+      { to: 'operations', label: 'Execution', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
       { to: 'sessions', label: 'C2 Sessions', icon: RadioTower, match: ['sessions', 'c2-session', 'c2-console', 'c2-channel'] },
     ],
   },
@@ -112,6 +115,7 @@ export const MOCK_PROJECT_NAV: ProjectNavGroup[] = [
     items: [
       { to: 'team', label: 'Team & Approvals', icon: Users, match: ['team', 'members', 'approvals'] },
       { to: 'audit', label: 'Activity & Audit', icon: ScrollText, match: ['audit', 'activity'] },
+      { to: 'vault', label: 'Vault', icon: KeyRound, match: ['vault'] },
       { to: 'close', label: 'Closeout', icon: Lock, match: ['close', 'closure', 'closeout'] },
     ],
   },
@@ -137,9 +141,9 @@ export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
   {
     group: 'EXECUTION',
     items: [
-      { to: 'operations', label: 'Execution', icon: Activity, match: ['operations'] },
-      { to: 'fleet', label: 'Fleet', icon: Monitor, match: ['fleet'] },
-      { to: 'c2', label: 'C2 Sessions', icon: RadioTower, match: ['c2'] },
+      { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
+      { to: 'operations', label: 'Execution', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
+      { to: 'c2', label: 'C2 Sessions', icon: RadioTower, match: ['c2', 'c2-channel', 'c2-session', 'c2-console'] },
     ],
   },
   {
@@ -154,6 +158,7 @@ export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
     group: 'MANAGEMENT',
     items: [
       { to: 'team', label: 'Team & Approvals', icon: Users, match: ['team'] },
+      { to: 'fleet', label: 'Fleet', icon: Monitor, match: ['fleet', 'agents', 'agent'] },
       { to: 'audit', label: 'Activity & Audit', icon: ScrollText, match: ['audit'] },
       { to: 'governance', label: 'Governance', icon: Scale, match: ['governance'] },
       { to: 'vault', label: 'Vault', icon: KeyRound, match: ['vault'] },

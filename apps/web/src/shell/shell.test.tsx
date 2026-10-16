@@ -16,7 +16,7 @@ import { currentRoute, go, resetNavStores, selectProject } from '../router/navig
 import { mountServices } from '../test/helpers'
 import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
-import { NAV } from './nav'
+import { NAV, MOCK_PROJECT_NAV, REAL_PROJECT_NAV, projectSection } from './nav'
 
 function mountApp(hash?: string) {
   if (hash !== undefined) window.location.hash = hash
@@ -50,6 +50,28 @@ afterEach(() => {
 const NAV_LABELS = NAV.flatMap((g) => g.items.map((i) => i.label))
 
 describe('sidebar navigation and active section', () => {
+  it('separates AI conversation, execution logs and C2 in both project menus', () => {
+    for (const groups of [MOCK_PROJECT_NAV, REAL_PROJECT_NAV]) {
+      expect(groups.find((group) => group.group === 'EXECUTION')?.items.map((item) => item.label)).toEqual(['AI Workspace', 'Execution', 'C2 Sessions'])
+      expect(projectSection({ page: 'ai-operator' }, groups)?.label).toBe('AI Workspace')
+      expect(projectSection({ page: 'ai-trace' }, groups)?.label).toBe('Execution')
+    }
+  })
+
+  it('opens chat with the agents panel separately from tool-call logs', async () => {
+    mountApp('#/project/RT-2026-014')
+    signIn()
+    const nav = screen.getByRole('navigation', { name: 'Main navigation' })
+    fireEvent.click(await within(nav).findByRole('button', { name: 'AI Workspace' }))
+    await screen.findByRole('region', { name: 'Conversation with Raptix' })
+    expect(currentRoute().tab).toBe('ai-workspace')
+    fireEvent.click(within(nav).getByRole('button', { name: 'Execution' }))
+    await screen.findByPlaceholderText('Search event, tool, target, agent, branch')
+    expect(currentRoute().tab).toBe('operations')
+    expect(screen.queryByRole('region', { name: 'Conversation with Raptix' })).toBeNull()
+    expect(within(nav).getByRole('button', { name: 'Execution' })).toHaveAttribute('aria-current', 'page')
+  })
+
   it('renders every nav group and item, highlighting the overview item as active', async () => {
     mountApp('#/command-center')
     signIn()

@@ -41,5 +41,16 @@ export function clearPending(engagementId: string, requestId: string): void {
   if (readPending(engagementId)?.requestId === requestId) localStorage.removeItem(key(engagementId, 'request'))
 }
 
+const draftKey = (engagementId: string, threadId: string, actorId: string): string => `raptix.real.draft.v1.${JSON.stringify([actorId, engagementId, threadId])}`
+
+export function readWorkspaceDraft(engagementId: string, threadId: string, actorId: string): string {
+  try { return localStorage.getItem(draftKey(engagementId, threadId, actorId)) ?? '' }
+  catch { return '' }
+}
+
+export function saveWorkspaceDraft(engagementId: string, threadId: string, text: string, actorId: string): void {
+  localStorage.setItem(draftKey(engagementId, threadId, actorId), text)
+}
+
 /** Raw LangGraph terminal states, matching the server's run-service policy. */
 export const isTerminalRun = (status: string): boolean => ['success', 'error', 'timeout', 'interrupted'].includes(status)

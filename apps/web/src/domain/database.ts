@@ -16,12 +16,13 @@ type Row = { id: string; projectId?: string }
 /** Db collections that map 1:1 to an entity kind for ChangeSet publication. */
 const COLLECTIONS: readonly (readonly [keyof Db, EntityKind])[] = [
   ['projects', 'project'], ['operations', 'operation'], ['agents', 'agent'], ['assets', 'asset'],
-  ['evidence', 'evidence'], ['findings', 'finding'], ['reports', 'report'], ['exportsList', 'report-export'],
+  ['evidence', 'evidence'], ['vaultSecrets', 'vault-secret'], ['findings', 'finding'], ['reports', 'report'], ['exportsList', 'report-export'],
   ['playbooks', 'playbook'], ['approvals', 'approval'], ['templates', 'template'], ['integrations', 'integration'],
   ['policies', 'policy'], ['retention', 'retention'], ['audit', 'audit'], ['notices', 'notice'],
   ['plans', 'plan'], ['conversations', 'conversation'], ['toolEvents', 'tool-event'], ['branches', 'branch'],
   ['branchGroups', 'branch-group'], ['aiWorkers', 'ai-worker'], ['c2Nodes', 'c2-node'], ['channels', 'channel'],
   ['sessions', 'session'], ['sessionRequests', 'session-request'], ['groups', 'agent-group'],
+  ['agentWorkspaces', 'agent-workspace'],
 ]
 
 const json = (v: unknown) => JSON.stringify(v)

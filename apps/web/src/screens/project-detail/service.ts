@@ -21,7 +21,7 @@ import { projectAccessible } from '../../auth/policy'
 import { closePanelItems, noConfirmedFindings } from '../../features/closure/service'
 import type { CloseCheck } from '../../features/closure/service'
 import type { Db } from '../../data'
-import type { Evidence, Project } from '../../domain/entities'
+import type { Evidence, Project, VaultSecret } from '../../domain/entities'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'
 
@@ -37,6 +37,8 @@ export interface ProjectDetail {
   aggregate: DashboardAggregate
   /** Evidence is not part of the dashboard aggregate; the shell only counts it for the tab badge. */
   evidence: Evidence[]
+  /** Credentials-vault metadata (never plaintext) for this project, mirrored from the real vault placement. */
+  vault: VaultSecret[]
   readiness: Readiness
   completion: Completion
   eligibility: Eligibility
@@ -57,6 +59,7 @@ export function detailFor(db: Db, actor: ActorRef, id: string): ProjectDetail | 
     project,
     aggregate,
     evidence: db.evidence.filter((e) => e.projectId === id),
+    vault: db.vaultSecrets.filter((s) => s.projectId === id),
     readiness: readiness(aggregate, id),
     completion: completion(aggregate, id),
     eligibility: eligibility(aggregate, id),

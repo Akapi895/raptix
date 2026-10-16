@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
+import { useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { Bot, FileText, MessageSquare, Pin, PinOff, Plus, ShieldCheck } from 'lucide-react'
 import { useServices } from '../state/services'
 import { planVer } from '../data'
@@ -18,10 +18,7 @@ import { WorkerTeamView } from './g-workers'
 // eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
 export const RAIL = { def: 280, min: 220, max: 380 }
 // eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
-export const INSP = { def: 360, min: 280, max: 520 }
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
-const readLS = (k: string) => { try { return window.localStorage.getItem(k) } catch { return null } }
-const writeLS = (k: string, v: string) => { try { window.localStorage.setItem(k, v) } catch { /* storage unavailable */ } }
+export { INSP, Separator, useResizable, useViewportW } from '../ui/panel-sizing'
 const moveChoice = (e: ReactKeyboardEvent<HTMLButtonElement>, role: 'tab' | 'radio') => {
   const verticalKeys = role === 'radio' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')
   if (!verticalKeys && !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
@@ -33,49 +30,6 @@ const moveChoice = (e: ReactKeyboardEvent<HTMLButtonElement>, role: 'tab' | 'rad
   const next = e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length - 1 : (current + (forward ? 1 : -1) + buttons.length) % buttons.length
   buttons[next].focus()
   buttons[next].click()
-}
-
-// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
-export function useViewportW() {
-  const [w, setW] = useState(() => window.innerWidth)
-  useEffect(() => { const on = () => setW(window.innerWidth); window.addEventListener('resize', on); return () => window.removeEventListener('resize', on) }, [])
-  return w
-}
-
-/** Persisted pane width: live while dragging, written to localStorage on release, reset to default on double-click. */
-// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
-export function useResizable(key: string, cfg: { def: number; min: number; max: number }) {
-  const [w, setW] = useState(() => { const n = Number(readLS(key)); return n ? clamp(n, cfg.min, cfg.max) : cfg.def })
-  const ref = useRef(w)
-  ref.current = w
-  const live = useCallback((n: number) => setW(clamp(n, cfg.min, cfg.max)), [cfg.min, cfg.max])
-  const commit = useCallback(() => writeLS(key, String(ref.current)), [key])
-  const reset = useCallback(() => { setW(cfg.def); writeLS(key, String(cfg.def)) }, [key, cfg.def])
-  return { w, live, commit, reset }
-}
-
-/** side='left': separator sits to the right of the pane it resizes (pane grows when dragged right). side='right': pane is to the right of the separator. */
-export function Separator({ label, side, r, cfg }: { label: string; side: 'left' | 'right'; r: ReturnType<typeof useResizable>; cfg: { min: number; max: number } }) {
-  const [drag, setDrag] = useState(false)
-  const start = useRef({ x: 0, w: 0 })
-  const dir = side === 'left' ? 1 : -1
-  return (
-    <div role="separator" aria-orientation="vertical" aria-label={label} aria-valuenow={r.w} aria-valuetext={`${r.w} pixels`} aria-valuemin={cfg.min} aria-valuemax={cfg.max} tabIndex={0}
-      title="Drag to resize. Double-click to reset. Arrow keys also resize."
-      onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); start.current = { x: e.clientX, w: r.w }; setDrag(true) }}
-      onPointerMove={(e) => { if (drag) r.live(start.current.w + dir * (e.clientX - start.current.x)) }}
-      onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); setDrag(false); r.commit() }}
-      onPointerCancel={() => { setDrag(false); r.commit() }}
-      onDoubleClick={r.reset}
-      onKeyDown={(e) => {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); r.live(r.w + dir * (e.key === 'ArrowRight' ? 16 : -16)) }
-        else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); r.live(e.key === 'Home' ? cfg.min : cfg.max) }
-      }}
-      onKeyUp={(e) => { if (e.key.startsWith('Arrow') || e.key === 'Home' || e.key === 'End') r.commit() }}
-      className={cx('group relative z-10 -mx-1 w-2 shrink-0 cursor-col-resize touch-none outline-none', drag ? 'bg-accent-soft' : 'hover:bg-accent-soft focus-visible:bg-accent-soft')}>
-      <span aria-hidden className={cx('absolute left-1/2 top-0 h-full w-px -translate-x-1/2', drag ? 'bg-accent' : 'bg-line group-hover:bg-accent group-focus-visible:bg-accent')} />
-    </div>
-  )
 }
 
 /* ───────────── Left rail ───────────── */

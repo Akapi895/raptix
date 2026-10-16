@@ -10,7 +10,10 @@ const { act, cleanup, render, screen, waitFor } = await import('@testing-library
 const userEvent = (await import('@testing-library/user-event')).default
 const { RealModeProvider } = await import('../bootstrap')
 const { RealWorkspace } = await import('./workspace')
+const { RealProjectDetail } = await import('./detail')
 const { go } = await import('../../router/navigate')
+const { useProjectStore } = await import('../../state/stores')
+const { readWorkspaceDraft, saveWorkspaceDraft } = await import('../workspace-session')
 
 const CAPS = {
   version: 1, mode: 'local-single-user',
@@ -79,6 +82,7 @@ function stubApi(over: {
   approvals?: unknown
   runStatus?: string
   planning?: unknown
+  fleet?: unknown
 } = {}) {
   const calls: { url: string; init?: RequestInit; body?: Record<string, unknown> }[] = []
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -87,6 +91,7 @@ function stubApi(over: {
     calls.push({ url, init, body })
     if (url.endsWith('/api/capabilities')) return new Response(JSON.stringify(CAPS), { status: 200 })
     if (url.endsWith('/api/engagements/eng-1')) return new Response(JSON.stringify(over.engagement ?? ENGAGEMENT('2026-10-14T08:30:00.000Z')), { status: 200 })
+    if (url.endsWith('/fleet')) return new Response(JSON.stringify(over.fleet ?? { engagementId: 'eng-1', agents: [], threads: [], branches: [], counts: { threads: 0, threadsTruncated: false, activeRuns: 0, branches: 0, runningBranches: 0 }, excludedActions: [], sources: { agents: 'catalog', threads: 'runtime', branches: 'checkpoint' }, source: 'runtime' }), { status: 200 })
     if (url.endsWith('/threads') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', threads: over.threads ?? [PLANNING_THREAD], source: 'runtime' }), { status: 200 })
     if (url.endsWith('/threads') && init?.method === 'POST') return new Response(JSON.stringify(ACK({ requestId: body?.requestId, threadId: body?.kind === 'execution' ? 'th-exec' : 'th-plan' })), { status: 201 })
     if (url.endsWith('/approvals') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', approvals: over.approvals ?? [], source: 'workspace' }), { status: 200 })
@@ -140,6 +145,7 @@ function ui(node: React.ReactElement) {
 
 beforeEach(() => {
   window.localStorage.clear()
+  useProjectStore.getState().setPid('all')
   go('ai-operator')
   FakeEventSource.instances = []
   vi.stubGlobal('EventSource', FakeEventSource as unknown as typeof EventSource)
@@ -150,6 +156,47 @@ afterEach(() => {
 })
 
 describe('RealWorkspace', () => {
+  it('does not restore an operator draft for another authenticated actor', () => {
+    saveWorkspaceDraft('eng-1', 'th-exec', 'Actor A instructions', 'actor-a')
+    expect(readWorkspaceDraft('eng-1', 'th-exec', 'actor-a')).toBe('Actor A instructions')
+    expect(readWorkspaceDraft('eng-1', 'th-exec', 'actor-b')).toBe('')
+  })
+
+  it('opens project Execution without dispatch and keeps checkpoint invocations observe-only', async () => {
+    const calls = stubApi({ threads: [EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true), planning: PLANNING_READY, fleet: { engagementId: 'eng-1', agents: [], threads: [], branches: [{ threadId: 'th-exec', key: 'branch-recon-2', agent: 'recon', state: 'running', outcome: null, startedAt: null, endedAt: null, provenance: 'checkpoint' }], counts: {}, sources: { agents: 'catalog', threads: 'runtime', branches: 'checkpoint' }, source: 'runtime' } })
+    go('project', { id: 'eng-1', tab: 'operations' })
+    ui(<RealProjectDetail />)
+    const user = userEvent.setup()
+    await screen.findByText('Conversation with executor')
+    expect(screen.queryByRole('heading', { name: 'AI Workspace' })).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: /Agents \/ Context/ }))
+    await user.click(await screen.findByRole('button', { name: 'Observe recon branch-recon-2' }))
+    expect(await screen.findByLabelText('Observed invocation — read-only')).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument()
+    expect(screen.getByText(/No independently addressable conversation/)).toBeInTheDocument()
+    expect(calls.filter((call) => call.init?.method === 'POST')).toHaveLength(0)
+    await user.click(screen.getByRole('button', { name: '← Back to orchestrator conversation' }))
+    expect(await screen.findByLabelText('Workspace message')).toBeInTheDocument()
+  })
+
+  it('preserves separate drafts when switching between existing planning and execution threads', async () => {
+    const calls = stubApi({ threads: [PLANNING_THREAD, EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const composer = await screen.findByLabelText('Workspace message')
+    await waitFor(() => expect(composer).toBeEnabled())
+    await user.type(composer, 'Planner draft')
+    await user.click(screen.getByRole('button', { name: 'execution' }))
+    await user.click(await screen.findByRole('button', { name: /th-exec/ }))
+    expect(screen.getByLabelText('Workspace message')).toHaveValue('')
+    await user.type(screen.getByLabelText('Workspace message'), 'Executor draft')
+    await user.click(screen.getByRole('button', { name: 'planning' }))
+    await user.click(await screen.findByRole('button', { name: /th-plan/ }))
+    expect(screen.getByLabelText('Workspace message')).toHaveValue('Planner draft')
+    expect(calls.filter((call) => call.init?.method === 'POST')).toHaveLength(0)
+  })
+
   it('bounds checkpoint snapshot reads during a replay burst', async () => {
     const calls = stubApi()
     go('ai-operator', { id: 'eng-1' })

@@ -24,11 +24,13 @@
  * show stale state. Closeout delegates ticket 22's policy derivation; no
  * panel duplicates operation/report/grant enforcement.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed } from 'lucide-react'
 import { APR, type Project } from '../data'
 import { DocumentWorkspace } from '../features/documents/workspace'
+import { ExecutionWorkspace } from '../features/execution/workspace'
+import { VaultTab } from '../features/vault/panel'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import { useProjectStore, useToastStore } from '../state/stores'
@@ -46,6 +48,7 @@ import type { ServiceFailure } from '../domain/service'
 
 const parseDate = (s: string) => { const d = new Date(s.replace(/,?\s*\d{1,2}:\d{2}.*$/, '')); return isNaN(d.getTime()) ? new Date(2026, 9, 13) : d }
 const NOW = new Date(2026, 9, 13)
+const ExecutionTrace = lazy(() => import('./g-trace').then((module) => ({ default: module.AiTrace })))
 
 /** Valid project tab IDs own the URLs; old aliases keep resolving. */
 const TAB_IDS = MOCK_PROJECT_TABS.map((t) => t.id)
@@ -194,13 +197,15 @@ function Detail({ d }: { d: ProjectDetail }) {
       {tab === 'objectives' && <Objectives p={p} ds={ds} />}
       {tab === 'activity' && <Activity p={p} ds={ds} />}
       {tab === 'team' && <TeamTab p={p} ds={ds} />}
-      {tab === 'operations' && <OpsTab p={p} ds={ds} elig={elig} via={via} setTab={setTab} />}
+      {tab === 'ai-workspace' && <ExecutionWorkspace project={p} aggregate={ds} history={<OpsTab p={p} ds={ds} elig={elig} via={via} setTab={setTab} />} />}
+      {tab === 'operations' && <div className="space-y-6"><OpsTab p={p} ds={ds} elig={elig} via={via} setTab={setTab} /><section aria-label="Execution tool calls"><h2 className="mb-3 text-base font-semibold">Tool calls & execution logs</h2><Suspense fallback={<p role="status">Loading tool trace…</p>}><ExecutionTrace embedded /></Suspense></section></div>}
       {tab === 'plans' && <PlansTab p={p} ds={ds} />}
       {tab === 'sessions' && <SessionsTab p={p} ds={ds} />}
       {tab === 'findings' && <FindingsTab p={p} ds={ds} via={via} />}
       {tab === 'reports' && <ReportsTab p={p} ds={ds} via={via} />}
       {tab === 'evidence' && <EvidenceTab p={p} d={d} />}
       {tab === 'audit' && <AuditTab p={p} ds={ds} />}
+      {tab === 'vault' && <VaultTab p={p} />}
       {tab === 'close' && <CloseTab p={p} d={d} setTab={setTab} />}
     </>
   )

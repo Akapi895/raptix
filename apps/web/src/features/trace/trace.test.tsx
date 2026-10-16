@@ -143,11 +143,13 @@ describe('trace screen on the typed read (ticket 41)', () => {
     h.unmount()
   })
 
-  it('opens the same inspector from keyboard activation; the inspector preserves plan version and project-scoped evidence provenance', async () => {
+  it('opens a centered modal inspector from keyboard activation; the inspector preserves plan version and project-scoped evidence provenance', async () => {
     const h = mountTrace()
     await waitFor(() => expect(screen.getByText('TL-01')).toBeInTheDocument())
     fireEvent.keyDown(screen.getByText('TL-01'), { key: 'Enter' })
     const drawer = await screen.findByRole('dialog', { name: 'Tool Event Inspector — TL-01' })
+    expect(drawer.tagName).toBe('DIV')
+    expect(document.querySelector('aside[data-dialog-layer]')).toBeNull()
     expect(within(drawer).getByText('Enumerate permission groups')).toBeInTheDocument()
     expect(within(drawer).getByText('PL-021')).toBeInTheDocument()
     expect(within(drawer).getByText('v1.2')).toBeInTheDocument()

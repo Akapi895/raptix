@@ -8,7 +8,7 @@ import { type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Bot } from 'lucide-react'
 import type { ScopedRunView, ThreadBindingView } from '@raptix/web-contracts'
-import { listRunsOfThread, listThreads } from '../api'
+import { getThread, listRunsOfThread, listThreads } from '../api'
 import { fetchTimeline } from '../api'
 import { utcMinute } from '../format'
 import { go, useRoute } from '../../router/navigate'
@@ -66,7 +66,7 @@ export function RealOperationsPanel({ engagementId }: { engagementId: string }):
             </ul>
           )}
         <div className="mt-4">
-          <Button variant="secondary" icon={Bot} onClick={() => go('ai-operator', { id: engagementId })}>Open AI workspace</Button>
+          <Button variant="secondary" icon={Bot} onClick={() => go('project', { id: engagementId, tab: 'ai-workspace' })}>Open AI workspace</Button>
         </div>
       </Card>
 
@@ -77,7 +77,7 @@ export function RealOperationsPanel({ engagementId }: { engagementId: string }):
 
 /** Merged operations timeline: runtime/checkpoint/workspace entries keep their source labels. */
 function TimelineCard({ engagementId }: { engagementId: string }): ReactElement {
-  const timeline = useQuery({ queryKey: ['real', 'timeline', engagementId], queryFn: () => fetchTimeline(engagementId), retry: false })
+  const timeline = useQuery({ queryKey: ['real', 'timeline', engagementId], queryFn: () => fetchTimeline(engagementId), retry: false, refetchInterval: 5_000 })
   return (
     <Card>
       <CardHeader title="Operations timeline" sub="Merged log of runtime run states, checkpoint events and workspace artifact presence. Artifact mtimes are presence markers, not exact execution times." />
@@ -113,6 +113,12 @@ function TimelineCard({ engagementId }: { engagementId: string }): ReactElement 
 }
 
 function ThreadRuns({ thread }: { thread: ThreadBindingView }): ReactElement {
+  const snapshot = useQuery({
+    queryKey: ['real', 'thread', thread.engagementId, thread.threadId],
+    queryFn: () => getThread(thread.engagementId, thread.threadId),
+    retry: false,
+    refetchInterval: 5_000,
+  })
   const runs = useQuery({
     queryKey: ['real', 'runs', thread.engagementId, thread.threadId],
     queryFn: () => listRunsOfThread(thread.engagementId, thread.threadId),
@@ -147,7 +153,19 @@ function ThreadRuns({ thread }: { thread: ThreadBindingView }): ReactElement {
               {list.map((r) => <RunRow key={r.runId} run={r} />)}
             </tbody>
           </table>
-        )}
+      )}
+      <section aria-label={`Tool activity ${thread.threadId}`} className="mt-4 space-y-2">
+        <h3 className="text-sm font-semibold">Tool calls & agent activity</h3>
+        <p className="text-xs text-muted">Checkpoint history across this thread; events without run attribution are not assigned to the latest run.</p>
+        {snapshot.isPending ? <p role="status">Loading tool activity…</p> : snapshot.isError ? <p role="alert" className="text-sm text-bad">Tool activity unavailable: {snapshot.error.message}</p> : <>
+          {snapshot.data?.transcriptsTruncated && <Banner tone="warn" title="Tool history truncated">Older checkpoint events are omitted by the source.</Banner>}
+          {!snapshot.data?.transcripts?.length && <p className="text-sm text-muted">No recorded tool activity.</p>}
+          {snapshot.data?.transcripts?.map((entry, index) => <details key={entry.key ?? index} className="rounded-lg border border-line p-2">
+            <summary className="cursor-pointer font-mono text-xs">{entry.payload.type} · checkpoint{entry.truncated ? ' · truncated' : ''}</summary>
+            <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">{JSON.stringify(entry.payload, null, 2)}</pre>
+          </details>)}
+        </>}
+      </section>
     </li>
   )
 }

@@ -17,7 +17,7 @@ import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
 import { useCan } from '../state/console'
 import { useProjectStore, useToastStore } from '../state/stores'
-import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui'
+import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui'
 import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from './g-common'
 
 /* ───────────── helpers ───────────── */
@@ -62,19 +62,19 @@ const COLS = [
 ] as const
 type ColId = (typeof COLS)[number]['id']
 
-export function AiTrace() {
+export function AiTrace({ embedded = false }: { embedded?: boolean } = {}) {
   const pid = useProjectStore((s) => s.pid)
   const route = useRoute()
   const can = useCan()
   const trace = useTraceEvents()
   const writes = useTraceWrites()
-  const [sel, setSel] = useState<string | undefined>(route.id)
+  const [sel, setSel] = useState<string | undefined>(embedded ? undefined : route.id)
   const [view, setView] = useState<View>(VIEWS.some((v) => v.id === route.tab) ? (route.tab as View) : 'table')
   const [st, setSt] = useState<'all' | Bucket>('all')
   const [q, setQ] = useState('')
   const [fp, setFp] = useState(''); const [fa, setFa] = useState(''); const [fx, setFx] = useState(''); const [fg, setFg] = useState('')
   const [hidden, setHidden] = useState<ColId[]>([])
-  const evParam = route.id
+  const evParam = embedded ? undefined : route.id
   useEffect(() => { setSel(evParam); setSt('all'); setQ(''); setFp(''); setFa(''); setFx(''); setFg('') }, [pid, evParam])
   useEffect(() => { if (sel) document.getElementById('trace-' + sel)?.scrollIntoView?.({ block: 'center' }) }, [sel, view])
   /* Selection and view are screen state; the router route (path id / ?tab=)
@@ -83,10 +83,10 @@ export function AiTrace() {
   const changeView = (v: View) => setView(v)
 
   if (pid === 'all') return <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /><NoProject /></>
-  if (trace.isPending) return <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /><p className="py-3 text-sm text-muted" role="status">Loading tool trace…</p></>
+  if (trace.isPending) return <>{!embedded && <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /></>}<p className="py-3 text-sm text-muted" role="status">Loading tool trace…</p></>
   if (trace.isError) {
     const f = (trace.error as TraceReadError).failure
-    return <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /><Empty title="Could not load tool trace" action={<Button onClick={() => trace.refetch()}>Retry</Button>}>{f.message}</Empty></>
+    return <>{!embedded && <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /></>}<Empty title="Could not load tool trace" action={<Button onClick={() => trace.refetch()}>Retry</Button>}>{f.message}</Empty></>
   }
   const all = trace.data.events
   const nq = q.trim().toLowerCase()
@@ -133,11 +133,11 @@ export function AiTrace() {
 
   return (
     <>
-      <PageHeader title="Tool Proposal & Execution Trace" crumbs={[{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'Tool trace' }]}
+      {!embedded && <><PageHeader title="Tool Proposal & Execution Trace" crumbs={[{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'Tool trace' }]}
         sub={<>Every tool the AI proposed in {pid}: proposal, policy decision, human approval, execution. Policy Allowed is not Executed. Demo Data — no backend enforcement.</>} />
-      <AiSubNav current="ai-trace" />
+      <AiSubNav current="ai-trace" /></>}
       <div className="mb-4 space-y-3">
-        <ReplanPanel pid={pid} compact />
+        {!embedded && <ReplanPanel pid={pid} compact />}
         {awaiting > 0 && <Banner tone="warn" title={`${awaiting} tool call${awaiting > 1 ? 's' : ''} pending approval`} action={<Button size="sm" onClick={() => { setView('table'); setSt('pending') }}>Show pending</Button>}>Nothing runs until a reviewer allows it.</Banner>}
         {sel && !ev && <Banner tone="bad" title={`Event ${sel} was not found in ${pid}`} action={<Button size="sm" onClick={() => open(undefined)}>Dismiss</Button>}>Tool events are project-scoped; events from other projects are never shown here.</Banner>}
       </div>
@@ -207,9 +207,9 @@ export function AiTrace() {
         <Grouped rows={events} view={view} sel={sel} open={open} stepName={stepName} />
       )}
       <p className="mt-2 text-xs text-muted">Chat messages are never counted as execution. Status chips are exclusive and sum to All; Policy, Approval and Execution facets are independent and live under More filters. Policy “Allowed” does not mean “Executed”.</p>
-      <Drawer open={!!ev} onClose={() => open(undefined)} width={580} title={ev ? `Tool Event Inspector — ${ev.event.id}` : ''}>
+      <Modal open={!!ev} onClose={() => open(undefined)} width={900} title={ev ? `Tool Event Inspector — ${ev.event.id}` : ''}>
         {ev && <Inspector key={ev.event.id} row={ev} canDecide={can('approvePlan')} why={why} onAllow={(r) => writes.decide(ev.event.id, 'allowed', r)} onDeny={(r) => writes.decide(ev.event.id, 'denied', r)} />}
-      </Drawer>
+      </Modal>
     </>
   )
 }
