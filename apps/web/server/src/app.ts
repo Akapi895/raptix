@@ -50,6 +50,8 @@ import type { C2Service } from './services/c2-service.js';
 import type { VaultService } from './services/vault-service.js';
 import type { MembersService } from './services/members-service.js';
 import type { ScopeService } from './services/scope-service.js';
+import type { DocumentDraftService } from './services/document-draft-service.js';
+import { registerDocumentRoutes } from './http/routes/documents.routes.js';
 import type { GovernanceService } from './services/governance-service.js';
 import type { ScheduleService } from './services/schedule-service.js';
 import type { FindingsWorkflowService } from './services/findings-workflow-service.js';
@@ -89,6 +91,7 @@ export interface AppOptions {
   readonly vaultService?: VaultService;
   readonly membersService?: MembersService;
   readonly scopeService?: ScopeService;
+  readonly documentDrafts?: DocumentDraftService;
   readonly governanceService?: GovernanceService;
   readonly scheduleService?: ScheduleService;
   readonly findingsWorkflow?: FindingsWorkflowService;
@@ -188,6 +191,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.vaultService) registerVaultRoutes(app, options.vaultService, identity);
   if (options.membersService) registerMembersRoutes(app, options.membersService, identity);
   if (options.scopeService) registerScopeRoutes(app, options.scopeService, identity);
+  if (options.documentDrafts) registerDocumentRoutes(app, options.documentDrafts, identity);
   if (options.governanceService) registerGovernanceRoutes(app, options.governanceService, identity, options.cancelRun, options.hasActiveRuns);
   if (options.scheduleService) registerScheduleRoutes(app, options.scheduleService, identity);
   if (options.findingsWorkflow) registerFindingsWorkflowRoutes(app, options.findingsWorkflow, identity);

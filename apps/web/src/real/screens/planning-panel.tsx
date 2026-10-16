@@ -4,11 +4,11 @@
  * Readiness is a runtime signal only — it never grants execution permission,
  * and an OPPLAN document is never presented as business plan approval (D2).
  */
-import { useState, type ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bot, CheckCircle2, CircleAlert, FileText, Lock, RefreshCw } from 'lucide-react'
+import { Bot, CheckCircle2, CircleAlert, FileText, Lock, PenLine, RefreshCw } from 'lucide-react'
 import { PLANNING_DOCUMENTS, type ConopsView, type DeconflictionView, type OpplanView, type PlanningDocument, type PlanningView, type PlanningState, type RoEView } from '@raptix/web-contracts'
-import { confirmHandoff, fetchPlanning } from '../api'
+import { confirmHandoff, discardDocumentDraft, fetchDocumentSource, fetchPlanning, publishDocumentDraft, saveDocumentDraft } from '../api'
 import { projectKeys } from '../queries'
 import { go } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, DescList, Skeleton, Status, cx } from '../../ui'
@@ -16,11 +16,16 @@ import { utcMinuteOr } from '../format'
 
 const STATE_TONE: Record<PlanningState, 'ok' | 'bad' | 'warn' | 'neutral'> = { ready: 'ok', missing: 'neutral', invalid: 'bad', unavailable: 'warn' }
 const STATE_LABEL: Record<PlanningState, string> = { ready: 'Ready', missing: 'Missing', invalid: 'Invalid', unavailable: 'Unavailable' }
+const PLANNING_DOCUMENT_TITLES: Record<string, string> = {
+  roe: 'Rules of Engagement', conops: 'Concept of Operations', deconfliction: 'Deconfliction', opplan: 'Operation Plan (OPPLAN)',
+  'threat-profile': 'Threat Profile', contact: 'Contact', 'data-handling': 'Data Handling', abort: 'Abort', cleanup: 'Cleanup',
+}
 
 export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engagementId: string; handoffConfirmedAt: string | null }): ReactElement {
   const client = useQueryClient()
   const planning = useQuery({ queryKey: ['real', 'planning', engagementId], queryFn: () => fetchPlanning(engagementId) })
   const [patchError, setPatchError] = useState<string | null>(null)
+  const [editorName, setEditorName] = useState<string | null>(null)
   const confirm = useMutation({
     mutationFn: () => confirmHandoff(engagementId),
     onSuccess: () => {
@@ -45,6 +50,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
     )
   }
   const view: PlanningView = planning.data
+  const editorDoc = editorName === null ? null : PLANNING_DOCUMENTS.includes(editorName as (typeof PLANNING_DOCUMENTS)[number]) ? PLANNING_DOCUMENT_TITLES[editorName] : null
 
   return (
     <div className="space-y-4">
@@ -66,7 +72,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
           <Card>
             <CardHeader title="Plan documents" sub="Generated in the AI workspace and stored in the engagement workspace. OPPLAN is the operational plan document — not a business plan approval." />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <PlanCard name="roe" title="Rules of Engagement" doc={view.documents.roe} render={(c) => (
+              <PlanCard name="roe" title="Rules of Engagement" onEdit={setEditorName} doc={view.documents.roe} render={(c) => (
                 <DescList
                   items={[
                     { k: 'Engagement type', v: c.engagement_type },
@@ -78,13 +84,13 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
                   ]}
                 />
               )} />
-              <PlanCard name="conops" title="Concept of Operations" doc={view.documents.conops} render={(c) => (
+              <PlanCard name="conops" title="Concept of Operations" onEdit={setEditorName} doc={view.documents.conops} render={(c) => (
                 <div className="space-y-2">
                   <p className="whitespace-pre-wrap text-sm text-fg">{c.executive_summary}</p>
                   {c.success_criteria && c.success_criteria.length > 0 && <p><span className="font-medium text-fg">Success criteria:</span> {c.success_criteria.join('; ')}</p>}
                 </div>
               )} />
-              <PlanCard name="deconfliction" title="Deconfliction" doc={view.documents.deconfliction} render={(c) => (
+              <PlanCard name="deconfliction" title="Deconfliction" onEdit={setEditorName} doc={view.documents.deconfliction} render={(c) => (
                 <DescList
                   items={[
                     { k: 'SOC contact', v: c.soc_contact ?? 'Not recorded' },
@@ -93,7 +99,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
                   ]}
                 />
               )} />
-              <PlanCard name="opplan" title="Operation Plan (OPPLAN)" doc={view.documents.opplan} render={(c) => (
+              <PlanCard name="opplan" title="Operation Plan (OPPLAN)" onEdit={setEditorName} doc={view.documents.opplan} render={(c) => (
                 <div className="space-y-2">
                   <p><span className="font-medium text-fg">Threat profile:</span> {c.threat_profile}</p>
                   {(c.objectives ?? []).length > 0 && (
@@ -122,6 +128,9 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
               })}
             </ul>
           </Card>
+          {editorDoc !== null && editorName !== null && (
+            <DocumentEditor engagementId={engagementId} name={editorName} title={editorDoc} onClose={() => setEditorName(null)} />
+          )}
         </div>
 
         <div className="min-w-0 space-y-4">
@@ -162,7 +171,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
   )
 }
 
-function DocUnavailable({ name, title, state }: { name: string; title: string; state: Exclude<PlanningState, 'ready'> }): ReactElement {
+function DocUnavailable({ name, title, state, onEdit }: { name: string; title: string; state: Exclude<PlanningState, 'ready'>; onEdit: (name: string) => void }): ReactElement {
   return (
     <div className="rounded-xl border border-line bg-subtle p-4" data-testid={`plan-doc-${name}`}>
       <div className="flex items-center justify-between">
@@ -170,19 +179,23 @@ function DocUnavailable({ name, title, state }: { name: string; title: string; s
         <Status kind="gate" value={state === 'invalid' ? 'failed' : 'pending'} size="sm" label={STATE_LABEL[state]} />
       </div>
       <p className="mt-2 text-xs text-muted">
-        {state === 'missing' ? 'This document has not been generated yet.' : state === 'invalid' ? 'The stored document failed validation — regenerate it in the AI workspace.' : 'The document source is unavailable right now.'}
+        {state === 'missing' ? 'This document has not been generated yet.' : state === 'invalid' ? 'The stored document failed validation — regenerate it in the AI workspace or fix it in the draft editor.' : 'The document source is unavailable right now.'}
       </p>
+      <Button size="sm" variant="secondary" className="mt-3" icon={PenLine} onClick={() => onEdit(name)}>
+        {state === 'missing' ? 'Draft this document' : 'Open draft editor'}
+      </Button>
     </div>
   )
 }
 
-function PlanCard<T extends RoEView | ConopsView | DeconflictionView | OpplanView>({ name, title, doc, render }: {
+function PlanCard<T extends RoEView | ConopsView | DeconflictionView | OpplanView>({ name, title, doc, render, onEdit }: {
   name: string
   title: string
   doc: PlanningDocument<T>
   render: (content: T) => ReactElement
+  onEdit: (name: string) => void
 }): ReactElement {
-  if (doc.state !== 'ready') return <DocUnavailable name={name} title={title} state={doc.state} />
+  if (doc.state !== 'ready') return <DocUnavailable name={name} title={title} state={doc.state} onEdit={onEdit} />
   return (
     <div className="rounded-xl border border-line bg-panel p-4" data-testid={`plan-doc-${name}`}>
       <div className="flex items-center justify-between">
@@ -190,6 +203,98 @@ function PlanCard<T extends RoEView | ConopsView | DeconflictionView | OpplanVie
         <Status kind="gate" value="passed" size="sm" label="Ready" />
       </div>
       <div className="mt-2 text-xs text-muted">{render(doc.content)}</div>
+      <Button size="sm" variant="secondary" className="mt-3" icon={PenLine} onClick={() => onEdit(name)}>View source & draft</Button>
     </div>
+  )
+}
+
+/**
+ * O06 (ADR-0083): source/draft editor for one allowlisted planning document.
+ * The server holds the draft and enforces the digest precondition: saving or
+ * publishing with a stale base answers 409 instead of clobbering either a
+ * concurrent browser edit or a model rewrite. ROE cannot be published here —
+ * scope/ROE changes go through the Scope & ROE revision workflow.
+ */
+function DocumentEditor({ engagementId, name, title, onClose }: { engagementId: string; name: string; title: string; onClose: () => void }): ReactElement {
+  const client = useQueryClient()
+  const source = useQuery({ queryKey: ['real', 'document', engagementId, name], queryFn: () => fetchDocumentSource(engagementId, name) })
+  const [text, setText] = useState<string | null>(null)
+  const [notice, setNotice] = useState<{ tone: 'ok' | 'bad' | 'warn'; text: string } | null>(null)
+  useEffect(() => {
+    if (source.data && text === null) setText(source.data.draft?.body ?? source.data.source ?? '')
+  }, [source.data, text])
+  const baseDigest = source.data?.digest ?? null
+  const savedDraft = source.data?.draft ?? null
+  const dirty = text !== null && text !== (savedDraft?.body ?? source.data?.source ?? '')
+
+  const invalidate = (): void => {
+    void client.invalidateQueries({ queryKey: ['real', 'document', engagementId, name] })
+    void client.invalidateQueries({ queryKey: ['real', 'planning', engagementId] })
+  }
+  const save = useMutation({
+    mutationFn: () => saveDocumentDraft(engagementId, name, { body: text ?? '', baseDigest }),
+    onSuccess: () => { setNotice({ tone: 'ok', text: 'Draft saved server-side — it survives refresh and restarts and is not visible to agents.' }); invalidate() },
+    onError: (error) => setNotice({ tone: 'bad', text: error instanceof Error ? error.message : 'Saving the draft failed.' }),
+  })
+  const publish = useMutation({
+    mutationFn: () => publishDocumentDraft(engagementId, name, { body: text ?? '', baseDigest }),
+    onSuccess: () => { setNotice({ tone: 'ok', text: 'Published to the engagement workspace with the digest precondition; agents read the new version on their next load.' }); invalidate() },
+    onError: (error) => setNotice({ tone: 'bad', text: error instanceof Error ? error.message : 'Publishing failed.' }),
+  })
+  const discard = useMutation({
+    mutationFn: () => discardDocumentDraft(engagementId, name),
+    onSuccess: () => { setNotice({ tone: 'ok', text: 'Draft discarded — the editor now shows the published source.' }); invalidate() },
+    onError: (error) => setNotice({ tone: 'bad', text: error instanceof Error ? error.message : 'Discarding the draft failed.' }),
+  })
+
+  const roeNote = name === 'roe'
+  return (
+    <Card>
+      <div data-testid={`document-editor-${name}`}>
+      <CardHeader title={`${title} — source & draft`} sub={roeNote ? 'ROE is governed by the Scope & ROE revision workflow; publishing the file from the console is refused.' : 'Edits are server-side drafts. Publish validates the schema and replaces the workspace file only if it has not changed since you loaded it.'} />
+      {notice && <Banner tone={notice.tone} title={notice.text} action={<Button size="sm" variant="ghost" onClick={() => setNotice(null)}>Dismiss</Button>} />}
+      {source.data?.validation.valid === false && source.data.source !== null && (
+        <Banner tone="warn" title="The published document currently fails schema validation">
+          <ul className="list-inside list-disc">{source.data.validation.errors.slice(0, 5).map((e) => <li key={e}>{e}</li>)}</ul>
+        </Banner>
+      )}
+      {source.isPending ? (
+        <div className="space-y-2" aria-busy="true" role="status"><Skeleton className="h-40" /></div>
+      ) : source.isError || !source.data ? (
+        <p className="text-sm text-bad" role="alert">{source.error instanceof Error ? source.error.message : 'The document source could not be loaded.'}</p>
+      ) : (
+        <>
+          <textarea
+            aria-label={`${title} draft`}
+            className="mt-3 h-64 w-full rounded-xl border border-line bg-subtle p-3 font-mono text-xs text-fg"
+            spellCheck={false}
+            value={text ?? ''}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button variant="primary" disabled={save.isPending || !dirty} onClick={() => { setNotice(null); save.mutate() }}>
+              {save.isPending ? 'Saving…' : dirty ? 'Save draft' : 'Draft saved'}
+            </Button>
+            {!roeNote && (
+              <Button variant="secondary" disabled={publish.isPending || save.isPending} onClick={() => { setNotice(null); publish.mutate() }}>
+                {publish.isPending ? 'Publishing…' : 'Publish to workspace'}
+              </Button>
+            )}
+            {savedDraft && (
+              <Button variant="ghost" disabled={discard.isPending} onClick={() => { setNotice(null); discard.mutate() }}>
+                {discard.isPending ? 'Discarding…' : 'Discard draft'}
+              </Button>
+            )}
+            <Button variant="ghost" icon={RefreshCw} onClick={() => { setText(null); setNotice(null); void source.refetch() }}>Reload</Button>
+            <Button variant="ghost" onClick={onClose}>Close editor</Button>
+            <span className="ml-auto text-xs text-muted">
+              {dirty ? 'Unsaved local edits' : savedDraft ? 'Server draft loaded' : 'Published source loaded'}
+              {baseDigest !== null && ` · base ${baseDigest.slice(0, 12)}`}
+            </span>
+          </div>
+        </>
+      )}
+      </div>
+    </Card>
   )
 }

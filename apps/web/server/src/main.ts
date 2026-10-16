@@ -31,6 +31,7 @@ import { SliverClient } from './integrations/c2/sliver-client.js';
 import { VaultService } from './services/vault-service.js';
 import { MembersService } from './services/members-service.js';
 import { ScopeService } from './services/scope-service.js';
+import { DocumentDraftService } from './services/document-draft-service.js';
 import { GovernanceService, type PreflightCheck, type ReadinessInput } from './services/governance-service.js';
 import { ScheduleService } from './services/schedule-service.js';
 import { FindingsWorkflowService } from './services/findings-workflow-service.js';
@@ -130,7 +131,11 @@ async function main(): Promise<void> {
        return pending;
      },
    }) : undefined;
-    const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
+     const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
+    // O06 (ADR-0083): persistent plan document drafts over the allowlisted
+    // planning documents; requires both the DB (draft rows, audit) and the
+    // workspace root (preconditioned reads/publish).
+    const documentDrafts = dbClient && env.workspacePath ? new DocumentDraftService(dbClient, env.workspacePath) : undefined;
    const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
      ? new RuntimeContextService({
          config: runtimeConfig,
@@ -258,6 +263,7 @@ async function main(): Promise<void> {
   vaultService,
   membersService,
   scopeService,
+  documentDrafts,
   governanceService,
   scheduleService,
   findingsWorkflow,
