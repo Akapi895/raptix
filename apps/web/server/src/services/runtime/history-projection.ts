@@ -1,7 +1,7 @@
 import { normalizedEventKey } from '@raptix/streaming';
 import type { ThreadHistoryEvent } from '@raptix/web-contracts';
 import type { StreamScope } from '@raptix/web-contracts';
-import { projectCustomPayload } from './stream-projection.js';
+import { projectCustomPayload, projectStreamFrame } from './stream-projection.js';
 
 /**
  * Durable checkpoint transcript history (W09).
@@ -19,12 +19,18 @@ const transcriptLimit = 500;
 const marker = '…[truncated]';
 export function projectThreadHistory(scope: StreamScope, values: Record<string, unknown>): { transcripts: ThreadHistoryEvent[]; transcriptsTruncated: boolean } {
   const raw = values.subagent_transcripts;
-  if (raw === undefined) return { transcripts: [], transcriptsTruncated: false };
-  if (!Array.isArray(raw)) return { transcripts: [], transcriptsTruncated: true };
-  const recent = raw.slice(-transcriptLimit);
+  const recent = Array.isArray(raw) ? raw.slice(-transcriptLimit) : [];
   const transcripts: ThreadHistoryEvent[] = [];
   const seen = new Set<string>();
-  let lossy = raw.length > transcriptLimit;
+  let lossy = raw !== undefined && (!Array.isArray(raw) || raw.length > transcriptLimit);
+  if (Array.isArray(values.messages)) {
+    lossy ||= values.messages.length > transcriptLimit;
+    const events = projectStreamFrame(scope, { event: 'values', data: JSON.stringify({ messages: values.messages.slice(-transcriptLimit) }) }, 'checkpoint-history');
+    for (const event of events) {
+      if (event.payload.type !== 'tool_call' && event.payload.type !== 'tool_result') continue;
+      transcripts.push({ key: event.eventId, runId: null, source: 'checkpoint', truncated: event.payload.truncated, payload: event.payload });
+    }
+  }
   for (const entry of recent) {
     const payload = projectCustomPayload(entry);
     if (!payload) { lossy = true; continue; }
@@ -34,5 +40,5 @@ export function projectThreadHistory(scope: StreamScope, values: Record<string, 
     const truncated = payload.truncated || (payload.content !== undefined && payload.content.endsWith(marker));
     transcripts.push({ key, runId: null, source: 'checkpoint', truncated, payload });
   }
-  return { transcripts, transcriptsTruncated: lossy };
+  return { transcripts: transcripts.slice(-transcriptLimit), transcriptsTruncated: lossy || transcripts.length > transcriptLimit };
 }

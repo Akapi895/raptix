@@ -13,6 +13,7 @@ import { fetchTimeline } from '../api'
 import { utcMinute } from '../format'
 import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status, cx } from '../../ui'
+import { ExecutionLogs } from './execution-logs'
 
 const STATUS_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = {
   // W24: the runtime reports success/error/timeout/interrupted; unknown
@@ -155,15 +156,11 @@ function ThreadRuns({ thread }: { thread: ThreadBindingView }): ReactElement {
           </table>
       )}
       <section aria-label={`Tool activity ${thread.threadId}`} className="mt-4 space-y-2">
-        <h3 className="text-sm font-semibold">Tool calls & agent activity</h3>
+        <h3 className="text-sm font-semibold">Tool calls & execution logs</h3>
         <p className="text-xs text-muted">Checkpoint history across this thread; events without run attribution are not assigned to the latest run.</p>
         {snapshot.isPending ? <p role="status">Loading tool activity…</p> : snapshot.isError ? <p role="alert" className="text-sm text-bad">Tool activity unavailable: {snapshot.error.message}</p> : <>
           {snapshot.data?.transcriptsTruncated && <Banner tone="warn" title="Tool history truncated">Older checkpoint events are omitted by the source.</Banner>}
-          {!snapshot.data?.transcripts?.length && <p className="text-sm text-muted">No recorded tool activity.</p>}
-          {snapshot.data?.transcripts?.map((entry, index) => <details key={entry.key ?? index} className="rounded-lg border border-line p-2">
-            <summary className="cursor-pointer font-mono text-xs">{entry.payload.type} · checkpoint{entry.truncated ? ' · truncated' : ''}</summary>
-            <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">{JSON.stringify(entry.payload, null, 2)}</pre>
-          </details>)}
+          <ExecutionLogs entries={snapshot.data?.transcripts ?? []} assistantId={thread.assistantId} />
         </>}
       </section>
     </li>

@@ -1,7 +1,7 @@
 ﻿/** Real operations panel tests (ticket 05): execution threads, run identities, truthful statuses. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { cleanup, render, screen } = await import('@testing-library/react')
+const { cleanup, fireEvent, render, screen, within } = await import('@testing-library/react')
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query')
 const { RealOperationsPanel } = await import('./operations-panel')
 
@@ -60,8 +60,10 @@ describe('RealOperationsPanel', () => {
   it('shows persisted tool calls as checkpoint history without claiming run attribution', async () => {
     const calls = stubApi()
     renderPanel()
-    expect(await screen.findByText(/subagent_tool_call · checkpoint/)).toBeTruthy()
-    expect(screen.getByText(/"tool": "service-mapper"/)).toBeTruthy()
+    fireEvent.click(await screen.findByRole('button', { name: /subagent_tool_call · checkpoint/ }))
+    const dialog = await screen.findByRole('dialog', { name: /Tool Event Inspector/ })
+    expect(dialog.tagName).toBe('DIV')
+    expect(within(dialog).getByText(/"tool": "service-mapper"/)).toBeTruthy()
     expect(screen.getByText(/events without run attribution/)).toBeTruthy()
     expect(screen.queryByLabelText('Workspace message')).toBeNull()
     expect(calls.every((call) => call.startsWith('GET '))).toBe(true)
