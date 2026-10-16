@@ -11,6 +11,7 @@ import { useEffect, useState, type ReactElement } from 'react'
 import { FileDiff, Loader2 } from 'lucide-react'
 import { decideScopeRevision, fetchAssetInventory, fetchEffectiveScope, fetchScopeRevisions, submitScopeRevision } from '../api'
 import { zonedToIso } from '../format'
+import { useSession } from '../session'
 import { Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -36,6 +37,7 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
     queryKey: ['real', 'effective-scope', engagementId],
     queryFn: () => fetchEffectiveScope(engagementId),
   })
+  const actorId = useSession().session?.actor?.id ?? null
   const [added, setAdded] = useState('')
   const [removed, setRemoved] = useState('')
   const [rationale, setRationale] = useState('')
@@ -168,11 +170,13 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
                     </td>
                     <td className="py-2 pr-3 font-mono text-xs">{r.requestedBy}</td>
                     <td className="py-2 text-xs">
-                      {r.status === 'pending' ? (
+                      {r.status === 'pending' && r.requestedBy !== actorId ? (
                         <span className="flex gap-2">
                           <Button variant="primary" onClick={() => decide.mutate({ revisionId: r.id, decision: 'approved' })}>Approve</Button>
                           <Button variant="secondary" onClick={() => decide.mutate({ revisionId: r.id, decision: 'rejected' })}>Reject</Button>
                         </span>
+                      ) : r.status === 'pending' ? (
+                        <span className="text-muted" title="The requester cannot decide their own revision">Awaiting an independent reviewer</span>
                       ) : (
                         <span className="text-muted">{r.decidedBy ?? '—'}{r.decisionComment !== null ? `: ${r.decisionComment}` : ''}</span>
                       )}

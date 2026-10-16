@@ -18,6 +18,22 @@ import { utcMinuteOr } from '../format'
 /* OPPLAN is the living operational plan, not part of the handoff. */
 const HANDOFF_DOCUMENTS = PLANNING_DOCUMENTS.filter((name) => name !== 'opplan')
 const PREPARE_DOCUMENTS_WITHOUT_CARD: readonly PlanningDocumentName[] = ['threat-profile', 'contact', 'data-handling', 'abort', 'cleanup']
+const READINESS_TEXT: Record<string, string> = {
+  authorization_not_confirmed: 'Authorization is not confirmed for this engagement.',
+  metadata_needs_review: 'The stored target has not been verified yet.',
+  engagement_name_mismatch: 'The planning documents disagree on the engagement name.',
+  authorization_reference_missing: 'The ROE has no authorization reference.',
+  target_not_in_scope: 'The ROE in_scope list does not contain the engagement target.',
+}
+const DOCUMENT_STATE_TEXT: Record<string, string> = { missing: 'is not drafted yet', invalid: 'fails schema validation', unavailable: 'cannot be read right now' }
+
+/** The server's machine reasons (`roe:missing`, `target_not_in_scope`) as a sentence the operator can act on. */
+export function describeReadinessReason(reason: string): string {
+  const [name, state] = reason.split(':').map((part) => part.trim())
+  if (state !== undefined && name in PLANNING_DOCUMENT_TITLES && state in DOCUMENT_STATE_TEXT) return `${PLANNING_DOCUMENT_TITLES[name]} ${DOCUMENT_STATE_TEXT[state]}.`
+  return READINESS_TEXT[reason] ?? reason
+}
+
 const STATE_TONE: Record<PlanningState, 'ok' | 'bad' | 'warn' | 'neutral'> ={ ready: 'ok', missing: 'neutral', invalid: 'bad', unavailable: 'warn' }
 const STATE_LABEL: Record<PlanningState, string> = { ready: 'Ready', missing: 'Missing', invalid: 'Invalid', unavailable: 'Unavailable' }
 const PLANNING_DOCUMENT_TITLES: Record<string, string> = {
@@ -65,7 +81,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
       ) : (
         <Banner tone="warn" icon={CircleAlert} title="Planning is blocked">
           <ul className="list-inside list-disc">
-            {view.readiness.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+            {view.readiness.reasons.map((reason) => <li key={reason} title={reason}>{describeReadinessReason(reason)}</li>)}
           </ul>
         </Banner>
       )}
@@ -154,7 +170,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
               items={[
                 { k: 'State', v: <Status kind="gate" value={view.readiness.state === 'ready' ? 'passed' : 'pending'} size="sm" label={view.readiness.state === 'ready' ? 'Ready' : 'Blocked'} /> },
                 { k: 'Runtime signal', v: view.readiness.runtimeSignal },
-                { k: 'Reasons', v: view.readiness.reasons.length === 0 ? 'None' : view.readiness.reasons.join('; ') },
+                { k: 'Reasons', v: view.readiness.reasons.length === 0 ? 'None' : view.readiness.reasons.map(describeReadinessReason).join(' ') },
               ]}
             />
           </Card>
@@ -360,7 +376,7 @@ function DocumentEditor({ engagementId, name, title, onClose }: { engagementId: 
           />
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button variant="primary" disabled={save.isPending || !dirty} onClick={() => { setNotice(null); save.mutate() }}>
-              {save.isPending ? 'Saving…' : dirty ? 'Save draft' : 'Draft saved'}
+              {save.isPending ? 'Saving…' : dirty || savedDraft === null ? 'Save draft' : 'Draft saved'}
             </Button>
             {!roeNote && (
               <Button variant="secondary" disabled={publish.isPending || save.isPending} onClick={() => { setNotice(null); publish.mutate() }}>
