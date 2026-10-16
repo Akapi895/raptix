@@ -12,16 +12,18 @@ import { go } from '../router/navigate'
 import { switchDataMode } from './mode'
 import { Button } from '../ui'
 
-/** Route keys with a verified real implementation (grows per integration ticket). */
+/**
+ * Route keys reachable via the mock-mode `routeComponent` lookup while still
+ * honest in real mode: the bootstrap/project surfaces and the system pages
+ * that read no console data. `router/host.tsx` checks `REAL_PAGES` (direct
+ * components plus everything in `route-table.ts`) first, so a key only ever
+ * reaches this set if it has no real-mode implementation there yet.
+ */
 // eslint-disable-next-line react-refresh/only-export-components
 export const REAL_INTEGRATED_ROUTES: ReadonlySet<string> = new Set([
   'projects',
   'project',
   'project-new',
-  // Ticket 04/05: the real AI workspace (planning + execution conversations).
-  'ai-operator',
-  // Ticket 06: graph-projected assets and the observed attack-chain graph.
-  'assets',
   // System pages that do not read console data render themselves.
   'notfound', 'error', 'offline', 'forbidden', 'session-expired',
 ])
