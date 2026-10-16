@@ -40,7 +40,9 @@ COPY --from=build /app/apps/web/server/prisma.config.ts apps/web/server/prisma.c
 
 WORKDIR /app/apps/web/server
 ARG VERSION=0.0.0
+ARG SOURCE_REVISION=unknown
 LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.revision="${SOURCE_REVISION}"
 EXPOSE 8081
 # The new server owns its migrations (guide §13.4): deploy them at boot before
 # serving. Migrations run against the dedicated new-stack database only.
