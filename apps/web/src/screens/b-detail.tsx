@@ -26,14 +26,16 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed, ChevronDown, Sparkles } from 'lucide-react'
-import { APR, planVer, type Project } from '../data'
+import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed } from 'lucide-react'
+import { APR, type Project } from '../data'
+import { DocumentWorkspace } from '../features/documents/workspace'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import { useProjectStore, useToastStore } from '../state/stores'
 import { useCan, useMe } from '../state/console'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, Menu, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui'
+import { MOCK_PROJECT_NAV, MOCK_PROJECT_TABS } from '../shell/nav'
+import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui'
 import type { DashboardAggregate, Eligibility } from './dashboard/domain'
 import { ScopeTab, TeamTab, CloseTab } from './b-detail2'
 import { useSubmitApproval, useReopen } from '../features/approvals/hooks'
@@ -45,15 +47,12 @@ import type { ServiceFailure } from '../domain/service'
 const parseDate = (s: string) => { const d = new Date(s.replace(/,?\s*\d{1,2}:\d{2}.*$/, '')); return isNaN(d.getTime()) ? new Date(2026, 9, 13) : d }
 const NOW = new Date(2026, 9, 13)
 
-const MAIN_TABS = [
-  { id: 'overview', label: 'Overview' }, { id: 'scope', label: 'Scope & ROE' }, { id: 'operations', label: 'Operations' }, { id: 'plans', label: 'AI Plans' }, { id: 'findings', label: 'Findings' }, { id: 'reports', label: 'Reports' },
-]
-const MORE_TABS = [
-  { id: 'objectives', label: 'Objectives' }, { id: 'activity', label: 'Activity' }, { id: 'team', label: 'Members & Approvals' }, { id: 'sessions', label: 'C2 Sessions' }, { id: 'evidence', label: 'Evidence' }, { id: 'audit', label: 'Audit' }, { id: 'close', label: 'Closeout' },
-]
-const TAB_LIST = [...MAIN_TABS, ...MORE_TABS]
+/** Valid project tab IDs own the URLs; old aliases keep resolving. */
+const TAB_IDS = MOCK_PROJECT_TABS.map((t) => t.id)
 /** Old tab ids that may still appear in deep links */
 const TAB_ALIAS: Record<string, string> = { closure: 'close', closeout: 'close', members: 'team', approvals: 'team', 'ai-plans': 'plans', c2: 'sessions', 'audit-log': 'audit', roe: 'scope' }
+/** The page title is the section being opened (plan 2026-10-16 §3.1). */
+const sectionTitle = (tab: string) => MOCK_PROJECT_NAV.flatMap((g) => g.items).find((i) => i.match.includes(tab))?.label ?? 'Overview'
 
 /** Access-blocked / not-found state. The typed read collapses foreign and unknown projects into one not-found failure — no record content is ever rendered. */
 function Blocked({ id }: { id?: string }) {
@@ -122,7 +121,7 @@ function Detail({ d }: { d: ProjectDetail }) {
   const p = d.project
   const ds = d.aggregate
   const rt = route.tab ? TAB_ALIAS[route.tab] || route.tab : ''
-  const tab = TAB_LIST.some((t) => t.id === rt) ? rt : 'overview'
+  const tab = TAB_IDS.includes(rt) ? rt : 'overview'
   const elig = d.eligibility
   const guard = useGuard(p.id)
   const sub = useSubmitApproval(p)
@@ -135,8 +134,6 @@ function Detail({ d }: { d: ProjectDetail }) {
   const setTab = (t: string) => go('project', { id: p.id, tab: t })
   const canOp = !guard.ro && can('run', p.id)
   const closed = p.status === 'closed' || p.status === 'cancelled'
-  const count = (id: string) => id === 'operations' ? ds.operations.length : id === 'plans' ? ds.plans.length : id === 'sessions' ? ds.sessions.length : id === 'findings' ? ds.findings.length : id === 'reports' ? ds.reports.length : id === 'evidence' ? d.evidence.length : id === 'team' && pending.length ? pending.length : undefined
-  const inMore = MORE_TABS.some((t) => t.id === tab)
   const canSubmit = (p.status === 'draft' || p.status === 'rejected') && can('editScope', p.id)
 
   /* Header pin runs through the typed project write (ticket 04's representative
@@ -151,7 +148,11 @@ function Detail({ d }: { d: ProjectDetail }) {
   })
   const canPin = me.role === 'manager' || me.role === 'admin'
 
-  const actions = (
+  /* Page-scoped actions (plan §3.1): the Overview header keeps the
+     engagement-level CTAs; other sections carry their own in-page CTA and
+     never repeat Close Project / Ask AI (Ask AI is the header copilot entry,
+     Close Project lives in Closeout). */
+  const actions = tab === 'overview' ? (
     <>
       <IconButton
         icon={p.pinned ? PinOff : Pin} label={p.pinned ? 'Unpin project' : 'Pin project'} disabled={!canPin || pin.isPending}
@@ -166,23 +167,16 @@ function Detail({ d }: { d: ProjectDetail }) {
       {closed ? (
         can('reopen', p.id) ? <Button variant="danger" onClick={reopen}>Reopen Project</Button> : <span title="Only an Organization Admin can reopen a closed project"><Button disabled>Reopen Project</Button></span>
       ) : (
-        <Button
-          disabled={!can('requestClose', p.id)} onClick={() => setTab('close')}
-          title={can('requestClose', p.id) ? 'Review the checklist and request project closure' : 'Only a Red Team Manager can request project closure'}
-        >Close Project</Button>
+        <Button variant="primary" icon={Plus} disabled={!canOp} title={canOp ? (elig.kind === 'locked' ? 'Saves a draft operation. Run stays blocked until execution is unlocked.' : undefined) : guard.ro ? guard.reason : 'Your role cannot create operations'} onClick={() => via('operation-new')}>Create Operation</Button>
       )}
-      <Button icon={Sparkles} disabled={closed} title={closed ? 'Project is closed — read-only.' : 'Open AI Operator for this project'} onClick={() => via('ai-operator')}>Ask AI</Button>
-      <Button variant="primary" icon={Plus} disabled={!canOp} title={canOp ? (elig.kind === 'locked' ? 'Saves a draft operation. Run stays blocked until execution is unlocked.' : undefined) : guard.ro ? guard.reason : 'Your role cannot create operations'} onClick={() => via('operation-new')}>Create Operation</Button>
     </>
-  )
+  ) : undefined
 
   return (
     <>
       <PageHeader
-        crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: p.client }, { label: p.id }]}
-        title={p.name}
-        sub={<span><span className="font-mono">{p.id}</span> · {p.client} · {p.type} · {p.start} – {p.end} · Owner: {p.owner}</span>}
-        meta={<span className="flex flex-wrap items-center gap-2"><Status kind="project" value={p.status} /><Status kind="generic" value={elig.tone === 'cyan' ? 'ok' : elig.tone} size="sm" label={elig.label} />{p.roeStatus !== 'approved' ? <span className="inline-flex"><Status kind="roe" value={p.roeStatus} label={p.roeStatus === 'none' ? 'No ROE' : 'ROE not approved'} /></span> : <Status kind="roe" value="approved" label={`${p.roeVersion} approved`} />}</span>}
+        crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: p.name }]}
+        title={sectionTitle(tab)}
         actions={actions}
       />
       {closed && <Banner tone="warn" icon={Lock} title={`${p.status === 'closed' ? 'Closed' : 'Cancelled'}${p.closedAt ? ` on ${p.closedAt}` : ''}`}>This project is read-only. Data is retained per policy; operations cannot be started and nothing can be edited. {p.status === 'closed' && 'Only an Organization Admin can reopen it, with a reason that is recorded in the audit log.'}</Banner>}
@@ -194,24 +188,6 @@ function Detail({ d }: { d: ProjectDetail }) {
       {!closed && pending.length === 0 && p.roeStatus === 'rejected' && (
         <Banner tone="bad" title="ROE returned for changes" action={<Button size="sm" onClick={() => setTab('scope')}>Edit scope</Button>}>Read the reviewer's note, update the scope, then resubmit for approval.</Banner>
       )}
-
-      <div role="tablist" className="mb-5 flex items-center gap-1 border-b border-line">
-        <div className="no-scrollbar flex min-w-0 gap-1 overflow-x-auto">
-          {MAIN_TABS.map((t) => {
-            const c = count(t.id)
-            return (
-              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`-mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 text-sm font-medium transition ${tab === t.id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg'}`}>
-                {t.label}{c !== undefined && <span className="rounded-full bg-hover px-1.5 text-xs text-muted">{c}</span>}
-              </button>
-            )
-          })}
-        </div>
-        <div className="-mb-px shrink-0">
-          {/* Ticket 62: right-anchored (default) — the trigger sits at the strip's right edge, so a left-anchored panel extended past the viewport where the strip scrolls.
-              Ticket 64: a real button so the tab (and its menu) is focusable and keyboard-operable. */}
-          <Menu trigger={<button type="button" role="tab" aria-selected={inMore} aria-haspopup="menu" className={`inline-flex h-11 cursor-pointer items-center gap-1.5 whitespace-nowrap border-b-2 px-3.5 text-sm font-medium transition ${inMore ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg'}`}>{inMore ? MORE_TABS.find((t) => t.id === tab)!.label : 'More'}<ChevronDown size={14} aria-hidden /></button>} items={MORE_TABS.map((t) => ({ label: `${t.label}${count(t.id) !== undefined ? ` (${count(t.id)})` : ''}`, onClick: () => setTab(t.id) }))} />
-        </div>
-      </div>
 
       {tab === 'overview' && <Overview d={d} via={via} setTab={setTab} />}
       {tab === 'scope' && <ScopeTab p={p} ds={ds} />}
@@ -441,13 +417,20 @@ function Activity({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   )
 }
 
-/* ───────────── Context shortcuts (ticket 23: typed aggregate slices; eligibility is the service's derived label) ───────────── */
+/* ───────────── Execution workspace (plan 2026-10-16 §4: the direct entry for
+   operations/runs — no intermediate second list; states and next steps first) ───────────── */
 function OpsTab({ p, ds, elig, via, setTab }: { p: Project; ds: DashboardAggregate; elig: Eligibility; via: Via; setTab: (t: string) => void }) {
   const can = useCan()
   const guard = useGuard(p.id)
   const ops = ds.operations.filter((o) => o.projectId === p.id)
   const pg = usePaged(ops, 8)
   const canOp = !guard.ro && can('run', p.id)
+  const live = !['closed', 'cancelled'].includes(p.status)
+  const running = ops.filter((o) => o.status === 'running')
+  const waiting = ops.filter((o) => ['draft', 'ready', 'pending', 'paused'].includes(o.status))
+  const errored = ops.filter((o) => ['error', 'estop'].includes(o.status))
+  const done = ops.filter((o) => o.status === 'done')
+  const blocked = live && elig.reasons.length > 0
   type O = (typeof ops)[number]
   const cols: Col<O>[] = [
     { key: 'id', header: 'ID', render: (o) => <IdLink onClick={() => go('operation', { id: o.id })}>{o.id}</IdLink> },
@@ -477,7 +460,21 @@ function OpsTab({ p, ds, elig, via, setTab }: { p: Project; ds: DashboardAggrega
   ]
   return (
     <>
-      <FilterBar right={<><Button size="sm" onClick={() => via('operations')}>Open in Operations</Button><Button variant="primary" icon={Plus} disabled={!canOp} title={canOp ? 'Saves a draft; Run is gated separately' : guard.ro ? guard.reason : 'Your role cannot create operations'} onClick={() => via('operation-new')}>Create Operation</Button></>}>
+      {/* Header: states + the evidence-based next step; no second table to cross. */}
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Kpi label="Running" value={running.length} sub={running[0]?.name ?? 'Nothing is executing'} tone={running.length ? 'ok' : undefined} onClick={() => running[0] && go('operation', { id: running[0].id })} />
+        <Kpi label="Waiting" value={waiting.length} sub={waiting.length ? 'Drafts and paused runs' : 'Nothing queued'} onClick={() => waiting[0] && go('operation', { id: waiting[0].id })} />
+        <Kpi label="Errors / stopped" value={errored.length} sub={errored.length ? errored.map((o) => o.id).join(', ') : 'None observed'} tone={errored.length ? 'warn' : undefined} onClick={() => errored[0] && go('operation', { id: errored[0].id })} />
+        <Kpi label="Completed" value={done.length} sub={done.length ? `${done.length} finished run${done.length === 1 ? '' : 's'}` : 'No completed runs yet'} />
+      </div>
+      {ops.length === 0 && live && (
+        <Banner tone="info" title="No operations yet">
+          {blocked
+            ? <>Execution is blocked by preflight conditions. Resolve them in <button className="text-accent underline" onClick={() => setTab('scope')}>Scope & ROE</button> and prepare the approach in <button className="text-accent underline" onClick={() => setTab('plans')}>Planning</button>; drafts can be saved meanwhile.</>
+            : <>Create a draft operation below, or review <button className="text-accent underline" onClick={() => setTab('scope')}>Scope & ROE</button> and <button className="text-accent underline" onClick={() => setTab('plans')}>Planning</button> first.</>}
+        </Banner>
+      )}
+      <FilterBar right={<Button variant="primary" icon={Plus} disabled={!canOp} title={canOp ? 'Saves a draft; Run is gated separately' : guard.ro ? guard.reason : 'Your role cannot create operations'} onClick={() => via('operation-new')}>Create Operation</Button>}>
         <span className="text-sm text-muted">{ops.length} operations in {p.id}</span>
       </FilterBar>
       {elig.kind === 'locked' && (
@@ -511,7 +508,7 @@ function FindingsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: 
   ]
   return (
     <>
-      <FilterBar right={<><Button size="sm" onClick={() => via('findings')}>Open in Findings</Button><Button variant="primary" icon={Plus} disabled={!ok} title={ok ? undefined : guard.ro ? guard.reason : 'Your role cannot create findings'} onClick={() => via('finding-new')}>Create Finding</Button></>}>
+      <FilterBar right={<Button variant="primary" icon={Plus} disabled={!ok} title={ok ? undefined : guard.ro ? guard.reason : 'Your role cannot create findings'} onClick={() => via('finding-new')}>Create Finding</Button>}>
         <span className="text-sm text-muted">{fs.length} findings in {p.id}</span>
       </FilterBar>
       <Table cols={cols} rows={pg.rows} rowKey={(f) => f.id} onRow={(f) => go('finding', { id: f.id })} empty={<Empty title="No findings yet">Findings are created from operation results or entered manually.</Empty>} />
@@ -537,7 +534,7 @@ function ReportsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: V
   ]
   return (
     <>
-      <FilterBar right={<><Button size="sm" onClick={() => via('reports')}>Open in Reports</Button><Button variant="primary" icon={Plus} disabled={!ok} title={ok ? 'Drafts can be saved at any time' : guard.ro ? guard.reason : 'Your role cannot create reports'} onClick={() => via('report-new')}>Create Report Draft</Button></>}>
+      <FilterBar right={<Button variant="primary" icon={Plus} disabled={!ok} title={ok ? 'Drafts can be saved at any time' : guard.ro ? guard.reason : 'Your role cannot create reports'} onClick={() => via('report-new')}>Create Report Draft</Button>}>
         <span className="text-sm text-muted">{reps.length} reports in {p.id}</span>
       </FilterBar>
       <Table cols={cols} rows={reps} rowKey={(r) => r.id} onRow={(r) => go('report', { id: r.id })} empty={<Empty title="No reports yet">Create a report from a template once findings are confirmed.</Empty>} />
@@ -596,25 +593,13 @@ function AuditTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 function PlansTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const guard = useGuard(p.id)
   const plans = ds.plans.filter((x) => x.projectId === p.id)
-  const pg = usePaged(plans, 8)
-  type P = (typeof plans)[number]
-  const cols: Col<P>[] = [
-    { key: 'id', header: 'Plan', render: (x) => <IdLink onClick={() => go('ai-plan-review', { id: x.id })}>{x.id}</IdLink> },
-    { key: 'title', header: 'Title', render: (x) => <span className="font-medium">{x.title}</span> },
-    { key: 'ver', header: 'Version', render: (x) => <span className="font-mono text-xs">{planVer(x)}</span>, hideBelow: 'md' },
-    { key: 'st', header: 'Status', render: (x) => <span className="inline-flex flex-wrap items-center gap-1.5"><Status kind="plan" value={x.status} />{x.status === 'expired' && x.risks.some((r) => r.startsWith('Re-validation')) && <span className="text-xs text-warn">Re-validation required</span>}</span> },
-    { key: 'steps', header: 'Steps', render: (x) => <span className="tabular-nums">{x.steps.length}</span>, hideBelow: 'md' },
-    { key: 'rv', header: 'Reviewer', render: (x) => x.reviewer, hideBelow: 'lg' },
-    { key: 'up', header: 'Updated', render: (x) => <span className="font-mono text-xs text-muted">{x.updated}</span>, hideBelow: 'lg' },
-  ]
   return (
-    <>
+    <div className="space-y-5">
       <FilterBar right={<Button variant="primary" icon={Plus} disabled={guard.ro} title={guard.ro ? guard.reason : 'Drafts can be saved even before the ROE is approved'} onClick={() => go('ai-operator')}>Create Plan Draft</Button>}>
-        <span className="text-sm text-muted">AI-proposed plans for {p.id}. Open a plan to review or compare it.</span>
+        <div><p className="text-sm font-medium">Plan the engagement, one OPPLAN document at a time.</p><p className="mt-1 text-xs text-muted">{plans.filter((plan) => plan.status !== 'superseded').length} current · {plans.filter((plan) => plan.status === 'in_review' || plan.status === 'proposed').length} awaiting review · {plans.filter((plan) => plan.status === 'superseded').length} earlier versions</p></div>
       </FilterBar>
-      <Table cols={cols} rows={pg.rows} rowKey={(x) => x.id} onRow={(x) => go('ai-plan-review', { id: x.id })} empty={<Empty title="No AI plans for this project">Plans appear here after the AI Operator proposes one for {p.id}.</Empty>} />
-      <Pager {...pg} />
-    </>
+      <DocumentWorkspace key={p.id} p={p} kindFilter="planning" />
+    </div>
   )
 }
 

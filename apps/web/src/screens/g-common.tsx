@@ -1,6 +1,6 @@
 import { FanOutCard } from './g-fanout'
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Ban, BarChart3, Bot, Check, FileText, GitBranch, Info, Lock, Send, ShieldCheck, Terminal, User, Cog, X } from 'lucide-react'
+import { AlertTriangle, Ban, BarChart3, Bot, Check, ChevronDown, FileText, GitBranch, Info, Lock, Send, ShieldCheck, Terminal, User, Cog, X } from 'lucide-react'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
 import { planVer, toolFacets } from '../data'
@@ -18,6 +18,7 @@ import { useAuthStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import type { ConsoleServices } from '../domain/service-factory'
 import { Banner, Button, DemoTag, Field, Gated, IdLink, Modal, Status, Tabs, Textarea, cx } from '../ui'
+import { Pop } from '../shell/pop'
 
 // eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared helpers consumed across AI routes
 export const MODES: { id: AiMode; label: string; hint: string }[] = [
@@ -27,6 +28,52 @@ export const MODES: { id: AiMode; label: string; hint: string }[] = [
 ]
 // eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared helpers consumed across AI routes
 export const STARTERS = ['Summarize the approved scope', 'Review agent readiness', 'Propose a validation plan', 'Explain recent operation results']
+
+/* ───────────── Default AI Mode (global preference for NEW conversations only) ───────────── */
+/**
+ * The default-AI-mode picker lives in the AI workspace, not the global
+ * header: it configures new conversations in this workspace and has no
+ * meaning outside a project context (plan 2026-10-16 §5). Semantics are
+ * unchanged — it never changes existing conversations; each conversation
+ * keeps its own mode, and a mode is not a permission.
+ */
+
+export function DefaultAiModePicker() {
+  const aiMode = useUiStore((s) => s.aiMode)
+  const setAiMode = useUiStore((s) => s.setAiMode)
+  const toast = useToastStore((s) => s.toast)
+  const [open, setOpen] = useState(false)
+  const AI_MODES = [
+    { id: 'observe', label: 'Observe', text: 'AI reads data and answers questions. It cannot change anything or run tools.' },
+    { id: 'propose', label: 'Propose', text: 'AI drafts plans and tool calls. Nothing runs until a person approves it.' },
+    { id: 'execution', label: 'Approved Execution', text: 'AI may act only on artifacts that were already approved. A prompt never starts execution.' },
+  ] as const
+  const mode = aiMode || 'propose'
+  const cur = AI_MODES.find((m) => m.id === mode) || AI_MODES[1]
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} aria-haspopup="dialog" aria-expanded={open} aria-label={`Default AI Mode: ${cur.label}`} title={`Default AI Mode: ${cur.label}`} className="flex h-10 items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm hover:bg-hover">
+        <span className="h-2 w-2 shrink-0 rounded-full bg-ok" aria-hidden />
+        <Bot size={16} className="shrink-0 text-muted" aria-hidden />
+        <span className="hidden text-xs text-muted min-[1500px]:inline">Default AI Mode</span>
+        <span className="whitespace-nowrap font-medium max-xl:hidden">{cur.label}</span>
+        <ChevronDown size={14} className="shrink-0 text-muted max-xl:hidden" aria-hidden />
+      </button>
+      <Pop open={open} onClose={() => setOpen(false)} label="Default AI Mode" align="right" width={360}>
+        <div className="mb-1 flex items-center gap-2 text-sm font-semibold"><span className="h-2 w-2 rounded-full bg-ok" aria-hidden />Default AI Mode</div>
+        <p className="mb-3 text-xs text-muted">Applies to new AI conversations only. It never changes existing conversations; each conversation keeps its own mode. Approved Execution is not permission: policy, approvals and Execution Eligibility still apply.</p>
+        <div role="radiogroup" aria-label="Default AI Mode" className="space-y-2">
+          {AI_MODES.map((m) => (
+            <button key={m.id} role="radio" aria-checked={m.id === mode} onClick={() => { setAiMode(m.id); toast(`Default AI Mode set to ${m.label}. Existing conversations are unchanged.`, 'info'); setOpen(false) }} className={cx('block w-full rounded-xl border p-3 text-left', m.id === mode ? 'border-accent-line bg-accent-soft' : 'border-line hover:bg-hover')}>
+              <div className="flex items-center justify-between text-sm font-medium">{m.label}{m.id === mode && <span className="text-xs font-semibold text-accent">Default</span>}</div>
+              <p className="mt-0.5 text-xs text-muted">{m.text}</p>
+            </button>
+          ))}
+        </div>
+      </Pop>
+    </div>
+  )
+}
 
 /* Ticket 67 wave 7: the store's request context (actorCtx), mirrored — the
    persona resolves at call time through the identity service (the
@@ -156,7 +203,7 @@ export function NoProject({ compact }: { compact?: boolean }) {
     <div role="status" className={cx('flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line bg-subtle text-center', compact ? 'p-5' : 'p-10')}>
       <Lock size={22} className="text-muted" aria-hidden />
       <div className="font-semibold">Select a project to continue</div>
-      <p className="max-w-md text-sm text-muted">In All Projects view the AI can only summarize aggregate data. Select a project to build an execution plan or start a conversation.</p>
+      <p className="max-w-md text-sm text-muted">Conversations, planning and tool trace belong to one project. Pick a project to open the AI workspace; there is no aggregate AI workspace at the global scope.</p>
       <Button variant="primary" onClick={() => setSwitcherOpen(true)}>Select a project</Button>
     </div>
   )

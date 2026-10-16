@@ -17,7 +17,7 @@ import { RealHeaderNotices } from './screens/notices-bell'
 import { RealSearch } from './screens/search'
 import { switchDataMode } from './mode'
 import { ProjectSwitcher } from '../shell/project-switcher'
-import { Avatar, Button, IconButton, Segmented, Status, cx } from '../ui'
+import { Avatar, Button, IconButton, Segmented, cx } from '../ui'
 
 function RealProfileMenu(): ReactElement {
   const { session } = useSession()
@@ -63,6 +63,7 @@ function RealProfileMenu(): ReactElement {
 
 export function RealTopbar({ openMobile }: { openMobile: () => void }): ReactElement {
   const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
+  const pid = useProjectStore((s) => s.pid)
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-side px-4 lg:px-6 xl:gap-3">
       <IconButton icon={MenuIcon} label="Open menu" onClick={openMobile} className="lg:hidden" />
@@ -70,7 +71,7 @@ export function RealTopbar({ openMobile }: { openMobile: () => void }): ReactEle
       <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>
       <RealSearch />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
-        <Button onClick={() => setCopilotOpen(true)}>Ask AI</Button>
+        {pid !== 'all' && <Button onClick={() => setCopilotOpen(true)}>Ask AI</Button>}
         <RealHeaderNotices />
         <RealProfileMenu />
       </div>
@@ -78,7 +79,7 @@ export function RealTopbar({ openMobile }: { openMobile: () => void }): ReactEle
   )
 }
 
-export function RealContextRibbon({ openSwitcher }: { openSwitcher: () => void }): ReactElement {
+export function RealContextRibbon({ openSwitcher }: { openSwitcher: () => void }): ReactElement | null {
   const project = useActiveProject()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -100,15 +101,9 @@ export function RealContextRibbon({ openSwitcher }: { openSwitcher: () => void }
       </div>
     )
   }
-  return (
-    <div className="sticky top-16 z-20 flex min-h-11 shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line bg-panel px-4 py-1.5 text-xs text-muted lg:px-8">
-      <button onClick={() => go('project', { id: project.id })} title={`${project.id} — open the real engagement detail`} className="max-w-[min(420px,50vw)] truncate rounded-md text-left text-[13px] font-semibold text-fg hover:text-accent hover:underline">
-        <span className="font-mono">{project.id}</span> — {project.name}
-      </button>
-      <Status kind="project" value={project.status} size="sm" />
-      <span className="min-w-0 flex-1 truncate">Engagement identity from the connected Raptix API.</span>
-    </div>
-  )
+  /* With an engagement selected there is no separate context bar: identity
+     lives in the sidebar header (plan 2026-10-16 §3.1), the same as demo mode. */
+  return null
 }
 
 /** The copilot drawer has no real integration yet; the slot renders nothing. */

@@ -345,7 +345,10 @@ function Overview({ ana }: { ana: Ana }) {
               {ana.nUndetected > 0 ? 'Recommended next step: record the verified gaps as findings and retest after detection rules are tuned.' : 'Recommended next step: verify the remaining techniques with the Blue Team.'}
             </p>
           </Card>
-          <OpTimeline ana={ana} />
+          {/* The execution timeline is per-operation: it renders only under an
+              explicit operation selection, never auto-attached to the aggregate
+              view that claims to cover all operations (plan 2026-10-16 §5). */}
+          {route.id && <OpTimeline ana={ana} />}
           <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
             <Card>
               <CardHeader title="Attack chain by operation" sub="Each dot is a step: solid = executed, hollow = not run / pending." />

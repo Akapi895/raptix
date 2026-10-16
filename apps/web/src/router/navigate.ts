@@ -108,6 +108,27 @@ export function selectProject(id: string, epoch?: number) {
     if (r.page === 'project' && id === 'all') navRawRoute({ page: 'projects' }, epoch)
     else if (r.page === 'project') navRawRoute({ ...r, id }, epoch)
     else if (DETAIL_MAP[r.page]) navRawRoute({ page: DETAIL_MAP[r.page] }, epoch)
+    else if (id !== 'all') navRawRoute({ page: 'project', id }, epoch)
+  })
+}
+
+/**
+ * Navigation to a global-scope page (the sidebar's global items): when a
+ * project is open, the scope is committed back to All Projects first — a
+ * global page must never render through a stale project filter. Resource
+ * deep links and in-project links keep using `go`, which never changes scope
+ * implicitly. Same guarded flow as selectProject (unsaved-changes modal,
+ * loading gate, single navRawRoute write).
+ */
+export function goGlobal(page: string, opts?: { id?: string; tab?: string; engagementId?: string }, epoch?: number) {
+  if (useProjectStore.getState().pid === 'all') { go(page, opts, epoch); return }
+  useSessionStore.getState().guarded(() => {
+    useSessionStore.getState().clearDirty()
+    useProjectStore.getState().setPid('all')
+    useUiStore.getState().setSwitcherOpen(false)
+    useSessionStore.getState().setLoading(true)
+    setTimeout(() => useSessionStore.getState().setLoading(false), 450)
+    navRawRoute({ page, id: opts?.id, tab: opts?.tab, ...(opts?.engagementId ? { engagementId: opts.engagementId } : {}) }, epoch)
   })
 }
 
@@ -124,6 +145,8 @@ export function useRoute(): Route {
     if (!router) return
     const sync = (): void => {
       const next = parseLocation(router.state.location)
+      const projectId = next.page === 'project' ? next.id : next.engagementId ?? (['overview', 'projects', 'infrastructure'].includes(next.page) ? 'all' : undefined)
+      if (projectId && useProjectStore.getState().pid !== projectId) useProjectStore.getState().setPid(projectId)
       if (!sameRoute(useNavStore.getState().route, next)) useNavStore.getState().setRoute(next)
     }
     // Real bootstrap can finish after a hash traversal; catch changes made

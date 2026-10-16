@@ -12,15 +12,15 @@
  */
 import { useState, type ComponentType } from 'react'
 import {
-  Bell, Bot, Building2, Check as CheckIcon, CheckCheck, ChevronDown, FlaskConical, Home, Lock, LogOut, Menu as MenuIcon, RotateCcw, Settings, Sparkles,
+  Bell, Building2, Check as CheckIcon, CheckCheck, ChevronDown, FlaskConical, Home, Lock, LogOut, Menu as MenuIcon, RotateCcw, Settings, Sparkles,
 } from 'lucide-react'
 import { useServices } from '../state/services'
 import { go, navRawRoute, useRoute } from '../router/navigate'
-import { useMe } from '../state/console'
+import { useActiveProject, useMe } from '../state/console'
 import { useServiceProjection } from '../state/projection'
 import { readHeaderNotices, markAllNoticesRead, type NoticeView } from '../features/notices/service'
 import { useSessionStore } from '../state/session'
-import { useAuthStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx } from '../state/stores'
+import { useAuthStore, useProjectStore, useThemeStore, useUiStore, type CopilotCtx } from '../state/stores'
 import { signOut } from '../auth/persona'
 import { resetDemo } from '../features/demo/runtime'
 import { ROLE_LABEL } from '../auth/policy'
@@ -28,46 +28,9 @@ import { USERS } from '../data'
 import { Button, IconButton, Segmented, Avatar, cx } from '../ui'
 import { NAV } from './nav'
 import { Pop } from './pop'
+import { ProjectStopControl } from './context-ribbon'
 import { ProjectSwitcher } from './project-switcher'
 import { GlobalSearch } from './search'
-
-/* ───────────── Default AI Mode (global preference for NEW conversations only) ───────────── */
-const AI_MODES = [
-  { id: 'observe', label: 'Observe', text: 'AI reads data and answers questions. It cannot change anything or run tools.' },
-  { id: 'propose', label: 'Propose', text: 'AI drafts plans and tool calls. Nothing runs until a person approves it.' },
-  { id: 'execution', label: 'Approved Execution', text: 'AI may act only on artifacts that were already approved. A prompt never starts execution.' },
-] as const
-function AiStatus() {
-  const aiMode = useUiStore((s) => s.aiMode)
-  const setAiMode = useUiStore((s) => s.setAiMode)
-  const toast = useToastStore((s) => s.toast)
-  const [open, setOpen] = useState(false)
-  const mode = aiMode || 'propose'
-  const cur = AI_MODES.find((m) => m.id === mode) || AI_MODES[1]
-  return (
-    <div className="relative">
-      <button onClick={() => setOpen(!open)} aria-haspopup="dialog" aria-expanded={open} aria-label={`Default AI Mode: ${cur.label}`} title={`Default AI Mode: ${cur.label}`} className="flex h-10 items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm hover:bg-hover">
-        <span className="h-2 w-2 shrink-0 rounded-full bg-ok" aria-hidden />
-        <Bot size={16} className="shrink-0 text-muted" aria-hidden />
-        <span className="hidden text-xs text-muted min-[1500px]:inline">Default AI Mode</span>
-        <span className="whitespace-nowrap font-medium max-xl:hidden">{cur.label}</span>
-        <ChevronDown size={14} className="shrink-0 text-muted max-xl:hidden" aria-hidden />
-      </button>
-      <Pop open={open} onClose={() => setOpen(false)} label="Default AI Mode" align="right" width={360}>
-        <div className="mb-1 flex items-center gap-2 text-sm font-semibold"><span className="h-2 w-2 rounded-full bg-ok" aria-hidden />Default AI Mode</div>
-        <p className="mb-3 text-xs text-muted">Applies to new AI conversations only. It never changes existing conversations; each conversation keeps its own mode. Approved Execution is not permission: policy, approvals and Execution Eligibility still apply.</p>
-        <div role="radiogroup" aria-label="Default AI Mode" className="space-y-2">
-          {AI_MODES.map((m) => (
-            <button key={m.id} role="radio" aria-checked={m.id === mode} onClick={() => { setAiMode(m.id); toast(`Default AI Mode set to ${m.label}. Existing conversations are unchanged.`, 'info'); setOpen(false) }} className={cx('block w-full rounded-xl border p-3 text-left', m.id === mode ? 'border-accent-line bg-accent-soft' : 'border-line hover:bg-hover')}>
-              <div className="flex items-center justify-between text-sm font-medium">{m.label}{m.id === mode && <span className="text-xs font-semibold text-accent">Default</span>}</div>
-              <p className="mt-0.5 text-xs text-muted">{m.text}</p>
-            </button>
-          ))}
-        </div>
-      </Pop>
-    </div>
-  )
-}
 
 /* ───────────── Workspace switcher ───────────── */
 function WorkspaceSwitcher() {
@@ -262,6 +225,8 @@ export interface HeaderSlots {
 /* ───────────── Topbar ───────────── */
 export function Topbar({ openMobile, slots = {} }: { openMobile: () => void; slots?: HeaderSlots }) {
   const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
   const Notifications = slots.notifications ?? Notices
   const AskAi = slots.askAi ?? AskAiButton
   return (
@@ -271,8 +236,12 @@ export function Topbar({ openMobile, slots = {} }: { openMobile: () => void; slo
       <ProjectSwitcher />
       <GlobalSearch />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
-        <AiStatus />
-        {route.page !== 'login' && route.page !== 'ai-operator' && <AskAi />}
+        {/* Emergency Stop lives in the shared header while a project is open
+            (plan 2026-10-16 §3.1): one place, independent of the page. */}
+        {project && <ProjectStopControl />}
+        {/* Copilot is page-scoped: it only appears inside a project. At the
+            global scope there is no page context to ask about (plan 2026-10-16 §5). */}
+        {pid !== 'all' && route.page !== 'login' && route.page !== 'ai-operator' && <AskAi />}
         <Notifications />
         <ProfileMenu />
       </div>

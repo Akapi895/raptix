@@ -22,20 +22,21 @@ const slices = {
   f: () => import('../screens/f'),
   g: () => import('../screens/g'),
   h: () => import('../screens/h'),
+  i: () => import('../screens/infrastructure'),
   s: () => import('../screens/demo/pages'),
 }
 type Slice = keyof typeof slices | 'a'
 
-/** 53 source route keys (see .scratch/web-improve-refactor/route-inventory.md). */
+/** 55 source route keys (see .scratch/web-improve-refactor/route-inventory.md). */
 const MANIFEST: Record<string, Slice> = {
-  login: 'a', forbidden: 'a', notfound: 'a', error: 'a', offline: 'a', 'session-expired': 'a', states: 'a', 'command-center': 'a', tasks: 'a',
+  login: 'a', forbidden: 'a', notfound: 'a', error: 'a', offline: 'a', 'session-expired': 'a', states: 'a', overview: 'a', 'command-center': 'a', tasks: 'a',
   projects: 'b', 'project-new': 'b', project: 'b',
   operations: 'c', 'operation-new': 'c', preflight: 'c', 'operation-schedule': 'c', operation: 'c',
-  agents: 'd', agent: 'd', assets: 'd', 'asset-new': 'd', 'asset-scope': 'd', asset: 'd', playbooks: 'd', playbook: 'd', technique: 'd', 'playbook-review': 'd',
+  infrastructure: 'i', agents: 'i', agent: 'd', assets: 'd', 'asset-new': 'd', 'asset-scope': 'd', asset: 'd', playbooks: 'd', playbook: 'd', technique: 'd', 'playbook-review': 'd',
   analysis: 'e', findings: 'e', 'finding-new': 'e', finding: 'e', evidence: 'e', 'evidence-inspector': 'e',
   reports: 'f', 'report-new': 'f', report: 'f', 'report-preview': 'f', 'report-review': 'f', settings: 'f',
   'ai-operator': 'g', 'ai-plan': 'g', 'ai-plan-review': 'g', 'ai-plan-compare': 'g', 'ai-trace': 'g', 'ai-history': 'g', 'ai-fanout': 'g', 'ai-branch': 'g',
-  c2: 'h', 'c2-channel': 'h', 'c2-session': 'h', 'c2-console': 'h',
+  c2: 'i', 'c2-channel': 'h', 'c2-session': 'h', 'c2-console': 'h',
   scenarios: 's', workspaces: 's',
 }
 setKnownPages(new Set(Object.keys(MANIFEST)))

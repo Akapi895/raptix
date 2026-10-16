@@ -7,6 +7,7 @@ import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, M
 import { type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
 import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../features/reports/projection'
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
+import { useResourceScope } from './resource-scope'
 import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject, useCan, useMe } from '../state/console'
@@ -311,6 +312,7 @@ const SUGGEST = (title: string, client: string, roe: string) => `AI draft sugges
  * unsaved-changes guard.
  */
 function EditorInner({ d }: { d: ReportEditorRead }) {
+  useResourceScope(d.report.projectId)
   const validation = useReportValidation()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
@@ -588,6 +590,7 @@ export function ReportPreview() {
 }
 
 function PreviewInner({ d }: { d: ReportEditorRead }) {
+  useResourceScope(d.report.projectId)
   const validation = useReportValidation()
   const me = useMe()
   const can = useCan()
@@ -708,6 +711,7 @@ export function ReportReview() {
 }
 
 function ReviewInner({ d }: { d: ReportReviewRead }) {
+  useResourceScope(d.report.projectId)
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
   const writes = useReportWrites()

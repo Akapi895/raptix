@@ -72,7 +72,7 @@ export function Login() {
       clearDirty()
       return
     }
-    navRawRoute({ page: 'command-center' })
+    navRawRoute({ page: 'overview' })
   }
   const quick = (name: string) => { switchPersona(name); login(ORG_NAME) }
 

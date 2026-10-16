@@ -9,7 +9,7 @@ import { resetSessionStores, useSessionStore } from '../state/session'
 import { resetSharedStores, useProjectStore, useUiStore } from '../state/stores'
 import { setActiveRouter } from './active'
 import { RouteHost, RouteErrorBoundary } from './host'
-import { currentRoute, go, navigationEpoch, navRawRoute, resetNavStores, selectProject, useRoute } from './navigate'
+import { currentRoute, go, goGlobal, navigationEpoch, navRawRoute, resetNavStores, selectProject, useRoute } from './navigate'
 import { parseHash, type Route } from './history'
 
 let latest: Route
@@ -136,6 +136,36 @@ describe('selectProject (guarded project switch)', () => {
     act(() => { selectProject('RT-2026-014') })
     expect(useUiStore.getState().switcherOpen).toBe(false)
     expect(useSessionStore.getState().unsaved).toBeNull()
+  })
+})
+
+describe('goGlobal (global-scope sidebar navigation)', () => {
+  it('commits an open project back to All Projects before navigating to a global page (plan §4.2)', () => {
+    useProjectStore.getState().setPid('RT-2026-014')
+    useUiStore.getState().setSwitcherOpen(true)
+    act(() => { goGlobal('findings') })
+    expect(useProjectStore.getState().pid).toBe('all')
+    expect(useUiStore.getState().switcherOpen).toBe(false)
+    expect(currentRoute()).toEqual({ page: 'findings' })
+    expect(window.location.hash).toBe('#/findings')
+  })
+
+  it('holds a dirty global navigation behind the unsaved modal like selectProject', () => {
+    useProjectStore.getState().setPid('RT-2026-014')
+    act(() => { useSessionStore.getState().setDirty(true, () => {}) })
+    act(() => { goGlobal('findings') })
+    expect(useProjectStore.getState().pid).toBe('RT-2026-014')
+    expect(useSessionStore.getState().unsaved).not.toBeNull()
+    act(() => { useSessionStore.getState().unsaved!.next() })
+    expect(useProjectStore.getState().pid).toBe('all')
+    expect(currentRoute()).toEqual({ page: 'findings' })
+  })
+
+  it('is a plain guarded go when the scope is already global', () => {
+    act(() => { goGlobal('playbooks', { id: 'PB-1' }) })
+    expect(useSessionStore.getState().unsaved).toBeNull()
+    expect(currentRoute()).toEqual({ page: 'playbooks', id: 'PB-1' })
+    expect(window.location.hash).toBe('#/playbooks/PB-1')
   })
 })
 

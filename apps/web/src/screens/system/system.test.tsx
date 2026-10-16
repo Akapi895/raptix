@@ -50,7 +50,7 @@ function signInAs(name: string) {
 }
 
 const SYSTEM_PAGES: [string, RegExp, RegExp][] = [
-  ['forbidden', /Access denied/i, /Back to Command Center/],
+  ['forbidden', /Access denied/i, /Back to System Overview/],
   ['notfound', /Page not found/i, /View projects/],
   ['error', /Something went wrong/i, /Retry/],
   ['offline', /Workspace temporarily unavailable/i, /Check connection again/],
@@ -78,7 +78,7 @@ describe('recovery behavior', () => {
     expect(current).toHaveTextContent('Taylor Chen')
     fireEvent.click(screen.getByRole('button', { name: /Switch to Alex Morgan/ }))
     expect(useAuthStore.getState().meName).toBe('Alex Morgan')
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
   })
 
   it('forbidden records the simulated access request as a toast', () => {
@@ -107,7 +107,7 @@ describe('recovery behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     act(() => { vi.advanceTimersByTime(900) })
     expect(screen.getByText('Reloaded successfully.')).toBeInTheDocument()
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
   })
 
   it('offline reconnects on the second check and returns with the saved data', () => {
@@ -119,7 +119,7 @@ describe('recovery behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check connection again' }))
     act(() => { vi.advanceTimersByTime(1000) })
     expect(screen.getByText('Reconnected. Data is in sync.')).toBeInTheDocument()
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
   })
 
   it('session-expired signs the persona out and returns to the login screen', () => {
@@ -172,13 +172,13 @@ describe('states gallery (ticket 61b)', () => {
   })
 })
 
-/* Route-inventory rows 1–53 (.scratch/web-improve-refactor/route-inventory.md):
+/* Route-inventory rows 1–55 (.scratch/web-improve-refactor/route-inventory.md):
    the manifest must resolve every inventoried key; unknown keys resolve to
    nothing so the host falls back to the not-found screen. */const INVENTORY = [
-  'login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'command-center', 'tasks',
+  'login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'overview', 'command-center', 'tasks',
   'projects', 'project-new', 'project',
   'operations', 'operation-new', 'preflight', 'operation-schedule', 'operation',
-  'agents', 'agent', 'assets', 'asset-new', 'asset-scope', 'asset', 'playbooks', 'playbook', 'technique', 'playbook-review',
+  'infrastructure', 'agents', 'agent', 'assets', 'asset-new', 'asset-scope', 'asset', 'playbooks', 'playbook', 'technique', 'playbook-review',
   'analysis', 'findings', 'finding-new', 'finding', 'evidence', 'evidence-inspector',
   'reports', 'report-new', 'report', 'report-preview', 'report-review', 'settings',
   'ai-operator', 'ai-plan', 'ai-plan-review', 'ai-plan-compare', 'ai-trace', 'ai-history', 'ai-fanout', 'ai-branch',
@@ -188,7 +188,7 @@ describe('states gallery (ticket 61b)', () => {
 
 describe('route-coverage closure', () => {
   it('every inventoried route key resolves to a screen component', () => {
-    expect(INVENTORY).toHaveLength(53)
+    expect(INVENTORY).toHaveLength(55)
     for (const key of INVENTORY) expect(routeComponent(key), `route key: ${key}`).toBeTruthy()
   })
 

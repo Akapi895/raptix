@@ -7,12 +7,18 @@ import { sessionPermOf } from '../c2/session-perm'
 
 export interface SearchResult { group: string; id: string; label: string; meta: string; page: string }
 
+/**
+ * Pending-work badges for the global sidebar (plan 2026-10-16 S3/S5): one
+ * counter per sidebar item, one meaning per counter. Projects counts pending
+ * approvals (the review queue — plans included, surfaced via Needs attention/
+ * Tasks, not a plan badge on a retired nav item); Infrastructure counts
+ * execution-agent connectivity failures only. AI-plan review queues belong to
+ * Tasks/Needs attention, not to a global AI Operator badge.
+ */
 export function readNavigationBadges(services: ConsoleServices, ctx: RequestContext): Record<string, number> {
   return projectView(services, ctx, 'navigation-badges', (db) => ({
     projects: can(ctx.actor, 'approve') ? scopedRows(db, ctx, db.approvals).filter((a) => a.status === 'pending').length : 0,
-    'ai-operator': scopedRows(db, ctx, db.plans).filter((p) => ['in_review', 'proposed'].includes(p.status)).length,
-    c2: scopedRows(db, ctx, db.sessionRequests).filter((r) => r.status === 'pending').length,
-    operations: scopedRows(db, ctx, db.operations).filter((o) => o.status === 'running').length,
+    infrastructure: scopedRows(db, ctx, db.agents).filter((a) => a.status === 'lost' || a.status === 'unhealthy').length,
   }))
 }
 

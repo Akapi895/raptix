@@ -37,7 +37,7 @@ do not default to the full suite.
 - Alias `@` → `src/` (ESM-compatible in `vite.config.ts`).
 - Never import Prisma/`fs`/server modules into browser code.
 - Production build does not read `.figma/` (Figma tooling removed at cutover).
-- 53-route inventory: `src/router/registry.tsx` (MANIFEST) — hash-based routes.
+- 55-route inventory: `src/router/registry.tsx` (MANIFEST) — hash-based routes.
 - Mock data lives behind the explicit mock authority (`src/domain/`); real-mode
   integration lands ticket by ticket and must never fall back to demo data.
 - `tests/contracts/w00-captures.test.ts` + `tests/fixtures/` are retained
@@ -49,7 +49,7 @@ do not default to the full suite.
 
 - `src/main.tsx` — entrypoint, imports `src/index.css`, mounts `App`.
 - `src/App.tsx` — lazy feature composition and shell.
-- `src/router/` — route registry/navigation (53 keys).
+- `src/router/` — route registry/navigation (55 keys).
 - `src/domain/` — contracts, service factory (mode seam), projections.
 - `src/state/` — zustand console state and Query providers.
 - `src/features/` — feature modules (a/b/c/d/e/f/g/h/s groups).

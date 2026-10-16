@@ -7,7 +7,7 @@
  * (ticket 61e — no location writes outside the router seam).
  */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -32,6 +32,9 @@ function signIn() {
   fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
 }
 
+// Resolve the actual lazy bundles before timed DOM assertions (WSL /mnt/d I/O).
+beforeAll(async () => { await Promise.all([import('../screens/b'), import('../screens/d'), import('../screens/f'), import('../screens/infrastructure')]) }, 30_000)
+
 beforeEach(() => {
   window.location.hash = ''
   resetSharedStores()
@@ -53,8 +56,8 @@ describe('deep links and the auth guard', () => {
     expect(window.location.hash).toBe('#/project/RT-2026-014?tab=scope')
     signIn()
     expect(useAuthStore.getState().authed).toBe(true)
-    const tab = await screen.findByRole('tab', { selected: true })
-    expect(tab.textContent).toContain('Scope')
+    const section = await screen.findByRole('button', { name: 'Scope & ROE', current: 'page' })
+    expect(section).toBeInTheDocument()
     expect(window.location.hash).toBe('#/project/RT-2026-014?tab=scope')
   })
 
@@ -81,12 +84,12 @@ describe('deep links and the auth guard', () => {
     expect(window.location.hash).toBe('#/not-a-real-page')
   })
 
-  it('an unknown destination falls back to the command center after sign-in', async () => {
+  it('an unknown destination falls back to the system overview after sign-in', async () => {
     window.location.hash = '#/not-a-real-page'
     mountApp()
     signIn()
-    await waitFor(() => expect(currentRoute().page).toBe('command-center'))
-    expect(window.location.hash).toBe('#/command-center')
+    await waitFor(() => expect(currentRoute().page).toBe('overview'))
+    expect(window.location.hash).toBe('#/overview')
   })
 })
 
@@ -146,7 +149,7 @@ describe('project detail transitions (execution ledger: setPid single write)', (
   it('switching project on a detail route redirects once and no delayed write clobbers it', async () => {
     mountApp('#/c2')
     signIn()
-    await screen.findAllByText(/C2 & Sessions/)
+    await screen.findByRole('heading', { name: 'Infrastructure' })
     act(() => { go('c2-console', { id: 'SS-041' }) })
     await waitFor(() => expect(window.location.hash).toBe('#/c2-console/SS-041'))
     act(() => { selectProject('RT-2026-014') })
@@ -189,7 +192,7 @@ describe('crash containment', () => {
     expect(screen.getByText('This screen failed to render')).toBeInTheDocument()
     expect(screen.getByText('page boom')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Try again' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: 'Back to Command Center' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Back to System Overview' })).toBeEnabled()
   })
 
   it('a crash inside the route tree resolves to the router error boundary', () => {

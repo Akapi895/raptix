@@ -6,7 +6,7 @@ import { useDirty } from '../state/session'
 import type { Asset } from '../data'
 import { useAssetImportRead, type AssetImportRead } from '../features/assets/import-read'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
-import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, PickProjectBanner, shortDate, Trunc, withLoading } from './d-shared'
+import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from './d-shared'
 // Ticket 50: catalog list, asset detail and scope views read through the
 // typed asset service via Query (feature-local handlers).
 import { AssetReadError, useAssetDetail, useAssetList, useAssetScope } from '../features/assets/query'
@@ -116,10 +116,12 @@ function AssetList() {
       <PageHeader title="Assets" sub="Asset inventory and scope status by project. Assets outside approved scope cannot be selected as targets."
         actions={<>
           <Button icon={MapIcon} onClick={() => go('asset-scope')}>Scope map</Button>
-          <Button icon={Upload} disabled={!!addWhy} title={addWhy || 'Import assets from CSV'} onClick={() => go('asset-new', { tab: 'bulk' })}>Import</Button>
-          <Button variant="primary" icon={Plus} disabled={!!addWhy} title={addWhy || 'Add an asset'} onClick={() => go('asset-new')}>Add Asset</Button>
+          {/* Import/Add change project scope: only offered inside a project, never as disabled global CTAs (plan 2026-10-16 §5). */}
+          {pid !== 'all' && <>
+            <Button icon={Upload} disabled={!!addWhy} title={addWhy || 'Import assets from CSV'} onClick={() => go('asset-new', { tab: 'bulk' })}>Import</Button>
+            <Button variant="primary" icon={Plus} disabled={!!addWhy} title={addWhy || 'Add an asset'} onClick={() => go('asset-new')}>Add Asset</Button>
+          </>}
         </>} />
-      {pid === 'all' && <PickProjectBanner what="add assets or change their scope (aggregated mode is read-only)" />}
       {addWhy && pid !== 'all' && <div className="-mt-2 mb-3"><Locked reason={`Add Asset: ${addWhy}`} /></div>}
       {list.isPending ? (
         <div aria-busy="true" aria-label="Loading assets"><Skeleton className="h-96" /></div>
@@ -273,7 +275,6 @@ function AssetScope() {
         sub={`Group assets by scope classification and review pending changes.${proj ? ` ROE ${proj.roeVersion}.` : ''} This is not an attack path diagram.`}
         meta={proj ? <Status kind="roe" value={proj.roeStatus} /> : undefined}
         actions={<Button variant="primary" disabled={!!reqWhy || !pending.length} title={reqWhy || (!pending.length ? 'No pending assets. Propose a scope change on an asset first.' : 'Request scope approval')} onClick={requestApproval}>Request Scope Approval</Button>} />
-      {pid === 'all' && <Banner tone="info">You are viewing all accessible projects. Select a project to review scope against that project's ROE.</Banner>}
       {reqWhy && pid !== 'all' && <div className="-mt-2 mb-3"><Locked reason={`Request Scope Approval: ${reqWhy}`} /></div>}
       {scope.isPending ? (
         <div aria-busy="true" aria-label="Loading scope map"><Skeleton className="h-96" /></div>

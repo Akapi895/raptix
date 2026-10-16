@@ -1225,6 +1225,53 @@ export function fetchTasks(): Promise<TasksView> {
   return apiFetch('/tasks', isTasksView)
 }
 
+/* ───────────── System Overview (cross-project dashboard, per-domain reads) ───────────── */
+
+export interface OverviewFindingsView {
+  total: number
+  bySeverity: Record<string, number>
+  byStatus: Record<string, number>
+  engagementsWithFindings: number
+  engagements: number
+  truncated: boolean
+  source: 'db'
+}
+
+function isOverviewFindingsView(v: unknown): v is OverviewFindingsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as OverviewFindingsView
+  return typeof doc.total === 'number' && typeof doc.bySeverity === 'object' && doc.bySeverity !== null && typeof doc.byStatus === 'object' && doc.byStatus !== null && typeof doc.engagements === 'number' && doc.source === 'db'
+}
+
+export function fetchOverviewFindings(): Promise<OverviewFindingsView> {
+  return apiFetch('/overview/findings', isOverviewFindingsView)
+}
+
+export interface OverviewC2CommandView {
+  id: string
+  engagementId: string
+  sessionId: string
+  status: string
+  createdAt: string
+}
+
+export interface OverviewC2View {
+  commandsByStatus: Record<string, number>
+  recentCommands: OverviewC2CommandView[]
+  pendingGrants: number
+  source: 'db'
+}
+
+function isOverviewC2View(v: unknown): v is OverviewC2View {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as OverviewC2View
+  return typeof doc.commandsByStatus === 'object' && doc.commandsByStatus !== null && Array.isArray(doc.recentCommands) && typeof doc.pendingGrants === 'number' && doc.source === 'db'
+}
+
+export function fetchOverviewC2(): Promise<OverviewC2View> {
+  return apiFetch('/overview/c2', isOverviewC2View)
+}
+
 export interface NoticeView {
   id: string
   engagementId: string | null

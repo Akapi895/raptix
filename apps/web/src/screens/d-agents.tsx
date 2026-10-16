@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
 import { useServices } from '../state/services'
 import { USERS, type Agent, type Group } from '../data'
@@ -24,7 +24,7 @@ const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle'
 const ACTIVE_PROJECT = ['active', 'approved']
 
 /* ───────────── Heartbeat bars (simulated) ───────────── */
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function Heartbeat({ a }: { a: Agent }) {
   const h = hashNum(a.id)
   const n = 24
@@ -42,7 +42,7 @@ function Heartbeat({ a }: { a: Agent }) {
 }
 
 /* ───────────── Group modal (AG-03, ticket 49: typed write handler) ───────────── */
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function GroupModal({ group, onClose }: { group: Group | null; onClose: () => void }) {
   const db = useGroupOptions('all')
   const pid = useProjectStore((s) => s.pid)
@@ -121,7 +121,7 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
 
 /* ───────────── Request assignment drawer (AG-V3-03, ticket 49: typed immediate assign) ───────────── */
 const isAssignReq = (t: string) => t.startsWith('Agent assignment')
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose: () => void }) {
   const db = useAssignmentOptions()
   const pid = useProjectStore((s) => s.pid)
@@ -261,7 +261,7 @@ const STEP_IMPACT: Record<string, { label: string; tone: string }> = {
   pending: { label: 'Waiting; cannot start on this agent', tone: 'text-warn' },
   notrun: { label: 'Not run; needs another agent', tone: 'text-muted' },
 }
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function FailurePanel({ a }: { a: Agent }) {
   const db = useAgentRecovery(a)
   const accessible = useAccessible()
@@ -344,7 +344,7 @@ function FailurePanel({ a }: { a: Agent }) {
 /** One row: the canonical agent plus the service-derived decorations. */
 type FleetRow = Agent & { sessions: number; pending?: { id: string; by: string; at: string; reviewer: string } }
 
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project' | 'pool'; onNewGroup: () => void; newGroupWhy: string; onAssign: (a: Agent | null) => void }) {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
@@ -406,7 +406,7 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
             <Kpi label="Need Attention" value={k.attention} tone={k.attention ? 'warn' : undefined} icon={ShieldAlert} sub={ks('attn', 'Disconnected, unhealthy, unknown, disabled')} onClick={tk('attn')} />
           </div>
           <p className="-mt-2 mb-4 text-xs text-muted">Pool agents are not counted as assigned to a project. “Busy” counts only agents reserved by an operation; an agent that is connected but not reserved is available, not busy.</p>
-          <FilterBar right={<Button icon={FolderPlus} onClick={onNewGroup} disabled={!!newGroupWhy} title={newGroupWhy || 'Create an agent group'}>Create Group</Button>}>
+          <FilterBar right={pid !== 'all' && <Button icon={FolderPlus} onClick={onNewGroup} disabled={!!newGroupWhy} title={newGroupWhy || 'Create an agent group'}>Create Group</Button>}>
             <SearchBox className="w-64" value={q} onChange={setQ} placeholder="Search by ID, hostname or IP" />
             <Select className="!w-40" aria-label="Status" value={st} onChange={(e) => setSt(e.target.value)}><option value="">All statuses</option>{Object.entries(STATUS_LABEL).map(([kk, v]) => <option key={kk} value={kk}>{v}</option>)}</Select>
             <MoreFilters active={moreActive}>
@@ -416,7 +416,7 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
             </MoreFilters>
             {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
           </FilterBar>
-          {newGroupWhy && <div className="-mt-2 mb-3"><Locked reason={`Create Group: ${newGroupWhy}`} /></div>}
+          {pid !== 'all' && newGroupWhy && <div className="-mt-2 mb-3"><Locked reason={`Create Group: ${newGroupWhy}`} /></div>}
           {read.lostAssigned.length > 0 && mode === 'project' && <Banner tone="bad" title="Some assigned agents are disconnected" action={<Button size="sm" onClick={() => go('agent', { id: read.lostAssigned[0].id, tab: 'conn' })}>View health failure</Button>}>{read.lostAssigned.map((a) => `${a.id} ${a.host} (last seen ${a.lastSeen})`).join('; ')}. Last-seen data may be stale; no operation is marked complete because of it.</Banner>}
           {mode === 'pool' && <Banner tone="info" title="Shared Pool">Connected agents that are not assigned to any project. They cannot join an operation until an assignment is approved. These rows are never counted as agents of the current project.</Banner>}
           <DTable
@@ -456,7 +456,7 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
 
 
 /* ───────────── Groups (AG-03, ticket 49: typed membership writes) ───────────── */
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: Group) => void; newWhy: string }) {
   const db = useGroupOptions()
   const pid = useProjectStore((s) => s.pid)
@@ -533,7 +533,7 @@ function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: G
 }
 
 /* ───────────── Connectivity & health (AG-04, ticket 48: typed service read) ───────────── */
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function HealthTab() {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
@@ -627,13 +627,20 @@ function HealthTab() {
 }
 
 /* ───────────── Main page ───────────── */
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
-function Agents() {
-  const route = useRoute()
+/**
+ * The agents surface body (fleet/pool/groups/connectivity + its modals),
+ * extracted so the global Infrastructure page can compose it without nesting
+ * a whole page (plan 2026-10-16 S2). `header` is the optional page header the
+ * route component renders above the tabs; it receives the assignment-drawer
+ * opener so the page-level CTA and the row actions share one drawer.
+ */
+
+export function AgentsContent({ initialTab, header }: { initialTab?: string; header?: (openAssign: (a: Agent | null) => void) => ReactNode }) {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
   const guard = useGuard(pid === 'all' ? undefined : pid)
-  const tab = route.tab === 'pool' || route.tab === 'groups' || route.tab === 'health' ? route.tab : 'list'
+  const legacy = initialTab === 'pool' || initialTab === 'groups' || initialTab === 'health' ? initialTab : undefined
+  const [tab, setTab] = useState<'list' | 'pool' | 'groups' | 'health'>(legacy ?? 'list')
   const [modal, setModal] = useState<{ g: Group | null } | null>(null)
   const [assign, setAssign] = useState<{ a: Agent | null } | null>(null)
   /* Tab badges come from the fleet read's whole-base counts. */
@@ -642,10 +649,8 @@ function Agents() {
   const newWhy = pid === 'all' ? 'Select a specific project to create a group.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can create groups.' : ''
   return (
     <>
-      <PageHeader title="Agents" sub="Connectivity and allocation are separate: an agent can be connected yet unassigned (Shared Pool). Each agent is used only in the project it is assigned to."
-        actions={<Button variant="primary" icon={UserPlus} onClick={() => setAssign({ a: null })}>Request assignment</Button>} />
-      {pid === 'all' && <Banner tone="info" title="“All Projects” mode">Aggregated, read-only view. The assignment column shows where each agent belongs; agents are not shared freely between projects.</Banner>}
-      <Tabs value={tab} onChange={(t) => go('agents', { tab: t })} tabs={[{ id: 'list', label: 'Project Agents', count: k?.assigned ?? 0 }, { id: 'pool', label: 'Shared Pool', count: k?.pool ?? 0 }, { id: 'groups', label: 'Groups' }, { id: 'health', label: 'Connectivity' }]} />
+      {header?.((a) => setAssign({ a }))}
+      <Tabs value={tab} onChange={(next) => { if (next === 'list' || next === 'pool' || next === 'groups' || next === 'health') setTab(next) }} tabs={[{ id: 'list', label: 'Project Agents', count: k?.assigned ?? 0 }, { id: 'pool', label: 'Shared Pool', count: k?.pool ?? 0 }, { id: 'groups', label: 'Groups' }, { id: 'health', label: 'Connectivity' }]} />
       {tab === 'groups' ? <GroupsTab onNew={() => setModal({ g: null })} onEdit={(g) => setModal({ g })} newWhy={newWhy} /> : tab === 'health' ? <HealthTab /> : <FleetList key={tab} mode={tab === 'pool' ? 'pool' : 'project'} onNewGroup={() => setModal({ g: null })} newGroupWhy={newWhy} onAssign={(a) => setAssign({ a })} />}
       {modal && <GroupModal group={modal.g} onClose={() => setModal(null)} />}
       {assign && <AssignDrawer agent={assign.a} onClose={() => setAssign(null)} />}
@@ -653,8 +658,24 @@ function Agents() {
   )
 }
 
+
+function Agents() {
+  const route = useRoute()
+  return (
+    <>
+      <AgentsContent
+        initialTab={route.tab}
+        header={(openAssign) => (
+          <PageHeader title="Agents" sub="Connectivity and allocation are separate: an agent can be connected yet unassigned (Shared Pool). Each agent is used only in the project it is assigned to."
+            actions={<Button variant="primary" icon={UserPlus} onClick={() => openAssign(null)}>Request assignment</Button>} />
+        )}
+      />
+    </>
+  )
+}
+
 /* ───────────── Detail (AG-02, ticket 48: typed service read + Query) ───────────── */
-// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
+
 function AgentDetail() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -792,4 +813,5 @@ function AgentDetail() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- registry record co-located with its screen components
 export const agentRoutes = { agents: withLoading(Agents), agent: withLoading(AgentDetail) }

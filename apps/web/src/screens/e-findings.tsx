@@ -13,8 +13,9 @@ import {
   Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx, useGuard,
 } from '../ui'
 import { go, useRoute } from '../router/navigate'
-import { useAccessible, useActiveProject, useCan, useMe, useReadOnly } from '../state/console'
+import { useActiveProject, useCan, useMe, useReadOnly } from '../state/console'
 import { useFindingFormRead, useFindingReportChoices, useFindingEvidenceChoices } from '../features/findings/projection'
+import { useResourceScope } from './resource-scope'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
@@ -125,8 +126,6 @@ function FindingList() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
-  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
-  const accessible = useAccessible()
   const ai = useAiActions()
   const [q, setQ] = useState('')
   const [sev, setSev] = useState('')
@@ -160,13 +159,8 @@ function FindingList() {
       <PageHeader
         title="Findings"
         sub={pid === 'all' ? 'All findings across the projects you can access (read-only aggregate). Creating one requires a specific project.' : `Findings for ${project?.id} — ${project?.name}. KPIs count verified findings only.`}
-        actions={<Button variant="primary" icon={Plus} disabled={!!reason} title={reason || 'Create a new finding'} onClick={() => go('finding-new')}>Create Finding</Button>}
+        actions={pid !== 'all' && <Button variant="primary" icon={Plus} disabled={!!reason} title={reason || 'Create a new finding'} onClick={() => go('finding-new')}>Create Finding</Button>}
       />
-      {pid === 'all' && (
-        <Banner tone="info" title="Viewing an aggregate of multiple projects" action={<Button size="sm" onClick={() => setSwitcherOpen(true)}>Select project</Button>}>
-          Findings are never silently moved to another project. Select a project to create a new one. ({accessible.length} accessible projects)
-        </Banner>
-      )}
       {pid !== 'all' && reason && <div className="-mt-3 mb-4 flex justify-end"><Locked reason={reason} /></div>}
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
         {SEVS.map((s) => <Kpi key={s} label={sevLabel[s]} value={data?.severity[s] ?? 0} tone={s === 'critical' || s === 'high' ? 'bad' : s === 'medium' ? 'warn' : s === 'low' ? 'cyan' : 'neutral'} onClick={() => setSev(sev === s ? '' : s)} />)}
@@ -498,6 +492,7 @@ function FindingDetail() {
   const db = useFindingReportChoices()
   const writes = useFindingWrites()
   const detail = useFindingDetail(route.id)
+  useResourceScope(detail.data?.finding.projectId)
   const [note, setNote] = useState('')
   const [rep, setRep] = useState(false)
   const ai = useAiActions()
