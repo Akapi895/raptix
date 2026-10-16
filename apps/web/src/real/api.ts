@@ -877,6 +877,13 @@ export function reviseReport(engagementId: string, reportId: string, input: { ex
 
 /* ───────────── C2 session grants (integration ticket 12) ───────────── */
 
+/** Moves the report's current content into review (the reviewer then decides on this exact version). */
+export function submitReportForReview(engagementId: string, reportId: string): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/review`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && typeof (v as ReportView).status === 'string',
+  { method: 'POST', body: { action: 'submit' } })
+}
+
 export interface C2GrantView {
   id: string
   engagementId: string

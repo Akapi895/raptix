@@ -92,7 +92,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports'>
 
 export interface ConsoleServices {
   identity: IdentityService

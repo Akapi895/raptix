@@ -1,5 +1,4 @@
 import type { Evidence, Finding, FindingStatus, Severity } from '../../domain/entities'
-import type { ServiceFailure, ServiceResult } from '../../domain/service'
 import type {
   EvidenceListRead, EvidenceDetailRead, EvidenceView,
   FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingSaveInput,
@@ -10,6 +9,7 @@ import {
   type CuratedFindingsView, type CuratedFindingView,
 } from '../api'
 import { ApiTransportError } from '../transport'
+import { displayTime, guarded, instant } from './shared'
 import { REAL_CONTROL_GAPS } from './control-gaps'
 import { unavailable, unsupportedControl } from './stub'
 
@@ -23,37 +23,6 @@ const CATEGORY_STATUSES: Readonly<Record<Exclude<FindingCategory, 'all'>, readon
 /** The curated workflow's target set; `returned` maps to the review→draft transition. */
 const TRANSITION_TO_API: Readonly<Record<FindingTransitionTarget, string>> = {
   draft: 'draft', review: 'review', confirmed: 'confirmed', returned: 'draft', remediation: 'remediation', retest: 'retest', resolved: 'resolved',
-}
-
-function failureFrom(error: unknown): ServiceFailure {
-  if (error instanceof ApiTransportError) {
-    const kind = error.status === 403 ? 'forbidden'
-      : error.status === 404 ? 'not-found'
-      : error.status === 409 ? 'conflict'
-      : error.status === 400 || error.status === 422 ? 'validation'
-      : 'unavailable'
-    return { kind, message: error.message }
-  }
-  return { kind: 'unavailable', message: error instanceof Error ? error.message : 'The request failed.' }
-}
-
-async function guarded<T>(run: () => Promise<ServiceResult<T>>): Promise<ServiceResult<T>> {
-  try {
-    return await run()
-  } catch (error) {
-    return { ok: false, failure: failureFrom(error) }
-  }
-}
-
-function instant(iso: string): number {
-  const parsed = Date.parse(iso)
-  return Number.isNaN(parsed) ? 0 : parsed
-}
-
-function displayTime(iso: string): string {
-  const parsed = Date.parse(iso)
-  if (Number.isNaN(parsed)) return ''
-  return new Date(parsed).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 /** Maps the curated resource onto the console's Finding entity; fields the curated workflow lacks stay empty. */

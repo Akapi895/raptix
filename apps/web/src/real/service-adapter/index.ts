@@ -1,8 +1,10 @@
 import type { FeatureServices } from '../../domain/service-factory'
+import type { FindingService } from '../../features/findings/service'
+import type { ReportService } from '../../features/reports/service'
 import { capabilityState, type CapabilitiesDocument } from '../api'
 import { createRealFindingService } from './findings'
+import { createRealReportService } from './reports'
 import { notIntegratedService } from './stub'
-import type { FindingService } from '../../features/findings/service'
 
 /**
  * Composes real per-feature services from the server's capability document
@@ -10,12 +12,18 @@ import type { FindingService } from '../../features/findings/service'
  * resolves every call to an explicit unavailable outcome.
  */
 export function createRealFeatureServices(capabilities: CapabilitiesDocument): FeatureServices {
-  const findingsSupported = capabilityState(capabilities, 'findings')?.supported === true
-  const findings: FeatureServices['findings'] = findingsSupported
+  const supported = (name: string) => capabilityState(capabilities, name)?.supported === true
+  const findings: FeatureServices['findings'] = supported('findings')
     ? (() => {
         const service = createRealFindingService()
         return () => service
       })()
     : () => notIntegratedService<FindingService>('Findings')
-  return { findings }
+  const reports: FeatureServices['reports'] = supported('reports')
+    ? (() => {
+        const service = createRealReportService()
+        return () => service
+      })()
+    : () => notIntegratedService<ReportService>('Reports')
+  return { findings, reports }
 }
