@@ -26,5 +26,7 @@ FROM nginx:1.27-alpine
 COPY infra/containers/web-raptix-proxy.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 ARG VERSION=0.0.0
+ARG SOURCE_REVISION=unknown
 LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.revision="${SOURCE_REVISION}"
 EXPOSE 8080

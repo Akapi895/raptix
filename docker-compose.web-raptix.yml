@@ -15,6 +15,7 @@ services:
       dockerfile: infra/containers/web-raptix-server.Dockerfile
       args:
         VERSION: ${VERSION:-0.0.0}
+        SOURCE_REVISION: ${RAPTIX_REPO_HEAD:-unknown}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-api
     env_file: .env
     environment:
@@ -29,7 +30,7 @@ services:
       - NEO4J_HTTP_URI=http://neo4j:7474
       - NEO4J_USER=neo4j
     volumes:
-      - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
+      - ${RAPTIX_WEB_WORKSPACE_PATH:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8081/api/health', r => { r.resume(); process.exit(r.statusCode < 500 ? 0 : 1); }).on('error', () => process.exit(1))"]
       interval: 5s
@@ -47,6 +48,7 @@ services:
       dockerfile: infra/containers/web-raptix.Dockerfile
       args:
         VERSION: ${VERSION:-0.0.0}
+        SOURCE_REVISION: ${RAPTIX_REPO_HEAD:-unknown}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-ui
     # Cutover binds the SAME host port the legacy web served (3000), so the
     # CLI `/web` command and launcher health checks keep working unchanged.

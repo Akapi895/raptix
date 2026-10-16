@@ -53,6 +53,27 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[1]
 COMPOSE = REPO_ROOT / "docker-compose.yml"
 
+
+def test_web_runtime_preserves_local_async_compatibility_and_sandbox_isolation():
+    """Dedicated Web execution keeps the existing local-runtime guard and hardening."""
+    profile = yaml.safe_load((REPO_ROOT / "docker-compose.web-runtime.yml").read_text())
+    runtime = profile["services"]["web-runtime"]
+    sandbox = profile["services"]["web-sandbox"]
+    assert "--allow-blocking" in " ".join(runtime.get("command", []))
+    assert "LANGGRAPH_STRICT_ASYNC" in " ".join(runtime["command"])
+    assert sandbox["networks"] == ["sandbox-net"]
+    assert sandbox["cap_drop"] == ["ALL"]
+    assert sandbox["security_opt"] == ["no-new-privileges:true"]
+    assert sandbox["volumes"] == ["web_runtime_workspace:/workspace"]
+    assert "web_runtime_workspace:/workspace" in runtime["volumes"]
+    # The dual-homed runtime executes agent code on sandbox-net, so it carries
+    # the same no-new-privileges posture even though it stays off docker.sock.
+    assert runtime["cap_drop"] == ["ALL"]
+    assert runtime["security_opt"] == ["no-new-privileges:true"]
+    assert runtime["mem_limit"] == "4g"
+    assert runtime["pids_limit"] == 2048
+
+
 MGMT_NET = "raptix-net"
 SANDBOX_NET = "sandbox-net"
 
