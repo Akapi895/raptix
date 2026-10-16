@@ -17,9 +17,11 @@ import { assertEngagementOpen } from './closure-service.js';
  * cap, and strict UTF-8 decoding (binary content is rejected, never guessed).
  * Paths are addressed as `<folder>/<file>` relative to the engagement
  * workspace; the engagement is identified by its owned API id, not by name.
+ * ``plan`` is included so operators can inspect the planning documents
+ * (roe/conops/…) the planning panel validates.
  */
 
-export const ARTIFACT_FOLDERS = ['recon', 'exploit', 'post-exploit', 'findings', 'report'] as const;
+export const ARTIFACT_FOLDERS = ['plan', 'recon', 'exploit', 'post-exploit', 'findings', 'report'] as const;
 const MAX_FILES_PER_FOLDER = 200;
 const MAX_CONTENT_BYTES = 256 * 1024;
 

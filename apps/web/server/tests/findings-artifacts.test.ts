@@ -149,15 +149,22 @@ describe('W12 artifact browser', () => {
       const root = path.join(h.workspaceRoot, h.slug);
       await mkdir(path.join(root, 'recon', 'nested'), { recursive: true });
       await mkdir(path.join(root, 'report'), { recursive: true });
+      await mkdir(path.join(root, 'plan'), { recursive: true });
       await mkdir(path.join(root, 'forbidden'), { recursive: true });
       await writeFile(path.join(root, 'recon', 'nmap.txt'), 'ports', 'utf8');
       await writeFile(path.join(root, 'recon', 'nested', 'deep.txt'), 'hidden', 'utf8');
       await writeFile(path.join(root, 'report', 'out.md'), '# report', 'utf8');
+      await writeFile(path.join(root, 'plan', 'roe.json'), '{"engagement_name":"eng"}', 'utf8');
       await writeFile(path.join(root, 'forbidden', 'x.txt'), 'nope', 'utf8');
       const view = (await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts' })).json();
       expect(isArtifactsView(view)).toBe(true);
-      expect(view.folders.map((f: { folder: string }) => f.folder)).toEqual(['recon', 'report']);
-      expect(view.folders[0].files).toEqual([{ name: 'nmap.txt', path: 'recon/nmap.txt', sizeBytes: 5 }]);
+      // plan is allowlisted (planning documents) and listed first.
+      expect(view.folders.map((f: { folder: string }) => f.folder)).toEqual(['plan', 'recon', 'report']);
+      expect(view.folders[0].files).toEqual([{ name: 'roe.json', path: 'plan/roe.json', sizeBytes: 25 }]);
+      expect(view.folders[1].files).toEqual([{ name: 'nmap.txt', path: 'recon/nmap.txt', sizeBytes: 5 }]);
+      const planContent = (await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content', query: { path: 'plan/roe.json' } })).json();
+      expect(isArtifactContentView(planContent)).toBe(true);
+      expect(planContent).toMatchObject({ path: 'plan/roe.json', mediaType: 'json', truncated: false });
     });
   });
   it('serves text/JSON content with media type and rejects traversal, symlinks and binary', async () => {
