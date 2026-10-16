@@ -9,7 +9,7 @@ import { useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { fetchPlanning, fetchScopeRevisions, getEngagement } from '../api'
+import { fetchAssetInventory, fetchFindings, fetchFleet, fetchPlanning, fetchScopeRevisions, getEngagement } from '../api'
 import { utcMinuteOr } from '../format'
 import { projectKeys } from '../queries'
 import { RealFindingsPanel } from './findings-panel'
@@ -141,16 +141,33 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
         </Card>
         <Card>
           <CardHeader title="Counts" sub="Counters exist only when a projection source confirms them." />
-          <DescList
-            items={[
-              { k: 'Findings', v: d.findingCount === null ? 'No source' : String(d.findingCount) },
-              { k: 'Assets', v: d.assetCount === null ? 'No source' : String(d.assetCount) },
-              { k: 'Active agents', v: d.activeAgentCount === null ? 'No source' : String(d.activeAgentCount) },
-            ]}
-          />
+          <ProjectCounts engagementId={d.id} />
         </Card>
       </div>
     </div>
+  )
+}
+
+/**
+ * Counts come from the sources that own them (the findings list, the scope
+ * inventory, the fleet's live runs), read through the same cache keys as those
+ * panels. Each count falls back to "No source" on its own read error, so one
+ * outage never blanks the others.
+ */
+export function ProjectCounts({ engagementId }: { engagementId: string }): ReactElement {
+  const findings = useQuery({ queryKey: ['real', 'findings', engagementId], queryFn: () => fetchFindings(engagementId) })
+  const assets = useQuery({ queryKey: ['real', 'asset-inventory', engagementId], queryFn: () => fetchAssetInventory(engagementId) })
+  const fleet = useQuery({ queryKey: ['real', 'fleet', engagementId], queryFn: () => fetchFleet(engagementId) })
+  const show = (read: { isPending: boolean; isError: boolean }, value: number | undefined): string =>
+    read.isPending ? '…' : read.isError || value === undefined ? 'No source' : String(value)
+  return (
+    <DescList
+      items={[
+        { k: 'Findings', v: show(findings, findings.data?.findings.length) },
+        { k: 'Assets', v: show(assets, assets.data?.assets.length) },
+        { k: 'Active runs', v: show(fleet, fleet.data?.counts.activeRuns) },
+      ]}
+    />
   )
 }
 
