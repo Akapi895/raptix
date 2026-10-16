@@ -72,3 +72,9 @@ Evidence JSON lưu kèm từng lần chạy trong `tests/local/artifacts/operati
   (web runtime plane / session-recovery / checkpoint history / HITL).
 - Ảnh runtime/API chứa `hitl.py` mới; các deployment sau rebuild sẽ tự mang
   revision label mới nhờ `SOURCE_REVISION` build arg.
+- **Full mock suite (ngoài phạm vi)**: một số test mock (evidence, notices,
+  analysis, grants, c2, …) đỏ khi chạy full suite trên Windows — file test và
+  component liên quan byte-identical với base, pass khi chạy riêng, số file đỏ
+  dao động giữa các lần chạy (navigate/DETAIL_MAP + load sensitivity, tiền
+  tồn tại từ `eba1b08`); không nằm trong phạm vi M1 real-mode và không bị
+  chạm tới bởi các commit của workstream này (chỉ `src/real/**`).

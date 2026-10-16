@@ -18,7 +18,9 @@ async function setup() {
     trace.cursors.push(request.headers['last-event-id']); trace.cancels.push((request.query as Record<string, unknown>).cancel_on_disconnect);
     return reply.type('text/event-stream').send(Readable.from((async function* () {
       yield 'event: metadata\nid: 100-0\ndata: {"run_id":"run"}\n\n';
-      await new Promise(resolve => setTimeout(resolve, 30));
+      // Long enough that the 5ms re-attestation cadence still fires when the
+      // event loop is starved by the rest of the parallel suite.
+      await new Promise(resolve => setTimeout(resolve, 120));
       yield 'event: values\nid: 100-1\ndata: {"proxy_api_key":"PRIVATE","messages":[{"type":"human","id":"user","content":"đúng"},{"type":"ai","id":"answer","content":"Hello"}]}\n\n';
     })()));
   });
