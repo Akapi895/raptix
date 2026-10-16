@@ -8,6 +8,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
+import { useMemberLabels } from '../member-labels'
 import { CheckCircle2, Loader2, Lock, ShieldCheck } from 'lucide-react'
 import { decideClosure, fetchClosure, requestClosure } from '../api'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Skeleton, Status } from '../../ui'
@@ -30,6 +31,7 @@ const CHECK_LABEL: Record<string, string> = {
 export function RealClosurePanel({ engagementId }: { engagementId: string }): ReactElement {
   const client = useQueryClient()
   const closure = useQuery({ queryKey: ['real', 'closure', engagementId], queryFn: () => fetchClosure(engagementId) })
+  const memberLabel = useMemberLabels(engagementId)
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -96,9 +98,9 @@ export function RealClosurePanel({ engagementId }: { engagementId: string }): Re
             <DescList
               items={[
                 { k: 'Status', v: <Status kind="gate" value={row.status === 'closed' ? 'passed' : row.status === 'requested' ? 'pending' : 'failed'} size="sm" label={row.status} /> },
-                { k: 'Requested by', v: <span className="font-mono">{row.requestedBy}</span> },
+                { k: 'Requested by', v: <span title={row.requestedBy}>{memberLabel(row.requestedBy)}</span> },
                 { k: 'Reason', v: row.reason },
-                { k: 'Decided by', v: row.decidedBy ? <span className="font-mono">{row.decidedBy}</span> : '—' },
+                { k: 'Decided by', v: row.decidedBy ? <span title={row.decidedBy}>{memberLabel(row.decidedBy)}</span> : '—' },
                 { k: 'Decided at', v: utcMinuteOr(row.decidedAt) },
                 { k: 'Updated', v: utcMinute(row.updatedAt) },
               ]}
