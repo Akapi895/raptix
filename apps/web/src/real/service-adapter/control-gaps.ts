@@ -19,6 +19,10 @@ export const REAL_CONTROL_GAPS: Readonly<Record<string, string>> = {
   'finding.retestRecord': 'Retest results are not stored separately; only the resolved transition exists.',
   'finding.reportLink': 'Adding a finding to a report is not part of the curated finding API yet.',
   'evidence.preview': 'Evidence content is not served by the console yet; no preview is shown.',
+  'evidence.original': 'Original evidence content is not served by the console yet.',
+  'evidence.integrity': 'The console does not compute or verify capture digests yet.',
   'evidence.download': 'Evidence download is not served by the console yet.',
+  'finding.reportInclusion': 'The report model does not record which findings a report includes yet.',
+  'finding.reviewerHistory': 'Reviewer decisions and change history are not recorded by the curated workflow yet.',
   'finding.auditTrail': 'Finding audit entries are not projected into the console yet.',
 }
