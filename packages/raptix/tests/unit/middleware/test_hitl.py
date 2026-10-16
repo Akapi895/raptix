@@ -6,9 +6,13 @@ import json
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 import pytest
+from langchain.tools import ToolRuntime
+from langchain.tools.tool_node import ToolCallRequest
 from langchain_core.messages import ToolMessage
+from langchain_core.tools import StructuredTool
 
 from raptix.middleware.hitl import (
     ApprovalDecision,
@@ -53,6 +57,112 @@ def test_redact_strips_known_secret_keys():
     assert out["password"] == "***REDACTED***"
     assert out["api_key"] == "***REDACTED***"
     assert out["x"] == 1
+
+
+@pytest.mark.asyncio
+async def test_current_tool_request_retains_redacted_invocation_and_denial_identity():
+    transport = InProcessApprovalTransport()
+    middleware = HITLApprovalMiddleware(
+        policy=[ApprovalPolicyRule(tool_pattern=r"^bash$", timeout_seconds=0)],
+        transport=transport,
+    )
+
+    def printf(command: str) -> str:
+        return command
+
+    tool = StructuredTool.from_function(printf, name="bash", description="Local test output")
+    runtime = ToolRuntime(
+        state={},
+        context=None,
+        config={},
+        stream_writer=lambda _: None,
+        tool_call_id="modern-call",
+        store=None,
+    )
+    request = ToolCallRequest(
+        tool_call={
+            "name": "bash",
+            "args": {"command": "printf marker", "password": "PRIVATE"},
+            "id": "modern-call",
+            "type": "tool_call",
+        },
+        tool=tool,
+        state={},
+        runtime=runtime,
+    )
+
+    async def forbidden_handler(_request: ToolCallRequest) -> ToolMessage:
+        raise AssertionError("An undecided tool must not execute")
+
+    result = await middleware.awrap_tool_call(request, forbidden_handler)
+    assert transport.pending()[0].tool_args_redacted == {
+        "command": "printf marker",
+        "password": "***REDACTED***",
+    }
+    assert result.tool_call_id == "modern-call"
+
+
+def test_redirect_decision_applies_replacement_arguments_through_modern_tool_call():
+    class RedirectTransport(InProcessApprovalTransport):
+        def wait_for_decision(self, request_id: str, timeout: float) -> ApprovalDecision | None:
+            return ApprovalDecision(
+                request_id=request_id,
+                action="redirect",
+                redirect_args={"command": "printf safe"},
+            )
+
+    transport = RedirectTransport()
+    middleware = HITLApprovalMiddleware(
+        policy=[ApprovalPolicyRule(tool_pattern=r"^bash$", timeout_seconds=1)],
+        transport=transport,
+    )
+
+    def printf(command: str) -> str:
+        return command
+
+    tool = StructuredTool.from_function(printf, name="bash", description="Local test output")
+    runtime = ToolRuntime(
+        state={},
+        context=None,
+        config={},
+        stream_writer=lambda _: None,
+        tool_call_id="redirect-call",
+        store=None,
+    )
+    request = ToolCallRequest(
+        tool_call={
+            "name": "bash",
+            "args": {"command": "printf original"},
+            "id": "redirect-call",
+            "type": "tool_call",
+        },
+        tool=tool,
+        state={},
+        runtime=runtime,
+    )
+    seen: dict[str, Any] = {}
+
+    def handler(req):
+        seen.update(req.tool_call["args"])
+        return ToolMessage(content="executed", tool_call_id=req.tool_call["id"], name="bash")
+
+    middleware.wrap_tool_call(request, handler)
+    assert seen == {"command": "printf safe"}
+
+
+def test_explicit_web_bash_approval_denies_on_timeout_without_changing_other_policies():
+    class TimeoutTransport(InProcessApprovalTransport):
+        def wait_for_decision(self, request_id: str, timeout: float) -> ApprovalDecision | None:
+            return None
+
+    policy = [ApprovalPolicyRule(tool_pattern=r"^bash$", default_on_timeout="allow")]
+    transport = TimeoutTransport()
+    middleware = HITLApprovalMiddleware(policy, transport, require_bash_approval=True)
+    result = middleware.wrap_tool_call(_Req("bash", {"command": "printf marker"}), _allow_handler)
+    assert result.status == "error"
+    assert transport.pending()[0].matched_rule.default_on_timeout == "deny"
+    unchanged = HITLApprovalMiddleware(policy, TimeoutTransport())
+    assert unchanged.wrap_tool_call(_Req("bash", {}), _allow_handler).content == "executed"
 
 
 def test_redact_recurses_into_nested():

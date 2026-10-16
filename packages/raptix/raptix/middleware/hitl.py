@@ -310,9 +310,24 @@ class HITLApprovalMiddleware(AgentMiddleware):
         *,
         engagement_name: str = "",
         agent_name: str = "",
+        require_bash_approval: bool = False,
     ) -> None:
         super().__init__()
-        self._policy = policy
+        self._policy = list(policy)
+        if require_bash_approval:
+            self._policy = [
+                rule
+                for rule in policy
+                if not (rule.tool_pattern and re.fullmatch(rule.tool_pattern, "bash"))
+            ]
+            self._policy.append(
+                ApprovalPolicyRule(
+                    tool_pattern=r"^bash$",
+                    timeout_seconds=300,
+                    default_on_timeout="deny",
+                    reason="Web execution requires an explicit operator decision for bash.",
+                )
+            )
         # Static transport (tests / single-process UIs). When None, the
         # transport is resolved per request from the request's workspace
         # so a long-lived server serving many engagements writes
@@ -402,12 +417,12 @@ class HITLApprovalMiddleware(AgentMiddleware):
             action = decision.action
             note = decision.operator_note
 
-        tool_call_id = getattr(request, "tool_call_id", "") or ""
+        tool_call_id = _tool_call(request).get("id", "") or ""
         tool_name = getattr(getattr(request, "tool", None), "name", "") if request else ""
         if action == "allow":
             return handler(request)
         if action == "redirect" and decision and decision.redirect_args is not None:
-            redirected = request.override(tool_call_args=decision.redirect_args)
+            redirected = _redirect_request(request, decision.redirect_args)
             return handler(redirected)
         denial_text = f"HITL gate denied tool call ``{tool_name}``" + (f": {note}" if note else "")
         return ToolMessage(
@@ -434,12 +449,12 @@ class HITLApprovalMiddleware(AgentMiddleware):
             action = decision.action
             note = decision.operator_note
 
-        tool_call_id = getattr(request, "tool_call_id", "") or ""
+        tool_call_id = _tool_call(request).get("id", "") or ""
         tool_name = getattr(getattr(request, "tool", None), "name", "") if request else ""
         if action == "allow":
             return await handler(request)
         if action == "redirect" and decision and decision.redirect_args is not None:
-            redirected = request.override(tool_call_args=decision.redirect_args)
+            redirected = _redirect_request(request, decision.redirect_args)
             return await handler(redirected)
         denial_text = f"HITL gate denied tool call ``{tool_name}``" + (f": {note}" if note else "")
         return ToolMessage(
@@ -453,7 +468,7 @@ class HITLApprovalMiddleware(AgentMiddleware):
     def wrap_tool_call(self, request, handler) -> ToolMessage | Command:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
-        tool_args = getattr(request, "tool_call_args", {}) or {}
+        tool_args = _tool_call(request).get("args", {}) or {}
         rule = self._match_rule(tool_name, self._technique_tag(request))
         if rule is None:
             return handler(request)
@@ -467,7 +482,7 @@ class HITLApprovalMiddleware(AgentMiddleware):
     async def awrap_tool_call(self, request, handler) -> ToolMessage | Command:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
-        tool_args = getattr(request, "tool_call_args", {}) or {}
+        tool_args = _tool_call(request).get("args", {}) or {}
         rule = self._match_rule(tool_name, self._technique_tag(request))
         if rule is None:
             return await handler(request)
@@ -482,6 +497,22 @@ class HITLApprovalMiddleware(AgentMiddleware):
             transport.wait_for_decision, appr.request_id, rule.timeout_seconds
         )
         return await self._adecision_to_response(decision, rule, request, handler)
+
+
+def _tool_call(request: Any) -> dict[str, Any]:
+    call = getattr(request, "tool_call", None)
+    if isinstance(call, dict):
+        return call
+    return {
+        "id": getattr(request, "tool_call_id", ""),
+        "args": getattr(request, "tool_call_args", {}),
+    }
+
+
+def _redirect_request(request: Any, arguments: dict[str, Any]) -> Any:
+    if isinstance(getattr(request, "tool_call", None), dict):
+        return request.override(tool_call={**request.tool_call, "args": arguments})
+    return request.override(tool_call_args=arguments)
 
 
 DEFAULT_HIGH_IMPACT_POLICY: list[ApprovalPolicyRule] = [
