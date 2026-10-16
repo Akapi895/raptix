@@ -68,7 +68,8 @@ export class TimelineService {
           source: 'checkpoint',
           kind: transcript.payload.type,
           label: transcript.payload.type.replace(/_/g, ' '),
-          ...(transcript.payload.agent !== undefined && transcript.payload.agent !== null ? { agent: String(transcript.payload.agent) } : {}),
+          ...('agent' in transcript.payload ? { agent: transcript.payload.agent } : {}),
+          ...('name' in transcript.payload ? { tool: transcript.payload.name } : {}),
         });
       }
     }

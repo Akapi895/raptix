@@ -81,13 +81,13 @@ export function RealWorkspace(): ReactElement {
 export function RealConversation({ engagementId, initialThreadId, embedded = false }: { engagementId: string; initialThreadId?: string; embedded?: boolean }): ReactElement {
   const client = useQueryClient()
   const agents = useCapabilityReady('agents')
-  const { session } = useSession()
+  const { session, deploymentId } = useSession()
   const actorId = session?.actor?.id ?? 'local'
-  const [kindFilter, setKindFilter] = useState<ThreadKind>(() => embedded ? 'execution' : readSelection(engagementId)?.kind ?? 'planning')
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => initialThreadId ?? (embedded && readSelection(engagementId)?.kind !== 'execution' ? null : readSelection(engagementId)?.threadId ?? null))
+  const [kindFilter, setKindFilter] = useState<ThreadKind>(() => embedded ? 'execution' : readSelection(actorId, engagementId, deploymentId)?.kind ?? 'planning')
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => initialThreadId ?? (embedded && readSelection(actorId, engagementId, deploymentId)?.kind !== 'execution' ? null : readSelection(actorId, engagementId, deploymentId)?.threadId ?? null))
   const [drafts, setDrafts] = useState<Record<string, string>>({})
-  const draft = selectedThreadId ? drafts[selectedThreadId] ?? readWorkspaceDraft(engagementId, selectedThreadId, actorId) : ''
-  const setDraft = (text: string): void => { if (selectedThreadId) { setDrafts((previous) => ({ ...previous, [selectedThreadId]: text })); try { saveWorkspaceDraft(engagementId, selectedThreadId, text, actorId) } catch { setDispatchError('Draft recovery storage is unavailable.') } } }
+  const draft = selectedThreadId ? drafts[selectedThreadId] ?? readWorkspaceDraft(engagementId, selectedThreadId, actorId, deploymentId) : ''
+  const setDraft = (text: string): void => { if (selectedThreadId) { setDrafts((previous) => ({ ...previous, [selectedThreadId]: text })); try { saveWorkspaceDraft(engagementId, selectedThreadId, text, actorId, deploymentId) } catch { setDispatchError('Draft recovery storage is unavailable.') } } }
   const [observation, setObservation] = useState<{ threadId: string; key: string } | null>(null)
   const [agentsOpen, setAgentsOpen] = useState(true)
   const [agentsSheet, setAgentsSheet] = useState(false)
@@ -95,7 +95,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const wide = useViewportW() >= 1280
   const agentWidth = useResizable('raptix.real.execution.agents.width', INSP)
   const [dispatchError, setDispatchError] = useState<string | null>(null)
-  const [unconfirmed, setUnconfirmed] = useState<PendingRequest | null>(() => readPending(engagementId))
+  const [unconfirmed, setUnconfirmed] = useState<PendingRequest | null>(() => readPending(actorId, engagementId, deploymentId))
   const [observedRun, setObservedRun] = useState<{ threadId: string; runId: string } | null>(null)
   const activeRunId = observedRun?.threadId === selectedThreadId ? observedRun.runId : null
   const [runStatus, setRunStatus] = useState<string | null>(null)
@@ -134,10 +134,10 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   }, [allThreads, filteredThreads, selectedThreadId, threads.isPending, initialThreadId, embedded])
   useEffect(() => {
     if (selectedThread) {
-      try { saveSelection(engagementId, selectedThread) }
+      try { saveSelection(actorId, engagementId, selectedThread, deploymentId) }
       catch { setDispatchError('Browser recovery storage is unavailable.') }
     }
-  }, [engagementId, selectedThread])
+  }, [actorId, engagementId, selectedThread, deploymentId])
 
   const snapshot = useQuery({
     queryKey: ['real', 'thread', engagementId, selectedThreadId],
@@ -257,11 +257,11 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
 
   const dispatch = async (pending: PendingRequest, invoke: () => Promise<Awaited<ReturnType<typeof createThread>>>): Promise<{ outcome: AckOutcome; scope: string }> => {
     const captured = scope
-    savePending(engagementId, pending)
+    savePending(actorId, engagementId, pending, deploymentId)
     setUnconfirmed(pending)
     try {
       const outcome = await awaitRequest(engagementId, await invoke())
-      if (outcome.kind !== 'unconfirmed') clearPending(engagementId, pending.requestId)
+      if (outcome.kind !== 'unconfirmed') clearPending(actorId, engagementId, pending.requestId, deploymentId)
       if (mounted.current) setUnconfirmed(previous => previous?.requestId === pending.requestId ? (outcome.kind === 'unconfirmed' ? pending : null) : previous)
       if (current(captured)) {
         if (outcome.kind === 'rejected') setDispatchError('The server recorded the request as rejected.')
@@ -269,7 +269,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       return { outcome, scope: captured }
     } catch (error) {
       const rejected = error instanceof ApiTransportError && ['bad_request', 'forbidden', 'unauthorized', 'conflict'].includes(error.code)
-      if (rejected) clearPending(engagementId, pending.requestId)
+      if (rejected) clearPending(actorId, engagementId, pending.requestId, deploymentId)
       if (current(captured)) {
         setDispatchError(error instanceof Error ? error.message : 'Dispatch outcome is unknown; reconcile the existing request.')
         if (rejected) setUnconfirmed(null)
@@ -371,7 +371,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       return { outcome: await awaitRequest(engagementId, view), scope }
     },
     onSuccess: ({ outcome, scope: captured }) => {
-      if (outcome.kind !== 'unconfirmed') clearPending(engagementId, outcome.requestId)
+      if (outcome.kind !== 'unconfirmed') clearPending(actorId, engagementId, outcome.requestId, deploymentId)
       if (!current(captured)) return
       if (outcome.kind !== 'unconfirmed') setUnconfirmed(null)
       if (outcome.kind === 'accepted') {

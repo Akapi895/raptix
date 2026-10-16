@@ -162,13 +162,13 @@ describe('RealWorkspace', () => {
     expect(readWorkspaceDraft('eng-1', 'th-exec', 'actor-b')).toBe('')
   })
 
-  it('opens project Execution without dispatch and keeps checkpoint invocations observe-only', async () => {
+  it('opens the AI workspace execution surface without dispatch and keeps checkpoint invocations observe-only', async () => {
     const calls = stubApi({ threads: [EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true), planning: PLANNING_READY, fleet: { engagementId: 'eng-1', agents: [], threads: [], branches: [{ threadId: 'th-exec', key: 'branch-recon-2', agent: 'recon', state: 'running', outcome: null, startedAt: null, endedAt: null, provenance: 'checkpoint' }], counts: {}, sources: { agents: 'catalog', threads: 'runtime', branches: 'checkpoint' }, source: 'runtime' } })
-    go('project', { id: 'eng-1', tab: 'operations' })
+    go('project', { id: 'eng-1', tab: 'ai-workspace' })
     ui(<RealProjectDetail />)
     const user = userEvent.setup()
     await screen.findByText('Conversation with executor')
-    expect(screen.queryByRole('heading', { name: 'AI Workspace' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Planning and execution conversations for')).not.toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /Agents \/ Context/ }))
     await user.click(await screen.findByRole('button', { name: 'Observe recon branch-recon-2' }))
     expect(await screen.findByLabelText('Observed invocation — read-only')).toBeDisabled()

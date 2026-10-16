@@ -7,6 +7,16 @@ const scope = { engagementId: 'eng', threadId: 'thread', runId: 'run' };
 const transcript = (event: Record<string, unknown>): { values: Record<string, unknown> } => ({ values: { subagent_transcripts: [event] } });
 
 describe('projectThreadHistory', () => {
+  it('restores root tool calls and results as redacted thread history without counting chat as execution', () => {
+    const { transcripts } = projectThreadHistory(scope, { messages: [
+      { type: 'human', content: 'Do not count this chat message' },
+      { type: 'ai', content: 'Preparing', tool_calls: [{ id: 'call-root', name: 'read_file', args: { path: '/workspace/marker.txt', token: 'PRIVATE-TOKEN' } }] },
+      { type: 'tool', tool_call_id: 'call-root', name: 'read_file', content: 'Marker output' },
+    ] });
+    expect(transcripts.map(entry => entry.payload.type)).toEqual(['tool_call', 'tool_result']);
+    expect(JSON.stringify(transcripts)).not.toContain('PRIVATE-TOKEN');
+    expect(transcripts.every(entry => entry.runId === null && entry.source === 'checkpoint')).toBe(true);
+  });
   it('keeps checkpoint history thread-level with stable provenance keys and full-vs-capped truth', () => {
     const { transcripts } = projectThreadHistory(scope, transcript({ type: 'subagent_tool_result', agent: 'recon', session_id: 's1', id: 'call-1', tool: 'nmap', created_at: '2026-10-02T00:00:00.000000+00:00', content: 'x'.repeat(8000) + '…[truncated]' }).values);
     expect(transcripts).toHaveLength(1);

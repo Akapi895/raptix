@@ -1,6 +1,6 @@
 import type { ThreadBindingView } from './ownership.js'
 import { isThreadBindingView } from './ownership.js'
-import { isPublicStreamPayload, type CustomPayload } from './stream-events.js'
+import { isPublicStreamPayload, type CustomPayload, type ToolPayload } from './stream-events.js'
 import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 import type { EngagementStatus, EngagementTargetType } from './engagements.js'
 export interface ScopedRunView {
@@ -19,7 +19,7 @@ export interface ScopedThreadMessage {
  * thread-level rather than being assigned to an active run.
  */
 export interface ThreadHistoryEvent {
-  key: string | null; runId: null; source: 'checkpoint'; truncated: boolean; payload: CustomPayload
+  key: string | null; runId: null; source: 'checkpoint'; truncated: boolean; payload: CustomPayload | ToolPayload
 }
 export interface ScopedThreadView {
   binding: ThreadBindingView; rawStatus: string | null
