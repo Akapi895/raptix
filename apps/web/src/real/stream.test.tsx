@@ -79,7 +79,9 @@ describe('useRunStream', () => {
     const { unmount } = renderHook(() => useRunStream({ engagementId: 'eng-1', threadId: 'th-1', runId: 'run-1', onEvent: () => {}, onControl }))
     const source = FakeEventSource.instances[0]
     await act(async () => { source.emitRaw('control', JSON.stringify({ type: 'stream_closed', recoveryRequired: true })) })
-    expect(onControl).toHaveBeenCalledWith('stream_closed')
+    expect(onControl).toHaveBeenCalledWith('stream_closed', true)
+    await act(async () => { source.emitRaw('control', JSON.stringify({ type: 'stream_closed', recoveryRequired: false })) })
+    expect(onControl).toHaveBeenLastCalledWith('stream_closed', false)
     unmount()
     expect(source.closed).toBe(true)
   })

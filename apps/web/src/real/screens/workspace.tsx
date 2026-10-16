@@ -248,8 +248,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       const line = traceLineFor(event.eventId, p as TraceLikePayload)
       if (line) setTrace((prev) => [...prev.slice(-199), line])
     },
-    onControl: (type) => {
-      setRecovery(type === 'stream_error'
+    onControl: (type, recoveryRequired) => {
+      /* A run that pauses for an answer closes its stream normally: reconcile the thread (pending questions) without a warning. */
+      setRecovery(!recoveryRequired ? null : type === 'stream_error'
         ? 'The event stream reported an error. The run keeps executing on the server - refresh the conversation to reconcile its state.'
         : 'The event stream closed. The run keeps executing on the server - the conversation restores from checkpoints on refresh.')
       void client.invalidateQueries({ queryKey: ['real', 'thread', streamRef.current.engagementId, streamRef.current.threadId] })

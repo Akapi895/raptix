@@ -17,8 +17,8 @@ export interface RunStreamOptions {
   /** Null disables the subscription (no active run to observe). */
   runId: string | null
   onEvent: (event: PublicStreamEvent) => void
-  /** A control frame means the stream ended and recovery is required. */
-  onControl?: (type: 'stream_closed' | 'stream_error') => void
+  /** A control frame means the stream ended; `recoveryRequired` is false for a normal end such as a run waiting for an answer. */
+  onControl?: (type: 'stream_closed' | 'stream_error', recoveryRequired: boolean) => void
 }
 
 export interface RunStreamState {
@@ -27,7 +27,7 @@ export interface RunStreamState {
   malformedCount: number
 }
 
-const isControlFrame = (value: unknown): value is { type: 'stream_closed' | 'stream_error'; recoveryRequired: boolean } => {
+const isControlFrame = (value: unknown): value is { type: 'stream_closed' | 'stream_error'; recoveryRequired?: boolean } => {
   if (typeof value !== 'object' || value === null) return false
   const type = (value as Record<string, unknown>).type
   return type === 'stream_closed' || type === 'stream_error'
@@ -81,19 +81,23 @@ export function useRunStream({ engagementId, threadId, runId, onEvent, onControl
     source.addEventListener('control', (frame) => {
       if (!isCurrent()) return
       let type: 'stream_closed' | 'stream_error' = 'stream_error'
+      let recoveryRequired = true
       try {
         const parsed = JSON.parse((frame as MessageEvent).data as string) as unknown
-        if (isControlFrame(parsed)) type = parsed.type
+        if (isControlFrame(parsed)) {
+          type = parsed.type
+          recoveryRequired = parsed.recoveryRequired !== false
+        }
       } catch {
         // A malformed control frame still requires recovery.
       }
-      onControlRef.current?.(type)
+      onControlRef.current?.(type, recoveryRequired)
     })
     source.onopen = () => { if (isCurrent()) setState((s) => ({ ...s, connected: true })) }
     source.onerror = () => {
       if (isCurrent()) {
         setState((s) => ({ ...s, connected: false }))
-        onControlRef.current?.('stream_error')
+        onControlRef.current?.('stream_error', true)
       }
     }
     return () => { disposed = true; source.close() }

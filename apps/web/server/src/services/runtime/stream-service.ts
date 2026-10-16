@@ -12,7 +12,8 @@ export function streamCursor(value: unknown): string {
   if (typeof value !== 'string' || !/^(?:-1|[A-Za-z0-9][A-Za-z0-9_.:-]{0,199})$/.test(value)) throw new ProjectPolicyError('bad_request', 'Invalid stream replay cursor');
   return value;
 }
-const control = (type: 'stream_closed' | 'stream_error'): string => `event: control\ndata: ${JSON.stringify({ type, recoveryRequired: true })}\n\n`;
+/** `recoveryRequired` is false only when the run itself ended or paused normally (e.g. waiting for an answer); access loss and transport errors need recovery. */
+const control = (type: 'stream_closed' | 'stream_error', recoveryRequired = true): string => `event: control\ndata: ${JSON.stringify({ type, recoveryRequired })}\n\n`;
 export class StreamService {
   public constructor(private readonly runs: Pick<RunService, 'getRun'>, private readonly join: RuntimeJoinPort, private readonly heartbeatMs = 15000) {}
   public async open(user: string, scope: StreamScope, cursor: unknown, signal: AbortSignal): Promise<Readable> {
@@ -49,7 +50,7 @@ export class StreamService {
         }
         if (!next) { yield ': heartbeat\n\n'; continue; }
         pending = undefined;
-        if (next.done) { yield control('stream_closed'); return; }
+        if (next.done) { yield control('stream_closed', false); return; }
         const frame = next.value; sequence++;
         if (frame.id !== undefined) streamCursor(frame.id);
         const events = projectStreamFrame(scope, frame, `${connection}:${sequence}`);

@@ -84,6 +84,20 @@ it('denies foreign run scope and malformed/arbitrary cursor options before joini
   expect(trace.joins).toHaveLength(0);
 });
 
+it('ends a normally finished or paused run with a control frame that does not require recovery', async () => {
+  const service = new StreamService({ async getRun() {
+    return { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'interrupted', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), source: 'runtime' };
+  } }, { async open() {
+    return { close: () => {}, frames: (async function* () {
+      yield { event: 'values', id: 'frame-0', data: JSON.stringify({ messages: [] }) };
+    })() };
+  } }, 60000);
+  const stream = await service.open('member', { engagementId: 'eng', threadId: 'thread', runId: 'run' }, '-1', new AbortController().signal);
+  let output = '';
+  for await (const chunk of stream) output += String(chunk);
+  expect(output).toContain('"type":"stream_closed","recoveryRequired":false');
+});
+
 it('re-attests revoked membership during continuous event traffic before publishing further frames', async () => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(0);
