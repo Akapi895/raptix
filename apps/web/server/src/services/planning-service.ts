@@ -95,6 +95,37 @@ export async function readDocumentSource(root: string, slug: string, name: Plann
   }
 }
 
+/**
+ * The scope the planner wrote into roe.json, mapped for the scope revision
+ * the operator confirms at the planning handoff. Null unless roe.json is a
+ * schema-valid document, because nothing else may seed the authorized scope.
+ */
+export interface PlannerScope {
+  readonly targets: readonly string[];
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly contacts: readonly string[];
+  readonly restrictions: readonly string[];
+}
+
+export async function readPlannerScope(workspaceRoot: string, slug: string): Promise<PlannerScope | null> {
+  const roe = await readDocument(workspaceRoot, slug, 'roe');
+  if (roe.state !== 'ready') return null;
+  const payload = roe.payload as {
+    start_date: string; end_date: string;
+    in_scope?: { target: string }[];
+    escalation_contacts?: { name: string; channel: string }[];
+    prohibited_actions?: string[];
+  };
+  return {
+    targets: (payload.in_scope ?? []).map((entry) => entry.target),
+    startDate: payload.start_date,
+    endDate: payload.end_date,
+    contacts: (payload.escalation_contacts ?? []).map((contact) => `${contact.name} (${contact.channel})`),
+    restrictions: payload.prohibited_actions ?? [],
+  };
+}
+
 /** O06: schema errors for one document's parsed payload, formatted for the draft API. */
 export function validateDocument(name: PlanningDocumentName, payload: unknown): string[] {
   if (!validators[name]!(payload)) {

@@ -1,7 +1,8 @@
 ﻿import type { PrismaClient, ScopeRevision, WebAsset } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
-import { assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import { ROLE_RANK, assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import type { PlannerScope } from './planning-service.js';
 import { assertEngagementOpen } from './closure-service.js';
 
 /**
@@ -75,6 +76,13 @@ export interface EffectiveScopeView {
   readonly inScope: readonly string[];
   readonly roe: RoeWindows;
   readonly source: 'db';
+}
+
+/** The inventory kind of a scope identifier: a URL, a CIDR range, or a single host/IP. */
+function assetKindOf(identifier: string): 'web_url' | 'ip_range' | 'host' {
+  if (/^https?:\/\//i.test(identifier)) return 'web_url';
+  if (identifier.includes('/')) return 'ip_range';
+  return 'host';
 }
 
 const MIN_WRITE: MemberRole = 'operator';
@@ -164,7 +172,41 @@ export class ScopeService {
     return toRevisionView(created);
   }
 
-  public async decideRevision(actorId: string, engagementId: string, revisionId: string, input: unknown): Promise<RevisionView> {
+  /**
+   * Single-operator planning handoff (ADR-0085): the one member of an
+   * engagement confirms the scope the planner wrote into roe.json, which is
+   * submitted and approved in one step. Engagements with a second member keep
+   * the independent review. Returns null when the approved scope already
+   * covers the plan.
+   */
+  public async confirmPlannerScope(actorId: string, engagementId: string, plan: PlannerScope): Promise<RevisionView | null> {
+    const access = await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_WRITE);
+    // The owner row is implicit (no membership row); a single-operator engagement
+    // has no other member at all.
+    const others = await this.db.webMembership.findMany({ where: { engagementId, userId: { not: actorId } } });
+    if (others.length > 0) {
+      throw new ProjectApiError(409, 'The planning scope is approved by the operator only on a single-operator engagement; with more members, a reviewer decides the scope revision.');
+    }
+    if (ROLE_RANK[access.role] < ROLE_RANK.reviewer) {
+      throw new ProjectApiError(403, 'Confirming the planning scope needs the reviewer role or above.');
+    }
+    const inScope = new Set((await this.db.webAsset.findMany({ where: { engagementId, classification: 'in_scope' } })).map((row) => row.identifier));
+    const approved = await this.latestApproved(engagementId);
+    const missing = [...new Set(plan.targets)].filter((target) => !inScope.has(target));
+    if (missing.length === 0 && approved !== null) return null;
+    const added = missing.length > 0 ? missing : [...new Set(plan.targets)];
+    const submitted = await this.submitRevision(actorId, engagementId, {
+      diff: { added, removed: [], rationale: 'Scope planned in roe.json, confirmed at the planning handoff' },
+      roe: {
+        windows: [{ start: `${plan.startDate}T00:00:00Z`, end: `${plan.endDate}T23:59:59Z`, tz: 'UTC' }],
+        emergencyContacts: [...plan.contacts],
+        restrictions: [...plan.restrictions],
+      },
+    });
+    return this.decideRevision(actorId, engagementId, submitted.id, { decision: 'approved', comment: 'Single-operator planning handoff' }, { singleOperatorHandoff: true });
+  }
+
+  public async decideRevision(actorId: string, engagementId: string, revisionId: string, input: unknown, options: { singleOperatorHandoff?: boolean } = {}): Promise<RevisionView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_REVIEW);
     const body = (input ?? {}) as { decision?: unknown; comment?: unknown };
     const decision = typeof body.decision === 'string' ? body.decision : '';
@@ -172,7 +214,7 @@ export class ScopeService {
     const revision = await this.db.scopeRevision.findFirst({ where: { id: revisionId, engagementId } });
     if (revision === null) throw new ProjectApiError(404, 'Scope revision not found');
     if (revision.status !== 'pending') throw new ProjectApiError(409, `Revision v${revision.version} is already ${revision.status}.`);
-    requireIndependentActor(revision.requestedBy, actorId, 'The scope revision decision');
+    if (options.singleOperatorHandoff !== true) requireIndependentActor(revision.requestedBy, actorId, 'The scope revision decision');
     const comment = typeof body.comment === 'string' ? body.comment : null;
     const updated = await this.db.$transaction(async (tx) => {
       // W07 CAS: a decision is only authoritative for the newest submitted
@@ -194,8 +236,16 @@ export class ScopeService {
       if (decision === 'approved') {
         const diff = revision.diff as unknown as ScopeDiff;
         for (const identifier of diff.added ?? []) {
-          // Newly added targets become executable only through this governance path.
-          await tx.webAsset.updateMany({ where: { engagementId, identifier, classification: 'pending' }, data: { classification: 'in_scope', updatedBy: actorId, version: { increment: 1 } } });
+          // Newly added targets become executable only through this governance
+          // path. A target the revision names but the inventory does not hold
+          // yet is created in scope; an existing row (pending or out of scope)
+          // is promoted, so the approved target shows in the effective scope.
+          const existing = await tx.webAsset.findFirst({ where: { engagementId, identifier } });
+          if (existing === null) {
+            await tx.webAsset.create({ data: { engagementId, identifier, kind: assetKindOf(identifier), classification: 'in_scope', observed: false, createdBy: actorId, updatedBy: actorId } });
+          } else if (existing.classification !== 'in_scope') {
+            await tx.webAsset.update({ where: { id: existing.id }, data: { classification: 'in_scope', updatedBy: actorId, version: { increment: 1 } } });
+          }
         }
         for (const identifier of diff.removed ?? []) {
           // W07: approved removals take real effect inside the same
