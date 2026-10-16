@@ -64,9 +64,44 @@ export interface NoticesView {
   readonly source: 'db';
 }
 
+/**
+ * Cross-engagement System Overview reads. Deliberately separate per domain
+ * (findings, C2) instead of one aggregate document: each section loads,
+ * degrades and is authorized on its own, and a missing source never blanks
+ * the rest of the dashboard.
+ */
+export interface FindingsSummaryView {
+  readonly total: number;
+  readonly bySeverity: Readonly<Record<string, number>>;
+  readonly byStatus: Readonly<Record<string, number>>;
+  readonly engagementsWithFindings: number;
+  readonly engagements: number;
+  /** True when the scan hit the row cap; counts are a lower bound. */
+  readonly truncated: boolean;
+  readonly source: 'db';
+}
+
+export interface C2SummaryCommandView {
+  readonly id: string;
+  readonly engagementId: string;
+  readonly sessionId: string;
+  readonly status: string;
+  readonly createdAt: string;
+}
+
+export interface C2SummaryView {
+  readonly commandsByStatus: Readonly<Record<string, number>>;
+  readonly recentCommands: readonly C2SummaryCommandView[];
+  readonly pendingGrants: number;
+  readonly source: 'db';
+}
+
 const MAX_TASKS_PER_KIND = 25;
 const MAX_ACTIVITY = 10;
 const MAX_NOTICES = 50;
+const MAX_FINDINGS_SCAN = 5000;
+const MAX_RECENT_C2_COMMANDS = 20;
+const C2_COMMAND_STATUSES = ['creating', 'succeeded', 'failed', 'uncertain'] as const;
 
 export function toNoticeView(row: { id: string; engagementId: string | null; kind: string; title: string; detail: unknown; readAt: Date | null; dismissedAt: Date | null; createdAt: Date }): NoticeView {
   return {
@@ -182,6 +217,68 @@ export class InboxService {
   public async notices(actorId: string): Promise<NoticesView> {
     const rows = await this.db.webNotice.findMany({ where: { actorId, dismissedAt: null }, orderBy: { createdAt: 'desc' }, take: MAX_NOTICES });
     return { notices: rows.map(toNoticeView), unread: rows.filter((r) => r.readAt === null).length, source: 'db' };
+  }
+
+  /**
+   * Observed finding counts over the engagements the actor owns or holds a
+   * membership on. Raw counts only — no eligibility re-decisions. The scan is
+   * capped and reports `truncated` instead of silently rounding.
+   */
+  public async findingsSummary(actorId: string): Promise<FindingsSummaryView> {
+    const engagements = await this.authorizedEngagements(actorId);
+    const ids = engagements.map((e) => e.id);
+    const rows = ids.length === 0
+      ? []
+      : await this.db.findingRecord.findMany({ where: { engagementId: { in: ids } }, take: MAX_FINDINGS_SCAN }).catch(() => []);
+    const bySeverity: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
+    const perEngagement = new Set<string>();
+    for (const row of rows) {
+      const severity = String(row.severity);
+      const status = String(row.status);
+      bySeverity[severity] = (bySeverity[severity] ?? 0) + 1;
+      byStatus[status] = (byStatus[status] ?? 0) + 1;
+      perEngagement.add(String(row.engagementId));
+    }
+    return {
+      total: rows.length,
+      bySeverity,
+      byStatus,
+      engagementsWithFindings: perEngagement.size,
+      engagements: engagements.length,
+      truncated: rows.length >= MAX_FINDINGS_SCAN,
+      source: 'db',
+    };
+  }
+
+  /**
+   * Durable C2 activity from the command audit (live Sliver sessions stay a
+   * per-engagement provider read — this section never pretends to observe
+   * them). Counts include every durable command row; `recentCommands` is the
+   * bounded newest slice.
+   */
+  public async c2Summary(actorId: string): Promise<C2SummaryView> {
+    const engagements = await this.authorizedEngagements(actorId);
+    const ids = engagements.map((e) => e.id);
+    const [recent, grants, ...counts] = await Promise.all([
+      ids.length === 0 ? Promise.resolve([]) : this.db.c2Command.findMany({ where: { engagementId: { in: ids } }, orderBy: { createdAt: 'desc' }, take: MAX_RECENT_C2_COMMANDS }).catch(() => []),
+      ids.length === 0 ? Promise.resolve([]) : this.db.c2Grant.findMany({ where: { engagementId: { in: ids }, status: 'requested' }, orderBy: { createdAt: 'desc' }, take: MAX_TASKS_PER_KIND }).catch(() => []),
+      ...C2_COMMAND_STATUSES.map((status) => (ids.length === 0 ? Promise.resolve(0) : this.db.c2Command.count({ where: { engagementId: { in: ids }, status } }).catch(() => 0))),
+    ]);
+    const commandsByStatus: Record<string, number> = {};
+    C2_COMMAND_STATUSES.forEach((status, index) => { commandsByStatus[status] = Number(counts[index]); });
+    return {
+      commandsByStatus,
+      recentCommands: recent.map((row) => ({
+        id: String(row.id),
+        engagementId: String(row.engagementId),
+        sessionId: String(row.sessionId),
+        status: String(row.status),
+        createdAt: (row.createdAt as Date).toISOString(),
+      })),
+      pendingGrants: grants.length,
+      source: 'db',
+    };
   }
 
   public async markNoticeRead(actorId: string, noticeId: string): Promise<NoticeView> {

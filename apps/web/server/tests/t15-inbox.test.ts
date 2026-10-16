@@ -102,6 +102,7 @@ function memoryDb() {
     scopeRevision: listModel('scopeRevision'),
     businessPlan: listModel('businessPlan'),
     c2Grant: listModel('c2Grant'),
+    c2Command: listModel('c2Command'),
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
   return db;
@@ -247,5 +248,38 @@ describe('ticket 15 command center, tasks and notices', () => {
     expect(readAll.json().updated).toBe(1);
     const final = await app.inject({ method: 'GET', url: '/api/notices', headers: { cookie: owner.cookie } });
     expect(final.json().unread).toBe(0);
+  });
+
+  it('summarizes findings and durable C2 activity per authorized engagements only', async () => {
+    const db = memoryDb();
+    const inbox = new InboxService(db as never, preflightStub(true, []));
+    const { app, owner } = await setup(db, inbox);
+    db.tables.set('findingRecord', new Map([
+      ['f1', { id: 'f1', engagementId: ENG, severity: 'high', status: 'confirmed', createdAt: at(9) }],
+      ['f2', { id: 'f2', engagementId: ENG, severity: 'critical', status: 'review', createdAt: at(8) }],
+      ['f3', { id: 'f3', engagementId: 'eng-2', severity: 'high', status: 'confirmed', createdAt: at(7) }],
+      ['f4', { id: 'f4', engagementId: 'eng-3', severity: 'critical', status: 'draft', createdAt: at(6) }],
+    ]));
+    db.tables.set('c2Command', new Map([
+      ['c1', { id: 'c1', engagementId: ENG, sessionId: 'sess-1', status: 'succeeded', createdAt: at(5) }],
+      ['c2', { id: 'c2', engagementId: 'eng-3', sessionId: 'sess-x', status: 'failed', createdAt: at(4) }],
+    ]));
+    db.tables.set('c2Grant', new Map([['g1', { id: 'g1', engagementId: 'eng-2', status: 'requested', sessionId: 'sess-9', createdAt: at(3) }]]));
+
+    const unauthorized = await app.inject({ method: 'GET', url: '/api/overview/findings' });
+    expect(unauthorized.statusCode).toBe(401);
+
+    // Owner owns eng-1 and holds a membership on eng-2; eng-3 must stay invisible.
+    const findings = (await app.inject({ method: 'GET', url: '/api/overview/findings', headers: { cookie: owner.cookie } })).json();
+    expect(findings).toMatchObject({ total: 3, engagementsWithFindings: 2, engagements: 2, truncated: false, source: 'db' });
+    expect(findings.bySeverity).toEqual({ high: 2, critical: 1 });
+    expect(findings.byStatus).toEqual({ confirmed: 2, review: 1 });
+
+    const c2 = (await app.inject({ method: 'GET', url: '/api/overview/c2', headers: { cookie: owner.cookie } })).json();
+    expect(c2.commandsByStatus).toEqual({ creating: 0, succeeded: 1, failed: 0, uncertain: 0 });
+    expect(c2.recentCommands).toHaveLength(1);
+    expect(c2.recentCommands[0]).toMatchObject({ id: 'c1', engagementId: ENG, sessionId: 'sess-1', status: 'succeeded' });
+    expect(c2.pendingGrants).toBe(1);
+    expect(c2.source).toBe('db');
   });
 });
