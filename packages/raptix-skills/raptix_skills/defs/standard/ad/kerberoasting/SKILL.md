@@ -6,6 +6,13 @@ metadata:
   when_to_use: "kerberoasting spn service ticket hashcat"
   mitre_attack:
     - T1558.003
+  fanout:
+    effects: read
+    resources: ["account:*"]
+    parallel_safe: false
+    notes: >-
+      concurrent TGS requests against the same account family can trip the
+      domain lockout policy; request for one account set at a time
 ---
 
 # Kerberoasting Playbook

@@ -254,7 +254,9 @@ def _make_kg(*, role: str, **_: Any):
     )
 
     try:
-        enabled_tools = {"kg_surface_inventory"} if role == "raptix" else None
+        enabled_tools = (
+            {"kg_surface_inventory", "challenge_inventory"} if role == "raptix" else None
+        )
         experimental = os.environ.get("RAPTIX_KG_OPERATIONAL_SHADOW", "0").lower() in {
             "1",
             "true",

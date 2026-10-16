@@ -8,6 +8,51 @@ design spec, §13.4).
 
 ## [Unreleased]
 
+### Added
+
+- Web console: real mode now lands on a **System Overview** dashboard
+  (`overview` route) with per-domain cross-project reads — projects, findings
+  rollup (`GET /api/overview/findings`), durable C2 activity
+  (`GET /api/overview/c2`) and the task inbox — each independently loading and
+  explicitly degraded when its source is unavailable (see
+  `docs/adr/0076-web-system-overview-cross-project-reads.md`).
+- Web console: with a project open, the sidebar replaces the global navigation
+  with the project's own tab strip (Overview, Planning, Operations, …) plus an
+  "All projects" return link.
+- AI workspace: once the planning bundle is ready and the one-way handoff is
+  confirmed, the execution thread is created and selected automatically —
+  nothing is dispatched; the operator reviews and presses Send.
+- The web engagement artifact browser now includes the `plan/` folder:
+  operators can view the planning documents (`roe.json`, `conops.json`,
+  …) the planning panel validates directly in the console
+  (project → Findings tab → Artifacts).
+- Added the orchestrator-only `challenge_inventory` tool plus the
+  `raptix.md` **Challenge-family sweep** flow: every unsolved scoreboard
+  entry derives exactly one bounded `surface_exploit` cell (one
+  win-condition each; target-owned names/difficulty; generic
+  keyword→skill mapping; no hint ingestion; RoE-gated families pinned
+  to the dispatch tail; skipped/attempted-failed outcomes require
+  bounded empirical evidence) so entries outside the endpoint coverage
+  matrix — XSS, information-hunting, account-takeover chains,
+  availability tests — receive a recorded terminal outcome. See
+  `docs/adr/0075-challenge-inventory.md`.
+- Added an empty-completion guard to the proxied chat models: a
+  successful response carrying neither content nor tool calls (observed:
+  23k-43k reasoning tokens, zero content) triggers one same-model retry
+  and then reroutes down the model fallback chain instead of dead-ending
+  the agent loop.
+- Added the generic fan-out admission contract (ADR-0077): `Objective`
+  gains optional `effects` (`read`/`mutate`/`destructive`),
+  `resources`, and `parallel_safe` annotations (unknown ⇒ mutate,
+  conservatively serialized); a pure `raptix.middleware.fanout_admission`
+  policy admits/rejects dispatches on resource overlap, effect class,
+  OPSEC tier, per-target resilience, and the global ceiling, with
+  machine-readable reject codes; `DispatchMiddleware` consults it behind
+  the `RAPTIX_FANOUT_ADMISSION` flag (default off = prior behaviour) and
+  emits `dispatch.admission` events. Domain facts enter only through
+  objective annotations and skill `metadata.fanout` metadata — no
+  per-domain scheduler code. See `docs/adr/0077-generic-fanout-admission.md`.
+
 ### Removed
 
 - Retired the Phase 1 core/framework/sdk-split compat shim layer ahead of the

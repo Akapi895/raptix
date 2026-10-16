@@ -17,6 +17,7 @@ from langgraph.types import Command
 from raptix_core.types.engagement import (
     OPPLAN,
     C2Tier,
+    EffectClass,
     Objective,
     ObjectivePhase,
     ObjectiveStatus,
@@ -372,6 +373,10 @@ def _add_objective_impl(
     concessions: list[str] | None = None,
     blocked_by: list[str] | None = None,
     parent_id: str | None = None,
+    effects: EffectClass = EffectClass.MUTATE,
+    resources: list[str] | None = None,
+    parallel_safe: bool | None = None,
+    fragile_target: bool = False,
     tool_call_id: str = "",
 ) -> Command[Any]:
     """Add one objective with auto-ID generation."""
@@ -420,6 +425,11 @@ def _add_objective_impl(
         "c2_tier": c2_tier,
         "concessions": concessions or [],
         "blocked_by": blocked_by or [],
+        # ADR-0077 fan-out annotations (unknown ⇒ mutate/None — conservative).
+        "effects": getattr(effects, "value", effects) or EffectClass.MUTATE.value,
+        "resources": [str(r).strip() for r in (resources or []) if str(r).strip()],
+        "parallel_safe": parallel_safe,
+        "fragile_target": bool(fragile_target),
         "owner": "",
         "notes": "",
         "parent_id": parent_id,
@@ -831,6 +841,36 @@ def _update_objective_impl(
     )
 
 
+def _coerce_effect_class(value: Any, parent: dict) -> str:
+    """ADR-0077: unset/invalid child effects inherit the parent, else mutate."""
+    candidate = (
+        str(value or "").strip().lower()
+        or str(parent.get("effects") or EffectClass.MUTATE.value).strip().lower()
+    )
+    try:
+        return EffectClass(candidate).value
+    except ValueError:
+        return EffectClass.MUTATE.value
+
+
+def _coerce_resources(value: Any) -> list[str]:
+    if isinstance(value, (list, tuple, set)):
+        return [str(r).strip() for r in value if str(r).strip()]
+    return []
+
+
+def _coerce_bool_or_none(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+    return None
+
+
 def _objective_expand_impl(
     parent_id: str,
     children: list[dict],
@@ -845,7 +885,11 @@ def _objective_expand_impl(
     ``acceptance_criteria`` (list[str]). Optional: ``phase``
     (ObjectivePhase value, default inherited from parent),
     ``priority`` (int, default parent.priority + N), ``mitre``,
-    ``blocked_by``.
+    ``blocked_by``. Fan-out annotations (ADR-0077, all optional):
+    ``effects`` (read/mutate/destructive — unset inherits the parent,
+    ultimately defaulting to the conservative ``mutate``), ``resources``
+    (shared mutable identifiers), ``parallel_safe`` (bool; unset is
+    treated as False for mutating work), ``fragile_target`` (bool).
     """
     objectives = [dict(o) for o in state.get("objectives", [])]
     parent = next((o for o in objectives if o.get("id") == parent_id), None)
@@ -936,6 +980,12 @@ def _objective_expand_impl(
             "c2_tier": parent.get("c2_tier", "interactive"),
             "concessions": [],
             "blocked_by": list(child.get("blocked_by") or []),
+            # ADR-0077 fan-out annotations; unset effects inherit the parent's
+            # own annotation, falling back to the conservative mutate default.
+            "effects": _coerce_effect_class(child.get("effects"), parent),
+            "resources": _coerce_resources(child.get("resources")),
+            "parallel_safe": _coerce_bool_or_none(child.get("parallel_safe")),
+            "fragile_target": bool(child.get("fragile_target") or False),
             "owner": str(child.get("owner") or ""),
             "notes": str(child.get("notes") or ""),
             "parent_id": parent_id,
@@ -1175,6 +1225,12 @@ def build_opplan_tools(
             "Add a single objective to the OPPLAN. Auto-generates an ID "
             "(OBJ-001, OBJ-002, ...). Each objective must be completable in "
             "ONE sub-agent context window. Use blocked_by to set kill chain dependencies. "
+            "Annotate fan-out (ADR-0077): effects (read/mutate/destructive — what the "
+            "work changes), resources (shared mutable identifiers it touches, e.g. "
+            "'account:svc', 'surface:/api/Users'), parallel_safe (true only when the "
+            "cited skill declares concurrent-safe mutating work), fragile_target "
+            "(true for lockout-sensitive accounts or single-worker/embedded hosts). "
+            "Unset effects means mutate — conservatively serialized by dispatch admission. "
             "Set engagement_name and threat_profile on the first call to initialize context. "
             "Auto-persists the OPPLAN through the engagement filesystem backend "
             "to /workspace/plan/opplan.json on success. "
@@ -1197,6 +1253,10 @@ def build_opplan_tools(
         concessions: list[str] | None = None,
         blocked_by: list[str] | None = None,
         parent_id: str | None = None,
+        effects: EffectClass = EffectClass.MUTATE,
+        resources: list[str] | None = None,
+        parallel_safe: bool | None = None,
+        fragile_target: bool = False,
         tool_call_id: Annotated[str, InjectedToolCallId] = "",
     ) -> Command[Any]:
         return _add_objective_impl(
@@ -1216,6 +1276,10 @@ def build_opplan_tools(
             concessions=concessions,
             blocked_by=blocked_by,
             parent_id=parent_id,
+            effects=effects,
+            resources=resources,
+            parallel_safe=parallel_safe,
+            fragile_target=fragile_target,
             tool_call_id=tool_call_id,
         )
 
@@ -1297,6 +1361,11 @@ def build_opplan_tools(
             "Each child inherits the parent's phase by default but can override it. "
             "Children auto-receive IDs (OBJ-NNN) and are added with status 'pending'. "
             "The parent cannot move to COMPLETED until every child is COMPLETED or CANCELLED. "
+            "Annotate each child for fan-out admission (ADR-0077): effects "
+            "(read/mutate/destructive), resources (shared mutable identifiers it touches), "
+            "parallel_safe (true only when the cited skill declares concurrent-safe), "
+            "fragile_target (true for lockout-sensitive or single-worker targets). "
+            "Unset effects means mutate — conservatively serialized by dispatch admission. "
             "Use this when an objective is broad or when recon reveals sub-tasks — it is "
             "the Pentesting Task Tree (PTT) pattern. Keep children small enough to complete "
             "in one sub-agent iteration. "

@@ -8,6 +8,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Sequence
 
+from raptix_core.types.engagement import EffectClass
+
 Surface = Mapping[str, Any]
 Applicability = Callable[[Surface], bool]
 
@@ -21,6 +23,11 @@ class VulnClassSpec:
     mitre: str
     tool_hints: tuple[str, ...]
     applies: Applicability
+    # ADR-0077 fan-out annotation: probe work for the class is read-only
+    # observation unless the class inherently writes state (authz write
+    # checks, SSRF to internal services). Classes default to READ so the
+    # admission gate lets same-surface probes overlap.
+    effects: EffectClass = EffectClass.READ
 
     @property
     def skill_path(self) -> str:
@@ -195,11 +202,25 @@ VULN_CLASS_REGISTRY: tuple[VulnClassSpec, ...] = (
     VulnClassSpec("sqli", "sqli", "T1190", ("http_request", "http_history"), _sqli),
     VulnClassSpec("xss", "xss", "T1190", ("http_request", "http_history"), _xss),
     VulnClassSpec("idor", "idor", "T1190", ("http_request", "http_history"), _idor),
-    VulnClassSpec("ssrf", "ssrf", "T1190", ("http_request", "proxy_send_request"), _ssrf),
+    VulnClassSpec(
+        "ssrf",
+        "ssrf",
+        "T1190",
+        ("http_request", "proxy_send_request"),
+        _ssrf,
+        effects=EffectClass.MUTATE,
+    ),
     VulnClassSpec(
         "authn_jwt", "authn_jwt", "T1078, T1190", ("jwt_parse", "http_request"), _authn_jwt
     ),
-    VulnClassSpec("authz", "authz", "T1190", ("http_request", "http_history"), _authz),
+    VulnClassSpec(
+        "authz",
+        "authz",
+        "T1190",
+        ("http_request", "http_history"),
+        _authz,
+        effects=EffectClass.MUTATE,
+    ),
     VulnClassSpec("ssti", "ssti", "T1190", ("http_request",), _ssti),
     VulnClassSpec("xxe", "xxe", "T1190", ("http_request",), _xxe),
     VulnClassSpec("open_redirect", "open_redirect", "T1190", ("http_request",), _open_redirect),
@@ -314,6 +335,11 @@ def build_coverage_matrix(surfaces: Sequence[Surface]) -> list[dict[str, Any]]:
                 "skill_path": spec.skill_path,
                 "mitre": spec.mitre,
                 "tool_hints": list(spec.tool_hints),
+                # ADR-0077 annotations: one shared resource per surface keeps
+                # mutating classes serialized against same-surface siblings
+                # while read classes overlap freely.
+                "effects": spec.effects.value,
+                "resources": [f"surface:{surface_key}"],
                 "session": session_name_for_cell(cell_id),
                 "session_name": session_name_for_cell(cell_id),
                 "gen": _surface_generation(surface),
@@ -362,6 +388,8 @@ def build_objective_expand_payload(
                 "priority": priority,
                 "mitre": mitre_list,
                 "owner": "surface_exploit",
+                "effects": str(cell.get("effects") or EffectClass.READ.value),
+                "resources": [str(r) for r in (cell.get("resources") or [])],
                 "notes": "; ".join(notes),
             }
         )

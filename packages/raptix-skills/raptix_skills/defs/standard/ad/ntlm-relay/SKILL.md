@@ -7,6 +7,13 @@ metadata:
   subdomain: ad
   tags: ad, ntlm-relay, mitm, impacket
   mitre_attack: T1557.001, T1550.002
+  fanout:
+    effects: mutate
+    resources: ["account:*", "host:*"]
+    parallel_safe: false
+    notes: >-
+      relaying rewrites authentication state on the target and the relayed
+      listener holds one victim at a time; serialize relay runs
 ---
 
 # NTLM Relay Deep Dive

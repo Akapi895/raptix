@@ -30,6 +30,18 @@ metadata:
   # Optional raw-preservation fields (graph keeps them as-is).
   aatmf_tactic: [...]            # SnailSploit AATMF v3 mappings
   upstream_ref: <ref>             # external skill reference
+
+  # Optional fan-out annotation (ADR-0077) — READ BY THE RUNTIME: the
+  # deterministic producers copy these facts onto objective work units so
+  # raptix.middleware.fanout_admission can admit/serialize dispatches.
+  # Only declare what the skill's methodology actually implies.
+  fanout:
+    effects: mutate              # read | mutate | destructive (what the work changes)
+    resources: ["account:*"]     # resource templates; * expands to the unit's target
+    parallel_safe: false         # true only when concurrent runs of THIS skill are safe
+    fragile_target: false        # true: per-target in-flight cap never widens
+    notes: >-                    # optional, why the declaration holds
+      concurrent attempts can trip the lockout policy
 ---
 ```
 
@@ -83,6 +95,13 @@ The v0.1 design proposed these fields. They are dropped:
 If a SKILL.md still has any of these fields, the cleanup batch removes
 them.
 
+`metadata.fanout` is the deliberate counter-example: it may only exist
+because a code path reads it (`_surface_registry.py` /
+`_challenge_registry.py` copy `effects`/`resources`/`parallel_safe`/
+`fragile_target` onto objective work units; the dispatch admission gate
+enforces them — ADR-0077). Do not add further skill metadata without an
+equivalent consumer.
+
 ## Validation rules
 
 The validator emits one error per violation, with rule ID:
@@ -101,6 +120,13 @@ The validator emits one error per violation, with rule ID:
 R-no-attribution is the path-based replacement for the v0.1 spec's
 `kind: offensive` check; it uses concrete data (file path) instead of
 the dead `kind` field.
+
+- **R-bad-fanout-metadata**: the optional `metadata.fanout` block is
+  malformed — `effects` outside `read|mutate|destructive`,
+  `resources` not a list of non-empty strings, `parallel_safe` /
+  `fragile_target` not booleans, or `notes` not a string. The block is
+  runtime-read (ADR-0077), so malformed values fail the audit instead of
+  silently degrading to conservative dispatch defaults.
 
 ## Authoring workflow
 

@@ -98,6 +98,7 @@ class EventType(str, Enum):
     LLM_RESPONSE = "llm.response"
     FINDING_CREATED = "finding.created"
     OPPLAN_UPDATE = "opplan.update"
+    DISPATCH_ADMISSION = "dispatch.admission"
 
 
 @dataclass(frozen=True, slots=True)
