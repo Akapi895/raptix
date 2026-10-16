@@ -12,7 +12,7 @@ import { GlobalModals } from './shell'
 
 vi.mock('../real/shell-parts', () => ({ RealContextRibbon: () => null, RealTopbar: () => null }))
 vi.mock('../features/copilot/lazy', () => ({ LazyCopilotDrawer: () => null }))
-vi.mock('../real/screens/copilot', () => ({ RealCopilotDrawer: () => null }))
+vi.mock('../real/copilot-drawer', () => ({ RealCopilotDrawer: () => null }))
 
 function openGuard(save: (() => Promise<unknown> | unknown) | undefined, navigate: () => void): void {
   act(() => {

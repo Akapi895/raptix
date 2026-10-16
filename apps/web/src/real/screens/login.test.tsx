@@ -2,7 +2,8 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
-import { RealLoginGate, SESSION_KEY } from './login'
+import { RealLoginGate } from './login'
+import { SESSION_KEY } from '../session'
 import { saveWorkspaceDraft } from '../workspace-session'
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.unstubAllGlobals() })

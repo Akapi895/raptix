@@ -28,7 +28,7 @@ import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
 import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
 import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
 import { RealOperationsPanel as RealOperationsHistory } from './operations-panel'
-import { useSession } from './login'
+import { useSession } from '../session'
 
 interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
 interface TraceLine { id: string; label: string; status?: string; error?: boolean }

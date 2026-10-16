@@ -20,7 +20,7 @@ import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../
 import { LazyCopilotDrawer } from '../features/copilot/lazy'
 import { DATA_MODE } from '../real/mode'
 import { RealContextRibbon, RealTopbar } from '../real/shell-parts'
-import { RealCopilotDrawer } from '../real/screens/copilot'
+import { RealCopilotDrawer } from '../real/copilot-drawer'
 import { isWide, NAV } from './nav'
 import { Sidebar } from './sidebar'
 import { Topbar, type HeaderSlots } from './header'
