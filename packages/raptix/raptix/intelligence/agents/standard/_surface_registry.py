@@ -28,6 +28,18 @@ class VulnClassSpec:
     # checks, SSRF to internal services). Classes default to READ so the
     # admission gate lets same-surface probes overlap.
     effects: EffectClass = EffectClass.READ
+    # Resource templates expanded per surface in ``build_coverage_matrix``.
+    # Only classes that write state declare one: a mutating cell then shares a
+    # resource with its same-surface siblings (serialized) while different
+    # surfaces carry different resources (independent). Read-only classes
+    # declare none, so they never conflict on resources — preserving the
+    # pre-admission fan-out rhythm on web benchmarks.
+    resources_template: tuple[str, ...] = ()
+    # True when instances of the class are independent by construction: each
+    # cell owns one distinct surface, and same-surface mutating siblings are
+    # already guarded by ``resources_template``. None (unset) means unknown —
+    # the gate serializes unknown mutating work.
+    parallel_safe: bool | None = None
 
     @property
     def skill_path(self) -> str:
@@ -209,6 +221,8 @@ VULN_CLASS_REGISTRY: tuple[VulnClassSpec, ...] = (
         ("http_request", "proxy_send_request"),
         _ssrf,
         effects=EffectClass.MUTATE,
+        resources_template=("mutate:{surface_key}",),
+        parallel_safe=True,
     ),
     VulnClassSpec(
         "authn_jwt", "authn_jwt", "T1078, T1190", ("jwt_parse", "http_request"), _authn_jwt
@@ -220,6 +234,8 @@ VULN_CLASS_REGISTRY: tuple[VulnClassSpec, ...] = (
         ("http_request", "http_history"),
         _authz,
         effects=EffectClass.MUTATE,
+        resources_template=("mutate:{surface_key}",),
+        parallel_safe=True,
     ),
     VulnClassSpec("ssti", "ssti", "T1190", ("http_request",), _ssti),
     VulnClassSpec("xxe", "xxe", "T1190", ("http_request",), _xxe),
@@ -335,11 +351,15 @@ def build_coverage_matrix(surfaces: Sequence[Surface]) -> list[dict[str, Any]]:
                 "skill_path": spec.skill_path,
                 "mitre": spec.mitre,
                 "tool_hints": list(spec.tool_hints),
-                # ADR-0077 annotations: one shared resource per surface keeps
-                # mutating classes serialized against same-surface siblings
-                # while read classes overlap freely.
+                # ADR-0077 annotations: mutating classes share one resource per
+                # surface (same-surface siblings serialize; different surfaces
+                # stay independent). Read-only classes declare no resource, so
+                # their probes never conflict on resources.
                 "effects": spec.effects.value,
-                "resources": [f"surface:{surface_key}"],
+                "resources": [
+                    template.format(surface_key=surface_key) for template in spec.resources_template
+                ],
+                "parallel_safe": spec.parallel_safe,
                 "session": session_name_for_cell(cell_id),
                 "session_name": session_name_for_cell(cell_id),
                 "gen": _surface_generation(surface),
@@ -390,6 +410,7 @@ def build_objective_expand_payload(
                 "owner": "surface_exploit",
                 "effects": str(cell.get("effects") or EffectClass.READ.value),
                 "resources": [str(r) for r in (cell.get("resources") or [])],
+                "parallel_safe": cell.get("parallel_safe"),
                 "notes": "; ".join(notes),
             }
         )
