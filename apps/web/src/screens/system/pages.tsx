@@ -58,9 +58,9 @@ export function Forbidden() {
         </dl>
       }
       actions={<>
-        <Button variant="primary" icon={Home} onClick={() => go('command-center')}>Back to Command Center</Button>
+        <Button variant="primary" icon={Home} onClick={() => go('overview')}>Back to System Overview</Button>
         <Button icon={FolderKanban} onClick={() => setSwitcherOpen(true)}>Switch project</Button>
-        {suggest && <Button icon={UserCog} onClick={() => { switchPersona(suggest.name); toast(`Switched to ${suggest.name} (${ROLE_LABEL[suggest.role]}) — demo only.`, 'info'); go('command-center') }}>Switch to {suggest.name}</Button>}
+        {suggest && <Button icon={UserCog} onClick={() => { switchPersona(suggest.name); toast(`Switched to ${suggest.name} (${ROLE_LABEL[suggest.role]}) — demo only.`, 'info'); go('overview') }}>Switch to {suggest.name}</Button>}
         <Button variant="ghost" onClick={() => toast('Access request sent to the organization admin (simulated).', 'info')}>Request access</Button>
       </>}
     />
@@ -76,7 +76,7 @@ export function NotFound() {
       desc="The link does not exist, was removed, or you do not have permission to view it. Check the link or go back to a list to find the right item."
       reason={<div className="flex items-center gap-2 text-xs text-muted"><span>Requested path:</span><Mono className="break-all text-fg">#/{route.page}{route.id ? '/' + route.id : ''}</Mono></div>}
       actions={<>
-        <Button variant="primary" icon={Home} onClick={() => go('command-center')}>Back to Command Center</Button>
+        <Button variant="primary" icon={Home} onClick={() => go('overview')}>Back to System Overview</Button>
         <Button icon={ArrowLeft} onClick={() => window.history.back()}>Go back</Button>
         <Button icon={FolderKanban} onClick={() => go('projects')}>View projects</Button>
       </>}
@@ -97,7 +97,7 @@ export function ServerError() {
     setBusy(true)
     timers.current.push(window.setTimeout(() => {
       setBusy(false); setTries(tries + 1)
-      if (tries >= 1) { toast('Reloaded successfully.'); go('command-center') } else toast('The server is still not responding. Try again in a few seconds.', 'warn')
+      if (tries >= 1) { toast('Reloaded successfully.'); go('overview') } else toast('The server is still not responding. Try again in a few seconds.', 'warn')
     }, 900))
   }
   return (
@@ -107,7 +107,7 @@ export function ServerError() {
       reason={<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted"><span>Incident ID</span><Mono className="text-fg">{INCIDENT_ID}</Mono></div>}
       actions={<>
         <Button variant="primary" icon={busy ? Loader2 : RefreshCw} disabled={busy} onClick={retry}>{busy ? 'Retrying…' : 'Retry'}</Button>
-        <Button icon={Home} onClick={() => go('command-center')}>Back to Command Center</Button>
+        <Button icon={Home} onClick={() => go('overview')}>Back to System Overview</Button>
         <Button variant="ghost" onClick={() => { void navigator.clipboard?.writeText(INCIDENT_ID); toast('Incident ID copied.', 'info') }}>Copy incident ID</Button>
       </>}
     />
@@ -125,7 +125,7 @@ export function Offline() {
     setBusy(true)
     timers.current.push(window.setTimeout(() => {
       setBusy(false); setN(n + 1)
-      if (n >= 1) { toast('Reconnected. Data is in sync.'); go('command-center') } else toast('Still no connection to the workspace.', 'warn')
+      if (n >= 1) { toast('Reconnected. Data is in sync.'); go('overview') } else toast('Still no connection to the workspace.', 'warn')
     }, 1000))
   }
   return (
@@ -135,7 +135,7 @@ export function Offline() {
       reason={<ul className="space-y-1.5 text-xs text-muted"><li className="flex gap-2"><Clock size={13} className="mt-0.5 shrink-0" aria-hidden />Last successful sync: Oct 13, 2026, 10:42 AM (UTC+7)</li><li className="flex gap-2"><Lock size={13} className="mt-0.5 shrink-0" aria-hidden />Start, stop and approval actions are available only while connected.</li></ul>}
       actions={<>
         <Button variant="primary" icon={busy ? Loader2 : RefreshCw} disabled={busy} onClick={check}>{busy ? 'Checking…' : 'Check connection again'}</Button>
-        <Button icon={Home} onClick={() => go('command-center')}>Back to Command Center (saved data)</Button>
+        <Button icon={Home} onClick={() => go('overview')}>Back to System Overview (saved data)</Button>
       </>}
     />
   )

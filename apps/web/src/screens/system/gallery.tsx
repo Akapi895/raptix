@@ -68,7 +68,7 @@ export function StatesGallery() {
           <Card className="flex flex-wrap items-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-bad/12 text-bad"><ShieldOff size={22} aria-hidden /></div>
             <div className="min-w-0 flex-1"><div className="font-semibold">You do not have permission to view this item</div><div className="text-sm text-muted">Requires the Red Team Manager or Organization Admin role.</div></div>
-            <div className="flex gap-2"><Button size="sm" variant="primary" onClick={() => go('command-center')}>Back to Command Center</Button><Button size="sm" onClick={() => setSwitcherOpen(true)}>Switch project</Button></div>
+            <div className="flex gap-2"><Button size="sm" variant="primary" onClick={() => go('overview')}>Back to System Overview</Button><Button size="sm" onClick={() => setSwitcherOpen(true)}>Switch project</Button></div>
           </Card>
         </Sample>
 

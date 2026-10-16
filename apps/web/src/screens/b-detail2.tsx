@@ -4,6 +4,8 @@ import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import { setProjectMembers } from '../features/projects/team-service'
 import { useReopen } from '../features/approvals/hooks'
+import { DocumentWorkspace } from '../features/documents/workspace'
+import { AssetPreviewModal } from '../features/assets/preview-modal'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
 import { decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, type ScopeFieldPatch } from '../features/approvals/service'
 import { confirmCloseTransaction, requestCloseTransaction } from '../features/closure/service'
@@ -13,7 +15,7 @@ import { useProjectStore, useToastStore } from '../state/stores'
 import { go, selectProject } from '../router/navigate'
 import type { DashboardAggregate } from './dashboard/domain'
 import type { ProjectDetail } from './project-detail/service'
-import { Banner, Button, Check, Card, CardHeader, DescList, Empty, Field, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
+import { Banner, Button, Check, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, SearchBox, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
 
 /* Ticket 21: ScopeTab/TeamTab mutations run through the ticket-21 approval
  * and scope-revision transaction handlers (via the delegating store actions),
@@ -28,8 +30,9 @@ import { Banner, Button, Check, Card, CardHeader, DescList, Empty, Field, IconBu
 /** Approval types the scope version history lists (typed, no `any`). */
 const CREATE_OR_SCOPE: readonly string[] = [APR.create, APR.scope]
 
-/* ───────────── PR-04 Scope & ROE ───────────── */
-type Sub = 'in' | 'out' | 'roe' | 'docs' | 'hist'
+/* ───────────── PR-04 Scope & ROE (plan 2026-10-16 §4 rework) ───────────── */
+type Sub = 'assets' | 'roe' | 'docs' | 'hist'
+type AssetGroup = 'all' | 'in' | 'pending' | 'out' | 'unclassified'
 export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const services = useServices()
   const me = useMe()
@@ -38,12 +41,15 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const toast = useToastStore((s) => s.toast)
   const pid = useProjectStore((s) => s.pid)
   const guard = useGuard(p.id)
-  const [sub, setSub] = useState<Sub>('in')
+  const [sub, setSub] = useState<Sub>('assets')
+  const [group, setGroup] = useState<AssetGroup>('all')
+  const [q, setQ] = useState('')
+  const [assetPreview, setAssetPreview] = useState<string | null>(null)
   const [edit, setEdit] = useState(false)
   const [scopeErr, setScopeErr] = useState('')
   /* Ticket 67 wave 3: the legacy A.submitApproval/A.editScope entries mirrored —
-     the transactions run directly with the same request context (corr 'legacy')
-     and the same Res bridge. */
+      the transactions run directly with the same request context (corr 'legacy')
+      and the same Res bridge. */
   const submitApproval = (projectId: string, type: string, note: string, diff?: string) => {
     const res = submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { projectId, type, note, diff })
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
@@ -53,7 +59,13 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
   const assets = ds.assets
-  const list = sub === 'in' ? assets.filter((a) => a.scope !== 'out') : assets.filter((a) => a.scope === 'out')
+  /* Pending assets are never counted as approved in scope (plan §4) — only
+     `scope === 'in'` is approved; `!= out` would overstate the executable
+     surface and was the old label's bug. */
+  const nIn = assets.filter((a) => a.scope === 'in').length
+  const nPending = assets.filter((a) => a.scope === 'pending').length
+  const nOut = assets.filter((a) => a.scope === 'out').length
+  const nUnc = assets.filter((a) => a.scope === 'unclassified').length
   const editable = !guard.ro && can('editScope', p.id)
   const why = guard.ro ? guard.reason : 'Only a Red Team Manager or Organization Admin can edit scope.'
   const scopePending = ds.approvals.find((a) => a.type === APR.scope && a.status === 'pending')
@@ -66,6 +78,12 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
     ? { prev: prevV, plans: ds.plans.filter((x) => x.status === 'expired' && x.risks.some((r) => r.startsWith('Re-validation'))), draftOps: ds.operations.filter((o) => ['draft', 'pending', 'ready'].includes(o.status)), running: ds.operations.filter((o) => ['running', 'paused'].includes(o.status)) }
     : null
   const histAudit = ds.audit.filter((a) => /scope|ROE/i.test(a.action))
+  const approved = p.roeStatus === 'approved'
+  const effective = approved ? p.roeVersion : prevRoe(p.roeVersion)
+  const proposed = approved ? null : p.roeVersion
+  const filtered = assets
+    .filter((a) => group === 'all' || a.scope === group)
+    .filter((a) => { const s = q.trim().toLowerCase(); return !s || [a.name, a.ident, a.ip].some((v) => v.toLowerCase().includes(s)) })
 
   type A = (typeof assets)[number]
   const cols: Col<A>[] = [
@@ -78,8 +96,7 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
     {
       key: 'act', header: '', render: (a) => (
         <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button size="sm" variant="ghost" onClick={() => go('asset', { id: a.id })}>View</Button>
-          <Button size="sm" variant="ghost" disabled={!editable} title={editable ? undefined : why} onClick={() => go('asset', { id: a.id, tab: 'edit' })}>Edit</Button>
+          <Button size="sm" variant="ghost" onClick={() => setAssetPreview(a.id)}>View details</Button>
         </span>
       ),
     },
@@ -116,57 +133,77 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
           </ul>
         </Banner>
       )}
-      <RoeCompare p={p} assets={assets} />
+      {/* Status strip: applied vs proposed version, contact and the scope
+          counts at a glance — the two large version cards are gone (plan §4). */}
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+          <span className="inline-flex items-center gap-1.5"><span className="text-muted">Effective version</span><span className="font-mono font-semibold text-fg">{effective || 'none yet'}</span>{effective && <Status kind="roe" value="approved" size="sm" label="approved" />}</span>
+          {proposed && <span className="inline-flex items-center gap-1.5"><span className="text-muted">Proposed</span><span className="font-mono font-semibold text-fg">{proposed}</span><Status kind="roe" value={p.roeStatus} size="sm" label={p.roeStatus} /></span>}
+          <span className="inline-flex items-center gap-1.5"><span className="text-muted">Emergency contact</span>{p.emergency ? <span className="text-fg">{p.emergency}</span> : <span className="font-medium text-bad">Missing — blocks approval</span>}</span>
+          <span className="inline-flex flex-wrap items-center gap-1.5"><span className="text-muted">Assets</span><span className="text-ok">{nIn} approved in scope</span>·<span className="text-warn">{nPending} pending</span>·<span>{nOut} out</span>·<span>{nUnc} unclassified</span></span>
+        </div>
+        {proposed && (
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs font-medium text-accent">Proposed changes summary (not in force until approved)</summary>
+            <div className="mt-2"><DescList cols={1} items={[
+              { k: 'Assets added (pending review)', v: nPending ? <span className="text-ok">+{nPending} — {assets.filter((a) => a.scope === 'pending').map((a) => a.name).join(', ')}</span> : '0 assets. At least one is needed to submit' },
+              { k: 'Emergency contact', v: p.emergency || <span className="text-bad">Missing</span> },
+              { k: 'Permitted window', v: p.window || <span className="text-bad">Not set</span> },
+              { k: 'Impact on plans / operations', v: effective ? 'Approved plans and ready operations are marked Re-validation Required' : 'No approved plans or operations exist yet' },
+            ]} /></div>
+          </details>
+        )}
+      </Card>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Segmented<Sub> value={sub} onChange={setSub} options={[{ id: 'in', label: `In scope (${assets.filter((a) => a.scope !== 'out').length})` }, { id: 'out', label: `Out of scope (${assets.filter((a) => a.scope === 'out').length})` }, { id: 'roe', label: 'ROE' }, { id: 'docs', label: 'Documents' }, { id: 'hist', label: 'Version history' }]} />
+        <Segmented<Sub> value={sub} onChange={setSub} options={[{ id: 'assets', label: `Assets (${assets.length})` }, { id: 'roe', label: 'ROE' }, { id: 'docs', label: 'Documents' }, { id: 'hist', label: 'History' }]} />
         <div className="flex flex-wrap items-center gap-2">
           {!editable && <Locked reason={why} />}
           <Button icon={Plus} disabled={!editable} title={editable ? undefined : why} onClick={addAsset}>Add Asset</Button>
-          <Button variant="primary" icon={Pencil} disabled={!editable || closedP} title={!editable ? why : closedP ? 'Project is closed — read-only.' : undefined} onClick={() => setEdit(true)}>{p.roeStatus === 'approved' && p.status !== 'draft' ? `Edit scope (new ${bumpRoeLabel(p.roeVersion)} draft)` : 'Edit Draft'}</Button>
+          <Button variant="primary" icon={Pencil} disabled={!editable || closedP} title={!editable ? why : closedP ? 'Project is closed — read-only.' : undefined} onClick={() => setEdit(true)}>{approved && p.status !== 'draft' ? `Edit scope (new ${bumpRoeLabel(p.roeVersion)} draft)` : 'Edit Draft'}</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          {(sub === 'in' || sub === 'out') && (
-            <Table cols={cols} rows={list} rowKey={(a) => a.id} onRow={(a) => go('asset', { id: a.id })} empty={<Empty title={sub === 'in' ? 'No in-scope assets' : 'No out-of-scope assets'}>{sub === 'in' ? 'At least one in-scope asset is required to submit for approval.' : 'Declare excluded assets to prevent accidental impact.'}</Empty>} />
-          )}
-          {sub === 'roe' && <RoePanel p={p} download={download} approvals={ds.approvals} />}
-          {sub === 'docs' && (
+      {sub === 'docs' ? (
+        <DocumentWorkspace key={p.id} p={p} />
+      ) : (
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+          <div className="xl:col-span-2">
+            {sub === 'assets' && (
+              <>
+                <FilterBar>
+                  <SearchBox value={q} onChange={setQ} placeholder="Search name, identifier or IP…" className="w-64" />
+                  <Segmented<AssetGroup> value={group} onChange={setGroup} options={[{ id: 'all', label: `All (${assets.length})` }, { id: 'in', label: `Approved in scope (${nIn})` }, { id: 'pending', label: `Pending (${nPending})` }, { id: 'out', label: `Out (${nOut})` }, { id: 'unclassified', label: `Unclassified (${nUnc})` }]} />
+                </FilterBar>
+                <Table cols={cols} rows={filtered} rowKey={(a) => a.id} onRow={(a) => setAssetPreview(a.id)} empty={<Empty title={q ? 'No assets match the search' : 'No assets in this view'}>{q ? 'Search matches name, identifier or IP.' : 'Declare at least one in-scope asset to submit for approval.'}</Empty>} />
+              </>
+            )}
+            {sub === 'roe' && <RoePanel p={p} download={download} approvals={ds.approvals} />}
+            {sub === 'hist' && (
+              <Card>
+                <CardHeader title="ROE version history" sub={`Current version: ${p.roeVersion}`} />
+                {hist.length + histAudit.length === 0 ? <p className="text-sm text-muted">No changes recorded yet.</p> : (
+                  <ul className="divide-y divide-line/60 text-sm">
+                    {hist.map((a) => <li key={a.id} className="flex flex-wrap items-center gap-3 py-2.5"><span className="font-mono text-xs text-muted">{a.at}</span><span className="font-medium">{a.type}</span><Status kind="approval" value={a.status} size="sm" /><span className="text-muted">{a.diff || a.note}</span></li>)}
+                    {histAudit.map((a) => <li key={a.id} className="flex flex-wrap items-center gap-3 py-2.5"><span className="font-mono text-xs text-muted">{a.at}</span><span className="font-medium">{a.action}</span><span className="text-muted">{a.actor}{a.reason ? ' — ' + a.reason : ''}</span></li>)}
+                  </ul>
+                )}
+              </Card>
+            )}
+          </div>
+          <div className="space-y-5">
             <Card>
-              <CardHeader title="Related documents" />
-              <ul className="divide-y divide-line/60">
-                {[`${p.id}_${p.roeVersion}.pdf`, `${p.id}_technical-contract.pdf`].map((f) => (
-                  <li key={f} className="flex min-h-12 items-center gap-3 py-2"><FileText size={16} className="text-muted" /><span className="flex-1 font-mono text-[13px]">{f}</span><Button size="sm" icon={Download} onClick={() => toast(`Downloading ${f} (simulated)`, 'info')}>Download</Button></li>
-                ))}
-              </ul>
-            </Card>
-          )}
-          {sub === 'hist' && (
-            <Card>
-              <CardHeader title="ROE version history" sub={`Current version: ${p.roeVersion}`} />
-              {hist.length + histAudit.length === 0 ? <p className="text-sm text-muted">No changes recorded yet.</p> : (
-                <ul className="divide-y divide-line/60 text-sm">
-                  {hist.map((a) => <li key={a.id} className="flex flex-wrap items-center gap-3 py-2.5"><span className="font-mono text-xs text-muted">{a.at}</span><span className="font-medium">{a.type}</span><Status kind="approval" value={a.status} size="sm" /><span className="text-muted">{a.diff || a.note}</span></li>)}
-                  {histAudit.map((a) => <li key={a.id} className="flex flex-wrap items-center gap-3 py-2.5"><span className="font-mono text-xs text-muted">{a.at}</span><span className="font-medium">{a.action}</span><span className="text-muted">{a.actor}{a.reason ? ' — ' + a.reason : ''}</span></li>)}
+              <CardHeader title="Affected operations (PRE-03)" sub="Operations that have not started need an approved ROE" />
+              {blocked.length === 0 ? <p className="text-sm text-muted">No operations are blocked.</p> : (
+                <ul className="space-y-2 text-sm">
+                  {blocked.map((o) => <li key={o.id} className="flex items-center gap-2"><IdLink onClick={() => go('preflight', { id: o.id })}>{o.id}</IdLink><span className="flex-1 truncate">{o.name}</span>{p.roeStatus !== 'approved' ? <Status kind="check" value="fail" size="sm" /> : <Status kind="check" value="pass" size="sm" />}</li>)}
                 </ul>
               )}
             </Card>
-          )}
+          </div>
         </div>
-        <div className="space-y-5">
-          <RoePanel p={p} download={download} compact approvals={ds.approvals} />
-          <Card>
-            <CardHeader title="Affected operations (PRE-03)" sub="Operations that have not started need an approved ROE" />
-            {blocked.length === 0 ? <p className="text-sm text-muted">No operations are blocked.</p> : (
-              <ul className="space-y-2 text-sm">
-                {blocked.map((o) => <li key={o.id} className="flex items-center gap-2"><IdLink onClick={() => go('preflight', { id: o.id })}>{o.id}</IdLink><span className="flex-1 truncate">{o.name}</span>{p.roeStatus !== 'approved' ? <Status kind="check" value="fail" size="sm" /> : <Status kind="check" value="pass" size="sm" />}</li>)}
-              </ul>
-            )}
-          </Card>
-        </div>
-      </div>
+      )}
 
+      {assetPreview && <AssetPreviewModal key={assetPreview} id={assetPreview} onClose={() => setAssetPreview(null)} />}
       {edit && <EditScope p={p} onClose={() => setEdit(false)} confirmReason={(patch) => {
         const needRe = ['approved', 'active'].includes(p.status) && p.roeStatus === 'approved'
         if (needRe) {
@@ -190,60 +227,30 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 const prevRoe = (v: string) => { const m = v.match(/^(.*v)(\d+)$/); return m && +m[2] > 1 ? `${m[1]}${+m[2] - 1}` : '' }
 const bumpRoeLabel = (v: string) => v.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`)
 
-/** PR-V3-04: effective (approved) version vs proposed/draft version, with a scope diff */
-function RoeCompare({ p, assets }: { p: Project; assets: { id: string; name: string; scope: string }[] }) {
-  const approved = p.roeStatus === 'approved'
-  const prev = prevRoe(p.roeVersion)
-  const effective = approved ? p.roeVersion : prev
-  const effAssets = assets.filter((a) => a.scope === 'in')
-  const added = assets.filter((a) => a.scope === 'pending')
-  const excluded = assets.filter((a) => a.scope === 'out')
-  const proposed = approved ? null : p.roeVersion
-  return (
-    <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader title="Effective version" sub="What policy enforces today" actions={effective ? <Status kind="roe" value="approved" label={`${effective} approved`} /> : <Status kind="roe" value="none" label="None approved yet" />} />
-        <DescList cols={1} items={[
-          { k: 'Approved assets', v: <span>{effAssets.length}{effAssets.length ? <span className="text-muted"> — {effAssets.map((a) => a.name).join(', ')}</span> : ''}</span> },
-          { k: 'Excluded assets', v: excluded.length || 'None' },
-          { k: 'Assessment window', v: effective ? p.window || '—' : 'Not effective yet' },
-        ]} />
-      </Card>
-      <Card>
-        <CardHeader title="Proposed changes" sub={proposed ? 'Not in force until approved' : 'No open proposal'} actions={proposed ? <Status kind="roe" value={p.roeStatus} label={`${proposed} ${p.roeStatus === 'draft' ? 'Draft' : p.roeStatus === 'pending' ? 'Pending approval' : 'Returned'}`} /> : undefined} />
-        {!proposed ? <p className="text-sm text-muted">The approved version is current. Editing scope creates a new draft version and sends dependent plans and operations back for re-validation.</p> : (
-          <DescList cols={1} items={[
-            { k: 'Assets added (pending review)', v: added.length ? <span className="text-ok">+{added.length} <span className="text-muted">— {added.map((a) => a.name).join(', ')}</span></span> : <span className="text-bad">0 assets. At least one is needed to submit</span> },
-            { k: 'Assets removed', v: '0' },
-            { k: 'Emergency contact', v: p.emergency || <span className="text-bad">Missing</span> },
-            { k: 'Permitted window', v: p.window || <span className="text-bad">Not set</span> },
-            { k: 'Impact on plans / operations', v: effective ? 'Approved plans and ready operations are marked Re-validation Required' : 'No approved plans or operations exist yet' },
-          ]} />
-        )}
-      </Card>
-    </div>
-  )
-}
-
-function RoePanel({ p, download, compact, approvals }: { p: Project; download: () => void; compact?: boolean; approvals: Approval[] }) {
+/** The single ROE rendering on the page (plan §4: never twice). Readable
+ *  sections from the applied fields; the PDF row is the simulated export. */
+function RoePanel({ p, download, approvals }: { p: Project; download: () => void; approvals: Approval[] }) {
   const approval = approvals.find((a) => CREATE_OR_SCOPE.includes(a.type))
   return (
     <Card>
-      <CardHeader title="Rules of Engagement (ROE)" actions={<Status kind="roe" value={p.roeStatus} />} />
+      <CardHeader title="Rules of Engagement (ROE)" sub="Applied fields below; edit through Edit Draft so the approval workflow stays authoritative" actions={<Status kind="roe" value={p.roeStatus} />} />
       <DescList cols={1} items={[
         { k: 'Version', v: <span className="font-mono">{p.roeVersion}</span> },
         { k: 'Assessment window', v: p.window || <span className="text-bad">Not set</span> },
         { k: 'Emergency contact', v: p.emergency || <span className="text-bad">Not set. Blocks approval</span> },
         { k: 'Reviewer', v: approval?.reviewer || '—' },
-        ...(compact ? [] : [{ k: 'Description', v: p.desc }]),
+        { k: 'Description', v: p.desc },
         { k: 'Allowed activities', v: p.methods.length ? <ul className="list-inside list-disc">{p.methods.map((m) => <li key={m}>{m}</li>)}</ul> : '—' },
         { k: 'Restrictions', v: p.restrictions.length ? <ul className="list-inside list-disc">{p.restrictions.map((m) => <li key={m}>{m}</li>)}</ul> : '—' },
       ]} />
       <div className="mt-3 flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm"><FileText size={16} className="text-muted" /><span className="flex-1 truncate font-mono text-[13px]">{p.id}_{p.roeVersion}.pdf</span><Button size="sm" icon={Download} onClick={download}>Download ROE</Button></div>
+      <p className="mt-2 text-xs text-muted">The readable/source document view of this ROE lives in Documents.</p>
     </Card>
   )
 }
 
+/** Wide side panel instead of the old small dialog (plan §4): the same
+ *  structured fields and the same transaction semantics. */
 function EditScope({ p, onClose, confirmReason }: { p: Project; onClose: () => void; confirmReason: (patch: { window: string; emergency: string; methods: string[]; restrictions: string[]; desc: string }) => void }) {
   const [f, setF] = useState({ window: p.window, emergency: p.emergency, methods: p.methods.join('\n'), restrictions: p.restrictions.join('\n'), desc: p.desc })
   const [tried, setTried] = useState(false)
@@ -256,7 +263,7 @@ function EditScope({ p, onClose, confirmReason }: { p: Project; onClose: () => v
     confirmReason({ window: f.window.trim(), emergency: f.emergency.trim(), methods: lines(f.methods), restrictions: lines(f.restrictions), desc: f.desc.trim() })
   }
   return (
-    <Modal open onClose={onClose} title="Edit Scope & ROE" width={620} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" disabled={!dirty} title={dirty ? undefined : 'No changes to save'} onClick={save}>Save changes</Button></>}>
+    <Drawer open onClose={onClose} title="Edit Scope & ROE" width={640} footer={<><Button onClick={onClose}>Discard changes</Button><Button variant="primary" disabled={!dirty} title={dirty ? undefined : 'No changes to save'} onClick={save}>Save changes</Button></>}>
       <div className="space-y-4">
         <Field label="Assessment window" required error={tried ? err.window : ''}><Input value={f.window} onChange={(e) => setF({ ...f, window: e.target.value })} placeholder="e.g. Mon–Fri, 8:00 PM–4:00 AM (UTC+7)" /></Field>
         <Field label="Emergency contact" required error={tried ? err.emergency : ''}><Input value={f.emergency} onChange={(e) => setF({ ...f, emergency: e.target.value })} placeholder="Full name, phone (synthetic)" /></Field>
@@ -264,7 +271,7 @@ function EditScope({ p, onClose, confirmReason }: { p: Project; onClose: () => v
         <Field label="Restrictions" hint="One item per line"><Textarea value={f.restrictions} onChange={(e) => setF({ ...f, restrictions: e.target.value })} /></Field>
         <Field label="Scope description"><Textarea value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} /></Field>
       </div>
-    </Modal>
+    </Drawer>
   )
 }
 

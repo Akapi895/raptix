@@ -1,9 +1,10 @@
 import { type ReactNode } from 'react'
-import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FileBarChart, FolderKanban, Inbox, KeyRound, Plus, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
+import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FolderKanban, Inbox, KeyRound, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
 import { APR } from '../data'
 import type { Severity } from '../data'
 import { actorRef } from '../auth/persona'
 import { useAuthStore, useProjectStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
 import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, PageSkeleton, Progress, STATUS, Status, Timeline, cx } from '../ui'
 import type { CanAction } from '../domain/permissions'
 import { useConsoleGo, useDashboard, type ConsoleGo } from './dashboard/use-dashboard'
@@ -15,7 +16,7 @@ const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const SELECT_PROJECT = 'Select a project to continue'
 const ATTN_ICON: Record<AttnSource, LucideIcon> = { agent: WifiOff, plan: Sparkles, request: KeyRound, roe: ShieldAlert, c2: Server }
 
-/* ───────── Command Center (ticket 14: typed aggregate reads + Query + shared scope) ───────── */
+/* ───────── System Overview (plan 2026-10-16 S4a: typed aggregate reads + Query + shared scope) ───────── */
 export const ErrorNotice = ({ message, retry }: { message?: string; retry: () => void }) => (
   <Banner tone="bad" title="The dashboard could not be loaded" action={<Button size="sm" onClick={retry}>Try again</Button>}>{message || 'The aggregate read failed.'}</Banner>
 )
@@ -24,6 +25,7 @@ export function Dashboard() {
   const go = useConsoleGo()
   const meName = useAuthStore((s) => s.meName)
   const pid = useProjectStore((s) => s.pid)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const { data, isError, error, refetch, now } = useDashboard()
   const all = pid === 'all'
   const project = data?.projects.find((p) => p.id === pid)
@@ -31,7 +33,7 @@ export function Dashboard() {
   if (!data) {
     return (
       <div>
-        <PageHeader title="Command Center" />
+        <PageHeader title="System Overview" />
         {isError ? <ErrorNotice message={error?.message} retry={refetch} /> : <PageSkeleton />}
       </div>
     )
@@ -48,7 +50,7 @@ export function Dashboard() {
   if (!all && !project) {
     return (
       <div>
-        <PageHeader title="Command Center" />
+        <PageHeader title="System Overview" />
         <Empty icon={ShieldCheck} title="This project is not available for your role">Select a project in the top bar, or switch to the aggregate view.</Empty>
       </div>
     )
@@ -57,26 +59,25 @@ export function Dashboard() {
   return (
     <div>
       <PageHeader
-        title="Command Center"
+        title="System Overview"
         sub={all ? `All projects · ${k.accessibleProjects} accessible · signed in as ${meName}` : `${project?.name} · ${project?.client}`}
         meta={all ? <span className="rounded-full border border-line bg-subtle px-2 py-0.5 text-xs text-muted">Aggregate view</span> : <Mono className="text-muted">{project?.id}</Mono>}
         actions={<>
           <Gated allowed={can('createProject')} reason="Only Red Team Managers and Organization Admins can create projects."><Button variant="primary" icon={FolderKanban} onClick={() => go('project-new')}>Create Project</Button></Gated>
-          <Gated {...gate}><Button icon={Plus} onClick={() => go('operation-new')}>New Operation</Button></Gated>
-          <Gated allowed={!all && can('plan')} reason={all ? SELECT_PROJECT : 'Your role cannot create AI plans.'}><Button icon={Sparkles} onClick={() => go('ai-operator')}>Ask AI Operator</Button></Gated>
+          {!all && <Gated {...gate}><Button icon={Workflow} onClick={() => go('operation-new')}>New Operation</Button></Gated>}
+          {!all && <Gated allowed={can('plan')} reason="Your role cannot create AI plans."><Button icon={Sparkles} onClick={() => go('ai-operator')}>Ask AI Operator</Button></Gated>}
         </>}
       />
 
       {isError && <ErrorNotice message={error?.message} retry={refetch} />}
-      {all && <Banner tone="info" title="Showing aggregated data across accessible projects">Read-only view. Select a project in the top bar to start operations or open sessions.</Banner>}
 
       {/* KPI strip */}
       <section aria-label="Key metrics" className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Active Projects" icon={FolderKanban} value={k.activeProjects} sub={`${k.accessibleProjects} accessible`} onClick={() => go('projects')} />
         <Kpi label="Running Operations" icon={Activity} tone="cyan" value={k.running} sub={`${k.totalOps} total`} onClick={() => go('operations')} />
         <Kpi label="Plans Awaiting Approval" icon={ClipboardCheck} tone={k.reviewPlans ? 'warn' : undefined} value={k.reviewPlans} sub={`${k.otherApprovals} other approvals`} onClick={() => go('tasks')} />
-        <Kpi label="Agents Connected" icon={Radar} tone={k.offlineAgents ? 'warn' : 'ok'} value={<>{k.healthyAgents}<span className="text-muted"> / {k.totalAgents}</span></>} sub={k.offlineAgents ? `${k.offlineAgents} disconnected` : 'All connected'} onClick={() => go('agents')} />
-        <Kpi label="Active Sessions" icon={Terminal} value={k.liveSessions} sub={`${k.trackedSessions} tracked`} onClick={() => go('c2')} />
+        <Kpi label="Agents Connected" icon={Radar} tone={k.offlineAgents ? 'warn' : 'ok'} value={<>{k.healthyAgents}<span className="text-muted"> / {k.totalAgents}</span></>} sub={k.offlineAgents ? `${k.offlineAgents} disconnected` : 'All connected'} onClick={() => go('infrastructure', { tab: 'agents' })} />
+        <Kpi label="Active Sessions" icon={Terminal} value={k.liveSessions} sub={`${k.trackedSessions} tracked`} onClick={() => go('infrastructure', { tab: 'sessions' })} />
         <Kpi label="Open Findings" icon={Bug} value={k.openFindings} sub={k.aiSuggested ? `${k.aiSuggested} AI suggestion${k.aiSuggested === 1 ? '' : 's'} not counted` : `${k.criticalOrHigh} critical or high`} onClick={() => go('findings')} />
       </section>
 
@@ -132,16 +133,19 @@ export function Dashboard() {
         </div>
 
         <div className="space-y-6">
-          {/* Quick actions */}
+          {/* Quick actions — global-scope actions only; project-scoped work
+              starts from Projects or Needs attention, never a disabled wall
+              (plan 2026-10-16 §5). Findings has no shared filter store, so the
+              findings entry uses its honest label. */}
           <Card>
             <CardHeader title="Quick actions" />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-1">
-              <Gated {...gate}><Button className="w-full justify-start" icon={Workflow} onClick={() => go('operation-new')}>New Operation</Button></Gated>
-              <Gated allowed={!all && can('interactive')} reason={all ? SELECT_PROJECT : 'Your role cannot open interactive sessions.'}><Button className="w-full justify-start" icon={Terminal} onClick={() => go('c2')}>Open Session</Button></Gated>
-              <Gated allowed={!all && can('createFinding')} reason={all ? SELECT_PROJECT : 'Your role cannot create findings.'}><Button className="w-full justify-start" icon={Bug} onClick={() => go('finding-new')}>New finding</Button></Gated>
-              <Gated allowed={!all && can('editReport')} reason={all ? SELECT_PROJECT : 'Your role cannot create reports.'}><Button className="w-full justify-start" icon={FileBarChart} onClick={() => go('report-new')}>New report</Button></Gated>
               <Gated allowed={can('createProject')} reason="Only Red Team Managers and Organization Admins can create projects."><Button className="w-full justify-start" icon={FolderKanban} onClick={() => go('project-new')}>Create Project</Button></Gated>
-              <Button className="w-full justify-start" icon={ClipboardCheck} onClick={() => go('tasks')}>Open My Tasks</Button>
+              <Button className="w-full justify-start" icon={Workflow} onClick={() => go('operations')}>View all operations</Button>
+              <Button className="w-full justify-start" icon={ClipboardCheck} onClick={() => go('tasks')}>Review pending decisions</Button>
+              <Button className="w-full justify-start" icon={AlertTriangle} onClick={() => { setFilter('operations.status', 'error'); go('operations') }}>Investigate failures</Button>
+               <Button className="w-full justify-start" icon={Bug} onClick={() => go('findings')}>Open Findings</Button>
+               <Button className="w-full justify-start" icon={Radar} onClick={() => go('analysis')}>View coverage</Button>
             </div>
           </Card>
 

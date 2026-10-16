@@ -24,7 +24,7 @@ const short = (t: string) => t.replace('Oct 13, 2026, ', '')
    handlers (src/features/c2); the legacy grant-expiry watcher stays until
    ticket 46 moves the deadline lifecycle into the service. Request/grant
    decisions and termination keep the legacy bridge until 46. */
-// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
+
 function C2Overview() {
   const db = useStopRead()
   const route = useRoute()
@@ -49,7 +49,6 @@ function C2Overview() {
       <PageHeader title="C2 & Sessions" sub="Authorized infrastructure, channels and sessions. Interactive access always needs an approved, time-limited grant."
         actions={<><Button icon={Eye} onClick={() => go('c2', { tab: 'audit' })}>View audit log</Button>
           <Gated allowed={!all && !noC2} reason={all ? SELECT_PROJECT : 'This project has no sessions to request access to.'}><Button variant="primary" icon={TerminalSquare} onClick={() => go('c2', { tab: 'sessions' })}>Request session access</Button></Gated></>} />
-      {all && <div className="mb-4"><Banner tone="info" icon={Lock} title="All Projects — read-only summary">{SELECT_PROJECT}. Session actions are disabled in this mode.</Banner></div>}
       {stop && <div className="mb-4"><Banner tone={stop.phase === 'stopped' ? 'ok' : stop.phase === 'failed' ? 'bad' : 'warn'} icon={OctagonX} title={stop.phase === 'requested' ? 'Emergency stop requested — awaiting acknowledgement' : stop.phase === 'stopped' ? 'Emergency stop acknowledged and completed' : stop.phase === 'failed' ? 'Emergency stop failed — no acknowledgement' : stop.phase === 'unknown' ? 'Emergency stop status unknown' : 'Emergency stop acknowledged — stopping'}>Sessions for {stop.scope} {stop.id} are being revoked. Reason: {stop.reason}</Banner></div>}
       {noC2 && <div className="mb-4"><Banner tone="info" icon={RadioTower} title={`No C2 infrastructure for ${pid}`} action={<Button size="sm" onClick={() => go('project', { id: pid })}>Open project readiness</Button>}>{noC2Reasons.join('. ')}. Allocate nodes and agents once the ROE is approved. Nothing from other projects is shown here.</Banner></div>}
       {degraded.map((n) => <div key={n.id} className="mb-4"><Banner tone={n.status === 'offline' ? 'bad' : 'warn'} icon={TriangleAlert} title={`${n.id} ${n.name} is ${n.status} (${n.latency})`} action={<Button size="sm" onClick={() => go('c2', { tab: 'infrastructure', id: n.id })}>View node</Button>}>{n.connectedVia ? `${n.connectedVia} connected session(s) in this project route through this node. Expect delays.` : 'No connected session in this project currently routes through this node.'}</Banner></div>)}
@@ -80,8 +79,41 @@ function C2Overview() {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
-function Infra({ nodes, channels, noC2 }: { nodes: C2NodeRow[]; channels: Channel[]; noC2: boolean }) {
+/**
+ * The C2 infrastructure monitoring body (node health, channels) for the
+ * global Infrastructure page — composed from the same feature reads as the
+ * project C2 page, without a nested PageHeader or project-only CTAs (plan
+ * 2026-10-16 S2).
+ */
+
+export function C2InfraContent() {
+  const list = useC2Overview()
+  const read = list.data
+  if (list.isPending) return <div aria-busy="true" aria-label="Loading C2 infrastructure"><PageSkeleton /></div>
+  if (list.isError || !read) {
+    return <Empty icon={ShieldAlert} title="C2 infrastructure could not be loaded" action={<Button onClick={() => list.refetch()}>Retry</Button>}>{(list.error as C2ReadError | null)?.failure.message}</Empty>
+  }
+  const nodes = read.nodes
+  const channels = read.channels
+  const degraded = nodes.filter((n) => n.status === 'degraded' || n.status === 'offline')
+  return (
+    <>
+      {degraded.map((n) => <div key={n.id} className="mb-4"><Banner tone={n.status === 'offline' ? 'bad' : 'warn'} icon={TriangleAlert} title={`${n.id} ${n.name} is ${n.status} (${n.latency})`}>{n.connectedVia ? `${n.connectedVia} connected session(s) route through this node. Expect delays.` : 'No connected session currently routes through this node.'}</Banner></div>)}
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Kpi label="Healthy nodes" value={`${nodes.filter((n) => n.status === 'healthy').length}/${nodes.length}`} tone={degraded.length ? 'warn' : 'ok'} icon={RadioTower} />
+        <Kpi label="Active channels" value={channels.filter((c) => c.status !== 'disconnected').length} icon={Activity} />
+        <Kpi label="Connected agents" value={read.connectedAgents} />
+        <Kpi label="Active sessions" value={read.sessionCounts.active} tone="accent" icon={Radio} />
+      </div>
+      <Infra nodes={nodes} channels={channels} noC2={read.noC2} />
+      <h3 className="mb-3 mt-6 text-[15px] font-semibold">Channels</h3>
+      <Channels rows={channels} noC2={read.noC2} />
+    </>
+  )
+}
+
+
+export function Infra({ nodes, channels, noC2 }: { nodes: C2NodeRow[]; channels: Channel[]; noC2: boolean }) {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
@@ -120,8 +152,8 @@ function Infra({ nodes, channels, noC2 }: { nodes: C2NodeRow[]; channels: Channe
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
-function Channels({ rows, noC2 }: { rows: Channel[]; noC2: boolean }) {
+
+export function Channels({ rows, noC2 }: { rows: Channel[]; noC2: boolean }) {
   const pid = useProjectStore((s) => s.pid)
   return <Card pad={false}><Table rows={rows} rowKey={(r) => r.id} onRow={(r) => go('c2-channel', { id: r.id })} empty={<Empty icon={Activity} title="No channels for this project" action={noC2 ? <Button onClick={() => go('project', { id: pid })}>Open project readiness</Button> : undefined}>Channels are created when a C2 node is allocated to the project.</Empty>}
     cols={[
@@ -131,8 +163,14 @@ function Channels({ rows, noC2 }: { rows: Channel[]; noC2: boolean }) {
     ]} /></Card>
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
-function Sessions({ all }: { all: boolean }) {
+/**
+ * Session list. `all` renders the cross-project read model; `monitor` (the
+ * global Infrastructure tab) drops the interactive-access CTAs entirely —
+ * session monitoring opens the recorded detail, interactive console access
+ * stays a project-scope action (plan 2026-10-16 §3).
+ */
+
+export function Sessions({ all, monitor = false }: { all: boolean; monitor?: boolean }) {
   const route = useRoute()
   const can = useCan()
   const pid = useProjectStore((s) => s.pid)
@@ -179,6 +217,7 @@ function Sessions({ all }: { all: boolean }) {
               { key: 'x', header: 'Expires', render: (r) => <span className="whitespace-nowrap">{r.grantExpires ? short(r.grantExpires) : '—'}</span>, hideBelow: 'lg' },
               { key: 'l', header: 'Last activity', render: (r) => <span className="whitespace-nowrap">{short(r.last)}</span>, hideBelow: 'lg' },
               { key: 'act', header: '', render: (r) => {
+                if (monitor) return <span className="flex gap-1.5" onClick={(e) => e.stopPropagation()}><Button size="sm" variant="ghost" onClick={() => go('c2-session', { id: r.id })}>View</Button></span>
                 const a = r.access, dead = ['expired', 'terminated', 'revoking'].includes(r.state)
                 const noConsole = all ? SELECT_PROJECT : dead ? `Session is ${r.state}.` : r.state === 'disconnected' ? 'Session is disconnected.' : a.key === 'pending' ? `Interactive access is pending (${a.detail}).` : 'Interactive access is not granted. Request access first.'
                 const noReq = all ? SELECT_PROJECT : dead ? `Session is ${r.state}.` : a.key === 'interactive' ? 'You already have interactive access.' : a.key === 'pending' ? `Request ${a.detail} is already pending.` : 'Your role cannot request interactive access.'
@@ -198,7 +237,7 @@ function Sessions({ all }: { all: boolean }) {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
+
 function Requests({ all }: { all: boolean }) {
   const services = useServices()
   const db = useRenewalSessions()
@@ -263,7 +302,7 @@ function Requests({ all }: { all: boolean }) {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
+
 function AuditViewer() {
   const toast = useToastStore((s) => s.toast)
   const can = useCan()
@@ -302,7 +341,7 @@ function AuditViewer() {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
+
 function ChannelDetail() {
   const route = useRoute()
   const [tab, setTab] = useState('overview')
@@ -339,4 +378,5 @@ function ChannelDetail() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- registry record co-located with its screen components
 export const routes: Record<string, ComponentType> = { c2: C2Overview, 'c2-channel': ChannelDetail, 'c2-session': SessionDetail, 'c2-console': Console }

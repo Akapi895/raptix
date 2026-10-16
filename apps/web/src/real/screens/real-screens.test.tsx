@@ -130,7 +130,7 @@ describe('RealProjectDetail', () => {
     go('project', { id: 'eng-8f3c92a1', tab: 'reports' })
     ui(<RealProjectDetail />)
     expect(await screen.findByText(/Reports unavailable/)).toBeTruthy()
-    expect(screen.getByRole('tab', { name: 'Reports' })).toHaveAttribute('aria-selected', 'true')
+    expect(globalThis.location.hash).toContain('tab=reports')
   })
 
   it('renders the server identity explicitly and honest unavailability when a tab data source is absent', async () => {
@@ -139,10 +139,9 @@ describe('RealProjectDetail', () => {
     ui(<RealProjectDetail />)
     await screen.findAllByText('Q1 External Assessment')
     expect(screen.getAllByText('eng-8f3c92a1').length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/workspace slug/).length).toBeGreaterThan(0)
     // Reports is integrated since ticket 11; with no report-records source the
     // panel still renders an honest unavailable alert, never demo data.
-    await userEvent.setup().click(await screen.findByRole('tab', { name: 'Reports' }))
+    go('project', { id: 'eng-8f3c92a1', tab: 'reports' })
     expect(await screen.findByText(/Reports unavailable/)).toBeTruthy()
   })
 

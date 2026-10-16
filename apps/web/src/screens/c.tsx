@@ -18,6 +18,7 @@ import type { PfCheck, PfSnap, PfState } from './c-common'
 import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, elapsed, pfOverall, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './c-console'
 import { GraphTab, ResultsTab } from './c-results'
+import { useResourceScope } from './resource-scope'
 import { useCreateOperation, useOperationDetail, useOperationDraftOptions, useOperationList, useRunPreflight, useScheduleOperation, useStartOperation, useUpdateOperation, OperationReadError } from '../features/operations/query'
 import { PROJECT_TZ_OFFSET_MS, roeWindowIssue, scheduleInstantOf } from '../features/operations/service'
 import type { OperationCategory, OperationDetailRead, OperationWriteRead } from '../features/operations/service'
@@ -35,7 +36,6 @@ function Operations() {
   const services = useServices()
   const persistFilters = useSessionStore((s) => s.persistFilters)
   const setFilter = useSessionStore((s) => s.setFilter)
-  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const f = { q: '', status: '', project: '', owner: '', ...(persistFilters.ops || {}) }
@@ -76,8 +76,7 @@ function Operations() {
   return (
     <div>
       <PageHeader title="Operations" sub="Operations by project, status and owner. Drafts can always be saved; only preflight and start are gated."
-        actions={<Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : createWhy} onClick={() => go('operation-new')}>Create Operation</Button>} />
-      {allProjects && <Banner tone="info" title="Viewing all projects (read-only)" action={<Button size="sm" onClick={() => setSwitcherOpen(true)}>Select a project</Button>}>Select a project to create or start an operation.</Banner>}
+        actions={!allProjects && <Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : createWhy} onClick={() => go('operation-new')}>Create Operation</Button>} />
       {project && ro && <Banner tone="info" icon={Lock}>{reason} You can view operations and results only.</Banner>}
       {elig && elig.kind === 'locked' && <Banner tone="warn" icon={Lock} title={`${elig.label} — operations can be drafted but not run`}>
         <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">{elig.reasons.map((r) => <li key={r.text} className="text-sm">{r.text}{r.to && <> · <button className="text-accent underline" onClick={() => go(r.to!.page, { id: r.to!.id, tab: r.to!.tab })}>Fix</button></>}</li>)}</ul>
@@ -708,6 +707,7 @@ const Detail = () => {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const read = useOperationDetail(route.id || '')
+  useResourceScope(read.data?.op.projectId)
   if (read.isPending) return <div className="space-y-2" aria-busy="true"><Skeleton className="h-14" /><Skeleton className="h-24" /><Skeleton className="h-64" /></div>
   if (read.isError || !read.data) {
     const failure = read.error instanceof OperationReadError ? read.error.failure : undefined

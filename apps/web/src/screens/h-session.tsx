@@ -14,6 +14,7 @@ import { C2ReadError, useC2GrantWatch, useC2Session, useC2Sessions } from '../fe
 import { hhmm } from '../features/c2/service'
 import type { C2AccessInfo } from '../features/c2/service'
 import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui'
+import { useResourceScope } from './resource-scope'
 
 // eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export const SELECT_PROJECT = 'Select a project to continue'
@@ -195,6 +196,7 @@ export function SessionDetail() {
   const revoke = useRevoke()
   const rs = useRevokeSim()
   const detail = useC2Session(route.id)
+  useResourceScope(detail.data?.session.projectId)
   const back = { label: 'C2 & Sessions', to: () => go('c2', { tab: 'sessions' }) }
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading session"><PageSkeleton /></div>
   if (detail.isError || !detail.data) {
@@ -348,6 +350,7 @@ export function Console(): ReactElement {
   const timer = useRef<number | undefined>(undefined)
   const stRef = useRef('')
   const detail = useC2Session(route.id)
+  useResourceScope(detail.data?.session.projectId)
   const list = useC2Sessions({})
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => { clearInterval(t); clearTimeout(timer.current) } }, [])
   const back = { label: 'C2 & Sessions', to: () => go('c2', { tab: 'sessions' }) }

@@ -28,26 +28,16 @@ import { RealAuditPanel } from './audit-panel'
 import { RealClosurePanel } from './closure-panel'
 import { ProjectSettingsPanel } from './project-settings-panel'
 import { go, useRoute } from '../../router/navigate'
+import { REAL_PROJECT_NAV } from '../../shell/nav'
 import { useProjectStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status, Tabs } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../ui'
 
-const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'planning', label: 'Planning' },
-  { id: 'operations', label: 'Operations' },
-  { id: 'fleet', label: 'Fleet' },
-  { id: 'c2', label: 'C2 Access' },
-  { id: 'findings', label: 'Findings' },
-  { id: 'analysis', label: 'Analysis' },
-  { id: 'reports', label: 'Reports' },
-  { id: 'team', label: 'Team' },
-  { id: 'scope', label: 'Scope & ROE' },
-  { id: 'governance', label: 'Governance' },
-  { id: 'vault', label: 'Vault' },
-  { id: 'audit', label: 'Audit' },
-  { id: 'settings', label: 'Settings' },
-  { id: 'close', label: 'Close' },
-]
+/**
+ * The sidebar's grouped model is the project nav (plan 2026-10-16 §3.1 — no
+ * in-page project tab strip). The engagement tab IDs stay the URL authority.
+ */
+const TABS = REAL_PROJECT_NAV.flatMap((g) => g.items.map(({ to, label }) => ({ id: to, label })))
+const sectionTitle = (tab: string) => TABS.find((t) => t.id === tab)?.label ?? 'Overview'
 
 export function RealProjectDetail(): ReactElement {
   const route = useRoute()
@@ -92,18 +82,13 @@ export function RealProjectDetail(): ReactElement {
   return (
     <>
       <PageHeader
-        title={data.displayName}
-        sub={<span><span className="font-mono">{data.id}</span> · workspace slug <span className="font-mono">{data.workspaceSlug}</span></span>}
+        title={sectionTitle(tab)}
+        sub={<span><span className="font-mono">{data.id}</span> · {data.displayName}</span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: data.displayName }]}
         meta={<Status kind="project" value={data.lifecycleStatus} size="sm" />}
       />
-      <Tabs
-        value={tab}
-        onChange={(next) => go('project', { id, tab: next })}
-        tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
-      />
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><RealFindingsPanel engagementId={data.id} /><RealCurationPanel engagementId={data.id} /></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : tab === 'vault' ? <RealVaultPanel key={data.id} engagementId={data.id} /> : tab === 'audit' ? <RealAuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><RealFindingsPanel engagementId={data.id} /><RealCurationPanel engagementId={data.id} /></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : tab === 'vault' ? <RealVaultPanel key={data.id} engagementId={data.id} /> : tab === 'audit' ? <RealAuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={sectionTitle(tab)} />}
       </div>
     </>
   )

@@ -15,7 +15,7 @@ import { Component, lazy, Suspense, useEffect, useRef, type ComponentType, type 
 import { useBlocker, useRouteError } from 'react-router'
 import { Loader2, RefreshCw, ServerCrash } from 'lucide-react'
 import { useSessionStore } from '../state/session'
-import { useAuthStore } from '../state/stores'
+import { useAuthStore, useProjectStore } from '../state/stores'
 import { go, useRoute } from './navigate'
 import { DATA_MODE } from '../real/mode'
 import { REAL_INTEGRATED_ROUTES, RealNotIntegrated } from '../real/not-integrated'
@@ -25,6 +25,8 @@ import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
 import { RealAssets } from '../real/screens/assets-panel'
 import { RealLibrary } from '../real/screens/library'
+import { RealOverview } from '../real/screens/overview'
+import { RealGlobalResource } from '../real/screens/global-resource'
 import { RealCommandCenter } from '../real/screens/command-center'
 import { RealSettings } from '../real/screens/settings'
 import { RealHeaderNotices } from '../real/screens/notices-bell'
@@ -41,13 +43,14 @@ const RealFeatureRoute = lazy(() => import('../real/screens/feature-route').then
 
 /** Route keys with a real implementation mounted directly (integration tickets 03-06). */
 const REAL_PAGES: Record<string, ComponentType | undefined> = {
+  overview: RealOverview,
   projects: RealPortfolio,
   'project-new': RealProjectCreate,
   project: RealProjectDetail,
   'ai-operator': RealWorkspace,
   assets: RealAssets,
   playbooks: RealLibrary,
-  'command-center': RealCommandCenter,
+  'command-center': RealOverview,
   tasks: RealCommandCenter,
   ...Object.fromEntries([
     'operations', 'operation', 'operation-new', 'preflight', 'operation-schedule',
@@ -91,7 +94,7 @@ function BoundaryFallback({ error, onRetry }: { error: unknown; onRetry: () => v
       <p className="mt-3 break-all font-mono text-xs text-muted">{error instanceof Error ? error.message : String(error)}</p>
       <div className="mt-5 flex justify-center gap-2">
         <Button variant="primary" icon={RefreshCw} onClick={onRetry}>Try again</Button>
-        <Button onClick={() => go('command-center')}>Back to Command Center</Button>
+        <Button onClick={() => go('overview')}>Back to System Overview</Button>
       </div>
     </div>
   )
@@ -118,12 +121,14 @@ function PageFallback() {
 /** Resolves the current store route to a page element (legacy App Router order preserved). */
 function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
   const key = pageKey(route)
+  const pid = useProjectStore((s) => s.pid)
   if (DATA_MODE === 'real') {
     // Real mode (integration ticket 03, ADR-0068): there is no sign-in and no
     // demo identity — every route either has a real implementation, renders
     // itself (system pages that read no console data), or renders the honest
     // unavailable panel (D4). Mock screens are never reached.
-    const Real = REAL_PAGES[route.page] ?? undefined
+    const globalResource = !route.id && !route.engagementId && (route.page === 'infrastructure' || pid === 'all' && ['findings', 'reports', 'operations', 'analysis', 'agents', 'c2'].includes(route.page))
+    const Real = globalResource ? RealGlobalResource : REAL_PAGES[route.page]
     if (Real) {
       return (
         <Shell slots={{ notifications: RealHeaderNotices }}>

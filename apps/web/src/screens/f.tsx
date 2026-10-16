@@ -11,7 +11,7 @@ import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } fro
 import { SettingsPage } from './f-settings'
 import { go, useRoute } from '../router/navigate'
 import { useCan, useMe } from '../state/console'
-import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useProjectStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
 const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileText }> = {
@@ -39,7 +39,6 @@ function ReportsPage() {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
   const me = useMe()
-  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const tab = route.tab || 'list'
   // Tab badges come from the typed reads; the ChangeSet bridge keeps every
   // tab live (a legacy export or status change refetches without a reload).
@@ -54,9 +53,9 @@ function ReportsPage() {
         actions={<>
           <Button icon={FileText} onClick={() => go('reports', { tab: 'templates' })}>Templates</Button>
           <Button icon={History} onClick={() => go('reports', { tab: 'exports' })}>Export History</Button>
-          <Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : whyNot} onClick={() => go('report-new')}>Create Draft</Button>
+          {pid !== 'all' && <Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : whyNot} onClick={() => go('report-new')}>Create Draft</Button>}
         </>} />
-      {!canCreate && <p className="-mt-3 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{whyNot}{pid === 'all' && <button className="text-accent hover:underline" onClick={() => setSwitcherOpen(true)}>Select project</button>}</p>}
+      {pid !== 'all' && !canCreate && <p className="-mt-3 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{whyNot}</p>}
       {tab === 'list' && <AiExclusion projectId={pid === 'all' ? undefined : pid} />}
       <Tabs tabs={[
         { id: 'list', label: 'Reports', count: list.data?.total },

@@ -26,7 +26,7 @@ import { useActiveProject, useReadOnly } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { Banner, Button, Drawer, Empty, PageHeader } from '../ui'
-import { AiSubNav, Composer, NoProject, Pill, STARTERS, Thread } from './g-common'
+import { AiSubNav, Composer, DefaultAiModePicker, NoProject, Pill, STARTERS, Thread } from './g-common'
 import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from './g-workspace'
 import type { AiMode } from '../domain/entities'
 
@@ -82,11 +82,9 @@ export function AiOperator() {
   if (pid === 'all' || !project) {
     return (
       <>
-        <PageHeader title="AI Operator" sub="Plan, review and coordinate authorized red team activities." />
+        <PageHeader title="AI Operator" sub="Conversations, planning and tool trace live inside a project." />
         <AiSubNav current="ai-operator" />
-        <Banner tone="info" title="All Projects view">AI Observe can summarize aggregate data you have access to. Proposing plans and Approved Execution are disabled until a project is selected.</Banner>
         <div className="mt-4"><NoProject /></div>
-        <div className="mt-4 flex flex-wrap gap-2 opacity-60" aria-hidden>{STARTERS.map((s) => <span key={s} className="rounded-full border border-line px-2.5 py-1 text-xs">{s}</span>)}</div>
       </>
     )
   }
@@ -97,6 +95,7 @@ export function AiOperator() {
     <>
       <PageHeader title="AI Operator" sub="Plan, review and coordinate authorized red team activities."
         actions={<>
+          <DefaultAiModePicker />
           {!wide && <Button icon={ListTree} onClick={() => setSheet(sheet === 'rail' ? null : 'rail')} aria-pressed={sheet === 'rail'}>Conversations</Button>}
           <Button icon={PanelRight} onClick={toggleCtx} aria-pressed={wide ? ctxOpen : sheet === 'ctx'}>{(wide ? ctxOpen : sheet === 'ctx') ? 'Hide Context' : 'Show Context'}</Button>
           <Button variant="primary" icon={Plus} disabled={ro} title={ro ? 'This project is read-only.' : 'Inherits the Default AI Mode. Nothing runs.'} onClick={newConv}>New Conversation</Button>

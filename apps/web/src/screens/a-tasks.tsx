@@ -106,7 +106,7 @@ export function MyTasks() {
         {all && <span className="text-xs text-muted">Showing tasks across all accessible projects.</span>}
       </div>
       {rows.length === 0 ? (
-        <Card><Empty icon={CheckCircle2} title="You're all caught up" action={<Button size="sm" onClick={() => go('command-center')}>Back to Command Center</Button>}>{kind === 'all' ? mineOnly ? 'Nothing is assigned to your role. Switch to All tasks to see read-only items.' : 'No approvals or reviews are waiting.' : 'No tasks of this type. Choose “All” to see other types.'}</Empty></Card>
+        <Card><Empty icon={CheckCircle2} title="You're all caught up" action={<Button size="sm" onClick={() => go('overview')}>Back to System Overview</Button>}>{kind === 'all' ? mineOnly ? 'Nothing is assigned to your role. Switch to All tasks to see read-only items.' : 'No approvals or reviews are waiting.' : 'No tasks of this type. Choose “All” to see other types.'}</Empty></Card>
       ) : (
         <ul className="space-y-3">
           {rows.map((t) => (

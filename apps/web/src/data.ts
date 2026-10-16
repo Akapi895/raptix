@@ -383,6 +383,10 @@ export function seed(variant: SeedVariant = 'default') {
   }
   const counters = { op: 16, plan: 23, session: variant === 'e2e01' ? 50 : 43, finding: 16, report: 16, approval: 200, request: 12, audit: 8 }
   const stopState = null as StopState | null
+  // Plan 2026-10-16 §2: simulated document drafts — mock-only working copies
+  // keyed `${projectId}/${docId}`; saving a draft never claims a real file
+  // write and never mutates the applied scope fields.
+  const docDrafts: Record<string, { text: string; by: string; at: string }> = {}
   // Ticket 56: organization settings live in the one database so profile edits
   // and member role/status overrides persist for the demo session and publish
   // ChangeSets through the shared commit bridge.
@@ -392,6 +396,6 @@ export function seed(variant: SeedVariant = 'default') {
     invites: [],
     holds: [],
   }
-  return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org }
+  return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org, docDrafts }
 }
 export type Db = ReturnType<typeof seed>

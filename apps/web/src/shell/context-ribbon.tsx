@@ -1,28 +1,23 @@
 /**
  * Project context ribbon and emergency stop controls (ticket 08d, extracted
- * from the shell monolith verbatim): ribbon variants for the draft/settings/
- * aggregate/project contexts, the eligibility badge, the Emergency Stop
- * confirmation modal and the stop-phase banner. Gating, validation and
- * responsive classes are moved unchanged — the visual audit remains with
- * tickets 62/63.
+ * from the shell monolith; reworked by plan 2026-10-16 §3.1): the slim
+ * ribbon variants for the draft/settings/aggregate contexts remain, while the
+ * per-project identity bar is gone — project identity lives in the sidebar
+ * header and the Emergency Stop control moved to the shared topbar
+ * (`ProjectStopControl`). The Emergency Stop confirmation modal, the
+ * stop-phase banner and their gating/validation are unchanged.
  */
 import { useEffect, useState } from 'react'
 import {
-  AlertTriangle, Clock, FolderKanban, Info, Layers, Loader2, Lock, MoreHorizontal, OctagonX, Phone, RotateCcw, Settings, type LucideIcon,
+  AlertTriangle, FolderKanban, Layers, Loader2, OctagonX, RotateCcw, Settings, type LucideIcon,
 } from 'lucide-react'
-import type { Project } from '../data'
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject, useCan, useMe } from '../state/console'
 import { useStopRead } from '../features/estop/projection'
 import { useProjectActivity } from '../features/projects/activity-read'
-import { useEligibility } from '../features/operations/eligibility-read'
-import { useSessionStore } from '../state/session'
 import { useProjectStore } from '../state/stores'
 import { emergencyStop, resolveStop, retryStop } from '../features/demo/runtime'
-import { ROLE_LABEL } from '../auth/policy'
-import { eligibility } from '../features/operations/preflight'
-import { Banner, Button, Check, Field, Modal, Status, Textarea, cx } from '../ui'
-import { Pop } from './pop'
+import { Banner, Button, Check, Field, Modal, Textarea, cx } from '../ui'
 
 function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }) {
   const db = useStopRead('all')
@@ -92,32 +87,30 @@ export function StopBanner() {
   )
 }
 
-const TONE_CLS: Record<string, string> = { ok: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', bad: 'border-bad/30 bg-bad-soft text-bad', neutral: 'border-line bg-subtle text-muted', cyan: 'border-cyan/30 bg-info-soft text-cyan' }
-const eligLabel = (e: ReturnType<typeof eligibility>) => e.kind === 'closed' ? 'Read-only (closed)' : e.kind === 'locked' ? 'Execution Locked' : 'Execution Eligible'
-function EligBadge({ pid }: { pid: string }) {
-  const e = useEligibility(pid)
-  const [open, setOpen] = useState(false)
-  const label = eligLabel(e)
-  const tone = e.kind === 'locked' ? 'bad' : e.kind === 'closed' ? 'neutral' : e.reasons.length ? 'warn' : 'ok'
+/**
+ * The header's Emergency Stop control for the active project (plan §3.1):
+ * always easy to find, keeps the eligibility/permission gating, the reason
+ * requirement and the requested/acknowledged states via the banner below.
+ */
+export function ProjectStopControl() {
+  const project = useActiveProject()
+  const can = useCan()
+  const activity = useProjectActivity(project?.id ?? '')
+  const [esOpen, setEsOpen] = useState(false)
+  if (!project) return null
+  const allowed = can('estop')
+  const stopWhy = !allowed
+    ? 'Your role cannot trigger an Emergency Stop. Ask a Manager or Admin.'
+    : activity.stopBusy
+      ? 'An Emergency Stop is already in progress. See the banner below.'
+      : activity.stoppable === 0
+        ? 'No running operations to stop in this project.'
+        : ''
   return (
-    <span className="relative inline-flex">
-      <button onClick={() => setOpen(!open)} aria-haspopup="dialog" aria-expanded={open} aria-label={`Execution Eligibility: ${label}. Show conditions`} className={cx('inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-xs font-medium', TONE_CLS[tone])}>
-        {e.kind === 'locked' ? <Lock size={12} aria-hidden /> : <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />}
-        {label}<Info size={12} aria-hidden />
-      </button>
-      <Pop open={open} onClose={() => setOpen(false)} label="Execution eligibility details" width={360}>
-        <div className="mb-1 text-sm font-semibold text-fg">{label}</div>
-        <p className="mb-1 text-xs text-fg">{e.label}</p>
-        <p className="mb-2 text-xs text-muted">Execution Eligibility is project-level and separate from AI mode and operation runtime state. Drafts can always be saved; only Preflight, Run and Submit are gated.</p>
-        {e.reasons.length === 0 ? <p className="text-xs text-muted">{e.kind === 'closed' ? 'This project is closed. Reopen it to run operations.' : 'All preflight conditions are met. Preflight must still pass before each run.'}</p> : (
-          <ul className="space-y-1.5">
-            {e.reasons.map((r) => (
-              <li key={r.text} className="flex items-start gap-2 text-xs text-fg"><AlertTriangle size={13} className="mt-0.5 shrink-0 text-warn" aria-hidden /><span className="min-w-0 flex-1">{r.text}</span>{r.to && <button className="shrink-0 font-medium text-accent hover:underline" onClick={() => { setOpen(false); go(r.to!.page, { id: r.to!.id, tab: r.to!.tab }) }}>Fix</button>}</li>
-            ))}
-          </ul>
-        )}
-      </Pop>
-    </span>
+    <>
+      <Button size="sm" variant="destructive" icon={OctagonX} disabled={!!stopWhy} title={stopWhy || 'Open Emergency Stop confirmation'} onClick={() => setEsOpen(true)}>Emergency Stop</Button>
+      <EmergencyStop open={esOpen} onClose={() => setEsOpen(false)} />
+    </>
   )
 }
 
@@ -152,80 +145,8 @@ export function ContextRibbon({ openSwitcher }: { openSwitcher: () => void }) {
       </div>
     )
   }
-  return <ProjectHeader project={project} />
-}
-
-function ProjectHeader({ project }: { project: Project }) {
-  const activity = useProjectActivity(project.id)
-  const me = useMe()
-  const can = useCan()
-  const setFilter = useSessionStore((s) => s.setFilter)
-  const [esOpen, setEsOpen] = useState(false)
-  const [det, setDet] = useState(false)
-  const [ct, setCt] = useState(false)
-  const { running, stoppable, inScope, stopBusy, runtime: rt } = activity
-  const allowed = can('estop')
-  const stopWhy = !allowed ? 'Your role cannot trigger an Emergency Stop. Ask a Manager or Admin.' : stopBusy ? 'An Emergency Stop is already in progress. See the banner below.' : stoppable === 0 ? 'No running operations to stop in this project.' : ''
-  const roe = project.roeStatus === 'approved' ? 'Approved' : project.roeStatus === 'none' ? 'Missing' : project.roeStatus.charAt(0).toUpperCase() + project.roeStatus.slice(1)
-  const chip = 'inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs hover:bg-hover'
-  const goRunning = () => { setFilter('operations.status', 'running'); setDet(false); go('operations') }
-  const goInScope = () => { setFilter('assets.scope', 'in'); setDet(false); go('assets') }
-  const goRt = () => { setDet(false); if (rt) go('operation', { id: rt.id }) }
-  const canContact = can('viewSensitive')
-  const rtChip = rt && <button className={cx(chip, 'border font-medium', TONE_CLS[rt.tone])} onClick={goRt} title={`Operation runtime state: ${rt.id} · ${rt.text}`}><Clock size={12} aria-hidden /><span className="font-mono">{rt.id}</span> · {rt.text}</button>
-  return (
-    <>
-      <div className="sticky top-16 z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line bg-panel px-4 py-1.5 text-xs text-muted lg:px-8">
-        {/* Main */}
-        <div className="flex min-w-0 flex-wrap items-center gap-2" role="group" aria-label="Project">
-          <button onClick={() => go('project', { id: project.id, tab: 'overview' })} title={`${project.id} — ${project.name}. Open project overview`} className="max-w-[min(420px,50vw)] truncate rounded-md text-left text-[13px] font-semibold text-fg hover:text-accent hover:underline"><span className="font-mono">{project.id}</span> — {project.name}</button>
-          <Status kind="project" value={project.status} size="sm" />
-          <button className={cx(chip, 'border border-line text-fg')} onClick={() => go('project', { id: project.id, tab: 'scope' })} title="Open Scope & ROE"><span className="text-muted">ROE</span> <span className="font-mono">{project.roeVersion.replace(/^.*-(v\d+)$/, '$1')}</span> · {roe}</button>
-          <EligBadge pid={project.id} />
-        </div>
-        {/* Activity (wide screens only; otherwise inside Project details) */}
-        <div className="hidden items-center gap-1 min-[1500px]:flex" role="group" aria-label="Activity">
-          <button className={cx(chip, running ? 'text-cyan' : '')} onClick={goRunning} title="Open Operations filtered to running"><span className="font-semibold tnum">{running}</span> Running Op{running === 1 ? '' : 's'}</button>
-          <button className={chip} onClick={goInScope} title="Open Assets filtered to Approved In Scope"><span className="font-semibold tnum">{inScope}</span> In-Scope Assets</button>
-          {rtChip}
-        </div>
-        {/* Details + Safety */}
-        <div className="ml-auto flex shrink-0 items-center gap-2" role="group" aria-label="Safety">
-          <span className="relative">
-            <button onClick={() => setDet(!det)} aria-haspopup="dialog" aria-expanded={det} className={cx(chip, 'border border-line text-fg')}><MoreHorizontal size={14} aria-hidden />Project details</button>
-            <Pop open={det} onClose={() => setDet(false)} label="Project details" align="right" width={380}>
-              <div className="mb-2 text-sm font-semibold">{project.id} — {project.name}</div>
-              <dl className="grid grid-cols-[96px_1fr] gap-x-3 gap-y-1.5 text-xs">
-                <dt className="text-muted">Client</dt><dd>{project.client}</dd>
-                <dt className="text-muted">Owner</dt><dd>{project.owner}</dd>
-                <dt className="text-muted">Type</dt><dd>{project.type}</dd>
-                <dt className="text-muted">Period</dt><dd>{project.start} – {project.end} (UTC+7)</dd>
-                <dt className="text-muted">ROE</dt><dd>{project.roeVersion} · {roe}</dd>
-              </dl>
-              <div className="mt-3 flex flex-col gap-1 border-t border-line pt-2 min-[1500px]:hidden">
-                <div className="text-xs font-semibold uppercase tracking-wider text-neutral">Activity</div>
-                <button className="flex h-9 items-center justify-between rounded-lg px-2 text-left text-sm hover:bg-hover" onClick={goRunning}>Running Operations<span className="font-semibold tnum">{running}</span></button>
-                <button className="flex h-9 items-center justify-between rounded-lg px-2 text-left text-sm hover:bg-hover" onClick={goInScope}>In-Scope Assets<span className="font-semibold tnum">{inScope}</span></button>
-                {rt ? <button className="flex h-9 items-center justify-between gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover" onClick={goRt}>Operation runtime<span className="truncate text-xs"><span className="font-mono">{rt.id}</span> · {rt.text}</span></button> : <div className="px-2 text-xs text-muted">No operation is running.</div>}
-              </div>
-              <div className="mt-3 flex gap-2 border-t border-line pt-3"><Button size="sm" variant="secondary" onClick={() => { setDet(false); go('project', { id: project.id, tab: 'overview' }) }}>Project overview</Button><Button size="sm" variant="secondary" onClick={() => { setDet(false); go('project', { id: project.id, tab: 'scope' }) }}>Scope &amp; ROE</Button></div>
-            </Pop>
-          </span>
-          <span className="relative">
-            <button onClick={() => setCt(!ct)} aria-haspopup="dialog" aria-expanded={ct} aria-label={`Emergency contact: ${project.emergency ? 'set' : 'not set'}`} className={cx(chip, 'border text-fg', project.emergency ? 'border-line' : 'border-warn/30 bg-warn-soft text-warn')}>
-              <Phone size={13} aria-hidden /><span className="max-2xl:hidden">Emergency contact{project.emergency ? '' : ': not set'}</span><span className="2xl:hidden">Contact</span>
-            </button>
-            <Pop open={ct} onClose={() => setCt(false)} label="Emergency contact" align="right" width={320}>
-              <div className="mb-1 text-sm font-semibold">Emergency contact · {project.id}</div>
-              {!canContact ? <p className="text-xs text-muted">Contact details are restricted for your role ({ROLE_LABEL[me.role]}). Ask a project manager.</p>
-                : project.emergency ? <><p className="font-medium">{project.emergency}</p><p className="mt-1 text-xs text-muted">Use this contact if an Emergency Stop is not acknowledged. Demo data, not a real number.</p></>
-                : <><p className="text-xs text-muted">No emergency contact is set. Execution stays locked until one is added.</p><Button size="sm" className="mt-2" onClick={() => { setCt(false); go('project', { id: project.id, tab: 'scope' }) }}>Set in Scope &amp; ROE</Button></>}
-            </Pop>
-          </span>
-          <Button size="sm" variant="destructive" icon={OctagonX} disabled={!!stopWhy} title={stopWhy || 'Open Emergency Stop confirmation'} onClick={() => setEsOpen(true)}>Emergency Stop</Button>
-        </div>
-      </div>
-      <EmergencyStop open={esOpen} onClose={() => setEsOpen(false)} />
-    </>
-  )
+  /* With a project selected there is no separate context bar: identity lives
+     in the sidebar header, the stop control in the topbar, eligibility on the
+     Overview page and the ROE state in Scope & ROE (plan §3.1). */
+  return null
 }

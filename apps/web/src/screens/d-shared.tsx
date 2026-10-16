@@ -1,8 +1,7 @@
 import { useRef, useState, useEffect, type ComponentType, type ReactNode } from 'react'
-import { FolderOpen, Lock, SlidersHorizontal } from 'lucide-react'
+import { Lock, SlidersHorizontal } from 'lucide-react'
 import { useSessionStore } from '../state/session'
-import { useUiStore } from '../state/stores'
-import { Banner, Button, Empty, Mono, PageSkeleton, cx } from '../ui'
+import { Button, Empty, Mono, PageSkeleton, cx } from '../ui'
 
 /** Wraps a screen: shows a skeleton while the project is switching */
 // eslint-disable-next-line react-refresh/only-export-components -- shared agent/asset/library screen helpers
@@ -18,16 +17,6 @@ export const hashNum = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCo
 
 // eslint-disable-next-line react-refresh/only-export-components -- shared agent/asset/library screen helpers
 export const POOL_LABEL = 'Unassigned (shared pool)'
-
-/** Banner asking for a specific project while in "All Projects" mode */
-export function PickProjectBanner({ what }: { what: ReactNode }) {
-  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
-  return (
-    <Banner tone="warn" title="Select a specific project" action={<Button size="sm" icon={FolderOpen} onClick={() => setSwitcherOpen(true)}>Select project</Button>}>
-      You are in “All Projects” mode (aggregated, read-only). Select a project to {what}.
-    </Banner>
-  )
-}
 
 export function Blocked({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
   return <Empty icon={Lock} title={title} action={actions}>{children}</Empty>

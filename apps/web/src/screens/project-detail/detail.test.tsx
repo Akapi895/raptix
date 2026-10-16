@@ -12,7 +12,7 @@
  * change bridge, and the shell files contain no legacy database reader
  * (source assertion), including the viewer redaction banner.
  */
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { readFileSync } from 'node:fs'
@@ -23,7 +23,8 @@ import type { ActorRef } from '../../domain/service'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import { resetSharedStores, useProjectStore } from '../../state/stores'
 import { resetSessionStores, useSessionStore } from '../../state/session'
-import { resetNavStores, selectProject } from '../../router/navigate'
+import { resetNavStores, go, selectProject } from '../../router/navigate'
+import { Sidebar } from '../../shell/sidebar'
 import { stamp } from '../../domain/demo-clock'
 import { mountServices } from '../../test/helpers'
 import { ProjectPage } from '../b-detail'
@@ -45,13 +46,13 @@ const RILEY: ActorRef = { id: 'Riley Brooks', role: 'analyst' }
 
 let lastView: { unmount(): void } | null = null
 
-/** Mounts the detail page for a hash deep link inside Services + Query + a hash router. */
-function mountProject(hash: string, opts: { me?: string; wire?: (svc: ConsoleServices) => void } = {}) {
+/** Mounts the detail page for a hash deep link inside Services + Query + a hash router. `withSidebar` mounts the real sidebar so nav clicks exercise the dirty guard. */
+function mountProject(hash: string, opts: { me?: string; wire?: (svc: ConsoleServices) => void; withSidebar?: boolean } = {}) {
   lastView?.unmount()
   window.location.hash = hash
   resetNavStores()
   const router = createHashRouter([
-    { path: '*', element: <ProjectPage />, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <>{opts.withSidebar && <Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={false} closeMobile={() => {}} />}<ProjectPage /></>, errorElement: <div />, hydrateFallbackElement: null },
   ])
   // The detail page navigates through the canonical navigate seam, which
   // forwards to the active data router — the same single-writer wiring the
@@ -107,7 +108,7 @@ describe('deep links and blocked states', () => {
     expect(await screen.findByText('Cloud Security Assessment')).toBeInTheDocument()
     expect(await screen.findByText('OP-015')).toBeInTheDocument()
     expect(screen.queryByText('OP-014')).not.toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Operations/ })).toHaveAttribute('aria-selected', 'true')
+    expect(window.location.hash).toContain('tab=operations')
     await waitFor(() => expect(useProjectStore.getState().pid).toBe('RT-2026-015'))
   })
 
@@ -168,13 +169,14 @@ describe('tab state, aliases and guards', () => {
   it('tab selection survives back/forward through the router', async () => {
     mountProject('#/project/RT-2026-014')
     await screen.findByText('Internal Red Team Q4')
-    fireEvent.click(screen.getByRole('tab', { name: /Findings/ }))
+    act(() => { go('project', { id: 'RT-2026-014', tab: 'findings' }) })
     await waitFor(() => expect(window.location.hash).toContain('tab=findings'))
-    expect(screen.getByRole('tab', { name: /Findings/ })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('2 findings in RT-2026-014')).toBeInTheDocument()
     act(() => { window.history.back() })
-    await waitFor(() => expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true'))
+    await waitFor(() => expect(window.location.hash).not.toContain('tab='))
     act(() => { window.history.forward() })
-    await waitFor(() => expect(screen.getByRole('tab', { name: /Findings/ })).toHaveAttribute('aria-selected', 'true'))
+    await waitFor(() => expect(window.location.hash).toContain('tab=findings'))
+    expect(screen.getByText('2 findings in RT-2026-014')).toBeInTheDocument()
   })
 
   it('old tab aliases resolve to their canonical panels', async () => {
@@ -192,20 +194,20 @@ describe('tab state, aliases and guards', () => {
     await screen.findByText('Internal Red Team Q4')
     act(() => { selectProject('RT-2026-016') })
     expect(await screen.findByText('Retail Perimeter Review')).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Findings/ })).toHaveAttribute('aria-selected', 'true')
+    expect(window.location.hash).toContain('tab=findings')
     expect(await screen.findByText('No findings yet')).toBeInTheDocument()
     expect(screen.queryByText('Internal Red Team Q4')).not.toBeInTheDocument()
   })
 
-  it('a dirty form holds tab navigation behind the unsaved-changes guard', async () => {
-    mountProject('#/project/RT-2026-014')
+  it('a dirty form holds sidebar navigation behind the unsaved-changes guard', async () => {
+    mountProject('#/project/RT-2026-014', { withSidebar: true })
     await screen.findByText('Internal Red Team Q4')
     act(() => { useSessionStore.getState().setDirty(true) })
-    fireEvent.click(screen.getByRole('tab', { name: /Operations/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Execution' }))
     expect(useSessionStore.getState().unsaved).not.toBeNull()
-    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+    expect(window.location.hash).not.toContain('tab=')
     act(() => { useSessionStore.getState().unsaved!.next() })
-    expect(await screen.findByRole('tab', { name: /Operations/ })).toHaveAttribute('aria-selected', 'true')
+    await waitFor(() => expect(window.location.hash).toContain('tab=operations'))
   })
 })
 
@@ -238,6 +240,54 @@ describe('scope and team panels on the typed read', () => {
       const member = h.db().projects.find((p) => p.id === 'RT-2026-014')!.members.find((m) => m.user === 'Taylor Chen')
       expect(member?.role).toBe('reviewer')
     })
+  })
+})
+
+describe('preparation workspace readers', () => {
+  it('opens an asset in a centered dialog and closes without leaving Scope & ROE', async () => {
+    mountProject('#/project/RT-2026-014?tab=scope')
+    fireEvent.click(await screen.findByText('win-dc-01'))
+    const dialog = await screen.findByRole('dialog', { name: 'Asset details' })
+    expect(await within(dialog).findByText('AS-0143')).toBeInTheDocument()
+    expect(within(dialog).getByText('ROE-014-v2')).toBeInTheDocument()
+    expect(within(dialog).getByText('OP-014')).toBeInTheDocument()
+    expect(window.location.hash).toBe('#/project/RT-2026-014?tab=scope')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByText('Effective version')).toBeInTheDocument()
+  })
+
+  it('keeps sensitive evidence redacted inside the asset popup', async () => {
+    mountProject('#/project/RT-2026-014?tab=scope', { me: 'Casey Nguyen (Client)' })
+    fireEvent.click(await screen.findByText('win-dc-01'))
+    const dialog = await screen.findByRole('dialog', { name: 'Asset details' })
+    expect(await within(dialog).findByText('Redacted (sensitive)')).toBeInTheDocument()
+    expect(within(dialog).queryByText('evidence-027.png')).not.toBeInTheDocument()
+  })
+
+  it('reads OPPLAN phases and older versions in place with a matching source view', async () => {
+    mountProject('#/project/RT-2026-014?tab=plans')
+    expect(await screen.findByRole('heading', { name: 'Execution sequence' })).toBeInTheDocument()
+    expect(screen.getByText('Host discovery')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Source (JSON)' }))
+    expect(screen.getByText(/"id": "PL-021"/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Open OPPLAN PL-020' }))
+    expect(await screen.findByRole('heading', { name: 'Execution sequence' })).toBeInTheDocument()
+    expect(screen.getByText('First draft of the discovery plan.')).toBeInTheDocument()
+    expect(window.location.hash).toBe('#/project/RT-2026-014?tab=plans')
+    expect(screen.queryByText('Cloud configuration validation plan')).not.toBeInTheDocument()
+  })
+
+  it('holds document switching when an OPPLAN draft contains invalid JSON', async () => {
+    mountProject('#/project/RT-2026-014?tab=plans')
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit draft' }))
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '{invalid' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Open OPPLAN PL-020' }))
+    expect(screen.getByRole('textbox')).toHaveValue('{invalid')
+    expect(useSessionStore.getState().unsaved).not.toBeNull()
+    await expect(useSessionStore.getState().unsaved!.save!()).rejects.toThrow()
+    expect(screen.getByRole('textbox')).toHaveValue('{invalid')
+    expect(screen.queryByText(/Draft saved/)).not.toBeInTheDocument()
   })
 })
 
