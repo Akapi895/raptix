@@ -13,7 +13,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
-import { useServices } from '../../state/services'
+import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Report, Template } from '../../domain/entities'

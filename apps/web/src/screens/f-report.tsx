@@ -8,6 +8,8 @@ import { type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead 
 import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../features/reports/projection'
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import { useResourceScope } from './resource-scope'
+import { isRealMode } from '../real/mode'
+import { realControlGap } from '../state/console'
 import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject, useCan, useMe } from '../state/console'
@@ -59,6 +61,7 @@ function DiffView({ sections, a, b, aLabel, bLabel, af, bf }: { sections: { id: 
 
 const CHK_TONE = { pass: 'text-ok', fail: 'text-bad', warn: 'text-warn' }
 function CheckList({ checks }: { checks: RCheck[] }) {
+  if (isRealMode()) return <p className="text-sm text-muted">{realControlGap('report.checks')}</p>
   return (
     <ul className="space-y-3">
       {checks.map((c) => {
@@ -171,7 +174,7 @@ export function ReportNew() {
   const lockReason = o.createReason
   const fs = o.findings
   const tpl = o.templates.find((t) => t.name === effTpl)
-  const errs = { title: !effTitle.trim() ? 'Enter a report title.' : '', tpl: !tpl ? 'Choose a template.' : '', reviewer: !effReviewer ? 'Choose a reviewer.' : effReviewer === me.name ? 'The reviewer cannot be the author.' : '' }
+  const errs = { title: !effTitle.trim() ? 'Enter a report title.' : '', tpl: !tpl && !isRealMode() ? 'Choose a template.' : '', reviewer: !effReviewer && !isRealMode() ? 'Choose a reviewer.' : effReviewer === me.name ? 'The reviewer cannot be the author.' : '' }
   const bad = !!(errs.title || errs.tpl || errs.reviewer)
   const unapproved = fs.filter((f) => picked.includes(f.id) && !f.reportable)
   const create = async () => {
@@ -179,7 +182,7 @@ export function ReportNew() {
     setSaveErr(null)
     if (bad || locked || busy) return
     setBusy(true)
-    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: `${from} – ${to}` })
+    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: isRealMode() ? '' : `${from} – ${to}` })
     setBusy(false)
     if (!res.ok) { setSaveErr(res.failure.message); return }
     const id = res.data.id
@@ -192,6 +195,7 @@ export function ReportNew() {
     <>
       <PageHeader title="Create Report" sub="Step 1 of 2. Choose project, template, report type, title and author, then open the editor." back={{ label: 'Reports', to: () => go('reports') }} />
       {locked && <Banner tone="warn" title="Cannot create report">{lockReason}</Banner>}
+      {isRealMode() && <Banner tone="info" title="Only the title is stored at creation">{realControlGap('report.template')}</Banner>}
       <AiExclusion projectId={project.id} />
       {!locked && fs.filter((f) => f.reportable).length === 0 && <Banner tone="info" title="No confirmed findings yet. You can still create a draft.">Saving a draft is always allowed. Submit for Review will need either a confirmed finding or a no-findings closure with a justification and completion evidence.</Banner>}
       {tpl && tpl.status !== 'published' && <Banner tone="warn" title="Template not approved">{tpl.name} is a draft template: you can try it, but formal delivery is blocked.</Banner>}
@@ -253,7 +257,7 @@ export function ReportNew() {
           </Card>
           <Card>
             <div className="flex flex-col gap-2">
-              <Check checked={nfc} onChange={setNfc} disabled={locked} label="Start as No-findings closure report" />
+              <Check checked={nfc} onChange={setNfc} disabled={locked || isRealMode()} label="Start as No-findings closure report" />
               <p className="-mt-1 text-xs text-muted">For assessments that found nothing confirmed. Needs a justification and completion evidence before review; no finding is ever invented.</p>
               <Button variant="primary" size="lg" icon={Plus} onClick={create} disabled={locked || busy} title={locked ? lockReason : undefined}>{busy ? 'Creating…' : 'Create Draft'}</Button>
               <Button variant="ghost" onClick={() => go('reports')}>Cancel</Button>
@@ -437,7 +441,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
       {returned && !perm && <PersonaHint need="Author" persona={r.author}>This report was returned. The author ({r.author}) must revise it and resubmit for review.</PersonaHint>}
       {state === 'error' && <Banner tone="bad" title="Could not save" action={<Button size="sm" onClick={() => saveAll()}>Retry</Button>}>{saveErr || 'The connection was lost during autosave. Your text is still on screen and has not been lost.'}</Banner>}
       <AiExclusion projectId={r.projectId} />
-      {r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
+      {isRealMode() ? <Banner tone="info" title="Findings are not linked to reports yet">{realControlGap('report.findingLink')}</Banner> : r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr_340px]">
         <Card pad={false} className="h-fit overflow-hidden">
@@ -479,8 +483,8 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
               <div className="mb-3 flex flex-wrap gap-2">
                 <Button size="sm" icon={ListChecks} onClick={() => insert('\n• Item 1\n• Item 2\n• Item 3')}>List</Button>
                 <Button size="sm" icon={Table2} onClick={() => insert('\n| Column A | Column B |\n|----------|----------|\n| …        | …        |')}>Table</Button>
-                <Button size="sm" icon={Wand2} onClick={() => insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`)}>Insert project info</Button>
-                <Button size="sm" icon={Wand2} onClick={fill}>Fill empty sections with simulated text</Button>
+                <Button size="sm" icon={Wand2} disabled={isRealMode()} title={isRealMode() ? (realControlGap('report.projectInfo') ?? undefined) : undefined} onClick={() => insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`)}>Insert project info</Button>
+                {!isRealMode() && <Button size="sm" icon={Wand2} onClick={fill}>Fill empty sections with simulated text</Button>}
                 {/Findings/i.test(sec?.title || '') && <Button size="sm" icon={Plus} disabled={!confirmedLinked.length} title={confirmedLinked.length ? undefined : 'Link at least one confirmed finding first. AI-suggested and unconfirmed findings cannot be inserted.'} onClick={insertFindings}>Insert confirmed findings</Button>}
               </div>
             )}
@@ -512,7 +516,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
           </Card>
           <Card>
             <CardHeader title="Report variant" sub="Standard reports list confirmed findings." />
-            <Segmented value={nf?.on ? 'nf' : 'std'} onChange={(v) => editable && setNf({ on: v === 'nf', note: nf?.note || '' })} options={[{ id: 'std', label: 'Standard' }, { id: 'nf', label: 'No-findings closure' }]} />
+            {!isRealMode() && <Segmented value={nf?.on ? 'nf' : 'std'} onChange={(v) => editable && setNf({ on: v === 'nf', note: nf?.note || '' })} options={[{ id: 'std', label: 'Standard' }, { id: 'nf', label: 'No-findings closure' }]} />}
             {!editable && <p className="mt-2 text-xs text-muted">The variant can only change while the report is a draft or returned.</p>}
             {nf?.on && (() => { const ce = validation.closure(r.projectId); return (
               <div className="mt-3 space-y-2 text-sm">
@@ -555,7 +559,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
             <CardHeader title="AI writing suggestion" sub="AI draft — verify before approval" />
             <p className="rounded-lg border border-dashed border-line bg-bg p-3 text-sm text-muted">{SUGGEST(sec?.title || 'section', project.client, project.roeVersion)}</p>
             <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><AlertTriangle size={13} className="mt-0.5 shrink-0 text-warn" />AI-written claims are not verified results unless they link to a source finding, event or evidence item.</p>
-            <Button className="mt-2" size="sm" icon={Wand2} disabled={!editable} title={editable ? undefined : lockMsg} onClick={() => insert(`\n[AI draft — verify before approval] ${sec?.title}: summary pending source linkage. Source: cite a finding or evidence ID.`)}>Insert as marked draft</Button>
+            {!isRealMode() && <Button className="mt-2" size="sm" icon={Wand2} disabled={!editable} title={editable ? undefined : lockMsg} onClick={() => insert(`\n[AI draft — verify before approval] ${sec?.title}: summary pending source linkage. Source: cite a finding or evidence ID.`)}>Insert as marked draft</Button>}
           </Card>
           <Card>
             <CardHeader title="Reviewer comments" />
@@ -606,8 +610,8 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
   const checks = validation.checks(r, nf)
   const blocking = checks.filter((c) => c.state === 'fail')
   const finalOk = ['approved', 'exported', 'delivered'].includes(r.status)
-  const canExport = finalOk && r.status !== 'delivered' && me.role !== 'viewer' && me.role !== 'operator' && !g.ro
-  const exportWhy = !finalOk ? 'Export is available only after the report is approved. Submit it for review first.' : r.status === 'delivered' ? 'This report is already delivered. Create a new version to export changes.' : me.role === 'viewer' || me.role === 'operator' ? 'Your role cannot export reports. Ask a Manager or Reviewer.' : g.reason
+  const canExport = !isRealMode() && finalOk && r.status !== 'delivered' && me.role !== 'viewer' && me.role !== 'operator' && !g.ro
+  const exportWhy = isRealMode() ? (realControlGap('report.pdfDocx') ?? '') : !finalOk ? 'Export is available only after the report is approved. Submit it for review first.' : r.status === 'delivered' ? 'This report is already delivered. Create a new version to export changes.' : me.role === 'viewer' || me.role === 'operator' ? 'Your role cannot export reports. Ask a Manager or Reviewer.' : g.reason
   const linked = d.linked
   const canSubmit = (r.status === 'draft' || r.status === 'returned') && can('editReport', r.projectId) && !g.ro
   const submitWhy = !canSubmit ? 'Only the author can submit, and only while the report is a draft or returned.' : blocking.length ? `Not ready: ${blocking.map((c) => c.label).join('; ')}.` : ''
@@ -851,8 +855,8 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
           <Card>
             <CardHeader title="2. Export" sub="Creates a PDF or DOCX with a checksum. Export is not delivery." />
             <div className="flex flex-wrap gap-2">
-              <Button icon={Download} disabled={!!exportWhy} title={exportWhy || undefined} onClick={() => doExport('PDF')}>Export PDF</Button>
-              <Button icon={Download} disabled={!!exportWhy} title={exportWhy || undefined} onClick={() => doExport('DOCX')}>Export DOCX</Button>
+              <Button icon={Download} disabled={!!exportWhy || isRealMode()} title={exportWhy || undefined} onClick={() => doExport('PDF')}>Export PDF</Button>
+              <Button icon={Download} disabled={!!exportWhy || isRealMode()} title={exportWhy || undefined} onClick={() => doExport('DOCX')}>Export DOCX</Button>
             </div>
             {exportWhy && <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
             {exps.length > 0 && (

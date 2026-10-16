@@ -6,6 +6,7 @@ import type { Template } from '../data'
 import { Banner, Button, Card, Drawer, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, cx } from '../ui'
 import { type NoFind } from '../features/reports/service'
 import { useReportValidation } from '../features/reports/projection'
+import { isRealMode } from '../real/mode'
 import { ReportReadError, useDeliveryHistory, useReportList, useTemplates } from '../features/reports/query'
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './f-report'
 import { SettingsPage } from './f-settings'
@@ -51,7 +52,7 @@ function ReportsPage() {
     <>
       <PageHeader title="Reports" sub="Draft, review, approve, export and deliver assessment reports. Creating a draft is always allowed; Submit for Review is gated by policy."
         actions={<>
-          <Button icon={FileText} onClick={() => go('reports', { tab: 'templates' })}>Templates</Button>
+          {!isRealMode() && <Button icon={FileText} onClick={() => go('reports', { tab: 'templates' })}>Templates</Button>}
           <Button icon={History} onClick={() => go('reports', { tab: 'exports' })}>Export History</Button>
           {pid !== 'all' && <Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : whyNot} onClick={() => go('report-new')}>Create Draft</Button>}
         </>} />
@@ -59,7 +60,7 @@ function ReportsPage() {
       {tab === 'list' && <AiExclusion projectId={pid === 'all' ? undefined : pid} />}
       <Tabs tabs={[
         { id: 'list', label: 'Reports', count: list.data?.total },
-        { id: 'templates', label: 'Templates', count: tpls.data?.length },
+        ...(isRealMode() ? [] : [{ id: 'templates', label: 'Templates', count: tpls.data?.length }]),
         { id: 'exports', label: 'Delivery History', count: exportsQ.data?.total },
       ]} value={tab} onChange={(t) => go('reports', { tab: t })} />
       {tab === 'templates' ? <Templates /> : tab === 'exports' ? <Exports /> : <ReportList />}
