@@ -550,7 +550,7 @@ function FindingDetail() {
   }
   const doSubmit = () => { void runTransition('review', `${f.id} submitted for review.`) }
   const approve = () => confirm({ title: `Confirm ${f.id}?`, body: 'The finding will move to "Confirmed" and can be added to reports. This action is written to the audit log.', confirmLabel: 'Confirm Finding', onConfirm: () => { void runTransition('confirmed', `${f.id} was confirmed.`) } })
-  const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: realControlGap('finding.transitionNote') ?? 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: 'Reason for returning', reasonRequired: !real, onConfirm: (r) => { void runTransition('returned', `${f.id} returned to the author.`, { note: real ? undefined : r, warn: true }) } })
+  const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: realControlGap('finding.transitionNote') ?? 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: real ? undefined : 'Reason for returning', reasonRequired: !real, onConfirm: (r) => { void runTransition('returned', `${f.id} returned to the author.`, { note: real ? undefined : r, warn: true }) } })
 
   const actions: ReactNode[] = []
   if (['draft', 'returned'].includes(f.status)) {
@@ -568,7 +568,7 @@ function FindingDetail() {
   }
   if (f.status === 'review') {
     actions.push(
-      <Button key="r" variant="danger" icon={RotateCcw} disabled={ro || !reviewer} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can return findings.' : ''} onClick={sendBack}>Return for Changes</Button>,
+      <Button key="r" variant="danger" icon={RotateCcw} disabled={ro || !reviewer || (real && !author)} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can return findings.' : real && !author ? 'The server requires the operator role to return a finding; a reviewer can only confirm it.' : ''} onClick={sendBack}>Return for Changes</Button>,
       <Button key="c" variant="primary" icon={ShieldCheck} disabled={ro || !reviewer} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can confirm findings.' : ''} onClick={approve}>Confirm Finding</Button>,
     )
   }
