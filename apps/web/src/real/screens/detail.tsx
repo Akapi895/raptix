@@ -9,7 +9,7 @@ import { useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { getEngagement } from '../api'
+import { fetchPlanning, fetchScopeRevisions, getEngagement } from '../api'
 import { utcMinuteOr } from '../format'
 import { projectKeys } from '../queries'
 import { RealFindingsPanel } from './findings-panel'
@@ -161,10 +161,18 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
  * handoff) renders a truthful status.
  */
 function Onboarding({ d }: { d: ProjectViewModel }): ReactElement {
-  const steps: { label: string; why: string; tab: string }[] = [
+  // Same keys as the Scope and Planning panels, so the overview reuses their reads.
+  const scope = useQuery({ queryKey: ['real', 'scope-revisions', d.id], queryFn: () => fetchScopeRevisions(d.id) })
+  const planning = useQuery({ queryKey: ['real', 'planning', d.id], queryFn: () => fetchPlanning(d.id) })
+  const scopeStatus = scope.data === undefined ? '…' : scope.data.latestApprovedVersion === null ? 'No approved revision yet' : `Approved v${scope.data.latestApprovedVersion}`
+  const planningStatus = planning.data === undefined ? '…'
+    : d.handoffConfirmedAt !== null ? 'Handoff confirmed'
+    : planning.data.readiness.state === 'ready' ? 'Documents ready — review, then confirm'
+    : `${planning.data.readiness.reasons.length} item(s) to resolve`
+  const steps: { label: string; why: string; tab: string; status?: string }[] = [
     { label: 'Team', why: 'invite the independent reviewer who decides approvals (four-eyes)', tab: 'team' },
-    { label: 'Scope & ROE', why: 'submit the scope revision and ROE that approvals pin', tab: 'scope' },
-    { label: 'Planning', why: 'confirm the planning handoff, then draft the business plan', tab: 'planning' },
+    { label: 'Scope & ROE', why: 'submit the scope revision and ROE that approvals pin', tab: 'scope', status: scopeStatus },
+    { label: 'Planning', why: 'confirm the planning handoff, then draft the business plan', tab: 'planning', status: planningStatus },
   ]
   return (
     <Card>
@@ -172,7 +180,7 @@ function Onboarding({ d }: { d: ProjectViewModel }): ReactElement {
       <ol className="space-y-2 p-4 text-sm">
         {steps.map((s, i) => (
           <li key={s.tab} className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2 last:border-b-0 last:pb-0">
-            <span>{i + 1}. <span className="font-medium">{s.label}</span> — <span className="text-muted">{s.why}</span></span>
+            <span>{i + 1}. <span className="font-medium">{s.label}</span> — <span className="text-muted">{s.why}</span>{s.status && <span className="ml-2 text-xs text-fg">· {s.status}</span>}</span>
             <Button variant="secondary" onClick={() => go('project', { id: d.id, tab: s.tab })}>Open {s.label}</Button>
           </li>
         ))}
