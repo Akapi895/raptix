@@ -19,20 +19,34 @@ export class StreamService {
     const position = streamCursor(cursor);
     await this.runs.getRun(user, scope.engagementId, scope.threadId, scope.runId);
     const subscription = await this.join.open(scope.threadId, scope.runId, position, signal);
-    return Readable.from(this.publish(scope, subscription, signal));
+    return Readable.from(this.publish(user, scope, subscription, signal));
   }
-  private async *publish(scope: StreamScope, subscription: JoinSubscription, signal: AbortSignal): AsyncGenerator<string> {
+  /**
+   * Authorization was verified once in `open()`; while the stream stays open
+   * membership can be revoked, so authorization is re-attested on every
+   * deadline, including during continuous traffic (heartbeat period = re-attestation period). A
+   * refused re-attestation ends the stream with `stream_closed`
+   * (recoveryRequired): the client reconciles from checkpoints and any
+   * reconnect re-authorizes against the same policy.
+   */
+  private async *publish(user: string, scope: StreamScope, subscription: JoinSubscription, signal: AbortSignal): AsyncGenerator<string> {
     const iterator = subscription.frames[Symbol.asyncIterator]();
     const connection = randomUUID(); let sequence = 0;
     let pending: Promise<IteratorResult<SseFrame>> | undefined;
+    let authorizeAt = Date.now() + this.heartbeatMs;
     try {
       yield ': connected\n\n';
       while (!signal.aborted) {
         pending ??= iterator.next();
         let timer: ReturnType<typeof setTimeout> | undefined;
-        const tick = new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), this.heartbeatMs); });
+        const tick = new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), Math.max(0, authorizeAt - Date.now())); });
         let next: IteratorResult<SseFrame> | null;
         try { next = await Promise.race([pending, tick]); } finally { clearTimeout(timer); }
+        if (!next || Date.now() >= authorizeAt) {
+          try { await this.runs.getRun(user, scope.engagementId, scope.threadId, scope.runId); }
+          catch { yield control('stream_closed'); return; }
+          authorizeAt = Date.now() + this.heartbeatMs;
+        }
         if (!next) { yield ': heartbeat\n\n'; continue; }
         pending = undefined;
         if (next.done) { yield control('stream_closed'); return; }

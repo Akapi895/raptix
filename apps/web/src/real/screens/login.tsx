@@ -6,24 +6,38 @@
  * token delivered here. The actor is trusted from the server session only —
  * the browser never posts a persona or role as authorization.
  */
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
+import { QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
 import { KeyRound, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { fetchAuthSession, login, logout, type AuthSessionView } from '../api'
+import { clearWorkspaceRecovery } from '../workspace-session'
 import { Button, Input } from '../../ui'
+import { createConsoleQueryClient } from '../../state/keys'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const SESSION_KEY = ['real', 'session'] as const
 
+interface SessionState { session: AuthSessionView | null; pending: boolean; error: Error | null; retry: () => void; deploymentId?: string }
+const SessionContext = createContext<SessionState | null>(null)
+
 /** Resolves the trusted session (null when the server is single-user local). */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useSession(): { session: AuthSessionView | null; pending: boolean; error: Error | null; retry: () => void } {
+export function useSession(): SessionState {
+  const trusted = useContext(SessionContext)
   const list = useQuery({
     queryKey: SESSION_KEY,
     queryFn: () => fetchAuthSession(),
     staleTime: 60_000,
+    enabled: trusted === null,
   })
-  return { session: list.data ?? null, pending: list.isPending, error: list.error, retry: () => { void list.refetch() } }
+  return trusted ?? { session: list.data ?? null, pending: list.isPending, error: list.error, retry: () => { void list.refetch() } }
+}
+
+/** Each trusted actor owns a cache; late replies can only populate the disposed cache. */
+function ActorQueries({ session, children }: { session: SessionState; children: ReactNode }): ReactElement {
+  const client = useMemo(() => createConsoleQueryClient(), [])
+  useEffect(() => () => { void client.cancelQueries(); client.clear() }, [client])
+  return <SessionContext.Provider value={session}><QueryClientProvider client={client}>{children}</QueryClientProvider></SessionContext.Provider>
 }
 
 function LoginForm({ onDone }: { onDone: () => void }): ReactElement {
@@ -72,29 +86,45 @@ function LoginForm({ onDone }: { onDone: () => void }): ReactElement {
 }
 
 /** Wraps the real console: local mode passes through, multi-user mode gates on a live session. */
-export function RealLoginGate({ children }: { children: ReactNode }): ReactElement {
+export function RealLoginGate({ children, deploymentId }: { children: ReactNode; deploymentId?: string }): ReactElement {
   const client = useQueryClient()
-  const { session, pending, error, retry } = useSession()
+  const state = { ...useSession(), deploymentId }
+  const { session, pending, error, retry } = state
+  const actor = pending || error ? null : session !== null && !session.authenticated ? 'anonymous' : JSON.stringify([deploymentId, session?.actor?.id ?? 'local'])
+  const previousActor = useRef<string | null>(null)
   // W04: a 401 anywhere re-probes the trusted session instead of declaring the
   // current actor unauthenticated. A late 401 from a previous actor must not
   // tear down a newer valid session; only a probe that says "not authenticated"
   // drops the actor-scoped reads.
   useEffect(() => {
     const onExpired = (): void => { void client.invalidateQueries({ queryKey: SESSION_KEY }) }
+    const onStorage = (event: StorageEvent): void => { if (event.key === 'raptix.session-change') onExpired() }
     window.addEventListener('raptix:session-expired', onExpired)
-    return () => window.removeEventListener('raptix:session-expired', onExpired)
+    window.addEventListener('raptix:session-change', onExpired)
+    window.addEventListener('focus', onExpired)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener('raptix:session-expired', onExpired)
+      window.removeEventListener('raptix:session-change', onExpired)
+      window.removeEventListener('focus', onExpired)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [client])
-  useEffect(() => {
-    if (session !== null && !session.authenticated) {
+  useLayoutEffect(() => {
+    if (actor === null) return
+    if (actor === 'anonymous' || previousActor.current !== null && previousActor.current !== actor) {
+      clearWorkspaceRecovery()
+      void client.cancelQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
       client.removeQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
     }
-  }, [session, client])
+    previousActor.current = actor
+  }, [actor, client])
   if (pending) {
     return <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Checking session"><Loader2 size={22} className="animate-spin text-muted" aria-hidden /></div>
   }
   if (error) return <div role="alert" className="p-6 text-bad">Session check failed: {error.message}<Button onClick={retry}>Retry session</Button></div>
   if (session === null || session.authenticated) {
-    return <div key={session?.actor?.id ?? 'local'} className="contents">{children}</div>
+    return <ActorQueries key={actor} session={state}>{children}</ActorQueries>
   }
   return <LoginForm onDone={() => { /* session query invalidation re-renders the gate */ }} />
 }
@@ -114,6 +144,7 @@ export function RealLogin(): ReactElement {
             className="mt-4"
             onClick={() => {
                void logout().then(() => {
+                 clearWorkspaceRecovery()
                  client.removeQueries({ predicate: (query) => query.queryKey[0] === 'real' && !['session', 'bootstrap'].includes(String(query.queryKey[1])) })
                  return client.invalidateQueries({ queryKey: SESSION_KEY })
                })

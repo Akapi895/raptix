@@ -88,7 +88,7 @@ function RealBoot({ children }: { children: ReactNode }): ReactElement {
   if (boot.isError || !boot.data) {
     return <BootError message={boot.error instanceof Error ? boot.error.message : 'The bootstrap request failed.'} onRetry={() => void boot.refetch()} />
   }
-  return <RealContext.Provider value={{ document: boot.data, identity: REAL_IDENTITY }}><RealLoginGate>{children}</RealLoginGate></RealContext.Provider>
+  return <RealContext.Provider value={{ document: boot.data, identity: REAL_IDENTITY }}><RealLoginGate deploymentId={boot.data.deploymentId}>{children}</RealLoginGate></RealContext.Provider>
 }
 
 /** Whether a capability is usable right now (supported AND available). */

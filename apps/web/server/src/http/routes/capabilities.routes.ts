@@ -21,6 +21,7 @@ export type CapabilityState =
   | { readonly supported: true; readonly available: true };
 
 export interface CapabilitiesResponse {
+  readonly deploymentId?: string;
   readonly version: number;
   readonly mode: CapabilityMode;
   readonly capabilities: {
@@ -151,6 +152,7 @@ export async function buildCapabilitiesResponse(
 }
 
 export interface CapabilitiesRouteOptions {
+  readonly deploymentId?: string;
   readonly mode?: CapabilityMode;
   readonly projectsSupported?: boolean;
   readonly databaseHealth?: DatabaseHealth;
@@ -174,8 +176,9 @@ export function registerCapabilitiesRoutes(
   app: FastifyInstance,
   options: CapabilitiesRouteOptions = {},
 ): void {
-  app.get('/api/capabilities', async () =>
-    buildCapabilitiesResponse(
+  app.get('/api/capabilities', async () => ({
+    ...(options.deploymentId === undefined ? {} : { deploymentId: options.deploymentId }),
+    ...await buildCapabilitiesResponse(
       options.projectsSupported === true,
       options.databaseHealth,
       options.runtimeContext,
@@ -194,5 +197,5 @@ export function registerCapabilitiesRoutes(
       options.c2ProviderConfigured === true,
       options.mode,
     ),
-  );
+  }));
 }

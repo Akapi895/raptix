@@ -27,6 +27,8 @@ export interface CapabilitiesDocument {
   version: number
   /** Deployment mode, e.g. "local-single-user". */
   mode: string
+  /** Stable, non-secret installation identity; absent on older servers. */
+  deploymentId?: string
   capabilities: Record<string, Capability>
 }
 
@@ -36,6 +38,7 @@ export function isCapabilitiesDocument(value: unknown): value is CapabilitiesDoc
     return false
   }
   if (!isNonEmptyString(value.mode)) return false
+  if (value.deploymentId !== undefined && (typeof value.deploymentId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value.deploymentId))) return false
   if (!isRecord(value.capabilities)) return false
   return Object.values(value.capabilities).every(isCapability)
 }

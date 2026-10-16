@@ -64,6 +64,7 @@ import type { AuditService } from './services/audit-service.js';
 import type { ClosureService } from './services/closure-service.js';
 
 export interface AppOptions {
+  readonly deploymentId?: string;
   readonly logger?: FastifyServerOptions['logger'];
   /**
    * Registered project service. When provided, /api/engagements routes are
@@ -147,6 +148,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.workflowDb) registerEngagementMutationFence(app, options.workflowDb, () => identity.id);
   registerHealthRoutes(app, { databaseHealth: options.databaseHealth, runtimeContext: options.runtimeContext });
   registerCapabilitiesRoutes(app, {
+    deploymentId: options.deploymentId,
     mode: multiAuth ? 'multi-user' : 'local-single-user',
     projectsSupported: options.projectsService !== undefined,
     databaseHealth: options.databaseHealth,
