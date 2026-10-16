@@ -26,7 +26,7 @@ async function buildHarness(): Promise<Harness> {
   const db = {
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
-        where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: 'w11-approvals' } : null,
+        where.id === 'eng-1' && where.userId === 'local' ? { id: 'eng-1', name: 'w11-approvals', workspaceSlug: 'w11-approvals' } : null,
     },
   };
   const app = Fastify({ logger: false });
@@ -107,7 +107,7 @@ describe('W11 file-backed approvals API', () => {
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-other/approvals' })).statusCode).toBe(404);
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/approvals' })).json().approvals).toEqual([]);
       await expect((async () => {
-        const service = new ApprovalsService({ engagement: { findFirst: async () => ({ id: 'eng-1', name: '../escape' }) } } as never, h.workspaceRoot);
+        const service = new ApprovalsService({ engagement: { findFirst: async () => ({ id: 'eng-1', name: '../escape', workspaceSlug: '../escape' }) } } as never, h.workspaceRoot);
         await service.list('local', 'eng-1');
       })()).rejects.toMatchObject({ code: 'bad_request' });
     });
