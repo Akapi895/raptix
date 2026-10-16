@@ -36,7 +36,7 @@ def test_orchestrator_role_gets_planning_context(monkeypatch: pytest.MonkeyPatch
     make_kg(role="raptix")
     assert _RecordingKG.instances == [
         {
-            "enabled_tools": {"kg_surface_inventory"},
+            "enabled_tools": {"kg_surface_inventory", "challenge_inventory"},
             "operational_shadow": False,
             "planning_context": True,
         }

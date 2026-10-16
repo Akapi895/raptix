@@ -10,7 +10,6 @@ import enum
 from dataclasses import dataclass
 from typing import Any
 
-from raptix.specialist_contracts.contracts import validate_contract_metadata
 from raptix.orchestration.phases.ukc import phase_from_slug
 from raptix.skills.audit.aliases import resolve_subdomain
 from raptix.skills.audit.canonical import load_canonical_subdomains
@@ -20,6 +19,7 @@ from raptix.skills.audit.frontmatter import (
 )
 from raptix.skills.audit.mitre import classify_mitre_id, coerce_mitre_list
 from raptix.skills.audit.path_kind import is_offensive_path
+from raptix.specialist_contracts.contracts import validate_contract_metadata
 
 _REQUIRED_TOP_LEVEL = ("name", "description")
 _REQUIRED_METADATA = ("subdomain", "when_to_use")
@@ -39,6 +39,7 @@ class RuleId(enum.Enum):
     BAD_CAPABILITY_CONTRACT = "R-bad-capability-contract"
     BAD_UKC_PHASE = "R-bad-ukc-phase"
     BAD_METADATA_LIST = "R-bad-metadata-list"
+    BAD_FANOUT_METADATA = "R-bad-fanout-metadata"
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,7 @@ def validate_skill_file(path: str, text: str) -> list[Violation]:
     violations.extend(_check_capability_contract(path, meta))
     violations.extend(_check_ukc_phases(path, meta))
     violations.extend(_check_optional_lists(path, meta))
+    violations.extend(_check_fanout_metadata(path, meta))
     return violations
 
 
@@ -207,6 +209,67 @@ def _check_capability_contract(path: str, meta: dict[str, Any]) -> list[Violatio
     metadata = meta.get("metadata")
     details = validate_contract_metadata(metadata)
     return [Violation(path, RuleId.BAD_CAPABILITY_CONTRACT, detail) for detail in details]
+
+
+_FANOUT_EFFECTS = frozenset({"read", "mutate", "destructive"})
+
+
+def _check_fanout_metadata(path: str, meta: dict[str, Any]) -> list[Violation]:
+    """Validate the optional ``metadata.fanout`` block (ADR-0077).
+
+    The block is consumed by the producers that annotate objective work
+    units — it is runtime-read metadata, not aspirational. Invalid values
+    must fail the audit rather than silently falling back to the
+    conservative dispatch defaults.
+    """
+    metadata = meta.get("metadata")
+    if not isinstance(metadata, dict):
+        return []
+    raw = metadata.get("fanout")
+    if raw is None:
+        return []
+    if not isinstance(raw, dict):
+        return [Violation(path, RuleId.BAD_FANOUT_METADATA, "metadata.fanout must be a mapping")]
+    out: list[Violation] = []
+    effects = raw.get("effects")
+    if effects is not None and (
+        not isinstance(effects, str) or effects.strip().lower() not in _FANOUT_EFFECTS
+    ):
+        out.append(
+            Violation(
+                path,
+                RuleId.BAD_FANOUT_METADATA,
+                "metadata.fanout.effects must be one of read|mutate|destructive",
+            )
+        )
+    resources = raw.get("resources")
+    if resources is not None and (
+        not isinstance(resources, list)
+        or not all(isinstance(item, str) and item.strip() for item in resources)
+    ):
+        out.append(
+            Violation(
+                path,
+                RuleId.BAD_FANOUT_METADATA,
+                "metadata.fanout.resources must be a list of non-empty strings",
+            )
+        )
+    for flag in ("parallel_safe", "fragile_target"):
+        flag_value = raw.get(flag)
+        if flag_value is not None and not isinstance(flag_value, bool):
+            out.append(
+                Violation(
+                    path,
+                    RuleId.BAD_FANOUT_METADATA,
+                    f"metadata.fanout.{flag} must be a boolean",
+                )
+            )
+    notes = raw.get("notes")
+    if notes is not None and not isinstance(notes, str):
+        out.append(
+            Violation(path, RuleId.BAD_FANOUT_METADATA, "metadata.fanout.notes must be a string")
+        )
+    return out
 
 
 def _truthy_string(value: Any) -> bool:

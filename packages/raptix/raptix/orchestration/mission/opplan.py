@@ -263,16 +263,19 @@ def _format_opplan_status(
         lines.append(f"| … | … | _{hidden} more terminal objectives_ | … | … | … |")
 
     if next_obj:
-        lines.extend(
-            [
-                "",
-                f"**Next**: {next_obj.get('id')} — {next_obj.get('title')}",
-                f"  Phase: {next_obj.get('phase')} | "
-                f"MITRE: {', '.join(next_obj.get('mitre') or []) or 'n/a'} | "
-                f"OPSEC: {next_obj.get('opsec', 'standard')} | "
-                f"C2: {next_obj.get('c2_tier', 'interactive')}",
-            ]
-        )
+        lines.extend(["", f"**Next**: {next_obj.get('id')} — {next_obj.get('title')}"])
+        next_effects = str(next_obj.get("effects") or "mutate")
+        next_resources = next_obj.get("resources") or []
+        next_lines = [
+            f"  Phase: {next_obj.get('phase')} | "
+            f"MITRE: {', '.join(next_obj.get('mitre') or []) or 'n/a'} | "
+            f"OPSEC: {next_obj.get('opsec', 'standard')} | "
+            f"C2: {next_obj.get('c2_tier', 'interactive')} | "
+            f"Effects: {next_effects}",
+        ]
+        if next_resources:
+            next_lines.append(f"  Resources: {', '.join(str(r) for r in next_resources)}")
+        lines.extend(next_lines)
         criteria = next_obj.get("acceptance_criteria", [])
         if criteria:
             lines.append("  Acceptance Criteria:")

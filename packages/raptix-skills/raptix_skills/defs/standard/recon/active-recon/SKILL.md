@@ -7,6 +7,13 @@ metadata:
   when_to_use: "port scan, nmap, active scan, service detection, banner grab, vulnerability scan, nuclei, nikto, SSL analysis, network sweep, testssl"
   tags: nmap, port-scan, service-detection, banner-grab, nuclei, vulnerability-scan
   mitre_attack: T1595, T1595.001, T1595.002, T1595.003
+  fanout:
+    effects: read
+    resources: ["host:*"]
+    fragile_target: true
+    notes: >-
+      aggressive parallel scans can wedge single-worker or embedded services;
+      admission keeps per-host in-flight scans at the narrow cap
 ---
 
 # Active Reconnaissance Knowledge Base

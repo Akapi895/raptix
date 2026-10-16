@@ -30,6 +30,17 @@ from raptix.knowledge.graph.store import KGStore
 
 DEFAULT_KG_TOOLS = frozenset({"kg_record", "kg_ingest"})
 SURFACE_INVENTORY_TOOL = "kg_surface_inventory"
+CHALLENGE_INVENTORY_TOOL = "challenge_inventory"
+
+# Snapshot locations the recon objectives already write on scoreboard-first
+# missions; the tool also accepts an explicit path argument.
+_CHALLENGE_SNAPSHOT_CANDIDATES = (
+    "/workspace/recon/challenges.json",
+    "/workspace/recon/api/Challenges.json",
+    "/workspace/recon/api/challenges.json",
+    "/workspace/recon/probe_api_Challenges.txt",
+    "/workspace/challenges.json",
+)
 
 _ENGAGEMENT_UNSET = (
     "kg_engagement is not set on agent state; middleware before_agent did not hydrate"
@@ -247,5 +258,83 @@ def build_kg_tools(
                 return _err(f"kg_surface_inventory failed: {exc}")
 
         tools.append(kg_surface_inventory)
+
+    if CHALLENGE_INVENTORY_TOOL in enabled_set:
+
+        @tool
+        def challenge_inventory(
+            state: Annotated[dict, InjectedState],
+            path: str = "",
+            tool_call_id: Annotated[str, InjectedToolCallId] = "",
+        ) -> str:
+            """Derive coverage cells from the mission's own scoreboard.
+
+            Read-only. Parses the challenge snapshot recon already pulled
+            (``GET /api/Challenges`` saved under ``/workspace/recon/``, or
+            the file passed as ``path``) and returns exactly one bounded
+            cell per unsolved entry — one win-condition each — plus the
+            ``objective_children`` inputs for the orchestrator's
+            sequential ``objective_expand`` call. Cells already present in
+            the OPPLAN (same ``cell_id``) are filtered out. Categories and
+            difficulties are the target's own vocabulary; no target-
+            specific content is baked into the mapping and hints are
+            deliberately never ingested (see
+            docs/adr/0075-challenge-inventory.md).
+            """
+            engagement = _resolve_engagement(state)
+            if not engagement:
+                return _err(_ENGAGEMENT_UNSET)
+            try:
+                # Agent-only planners must not run during middleware package import.
+                from pathlib import Path
+
+                from raptix.intelligence.agents.standard._challenge_registry import (
+                    build_challenge_cells,
+                    build_challenge_children,
+                    find_snapshot_file,
+                    parse_challenge_snapshot,
+                )
+                from raptix.intelligence.agents.standard._surface_reexpand import (
+                    plan_reexpansion,
+                )
+
+                candidates = (path,) if path else _CHALLENGE_SNAPSHOT_CANDIDATES
+                snapshot = find_snapshot_file(candidates)
+                if snapshot is None:
+                    return _err(
+                        "no challenge snapshot found; pull GET /api/Challenges with "
+                        "http_request and save it to /workspace/recon/challenges.json, "
+                        "then call challenge_inventory again (or pass path=...)"
+                    )
+                challenges = parse_challenge_snapshot(
+                    Path(snapshot).read_text(encoding="utf-8", errors="replace")
+                )
+                derived_cells = build_challenge_cells(challenges)
+                cells = plan_reexpansion(state.get("objectives", []), derived_cells)
+                children = build_challenge_children(cells)
+                entries = [
+                    {
+                        "challenge_id": cell["challenge_id"],
+                        "challenge_name": cell["challenge_name"],
+                        "category": cell["category"],
+                        "difficulty": cell["difficulty"],
+                        "skill_path": cell["skill_path"],
+                        "roe_gated": bool(cell.get("roe_gated")),
+                    }
+                    for cell in cells
+                ]
+                return json.dumps(
+                    {
+                        "source": str(snapshot),
+                        "challenge_count": len(challenges),
+                        "unsolved_cells": len(cells),
+                        "entries": entries,
+                        "objective_children": children,
+                    }
+                )
+            except Exception as exc:  # noqa: BLE001 — snapshot read failures to the orchestrator
+                return _err(f"challenge_inventory failed: {exc}")
+
+        tools.append(challenge_inventory)
 
     return tools

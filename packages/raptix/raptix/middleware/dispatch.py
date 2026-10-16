@@ -12,6 +12,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import threading
 from copy import copy
@@ -30,12 +31,23 @@ from raptix.core.subagent_streaming import (
     MAX_SUBAGENT_CONSECUTIVE_FAILURES,
     PRIVATE_CHILD_STATE_KEYS,
 )
+from raptix.execution.session.event_log import EventLog, EventType
+from raptix.middleware.fanout_admission import (
+    AdmissionDecision,
+    Ceilings,
+    ResilienceState,
+    WorkUnit,
+    decide,
+)
 from raptix.middleware.subagent_transcript_state import SubagentTranscriptState
 from raptix.orchestration.mission.objective_context import ObjectiveContextState
 from raptix_core.types.dispatch_outcome import (
     DispatchFailureOutcome,
     classify_dispatch_failure,
 )
+from raptix_core.types.engagement import EffectClass, OpsecLevel
+
+log = logging.getLogger(__name__)
 
 MAX_DISPATCHES = 256
 
@@ -67,6 +79,30 @@ DEFAULT_DISPATCH_TIMEOUT_SECONDS = 45 * 60
 # deliberately need wider fan-out.
 DISPATCH_CONCURRENCY_ENV = "RAPTIX_MAX_CONCURRENT_DISPATCHES"
 DEFAULT_MAX_CONCURRENT_DISPATCHES = 3
+
+# ADR-0077: generic fan-out admission. When disabled (default), the ceiling
+# above is the only control — byte-for-byte today's behaviour. When enabled,
+# each dispatch intent is admitted through the pure policy in
+# ``raptix.middleware.fanout_admission``: resource overlap, effect class,
+# OPSEC noise tier, per-target resilience, then the same global ceiling as
+# the outermost bound. Domain knowledge enters only through objective
+# annotations and skill metadata — never here.
+FANOUT_ADMISSION_ENV = "RAPTIX_FANOUT_ADMISSION"
+FANOUT_PER_TARGET_ENV = "RAPTIX_MAX_CONCURRENT_PER_TARGET"
+FANOUT_ALLOW_DESTRUCTIVE_ENV = "RAPTIX_FANOUT_ALLOW_DESTRUCTIVE"
+_TRUTHY = frozenset({"1", "true", "yes", "on"})
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in _TRUTHY
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.environ.get(name, "").strip() or default)
+    except ValueError:
+        return default
+
 
 # Child state keys that never merge into the parent update (ADR-0045).
 # StreamingRunnable already withholds PrivateStateAttr channels before the
@@ -141,6 +177,16 @@ class DispatchMiddleware(SubAgentMiddleware):
         self._active: set[tuple[str, str]] = set()
         self._timeout_seconds = _resolve_dispatch_timeout_seconds()
         self._max_concurrent = _resolve_max_concurrent_dispatches()
+        # ADR-0077 admission state: in-flight work units + per-scope resilience.
+        self._fanout_enabled = _env_flag(FANOUT_ADMISSION_ENV)
+        self._active_units: dict[tuple[str, str], WorkUnit] = {}
+        self._resilience: dict[str, ResilienceState] = {}
+        self._event_logs: dict[tuple[str, str], EventLog] = {}
+        self._ceilings = Ceilings(
+            global_max=self._max_concurrent,
+            per_target_max=max(1, _env_int(FANOUT_PER_TARGET_ENV, 1)),
+            allow_destructive=_env_flag(FANOUT_ALLOW_DESTRUCTIVE_ENV),
+        )
         self.tools = [self._guarded_tool()]
 
     def _prepare(
@@ -204,20 +250,137 @@ class DispatchMiddleware(SubAgentMiddleware):
                     "dispatch_in_flight",
                     "An invocation of this dispatch is already active",
                 )
-            active_in_scope = sum(1 for active_scope, _ in self._active if active_scope == scope)
-            if active_in_scope >= self._max_concurrent:
-                return _reply(
-                    runtime,
-                    "dispatch_capacity_exceeded",
-                    f"Max {self._max_concurrent} concurrent dispatches already active for "
-                    "this engagement; wait for one to finish before starting another",
+            if self._fanout_enabled:
+                candidate = self._work_unit_for(runtime, objective_id, role, dispatch_id)
+                in_flight = self._in_flight_units(scope)
+                resilient = self._resilience.setdefault(scope, ResilienceState()).resilient_map()
+                decision = decide(
+                    candidate, in_flight, ceilings=self._ceilings, resilient=resilient
                 )
-            self._active.add(key)
+                self._admission_event(runtime, candidate, decision)
+                if not decision.admitted:
+                    return _reply(runtime, f"dispatch_{decision.reject_code}", decision.detail)
+                self._active.add(key)
+                self._active_units[key] = candidate
+            else:
+                active_in_scope = sum(
+                    1 for active_scope, _ in self._active if active_scope == scope
+                )
+                if active_in_scope >= self._max_concurrent:
+                    return _reply(
+                        runtime,
+                        "dispatch_capacity_exceeded",
+                        f"Max {self._max_concurrent} concurrent dispatches already active for "
+                        "this engagement; wait for one to finish before starting another",
+                    )
+                self._active.add(key)
         return (
             DispatchContext(dispatch_id, objective_id, int(prior.get("attempt", 0)) + 1),
             key,
             fingerprint,
         )
+
+    # ── ADR-0077 fan-out admission helpers ──────────────────────────────
+
+    @staticmethod
+    def _coerce_bool(value: Any) -> bool | None:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in _TRUTHY:
+                return True
+            if lowered in {"0", "false", "no", "off"}:
+                return False
+        return None
+
+    def _work_unit_for(
+        self,
+        runtime: ToolRuntime,
+        objective_id: str | None,
+        role: str,
+        dispatch_id: str,
+    ) -> WorkUnit:
+        """Build the annotated work unit for a candidate dispatch.
+
+        Missing/unparseable annotations collapse to the conservative default
+        (``mutate``, unknown parallel safety) — unknown means conservative.
+        """
+        objectives = runtime.state.get("objectives") or []
+        objective: dict = next((o for o in objectives if o.get("id") == objective_id), {})
+        try:
+            effects = EffectClass(str(objective.get("effects") or EffectClass.MUTATE.value))
+        except ValueError:
+            effects = EffectClass.MUTATE
+        try:
+            opsec = OpsecLevel(str(objective.get("opsec") or OpsecLevel.STANDARD.value))
+        except ValueError:
+            opsec = OpsecLevel.STANDARD
+        raw_resources = objective.get("resources")
+        resources = frozenset(
+            str(r).strip()
+            for r in (raw_resources if isinstance(raw_resources, (list, tuple, set)) else ())
+            if str(r).strip()
+        )
+        return WorkUnit(
+            dispatch_id=dispatch_id,
+            objective_id=str(objective_id or ""),
+            role=role,
+            effects=effects,
+            resources=resources,
+            parallel_safe=self._coerce_bool(objective.get("parallel_safe")),
+            opsec=opsec,
+            fragile_target=bool(self._coerce_bool(objective.get("fragile_target"))),
+        )
+
+    def _in_flight_units(self, scope: str) -> list[WorkUnit]:
+        """Caller must hold ``self._lock`` (non-reentrant)."""
+        return [unit for (unit_scope, _), unit in self._active_units.items() if unit_scope == scope]
+
+    def _record_outcome(self, key: tuple[str, str], *, ok: bool) -> None:
+        """Feed the dispatch outcome into per-resource progressive widening."""
+        with self._lock:
+            unit = self._active_units.pop(key, None)
+            if unit is None or not unit.resources:
+                return
+            state = self._resilience.setdefault(key[0], ResilienceState())
+            state.record(sorted(unit.resources), ok=ok)
+
+    def _admission_event(
+        self, runtime: ToolRuntime, candidate: WorkUnit, decision: AdmissionDecision
+    ) -> None:
+        """Append one ``dispatch.admission`` record; never break the dispatch."""
+        try:
+            state = getattr(runtime, "state", None) or {}
+            get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
+            workspace = str(
+                get("workspace_path") or os.environ.get("RAPTIX_WORKSPACE_PATH", "") or "/workspace"
+            )
+            engagement = str(
+                get("engagement_name")
+                or os.environ.get("RAPTIX_ENGAGEMENT_ID", "")
+                or "default-engagement"
+            )
+            key = (workspace, engagement)
+            event_log = self._event_logs.get(key)
+            if event_log is None:
+                event_log = EventLog.for_workspace(workspace, engagement)
+                self._event_logs[key] = event_log
+            event_log.append(
+                EventType.DISPATCH_ADMISSION,
+                {
+                    "admitted": decision.admitted,
+                    "code": decision.code,
+                    "objective_id": candidate.objective_id,
+                    "role": candidate.role,
+                    "effects": candidate.effects.value,
+                    "resource_count": len(candidate.resources),
+                    "blocking": list(decision.blocking)[:8],
+                },
+                agent="orchestrator",
+            )
+        except Exception:  # noqa: BLE001 — admission telemetry must never break dispatch
+            log.debug("dispatch.admission event not recorded", exc_info=True)
 
     def _finish(
         self,
@@ -302,6 +465,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 return prepared
             context, key, fingerprint = prepared
             token = active_dispatch.set(context)
+            error: Exception | None = None
             try:
                 try:
                     result = self._task.func(
@@ -310,10 +474,15 @@ class DispatchMiddleware(SubAgentMiddleware):
                         runtime=self._child_runtime(runtime, context),
                     )
                 except Exception as exc:
+                    error = exc
                     return self._finish(None, context, fingerprint, runtime, exc)
                 return self._finish(result, context, fingerprint, runtime)
+            except asyncio.CancelledError as exc:
+                error = exc
+                raise
             finally:
                 active_dispatch.reset(token)
+                self._record_outcome(key, ok=error is None)
                 self._release(key)
 
         async def atask(
@@ -328,6 +497,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 return prepared
             context, key, fingerprint = prepared
             token = active_dispatch.set(context)
+            error: Exception | None = None
             try:
                 try:
                     result = await asyncio.wait_for(
@@ -339,10 +509,15 @@ class DispatchMiddleware(SubAgentMiddleware):
                         timeout=self._timeout_seconds,
                     )
                 except Exception as exc:
+                    error = exc
                     return self._finish(None, context, fingerprint, runtime, exc)
                 return self._finish(result, context, fingerprint, runtime)
+            except asyncio.CancelledError as exc:
+                error = exc
+                raise
             finally:
                 active_dispatch.reset(token)
+                self._record_outcome(key, ok=error is None)
                 self._release(key)
 
         return StructuredTool.from_function(
