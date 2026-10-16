@@ -14,6 +14,14 @@ export function registerInboxRoutes(app: FastifyInstance, inbox: InboxService, i
     reply.header('Cache-Control', 'no-store');
     return inbox.tasks(identity.id);
   }));
+  app.get('/api/overview/findings', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    return inbox.findingsSummary(identity.id);
+  }));
+  app.get('/api/overview/c2', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    return inbox.c2Summary(identity.id);
+  }));
   app.get('/api/notices', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     return inbox.notices(identity.id);
