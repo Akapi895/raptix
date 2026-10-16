@@ -87,6 +87,13 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
   return { ok: true, data: { items: items.slice(start, start + req.pageSize), page: req.page, pageSize: req.pageSize, total: items.length } }
 }
 
+/**
+ * Per-feature service surface that real-mode adapters implement
+ * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
+ * `authority`, `clock` and `schedule` is deliberately absent.
+ */
+export type FeatureServices = Pick<ConsoleServices, 'findings'>
+
 export interface ConsoleServices {
   identity: IdentityService
   authority: DbAuthority

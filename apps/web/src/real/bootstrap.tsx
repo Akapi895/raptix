@@ -17,6 +17,7 @@ import { REAL_IDENTITY, type RealIdentity } from './identity'
 import { createConsoleQueryClient } from '../state/keys'
 import { Button } from '../ui'
 import { RealLoginGate } from './screens/login'
+import { RealFeatureServicesProvider } from './service-adapter/provider'
 
 export { REAL_IDENTITY, REAL_PERSONA, type RealIdentity } from './identity'
 
@@ -88,7 +89,7 @@ function RealBoot({ children }: { children: ReactNode }): ReactElement {
   if (boot.isError || !boot.data) {
     return <BootError message={boot.error instanceof Error ? boot.error.message : 'The bootstrap request failed.'} onRetry={() => void boot.refetch()} />
   }
-  return <RealContext.Provider value={{ document: boot.data, identity: REAL_IDENTITY }}><RealLoginGate deploymentId={boot.data.deploymentId}>{children}</RealLoginGate></RealContext.Provider>
+  return <RealContext.Provider value={{ document: boot.data, identity: REAL_IDENTITY }}><RealFeatureServicesProvider document={boot.data}><RealLoginGate deploymentId={boot.data.deploymentId}>{children}</RealLoginGate></RealFeatureServicesProvider></RealContext.Provider>
 }
 
 /** Whether a capability is usable right now (supported AND available). */

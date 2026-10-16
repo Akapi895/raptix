@@ -13,7 +13,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
-import { useServices } from '../../state/services'
+import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Finding } from '../../domain/entities'
@@ -45,7 +45,7 @@ export class FindingReadError extends Error {
 
 /** Query-backed findings inventory for the current auth/project scope. */
 export function useFindingList(query: FindingListQuery) {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useQuery({
     queryKey: findingKeys.list(scope, query),
@@ -63,7 +63,7 @@ export function useFindingList(query: FindingListQuery) {
 
 /** Query-backed finding detail (history, metadata and masked linked evidence). */
 export function useFindingDetail(id?: string) {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useQuery({
     queryKey: findingKeys.detail(scope, id || ''),
@@ -89,7 +89,7 @@ export class EvidenceReadError extends Error {
 
 /** Query-backed standalone evidence list (ticket 33) for the current auth/project scope. */
 export function useEvidenceList(query: EvidenceListQuery) {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useQuery({
     queryKey: evidenceKeys.list(scope, query),
@@ -112,7 +112,7 @@ export function useEvidenceList(query: EvidenceListQuery) {
  * 32's handlers) refetches the linked views without a reload.
  */
 export function useEvidenceDetail(id?: string) {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useQuery({
     queryKey: evidenceKeys.detail(scope, id || ''),
@@ -138,7 +138,7 @@ export function useEvidenceDetail(id?: string) {
  * and the message is safe to render.
  */
 export function useFindingWrites() {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useMemo(() => {
     const actor = actorRef(scope.actor, scope.role)
