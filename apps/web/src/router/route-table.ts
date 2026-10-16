@@ -46,9 +46,6 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
   asset: { title: 'Asset detail', panels: ['assets'], mockScreens: ['d-assets.tsx'] },
   'asset-new': { title: 'Import assets', panels: ['assets'], mockScreens: ['d-assets.tsx'] },
   'asset-scope': { title: 'Asset scope', panels: ['assets', 'scope'], mockScreens: ['d-assets.tsx'] },
-  findings: { title: 'Findings', panels: ['findings', 'curation'], mockScreens: ['e-findings.tsx'] },
-  finding: { title: 'Finding detail', panels: ['findings', 'curation'], mockScreens: ['e-findings.tsx'] },
-  'finding-new': { title: 'New finding', panels: ['curation'], mockScreens: ['e-findings.tsx'] },
   evidence: { title: 'Evidence', panels: ['findings'], mockScreens: ['e-findings.tsx'] },
   'evidence-inspector': { title: 'Evidence inspector', panels: ['findings'], mockScreens: ['e-findings.tsx'] },
   analysis: { title: 'Observed analysis', panels: ['analysis'], mockScreens: ['e-analysis.tsx'] },
@@ -66,3 +63,6 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
   'c2-console': { title: 'C2 console', panels: ['c2'], mockScreens: ['h-session.tsx'] },
   'playbook-review': { title: 'Library review proposals', panels: ['library-review'], mockScreens: ['d-library.tsx'] },
 }
+
+/** Route keys whose mock screen is the operational UI in both modes (plan 2026-10-16 screens unification); `router/host.tsx` renders them before `REAL_PAGES`. */
+export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new'])
