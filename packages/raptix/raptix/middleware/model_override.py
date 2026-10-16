@@ -39,7 +39,12 @@ from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 from typing_extensions import Annotated, NotRequired, override
 
-from raptix.intelligence.llm.factory import LLMFactory, _model_drops_temperature
+from raptix.intelligence.llm.factory import (
+    LLMFactory,
+    _model_drops_temperature,
+    _model_preserves_reasoning,
+    _ReasoningContentChatOpenAI,
+)
 from raptix.middleware.state_reducers import reduce_converging_value
 from raptix_core.utils.logging import get_logger
 
@@ -129,6 +134,8 @@ def _build_proxied_llm(model_id: str, original: BaseChatModel) -> BaseChatModel:
     }
     if temperature is not None:
         kwargs["temperature"] = temperature
+    if _model_preserves_reasoning(model_id):
+        return _ReasoningContentChatOpenAI(**kwargs)
     return ChatOpenAI(**kwargs)
 
 
