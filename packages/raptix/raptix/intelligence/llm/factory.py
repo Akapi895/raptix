@@ -23,6 +23,7 @@ import asyncio
 import json
 import os
 import re
+import time
 from collections.abc import Awaitable
 from dataclasses import dataclass
 from enum import Enum
@@ -34,6 +35,8 @@ from langchain_core.exceptions import ContextOverflowError
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_openai import ChatOpenAI
+from openai import APIConnectionError as _APIConnectionError
+from openai import APITimeoutError as _APITimeoutError
 from pydantic import SecretStr
 
 from raptix.intelligence.llm.router import ModelRouter
@@ -899,6 +902,28 @@ def auth_inventory() -> AuthInventory:
 
 _EMPTY_COMPLETION_RETRIES = 1
 
+# Transient transport failures (slow upstream, proxy hiccup) used to escape a
+# single model call as a fatal RuntimeError and tear down the whole engagement
+# run ("LLM proxy unreachable (APITimeoutError)"). They are retryable: attempt
+# the call a couple more times with linear backoff before surfacing the error.
+_TRANSPORT_RETRIES = int(os.environ.get("RAPTIX_LLM_TIMEOUT_RETRIES", "2"))
+_TRANSPORT_RETRY_BACKOFF_S = float(os.environ.get("RAPTIX_LLM_TIMEOUT_RETRY_BACKOFF_S", "5"))
+
+
+def _is_transport_timeout(exc: BaseException) -> bool:
+    """True for transient client-transport failures worth a retry."""
+    if isinstance(exc, (_APITimeoutError, _APIConnectionError)):
+        return True
+    return isinstance(
+        exc,
+        (
+            httpx.TimeoutException,
+            httpx.ConnectError,
+            httpx.ReadError,
+            httpx.RemoteProtocolError,
+        ),
+    )
+
 
 class EmptyCompletionError(RuntimeError):
     """Raised when a model returns neither content nor tool calls.
@@ -948,8 +973,44 @@ class _ProxiedChatOpenAI(ChatOpenAI):
     :class:`EmptyCompletionError`). One same-model retry, then the error.
     """
 
+    def _call_retrying_transport(self, call):
+        for attempt in range(_TRANSPORT_RETRIES + 1):
+            try:
+                return call()
+            except Exception as exc:
+                if not _is_transport_timeout(exc) or attempt >= _TRANSPORT_RETRIES:
+                    raise
+                wait = _TRANSPORT_RETRY_BACKOFF_S * (attempt + 1)
+                log.warning(
+                    "transport timeout from %s (attempt %d/%d); retrying in %.0fs",
+                    self.model_name,
+                    attempt + 1,
+                    _TRANSPORT_RETRIES + 1,
+                    wait,
+                )
+                time.sleep(wait)
+        raise AssertionError("unreachable: retries exhausted without raise")
+
+    async def _acall_retrying_transport(self, call):
+        for attempt in range(_TRANSPORT_RETRIES + 1):
+            try:
+                return await call()
+            except Exception as exc:
+                if not _is_transport_timeout(exc) or attempt >= _TRANSPORT_RETRIES:
+                    raise
+                wait = _TRANSPORT_RETRY_BACKOFF_S * (attempt + 1)
+                log.warning(
+                    "transport timeout from %s (attempt %d/%d); retrying in %.0fs",
+                    self.model_name,
+                    attempt + 1,
+                    _TRANSPORT_RETRIES + 1,
+                    wait,
+                )
+                await asyncio.sleep(wait)
+        raise AssertionError("unreachable: retries exhausted without raise")
+
     def _retry_when_empty(self, call):
-        result = call()
+        result = self._call_retrying_transport(call)
         for _ in range(_EMPTY_COMPLETION_RETRIES):
             if _has_usable_output(result):
                 return result
@@ -957,7 +1018,7 @@ class _ProxiedChatOpenAI(ChatOpenAI):
                 "empty completion from %s (no content, no tool calls); retrying",
                 self.model_name,
             )
-            result = call()
+            result = self._call_retrying_transport(call)
         if not _has_usable_output(result):
             raise EmptyCompletionError(
                 f"model {self.model_name!r} returned no content and no tool calls"
@@ -965,7 +1026,7 @@ class _ProxiedChatOpenAI(ChatOpenAI):
         return result
 
     async def _aretry_when_empty(self, call):
-        result = await call()
+        result = await self._acall_retrying_transport(call)
         for _ in range(_EMPTY_COMPLETION_RETRIES):
             if _has_usable_output(result):
                 return result
@@ -973,7 +1034,7 @@ class _ProxiedChatOpenAI(ChatOpenAI):
                 "empty completion from %s (no content, no tool calls); retrying",
                 self.model_name,
             )
-            result = await call()
+            result = await self._acall_retrying_transport(call)
         if not _has_usable_output(result):
             raise EmptyCompletionError(
                 f"model {self.model_name!r} returned no content and no tool calls"
