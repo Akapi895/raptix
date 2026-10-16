@@ -6,10 +6,10 @@
  */
 import { useMemo } from 'react'
 import { useQuery, type useQueryClient } from '@tanstack/react-query'
-import { engagementToProject, listEngagements } from './api'
+import { engagementToProject, fetchMembers, listEngagements } from './api'
 import { REAL_IDENTITY } from './identity'
 import { useCapabilityReady } from './bootstrap'
-import type { Project } from '../domain/entities'
+import type { Project, Role } from '../domain/entities'
 
 export const projectKeys = {
   list: ['real', 'projects', REAL_IDENTITY.id] as const,
@@ -35,4 +35,23 @@ export function useRealProjects() {
 export function useRealProjectList(): Project[] {
   const { list } = useRealProjects()
   return useMemo(() => (list.data ?? []).map(engagementToProject), [list.data])
+}
+
+const MEMBERSHIP_ROLE: Readonly<Record<string, Role>> = { owner: 'manager', operator: 'operator', reviewer: 'reviewer', viewer: 'viewer' }
+
+/**
+ * The actor's role in one engagement from its persisted membership. Null while
+ * unknown; callers treat unknown as the least-privileged role so the console
+ * never shows a write control the server would refuse.
+ */
+export function useRealMembershipRole(engagementId: string, actorId: string | undefined): Role | null {
+  const { ready } = useCapabilityReady('members')
+  const members = useQuery({
+    queryKey: ['real', 'members', REAL_IDENTITY.id, engagementId],
+    queryFn: () => fetchMembers(engagementId),
+    enabled: ready && engagementId !== '' && !!actorId,
+    staleTime: 30_000,
+  })
+  const row = members.data?.members.find((m) => m.id === actorId)
+  return row ? (MEMBERSHIP_ROLE[row.role] ?? 'viewer') : null
 }
