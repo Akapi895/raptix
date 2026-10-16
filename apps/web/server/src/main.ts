@@ -71,6 +71,8 @@ async function main(): Promise<void> {
   const runtimeConfig = loadRuntimeConfig(process.env);
 
   let dbClient: PrismaClient | undefined;
+  // ADR-0085: the scope service is built below, after the projects service; the handoff reaches it through this holder.
+  const plannerScope: { confirm?: ScopeService['confirmPlannerScope'] } = {};
   let projectsService: ProjectsService | undefined;
   let databaseHealth: DatabaseHealth | undefined;
 
@@ -100,6 +102,10 @@ async function main(): Promise<void> {
       repository: new EngagementsRepository(dbClient.engagement, env.authMode === 'multi' ? dbClient.webMembership : undefined),
       workspaceRoot: env.workspacePath,
       identity: getLocalIdentity(),
+      confirmPlannerScope: (actorId, engagementId, plan) => {
+        if (plannerScope.confirm === undefined) throw new ProjectApiError(409, 'The planning scope cannot be approved without the database.');
+        return plannerScope.confirm(actorId, engagementId, plan);
+      },
     });
   }
 
@@ -132,6 +138,7 @@ async function main(): Promise<void> {
      },
    }) : undefined;
      const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
+    plannerScope.confirm = scopeService?.confirmPlannerScope.bind(scopeService);
     // O06 (ADR-0083): persistent plan document drafts over the allowlisted
     // planning documents; requires both the DB (draft rows, audit) and the
     // workspace root (preconditioned reads/publish).

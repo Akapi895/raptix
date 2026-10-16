@@ -212,6 +212,42 @@ describe('ticket 08 scope governance', () => {
     expect(out.statusCode).toBe(200);
   });
 
+  it('makes a target named by an approved revision in scope and shows it in the effective scope', async () => {
+    const { app, owner, reviewer } = await setup();
+    const target = '10.129.227.140';
+    const before = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/scope/effective`, headers: { cookie: owner.cookie } });
+    expect(before.json().inScope).not.toContain(target);
+
+    const revision = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { diff: { added: [target], removed: [], rationale: 'authorized lab host' }, roe: ROE } });
+    expect(revision.statusCode).toBe(200);
+    const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/scope/revisions/${revision.json().id}/decision`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved' } });
+    expect(approved.statusCode).toBe(200);
+
+    const effective = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/scope/effective`, headers: { cookie: owner.cookie } });
+    expect(effective.json().version).toBe(1);
+    expect(effective.json().inScope).toEqual([target]);
+    const inventory = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/assets/inventory`, headers: { cookie: owner.cookie } });
+    expect(inventory.json().assets).toEqual([expect.objectContaining({ identifier: target, kind: 'host', classification: 'in_scope' })]);
+  });
+
+  it('ADR-0085: a single operator confirms the planner scope into an approved revision, while a second member keeps the independent review', async () => {
+    const { db } = await setup();
+    const ownerId = String([...db.tables.get('webUser')!.values()].find((row) => row.username === 'owner')!.id);
+    const scope = new ScopeService(db as never);
+    const plan = { targets: ['10.129.227.140'], startDate: '2026-10-20', endDate: '2026-10-31', contacts: ['Lab SOC (email:soc@example.invalid)'], restrictions: ['Denial of service'] };
+
+    // The owner has no membership row; the setup's reviewer is a second member.
+    await expect(scope.confirmPlannerScope(ownerId, ENG, plan)).rejects.toMatchObject({ statusCode: 409 });
+
+    db.tables.get('webMembership')!.clear();
+    const approved = await scope.confirmPlannerScope(ownerId, ENG, plan);
+    expect(approved).toMatchObject({ status: 'approved', requestedBy: ownerId, decidedBy: ownerId });
+    const effective = await scope.effectiveScope(ownerId, ENG);
+    expect(effective.inScope).toEqual(['10.129.227.140']);
+    expect(effective.roe.restrictions).toEqual(['Denial of service']);
+    expect(await scope.confirmPlannerScope(ownerId, ENG, plan)).toBeNull();
+  });
+
   it('answers 404 for foreign engagements and rejects malformed ROE windows', async () => {
     const { app, owner } = await setup();
     expect((await app.inject({ method: 'GET', url: '/api/engagements/eng-other/scope/revisions', headers: { cookie: owner.cookie } })).statusCode).toBe(404);

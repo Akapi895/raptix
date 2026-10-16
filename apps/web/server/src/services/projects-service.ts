@@ -17,7 +17,7 @@ import {
   prepareEngagementPlanDir,
   resolveEngagementWorkspaceDir,
 } from '../security/workspace-policy.js';
-import { readPlanningView } from './planning-service.js';
+import { readPlannerScope, readPlanningView, type PlannerScope } from './planning-service.js';
 import type { PlanningView } from '@raptix/web-contracts';
 
 /**
@@ -188,17 +188,21 @@ export interface ProjectsServiceOptions {
   readonly workspaceRoot: string;
   /** Local single-user owner; used when a method is called without userId. */
   readonly identity: LocalIdentity;
+  /** ADR-0085: approves the planner's scope at the handoff (wired with the database). */
+  readonly confirmPlannerScope?: (actorId: string, engagementId: string, plan: PlannerScope) => Promise<unknown>;
 }
 
 export class ProjectsService {
   private readonly repository: ProjectRepositoryPort;
   private readonly workspaceRoot: string;
   private readonly identity: LocalIdentity;
+  private readonly confirmPlannerScope: ProjectsServiceOptions['confirmPlannerScope'];
 
   public constructor(options: ProjectsServiceOptions) {
     this.repository = options.repository;
     this.workspaceRoot = options.workspaceRoot;
     this.identity = options.identity;
+    this.confirmPlannerScope = options.confirmPlannerScope;
   }
 
   private ownerId(userId?: string): string {
@@ -291,6 +295,25 @@ export class ProjectsService {
   }
 
   /**
+   * ADR-0085: the handoff is refused unless every required planning document is
+   * ready, and confirming it approves the scope roe.json plans for a
+   * single-operator engagement. Engagements with more members keep the
+   * independent scope review.
+   */
+  private async confirmPlanningHandoff(actorId: string, record: ProjectRecord): Promise<void> {
+    const view = await readPlanningView(this.workspaceRoot, record, toMetadataState(record) === 'verified');
+    if (view.readiness.state !== 'ready') {
+      throw new ProjectApiError(409, `Planning is not ready for handoff: ${view.readiness.reasons.join('; ')}`);
+    }
+    if (this.confirmPlannerScope === undefined) {
+      throw new ProjectApiError(409, 'The planning scope cannot be approved without the database.');
+    }
+    const plan = await readPlannerScope(this.workspaceRoot, record.workspaceSlug);
+    if (plan === null) throw new ProjectApiError(409, 'roe.json is not a valid planning document, so the handoff cannot approve its scope.');
+    await this.confirmPlannerScope(actorId, record.id, plan);
+  }
+
+  /**
    * Only displayName/targetType/targetValue plus the one-way handoff
    * confirmation are patchable (strict policy parse). Every patch first
    * loads the owned record and refuses rows whose stored name is not a safe
@@ -320,6 +343,9 @@ export class ProjectsService {
         patch.targetType ?? current.targetType,
         patch.targetValue ?? current.targetValue,
       );
+    }
+    if (patch.handoffConfirmed !== undefined) {
+      await this.confirmPlanningHandoff(this.ownerId(userId), current);
     }
     const record = await this.repository.update(this.ownerId(userId), id, {
       ...(patch.displayName === undefined ? {} : { displayName: patch.displayName }),
