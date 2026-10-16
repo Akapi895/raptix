@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bot, CircleAlert, Hand, ListPlus, MessagesSquare, RefreshCw, Send, ServerCrash, ShieldQuestion, User } from 'lucide-react'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, fetchApprovals, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, resumeThread, submitRun } from '../api'
+import { cancelRun, createThread, decideApproval, fetchApprovals, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, resumeThread, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
 import { useCapabilityReady } from '../bootstrap'
 import { awaitRequest, newRequestId, type AckOutcome } from '../request-ledger'
@@ -96,6 +96,15 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
   const current = (captured: string): boolean => mounted.current && scopeRef.current === captured
 
   const detail = useQuery({ queryKey: projectKeys.detail(engagementId), queryFn: () => getEngagement(engagementId) })
+  /* Planning readiness subscription (same projection/key as the planning
+     panel): polled so a completed planning bundle is noticed from the
+     workspace without the panel mounted. */
+  const planning = useQuery({
+    queryKey: ['real', 'planning', engagementId],
+    queryFn: () => fetchPlanning(engagementId),
+    enabled: agents.ready,
+    refetchInterval: 15_000,
+  })
   const threads = useQuery({ queryKey: ['real', 'threads', engagementId], queryFn: () => listThreads(engagementId), enabled: agents.ready })
   const allThreads = useMemo(() => [...(threads.data?.threads ?? [])].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [threads.data])
   const filteredThreads = useMemo(() => allThreads.filter((t) => t.kind === kindFilter), [allThreads, kindFilter])
@@ -259,13 +268,37 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
       const pending = { requestId: newRequestId(), threadId: null, kind }
       return dispatch(pending, () => createThread(engagementId, { requestId: pending.requestId, kind }))
     },
-    onSuccess: (result) => {
+    onSuccess: (result, kind) => {
       if (!current(result.scope) || result.outcome.kind !== 'accepted') return
       void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] })
+      setKindFilter(kind)
       setSelectedThreadId(result.outcome.threadId)
+      if (kind === 'execution' && autoRequested.current === engagementId) setAutoTransitioned(true)
     },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'Recovery identity could not be saved; nothing dispatched.'),
   })
+
+  /* W22 auto-transition (operator decision: prepare the tab + thread only —
+     never Send). Once the planning bundle is ready and the one-way handoff is
+     confirmed, create the execution thread exactly once and switch the
+     workspace to it. The request goes through the same ledger/dispatch path
+     as a manual click; a refused creation is not retried. */
+  const hasExecutionThread = allThreads.some((t) => t.kind === 'execution')
+  const [autoTransitioned, setAutoTransitioned] = useState(false)
+  const autoRequested = useRef<string | null>(null)
+  useEffect(() => {
+    if (autoRequested.current === engagementId || autoTransitioned) return
+    if (hasExecutionThread) return
+    if (detail.data?.handoffConfirmedAt == null) return
+    if (planning.data?.readiness.state !== 'ready') return
+    if (threads.isPending || activeRunId || createThreadByKind.isPending || unconfirmed) return
+    /* Keep the dispatch scope stable: wait until the threads effect has
+       selected an existing thread (or there is none to select). */
+    if (selectedThreadId === null && filteredThreads.length > 0) return
+    autoRequested.current = engagementId
+    setDispatchError(null)
+    createThreadByKind.mutate('execution')
+  }, [engagementId, autoTransitioned, hasExecutionThread, detail.data, planning.data, threads.isPending, activeRunId, unconfirmed, selectedThreadId, filteredThreads.length, createThreadByKind])
 
   const send = useMutation({
     mutationFn: async (message: string) => {
@@ -397,6 +430,11 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
       {recovery && (
         <Banner tone="warn" title="Observation needs recovery" action={<Button size="sm" variant="secondary" icon={RefreshCw} onClick={() => { void snapshot.refetch(); void runs.refetch(); setRecovery(null) }}>Refresh view</Button>}>
           {recovery}
+        </Banner>
+      )}
+      {autoTransitioned && selectedKind === 'execution' && (
+        <Banner tone="ok" title="Planning handoff is confirmed — execution thread ready" action={<Button size="sm" variant="ghost" onClick={() => setAutoTransitioned(false)}>Dismiss</Button>}>
+          All required plan documents are ready, so the execution thread was created and selected. Review it, then press Send to start execution — nothing is dispatched automatically.
         </Banner>
       )}
 
