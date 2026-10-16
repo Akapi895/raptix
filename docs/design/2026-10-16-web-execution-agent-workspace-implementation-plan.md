@@ -6,6 +6,13 @@
   agent được spawn, thông tin chi tiết và các thao tác được hỗ trợ.
 - **Tiếp nối:** [Project Workspace UI](2026-10-16-web-project-workspace-ui-implementation-plan.md).
 - **Ưu tiên:** UI mock trước; kiểm tra capabilities và tích hợp real theo khả năng có thật.
+- **Cập nhật O01 (2026-10-16):** khi merge `2012e69` tên mục được chốt lại thành
+  **AI Workspace + Execution + C2 Sessions** — bố cục hội thoại giữa + Agents/Context
+  (kèm drawer lịch sử) thuộc mục **AI Workspace**; mục **Execution** giữ bảng
+  operation/run và tool-call trace (inspector dạng modal giữa màn hình). Các đoạn
+  dưới đây nói "hội thoại nằm bên trong Execution" đọc theo naming cũ; đích UX và
+  ràng buộc capability không đổi. Lộ trình vận hành:
+  [mock-to-operational plan](2026-10-16-web-mock-to-operational-system-implementation-plan.md).
 
 ## 1. Mục tiêu sản phẩm và quan hệ với plan trước
 
