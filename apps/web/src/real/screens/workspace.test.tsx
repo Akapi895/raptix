@@ -52,6 +52,25 @@ const APPROVAL = {
   reason: 'Policy requires operator approval for shell commands', createdAtSeconds: 1791988800, source: 'workspace',
 }
 
+const PLANNING_READY = {
+  version: 1, engagementId: 'eng-1',
+  documents: {
+    roe: { state: 'ready', content: { engagement_name: 'E', client: 'C', start_date: '2026-10-01', end_date: '2026-10-31', engagement_type: 'external', testing_window: 'Mon-Fri 9-17', authorization_reference: 'AUTH-1' } },
+    conops: { state: 'ready', content: { engagement_name: 'E', executive_summary: 'Summary' } },
+    deconfliction: { state: 'ready', content: { engagement_name: 'E' } },
+    opplan: { state: 'ready', content: { engagement_name: 'E', threat_profile: 'tier-2' } },
+  },
+  bundle: { roe: 'ready', conops: 'ready', deconfliction: 'ready', opplan: 'ready', 'threat-profile': 'ready', contact: 'ready', 'data-handling': 'ready', abort: 'ready', cleanup: 'ready' },
+  readiness: { state: 'ready', reasons: [], runtimeSignal: 'not_observed' },
+}
+
+const PLANNING_BLOCKED = {
+  version: 1, engagementId: 'eng-1',
+  documents: { roe: { state: 'missing' }, conops: { state: 'missing' }, deconfliction: { state: 'missing' }, opplan: { state: 'missing' } },
+  bundle: { roe: 'missing', conops: 'missing', deconfliction: 'missing', opplan: 'missing', 'threat-profile': 'missing', contact: 'missing', 'data-handling': 'missing', abort: 'missing', cleanup: 'missing' },
+  readiness: { state: 'blocked', reasons: ['required documents are missing'], runtimeSignal: 'not_observed' },
+}
+
 function stubApi(over: {
   threads?: unknown[]
   snapshot?: unknown
@@ -59,6 +78,7 @@ function stubApi(over: {
   runtimeCtx?: unknown
   approvals?: unknown
   runStatus?: string
+  planning?: unknown
 } = {}) {
   const calls: { url: string; init?: RequestInit; body?: Record<string, unknown> }[] = []
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -71,6 +91,7 @@ function stubApi(over: {
     if (url.endsWith('/threads') && init?.method === 'POST') return new Response(JSON.stringify(ACK({ requestId: body?.requestId, threadId: body?.kind === 'execution' ? 'th-exec' : 'th-plan' })), { status: 201 })
     if (url.endsWith('/approvals') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', approvals: over.approvals ?? [], source: 'workspace' }), { status: 200 })
     if (url.endsWith('/approvals') && init?.method === 'POST') return new Response(JSON.stringify({ ok: true, requestId: (body as { requestId?: string }).requestId, action: body?.action, decidedAtSeconds: 1791988800 }), { status: 200 })
+    if (url.endsWith('/plan-docs')) return new Response(JSON.stringify(over.planning ?? PLANNING_BLOCKED), { status: 200 })
     if (url.includes('/runtime-context')) return new Response(JSON.stringify(over.runtimeCtx ?? RUNTIME_CTX(false)), { status: 200 })
     if (url.includes('/threads/') && url.endsWith('/events')) return new Response('unexpected', { status: 404 })
     if (url.match(/\/runs\/[^/]+$/) && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', threadId: 'th-plan', runId: 'run-1', requestId: 'req-abc12345', rawStatus: over.runStatus ?? 'running', createdAt: '2026-10-14T08:00:00.000Z', updatedAt: '2026-10-14T08:00:02.000Z', source: 'runtime' }), { status: 200 })
@@ -253,5 +274,26 @@ describe('RealWorkspace', () => {
     ui(<RealWorkspace />)
     await screen.findByRole('button', { name: /New planning thread/ })
     expect(screen.getByText(/No planning thread yet/)).toBeTruthy()
+  })
+
+  it('auto-creates and selects the execution thread once planning is ready and the handoff is confirmed — without dispatching a run', async () => {
+    const calls = stubApi({ planning: PLANNING_READY })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await screen.findByText('th-plan')
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST')).toBe(true))
+    const posted = calls.find((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST')
+    expect(posted?.body).toMatchObject({ kind: 'execution' })
+    expect(await screen.findByText(/nothing is dispatched automatically/)).toBeTruthy()
+    expect(calls.some((c) => c.url.endsWith('/runs') && c.init?.method === 'POST')).toBe(false)
+  })
+
+  it('does not auto-create the execution thread before the handoff is confirmed', async () => {
+    const calls = stubApi({ planning: PLANNING_READY, engagement: ENGAGEMENT(null) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await screen.findByText('th-plan')
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 60)) })
+    expect(calls.some((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST')).toBe(false)
   })
 })
