@@ -152,6 +152,34 @@ describe('real finding writes', () => {
   })
 })
 
+describe('real evidence reads', () => {
+  it('lists the evidence linked into curated findings, filtered by kind and text', async () => {
+    vi.mocked(api.fetchCuratedFindings).mockResolvedValue(view([
+      curated({ id: 'CF-1', evidence: [{ id: 'EV-1', kind: 'artifact', artifactPath: 'captures/admin.png', digest: null, producer: 'recon', createdAt: '2026-10-13T09:00:00.000Z' }] }),
+      curated({ id: 'CF-2', evidence: [{ id: 'EV-2', kind: 'digest', artifactPath: null, digest: 'abcdef0123456789', producer: null, createdAt: '2026-10-13T09:30:00.000Z' }] }),
+    ]))
+    const all = await createRealFindingService().listEvidence(ctx, {})
+    expect(all.ok && all.data.kinds).toEqual(['artifact', 'digest'])
+    expect(all.ok && all.data.items.map((e) => [e.ref, e.name, e.findingId])).toEqual([
+      ['EV-1', 'admin.png', 'CF-1'],
+      ['EV-2', 'digest abcdef012345', 'CF-2'],
+    ])
+    const artifacts = await createRealFindingService().listEvidence(ctx, { kind: 'artifact' })
+    expect(artifacts.ok && artifacts.data.items.map((e) => e.ref)).toEqual(['EV-1'])
+  })
+
+  it('reports a missing evidence reference as not-found and an unverified integrity baseline', async () => {
+    vi.mocked(api.fetchCuratedFindings).mockResolvedValue(view([curated({ id: 'CF-1' })]))
+    vi.mocked(api.getEngagement).mockResolvedValue({ id: 'RT-1', displayName: 'Lab' } as never)
+    const missing = await createRealFindingService().getEvidence(ctx, 'EV-404')
+    expect(missing).toEqual({ ok: false, failure: { kind: 'not-found', message: 'ID EV-404 does not exist or is not available for your account.' } })
+    vi.mocked(api.fetchCuratedFindings).mockResolvedValue(view([curated({ id: 'CF-1', evidence: [{ id: 'EV-1', kind: 'artifact', artifactPath: 'a.png', digest: null, producer: null, createdAt: '2026-10-13T09:00:00.000Z' }] })]))
+    const found = await createRealFindingService().getEvidence(ctx, 'EV-1')
+    expect(found.ok && found.data.integrity).toEqual({ status: 'unverified' })
+    expect(found.ok && found.data.findings.map((f) => f.id)).toEqual(['CF-1'])
+  })
+})
+
 describe('real feature service composition', () => {
   it('serves the findings adapter only when the capability is supported', async () => {
     const supported = createRealFeatureServices({ version: 1, mode: 'multi-user', capabilities: { findings: { supported: true, available: true } } } as never)

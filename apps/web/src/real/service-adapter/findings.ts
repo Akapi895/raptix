@@ -1,13 +1,13 @@
 import type { Evidence, Finding, FindingStatus, Severity } from '../../domain/entities'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
 import type {
-  EvidenceListRead, EvidenceDetailRead,
+  EvidenceListRead, EvidenceDetailRead, EvidenceView,
   FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingSaveInput,
   FindingService, FindingSort, FindingTransitionTarget,
 } from '../../features/findings/service'
 import {
   createCuratedFinding, fetchCuratedFindings, getEngagement, transitionCuratedFinding, updateCuratedFinding,
-  type CuratedFindingView,
+  type CuratedFindingsView, type CuratedFindingView,
 } from '../api'
 import { ApiTransportError } from '../transport'
 import { REAL_CONTROL_GAPS } from './control-gaps'
@@ -164,6 +164,29 @@ function versionTracker() {
   }
 }
 
+type CuratedEvidenceRow = CuratedFindingView['evidence'][number]
+
+function evidenceName(row: CuratedEvidenceRow): string {
+  if (row.artifactPath) return row.artifactPath.split('/').pop() ?? row.artifactPath
+  return row.digest ? `digest ${row.digest.slice(0, 12)}` : row.id
+}
+
+/** Evidence rows linked into the engagement's curated findings; each row is one finding's reference. */
+function evidenceRows(view: CuratedFindingsView, engagementId: string): EvidenceView[] {
+  return view.findings.flatMap((finding) => finding.evidence.map((row) => ({
+    ref: row.id,
+    name: evidenceName(row),
+    masked: false,
+    kind: row.kind,
+    source: row.producer ?? '',
+    at: displayTime(row.createdAt),
+    by: '',
+    projectId: engagementId,
+    findingId: finding.id,
+    sensitive: false,
+  })))
+}
+
 /** Unsupported unless the request carries no field the curated workflow would silently drop. */
 function unsupportedSaveField(input: FindingSaveInput): string | null {
   if (input.severityReason) return 'finding.severityRationale'
@@ -243,7 +266,32 @@ export function createRealFindingService(): FindingService {
     attachEvidence: () => unsupportedControl<Finding>('finding.evidenceLink'),
     uploadEvidence: () => unsupportedControl<Evidence>('finding.evidenceUpload'),
     recordRetest: () => unsupportedControl<Finding>('finding.retestRecord'),
-    listEvidence: () => unsupportedControl<EvidenceListRead>('finding.evidenceLink'),
-    getEvidence: () => unsupportedControl<EvidenceDetailRead>('finding.evidenceLink'),
+    listEvidence: (ctx, query = {}) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<EvidenceListRead>('Select an engagement to read its evidence.')
+      const view = await fetchCuratedFindings(ctx.projectId)
+      const all = evidenceRows(view, ctx.projectId)
+      const needle = query.q?.trim().toLowerCase() ?? ''
+      const items = all.filter((e) =>
+        (!needle || [e.ref, e.name ?? '', e.kind, e.source].some((field) => field.toLowerCase().includes(needle)))
+        && (!query.kind || e.kind === query.kind))
+      return { ok: true, data: { items, kinds: [...new Set(all.map((e) => e.kind))].sort() } }
+    }),
+
+    getEvidence: (ctx, id) => guarded(async () => {
+      const [view, engagement] = await Promise.all([fetchCuratedFindings(ctx.projectId), getEngagement(ctx.projectId)])
+      const evidence = evidenceRows(view, ctx.projectId).find((e) => e.ref === id)
+      if (!evidence) return { ok: false, failure: { kind: 'not-found', message: `ID ${id} does not exist or is not available for your account.` } }
+      const detail: EvidenceDetailRead = {
+        evidence,
+        project: { id: ctx.projectId, name: engagement.displayName, client: '' },
+        integrity: { status: 'unverified' },
+        findings: view.findings
+          .filter((f) => f.evidence.some((row) => row.id === id))
+          .map((f) => ({ id: f.id, status: f.status as FindingStatus, updated: displayTime(f.updatedAt) })),
+        canViewSensitive: false,
+        canViewOriginal: false,
+      }
+      return { ok: true, data: detail }
+    }),
   }
 }
