@@ -21,7 +21,7 @@
 /** Real panel groups `RealFeatureRoute` can compose; each maps to one lazy-loaded panel component. */
 export type PanelGroup =
   | 'operations' | 'governance' | 'fleet' | 'scope'
-  | 'reports' | 'analysis' | 'c2' | 'campaigns' | 'assets' | 'library-review'
+  | 'analysis' | 'c2' | 'campaigns' | 'assets' | 'library-review'
 
 export interface RouteSurface {
   /** Page title `RealFeatureRoute` renders in the header. */
@@ -47,11 +47,6 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
   'asset-new': { title: 'Import assets', panels: ['assets'], mockScreens: ['d-assets.tsx'] },
   'asset-scope': { title: 'Asset scope', panels: ['assets', 'scope'], mockScreens: ['d-assets.tsx'] },
   analysis: { title: 'Observed analysis', panels: ['analysis'], mockScreens: ['e-analysis.tsx'] },
-  reports: { title: 'Reports', panels: ['reports'], mockScreens: ['f-report.tsx'] },
-  'report-new': { title: 'New report', panels: ['reports'], mockScreens: ['f-report.tsx'] },
-  report: { title: 'Report editor', panels: ['reports'], mockScreens: ['f-report.tsx'] },
-  'report-preview': { title: 'Report preview', panels: ['reports'], mockScreens: ['f-report.tsx'] },
-  'report-review': { title: 'Report review', panels: ['reports'], mockScreens: ['f-report.tsx'] },
   'ai-plan': { title: 'Business plan', panels: ['governance'], mockScreens: ['g-plan.tsx'] },
   'ai-plan-review': { title: 'Plan review', panels: ['governance'], mockScreens: ['g-plan.tsx'] },
   'ai-plan-compare': { title: 'Plan revisions', panels: ['governance'], mockScreens: ['g-plan.tsx'] },
@@ -63,4 +58,4 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
 }
 
 /** Route keys whose mock screen is the operational UI in both modes (plan 2026-10-16 screens unification); `router/host.tsx` renders them before `REAL_PAGES`. */
-export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector'])
+export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'reports', 'report-new', 'report', 'report-preview', 'report-review'])

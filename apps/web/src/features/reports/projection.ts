@@ -5,6 +5,7 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
+import { DATA_MODE } from '../../real/mode'
 import { closureEvidence, reportChecks, type NoFind, type RCheck } from './service'
 
 export interface ReportValidationRead {
@@ -30,6 +31,19 @@ export function readReportExclusions(services: ConsoleServices, ctx: RequestCont
   return projectView(services, ctx, 'report-ai-exclusions', (db) => ({ findings: scopedRows(db, ctx, db.findings).filter((f) => f.status === 'ai_suggested').map(({ id, projectId }) => ({ id, projectId })) }))
 }
 
-export function useReportValidation(): ReportValidationRead { return useServiceProjection(readReportValidation) }
-export function useReportSourceCounts(): { operations: number; evidence: number } { return useServiceProjection(readReportSources) }
-export function useReportExclusions(projectId?: string): { findings: { id: string; projectId: string }[] } { return useServiceProjection(readReportExclusions, projectId) }
+const NO_REAL_CHECKS: ReportValidationRead = { checks: () => [], closure: () => ({ ops: [], run: [], ev: [] }) }
+
+/* Real mode: the readiness checks and source counts come from the mock database and are not available; the screens show the registered gap instead of these values. */
+/* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
+export function useReportValidation(): ReportValidationRead {
+  if (DATA_MODE === 'real') return NO_REAL_CHECKS
+  return useServiceProjection(readReportValidation)
+}
+export function useReportSourceCounts(): { operations: number; evidence: number } {
+  if (DATA_MODE === 'real') return { operations: 0, evidence: 0 }
+  return useServiceProjection(readReportSources)
+}
+export function useReportExclusions(projectId?: string): { findings: { id: string; projectId: string }[] } {
+  if (DATA_MODE === 'real') return { findings: [] }
+  return useServiceProjection(readReportExclusions, projectId)
+}
