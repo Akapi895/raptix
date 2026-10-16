@@ -123,7 +123,7 @@ function MoreFilters({ children, active }: { children: ReactNode; active: number
  * dismissal is a session-local overlay passed into the read. Creation and
  * the detail form still use the bridged legacy routes (owner: ticket 32).
  */
-function FindingList() {
+export function FindingList() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
@@ -622,16 +622,16 @@ function FindingDetail() {
             <Card>
               <CardHeader title="Links" />
               <DescList cols={2} items={[
-                { k: 'Affected asset', v: data.assetId ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
+                { k: 'Affected asset', v: real ? <span className="text-muted">{realControlGap('finding.assetLink')}</span> : data.assetId ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
                 { k: 'Evidence', v: f.evidence.length ? f.evidence.map((id) => <button key={id} className="mr-2 whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('evidence', { id })}>{id}</button>) : <span className="text-muted">None linked</span> },
                 { k: 'Operation step', v: op && step ? <button className="whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id, tab: 'console' })}>{op.id} / {step.id} — {step.name}</button> : '—' },
                 { k: 'Confidence', v: f.status === 'ai_suggested' ? 'Low — AI inference, needs verification' : f.evidence.length ? 'Supported by linked evidence — a recorded claim, not proven exploitability' : 'Low — no evidence linked' },
-                { k: 'Reviewer decision', v: f.status === 'ai_suggested' ? 'Not submitted' : lastDecision ? `${lastDecision.text} by ${lastDecision.by}` : 'Pending' },
+                { k: 'Reviewer decision', v: real ? realControlGap('finding.reviewerHistory') : f.status === 'ai_suggested' ? 'Not submitted' : lastDecision ? `${lastDecision.text} by ${lastDecision.by}` : 'Pending' },
                 { k: 'Operation', v: op ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id} — {op.name}</button> : f.op || '—' },
-                { k: 'ATT&CK technique', v: data.techniqueName ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono> — {data.techniqueName}</button> : f.technique || 'Not applicable' },
+                { k: 'ATT&CK technique', v: real ? realControlGap('finding.techniqueLink') : data.techniqueName ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono> — {data.techniqueName}</button> : f.technique || 'Not applicable' },
                 { k: 'Client', v: proj?.client },
                 { k: 'Recorded', v: f.date },
-                { k: 'Included in reports', v: inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-accent hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
+                { k: 'Included in reports', v: real ? realControlGap('finding.reportInclusion') : inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-accent hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
               ]} />
             </Card>
             <Card>
@@ -643,8 +643,8 @@ function FindingDetail() {
               ]} />
             </Card>
             <Card>
-              <CardHeader title="Reviewer comments" sub={`${f.comments.length} comment(s)`} />
-              {f.comments.length === 0 ? <div className="mb-4 text-sm text-muted">No comments yet.</div> : (
+              <CardHeader title="Reviewer comments" sub={real ? undefined : `${f.comments.length} comment(s)`} />
+              {real ? <div className="mb-4 text-sm text-muted">{realControlGap('finding.comments')}</div> : f.comments.length === 0 ? <div className="mb-4 text-sm text-muted">No comments yet.</div> : (
                 <ul className="mb-4 space-y-3">
                   {f.comments.map((c, i) => (
                     <li key={i} className={cx('rounded-lg border p-3', f.status === 'returned' && i === f.comments.length - 1 ? 'border-bad/40 bg-bad/5' : 'border-line')}>
@@ -674,7 +674,7 @@ function FindingDetail() {
                 })}
               </ol>
               <div className="mb-3 text-xs font-medium text-muted">Change history</div>
-              {f.history.length === 0 ? <div className="text-sm text-muted">No history recorded.</div> : (
+              {real ? <div className="text-sm text-muted">{realControlGap('finding.reviewerHistory')}</div> : f.history.length === 0 ? <div className="text-sm text-muted">No history recorded.</div> : (
                 <Timeline items={[...f.history].reverse().map((h) => ({ at: h.at, title: h.text, sub: h.by, tone: /Returned/.test(h.text) ? 'bad' : /Confirmed|Resolved|resolved/.test(h.text) ? 'ok' : /review/i.test(h.text) ? 'warn' : 'accent' }))} />
               )}
             </Card>
@@ -991,6 +991,7 @@ function EvidenceInspector() {
   const masked = ev.sensitive && !orig
   const isImg = ev.kind.startsWith('Image')
   const ro = readOnly(ev.projectId)
+  const real = isRealMode()
   const createWhy = ro ? 'Project is read-only.' : !can('createFinding', ev.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot create findings.` : ''
   const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[synthetic content — no real data]'
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
@@ -1007,8 +1008,8 @@ function EvidenceInspector() {
     go('finding-new')
   }
   const chain = [
-    { at: ev.at, title: `Captured by agent ${producer?.step?.agent || producer?.invocation?.producer || '—'}`, sub: `${ev.source} · collector ${producer?.agent ? producer.agent.host : 'operator upload'}`, tone: 'cyan' as const },
-    { at: ev.at, title: 'Hash computed and stored (simulated SHA-256)', sub: 'Integrity baseline — describes the retained capture, not the truth of any finding', tone: 'accent' as const },
+    { at: ev.at, title: `Captured by agent ${producer?.step?.agent || producer?.invocation?.producer || '—'}`, sub: `${ev.source} · collector ${producer?.agent ? producer.agent.host : (real ? '—' : 'operator upload')}`, tone: 'cyan' as const },
+    ...(real ? [] : [{ at: ev.at, title: 'Hash computed and stored (simulated SHA-256)', sub: 'Integrity baseline — describes the retained capture, not the truth of any finding', tone: 'accent' as const }]),
     { at: ev.at, title: `Collected by ${ev.by}`, sub: 'Attached to the operation record', tone: 'accent' as const },
     ...data.findings.map((f) => ({ at: f.updated, title: `Linked to ${f.id}`, sub: 'Link cannot be removed from history', tone: 'ok' as const })),
   ]
@@ -1025,19 +1026,19 @@ function EvidenceInspector() {
       <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
         <div className="space-y-6">
           <Card>
-            <CardHeader title="Content" sub="Simulated preview — no real files or payloads." actions={
-              <Button size="sm" icon={orig ? EyeOff : Eye} disabled={!!origWhy} title={origWhy || (orig ? 'Return to masked view' : 'Show original content (logged)')} onClick={toggle}>{orig ? 'Mask content' : 'View Original'}</Button>
+            <CardHeader title="Content" sub={real ? undefined : 'Simulated preview — no real files or payloads.'} actions={
+              <Button size="sm" icon={orig ? EyeOff : Eye} disabled={!!origWhy || real} title={real ? (realControlGap('evidence.original') ?? '') : (origWhy || (orig ? 'Return to masked view' : 'Show original content (logged)'))} onClick={toggle}>{orig ? 'Mask content' : 'View Original'}</Button>
             } />
             {origWhy && ev.sensitive && <div className="mb-3"><Locked reason={origWhy} /></div>}
             {masked ? (
               <div className="flex h-44 items-center justify-center rounded-lg border border-line bg-bg text-center text-muted" role="img" aria-label="Masked content"><div><Lock size={28} className="mx-auto mb-2 text-warn" aria-hidden /><div className="text-sm">Content masked by default</div><div className="text-xs">Redaction status: Redacted</div></div></div>
-            ) : isImg ? (
+            ) : isImg && !real ? (
               <div className="flex h-44 items-center justify-center rounded-lg border border-line bg-bg text-muted" role="img" aria-label="Image preview (simulated)"><div className="text-center"><FileImage size={30} className="mx-auto mb-2" aria-hidden /><div className="text-xs">Synthetic image — {ev.name}</div></div></div>
             ) : (
-              <pre className="max-h-56 overflow-auto rounded-lg border border-line bg-bg p-3 font-mono text-xs leading-relaxed">{sample}</pre>
+              real ? <div className="text-sm text-muted">{realControlGap('evidence.preview')}</div> : <pre className="max-h-56 overflow-auto rounded-lg border border-line bg-bg p-3 font-mono text-xs leading-relaxed">{sample}</pre>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" icon={Download} disabled={!data.canViewSensitive || masked} title={!data.canViewSensitive ? 'Your role cannot download evidence.' : masked ? 'Download is available only for content you are permitted to view unmasked.' : ''} onClick={() => toast(`Download of ${ev.name} started (simulated).`, 'info')}>Download</Button>
+              <Button size="sm" icon={Download} disabled={!data.canViewSensitive || masked || real} title={real ? (realControlGap('evidence.download') ?? '') : !data.canViewSensitive ? 'Your role cannot download evidence.' : masked ? 'Download is available only for content you are permitted to view unmasked.' : ''} onClick={() => toast(`Download of ${ev.name} started (simulated).`, 'info')}>Download</Button>
             </div>
           </Card>
           <Card>
@@ -1060,7 +1061,7 @@ function EvidenceInspector() {
               { k: 'Captured time', v: ev.at },
               { k: 'Collector', v: ev.by },
               { k: 'Content type', v: ev.kind },
-              { k: 'Hash / integrity', v: <span><Mono className="break-all text-xs">sha256:{data.integrity.digest?.slice(0, 24)}…</Mono><div className="mt-1 inline-flex items-center gap-1 text-xs text-ok"><Fingerprint size={12} aria-hidden />Integrity verified (simulated)</div><div className="mt-1 text-xs text-muted">Describes the retained capture — not proof that any finding is true.</div></span> },
+              { k: 'Hash / integrity', v: real ? <span className="text-muted">{realControlGap('evidence.integrity')}</span> : <span><Mono className="break-all text-xs">sha256:{data.integrity.digest?.slice(0, 24)}…</Mono><div className="mt-1 inline-flex items-center gap-1 text-xs text-ok"><Fingerprint size={12} aria-hidden />Integrity verified (simulated)</div><div className="mt-1 text-xs text-muted">Describes the retained capture — not proof that any finding is true.</div></span> },
               { k: 'Redaction status', v: !ev.sensitive ? 'None needed' : orig ? 'Redacted by default — original shown (logged)' : 'Redacted (masked)' },
             ]} />
           </Card>
