@@ -6,7 +6,8 @@ const { cleanup, render, screen, waitFor } = await import('@testing-library/reac
 const userEvent = (await import('@testing-library/user-event')).default
 const { RealModeProvider } = await import('../bootstrap')
 const { RealPortfolio } = await import('./portfolio')
-const { RealProjectCreate } = await import('./create')
+const { RealProjectCreateDialog, RealProjectNewRoute } = await import('./create')
+const { useCreateProjectDialog, showCreateProject } = await import('../create-project-dialog')
 const { RealProjectDetail } = await import('./detail')
 const { go } = await import('../../router/navigate')
 
@@ -79,10 +80,11 @@ describe('RealPortfolio', () => {
   })
 })
 
-describe('RealProjectCreate', () => {
+describe('RealProjectCreateDialog', () => {
+  const openCreate = () => { showCreateProject(); return ui(<RealProjectCreateDialog />) }
   it('auto-derives the workspace slug and requires the authorization confirmation', async () => {
     stubApi()
-    ui(<RealProjectCreate />)
+    openCreate()
     const user = userEvent.setup()
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1 External Assessment')
     expect(screen.getByPlaceholderText('q1-external-assessment')).toHaveValue('q1-external-assessment')
@@ -95,7 +97,7 @@ describe('RealProjectCreate', () => {
 
   it('surfaces the server slug rule inline', async () => {
     stubApi()
-    ui(<RealProjectCreate />)
+    openCreate()
     const user = userEvent.setup()
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1')
     expect(screen.getAllByText(/3-63 lowercase letters/).length).toBeGreaterThan(0)
@@ -103,7 +105,7 @@ describe('RealProjectCreate', () => {
 
   it('POSTs exactly the contract fields and navigates to the created engagement', async () => {
     const fetchMock = stubApi()
-    ui(<RealProjectCreate />)
+    openCreate()
     const user = userEvent.setup()
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1 External Assessment')
     await user.type(screen.getByPlaceholderText('https://target.example.test or 10.20.0.0/24'), 'https://target.example.test')
@@ -121,6 +123,31 @@ describe('RealProjectCreate', () => {
       authorizationConfirmed: true,
       brief: 'Authorized external assessment of the public surface with a documented scope.',
     })
+    // The planner starts in the project's own AI Workspace tab, not the global workspace route.
+    await waitFor(() => expect(globalThis.location.hash).toMatch(/^#\/project\/[^?]+\?tab=ai-workspace$/))
+  })
+})
+
+describe('project creation popup', () => {
+  it('opens over the current page and never renders a separate create page', async () => {
+    stubApi()
+    go('projects')
+    ui(<RealProjectCreateDialog />)
+    expect(screen.queryByRole('dialog')).toBeNull()
+    showCreateProject()
+    expect(await screen.findByRole('dialog', { name: 'New project' })).toBeTruthy()
+    expect(globalThis.location.hash).toContain('#/projects')
+    useCreateProjectDialog.getState().hide()
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  })
+
+  it('redirects the old #/project-new link to the project list with the popup open', async () => {
+    stubApi()
+    ui(<><RealProjectNewRoute /><RealProjectCreateDialog /></>)
+    expect(await screen.findByRole('dialog', { name: 'New project' })).toBeTruthy()
+    expect(useCreateProjectDialog.getState().open).toBe(true)
+    expect(globalThis.location.hash).toContain('#/projects')
+    useCreateProjectDialog.getState().hide()
   })
 })
 

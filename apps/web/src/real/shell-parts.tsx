@@ -17,6 +17,7 @@ import { RealHeaderNotices } from './screens/notices-bell'
 import { RealSearch } from './screens/search'
 import { switchDataMode } from './mode'
 import { ProjectSwitcher } from '../shell/project-switcher'
+import { RealProjectCreateDialog } from './screens/create'
 import { Avatar, Button, IconButton, Segmented, cx } from '../ui'
 
 function RealProfileMenu(): ReactElement {
@@ -68,6 +69,7 @@ export function RealTopbar({ openMobile }: { openMobile: () => void }): ReactEle
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-side px-4 lg:px-6 xl:gap-3">
       <IconButton icon={MenuIcon} label="Open menu" onClick={openMobile} className="lg:hidden" />
       <ProjectSwitcher />
+      <RealProjectCreateDialog />
       <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>
       <RealSearch />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
