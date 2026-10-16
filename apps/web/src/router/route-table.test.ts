@@ -10,7 +10,7 @@ import { FEATURE_ROUTE_SURFACES, MIGRATED_ROUTES, type PanelGroup } from './rout
 import { hasRoute } from './registry'
 
 const KNOWN_PANEL_GROUPS: ReadonlySet<PanelGroup> = new Set([
-  'operations', 'governance', 'fleet', 'scope', 'findings', 'curation',
+  'operations', 'governance', 'fleet', 'scope',
   'reports', 'analysis', 'c2', 'campaigns', 'assets', 'library-review',
 ])
 
@@ -45,7 +45,7 @@ describe('FEATURE_ROUTE_SURFACES', () => {
     expect(Object.keys(FEATURE_ROUTE_SURFACES).sort()).toEqual([
       'agent', 'agents', 'ai-branch', 'ai-fanout', 'ai-plan', 'ai-plan-compare', 'ai-plan-review',
       'analysis', 'asset', 'asset-new', 'asset-scope', 'c2', 'c2-channel', 'c2-console', 'c2-session',
-      'evidence', 'evidence-inspector', 'operation',
+      'operation',
       'operation-new', 'operation-schedule', 'operations', 'playbook-review', 'preflight',
       'report', 'report-new', 'report-preview', 'report-review', 'reports',
     ].sort())

@@ -20,7 +20,7 @@
 
 /** Real panel groups `RealFeatureRoute` can compose; each maps to one lazy-loaded panel component. */
 export type PanelGroup =
-  | 'operations' | 'governance' | 'fleet' | 'scope' | 'findings' | 'curation'
+  | 'operations' | 'governance' | 'fleet' | 'scope'
   | 'reports' | 'analysis' | 'c2' | 'campaigns' | 'assets' | 'library-review'
 
 export interface RouteSurface {
@@ -46,8 +46,6 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
   asset: { title: 'Asset detail', panels: ['assets'], mockScreens: ['d-assets.tsx'] },
   'asset-new': { title: 'Import assets', panels: ['assets'], mockScreens: ['d-assets.tsx'] },
   'asset-scope': { title: 'Asset scope', panels: ['assets', 'scope'], mockScreens: ['d-assets.tsx'] },
-  evidence: { title: 'Evidence', panels: ['findings'], mockScreens: ['e-findings.tsx'] },
-  'evidence-inspector': { title: 'Evidence inspector', panels: ['findings'], mockScreens: ['e-findings.tsx'] },
   analysis: { title: 'Observed analysis', panels: ['analysis'], mockScreens: ['e-analysis.tsx'] },
   reports: { title: 'Reports', panels: ['reports'], mockScreens: ['f-report.tsx'] },
   'report-new': { title: 'New report', panels: ['reports'], mockScreens: ['f-report.tsx'] },
@@ -65,4 +63,4 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
 }
 
 /** Route keys whose mock screen is the operational UI in both modes (plan 2026-10-16 screens unification); `router/host.tsx` renders them before `REAL_PAGES`. */
-export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new'])
+export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector'])
