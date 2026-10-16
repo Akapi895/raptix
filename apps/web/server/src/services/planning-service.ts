@@ -32,7 +32,28 @@ function projectContent(name: keyof typeof PUBLIC_FIELDS, payload: Record<string
   }));
 }
 
+/** O06: the readable/public view of one document's payload (same projection as the planning view). */
+export function projectContentFor(name: PlanningDocumentName, payload: Record<string, unknown>): Record<string, unknown> | null {
+  return name in PUBLIC_FIELDS ? projectContent(name as keyof typeof PUBLIC_FIELDS, payload) : null;
+}
+
 async function readDocument(root: string, slug: string, name: PlanningDocumentName): Promise<ReadDocument> {
+  const raw = await readDocumentSource(root, slug, name);
+  if (raw.state !== 'present') return { state: raw.state === 'oversized' ? 'invalid' : raw.state };
+  let payload: unknown;
+  try { payload = JSON.parse(raw.text); } catch { return { state: 'invalid' }; }
+  if (!validators[name]!(payload)) return { state: 'invalid' };
+  return { state: 'ready', payload: payload as Record<string, unknown> };
+}
+
+/**
+ * O06 (ADR-0083): the hardened raw read behind both planning views and the
+ * document draft API. Returns the bounded raw bytes when the file is a
+ * regular, non-symlink file inside the canonical plan directory, plus the
+ * file mtime; `oversized` files are refused without content. Validity is the
+ * caller's job (parse + `validateDocument`).
+ */
+export async function readDocumentSource(root: string, slug: string, name: PlanningDocumentName): Promise<{ state: 'present'; text: string; updatedAt: string } | { state: 'oversized' } | { state: 'missing' } | { state: 'unavailable' }> {
   let canonicalRoot: string;
   try { canonicalRoot = await realpath(root); } catch { return { state: 'unavailable' }; }
   try {
@@ -48,6 +69,7 @@ async function readDocument(root: string, slug: string, name: PlanningDocumentNa
     if (!info.isFile()) return { state: 'unavailable' };
     const handle = await open(candidate, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     let text: string;
+    let updatedAt: string;
     try {
       const opened = await handle.stat();
       if (!opened.isFile() || opened.ino !== info.ino || opened.dev !== info.dev) return { state: 'unavailable' };
@@ -55,7 +77,7 @@ async function readDocument(root: string, slug: string, name: PlanningDocumentNa
         const expected = path.join(canonicalRoot, ...segments.slice(0, i));
         if ((await lstat(expected)).isSymbolicLink() || await realpath(expected) !== expected) return { state: 'unavailable' };
       }
-      if (opened.size > MAX_BYTES) return { state: 'invalid' };
+      if (opened.size > MAX_BYTES) return { state: 'oversized' };
       const buffer = Buffer.alloc(MAX_BYTES + 1);
       let total = 0;
       while (total < buffer.length) {
@@ -63,16 +85,22 @@ async function readDocument(root: string, slug: string, name: PlanningDocumentNa
         if (bytesRead === 0) break;
         total += bytesRead;
       }
-      if (total > MAX_BYTES) return { state: 'invalid' };
+      if (total > MAX_BYTES) return { state: 'oversized' };
       text = buffer.subarray(0, total).toString('utf8');
+      updatedAt = opened.mtime.toISOString();
     } finally { await handle.close(); }
-    let payload: unknown;
-    try { payload = JSON.parse(text); } catch { return { state: 'invalid' }; }
-    if (!validators[name]!(payload)) return { state: 'invalid' };
-    return { state: 'ready', payload: payload as Record<string, unknown> };
+    return { state: 'present', text, updatedAt };
   } catch (error) {
     return { state: (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'missing' : 'unavailable' };
   }
+}
+
+/** O06: schema errors for one document's parsed payload, formatted for the draft API. */
+export function validateDocument(name: PlanningDocumentName, payload: unknown): string[] {
+  if (!validators[name]!(payload)) {
+    return (validators[name]!.errors ?? []).map(error => `${error.instancePath || '/'} ${error.message ?? 'is invalid'}`);
+  }
+  return [];
 }
 
 export async function readPlanningView(workspaceRoot: string, project: ProjectRecord, metadataVerified: boolean): Promise<PlanningView> {

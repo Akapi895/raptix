@@ -1,7 +1,7 @@
-﻿/** Real planning panel tests (ticket 04): documents, readiness, one-way handoff. */
+/** Real planning panel tests (ticket 04): documents, readiness, one-way handoff. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
+const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query')
 const { RealPlanningPanel } = await import('./planning-panel')
@@ -81,5 +81,78 @@ describe('RealPlanningPanel', () => {
     renderPanel({ engagementId: 'eng-1', handoffConfirmedAt: null })
     expect(await screen.findByText('Could not load planning documents')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+  })
+})
+
+describe('RealPlanningPanel document editor (O06)', () => {
+  const SOURCE = JSON.stringify({ engagement_name: 'E', executive_summary: 'External assessment of the perimeter.' })
+  const DIGEST = 'a'.repeat(64)
+  const docSource = (over: Record<string, unknown> = {}) => ({
+    version: 1, engagementId: 'eng-1', name: 'conops', state: 'ready',
+    digest: DIGEST, updatedAt: '2026-10-16T09:00:00.000Z', sizeBytes: SOURCE.length,
+    source: SOURCE, validation: { valid: true, errors: [] }, readable: { engagement_name: 'E' }, draft: null,
+    ...over,
+  })
+
+  function stubEditorApi(doc: unknown, respond: (url: string, init: RequestInit | undefined) => Response) {
+    const calls: { url: string; init?: RequestInit; body?: unknown }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      calls.push({ url, init, body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined })
+      if (url.endsWith('/plan-docs')) return new Response(JSON.stringify(VIEW()), { status: 200 })
+      if (url.endsWith('/documents/conops') && (init?.method === undefined || init.method === 'GET')) return new Response(JSON.stringify(doc), { status: 200 })
+      return respond(url, init)
+    }))
+    return calls
+  }
+
+  async function openConopsEditor() {
+    renderPanel({ engagementId: 'eng-1', handoffConfirmedAt: null })
+    const card = await screen.findByTestId('plan-doc-conops')
+    await userEvent.setup().click(within(card).getByRole('button', { name: 'View source & draft' }))
+    return await screen.findByTestId('document-editor-conops')
+  }
+
+  it('opens the editor from a ready card, prefills the source and saves a server-side draft', async () => {
+    const calls = stubEditorApi(docSource(), (_url, init) => {
+      if (init?.method === 'PUT') {
+        return new Response(JSON.stringify(docSource({ draft: { body: SOURCE, baseDigest: DIGEST, updatedBy: 'u1', updatedAt: '2026-10-16T09:05:00.000Z' } })), { status: 200 })
+      }
+      return new Response('unexpected', { status: 404 })
+    })
+    await openConopsEditor()
+    const editor = screen.getByTestId('document-editor-conops')
+    const textarea = within(editor).getByLabelText('Concept of Operations draft') as HTMLTextAreaElement
+    expect(textarea.value).toBe(SOURCE)
+    await userEvent.setup().type(textarea, ' ')
+    await userEvent.setup().click(within(editor).getByRole('button', { name: 'Save draft' }))
+    await screen.findByText(/Draft saved server-side/)
+    const put = calls.find((c) => c.init?.method === 'PUT')
+    expect(put?.body).toEqual({ body: `${SOURCE} `, baseDigest: DIGEST })
+  })
+
+  it('publishes with the digest precondition and surfaces a 409 conflict without clobbering', async () => {
+    const calls = stubEditorApi(docSource(), (_url, init) => {
+      if (init?.method === 'POST') return new Response(JSON.stringify({ error: { code: 'conflict', message: 'The document changed after this draft was loaded (current digest bb12); reload the document and reapply your edit.' } }), { status: 409 })
+      return new Response('unexpected', { status: 404 })
+    })
+    await openConopsEditor()
+    const editor = screen.getByTestId('document-editor-conops')
+    await userEvent.setup().click(within(editor).getByRole('button', { name: 'Publish to workspace' }))
+    await screen.findByText(/changed after this draft was loaded/)
+    const post = calls.find((c) => c.init?.method === 'POST')
+    expect(post?.url).toContain('/documents/conops/publish')
+    expect(post?.body).toEqual({ body: SOURCE, baseDigest: DIGEST })
+    expect(within(editor).queryByRole('button', { name: 'Discard draft' })).toBeNull()
+  })
+
+  it('hides publishing for ROE and points at the Scope & ROE workflow', async () => {
+    stubEditorApi(docSource({ name: 'roe' }), () => new Response('unexpected', { status: 404 }))
+    renderPanel({ engagementId: 'eng-1', handoffConfirmedAt: null })
+    const card = await screen.findByTestId('plan-doc-roe')
+    await userEvent.setup().click(within(card).getByRole('button', { name: 'View source & draft' }))
+    const editor = await screen.findByTestId('document-editor-roe')
+    expect(within(editor).queryByRole('button', { name: 'Publish to workspace' })).toBeNull()
+    expect(editor.textContent).toContain('Scope & ROE revision workflow')
   })
 })

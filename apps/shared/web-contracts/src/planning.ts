@@ -34,6 +34,31 @@ export interface PlanningView {
   readiness: { state: 'ready' | 'blocked'; reasons: string[]; runtimeSignal: 'not_observed' }
 }
 
+// -- O06 (ADR-0083): document source + draft views ----------------------
+// One read of the published file with both faces (raw source and the public
+// projection), the digest precondition base, schema validation errors and the
+// actor's saved draft. Drafts live server-side; publish is a separate,
+// preconditioned write.
+
+export interface DocumentValidation { valid: boolean; errors: string[] }
+export interface DocumentDraftView { body: string; baseDigest: string | null; updatedBy: string; updatedAt: string }
+export interface DocumentSourceView {
+  version: 1
+  engagementId: string
+  name: PlanningDocumentName
+  state: PlanningState
+  /** sha256 of the published bytes; null when the document is absent. */
+  digest: string | null
+  updatedAt: string | null
+  sizeBytes: number
+  /** Raw bounded text when the file is readable (ready or invalid). */
+  source: string | null
+  validation: DocumentValidation
+  /** Public-field projection of a schema-valid document. */
+  readable: Record<string, unknown> | null
+  draft: DocumentDraftView | null
+}
+
 const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(x => typeof x === 'string')
 const fields = (v: unknown, names: string[]): boolean => isRecord(v) && names.every(n => typeof v[n] === 'string')
 const optional = (v: Record<string, unknown>, name: string, check: (x: unknown) => boolean): boolean => v[name] === undefined || check(v[name])
@@ -53,6 +78,22 @@ export function isPlanningContent(name: string, value: unknown): boolean {
   if (name === 'opplan') return fields(value, ['threat_profile']) && optional(value, 'objectives', rows(x =>
     fields(x, ['id', 'title', 'description', 'phase']) && isRecord(x) && optional(x, 'status', y => typeof y === 'string') && optional(x, 'blocked_by', strings)))
   return false
+}
+
+export function isDocumentSourceView(value: unknown): value is DocumentSourceView {
+  const states = ['ready', 'missing', 'invalid', 'unavailable']
+  if (!isRecord(value) || value.version !== 1 || typeof value.engagementId !== 'string') return false
+  if (!PLANNING_DOCUMENTS.includes(value.name as PlanningDocumentName)) return false
+  if (!isRecord(value.validation) || typeof value.validation.valid !== 'boolean' || !strings(value.validation.errors)) return false
+  if (value.digest !== null && typeof value.digest !== 'string') return false
+  if (value.updatedAt !== null && typeof value.updatedAt !== 'string') return false
+  if (value.source !== null && typeof value.source !== 'string') return false
+  if (typeof value.sizeBytes !== 'number' || !states.includes(String(value.state))) return false
+  if (value.readable !== null && !isRecord(value.readable)) return false
+  if (value.draft === null) return true
+  return isRecord(value.draft) && typeof value.draft.body === 'string' &&
+    (value.draft.baseDigest === null || typeof value.draft.baseDigest === 'string') &&
+    typeof value.draft.updatedBy === 'string' && typeof value.draft.updatedAt === 'string'
 }
 
 export function isPlanningView(value: unknown): value is PlanningView {

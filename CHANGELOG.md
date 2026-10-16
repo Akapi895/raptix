@@ -10,6 +10,15 @@ design spec, §13.4).
 
 ### Added
 
+- Web console: planning documents gain server-side drafts with a digest
+  precondition (O06, ADR-0083) — the Planning panel can open a source/draft
+  editor for every allowlisted plan document; drafts persist in Postgres,
+  survive refresh and restarts, and stay invisible to agents. Saving or
+  publishing with a stale base digest answers 409 instead of clobbering a
+  concurrent browser edit or a model rewrite, publishing validates the schema
+  and atomically replaces the workspace file, and ROE publishing is refused in
+  favour of the Scope & ROE revision workflow. Reads stay viewer-level;
+  writes require the operator role and are audited.
 - Web console: the project AI Workspace combines a recipient-aware conversation
   with an Agents/Context panel and an execution-history drawer; the Execution
   surface keeps the operations/runs table plus the tool-call trace. Mock instances

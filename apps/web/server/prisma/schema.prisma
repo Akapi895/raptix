@@ -55,6 +55,7 @@ model Engagement {
   campaigns Campaign[]
   vaultSecrets VaultSecret[]
   c2Commands C2Command[]
+  documentDrafts PlanDocumentDraft[]
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -282,6 +283,28 @@ model WebAuditEntry {
   createdAt DateTime @default(now())
   @@index([engagementId, createdAt])
   @@index([actorId, createdAt])
+}
+
+// -- O06 (ADR-0083): persistent plan document drafts --------------------
+// A draft is Web-side work-in-progress for one allowlisted planning
+// document. The published file stays the single authority the runtime
+// reads; drafts are invisible to agents until a preconditioned publish.
+// `baseDigest` is the sha256 of the published bytes the editor loaded
+// (null = document absent); publish refuses a stale base.
+
+model PlanDocumentDraft {
+  id           String     @id @default(cuid())
+  engagementId String
+  name         String
+  baseDigest   String?
+  body         String
+  updatedBy    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@unique([engagementId, name])
+  @@index([engagementId, updatedAt])
 }
 
 // Ticket 08: operator-managed scope/ROE revisions with persisted review.
