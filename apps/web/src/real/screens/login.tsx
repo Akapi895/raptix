@@ -6,32 +6,14 @@
  * token delivered here. The actor is trusted from the server session only —
  * the browser never posts a persona or role as authorization.
  */
-import { QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
 import { KeyRound, Loader2, LogOut, ShieldCheck } from 'lucide-react'
-import { fetchAuthSession, login, logout, type AuthSessionView } from '../api'
+import { login, logout } from '../api'
 import { clearWorkspaceRecovery } from '../workspace-session'
 import { Button, Input } from '../../ui'
 import { createConsoleQueryClient } from '../../state/keys'
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const SESSION_KEY = ['real', 'session'] as const
-
-interface SessionState { session: AuthSessionView | null; pending: boolean; error: Error | null; retry: () => void; deploymentId?: string }
-const SessionContext = createContext<SessionState | null>(null)
-
-/** Resolves the trusted session (null when the server is single-user local). */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useSession(): SessionState {
-  const trusted = useContext(SessionContext)
-  const list = useQuery({
-    queryKey: SESSION_KEY,
-    queryFn: () => fetchAuthSession(),
-    staleTime: 60_000,
-    enabled: trusted === null,
-  })
-  return trusted ?? { session: list.data ?? null, pending: list.isPending, error: list.error, retry: () => { void list.refetch() } }
-}
+import { SESSION_KEY, SessionContext, useSession, type SessionState } from '../session'
 
 /** Each trusted actor owns a cache; late replies can only populate the disposed cache. */
 function ActorQueries({ session, children }: { session: SessionState; children: ReactNode }): ReactElement {

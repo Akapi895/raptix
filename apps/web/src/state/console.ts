@@ -27,7 +27,7 @@ import { can as policyCan, projectAccessible, readOnlyContext } from '../auth/po
 import type { CanAction } from '../domain/permissions'
 import { DATA_MODE } from '../real/mode'
 import { REAL_PERSONA } from '../real/identity'
-import { useSession } from '../real/screens/login'
+import { useSession } from '../real/session'
 import { useRealProjectList } from '../real/queries'
 import { useServices, useServicesOrNull } from './services'
 import { useAuthStore, useProjectStore } from './stores'
