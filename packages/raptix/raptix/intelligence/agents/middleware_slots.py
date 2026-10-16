@@ -789,6 +789,10 @@ def _make_hitl(*, role: str, **_: Any):
         transport=None,
         engagement_name=eid,
         agent_name=role,
+        require_bash_approval=os.environ.get("RAPTIX_HITL__REQUIRE_BASH_APPROVAL", "")
+        .strip()
+        .lower()
+        not in _HITL_FALSY,
     )
 
 
