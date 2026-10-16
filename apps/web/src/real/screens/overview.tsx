@@ -12,6 +12,7 @@ import { FolderKanban } from 'lucide-react'
 import type { ReactElement, ReactNode } from 'react'
 import { fetchOverviewC2, fetchOverviewFindings, fetchTasks, listEngagements, type OverviewC2View, type OverviewFindingsView, type TasksView } from '../api'
 import { go } from '../../router/navigate'
+import { showCreateProject } from '../create-project-dialog'
 import { parseHash } from '../../router/history'
 import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui'
 import { utcMinute } from '../format'
@@ -134,7 +135,7 @@ export function RealOverview(): ReactElement {
       <Card>
         <CardHeader title="Quick actions" />
         <div className="flex flex-wrap gap-2 p-4">
-          <Button onClick={() => go('project-new')}>Create Project</Button>
+          <Button onClick={() => showCreateProject()}>Create Project</Button>
           <Button onClick={() => go('operations')}>View all operations</Button>
           <Button onClick={() => go('tasks')}>Review pending decisions</Button>
           <Button onClick={() => go('analysis')}>View coverage</Button>
@@ -147,7 +148,7 @@ export function RealOverview(): ReactElement {
         <SourceState label="The project list" pending={engagements.isPending} error={engagements.error instanceof Error ? engagements.error : null} onRetry={() => void engagements.refetch()}>
           <div className="p-4">
             {(engagements.data ?? []).length === 0 ? (
-              <Empty icon={FolderKanban} title="No projects yet" action={<Button variant="primary" onClick={() => go('project-new')}>Create the first project</Button>}>
+              <Empty icon={FolderKanban} title="No projects yet" action={<Button variant="primary" onClick={() => showCreateProject()}>Create the first project</Button>}>
                 Projects created from the console or the CLI appear here with their live status.
               </Empty>
             ) : (

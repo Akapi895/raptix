@@ -7,15 +7,17 @@
  * (objectives, members, ROE document, scheduling) are named as not-yet
  * integrated — creating never persists them under a real label.
  */
-import { useMemo, useState, type FormEvent, type ReactElement } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, FolderPlus, Info } from 'lucide-react'
+import { FolderPlus, Info } from 'lucide-react'
 import { createEngagement, type CreateEngagementInput } from '../api'
 import { invalidateProjects, projectKeys } from '../queries'
+import { markPlanningSeed } from '../planning-seed'
+import { showCreateProject, useCreateProjectDialog } from '../create-project-dialog'
 import { go } from '../../router/navigate'
 import { useDirty, useSessionStore } from '../../state/session'
 import { useToastStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, Check, Field, Input, PageHeader, Select, Textarea } from '../../ui'
+import { Banner, Button, Card, CardHeader, Check, Field, Input, Modal, Select, Textarea } from '../../ui'
 
 const TARGET_TYPES: { value: CreateEngagementInput['targetType']; label: string }[] = [
   { value: 'web_url', label: 'Web URL' },
@@ -42,7 +44,8 @@ interface FormState {
 
 const INITIAL: FormState = { displayName: '', name: '', nameTouched: false, targetType: 'web_url', targetValue: '', brief: '', authorized: false }
 
-export function RealProjectCreate(): ReactElement {
+/** The creation form; it is hosted by the "New project" popup and reset whenever the popup closes. */
+function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactElement {
   const client = useQueryClient()
   const toast = useToastStore((s) => s.toast)
   const guarded = useSessionStore((s) => s.guarded)
@@ -75,7 +78,10 @@ export function RealProjectCreate(): ReactElement {
       invalidateProjects(client)
       void client.invalidateQueries({ queryKey: projectKeys.detail(created.id) })
       setForm(INITIAL)
-      go('project', { id: created.id })
+      useCreateProjectDialog.getState().hide()
+      /* The brief starts the planner's interview: the workspace sends it once. */
+      markPlanningSeed(created.id)
+      go('project', { id: created.id, tab: 'ai-workspace' })
     },
     onError: (error) => {
       setFormError(error instanceof Error ? error.message : 'Creating the engagement failed.')
@@ -98,16 +104,10 @@ export function RealProjectCreate(): ReactElement {
 
   return (
     <>
-      <PageHeader
-        title="New Project"
-        sub="Creates a real engagement through the API. The full demo wizard (objectives, members, ROE document, scheduling) is not integrated yet and is intentionally unavailable in real mode."
-        crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: 'New Project' }]}
-        meta={<span className="inline-flex h-6 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>}
-      />
       <form
         onSubmit={submit}
         noValidate
-        className="grid max-w-3xl grid-cols-1 gap-5"
+        className="grid grid-cols-1 gap-5"
         aria-busy={create.isPending}
       >
         {formError && (
@@ -165,7 +165,7 @@ export function RealProjectCreate(): ReactElement {
           />
         </Card>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="ghost" icon={ArrowLeft} onClick={() => guarded(() => go('projects'))}>Cancel</Button>
+          <Button variant="ghost" onClick={() => guarded(onCancel)}>Cancel</Button>
           <div className="ml-auto">
             <Button type="submit" variant="primary" icon={FolderPlus} disabled={!valid || create.isPending} title={valid ? undefined : 'Complete the required fields and confirm authorization'}>
               {create.isPending ? 'Creating…' : 'Create Engagement'}
@@ -179,4 +179,27 @@ export function RealProjectCreate(): ReactElement {
       </form>
     </>
   )
+}
+
+/** The real "New project" popup, mounted once in the real shell. */
+export function RealProjectCreateDialog(): ReactElement {
+  const open = useCreateProjectDialog((s) => s.open)
+  const hide = useCreateProjectDialog((s) => s.hide)
+  const guarded = useSessionStore((s) => s.guarded)
+  const close = (): void => guarded(hide)
+  return (
+    <Modal open={open} onClose={close} title="New project" width={760}>
+      <p className="mb-4 text-sm text-muted">Creates a real engagement through the API. The planner starts its interview from this brief when the project opens.</p>
+      <RealProjectCreateForm onCancel={close} />
+    </Modal>
+  )
+}
+
+/** Old #/project-new links: open the popup over the project list instead of a page. */
+export function RealProjectNewRoute(): ReactElement {
+  useEffect(() => {
+    showCreateProject()
+    go('projects')
+  }, [])
+  return <></>
 }

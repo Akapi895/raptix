@@ -162,6 +162,34 @@ describe('RealWorkspace', () => {
     expect(readWorkspaceDraft('eng-1', 'th-exec', 'actor-b')).toBe('')
   })
 
+  it('starts the planner with the operator brief and target once after project creation', async () => {
+    const { markPlanningSeed } = await import('../planning-seed')
+    const project = { ...ENGAGEMENT(null), displayName: 'Lab', targetType: 'ip_range', targetValue: '10.129.227.140', brief: 'Assess the lab host for the authorized exercise.' }
+    const calls = stubApi({ threads: [], engagement: project, planning: PLANNING_BLOCKED })
+    markPlanningSeed('eng-1')
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await waitFor(() => expect(calls.some((call) => call.url.endsWith('/runs') && call.init?.method === 'POST')).toBe(true))
+    const created = calls.find((call) => call.url.endsWith('/threads') && call.init?.method === 'POST')
+    expect(created?.body).toEqual(expect.objectContaining({ kind: 'planning' }))
+    const run = calls.find((call) => call.url.endsWith('/runs') && call.init?.method === 'POST')
+    expect(run?.body?.message).toEqual(expect.stringContaining('10.129.227.140'))
+    expect(run?.body?.message).toEqual(expect.stringContaining('Assess the lab host for the authorized exercise.'))
+    expect(calls.filter((call) => call.url.endsWith('/runs') && call.init?.method === 'POST')).toHaveLength(1)
+  })
+
+  it('does not send the planner brief again when a planning thread already exists', async () => {
+    const { markPlanningSeed } = await import('../planning-seed')
+    const project = { ...ENGAGEMENT(null), displayName: 'Lab', targetType: 'ip_range', targetValue: '10.129.227.140', brief: 'Brief.' }
+    const calls = stubApi({ threads: [PLANNING_THREAD], engagement: project, planning: PLANNING_BLOCKED })
+    markPlanningSeed('eng-1')
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await screen.findByLabelText('Workspace message')
+    expect(calls.filter((call) => call.init?.method === 'POST')).toHaveLength(0)
+    await waitFor(() => expect(window.sessionStorage.getItem('raptix.planning-seed.eng-1')).toBeNull())
+  })
+
   it('opens the AI workspace execution surface without dispatch and keeps checkpoint invocations observe-only', async () => {
     const calls = stubApi({ threads: [EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true), planning: PLANNING_READY, fleet: { engagementId: 'eng-1', agents: [], threads: [], branches: [{ threadId: 'th-exec', key: 'branch-recon-2', agent: 'recon', state: 'running', outcome: null, startedAt: null, endedAt: null, provenance: 'checkpoint' }], counts: {}, sources: { agents: 'catalog', threads: 'runtime', branches: 'checkpoint' }, source: 'runtime' } })
     go('project', { id: 'eng-1', tab: 'ai-workspace' })

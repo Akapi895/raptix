@@ -82,14 +82,15 @@ export function RealProjectDetail(): ReactElement {
 
   return (
     <>
-      <PageHeader
+      {/* The planning-mode AI workspace draws its own header (with the thread actions) inside the page. */}
+      {!(tab === 'ai-workspace' && data.handoffConfirmedAt === null) && <PageHeader
         title={sectionTitle(tab)}
         sub={<span><span className="font-mono">{data.id}</span> · {data.displayName}</span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: data.displayName }]}
         meta={<Status kind="project" value={data.lifecycleStatus} size="sm" />}
-      />
+      />}
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <RealConversation key={data.id} engagementId={data.id} embedded /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><RealFindingsPanel engagementId={data.id} /></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : tab === 'vault' ? <RealVaultPanel key={data.id} engagementId={data.id} /> : tab === 'audit' ? <RealAuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={sectionTitle(tab)} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><RealFindingsPanel engagementId={data.id} /></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : tab === 'vault' ? <RealVaultPanel key={data.id} engagementId={data.id} /> : tab === 'audit' ? <RealAuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={sectionTitle(tab)} />}
       </div>
     </>
   )

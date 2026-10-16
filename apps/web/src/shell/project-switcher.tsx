@@ -14,6 +14,8 @@ import { useAccessible, useActiveProject, useCan, usePolicyProjects, useMe } fro
 import { useSessionStore } from '../state/session'
 import { useProjectStore, useUiStore } from '../state/stores'
 import { Button, cx, SearchBox, Status } from '../ui'
+import { DATA_MODE } from '../real/mode'
+import { showCreateProject } from '../real/create-project-dialog'
 
 export function ProjectSwitcher() {
   const projects = usePolicyProjects()
@@ -96,7 +98,7 @@ export function ProjectSwitcher() {
             </div>
             <div className="mt-3 flex gap-2">
               <Button variant="secondary" className="flex-1" onClick={() => { setSwitcherOpen(false); go('projects') }}>View all projects</Button>
-              {can('createProject') && <Button variant="primary" className="flex-1" onClick={() => { setSwitcherOpen(false); go('project-new') }}>New project</Button>}
+              {can('createProject') && <Button variant="primary" className="flex-1" onClick={() => { setSwitcherOpen(false); if (DATA_MODE === 'real') showCreateProject(); else go('project-new') }}>New project</Button>}
             </div>
             {me.role === 'viewer' && <p className="mt-3 text-xs text-muted">Only projects you have been granted access to are available.</p>}
           </div>

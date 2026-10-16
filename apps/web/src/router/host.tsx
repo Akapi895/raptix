@@ -21,7 +21,7 @@ import { DATA_MODE } from '../real/mode'
 import { REAL_INTEGRATED_ROUTES, RealNotIntegrated } from '../real/not-integrated'
 import { FEATURE_ROUTE_SURFACES, MIGRATED_ROUTES } from './route-table'
 import { RealPortfolio } from '../real/screens/portfolio'
-import { RealProjectCreate } from '../real/screens/create'
+import { RealProjectNewRoute } from '../real/screens/create'
 import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
 import { RealAssets } from '../real/screens/assets-panel'
@@ -51,7 +51,7 @@ const RealFeatureRoute = lazy(() => import('../real/screens/feature-route').then
 const REAL_PAGES: Record<string, ComponentType | undefined> = {
   overview: RealOverview,
   projects: RealPortfolio,
-  'project-new': RealProjectCreate,
+  'project-new': RealProjectNewRoute,
   project: RealProjectDetail,
   'ai-operator': RealWorkspace,
   assets: RealAssets,

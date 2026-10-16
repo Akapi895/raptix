@@ -10,6 +10,7 @@ import { FolderPlus, RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
 import { useRealProjects } from '../queries'
 import { go } from '../../router/navigate'
+import { showCreateProject } from '../create-project-dialog'
 import { useProjectStore } from '../../state/stores'
 import { Button, Empty, Input, PageHeader, Skeleton, Status, Table, type Col } from '../../ui'
 import { utcMinute } from '../format'
@@ -72,7 +73,7 @@ export function RealPortfolio(): ReactElement {
         title="Projects"
         sub="Real engagements from the connected Raptix API. Columns without an API source show as unavailable rather than demo values."
         meta={<span className="inline-flex h-6 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>}
-        actions={<Button variant="primary" icon={FolderPlus} onClick={() => go('project-new')}>New Project</Button>}
+        actions={<Button variant="primary" icon={FolderPlus} onClick={() => showCreateProject()}>New Project</Button>}
       />
       {!ready ? (
         <Empty icon={ServerCrash} title="Projects are unavailable on this server">
@@ -97,7 +98,7 @@ export function RealPortfolio(): ReactElement {
             <Empty
               icon={FolderPlus}
               title={list.data.length === 0 ? 'No engagements yet' : 'No engagements match the filters'}
-              action={<Button variant="primary" icon={FolderPlus} onClick={() => go('project-new')}>New Project</Button>}
+              action={<Button variant="primary" icon={FolderPlus} onClick={() => showCreateProject()}>New Project</Button>}
             >
               {list.data.length === 0
                 ? 'Create the first engagement to start planning against the real runtime.'

@@ -27,6 +27,7 @@ import { utcMinute } from '../format'
 import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
 import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
 import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
+import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../planning-seed'
 import { RealOperationsPanel as RealOperationsHistory } from './operations-panel'
 import { useSession } from '../session'
 
@@ -332,6 +333,32 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'Message dispatch failed.'),
   })
+
+  /* Project creation starts the planner: when the create form flagged this
+     engagement and no planning thread exists yet, open one and send the brief
+     as its first message. The flag is consumed on read, so a reload never sends
+     it twice, and an existing planning thread always wins. */
+  const seedPending = useRef(false)
+  const seedMessage = useRef<string | null>(null)
+  useEffect(() => {
+    if (embedded) return
+    seedPending.current = hasPlanningSeed(engagementId)
+  }, [engagementId, embedded])
+  useEffect(() => {
+    if (!seedPending.current || embedded || threads.isPending || !detail.data || createThreadByKind.isPending) return
+    seedPending.current = false
+    clearPlanningSeed(engagementId)
+    if (allThreads.some((t) => t.kind === 'planning')) return
+    seedMessage.current = planningSeedMessage(detail.data)
+    setDispatchError(null)
+    createThreadByKind.mutate('planning')
+  }, [allThreads, createThreadByKind, detail.data, embedded, engagementId, threads.isPending])
+  useEffect(() => {
+    const message = seedMessage.current
+    if (message === null || selectedKind !== 'planning' || selectedThreadId === null || send.isPending) return
+    seedMessage.current = null
+    send.mutate(message)
+  }, [selectedKind, selectedThreadId, send])
 
   const answerQuestion = useMutation({
     mutationFn: async (responses: { questionId: string; value: string | string[] }[]) => {
