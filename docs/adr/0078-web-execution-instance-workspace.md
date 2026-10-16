@@ -2,8 +2,10 @@
 
 **Status: Proposed** · 2026-10-16
 
-Execution composes a recipient-aware conversation and an instance panel. AI
-instances are distinct from host agents, worker dependency nodes and C2 sessions.
+AI Workspace composes the recipient-aware conversation and instance panel;
+Execution is the operations/runs surface with the centered tool-event modal,
+and C2 Sessions stays a separate surface. AI instances are distinct from host
+agents, worker dependency nodes and C2 sessions.
 The mock feature owns an `agent-workspace` aggregate inside the existing database
 authority, scoped by actor/project/execution. All messages, drafts, questions and
 control requests commit through that authority and publish ChangeSets. Browser

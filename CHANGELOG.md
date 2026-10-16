@@ -67,6 +67,35 @@ design spec, §13.4).
   objective annotations and skill `metadata.fanout` metadata — no
   per-domain scheduler code. See `docs/adr/0077-generic-fanout-admission.md`.
 
+- Web console real mode now binds its own execution plane: a dedicated
+  `docker-compose.web-runtime.yml` layer runs `web-runtime` (LangGraph dev
+  server with the existing strict-async guard) plus `web-sandbox` on named
+  volumes and the shared `sandbox-net`, with sandbox-parity hardening
+  (`cap_drop: [ALL]`, `no-new-privileges`, memory/pid limits) on the
+  dual-homed runtime; CLI compose files and volumes stay untouched
+  (Proposed ADR-0082, pinned in `tests/test_compose_network_isolation.py`).
+- Web console: `/api/capabilities` reports a non-secret `deploymentId`
+  (validated `RAPTIX_WEB_DEPLOYMENT_ID`); the login gate passes it to the
+  session store so browser recovery keys are scoped to
+  deployment + actor + engagement and a replaced deployment cannot replay an
+  earlier deployment's drafts (Proposed ADR-0079).
+- Web console: the operations timeline projects ordinary root tool calls from
+  owned checkpoint `values.messages` through the same bounded/redacted
+  projection used for live messages (`source: checkpoint`, `runId: null`),
+  so the Execution logs view survives refresh (Proposed ADR-0080).
+- Runtime: `HITLApprovalMiddleware` reads approval requests from the
+  LangChain `ToolCallRequest` contract (args/ID via `request.tool_call`)
+  with the legacy kwargs path as fallback; `RAPTIX_HITL__REQUIRE_BASH_APPROVAL`
+  enables an explicit approve/deny policy for every `bash` invocation
+  (timeout denies, rule matching by exact command name)
+  (Proposed ADR-0081).
+- Web operations tooling: `verify-operational-m1.mjs` (deployed M1 acceptance:
+  prepare/planning/execution/vault phases), `verify-operational-storage.mjs`
+  (three-way workspace round-trip; backup/restore proving the migration
+  ledger, a vault ciphertext decrypted by the backed-up key and a restored
+  workspace manifest) and `capture-operational-release.mjs` (source digest
+  plus deployed image IDs and revision labels).
+
 ### Removed
 
 - Retired the Phase 1 core/framework/sdk-split compat shim layer ahead of the
@@ -92,6 +121,24 @@ design spec, §13.4).
   evidence moves to `benchmarks/results/published/<suite>/` without regeneration.
 
 ### Fixed
+
+- A continuous upstream SSE stream could starve the Web API's re-attestation
+  window: authorization was measured per event, so heavy traffic kept
+  resetting it and a stale connection stayed subscribed. Re-attestation now
+  uses an elapsed-time deadline and refuses to a closed `stream_closed`
+  event, forcing clients through recovery instead of silently consuming
+  another actor's stream.
+- An authenticated actor switch in real mode kept the previous actor's
+  React Query cache in flight: each login now owns a dedicated QueryClient
+  that is cancelled and cleared at the actor boundary, and session changes
+  announce themselves across tabs/focus so foreign history never renders.
+- Browser recovery storage was keyed by engagement only; keys are now
+  versioned and scoped (deployment, actor, engagement), legacy v1 entries are
+  dropped, and clearing recovery state no longer wipes unrelated UI
+  preferences.
+- `HITLApprovalMiddleware`'s bash approval rule matched substrings; commands
+  whose name merely contained `bash` (e.g. `bashfuscate`) would slip past the
+  approval gate. Matching is now anchored to the full command name.
 
 - A transient `APITimeoutError` from the LLM proxy escaped every retry layer
   and tore down the whole engagement run ("LLM proxy unreachable") — observed

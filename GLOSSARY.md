@@ -17,6 +17,17 @@ record. A finding's identity identifies a claim, not its supporting evidence.
 Copies and aliases preserve that origin; counting distinct invocations does not
 by itself establish independent corroboration.
 
+**Agent instance**: One invocation of an AI agent assigned an objective. Multiple
+instances can share the same role. An instance is distinct from a host executor
+and from the model used to produce its responses.
+
+**Spawn parent**: The instance that created another instance. This relationship
+does not, by itself, establish a dependency or authorize intervention.
+
+**Delivery path**: How an operator's message reaches its intended recipient:
+directly or through an orchestrating agent. Observing an instance does not imply
+that either delivery path is available.
+
 **Scanner capture**: The exact scanner-output bytes retained for later inspection,
 with the context needed to interpret them.
 
