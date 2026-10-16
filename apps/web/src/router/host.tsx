@@ -19,6 +19,7 @@ import { useAuthStore, useProjectStore } from '../state/stores'
 import { go, useRoute } from './navigate'
 import { DATA_MODE } from '../real/mode'
 import { REAL_INTEGRATED_ROUTES, RealNotIntegrated } from '../real/not-integrated'
+import { FEATURE_ROUTE_SURFACES } from './route-table'
 import { RealPortfolio } from '../real/screens/portfolio'
 import { RealProjectCreate } from '../real/screens/create'
 import { RealProjectDetail } from '../real/screens/detail'
@@ -41,7 +42,12 @@ import { routeComponent } from './registry'
 const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
 const RealFeatureRoute = lazy(() => import('../real/screens/feature-route').then((m) => ({ default: m.RealFeatureRoute })))
 
-/** Route keys with a real implementation mounted directly (integration tickets 03-06). */
+/**
+ * Route keys with a real implementation mounted directly (integration tickets
+ * 03-06). Keys routed through `RealFeatureRoute` come from `route-table.ts`
+ * (the one list that file and `feature-route.tsx`'s panel composition both
+ * read) instead of a second hand-written array — see route-table.ts for why.
+ */
 const REAL_PAGES: Record<string, ComponentType | undefined> = {
   overview: RealOverview,
   projects: RealPortfolio,
@@ -52,18 +58,11 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   playbooks: RealLibrary,
   'command-center': RealOverview,
   tasks: RealCommandCenter,
-  ...Object.fromEntries([
-    'operations', 'operation', 'operation-new', 'preflight', 'operation-schedule',
-    'agents', 'agent', 'ai-fanout', 'ai-branch', 'asset', 'asset-new', 'asset-scope',
-    'findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'analysis',
-    'reports', 'report-new', 'report', 'report-preview', 'report-review',
-    'ai-plan', 'ai-plan-review', 'ai-plan-compare', 'c2', 'c2-channel', 'c2-session', 'c2-console',
-  ].map((key) => [key, RealFeatureRoute])),
+  ...Object.fromEntries(Object.keys(FEATURE_ROUTE_SURFACES).map((key) => [key, RealFeatureRoute])),
   'ai-history': RealWorkspace,
   'ai-trace': RealWorkspace,
   playbook: RealLibrary,
   technique: RealLibrary,
-  'playbook-review': RealFeatureRoute,
   settings: RealSettings,
   login: RealLogin,
 }
