@@ -52,7 +52,52 @@ describe('RealPlanningPanel', () => {
     expect((await screen.findByTestId('plan-doc-roe')).textContent).toContain('external')
     expect(screen.getByTestId('plan-doc-deconfliction').textContent).toContain('not been generated yet')
     expect(screen.getByTestId('plan-doc-opplan').textContent).toContain('failed validation')
-    expect(screen.getByText('opplan: Invalid')).toBeTruthy()
+    expect(screen.queryByText('opplan: Invalid')).toBeNull()
+  })
+
+  it('shows OPPLAN in full beside the plan documents and keeps it out of the handoff bundle', async () => {
+    const opplan = { state: 'ready', content: { engagement_name: 'E', threat_profile: 'external-web-app-pentester', objectives: [
+      { id: 'OBJ-001', title: 'Enumerate the attack surface', description: 'Map pages and APIs.', phase: 'recon', status: 'completed' },
+      { id: 'OBJ-002', title: 'Exploit the admin endpoint', description: 'Verify the authz flaw.', phase: 'initial-access', status: 'pending', blocked_by: ['OBJ-001'] },
+    ] } }
+    stubApi(VIEW({
+      documents: { roe: ROE, conops: CONOPS, deconfliction: DECON, opplan },
+      bundle: { roe: 'ready', conops: 'ready', deconfliction: 'missing', opplan: 'ready', 'threat-profile': 'missing', contact: 'missing', 'data-handling': 'missing', abort: 'missing', cleanup: 'missing' },
+    }))
+    renderPanel({ engagementId: 'eng-1', handoffConfirmedAt: null })
+    const card = await screen.findByTestId('plan-doc-opplan')
+    expect(within(card).getByText('Exploit the admin endpoint')).toBeTruthy()
+    expect(within(card).getByText('Enumerate the attack surface').closest('tr')?.textContent).toContain('completed')
+    expect(within(card).getByText('Exploit the admin endpoint').closest('tr')?.textContent).toContain('OBJ-001')
+    const planDocumentGrid = screen.getByTestId('plan-doc-roe').parentElement as HTMLElement
+    expect(planDocumentGrid.contains(card)).toBe(false)
+    expect(screen.queryByText('opplan: ready')).toBeNull()
+  })
+
+  it('gives every PREPARE document a reviewable card, not only a bundle chip', async () => {
+    stubApi(VIEW({
+      bundle: { roe: 'ready', conops: 'ready', deconfliction: 'missing', opplan: 'invalid', 'threat-profile': 'ready', contact: 'ready', 'data-handling': 'ready', abort: 'ready', cleanup: 'missing' },
+    }))
+    renderPanel({ engagementId: 'eng-1', handoffConfirmedAt: null })
+    const threat = await screen.findByTestId('plan-doc-threat-profile')
+    expect(within(threat).getByRole('button', { name: 'View source & draft' })).toBeTruthy()
+    expect(within(screen.getByTestId('plan-doc-contact')).getByRole('button', { name: 'View source & draft' })).toBeTruthy()
+    expect(within(screen.getByTestId('plan-doc-cleanup')).getByRole('button', { name: 'Draft this document' })).toBeTruthy()
+  })
+
+  it('shows the schema errors of a stored document that fails validation on its card', async () => {
+    const error = "/ must have required property 'threat_profile'"
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/plan-docs')) return new Response(JSON.stringify(VIEW()), { status: 200 })
+      if (url.endsWith('/documents/opplan')) {
+        return new Response(JSON.stringify({ version: 1, engagementId: 'eng-1', name: 'opplan', state: 'invalid', digest: 'b'.repeat(64), updatedAt: '2026-10-16T09:00:00.000Z', sizeBytes: 2, source: '{}', validation: { valid: false, errors: [error] }, readable: null, draft: null }), { status: 200 })
+      }
+      return new Response('unexpected', { status: 404 })
+    }))
+    renderPanel({ engagementId: 'eng-1', handoffConfirmedAt: null })
+    const card = await screen.findByTestId('plan-doc-opplan')
+    expect(await within(card).findByText(error)).toBeTruthy()
   })
 
   it('confirms the planning handoff with the one-way PATCH', async () => {

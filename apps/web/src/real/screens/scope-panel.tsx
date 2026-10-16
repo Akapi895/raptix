@@ -122,7 +122,7 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
             <>
               <p className="text-muted">
                 Root target (always in scope): <span className="font-mono">{effective.data.rootTarget ?? '—'}</span>
-                {' · '}Inventoried in scope: <span className="font-mono">{effective.data.inScope.length === 0 ? 'none' : effective.data.inScope.join(', ')}</span>
+                {' · '}Approved in-scope targets: <span className="font-mono">{effective.data.inScope.length === 0 ? 'none yet' : effective.data.inScope.join(', ')}</span>
               </p>
               {effective.data.roe.restrictions.length > 0 && (
                 <p className="mt-2 text-muted">Restrictions: {effective.data.roe.restrictions.join(' · ')}</p>

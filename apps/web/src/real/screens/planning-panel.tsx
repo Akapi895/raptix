@@ -7,14 +7,18 @@
 import { useEffect, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bot, CheckCircle2, CircleAlert, FileText, Lock, PenLine, RefreshCw } from 'lucide-react'
-import { PLANNING_DOCUMENTS, type ConopsView, type DeconflictionView, type OpplanView, type PlanningDocument, type PlanningView, type PlanningState, type RoEView } from '@raptix/web-contracts'
+import { PLANNING_DOCUMENTS, type ConopsView, type DeconflictionView, type OpplanView, type PlanningDocument, type PlanningDocumentName, type PlanningView, type PlanningState, type RoEView } from '@raptix/web-contracts'
 import { confirmHandoff, discardDocumentDraft, fetchDocumentSource, fetchPlanning, publishDocumentDraft, saveDocumentDraft } from '../api'
 import { projectKeys } from '../queries'
 import { go } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, DescList, Skeleton, Status, cx } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList, Drawer, Skeleton, Status, cx } from '../../ui'
 import { utcMinuteOr } from '../format'
 
-const STATE_TONE: Record<PlanningState, 'ok' | 'bad' | 'warn' | 'neutral'> = { ready: 'ok', missing: 'neutral', invalid: 'bad', unavailable: 'warn' }
+/* The four documents with a summary card; the rest of the PREPARE bundle is reviewed through BundleDocCard. */
+/* OPPLAN is the living operational plan, not part of the handoff. */
+const HANDOFF_DOCUMENTS = PLANNING_DOCUMENTS.filter((name) => name !== 'opplan')
+const PREPARE_DOCUMENTS_WITHOUT_CARD: readonly PlanningDocumentName[] = ['threat-profile', 'contact', 'data-handling', 'abort', 'cleanup']
+const STATE_TONE: Record<PlanningState, 'ok' | 'bad' | 'warn' | 'neutral'> ={ ready: 'ok', missing: 'neutral', invalid: 'bad', unavailable: 'warn' }
 const STATE_LABEL: Record<PlanningState, string> = { ready: 'Ready', missing: 'Missing', invalid: 'Invalid', unavailable: 'Unavailable' }
 const PLANNING_DOCUMENT_TITLES: Record<string, string> = {
   roe: 'Rules of Engagement', conops: 'Concept of Operations', deconfliction: 'Deconfliction', opplan: 'Operation Plan (OPPLAN)',
@@ -56,7 +60,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
     <div className="space-y-4">
       {view.readiness.state === 'ready' ? (
         <Banner tone="ok" icon={CheckCircle2} title="Planning documents ready">
-          All required documents are present and valid. Readiness is a runtime signal — execution still requires the approved lifecycle steps and never follows from this banner alone.
+          All required documents are present and valid. Review each document, then confirm the planning handoff. Readiness is a runtime signal — execution still requires the approved lifecycle steps and never follows from this banner alone.
         </Banner>
       ) : (
         <Banner tone="warn" icon={CircleAlert} title="Planning is blocked">
@@ -70,13 +74,13 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-4">
           <Card>
-            <CardHeader title="Plan documents" sub="Generated in the AI workspace and stored in the engagement workspace. OPPLAN is the operational plan document — not a business plan approval." />
+            <CardHeader title="Plan documents" sub="Generated in the AI workspace and stored in the engagement workspace. These are the documents the handoff depends on; the OPPLAN is shown separately below." />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <PlanCard name="roe" title="Rules of Engagement" onEdit={setEditorName} doc={view.documents.roe} render={(c) => (
+              <PlanCard engagementId={engagementId} name="roe" title="Rules of Engagement" onEdit={setEditorName} doc={view.documents.roe} render={(c) => (
                 <DescList
                   items={[
                     { k: 'Engagement type', v: c.engagement_type },
-                    { k: 'Window', v: `${c.start_date} â†’ ${c.end_date}` },
+                    { k: 'Window', v: `${c.start_date} → ${c.end_date}` },
                     { k: 'Testing window', v: c.testing_window },
                     { k: 'Authorization', v: c.authorization_reference ?? 'Not recorded' },
                     { k: 'Scope', v: `${(c.in_scope ?? []).length} in / ${(c.out_of_scope ?? []).length} out` },
@@ -84,13 +88,13 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
                   ]}
                 />
               )} />
-              <PlanCard name="conops" title="Concept of Operations" onEdit={setEditorName} doc={view.documents.conops} render={(c) => (
+              <PlanCard engagementId={engagementId} name="conops" title="Concept of Operations" onEdit={setEditorName} doc={view.documents.conops} render={(c) => (
                 <div className="space-y-2">
                   <p className="whitespace-pre-wrap text-sm text-fg">{c.executive_summary}</p>
                   {c.success_criteria && c.success_criteria.length > 0 && <p><span className="font-medium text-fg">Success criteria:</span> {c.success_criteria.join('; ')}</p>}
                 </div>
               )} />
-              <PlanCard name="deconfliction" title="Deconfliction" onEdit={setEditorName} doc={view.documents.deconfliction} render={(c) => (
+              <PlanCard engagementId={engagementId} name="deconfliction" title="Deconfliction" onEdit={setEditorName} doc={view.documents.deconfliction} render={(c) => (
                 <DescList
                   items={[
                     { k: 'SOC contact', v: c.soc_contact ?? 'Not recorded' },
@@ -99,24 +103,16 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
                   ]}
                 />
               )} />
-              <PlanCard name="opplan" title="Operation Plan (OPPLAN)" onEdit={setEditorName} doc={view.documents.opplan} render={(c) => (
-                <div className="space-y-2">
-                  <p><span className="font-medium text-fg">Threat profile:</span> {c.threat_profile}</p>
-                  {(c.objectives ?? []).length > 0 && (
-                    <ul className="space-y-1">
-                      {(c.objectives ?? []).map((o) => (
-                        <li key={o.id} className="text-fg"><span className="font-mono">{o.id}</span> · {o.title} <span className="text-muted">({o.phase}{o.status ? `, ${o.status}` : ''}{o.blocked_by?.length ? `, blocked by ${o.blocked_by.join(', ')}` : ''})</span></li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )} />
+              {PREPARE_DOCUMENTS_WITHOUT_CARD.map((name) => (
+                <BundleDocCard key={name} engagementId={engagementId} name={name} title={PLANNING_DOCUMENT_TITLES[name] ?? name} state={view.bundle[name]} onEdit={setEditorName} />
+              ))}
             </div>
           </Card>
+          <OpplanCard engagementId={engagementId} doc={view.documents.opplan} />
           <Card>
             <CardHeader title="Document bundle" sub="Every required planning document and its current state." />
             <ul className="flex flex-wrap gap-2">
-              {PLANNING_DOCUMENTS.map((name) => {
+              {HANDOFF_DOCUMENTS.map((name) => {
                 const state = view.bundle[name]
                 return (
                   <li key={name} className={cx('inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium', {
@@ -128,14 +124,11 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
               })}
             </ul>
           </Card>
-          {editorDoc !== null && editorName !== null && (
-            <DocumentEditor engagementId={engagementId} name={editorName} title={editorDoc} onClose={() => setEditorName(null)} />
-          )}
         </div>
 
         <div className="min-w-0 space-y-4">
           <Card>
-            <CardHeader title="Planning handoff" sub="One-way confirmation that planning moved from drafting to the AI workspace. It can be set once and is never unset by the UI." />
+            <CardHeader title="Planning handoff" sub="One-way confirmation after you review the planning documents. On a single-operator engagement it also approves the scope planned in roe.json. It can be set once and is never unset by the UI." />
             <p className="text-sm">
               {handoffConfirmedAt ? <span className="text-ok">Confirmed at {utcMinuteOr(handoffConfirmedAt)}</span> : <span className="text-muted">Not confirmed yet.</span>}
             </p>
@@ -152,7 +145,7 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
             <CardHeader title="AI workspace" />
             <p className="text-sm text-muted">Plan documents are drafted with the assistant in the engagement's planning conversations.</p>
             <div className="mt-3">
-              <Button variant="secondary" icon={Bot} onClick={() => go('ai-operator', { id: engagementId })}>Open AI workspace</Button>
+              <Button variant="secondary" icon={Bot} onClick={() => go('project', { id: engagementId, tab: 'ai-workspace' })}>Open AI workspace</Button>
             </div>
           </Card>
           <Card>
@@ -167,11 +160,104 @@ export function RealPlanningPanel({ engagementId, handoffConfirmedAt }: { engage
           </Card>
         </div>
       </div>
+      <Drawer open={editorDoc !== null && editorName !== null} onClose={() => setEditorName(null)} title={editorDoc ? `${editorDoc} — source & draft` : ''} width={760}>
+        {editorDoc !== null && editorName !== null && (
+          <DocumentEditor engagementId={engagementId} name={editorName} title={editorDoc} onClose={() => setEditorName(null)} />
+        )}
+      </Drawer>
     </div>
   )
 }
 
-function DocUnavailable({ name, title, state, onEdit }: { name: string; title: string; state: Exclude<PlanningState, 'ready'>; onEdit: (name: string) => void }): ReactElement {
+/** The schema errors of a stored document that exists but fails validation, read from the same source query the editor uses. */
+function InvalidDocumentErrors({ engagementId, name }: { engagementId: string; name: string }): ReactElement {
+  const source = useQuery({ queryKey: ['real', 'document', engagementId, name], queryFn: () => fetchDocumentSource(engagementId, name) })
+  if (source.isPending) return <Skeleton className="mt-3 h-12" />
+  if (source.isError || !source.data) {
+    return <p className="mt-3 text-xs text-bad" role="alert">{source.error instanceof Error ? source.error.message : 'The stored document could not be read.'}</p>
+  }
+  const errors = source.data.validation.errors
+  if (errors.length === 0) return <></>
+  return (
+    <div className="mt-3">
+      <p className="text-xs font-medium text-fg">Schema errors ({errors.length})</p>
+      <ul className="mt-1 list-inside list-disc break-words text-xs text-bad">
+        {errors.slice(0, 5).map((error) => <li key={error}>{error}</li>)}
+      </ul>
+      {errors.length > 5 && <p className="mt-1 text-xs text-muted">{errors.length - 5} more — open the source to see all of them.</p>}
+    </div>
+  )
+}
+
+/**
+ * The living operational plan (OPPLAN), in full. The operations agent creates it
+ * after the planning handoff and updates it on every objective change during
+ * execution, so it sits beside the planning documents and never gates the handoff.
+ */
+function OpplanCard({ engagementId, doc }: { engagementId: string; doc: PlanningDocument<OpplanView> }): ReactElement {
+  return (
+    <Card>
+      <CardHeader title="Operation Plan (OPPLAN)" sub="The living operational plan: the operations agent creates it after the planning handoff and updates it on every objective change during execution." />
+      <div className="p-4 text-sm" data-testid="plan-doc-opplan">
+        {doc.state === 'ready' ? (
+          <div className="space-y-3">
+            <p><span className="font-medium text-fg">Threat profile:</span> {doc.content.threat_profile}</p>
+            {(doc.content.objectives ?? []).length === 0 ? (
+              <p className="text-muted">No objectives yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted">
+                      <th className="pb-2 pr-3">ID</th><th className="pb-2 pr-3">Objective</th><th className="pb-2 pr-3">Phase</th><th className="pb-2 pr-3">Status</th><th className="pb-2 pr-3">Blocked by</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(doc.content.objectives ?? []).map((o) => (
+                      <tr key={o.id} className="border-t border-line align-top">
+                        <td className="py-2 pr-3 font-mono text-xs">{o.id}</td>
+                        <td className="py-2 pr-3"><div className="font-medium">{o.title}</div><p className="mt-1 text-xs text-muted">{o.description}</p></td>
+                        <td className="py-2 pr-3 text-xs">{o.phase}</td>
+                        <td className="py-2 pr-3 text-xs">{o.status ?? 'pending'}</td>
+                        <td className="py-2 pr-3 font-mono text-xs">{(o.blocked_by ?? []).join(', ') || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : doc.state === 'missing' ? (
+          <p className="text-muted">Not created yet. The operations agent creates OPPLAN after the planning handoff, so there is nothing to review here before then.</p>
+        ) : doc.state === 'invalid' ? (
+          <div className="space-y-2">
+            <p className="text-muted">The stored OPPLAN failed validation. The operations agent owns this document; the errors below show what is wrong with it.</p>
+            <InvalidDocumentErrors engagementId={engagementId} name="opplan" />
+          </div>
+        ) : (
+          <p className="text-muted">The OPPLAN source is unavailable right now.</p>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+/** A PREPARE document the console does not summarize: reviewed through its source, the same as the typed cards. */
+function BundleDocCard({ engagementId, name, title, state, onEdit }: { engagementId: string; name: string; title: string; state: PlanningState; onEdit: (name: string) => void }): ReactElement {
+  if (state !== 'ready') return <DocUnavailable engagementId={engagementId} name={name} title={title} state={state} onEdit={onEdit} />
+  return (
+    <div className="rounded-xl border border-line bg-panel p-4" data-testid={`plan-doc-${name}`}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <Status kind="gate" value="passed" size="sm" label="Ready" />
+      </div>
+      <p className="mt-2 text-xs text-muted">Generated by the planner. Open the source to review it before confirming the handoff.</p>
+      <Button size="sm" variant="secondary" className="mt-3" icon={PenLine} onClick={() => onEdit(name)}>View source & draft</Button>
+    </div>
+  )
+}
+
+function DocUnavailable({ engagementId, name, title, state, onEdit }: { engagementId: string; name: string; title: string; state: Exclude<PlanningState, 'ready'>; onEdit: (name: string) => void }): ReactElement {
   return (
     <div className="rounded-xl border border-line bg-subtle p-4" data-testid={`plan-doc-${name}`}>
       <div className="flex items-center justify-between">
@@ -181,6 +267,7 @@ function DocUnavailable({ name, title, state, onEdit }: { name: string; title: s
       <p className="mt-2 text-xs text-muted">
         {state === 'missing' ? 'This document has not been generated yet.' : state === 'invalid' ? 'The stored document failed validation — regenerate it in the AI workspace or fix it in the draft editor.' : 'The document source is unavailable right now.'}
       </p>
+      {state === 'invalid' && <InvalidDocumentErrors engagementId={engagementId} name={name} />}
       <Button size="sm" variant="secondary" className="mt-3" icon={PenLine} onClick={() => onEdit(name)}>
         {state === 'missing' ? 'Draft this document' : 'Open draft editor'}
       </Button>
@@ -188,14 +275,15 @@ function DocUnavailable({ name, title, state, onEdit }: { name: string; title: s
   )
 }
 
-function PlanCard<T extends RoEView | ConopsView | DeconflictionView | OpplanView>({ name, title, doc, render, onEdit }: {
+function PlanCard<T extends RoEView | ConopsView | DeconflictionView | OpplanView>({ engagementId, name, title, doc, render, onEdit }: {
+  engagementId: string
   name: string
   title: string
   doc: PlanningDocument<T>
   render: (content: T) => ReactElement
   onEdit: (name: string) => void
 }): ReactElement {
-  if (doc.state !== 'ready') return <DocUnavailable name={name} title={title} state={doc.state} onEdit={onEdit} />
+  if (doc.state !== 'ready') return <DocUnavailable engagementId={engagementId} name={name} title={title} state={doc.state} onEdit={onEdit} />
   return (
     <div className="rounded-xl border border-line bg-panel p-4" data-testid={`plan-doc-${name}`}>
       <div className="flex items-center justify-between">
@@ -249,9 +337,8 @@ function DocumentEditor({ engagementId, name, title, onClose }: { engagementId: 
 
   const roeNote = name === 'roe'
   return (
-    <Card>
-      <div data-testid={`document-editor-${name}`}>
-      <CardHeader title={`${title} — source & draft`} sub={roeNote ? 'ROE is governed by the Scope & ROE revision workflow; publishing the file from the console is refused.' : 'Edits are server-side drafts. Publish validates the schema and replaces the workspace file only if it has not changed since you loaded it.'} />
+    <div data-testid={`document-editor-${name}`} className="space-y-3">
+      <p className="text-sm text-muted">{roeNote ? 'ROE is governed by the Scope & ROE revision workflow; publishing the file from the console is refused.' : 'Edits are server-side drafts. Publish validates the schema and replaces the workspace file only if it has not changed since you loaded it.'}</p>
       {notice && <Banner tone={notice.tone} title={notice.text} action={<Button size="sm" variant="ghost" onClick={() => setNotice(null)}>Dismiss</Button>} />}
       {source.data?.validation.valid === false && source.data.source !== null && (
         <Banner tone="warn" title="The published document currently fails schema validation">
@@ -294,7 +381,6 @@ function DocumentEditor({ engagementId, name, title, onClose }: { engagementId: 
           </div>
         </>
       )}
-      </div>
-    </Card>
+    </div>
   )
 }
