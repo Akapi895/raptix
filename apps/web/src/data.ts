@@ -10,8 +10,9 @@ import type {
   ChatMsg, Conversation, DetectState, Evidence, ExportRec, Facets, Finding, Group, Integration,
   Notice, Operation, OrgState, Plan, PlanStep, Playbook, Policy, Project, Report, Retention, Role, Session,
   SessionRequest, StopState, Step, StepStatus, Template, Technique, ToolEvent, ToolState,
-  WorkerState,
+  VaultSecret, WorkerState,
 } from './domain/entities'
+import { executionSeeds } from './features/execution/seed'
 
 export type * from './domain/entities'
 
@@ -168,6 +169,11 @@ export function seed(variant: SeedVariant = 'default') {
     { id: 'EV-014-01', name: 'accounts-output.txt', kind: 'Text', source: 'OP-014 / S02', at: D('Oct 13', '9:35 AM'), by: 'Taylor Chen', projectId: 'RT-2026-014', opId: 'OP-014', sensitive: false },
     { id: 'EV-014-02', name: 'evidence-027.png', kind: 'Image (redacted)', source: 'OP-014 / S06', at: D('Oct 13', '10:08 AM'), by: 'Taylor Chen', projectId: 'RT-2026-014', opId: 'OP-014', findingId: 'FD-011', sensitive: true },
     { id: 'EV-301', name: 'iam-review.json', kind: 'JSON', source: 'OP-015 / S02', at: D('Oct 13', '8:58 AM'), by: 'Sam Patel', projectId: 'RT-2026-015', opId: 'OP-015', findingId: 'FD-015', sensitive: false },
+  ]
+  const vaultSecrets: VaultSecret[] = [
+    { id: 'VS-014-01', projectId: 'RT-2026-014', kind: 'api-key', label: 'SIEM read token (lab)', demoPlaintext: 'demo-siem-token-4f2a', revealCount: 2, lastRevealedAt: D('Oct 12', '3:05 PM'), createdAt: D('Oct 8', '9:10 AM'), createdBy: 'Alex Morgan' },
+    { id: 'VS-014-02', projectId: 'RT-2026-014', kind: 'password', label: 'Lab service account', demoPlaintext: 'demo-lab-password', revealCount: 0, createdAt: D('Oct 8', '11:20 AM'), createdBy: 'Taylor Chen' },
+    { id: 'VS-015-01', projectId: 'RT-2026-015', kind: 'api-key', label: 'Fabrikam scanner key', demoPlaintext: 'demo-scanner-key-9c1d', revealCount: 1, lastRevealedAt: D('Oct 10', '2:40 PM'), createdAt: D('Oct 5', '9:00 AM'), createdBy: 'Sam Patel' },
   ]
   const findings: Finding[] = [
     { id: 'FD-011', projectId: 'RT-2026-014', title: 'Excessive account privileges (simulated)', severity: 'high', status: 'confirmed', asset: 'win-dc-01', op: 'OP-014', technique: 'T1078', owner: 'Taylor Chen', date: D('Oct 13', '10:15 AM'), updated: D('Oct 13', '10:20 AM'),
@@ -387,6 +393,7 @@ export function seed(variant: SeedVariant = 'default') {
   // keyed `${projectId}/${docId}`; saving a draft never claims a real file
   // write and never mutates the applied scope fields.
   const docDrafts: Record<string, { text: string; by: string; at: string }> = {}
+  const agentWorkspaces = executionSeeds(operations)
   // Ticket 56: organization settings live in the one database so profile edits
   // and member role/status overrides persist for the demo session and publish
   // ChangeSets through the shared commit bridge.
@@ -396,6 +403,6 @@ export function seed(variant: SeedVariant = 'default') {
     invites: [],
     holds: [],
   }
-  return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org, docDrafts }
+  return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, vaultSecrets, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org, docDrafts, agentWorkspaces }
 }
 export type Db = ReturnType<typeof seed>

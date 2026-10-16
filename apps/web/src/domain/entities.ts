@@ -44,6 +44,8 @@ export interface Operation {
 export interface Agent { id: string; host: string; os: string; version: string; projectId: string; status: AgentStatus; lastSeen: string; op: string | null; group: string; conn: string; ip: string }
 export interface Asset { id: string; name: string; ident: string; ip: string; type: string; os: string; owner: string; projectId: string; scope: 'in' | 'out' | 'pending' | 'unclassified'; source: string; updated: string }
 export interface Evidence { id: string; name: string; kind: string; source: string; at: string; by: string; projectId: string; findingId?: string; opId?: string; sensitive: boolean }
+/** Mock credentials-vault record (parity with the real engagement vault, ticket 16): the list view carries metadata only — `demoPlaintext` is seeded demo material that only an explicit, audited reveal surfaces in-session. */
+export interface VaultSecret { id: string; projectId: string; kind: string; label: string; demoPlaintext: string; revealCount: number; lastRevealedAt?: string; createdAt: string; createdBy: string }
 export interface Finding {
   id: string; projectId: string; title: string; severity: Severity; status: FindingStatus; asset: string; op: string
   technique: string; owner: string; date: string; updated: string; desc: string; impact: string; rec: string

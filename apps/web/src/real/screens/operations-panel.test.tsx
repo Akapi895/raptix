@@ -16,6 +16,7 @@ function stubApi(over: { threads?: unknown[]; runs?: unknown[] } = {}) {
     calls.push(`${init?.method ?? 'GET'} ${url}`)
     if (url.endsWith('/threads') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', threads: over.threads ?? [PLAN, EXEC], source: 'runtime' }), { status: 200 })
     if (url.includes('/runs?') || (url.endsWith('/runs') && (init?.method ?? 'GET') === 'GET')) return new Response(JSON.stringify({ runs: over.runs ?? [RUN], offset: 0, nextOffset: null }), { status: 200 })
+    if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ binding: EXEC, rawStatus: 'running', messages: [], messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime', transcriptsTruncated: false, transcripts: [{ key: 'tool-1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_tool_call', agent: 'recon', tool: 'service-mapper', truncated: false } }] }))
     return new Response('unexpected', { status: 404 })
   }))
   return calls
@@ -54,6 +55,16 @@ describe('RealOperationsPanel', () => {
     stubApi()
     renderPanel()
     expect(await screen.findByRole('button', { name: 'Open AI workspace' })).toBeTruthy()
+  })
+
+  it('shows persisted tool calls as checkpoint history without claiming run attribution', async () => {
+    const calls = stubApi()
+    renderPanel()
+    expect(await screen.findByText(/subagent_tool_call · checkpoint/)).toBeTruthy()
+    expect(screen.getByText(/"tool": "service-mapper"/)).toBeTruthy()
+    expect(screen.getByText(/events without run attribution/)).toBeTruthy()
+    expect(screen.queryByLabelText('Workspace message')).toBeNull()
+    expect(calls.every((call) => call.startsWith('GET '))).toBe(true)
   })
 
   it('W24: maps raw runtime statuses truthfully (success is ok, error is failed)', async () => {

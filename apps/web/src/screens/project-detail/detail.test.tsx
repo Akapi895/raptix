@@ -32,7 +32,7 @@ import { detailFor, projectDetailForScope } from './service'
 import { aggregateFor } from '../dashboard/service'
 import { readiness, completion, eligibility } from '../dashboard/domain'
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); setActiveRouter(null); window.location.hash = '' })
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setActiveRouter(null); window.location.hash = '' })
 
 beforeEach(() => {
   window.location.hash = ''
@@ -107,7 +107,7 @@ describe('deep links and blocked states', () => {
     mountProject('#/project/RT-2026-015?tab=operations')
     expect(await screen.findByText('Cloud Security Assessment')).toBeInTheDocument()
     expect(await screen.findByText('OP-015')).toBeInTheDocument()
-    expect(screen.queryByText('OP-014')).not.toBeInTheDocument()
+    expect(screen.queryByRole('row', { name: /OP-014/ })).not.toBeInTheDocument()
     expect(window.location.hash).toContain('tab=operations')
     await waitFor(() => expect(useProjectStore.getState().pid).toBe('RT-2026-015'))
   })
@@ -300,7 +300,7 @@ describe('unmigrated panels keep working through the bridge', () => {
 
     mountProject('#/project/RT-2026-014?tab=operations')
     expect(await screen.findByText('2 operations in RT-2026-014')).toBeInTheDocument()
-    expect(screen.getByText('OP-014')).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: /OP-014.*Internal environment discovery/ })).toBeInTheDocument()
   })
 
   it('the viewer redaction path still renders (fixed conditional-hook site)', async () => {
@@ -309,6 +309,55 @@ describe('unmigrated panels keep working through the bridge', () => {
     expect(await screen.findByText('Sensitive content is redacted')).toBeInTheDocument()
     expect(screen.getByText('Redacted (sensitive)')).toBeInTheDocument()
     expect(screen.queryByText('evidence-027.png')).not.toBeInTheDocument()
+  })
+})
+
+describe('AI instance workspace', () => {
+  it('keeps two Recon recipients, their drafts and their transcripts separate', async () => {
+    localStorage.clear()
+    vi.stubGlobal('innerWidth', 1440)
+    const h = mountProject('#/project/RT-2026-014?tab=ai-workspace')
+    fireEvent.click(await screen.findByRole('button', { name: 'Select Recon #1' }))
+    fireEvent.change(screen.getByLabelText('Send to Recon #1'), { target: { value: 'Draft for first Recon' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Select Recon #2' }))
+    expect(screen.getByLabelText('Send to Recon #2')).toHaveValue('')
+    fireEvent.change(screen.getByLabelText('Send to Recon #2'), { target: { value: 'Only the second Recon' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+    expect(screen.getAllByText('Only the second Recon').length).toBeGreaterThan(0)
+    const sent = h.db().agentWorkspaces.find((workspace) => workspace.owner === 'Alex Morgan' && workspace.executionId === 'OP-014')!.messages.find((message) => message.text === 'Only the second Recon')!
+    expect(sent.recipient).toBe('OP-014/instance-2')
+    fireEvent.click(screen.getByRole('button', { name: 'Select Recon #1' }))
+    expect(screen.getByLabelText('Send to Recon #1')).toHaveValue('Draft for first Recon')
+    expect(screen.queryByText('Only the second Recon')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Context' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Agents' }))
+    expect(screen.getByLabelText('Send to Recon #1')).toHaveValue('Draft for first Recon')
+  })
+
+  it('answers the selected instance question and leaves the concurrent question pending', async () => {
+    localStorage.clear()
+    vi.stubGlobal('innerWidth', 1440)
+    const h = mountProject('#/project/RT-2026-014?tab=ai-workspace')
+    fireEvent.click(await screen.findByRole('button', { name: 'Select Recon #2' }))
+    fireEvent.change(screen.getByLabelText('Answer OP-014/question-window'), { target: { value: 'Use the approved window' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Answer Recon #2' }))
+    const questions = h.db().agentWorkspaces.find((workspace) => workspace.owner === 'Alex Morgan' && workspace.executionId === 'OP-014')!.questions
+    expect(questions.find((question) => question.id === 'OP-014/question-window')!.answer).toBe('Use the approved window')
+    expect(questions.find((question) => question.id === 'OP-014/question-evidence')!.answer).toBeUndefined()
+    expect(screen.queryByLabelText('Answer OP-014/question-window')).not.toBeInTheDocument()
+    expect(window.location.hash).toContain('tab=ai-workspace')
+  })
+
+  it('keeps project tool approval separate from instance answers and execution', async () => {
+    localStorage.clear()
+    const h = mountProject('#/project/RT-2026-014?tab=ai-workspace', { me: 'Pat Kim' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Review & allow' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Allow TL-03' })
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: 'Reviewed within the approved scope' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm allow' }))
+    await waitFor(() => expect(h.db().toolEvents.find((tool) => tool.id === 'TL-03')!.state).toBe('allowed'))
+    expect(h.db().operations.find((operation) => operation.id === 'OP-014')!.status).toBe('running')
+    expect(h.db().agentWorkspaces.find((workspace) => workspace.executionId === 'OP-014')!.questions.every((question) => question.answer === undefined)).toBe(true)
   })
 })
 

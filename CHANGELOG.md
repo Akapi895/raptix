@@ -10,6 +10,19 @@ design spec, §13.4).
 
 ### Added
 
+- Web console: project Execution now combines a recipient-aware conversation
+  with an Agents/Context panel and an execution-history drawer. Mock instances
+  have isolated drafts, questions, delivery/recovery states and ACK-gated controls
+  in the shared authority. Real mode reuses owned thread/run/interrupt contracts
+  and renders checkpoint invocations observe-only when per-instance identity,
+  messaging or control contracts are absent (Proposed ADR-0078).
+- Web console: the tool event inspector opens as a centered modal instead of a
+  right-side drawer, in both the standalone trace page and the embedded
+  Execution logs view.
+- Web console: a mock credentials-vault tab mirrors the real engagement vault
+  placement — a metadata-only secrets list with audited reveal/revoke/store
+  through the mock authority; plaintext exists only as seeded demo data shown
+  in-session after an explicit reveal.
 - Web console: real mode now lands on a **System Overview** dashboard
   (`overview` route) with per-domain cross-project reads — projects, findings
   rollup (`GET /api/overview/findings`), durable C2 activity

@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bot, CircleAlert, Hand, ListPlus, MessagesSquare, RefreshCw, Send, ServerCrash, ShieldQuestion, User } from 'lucide-react'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, fetchApprovals, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, resumeThread, submitRun } from '../api'
+import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, resumeThread, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
 import { useCapabilityReady } from '../bootstrap'
 import { awaitRequest, newRequestId, type AckOutcome } from '../request-ledger'
@@ -22,8 +22,13 @@ import { useRunStream } from '../stream'
 import { projectKeys } from '../queries'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, Empty, PageHeader, Skeleton, Textarea, cx } from '../../ui'
+import { Banner, Button, Card, CardHeader, Drawer, Empty, PageHeader, Select, Skeleton, Textarea, cx } from '../../ui'
 import { utcMinute } from '../format'
+import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
+import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
+import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
+import { RealOperationsPanel as RealOperationsHistory } from './operations-panel'
+import { useSession } from './login'
 
 interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
 interface TraceLine { id: string; label: string; status?: string; error?: boolean }
@@ -73,12 +78,22 @@ export function RealWorkspace(): ReactElement {
   )
 }
 
-export function RealConversation({ engagementId, initialThreadId }: { engagementId: string; initialThreadId?: string }): ReactElement {
+export function RealConversation({ engagementId, initialThreadId, embedded = false }: { engagementId: string; initialThreadId?: string; embedded?: boolean }): ReactElement {
   const client = useQueryClient()
   const agents = useCapabilityReady('agents')
-  const [kindFilter, setKindFilter] = useState<ThreadKind>(() => readSelection(engagementId)?.kind ?? 'planning')
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => initialThreadId ?? readSelection(engagementId)?.threadId ?? null)
-  const [draft, setDraft] = useState('')
+  const { session } = useSession()
+  const actorId = session?.actor?.id ?? 'local'
+  const [kindFilter, setKindFilter] = useState<ThreadKind>(() => embedded ? 'execution' : readSelection(engagementId)?.kind ?? 'planning')
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => initialThreadId ?? (embedded && readSelection(engagementId)?.kind !== 'execution' ? null : readSelection(engagementId)?.threadId ?? null))
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const draft = selectedThreadId ? drafts[selectedThreadId] ?? readWorkspaceDraft(engagementId, selectedThreadId, actorId) : ''
+  const setDraft = (text: string): void => { if (selectedThreadId) { setDrafts((previous) => ({ ...previous, [selectedThreadId]: text })); try { saveWorkspaceDraft(engagementId, selectedThreadId, text, actorId) } catch { setDispatchError('Draft recovery storage is unavailable.') } } }
+  const [observation, setObservation] = useState<{ threadId: string; key: string } | null>(null)
+  const [agentsOpen, setAgentsOpen] = useState(true)
+  const [agentsSheet, setAgentsSheet] = useState(false)
+  const [historySheet, setHistorySheet] = useState(false)
+  const wide = useViewportW() >= 1280
+  const agentWidth = useResizable('raptix.real.execution.agents.width', INSP)
   const [dispatchError, setDispatchError] = useState<string | null>(null)
   const [unconfirmed, setUnconfirmed] = useState<PendingRequest | null>(() => readPending(engagementId))
   const [observedRun, setObservedRun] = useState<{ threadId: string; runId: string } | null>(null)
@@ -113,10 +128,10 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
 
   useEffect(() => {
     if (threads.isPending || initialThreadId) return
-    if (!selectedThreadId || !allThreads.some((t) => t.threadId === selectedThreadId)) {
+    if (!selectedThreadId || !allThreads.some((t) => t.threadId === selectedThreadId && (!embedded || t.kind === 'execution'))) {
       setSelectedThreadId(filteredThreads[0]?.threadId ?? null)
     }
-  }, [allThreads, filteredThreads, selectedThreadId, threads.isPending, initialThreadId])
+  }, [allThreads, filteredThreads, selectedThreadId, threads.isPending, initialThreadId, embedded])
   useEffect(() => {
     if (selectedThread) {
       try { saveSelection(engagementId, selectedThread) }
@@ -287,6 +302,7 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
   const [autoTransitioned, setAutoTransitioned] = useState(false)
   const autoRequested = useRef<string | null>(null)
   useEffect(() => {
+    if (embedded) return
     if (autoRequested.current === engagementId || autoTransitioned) return
     if (hasExecutionThread) return
     if (detail.data?.handoffConfirmedAt == null) return
@@ -298,7 +314,7 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
     autoRequested.current = engagementId
     setDispatchError(null)
     createThreadByKind.mutate('execution')
-  }, [engagementId, autoTransitioned, hasExecutionThread, detail.data, planning.data, threads.isPending, activeRunId, unconfirmed, selectedThreadId, filteredThreads.length, createThreadByKind])
+  }, [engagementId, autoTransitioned, hasExecutionThread, detail.data, planning.data, threads.isPending, activeRunId, unconfirmed, selectedThreadId, filteredThreads.length, createThreadByKind, embedded])
 
   const send = useMutation({
     mutationFn: async (message: string) => {
@@ -359,6 +375,7 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
       if (!current(captured)) return
       if (outcome.kind !== 'unconfirmed') setUnconfirmed(null)
       if (outcome.kind === 'accepted') {
+        if (embedded && unconfirmed?.kind === 'planning') return
         setKindFilter(unconfirmed?.kind ?? selectedKind)
         setSelectedThreadId(outcome.threadId)
         void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] })
@@ -373,17 +390,23 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
   const displayed = [...snapshotMessages, ...live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))]
   const pendingQuestions = (snapshot.data?.pendingQuestions ?? []).filter(isPendingInterruptView)
   const transcripts = snapshot.data?.transcripts ?? []
+  const fleet = useQuery({ queryKey: ['real', 'fleet', engagementId], queryFn: () => fetchFleet(engagementId), enabled: embedded && agents.ready, refetchInterval: embedded ? 8000 : false })
+  const observationKey = observation?.threadId === selectedThreadId ? observation.key : null
+  const branches = fleet.data?.branches.filter((branch) => branch.threadId === selectedThreadId) ?? []
+  const observedBranch = branches.find((branch) => branch.key === observationKey)
+  const selectObservation = (key: string | null): void => { setObservation(key && selectedThreadId ? { threadId: selectedThreadId, key } : null); setAgentsSheet(false) }
+  const agentPanel = <RealExecutionAgents engagementId={engagementId} assistantId={selectedThread?.assistantId ?? null} threadId={selectedThreadId} branches={branches} selectedKey={observationKey} onSelect={selectObservation} sourceError={fleet.isError ? 'The fleet source is unavailable. No completion is inferred.' : null} />
 
   /* Honest unavailable surface (D4): without the assistant runtime the
      workspace has nothing to host - no demo conversation is substituted. */
   if (!agents.ready) {
     return (
       <>
-        <PageHeader
+        {!embedded && <PageHeader
           title="AI Workspace"
           sub={<span>Planning and execution conversations for <span className="font-mono">{engagementId}</span>.</span>}
           crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: 'AI Workspace' }]}
-        />
+        />}
         <Empty icon={ServerCrash} title="Assistant runtime is not available on this server">
           {agents.reason ?? 'The conversation/run runtime is not configured, so the workspace cannot host threads. No demo data is shown.'}
         </Empty>
@@ -395,7 +418,7 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
 
   return (
     <>
-      <PageHeader
+      {!embedded && <PageHeader
         title="AI Workspace"
         sub={<span>Planning and execution conversations for <span className="font-mono">{engagementId}</span>. Threads and messages live on the server and survive a refresh.</span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: 'AI Workspace' }]}
@@ -415,7 +438,8 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
             </Button>
           </div>
         )}
-      />
+      />}
+      {embedded && <div className="flex flex-wrap items-center justify-between gap-2"><Select aria-label="Execution conversation" value={selectedThreadId ?? ''} onChange={(event) => setSelectedThreadId(event.target.value)}><option value="">Select an execution conversation</option>{allThreads.filter((thread) => thread.kind === 'execution').map((thread) => <option key={thread.threadId} value={thread.threadId}>{thread.assistantId ?? 'Unknown assistant'} · {utcMinute(thread.updatedAt)}</option>)}</Select><div className="flex flex-wrap gap-2"><Button size="sm" disabled={createThreadByKind.isPending || !!unconfirmed || detail.data?.handoffConfirmedAt == null} onClick={() => createThreadByKind.mutate('execution')}>New execution conversation</Button><Button size="sm" onClick={() => setHistorySheet(true)}>Execution history</Button><Button size="sm" onClick={() => wide ? setAgentsOpen(!agentsOpen) : setAgentsSheet(true)}>Agents / Context{pendingQuestions.length ? ` · ${pendingQuestions.length} need you` : ''}</Button></div></div>}
 
       {dispatchError && <Banner tone="bad" title="Request not completed" action={<Button size="sm" variant="ghost" onClick={() => setDispatchError(null)}>Dismiss</Button>}>{dispatchError}</Banner>}
       {unconfirmed && (
@@ -438,8 +462,8 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
         </Banner>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-3">
+      <div className={embedded ? 'mt-4 flex min-w-0 gap-3' : 'mt-4 grid grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)]'}>
+        {!embedded && <div className="min-w-0 space-y-3">
           <Card>
             <CardHeader title="Threads" sub="Owned bindings from the runtime ledger." />
             <div className="mb-3 flex gap-1" role="group" aria-label="Thread kind filter">
@@ -482,9 +506,10 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
                 : 'No active run. Sending a message dispatches exactly one server run.'}
             </p>
           </Card>
-        </div>
+        </div>}
 
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0 flex-1 space-y-4">
+          {observationKey ? <ObservedInvocation branch={observedBranch} onRoot={() => selectObservation(null)} /> : <>
           {activeRunId && (
             <div className="flex items-center gap-2 text-xs text-muted" role="status">
               <span className="inline-flex h-6 items-center rounded-full border border-line bg-subtle px-2.5 font-mono">run {activeRunId.slice(0, 12)}...</span>
@@ -500,7 +525,7 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
           )}
 
           <Card>
-            <CardHeader title="Conversation" sub={snapshot.data?.messagesTruncated ? 'Earlier messages are truncated by the server projection.' : undefined} />
+            <CardHeader title={embedded ? `Conversation with ${selectedThread?.assistantId ?? 'orchestrator'}` : 'Conversation'} sub={snapshot.data?.messagesTruncated ? 'Earlier messages are truncated by the server projection.' : undefined} />
             {!selectedThreadId ? (
               <Empty icon={MessagesSquare} title="No thread selected">Create a thread to start the conversation.</Empty>
             ) : snapshot.isPending ? (
@@ -553,11 +578,13 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
           <Card>
             <div className="flex items-end gap-2">
               <div className="min-w-0 flex-1">
+                {embedded && <p className="mb-2 text-xs font-semibold">Send to {selectedThread?.assistantId ?? 'orchestrator'} · owned thread</p>}
                 <Textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   placeholder={selectedThreadId ? 'Describe what to do next - scope, constraints, instructions...' : 'Create a thread first...'}
                   aria-label="Workspace message"
+                  title={embedded ? `Send to ${selectedThread?.assistantId ?? 'orchestrator'} through its owned thread` : undefined}
                   disabled={!selectedThreadId || send.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
                 />
                 <p className="mt-1 text-xs text-neutral">
@@ -572,8 +599,11 @@ export function RealConversation({ engagementId, initialThreadId }: { engagement
               </Button>
             </div>
           </Card>
+          </>}
         </div>
+        {embedded && wide && agentsOpen && <><Separator label="Resize real agents panel" side="right" r={agentWidth} cfg={INSP} /><aside style={{ width: agentWidth.w }} className="max-h-[80vh] shrink-0 overflow-y-auto rounded-xl border border-line bg-panel" aria-label="Execution agent observations">{agentPanel}</aside></>}
       </div>
+      {embedded && <><Drawer open={agentsSheet && !wide} onClose={() => setAgentsSheet(false)} title="Agents / Context" width={420}>{agentPanel}</Drawer><Drawer open={historySheet} onClose={() => setHistorySheet(false)} title="Execution history" width={980}><RealOperationsHistory engagementId={engagementId} /></Drawer></>}
     </>
   )
 }
