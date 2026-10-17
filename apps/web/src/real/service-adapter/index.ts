@@ -19,9 +19,9 @@ import { createRealSettingsService } from './settings'
 import { createRealVaultService } from './vault'
 import { createRealClosureService } from './closure'
 import { createRealObservedAnalysisService } from './analysis'
-import { unavailableObservedAnalysisService, type ObservedAnalysisService } from '../../features/analysis/observed'
-import { unavailableClosureService, type ClosureService } from '../../features/closure/service'
-import { unavailableVaultService, type VaultService } from '../../features/vault/service'
+import { unavailableObservedAnalysisService } from '../../features/analysis/observed'
+import { unavailableClosureService } from '../../features/closure/service'
+import { unavailableVaultService } from '../../features/vault/service'
 import { notIntegratedService } from './stub'
 
 /**
