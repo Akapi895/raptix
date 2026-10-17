@@ -102,6 +102,35 @@ export interface ArtifactsView {
   folders: { folder: string; files: { name: string; path: string; sizeBytes: number }[] }[]
   source: 'workspace'
 }
+export type CaptureClassification = 'unclassified' | 'standard' | 'sensitive'
+export interface RetainedCaptureView {
+  id: string; engagementId: string; filename: string | null; mediaType: string
+  sizeBytes: number; digest: string; producer: string | null; classification: CaptureClassification
+  classificationVersion: number; uploadedBy: string; classifiedBy: string | null
+  classificationReason: string | null; classifiedAt: string | null; createdAt: string
+  canReadOriginal: boolean; canClassify: boolean
+}
+export interface RetainedCapturesView {
+  engagementId: string; captures: RetainedCaptureView[]; source: 'db'
+}
+export interface RetainCaptureInput {
+  requestId: string; filename: string; mediaType: string; base64: string
+}
+export interface ClassifyCaptureInput {
+  classification: 'standard' | 'sensitive'; expectedVersion: number; reason: string
+}
+export function isRetainedCaptureView(v: unknown): v is RetainedCaptureView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.engagementId) || (v.filename !== null && typeof v.filename !== 'string')) return false
+  if (!isNonEmptyString(v.mediaType) || typeof v.sizeBytes !== 'number' || !Number.isSafeInteger(v.sizeBytes) || v.sizeBytes <= 0) return false
+  if (typeof v.digest !== 'string' || !/^[a-f0-9]{64}$/.test(v.digest) || !['unclassified', 'standard', 'sensitive'].includes(v.classification as string)) return false
+  if (!Number.isSafeInteger(v.classificationVersion) || Number(v.classificationVersion) < 1 || !isNonEmptyString(v.uploadedBy)) return false
+  if ((v.producer !== null && typeof v.producer !== 'string') || (v.classifiedBy !== null && typeof v.classifiedBy !== 'string') || (v.classificationReason !== null && typeof v.classificationReason !== 'string')) return false
+  return typeof v.canReadOriginal === 'boolean' && typeof v.canClassify === 'boolean' &&
+    (v.classifiedAt === null || typeof v.classifiedAt === 'string' && Number.isFinite(Date.parse(v.classifiedAt))) && typeof v.createdAt === 'string' && Number.isFinite(Date.parse(v.createdAt))
+}
+export function isRetainedCapturesView(v: unknown): v is RetainedCapturesView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.captures) && v.captures.every(capture => isRetainedCaptureView(capture) && capture.engagementId === v.engagementId) && v.source === 'db'
+}
 export interface ArtifactContentView {
   engagementId: string; path: string; content: string
   mediaType: 'json' | 'text'; sizeBytes: number; truncated: boolean; source: 'workspace'

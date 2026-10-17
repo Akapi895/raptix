@@ -19,7 +19,7 @@ import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain
 import type { Finding } from '../../domain/entities'
 import type {
   EvidenceDetailRead, EvidenceListQuery, EvidenceListRead, EvidenceUploadInput,
-  FindingDetailRead, FindingListQuery, FindingListRead,
+  EvidenceDownload, FindingActivityKind, FindingActivityPage, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions,
   FindingSaveInput, FindingTransitionTarget, RetestInput,
 } from './service'
 
@@ -76,6 +76,21 @@ export function useFindingDetail(id?: string) {
       return res.data
     },
     enabled: !!services && !!id,
+  })
+}
+
+export function useFindingReferenceOptions() {
+  const services = useFeatureServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: consoleKeys.view('finding', scope, 'reference-options'),
+    queryFn: async (): Promise<FindingReferenceOptions> => {
+      const actor = actorRef(scope.actor, scope.role)
+      const result = await services.findings(actor, scope.project).referenceOptions({ actor, projectId: scope.project, corr: 'finding-reference-options' })
+      if (!result.ok) throw new FindingReadError(result.failure)
+      return result.data
+    },
+    enabled: !!services && !!scope.project && scope.project !== 'all',
   })
 }
 
@@ -147,11 +162,18 @@ export function useFindingWrites() {
     return {
       save: (id: string | null, input: FindingSaveInput): Promise<ServiceResult<Finding>> =>
         svc().save(ctx('finding-save'), id, input),
-      transition: (id: string, to: FindingTransitionTarget, note?: string) =>
-        svc().transition(ctx('finding-transition'), id, to, note),
+      transition: (id: string, to: FindingTransitionTarget, note?: string, expectedVersion?: number) =>
+        svc().transition(ctx('finding-transition'), id, to, note, expectedVersion),
+      loadActivity: (id: string, kind: FindingActivityKind, cursor: string, version: number): Promise<ServiceResult<FindingActivityPage>> => svc().loadActivity(ctx('finding-activity'), id, kind, cursor, version),
+      setSuggestionDisposition: (id: string, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }) => svc().setSuggestionDisposition(ctx('suggestion-disposition'), input),
+      addComment: (id: string, text: string, expectedVersion: number, requestId: string) => svc().addComment(ctx('finding-comment'), id, text, expectedVersion, requestId),
       importSuggestion: (id: string) => svc().importSuggestion(ctx('finding-import'), id),
       attachEvidence: (findingId: string, evidenceId: string) =>
         svc().attachEvidence(ctx('finding-attach'), findingId, evidenceId),
+      classifyCapture: (captureId: string, classification: 'standard' | 'sensitive', expectedVersion: number, reason: string) =>
+        svc().classifyCapture(ctx('capture-classification'), captureId, classification, expectedVersion, reason),
+      downloadEvidence: (evidenceId: string): Promise<ServiceResult<EvidenceDownload>> =>
+        svc().downloadEvidence(ctx('evidence-download'), evidenceId),
       uploadEvidence: (input: EvidenceUploadInput) => svc().uploadEvidence(ctx('finding-upload'), input),
       recordRetest: (id: string, input: RetestInput) => svc().recordRetest(ctx('finding-retest'), id, input),
     }

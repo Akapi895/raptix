@@ -1,16 +1,16 @@
 import type { Evidence, Finding, FindingStatus, Severity } from '../../domain/entities'
 import type {
   EvidenceListRead, EvidenceDetailRead, EvidenceView,
-  FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingSaveInput,
-  FindingService, FindingSort, FindingTransitionTarget,
+  FindingActivityPage, FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions, FindingSaveInput,
+  FindingService, FindingSort, FindingSuggestionDisposition, FindingTransitionTarget,
 } from '../../features/findings/service'
 import {
-  createCuratedFinding, fetchCuratedFindings, getEngagement, transitionCuratedFinding, updateCuratedFinding,
+  addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, getEngagement, importCuratedFinding, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture,
   type CuratedFindingsView, type CuratedFindingView,
 } from '../api'
+import type { FindingView } from '@raptix/web-contracts'
 import { ApiTransportError } from '../transport'
 import { displayTime, guarded, instant } from './shared'
-import { REAL_CONTROL_GAPS } from './control-gaps'
 import { unavailable, unsupportedControl } from './stub'
 
 const PAGE_SIZE = 10
@@ -20,9 +20,20 @@ const SEVERITY_RANK: Readonly<Record<Severity, number>> = { critical: 0, high: 1
 const CATEGORY_STATUSES: Readonly<Record<Exclude<FindingCategory, 'all'>, readonly FindingStatus[]>> = {
   confirmed: ['confirmed'], review: ['review'], ai: ['ai_suggested'], drafts: ['draft', 'returned'], remediation: ['remediation', 'retest', 'resolved'],
 }
-/** The curated workflow's target set; `returned` maps to the review→draft transition. */
+/** The server persists returned as a distinct reviewer decision. */
 const TRANSITION_TO_API: Readonly<Record<FindingTransitionTarget, string>> = {
-  draft: 'draft', review: 'review', confirmed: 'confirmed', returned: 'draft', remediation: 'remediation', retest: 'retest', resolved: 'resolved',
+  draft: 'draft', review: 'review', confirmed: 'confirmed', returned: 'returned', remediation: 'remediation', retest: 'retest', resolved: 'resolved',
+}
+
+function historyText(event: NonNullable<CuratedFindingView['history']>[number]): string {
+  const label: Readonly<Record<string, string>> = {
+    created: 'Draft created', imported: 'Imported producer finding as a draft', review: 'Submitted for review',
+    confirmed: 'Confirmed', returned: 'Returned for changes', remediation: 'Sent to remediation', retest: 'Retest recorded',
+    resolved: 'Resolved', updated: 'Content updated', commented: 'Comment added', evidence_attached: 'Evidence attached',
+    retested: 'Retest recorded',
+  }
+  const text = label[event.action] ?? event.action
+  return event.reason ? `${text}: ${event.reason}` : text
 }
 
 /** Maps the curated resource onto the console's Finding entity; fields the curated workflow lacks stay empty. */
@@ -34,19 +45,53 @@ function toFinding(view: CuratedFindingView, engagementId: string): Finding {
     title: view.title,
     severity: SEVERITY_FROM_API[view.severity] ?? 'info',
     status: view.status as FindingStatus,
-    asset: '',
-    op: '',
-    technique: '',
+    asset: view.references.assetId ?? '',
+    op: view.references.runId ?? view.references.bindingId ?? view.references.threadId ?? '',
+    technique: view.references.techniqueId ?? '',
     owner: view.createdBy,
-    date: updated,
+    date: displayTime(view.createdAt ?? view.updatedAt),
     updated,
     desc: view.body.detail,
-    impact: '',
-    rec: '',
+    impact: view.body.impact ?? '',
+    rec: view.body.recommendation ?? '',
+    severityRationale: view.body.severityRationale ?? '',
+    scopeNote: view.body.scopeNote ?? '',
     evidence: view.evidence.map((item) => item.id),
+    comments: (view.comments ?? []).map((item) => ({ id: item.id, version: item.findingVersion, by: item.actorId, at: displayTime(item.createdAt), text: item.text })),
+    history: (view.history ?? []).map((item) => ({ id: item.id, version: item.version, evidenceRefs: item.evidenceRefs, at: displayTime(item.createdAt), by: item.actorId, text: historyText(item) })),
+    retests: (view.retests ?? []).map((item) => ({ id: item.id, version: item.findingVersion, evidenceRefs: item.evidenceRefs, at: displayTime(item.createdAt), by: item.actorId, result: item.result, note: item.note })),
+    version: view.expectedVersion,
+    references: view.references,
+    activityCursors: view.activityCursors,
+    lastReviewDecision: view.lastReviewDecision,
+    ...(view.sourceType === 'imported' && view.producerRef ? { producer: { path: view.producerRef, digest: view.producerDigest } } : {}),
+  }
+}
+
+/** A producer claim stays an unverified AI suggestion until a human imports it as a draft. */
+function toProducerFinding(view: FindingView, disposition?: FindingSuggestionDisposition): Finding {
+  const updated = ''
+  return {
+    id: view.id,
+    projectId: view.engagementId,
+    title: view.title,
+    severity: SEVERITY_FROM_API[view.severity] ?? 'info',
+    status: 'ai_suggested',
+    asset: view.affectedAssets.join(', '),
+    op: '',
+    technique: view.mitre?.join(', ') ?? '',
+    owner: 'Runtime producer',
+    date: updated,
+    updated,
+    desc: view.description,
+    impact: '',
+    rec: view.remediation ?? '',
+    evidence: [],
     comments: [],
     history: [],
     retests: [],
+    producer: { path: `findings/${view.id}.md`, sizeBytes: view.sizeBytes, quality: view.quality },
+    suggestionDisposition: disposition ? { dismissed: disposition.dismissed, reason: disposition.reason, version: disposition.version } : undefined,
   }
 }
 
@@ -67,14 +112,16 @@ function compareFindings(a: Finding, b: Finding, sort: FindingSort | undefined):
   return instant(b.updated) - instant(a.updated)
 }
 
-function buildList(findings: Finding[], query: FindingListQuery): FindingListRead {
+function buildList(findings: Finding[], query: FindingListQuery, dismissedCount = 0): FindingListRead {
   const needle = query.q?.trim().toLowerCase() ?? ''
   const base = findings.filter((f) =>
     (!needle || f.id.toLowerCase().includes(needle) || f.title.toLowerCase().includes(needle))
-    && (!query.owner || f.owner === query.owner))
+    && (!query.owner || f.owner === query.owner) && (!query.asset || f.asset === query.asset) && (!query.op || f.op === query.op))
   const severities = Object.keys(SEVERITY_RANK) as Severity[]
+  const locallyDismissed = new Set(query.dismissed ?? [])
+  const isHiddenDismissed = (finding: Finding) => finding.suggestionDisposition?.dismissed || locallyDismissed.has(finding.id)
   const filtered = base
-    .filter((f) => matchesStatus(f, query.status ?? ''))
+    .filter((f) => matchesStatus(f, query.status ?? '') && (query.status !== 'ai' || query.showDismissed || !isHiddenDismissed(f)))
     .filter((f) => !query.severity || f.severity === query.severity)
     .sort((a, b) => compareFindings(a, b, query.sort))
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -85,7 +132,7 @@ function buildList(findings: Finding[], query: FindingListQuery): FindingListRea
     all: base.length,
     confirmed: base.filter((f) => inCategory(f, 'confirmed')).length,
     review: base.filter((f) => inCategory(f, 'review')).length,
-    ai: base.filter((f) => inCategory(f, 'ai')).length,
+    ai: base.filter((f) => inCategory(f, 'ai') && (query.showDismissed || !isHiddenDismissed(f))).length,
     drafts: base.filter((f) => inCategory(f, 'drafts')).length,
     remediation: base.filter((f) => inCategory(f, 'remediation')).length,
   } satisfies Record<FindingCategory, number>
@@ -98,9 +145,10 @@ function buildList(findings: Finding[], query: FindingListQuery): FindingListRea
     severity,
     awaitingReview: base.filter((f) => f.status === 'review').length,
     resolved: base.filter((f) => f.status === 'resolved').length,
+    dismissedCount,
     owners: [...new Set(base.map((f) => f.owner).filter(Boolean))].sort(),
-    assets: [],
-    ops: [],
+    assets: [...new Set(findings.map((finding) => finding.asset).filter(Boolean))],
+    ops: [...new Set(findings.map((finding) => finding.op).filter(Boolean))],
     projects: [],
   }
 }
@@ -140,32 +188,96 @@ function evidenceName(row: CuratedEvidenceRow): string {
   return row.digest ? `digest ${row.digest.slice(0, 12)}` : row.id
 }
 
-/** Evidence rows linked into the engagement's curated findings; each row is one finding's reference. */
-function evidenceRows(view: CuratedFindingsView, engagementId: string): EvidenceView[] {
-  return view.findings.flatMap((finding) => finding.evidence.map((row) => ({
+function captureEvidence(capture: import('../api').RetainedCaptureView, engagementId: string, findingId?: string): EvidenceView {
+  return {
+    ref: capture.id,
+    captureId: capture.id,
+    name: capture.filename ?? undefined,
+    masked: capture.filename === null,
+    kind: capture.mediaType,
+    source: capture.producer ?? '',
+    at: displayTime(capture.createdAt),
+    by: capture.uploadedBy,
+    projectId: engagementId,
+    findingId,
+    sensitive: capture.classification === 'sensitive',
+    digest: capture.digest,
+    sizeBytes: capture.sizeBytes,
+    classification: capture.classification,
+    classificationVersion: capture.classificationVersion,
+    mediaType: capture.mediaType,
+    canClassify: capture.canClassify,
+    canViewOriginal: capture.canReadOriginal,
+  }
+}
+
+function mapCapture(capture: import('../api').RetainedCaptureView, engagementId: string): Evidence {
+  return {
+    id: capture.id,
+    name: capture.filename ?? capture.id,
+    kind: capture.mediaType,
+    source: capture.producer ?? 'Web upload',
+    at: displayTime(capture.createdAt),
+    by: capture.uploadedBy,
+    projectId: engagementId,
+    sensitive: capture.classification === 'sensitive',
+    captureId: capture.id,
+    digest: capture.digest,
+    sizeBytes: capture.sizeBytes,
+    classification: capture.classification,
+    classificationVersion: capture.classificationVersion,
+    mediaType: capture.mediaType,
+    canClassify: capture.canClassify,
+    canViewOriginal: capture.canReadOriginal,
+  }
+}
+
+/** Evidence links retain their own identity; retained captures supply classification and byte metadata. */
+function evidenceRows(view: CuratedFindingsView, engagementId: string, captures: import('../api').RetainedCaptureView[]): EvidenceView[] {
+  const byCaptureId = new Map(captures.map((capture) => [capture.id, capture]))
+  return view.findings.flatMap((finding) => finding.evidence.map((row) => {
+    const capture = row.captureId ? byCaptureId.get(row.captureId) : undefined
+    return {
     ref: row.id,
-    name: evidenceName(row),
-    masked: false,
-    kind: row.kind,
+    captureId: row.captureId ?? undefined,
+    name: capture ? capture.filename ?? undefined : evidenceName(row),
+    masked: capture ? capture.filename === null : false,
+    kind: capture?.mediaType ?? row.kind,
     source: row.producer ?? '',
     at: displayTime(row.createdAt),
     by: '',
     projectId: engagementId,
     findingId: finding.id,
-    sensitive: false,
-  })))
+    sensitive: capture?.classification === 'sensitive',
+    ...(capture ? {
+      digest: capture.digest,
+      sizeBytes: capture.sizeBytes,
+      classification: capture.classification,
+      classificationVersion: capture.classificationVersion,
+      mediaType: capture.mediaType,
+      canClassify: capture.canClassify,
+      canViewOriginal: capture.canReadOriginal,
+    } : {}),
+  }
+  }))
 }
 
-/** Unsupported unless the request carries no field the curated workflow would silently drop. */
+async function sha256(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', bytes.slice().buffer as ArrayBuffer)
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('')
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary)
+}
+
+/** Legacy display labels cannot stand in for owned reference identities. */
 function unsupportedSaveField(input: FindingSaveInput): string | null {
-  if (input.severityReason) return 'finding.severityRationale'
-  if (input.scopeNote) return 'finding.scopeNote'
-  if (input.impact) return 'finding.impact'
-  if (input.rec) return 'finding.recommendation'
-  if (input.asset) return 'finding.assetLink'
-  if (input.op) return 'finding.operationLink'
-  if (input.technique) return 'finding.techniqueLink'
-  if (input.evidence.length > 0) return 'finding.evidenceLink'
+  if (input.asset && !input.references?.assetId) return 'Select a managed asset identity before saving this asset link.'
+  if (input.op && !input.references?.bindingId && !input.references?.runId && !input.references?.threadId) return 'Select an owned execution identity before saving this execution link.'
+  if (input.technique && !input.references?.techniqueId) return 'Select a canonical technique identity before saving this technique link.'
   return null
 }
 
@@ -180,65 +292,174 @@ export function createRealFindingService(): FindingService {
   return {
     list: (ctx, query = {}) => guarded(async () => {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<FindingListRead>('Select an engagement to read its curated findings.')
-      const view = await fetchCuratedFindings(ctx.projectId)
-      versions.observe(view.findings)
-      return { ok: true, data: buildList(view.findings.map((f) => toFinding(f, ctx.projectId)), query) }
+      const [curated, producer, dispositions] = await Promise.all([fetchCuratedFindings(ctx.projectId), fetchFindings(ctx.projectId), fetchFindingSuggestionDispositions(ctx.projectId)])
+      versions.observe(curated.findings)
+      const imported = new Set(curated.findings.filter((finding) => finding.sourceType === 'imported' && finding.producerRef).map((finding) => finding.producerRef!))
+      const dispositionByPath = new Map(dispositions.dispositions.map((disposition) => [disposition.producerRef, disposition]))
+      const producerClaims = producer.findings
+        .filter((finding) => !imported.has(`findings/${finding.id}.md`))
+        .map((finding) => toProducerFinding(finding, dispositionByPath.get(`findings/${finding.id}.md`)))
+      return { ok: true, data: buildList([...curated.findings.map((finding) => toFinding(finding, ctx.projectId)), ...producerClaims], query, dispositions.dispositions.filter((row) => row.dismissed).length) }
     }),
 
     get: (ctx, id) => guarded(async () => {
-      const [view, engagement] = await Promise.all([readCurated(ctx.projectId, id), getEngagement(ctx.projectId)])
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<FindingDetailRead>('Select an engagement to read finding details.')
+      const [curated, captures, dispositions] = await Promise.all([fetchCuratedFindings(ctx.projectId), fetchRetainedCaptures(ctx.projectId), fetchFindingSuggestionDispositions(ctx.projectId)])
+      const view = curated.findings.find((finding) => finding.id === id)
+      const engagement = await getEngagement(ctx.projectId)
+      if (!view) {
+        const producer = (await fetchFindings(ctx.projectId)).findings.find((finding) => finding.id === id)
+        if (!producer) return { ok: false, failure: { kind: 'not-found', message: `Finding ${id} was not found.` } }
+        return {
+          ok: true,
+          data: {
+            finding: toProducerFinding(producer, dispositions.dispositions.find((row) => row.producerRef === `findings/${producer.id}.md`)),
+            evidence: [],
+            project: { id: ctx.projectId, name: engagement.displayName, client: '' },
+            inReports: [],
+            canViewSensitive: false,
+            producer: {
+              path: `findings/${producer.id}.md`,
+              evidence: producer.evidence,
+              attackVector: producer.attackVector,
+              quality: producer.quality,
+              sizeBytes: producer.sizeBytes,
+            },
+          },
+        }
+      }
       versions.observe(view)
       const detail: FindingDetailRead = {
         finding: toFinding(view, ctx.projectId),
-        evidence: view.evidence.map((item) => ({
-          ref: item.id,
-          name: item.artifactPath ?? undefined,
-          masked: false,
-          kind: item.kind,
-          source: item.producer ?? '',
-          at: displayTime(item.createdAt),
-          by: '',
-          projectId: ctx.projectId,
-          findingId: view.id,
-          sensitive: false,
-        })),
+        evidence: evidenceRows({ ...curated, findings: [view] }, ctx.projectId, captures.captures),
         project: { id: ctx.projectId, name: engagement.displayName, client: '' },
+        ...(view.references.assetId ? { assetId: view.references.assetId } : {}),
         inReports: [],
         canViewSensitive: false,
+        ...(view.sourceType === 'imported' && view.producerRef ? {
+          producer: { path: view.producerRef, resolved: view.producerResolved, digest: view.producerDigest },
+        } : {}),
       }
       return { ok: true, data: detail }
     }),
 
     save: (ctx, id, input) => guarded(async () => {
+      if (id === null && input.submit) return { ok: false, failure: { kind: 'validation', message: 'Save a draft, then attach evidence before submitting for review.' } }
       const gap = unsupportedSaveField(input)
-      if (gap) return { ok: false, failure: { kind: 'validation', message: REAL_CONTROL_GAPS[gap] } }
-      const body = { title: input.title, severity: SEVERITY_TO_API[input.severity], detail: input.desc }
+      if (gap) return { ok: false, failure: { kind: 'validation', message: gap } }
+      const expectedVersion = id === null ? undefined : input.expectedVersion ?? await versions.expected(ctx.projectId, id)
+      const linked = id === null ? [] : (await readCurated(ctx.projectId, id)).evidence.map((item) => item.id)
+      if (linked.length !== input.evidence.length || input.evidence.some((ref) => !linked.includes(ref))) return unsupportedControl<Finding>('finding.evidenceLink')
+      const body = {
+        title: input.title,
+        severity: SEVERITY_TO_API[input.severity],
+        detail: input.desc,
+        impact: input.impact,
+        recommendation: input.rec,
+        severityRationale: input.severityReason,
+        scopeNote: input.scopeNote,
+        references: input.references,
+      }
       const saved = id === null
         ? await createCuratedFinding(ctx.projectId, body)
-        : await updateCuratedFinding(ctx.projectId, id, { ...body, expectedVersion: await versions.expected(ctx.projectId, id) })
+        : await updateCuratedFinding(ctx.projectId, id, { ...body, expectedVersion: expectedVersion!, ...(input.submit ? { submit: true } : {}) })
       versions.observe(saved)
-      const finalView = input.submit
-        ? await transitionCuratedFinding(ctx.projectId, saved.id, 'review', saved.expectedVersion)
-        : saved
-      versions.observe(finalView)
-      return { ok: true, data: toFinding(finalView, ctx.projectId) }
+      return { ok: true, data: toFinding(saved, ctx.projectId) }
     }),
 
-    transition: (ctx, id, to, note) => guarded(async () => {
-      if (note) return { ok: false, failure: { kind: 'validation', message: REAL_CONTROL_GAPS['finding.transitionNote'] } }
-      const moved = await transitionCuratedFinding(ctx.projectId, id, TRANSITION_TO_API[to], await versions.expected(ctx.projectId, id))
+    transition: (ctx, id, to, note, expectedVersion) => guarded(async () => {
+      const moved = await transitionCuratedFinding(ctx.projectId, id, TRANSITION_TO_API[to], expectedVersion ?? await versions.expected(ctx.projectId, id), note)
       versions.observe(moved)
       return { ok: true, data: toFinding(moved, ctx.projectId) }
     }),
 
-    importSuggestion: () => unsupportedControl<Finding>('finding.aiSuggestion'),
-    attachEvidence: () => unsupportedControl<Finding>('finding.evidenceLink'),
-    uploadEvidence: () => unsupportedControl<Evidence>('finding.evidenceUpload'),
-    recordRetest: () => unsupportedControl<Finding>('finding.retestRecord'),
+    referenceOptions: (ctx) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<FindingReferenceOptions>('Select an engagement before loading finding reference options.')
+      return { ok: true, data: await fetchFindingReferenceOptions(ctx.projectId) }
+    }),
+
+    loadActivity: (ctx, id, kind, cursor, version) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<FindingActivityPage>('Select an engagement before paging finding activity.')
+      return { ok: true, data: await fetchFindingActivity(ctx.projectId, id, kind, cursor, version) }
+    }),
+
+    setSuggestionDisposition: (ctx, input) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<FindingSuggestionDisposition>('Select an engagement before changing a suggestion disposition.')
+      const disposition = await setSuggestionDispositionApi(ctx.projectId, input)
+      return { ok: true, data: disposition.disposition }
+    }),
+
+    addComment: (ctx, id, text, expectedVersion, requestId) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Finding>('Select an engagement before commenting on a finding.')
+      const updated = await addCuratedFindingComment(ctx.projectId, id, { text, expectedVersion, requestId })
+      versions.observe(updated)
+      return { ok: true, data: toFinding(updated, ctx.projectId) }
+    }),
+
+    importSuggestion: (ctx, id) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Finding>('Select an engagement before importing a producer finding.')
+      const producer = (await fetchFindings(ctx.projectId)).findings.find((finding) => finding.id === id)
+      if (!producer) return { ok: false, failure: { kind: 'not-found', message: `Producer finding ${id} is not available in this engagement.` } }
+      const imported = await importCuratedFinding(ctx.projectId, {
+        title: producer.title,
+        severity: producer.severity,
+        detail: producer.description,
+        producerRef: `findings/${producer.id}.md`,
+      })
+      versions.observe(imported)
+      return { ok: true, data: toFinding(imported, ctx.projectId) }
+    }),
+    attachEvidence: (ctx, findingId, evidenceId) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Finding>('Select an engagement before linking evidence.')
+      const captures = await fetchRetainedCaptures(ctx.projectId)
+      const capture = captures.captures.find((item) => item.id === evidenceId)
+      if (!capture) return unsupportedControl<Finding>('finding.evidenceLink')
+      if (capture.classification === 'unclassified') return { ok: false, failure: { kind: 'conflict', message: 'An owner or reviewer must classify this capture before it can be attached to a finding.' } }
+      await attachEvidenceApi(ctx.projectId, findingId, { kind: 'artifact', captureId: capture.id, expectedVersion: await versions.expected(ctx.projectId, findingId) })
+      const finding = await readCurated(ctx.projectId, findingId)
+      versions.observe(finding)
+      return { ok: true, data: toFinding(finding, ctx.projectId) }
+    }),
+    classifyCapture: (ctx, captureId, classification, expectedVersion, reason) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<EvidenceView>('Select an engagement to classify a capture.')
+      const capture = await classifyCaptureApi(ctx.projectId, captureId, { classification, expectedVersion, reason })
+      return { ok: true, data: captureEvidence(capture, ctx.projectId) }
+    }),
+    downloadEvidence: (ctx, evidenceId) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable('Select an engagement before downloading evidence.')
+      const [curated, captures] = await Promise.all([fetchCuratedFindings(ctx.projectId), fetchRetainedCaptures(ctx.projectId)])
+      const link = curated.findings.flatMap((finding) => finding.evidence).find((item) => item.id === evidenceId)
+      const captureId = captures.captures.find((item) => item.id === evidenceId)?.id ?? link?.captureId ?? null
+      if (!captureId) return unsupportedControl('evidence.original')
+      const capture = captures.captures.find((item) => item.id === captureId)
+      if (!capture) return { ok: false, failure: { kind: 'not-found', message: 'The retained capture is not available in this engagement.' } }
+      if (!capture.canReadOriginal) return { ok: false, failure: { kind: 'forbidden', message: 'The current classification does not permit this actor to read the original bytes.' } }
+      const file = await downloadCapture(ctx.projectId, captureId)
+      if (file.digest !== capture.digest || await sha256(file.bytes) !== capture.digest) return { ok: false, failure: { kind: 'conflict', message: 'Downloaded bytes do not match the retained capture digest.' } }
+      return { ok: true, data: { bytes: file.bytes, filename: file.filename, mediaType: capture.mediaType, digest: capture.digest } }
+    }),
+    uploadEvidence: (ctx, input) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Evidence>('Select an engagement before uploading evidence.')
+      if (!input.bytes || input.bytes.length === 0) return { ok: false, failure: { kind: 'validation', message: 'Select the original file bytes to upload.' } }
+      if (input.sensitive) return { ok: false, failure: { kind: 'validation', message: 'Sensitivity is assigned by an owner or reviewer after upload.' } }
+      const capture = await uploadCapture(ctx.projectId, {
+        requestId: input.requestId ?? crypto.randomUUID(), filename: input.name,
+        mediaType: input.mediaType ?? 'application/octet-stream', base64: bytesToBase64(input.bytes),
+      })
+      return { ok: true, data: mapCapture(capture, ctx.projectId) }
+    }),
+    recordRetest: (ctx, id, input) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Finding>('Select an engagement before recording a retest.')
+      const updated = await recordCuratedFindingRetest(ctx.projectId, id, { ...input, requestId: input.requestId ?? crypto.randomUUID(), expectedVersion: input.expectedVersion ?? await versions.expected(ctx.projectId, id) })
+      versions.observe(updated)
+      return { ok: true, data: toFinding(updated, ctx.projectId) }
+    }),
     listEvidence: (ctx, query = {}) => guarded(async () => {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<EvidenceListRead>('Select an engagement to read its evidence.')
-      const view = await fetchCuratedFindings(ctx.projectId)
-      const all = evidenceRows(view, ctx.projectId)
+      const [view, retained] = await Promise.all([fetchCuratedFindings(ctx.projectId), fetchRetainedCaptures(ctx.projectId)])
+      const linked = evidenceRows(view, ctx.projectId, retained.captures)
+      const linkedCaptureIds = new Set(linked.map((item) => item.captureId).filter((id): id is string => id !== undefined))
+      const all = [...linked, ...retained.captures.filter((capture) => !linkedCaptureIds.has(capture.id)).map((capture) => captureEvidence(capture, ctx.projectId))]
       const needle = query.q?.trim().toLowerCase() ?? ''
       const items = all.filter((e) =>
         (!needle || [e.ref, e.name ?? '', e.kind, e.source].some((field) => field.toLowerCase().includes(needle)))
@@ -247,18 +468,24 @@ export function createRealFindingService(): FindingService {
     }),
 
     getEvidence: (ctx, id) => guarded(async () => {
-      const [view, engagement] = await Promise.all([fetchCuratedFindings(ctx.projectId), getEngagement(ctx.projectId)])
-      const evidence = evidenceRows(view, ctx.projectId).find((e) => e.ref === id)
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<EvidenceDetailRead>('Select an engagement to inspect evidence.')
+      const [view, engagement, captures] = await Promise.all([fetchCuratedFindings(ctx.projectId), getEngagement(ctx.projectId), fetchRetainedCaptures(ctx.projectId)])
+      const linked = evidenceRows(view, ctx.projectId, captures.captures)
+      const evidence = linked.find((item) => item.ref === id || item.captureId === id) ?? (() => {
+        const capture = captures.captures.find((item) => item.id === id)
+        return capture ? captureEvidence(capture, ctx.projectId) : undefined
+      })()
       if (!evidence) return { ok: false, failure: { kind: 'not-found', message: `ID ${id} does not exist or is not available for your account.` } }
+      const capture = evidence.captureId ? captures.captures.find((item) => item.id === evidence.captureId) : undefined
       const detail: EvidenceDetailRead = {
         evidence,
         project: { id: ctx.projectId, name: engagement.displayName, client: '' },
-        integrity: { status: 'unverified' },
+        integrity: { status: 'unverified', ...(capture ? { digest: capture.digest } : {}) },
         findings: view.findings
-          .filter((f) => f.evidence.some((row) => row.id === id))
+          .filter((finding) => finding.evidence.some((row) => row.id === id || capture && row.captureId === capture.id))
           .map((f) => ({ id: f.id, status: f.status as FindingStatus, updated: displayTime(f.updatedAt) })),
-        canViewSensitive: false,
-        canViewOriginal: false,
+        canViewSensitive: capture?.canReadOriginal ?? false,
+        canViewOriginal: capture?.canReadOriginal ?? false,
       }
       return { ok: true, data: detail }
     }),

@@ -1,27 +1,32 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
 import { useDirty } from '../state/session'
 import { useServicesOrNull } from '../state/services'
 import { isRealMode } from '../real/mode'
+import { captureRequestId, clearCaptureRequest } from '../real/capture-session'
+import { clearFindingRequest, findingRequestId, type FindingRequestScope } from '../real/finding-session'
+import { SessionContext, useSession } from '../real/session'
 import { ROLE_LABEL } from '../auth/policy'
 import { recordAudit } from '../features/audit/service'
 import { sevLabel, addFindingCommentTransaction } from '../features/findings/service'
 import { setReportFindingsLegacyTransaction } from '../features/reports/service'
 import { TECHNIQUES, type Finding, type Severity } from '../data'
-import { EvidenceReadError, FindingReadError, useEvidenceDetail, useEvidenceList, useFindingDetail, useFindingList, useFindingWrites } from '../features/findings/query'
-import type { EvidenceView, FindingSort, FindingTransitionTarget } from '../features/findings/service'
+import { EvidenceReadError, FindingReadError, useEvidenceDetail, useEvidenceList, useFindingDetail, useFindingList, useFindingReferenceOptions, useFindingWrites } from '../features/findings/query'
+import type { EvidenceDownload, EvidenceView, FindingActivityKind, FindingSort, FindingTransitionTarget } from '../features/findings/service'
 import {
   Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx, useGuard,
 } from '../ui'
 import { go, useRoute } from '../router/navigate'
 import { realControlGap, useActiveProject, useCan, useMe, useReadOnly } from '../state/console'
-import { useFindingFormRead, useFindingReportChoices, useFindingEvidenceChoices, type FindingFormRead } from '../features/findings/projection'
+import { useFindingFormRead, useFindingReportChoices, type FindingFormRead } from '../features/findings/projection'
 import { useResourceScope } from './resource-scope'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const STATUS_LABEL: Record<string, string> = { ai_suggested: 'AI Suggested — unverified', draft: 'Draft', review: 'In Review', returned: 'Returned', confirmed: 'Confirmed', remediation: 'In Remediation', retest: 'Retest', resolved: 'Resolved' }
+const activityTime = (value: string) => new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 /** Status tabs; the scoped counts come from the findings read model (ticket 31). */
 const TABS: { id: string; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -75,6 +80,7 @@ function useAiActions() {
   const persistFilters = useSessionStore((s) => s.persistFilters)
   const setFilter = useSessionStore((s) => s.setFilter)
   const writes = useFindingWrites()
+  const queryClient = useQueryClient()
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority (the typed dismiss path has no audit row). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
@@ -83,19 +89,52 @@ function useAiActions() {
   const why = (f: Finding) => (readOnly(f.projectId) ? 'Project is read-only.' : !can('createFinding', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot verify or dismiss AI suggestions. An Analyst or Operator can.` : '')
   const verify = (f: Finding) => confirm({
     title: `Verify & import ${f.id} as a draft?`, confirmLabel: 'Verify & create finding',
-    body: 'You confirm you reviewed the source step and evidence. The suggestion becomes a draft finding for you to curate — it enters review only after you submit it, and a Reviewer must still confirm it before it counts in reports.',
+    body: <div className="space-y-2">
+      <p>You confirm you reviewed the source claim. It becomes a draft for curation, enters review only after you submit it, and needs an independent Reviewer before it can count in reports.</p>
+      {f.producer && <p>Producer source: <Mono>{f.producer.path}</Mono>. The source evidence text is a claim, not an evidence reference.</p>}
+      {f.producer?.quality?.defaultSeverity && <p className="text-warn">The parser supplied the severity default; verify the source before keeping it.</p>}
+      {f.producer?.quality?.placeholderDescription && <p className="text-warn">The source has no description beyond a placeholder.</p>}
+      {f.producer?.quality?.placeholderEvidence && <p className="text-warn">The source has no evidence reference beyond a placeholder.</p>}
+      {f.producer?.quality?.unreadable && <p className="text-warn">The producer source has parser-quality problems.</p>}
+    </div>,
     onConfirm: async () => {
       const res = await writes.importSuggestion(f.id)
-      if (res.ok) { toast(`${f.id} imported as a draft finding.`); go('finding', { id: f.id }) }
+      if (res.ok) { toast(`${f.id} imported as draft ${res.data.id}.`); go('finding', { id: res.data.id }) }
       else toast(res.failure.message, 'warn')
     },
   })
   const dismiss = (f: Finding) => confirm({
     title: `Dismiss ${f.id}?`, confirmLabel: 'Dismiss suggestion', danger: true, reasonLabel: 'Reason for dismissing', reasonRequired: true,
     body: 'The suggestion is removed from the active AI Suggestions list. It is never added to confirmed counts or reports. The reason is recorded.',
-    onConfirm: (r) => { setFilter('fd-dismissed', { ...dismissed, [f.id]: r }); if (services) addFindingCommentTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, f.id, `AI suggestion dismissed: ${r}`); audit('Dismissed AI suggestion', f.id, f.projectId, 'Success', r); toast(`${f.id} dismissed.`, 'warn') },
+    onConfirm: async (r) => {
+      if (isRealMode()) {
+        const result = await writes.setSuggestionDisposition(f.id, { producerRef: f.producer?.path ?? '', dismissed: true, reason: r, expectedVersion: f.suggestionDisposition?.version ?? 0 })
+        if (!result.ok) { toast(result.failure.message, 'warn'); return }
+        void queryClient.invalidateQueries({ queryKey: ['finding'] })
+      } else {
+        setFilter('fd-dismissed', { ...dismissed, [f.id]: r })
+        if (services) addFindingCommentTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, f.id, `AI suggestion dismissed: ${r}`)
+        audit('Dismissed AI suggestion', f.id, f.projectId, 'Success', r)
+      }
+      toast(`${f.id} dismissed.`, 'warn')
+    },
   })
-  return { dismissed, why, verify, dismiss, restore: (f: Finding) => { const d = { ...dismissed }; delete d[f.id]; setFilter('fd-dismissed', d) } }
+  return {
+    dismissed,
+    why,
+    dismissWhy: (f: Finding) => why(f),
+    verify,
+    dismiss,
+    restore: async (f: Finding) => {
+      if (isRealMode()) {
+        const result = await writes.setSuggestionDisposition(f.id, { producerRef: f.producer?.path ?? '', dismissed: false, reason: '', expectedVersion: f.suggestionDisposition?.version ?? 0 })
+        if (!result.ok) { toast(result.failure.message, 'warn'); return }
+        void queryClient.invalidateQueries({ queryKey: ['finding'] })
+      } else {
+        const restored = { ...dismissed }; delete restored[f.id]; setFilter('fd-dismissed', restored)
+      }
+    },
+  }
 }
 
 function MoreFilters({ children, active }: { children: ReactNode; active: number }) {
@@ -120,7 +159,7 @@ function MoreFilters({ children, active }: { children: ReactNode; active: number
  * updates these views without a reload) and cancel-on-switch come from the
  * shared bridges. AI suggestions are presented as proposals: they are
  * excluded from the severity KPIs until a human verifies them, and
- * dismissal is a session-local overlay passed into the read. Creation and
+  * dismissal is persisted per actor in real mode. Creation and
  * the detail form still use the bridged legacy routes (owner: ticket 32).
  */
 export function FindingList() {
@@ -131,7 +170,7 @@ export function FindingList() {
   const [q, setQ] = useState('')
   const [sev, setSev] = useState('')
   const [tab, setTab] = useState(route.tab && TABS.some((t) => t.id === route.tab) ? route.tab : 'all')
-  const listTabs = isRealMode() ? TABS.filter((t) => t.id !== 'ai') : TABS
+  const listTabs = TABS
   const [prj, setPrj] = useState('')
   const [owner, setOwner] = useState('')
   const [asset, setAsset] = useState('')
@@ -146,6 +185,7 @@ export function FindingList() {
     project: prj || undefined, owner: owner || undefined, asset: asset || undefined, op: opf || undefined,
     sort: sort !== 'updated' ? (sort as FindingSort) : undefined,
     dismissed: !showDis && dismissed.length ? dismissed : undefined,
+    showDismissed: showDis,
     page: page > 1 ? page : undefined,
   })
   useEffect(() => { setPage(1) }, [q, sev, tab, prj, owner, asset, opf, sort, showDis])
@@ -168,9 +208,8 @@ export function FindingList() {
         {SEVS.map((s) => <Kpi key={s} label={sevLabel[s]} value={data?.severity[s] ?? 0} tone={s === 'critical' || s === 'high' ? 'bad' : s === 'medium' ? 'warn' : s === 'low' ? 'cyan' : 'neutral'} onClick={() => setSev(sev === s ? '' : s)} />)}
         <Kpi label="Awaiting Review" value={data?.awaitingReview ?? 0} tone="warn" onClick={() => setTab('review')} />
         <Kpi label="Resolved" value={data?.resolved ?? 0} tone="ok" onClick={() => setTab('remediation')} />
-        {!isRealMode() && <Kpi label="AI Suggestions" value={data?.counts.ai ?? 0} sub="unverified — not in counts" tone="warn" onClick={() => setTab('ai')} />}
+        <Kpi label="AI Suggestions" value={data?.counts.ai ?? 0} sub="unverified — not in counts" tone="warn" onClick={() => setTab('ai')} />
       </div>
-      {realControlGap('finding.aiSuggestion') && <Banner tone="warn" title="AI suggestions are not in the curated workflow yet">{realControlGap('finding.aiSuggestion')}</Banner>}
       <Tabs value={tab} onChange={setTab} tabs={listTabs.map((t) => ({ id: t.id, label: t.label, count: data?.counts[t.id as keyof typeof data.counts] ?? 0 }))} />
       <FilterBar right={filtered ? <Button size="sm" variant="ghost" icon={RotateCcw} onClick={reset}>Reset</Button> : undefined}>
         <SearchBox value={q} onChange={setQ} placeholder="Search by ID or title…" className="w-full sm:w-64" />
@@ -186,7 +225,7 @@ export function FindingList() {
       {tab === 'ai' && (
         <div className="mb-3 space-y-2">
           <Banner tone="warn" icon={Sparkles} title="AI suggestions are not verified findings">They are excluded from confirmed counts, severity charts and reports until a human verifies them.</Banner>
-          {dismissed.length > 0 && <label className="flex cursor-pointer items-center gap-2 text-xs text-muted"><input type="checkbox" className="accent-[var(--c-accent)]" checked={showDis} onChange={(e) => setShowDis(e.target.checked)} />Show dismissed suggestions ({dismissed.length})</label>}
+          {(data?.dismissedCount ?? dismissed.length) > 0 && <label className="flex cursor-pointer items-center gap-2 text-xs text-muted"><input type="checkbox" className="accent-[var(--c-accent)]" checked={showDis} onChange={(e) => setShowDis(e.target.checked)} />Show dismissed suggestions ({data?.dismissedCount ?? dismissed.length})</label>}
         </div>
       )}
       {list.isPending ? (
@@ -206,21 +245,22 @@ export function FindingList() {
             }
             cols={[
               { key: 'id', header: 'Finding ID', render: (it) => <span className="whitespace-nowrap"><Mono className="text-accent">{it.finding.id}</Mono></span> },
-              { key: 't', header: 'Title', render: (it) => <div className="max-w-[300px] truncate font-medium" title={it.finding.title}>{it.finding.title}</div> },
+              { key: 't', header: 'Title', render: (it) => <div className="max-w-[300px]" title={it.finding.title}><div className="truncate font-medium">{it.finding.title}</div>{it.finding.producer && Object.values(it.finding.producer.quality ?? {}).some(Boolean) && <div className="mt-1 text-[11px] text-warn">Producer source needs review</div>}</div> },
               { key: 'p', header: 'Project', hideBelow: 'md', render: (it) => <div className="whitespace-nowrap"><Mono>{it.finding.projectId}</Mono><div className="text-xs text-muted">{it.projectClient}</div></div> },
               { key: 'sev', header: 'Severity', render: (it) => <span className="whitespace-nowrap"><Sev v={it.finding.severity} /></span> },
               { key: 'a', header: 'Affected asset', hideBelow: 'lg', render: (it) => <span className="whitespace-nowrap"><Mono>{it.finding.asset}</Mono></span> },
               { key: 'op', header: 'Operation', hideBelow: 'lg', render: (it) => <span className="whitespace-nowrap"><Mono>{it.finding.op}</Mono></span> },
               { key: 'o', header: 'Owner', hideBelow: 'md', render: (it) => <span className="whitespace-nowrap">{it.finding.owner}</span> },
-              { key: 's', header: 'Status', render: (it) => <span className="whitespace-nowrap"><Status kind="finding" value={it.finding.status} />{ai.dismissed[it.finding.id] && <span className="ml-1.5 text-xs text-muted">dismissed</span>}</span> },
+              { key: 's', header: 'Status', render: (it) => <span className="whitespace-nowrap"><Status kind="finding" value={it.finding.status} />{(ai.dismissed[it.finding.id] || it.finding.suggestionDisposition?.dismissed) && <span className="ml-1.5 text-xs text-muted">dismissed</span>}</span> },
               { key: 'u', header: 'Updated', hideBelow: 'lg', render: (it) => <span className="whitespace-nowrap text-xs text-muted">{it.finding.updated}</span> },
               ...(tab === 'ai' ? [{ key: 'act', header: 'Actions', render: (it: { finding: Finding }) => {
                 const f = it.finding
                 const w = ai.why(f)
-                return ai.dismissed[f.id] ? <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); ai.restore(f) }}>Restore</Button> : (
+                const dismissWhy = ai.dismissWhy(f)
+                return ai.dismissed[f.id] || f.suggestionDisposition?.dismissed ? <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); void ai.restore(f) }}>Restore</Button> : (
                   <div className="flex gap-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <Button size="sm" variant="primary" disabled={!!w} title={w || 'Verify the suggestion and create a finding in review'} onClick={() => ai.verify(f)}>Verify & create finding</Button>
-                    <Button size="sm" disabled={!!w} title={w || 'Dismiss with a reason'} onClick={() => ai.dismiss(f)}>Dismiss</Button>
+                    <Button size="sm" disabled={!!dismissWhy} title={dismissWhy || 'Dismiss with a reason'} onClick={() => ai.dismiss(f)}>Dismiss</Button>
                   </div>
                 )
               } }] : []),
@@ -261,7 +301,7 @@ const MaskedName = ({ ev }: { ev: EvidenceView }) =>
   ev.masked ? <span className="inline-flex items-center gap-1.5 text-warn"><Lock size={13} aria-hidden />Sensitive file — redacted</span> : <span>{ev.name ?? ev.ref}</span>
 
 /* ───────────── FI-03: create / edit ───────────── */
-interface Draft { title: string; severity: Severity; severityReason: string; asset: string; op: string; technique: string; desc: string; scopeNote: string; impact: string; rec: string; evidence: string[]; owner: string; kind: string; stepId?: string }
+interface Draft { title: string; severity: Severity; severityReason: string; asset: string; op: string; technique: string; desc: string; scopeNote: string; impact: string; rec: string; evidence: string[]; owner: string; kind: string; references: NonNullable<Finding['references']>; stepId?: string }
 
 /**
  * Finding create/edit form (ticket 32): validation, dirty tracking and the
@@ -283,6 +323,7 @@ function FindingForm() {
 
 function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: FindingFormRead }) {
   const route = useRoute()
+  const real = isRealMode()
   const me = useMe()
   const pid = useProjectStore((s) => s.pid)
   const toast = useToastStore((s) => s.toast)
@@ -292,6 +333,7 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
   const can = useCan()
   const nav = useDelayedNav()
   const writes = useFindingWrites()
+  const referencesQuery = useFindingReferenceOptions()
   const projectId = editing?.projectId || (pid !== 'all' ? pid : '')
   const createReason = useCreateReason(projectId || undefined)
   const guard = useGuard(projectId || undefined)
@@ -302,11 +344,13 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
   const members = project?.members.filter((m) => m.role !== 'viewer').map((m) => m.user) || []
 
   const init: Draft = useMemo(() => editing
-    ? { title: editing.title, severity: editing.severity, severityReason: '', asset: editing.asset, op: editing.op, technique: editing.technique, desc: editing.desc, scopeNote: '', impact: editing.impact, rec: editing.rec, evidence: [...editing.evidence], owner: editing.owner, kind: 'Configuration / access control' }
-    : { title: pf?.title || '', severity: (pf?.severity as Severity) || 'medium', severityReason: '', asset: pf?.asset || '', op: pf?.op || '', technique: pf?.technique || '', desc: pf?.desc || '', scopeNote: '', impact: '', rec: '', evidence: (pf?.evidence || []).filter((id) => db.evidence.some((e) => e.id === id && e.projectId === projectId)), owner: members.includes(me.name) ? me.name : members[0] || me.name, kind: 'Configuration / access control', stepId: pf?.stepId }
+    ? { title: editing.title, severity: editing.severity, severityReason: editing.severityRationale ?? '', asset: editing.asset, op: editing.op, technique: editing.technique, desc: editing.desc, scopeNote: editing.scopeNote ?? '', impact: editing.impact, rec: editing.rec, evidence: [...editing.evidence], owner: editing.owner, kind: 'Configuration / access control', references: editing.references ?? { assetId: null, bindingId: null, threadId: null, runId: null, techniqueId: null } }
+    : { title: pf?.title || '', severity: (pf?.severity as Severity) || 'medium', severityReason: '', asset: pf?.asset || '', op: pf?.op || '', technique: pf?.technique || '', desc: pf?.desc || '', scopeNote: '', impact: '', rec: '', evidence: (pf?.evidence || []).filter((id) => db.evidence.some((e) => e.id === id && e.projectId === projectId)), owner: members.includes(me.name) ? me.name : members[0] || me.name, kind: 'Configuration / access control', references: { assetId: null, bindingId: null, threadId: null, runId: null, techniqueId: null }, stepId: pf?.stepId }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   , [])
   const [d, setD] = useState<Draft>(init)
+  const [baseVersion, setBaseVersion] = useState(editing?.version)
+  const queryClient = useQueryClient()
   const [tried, setTried] = useState(false)
   const [saved, setSaved] = useState(false)
   const [preview, setPreview] = useState(false)
@@ -314,17 +358,19 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
   const dirty = !saved && JSON.stringify(d) !== JSON.stringify(init)
 
   const assets = db.assets.filter((a) => a.projectId === projectId)
+  const managedAssets = real ? referencesQuery.data?.assets ?? [] : assets.map((asset) => ({ id: asset.id, label: asset.name }))
+  const executions = referencesQuery.data?.executions ?? []
   const ops = db.operations.filter((o) => o.projectId === projectId)
   const evs = db.evidence.filter((e) => e.projectId === projectId)
-  const assetGap = realControlGap('finding.assetLink')
-  const opGap = realControlGap('finding.operationLink')
-  const techniqueGap = realControlGap('finding.techniqueLink')
+  const assetGap = undefined
+  const techniqueGap = referencesQuery.data?.techniqueAvailable === false ? 'Canonical technique references are unavailable.' : undefined
   const impactGap = realControlGap('finding.impact')
   const recGap = realControlGap('finding.recommendation')
   const scopeGap = realControlGap('finding.scopeNote')
   const severityGap = realControlGap('finding.severityRationale')
   const evidenceGap = realControlGap('finding.evidenceLink')
-  const locked = !!createReason || (!!editing && !['draft', 'returned'].includes(editing.status))
+  const editableStatuses = real ? ['draft', 'returned', 'review', 'confirmed', 'remediation', 'retest'] : ['draft', 'returned']
+  const locked = !!createReason || (!!editing && !editableStatuses.includes(editing.status))
   const err: Record<string, string> = {}
   if (d.title.trim().length < 5) err.title = 'Enter a finding title (at least 5 characters).'
   if (!assetGap && !d.asset) err.asset = 'Select the affected asset.'
@@ -332,10 +378,11 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
   if (!impactGap && !d.impact.trim()) err.impact = 'Enter the impact.'
   if (!recGap && !d.rec.trim()) err.rec = 'Enter a recommendation.'
   if (!severityGap && d.severity === 'critical' && !d.severityReason.trim()) err.severityReason = 'Critical severity requires a rationale.'
-  const noEvidence = !evidenceGap && d.evidence.length === 0
+  const noEvidence = d.evidence.length === 0
   const submitReason = noEvidence ? 'At least 1 piece of evidence is required to submit for review (you can save a draft first).' : ''
+  const maySubmit = !editing || ['draft', 'returned'].includes(editing.status)
 
-  const draftPayload = () => ({ title: d.title.trim(), severity: d.severity, severityReason: d.severityReason.trim() || undefined, owner: d.owner, kind: d.kind, desc: d.desc, scopeNote: d.scopeNote, asset: d.asset, impact: d.impact, rec: d.rec, technique: d.technique, op: d.op, stepId: d.stepId, evidence: d.evidence })
+  const draftPayload = () => ({ title: d.title.trim(), severity: d.severity, severityReason: d.severityReason.trim() || undefined, owner: d.owner, kind: d.kind, desc: d.desc, scopeNote: d.scopeNote, asset: d.asset, impact: d.impact, rec: d.rec, technique: d.technique, op: d.op, stepId: d.stepId, evidence: d.evidence, references: d.references })
   const finish = (id: string, msg: string) => {
     setSaved(true)
     toast(msg)
@@ -349,9 +396,11 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
     if (!projectId || saving) return null
     setSaving(true)
     setSaveErr(null)
-    const res = await writes.save(editing?.id ?? null, { ...draftPayload(), submit })
+    const res = await writes.save(editing?.id ?? null, { ...draftPayload(), submit, expectedVersion: baseVersion })
     setSaving(false)
     if (!res.ok) { setSaveErr(res.failure.message); return null }
+    setBaseVersion(res.data.version)
+    await queryClient.invalidateQueries({ queryKey: ['finding'] })
     const id = res.data.id
     if (navigate) finish(id, submit ? `${id} submitted for review.` : `Draft ${id} saved.`)
     return id
@@ -403,7 +452,7 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
         </Banner>
       )}
       {createReason ? <Banner tone="warn" title="Cannot create / edit finding">{createReason}</Banner>
-        : locked ? <Banner tone="warn" title="Finding is no longer editable">Only drafts or returned findings can be edited. Current status: {STATUS_LABEL[editing!.status]}.</Banner>
+         : locked ? <Banner tone="warn" title="Finding is no longer editable">This lifecycle stage is immutable. Current status: {STATUS_LABEL[editing!.status]}.</Banner>
           : guard.ro ? <Banner tone="warn" title="Read-only">{guard.reason}</Banner> : null}
       {saveErr && (
         <Banner tone="bad" title="The finding was not saved">
@@ -431,14 +480,16 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
         <Card>
           <CardHeader title="Analysis" />
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Affected asset" required={!assetGap} error={E('asset')} hint={assetGap ?? `${assets.length} assets in ${projectId}`}>
-              <Select disabled={!!assetGap} value={d.asset} onChange={(e) => set('asset', e.target.value)}><option value="">— Select an asset —</option>{assets.map((a) => <option key={a.id} value={a.name}>{a.name} ({a.id})</option>)}</Select>
+            <Field label="Affected asset" required error={E('asset')} hint={referencesQuery.isPending ? 'Loading managed assets…' : `${managedAssets.length} managed assets in ${projectId}`}>
+              <Select value={real ? d.references.assetId ?? '' : d.asset} onChange={(e) => { const asset = managedAssets.find((item) => real ? item.id === e.target.value : item.label === e.target.value); set('references', { ...d.references, assetId: real ? e.target.value || null : null }); set('asset', asset?.label ?? '') }}><option value="">— Select an asset —</option>{managedAssets.map((asset) => <option key={asset.id} value={real ? asset.id : asset.label}>{asset.label} ({asset.id})</option>)}</Select>
             </Field>
-            <Field label="Related operation" hint={opGap ?? 'Only operations in this project.'}>
-              <Select disabled={!!opGap} value={d.op} onChange={(e) => set('op', e.target.value)}><option value="">— No linked operation —</option>{ops.map((o) => <option key={o.id} value={o.id}>{o.id} — {o.name}</option>)}</Select>
+            <Field label="Related execution" hint={referencesQuery.data?.truncated ? 'Execution options are bounded. Refine before linking.' : 'Links only owned execution threads and runs in this engagement.'}>
+              {real ? <Select value={JSON.stringify(d.references)} onChange={(e) => { const selected = executions.find((item) => JSON.stringify({ ...d.references, threadId: item.threadId, runId: item.runId, bindingId: item.bindingId }) === e.target.value); const refs = selected ? { ...d.references, threadId: selected.threadId, runId: selected.runId, bindingId: selected.bindingId } : { ...d.references, threadId: null, runId: null, bindingId: null }; set('references', refs); set('op', refs.runId ?? refs.bindingId ?? refs.threadId ?? '') }}><option value={JSON.stringify({ ...d.references, threadId: null, runId: null, bindingId: null })}>— No linked execution —</option>{executions.map((execution) => { const refs = { ...d.references, threadId: execution.threadId, runId: execution.runId, bindingId: execution.bindingId }; return <option key={JSON.stringify(refs)} value={JSON.stringify(refs)}>{execution.runId ?? execution.bindingId ?? execution.threadId}</option> })}</Select>
+                : <Select value={d.op} onChange={(e) => set('op', e.target.value)}><option value="">— No linked operation —</option>{ops.map((operation) => <option key={operation.id} value={operation.id}>{operation.id} — {operation.name}</option>)}</Select>}
             </Field>
-            <Field label="ATT&CK technique (if applicable)" hint={techniqueGap ?? undefined}>
-              <Select disabled={!!techniqueGap} value={d.technique} onChange={(e) => set('technique', e.target.value)}><option value="">— Not applicable —</option>{TECHNIQUES.map((t) => <option key={t.id} value={t.id}>{t.id} — {t.name}</option>)}</Select>
+            <Field label="ATT&CK technique (if applicable)" hint={techniqueGap ?? (referencesQuery.data?.techniqueAvailable ? 'Validated against the canonical technique corpus on save.' : 'Select a project to check the canonical corpus.')}>
+              {real ? <Input value={d.references.techniqueId ?? ''} onChange={(e) => { set('references', { ...d.references, techniqueId: e.target.value.trim() || null }); set('technique', e.target.value.trim()) }} placeholder="T1059.001" disabled={!!techniqueGap} />
+                : <Select value={d.technique} onChange={(e) => set('technique', e.target.value)}><option value="">— Not applicable —</option>{TECHNIQUES.map((technique) => <option key={technique.id} value={technique.id}>{technique.id} — {technique.name}</option>)}</Select>}
             </Field>
             <Field label="Conditions / scope of impact" hint={scopeGap ?? undefined}><Input disabled={!!scopeGap} value={d.scopeNote} onChange={(e) => set('scopeNote', e.target.value)} placeholder="Example: applies only to demo accounts in the lab" /></Field>
             <Field label="Description" required error={E('desc')} className="md:col-span-2"><Textarea value={d.desc} onChange={(e) => set('desc', e.target.value)} /></Field>
@@ -472,8 +523,8 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
         {!locked && submitReason && <span className="mr-auto flex items-center gap-1.5 text-xs text-muted"><Lock size={12} aria-hidden />{submitReason}</span>}
         <Button variant="ghost" onClick={() => (editing ? go('finding', { id: editing.id }) : go('findings'))}>Cancel</Button>
         <Button onClick={() => setPreview(true)} icon={FileText}>Preview</Button>
-        <Button onClick={saveDraft} disabled={locked || saving} title={locked ? createReason || 'Cannot edit in the current status.' : ''}>Save Draft</Button>
-        <Button variant="primary" icon={Send} onClick={submit} disabled={locked || saving || !!submitReason} title={locked ? createReason || 'Cannot edit in the current status.' : submitReason}>Submit for Review</Button>
+        <Button onClick={saveDraft} disabled={locked || saving} title={locked ? createReason || 'Cannot edit in the current status.' : !maySubmit ? 'Content changes invalidate confirmation and return the finding to review.' : ''}>{maySubmit ? 'Save Draft' : 'Save for Re-review'}</Button>
+        <Button variant="primary" icon={Send} onClick={submit} disabled={locked || saving || !!submitReason || !maySubmit} title={locked ? createReason || 'Cannot edit in the current status.' : !maySubmit ? 'Use Save for Re-review to save content and invalidate its previous confirmation.' : submitReason}>Submit for Review</Button>
       </div>
       <Modal open={preview} onClose={() => setPreview(false)} title="Finding preview" width={640} footer={<Button onClick={() => setPreview(false)}>Close</Button>}>
         <div className="space-y-3">
@@ -503,17 +554,36 @@ const FLOW_IDX: Record<string, number> = { ai_suggested: -1, draft: 0, returned:
  */
 function FindingDetail() {
   const route = useRoute()
+  const session = useContext(SessionContext)
+  const me = useMe()
+  const pid = useProjectStore((state) => state.pid)
+  return <FindingDetailBody key={`${session?.session?.actor?.id ?? me.email}:${pid}:${route.id}`} />
+}
+
+function FindingDetailBody() {
+  const route = useRoute()
+  const session = useContext(SessionContext)
   const can = useCan()
   const readOnly = useReadOnly()
   const me = useMe()
-  const services = useServicesOrNull()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
   const db = useFindingReportChoices()
   const writes = useFindingWrites()
+  const queryClient = useQueryClient()
   const detail = useFindingDetail(route.id)
   useResourceScope(detail.data?.finding.projectId)
   const [note, setNote] = useState('')
+  const [commentSaving, setCommentSaving] = useState(false)
+  const [olderComments, setOlderComments] = useState<Finding['comments']>([])
+  const [olderHistory, setOlderHistory] = useState<Finding['history']>([])
+  const [activityCursors, setActivityCursors] = useState<Partial<Record<FindingActivityKind, string | null>>>({})
+  const [activityLoading, setActivityLoading] = useState<FindingActivityKind | null>(null)
+  const activityVersion = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    activityVersion.current = detail.data?.finding.version
+    setOlderComments([]); setOlderHistory([]); setActivityCursors({}); setActivityLoading(null)
+  }, [detail.data?.finding.version])
   const [rep, setRep] = useState(false)
   const ai = useAiActions()
   if (!route.id || detail.isError) {
@@ -532,27 +602,31 @@ function FindingDetail() {
   const op = data.operation
   const step = data.step
   const real = isRealMode()
-  const commentGap = realControlGap('finding.comments')
-  const noEv = !real && f.evidence.length === 0
+  const noEv = f.evidence.length === 0
   const roReason = me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.'
-  const returnedNote = f.status === 'returned' ? [...f.comments].reverse()[0] : undefined
+  const reviewDecision = f.lastReviewDecision
+  const returnedNote = f.status === 'returned' ? reviewDecision?.action === 'returned' ? { by: reviewDecision.actorId, at: activityTime(reviewDecision.createdAt), text: reviewDecision.reason ?? '' } : [...olderHistory, ...f.history].reverse().find((event) => event.text.startsWith('Returned for changes')) : undefined
   const reports = db.reports.filter((r) => r.projectId === f.projectId && ['draft', 'returned'].includes(r.status))
   const inReport = data.inReports
   const reportReason = realControlGap('finding.reportLink') ?? (f.status === 'ai_suggested' ? 'AI suggestions are unverified and cannot be included in a report. Verify the finding first.' : ro ? roReason : !can('editReport', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot edit reports.` : ['draft', 'review', 'returned'].includes(f.status) ? 'Only confirmed findings can be added to a report.' : '')
 
-  const lastDecision = [...f.history].reverse().find((h) => /Confirmed|Returned/.test(h.text))
+  const lastDecision = reviewDecision ? { text: `${reviewDecision.action === 'confirmed' ? 'Confirmed' : 'Returned for changes'} @ v${reviewDecision.version}`, by: reviewDecision.actorId } : [...olderHistory, ...f.history].reverse().find((h) => /Confirmed|Returned/.test(h.text))
   /** One lifecycle move through the typed handler; the handler is the
    *  enforcer — a refusal (role, state, read-only) surfaces its reason. */
   const runTransition = async (to: FindingTransitionTarget, msg: string, opts?: { note?: string; warn?: boolean }) => {
-    const res = await writes.transition(f.id, to, opts?.note)
-    if (res.ok) toast(msg, opts?.warn ? 'warn' : 'ok')
+    const res = await writes.transition(f.id, to, opts?.note, f.version)
+    if (res.ok) {
+      toast(msg, opts?.warn ? 'warn' : 'ok')
+      await queryClient.invalidateQueries({ queryKey: ['finding'] })
+    }
     else toast(res.failure.message, 'warn')
   }
   const doSubmit = () => { void runTransition('review', `${f.id} submitted for review.`) }
   const approve = () => confirm({ title: `Confirm ${f.id}?`, body: 'The finding will move to "Confirmed" and can be added to reports. This action is written to the audit log.', confirmLabel: 'Confirm Finding', onConfirm: () => { void runTransition('confirmed', `${f.id} was confirmed.`) } })
-  const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: realControlGap('finding.transitionNote') ?? 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: real ? undefined : 'Reason for returning', reasonRequired: !real, onConfirm: (r) => { void runTransition('returned', `${f.id} returned to the author.`, { note: real ? undefined : r, warn: true }) } })
+  const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: 'Reason for returning', reasonRequired: true, onConfirm: (r) => { void runTransition('returned', `${f.id} returned to the author.`, { note: r, warn: true }) } })
 
   const actions: ReactNode[] = []
+  if (real && ['review', 'confirmed', 'remediation', 'retest'].includes(f.status)) actions.push(<Button key="edit-content" icon={Pencil} disabled={ro || !author} title="Editing confirmed content returns the finding to review." onClick={() => go('finding-new', { id: f.id })}>Edit Finding</Button>)
   if (['draft', 'returned'].includes(f.status)) {
     actions.push(
       <Button key="e" icon={Pencil} disabled={ro || !author} title={ro ? roReason : !author ? `The ${ROLE_LABEL[me.role]} role cannot edit.` : ''} onClick={() => go('finding-new', { id: f.id })}>Edit Draft</Button>,
@@ -561,14 +635,15 @@ function FindingDetail() {
   }
   if (f.status === 'ai_suggested') {
     const w = ai.why(f)
+    const dismissWhy = ai.dismissWhy(f)
     actions.push(
-      <Button key="d" disabled={!!w || !!ai.dismissed[f.id]} title={w || 'Dismiss with a reason'} onClick={() => ai.dismiss(f)}>Dismiss</Button>,
+      <Button key="d" disabled={!!dismissWhy || !!ai.dismissed[f.id]} title={dismissWhy || 'Dismiss with a reason'} onClick={() => ai.dismiss(f)}>Dismiss</Button>,
       <Button key="v" variant="primary" icon={ShieldCheck} disabled={!!w} title={w || 'Verify the suggestion and create a finding in review'} onClick={() => ai.verify(f)}>Verify & create finding</Button>,
     )
   }
   if (f.status === 'review') {
     actions.push(
-      <Button key="r" variant="danger" icon={RotateCcw} disabled={ro || !reviewer || (real && !author)} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can return findings.' : real && !author ? 'The server requires the operator role to return a finding; a reviewer can only confirm it.' : ''} onClick={sendBack}>Return for Changes</Button>,
+      <Button key="r" variant="danger" icon={RotateCcw} disabled={ro || !reviewer} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can return findings.' : ''} onClick={sendBack}>Return for Changes</Button>,
       <Button key="c" variant="primary" icon={ShieldCheck} disabled={ro || !reviewer} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can confirm findings.' : ''} onClick={approve}>Confirm Finding</Button>,
     )
   }
@@ -579,7 +654,39 @@ function FindingDetail() {
     <Button key="rep" icon={FilePlus2} disabled={!!reportReason} title={reportReason || 'Add this finding to a report in the same project'} onClick={() => setRep(true)}>Add to Report</Button>,
   )
 
-  const postComment = () => { if (!note.trim() || !services) return; addFindingCommentTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, f.id, note.trim()); setNote(''); toast('Comment posted.') }
+  const postComment = async () => {
+    if (!note.trim() || commentSaving) return
+    setCommentSaving(true)
+    const requestScope: FindingRequestScope = { deploymentId: session?.deploymentId ?? window.location.origin, actorId: session?.session?.actor?.id ?? me.email, engagementId: f.projectId, findingId: f.id, action: 'comment', payload: { text: note.trim() } }
+    try {
+      const requestId = await findingRequestId(requestScope)
+      const result = await writes.addComment(f.id, note.trim(), f.version ?? 1, requestId)
+      if (!result.ok) { toast(result.failure.message, 'warn'); return }
+      await clearFindingRequest(requestScope)
+      setNote('')
+      setOlderComments([]); setOlderHistory([]); setActivityCursors({})
+      await queryClient.invalidateQueries({ queryKey: ['finding'] })
+      toast('Comment posted.')
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'The comment could not be saved.', 'warn')
+    } finally {
+      setCommentSaving(false)
+    }
+  }
+  const activityCursor = (kind: FindingActivityKind) => activityCursors[kind] === undefined ? f.activityCursors?.[kind] ?? null : activityCursors[kind] ?? null
+  const loadOlderActivity = async (kind: 'comments' | 'history') => {
+    const cursor = activityCursor(kind)
+    if (!cursor || activityLoading) return
+    setActivityLoading(kind)
+    const page = await writes.loadActivity(f.id, kind, cursor, f.version ?? 1)
+    if (activityVersion.current !== f.version) return
+    setActivityLoading(null)
+    if (!page.ok) { toast(page.failure.message, 'warn'); return }
+    const events = [...page.data.items].reverse()
+    if (kind === 'comments') setOlderComments((previous) => [...events.map((item) => ({ by: item.actorId, at: activityTime(item.createdAt), text: item.text })), ...previous])
+    else setOlderHistory((previous) => [...events.map((item) => ({ at: activityTime(item.createdAt), by: item.actorId, text: item.text })), ...previous])
+    setActivityCursors((previous) => ({ ...previous, [kind]: page.data.nextCursor }))
+  }
 
   return (
     <div>
@@ -593,12 +700,12 @@ function FindingDetail() {
       {ro && <Banner tone="warn" icon={Lock} title="Read-only mode">{roReason} Actions that change data are disabled, each with an explanation.</Banner>}
       {returnedNote && (
         <Banner tone="bad" icon={RotateCcw} title={`Returned by ${returnedNote.by} — ${returnedNote.at}`} action={!ro && author ? <Button size="sm" variant="secondary" icon={Pencil} onClick={() => go('finding-new', { id: f.id })}>Edit now</Button> : undefined}>
-          <span className="whitespace-pre-wrap">{returnedNote.text}</span>
+          <span className="whitespace-pre-wrap">{returnedNote.text.replace(/^Returned for changes(?::\s*)?/, '')}</span>
         </Banner>
       )}
       {f.status === 'ai_suggested' && (
         <Banner tone="warn" icon={Sparkles} title="AI Suggested — unverified">
-          Proposed by the AI Operator. Not a finding yet: excluded from confirmed counts, severity charts and reports. {ai.dismissed[f.id] ? `Dismissed: ${ai.dismissed[f.id]}` : 'Verify it against the source step and evidence, or dismiss it with a reason.'}
+          {data.producer ? `Produced from ${data.producer.path}. ` : 'Proposed by the AI Operator. '}Not a finding yet: excluded from confirmed counts, severity charts and reports. {ai.dismissed[f.id] ? `Dismissed: ${ai.dismissed[f.id]}` : 'Verify it against the source output before importing it as a draft.'}
         </Banner>
       )}
       {f.status === 'review' && !reviewer && !ro && <PersonaHint need="Reviewer" persona="Pat Kim">This finding is awaiting review. Switch to the Reviewer role to Confirm or Return it.</PersonaHint>}
@@ -607,28 +714,43 @@ function FindingDetail() {
         value={tab} onChange={(t) => go('finding', { id: f.id, tab: t })}
         tabs={[{ id: 'overview', label: 'Summary & workflow' }, { id: 'evidence', label: 'Evidence', count: f.evidence.length }, { id: 'retest', label: 'Retest', count: f.retests.length }]}
       />
-      {tab === 'evidence' ? <EvidenceTab f={f} evs={data.evidence} ro={ro} /> : tab === 'retest' ? <RetestTab f={f} ro={ro} roReason={roReason} /> : (
+      {tab === 'evidence' ? <EvidenceTab f={f} evs={data.evidence} ro={ro} /> : tab === 'retest' ? <RetestTab key={`${f.id}:${f.version}`} f={f} ro={ro} roReason={roReason} /> : (
         <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
           <div className="space-y-6">
+            {data.producer && <Card>
+              <CardHeader title={data.producer.evidence ? 'Runtime producer output' : 'Imported producer lineage'} sub={`${data.producer.path}${data.producer.sizeBytes === undefined ? '' : ` · ${data.producer.sizeBytes} bytes`}`} />
+              <div className="space-y-3 text-sm">
+                {data.producer.resolved === false && <Banner tone="warn" title="Producer source is not retained">The imported claim keeps its source reference, but the server could not resolve it to retained artifact bytes.</Banner>}
+                {data.producer.digest && <p className="break-all text-xs text-muted">Producer source SHA-256: <span className="font-mono">{data.producer.digest}</span></p>}
+                {data.producer.quality?.defaultSeverity && <Banner tone="warn" title="Severity is a parser default">The source did not include a recognized severity. Review the value before curation.</Banner>}
+                {data.producer.quality?.placeholderDescription && <Banner tone="warn" title="Description is a placeholder">The source did not provide a description.</Banner>}
+                {data.producer.quality?.placeholderEvidence && <Banner tone="warn" title="Evidence is a placeholder">The source did not provide an evidence reference.</Banner>}
+                {data.producer.quality?.unreadable && <Banner tone="warn" title="Producer source is unreadable">The retained source could not be parsed completely.</Banner>}
+                {data.producer.evidence && <div><div className="mb-1 text-xs text-muted">Producer evidence text — not an evidence reference</div><p className="whitespace-pre-wrap leading-relaxed">{data.producer.evidence}</p></div>}
+                {data.producer.attackVector && <div><div className="mb-1 text-xs text-muted">Attack vector</div><p className="whitespace-pre-wrap leading-relaxed">{data.producer.attackVector}</p></div>}
+              </div>
+            </Card>}
             <Card>
               <CardHeader title="Analysis & impact" />
               <div className="space-y-4 text-sm">
                 <div><div className="mb-1 text-xs text-muted">Description</div><p className="leading-relaxed">{f.desc}</p></div>
                 <div><div className="mb-1 text-xs text-muted">Technical observations</div><p className="leading-relaxed">{step ? `${step.id} (${step.technique}) on ${step.asset}: ${step.output}` : 'No linked step observation.'}</p></div>
-                <div><div className="mb-1 text-xs text-muted">Impact</div><p className="leading-relaxed">{f.impact}</p></div>
-                <div><div className="mb-1 text-xs text-muted">Recommendations</div><p className="leading-relaxed">{f.rec}</p></div>
+                <div><div className="mb-1 text-xs text-muted">Impact</div><p className="leading-relaxed">{f.impact || 'Not recorded.'}</p></div>
+                <div><div className="mb-1 text-xs text-muted">Recommendations</div><p className="leading-relaxed">{f.rec || 'Not recorded.'}</p></div>
+                <div><div className="mb-1 text-xs text-muted">Severity rationale</div><p className="leading-relaxed">{f.severityRationale || 'Not recorded.'}</p></div>
+                <div><div className="mb-1 text-xs text-muted">Scope note</div><p className="leading-relaxed">{f.scopeNote || 'Not recorded.'}</p></div>
               </div>
             </Card>
             <Card>
               <CardHeader title="Links" />
               <DescList cols={2} items={[
-                { k: 'Affected asset', v: real ? <span className="text-muted">{realControlGap('finding.assetLink')}</span> : data.assetId ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
+                { k: 'Affected asset', v: real ? <Mono>{f.references?.assetId ?? 'Not linked'}</Mono> : data.assetId ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
                 { k: 'Evidence', v: f.evidence.length ? f.evidence.map((id) => <button key={id} className="mr-2 whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('evidence', { id })}>{id}</button>) : <span className="text-muted">None linked</span> },
                 { k: 'Operation step', v: op && step ? <button className="whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id, tab: 'console' })}>{op.id} / {step.id} — {step.name}</button> : '—' },
                 { k: 'Confidence', v: f.status === 'ai_suggested' ? 'Low — AI inference, needs verification' : f.evidence.length ? 'Supported by linked evidence — a recorded claim, not proven exploitability' : 'Low — no evidence linked' },
-                { k: 'Reviewer decision', v: real ? realControlGap('finding.reviewerHistory') : f.status === 'ai_suggested' ? 'Not submitted' : lastDecision ? `${lastDecision.text} by ${lastDecision.by}` : 'Pending' },
-                { k: 'Operation', v: op ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id} — {op.name}</button> : f.op || '—' },
-                { k: 'ATT&CK technique', v: real ? realControlGap('finding.techniqueLink') : data.techniqueName ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono> — {data.techniqueName}</button> : f.technique || 'Not applicable' },
+                { k: 'Reviewer decision', v: f.status === 'ai_suggested' ? 'Not submitted' : lastDecision ? `${lastDecision.text} by ${lastDecision.by}` : 'Pending' },
+                { k: 'Execution', v: real ? <span className="break-all text-xs">Thread: {f.references?.threadId ?? '—'}<br />Run: {f.references?.runId ?? '—'}<br />Binding: {f.references?.bindingId ?? '—'}</span> : op ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id} — {op.name}</button> : f.op || '—' },
+                { k: 'ATT&CK technique', v: f.technique ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono>{data.techniqueName ? ` — ${data.techniqueName}` : ''}</button> : 'Not linked' },
                 { k: 'Client', v: proj?.client },
                 { k: 'Recorded', v: f.date },
                 { k: 'Included in reports', v: real ? realControlGap('finding.reportInclusion') : inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-accent hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
@@ -643,19 +765,20 @@ function FindingDetail() {
               ]} />
             </Card>
             <Card>
-              <CardHeader title="Reviewer comments" sub={real ? undefined : `${f.comments.length} comment(s)`} />
-              {real ? <div className="mb-4 text-sm text-muted">{realControlGap('finding.comments')}</div> : f.comments.length === 0 ? <div className="mb-4 text-sm text-muted">No comments yet.</div> : (
+              <CardHeader title="Reviewer comments" sub={`${olderComments.length + f.comments.length} loaded${activityCursor('comments') ? ' · older comments available' : ''}`} />
+              {f.comments.length === 0 ? <div className="mb-4 text-sm text-muted">No comments yet.</div> : (
                 <ul className="mb-4 space-y-3">
-                  {f.comments.map((c, i) => (
-                    <li key={i} className={cx('rounded-lg border p-3', f.status === 'returned' && i === f.comments.length - 1 ? 'border-bad/40 bg-bad/5' : 'border-line')}>
+                  {[...olderComments, ...f.comments].map((c, i) => (
+                    <li key={c.id ?? `${c.at}:${c.by}:${i}`} className={cx('rounded-lg border p-3', f.status === 'returned' && i === olderComments.length + f.comments.length - 1 ? 'border-bad/40 bg-bad/5' : 'border-line')}>
                       <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted"><Person name={c.by} /><span className="font-mono">{c.at}</span></div>
                       <div className="whitespace-pre-wrap text-sm">{c.text}</div>
                     </li>
                   ))}
                 </ul>
               )}
-              <Textarea aria-label="Comment" value={note} onChange={(e) => setNote(e.target.value)} disabled={ro || !!commentGap} placeholder={commentGap ?? (ro ? roReason : 'Write a comment for the reviewer / owner…')} className="min-h-20" />
-              <div className="mt-2 flex justify-end"><Button onClick={postComment} disabled={ro || !!commentGap || !note.trim()} title={commentGap ?? (ro ? roReason : !note.trim() ? 'Enter a comment.' : '')}>Post comment</Button></div>
+              {activityCursor('comments') && <Button size="sm" variant="ghost" disabled={activityLoading !== null} onClick={() => { void loadOlderActivity('comments') }}>{activityLoading === 'comments' ? 'Loading…' : 'Load older comments'}</Button>}
+              <Textarea aria-label="Comment" value={note} onChange={(e) => setNote(e.target.value)} disabled={ro} placeholder={ro ? roReason : 'Write a comment for the reviewer / owner…'} className="min-h-20" />
+              <div className="mt-2 flex justify-end"><Button onClick={() => { void postComment() }} disabled={ro || commentSaving || !note.trim()} title={ro ? roReason : !note.trim() ? 'Enter a comment.' : ''}>Post comment</Button></div>
             </Card>
           </div>
           <div className="space-y-6">
@@ -674,9 +797,10 @@ function FindingDetail() {
                 })}
               </ol>
               <div className="mb-3 text-xs font-medium text-muted">Change history</div>
-              {real ? <div className="text-sm text-muted">{realControlGap('finding.reviewerHistory')}</div> : f.history.length === 0 ? <div className="text-sm text-muted">No history recorded.</div> : (
-                <Timeline items={[...f.history].reverse().map((h) => ({ at: h.at, title: h.text, sub: h.by, tone: /Returned/.test(h.text) ? 'bad' : /Confirmed|Resolved|resolved/.test(h.text) ? 'ok' : /review/i.test(h.text) ? 'warn' : 'accent' }))} />
+              {[...olderHistory, ...f.history].length === 0 ? <div className="text-sm text-muted">No history recorded.</div> : (
+                <Timeline items={[...olderHistory, ...f.history].reverse().map((h) => ({ at: h.at, title: h.text, sub: h.by, tone: /Returned/.test(h.text) ? 'bad' : /Confirmed|Resolved|resolved/.test(h.text) ? 'ok' : /review/i.test(h.text) ? 'warn' : 'accent' }))} />
               )}
+              {activityCursor('history') && <Button size="sm" variant="ghost" disabled={activityLoading !== null} onClick={() => { void loadOlderActivity('history') }}>{activityLoading === 'history' ? 'Loading…' : 'Load older history'}</Button>}
             </Card>
           </div>
         </div>
@@ -715,30 +839,52 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
 
 /* ───────────── Evidence tab (ticket 31: masked read; ticket 32: typed link/upload) ───────────── */
 const OK_EXT = ['png', 'jpg', 'jpeg', 'txt', 'log', 'json', 'csv', 'pdf']
+function saveEvidenceFile(file: EvidenceDownload): void {
+  const blob = new Blob([file.bytes.slice().buffer], { type: file.mediaType })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = file.filename
+  anchor.click()
+  window.setTimeout(() => URL.revokeObjectURL(url), 0)
+}
+
 function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: boolean }) {
-  const db = useFindingEvidenceChoices(f.projectId)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const me = useMe()
   const writes = useFindingWrites()
+  const client = useQueryClient()
+  const evidenceList = useEvidenceList({})
   const [view, setView] = useState<EvidenceView | null>(null)
+  const [classifying, setClassifying] = useState<EvidenceView | null>(null)
   const [attach, setAttach] = useState(false)
   const [up, setUp] = useState(false)
-  const evidenceGap = realControlGap('finding.evidenceLink')
-  const canAdd = !ro && !evidenceGap && can('createFinding', f.projectId)
-  const why = evidenceGap ?? (ro ? (me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.') : !canAdd ? `The ${ROLE_LABEL[me.role]} role cannot add evidence.` : '')
-  const candidates = db.evidence.filter((e) => e.projectId === f.projectId && !f.evidence.includes(e.id))
+  const canAdd = !ro && can('createFinding', f.projectId)
+  const why = ro ? (me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.') : !canAdd ? `The ${ROLE_LABEL[me.role]} role cannot add evidence.` : ''
+  const candidates = (evidenceList.data?.items ?? []).filter((e) => e.projectId === f.projectId && !e.findingId && !f.evidence.includes(e.ref))
+  const canClassifyAny = candidates.some((e) => e.classification === 'unclassified' && e.canClassify)
+  const refreshEvidence = (): void => {
+    void client.invalidateQueries({ queryKey: ['evidence'] })
+    void client.invalidateQueries({ queryKey: ['finding'] })
+  }
   const link = async (evidenceId: string) => {
     const res = await writes.attachEvidence(f.id, evidenceId)
-    if (res.ok) toast(`Linked ${evidenceId} to ${f.id}.`)
+    if (res.ok) { toast(`Linked ${evidenceId} to ${f.id}.`); refreshEvidence() }
     else toast(res.failure.message, 'warn')
+  }
+  const download = async (evidence: EvidenceView) => {
+    if (!isRealMode()) { toast(`Download of ${evidence.name} started (simulated).`, 'info'); return }
+    const result = await writes.downloadEvidence(evidence.captureId ?? evidence.ref)
+    if (!result.ok) { toast(result.failure.message, 'warn'); return }
+    saveEvidenceFile(result.data)
   }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="mr-auto text-sm text-muted">{evs.length} evidence item(s) — links are opaque references to retained captures; a linked claim still needs reviewer verification and is never proof of exploitability by itself. Evidence cannot be removed from history; every link is logged.</span>
-        <Button icon={Link2} disabled={!canAdd} title={why} onClick={() => setAttach(true)}>Link Evidence</Button>
+        <Button icon={Link2} disabled={!canAdd && !canClassifyAny} title={!canAdd && !canClassifyAny ? why || 'No capture is awaiting your classification.' : undefined} onClick={() => setAttach(true)}>{canAdd ? 'Link Evidence' : 'Classify captures'}</Button>
         <Button variant="primary" icon={Upload} disabled={!canAdd} title={why} onClick={() => setUp(true)}>Upload evidence</Button>
       </div>
       <Table
@@ -750,35 +896,44 @@ function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: bool
           { key: 's', header: 'Source', hideBelow: 'md', render: (e) => <Mono>{e.source}</Mono> },
           { key: 'a', header: 'Captured at', hideBelow: 'lg', render: (e) => <span className="text-xs text-muted">{e.at}</span> },
           { key: 'b', header: 'Uploaded by', hideBelow: 'md', render: (e) => e.by },
-          { key: 'l', header: 'Label', render: (e) => (e.sensitive ? <span className="inline-flex items-center gap-1 text-xs text-warn"><Lock size={12} aria-hidden />Sensitive</span> : <span className="text-xs text-muted">Standard</span>) },
+          { key: 'l', header: 'Label', render: (e) => e.classification === 'unclassified' ? <span className="text-xs text-warn">Awaiting classification</span> : e.sensitive ? <span className="inline-flex items-center gap-1 text-xs text-warn"><Lock size={12} aria-hidden />Sensitive</span> : <span className="text-xs text-muted">Standard</span> },
         ]}
       />
       <Drawer open={!!view} onClose={() => setView(null)} title={view ? <span><Mono className="text-accent">{view.ref}</Mono> · <MaskedName ev={view} /></span> : ''}
-        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.ref })}>Open in Evidence Inspector</Button><Button icon={Download} disabled={view.masked || !!realControlGap('evidence.download')} title={view.masked ? 'Sensitive file — your role cannot download it.' : (realControlGap('evidence.download') ?? '')} onClick={() => toast(`Download of ${view.name} started (simulated).`, 'info')}>Download</Button></>}>
+        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.captureId ?? view.ref })}>Open in Evidence Inspector</Button><Button icon={Download} disabled={view.masked || isRealMode() && !view.canViewOriginal} title={view.masked ? 'Classification has not made this filename visible to your role.' : isRealMode() && !view.canViewOriginal ? 'The current classification does not permit reading the original bytes.' : undefined} onClick={() => void download(view)}>Download original</Button></>}>
         {view && <EvidencePreview ev={view} f={f} onOp={() => view.opId && go('operation', { id: view.opId })} />}
       </Drawer>
       <Modal open={attach} onClose={() => setAttach(false)} title="Link existing evidence" footer={<Button onClick={() => setAttach(false)}>Done</Button>}>
-        {candidates.length === 0 ? <div className="text-sm text-muted">No more evidence from {f.projectId} is available to link. Upload a new file.</div> : (
+        {evidenceList.isError && <Banner tone="bad" title="Could not load retained captures">{evidenceList.error instanceof Error ? evidenceList.error.message : 'Capture inventory is unavailable.'}</Banner>}
+        {evidenceList.isPending ? <Skeleton className="h-16" /> : candidates.length === 0 ? <div className="text-sm text-muted">No unlinked, classified evidence from {f.projectId} is available. Uploads appear here after an owner or reviewer classifies them.</div> : (
           <ul className="space-y-2">
             {candidates.map((e) => {
               const other = !!e.findingId && e.findingId !== f.id
-              const hide = e.sensitive && !can('viewSensitive')
+              const unclassified = e.classification === 'unclassified'
+              const inaccessible = e.sensitive && !e.canViewOriginal
               return (
-                <li key={e.id} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5">
-                  <div className="min-w-0 flex-1"><div className="truncate text-sm"><Mono className="text-accent">{e.id}</Mono> {hide ? 'Sensitive file' : e.name}</div><div className="text-xs text-muted">{e.kind} · {e.source}{other ? ` · linked to ${e.findingId}` : ''}</div></div>
-                  <Button size="sm" disabled={other || hide} title={other ? `Already linked to ${e.findingId}` : hide ? 'Outside your permission scope' : ''} onClick={() => { void link(e.id) }}>Link</Button>
+                <li key={e.ref} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5">
+                  <div className="min-w-0 flex-1"><div className="truncate text-sm"><Mono className="text-accent">{e.ref}</Mono> {e.masked ? 'Capture name restricted' : e.name}</div><div className="text-xs text-muted">{e.kind} · {e.source}{e.classification ? ` · ${e.classification}` : ''}{other ? ` · linked to ${e.findingId}` : ''}</div></div>
+                  {unclassified && e.canClassify ? <Button size="sm" onClick={() => { setClassifying(e); setAttach(false) }}>Classify</Button> : unclassified ? <span className="text-xs text-muted">Awaiting owner/reviewer</span> : <Button size="sm" disabled={other || inaccessible || !canAdd} title={other ? `Already linked to ${e.findingId}` : inaccessible ? 'Classification restricts original access to owner/reviewer.' : !canAdd ? why : undefined} onClick={() => { void link(e.captureId ?? e.ref) }}>Link</Button>}
                 </li>
               )
             })}
           </ul>
         )}
       </Modal>
-      <UploadModal open={up} onClose={() => setUp(false)} f={f} />
+      <CaptureClassificationModal evidence={classifying} onClose={() => setClassifying(null)} onClassified={refreshEvidence} />
+      <UploadModal open={up} onClose={() => setUp(false)} f={f} onUploaded={refreshEvidence} />
     </div>
   )
 }
 
-function UploadModal({ open, onClose, f }: { open: boolean; onClose: () => void; f: Finding }) {
+function UploadModal({ open, onClose, f, onUploaded }: { open: boolean; onClose: () => void; f: Finding; onUploaded: () => void }) {
+  return isRealMode()
+    ? <RealCaptureUploadModal open={open} onClose={onClose} f={f} onUploaded={onUploaded} />
+    : <MockEvidenceUploadModal open={open} onClose={onClose} f={f} onUploaded={onUploaded} />
+}
+
+function MockEvidenceUploadModal({ open, onClose, f, onUploaded }: { open: boolean; onClose: () => void; f: Finding; onUploaded: () => void }) {
   const toast = useToastStore((s) => s.toast)
   const writes = useFindingWrites()
   const [name, setName] = useState('')
@@ -795,10 +950,10 @@ function UploadModal({ open, onClose, f }: { open: boolean; onClose: () => void;
     const res = await writes.uploadEvidence({ findingId: f.id, name: name.trim(), kind, source, sensitive: sens, opId: f.op || undefined })
     if (!res.ok) { setErr(res.failure.message); return }
     toast(`Uploaded ${name.trim()} and linked it to ${f.id}.`)
-    setName(''); setTried(false); setSens(false); setErr(null); onClose()
+    setName(''); setTried(false); setSens(false); setErr(null); onUploaded(); onClose()
   }
   return (
-    <Modal open={open} onClose={onClose} title="Upload evidence (simulated)" footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" icon={Upload} onClick={save}>Upload & link</Button></>}>
+    <Modal open={open} onClose={onClose} title="Upload evidence (simulated)" footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" icon={Upload} onClick={() => void save()}>Upload & link</Button></>}>
       <div className="space-y-4">
         {err && <Banner tone="bad" title="The evidence was not uploaded">{err}</Banner>}
         <Field label="File name" required error={tried ? e : undefined} hint="No real file is uploaded — only a simulated record is created."><Input value={name} onChange={(x) => setName(x.target.value)} placeholder="e.g. evidence-028.png" /></Field>
@@ -811,8 +966,142 @@ function UploadModal({ open, onClose, f }: { open: boolean; onClose: () => void;
   )
 }
 
+const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  bin: 'application/octet-stream', csv: 'text/plain', gif: 'image/gif', jpeg: 'image/jpeg', jpg: 'image/jpeg',
+  json: 'application/json', log: 'text/plain', pdf: 'application/pdf', png: 'image/png', txt: 'text/plain',
+}
+
+function RealCaptureUploadModal({ open, onClose, f, onUploaded }: { open: boolean; onClose: () => void; f: Finding; onUploaded: () => void }): ReactNode {
+  const session = useSession()
+  const writes = useFindingWrites()
+  const toast = useToastStore((s) => s.toast)
+  const fileInput = useRef<HTMLInputElement>(null)
+  const pending = useRef<{ fingerprint: string; requestId: string } | null>(null)
+  const [source, setSource] = useState(f.op ? `${f.op} / manual` : 'Operator upload')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const save = async (): Promise<void> => {
+    const file = fileInput.current?.files?.[0]
+    if (!file) { setError('Select a capture file.'); return }
+    if (file.size < 1 || file.size > 262144) { setError('Select a capture of 1–262144 bytes.'); return }
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
+    const mediaType = file.type && Object.values(MIME_BY_EXTENSION).includes(file.type) ? file.type : MIME_BY_EXTENSION[extension]
+    if (!mediaType || !Object.values(MIME_BY_EXTENSION).includes(mediaType)) { setError('Unsupported media type.'); return }
+    setBusy(true); setError(null)
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes.slice().buffer as ArrayBuffer)), (value) => value.toString(16).padStart(2, '0')).join('')
+      const fingerprint = `${file.name}\u0000${mediaType}\u0000${digest}`
+      const actorId = session.session?.actor?.id ?? 'local'
+      const deploymentId = session.deploymentId ?? 'local'
+      const requestId = pending.current?.fingerprint === fingerprint
+        ? pending.current.requestId
+        : captureRequestId(deploymentId, actorId, f.projectId, fingerprint)
+      pending.current = { fingerprint, requestId }
+      const result = await writes.uploadEvidence({ findingId: f.id, name: file.name, kind: mediaType, source, sensitive: false, bytes, mediaType, requestId })
+      if (!result.ok) { setError(result.failure.message); return }
+      pending.current = null
+      clearCaptureRequest(deploymentId, actorId, f.projectId, fingerprint)
+      if (fileInput.current) fileInput.current.value = ''
+      toast(`Capture ${result.data.id} retained as unclassified. An owner or reviewer must classify it before linking or reading the bytes.`)
+      onUploaded()
+      onClose()
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Capture upload failed. Re-select the same file to reconcile this request.')
+    } finally { setBusy(false) }
+  }
+  return <Modal open={open} onClose={onClose} title="Retain evidence capture" footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" icon={Upload} disabled={busy} onClick={() => void save()}>{busy ? 'Retaining…' : 'Retain unclassified capture'}</Button></>}>
+    <div className="space-y-4">
+      {error && <Banner tone="bad" title="Capture was not acknowledged">{error} If the server may have saved it, re-select the same file to retry with the same request identity.</Banner>}
+      <Field label="Capture file" required hint="Maximum 256 KiB. Captures start unclassified; original bytes stay locked until an owner or reviewer classifies them."><input ref={fileInput} type="file" accept=".png,.jpg,.jpeg,.gif,.txt,.log,.json,.pdf,.bin" className="block w-full text-sm" onChange={() => setError(null)} /></Field>
+      <Field label="Source context"><Input value={source} onChange={(event) => setSource(event.target.value)} /></Field>
+      <p className="text-xs text-muted">This file will be retained in engagement <Mono>{f.projectId}</Mono>. The selected context is display-only; producer attribution comes from the authenticated server session.</p>
+    </div>
+  </Modal>
+}
+
+function CaptureClassificationModal({ evidence, onClose, onClassified }: { evidence: EvidenceView | null; onClose: () => void; onClassified: () => void }) {
+  const writes = useFindingWrites()
+  const toast = useToastStore((s) => s.toast)
+  const [classification, setClassification] = useState<'standard' | 'sensitive'>('standard')
+  const [reason, setReason] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const classify = async () => {
+    if (!evidence?.captureId || !reason.trim()) return
+    const res = await writes.classifyCapture(evidence.captureId, classification, evidence.classificationVersion ?? 1, reason.trim())
+    if (!res.ok) { setError(res.failure.message); return }
+    toast(`Capture ${evidence.captureId} classified ${classification}.`)
+    setError(null); setReason(''); onClassified(); onClose()
+  }
+  return <Modal open={evidence !== null} onClose={onClose} title="Classify retained capture" footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" disabled={!reason.trim()} onClick={() => void classify()}>Save classification</Button></>}>
+    {evidence && <div className="space-y-3">
+      <p className="text-sm text-muted">Original bytes remain locked until this decision. Standard captures are readable by engagement members; sensitive captures are readable only by owner/reviewer.</p>
+      {error && <Banner tone="bad" title="Classification was not saved">{error}</Banner>}
+      <Field label="Capture"><Mono>{evidence.captureId}</Mono></Field>
+      <Field label="Classification"><Select value={classification} onChange={(event) => setClassification(event.target.value as 'standard' | 'sensitive')}><option value="standard">Standard — readable by engagement members</option><option value="sensitive">Sensitive — owner/reviewer only</option></Select></Field>
+      <Field label="Reason" required><Textarea aria-label="Classification reason" value={reason} onChange={(event) => setReason(event.target.value)} /></Field>
+    </div>}
+  </Modal>
+}
+
+function useEvidenceBytes(evidenceId: string, enabled: boolean) {
+  const writes = useFindingWrites()
+  const [data, setData] = useState<EvidenceDownload | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  useEffect(() => {
+    if (!enabled || !evidenceId) { setData(null); setError(null); return }
+    let current = true
+    setPending(true); setError(null)
+    void writes.downloadEvidence(evidenceId).then((result) => {
+      if (!current) return
+      if (result.ok) setData(result.data)
+      else setError(result.failure.message)
+    }).catch((reason: unknown) => { if (current) setError(reason instanceof Error ? reason.message : 'Capture download failed.') })
+      .finally(() => { if (current) setPending(false) })
+    return () => { current = false }
+  }, [enabled, evidenceId, writes])
+  const imageUrl = useMemo(() => {
+    if (!data || !data.mediaType.startsWith('image/') || typeof URL.createObjectURL !== 'function') return null
+    return URL.createObjectURL(new Blob([data.bytes.slice().buffer], { type: data.mediaType }))
+  }, [data])
+  useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl) }, [imageUrl])
+  return { data, error, imageUrl, pending }
+}
+
+type OriginalReadState = ReturnType<typeof useEvidenceBytes>
+
+function CaptureOriginalContent({ evidence, open, original }: { evidence: EvidenceView; open: boolean; original: OriginalReadState }): ReactNode {
+  if (!evidence.captureId) return <p className="text-sm text-muted">{realControlGap('evidence.original')}</p>
+  if (!evidence.canViewOriginal) return <Banner tone="warn" title="Original bytes are locked">This capture is unclassified or its sensitivity classification does not permit your role to read it.</Banner>
+  if (!open) return <p className="text-sm text-muted">Choose Preview original to retrieve and verify the retained bytes.</p>
+  if (original.pending) return <p role="status" className="text-sm text-muted">Loading and verifying capture bytes…</p>
+  if (original.error) return <Banner tone="bad" title="Original capture could not be verified">{original.error}</Banner>
+  if (!original.data) return <p className="text-sm text-muted">No original bytes were returned.</p>
+  const { data } = original
+  const isText = data.mediaType === 'text/plain' || data.mediaType === 'application/json'
+  let text: string | null = null
+  if (isText) {
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(data.bytes) }
+    catch { text = null }
+  }
+  return <div className="space-y-2">
+    <p role="status" className="break-all text-xs text-ok">Capture integrity verified · SHA-256 <Mono>{data.digest}</Mono></p>
+    {text !== null ? <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-line bg-bg p-3 font-mono text-xs">{text}</pre>
+      : original.imageUrl ? <img src={original.imageUrl} alt={data.filename} className="max-h-96 max-w-full rounded-lg border border-line object-contain" />
+        : <p className="text-sm text-muted">Inline preview is unavailable for this media type. The verified original can be downloaded.</p>}
+  </div>
+}
+
 function EvidencePreview({ ev, f, onOp }: { ev: EvidenceView; f: Finding; onOp: () => void }) {
-  if (isRealMode()) return <div className="text-sm text-muted">{realControlGap('evidence.preview')}</div>
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const original = useEvidenceBytes(ev.captureId ?? '', previewOpen && ev.canViewOriginal === true)
+  if (isRealMode()) return <div className="space-y-4">
+    <p className="text-sm text-muted">Capture integrity is checked against the original bytes before display. A matching digest does not validate the recorded claim.</p>
+    <Button variant="secondary" disabled={!ev.canViewOriginal} title={!ev.canViewOriginal ? 'Classification or role does not permit original-byte access.' : undefined} onClick={() => setPreviewOpen(true)}>Preview original</Button>
+    <CaptureOriginalContent evidence={ev} open={previewOpen} original={original} />
+    <DescList cols={2} items={[{ k: 'Classification', v: ev.classification ?? 'Legacy / unclassified' }, { k: 'Digest', v: ev.digest ?? 'Not recorded' }, { k: 'Size', v: ev.sizeBytes === undefined ? 'Unknown' : `${ev.sizeBytes} bytes` }]} />
+  </div>
   const hide = ev.masked
   const isImg = ev.kind.startsWith('Image')
   const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list", "write (exceeds policy)"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[sanitized — contains no sensitive data]'
@@ -844,31 +1133,62 @@ const RETEST_STATE: Record<string, { label: string; tone: 'ok' | 'bad' | 'warn' 
   'Resolved': { label: 'Resolved', tone: 'ok' }, 'Persists': { label: 'Still present', tone: 'bad' }, 'Partial': { label: 'Partially resolved', tone: 'warn' },
 }
 function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: string }) {
+  const session = useContext(SessionContext)
   const toast = useToastStore((s) => s.toast)
   const can = useCan()
   const me = useMe()
   const writes = useFindingWrites()
+  const queryClient = useQueryClient()
+  const evidence = useEvidenceList({})
   const [result, setResult] = useState('Resolved')
   const [note, setNote] = useState('')
+  const [captureIds, setCaptureIds] = useState<string[]>([])
+  const [saving, setSaving] = useState(false)
   const [tried, setTried] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const stageOk = ['confirmed', 'remediation', 'retest', 'resolved'].includes(f.status)
+  const [olderRetests, setOlderRetests] = useState<Finding['retests']>([])
+  const [cursor, setCursor] = useState<string | null | undefined>(undefined)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const stageOk = ['confirmed', 'remediation', 'retest'].includes(f.status)
+  const resolutionEvidence = [...new Map((evidence.data?.items ?? []).filter((item) => item.projectId === f.projectId && item.captureId && ['standard', 'sensitive'].includes(item.classification ?? '') && item.canViewOriginal).map((item) => [item.captureId, item])).values()]
   const roleOk = can('createFinding', f.projectId) || can('reviewFinding', f.projectId)
-  const reason = realControlGap('finding.retestRecord') ?? (ro ? roReason : !roleOk ? `The ${ROLE_LABEL[me.role]} role cannot record retests.` : !stageOk ? 'Retest is only available after the finding has been confirmed.' : '')
+  const inputReason = ro ? roReason : !roleOk ? `The ${ROLE_LABEL[me.role]} role cannot record retests.` : !stageOk ? 'Retest is only available after the finding has been confirmed.' : ''
+  const reason = inputReason || (result === 'Resolved' && f.status !== 'retest' ? 'Move the finding to retest before resolving it.' : result === 'Resolved' && captureIds.length === 0 ? 'Select at least one classified retained capture to resolve this finding.' : '')
   const save = async () => {
     setTried(true)
-    if (!note.trim()) return
-    const res = await writes.recordRetest(f.id, { result, note: note.trim() })
-    if (!res.ok) { setErr(res.failure.message); return }
-    toast(result === 'Resolved' ? `${f.id} was marked Resolved.` : 'Retest result recorded.', result === 'Resolved' ? 'ok' : 'warn')
-    setNote(''); setTried(false); setErr(null)
+    if (!note.trim() || saving || reason) return
+    setSaving(true)
+    const requestScope: FindingRequestScope = { deploymentId: session?.deploymentId ?? window.location.origin, actorId: session?.session?.actor?.id ?? me.email, engagementId: f.projectId, findingId: f.id, action: 'retest', payload: { result, note: note.trim(), captureIds: [...captureIds].sort() } }
+    try {
+      const requestId = await findingRequestId(requestScope)
+      const res = await writes.recordRetest(f.id, { result, note: note.trim(), requestId, expectedVersion: f.version ?? 1, captureIds })
+      if (!res.ok) { setErr(res.failure.message); return }
+      await clearFindingRequest(requestScope)
+      toast(result === 'Resolved' ? `${f.id} was marked Resolved.` : 'Retest result recorded.', result === 'Resolved' ? 'ok' : 'warn')
+      setNote(''); setTried(false); setErr(null); setCaptureIds([])
+      await queryClient.invalidateQueries({ queryKey: ['finding'] })
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : 'The retest could not be saved.')
+    } finally {
+      setSaving(false)
+    }
+  }
+  const retestCursor = cursor === undefined ? f.activityCursors?.retests ?? null : cursor
+  const loadOlder = async () => {
+    if (!retestCursor || loadingHistory) return
+    setLoadingHistory(true)
+    const page = await writes.loadActivity(f.id, 'retests', retestCursor, f.version ?? 1)
+    setLoadingHistory(false)
+    if (!page.ok) { setErr(page.failure.message); return }
+    setOlderRetests((previous) => [...[...page.data.items].reverse().map((item) => ({ at: activityTime(item.createdAt), by: item.actorId, result: item.result ?? '', note: item.note ?? '' })), ...previous])
+    setCursor(page.data.nextCursor)
   }
   return (
     <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
       <div>
         <div className="mb-3 text-sm font-semibold">Retest history</div>
         <Table
-          rows={[...f.retests].reverse()} rowKey={(r) => r.at + r.by + r.note}
+          rows={[...olderRetests, ...f.retests].reverse()} rowKey={(r) => r.at + r.by + r.note}
           empty={<Empty icon={RotateCcw} title="No retests yet">Current state: <b>Undetermined</b>. Record a result after the owner remediates.</Empty>}
           cols={[
             { key: 'at', header: 'Date', render: (r) => <span className="text-xs">{r.at}</span> },
@@ -878,16 +1198,19 @@ function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: str
             { key: 'note', header: 'Notes', render: (r) => <span className="text-sm">{r.note}</span> },
           ]}
         />
+        {retestCursor && <Button size="sm" variant="ghost" disabled={loadingHistory} onClick={() => { void loadOlder() }}>{loadingHistory ? 'Loading…' : 'Load older retests'}</Button>}
       </div>
       <Card>
         <CardHeader title="Record retest" sub="A “Resolved” result closes the finding." />
         {reason && <div className="mb-3"><Locked reason={reason} /></div>}
         {err && <Banner tone="bad" title="The retest was not recorded">{err}</Banner>}
         <div className="space-y-4">
-          <Field label="Result" required><Select value={result} onChange={(e) => setResult(e.target.value)} disabled={!!reason}><option value="Resolved">Resolved</option><option value="Persists">Still present</option><option value="Partial">Partially resolved</option></Select></Field>
-          <Field label="Notes" required error={tried && !note.trim() ? 'Enter notes about the retest.' : undefined}><Textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!!reason} placeholder="Describe how you tested and what you observed" /></Field>
-          <div className="text-xs text-muted">Related operation: <Mono>{f.op || '—'}</Mono> · New evidence can be linked in the Evidence tab.</div>
-          <Button variant="primary" icon={RotateCcw} onClick={save} disabled={!!reason} title={reason}>Record result</Button>
+          <Field label="Result" required><Select value={result} onChange={(e) => setResult(e.target.value)} disabled={!!inputReason || saving}><option value="Resolved">Resolved</option><option value="Persists">Still present</option><option value="Partial">Partially resolved</option></Select></Field>
+          <Field label="Notes" required error={tried && !note.trim() ? 'Enter notes about the retest.' : undefined}><Textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!!inputReason || saving} placeholder="Describe how you tested and what you observed" /></Field>
+          {result === 'Resolved' && <fieldset disabled={!!inputReason || saving} className="space-y-2 rounded-lg border border-line p-3"><legend className="px-1 text-xs font-medium">Classified retained evidence (required to resolve)</legend>{resolutionEvidence.length === 0 ? <p className="text-xs text-muted">No readable classified captures are available. Upload and classify a capture in the Evidence tab; attaching it to the finding is not required for retest.</p> : resolutionEvidence.map((item) => <Check key={item.captureId} checked={captureIds.includes(item.captureId!)} onChange={(checked) => setCaptureIds((current) => checked ? [...new Set([...current, item.captureId!])] : current.filter((id) => id !== item.captureId))} label={`${item.name ?? item.ref} · ${item.classification}`} />)}</fieldset>}
+          {evidence.isError && <p role="alert" className="text-xs text-bad">Retest capture inventory is unavailable. Reload before resolving.</p>}
+          <div className="text-xs text-muted">Related operation: <Mono>{f.op || '—'}</Mono> · The server verifies evidence access and integrity before resolution.</div>
+          <Button variant="primary" icon={RotateCcw} onClick={save} disabled={!!reason || saving} title={reason}>Record result</Button>
         </div>
       </Card>
     </div>
@@ -957,6 +1280,7 @@ function EvidenceInspector() {
   const setPid = useProjectStore((s) => s.setPid)
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const services = useServicesOrNull()
+  const writes = useFindingWrites()
   const me = useMe()
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
@@ -967,6 +1291,7 @@ function EvidenceInspector() {
   const [orig, setOrig] = useState(false)
   const [log, setLog] = useState<{ at: string; text: string }[]>([])
   const detail = useEvidenceDetail(route.id || undefined)
+  const original = useEvidenceBytes(route.id ?? '', !!detail.data?.canViewOriginal && orig)
   useEffect(() => { setOrig(false); setLog([]) }, [route.id])
   if (!route.id) return <EvidenceList />
   if (detail.isError) {
@@ -987,12 +1312,12 @@ function EvidenceInspector() {
   const data = detail.data
   const ev = data.evidence
   const producer = data.producer
-  const origWhy = !ev.sensitive ? 'This item has no sensitive content — nothing is masked.' : !data.canViewSensitive ? `The ${ROLE_LABEL[me.role]} role cannot view sensitive content.` : !data.canViewOriginal ? `The ${ROLE_LABEL[me.role]} role can only view masked content. Ask a Reviewer, Operator or Manager.` : ''
-  const masked = ev.sensitive && !orig
-  const isImg = ev.kind.startsWith('Image')
-  const ro = readOnly(ev.projectId)
   const real = isRealMode()
-  const createWhy = ro ? 'Project is read-only.' : !can('createFinding', ev.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot create findings.` : ''
+  const origWhy = real ? !ev.captureId ? (realControlGap('evidence.original') ?? 'Original bytes are unavailable for this legacy reference.') : !data.canViewOriginal ? 'The capture is unclassified or its classification does not permit your role.' : '' : !ev.sensitive ? 'This item has no sensitive content — nothing is masked.' : !data.canViewSensitive ? `The ${ROLE_LABEL[me.role]} role cannot view sensitive content.` : !data.canViewOriginal ? `The ${ROLE_LABEL[me.role]} role can only view masked content. Ask a Reviewer, Operator or Manager.` : ''
+  const masked = real ? !orig : ev.sensitive && !orig
+  const isImg = real ? ev.mediaType?.startsWith('image/') === true : ev.kind.startsWith('Image')
+  const ro = readOnly(ev.projectId)
+  const createWhy = realControlGap('finding.evidenceLink') ?? (ro ? 'Project is read-only.' : !can('createFinding', ev.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot create findings.` : '')
   const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[synthetic content — no real data]'
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
@@ -1000,8 +1325,14 @@ function EvidenceInspector() {
     services && recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const toggle = () => {
     if (!orig) {
-      confirm({ title: 'View original content?', confirmLabel: 'View original', body: 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: () => { setOrig(true); setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l]); audit('Viewed original evidence', ev.ref, ev.projectId) } })
+      confirm({ title: 'View original content?', confirmLabel: 'View original', body: real ? 'The server re-checks capture classification and role before returning original bytes. The browser verifies SHA-256 before display.' : 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: () => { setOrig(true); if (!real) { setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l]); audit('Viewed original evidence', ev.ref, ev.projectId) } } })
     } else { setOrig(false); toast('Masked view restored.', 'info') }
+  }
+  const download = async () => {
+    if (!real) { toast(`Download of ${ev.name} started (simulated).`, 'info'); return }
+    const result = await writes.downloadEvidence(ev.captureId ?? ev.ref)
+    if (!result.ok) { toast(result.failure.message, 'warn'); return }
+    saveEvidenceFile(result.data)
   }
   const createFinding = () => {
     setFilter('finding-prefill', { projectId: ev.projectId, op: producer?.operation?.id, technique: producer?.step?.technique, asset: producer?.step?.asset, stepId: producer?.step?.id, evidence: [ev.ref], title: producer?.step ? `Finding from ${ev.ref}: ${producer.step.name}` : `Finding from ${ev.ref}`, desc: `Observed in ${ev.source}. Evidence ${ev.ref} (${ev.kind}) captured ${ev.at}.` })
@@ -1027,7 +1358,7 @@ function EvidenceInspector() {
         <div className="space-y-6">
           <Card>
             <CardHeader title="Content" sub={real ? undefined : 'Simulated preview — no real files or payloads.'} actions={
-              <Button size="sm" icon={orig ? EyeOff : Eye} disabled={!!origWhy || real} title={real ? (realControlGap('evidence.original') ?? '') : (origWhy || (orig ? 'Return to masked view' : 'Show original content (logged)'))} onClick={toggle}>{orig ? 'Mask content' : 'View Original'}</Button>
+              <Button size="sm" icon={orig ? EyeOff : Eye} disabled={!!origWhy} title={origWhy || (orig ? 'Return to masked view' : 'Show original content')} onClick={toggle}>{orig ? 'Mask content' : 'View Original'}</Button>
             } />
             {origWhy && ev.sensitive && <div className="mb-3"><Locked reason={origWhy} /></div>}
             {masked ? (
@@ -1035,10 +1366,10 @@ function EvidenceInspector() {
             ) : isImg && !real ? (
               <div className="flex h-44 items-center justify-center rounded-lg border border-line bg-bg text-muted" role="img" aria-label="Image preview (simulated)"><div className="text-center"><FileImage size={30} className="mx-auto mb-2" aria-hidden /><div className="text-xs">Synthetic image — {ev.name}</div></div></div>
             ) : (
-              real ? <div className="text-sm text-muted">{realControlGap('evidence.preview')}</div> : <pre className="max-h-56 overflow-auto rounded-lg border border-line bg-bg p-3 font-mono text-xs leading-relaxed">{sample}</pre>
+              real ? <CaptureOriginalContent evidence={ev} open={orig} original={original} /> : <pre className="max-h-56 overflow-auto rounded-lg border border-line bg-bg p-3 font-mono text-xs leading-relaxed">{sample}</pre>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" icon={Download} disabled={!data.canViewSensitive || masked || real} title={real ? (realControlGap('evidence.download') ?? '') : !data.canViewSensitive ? 'Your role cannot download evidence.' : masked ? 'Download is available only for content you are permitted to view unmasked.' : ''} onClick={() => toast(`Download of ${ev.name} started (simulated).`, 'info')}>Download</Button>
+              <Button size="sm" icon={Download} disabled={real ? !data.canViewOriginal : !data.canViewSensitive || masked} title={real ? (origWhy || undefined) : !data.canViewSensitive ? 'Your role cannot download evidence.' : masked ? 'Download is available only for content you are permitted to view unmasked.' : undefined} onClick={() => void download()}>Download original</Button>
             </div>
           </Card>
           <Card>
@@ -1061,7 +1392,7 @@ function EvidenceInspector() {
               { k: 'Captured time', v: ev.at },
               { k: 'Collector', v: ev.by },
               { k: 'Content type', v: ev.kind },
-              { k: 'Hash / integrity', v: real ? <span className="text-muted">{realControlGap('evidence.integrity')}</span> : <span><Mono className="break-all text-xs">sha256:{data.integrity.digest?.slice(0, 24)}…</Mono><div className="mt-1 inline-flex items-center gap-1 text-xs text-ok"><Fingerprint size={12} aria-hidden />Integrity verified (simulated)</div><div className="mt-1 text-xs text-muted">Describes the retained capture — not proof that any finding is true.</div></span> },
+              { k: 'Hash / integrity', v: real ? ev.captureId ? <span><Mono className="break-all text-xs">sha256:{original.data?.digest ?? ev.digest ?? '—'}</Mono><div className={`mt-1 text-xs ${original.data ? 'text-ok' : 'text-muted'}`}>{original.data ? 'Capture integrity verified' : 'Not checked until original bytes are read'}</div><div className="mt-1 text-xs text-muted">Integrity describes bytes, not the truth of a finding.</div></span> : <span className="text-muted">{realControlGap('evidence.integrity')}</span> : <span><Mono className="break-all text-xs">sha256:{data.integrity.digest?.slice(0, 24)}…</Mono><div className="mt-1 inline-flex items-center gap-1 text-xs text-ok"><Fingerprint size={12} aria-hidden />Integrity verified (simulated)</div><div className="mt-1 text-xs text-muted">Describes the retained capture — not proof that any finding is true.</div></span> },
               { k: 'Redaction status', v: !ev.sensitive ? 'None needed' : orig ? 'Redacted by default — original shown (logged)' : 'Redacted (masked)' },
             ]} />
           </Card>

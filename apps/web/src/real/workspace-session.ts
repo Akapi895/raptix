@@ -74,7 +74,7 @@ export function clearPending(actorId: string, engagementId: string, requestId: s
 }
 
 /** Recovery namespaces only: the plaintext draft mirror, selection/pending pointers and the pre-actor legacy twins. */
-const RECOVERY_PREFIXES = ['raptix.real.selection.', 'raptix.real.pending.', 'raptix.real.draft.', `raptix.real.${REAL_IDENTITY.id}.`]
+const RECOVERY_PREFIXES = ['raptix.real.selection.', 'raptix.real.pending.', 'raptix.real.draft.', 'raptix.real.capture-request.', 'raptix.real.finding-request.', `raptix.real.${REAL_IDENTITY.id}.`]
 const isRecoveryKey = (key: string): boolean => RECOVERY_PREFIXES.some((prefix) => key.startsWith(prefix))
 
 /**

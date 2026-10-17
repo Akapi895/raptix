@@ -23,7 +23,7 @@ import type { Finding } from '../../domain/entities'
 import type { FindingDetailRead } from './service'
 import { routes } from '../../screens/e'
 import {
-  attachFindingEvidence, importFindingSuggestion, recordFindingRetest, saveFinding, transitionFinding, uploadFindingEvidence,
+  addFindingComment, attachFindingEvidence, importFindingSuggestion, recordFindingRetest, saveFinding, transitionFinding, uploadFindingEvidence,
 } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
@@ -138,7 +138,7 @@ describe('lifecycle role gates (requirement 33, enforced at the handler)', () =>
     h.authority.reset()
   })
 
-  it('returned → review resubmits through the same author gate, then confirmed → remediation → retest → resolved', () => {
+  it('returned findings resubmit through the author gate and direct resolution cannot bypass a retest record', () => {
     const h = harness()
     const id = createDraft(h)
     transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), id, 'review')
@@ -149,9 +149,9 @@ describe('lifecycle role gates (requirement 33, enforced at the handler)', () =>
     transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), id, 'remediation')
     transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), id, 'retest')
     const done = transitionFinding(h.authority, h.clock, ctxOf(pat, P14), id, 'resolved')
-    expect(done.ok).toBe(true)
-    if (done.ok) expect(done.data.status).toBe('resolved')
-    expect(statusOf(h, id).history.map((x) => x.text)).toEqual(['Draft created', 'Submitted for review', 'Returned for changes: Tighten the evidence', 'Submitted for review', 'Confirmed', 'Sent to remediation', 'Moved to retest', 'Marked resolved'])
+    expect(done).toMatchObject({ ok: false, failure: { kind: 'conflict' } })
+    expect(statusOf(h, id).status).toBe('retest')
+    expect(statusOf(h, id).history.map((x) => x.text)).toEqual(['Draft created', 'Submitted for review', 'Returned for changes: Tighten the evidence', 'Submitted for review', 'Confirmed', 'Sent to remediation', 'Moved to retest'])
     h.authority.reset()
   })
 
@@ -166,6 +166,26 @@ describe('lifecycle role gates (requirement 33, enforced at the handler)', () =>
     // Closed project (RT-2026-009): read-only regardless of role.
     expect(transitionFinding(h.authority, h.clock, ctxOf(pat, 'all'), 'FD-009', 'remediation')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('read-only') }) })
     expect(statusOf(h, 'FD-011').status).toBe('confirmed')
+    h.authority.reset()
+  })
+})
+
+describe('finding comments', () => {
+  it('pins comments to a version and replays the same request without duplicating the record', () => {
+    const h = harness()
+    const id = createDraft(h)
+    const first = addFindingComment(h.authority, h.clock, ctxOf(taylor, P14), id, 'Add the observed impact.', 1, 'comment-1')
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.data.version).toBe(2)
+    expect(first.data.comments.at(-1)).toMatchObject({ requestId: 'comment-1', version: 2, text: 'Add the observed impact.' })
+    expect(first.data.history.at(-1)?.text).toBe('Comment added')
+
+    const replay = addFindingComment(h.authority, h.clock, ctxOf(taylor, P14), id, 'Add the observed impact.', 1, 'comment-1')
+    expect(replay.ok && replay.data.comments).toHaveLength(1)
+    expect(addFindingComment(h.authority, h.clock, ctxOf(taylor, P14), id, 'Different content.', 1, 'comment-1')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict' }) })
+    expect(addFindingComment(h.authority, h.clock, ctxOf(casey, P14), id, 'Viewer comment.', 2, 'comment-2')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden' }) })
+    expect(addFindingComment(h.authority, h.clock, ctxOf(taylor, P14), id, 'Stale comment.', 1, 'comment-3')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict' }) })
     h.authority.reset()
   })
 })
@@ -244,14 +264,16 @@ describe('retest recording (ticket 32)', () => {
     transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), id, 'retest')
     return id
   }
-  it('a Resolved result closes the finding; a failed retest returns it to remediation', () => {
+  it('a Resolved result requires the retest stage and classified capture; a failed retest returns to remediation', () => {
     const h = harness()
     const id = toRetest(h)
-    const fixed = recordFindingRetest(h.authority, h.clock, ctxOf(taylor, P14), id, { result: 'Resolved', note: 'Least privilege applied.' })
+    expect(recordFindingRetest(h.authority, h.clock, ctxOf(taylor, P14), id, { result: 'Resolved', note: 'Least privilege applied.' })).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('at least one classified retained capture') }) })
+    h.authority.commit('seed-retest-capture', (db) => { db.evidence.push({ id: 'EV-RET-1', name: 'retest.txt', kind: 'text/plain', source: 'operator', at: 'Oct 17, 2026, 10:00 AM', by: 'Taylor Chen', projectId: P14, findingId: id, sensitive: false, captureId: 'cap-retest-1', classification: 'standard', classificationVersion: 1 }) })
+    const fixed = recordFindingRetest(h.authority, h.clock, ctxOf(taylor, P14), id, { result: 'Resolved', note: 'Least privilege applied.', captureIds: ['cap-retest-1'] })
     expect(fixed.ok).toBe(true)
     if (fixed.ok) {
       expect(fixed.data.status).toBe('resolved')
-      expect(fixed.data.retests.at(-1)).toMatchObject({ result: 'Resolved', by: 'Taylor Chen' })
+       expect(fixed.data.retests.at(-1)).toMatchObject({ result: 'Resolved', by: 'Taylor Chen', evidenceRefs: ['cap-retest-1'] })
     }
     h.authority.reset()
 
@@ -373,6 +395,22 @@ describe('finding form on the typed service (ticket 32)', () => {
 })
 
 describe('finding detail lifecycle on the typed service (ticket 32)', () => {
+  it('posts a version-pinned comment through the finding service and refreshes the timeline', async () => {
+    const h = mountScreenRoute('Taylor Chen')
+    const finding = h.db().findings.find((item) => item.id === 'FD-011')!
+    const before = finding.comments.length
+    h.run(() => go('finding', { id: finding.id }))
+    h.show(<routes.finding />)
+    await waitFor(() => expect(screen.getByRole('heading', { name: finding.title })).toBeInTheDocument())
+    fireEvent.change(screen.getByLabelText('Comment'), { target: { value: 'Record the impact evidence.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Post comment' }))
+    await waitFor(() => expect(h.db().findings.find((item) => item.id === finding.id)!.comments).toHaveLength(before + 1))
+    expect(h.db().findings.find((item) => item.id === finding.id)!.comments.at(-1)?.text).toBe('Record the impact evidence.')
+    expect(h.db().findings.find((item) => item.id === finding.id)!.history.at(-1)?.text).toBe('Comment added')
+    await waitFor(() => expect(useToastStore.getState().toasts.some((item) => item.text === 'Comment posted.')).toBe(true))
+    h.unmount()
+  })
+
   it('gates confirm/return per role and runs the reviewer confirm through the handler', async () => {
     const h = mountScreenRoute('Taylor Chen')
     // Author creates and submits a probe draft (handler path).
@@ -413,7 +451,7 @@ describe('finding detail lifecycle on the typed service (ticket 32)', () => {
     await act(async () => { opts.onConfirm('') })
     await waitFor(() => expect(h.db().findings.find((f) => f.id === 'FD-012')!.status).toBe('draft'))
     expect(h.db().findings.find((f) => f.id === 'FD-012')!.history.at(-1)?.text).toBe('Imported AI suggestion as a draft')
-    expect(useToastStore.getState().toasts.some((t) => t.text === 'FD-012 imported as a draft finding.')).toBe(true)
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'FD-012 imported as draft FD-012.')).toBe(true)
     h.unmount()
   })
 })

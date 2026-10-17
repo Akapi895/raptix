@@ -56,6 +56,7 @@ model Engagement {
   vaultSecrets VaultSecret[]
   c2Commands C2Command[]
   documentDrafts PlanDocumentDraft[]
+  retainedCaptures RetainedCapture[]
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -422,28 +423,139 @@ model FindingRecord {
   engagementId String
   title String
   severity String @default("medium")
-  status String @default("draft") // draft | review | confirmed | remediation | retest | resolved
+  status String @default("draft") // draft | review | returned | confirmed | remediation | retest | resolved
   body Json
   expectedVersion Int @default(1)
   sourceType String @default("authored") // authored | imported
   producerRef String?
+  // SHA-256 of the producer source bytes at import time; retries for one path
+  // replay the same draft, while changed bytes require an explicit revision flow.
+  producerDigest String?
+  contentUpdatedBy String?
+  assetId String?
+  bindingId String?
+  threadId String?
+  runId String?
+  techniqueId String?
   createdBy String
   updatedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  comments FindingComment[]
+  history FindingHistory[]
+  retests FindingRetest[]
+  @@unique([engagementId, producerRef])
   @@index([engagementId, status])
+}
+
+model FindingSuggestionDisposition {
+  id String @id @default(cuid())
+  engagementId String
+  actorId String
+  producerRef String
+  dismissed Boolean @default(false)
+  reason String?
+  version Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, actorId, producerRef])
+  @@index([engagementId, actorId, dismissed])
+}
+
+model FindingComment {
+  id String @id @default(cuid())
+  findingId String
+  engagementId String
+  actorId String
+  text String
+  findingVersion Int
+  requestId String
+  payloadHash String
+  createdAt DateTime @default(now())
+  finding FindingRecord @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  @@unique([findingId, requestId])
+  @@index([findingId, createdAt, id])
+  @@index([findingId, findingVersion, id])
+  @@index([engagementId, createdAt])
+}
+
+model FindingHistory {
+  id String @id @default(cuid())
+  findingId String
+  engagementId String
+  actorId String
+  action String
+  reason String?
+  fromStatus String?
+  toStatus String?
+  findingVersion Int
+  evidenceRefs Json?
+  createdAt DateTime @default(now())
+  finding FindingRecord @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  @@index([findingId, createdAt, id])
+  @@index([findingId, findingVersion, id])
+  @@index([engagementId, createdAt])
+}
+
+model FindingRetest {
+  id String @id @default(cuid())
+  findingId String
+  engagementId String
+  actorId String
+  result String
+  note String
+  findingVersion Int
+  evidenceRefs Json?
+  requestId String
+  payloadHash String
+  createdAt DateTime @default(now())
+  finding FindingRecord @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  @@unique([findingId, requestId])
+  @@index([findingId, createdAt, id])
+  @@index([findingId, findingVersion, id])
+  @@index([engagementId, createdAt])
 }
 
 model EvidenceLink {
   id String @id @default(cuid())
   findingId String
   engagementId String
+  captureId String?
   kind String // artifact | digest
   artifactPath String?
   digest String?
   producer String?
   createdAt DateTime @default(now())
+  capture RetainedCapture? @relation(fields: [captureId], references: [id], onDelete: Restrict)
   @@index([findingId])
+  @@unique([findingId, captureId])
+}
+
+// ADR-0087: byte-retaining Web captures have an opaque identity and an
+// explicit classification. Original bytes are unavailable while unclassified.
+model RetainedCapture {
+  id String @id
+  engagementId String
+  requestId String
+  requestFingerprint String
+  path String
+  filename String
+  mediaType String
+  sizeBytes Int
+  digest String
+  producer String?
+  uploadedBy String
+  classification String @default("unclassified") // unclassified | standard | sensitive
+  classificationVersion Int @default(1)
+  classifiedBy String?
+  classificationReason String?
+  classifiedAt DateTime?
+  createdAt DateTime @default(now())
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  evidenceLinks EvidenceLink[]
+  @@unique([engagementId, requestId])
+  @@unique([engagementId, path])
+  @@index([engagementId, classification, createdAt])
 }
 
 // Ticket 11: report lifecycle with independent version-pinned review.
@@ -459,9 +571,20 @@ model ReportRecord {
   reviewedAt DateTime?
   reviewComment String?
   approvedVersion Int?
+  // P06: the template, reporting period, named reviewer and revision lineage are
+  // part of the report record; they never grant review rights by themselves.
+  templateId String?
+  templateVersion Int?
+  periodStart DateTime?
+  periodEnd DateTime?
+  reviewerId String?
+  parentReportId String?
+  rootReportId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  findingSnapshots ReportFindingSnapshot[]
   @@index([engagementId, status])
+  @@index([engagementId, rootReportId])
 }
 
 model ReportDelivery {
@@ -474,7 +597,57 @@ model ReportDelivery {
   requestId String
   detail Json?
   createdAt DateTime @default(now())
+  acknowledgement ReportAcknowledgement?
   @@unique([reportId, requestId])
+  @@index([engagementId, createdAt])
+}
+
+// P06: versioned report templates; sections are pinned by version on each report.
+model ReportTemplate {
+  id String @id @default(cuid())
+  engagementId String
+  name String
+  version Int @default(1)
+  sections Json // [{ title, required }]
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([engagementId, name, version])
+  @@index([engagementId, createdAt])
+}
+
+// P06: exact finding version, content and evidence references selected for a report.
+// Rows are replaced only while the report is a draft; approved snapshots stay immutable.
+model ReportFindingSnapshot {
+  id String @id @default(cuid())
+  reportId String
+  engagementId String
+  findingId String
+  findingVersion Int
+  title String
+  severity String
+  status String
+  body Json
+  evidence Json
+  position Int
+  selectedBy String
+  createdAt DateTime @default(now())
+  report ReportRecord @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  @@unique([reportId, findingId])
+  @@index([reportId, position])
+}
+
+// P07: recipient acknowledgement is a separate fact from the delivery record.
+model ReportAcknowledgement {
+  id String @id @default(cuid())
+  deliveryId String @unique
+  reportId String
+  engagementId String
+  actorId String
+  receipt String
+  requestId String
+  createdAt DateTime @default(now())
+  delivery ReportDelivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  @@unique([deliveryId, requestId])
   @@index([engagementId, createdAt])
 }
 

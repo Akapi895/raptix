@@ -1,10 +1,11 @@
 import { mkdtemp, rm, mkdir, writeFile, symlink } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { isFindingsView, isArtifactsView, isArtifactContentView } from '@raptix/web-contracts';
+import { isFindingsView, isArtifactsView, isArtifactContentView, isRetainedCaptureView, isRetainedCapturesView } from '@raptix/web-contracts';
 import { registerErrorHandler } from '../src/http/error-handler.js';
 import { registerFindingsRoutes } from '../src/http/routes/findings.routes.js';
 import { ArtifactsService } from '../src/services/artifacts-service.js';
@@ -41,22 +42,45 @@ T1552.001 T1003
 Rotate credentials; block .env access.
 `;
 
-interface Harness { app: FastifyInstance; workspaceRoot: string; slug: string }
+interface Harness { app: FastifyInstance; artifacts: ArtifactsService; workspaceRoot: string; slug: string }
 
 async function buildHarness(): Promise<Harness> {
   const workspaceRoot = await mkdtemp(path.join(tmpdir(), 'w12-'));
   const slug = `w12-proj-${Date.now().toString(36)}`;
+  const captures = new Map<string, Record<string, unknown>>();
+  let auditId = 0;
   const db = {
+    engagementClosure: { findFirst: async () => null },
+    retainedCapture: {
+      findFirst: async ({ where }: { where: { id?: string; engagementId: string; path?: string } }) => [...captures.values()].find((row) => row.engagementId === where.engagementId && (where.id === undefined || row.id === where.id) && (where.path === undefined || row.path === where.path)) ?? null,
+      findUnique: async ({ where }: { where: { engagementId_requestId?: { engagementId: string; requestId: string } } }) => [...captures.values()].find((row) => row.engagementId === where.engagementId_requestId?.engagementId && row.requestId === where.engagementId_requestId?.requestId) ?? null,
+      findMany: async ({ where }: { where: { engagementId: string } }) => [...captures.values()].filter((row) => row.engagementId === where.engagementId).map((row) => ({ ...row })),
+      create: async ({ data }: { data: Record<string, unknown> }) => { const row: Record<string, unknown> = { classifiedBy: null, classificationReason: null, producer: null, ...data, createdAt: new Date(), classifiedAt: null }; captures.set(String(row.id), row); return { ...row }; },
+      updateMany: async ({ where, data }: { where: { id: string; engagementId: string; classificationVersion: number }; data: Record<string, unknown> }) => {
+        const row = captures.get(where.id);
+        if (!row || row.engagementId !== where.engagementId || row.classificationVersion !== where.classificationVersion) return { count: 0 };
+        const increment = (data.classificationVersion as { increment: number }).increment;
+        captures.set(where.id, { ...row, ...data, classificationVersion: Number(row.classificationVersion) + increment });
+        return { count: 1 };
+      },
+    },
+    webAuditEntry: { create: async ({ data }: { data: Record<string, unknown> }) => ({ ...data, id: `audit-${++auditId}` }) },
+    $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(db),
     engagement: {
       findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         where.id === 'eng-1' && (where.userId === undefined || where.userId === 'local') ? { id: 'eng-1', name: slug, workspaceSlug: slug, userId: 'local' } : null,
     },
+    webMembership: {
+      findFirst: async ({ where }: { where: { engagementId: string; userId: string } }) =>
+        where.engagementId === 'eng-1' && ['viewer', 'operator', 'reviewer'].includes(where.userId) ? { engagementId: 'eng-1', userId: where.userId, role: where.userId } : null,
+    },
   };
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
-  registerFindingsRoutes(app, new FindingsService(db as never, workspaceRoot), new ArtifactsService(db as never, workspaceRoot), { id: 'local', mode: 'local-single-user' });
+  const artifacts = new ArtifactsService(db as never, workspaceRoot);
+  registerFindingsRoutes(app, new FindingsService(db as never, workspaceRoot), artifacts, { id: 'local', mode: 'local-single-user' });
   await app.ready();
-  return { app, workspaceRoot, slug };
+  return { app, artifacts, workspaceRoot, slug };
 }
 
 const harnesses: Harness[] = [];
@@ -73,7 +97,7 @@ afterEach(async () => {
 describe('W12 findings projection', () => {
   it('W01: resolves workspace contents by the global workspace slug, not the owner name', async () => {
     const workspaceRoot = await mkdtemp(path.join(tmpdir(), 'w12-slug-'));
-    harnesses.push({ app: { close: async () => undefined } as unknown as FastifyInstance, workspaceRoot, slug: 'dup-name' });
+    harnesses.push({ app: { close: async () => undefined } as unknown as FastifyInstance, artifacts: new ArtifactsService({} as never, workspaceRoot), workspaceRoot, slug: 'dup-name' });
     const slugDir = `dup-name-${Date.now().toString(36)}`;
     const db = {
       engagement: {
@@ -144,6 +168,66 @@ describe('W12 findings projection', () => {
 });
 
 describe('W12 artifact browser', () => {
+  it('retains uploads as unclassified, blocks original bytes, then serves classified bytes with a verified digest', async () => {
+    await withHarness(async (h) => {
+      const bytes = Buffer.from([0x00, 0xff, 0x41, 0x42]);
+      const response = await h.app.inject({
+        method: 'POST',
+        url: '/api/engagements/eng-1/artifacts/captures',
+        payload: { requestId: 'upload-1', filename: 'capture.bin', base64: bytes.toString('base64'), mediaType: 'application/octet-stream' },
+      });
+      expect(response.statusCode).toBe(200);
+      const uploaded = response.json();
+      expect(uploaded).toMatchObject({ classification: 'unclassified', sizeBytes: bytes.length, filename: 'capture.bin' });
+      expect(isRetainedCaptureView(uploaded), JSON.stringify(uploaded)).toBe(true);
+      const id = uploaded.id as string;
+      const replay = await h.app.inject({ method: 'POST', url: '/api/engagements/eng-1/artifacts/captures', payload: { requestId: 'upload-1', filename: 'capture.bin', base64: bytes.toString('base64'), mediaType: 'application/octet-stream' } });
+      expect(replay.statusCode).toBe(200);
+      expect(replay.json().id).toBe(id);
+      const reused = await h.app.inject({ method: 'POST', url: '/api/engagements/eng-1/artifacts/captures', payload: { requestId: 'upload-1', filename: 'other.bin', base64: Buffer.from('different').toString('base64'), mediaType: 'application/octet-stream' } });
+      expect(reused.statusCode).toBe(409);
+
+      const listed = await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/captures' });
+      expect(isRetainedCapturesView(listed.json())).toBe(true);
+      expect(listed.json().captures.map((capture: { id: string }) => capture.id)).toEqual([id]);
+      const operatorView = await h.artifacts.listCaptures('operator', 'eng-1');
+      expect(operatorView.captures[0]).toMatchObject({ classification: 'unclassified', filename: null, canReadOriginal: false, canClassify: false });
+      expect((await h.app.inject({ method: 'GET', url: `/api/engagements/eng-1/artifacts/captures/${id}/content` })).statusCode).toBe(409);
+
+      const classified = await h.app.inject({
+        method: 'PATCH', url: `/api/engagements/eng-1/artifacts/captures/${id}/classification`,
+        payload: { classification: 'standard', expectedVersion: 1, reason: 'Approved lab capture for engagement members.' },
+      });
+      expect(classified.statusCode).toBe(200);
+      expect(classified.json()).toMatchObject({ classification: 'standard', classificationVersion: 2 });
+      const downloaded = await h.app.inject({ method: 'GET', url: `/api/engagements/eng-1/artifacts/captures/${id}/content` });
+      expect(downloaded.statusCode).toBe(200);
+      expect(downloaded.headers['x-content-sha256']).toBe(createHash('sha256').update(bytes).digest('hex'));
+      expect(Buffer.from(downloaded.rawPayload)).toEqual(bytes);
+    });
+  });
+
+  it('limits sensitive original bytes and classification decisions to owner/reviewer roles', async () => {
+    await withHarness(async (h) => {
+      const bytes = Buffer.from('sensitive operator note');
+      const uploaded = await h.app.inject({
+        method: 'POST', url: '/api/engagements/eng-1/artifacts/captures',
+        payload: { requestId: 'upload-sensitive', filename: 'note.txt', base64: bytes.toString('base64'), mediaType: 'text/plain' },
+      });
+      const id = uploaded.json().id as string;
+      await expect(h.artifacts.classifyCapture('operator', 'eng-1', id, { classification: 'sensitive', expectedVersion: 1, reason: 'Operator cannot classify.' })).rejects.toMatchObject({ statusCode: 403 });
+      const classified = await h.app.inject({
+        method: 'PATCH', url: `/api/engagements/eng-1/artifacts/captures/${id}/classification`,
+        payload: { classification: 'sensitive', expectedVersion: 1, reason: 'Contains restricted account data.' },
+      });
+      expect(classified.statusCode).toBe(200);
+      await expect(h.artifacts.downloadCapture('viewer', 'eng-1', id)).rejects.toMatchObject({ statusCode: 404 });
+      await expect(h.artifacts.downloadCapture('operator', 'eng-1', id)).rejects.toMatchObject({ statusCode: 404 });
+      await expect(h.artifacts.downloadCapture('reviewer', 'eng-1', id)).resolves.toMatchObject({ bytes });
+      await expect(h.artifacts.downloadCapture('local', 'eng-1', id)).resolves.toMatchObject({ bytes });
+    });
+  });
+
   it('lists allowlisted folders non-recursively with sizes and engagement scoping', async () => {
     await withHarness(async (h) => {
       const root = path.join(h.workspaceRoot, h.slug);

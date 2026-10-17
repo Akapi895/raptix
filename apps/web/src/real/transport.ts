@@ -36,6 +36,13 @@ export interface RequestOptions {
   signal?: AbortSignal
 }
 
+export interface BinaryApiResponse {
+  bytes: Uint8Array
+  mediaType: string
+  filename: string
+  digest: string
+}
+
 const API_BASE = '/api'
 const DEFAULT_TIMEOUT_MS = 15_000
 
@@ -138,6 +145,45 @@ export async function apiFetch<T>(
     if (error instanceof ApiTransportError) throw error
     // DOMException is not an Error subclass in every environment — read the
     // name defensively so a fetch timeout is never misreported.
+    const name = (error as { name?: string } | null)?.name
+    const reason = name === 'TimeoutError' ? 'timed out' : 'is unreachable'
+    throw new ApiTransportError(0, 'unavailable', `The Raptix API ${reason}. Verify the server is running and reachable.`)
+  }
+}
+
+/** Retrieves one server-authorized original capture; byte length and SHA-256 headers are validated before the caller uses the bytes. */
+export async function apiFetchBytes(path: string, options: Pick<RequestOptions, 'timeoutMs' | 'signal'> = {}): Promise<BinaryApiResponse> {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, signal } = options
+  const timeout = AbortSignal.timeout(timeoutMs)
+  const composed = signal ? AbortSignal.any([signal, timeout]) : timeout
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: { Accept: 'application/octet-stream' },
+      credentials: 'same-origin',
+      signal: composed,
+    })
+    if (!response.ok) {
+      const parsed = await parseBody(response)
+      if (response.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event('raptix:session-expired'))
+      throw failureFrom(response, parsed)
+    }
+    const digest = response.headers.get('x-content-sha256') ?? ''
+    const declaredSize = Number(response.headers.get('x-content-length'))
+    if (!/^[a-f0-9]{64}$/.test(digest) || !Number.isSafeInteger(declaredSize) || declaredSize < 1) {
+      throw new ApiTransportError(response.status, 'internal_error', 'The capture response omitted valid integrity metadata.')
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    if (bytes.length !== declaredSize) throw new ApiTransportError(response.status, 'internal_error', 'The downloaded capture size does not match its recorded length.')
+    const disposition = response.headers.get('content-disposition') ?? ''
+    const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+    let filename = 'capture'
+    if (encodedName) {
+      try { filename = decodeURIComponent(encodedName) } catch { throw new ApiTransportError(response.status, 'internal_error', 'The capture filename is malformed.') }
+    }
+    return { bytes, digest, filename, mediaType: (response.headers.get('content-type') ?? 'application/octet-stream').split(';', 1)[0]!.trim() }
+  } catch (error) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+    if (error instanceof ApiTransportError) throw error
     const name = (error as { name?: string } | null)?.name
     const reason = name === 'TimeoutError' ? 'timed out' : 'is unreachable'
     throw new ApiTransportError(0, 'unavailable', `The Raptix API ${reason}. Verify the server is running and reachable.`)
