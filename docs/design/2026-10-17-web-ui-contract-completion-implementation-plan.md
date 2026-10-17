@@ -599,6 +599,33 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 | P12 | Chưa | Phụ thuộc P11 cho lifecycle controls. |
 | P13 | Chưa | Cần sau P08–P12. |
 
+### 13.6 Cập nhật lượt triển khai tiếp theo
+
+| Phase | Trạng thái | Bằng chứng / ghi chú |
+|---|---|---|
+| P02–P05 | Đã xác minh | Gate live `apps/web/server/tests/p02-p05-workflow-live.ts` pass trên DB `raptix_ui_contract_test`: import idempotent khi retry đồng thời, từ chối đổi bytes, upload và tải bytes gốc khớp digest, retest chặn resolve trực tiếp, comment bị khóa khi resolved, phân trang activity, dismissal theo actor, đọc lại sau restart. Sửa lỗi thật: attach capture chưa phân loại (ADR-0087) trước đây bị chặn bởi cổng đọc; và attach gọi lại `capture()` không cần thiết. |
+| P06–P07 | Đã xác minh | Gate live P06/P07 pass. Suite `t10`, `t11`, `findings-artifacts` pass. |
+| P08 | Xong (code và test) | Project tab Reports dùng màn hình chia sẻ `ReportsPage`; tab Findings dùng `FindingList` chia sẻ (có cảnh báo truncated). Adapter thật nối template, reviewer, kỳ báo cáo, finding ghim theo version người dùng đã đọc, ack có request id, revise, tạo template (owner), tải JSON/Markdown. Đã xóa `RealReportsPanel`, `RealReportEditor`, `RealReportSetup`, `RealFindingsPanel` và test tương ứng. Gỡ gap đã triển khai khỏi `control-gaps.ts`. Commit `8a03dd0`. |
+| P09 | Chưa | Các domain assets/library/team/settings/vault/audit/closure/C2/operations chưa có port thật (`real/service-adapter` chỉ có findings và reports). Project detail mock (`screens/b-detail*.tsx`) gọi service trực tiếp. Cần một port + adapter + màn hình chia sẻ cho từng domain. |
+| P10 | Chưa | Runtime Python không có roster instance, inbox, outbox hay instance API. Cần P10a audit `middleware/dispatch.py`, `core/subagent_streaming.py`, checkpointer rồi mới viết code. |
+| P11 | Chưa | Không có pause intent, checkpoint pause, step controls ở runtime. |
+| P12 | Chưa | Phụ thuộc P09 (port) và P11 (lifecycle). |
+| P13 | Chưa | Cần sau P09–P12. |
+
+### 13.7 Test toàn bộ web UI (sau P08)
+
+- Suite UI đầy đủ: 124 file, 1256/1264 test pass.
+- 8 test fail đều đã có ở baseline `94c58b6` (đã đối chiếu bằng worktree tạm, đã gỡ): `a11y-audit` (2), `dark-theme-audit` (1), `responsive-audit` (5, một trong đó lần chạy này pass). Chưa sửa vì nằm ngoài kế hoạch này; cần xử lý riêng.
+- Đã sửa trong lượt này: `features/findings/evidence.test.tsx` kỳ vọng nhãn cũ "Download", nay là "Download original" (đổi có chủ đích ở P04, commit `cf326fe`).
+- Adapter Reports: 22/22 test pass. Server: `t10`, `t11`, `findings-artifacts`: 33/33 pass.
+- Lint và typecheck `@raptix/web-raptix` và `@raptix/web-raptix-server`: sạch.
+
+### 13.8 Hạ tầng live
+
+- LangGraph và LiteLLM đã khởi động lại. Cả hai đều healthy (`/ok` và `/health/readiness` trả 200).
+- Postgres, Neo4j, Sandbox, Skillogy đang chạy.
+- Sliver C2: image `raptix-iw09-sliver-bridge:lab` có sẵn, chưa chạy container. Chưa kiểm tra provider.
+
 ### 13.4 Kết quả kiểm tra đã chạy (sau khi triển khai P00–P07)
 
 - Build `@raptix/web-contracts`: pass. Typecheck `@raptix/web-raptix-server`: 0 lỗi. Typecheck `@raptix/web-raptix`: 0 lỗi.
