@@ -92,7 +92,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -263,7 +263,7 @@ export function createConsoleServices(): ConsoleServices {
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/settings/service').then((m) => m.createSettingsService(authority, clock, guard)))
   const forAssets = (actor: ActorRef, projectId: string): AssetService =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/assets/service').then((m) => m.createAssetService(authority, guard)))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/assets/service').then((m) => m.createAssetService(authority, clock, guard)))
   const forWorkers = (actor: ActorRef, projectId: string): WorkerService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/workers/service').then((m) => m.createWorkerService(authority, guard)))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>

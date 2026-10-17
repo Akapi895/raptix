@@ -36,7 +36,6 @@ function signIn() {
   if (landing !== undefined) window.location.hash = landing
 }
 
-const noHide = (el: HTMLElement) => expect(el.className).not.toMatch(/\b(max-(sm|md|lg|xl|2xl):)?hidden\b/)
 
 afterEach(() => {
   cleanup()

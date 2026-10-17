@@ -44,7 +44,7 @@ describe('FEATURE_ROUTE_SURFACES', () => {
   it('keeps the current real-feature-route key set', () => {
     expect(Object.keys(FEATURE_ROUTE_SURFACES).sort()).toEqual([
       'agent', 'agents', 'ai-branch', 'ai-fanout', 'ai-plan', 'ai-plan-compare', 'ai-plan-review',
-      'analysis', 'asset', 'asset-new', 'asset-scope', 'c2', 'c2-channel', 'c2-console', 'c2-session',
+      'analysis', 'c2', 'c2-channel', 'c2-console', 'c2-session',
       'operation',
       'operation-new', 'operation-schedule', 'operations', 'playbook-review', 'preflight',
     ].sort())

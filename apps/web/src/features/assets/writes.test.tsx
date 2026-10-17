@@ -261,7 +261,7 @@ describe('bridge both directions (ticket 51)', () => {
     await waitFor(() => expect(screen.getByText('Page 1 of 3')).toBeInTheDocument())
     h.run(() => selectProject(P14))
     await waitFor(() => expect(screen.getByText('14 records')).toBeInTheDocument())
-    const write = createAssetWriteHandlers(h.svc(), ALEX, P14)
+    const write = createAssetWriteHandlers(h.svc().assets(ALEX, P14), ALEX, P14)
     await act(async () => { await write.importRows([row(), row({ name: 'hook-02', ident: 'hook-02.example.test' })]) })
     await waitFor(() => expect(screen.getByText('16 records')).toBeInTheDocument())
     const importedId = h.db().assets.find((a) => a.projectId === P14 && a.name === 'hook-02')!.id

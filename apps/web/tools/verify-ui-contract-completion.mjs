@@ -5,6 +5,7 @@
  * Phases run one at a time and read the state file before any side effect:
  *   --prepare            create the acceptance engagement scoped to one host
  *   --findings-evidence  finding, retained capture upload/classify/download, attach
+ *   --assets             managed inventory import, classification at a read version and a stale refusal
  *   --target-flow        bounded read-only observation of the scoped host, only when
  *                        WEB_ACCEPTANCE_NETWORK_PROBES=1
  *
@@ -165,6 +166,42 @@ async function observe(command, commandArgs) {
   }
 }
 
+async function assetsPhase(state) {
+  const prepared = state.steps.prepare;
+  if (!prepared) fail('run --prepare first');
+  const { engagementId } = prepared;
+  const api = client();
+  await api.login();
+  const base = `/api/engagements/${engagementId}`;
+  // The imported identifier is the declared target host, so it stays inside the engagement scope.
+  const imported = await api.json(await api.request('POST', `${base}/assets/inventory/import`, { identifiers: [TARGET_HOST], kind: 'host' }));
+  if (imported.status !== 200) fail(`asset import refused with status ${imported.status}`);
+  const inventory = await api.json(await api.request('GET', `${base}/assets/inventory`));
+  const row = inventory.body.assets.find((asset) => asset.identifier === TARGET_HOST);
+  if (!row) fail('the imported target host is not in the inventory');
+  // Marking a target in scope needs an approved scope revision that adds it; that governed refusal is part of the check.
+  const governed = await api.json(await api.request('PATCH', `${base}/assets/inventory/${row.id}`, { classification: 'in_scope', expectedVersion: row.version }));
+  const changed = await api.json(await api.request('PATCH', `${base}/assets/inventory/${row.id}`, { classification: 'out_of_scope', expectedVersion: row.version }));
+  const stale = await api.json(await api.request('PATCH', `${base}/assets/inventory/${row.id}`, { classification: 'pending', expectedVersion: row.version }));
+  const after = await api.json(await api.request('GET', `${base}/assets/inventory`));
+  const afterRow = after.body.assets.find((asset) => asset.id === row.id);
+  const graph = await api.json(await api.request('GET', `${base}/graph`));
+  const result = {
+    assetId: row.id,
+    importStatus: imported.status,
+    importedRows: imported.body.imported,
+    inScopeWithoutApprovalStatus: governed.status,
+    classifyStatus: changed.status,
+    staleClassifyStatus: stale.status,
+    classificationAfter: afterRow?.classification ?? null,
+    versionAdvanced: (afterRow?.version ?? 0) > row.version,
+    graphStatus: graph.status,
+    recordedAt: new Date().toISOString(),
+  };
+  const passed = result.inScopeWithoutApprovalStatus === 409 && result.classifyStatus === 200 && result.staleClassifyStatus === 409 && result.classificationAfter === 'out_of_scope' && result.versionAdvanced;
+  return { ...state, steps: { ...state.steps, assets: { ...result, passed } } };
+}
+
 async function targetFlow(state) {
   const prepared = state.steps.prepare;
   if (!prepared) fail('run --prepare first');
@@ -196,6 +233,7 @@ const state = await readState();
 let next = state;
 if (args.has('--prepare')) next = await prepare(state);
 if (args.has('--findings-evidence')) next = await findingsEvidence(next);
+if (args.has('--assets')) next = await assetsPhase(next);
 if (args.has('--target-flow')) next = await targetFlow(next);
 await writeState(next);
 process.stdout.write(`${JSON.stringify(next.steps, null, 2)}\n`);

@@ -16,7 +16,8 @@ import { projectAccessible, can as policyCan } from '../../auth/policy'
 import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Asset } from '../../domain/entities'
-import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
+import { changeAssetScopeTransaction, importAssetsTransaction, type AssetImportOutcome, type AssetImportRow, type AssetScopeWriteInput, type AssetScopeWriteOutcome } from './writes'
 
 /** Filter state for the catalog list (all optional; empty = unfiltered). */
 export interface AssetListQuery {
@@ -51,10 +52,29 @@ export interface AssetListRead {
   owners: string[]
 }
 
+/**
+ * Sections of an asset read that the source cannot supply. Real mode names them
+ * explicitly instead of rendering an empty list that reads as "none".
+ */
+export type AssetUnmodelled = 'operations' | 'findings' | 'evidence' | 'agents' | 'approvals' | 'techniques' | 'history' | 'governance'
+
+/** Observed attack-chain graph (real mode only): server-redacted nodes and edges, listed verbatim. */
+export interface AssetObservedGraph {
+  nodes: { id: string; labels: string[]; properties: Record<string, unknown> }[]
+  edges: { id: string; source: string; target: string; type: string; properties: Record<string, unknown> }[]
+  truncated: boolean
+}
+
 export interface AssetService {
+  /** The observed graph source; the simulated store has none, so the screen says so instead of inventing one. */
+  observedGraph(ctx: RequestContext): Promise<ServiceResult<AssetObservedGraph>>
   list(ctx: RequestContext, query?: AssetListQuery): Promise<ServiceResult<AssetListRead>>
   get(ctx: RequestContext, id: string): Promise<ServiceResult<AssetDetailRead>>
   scope(ctx: RequestContext): Promise<ServiceResult<AssetScopeRead>>
+  /** Atomic validated import for the active project; refusals commit nothing. */
+  importRows(ctx: RequestContext, rows: readonly AssetImportRow[]): Promise<ServiceResult<AssetImportOutcome>>
+  /** Role-gated classification change with the audited reason. */
+  changeScope(ctx: RequestContext, assetId: string, scope: Asset['scope'], input?: AssetScopeWriteInput): Promise<ServiceResult<AssetScopeWriteOutcome>>
 }
 
 const PAGE_SIZE = 10
@@ -152,6 +172,7 @@ export interface AssetDetailRead {
   /** Audit trail (project-scoped) + the last-updated observation, newest first. */
   history: AssetHistoryItem[]
   canViewSensitive: boolean
+  unmodelled: AssetUnmodelled[]
 }
 
 /**
@@ -204,7 +225,7 @@ export function getAsset(db: Db, ctx: RequestContext, id: string): ServiceResult
       evidence: ev.map((e) => ({ id: e.id, name: mask(e) ? 'Redacted (sensitive)' : e.name, kind: mask(e) ? '••••' : e.kind, sensitive: e.sensitive, masked: mask(e) })),
       agents: agents.map((g) => ({ id: g.id, host: g.host, status: g.status, op: g.op || undefined })),
       approvals: apprs.map((x) => ({ id: x.id, type: x.type, by: x.by, reviewer: x.reviewer, at: x.at, status: x.status })),
-      techniques, history, canViewSensitive,
+      techniques, history, canViewSensitive, unmodelled: [],
     },
   }
 }
@@ -235,6 +256,7 @@ export interface AssetScopeProject {
 
 /** The whole scope-classification read: scoped rows + per-project contexts. */
 export interface AssetScopeRead {
+  unmodelled: AssetUnmodelled[]
   rows: AssetScopeRow[]
   /** Contexts for the scope's projects: the specific project always, accessible asset projects in aggregate. */
   projects: AssetScopeProject[]
@@ -266,17 +288,21 @@ export function getAssetScope(db: Db, ctx: RequestContext): ServiceResult<AssetS
         pendingScopeApproval: apr ? { id: apr.id, by: apr.by, at: apr.at } : undefined,
       }
     })
-  return { ok: true, data: { rows, projects, accessibleCount: accessible.size } }
+  return { ok: true, data: { rows, projects, accessibleCount: accessible.size, unmodelled: [] } }
 }
 
 /** Builds the typed asset service; `guard` is the factory's superseded-scope read guard. */
 export function createAssetService(
   authority: DbAuthority,
+  clock: Clock,
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ): AssetService {
   return {
     list: (ctx, query) => guard(() => listAssets(authority.snapshot(), ctx, query)),
     get: (ctx, id) => guard(() => getAsset(authority.snapshot(), ctx, id)),
     scope: (ctx) => guard(() => getAssetScope(authority.snapshot(), ctx)),
+    observedGraph: (ctx) => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `The simulated store has no observed graph for ${ctx.projectId}.` } }),
+    importRows: (ctx, rows) => Promise.resolve(importAssetsTransaction(authority, clock, ctx, ctx.projectId, rows)),
+    changeScope: (ctx, assetId, scope, input) => Promise.resolve(changeAssetScopeTransaction(authority, clock, ctx, assetId, scope, input)),
   }
 }
