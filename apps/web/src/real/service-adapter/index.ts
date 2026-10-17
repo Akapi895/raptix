@@ -28,6 +28,8 @@ import { createRealPlanningService } from './planning'
 import { createRealGovernanceService } from './governance'
 import { unavailableC2ProviderService, type C2ProviderService } from '../../features/c2/provider'
 import { createRealC2ProviderService } from './c2-provider'
+import { unavailableRuntimeOperationsService, type RuntimeOperationsService } from '../../features/operations/runtime'
+import { createRealRuntimeOperationsService } from './runtime-operations'
 import { notIntegratedService } from './stub'
 
 /**
@@ -121,5 +123,11 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableC2ProviderService()
-  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider }
+  const runtimeOperations: FeatureServices['runtimeOperations'] = supported('runs')
+    ? (() => {
+        const service: RuntimeOperationsService = createRealRuntimeOperationsService()
+        return () => service
+      })()
+    : () => unavailableRuntimeOperationsService()
+  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations }
 }

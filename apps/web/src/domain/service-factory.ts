@@ -46,6 +46,7 @@ import type { ClosureService } from '../features/closure/service'
 import { unavailablePlanningService, type PlanningService } from '../features/planning/service'
 import { unavailableGovernanceService, type GovernanceService } from '../features/governance/service'
 import { unavailableC2ProviderService, type C2ProviderService } from '../features/c2/provider'
+import { unavailableRuntimeOperationsService, type RuntimeOperationsService } from '../features/operations/runtime'
 import type { ObservedAnalysisService } from '../features/analysis/observed'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
@@ -101,7 +102,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider' | 'runtimeOperations'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -159,6 +160,8 @@ export interface ConsoleServices {
   governance(actor: ActorRef, projectId: string): GovernanceService
   /** C2 provider sessions, grants and command ledger (plan P12 C2 slice). Real mode only: the mock console keeps its own session model. */
   c2Provider(actor: ActorRef, projectId: string): C2ProviderService
+  /** Execution threads, runs and the runtime timeline (plan P12 Operations slice). Real mode only: the mock console keeps its own lifecycle. */
+  runtimeOperations(actor: ActorRef, projectId: string): RuntimeOperationsService
   /** Observed analysis (plan P09 Analysis slice): the mock adapter maps its executed steps, the real adapter reads the knowledge graph. */
   observedAnalysis(actor: ActorRef, projectId: string): ObservedAnalysisService
   /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
@@ -366,6 +369,7 @@ export function createConsoleServices(): ConsoleServices {
     planning: () => unavailablePlanningService(),
     governance: () => unavailableGovernanceService(),
     c2Provider: () => unavailableC2ProviderService(),
+    runtimeOperations: () => unavailableRuntimeOperationsService(),
     audit: () => unavailableAuditService(),
     workers: forWorkers,
     notices: forNotices,

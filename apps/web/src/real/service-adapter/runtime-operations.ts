@@ -1,0 +1,49 @@
+import type { ScopedRunView } from '@raptix/web-contracts'
+import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { RuntimeOperationsService, RuntimeRun, RuntimeTimeline } from '../../features/operations/runtime'
+import { cancelRun, fetchTimeline, getThread, listRunsOfThread, listThreads } from '../api'
+import { guarded } from './shared'
+
+const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading its operations.' }
+
+const runOf = (view: ScopedRunView): RuntimeRun => ({
+  runId: view.runId,
+  requestId: view.requestId,
+  threadId: view.threadId,
+  rawStatus: view.rawStatus,
+  createdAt: view.createdAt,
+  updatedAt: view.updatedAt,
+})
+
+/** The runtime's own answers only: every read goes to the owning engagement's runtime binding. */
+export function createRealRuntimeOperationsService(): RuntimeOperationsService {
+  const engagementOf = (ctx: RequestContext): string | null => (ctx.projectId && ctx.projectId !== 'all' ? ctx.projectId : null)
+  const scoped = <T>(ctx: RequestContext, run: (engagementId: string) => Promise<ServiceResult<T>>) => guarded(async () => {
+    const engagementId = engagementOf(ctx)
+    return engagementId === null ? { ok: false as const, failure: NO_ENGAGEMENT } : run(engagementId)
+  })
+  return {
+    threads: (ctx) => scoped(ctx, async (engagementId) => {
+      const list = await listThreads(engagementId)
+      return {
+        ok: true,
+        data: list.threads
+          .filter((t) => t.kind === 'execution')
+          .map((t) => ({ threadId: t.threadId, assistantId: t.assistantId, createdAt: t.createdAt })),
+      }
+    }),
+    runs: (ctx, threadId) => scoped(ctx, async (engagementId) => {
+      const page = await listRunsOfThread(engagementId, threadId)
+      return { ok: true, data: page.runs.map(runOf) }
+    }),
+    snapshot: (ctx, threadId) => scoped(ctx, async (engagementId) => {
+      const view = await getThread(engagementId, threadId)
+      return { ok: true, data: { transcripts: view.transcripts ?? [], transcriptsTruncated: view.transcriptsTruncated ?? false } }
+    }),
+    cancelRun: (ctx, threadId, runId) => scoped(ctx, async (engagementId) => ({ ok: true, data: runOf(await cancelRun(engagementId, threadId, runId)) })),
+    timeline: (ctx) => scoped(ctx, async (engagementId): Promise<ServiceResult<RuntimeTimeline>> => {
+      const view = await fetchTimeline(engagementId)
+      return { ok: true, data: { entries: view.entries, truncated: view.truncated, unavailableThreads: view.unavailableThreads } }
+    }),
+  }
+}
