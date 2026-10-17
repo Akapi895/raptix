@@ -18,7 +18,6 @@ const PANEL_COMPONENTS: Record<PanelGroup, PanelComponent> = {
   analysis: lazy(() => import('./analysis-panel').then((m) => ({ default: m.RealAnalysisPanel }))),
   c2: lazy(() => import('./c2-panel').then((m) => ({ default: m.RealC2Panel }))),
   campaigns: lazy(() => import('./campaigns-panel').then((m) => ({ default: m.RealCampaignsPanel }))),
-  assets: lazy(() => import('./inventory-panel').then((m) => ({ default: m.RealInventoryPanel }))),
 }
 
 export function RealFeatureRoute(): ReactElement {

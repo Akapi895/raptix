@@ -11,7 +11,7 @@ import { hasRoute } from './registry'
 
 const KNOWN_PANEL_GROUPS: ReadonlySet<PanelGroup> = new Set([
   'operations', 'governance', 'fleet', 'scope',
-  'analysis', 'c2', 'campaigns', 'assets',
+  'analysis', 'c2', 'campaigns',
 ])
 
 describe('FEATURE_ROUTE_SURFACES', () => {
