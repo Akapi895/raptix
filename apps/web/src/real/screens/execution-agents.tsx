@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Bot, Eye, ShieldCheck } from 'lucide-react'
-import type { FleetBranchView } from '../api'
+import { fetchRuntimeInstances, type FleetBranchView } from '../api'
 import { go } from '../../router/navigate'
 import { Banner, Button, DescList, Segmented, Textarea, cx } from '../../ui'
 import { utcMinuteOr } from '../format'
@@ -19,9 +20,32 @@ export function RealExecutionAgents({ engagementId, assistantId, threadId, branc
         <ul className="space-y-2">{branches.map((branch) => <li key={`${branch.threadId}/${branch.key}`}><button aria-label={`Observe ${branch.agent} ${branch.key}`} aria-pressed={selectedKey === branch.key} onClick={() => onSelect(branch.key)} className={cx('w-full rounded-xl border p-3 text-left', selectedKey === branch.key ? 'border-accent-line bg-accent-soft/40' : 'border-line hover:bg-hover')}><span className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium"><span>{branch.agent} · <span className="font-mono text-xs">{branch.key.slice(-8)}</span></span><Eye size={14} /></span><p className="mt-1 text-xs text-muted">Recorded state: {branch.state} · outcome {branch.outcome ?? 'unknown'}</p><p className="mt-1 text-[11px] text-muted">{utcMinuteOr(branch.endedAt ?? branch.startedAt)}</p></button></li>)}</ul>
         {!branches.length && <p className="text-xs text-muted">No checkpoint invocations are recorded for this thread.</p>}
       </section>
+      <RuntimeRoster engagementId={engagementId} threadId={threadId} />
       <details className="text-xs"><summary className="cursor-pointer text-muted">Communication & control capabilities</summary><p className="mt-2 leading-relaxed">Observation: checkpoint records only. Direct message / forward / per-instance pause, cancel and retry: unavailable — no endpoint contract. Questions resume their recorded thread. Cancel run remains run-scoped.</p><p className="mt-2 break-all font-mono">Thread: {threadId ?? 'not selected'}</p></details>
     </>}
   </div>
+}
+
+/** P10b roster: the dispatches the runtime ledger records for the engagement. A thread the runtime cannot read is named, never shown as empty. */
+function RuntimeRoster({ engagementId, threadId }: { engagementId: string; threadId: string | null }): ReactElement {
+  const roster = useQuery({ queryKey: ['real', 'runtime-instances', engagementId], queryFn: () => fetchRuntimeInstances(engagementId) })
+  if (roster.isPending) return <p className="text-xs text-muted">Reading the runtime roster…</p>
+  if (roster.isError) return <Banner tone="warn" title="Runtime roster unavailable">{roster.error instanceof Error ? roster.error.message : 'The roster read failed.'}</Banner>
+  const instances = roster.data.instances.filter((instance) => threadId === null || instance.threadId === threadId)
+  const unread = roster.data.threads.filter((thread) => thread.read === 'unavailable' && (threadId === null || thread.threadId === threadId))
+  return <section aria-label="Runtime dispatch roster" className="space-y-2">
+    <h3 className="text-xs font-semibold">Dispatch instances · runtime ledger</h3>
+    <p className="text-xs leading-relaxed text-muted">Each row is a dispatch the runtime recorded: thread, dispatch and attempt. Dispatches recorded before the runtime named roles show the role as not recorded.</p>
+    {unread.length > 0 && <Banner tone="warn" title="Some threads could not be read">{unread.map((thread) => `${thread.threadId.slice(0, 8)}: ${thread.reason ?? 'unavailable'}`).join(' · ')}</Banner>}
+    {instances.length === 0 ? <p className="text-xs text-muted">No dispatch instances are recorded{threadId ? ' on this thread' : ''}.</p> : (
+      <ul className="space-y-2">
+        {instances.map((instance) => <li key={instance.instanceId} className="rounded-xl border border-line p-3 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium">{instance.role ?? 'role not recorded'} · attempt {instance.attempt}</span><span className="font-mono">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></div>
+          <p className="mt-1 break-all font-mono text-muted">{instance.dispatchId.slice(0, 12)} · objective {instance.objectiveId ?? '—'} · thread {instance.threadId.slice(0, 8)}</p>
+        </li>)}
+      </ul>
+    )}
+  </section>
 }
 
 export function ObservedInvocation({ branch, onRoot }: { branch?: FleetBranchView; onRoot: () => void }): ReactElement {

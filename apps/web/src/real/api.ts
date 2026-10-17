@@ -529,6 +529,39 @@ export function fetchEffectiveScope(engagementId: string): Promise<EffectiveScop
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/scope/effective`, owned(engagementId, isEffectiveScopeView))
 }
 
+/* ───────────── Runtime instance roster (P10b) ───────────── */
+
+/** One dispatch the runtime's ledger records. `role` is null for rows written before the runtime recorded roles. */
+export interface RuntimeInstanceView {
+  instanceId: string
+  threadId: string
+  dispatchId: string
+  attempt: number
+  role: string | null
+  objectiveId: string | null
+  outcome: string
+  terminal: boolean
+  source: 'dispatch_ledger'
+}
+
+export interface RuntimeRosterView {
+  engagementId: string
+  instances: RuntimeInstanceView[]
+  threads: { threadId: string; read: 'read' | 'unavailable'; reason: string | null }[]
+  source: 'runtime'
+}
+
+function isRuntimeRosterView(v: unknown): v is RuntimeRosterView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as RuntimeRosterView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.instances) && Array.isArray(doc.threads) && doc.source === 'runtime'
+    && doc.instances.every((i) => typeof i.instanceId === 'string' && typeof i.attempt === 'number' && i.source === 'dispatch_ledger')
+}
+
+export function fetchRuntimeInstances(engagementId: string): Promise<RuntimeRosterView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/instances`, owned(engagementId, isRuntimeRosterView))
+}
+
 export interface AssetInventoryView {
   engagementId: string
   assets: { id: string; engagementId: string; identifier: string; kind: string; classification: 'pending' | 'in_scope' | 'out_of_scope'; observed: boolean; version: number; updatedAt: string }[]
