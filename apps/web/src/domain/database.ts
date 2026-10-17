@@ -17,7 +17,7 @@ type Row = { id: string; projectId?: string }
 const COLLECTIONS: readonly (readonly [keyof Db, EntityKind])[] = [
   ['projects', 'project'], ['operations', 'operation'], ['agents', 'agent'], ['assets', 'asset'],
   ['evidence', 'evidence'], ['vaultSecrets', 'vault-secret'], ['findings', 'finding'], ['reports', 'report'], ['exportsList', 'report-export'],
-  ['playbooks', 'playbook'], ['approvals', 'approval'], ['templates', 'template'], ['integrations', 'integration'],
+  ['playbooks', 'playbook'], ['libraryProposals', 'library-proposal'], ['approvals', 'approval'], ['templates', 'template'], ['integrations', 'integration'],
   ['policies', 'policy'], ['retention', 'retention'], ['audit', 'audit'], ['notices', 'notice'],
   ['plans', 'plan'], ['conversations', 'conversation'], ['toolEvents', 'tool-event'], ['branches', 'branch'],
   ['branchGroups', 'branch-group'], ['aiWorkers', 'ai-worker'], ['c2Nodes', 'c2-node'], ['channels', 'channel'],

@@ -21,7 +21,7 @@
 /** Real panel groups `RealFeatureRoute` can compose; each maps to one lazy-loaded panel component. */
 export type PanelGroup =
   | 'operations' | 'governance' | 'fleet' | 'scope'
-  | 'analysis' | 'c2' | 'campaigns' | 'assets' | 'library-review'
+  | 'analysis' | 'c2' | 'campaigns' | 'assets'
 
 export interface RouteSurface {
   /** Page title `RealFeatureRoute` renders in the header. */
@@ -51,8 +51,7 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
   'c2-channel': { title: 'C2 channel', panels: ['c2', 'campaigns'], mockScreens: ['h-session.tsx'] },
   'c2-session': { title: 'C2 session', panels: ['c2', 'campaigns'], mockScreens: ['h-session.tsx'] },
   'c2-console': { title: 'C2 console', panels: ['c2'], mockScreens: ['h-session.tsx'] },
-  'playbook-review': { title: 'Library review proposals', panels: ['library-review'], mockScreens: ['d-library.tsx'] },
 }
 
 /** Route keys whose mock screen is the operational UI in both modes (plan 2026-10-16 screens unification); `router/host.tsx` renders them before `REAL_PAGES`. */
-export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'reports', 'report-new', 'report', 'report-preview', 'report-review', 'assets', 'asset', 'asset-new', 'asset-scope'])
+export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'reports', 'report-new', 'report', 'report-preview', 'report-review', 'assets', 'asset', 'asset-new', 'asset-scope', 'playbooks', 'playbook', 'technique', 'playbook-review'])
