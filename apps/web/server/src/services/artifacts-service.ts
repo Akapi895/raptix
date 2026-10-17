@@ -228,10 +228,15 @@ export class ArtifactsService {
     return { engagementId, path: artifactPath, digest: createHash('sha256').update(bytes).digest('hex'), sizeBytes: bytes.length, producer: null };
   }
 
-  public async captureById(userId: string, engagementId: string, captureId: string): Promise<RetainedArtifactView & { captureId: string; classification: CaptureClassification }> {
+  /**
+   * Resolves a retained capture for a finding link. Attach passes requireReadable=false: an unclassified
+   * capture can be linked (ADR-0087) and its digest is checked here, but no bytes leave the server.
+   * Retest and any read keep the readability gate.
+   */
+  public async captureById(userId: string, engagementId: string, captureId: string, options: { requireReadable?: boolean } = {}): Promise<RetainedArtifactView & { captureId: string; classification: CaptureClassification }> {
     const access = await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
     const row = await this.retainedCapture(engagementId, captureId);
-    await this.assertCaptureReadable(row, access.role);
+    if (options.requireReadable !== false) await this.assertCaptureReadable(row, access.role);
     const file = await this.artifactFile(userId, engagementId, row.path);
     const bytes = await readFile(file);
     if (bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) throw new ProjectApiError(503, 'The retained capture failed its recorded integrity check.');
