@@ -666,3 +666,29 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 - **Library/Analysis: chưa làm, cần quyết định.** Mock port mô hình playbook có vòng đời revision và approval. Real mô hình corpus skill (chỉ đọc) và proposal (propose, amend, submit, decide, export). Chọn port nào là quyết định parity theo plan D08 của frontend owner, không tự suy ra được.
 - **Team/Settings, Vault/Audit/Notices, Closure: chưa làm.**
 
+
+### 13.11 Library và kiểm chứng luồng live (2026-10-17, cuối)
+
+- **Library (P09): xong.** Commit `a222392`.
+  - Port `LibraryService` gồm corpus (chỉ đọc, lấy từ knowledge graph), skill, technique và proposal (submit, amend, propose, decide, export).
+  - Adapter thật `real/service-adapter/library.ts` đăng ký dưới capability `graphs`. `RealLibrary` và `RealLibraryReviewPanel` đã xóa; Playbooks là danh sách skill, Review là danh sách proposal.
+  - Fingerprint dùng dạng `sha256:<hex>` như server. Mock trước đây dùng hex trần, đã được sửa cho khớp.
+  - Test UI: `features/library` 7 test; toàn bộ UI 121/121 file, 1242/1242 test pass.
+  - Phase `--library` của harness pass trên HTTP thật: corpus 200 (324 skill), fingerprint đúng dạng, draft, amend, version lệch 409, propose, tác giả tự quyết định 403, reviewer độc lập approve 200, export 200.
+  - Trên UI thật (Vite real mode, Playwright): Skill library hiện 324 skill và 697 kỹ thuật; chi tiết skill hiện fingerprint `sha256:`.
+- **Sửa handoff: commit `701bcbf`.** Handoff bị 409 với mọi engagement có thành viên thứ hai, kể cả khi reviewer đã duyệt scope bao phủ target. Nay kiểm tra scope đã duyệt trước; target mới vẫn cần review độc lập. Test: `t08-scope` (test mới) và `adr0085-planning-handoff`. Server 47/47 file, 438/438 test pass.
+- **Luồng live đã chạy trên API thật (engagement `cmvc80mzk0001jwfipei7teyr`, DB test):**
+  - Planning: 8 tài liệu (conops, deconfliction, opplan, threat-profile, contact, data-handling, abort, cleanup) qua draft và publish với digest precondition. `plan-docs` ready.
+  - ROE: `roe.json` chưa có đường publish hợp lệ (publish ROE bị chặn có chủ đích, ADR-0085). Đã ghi fixture `roe.json` do operator soạn vào thư mục plan của workspace acceptance. Đây không phải đường planner thật.
+  - Scope: owner submit revision, reviewer độc lập approve 200, owner tự approve 409. `scope/effective` có `10.129.227.140/32`.
+  - Plan: save, propose (cần ROE pin), tác giả quyết định 403, reviewer approve 200 với expiry 24h. Preflight: roe, targets, contact pass.
+  - Handoff: lần 1 với thành viên thứ hai bị 409 (trước bản sửa). Sau khi gỡ reviewer, handoff 200 và preflight `project:pass`.
+  - Estop: raise 200, preflight `estop:fail`; resolve cần `concurrencyVersion` (400 nếu thiếu), resolve lần hai 409.
+  - Closure: request bị chặn bởi checklist (proposal Library còn chờ review); sau khi reviewer reject proposal còn mở, owner request 200; owner tự quyết định 403; reviewer xác nhận 200 và engagement `closed`; ghi sau đó bị 409 read-only.
+  - Form tạo project trên UI thật: Playwright điền form, nút submit bị disable đến khi đủ trường và xác nhận ủy quyền (đúng thiết kế), tạo thành công `cmvc9u94y000e6gfiknyh78rj`, API xác nhận `ip_range`, `10.129.227.140/32`, `draft`.
+- **Chưa kiểm chứng: runtime (AI conversation, thread, run), execution.** Lý do đã xác minh:
+  - API chưa có `LANGGRAPH_API_URL`. Route thread/run trả 404 và màn AI Workspace báo "Assistant runtime is not available on this server".
+  - LangGraph đang gắn `/workspace` vào `.raptix/workspace/juice-shop-v4-r3`, không phải workspace acceptance. Chạy bằng LangGraph này sẽ ghi vào workspace của engagement khác.
+  - Khóa provider: `anthropic`, `openai`, `gemini`, `xai`, `mistral`, `openrouter` và các provider khác trong LiteLLM trả lỗi xác thực. Chỉ `custom/MiniMax/MiniMax-M2.7` trả completion.
+  - Cần quyết định hạ tầng (rebind hoặc container LangGraph riêng, cấu hình model profile) trước khi chạy tiếp. Không tự đổi các cấu hình dùng chung này.
+- **Ghi chú cho owner:** engagement acceptance đã closed. Các bước mutation tiếp theo cần engagement mới.
