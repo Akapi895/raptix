@@ -28,7 +28,7 @@ const READINESS_TEXT: Record<string, string> = {
 const DOCUMENT_STATE_TEXT: Record<string, string> = { missing: 'is not drafted yet', invalid: 'fails schema validation', unavailable: 'cannot be read right now' }
 
 /** The server's machine reasons (`roe:missing`, `target_not_in_scope`) as a sentence the operator can act on. */
-export function describeReadinessReason(reason: string): string {
+function describeReadinessReason(reason: string): string {
   const [name, state] = reason.split(':').map((part) => part.trim())
   if (state !== undefined && name in PLANNING_DOCUMENT_TITLES && state in DOCUMENT_STATE_TEXT) return `${PLANNING_DOCUMENT_TITLES[name]} ${DOCUMENT_STATE_TEXT[state]}.`
   return READINESS_TEXT[reason] ?? reason
