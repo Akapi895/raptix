@@ -291,10 +291,13 @@ describe('W11 operation schedules (durable execution intents)', () => {
     const stale = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/schedules/${id}/reschedule`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { executeAt: later, timezone: 'UTC', expectedVersion: 1 } });
     expect(stale.statusCode).toBe(409);
     expect(stale.json().error.message).toContain('changed');
-    const cancel = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/schedules/${id}/cancel`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf } });
+    const staleCancel = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/schedules/${id}/cancel`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { expectedVersion: 1 } });
+    expect(staleCancel.statusCode).toBe(409);
+    expect(staleCancel.json().error.message).toContain('changed');
+    const cancel = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/schedules/${id}/cancel`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { expectedVersion: 2 } });
     expect(cancel.statusCode).toBe(200);
     expect(cancel.json().status).toBe('canceled');
-    const again = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/schedules/${id}/cancel`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf } });
+    const again = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/schedules/${id}/cancel`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { expectedVersion: 3 } });
     expect(again.statusCode).toBe(409);
     await app.close();
   });

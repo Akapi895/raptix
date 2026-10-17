@@ -147,12 +147,17 @@ export class ScheduleService {
     return toView(created as never);
   }
 
-  public async cancel(actorId: string, engagementId: string, scheduleId: string): Promise<ScheduleView> {
+  /** ADR-0073: a cancel applies to the version the caller read; a reschedule or dispatch since then refuses it. */
+  public async cancel(actorId: string, engagementId: string, scheduleId: string, input: unknown = {}): Promise<ScheduleView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'operator');
+    const body = (input ?? {}) as { expectedVersion?: unknown };
     const row = await this.find(engagementId, scheduleId);
     if (row.status !== 'scheduled') throw new ProjectApiError(409, `The schedule is ${row.status} and can no longer be canceled.`);
-    const updated = await this.db.operationSchedule.updateMany({ where: { id: row.id, status: 'scheduled' }, data: { status: 'canceled' } });
-    if (updated.count !== 1) throw new ProjectApiError(409, 'The schedule changed state concurrently; re-read it.');
+    if (typeof body.expectedVersion !== 'number' || body.expectedVersion !== row.version) {
+      throw new ProjectApiError(409, `The schedule changed since you read it (now v${row.version}); re-read it and cancel again.`);
+    }
+    const updated = await this.db.operationSchedule.updateMany({ where: { id: row.id, status: 'scheduled', version: row.version }, data: { status: 'canceled', version: { increment: 1 } } });
+    if (updated.count !== 1) throw new ProjectApiError(409, 'The schedule changed since you read it; re-read it and cancel again.');
     await this.audit(engagementId, actorId, 'schedule.canceled', 'operation_schedule', row.id, row.reason);
     return toView({ ...row, status: 'canceled' });
   }

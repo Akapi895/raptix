@@ -100,7 +100,7 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
     onError: (err) => setError(err instanceof Error ? err.message : 'The schedule was refused.'),
   })
   const scheduleCancel = useMutation({
-    mutationFn: (scheduleId: string) => cancelSchedule(engagementId, scheduleId),
+    mutationFn: (input: { scheduleId: string; expectedVersion: number }) => cancelSchedule(engagementId, input.scheduleId, input.expectedVersion),
     onSuccess: () => { setError(null); invalidate() },
     onError: (err) => setError(err instanceof Error ? err.message : 'The cancellation was refused.'),
   })
@@ -346,7 +346,7 @@ export function RealGovernancePanel({ engagementId }: { engagementId: string }):
                     <td className="py-2 text-xs">
                       {s.status === 'scheduled' ? (
                         <span className="flex gap-2">
-                          <Button variant="secondary" disabled={scheduleCancel.isPending} onClick={() => scheduleCancel.mutate(s.id)}>Cancel</Button>
+                          <Button variant="secondary" disabled={scheduleCancel.isPending} onClick={() => scheduleCancel.mutate({ scheduleId: s.id, expectedVersion: s.version })}>Cancel</Button>
                           <Button variant="secondary" disabled={scheduleDate === '' || scheduleMove.isPending} onClick={() => scheduleMove.mutate({ scheduleId: s.id, expectedVersion: s.version })}>Move to picked time</Button>
                         </span>
                       ) : <span className="text-muted">—</span>}

@@ -16,7 +16,7 @@ export function registerScheduleRoutes(app: FastifyInstance, schedules: Schedule
   }));
   app.post('/api/engagements/:id/schedules/:scheduleId/cancel', (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id, scheduleId } = request.params as { id: string; scheduleId: string };
-    return schedules.cancel(identity.id, id, scheduleId);
+    return schedules.cancel(identity.id, id, scheduleId, request.body);
   }));
   app.post('/api/engagements/:id/schedules/:scheduleId/reschedule', (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id, scheduleId } = request.params as { id: string; scheduleId: string };
