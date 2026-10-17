@@ -13,6 +13,7 @@ import type {
   VaultSecret, WorkerState,
 } from './domain/entities'
 import { executionSeeds } from './features/execution/seed'
+import type { LibraryProposal as LibraryProposalRecord } from './features/library/service'
 
 export type * from './domain/entities'
 
@@ -403,6 +404,6 @@ export function seed(variant: SeedVariant = 'default') {
     invites: [],
     holds: [],
   }
-  return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, vaultSecrets, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org, docDrafts, agentWorkspaces }
+  return { libraryProposals: [] as LibraryProposalRecord[], groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, vaultSecrets, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org, docDrafts, agentWorkspaces }
 }
 export type Db = ReturnType<typeof seed>

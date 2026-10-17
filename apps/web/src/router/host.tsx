@@ -24,7 +24,6 @@ import { RealPortfolio } from '../real/screens/portfolio'
 import { RealProjectNewRoute } from '../real/screens/create'
 import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
-import { RealLibrary } from '../real/screens/library'
 import { RealOverview } from '../real/screens/overview'
 import { RealGlobalResource } from '../real/screens/global-resource'
 import { RealCommandCenter } from '../real/screens/command-center'
@@ -53,14 +52,11 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   'project-new': RealProjectNewRoute,
   project: RealProjectDetail,
   'ai-operator': RealWorkspace,
-  playbooks: RealLibrary,
   'command-center': RealOverview,
   tasks: RealCommandCenter,
   ...Object.fromEntries(Object.keys(FEATURE_ROUTE_SURFACES).map((key) => [key, RealFeatureRoute])),
   'ai-history': RealWorkspace,
   'ai-trace': RealWorkspace,
-  playbook: RealLibrary,
-  technique: RealLibrary,
   settings: RealSettings,
   login: RealLogin,
 }

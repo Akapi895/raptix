@@ -115,6 +115,7 @@ export type EntityKind =
   | 'report'
   | 'report-export'
   | 'playbook'
+  | 'library-proposal'
   | 'technique'
   | 'approval'
   | 'template'

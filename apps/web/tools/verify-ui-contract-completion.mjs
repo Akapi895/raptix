@@ -66,9 +66,9 @@ function client() {
     return response;
   };
   return {
-    async login() {
-      const username = process.env.RAPTIX_WEB_ADMIN_USERNAME;
-      const password = process.env.RAPTIX_WEB_ADMIN_PASSWORD;
+    async login(credentials) {
+      const username = credentials?.username ?? process.env.RAPTIX_WEB_ADMIN_USERNAME;
+      const password = credentials?.password ?? process.env.RAPTIX_WEB_ADMIN_PASSWORD;
       if (!username || !password) fail('RAPTIX_WEB_ADMIN_USERNAME and RAPTIX_WEB_ADMIN_PASSWORD must be set');
       const response = await request('POST', '/api/auth/login', { username, password });
       if (response.status !== 200) fail(`login refused with status ${response.status}`);
@@ -202,6 +202,63 @@ async function assetsPhase(state) {
   return { ...state, steps: { ...state.steps, assets: { ...result, passed } } };
 }
 
+async function libraryPhase(state) {
+  const prepared = state.steps.prepare;
+  if (!prepared) fail('run --prepare first');
+  const { engagementId } = prepared;
+  const owner = client();
+  await owner.login();
+  const base = `/api/engagements/${engagementId}`;
+  const corpus = await owner.json(await owner.request('GET', '/api/library'));
+  // One open proposal per skill is a server rule, so pick a skill no draft or review already holds.
+  const open = await owner.json(await owner.request('GET', `${base}/library-proposals`));
+  const openSkills = new Set((open.body?.proposals ?? []).filter((p) => p.status === 'draft' || p.status === 'proposed').map((p) => p.skillName));
+  const skill = corpus.body?.skills?.find((s) => !openSkills.has(s.name));
+  if (!skill) fail('every corpus skill already has an open proposal');
+  const detail = await owner.json(await owner.request('GET', `/api/library/skills/${encodeURIComponent(skill.name)}`));
+  // A reviewer is a second member; its credentials exist only for this run and are not written to state.
+  const reviewerName = `reviewer-${randomUUID().slice(0, 8)}`;
+  const reviewerPassword = `${randomUUID()}-Aa1`;
+  const invited = await owner.json(await owner.request('POST', `${base}/members`, { username: reviewerName, displayName: 'Acceptance reviewer', password: reviewerPassword, role: 'reviewer' }));
+  const reviewer = client();
+  await reviewer.login({ username: reviewerName, password: reviewerPassword });
+  const created = await owner.json(await owner.request('POST', `${base}/library-proposals`, { skillName: skill.name, proposedBody: `${detail.body ?? ''}
+
+Acceptance note ${state.runId}.` }));
+  const proposalId = created.body?.id;
+  const amended = await owner.json(await owner.request('POST', `${base}/library-proposals/${proposalId}/amendments`, { proposedBody: `${detail.body ?? ''}
+
+Amended ${state.runId}.`, expectedVersion: created.body?.version }));
+  const staleAmend = await owner.json(await owner.request('POST', `${base}/library-proposals/${proposalId}/amendments`, { proposedBody: 'stale', expectedVersion: 1 }));
+  const proposed = await owner.json(await owner.request('POST', `${base}/library-proposals/${proposalId}/propose`, {}));
+  const ownDecision = await owner.json(await owner.request('POST', `${base}/library-proposals/${proposalId}/decision`, { decision: 'approved', expectedVersion: proposed.body?.version }));
+  const decided = await reviewer.json(await reviewer.request('POST', `${base}/library-proposals/${proposalId}/decision`, { decision: 'approved', expectedVersion: proposed.body?.version, comment: 'Acceptance review.' }));
+  const exported = await owner.json(await owner.request('GET', `${base}/library-proposals/${proposalId}/export`));
+  const result = {
+    corpusStatus: corpus.status,
+    corpusSkills: corpus.body.counts.skills,
+    skillName: skill.name,
+    fingerprintIsSha256: /^sha256:[0-9a-f]{64}$/.test(detail.body?.contentSha256 ?? ''),
+    invitedReviewerStatus: invited.status,
+    proposalId,
+    draftStatus: created.body?.status ?? null,
+    amendStatus: amended.status,
+    amendedVersion: amended.body?.version ?? null,
+    staleAmendStatus: staleAmend.status,
+    proposedStatus: proposed.body?.status ?? null,
+    authorDecisionStatus: ownDecision.status,
+    reviewerDecisionStatus: decided.status,
+    decidedStatus: decided.body?.status ?? null,
+    exportStatus: exported.status,
+    exportKind: exported.body?.kind ?? null,
+    recordedAt: new Date().toISOString(),
+  };
+  const passed = result.corpusStatus === 200 && result.corpusSkills > 0 && result.fingerprintIsSha256 && result.draftStatus === 'draft'
+    && result.amendStatus === 200 && result.amendedVersion === 2 && result.staleAmendStatus === 409 && result.proposedStatus === 'proposed'
+    && result.authorDecisionStatus === 403 && result.reviewerDecisionStatus === 200 && result.decidedStatus === 'approved' && result.exportStatus === 200;
+  return { ...state, steps: { ...state.steps, library: { ...result, passed } } };
+}
+
 async function targetFlow(state) {
   const prepared = state.steps.prepare;
   if (!prepared) fail('run --prepare first');
@@ -234,6 +291,7 @@ let next = state;
 if (args.has('--prepare')) next = await prepare(state);
 if (args.has('--findings-evidence')) next = await findingsEvidence(next);
 if (args.has('--assets')) next = await assetsPhase(next);
+if (args.has('--library')) next = await libraryPhase(next);
 if (args.has('--target-flow')) next = await targetFlow(next);
 await writeState(next);
 process.stdout.write(`${JSON.stringify(next.steps, null, 2)}\n`);

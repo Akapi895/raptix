@@ -11,7 +11,7 @@ import { hasRoute } from './registry'
 
 const KNOWN_PANEL_GROUPS: ReadonlySet<PanelGroup> = new Set([
   'operations', 'governance', 'fleet', 'scope',
-  'analysis', 'c2', 'campaigns', 'assets', 'library-review',
+  'analysis', 'c2', 'campaigns', 'assets',
 ])
 
 describe('FEATURE_ROUTE_SURFACES', () => {
@@ -46,7 +46,7 @@ describe('FEATURE_ROUTE_SURFACES', () => {
       'agent', 'agents', 'ai-branch', 'ai-fanout', 'ai-plan', 'ai-plan-compare', 'ai-plan-review',
       'analysis', 'c2', 'c2-channel', 'c2-console', 'c2-session',
       'operation',
-      'operation-new', 'operation-schedule', 'operations', 'playbook-review', 'preflight',
+      'operation-new', 'operation-schedule', 'operations', 'preflight',
     ].sort())
   })
 

@@ -1,557 +1,397 @@
 /**
- * Tradecraft library read model + revision review (tickets 52–53, ADR-0067 —
- * docs/adr/0067-web-console-service-domain-boundary.md).
+ * Tradecraft library port (ADR-0067, ADR-0084). The library has two parts with
+ * different authority:
  *
- * Feature-local handlers for the playbook library list, playbook detail,
- * technique detail (52, reads) and the revision-review lifecycle (53,
- * writes). A revision submission preserves the approved active version and
- * only records pending-review metadata; approving is role-gated
- * (`reviewPlaybook`), author-independent and reason-mandatory, and it
- * promotes the reviewed version to the one committed active version in a
- * single atomic commit whose ChangeSet refetches the library views and the
- * legacy store. Pending revisions are never executable selections — the
- * operation wizard reads active versions only.
+ *  - the canonical skill corpus: read-only here; the runtime's git-based
+ *    publication gates are the only way its content changes;
+ *  - library proposals: engagement-scoped review of a replacement SKILL.md body.
+ *    A proposal is never a corpus mutation. Its lifecycle mirrors the server:
+ *    submit (draft) → amend (draft, author only) → propose (proposed) →
+ *    decide (approved or rejected, by a reviewer who is not the author) →
+ *    export (approved only, for the git publication workflow).
  *
- * Versioning read model: a playbook's committed state is the active (approved
- * or draft) version; `revision` is a pending candidate that never replaces
- * the active version until a reviewer approves it. Every read describes the
- * active version plus a separate pending-revision projection, so screens
- * distinguish "approved v2.3 in use" from "v2.4 pending review" from
- * canonical state without re-deriving it — and an unapproved revision is
- * never presented as an operation target (read-side guarantee; enforcement
- * stays with the operations features).
- *
- * Sharing scope: 'Organization' items are visible to every actor; items
- * shared with 'Project <id>' to that project's members and elevated roles;
- * team-internal items ('Team only') to elevated roles only. A denied read is
- * `not-found` with no existence leak. The technique catalog is static
- * reference data readable by every signed-in persona; its per-project
- * projections (steps, findings, detection) narrow to the request scope — a
- * specific project the actor cannot access yields an empty projection.
+ * The mock store holds the corpus as read-only skills derived from its playbook
+ * seed, and keeps proposals in `db.libraryProposals`. Mock content fingerprints
+ * are simulated; the real adapter reports SHA-256 values from the server.
  */
-import { can, projectAccessible } from '../../auth/policy'
 import { TECHNIQUES, type Db, type Playbook } from '../../data'
+import { projectAccessible, projectLocked } from '../../auth/policy'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
-import type { DetectState, PlaybookRevision, Severity, StepStatus } from '../../domain/entities'
-import type { ActorRef, Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'
 
-/** Which library tab the list reads: playbooks or simulated adversary profiles. */
-export type PlaybookKind = 'playbook' | 'profile'
+/** Roles that may submit, amend and propose a library proposal (server: operator and above). */
+const SUBMIT_ROLES: readonly string[] = ['admin', 'manager', 'operator']
+/** Roles that may decide a proposal (server: reviewer and above; never the author). */
+const DECIDE_ROLES: readonly string[] = ['admin', 'manager', 'reviewer']
 
-/** Filter state for the library list (all optional; empty = unfiltered). */
-export interface PlaybookListQuery {
-  kind?: PlaybookKind
-  /** Case-insensitive substring over name + id + description + goal. */
+export type LibraryProposalStatus = 'draft' | 'proposed' | 'approved' | 'rejected'
+
+/** One canonical corpus skill. */
+export interface LibrarySkill {
+  name: string
+  description: string | null
+  subdomain: string | null
+  mitreIds: string[]
+  whenToUse: string | null
+  path: string | null
+}
+
+export interface LibraryCorpusQuery {
+  /** Case-insensitive substring over name and description. */
   q?: string
-  /** Tactic match: the item covers ≥1 technique of the tactic. */
-  tactic?: string
-  /** OS match (Windows/Linux). */
-  os?: string
-  /** One Playbook status value. */
-  status?: string
+  subdomain?: string
+  /** Skills that reference this technique id. */
+  mitre?: string
   /** 1-based page; out-of-range values clamp to the valid range. */
   page?: number
   pageSize?: number
 }
 
-/** One library card: the active version plus its pending-revision projection. */
-export interface PlaybookListItem {
-  playbook: Playbook
-  /** Pending candidate version, when one awaits a reviewer decision. */
-  pendingRevision?: { version: string; by: string; at: string }
-}
-
-/** One technique-catalog row for the MITRE ATT&CK tab. */
-export interface TechniqueListItem {
-  id: string
-  name: string
-  tactic: string
-  platforms: string[]
-  /** Visible playbooks exercising the technique (scoped count). */
-  usedBy: number
-}
-
-/** The whole library read: page + tab badge counts + technique catalog rows. */
-export interface PlaybookListRead {
-  items: PlaybookListItem[]
+export interface LibraryCorpusRead {
+  items: LibrarySkill[]
   page: number
   pageSize: number
   total: number
-  /** Whole-library tab badge counts (never filtered by the active query). */
-  counts: { playbooks: number; profiles: number; techniques: number }
-  techniques: TechniqueListItem[]
-  /** Per-technique detection overlay for the active project (specific scope only). */
-  detection?: Record<string, DetectState>
+  counts: { skills: number; techniques: number | null }
+  subdomains: string[]
+  /** Corpus actions the runtime excludes from the library, with their reasons. */
+  excludedActions: string[]
+}
+
+/** One canonical skill with its body and content fingerprint. */
+export interface LibrarySkillDetail extends LibrarySkill {
+  body: string
+  /** Fingerprint of the canonical body the proposals pin (SHA-256 in real mode). */
+  contentSha256: string | null
+  /** Commit that published the body; null when the source does not record one. */
+  commitSha: string | null
+  allowedTools: string[]
+  publication: 'canonical'
+}
+
+export interface LibraryTechniqueRead {
+  id: string
+  name: string | null
+  description: string | null
+  url: string | null
+  skills: { name: string }[]
+}
+
+export interface LibraryProposalReview {
+  id: string
+  proposalVersion: number
+  decision: 'approved' | 'rejected'
+  comment: string | null
+  reviewerId: string
+  createdAt: string
+}
+
+/** One engagement-scoped proposal to replace a canonical skill body. */
+export interface LibraryProposal {
+  id: string
+  projectId: string
+  skillName: string
+  skillPath: string
+  /** The canonical fingerprint the proposal was pinned to when it was proposed. */
+  baseRevision: string
+  status: LibraryProposalStatus
+  version: number
+  proposedBody: string
+  baseBody: string
+  rationale: string | null
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  reviews: LibraryProposalReview[]
+  /** False when the canonical corpus changed after the proposal was pinned. */
+  canonicalCurrent?: boolean
+}
+
+export interface LibraryProposalsRead {
+  items: LibraryProposal[]
+  counts: Record<LibraryProposalStatus, number>
+}
+
+/** The git publication handover of an approved proposal (the same shape the real export returns). */
+export interface LibraryProposalExport {
+  kind: 'library-body-replacement-proposal'
+  proposal: { id: string; engagementId: string; skillName: string; skillPath: string; baseRevision: string; status: string; version: number; createdBy: string }
+  base: { body: string; revision: string }
+  proposed: { body: string }
+  diff: { before: string; after: string }
+  reviews: LibraryProposalReview[]
+  publicationContract: string[]
 }
 
 export interface LibraryService {
-  list(ctx: RequestContext, query?: PlaybookListQuery): Promise<ServiceResult<PlaybookListRead>>
-  getPlaybook(ctx: RequestContext, id: string): Promise<ServiceResult<PlaybookDetailRead>>
-  getTechnique(ctx: RequestContext, id: string): Promise<ServiceResult<TechniqueDetailRead>>
-  /* Ticket 53: the revision-review queue and lifecycle writes. */
-  reviewQueue(ctx: RequestContext): Promise<ServiceResult<ReviewQueueRead>>
-  proposeRevision(ctx: RequestContext, id: string, input: RevisionInput): Promise<ServiceResult<Playbook>>
-  submitForReview(ctx: RequestContext, id: string): Promise<ServiceResult<Playbook>>
-  decideRevision(ctx: RequestContext, id: string, decision: RevisionDecision, reason: string): Promise<ServiceResult<RevisionDecisionRead>>
+  corpus(ctx: RequestContext, query?: LibraryCorpusQuery): Promise<ServiceResult<LibraryCorpusRead>>
+  skill(ctx: RequestContext, name: string): Promise<ServiceResult<LibrarySkillDetail>>
+  technique(ctx: RequestContext, id: string): Promise<ServiceResult<LibraryTechniqueRead>>
+  proposals(ctx: RequestContext): Promise<ServiceResult<LibraryProposalsRead>>
+  proposal(ctx: RequestContext, id: string): Promise<ServiceResult<LibraryProposal>>
+  submit(ctx: RequestContext, input: { skillName: string; proposedBody: string; rationale?: string }): Promise<ServiceResult<LibraryProposal>>
+  amend(ctx: RequestContext, id: string, input: { proposedBody: string; expectedVersion: number; rationale?: string }): Promise<ServiceResult<LibraryProposal>>
+  propose(ctx: RequestContext, id: string): Promise<ServiceResult<LibraryProposal>>
+  decide(ctx: RequestContext, id: string, input: { decision: 'approved' | 'rejected'; expectedVersion: number; comment?: string }): Promise<ServiceResult<LibraryProposal>>
+  exportProposal(ctx: RequestContext, id: string): Promise<ServiceResult<LibraryProposalExport>>
 }
 
-const PAGE_SIZE = 12
-const MAX_PAGE_SIZE = 60
-const ELEVATED: readonly string[] = ['admin', 'manager', 'reviewer']
-
-/** Sharing rule: 'Organization' → everyone; 'Project <id>' → members + elevated; team-internal → elevated only. */
-function visibleWithMembership(db: Db, p: Playbook, actor: RequestContext['actor']): boolean {
-  if (ELEVATED.includes(actor.role)) return true
-  if (p.share === 'Organization') return true
-  if (p.share.startsWith('Project ')) {
-    return projectAccessible(db.projects.find((x) => x.id === p.share.slice('Project '.length)), actor)
+/** Simulated content fingerprint in the server's `sha256:<hex>` form: stable for a body, not a cryptographic digest. */
+export function fingerprint(text: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193) >>> 0
   }
-  return false
+  return `sha256:${hash.toString(16).padStart(8, '0').repeat(8)}`
 }
 
-/** The actor-visible slice of the library (active versions only; a pending revision is never a separate item). */
-export function visiblePlaybooks(db: Db, ctx: RequestContext): Playbook[] {
-  return db.playbooks.filter((p) => visibleWithMembership(db, p, ctx.actor))
+/** The canonical body of a corpus skill, derived from its playbook seed. */
+export function skillBody(p: Playbook): string {
+  return [`# ${p.name}`, '', p.goal, '', ...p.steps.map((step, index) => `${index + 1}. ${step}`)].join('\n')
 }
 
-const pendingOf = (p: Playbook): PlaybookListItem['pendingRevision'] =>
-  p.revision ? { version: p.revision.version, by: p.revision.by, at: p.revision.at } : undefined
+function toSkill(p: Playbook): LibrarySkill {
+  const tactic = TECHNIQUES.find((t) => p.techniques.includes(t.id))?.tactic ?? null
+  return {
+    name: p.id,
+    description: p.desc,
+    subdomain: tactic,
+    mitreIds: p.techniques,
+    whenToUse: p.goal,
+    path: `skills/${p.id}/SKILL.md`,
+  }
+}
 
-/**
- * Pure list handler. Tab badge counts always derive from the whole visible
- * base, so they stay live regardless of the active filters; `items` apply
- * kind + filters + page. The technique rows carry scoped used-by counts and
- * the active project's detection overlay (absent in aggregate scope).
- */
-export function listLibrary(db: Db, ctx: RequestContext, query: PlaybookListQuery = {}): ServiceResult<PlaybookListRead> {
-  const base = visiblePlaybooks(db, ctx)
-  const kind = query.kind === 'profile' ? 'profile' : 'playbook'
-  const tacticOf = (t: string) => TECHNIQUES.find((x) => x.id === t)?.tactic
-  const q = (query.q || '').toLowerCase()
-  const rows = base
-    .filter((p) => p.kind === kind)
-    .filter((p) => !q || (p.name + p.id + p.desc + p.goal).toLowerCase().includes(q))
-    .filter((p) => !query.tactic || p.techniques.some((t) => tacticOf(t) === query.tactic))
-    .filter((p) => !query.os || p.os.includes(query.os))
-    .filter((p) => !query.status || p.status === query.status)
-  const pageSize = Math.min(Math.max(1, query.pageSize ?? PAGE_SIZE), MAX_PAGE_SIZE)
-  const pages = Math.max(1, Math.ceil(rows.length / pageSize))
-  const page = Math.min(Math.max(1, query.page ?? 1), pages)
-  const usedBy = (id: string) => base.filter((p) => p.techniques.includes(id)).length
-  const techniques = TECHNIQUES
-    .filter((t) => (!q || (t.id + t.name).toLowerCase().includes(q)) && (!query.tactic || t.tactic === query.tactic) && (!query.os || t.platforms.includes(query.os)))
-    .map((t) => ({ id: t.id, name: t.name, tactic: t.tactic, platforms: t.platforms, usedBy: usedBy(t.id) }))
-  const project = visibleProject(db, ctx)
-  const detection = project ? db.detection[project.id] : undefined
+/** The corpus is organization-wide reference data: any signed-in actor reads it. */
+function corpusSkills(db: Db): Playbook[] {
+  return db.playbooks
+}
+
+/** Proposal access follows project membership; a foreign project reads as not found. */
+function projectOf(db: Db, actor: ActorRef, projectId: string): ServiceResult<true> {
+  const project = db.projects.find((p) => p.id === projectId)
+  if (!project || !projectAccessible(project, actor)) return { ok: false, failure: { kind: 'not-found', message: 'Library proposals for this engagement are not available for your account.' } }
+  return { ok: true, data: true }
+}
+
+function specificScope(ctx: RequestContext): ServiceResult<string> {
+  if (!ctx.projectId || ctx.projectId === 'all') return { ok: false, failure: { kind: 'validation', message: 'Select an engagement before working with library proposals.' } }
+  return { ok: true, data: ctx.projectId }
+}
+
+export function listCorpus(db: Db, query: LibraryCorpusQuery = {}): ServiceResult<LibraryCorpusRead> {
+  const needle = query.q?.trim().toLowerCase() ?? ''
+  const all = corpusSkills(db).map(toSkill)
+  const rows = all.filter((skill) =>
+    (!needle || skill.name.toLowerCase().includes(needle) || (skill.description ?? '').toLowerCase().includes(needle))
+    && (!query.subdomain || skill.subdomain === query.subdomain)
+    && (!query.mitre || skill.mitreIds.includes(query.mitre)))
+  const pageSize = Math.min(Math.max(1, query.pageSize ?? 10), 100)
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+  const page = Math.min(Math.max(1, query.page ?? 1), pageCount)
   return {
     ok: true,
     data: {
-      items: rows.slice((page - 1) * pageSize, page * pageSize).map((p) => ({ playbook: p, pendingRevision: pendingOf(p) })),
-      page, pageSize, total: rows.length,
-      counts: {
-        playbooks: base.filter((p) => p.kind === 'playbook').length,
-        profiles: base.filter((p) => p.kind === 'profile').length,
-        techniques: TECHNIQUES.length,
-      },
-      techniques,
-      detection: detection ? { ...detection } : undefined,
+      items: rows.slice((page - 1) * pageSize, page * pageSize),
+      page,
+      pageSize,
+      total: rows.length,
+      counts: { skills: all.length, techniques: TECHNIQUES.length },
+      subdomains: [...new Set(all.map((skill) => skill.subdomain).filter((s): s is string => s !== null))].sort(),
+      excludedActions: [],
     },
   }
 }
 
-/** The active project when the request is specific and the actor may read it. */
-function visibleProject(db: Db, ctx: RequestContext) {
-  const aggregate = !ctx.projectId || ctx.projectId === 'all'
-  if (aggregate) return undefined
-  const project = db.projects.find((x) => x.id === ctx.projectId)
-  return project && projectAccessible(project, ctx.actor) ? project : undefined
+export function skillDetail(db: Db, name: string): ServiceResult<LibrarySkillDetail> {
+  const playbook = corpusSkills(db).find((p) => p.id === name)
+  if (!playbook) return { ok: false, failure: { kind: 'not-found', message: `Skill ${name} does not exist in the corpus.` } }
+  const body = skillBody(playbook)
+  return { ok: true, data: { ...toSkill(playbook), body, contentSha256: fingerprint(body), commitSha: null, allowedTools: [], publication: 'canonical' } }
 }
 
-export interface PlaybookUsageRef { id: string; projectId: string; label: string; status: string }
-
-/** One playbook detail read: active version, pending revision and scoped usage. */
-export interface PlaybookDetailRead {
-  playbook: Playbook
-  /** The active version is approved — read-only under the review policy. */
-  approved: boolean
-  /** True when a revision or the initial version awaits a reviewer decision. */
-  pending: boolean
-  pendingRevision?: PlaybookRevision
-  usage: { plans: PlaybookUsageRef[]; operations: PlaybookUsageRef[] }
-  usedProjects: { id: string; operations: string[] }[]
-  tactics: string[]
-  versions: { at: string; title: string; sub: string; tone: 'ok' | 'warn' | 'neutral' }[]
-  /** Attach-card compatibility for the active project (specific scope only). */
-  compat?: { projectId: string; inScope: number; matching: number; winOnly: boolean }
+export function techniqueDetail(db: Db, id: string): ServiceResult<LibraryTechniqueRead> {
+  const technique = TECHNIQUES.find((t) => t.id === id)
+  if (!technique) return { ok: false, failure: { kind: 'not-found', message: `Technique ${id} does not exist in the ATT&CK catalog.` } }
+  const skills = corpusSkills(db).filter((p) => p.techniques.includes(id)).map((p) => ({ name: p.id }))
+  return { ok: true, data: { id, name: technique.name, description: technique.desc, url: null, skills } }
 }
 
-/**
- * Pure detail handler. A playbook outside the actor's sharing scope is
- * `not-found` (indistinguishable from a missing one — no existence leak).
- * Usage stays accessible-project-scoped regardless of the active project,
- * matching the legacy "projects that used it" view.
- */
-export function getPlaybook(db: Db, ctx: RequestContext, id: string): ServiceResult<PlaybookDetailRead> {
-  const p = db.playbooks.find((x) => x.id === id)
-  if (!p || !visibleWithMembership(db, p, ctx.actor)) {
-    return { ok: false, failure: { kind: 'not-found', message: `Playbook ${id} does not exist or is not available for your account.`, entity: { kind: 'playbook', id } } }
+/** A proposal's canonical pin is current while the corpus body still has the fingerprint it was pinned to. */
+function withCanonical(db: Db, row: LibraryProposal): LibraryProposal {
+  const playbook = corpusSkills(db).find((p) => p.id === row.skillName)
+  const current = playbook ? fingerprint(skillBody(playbook)) === row.baseRevision : false
+  return { ...row, canonicalCurrent: current }
+}
+
+function count(rows: readonly LibraryProposal[]): LibraryProposalsRead['counts'] {
+  return {
+    draft: rows.filter((r) => r.status === 'draft').length,
+    proposed: rows.filter((r) => r.status === 'proposed').length,
+    approved: rows.filter((r) => r.status === 'approved').length,
+    rejected: rows.filter((r) => r.status === 'rejected').length,
   }
-  const accessible = new Set(db.projects.filter((x) => projectAccessible(x, ctx.actor)).map((x) => x.id))
-  const plans = db.plans
-    .filter((x) => x.playbookId === p.id && accessible.has(x.projectId))
-    .map((x) => ({ id: x.id, projectId: x.projectId, label: x.ver || `v${x.version}`, status: x.status }))
-  const operations = db.operations
-    .filter((o) => o.playbookId === p.id && accessible.has(o.projectId))
-    .map((o) => ({ id: o.id, projectId: o.projectId, label: o.name, status: o.status }))
-  const usedProjects = [...new Set(operations.map((o) => o.projectId))]
-    .map((pid) => ({ id: pid, operations: operations.filter((o) => o.projectId === pid).map((o) => o.id) }))
-  const tacticOf = (t: string) => TECHNIQUES.find((x) => x.id === t)?.tactic
-  const [maj, min] = p.version.split('.').map(Number)
-  const versions = [
-    { at: p.updated, title: `v${p.version}: ${p.status === 'approved' ? 'approved' : p.status === 'review' ? 'in review' : 'current draft'}`, sub: p.owner, tone: (p.status === 'approved' ? 'ok' : 'warn') as 'ok' | 'warn' },
-    ...(min > 0 ? [{ at: '—', title: `v${maj}.${min - 1}: previous version`, sub: 'Archived', tone: 'neutral' as const }] : []),
-  ]
-  const project = visibleProject(db, ctx)
-  const assets = project ? db.assets.filter((a) => a.projectId === project.id) : []
-  const inScopeAssets = assets.filter((a) => a.scope === 'in')
+}
+
+export function listProposals(db: Db, ctx: RequestContext): ServiceResult<LibraryProposalsRead> {
+  const scope = specificScope(ctx)
+  if (!scope.ok) return scope
+  const access = projectOf(db, ctx.actor, scope.data)
+  if (!access.ok) return access
+  const rows = db.libraryProposals.filter((r) => r.projectId === scope.data).map((r) => withCanonical(db, r))
+  return { ok: true, data: { items: rows, counts: count(rows) } }
+}
+
+function ownedProposal(db: Db, ctx: RequestContext, id: string): ServiceResult<LibraryProposal> {
+  const scope = specificScope(ctx)
+  if (!scope.ok) return scope
+  const access = projectOf(db, ctx.actor, scope.data)
+  if (!access.ok) return access
+  const row = db.libraryProposals.find((r) => r.id === id && r.projectId === scope.data)
+  if (!row) return { ok: false, failure: { kind: 'not-found', message: `Library proposal ${id} does not exist for this engagement.` } }
+  return { ok: true, data: row }
+}
+
+export function getProposal(db: Db, ctx: RequestContext, id: string): ServiceResult<LibraryProposal> {
+  const row = ownedProposal(db, ctx, id)
+  return row.ok ? { ok: true, data: withCanonical(db, row.data) } : row
+}
+
+/** Common write gate: a specific engagement, an open project and the role for the action. */
+function writeGate(db: Db, ctx: RequestContext, roles: readonly string[], message: string): ServiceResult<string> {
+  const scope = specificScope(ctx)
+  if (!scope.ok) return scope
+  const project = db.projects.find((p) => p.id === scope.data)
+  if (!project || !projectAccessible(project, ctx.actor)) return { ok: false, failure: { kind: 'not-found', message: 'Library proposals for this engagement are not available for your account.' } }
+  if (projectLocked(project)) return { ok: false, failure: { kind: 'forbidden', message: 'The engagement is closed; library proposals are read-only.' } }
+  if (!roles.includes(ctx.actor.role)) return { ok: false, failure: { kind: 'forbidden', message } }
+  return { ok: true, data: scope.data }
+}
+
+export function submitProposal(authority: DbAuthority, clock: Clock, ctx: RequestContext, input: { skillName: string; proposedBody: string; rationale?: string }): ServiceResult<LibraryProposal> {
+  const db = authority.snapshot()
+  const gate = writeGate(db, ctx, SUBMIT_ROLES, 'Your role cannot submit library proposals.')
+  if (!gate.ok) return gate
+  const skillName = input.skillName.trim()
+  const playbook = corpusSkills(db).find((p) => p.id === skillName)
+  if (!playbook) return { ok: false, failure: { kind: 'validation', message: `Skill ${skillName || '(none)'} is not in the canonical corpus.` } }
+  if (input.proposedBody.trim().length === 0) return { ok: false, failure: { kind: 'validation', message: 'The replacement body is required.' } }
+  if (db.libraryProposals.some((r) => r.projectId === gate.data && r.skillName === skillName && (r.status === 'draft' || r.status === 'proposed'))) {
+    return { ok: false, failure: { kind: 'conflict', message: `A proposal for ${skillName} is already in independent review.` } }
+  }
+  const at = formatDemoInstant(clock.now())
+  const row: LibraryProposal = {
+    id: `LP-${db.libraryProposals.length + 1}`,
+    projectId: gate.data,
+    skillName,
+    skillPath: `skills/${skillName}/SKILL.md`,
+    baseRevision: fingerprint(skillBody(playbook)),
+    status: 'draft',
+    version: 1,
+    proposedBody: input.proposedBody,
+    baseBody: skillBody(playbook),
+    rationale: input.rationale?.trim() || null,
+    createdBy: ctx.actor.id,
+    createdAt: at,
+    updatedAt: at,
+    reviews: [],
+  }
+  authority.commit(ctx.corr, (d) => { d.libraryProposals.push(row) })
+  return { ok: true, data: withCanonical(db, row) }
+}
+
+export function amendProposal(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: { proposedBody: string; expectedVersion: number; rationale?: string }): ServiceResult<LibraryProposal> {
+  const db = authority.snapshot()
+  const gate = writeGate(db, ctx, SUBMIT_ROLES, 'Your role cannot amend library proposals.')
+  if (!gate.ok) return gate
+  const row = ownedProposal(db, ctx, id)
+  if (!row.ok) return row
+  if (row.data.createdBy !== ctx.actor.id) return { ok: false, failure: { kind: 'forbidden', message: 'Only the original author can amend a library proposal.' } }
+  if (row.data.version !== input.expectedVersion) return { ok: false, failure: { kind: 'conflict', message: `Concurrent edit: the proposal moved to version ${row.data.version} while you edited version ${input.expectedVersion}.` } }
+  if (input.proposedBody.trim().length === 0) return { ok: false, failure: { kind: 'validation', message: 'The replacement body is required.' } }
+  const at = formatDemoInstant(clock.now())
+  authority.commit(ctx.corr, (d) => {
+    const target = d.libraryProposals.find((r) => r.id === id)!
+    target.proposedBody = input.proposedBody
+    target.rationale = input.rationale?.trim() || target.rationale
+    target.version += 1
+    target.status = 'draft'
+    target.updatedAt = at
+  })
+  return getProposal(authority.snapshot(), ctx, id)
+}
+
+export function proposeProposal(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<LibraryProposal> {
+  const db = authority.snapshot()
+  const gate = writeGate(db, ctx, SUBMIT_ROLES, 'Your role cannot propose library proposals.')
+  if (!gate.ok) return gate
+  const row = ownedProposal(db, ctx, id)
+  if (!row.ok) return row
+  if (row.data.status !== 'draft') return { ok: false, failure: { kind: 'conflict', message: `Proposal is already ${row.data.status}.` } }
+  if (!withCanonical(db, row.data).canonicalCurrent) {
+    return { ok: false, failure: { kind: 'conflict', message: `The canonical corpus changed since proposal v${row.data.version} was pinned; amend the proposal against the current content before review.` } }
+  }
+  const at = formatDemoInstant(clock.now())
+  authority.commit(ctx.corr, (d) => {
+    const target = d.libraryProposals.find((r) => r.id === id)!
+    target.status = 'proposed'
+    target.updatedAt = at
+  })
+  return getProposal(authority.snapshot(), ctx, id)
+}
+
+export function decideProposal(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: { decision: 'approved' | 'rejected'; expectedVersion: number; comment?: string }): ServiceResult<LibraryProposal> {
+  const db = authority.snapshot()
+  const gate = writeGate(db, ctx, DECIDE_ROLES, 'Only a reviewer can decide a library proposal.')
+  if (!gate.ok) return gate
+  const row = ownedProposal(db, ctx, id)
+  if (!row.ok) return row
+  if (row.data.createdBy === ctx.actor.id) return { ok: false, failure: { kind: 'forbidden', message: 'The author cannot decide their own library proposal.' } }
+  if (row.data.status !== 'proposed') return { ok: false, failure: { kind: 'conflict', message: `Proposal is ${row.data.status}, not in review.` } }
+  if (row.data.version !== input.expectedVersion) return { ok: false, failure: { kind: 'conflict', message: `The proposal moved to version ${row.data.version}; reload before deciding.` } }
+  if (!withCanonical(db, row.data).canonicalCurrent) return { ok: false, failure: { kind: 'conflict', message: 'The canonical corpus changed since this proposal was pinned; amend it before deciding.' } }
+  const at = formatDemoInstant(clock.now())
+  authority.commit(ctx.corr, (d) => {
+    const target = d.libraryProposals.find((r) => r.id === id)!
+    target.status = input.decision
+    target.updatedAt = at
+    target.reviews.push({ id: `LPR-${target.reviews.length + 1}-${id}`, proposalVersion: target.version, decision: input.decision, comment: input.comment?.trim() || null, reviewerId: ctx.actor.id, createdAt: at })
+  })
+  return getProposal(authority.snapshot(), ctx, id)
+}
+
+export function exportProposal(db: Db, ctx: RequestContext, id: string): ServiceResult<LibraryProposalExport> {
+  const row = ownedProposal(db, ctx, id)
+  if (!row.ok) return row
+  if (row.data.status !== 'approved') return { ok: false, failure: { kind: 'conflict', message: 'Only an approved proposal can be exported for the git publication workflow.' } }
+  const proposal = row.data
   return {
     ok: true,
     data: {
-      playbook: p,
-      approved: p.status === 'approved',
-      pending: !!p.revision || p.status === 'review',
-      pendingRevision: p.revision,
-      usage: { plans, operations },
-      usedProjects,
-      tactics: [...new Set(p.techniques.map(tacticOf).filter((x): x is string => !!x))],
-      versions,
-      compat: project
-        ? { projectId: project.id, inScope: inScopeAssets.length, matching: inScopeAssets.filter((a) => p.os.includes(a.os)).length, winOnly: p.os.length === 1 }
-        : undefined,
+      kind: 'library-body-replacement-proposal',
+      proposal: { id: proposal.id, engagementId: proposal.projectId, skillName: proposal.skillName, skillPath: proposal.skillPath, baseRevision: proposal.baseRevision, status: proposal.status, version: proposal.version, createdBy: proposal.createdBy },
+      base: { body: proposal.baseBody, revision: proposal.baseRevision },
+      proposed: { body: proposal.proposedBody },
+      diff: { before: proposal.baseBody, after: proposal.proposedBody },
+      reviews: proposal.reviews,
+      publicationContract: ['Export is the handover for the runtime git publication workflow; it does not change the canonical corpus.'],
     },
   }
 }
 
-export interface TechniqueStepRef { opId: string; stepId: string; projectId: string; name: string; asset: string; status: StepStatus }
-
-/** One technique detail read: catalog entry + scoped projections. */
-export interface TechniqueDetailRead {
-  id: string
-  name: string
-  tactic: string
-  platforms: string[]
-  desc: string
-  playbooks: { id: string; name: string; status: Playbook['status']; pendingRevision?: { version: string; by: string; at: string } }[]
-  steps: TechniqueStepRef[]
-  findings: { id: string; severity: Severity }[]
-  siem: { connected: boolean; name?: string }
-  detection: { projectId: string; state: DetectState }[]
-}
-
-/**
- * Pure technique detail. The catalog entry itself is reference data readable
- * by every persona; its projections narrow to the request scope (accessible
- * projects in aggregate, only the active project when specific and
- * accessible — a non-member read yields an empty projection).
- */
-export function getTechnique(db: Db, ctx: RequestContext, id: string): ServiceResult<TechniqueDetailRead> {
-  const t = TECHNIQUES.find((x) => x.id === id)
-  if (!t) {
-    return { ok: false, failure: { kind: 'not-found', message: `Technique ${id} does not exist in the ATT&CK catalog.`, entity: { kind: 'technique', id } } }
-  }
-  const accessible = new Set(db.projects.filter((x) => projectAccessible(x, ctx.actor)).map((x) => x.id))
-  const aggregate = !ctx.projectId || ctx.projectId === 'all'
-  const inScope = (projectId: string) => (aggregate ? accessible.has(projectId) : projectId === ctx.projectId && accessible.has(projectId))
-  const playbooks = visiblePlaybooks(db, ctx)
-    .filter((p) => p.techniques.includes(t.id))
-    .map((p) => ({ id: p.id, name: p.name, status: p.status, pendingRevision: pendingOf(p) }))
-  const steps: TechniqueStepRef[] = db.operations
-    .filter((o) => inScope(o.projectId))
-    .flatMap((o) => o.steps.filter((s) => s.technique === t.id).map((s) => ({ opId: o.id, stepId: s.id, projectId: o.projectId, name: s.name, asset: s.asset, status: s.status })))
-  const findings = db.findings
-    .filter((f) => f.technique === t.id && inScope(f.projectId))
-    .map((f) => ({ id: f.id, severity: f.severity }))
-  const siem = db.integrations.find((i) => i.kind === 'SIEM')
-  const detProjects = aggregate ? [...accessible] : visibleProject(db, ctx) ? [ctx.projectId] : []
-  const detection = detProjects.map((projectId) => ({ projectId, state: db.detection[projectId]?.[t.id] || ('nodata' as DetectState) }))
+export function createLibraryService(authority: DbAuthority, clock: Clock, guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>): LibraryService {
   return {
-    ok: true,
-    data: {
-      id: t.id, name: t.name, tactic: t.tactic, platforms: t.platforms, desc: t.desc,
-      playbooks, steps, findings,
-      siem: { connected: siem?.status === 'connected', name: siem?.name },
-      detection,
-    },
-  }
-}
-
-/* ═════════════ Revision review (ticket 53) ═════════════ */
-
-const ROLE_TEXT: Record<string, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
-
-/**
- * Review policy: deciding a revision (or an initial-version review) needs
- * the shared `approve` action — Reviewers and Admins only. Named here so
- * the screen affordance and the handler gate through one policy instead of
- * a role string.
- */
-export function reviewPlaybook(actor: ActorRef): boolean {
-  return can(actor, 'approve')
-}
-
-const canEditPlaybook = (actor: ActorRef) => can(actor, 'editScope')
-
-/** The author whose independence a decision must respect: the revision submitter, or the owner of a playbook in initial review. */
-const reviewAuthor = (p: Playbook) => p.revision?.by || p.owner
-
-/** Handler-computed decide gate; empty reason = this actor may decide. */
-export function decideGate(p: Playbook, ctx: RequestContext): { canDecide: boolean; decideReason: string } {
-  if (!reviewPlaybook(ctx.actor)) {
-    return { canDecide: false, decideReason: 'Only Reviewers and Admins can approve or return playbooks.' }
-  }
-  if (reviewAuthor(p) === ctx.actor.id) {
-    return { canDecide: false, decideReason: 'You cannot review your own revision. Ask another reviewer.' }
-  }
-  return { canDecide: true, decideReason: '' }
-}
-
-/** One review-queue row: what awaits a decision plus the handler-computed gate. */
-export interface ReviewQueueItem {
-  playbookId: string
-  name: string
-  kind: PlaybookKind
-  /** The active version — stays approved and in use until the decision. */
-  activeVersion: string
-  pending: { kind: 'revision' | 'initial'; version: string; by: string; at: string; summary: string[] }
-  canDecide: boolean
-  decideReason: string
-}
-
-export interface ReviewQueueRead { items: ReviewQueueItem[] }
-
-/** Pure review-queue read over the actor-visible base (sharing rule as for every library read). */
-export function reviewQueue(db: Db, ctx: RequestContext): ServiceResult<ReviewQueueRead> {
-  const items = visiblePlaybooks(db, ctx)
-    .filter((p) => !!p.revision || p.status === 'review')
-    .map((p) => {
-      const pending = p.revision
-        ? { kind: 'revision' as const, version: p.revision.version, by: p.revision.by, at: p.revision.at, summary: p.revision.summary }
-        : { kind: 'initial' as const, version: p.version, by: p.owner, at: p.updated, summary: [] }
-      const gate = decideGate(p, ctx)
-      return { playbookId: p.id, name: p.name, kind: p.kind, activeVersion: p.version, pending, canDecide: gate.canDecide, decideReason: gate.decideReason }
-    })
-  return { ok: true, data: { items } }
-}
-
-export interface RevisionInput {
-  /** New version; must be a strict maj.min bump above the active version. */
-  version: string
-  /** Changelog entries — at least one is required. */
-  summary: string[]
-  /** Revised step sequence; defaults to the active steps. */
-  steps?: string[]
-  /** Revised technique list; defaults to the active techniques. */
-  techniques?: string[]
-}
-
-export type RevisionDecision = 'approve' | 'return'
-
-export interface RevisionDecisionRead {
-  playbookId: string
-  decision: RevisionDecision
-  /** Version the decision applied to. */
-  version: string
-  /** Active (executable) version after the decision. */
-  activeVersion: string
-  activated: boolean
-}
-
-const VERSION_RE = /^\d+\.\d+$/
-const versionKey = (v: string) => {
-  const [maj, min] = v.split('.').map(Number)
-  return maj * 1000 + min
-}
-const versionBump = (v: string) => {
-  const [maj, min] = v.split('.').map(Number)
-  return `${maj}.${min + 1}`
-}
-
-const noticeId = (db: Db, clock: Clock) => `N${db.notices.length + 1}-${clock.now() % 100000}`
-
-/** Resolves a playbook for a read or write; out of the sharing scope is `not-found` (no existence leak). */
-function resolvePlaybook(db: Db, ctx: RequestContext, id: string): { ok: true; playbook: Playbook } | { ok: false; failure: ServiceFailure } {
-  const p = db.playbooks.find((x) => x.id === id)
-  if (!p || !visibleWithMembership(db, p, ctx.actor)) {
-    return { ok: false, failure: { kind: 'not-found', message: `Playbook ${id} does not exist or is not available for your account.`, entity: { kind: 'playbook', id } } }
-  }
-  return { ok: true, playbook: p }
-}
-
-/** Audit row for a review action; the id comes from the database counters inside the commit. */
-const auditRow = (at: string, ctx: RequestContext, action: string, obj: string, result: string, reason: string) => ({
-  at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action, obj, projectId: '', result, reason,
-})
-
-/**
- * Submits a revision proposal in one atomic commit. The approved active
- * version is untouched — only pending-review metadata (`revision`) is
- * recorded, so the version stays in use and read-only. Refusal order:
- * sharing scope → `not-found`; missing `editScope` → `forbidden`; wrong
- * state (not approved / revision already pending) → `conflict`; then the
- * field validations (strict version bump, changelog, steps, catalog
- * techniques). A refused proposal commits nothing.
- */
-export function proposeRevision(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: RevisionInput): ServiceResult<Playbook> {
-  const db = authority.snapshot()
-  const r = resolvePlaybook(db, ctx, id)
-  if (!r.ok) return r
-  const p = r.playbook
-  if (!canEditPlaybook(ctx.actor)) {
-    return { ok: false, failure: { kind: 'forbidden', message: 'Only Red Team Managers and Admins can change playbooks.', entity: { kind: 'playbook', id } } }
-  }
-  if (p.status === 'review') {
-    return { ok: false, failure: { kind: 'conflict', message: `${id} is already awaiting review — one decision at a time.`, entity: { kind: 'playbook', id } } }
-  }
-  if (p.status !== 'approved') {
-    return { ok: false, failure: { kind: 'conflict', message: `${id} is a draft — submit it for review instead of proposing a revision.`, entity: { kind: 'playbook', id } } }
-  }
-  if (p.revision) {
-    return { ok: false, failure: { kind: 'conflict', message: `Revision v${p.revision.version} is already pending review — one revision at a time.`, entity: { kind: 'playbook', id } } }
-  }
-  if (!VERSION_RE.test(input.version) || versionKey(input.version) <= versionKey(p.version)) {
-    return { ok: false, failure: { kind: 'validation', message: `The revision version must be a bump above v${p.version} (for example v${versionBump(p.version)}).`, entity: { kind: 'playbook', id } } }
-  }
-  const summary = input.summary.map((s) => s.trim()).filter(Boolean)
-  if (!summary.length) {
-    return { ok: false, failure: { kind: 'validation', message: 'Add at least one changelog entry describing what changed.', entity: { kind: 'playbook', id } } }
-  }
-  const steps = (input.steps ?? p.steps).filter(Boolean)
-  if (!steps.length) {
-    return { ok: false, failure: { kind: 'validation', message: 'A revision needs at least one step.', entity: { kind: 'playbook', id } } }
-  }
-  const techniques = input.techniques ?? p.techniques
-  for (const t of techniques) {
-    if (!TECHNIQUES.some((x) => x.id === t)) {
-      return { ok: false, failure: { kind: 'validation', message: `Technique ${t} is not in the ATT&CK catalog.`, entity: { kind: 'playbook', id } } }
-    }
-  }
-  const at = formatDemoInstant(clock.now())
-  authority.commit(ctx.corr, (d) => {
-    const target = d.playbooks.find((x) => x.id === id)!
-    target.revision = { version: input.version, by: ctx.actor.id, at, summary, steps: [...steps], techniques: [...techniques] }
-    target.updated = at
-    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, ...auditRow(at, ctx, 'Submitted playbook revision', `${id} v${input.version}`, 'Pending', summary[0]) })
-    d.notices.unshift({ id: noticeId(d, clock), group: 'todo', category: 'approvals', text: `Playbook ${id} v${input.version} is waiting for review`, projectId: '', at, read: false, to: { name: 'playbook-review', id } })
-  })
-  return { ok: true, data: authority.snapshot().playbooks.find((x) => x.id === id)! }
-}
-
-/**
- * Submits a draft playbook for its initial review (the PB-004 flow): a
- * state transition to `review`, never a version change. Refusals mirror
- * {@link proposeRevision}.
- */
-export function submitForReview(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<Playbook> {
-  const db = authority.snapshot()
-  const r = resolvePlaybook(db, ctx, id)
-  if (!r.ok) return r
-  const p = r.playbook
-  if (!canEditPlaybook(ctx.actor)) {
-    return { ok: false, failure: { kind: 'forbidden', message: 'Only Red Team Managers and Admins can change playbooks.', entity: { kind: 'playbook', id } } }
-  }
-  if (p.status === 'review') {
-    return { ok: false, failure: { kind: 'conflict', message: `${id} is already awaiting review.`, entity: { kind: 'playbook', id } } }
-  }
-  if (p.status !== 'draft') {
-    return { ok: false, failure: { kind: 'conflict', message: `${id} is already approved — propose a revision instead.`, entity: { kind: 'playbook', id } } }
-  }
-  const at = formatDemoInstant(clock.now())
-  authority.commit(ctx.corr, (d) => {
-    const target = d.playbooks.find((x) => x.id === id)!
-    target.status = 'review'
-    target.updated = at
-    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, ...auditRow(at, ctx, 'Submitted playbook for review', `${id} v${target.version}`, 'Pending', '') })
-    d.notices.unshift({ id: noticeId(d, clock), group: 'todo', category: 'approvals', text: `Playbook ${id} v${target.version} is waiting for review`, projectId: '', at, read: false, to: { name: 'playbook-review', id } })
-  })
-  return { ok: true, data: authority.snapshot().playbooks.find((x) => x.id === id)! }
-}
-
-/**
- * Decides a pending revision (or an initial-version review) in one atomic
- * commit. Refusal order: sharing scope → `not-found`; nothing pending →
- * `conflict`; invalid decision value → `validation`; `reviewPlaybook` role
- * or the author themself → `forbidden`; missing reason → `validation`.
- * Approval promotes the reviewed version to the one committed active
- * version (`version`/`steps`/`techniques`, status `approved`); a return
- * clears the pending candidate and never touches an approved active
- * version, recording the reviewer's note in the audit log and a notice to
- * the author. Operations already pinned to the previous version stay
- * pinned — activation changes only new selections.
- */
-export function decideRevision(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, decision: RevisionDecision, reason: string): ServiceResult<RevisionDecisionRead> {
-  const db = authority.snapshot()
-  const r = resolvePlaybook(db, ctx, id)
-  if (!r.ok) return r
-  const p = r.playbook
-  const rev = p.revision
-  if (!rev && p.status !== 'review') {
-    return { ok: false, failure: { kind: 'conflict', message: p.status === 'approved' ? `v${p.version} is approved: no pending revision to review.` : 'There is nothing pending review for this playbook.', entity: { kind: 'playbook', id } } }
-  }
-  if (decision !== 'approve' && decision !== 'return') {
-    return { ok: false, failure: { kind: 'validation', message: 'Unknown review decision — approve or return.', entity: { kind: 'playbook', id } } }
-  }
-  const gate = decideGate(p, ctx)
-  if (!gate.canDecide) {
-    return { ok: false, failure: { kind: 'forbidden', message: gate.decideReason, entity: { kind: 'playbook', id } } }
-  }
-  const note = reason.trim()
-  if (!note) {
-    return { ok: false, failure: { kind: 'validation', message: 'A reason is required for both decisions.', entity: { kind: 'playbook', id } } }
-  }
-  const at = formatDemoInstant(clock.now())
-  const reviewedVersion = rev?.version || p.version
-  const action = decision === 'approve' ? 'Playbook approved' : 'Playbook returned to draft'
-  authority.commit(ctx.corr, (d) => {
-    const target = d.playbooks.find((x) => x.id === id)!
-    if (rev) {
-      if (decision === 'approve') {
-        target.version = rev.version
-        target.steps = rev.steps
-        target.techniques = rev.techniques
-        target.status = 'approved'
-      }
-      target.revision = undefined
-    } else {
-      target.status = decision === 'approve' ? 'approved' : 'draft'
-    }
-    if (decision === 'return' && target.status === 'review') target.status = 'draft'
-    target.updated = at
-    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, ...auditRow(at, ctx, action, `${id} v${reviewedVersion}`, 'Success', note) })
-    d.notices.unshift({
-      id: noticeId(d, clock), group: 'update', category: 'approvals',
-      text: decision === 'approve' ? `Playbook ${id} v${reviewedVersion} approved` : `Playbook ${id} v${reviewedVersion} returned to draft: ${note}`,
-      projectId: '', at, read: false, to: { name: 'playbook', id },
-    })
-  })
-  const after = authority.snapshot().playbooks.find((x) => x.id === id)!
-  return { ok: true, data: { playbookId: id, decision, version: reviewedVersion, activeVersion: after.version, activated: decision === 'approve' } }
-}
-
-/** Builds the typed library service; `guard` is the factory's superseded-scope read guard.
- *  Reads observe scope cancellation; the review writes capture ctx at call time and commit once. */
-export function createLibraryService(
-  authority: DbAuthority,
-  clock: Clock,
-  guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
-): LibraryService {
-  return {
-    list: (ctx, query) => guard(() => listLibrary(authority.snapshot(), ctx, query)),
-    getPlaybook: (ctx, id) => guard(() => getPlaybook(authority.snapshot(), ctx, id)),
-    getTechnique: (ctx, id) => guard(() => getTechnique(authority.snapshot(), ctx, id)),
-    reviewQueue: (ctx) => guard(() => reviewQueue(authority.snapshot(), ctx)),
-    proposeRevision: (ctx, id, input) => Promise.resolve(proposeRevision(authority, clock, ctx, id, input)),
-    submitForReview: (ctx, id) => Promise.resolve(submitForReview(authority, clock, ctx, id)),
-    decideRevision: (ctx, id, decision, reason) => Promise.resolve(decideRevision(authority, clock, ctx, id, decision, reason)),
+    corpus: (ctx, query) => guard(() => listCorpus(authority.snapshot(), query)),
+    skill: (ctx, name) => guard(() => skillDetail(authority.snapshot(), name)),
+    technique: (ctx, id) => guard(() => techniqueDetail(authority.snapshot(), id)),
+    proposals: (ctx) => guard(() => listProposals(authority.snapshot(), ctx)),
+    proposal: (ctx, id) => guard(() => getProposal(authority.snapshot(), ctx, id)),
+    submit: (ctx, input) => Promise.resolve(submitProposal(authority, clock, ctx, input)),
+    amend: (ctx, id, input) => Promise.resolve(amendProposal(authority, clock, ctx, id, input)),
+    propose: (ctx, id) => Promise.resolve(proposeProposal(authority, clock, ctx, id)),
+    decide: (ctx, id, input) => Promise.resolve(decideProposal(authority, clock, ctx, id, input)),
+    exportProposal: (ctx, id) => guard(() => exportProposal(authority.snapshot(), ctx, id)),
   }
 }
