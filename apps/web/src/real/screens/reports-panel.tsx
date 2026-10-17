@@ -39,7 +39,7 @@ export function RealReportsPanel({ engagementId }: { engagementId: string }): Re
   }
   if (route.id && ['report', 'report-review', 'report-preview'].includes(route.page)) {
     const report = list.data.reports.find((r) => r.id === route.id)
-    return report ? <RealReportEditor key={`${report.id}/${report.version}/${report.status}`} report={report} preview={route.page === 'report-preview'} /> : <p role="alert">Report not found in this engagement.</p>
+    return report ? <RealReportEditor key={`${report.id}/${report.version}/${report.status}`} report={report} templates={list.data.templates} preview={route.page === 'report-preview'} /> : <p role="alert">Report not found in this engagement.</p>
   }
 
   return (
