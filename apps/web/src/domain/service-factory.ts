@@ -38,6 +38,7 @@ import type { LibraryService } from '../features/library/service'
 import type { AnalysisService } from '../features/analysis/service'
 import type { SettingsService } from '../features/settings/service'
 import type { AssetService } from '../features/assets/service'
+import { unavailableScopeService, type ScopeService } from '../features/scope/service'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
 import type { ResultsService } from '../features/results/service'
@@ -92,7 +93,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -134,6 +135,8 @@ export interface ConsoleServices {
   settings(actor: ActorRef, projectId: string): SettingsService
   /** Typed asset catalog/detail + scope-classification reads (ticket 50 — feature-local implementation). */
   assets(actor: ActorRef, projectId: string): AssetService
+  /** Scope and ROE revisions (plan P09 Scope slice). Real mode only; the mock Scope tab does not read this port. */
+  scope(actor: ActorRef, projectId: string): ScopeService
   /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
   workers(actor: ActorRef, projectId: string): WorkerService
   /** Typed notice center handlers (ticket 59 — feature-local implementation). */
@@ -321,6 +324,7 @@ export function createConsoleServices(): ConsoleServices {
     analysis: forAnalysis,
     settings: forSettings,
     assets: forAssets,
+    scope: () => unavailableScopeService(),
     workers: forWorkers,
     notices: forNotices,
     results: forResults,
