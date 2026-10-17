@@ -30,6 +30,8 @@ import { unavailableC2ProviderService, type C2ProviderService } from '../../feat
 import { createRealC2ProviderService } from './c2-provider'
 import { unavailableRuntimeOperationsService, type RuntimeOperationsService } from '../../features/operations/runtime'
 import { createRealRuntimeOperationsService } from './runtime-operations'
+import { unavailableNoticeCenterService, type NoticeCenterService } from '../../features/notices/center'
+import { createRealNoticeCenterService } from './notices'
 import { notIntegratedService } from './stub'
 
 /**
@@ -129,5 +131,11 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableRuntimeOperationsService()
-  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations }
+  const noticeCenter: FeatureServices['noticeCenter'] = supported('projects')
+    ? (() => {
+        const service: NoticeCenterService = createRealNoticeCenterService()
+        return () => service
+      })()
+    : () => unavailableNoticeCenterService()
+  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations, noticeCenter }
 }

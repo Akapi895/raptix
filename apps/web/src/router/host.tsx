@@ -27,7 +27,6 @@ import { RealWorkspace } from '../real/screens/workspace'
 import { RealOverview } from '../real/screens/overview'
 import { RealGlobalResource } from '../real/screens/global-resource'
 import { RealCommandCenter } from '../real/screens/command-center'
-import { RealHeaderNotices } from '../real/screens/notices-bell'
 import { RealLogin } from '../real/screens/login'
 import { Button } from '../ui'
 import { Shell } from '../shell'
@@ -122,7 +121,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
     if (!globalResource && MIGRATED_ROUTES.has(route.page)) {
       const Migrated = routeComponent(route.page)
       return (
-        <Shell slots={{ notifications: RealHeaderNotices }}>
+        <Shell slots={{ notifications: HeaderNotices }}>
           <PageBoundary key={key}>
             <Suspense fallback={<PageFallback />}>{Migrated ? <Migrated /> : null}</Suspense>
           </PageBoundary>
@@ -132,7 +131,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
     const Real = globalResource ? RealGlobalResource : REAL_PAGES[route.page]
     if (Real) {
       return (
-        <Shell slots={{ notifications: RealHeaderNotices }}>
+        <Shell slots={{ notifications: HeaderNotices }}>
           <PageBoundary key={key}>
             <Suspense fallback={<PageFallback />}><Real /></Suspense>
           </PageBoundary>
@@ -142,7 +141,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
     if (REAL_INTEGRATED_ROUTES.has(route.page)) {
       const Page = routeComponent(route.page)
       return (
-        <Shell slots={{ notifications: RealHeaderNotices }}>
+        <Shell slots={{ notifications: HeaderNotices }}>
           <Suspense fallback={<PageFallback />}>
             <PageBoundary key={key}>
               {Page ? <Page /> : null}
