@@ -1,37 +1,20 @@
 /**
- * Real settings (integration ticket 16). The six-tab surface distinguishes
- * its three data classes honestly: UI-only preferences live in this browser
- * only; engagement settings stay on each project's detail screen; the
- * workspace policy/retention keys are persisted, versioned server contracts
- * with their actual consumers disclosed. Integrations render the server's
- * capability document — unavailable providers disclose the real reason
- * instead of simulated connect actions, and the audit tab projects the
- * authoritative web/vault records with truthful attribution.
+ * Real-mode sections of the settings page. The shared page renders its tab
+ * shell in both modes; in real mode each tab body is one of these sections,
+ * which read the deployment's own records: the capability document, the
+ * persisted workspace policy and retention keys (versioned, with a required
+ * reason), and the workspace audit. The organization registry is named as not
+ * modelled, because this deployment has none.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { Loader2, Save, Settings as SettingsIcon } from 'lucide-react'
-import {
-  fetchCapabilities,
-  fetchWorkspaceAudit,
-  fetchWorkspaceSettings,
-  saveWorkspaceSetting,
-  type AuditEntryView,
-  type WorkspaceSettingView,
-} from '../api'
-import { REAL_IDENTITY } from '../identity'
-import { go, useRoute } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, DescList, Empty, Input, PageHeader, Skeleton, Status, Tabs } from '../../ui'
-import { utcMinute, utcMinuteOr } from '../format'
-
-const TABS = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'organization', label: 'Organization' },
-  { id: 'integrations', label: 'Integrations' },
-  { id: 'policies', label: 'Policies' },
-  { id: 'retention', label: 'Retention' },
-  { id: 'audit', label: 'Audit' },
-]
+import { fetchCapabilities, fetchWorkspaceAudit, fetchWorkspaceSettings, saveWorkspaceSetting, type WorkspaceSettingView } from '../../real/api'
+import { REAL_IDENTITY } from '../../real/identity'
+import { utcMinuteOr } from '../../real/format'
+import { go } from '../../router/navigate'
+import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Skeleton, Status } from '../../ui'
+import { AuditTable } from '../audit/table'
 
 const PROVIDER_LABEL: Record<string, string> = {
   projects: 'Engagements API',
@@ -48,39 +31,17 @@ const PROVIDER_LABEL: Record<string, string> = {
   members: 'Memberships',
 }
 
-export function RealSettings(): ReactElement {
-  const route = useRoute()
-  const initialTab = route.tab !== undefined && TABS.some((t) => t.id === route.tab) ? route.tab : 'profile'
-  const [tab, setTab] = useState(initialTab)
-  const switchTab = (id: string): void => {
-    setTab(id)
-    go('settings', { tab: id })
-  }
-
-  return (
-    <div className="space-y-4">
-      <PageHeader title="Settings" sub="UI-only preferences, engagement settings and workspace-level configuration are distinct data classes — each tab states which one it renders" />
-      <Tabs value={tab} onChange={switchTab} tabs={TABS} />
-      <div className="mt-2">
-        {tab === 'profile' ? <ProfileTab /> : tab === 'organization' ? <OrganizationTab /> : tab === 'integrations' ? <IntegrationsTab /> : tab === 'policies' ? <WorkspaceSettingsTab kind="policy" /> : tab === 'retention' ? <WorkspaceSettingsTab kind="retention" /> : <AuditTab />}
-      </div>
-    </div>
-  )
-}
-
-function ProfileTab(): ReactElement {
+export function RealOrganizationSection(): ReactElement {
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader title="Trusted identity" sub="Resolved by the deployment's identity boundary, not by the browser" />
         <div className="p-4">
-          <DescList
-            items={[
-              { k: 'Actor', v: REAL_IDENTITY.name },
-              { k: 'Actor id', v: <span className="font-mono">{REAL_IDENTITY.id}</span> },
-              { k: 'Deployment mode', v: REAL_IDENTITY.deploymentMode },
-            ]}
-          />
+          <DescList items={[
+            { k: 'Actor', v: REAL_IDENTITY.name },
+            { k: 'Actor id', v: <span className="font-mono">{REAL_IDENTITY.id}</span> },
+            { k: 'Deployment mode', v: REAL_IDENTITY.deploymentMode },
+          ]} />
         </div>
       </Card>
       <Banner tone="info" title="UI-only preferences stay in this browser">
@@ -94,11 +55,12 @@ function ProfileTab(): ReactElement {
           <div className="mt-3"><Button variant="secondary" onClick={() => go('projects')}>Open Projects</Button></div>
         </div>
       </Card>
+      <OrganizationExclusion />
     </div>
   )
 }
 
-function OrganizationTab(): ReactElement {
+function OrganizationExclusion(): ReactElement {
   return (
     <Card>
       <CardHeader title="Organization" sub="Membership administration is engagement-scoped in this deployment" />
@@ -114,7 +76,7 @@ function OrganizationTab(): ReactElement {
   )
 }
 
-function IntegrationsTab(): ReactElement {
+export function CapabilitiesSection(): ReactElement {
   const capabilities = useQuery({ queryKey: ['real', 'capabilities'], queryFn: () => fetchCapabilities() })
   if (capabilities.isPending) return <Card><CardHeader title="Integrations" /><div className="p-4"><Skeleton className="h-32" /></div></Card>
   if (capabilities.isError || !capabilities.data) {
@@ -152,7 +114,7 @@ function IntegrationsTab(): ReactElement {
   )
 }
 
-function WorkspaceSettingsTab({ kind }: { kind: 'policy' | 'retention' }): ReactElement {
+export function WorkspaceSettingsSection({ kind }: { kind: 'policy' | 'retention' }): ReactElement {
   const client = useQueryClient()
   const settings = useQuery({ queryKey: ['real', 'workspace-settings'], queryFn: () => fetchWorkspaceSettings() })
   const [draft, setDraft] = useState<Record<string, { value: string; reason: string }>>({})
@@ -238,7 +200,7 @@ function WorkspaceSettingsTab({ kind }: { kind: 'policy' | 'retention' }): React
   )
 }
 
-function AuditTab(): ReactElement {
+export function WorkspaceAuditSection(): ReactElement {
   const [action, setAction] = useState('')
   const [q, setQ] = useState('')
   const audit = useQuery({
@@ -268,38 +230,3 @@ function AuditTab(): ReactElement {
   )
 }
 
-/** `labelFor` resolves an actor id to a name where the caller can (engagement members); by default the id is shown as recorded. */
-export function AuditTable({ entries, labelFor = (actorId: string) => actorId }: { entries: readonly AuditEntryView[]; labelFor?: (actorId: string) => string }): ReactElement {
-  if (entries.length === 0) return <p className="text-sm text-muted">No audit entries match.</p>
-  return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="text-left text-xs text-muted">
-          <th className="pb-2">When</th>
-          <th className="pb-2">Action</th>
-          <th className="pb-2">Actor</th>
-          <th className="pb-2">Scope</th>
-          <th className="pb-2">Reason</th>
-          <th className="pb-2">Source</th>
-        </tr>
-      </thead>
-      <tbody>
-        {entries.map((e) => (
-          <tr key={e.id} className="border-t border-line align-top">
-            <td className="whitespace-nowrap py-2 pr-3 font-mono text-xs">{utcMinute(e.createdAt)}</td>
-            <td className="py-2 pr-3 font-mono text-xs text-fg">{e.action}</td>
-            <td className="py-2 pr-3 text-xs" title={e.actorId ?? undefined}>{e.actorId === null ? <span className="text-muted">not recorded</span> : labelFor(e.actorId)}</td>
-            <td className="py-2 pr-3 text-xs">
-              {e.engagementId === null ? <span className="text-muted">workspace</span> : (
-                <button className="font-mono text-xs text-fg hover:text-accent hover:underline" onClick={() => go('project', { id: e.engagementId as string })}>{e.engagementId}</button>
-              )}
-              {e.targetType !== null && <span className="text-muted"> · {e.targetType}</span>}
-            </td>
-            <td className="py-2 pr-3 text-xs">{e.reason ?? <span className="text-muted">—</span>}</td>
-            <td className="py-2 text-xs"><Status kind="gate" value={e.source === 'vault' ? 'pending' : 'passed'} size="sm" label={e.source} /></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
