@@ -105,11 +105,15 @@ function TimelineCard({ engagementId }: { engagementId: string }): ReactElement 
           <Banner tone="warn" title="Timeline source unavailable">
             {timeline.error instanceof Error ? timeline.error.message : 'The merged timeline is not available right now.'} No substitute events are shown.
           </Banner>
-        ) : timeline.data.entries.length === 0 ? (
-          <p className="text-sm text-muted">No observed activity recorded yet.</p>
         ) : (
           <div className="space-y-2">
+            {timeline.data.unavailableThreads > 0 && (
+              <Banner tone="warn" title="Some runtime threads are not shown">
+                {timeline.data.unavailableThreads === 1 ? '1 thread has' : `${timeline.data.unavailableThreads} threads have`} a runtime binding that no longer matches persisted state, so its runs and checkpoints are left out.
+              </Banner>
+            )}
             {timeline.data.truncated && <Banner tone="warn" title="Timeline truncated">The server projection truncated this timeline.</Banner>}
+            {timeline.data.entries.length === 0 ? <p className="text-sm text-muted">No observed activity recorded yet.</p> : (
             <ul className="space-y-1.5">
               {timeline.data.entries.map((e) => (
                 <li key={e.id} className="flex flex-wrap items-center gap-2 text-sm">
@@ -125,6 +129,7 @@ function TimelineCard({ engagementId }: { engagementId: string }): ReactElement 
                 </li>
               ))}
             </ul>
+            )}
           </div>
         )}
     </Card>

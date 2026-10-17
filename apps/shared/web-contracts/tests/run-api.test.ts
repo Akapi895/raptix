@@ -89,7 +89,8 @@ it('validates merged operations-timeline entries with distinct source labels add
   expect(isTimelineEntryView({ ...runEntry, agent: 5 })).toBe(false);
   const artifact = { id: 'ws:recon/nmap.txt', at: '2026-10-02T00:10:00.000Z', source: 'workspace', kind: 'artifact', label: 'Artifact updated' };
   expect(isTimelineEntryView(artifact)).toBe(true);
-  expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, source: 'mixed' })).toBe(true);
+  expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, unavailableThreads: 0, source: 'mixed' })).toBe(true);
+  expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, source: 'mixed' })).toBe(false);
   expect(isTimelineView({ engagementId: 'eng', entries: [runEntry], truncated: false, source: 'runtime' })).toBe(false);
 });
 it('validates engagement settings with the explicit target-change policy additively', () => {
