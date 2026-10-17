@@ -788,3 +788,7 @@ networks:
     driver: bridge
   sandbox-net:
     driver: bridge
+    # This stack's own sandbox network. The default keeps the shared name that the web
+    # stack's per-project sandboxes use; set RAPTIX_STACK_SANDBOX_NETWORK to keep this
+    # stack's sandboxes apart from them.
+    name: ${RAPTIX_STACK_SANDBOX_NETWORK:-raptix_sandbox-net}

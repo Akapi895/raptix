@@ -712,3 +712,11 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
   - Container `sbx-popup-lab-lbvq` vẫn giữ alias `sandbox` cho tới khi lab được sync lại bằng launcher đã sửa. Lệnh xóa 4 mục do phiên này tạo trong `/workspace` của container đó (`plan/`, `recon/`, `.engagement`, `ui-live-8b98a9/`) đã bị bộ phân loại từ chối. Chúng vẫn còn đó và cần xóa bởi người sở hữu lab.
   - Agent ghi evidence vào thư mục lồng `ui-live-8b98a9/ui-live-8b98a9/evidence/`, trong khi báo cáo nhắc tới `evidence/` tương đối. Nguyên nhân: engagement đã pin ở `/workspace`, nhưng agent dùng đường dẫn có slug. Cần quyết định có chuẩn hóa đường dẫn trong fence hay không, vì đó là đổi ngữ nghĩa của fence filesystem.
   - Thread planning tạo trước khi pin trả 409 khi tiếp tục. Đây là hành vi đúng: cấu hình runtime khác với lúc tạo thread.
+
+### 13.13 Cô lập sandbox giữa các stack và project (2026-10-17, khuya)
+
+- **Sandbox popup lab (project `popup-lab-lbvq` của stack web):** đã sync lại bằng launcher đã sửa. Compose mới dùng service `sbx-popup-lab-lbvq`, alias `sandbox` không còn, container healthy, mount vẫn là subpath của project. Đã xóa 4 mục do phiên này tạo trong `/workspace` của container theo quyền của người yêu cầu.
+- **Tách network sandbox của stack này:** `sandbox-net` đặt tên bằng `RAPTIX_STACK_SANDBOX_NETWORK` (`.env`: `raptix_lab_sandbox-net`). Mặc định vẫn là `raptix_sandbox-net` cho các cài đặt khác. LangGraph và `raptix-sandbox` nằm trên mạng mới. Sandbox của stack web (`sbx-popup-lab-lbvq`) không còn resolve được từ LangGraph.
+- **Dữ liệu dùng chung còn lại:** `raptix-web-runtime` gọi `bolt://neo4j:7687`, `http://skillogy:9100` và LiteLLM, và các địa chỉ này đi qua `raptix-net`. Việc tách `raptix-net` sẽ làm đứt đồ thị tri thức của stack web, nên chưa làm. Đây là quyết định về dữ liệu dùng chung cần người sở hữu quyết định.
+- **Kiểm chứng:** execution ghi `recon/ssh_recheck.txt` qua mạng mới, file xuất hiện trên host và trong `raptix-sandbox`, đúng một kết nối tới `10.129.227.140:22`. Lần chạy không yêu cầu làm lại chỉ trả về bằng chứng cũ, vì OBJ-001 đã `COMPLETED` trong OPPLAN.
+- **Còn mở:** bằng chứng OBJ-001 vẫn nằm trong thư mục lồng `ui-live-8b98a9/ui-live-8b98a9/evidence/`.
