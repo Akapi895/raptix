@@ -1,4 +1,4 @@
-import { mkdtemp, rm, mkdir, writeFile, symlink } from 'node:fs/promises';
+import { mkdtemp, rm, mkdir, readdir, readFile, writeFile, symlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
@@ -225,6 +225,36 @@ describe('W12 artifact browser', () => {
       await expect(h.artifacts.downloadCapture('operator', 'eng-1', id)).rejects.toMatchObject({ statusCode: 404 });
       await expect(h.artifacts.downloadCapture('reviewer', 'eng-1', id)).resolves.toMatchObject({ bytes });
       await expect(h.artifacts.downloadCapture('local', 'eng-1', id)).resolves.toMatchObject({ bytes });
+    });
+  });
+
+  it('keeps original bytes from viewers whatever the classification, and refuses a tampered capture with a conflict', async () => {
+    await withHarness(async (h) => {
+      const bytes = Buffer.from('viewer check bytes');
+      const uploaded = await h.app.inject({
+        method: 'POST', url: '/api/engagements/eng-1/artifacts/captures',
+        payload: { requestId: 'upload-viewer', filename: 'viewer.txt', base64: bytes.toString('base64'), mediaType: 'text/plain' },
+      });
+      const id = uploaded.json().id as string;
+      const classified = await h.app.inject({
+        method: 'PATCH', url: `/api/engagements/eng-1/artifacts/captures/${id}/classification`,
+        payload: { classification: 'standard', expectedVersion: 1, reason: 'Standard lab capture for the viewer check.' },
+      });
+      expect(classified.statusCode).toBe(200);
+      expect((await h.artifacts.listCaptures('viewer', 'eng-1')).captures[0]).toMatchObject({ canReadOriginal: false });
+      expect((await h.artifacts.listCaptures('operator', 'eng-1')).captures[0]).toMatchObject({ canReadOriginal: true });
+      await expect(h.artifacts.downloadCapture('viewer', 'eng-1', id)).rejects.toMatchObject({ statusCode: 403 });
+      expect((await h.app.inject({ method: 'GET', url: `/api/engagements/eng-1/artifacts/captures/${id}/content` })).statusCode).toBe(200);
+      await expect(h.artifacts.downloadCapture('operator', 'eng-1', id)).resolves.toMatchObject({ bytes });
+
+      // Overwrite the retained file with same-length different bytes: the recorded digest no longer matches.
+      const entries = await readdir(h.workspaceRoot, { recursive: true, withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isFile()) continue;
+        const file = path.join(entry.parentPath, entry.name);
+        if ((await readFile(file)).equals(bytes)) await writeFile(file, Buffer.from('X'.repeat(bytes.length)));
+      }
+      await expect(h.artifacts.downloadCapture('operator', 'eng-1', id)).rejects.toMatchObject({ statusCode: 409 });
     });
   });
 
