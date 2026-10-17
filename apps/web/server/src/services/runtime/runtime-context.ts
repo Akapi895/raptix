@@ -55,7 +55,8 @@ export class RuntimeContextService {
     if (!assistantId || !graphs.includes(assistantId)) throw new RuntimeUnavailableError();
     if (selection.kind === 'planning' && assistantId !== 'soundwave' || selection.kind === 'execution' && assistantId === 'soundwave') throw mismatch();
     const configurable = { engagement_name: project.workspaceSlug, workspace_path: config.pinnedSlug ? config.workspaceRoot : path.posix.join(config.workspaceRoot, project.workspaceSlug), target_type: project.targetType, target_value: project.targetValue, authorization_confirmed: project.authorizationConfirmed, ...(config.language ? { language: config.language } : {}), ...(config.perProjectSandbox ? { sandbox_url: sandboxUrlFor(project.workspaceSlug) } : config.sandboxUrl ? { sandbox_url: config.sandboxUrl } : {}) };
-    const runtimeConfigHash = requestFingerprint({ engagementId, assistantId, kind: selection.kind, configurable });
+    // The sandbox host follows from the slug, which the fingerprint already names. Leaving it out keeps threads bound before per-project sandboxes were enabled runnable.
+    const runtimeConfigHash = requestFingerprint({ engagementId, assistantId, kind: selection.kind, configurable: Object.fromEntries(Object.entries(configurable).filter(([k]) => k !== 'sandbox_url')) });
     const metadata = { engagement_id: engagementId, workspace_slug: project.workspaceSlug, ui_assistant_id: assistantId, graph_id: assistantId, ui_flow: selection.kind, runtime_context_hash: runtimeConfigHash };
     if (bound) {
       await ownership.getBinding(userId, engagementId, bound.threadId, { assistantId, kind: selection.kind, runtimeConfigHash });
@@ -64,7 +65,7 @@ export class RuntimeContextService {
       const { values, graphId } = await runtime.state(bound.threadId);
       const fields = Object.entries(configurable).filter(([k]) => k !== 'sandbox_url');
       if (Object.keys(values).length && (graphId !== assistantId || fields.some(([k, v]) => values[k] !== v))) throw mismatch();
-      if (values.kg_engagement !== undefined && values.kg_engagement !== '' && values.kg_engagement !== project.workspaceSlug || values.language !== undefined && values.language !== '' && values.language !== config.language || values.sandbox_url !== undefined && values.sandbox_url !== '' && values.sandbox_url !== config.sandboxUrl) throw mismatch();
+      if (values.kg_engagement !== undefined && values.kg_engagement !== '' && values.kg_engagement !== project.workspaceSlug || values.language !== undefined && values.language !== '' && values.language !== config.language || values.sandbox_url !== undefined && values.sandbox_url !== '' && values.sandbox_url !== configurable.sandbox_url) throw mismatch();
     }
     const planning = await projects.getPlanning(userId, engagementId);
     const bindingHash = await ownership.prepareBinding(userId, engagementId, assistantId, selection.kind);
