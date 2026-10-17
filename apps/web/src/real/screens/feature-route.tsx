@@ -12,7 +12,7 @@ type PanelComponent = ComponentType<{ engagementId: string }>
 /** Lazy real panel per group; `route-table.ts` decides which groups a route key renders. */
 const PANEL_COMPONENTS: Record<PanelGroup, PanelComponent> = {
   operations: lazy(() => import('./operations-panel').then((m) => ({ default: m.RealOperationsPanel }))),
-  governance: lazy(() => import('./governance-panel').then((m) => ({ default: m.RealGovernancePanel }))),
+  governance: lazy(() => import('../../features/governance/tab').then((m) => ({ default: m.GovernanceTab }))),
   fleet: lazy(() => import('./fleet-panel').then((m) => ({ default: m.RealFleetPanel }))),
   scope: lazy(() => import('../../features/scope/tab').then((m) => ({ default: m.ScopeTab }))),
   analysis: lazy(() => import('../../features/analysis/observed-tab').then((m) => ({ default: m.ObservedAnalysisTab }))),

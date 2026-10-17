@@ -22,6 +22,10 @@ import { createRealObservedAnalysisService } from './analysis'
 import { unavailableObservedAnalysisService } from '../../features/analysis/observed'
 import { unavailableClosureService } from '../../features/closure/service'
 import { unavailableVaultService } from '../../features/vault/service'
+import { unavailablePlanningService, type PlanningService } from '../../features/planning/service'
+import { unavailableGovernanceService, type GovernanceService } from '../../features/governance/service'
+import { createRealPlanningService } from './planning'
+import { createRealGovernanceService } from './governance'
 import { notIntegratedService } from './stub'
 
 /**
@@ -97,5 +101,17 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableObservedAnalysisService()
-  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis }
+  const planning: FeatureServices['planning'] = supported('planning')
+    ? (() => {
+        const service: PlanningService = createRealPlanningService()
+        return () => service
+      })()
+    : () => unavailablePlanningService()
+  const governance: FeatureServices['governance'] = supported('projects')
+    ? (() => {
+        const service: GovernanceService = createRealGovernanceService()
+        return () => service
+      })()
+    : () => unavailableGovernanceService()
+  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance }
 }

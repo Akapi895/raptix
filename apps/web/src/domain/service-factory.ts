@@ -43,6 +43,8 @@ import { unavailableAuditService, type AuditService } from '../features/audit/se
 import type { TeamService } from '../features/team/service'
 import type { VaultService } from '../features/vault/service'
 import type { ClosureService } from '../features/closure/service'
+import { unavailablePlanningService, type PlanningService } from '../features/planning/service'
+import { unavailableGovernanceService, type GovernanceService } from '../features/governance/service'
 import type { ObservedAnalysisService } from '../features/analysis/observed'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
@@ -98,7 +100,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -150,6 +152,10 @@ export interface ConsoleServices {
   vault(actor: ActorRef, projectId: string): VaultService
   /** Project closure (plan P09 Closure slice): the mock adapter maps its close approvals, the real adapter reads the closure API. */
   closure(actor: ActorRef, projectId: string): ClosureService
+  /** Planning handoff documents (plan P09 Planning slice). Real mode only: the mock console keeps its own document workspace. */
+  planning(actor: ActorRef, projectId: string): PlanningService
+  /** Business plan, preflight, binding, schedules and stops (plan P09 Governance slice). Real mode only: the mock console keeps its own plan review. */
+  governance(actor: ActorRef, projectId: string): GovernanceService
   /** Observed analysis (plan P09 Analysis slice): the mock adapter maps its executed steps, the real adapter reads the knowledge graph. */
   observedAnalysis(actor: ActorRef, projectId: string): ObservedAnalysisService
   /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
@@ -354,6 +360,8 @@ export function createConsoleServices(): ConsoleServices {
     vault: forVault,
     closure: forClosure,
     observedAnalysis: forObservedAnalysis,
+    planning: () => unavailablePlanningService(),
+    governance: () => unavailableGovernanceService(),
     audit: () => unavailableAuditService(),
     workers: forWorkers,
     notices: forNotices,
