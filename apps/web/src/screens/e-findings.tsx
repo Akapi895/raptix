@@ -11,6 +11,7 @@ import { ROLE_LABEL } from '../auth/policy'
 import { recordAudit } from '../features/audit/service'
 import { sevLabel, addFindingCommentTransaction } from '../features/findings/service'
 import { setReportFindingsLegacyTransaction } from '../features/reports/service'
+import { useReportWrites } from '../features/reports/query'
 import { TECHNIQUES, type Finding, type Severity } from '../data'
 import { EvidenceReadError, FindingReadError, useEvidenceDetail, useEvidenceList, useFindingDetail, useFindingList, useFindingReferenceOptions, useFindingWrites } from '../features/findings/query'
 import type { EvidenceDownload, EvidenceView, FindingActivityKind, FindingSort, FindingTransitionTarget } from '../features/findings/service'
@@ -610,7 +611,7 @@ function FindingDetailBody() {
   const reviewDecision = f.lastReviewDecision
   const returnedNote = f.status === 'returned' ? reviewDecision?.action === 'returned' ? { by: reviewDecision.actorId, at: activityTime(reviewDecision.createdAt), text: reviewDecision.reason ?? '' } : [...olderHistory, ...f.history].reverse().find((event) => event.text.startsWith('Returned for changes')) : undefined
   const reports = db.reports.filter((r) => r.projectId === f.projectId && ['draft', 'returned'].includes(r.status))
-  const inReport = data.inReports
+  const inReport = real ? db.reports.filter((r) => r.findings.includes(f.id)).map((r) => ({ id: r.id, title: r.title })) : data.inReports
   const reportReason = realControlGap('finding.reportLink') ?? (f.status === 'ai_suggested' ? 'AI suggestions are unverified and cannot be included in a report. Verify the finding first.' : ro ? roReason : !can('editReport', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot edit reports.` : ['draft', 'review', 'returned'].includes(f.status) ? 'Only confirmed findings can be added to a report.' : '')
 
   const lastDecision = reviewDecision ? { text: `${reviewDecision.action === 'confirmed' ? 'Confirmed' : 'Returned for changes'} @ v${reviewDecision.version}`, by: reviewDecision.actorId } : [...olderHistory, ...f.history].reverse().find((h) => /Confirmed|Returned/.test(h.text))
@@ -756,7 +757,7 @@ function FindingDetailBody() {
                 { k: 'ATT&CK technique', v: f.technique ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono>{data.techniqueName ? ` — ${data.techniqueName}` : ''}</button> : 'Not linked' },
                 { k: 'Client', v: proj?.client },
                 { k: 'Recorded', v: f.date },
-                { k: 'Included in reports', v: real ? realControlGap('finding.reportInclusion') : inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-accent hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
+                { k: 'Included in reports', v: inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-accent hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
               ]} />
             </Card>
             <Card>
@@ -818,10 +819,23 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
   const me = useMe()
   const toast = useToastStore((s) => s.toast)
   const setFilter = useSessionStore((s) => s.setFilter)
+  const real = isRealMode()
+  const reportWrites = useReportWrites()
+  const queryClient = useQueryClient()
+  // Real mode adds the finding through the report's findings write, sending the version the choice was read at.
+  const addTo = async (r: { id: string; version: string; findings: string[] }, has: boolean) => {
+    if (!has && real) {
+      const res = await reportWrites.setFindings(r.id, [...r.findings, f.id], Number(r.version.replace(/^v/, '')))
+      if (!res.ok) { toast(res.failure.message, 'warn'); return }
+      void queryClient.invalidateQueries({ queryKey: ['report'] })
+    } else if (!has && services) setReportFindingsLegacyTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, r.id, [...r.findings, f.id])
+    toast(has ? `${f.id} is already in ${r.id}.` : `Added ${f.id} to ${r.id}.`)
+    onClose()
+    go('report', { id: r.id })
+  }
   return (
     <Modal open={open} onClose={onClose} title="Add finding to report" footer={<Button onClick={onClose}>Close</Button>}>
       <p className="mb-3 text-muted">Only editable reports in the same project <Mono>{f.projectId}</Mono> are shown.</p>
-      {realControlGap('finding.reportLink') && <Banner tone="warn" title="Adding findings to reports is not available yet">{realControlGap('finding.reportLink')}</Banner>}
       {reports.length === 0 ? <div className="mb-4 rounded-lg border border-dashed border-line p-4 text-sm text-muted">There are no draft reports in this project yet.</div> : (
         <ul className="mb-4 space-y-2">
           {reports.map((r) => {
@@ -829,7 +843,7 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
             return (
               <li key={r.id} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5">
                 <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{r.title}</div><div className="text-xs text-muted"><Mono>{r.id}</Mono> · {r.version} · {r.findings.length} finding(s)</div></div>
-                <Button size="sm" variant="primary" onClick={() => { if (!has && services) setReportFindingsLegacyTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, r.id, [...r.findings, f.id]); toast(has ? `${f.id} is already in ${r.id}.` : `Added ${f.id} to ${r.id}.`); onClose(); go('report', { id: r.id }) }}>{has ? 'Open report' : 'Add'}</Button>
+                <Button size="sm" variant="primary" onClick={() => { void addTo(r, has) }}>{has ? 'Open report' : 'Add'}</Button>
               </li>
             )
           })}

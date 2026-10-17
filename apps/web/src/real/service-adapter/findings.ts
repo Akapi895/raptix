@@ -349,7 +349,7 @@ export function createRealFindingService(): FindingService {
       if (gap) return { ok: false, failure: { kind: 'validation', message: gap } }
       const expectedVersion = id === null ? undefined : input.expectedVersion ?? await versions.expected(ctx.projectId, id)
       const linked = id === null ? [] : (await readCurated(ctx.projectId, id)).evidence.map((item) => item.id)
-      if (linked.length !== input.evidence.length || input.evidence.some((ref) => !linked.includes(ref))) return unsupportedControl<Finding>('finding.evidenceLink')
+      if (linked.length !== input.evidence.length || input.evidence.some((ref) => !linked.includes(ref))) return { ok: false, failure: { kind: 'validation', message: 'Evidence is linked from the Evidence tab, not the finding form. Save the draft without changing its evidence list.' } }
       const body = {
         title: input.title,
         severity: SEVERITY_TO_API[input.severity],
@@ -413,7 +413,7 @@ export function createRealFindingService(): FindingService {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Finding>('Select an engagement before linking evidence.')
       const captures = await fetchRetainedCaptures(ctx.projectId)
       const capture = captures.captures.find((item) => item.id === evidenceId)
-      if (!capture) return unsupportedControl<Finding>('finding.evidenceLink')
+      if (!capture) return unavailable<Finding>('That capture is not in this engagement\'s retained evidence. Refresh the evidence list and try again.')
       // An unclassified capture can be linked; its original bytes stay locked on the server until an owner or reviewer classifies it.
       await attachEvidenceApi(ctx.projectId, findingId, { kind: 'artifact', captureId: capture.id, expectedVersion: await versions.expected(ctx.projectId, findingId) })
       const finding = await readCurated(ctx.projectId, findingId)
