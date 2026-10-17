@@ -16,6 +16,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
 import { selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../data'
 import { FanOutPage } from '../../screens/g-fanout'
@@ -201,7 +202,7 @@ describe('fanout screen on typed services (ticket 43)', () => {
     const h2 = mountFanout('Riley Brooks', '#/ai-fanout')
     h2.show()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Open branch BR-014-03, Failed' })).toBeInTheDocument())
-    h2.run(() => selectProject('RT-2026-015'))
+    h2.run(() => useProjectStore.getState().setPid('RT-2026-015'))
     await waitFor(() => expect(screen.getByText('No branch group in this project')).toBeInTheDocument())
     expect(screen.queryByText(/BG-014-01/)).not.toBeInTheDocument()
     h2.unmount()
