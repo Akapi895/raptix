@@ -762,3 +762,53 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 Trạng thái 8 control gap: `finding.evidenceLink`, `finding.reportLink`, `finding.reportInclusion`, `finding.auditTrail`, `evidence.original` và `evidence.integrity` (legacy), `report.pdfDocx`, `report.projectInfo`. Ba mục có backend nhưng chưa nối UI: `finding.auditTrail`, `finding.reportInclusion`, `report.projectInfo`.
 
 Phạm vi của lượt tiếp theo: hoàn thiện M-B bằng bằng chứng (A01–A07 trên browser và runtime thật) và đóng các gap có backend. P09, P12, P10 là các việc tiếp theo theo yêu cầu của người yêu cầu. D05 (PDF/DOCX) tạm hoãn đến khi xong P09, P12 và P10.
+
+### 13.16 Bước 1 và bước 2 của M-B: bằng chứng trên browser và runtime thật (2026-10-17, khuya muộn)
+
+Bước 1 kiểm A01–A07 qua browser và API thật (engagement `ui-live-8b98a9`, DB test). Bước 2 đóng các gap có backend. D05 (PDF/DOCX) vẫn hoãn.
+
+| Kịch bản | Kết quả | Bằng chứng | Chưa kiểm |
+|---|---|---|---|
+| A01 producer → suggestion → import | Đạt | Browser: "Verify & create finding" tạo draft, reload giữ nguyên. API: import replay trả cùng draft; đổi bytes nguồn sau import → 409 và draft được giữ; engagement khác → 404 | — |
+| A02 upload → retain → attach | Đạt | Browser: retain unclassified, digest khớp `773f7342…`, link vào finding, còn sau reload. API: replay cùng requestId trả cùng capture; attach với version cũ → 409; attach tới finding không tồn tại → 404, capture vẫn giữ và attach lại được | — |
+| A03 inspect / original / download / integrity | Đạt một phần | Browser: classify standard → download bản gốc, SHA-256 khớp digest đã retain. API: sửa bytes trên đĩa → `content` trả 503 "failed its recorded integrity check" | Traversal, symlink, mất quyền với capture sensitive, redaction của preview |
+| A04 field / comment / history / refs | Đạt một phần | Browser: Impact và Recommendation lưu và còn sau reload. API: PATCH với version cũ → 409; comment (`text`, `expectedVersion`, `requestId`) replay idempotent, comment với version cũ → 409; activity `kind=comments|history`; asset của engagement khác → 404 | Comment và history trên browser |
+| A05 review / retest | Đạt | API: tác giả tự confirm → 403; return không có lý do → 400; return rồi resubmit; transition với version cũ → 409; `Resolved` ở remediation → 409; `Resolved` chỉ ở retest và cần capture đã classify (unclassified → 409); `Persists` giữ remediation; replay requestId khác nội dung → 409; resolved khóa comment, edit, transition; viewer retest → 403. Browser: submit; reviewer confirm qua dialog; nút Confirm/Return của tác giả bị khóa có lý do | — |
+| A06 report | Đạt | API: setup template/kỳ/reviewer; reviewer là tác giả hoặc viewer bị 400; finding draft bị từ chối; readiness đủ 5 check; snapshot giữ nội dung khi finding đổi; tác giả không tự quyết (403); version cũ → 409; changes requested → sửa → resubmit → approved; approved khóa edit, chọn finding và submit; export json và markdown. Reviewer bị thu hồi: quyết định trả 404, owner không quyết được, sửa report đưa về draft, gán reviewer mới rồi approve được. Browser: báo cáo approved khóa Save và Submit | Readiness hiện ở tab Review, chưa kiểm trên browser |
+| A07 hai editor | Đạt | Browser: hai phiên cùng sửa một draft; lưu thứ hai bị 409 "moved to version 2 … Reload and reapply", nội dung của phiên thứ hai còn trong form. API: approved bất biến | — |
+
+Hành vi đã xác nhận là đúng, ghi để không báo lại như lỗi:
+- Sửa finding đã confirmed đưa nó về review (bốn mắt). Báo cáo đã chọn finding đó báo "changed from vN to vM; reselect it" và không submit được cho đến khi chọn lại.
+- Sửa báo cáo đang in_review đưa nó về draft. Đây là đường phục hồi khi reviewer bị thu hồi.
+- Reviewer bị thu hồi nhận 404 "Project not found", không phải 403. Đây là không tiết lộ sự tồn tại của engagement.
+
+Lỗi tìm thấy và đã sửa:
+- `b80317f`: reload trên route finding/report làm mất engagement, màn hình báo "Finding not found".
+- `5836766`, `ba13cb4`: không link và không classify được capture unclassified từ finding.
+- `f031490`: tác giả thấy Confirm và Return bật được, server từ chối sau khi bấm. Nay khóa với lý do. Trong real mode, các gợi ý vai trò của màn finding không còn nút "Switch to <persona demo>" (nút này không đổi gì trong phiên thật). Bỏ câu audit log bị lặp trong hộp xác nhận.
+- `9d78cda`, `e91c174`: cập nhật expectation của test vì route report, finding, evidence giữ `?engagement=` từ `b80317f`.
+
+Đóng gap có backend (`47a59e6`):
+- `finding.evidenceLink`: đã gỡ. Link qua attach route, đã kiểm trên browser ở A02. Lỗi "evidence không khớp" của save nay ghi rõ phải link từ tab Evidence.
+- `finding.auditTrail`: đã gỡ. Change history trên finding đọc từ activity `history`, kiểm trên browser (hiện "Change history").
+- `finding.reportInclusion`: đã gỡ. "Included in reports" đọc từ danh sách báo cáo thật. Kiểm trên browser: finding vừa thêm hiện đúng báo cáo; finding ở báo cáo approved hiện cả ba báo cáo.
+- `finding.reportLink`: đã gỡ. Nút "Add" ghi qua `setFindings` ở version đã đọc và invalidate cache `report`. Kiểm trên browser: thêm finding vào báo cáo draft (v5 → v6, từ 2 lên 3 finding); "Open report" hoạt động cho báo cáo đã chứa finding.
+- `report.projectInfo`: đã gỡ. "Insert project info" trong real mode đọc `scope/effective` và chèn cửa sổ kiểm thử và version. Kiểm trên browser: `Scope: 2026-10-17T00:00:00Z to 2026-10-24T23:59:59Z UTC. ROE 1.`
+
+Còn lại trong registry: `evidence.original`, `evidence.integrity` (legacy, cần người yêu cầu xác nhận là exclusion có tên) và `report.pdfDocx` (D05, hoãn).
+
+Quyết định còn mở, cần người yêu cầu chọn:
+1. Quyền đọc bản gốc của viewer. ADR-0087 mâu thuẫn: dòng Status ghi "viewers never read original bytes", còn quyết định 2 ghi "any authorized engagement member may read standard captures". Server hiện theo quyết định 2 (viewer đọc được capture standard, trả 200). Ledger 13.1 ghi viewer không đọc được. Phương án: (a) khóa viewer, sửa server và ADR; (b) giữ server, sửa dòng Status và 13.1.
+2. Capture bị sửa trên đĩa trả 503. 409 hoặc 422 hợp hơn vì lỗi nằm ở dữ liệu lưu, không ở dịch vụ. Đổi cần sửa test; chưa làm.
+3. Exclusion cho `evidence.original` và `evidence.integrity` (legacy).
+
+Hạn chế đã biết:
+- Danh sách báo cáo đọc qua `useReportList` không phân trang. Dự án có nhiều báo cáo hơn trang đầu có thể thiếu báo cáo trong "Included in reports" và trong dialog thêm finding.
+- Nhãn "ROE" trong project info hiển thị version của effective scope. Không có ROE version riêng trong backend.
+- "Create a new report with this finding": màn tạo báo cáo có hiển thị finding. Chưa đi tới hết luồng tạo.
+- Các `PersonaHint` còn lại ở `b-detail2`, `c.tsx`, `f-report` vẫn có nút đổi persona demo trong real mode. Thuộc P09, chưa đụng.
+- Test: chạy cả bộ web có nhiều file timeout 5 giây ở `RealProjectCreateDialog`, a11y, dark-theme, responsive. Chạy riêng từng file đều pass. Đây là flakiness có sẵn khi tải cao, chưa sửa.
+
+Kiểm chứng: `tsc` sạch; các nhóm test findings, reports, router, real, c2, screens chạy riêng đều pass.
+
+Trạng thái sau lượt này: M-B hoàn tất bước 1 và 2 trừ ba quyết định mở ở trên. P09, P12, P10 chưa bắt đầu; D05 vẫn hoãn.
