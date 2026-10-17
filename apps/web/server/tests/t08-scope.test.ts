@@ -248,6 +248,20 @@ describe('ticket 08 scope governance', () => {
     expect(await scope.confirmPlannerScope(ownerId, ENG, plan)).toBeNull();
   });
 
+  it('a team engagement hands off on a scope a reviewer already approved, and still needs a reviewer for any new target', async () => {
+    const { db } = await setup();
+    const usersByName = (username: string) => String([...db.tables.get('webUser')!.values()].find((row) => row.username === username)!.id);
+    const ownerId = usersByName('owner');
+    const reviewerId = usersByName('rev');
+    const scope = new ScopeService(db as never);
+    const plan = { targets: ['10.129.227.140'], startDate: '2026-10-20', endDate: '2026-10-31', contacts: ['Lab SOC (email:soc@example.invalid)'], restrictions: ['Denial of service'] };
+    const submitted = await scope.submitRevision(ownerId, ENG, { diff: { added: ['10.129.227.140'], removed: [], rationale: 'Planned target' }, roe: { windows: [], emergencyContacts: [], restrictions: [] } });
+    await scope.decideRevision(reviewerId, ENG, submitted.id, { decision: 'approved' });
+
+    expect(await scope.confirmPlannerScope(ownerId, ENG, plan)).toBeNull();
+    await expect(scope.confirmPlannerScope(ownerId, ENG, { ...plan, targets: ['10.129.227.141'] })).rejects.toMatchObject({ statusCode: 409 });
+  });
+
   it('answers 404 for foreign engagements and rejects malformed ROE windows', async () => {
     const { app, owner } = await setup();
     expect((await app.inject({ method: 'GET', url: '/api/engagements/eng-other/scope/revisions', headers: { cookie: owner.cookie } })).statusCode).toBe(404);
