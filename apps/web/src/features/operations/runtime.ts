@@ -37,7 +37,40 @@ export interface RuntimeTimeline {
   unavailableThreads: number
 }
 
+/** The three identities the fleet keeps apart: catalog graph ids, bound runtime threads and checkpoint subagent branches. */
+export interface RuntimeFleetAgent { graphId: string }
+
+export interface RuntimeFleetThread {
+  threadId: string
+  assistantId: string | null
+  kind: string | null
+  /** The runtime's raw thread status; null when the runtime does not report one. */
+  rawStatus: string | null
+  activeRunId: string | null
+}
+
+export interface RuntimeFleetBranch {
+  threadId: string
+  key: string
+  agent: string
+  state: 'running' | 'ended' | 'unknown'
+  outcome: string | null
+  startedAt: string | null
+  endedAt: string | null
+}
+
+export interface RuntimeFleet {
+  agents: RuntimeFleetAgent[]
+  threads: RuntimeFleetThread[]
+  branches: RuntimeFleetBranch[]
+  counts: { threads: number; threadsTruncated: boolean; activeRuns: number; branches: number; runningBranches: number }
+  /** Controls the runtime has no action contract for; shown as recorded exclusions. */
+  excludedActions: string[]
+  sources: { agents: string; threads: string; branches: string }
+}
+
 export interface RuntimeOperationsService {
+  fleet(ctx: RequestContext): Promise<ServiceResult<RuntimeFleet>>
   /** The engagement's execution threads only; planning threads are not operation resources. */
   threads(ctx: RequestContext): Promise<ServiceResult<RuntimeThread[]>>
   runs(ctx: RequestContext, threadId: string): Promise<ServiceResult<RuntimeRun[]>>
@@ -52,6 +85,7 @@ export function unavailableRuntimeOperationsService(): RuntimeOperationsService 
   const failure = { kind: 'unavailable' as const, message: 'Runtime operations are not available on this server.' }
   const unavailable = () => Promise.resolve({ ok: false as const, failure })
   return {
+    fleet: unavailable,
     threads: unavailable,
     runs: unavailable,
     snapshot: unavailable,

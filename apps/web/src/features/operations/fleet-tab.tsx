@@ -1,23 +1,23 @@
 /**
- * Real agent fleet/fanout panel (integration ticket 13). Three identities
- * stay distinct: assistant graph catalog IDs (not endpoint health), bound
- * runtime threads and checkpoint-provenance subagent branches. Missing
- * runtime data renders as unknown — no heartbeat is fabricated. Branch-level
- * retry/reassign/cancel and allocation have no runtime action contract and
- * are surfaced as recorded exclusions (D1/D2); run-level cancel reuses the
- * ticket 05 cancel API.
+ * Agent fleet over the runtime (plan P12, Operations slice). Three identities stay
+ * distinct: assistant graph catalog ids (not endpoint health), bound runtime threads
+ * and checkpoint-provenance subagent branches. Missing runtime data renders as
+ * unknown, and no heartbeat is fabricated. Branch-level retry, reassign, cancel and
+ * allocation have no runtime action contract, so they are recorded as exclusions.
+ * Run-level cancel uses the same runtime cancel as the operations tab.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Ban, Bot, Loader2 } from 'lucide-react'
 import type { ReactElement } from 'react'
-import { fetchFleet, cancelRun } from '../api'
+import { useMutation } from '@tanstack/react-query'
+import { Ban, Bot, Loader2 } from 'lucide-react'
+import { utcMinuteOr } from '../../real/format'
 import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status } from '../../ui'
-import { utcMinuteOr } from '../format'
+import { messageOf, useRuntimeCancel, useRuntimeFleet } from './runtime-query'
+import type { RuntimeFleetBranch } from './runtime'
 
 const STATE_LABEL: Record<string, string> = { running: 'running', ended: 'ended', unknown: 'unknown' }
 
-/** W24: an ended branch is "passed" only for a known success outcome; unknown/error/timeout stay non-success. */
+/** W24: an ended branch is "passed" only for a known success outcome; unknown, error and timeout stay non-success. */
 function branchStatusValue(branch: { state: 'running' | 'ended' | 'unknown'; outcome: string | null }): 'passed' | 'failed' | 'pending' {
   if (branch.state !== 'ended') return 'pending'
   const outcome = (branch.outcome ?? '').toLowerCase()
@@ -26,34 +26,24 @@ function branchStatusValue(branch: { state: 'running' | 'ended' | 'unknown'; out
   return 'pending'
 }
 
-export function RealFleetPanel({ engagementId }: { engagementId: string }): ReactElement {
-  const client = useQueryClient()
+export function RuntimeFleetTab({ engagementId }: { engagementId: string }): ReactElement {
   const route = useRoute()
-  const fleet = useQuery({
-    queryKey: ['real', 'fleet', engagementId],
-    queryFn: () => fetchFleet(engagementId),
-    // W13 read-only v1: live read only — the panel re-reads the runtime on an
-    // interval; every mutation surface stays a recorded exclusion.
-    refetchInterval: 15_000,
-  })
-  const cancel = useMutation({
-    mutationFn: (input: { threadId: string; runId: string }) => cancelRun(engagementId, input.threadId, input.runId),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ['real', 'fleet', engagementId] }),
-  })
-  const cancelError = cancel.error instanceof Error ? cancel.error.message : null
+  const fleet = useRuntimeFleet(engagementId)
+  const cancelRun = useRuntimeCancel(engagementId)
+  const cancel = useMutation({ mutationFn: (input: { threadId: string; runId: string }) => cancelRun(input.threadId, input.runId) })
+  const cancelError = cancel.error === null ? null : messageOf(cancel.error, 'The cancel was refused.')
 
   if (fleet.isPending) {
     return <Card><CardHeader title="Agent fleet" /><div className="p-4"><Skeleton className="h-24" /></div></Card>
   }
   if (fleet.isError || !fleet.data) {
     return <Empty icon={Bot} title="Fleet data is unavailable" action={<Button onClick={() => void fleet.refetch()}>Retry</Button>}>
-      {fleet.error instanceof Error ? fleet.error.message : 'The fleet read failed.'}
+      {messageOf(fleet.error, 'The fleet read failed.')}
     </Empty>
   }
   const view = fleet.data
 
-  // W22: the agent and branch detail routes consume the resource id from the
-  // URL. Unknown or foreign ids render an explicit not-found, never the fleet.
+  // The agent and branch detail routes consume the resource id from the URL. Unknown or foreign ids render an explicit not-found, never the fleet.
   if (route.page === 'agent' && route.id) {
     const agent = view.agents.find((a) => a.graphId === route.id)
     return agent === undefined ? (
@@ -168,7 +158,7 @@ export function RealFleetPanel({ engagementId }: { engagementId: string }): Reac
                 </tr>
               </thead>
               <tbody>
-                {view.branches.map((b) => (
+                {view.branches.map((b: RuntimeFleetBranch) => (
                   <tr key={`${b.threadId}::${b.key}`} className="border-t border-line">
                     <td className="py-2 pr-3 font-mono text-xs">{b.threadId}</td>
                     <td className="py-2 pr-3 font-mono text-xs">{b.agent}</td>

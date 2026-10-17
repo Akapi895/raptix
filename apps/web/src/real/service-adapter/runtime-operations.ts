@@ -1,7 +1,7 @@
 import type { ScopedRunView } from '@raptix/web-contracts'
 import type { RequestContext, ServiceResult } from '../../domain/service'
-import type { RuntimeOperationsService, RuntimeRun, RuntimeTimeline } from '../../features/operations/runtime'
-import { cancelRun, fetchTimeline, getThread, listRunsOfThread, listThreads } from '../api'
+import type { RuntimeFleet, RuntimeOperationsService, RuntimeRun, RuntimeTimeline } from '../../features/operations/runtime'
+import { cancelRun, fetchFleet, fetchTimeline, getThread, listRunsOfThread, listThreads } from '../api'
 import { guarded } from './shared'
 
 const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading its operations.' }
@@ -23,6 +23,20 @@ export function createRealRuntimeOperationsService(): RuntimeOperationsService {
     return engagementId === null ? { ok: false as const, failure: NO_ENGAGEMENT } : run(engagementId)
   })
   return {
+    fleet: (ctx) => scoped(ctx, async (engagementId): Promise<ServiceResult<RuntimeFleet>> => {
+      const view = await fetchFleet(engagementId)
+      return {
+        ok: true,
+        data: {
+          agents: view.agents.map((a) => ({ graphId: a.graphId })),
+          threads: view.threads.map((t) => ({ threadId: t.threadId, assistantId: t.assistantId, kind: t.kind, rawStatus: t.rawStatus, activeRunId: t.activeRunId })),
+          branches: view.branches.map((b) => ({ threadId: b.threadId, key: b.key, agent: b.agent, state: b.state, outcome: b.outcome, startedAt: b.startedAt, endedAt: b.endedAt })),
+          counts: view.counts,
+          excludedActions: view.excludedActions,
+          sources: view.sources,
+        },
+      }
+    }),
     threads: (ctx) => scoped(ctx, async (engagementId) => {
       const list = await listThreads(engagementId)
       return {
