@@ -9,7 +9,7 @@ const EXEC = { engagementId: 'eng-1', threadId: 'th-exec', assistantId: 'executo
 const PLAN = { engagementId: 'eng-1', threadId: 'th-plan', assistantId: 'soundwave', kind: 'planning', createdAt: '2026-10-14T08:00:00.000Z', updatedAt: '2026-10-14T08:05:00.000Z' }
 const RUN = { engagementId: 'eng-1', threadId: 'th-exec', runId: 'run-9', requestId: 'req-abc12345', rawStatus: 'running', createdAt: '2026-10-14T09:01:00.000Z', updatedAt: '2026-10-14T09:02:00.000Z', source: 'runtime' }
 
-function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[] } = {}) {
+function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[]; timeline?: unknown } = {}) {
   const calls: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
@@ -18,6 +18,7 @@ function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[
     if (url.includes('/runs?') || (url.endsWith('/runs') && (init?.method ?? 'GET') === 'GET')) return new Response(JSON.stringify({ runs: over.runs ?? [RUN], offset: 0, nextOffset: null }), { status: 200 })
     if (url.endsWith('/estops') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', stops: over.stops ?? [], source: 'db' }), { status: 200 })
     if (url.endsWith('/cancel') && init?.method === 'POST') return new Response(JSON.stringify({ ...RUN, rawStatus: 'cancelled' }), { status: 200 })
+    if (url.endsWith('/timeline')) return new Response(JSON.stringify(over.timeline ?? { engagementId: 'eng-1', entries: [], truncated: false, unavailableThreads: 0, source: 'mixed' }), { status: 200 })
     if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ binding: EXEC, rawStatus: 'running', messages: [], messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime', transcriptsTruncated: false, transcripts: [{ key: 'tool-1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_tool_call', agent: 'recon', tool: 'service-mapper', truncated: false } }] }))
     return new Response('unexpected', { status: 404 })
   }))
@@ -130,5 +131,14 @@ describe('RealOperationsPanel (W22 operation detail route)', () => {
     renderPanel()
     await screen.findByText('Execution threads')
     expect(screen.queryByText(/emergency stop/)).not.toBeInTheDocument()
+  })
+
+  it('names the threads a stale binding left out of the timeline instead of blanking it', async () => {
+    stubApi({ timeline: { engagementId: 'eng-1', entries: [{ id: 'run:run-9', at: '2026-10-14T09:01:00.000Z', source: 'runtime', kind: 'run', label: 'Planning run success', runId: 'run-9', status: 'success' }], truncated: false, unavailableThreads: 1, source: 'mixed' } })
+    renderPanel()
+    expect(await screen.findByText('Some runtime threads are not shown')).toBeInTheDocument()
+    expect(screen.getByText('1 thread has a runtime binding that no longer matches persisted state, so its runs and checkpoints are left out.')).toBeInTheDocument()
+    expect(screen.queryByText('Timeline source unavailable')).not.toBeInTheDocument()
+    expect(screen.getByText('Planning run success')).toBeInTheDocument()
   })
 })

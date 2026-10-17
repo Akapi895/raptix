@@ -17,6 +17,9 @@ import { ProjectNotFoundError } from './projects-service.js';
  * Output is bounded and newest-first; `truncated` is truthful.
  */
 
+type RunPage = Awaited<ReturnType<RunService['listRuns']>>;
+type ThreadSnapshot = Awaited<ReturnType<RunService['snapshot']>>;
+
 const MAX_ENTRIES = 250;
 const MAX_RUNS_PER_THREAD = 25;
 const MAX_TRANSCRIPTS_PER_THREAD = 50;
@@ -39,10 +42,12 @@ export class TimelineService {
     // Runtime: one merged entry per owned run per bound thread.
     const threads = await this.runs.listThreads(userId, engagementId);
     if (threads.threads.length > 5) truncated = true;
+    let unavailableThreads = 0;
     for (const thread of threads.threads.slice(0, 5)) {
-      // The scoped run page parser only accepts string query values (limit ≤ 25).
-      const page = await this.runs.listRuns(userId, engagementId, thread.threadId, { limit: String(MAX_RUNS_PER_THREAD), offset: '0' });
-      if (page.nextOffset !== null) truncated = true;
+      const read = await this.readThread(userId, engagementId, thread.threadId);
+      if (read === null) { unavailableThreads += 1; continue; }
+      const { page, snapshot } = read;
+      if (page.nextOffset !== null || snapshot.transcriptsTruncated === true) truncated = true;
       for (const run of page.runs) {
         entries.push({
           id: `run:${run.runId}`,
@@ -54,12 +59,7 @@ export class TimelineService {
           status: run.rawStatus,
         });
       }
-    }
-
-    // Checkpoint transcripts: thread-level durable history, runId null by contract.
-    for (const thread of threads.threads.slice(0, 5)) {
-      const snapshot = await this.runs.snapshot(userId, engagementId, thread.threadId);
-      if (snapshot.transcriptsTruncated === true) truncated = true;
+      // Checkpoint transcripts: thread-level durable history, runId null by contract.
       const transcripts = snapshot.transcripts ?? [];
       for (const transcript of transcripts.slice(0, MAX_TRANSCRIPTS_PER_THREAD)) {
         entries.push({
@@ -97,7 +97,23 @@ export class TimelineService {
 
     entries.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
     if (entries.length > MAX_ENTRIES) { entries.length = MAX_ENTRIES; truncated = true; }
-    return { engagementId, entries, truncated, source: 'mixed' };
+    return { engagementId, entries, truncated, unavailableThreads, source: 'mixed' };
+  }
+
+  /**
+   * A thread whose binding no longer matches persisted state answers 409. It is
+   * left out and counted, so one stale thread cannot blank the whole timeline.
+   */
+  private async readThread(userId: string, engagementId: string, threadId: string): Promise<{ page: RunPage; snapshot: ThreadSnapshot } | null> {
+    try {
+      // The scoped run page parser only accepts string query values (limit ≤ 25).
+      const page = await this.runs.listRuns(userId, engagementId, threadId, { limit: String(MAX_RUNS_PER_THREAD), offset: '0' });
+      const snapshot = await this.runs.snapshot(userId, engagementId, threadId);
+      return { page, snapshot };
+    } catch (error) {
+      if (error instanceof Object && 'statusCode' in error && error.statusCode === 409) return null;
+      throw error;
+    }
   }
 
   private async artifactMtime(slug: string, relativePath: string): Promise<string | null> {

@@ -191,7 +191,9 @@ export interface TimelineEntryView {
  */
 export interface TimelineView {
   engagementId: string; entries: TimelineEntryView[]
-  truncated: boolean; source: 'mixed'
+  truncated: boolean
+  /** Threads left out because their runtime binding conflicts with persisted state. */
+  unavailableThreads: number; source: 'mixed'
 }
 export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
   if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.at) || Number.isNaN(Date.parse(v.at)) || !isNonEmptyString(v.kind) || typeof v.label !== 'string') return false
@@ -202,7 +204,7 @@ export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
   return true
 }
 export function isTimelineView(v: unknown): v is TimelineView {
-  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && v.source === 'mixed'
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && typeof v.unavailableThreads === 'number' && v.source === 'mixed'
 }
 /**
  * W15 engagement settings: only the fields the new server actually persists
