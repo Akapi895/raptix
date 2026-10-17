@@ -34,7 +34,18 @@ export function createRealScopeService(): ScopeService {
         data: {
           revisions: revisions.revisions.map(toRevision),
           latestApprovedVersion: revisions.latestApprovedVersion,
-          effective: { version: effective.version, rootTarget: effective.rootTarget, inScope: effective.inScope, roe: effective.roe },
+          effective: {
+            version: effective.version,
+            versionLabel: effective.version === null ? null : `v${effective.version}`,
+            rootTarget: effective.rootTarget,
+            inScope: effective.inScope,
+            roe: effective.roe,
+            windowText: effective.roe.windows.length === 0 ? null : effective.roe.windows.map((w) => `${w.start} → ${w.end} (${w.tz})`).join(' · '),
+          },
+          // The backend has no operations, plans or documents model yet, so a scope change has no impact list here.
+          impact: null,
+          unmodelled: ['operations', 'plans', 'documents'],
+          supports: { roeFields: true },
         },
       }
     }),

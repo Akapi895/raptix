@@ -14,7 +14,7 @@ const PANEL_COMPONENTS: Record<PanelGroup, PanelComponent> = {
   operations: lazy(() => import('./operations-panel').then((m) => ({ default: m.RealOperationsPanel }))),
   governance: lazy(() => import('./governance-panel').then((m) => ({ default: m.RealGovernancePanel }))),
   fleet: lazy(() => import('./fleet-panel').then((m) => ({ default: m.RealFleetPanel }))),
-  scope: lazy(() => import('../../features/scope/panel').then((m) => ({ default: m.ScopePanel }))),
+  scope: lazy(() => import('../../features/scope/tab').then((m) => ({ default: m.ScopeTab }))),
   analysis: lazy(() => import('./analysis-panel').then((m) => ({ default: m.RealAnalysisPanel }))),
   c2: lazy(() => import('./c2-panel').then((m) => ({ default: m.RealC2Panel }))),
   campaigns: lazy(() => import('./campaigns-panel').then((m) => ({ default: m.RealCampaignsPanel }))),

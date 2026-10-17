@@ -51,8 +51,8 @@ export function useScopeWrites() {
       await refresh()
       return res.data
     },
-    decide: async (revisionId: string, decision: 'approved' | 'rejected'): Promise<ScopeRevision> => {
-      const res = await svc().decide(ctxOf(scope, 'scope-decide'), revisionId, decision)
+    decide: async (revisionId: string, decision: 'approved' | 'rejected', comment?: string): Promise<ScopeRevision> => {
+      const res = await svc().decide(ctxOf(scope, 'scope-decide'), revisionId, decision, comment)
       if (!res.ok) throw new ScopeError(res.failure)
       await refresh()
       return res.data

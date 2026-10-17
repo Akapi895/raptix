@@ -28,7 +28,6 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed } from 'lucide-react'
 import { APR, type Project } from '../data'
-import { DocumentWorkspace } from '../features/documents/workspace'
 import { ExecutionWorkspace } from '../features/execution/workspace'
 import { VaultTab } from '../features/vault/panel'
 import { useServices } from '../state/services'
@@ -39,7 +38,9 @@ import { go, selectProject, useRoute } from '../router/navigate'
 import { MOCK_PROJECT_NAV, MOCK_PROJECT_TABS } from '../shell/nav'
 import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui'
 import type { DashboardAggregate, Eligibility } from './dashboard/domain'
-import { ScopeTab, TeamTab, CloseTab } from './b-detail2'
+import { TeamTab, CloseTab } from './b-detail2'
+import { ScopeTab } from '../features/scope/tab'
+import { DocumentWorkspace } from '../features/documents/workspace'
 import { useSubmitApproval, useReopen } from '../features/approvals/hooks'
 import { useProjectDetail } from './project-detail/use-project-detail'
 import { createPortfolioHandlers, ServiceReadError } from './portfolio-handlers'
@@ -193,7 +194,7 @@ function Detail({ d }: { d: ProjectDetail }) {
       )}
 
       {tab === 'overview' && <Overview d={d} via={via} setTab={setTab} />}
-      {tab === 'scope' && <ScopeTab p={p} ds={ds} />}
+      {tab === 'scope' && <ScopeTab engagementId={p.id} documents={<DocumentWorkspace key={p.id} p={p} />} />}
       {tab === 'objectives' && <Objectives p={p} ds={ds} />}
       {tab === 'activity' && <Activity p={p} ds={ds} />}
       {tab === 'team' && <TeamTab p={p} ds={ds} />}
