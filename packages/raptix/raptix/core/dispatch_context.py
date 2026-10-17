@@ -14,6 +14,8 @@ class DispatchContext:
     failures: list[DispatchFailureOutcome] = field(default_factory=list)
     # The subagent role that owns this dispatch; the ledger records it so a roster can name the instance.
     role: str | None = None
+    # The LangGraph thread that owns this dispatch; the instance mailbox is keyed by it. None outside a thread.
+    thread_id: str | None = None
 
 
 active_dispatch: ContextVar[DispatchContext | None] = ContextVar("active_dispatch", default=None)

@@ -32,6 +32,7 @@ from raptix.core.subagent_streaming import (
     PRIVATE_CHILD_STATE_KEYS,
 )
 from raptix.execution.session.event_log import EventLog, EventType
+from raptix.execution.session.instance_mailbox import default_mailbox
 from raptix.middleware.fanout_admission import (
     AdmissionDecision,
     Ceilings,
@@ -240,8 +241,8 @@ class DispatchMiddleware(SubAgentMiddleware):
                 "Thread dispatch ledger is full; start a new thread",
             )
         config = getattr(runtime, "config", None) or {}
-        scope = (config.get("configurable") or {}).get("thread_id")
-        scope = str(scope or runtime.state.get("engagement_name") or id(runtime.state))
+        thread_id = (config.get("configurable") or {}).get("thread_id")
+        scope = str(thread_id or runtime.state.get("engagement_name") or id(runtime.state))
         key = (scope, dispatch_id)
         with self._lock:
             if key in self._active:
@@ -275,10 +276,39 @@ class DispatchMiddleware(SubAgentMiddleware):
                     )
                 self._active.add(key)
         return (
-            DispatchContext(dispatch_id, objective_id, int(prior.get("attempt", 0)) + 1, role=role),
+            DispatchContext(
+                dispatch_id,
+                objective_id,
+                int(prior.get("attempt", 0)) + 1,
+                role=role,
+                thread_id=str(thread_id) if thread_id else None,
+            ),
             key,
             fingerprint,
         )
+
+    @staticmethod
+    def _start_instance(context: DispatchContext) -> None:
+        """Make the running instance visible to the operator mailbox (P10c); never breaks the dispatch."""
+        if not context.thread_id:
+            return
+        try:
+            default_mailbox().start_instance(
+                context.thread_id, context.dispatch_id, context.attempt, context.role
+            )
+        except Exception:  # noqa: BLE001 — mailbox bookkeeping must never fail a dispatch
+            log.warning("instance mailbox registration failed", exc_info=True)
+
+    @staticmethod
+    def _end_instance(context: DispatchContext) -> None:
+        if not context.thread_id:
+            return
+        try:
+            default_mailbox().finish_instance(
+                context.thread_id, context.dispatch_id, context.attempt
+            )
+        except Exception:  # noqa: BLE001 — a failed close leaves the row running until the next restart marks it interrupted
+            log.warning("instance mailbox close failed", exc_info=True)
 
     # ── ADR-0077 fan-out admission helpers ──────────────────────────────
 
@@ -466,6 +496,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 return prepared
             context, key, fingerprint = prepared
             token = active_dispatch.set(context)
+            self._start_instance(context)
             error: Exception | None = None
             try:
                 try:
@@ -482,6 +513,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 error = exc
                 raise
             finally:
+                self._end_instance(context)
                 active_dispatch.reset(token)
                 self._record_outcome(key, ok=error is None)
                 self._release(key)
@@ -498,6 +530,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 return prepared
             context, key, fingerprint = prepared
             token = active_dispatch.set(context)
+            self._start_instance(context)
             error: Exception | None = None
             try:
                 try:
@@ -517,6 +550,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 error = exc
                 raise
             finally:
+                self._end_instance(context)
                 active_dispatch.reset(token)
                 self._record_outcome(key, ok=error is None)
                 self._release(key)

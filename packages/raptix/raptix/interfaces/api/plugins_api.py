@@ -278,3 +278,79 @@ def lg_api_feature_postgres() -> bool:
     from langgraph_api.feature_flags import IS_POSTGRES_OR_GRPC_BACKEND  # noqa: PLC0415
 
     return IS_POSTGRES_OR_GRPC_BACKEND
+
+
+# ── Operator mailbox for running dispatch instances (P10c) ─────────────
+# A message is durably accepted, delivered at the instance's model-call safe
+# point, and handled when that turn completes. A refusal is an explicit
+# reason, never a silent drop. The mailbox lives beside the checkpointer.
+
+_INSTANCE_PATH = "/_raptix/instances/{thread_id}/{dispatch_id}"
+
+
+class InstanceMessageIn(BaseModel):
+    messageId: str
+    body: str
+
+
+@app.post(_INSTANCE_PATH + "/messages")
+def post_instance_message(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    payload: InstanceMessageIn,
+) -> dict:
+    from fastapi.responses import JSONResponse  # noqa: PLC0415
+
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    result = default_mailbox().accept(payload.messageId, thread_id, dispatch_id, payload.body)
+    body = {
+        "status": result.status,
+        "reason": result.reason,
+        "attempt": result.attempt,
+        "message": _message_view(result.message),
+    }
+    if result.status == "refused":
+        return JSONResponse(status_code=409, content=body)
+    return body
+
+
+@app.get(_INSTANCE_PATH)
+def get_instance(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+) -> dict:
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    instances, messages = default_mailbox().snapshot(thread_id, dispatch_id)
+    return {
+        "threadId": thread_id,
+        "dispatchId": dispatch_id,
+        "instances": [
+            {
+                "attempt": row.attempt,
+                "role": row.role,
+                "state": row.state,
+                "startedAt": row.started_at,
+                "finishedAt": row.finished_at,
+            }
+            for row in instances
+        ],
+        "messages": [_message_view(message) for message in messages],
+    }
+
+
+def _message_view(message) -> dict | None:
+    if message is None:
+        return None
+    return {
+        "messageId": message.message_id,
+        "attempt": message.attempt,
+        "seq": message.seq,
+        "body": message.body,
+        "state": message.state,
+        "acceptedAt": message.accepted_at,
+        "deliveredAt": message.delivered_at,
+        "handledAt": message.handled_at,
+        "outcome": message.outcome,
+    }
