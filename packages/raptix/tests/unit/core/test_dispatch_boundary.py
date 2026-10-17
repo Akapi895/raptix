@@ -159,6 +159,16 @@ def test_task_parent_receives_typed_failure_and_terminal_rejects_redispatch(task
     assert inner.calls == 4
 
 
+def test_ledger_row_names_the_role_that_owns_the_dispatch(task: tuple) -> None:
+    tool, _ = task
+    state = {"objectives": [{"id": "A"}], "engagement_name": "lab"}
+    state = _apply(state, _call(tool, state, dispatch="role-check"))
+    row = state["dispatch_ledger"]["role-check"]
+    assert row["role"] == "exploit"
+    assert row["attempt"] == 1
+    assert row["objective_id"] == "A"
+
+
 @pytest.mark.asyncio
 async def test_async_task_failure_preserves_parent_tool_result(task: tuple) -> None:
     tool, _ = task
