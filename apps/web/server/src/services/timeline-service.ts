@@ -2,6 +2,7 @@ import { stat } from 'node:fs/promises';
 import * as path from 'node:path';
 import type { TimelineEntryView, TimelineView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
+import { ProjectPolicyError } from '../security/project-policy.js';
 import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
 import type { ArtifactsService } from './artifacts-service.js';
 import { ARTIFACT_FOLDERS } from './artifacts-service.js';
@@ -111,7 +112,7 @@ export class TimelineService {
       const snapshot = await this.runs.snapshot(userId, engagementId, threadId);
       return { page, snapshot };
     } catch (error) {
-      if (error instanceof Object && 'statusCode' in error && error.statusCode === 409) return null;
+      if (error instanceof ProjectPolicyError && error.code === 'conflict') return null;
       throw error;
     }
   }
