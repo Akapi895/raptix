@@ -19,6 +19,7 @@ function serviceWith(reads: Record<string, () => Promise<{ values: Record<string
     context: {} as ConstructorParameters<typeof RunService>[0]['context'],
     runtime: {} as ConstructorParameters<typeof RunService>[0]['runtime'],
     reads: {
+      instanceExchange: async () => ({ status: 200, body: { threadId: 'x', instances: [] } }),
       state: async (thread: string) => {
         const read = reads[thread];
         if (!read) throw new Error(`no state fixture for ${thread}`);

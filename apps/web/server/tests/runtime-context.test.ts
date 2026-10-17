@@ -24,7 +24,7 @@ async function setup(opts: { pinnedSlug?: string; perProjectSandbox?: boolean } 
   const service = new RuntimeContextService({ config, workspaceRoot: root,
     projects: { async getProject(user, id) { if (user !== 'local' || id !== project.id) throw new ProjectNotFoundError(); return project; }, async getPlanning() { return planning; } },
     ownership: { async getBinding(user, id, thread, expected) { if (user !== 'local' || id !== 'owned' || thread !== 'thread') throw new ProjectNotFoundError(); if (expected?.runtimeConfigHash && expected.runtimeConfigHash !== control.proof) throw Object.assign(new Error('Persisted proof mismatch'), { statusCode: 409 }); return bound; }, async prepareBinding() { return requestFingerprint({ engagementId: project.id, workspaceSlug: project.workspaceSlug, targetType: project.targetType, targetValue: project.targetValue, authorizationConfirmed: project.authorizationConfirmed, assistantId: bound.assistantId, kind: bound.kind }); } },
-    runtime: { async catalog() { control.calls++; return control.graphs; }, async thread() { return { thread_id: 'thread', metadata: control.metadata }; }, async state() { return { values: control.values, graphId: control.stateGraph ?? bound.assistantId }; } },
+    runtime: { async instanceExchange() { throw new Error('not used in this test'); }, async catalog() { control.calls++; return control.graphs; }, async thread() { return { thread_id: 'thread', metadata: control.metadata }; }, async state() { return { values: control.values, graphId: control.stateGraph ?? bound.assistantId }; } },
   });
   return { root, project, bound, control, config, service };
 }

@@ -4,7 +4,7 @@ import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtim
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
 import { RuntimeCheckpointMissingError, RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
-import { parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
+import { parseInstanceMessage, parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-context.js';
 import { projectThreadHistory } from './history-projection.js';
@@ -26,8 +26,42 @@ export interface RuntimeInstanceView {
   objectiveId: string | null;
   outcome: string;
   terminal: boolean;
-  source: 'dispatch_ledger';
+  /** `mailbox` rows are attempts the runtime is running (or ended without a ledger row); the ledger keeps only each dispatch's latest finished attempt. */
+  source: 'dispatch_ledger' | 'mailbox';
 }
+
+/** P10c: one message as the runtime's mailbox records it. */
+export interface InstanceMessageView {
+  messageId: string;
+  attempt: number;
+  seq: number;
+  body: string;
+  state: 'accepted' | 'delivered' | 'handled' | 'undelivered';
+  acceptedAt: string;
+  deliveredAt: string | null;
+  handledAt: string | null;
+  outcome: string | null;
+}
+
+export interface InstanceMailboxView {
+  threadId: string;
+  dispatchId: string;
+  instances: { attempt: number; role: string | null; state: 'running' | 'finished' | 'interrupted'; startedAt: string; finishedAt: string | null }[];
+  messages: InstanceMessageView[];
+  source: 'runtime';
+}
+
+/** Why the runtime refused a message, in the words the operator sees. Unknown codes keep the runtime's code. */
+const REFUSAL_TEXT: Readonly<Record<string, string>> = {
+  instance_not_running: 'This instance is not running, so the message was not accepted.',
+  mailbox_full: 'This instance already has the maximum number of messages waiting for its next step.',
+  message_too_large: 'The message is longer than the instance accepts.',
+  empty_message: 'The message is empty.',
+  invalid_message_id: 'The message id is not valid.',
+  message_id_conflict: 'This message id was already used for another instance.',
+};
+
+const instancePath = (thread: string, dispatch: string): string => `/_raptix/instances/${encodeURIComponent(thread)}/${encodeURIComponent(dispatch)}`;
 
 export interface RuntimeRosterView {
   engagementId: string;
@@ -168,8 +202,17 @@ export class RunService {
     for (const binding of bindings) {
       try {
         const { values } = await this.threadState(user, engagement, binding.threadId);
-        instances.push(...ledgerInstances(binding.threadId, values.dispatch_ledger));
-        threads.push({ threadId: binding.threadId, read: 'read', reason: null });
+        const ledger = ledgerInstances(binding.threadId, values.dispatch_ledger);
+        instances.push(...ledger);
+        const recorded = new Set(ledger.map(row => `${row.dispatchId}:${row.attempt}`));
+        // P10: a running attempt is not in the ledger until it finishes; the mailbox is where it is visible now.
+        try {
+          instances.push(...await this.mailboxInstances(binding.threadId, recorded));
+          threads.push({ threadId: binding.threadId, read: 'read', reason: null });
+        } catch (error) {
+          if (!(error instanceof RuntimeUnavailableError)) throw error;
+          threads.push({ threadId: binding.threadId, read: 'read', reason: 'Running instances could not be read; only finished attempts are shown.' });
+        }
       } catch (error) {
         if (!(error instanceof RuntimeUnavailableError || error instanceof RuntimeCheckpointMissingError)) throw error;
         threads.push({ threadId: binding.threadId, read: 'unavailable', reason: error.message });
@@ -177,6 +220,63 @@ export class RunService {
     }
     instances.sort((a, b) => a.threadId.localeCompare(b.threadId) || a.dispatchId.localeCompare(b.dispatchId) || a.attempt - b.attempt);
     return { engagementId: engagement, instances, threads, source: 'runtime' };
+  }
+  /**
+   * P10c: send an operator message to one running dispatch instance. The thread must belong to the
+   * engagement, and sending is a mutation, so the operator gate runs here. The runtime decides whether
+   * the instance can take the message; a refusal reaches the operator as its reason.
+   */
+  public async sendInstanceMessage(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
+    const { messageId, body } = parseInstanceMessage(raw);
+    const binding = await this.options.ownership.getBinding(user, engagement, thread);
+    await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
+    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/messages`, { messageId, body });
+    const payload = reply.body as { status?: unknown; reason?: unknown; attempt?: unknown; message?: InstanceMessageView | null } | null;
+    if (reply.status === 409) {
+      const reason = typeof payload?.reason === 'string' ? payload.reason : 'refused';
+      throw new ProjectPolicyError('conflict', REFUSAL_TEXT[reason] ?? `The runtime refused the message (${reason}).`);
+    }
+    if (!payload || (payload.status !== 'accepted' && payload.status !== 'duplicate') || typeof payload.attempt !== 'number' || !payload.message) {
+      throw new RuntimeUnavailableError();
+    }
+    return { status: payload.status, attempt: payload.attempt, message: payload.message };
+  }
+  /** P10: attempts the mailbox records on a thread that the ledger does not hold yet (running, or ended before the ledger write). */
+  private async mailboxInstances(thread: string, recorded: Set<string>): Promise<RuntimeInstanceView[]> {
+    const reply = await this.options.reads.instanceExchange('GET', `/_raptix/threads/${encodeURIComponent(thread)}/instances`);
+    const payload = reply.body as { instances?: unknown } | null;
+    if (reply.status !== 200 || !payload || !Array.isArray(payload.instances)) throw new RuntimeUnavailableError();
+    const rows: RuntimeInstanceView[] = [];
+    for (const raw of payload.instances as { dispatchId?: unknown; attempt?: unknown; role?: unknown; state?: unknown }[]) {
+      if (typeof raw.dispatchId !== 'string' || typeof raw.attempt !== 'number' || typeof raw.state !== 'string') throw new RuntimeUnavailableError();
+      if (recorded.has(`${raw.dispatchId}:${raw.attempt}`)) continue;
+      rows.push({
+        instanceId: `${thread}:${raw.dispatchId}:${raw.attempt}`,
+        threadId: thread,
+        dispatchId: raw.dispatchId,
+        attempt: raw.attempt,
+        role: typeof raw.role === 'string' && raw.role.length > 0 ? raw.role : null,
+        objectiveId: null,
+        outcome: raw.state,
+        terminal: raw.state !== 'running',
+        source: 'mailbox',
+      });
+    }
+    return rows;
+  }
+  /** P10c: the attempts and messages of one dispatch on a thread the engagement owns. */
+  public async instanceMailbox(user: string, engagement: string, thread: string, dispatch: string): Promise<InstanceMailboxView> {
+    await this.options.ownership.getBinding(user, engagement, thread);
+    const reply = await this.options.reads.instanceExchange('GET', instancePath(thread, dispatch));
+    const payload = reply.body as { instances?: unknown; messages?: unknown } | null;
+    if (reply.status !== 200 || !payload || !Array.isArray(payload.instances) || !Array.isArray(payload.messages)) throw new RuntimeUnavailableError();
+    return {
+      threadId: thread,
+      dispatchId: dispatch,
+      instances: payload.instances as InstanceMailboxView['instances'],
+      messages: payload.messages as InstanceMessageView[],
+      source: 'runtime',
+    };
   }
   /** W11: resume a pending graph interrupt on the bound thread; ack returns the NEW run identity. */
   public async resume(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {

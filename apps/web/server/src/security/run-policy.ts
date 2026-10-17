@@ -36,6 +36,18 @@ const isResumeValue = (answer: unknown): boolean =>
 /** One pending-question answer within a multi-interrupt resume. */
 export interface ResumeAnswer { questionId: string; value: string | string[] }
 /** W11 scoped graph-interrupt resume: one validated value, optional targeting question id, or every pending answer at once. */
+/** Longest operator message the runtime accepts (P10c); the console shows the same limit. */
+export const INSTANCE_MESSAGE_MAX_CHARS = 2000;
+/** P10c: an operator message to one running dispatch instance. The message id is the client's idempotency key. */
+export function parseInstanceMessage(raw: unknown): { messageId: string; body: string } {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw) || Object.keys(raw).some(k => k !== 'messageId' && k !== 'body')) throw invalid();
+  const value = raw as Record<string, unknown>;
+  if (typeof value.messageId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/.test(value.messageId)) throw invalid();
+  if (typeof value.body !== 'string') throw invalid();
+  const text = value.body.trim();
+  if (text.length === 0 || text.length > INSTANCE_MESSAGE_MAX_CHARS) throw invalid();
+  return { messageId: value.messageId, body: text };
+}
 export function parseResumeCreate(raw: unknown): { requestId: string; value: string | string[]; questionId: string | null; answers?: ResumeAnswer[]; intent: { value: string | string[]; questionId: string | null; answers?: ResumeAnswer[] } } {
   const value = body(raw, ['requestId', 'value', 'questionId', 'answers']);
   const parseAnswer = (entry: unknown): ResumeAnswer | null => {
