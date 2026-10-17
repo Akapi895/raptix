@@ -282,7 +282,7 @@ describe('mounted tasks inbox (services/Query only)', () => {
     await screen.findByText(/All \(4\)/)
     act(() => { useProjectStore.getState().setPid('RT-2026-009') })
     expect(await screen.findByText("You're all caught up")).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Back to Command Center' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Back to System Overview' })).toBeEnabled()
     h.view.unmount()
   })
 

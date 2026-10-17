@@ -43,7 +43,7 @@ describe('shell chrome (every route group)', () => {
   it('keeps the 768/1024/1280/1440 breakpoint classes on the sidebar, header and overlay surfaces', async () => {
     mountApp('#/command-center')
     signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     // Sidebar: desktop rail from lg, mobile drawer below lg.
     const rail = screen.getByRole('complementary')
     expect(rail.className).toContain('hidden')
@@ -158,7 +158,7 @@ describe('operation live workspace (operations group)', () => {
   it('uses the wide layout, collapse-at-xl panes and wrapped strips; the dock scrolls its console', async () => {
     mountApp('#/command-center')
     signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     act(() => { go('operation', { id: 'OP-014', tab: 'live' }) })
     const steps = await screen.findByRole('list', { name: 'Operation steps' })
     for (const cls of ['grid-cols-2', 'sm:grid-cols-3', 'lg:grid-cols-4', '2xl:grid-cols-6']) expect(steps.className).toContain(cls)
