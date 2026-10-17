@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { TimelineService } from '../src/services/timeline-service.js';
 import type { PrismaClient } from '../src/generated/prisma/client.js';
+import { ProjectPolicyError } from '../src/security/project-policy.js';
 
 const THREADS = { engagementId: 'eng-1', source: 'runtime' as const, threads: [{ threadId: 'good' }, { threadId: 'stale' }] };
 
 function conflict(): Error {
-  return Object.assign(new Error('Runtime ownership or request intent conflicts with persisted state'), { statusCode: 409 });
+  return new ProjectPolicyError('conflict', 'Runtime ownership or request intent conflicts with persisted state');
 }
 
 function service(opts: { listRuns: (thread: string) => Promise<unknown>; snapshot: (thread: string) => Promise<unknown> }): TimelineService {
