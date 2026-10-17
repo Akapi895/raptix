@@ -580,7 +580,7 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 - Sau các sửa trên: build contracts OK, typecheck server OK, typecheck UI OK.
 - Test chưa chạy. Theo yêu cầu, test chạy sau khi các phase được implement xong.
 
-### 13.3 Tiến độ theo phase (cập nhật sau lượt triển khai này)
+### 13.3 Tiến độ theo phase (lượt đầu; các dòng P00, P08, P10 và mục 13.5 đã được đính chính ở 13.15)
 
 | Phase | Trạng thái | Bằng chứng / ghi chú |
 |---|---|---|
@@ -636,7 +636,7 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 - UI (vitest): 12 file, 141 test, pass (findings, reports, capture/finding session, transport, report editor).
 - Migration: áp dụng sạch lên DB test. `migrate diff` không báo drift cho bảng mới; có drift có sẵn từ trước ở các FK cũ và default `createdAt` (không thuộc phạm vi này).
 
-### 13.5 Lệch khỏi plan đã biết
+### 13.5 Lệch khỏi plan đã biết (mục readiness đã được đính chính ở 13.15)
 
 - DTO report vẫn nằm ở `apps/web/src/real/api.ts`, chưa chuyển vào `apps/shared/web-contracts` như §5.2 yêu cầu. Lý do: report chưa có consumer shared; chuyển khi P08.
 - Readiness chưa có check "scope/source version" vì DB chưa lưu scope window. Mục này ghi là chưa có, không báo pass.
@@ -735,3 +735,30 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
   - DB `raptix_web_raptix` vẫn còn trên postgres của stack gốc như bản sao lưu; chưa xóa.
   - `WEB_RUNTIME_IMAGE_TAG=stable` thay cho `web-m1` để web runtime có các sửa layout và planner.
   - Stack web vẫn dùng chung `raptix-web-p05-final-db` là DB riêng, không liên quan tới runtime.
+
+### 13.15 Đối chiếu trạng thái và đính chính ledger (2026-10-17, đêm)
+
+Đối chiếu với code và bằng chứng đã chạy. Các dòng cũ ở 13.3 và 13.5 được thay bằng bảng dưới đây.
+
+| Phase | Trạng thái | Bằng chứng | Còn thiếu |
+|---|---|---|---|
+| P00 | Một phần | ADR-0087/0088 Accepted; D01–D08 ghi nhận | Không có inventory 55 key và dirty-file ledger cho lượt này (đính chính: không phải "Xong") |
+| P01 | Xong (evidence) | `EvidenceUploadInput` có bytes; transport binary kiểm SHA-256 | Test abort và late-ACK chưa xác nhận |
+| P02 | Có code, gate pass | Migration `20261022`; gate `p02-p05` | A01 cần artifact runtime thật |
+| P03 | Có code, gate pass | Route captures và attach | Retry sau lỗi trên browser |
+| P04 | Có code | Tải bản gốc, kiểm digest | Tamper, traversal, mất quyền trên browser |
+| P05 | Có code, gate pass | Trường impact/recommendation/scope; bốn mắt; retest rule | Vòng đầy đủ hai actor trên browser; `finding.auditTrail`, `finding.reportLink` |
+| P06 | Backend + API + panel setup, gate pass | Template có version; snapshot; readiness server | Live hai browser (A07); `report.projectInfo` |
+| P07 | Một phần | Acknowledgement tách biệt, idempotent | PDF/DOCX hoãn theo quyết định người yêu cầu (D05) |
+| P08 | Xong (code) | `RealReportsPanel`, `RealFindingsPanel` đã xóa; project và standalone dùng chung | 8 mục `REAL_CONTROL_GAPS` còn lại |
+| P09 | Một phần | Assets (`59b8694`), Library (`a222392`) | Team/Settings, Scope/ROE, Closure, Vault/Audit/Notices, Analysis, Planning/Governance, Inventory vẫn real panel |
+| P10 | Chỉ P10a | Tài liệu audit instance runtime | Roster, inbox, outbox, control API chưa có |
+| P11 | Chưa | Không có pause intent, checkpoint pause, step control | Cần D07 |
+| P12 | Chưa | C2/Operations real panel còn nguyên | Cần P11 cho lifecycle |
+| P13 | Chưa | — | Sau các phase trên |
+
+Đính chính: mục 13.5 ghi readiness "chưa có scope version vì DB chưa lưu scope window". Sai: scope revisions đã lưu windows, contacts và restrictions, và `scope/effective` trả về version. Phần còn lại vẫn đúng: PDF/DOCX là exclusion có tên.
+
+Trạng thái 8 control gap: `finding.evidenceLink`, `finding.reportLink`, `finding.reportInclusion`, `finding.auditTrail`, `evidence.original` và `evidence.integrity` (legacy), `report.pdfDocx`, `report.projectInfo`. Ba mục có backend nhưng chưa nối UI: `finding.auditTrail`, `finding.reportInclusion`, `report.projectInfo`.
+
+Phạm vi của lượt tiếp theo: hoàn thiện M-B bằng bằng chứng (A01–A07 trên browser và runtime thật) và đóng các gap có backend. P09, P12, P10 là các việc tiếp theo theo yêu cầu của người yêu cầu. D05 (PDF/DOCX) tạm hoãn đến khi xong P09, P12 và P10.
