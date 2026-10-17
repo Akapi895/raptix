@@ -1,25 +1,21 @@
 /**
- * Real audit panel (integration ticket 16). Projects the engagement's
- * authoritative audit records — web workflow entries plus the vault
- * lifecycle — with the attribution the records actually carry. Vault rows
- * have no actor; they render "not recorded" instead of a fabricated name.
+ * Engagement audit panel (plan P09, Vault/Audit slice). Projects the
+ * engagement's authoritative audit records, web workflow entries plus the vault
+ * lifecycle, with the attribution the records carry. Vault rows have no actor
+ * and render "not recorded" instead of a fabricated name.
  */
-import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { ScrollText } from 'lucide-react'
-import { fetchEngagementAudit } from '../api'
-import { useMemberLabels } from '../member-labels'
-import { AuditTable } from './settings'
+import { useMemberLabels } from '../../real/member-labels'
+import { AuditTable } from '../../real/screens/settings'
 import { Button, Card, CardHeader, Empty, Input, Skeleton } from '../../ui'
+import { useAuditRead } from './query'
 
-export function RealAuditPanel({ engagementId }: { engagementId: string }): ReactElement {
+export function AuditPanel({ engagementId }: { engagementId: string }): ReactElement {
   const [action, setAction] = useState('')
   const [q, setQ] = useState('')
   const memberLabel = useMemberLabels(engagementId)
-  const audit = useQuery({
-    queryKey: ['real', 'engagement-audit', engagementId, action, q],
-    queryFn: () => fetchEngagementAudit(engagementId, { action: action || undefined, q: q || undefined }),
-  })
+  const audit = useAuditRead({ action: action || undefined, q: q || undefined })
   return (
     <Card>
       <CardHeader title="Audit" sub="Consequential actions on this engagement, recorded server-side with actor, scope, reason and timestamp" />

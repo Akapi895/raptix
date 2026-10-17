@@ -24,7 +24,7 @@ import { RealC2Panel } from './c2-panel'
 import { RealFleetPanel } from './fleet-panel'
 import { RealAnalysisPanel } from './analysis-panel'
 import { RealVaultPanel } from './vault-panel'
-import { RealAuditPanel } from './audit-panel'
+import { AuditPanel } from '../../features/audit/panel'
 import { RealClosurePanel } from './closure-panel'
 import { ProjectSettingsPanel } from './project-settings-panel'
 import { go, useRoute } from '../../router/navigate'
@@ -91,7 +91,7 @@ export function RealProjectDetail(): ReactElement {
         meta={<Status kind="project" value={data.lifecycleStatus} size="sm" />}
       />}
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <ScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}>{ProjectReports ? <ProjectReports /> : null}</Suspense> : tab === 'vault' ? <RealVaultPanel key={data.id} engagementId={data.id} /> : tab === 'audit' ? <RealAuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={sectionTitle(tab)} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <RealAnalysisPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <ScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}>{ProjectReports ? <ProjectReports /> : null}</Suspense> : tab === 'vault' ? <RealVaultPanel key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <RealClosurePanel engagementId={data.id} /> : <NotYetIntegrated label={sectionTitle(tab)} />}
       </div>
     </>
   )

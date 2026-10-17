@@ -30,6 +30,7 @@ export interface CapabilitiesResponse {
     readonly planning: CapabilityState;
     readonly assets: CapabilityState;
     readonly scope: CapabilityState;
+    readonly audit: CapabilityState;
     readonly threads: CapabilityState;
     readonly runs: CapabilityState;
     readonly approvals: CapabilityState;
@@ -141,6 +142,8 @@ export async function buildCapabilitiesResponse(
       assets: projects,
       // Scope revisions and the effective scope are DB-backed and engagement-scoped, like the asset inventory.
       scope: projects,
+      // The engagement audit log is DB-backed and engagement-scoped, like the scope and asset records.
+      audit: projects,
       threads: operations,
       runs: operations,
       approvals,

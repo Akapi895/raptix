@@ -39,6 +39,7 @@ import type { AnalysisService } from '../features/analysis/service'
 import type { SettingsService } from '../features/settings/service'
 import type { AssetService } from '../features/assets/service'
 import { unavailableScopeService, type ScopeService } from '../features/scope/service'
+import { unavailableAuditService, type AuditService } from '../features/audit/service'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
 import type { ResultsService } from '../features/results/service'
@@ -93,7 +94,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -137,6 +138,8 @@ export interface ConsoleServices {
   assets(actor: ActorRef, projectId: string): AssetService
   /** Scope and ROE revisions (plan P09 Scope slice). Real mode only; the mock Scope tab does not read this port. */
   scope(actor: ActorRef, projectId: string): ScopeService
+  /** Engagement audit read (plan P09 Vault/Audit slice). Real mode only; the mock Activity & Audit tab does not read this port. */
+  audit(actor: ActorRef, projectId: string): AuditService
   /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
   workers(actor: ActorRef, projectId: string): WorkerService
   /** Typed notice center handlers (ticket 59 — feature-local implementation). */
@@ -325,6 +328,7 @@ export function createConsoleServices(): ConsoleServices {
     settings: forSettings,
     assets: forAssets,
     scope: () => unavailableScopeService(),
+    audit: () => unavailableAuditService(),
     workers: forWorkers,
     notices: forNotices,
     results: forResults,
