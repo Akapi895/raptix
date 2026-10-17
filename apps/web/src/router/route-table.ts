@@ -21,7 +21,7 @@
 /** Real panel groups `RealFeatureRoute` can compose; each maps to one lazy-loaded panel component. */
 export type PanelGroup =
   | 'operations' | 'governance' | 'fleet' | 'scope'
-  | 'analysis' | 'c2' | 'campaigns' | 'assets'
+  | 'analysis' | 'c2' | 'campaigns'
 
 export interface RouteSurface {
   /** Page title `RealFeatureRoute` renders in the header. */
