@@ -11,6 +11,13 @@ sạch cả hai package. Test xanh không thay thế nghiệm thu browser/DB/run
 
 ---
 
+## 0. Trạng thái cập nhật (2026-10-17)
+
+- **R1** đã có: stream re-attest membership theo mỗi deadline heartbeat (`stream-service.ts`), test `re-attests revoked membership during continuous event traffic` pass. Membership bị thu hồi kết thúc stream bằng `stream_closed` với `recoveryRequired: true`.
+- **R2** đã có: recovery state khóa theo actor (`workspace.tsx` dùng `session.actor.id`, `workspace-session.ts` khóa theo `actorId`), và `clearWorkspaceRecovery()` chạy khi đăng xuất hoặc hết hạn (`login.tsx`).
+- **R3** đã sửa (commit `c19acd7`): cancel lịch nhận `expectedVersion` như reschedule, CAS theo version, test cho version cũ và double cancel.
+- Mục còn mở: quyết định sandbox isolation (ADR-0086, Proposed) và hợp đồng pause/resume/complete cho Execution (chưa có trên runtime).
+
 ## 1. Lỗi source đã tái hiện, **chưa fix**
 
 | # | Mức | Khu vực | Vị trí | Bằng chứng / tái hiện | Ảnh hưởng | Hướng xử lý đề xuất |
