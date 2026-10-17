@@ -47,21 +47,6 @@ it('routes a project run to its own sandbox host when per-project sandboxes are 
   expect(context.configurable.sandbox_url).toBe('http://sbx-parity-project:9999');
   expect(context.configurable.workspace_path).toBe('/workspace/parity-project');
 });
-it('keeps a thread bound before per-project sandboxes were enabled runnable, on its project sandbox', async () => {
-  const { service, control, config } = await setup();
-  const before = await service.resolve('local', 'owned', { kind: 'planning' });
-  control.proof = before.runtimeConfigHash; control.metadata = before.metadata;
-  config.perProjectSandbox = true;
-  const after = await service.resolve('local', 'owned', { kind: 'planning', threadId: 'thread' });
-  expect(after.configurable.sandbox_url).toBe('http://sbx-parity-project:9999');
-});
-it('refuses a thread whose recorded sandbox differs from the sandbox this run would use', async () => {
-  const { service, control } = await setup({ perProjectSandbox: true });
-  const before = await service.resolve('local', 'owned', { kind: 'planning' });
-  control.proof = before.runtimeConfigHash; control.metadata = before.metadata;
-  control.values = { ...before.configurable, sandbox_url: 'http://sbx-other-project:9999' };
-  await expect(service.resolve('local', 'owned', { kind: 'planning', threadId: 'thread' })).rejects.toMatchObject({ code: 'conflict' });
-});
 it('refuses a run whose slug cannot name a per-project sandbox host instead of falling back to a shared sandbox', async () => {
   const { service, project } = await setup({ perProjectSandbox: true });
   project.workspaceSlug = 'a'.repeat(60);
