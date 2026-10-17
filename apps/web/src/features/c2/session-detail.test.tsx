@@ -111,7 +111,7 @@ describe('session detail route (ticket 47)', () => {
     const ev = mountSession('#/c2-session/SS-041')
     await waitFor(() => expect(screen.getByText('Session identity')).toBeInTheDocument())
     fireEvent.click(screen.getAllByText('EV-014-01')[0])
-    await waitFor(() => expect(window.location.hash).toBe('#/evidence/EV-014-01'))
+    await waitFor(() => expect(window.location.hash).toBe('#/evidence/EV-014-01?engagement=RT-2026-014'))
     ev.unmount()
   })
 
