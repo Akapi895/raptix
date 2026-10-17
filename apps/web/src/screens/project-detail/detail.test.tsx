@@ -428,12 +428,12 @@ describe('secondary panels on the typed detail read (ticket 23)', () => {
     mountProject('#/project/RT-2026-014?tab=findings')
     await screen.findByText('Internal Red Team Q4')
     fireEvent.click(await screen.findByText('FD-011'))
-    await waitFor(() => expect(window.location.hash).toBe('#/finding/FD-011'))
+    await waitFor(() => expect(window.location.hash).toBe('#/finding/FD-011?engagement=RT-2026-014'))
 
     mountProject('#/project/RT-2026-014?tab=reports')
     await screen.findByText('Internal Red Team Q4')
     fireEvent.click(await screen.findByText('REP-014'))
-    await waitFor(() => expect(window.location.hash).toBe('#/report/REP-014'))
+    await waitFor(() => expect(window.location.hash).toBe('#/report/REP-014?engagement=RT-2026-014'))
 
     mountProject('#/project/RT-2026-014?tab=sessions')
     await screen.findByText('Internal Red Team Q4')
