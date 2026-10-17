@@ -40,7 +40,6 @@ func TestRenderComposeMountsOnlyTheProjectSubpathAndIsolatesIt(t *testing.T) {
 		"target: /workspace/lab-a",
 		"subpath: lab-a",
 		"RAPTIX_ENGAGEMENT: 'lab-a'",
-		"RAPTIX_WORKSPACE_ISOLATED: '1'",
 		"cap_drop: [ALL]",
 		"no-new-privileges:true",
 		"name: raptix-web-raptix_web_runtime_workspace",

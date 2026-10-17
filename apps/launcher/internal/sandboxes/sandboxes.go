@@ -79,7 +79,6 @@ services:
     environment:
       SANDBOX_DAEMON: '1'
       RAPTIX_ENGAGEMENT: '{{.Slug}}'
-      RAPTIX_WORKSPACE_ISOLATED: '1'
       RAPTIX_ENGAGEMENT_WORKSPACE: ''
       NEO4J_URI: bolt://neo4j:7687
       NEO4J_USER: neo4j

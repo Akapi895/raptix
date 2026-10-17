@@ -60,7 +60,7 @@ def test_ensure_normalizes_traversal_to_root_then_fences() -> None:
             headers={"Authorization": "Bearer t"},
         )
     assert resp.status_code == 403
-    assert "isolated" in resp.json()["detail"]
+    assert "/workspace/lab-01" in resp.json()["detail"]
 
 
 def test_ensure_fences_other_engagement_when_slug_set() -> None:
@@ -75,7 +75,7 @@ def test_ensure_fences_other_engagement_when_slug_set() -> None:
             headers={"Authorization": "Bearer t"},
         )
     assert resp.status_code == 403
-    assert "isolated" in resp.json()["detail"]
+    assert "outside engagement 'lab-01'" in resp.json()["detail"]
 
 
 def test_ensure_fences_shared_root_when_slug_set() -> None:
@@ -92,19 +92,19 @@ def test_ensure_fences_shared_root_when_slug_set() -> None:
     assert resp.status_code == 403
 
 
-def test_ensure_allows_subpaths_of_the_isolated_mount(fs_stub) -> None:
+def test_ensure_allows_subpaths_of_the_engagement_workspace(fs_stub) -> None:
     backend = _make_backend()
     with (
         _client(backend, token="t") as client,
-        patch.dict("os.environ", {"RAPTIX_ENGAGEMENT": "lab-01", "RAPTIX_WORKSPACE_ISOLATED": "1"}),
+        patch.dict("os.environ", {"RAPTIX_ENGAGEMENT": "lab-01"}),
     ):
         resp = client.post(
             "/workspace/ensure",
-            json={"path": "/workspace/output"},
+            json={"path": "/workspace/lab-01/output"},
             headers={"Authorization": "Bearer t"},
         )
     assert resp.status_code == 200
-    assert resp.json() == {"path": "/workspace/output", "created": True}
+    assert resp.json() == {"path": "/workspace/lab-01/output", "created": True}
 
 
 def test_ensure_without_slug_serves_any_valid_workspace(fs_stub) -> None:

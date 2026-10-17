@@ -309,7 +309,7 @@ def get_sandbox(config: RunnableConfig | None = None) -> HTTPSandbox | None:
 
 
 def _engagement_fence(workspace_path: str) -> str:
-    """A named engagement requires the operator's isolated /workspace mount."""
+    """A named engagement's workspace is /workspace/<slug>; nothing outside it is reachable."""
     slug = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
     if not slug:
         return workspace_path
@@ -319,15 +319,11 @@ def _engagement_fence(workspace_path: str) -> str:
             "bash tools refuse to resolve a workspace without a fenced subtree. "
             "Set RAPTIX_ENGAGEMENT to a [A-Za-z0-9][A-Za-z0-9._-]{0,127} slug."
         )
-    if os.environ.get("RAPTIX_WORKSPACE_ISOLATED") != "1":
+    root = f"/workspace/{slug}"
+    if workspace_path != root and not workspace_path.startswith(f"{root}/"):
         raise RuntimeError(
-            f"engagement {slug!r} requires an isolated workspace bind mount; "
-            "recreate the stack with RAPTIX_ENGAGEMENT_WORKSPACE set to its host directory"
-        )
-    if workspace_path != "/workspace":
-        raise RuntimeError(
-            f"workspace {workspace_path!r} is outside engagement {slug!r}'s runtime root; "
-            "the engagement is mounted at /workspace. Set workspace_path=/workspace."
+            f"workspace {workspace_path!r} is outside engagement {slug!r}; "
+            f"its workspace is {root}. Set workspace_path={root}."
         )
     return workspace_path
 
@@ -354,8 +350,6 @@ def _raw_workspace_path_from_config(config: RunnableConfig | None) -> str:
 
     env_slug = os.environ.get("RAPTIX_ENGAGEMENT")
     if env_slug:
-        if os.environ.get("RAPTIX_WORKSPACE_ISOLATED") == "1":
-            return "/workspace"
         normalized = SandboxBase._normalize_workspace_path(f"/workspace/{env_slug}")
         if normalized != "/workspace":
             return normalized

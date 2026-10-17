@@ -10,7 +10,7 @@
   },
   "configurable": {
     "engagement_name": "parity-project",
-    "workspace_path": "/workspace",
+    "workspace_path": "/workspace/parity-project",
     "target_value": "https://authorized.invalid",
     "target_type": "web_url",
     "authorization_confirmed": true
@@ -20,7 +20,7 @@
     "hydrateSourceHash": "856d7f01ad8e285dd748d775156f3111664f5bf7562082d20b3c4e9c2db08ac6",
     "fresh": {
       "engagement_name": "parity-project",
-      "workspace_path": "/workspace",
+      "workspace_path": "/workspace/parity-project",
       "target_type": "web_url",
       "target_value": "https://authorized.invalid",
       "authorization_confirmed": true
