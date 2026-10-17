@@ -1,8 +1,10 @@
 /** Global resource navigation without pretending scoped APIs are aggregate sources. */
 import type { ReactElement } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchOverviewC2, fetchOverviewFindings } from '../api'
 import { useRealProjects } from '../queries'
 import { go, useRoute } from '../../router/navigate'
-import { Button, Card, CardHeader, PageHeader, Tabs } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList, PageHeader, Skeleton, Tabs } from '../../ui'
 
 const SURFACES: Record<string, { title: string; tab: string; gap: string }> = {
   findings: { title: 'Findings', tab: 'findings', gap: 'A cross-project finding list is not integrated. The overview rollup is a count, not a finding inventory.' },
@@ -12,6 +14,51 @@ const SURFACES: Record<string, { title: string; tab: string; gap: string }> = {
   infrastructure: { title: 'Infrastructure', tab: 'fleet', gap: 'Global execution-agent inventory, C2 infrastructure and live session monitoring are not integrated. Durable command audit counts are available in System Overview.' },
   agents: { title: 'Infrastructure', tab: 'fleet', gap: 'Global execution-agent inventory is not integrated. Project fleet observations are available separately.' },
   c2: { title: 'Infrastructure', tab: 'c2', gap: 'Global live C2 sessions are not integrated. Open the owning project for provider-backed session data.' },
+}
+
+/** Counts across the authorized projects, from the same overview reads the System Overview uses. */
+function FindingsRollup(): ReactElement {
+  const findings = useQuery({ queryKey: ['real', 'overview', 'findings'], queryFn: () => fetchOverviewFindings(), refetchInterval: 60_000 })
+  return (
+    <Card>
+      <CardHeader title="Findings across your projects" sub="Counts only; open a project for its finding list." />
+      <div className="p-4">
+        {findings.isPending ? <Skeleton className="h-16" /> : findings.isError ? (
+          <Banner tone="warn" title="Findings rollup unavailable">{findings.error instanceof Error ? findings.error.message : 'The rollup could not be read.'} No substitute counts are shown.</Banner>
+        ) : (
+          <div className="space-y-3">
+            {findings.data.truncated && <Banner tone="warn" title="Rollup truncated">The server scanned its row cap; these counts are a lower bound.</Banner>}
+            <DescList items={[
+              { k: 'Findings', v: String(findings.data.total) },
+              { k: 'Projects with findings', v: `${findings.data.engagementsWithFindings} of ${findings.data.engagements}` },
+              { k: 'By severity', v: Object.entries(findings.data.bySeverity).map(([k, v]) => `${k} ${v}`).join(' · ') || 'None' },
+              { k: 'By status', v: Object.entries(findings.data.byStatus).map(([k, v]) => `${k} ${v}`).join(' · ') || 'None' },
+            ]} />
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+/** Durable C2 command audit and pending grants across the authorized projects. Live sessions stay per project. */
+function C2Rollup(): ReactElement {
+  const c2 = useQuery({ queryKey: ['real', 'overview', 'c2'], queryFn: () => fetchOverviewC2(), refetchInterval: 60_000 })
+  return (
+    <Card>
+      <CardHeader title="C2 command audit across your projects" sub="Durable command records and pending grants; live sessions are read per project." />
+      <div className="p-4">
+        {c2.isPending ? <Skeleton className="h-16" /> : c2.isError ? (
+          <Banner tone="warn" title="C2 rollup unavailable">{c2.error instanceof Error ? c2.error.message : 'The rollup could not be read.'} No substitute counts are shown.</Banner>
+        ) : (
+          <DescList items={[
+            { k: 'Pending grants', v: String(c2.data.pendingGrants) },
+            { k: 'Commands by status', v: Object.entries(c2.data.commandsByStatus).map(([k, v]) => `${k} ${v}`).join(' · ') || 'None recorded' },
+          ]} />
+        )}
+      </div>
+    </Card>
+  )
 }
 
 export function RealGlobalResource(): ReactElement {
@@ -24,6 +71,8 @@ export function RealGlobalResource(): ReactElement {
   return <div className="space-y-4">
     <PageHeader title={surface.title} sub="Across the projects your account is authorized to access." />
     {infrastructure && <Tabs value={tab} onChange={(next) => go('infrastructure', { tab: next })} tabs={[{ id: 'agents', label: 'Execution agents' }, { id: 'c2', label: 'C2 infrastructure' }, { id: 'sessions', label: 'Sessions' }]} />}
+    {route.page === 'findings' && <FindingsRollup />}
+    {infrastructure && <C2Rollup />}
     <Card>
       <CardHeader title="Global source unavailable" />
       <p className="p-4 text-sm text-muted" role="status">{surface.gap} No demo records or zero counts are substituted.</p>
