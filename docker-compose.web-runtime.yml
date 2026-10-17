@@ -99,6 +99,7 @@ volumes:
   web_runtime_state:
 
 networks:
+  # The web stack's own sandbox network. Its per-project sandboxes (sbx-<slug>) join
+  # the same network through RAPTIX_SANDBOX_NETWORK, which the launcher reads too.
   sandbox-net:
-    external: true
-    name: ${RAPTIX_SANDBOX_NETWORK:-raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}_sandbox-net}
+    name: ${RAPTIX_SANDBOX_NETWORK:-raptix_web_sandbox-net}

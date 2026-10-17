@@ -1,13 +1,48 @@
-# New-stack deployment (W16 cutover): web-raptix UI + API only.
-# This file deliberately contains NO legacy `web` (Next.js) service — the
-# cutover acceptance is "new deployed stack + legacy service stopped".
-# PostgreSQL / Neo4j / LangGraph / workspace keep running from the base
-# docker-compose.yml (data and identities preserved); this file only adds the
-# two new services on the same network and a dedicated database, so the
-# rollback window can restore the old stack with `docker start raptix-web`.
+# Web stack (W16 cutover). The UI and API run here together with their own
+# PostgreSQL, Neo4j, Skillogy and LiteLLM. Each stack owns one set of infra, so the
+# web stack's data, graph and LLM proxy never reach the lab stack's, and the reverse.
+# The services below reuse the base definitions from docker-compose.yml; only the
+# container name, network, volumes and published ports are changed here.
 name: raptix-web-raptix
 
 services:
+  postgres:
+    extends:
+      file: docker-compose.yml
+      service: postgres
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-postgres
+    networks: !override [raptix-net]
+    ports: !reset []
+    volumes: !override
+      - web_postgres_data:/var/lib/postgresql/data
+
+  neo4j:
+    extends:
+      file: docker-compose.yml
+      service: neo4j
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-neo4j
+    networks: !override [raptix-net]
+    ports: !reset []
+    volumes: !override
+      - web_neo4j_data:/data
+      - web_neo4j_logs:/logs
+
+  skillogy:
+    extends:
+      file: docker-compose.yml
+      service: skillogy
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-skillogy
+    networks: !override [raptix-net]
+    ports: !reset []
+
+  litellm:
+    extends:
+      file: docker-compose.yml
+      service: litellm
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-litellm
+    networks: !override [raptix-net]
+    ports: !reset []
+
   web-raptix-api:
     image: ghcr.io/akapi895/raptix-web-raptix-api:${RAPTIX_VERSION:-stable}
     build:
@@ -21,8 +56,7 @@ services:
     environment:
       - PORT=8081
       - HOST=0.0.0.0
-      # Dedicated new-stack database (own migration history; legacy `raptix_web`
-      # data is never touched). Created by `make webraptix-db-ensure`.
+      # The web stack's own database on its own postgres (migrations are its own).
       - DATABASE_URL=postgresql://raptix:${POSTGRES_PASSWORD:-raptix}@postgres:5432/raptix_web_raptix
       - WORKSPACE_PATH=/workspace
       - RAPTIX_RUNTIME_WORKSPACE_ROOT=/workspace
@@ -62,11 +96,13 @@ services:
     restart: unless-stopped
 
 volumes:
-  workspace_data:
-    external: true
-    name: ${RAPTIX_WORKSPACE_VOLUME:-raptix_workspace_data}
+  web_postgres_data:
+    name: raptix_web_postgres_data
+  web_neo4j_data:
+    name: raptix_web_neo4j_data
+  web_neo4j_logs:
+    name: raptix_web_neo4j_logs
 
 networks:
   raptix-net:
-    external: true
-    name: ${RAPTIX_NETWORK:-raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}_raptix-net}
+    name: ${RAPTIX_NETWORK:-raptix_web_raptix-net}
