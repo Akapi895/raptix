@@ -47,6 +47,8 @@ import { unavailablePlanningService, type PlanningService } from '../features/pl
 import { unavailableGovernanceService, type GovernanceService } from '../features/governance/service'
 import { unavailableC2ProviderService, type C2ProviderService } from '../features/c2/provider'
 import { unavailableRuntimeOperationsService, type RuntimeOperationsService } from '../features/operations/runtime'
+import type { NoticeCenterService } from '../features/notices/center'
+import { createMockNoticeCenter } from '../features/notices/center-mock'
 import type { ObservedAnalysisService } from '../features/analysis/observed'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
@@ -102,7 +104,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider' | 'runtimeOperations'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider' | 'runtimeOperations' | 'noticeCenter'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -168,6 +170,8 @@ export interface ConsoleServices {
   workers(actor: ActorRef, projectId: string): WorkerService
   /** Typed notice center handlers (ticket 59 — feature-local implementation). */
   notices(actor: ActorRef, projectId: string): NoticeService
+  /** The header notification center (plan P09 Notices slice): the mock adapter presents its notices, the real adapter reads the API. */
+  noticeCenter(actor: ActorRef, projectId: string): NoticeCenterService
   /** Typed operation results + execution graph read (ticket 30 — feature-local implementation). */
   results(actor: ActorRef, projectId: string): ResultsService
   /** Typed tool-event trace reads with boundary-derived facets (ticket 41 — feature-local implementation). */
@@ -370,6 +374,7 @@ export function createConsoleServices(): ConsoleServices {
     governance: () => unavailableGovernanceService(),
     c2Provider: () => unavailableC2ProviderService(),
     runtimeOperations: () => unavailableRuntimeOperationsService(),
+    noticeCenter: (actor, projectId) => createMockNoticeCenter(forNotices(actor, projectId)),
     audit: () => unavailableAuditService(),
     workers: forWorkers,
     notices: forNotices,

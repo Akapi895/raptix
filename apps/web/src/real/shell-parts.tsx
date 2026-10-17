@@ -13,7 +13,7 @@ import { useActiveProject } from '../state/console'
 import { useProjectStore, useThemeStore, useUiStore } from '../state/stores'
 import { REAL_IDENTITY } from './bootstrap'
 import { useSession } from './session'
-import { RealHeaderNotices } from './screens/notices-bell'
+import { HeaderNotices } from '../features/notices/header-notices'
 import { RealSearch } from './screens/search'
 import { switchDataMode } from './mode'
 import { ProjectSwitcher } from '../shell/project-switcher'
@@ -74,7 +74,7 @@ export function RealTopbar({ openMobile }: { openMobile: () => void }): ReactEle
       <RealSearch />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {pid !== 'all' && <Button onClick={() => setCopilotOpen(true)}>Ask AI</Button>}
-        <RealHeaderNotices />
+        <HeaderNotices />
         <RealProfileMenu />
       </div>
     </header>

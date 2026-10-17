@@ -15,8 +15,8 @@ import { useToastStore, useUiStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
 import { go } from '../../router/navigate'
 import { Button, IconButton, cx } from '../../ui'
-import { useNotices, useNoticeMutations } from './query'
-import { NOTICE_CHIPS, type NoticeChip } from './service'
+import { useNoticeCenterRead, useNoticeCenterWrites } from './center-query'
+import { NOTICE_CHIPS } from './service'
 
 export function HeaderNotices() {
   const noticesOpen = useUiStore((s) => s.noticesOpen)
@@ -25,10 +25,10 @@ export function HeaderNotices() {
   const me = useMe()
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
-  const notices = useNotices()
-  const { setRead, dismiss, markAllRead } = useNoticeMutations()
+  const notices = useNoticeCenterRead()
+  const { setRead, dismiss, markAllRead } = useNoticeCenterWrites()
   const [tab, setTab] = useState<'unread' | 'all'>('unread')
-  const [chip, setChip] = useState<NoticeChip | ''>('')
+  const [chip, setChip] = useState<string>('')
 
   const items = notices.data?.items ?? []
   const unread = notices.data?.unread ?? 0
@@ -36,7 +36,7 @@ export function HeaderNotices() {
   const list = items.filter((n) => (tab === 'all' || !n.read) && (!chip || n.chip === chip))
 
   const toggle = () => { if (!noticesOpen) setCopilotOpen(false); setNoticesOpen(!noticesOpen) }
-  const open = (n: (typeof items)[number]) => { setNoticesOpen(false); go(n.to.name, { id: n.to.id }) }
+  const open = (n: (typeof items)[number]) => { if (n.target === null) return; setNoticesOpen(false); go(n.target.page, { id: n.target.id }) }
   const fail = (r: { ok: boolean; failure?: { message: string } }) => { if (!r.ok && r.failure) toast(r.failure.message, 'warn') }
 
   const onToggleRead = async (id: string, read: boolean) => fail(await setRead.mutateAsync({ id, read }))
@@ -71,11 +71,13 @@ export function HeaderNotices() {
                 <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cx('h-9 border-b-2 px-3 text-xs font-medium', tab === id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg')}>{l}</button>
               ))}
             </div>
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              {NOTICE_CHIPS.map((c) => (
-                <button key={c} aria-pressed={chip === c} onClick={() => setChip(chip === c ? '' : c)} className={cx('h-7 rounded-full border px-2.5 text-xs font-medium', chip === c ? 'border-accent-line bg-accent-soft text-accent' : 'border-line text-muted hover:bg-hover')}>{c}</button>
-              ))}
-            </div>
+            {items.some((n) => n.chip !== null) && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {NOTICE_CHIPS.map((c) => (
+                  <button key={c} aria-pressed={chip === c} onClick={() => setChip(chip === c ? '' : c)} className={cx('h-7 rounded-full border px-2.5 text-xs font-medium', chip === c ? 'border-accent-line bg-accent-soft text-accent' : 'border-line text-muted hover:bg-hover')}>{c}</button>
+                ))}
+              </div>
+            )}
             <div className="no-scrollbar max-h-[340px] overflow-y-auto">
               {notices.isLoading ? (
                 <div className="py-10 text-center text-sm text-muted" role="status" aria-busy="true" data-testid="notice-loading">Loading notifications…</div>
@@ -86,7 +88,7 @@ export function HeaderNotices() {
               ) : list.map((n) => (
                 <div key={n.id} data-testid={`notice-row-${n.id}`} className="flex items-start gap-3 rounded-[10px] px-3 py-2.5 hover:bg-hover">
                   <span className={cx('mt-1.5 h-2 w-2 shrink-0 rounded-full', n.read ? 'bg-transparent' : 'bg-accent')} aria-label={n.read ? 'Read' : 'Unread'} />
-                  <div className="min-w-0 flex-1"><div className="text-sm">{n.text}</div><div className="mt-0.5 text-xs text-muted">{n.chip} · {n.projectId || 'System'} · {n.at}</div></div>
+                  <div className="min-w-0 flex-1"><div className="text-sm">{n.text}</div><div className="mt-0.5 text-xs text-muted">{n.chip ?? 'Notice'} · {n.projectId ?? 'System'} · {n.at}</div></div>
                   <div className="flex shrink-0 items-center gap-1">
                     <IconButton
                       icon={n.read ? Mail : MailOpen}
@@ -99,7 +101,7 @@ export function HeaderNotices() {
                       disabled={!canMutate}
                       onClick={() => onDismiss(n)}
                     />
-                    <Button size="sm" variant={n.group === 'todo' ? 'primary' : 'secondary'} onClick={() => open(n)}>{n.group === 'todo' ? 'Review' : 'Open'}</Button>
+                    <Button size="sm" variant={n.needsReview ? 'primary' : 'secondary'} disabled={n.target === null} title={n.target === null ? 'This notice names no route' : undefined} onClick={() => open(n)}>{n.needsReview ? 'Review' : 'Open'}</Button>
                   </div>
                 </div>
               ))}
