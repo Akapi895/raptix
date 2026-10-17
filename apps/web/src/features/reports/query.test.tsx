@@ -291,7 +291,7 @@ describe('navigation writes through the router (ticket 34)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create Draft/ }))
     await waitFor(() => expect(currentRoute().page).toBe('report'), { timeout: 3000 })
     const created = view.db().reports[0]
-    expect(window.location.hash).toBe(`#/report/${encodeURIComponent(created.id)}`)
+    expect(window.location.hash).toBe(`#/report/${encodeURIComponent(created.id)}?engagement=RT-2026-014`)
     expect(navigate).toHaveBeenCalled()
     view.unmount()
     setActiveRouter(null)
