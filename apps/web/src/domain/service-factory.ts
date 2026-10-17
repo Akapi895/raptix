@@ -38,7 +38,7 @@ import type { LibraryService } from '../features/library/service'
 import type { AnalysisService } from '../features/analysis/service'
 import type { SettingsService } from '../features/settings/service'
 import type { AssetService } from '../features/assets/service'
-import { unavailableScopeService, type ScopeService } from '../features/scope/service'
+import type { ScopeService } from '../features/scope/service'
 import { unavailableAuditService, type AuditService } from '../features/audit/service'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
@@ -136,7 +136,7 @@ export interface ConsoleServices {
   settings(actor: ActorRef, projectId: string): SettingsService
   /** Typed asset catalog/detail + scope-classification reads (ticket 50 — feature-local implementation). */
   assets(actor: ActorRef, projectId: string): AssetService
-  /** Scope and ROE revisions (plan P09 Scope slice). Real mode only; the mock Scope tab does not read this port. */
+  /** Scope and ROE revisions (plan P09 Scope slice): the mock adapter maps approval records, the real adapter reads the API. */
   scope(actor: ActorRef, projectId: string): ScopeService
   /** Engagement audit read (plan P09 Vault/Audit slice). Real mode only; the mock Activity & Audit tab does not read this port. */
   audit(actor: ActorRef, projectId: string): AuditService
@@ -268,6 +268,8 @@ export function createConsoleServices(): ConsoleServices {
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/analysis/service').then((m) => m.createAnalysisService(authority, guard)))
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/settings/service').then((m) => m.createSettingsService(authority, clock, guard)))
+  const forRoeScope = (actor: ActorRef, projectId: string): ScopeService =>
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/scope/mock').then((m) => m.createMockScopeService(authority, clock, guard)))
   const forAssets = (actor: ActorRef, projectId: string): AssetService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/assets/service').then((m) => m.createAssetService(authority, clock, guard)))
   const forWorkers = (actor: ActorRef, projectId: string): WorkerService =>
@@ -327,7 +329,7 @@ export function createConsoleServices(): ConsoleServices {
     analysis: forAnalysis,
     settings: forSettings,
     assets: forAssets,
-    scope: () => unavailableScopeService(),
+    scope: forRoeScope,
     audit: () => unavailableAuditService(),
     workers: forWorkers,
     notices: forNotices,
