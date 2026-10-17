@@ -5,6 +5,7 @@ import type { ReportService } from '../../features/reports/service'
 import type { LibraryService } from '../../features/library/service'
 import { unavailableScopeService } from '../../features/scope/service'
 import { unavailableAuditService } from '../../features/audit/service'
+import { unavailableTeamService } from '../../features/team/service'
 import { capabilityState, type CapabilitiesDocument } from '../api'
 import { createRealAssetService } from './assets'
 import { createRealFindingService } from './findings'
@@ -12,6 +13,7 @@ import { createRealLibraryService } from './library'
 import { createRealReportService } from './reports'
 import { createRealAuditService } from './audit'
 import { createRealScopeService } from './scope'
+import { createRealTeamService } from './team'
 import { notIntegratedService } from './stub'
 
 /**
@@ -57,6 +59,11 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableAuditService()
-  return { findings, reports, assets, library, scope, audit }
-
+  const team: FeatureServices['team'] = supported('projects')
+    ? (() => {
+        const service = createRealTeamService()
+        return () => service
+      })()
+    : () => unavailableTeamService()
+  return { findings, reports, assets, library, scope, audit, team }
 }
