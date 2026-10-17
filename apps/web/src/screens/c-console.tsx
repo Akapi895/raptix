@@ -9,8 +9,7 @@ import { useSessionStore, type LogLine } from '../state/session'
 import { hhmm, stamp } from '../domain/demo-clock'
 import { recordAudit } from '../features/audit/service'
 import { preflightPass } from '../features/operations/preflight'
-import { readOperationMeta, readOperationPreflight, useOperationView } from '../features/operations/views'
-import { completeOperation, pauseOperation, resumeOperation, stopOperation } from '../features/operations/service'
+import { readOperationMeta, useOperationView } from '../features/operations/views'
 import { fastForward, loseAgent, restoreAgent } from '../features/demo/runtime'
 import { useSessionPerm } from '../features/c2/projection'
 import { useStopRead } from '../features/estop/projection'
@@ -103,29 +102,30 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
   const entryCtx = (projectId: string) => ({ actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' })
   const pushLog = (opId: string, line: Omit<LogLine, 'id' | 'ts'>) =>
     useSessionStore.getState().pushLog(opId, line, hhmm() + ':' + pad(new Date().getSeconds()))
-  const pauseOp = (opId: string, reason: string) => {
+  const opsFor = (projectId: string) => services.operations({ id: me.name, role: me.role }, projectId)
+  const pauseOp = async (opId: string, reason: string) => {
     const meta = readOperationMeta(services, opId)
     if (!meta) return
-    const res = pauseOperation(services.authority, services.clock, entryCtx(meta.projectId), opId, reason)
+    const res = await opsFor(meta.projectId).pause(entryCtx(meta.projectId), opId, reason)
     if (res.ok) pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` })
   }
-  const resumeOp = (opId: string) => {
+  const resumeOp = async (opId: string) => {
     const meta = readOperationMeta(services, opId)
     if (!meta) return { ok: false, error: 'Operation not found.' }
-    const res = resumeOperation(services.authority, services.clock, entryCtx(meta.projectId), opId)
+    const res = await opsFor(meta.projectId).resume(entryCtx(meta.projectId), opId)
     if (!res.ok) return { ok: false, error: res.failure.message }
     pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: `Operation resumed by ${me.name}` })
     return { ok: true }
   }
-  const stopOp = (opId: string, reason: string) => {
+  const stopOp = async (opId: string, reason: string) => {
     const meta = readOperationMeta(services, opId)
     if (!meta) return
-    stopOperation(services.authority, services.clock, entryCtx(meta.projectId), opId, reason)
+    await opsFor(meta.projectId).stop(entryCtx(meta.projectId), opId, reason)
   }
-  const completeOp = (opId: string) => {
+  const completeOp = async (opId: string) => {
     const meta = readOperationMeta(services, opId)
     if (!meta) return { ok: false, error: 'Operation not found.' }
-    const res = completeOperation(services.authority, services.clock, entryCtx(meta.projectId), opId)
+    const res = await opsFor(meta.projectId).complete(entryCtx(meta.projectId), opId)
     if (!res.ok) return { ok: false, error: res.failure.message }
     pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation completed' })
     return { ok: true }
@@ -135,10 +135,12 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     title: `Pause ${op.id}?`,
     body: <div className="space-y-2"><p>No new steps are dispatched until you resume. Steps already running finish or time out; progress does not advance while paused.</p><ul className="list-disc space-y-0.5 pl-5 text-muted"><li>{c.running} running step(s) finish first</li><li>{c.pending + c.review} queued or review step(s) wait</li><li>{sessions.length} linked session(s) stay connected, read-only</li></ul><p className="text-muted">The action is audited.</p></div>,
     confirmLabel: 'Pause operation', reasonLabel: 'Reason for pausing', reasonRequired: true,
-    onConfirm: (r) => { pauseOp(op.id, r); toast('Operation paused.', 'warn') },
+    onConfirm: async (r) => { await pauseOp(op.id, r); toast('Operation paused.', 'warn') },
   })
-  const resume = () => {
-    const checks = readOperationPreflight(services, op, services.clock.now())
+  const resume = async () => {
+    const read = await opsFor(op.projectId).preflightChecks(entryCtx(op.projectId), op.id)
+    if (!read.ok) { onError(read.failure.message); return }
+    const checks = read.data
     const rows: [string, boolean, string][] = [
       ['ROE', p.roeStatus === 'approved', `ROE ${p.roeVersion} is ${p.roeStatus}`],
       ['Permissions', allowed, allowed ? 'You may run operations' : 'Your role cannot run operations'],
@@ -150,9 +152,9 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
       title: `Resume ${op.id}?`,
       body: <div className="space-y-2"><p>Before resuming, the system rechecks:</p><ul className="space-y-1">{rows.map(([k, ok, d]) => <li key={k} className="flex items-start gap-2">{ok ? <CheckCircle2 size={14} className="mt-0.5 text-ok" aria-hidden /> : <XCircle size={14} className="mt-0.5 text-bad" aria-hidden />}<span><b>{k}</b> — {d}</span></li>)}</ul>{!okAll && <p className="text-bad">Resume is blocked until every check passes.</p>}</div>,
       confirmLabel: okAll ? 'Resume operation' : 'Recheck blocked — close',
-      onConfirm: () => {
+      onConfirm: async () => {
         if (!okAll) { const msg = `Cannot resume: ${rows.filter((r) => !r[1]).map((r) => r[0]).concat(checks.filter((x) => x.state !== 'pass').map((x) => x.label)).join('; ') || 'preflight re-evaluation failed'}.`; onError(msg); toast('Resume blocked by recheck.', 'bad'); return }
-        const r = resumeOp(op.id)
+        const r = await resumeOp(op.id)
         if (r.ok) { onError(''); toast('Rechecks passed. Operation resumed.') } else { onError(r.error || 'Cannot resume.'); toast(r.error || 'Cannot resume.', 'bad') }
       },
     })
@@ -162,9 +164,9 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     body: <div className="space-y-2"><p>A graceful stop. The operation moves to <b>Stopping</b>, then <b>Stopped</b>, and cannot be resumed.</p>
       <ul className="list-disc space-y-0.5 pl-5 text-muted"><li>{c.running} running step(s) become “Unknown”</li><li>{c.pending + c.review} queued step(s) become “Not run”</li><li>{sessions.length} linked session(s) are terminated</li></ul><p className="text-muted">Results so far are kept as partial results. Audited.</p></div>,
     confirmLabel: 'Stop operation', danger: true, reasonLabel: 'Reason for stopping', reasonRequired: true,
-    onConfirm: (r) => { setStopping(true); onError(''); toast('Stop requested. Stopping…', 'warn'); setTimeout(() => { stopOp(op.id, r); setStopping(false); toast('Operation stopped.', 'warn') }, 1400) },
+    onConfirm: (r) => { setStopping(true); onError(''); toast('Stop requested. Stopping…', 'warn'); setTimeout(async () => { await stopOp(op.id, r); setStopping(false); toast('Operation stopped.', 'warn') }, 1400) },
   })
-  const complete = () => { const r = completeOp(op.id); if (r.ok) { onError(''); toast('Operation completed.'); go('operation', { id: op.id, tab: 'results' }) } else { onError(r.error || ''); toast(r.error || 'Cannot complete.', 'bad') } }
+  const complete = async () => { const r = await completeOp(op.id); if (r.ok) { onError(''); toast('Operation completed.'); go('operation', { id: op.id, tab: 'results' }) } else { onError(r.error || ''); toast(r.error || 'Cannot complete.', 'bad') } }
   const G = ({ ok, w, children }: { ok: boolean; w: string; children: React.ReactNode }) => <Gated allowed={allowed && ok} reason={!allowed ? why : w}>{children}</Gated>
   return (
     <div className="flex flex-wrap items-center gap-2">

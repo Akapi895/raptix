@@ -307,7 +307,7 @@ export function createConsoleServices(): ConsoleServices {
   const forTrace = (actor: ActorRef, projectId: string): TraceService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/trace/service').then((m) => m.createTraceService(authority, clock, guard)))
   const forC2 = (actor: ActorRef, projectId: string): C2Service =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/c2/service').then((m) => m.createC2Service(authority, guard)))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/c2/service').then((m) => m.createC2Service(authority, clock, guard)))
   const grants = createGrantLifecycle(authority, clock, scheduler)
 
   const cancelScope = (actor: ActorRef, projectId: string) => {

@@ -22,7 +22,7 @@ import { parseDemoInstant } from '../../domain/clock'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Asset, Audit, C2Node, Channel, Session, SessionPerm, SessionRequest, SessionState } from '../../domain/entities'
-import type { Instant, RequestContext, ServiceResult } from '../../domain/service'
+import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 
 /* ───────────── Access derivation (connection ≠ permission) ───────────── */
 
@@ -36,6 +36,10 @@ export type C2Perm = 'none' | 'read-only' | 'interactive'
    initial load; the rule itself is unchanged. */
 export { sessionPermOf } from './session-perm'
 import { sessionPermOf } from './session-perm'
+import {
+  expireGrantTransaction, requestSessionAccessTransaction, revokeGrantTransaction, sessionCommandTransaction,
+  type GrantExpiryOutcome, type GrantRequestInput, type GrantRequestOutcome, type GrantRevokeInput, type GrantRevokeOutcome, type SessionCommandInput, type SessionCommandOutcome,
+} from './grants'
 
 /* Ticket 67 enabler C: the demo wall-clock label is hosted by the canonical
    projection (src/domain/demo-clock.ts — one T0 anchor shared with the
@@ -203,6 +207,12 @@ export interface C2Service {
   channel(ctx: RequestContext, id: string): Promise<ServiceResult<C2ChannelDetailRead>>
   /** One session with its linked panels (scoped, masked per viewSensitive). */
   session(ctx: RequestContext, id: string): Promise<ServiceResult<C2SessionDetailRead>>
+  /** Requests a time-limited grant on a session; the transaction checks scope, duration and reason. */
+  requestAccess(ctx: RequestContext, input: GrantRequestInput): Promise<ServiceResult<GrantRequestOutcome>>
+  revokeGrant(ctx: RequestContext, input: GrantRevokeInput): Promise<ServiceResult<GrantRevokeOutcome>>
+  sendCommand(ctx: RequestContext, input: SessionCommandInput): Promise<ServiceResult<SessionCommandOutcome>>
+  /** Idempotent single-grant expiry for one user on one session. */
+  expireGrant(ctx: RequestContext, sessionId: string, user: string): Promise<ServiceResult<GrantExpiryOutcome>>
 }
 
 /* ───────────── Shared scoping (matches the legacy seam) ───────────── */
@@ -430,6 +440,7 @@ export function getGrantWatch(db: Db, ctx: RequestContext): ServiceResult<C2Gran
 /** Builds the typed C2 read service; `guard` is the factory's superseded-scope read guard. */
 export function createC2Service(
   authority: DbAuthority,
+  clock: Clock,
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ): C2Service {
   return {
@@ -439,5 +450,9 @@ export function createC2Service(
     audit: (ctx, query) => guard(() => listAudit(authority.snapshot(), ctx, query)),
     channel: (ctx, id) => guard(() => getChannel(authority.snapshot(), ctx, id)),
     session: (ctx, id) => guard(() => getSessionDetail(authority.snapshot(), ctx, id)),
+    requestAccess: (ctx, input) => Promise.resolve(requestSessionAccessTransaction(authority, clock, ctx, input)),
+    revokeGrant: (ctx, input) => Promise.resolve(revokeGrantTransaction(authority, clock, ctx, input)),
+    sendCommand: (ctx, input) => Promise.resolve(sessionCommandTransaction(authority, clock, ctx, input)),
+    expireGrant: (ctx, sessionId, user) => Promise.resolve(expireGrantTransaction(authority, clock, ctx.corr, sessionId, user)),
   }
 }
