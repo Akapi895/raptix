@@ -238,6 +238,6 @@ describe('login screen stays wired through the auth actions', () => {
     fireEvent.click(screen.getByRole('button', { name: /Pat Kim/ }))
     expect(screen.getByTestId('probe').textContent).toBe('true:Pat Kim')
     expect(useAuthStore.getState().meName).toBe('Pat Kim')
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
   })
 })

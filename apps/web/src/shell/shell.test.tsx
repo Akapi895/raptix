@@ -225,7 +225,8 @@ describe('emergency stop and emergency contact controls', () => {
     await screen.findAllByText('RT-2026-014')
     act(() => { selectProject('RT-2026-014') })
     await screen.findByRole('button', { name: /Emergency Stop/ })
-    expect(screen.queryByRole('button', { name: /Emergency contact/ })).not.toBeInTheDocument()
+    // The readiness checklist row is a legitimate body element; the header must carry no contact chip.
+    expect(within(screen.getByRole('banner')).queryByRole('button', { name: /Emergency contact/ })).not.toBeInTheDocument()
     act(() => { go('project', { id: 'RT-2026-014', tab: 'scope' }) })
     expect(await screen.findByText('Emergency contact')).toBeInTheDocument()
     expect(screen.getAllByText(/Robin Vale — \+1 \(555\) 010-0014/).length).toBeGreaterThan(0)
