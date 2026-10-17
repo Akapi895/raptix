@@ -41,6 +41,7 @@ function readClosure(db: Db, ctx: RequestContext): ServiceResult<ClosureRead> {
       record,
       readOnly: project.status === 'closed' || project.status === 'cancelled',
       canRequest: canRequest && eligible,
+      requestBlockReason: evaluateCloseChecklist(db, project.id).some((c) => !c.ok) ? 'Resolve the blockers first' : null,
       requestReason: !canRequest ? 'Only a Red Team Manager can request project closure.' : !eligible ? `The project is “${project.status}”, so closure cannot be requested yet.` : null,
       canDecide,
       decideReason: pending && !canDecide ? (pending.by === ctx.actor.id ? 'The requester cannot confirm their own request.' : 'Only a Reviewer or Admin can confirm the closure request.') : null,

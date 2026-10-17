@@ -109,18 +109,22 @@ export function ClosureTab({ engagementId, summary, extraActions }: { engagement
           <div className="p-4 text-sm text-muted">{extraActions ?? 'Closed engagements take no new actions here.'}</div>
         ) : (
           <div className="space-y-4 p-4">
+            {!pending && view.requestBlockReason && failing.length > 0 && (
+              <div className="text-sm"><p className="mb-2 font-medium text-bad">Closure is blocked. Resolve these first:</p><ul className="list-disc pl-5 text-muted">{failing.map((i) => <li key={i.id}>{i.label}</li>)}</ul></div>
+            )}
             {!pending && (
               <form className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) request.mutate() }}>
                 <label className="grid gap-1 text-xs text-muted" htmlFor="closure-reason">
                   Reason (audited, required)
                   <Input id="closure-reason" required value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this engagement is complete" />
                 </label>
-                <Button type="submit" variant="primary" icon={CheckCircle2} disabled={busy || !reason.trim() || !view.canRequest} title={view.canRequest ? undefined : view.requestReason ?? undefined}>
+                <Button type="submit" variant="primary" icon={CheckCircle2} disabled={busy || !reason.trim() || !view.canRequest || !!view.requestBlockReason} title={view.canRequest ? view.requestBlockReason ?? undefined : view.requestReason ?? undefined}>
                   Request closure
                 </Button>
               </form>
             )}
             {!pending && !view.canRequest && view.requestReason && <p className="text-xs text-muted">{view.requestReason}</p>}
+            {!pending && view.canRequest && view.requestBlockReason && failing.length === 0 && <p className="text-xs text-muted">{view.requestBlockReason}</p>}
             {!pending && view.waivedChecklist !== null && failing.length > 0 && (
               <Check checked={waive} onChange={setWaive} label="Approved no-findings closure: no confirmed findings; documented in the reason instead of a delivered report" />
             )}
