@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 from typing import Annotated, Any
 
+from langchain_core.messages import ToolMessage
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.config import get_config, get_stream_writer
+from pydantic import ValidationError
 
 from raptix_core.types.engagement import (
     CONOPS,
@@ -32,27 +34,50 @@ _PLANNING_DOCUMENTS = {
 }
 
 
+def _schema_issues(error: ValidationError) -> list[str]:
+    """One line per schema error: the field path, the rule, and the value that broke it."""
+    issues = []
+    for item in error.errors(include_url=False):
+        location = ".".join(str(part) for part in item["loc"]) or "(document)"
+        value = item.get("input")
+        shown = f" (got {value!r})" if isinstance(value, str) and len(value) <= 60 else ""
+        issues.append(f"{location}: {item['msg']}{shown}")
+    return issues
+
+
 def validate_planning_bundle(
     workspace: str | Path,
     *,
     target_value: str = "",
     authorization_confirmed: bool | None = None,
 ) -> str | None:
-    """Return a failure reason unless the eight-document planner bundle is ready."""
+    """Return every reason the eight-document planner bundle is not ready, or None.
+
+    All documents are checked before returning, so the planner can fix the whole
+    bundle in one pass instead of one error per handoff attempt.
+    """
     if authorization_confirmed is False:
         return "Authorization is not confirmed; do not hand off the engagement."
 
     root = Path(workspace)
     documents: dict[str, Any] = {}
+    problems: list[str] = []
     for filename, model in _PLANNING_DOCUMENTS.items():
         path = root / "plan" / filename
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-            documents[filename] = model.model_validate(payload)
         except FileNotFoundError:
-            return f"Missing required planning document: plan/{filename}."
-        except (json.JSONDecodeError, ValueError) as exc:
-            return f"Invalid planning document plan/{filename}: {exc}"
+            problems.append(f"plan/{filename}: missing; write this document")
+            continue
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            problems.append(f"plan/{filename}: not valid JSON ({exc})")
+            continue
+        try:
+            documents[filename] = model.model_validate(payload)
+        except ValidationError as exc:
+            problems.extend(f"plan/{filename}: {issue}" for issue in _schema_issues(exc))
+    if problems:
+        return "\n".join(problems)
 
     names = {document.engagement_name.strip() for document in documents.values()}
     if len(names) != 1 or not next(iter(names), ""):
@@ -107,7 +132,17 @@ def complete_engagement_planning(
         authorization_confirmed=authorization_confirmed,
     )
     if failure:
-        return f"Planning handoff blocked: {failure}"
+        # An error status, not text: the planner's loop sees the block as a failed call
+        # and gets the full list of what to fix.
+        return ToolMessage(
+            content=(
+                "Planning handoff blocked. The engagement was not handed to Raptix. "
+                "Fix each item below in the named file, then call this tool again:\n"
+                f"{failure}"
+            ),
+            tool_call_id=tool_call_id or "",
+            status="error",
+        )
     writer = _safe_writer()
     if writer is not None:
         writer(
