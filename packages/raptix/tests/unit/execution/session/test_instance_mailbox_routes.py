@@ -64,3 +64,11 @@ def test_an_oversized_body_is_refused_before_anything_is_stored(client):
     )
     assert response.status_code == 409 and response.json()["reason"] == "message_too_large"
     assert client.get("/_raptix/instances/thread-1/disp-1").json()["messages"] == []
+
+
+def test_the_thread_listing_names_running_attempts_for_the_roster(client):
+    listing = client.get("/_raptix/threads/thread-1/instances").json()
+    assert listing["threadId"] == "thread-1"
+    assert [(row["dispatchId"], row["attempt"], row["state"]) for row in listing["instances"]] == [
+        ("disp-1", 1, "running")
+    ]

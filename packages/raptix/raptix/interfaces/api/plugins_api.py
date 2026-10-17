@@ -340,6 +340,29 @@ def get_instance(
     }
 
 
+@app.get("/_raptix/threads/{thread_id}/instances")
+def list_thread_instances(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+) -> dict:
+    """Every dispatch attempt the mailbox recorded on a thread, running ones included (roster, P10)."""
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    return {
+        "threadId": thread_id,
+        "instances": [
+            {
+                "dispatchId": row.dispatch_id,
+                "attempt": row.attempt,
+                "role": row.role,
+                "state": row.state,
+                "startedAt": row.started_at,
+                "finishedAt": row.finished_at,
+            }
+            for _, row in default_mailbox().list_instances(thread_id)
+        ],
+    }
+
+
 def _message_view(message) -> dict | None:
     if message is None:
         return None
