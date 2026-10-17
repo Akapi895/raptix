@@ -812,3 +812,29 @@ Hạn chế đã biết:
 Kiểm chứng: `tsc` sạch; các nhóm test findings, reports, router, real, c2, screens chạy riêng đều pass.
 
 Trạng thái sau lượt này: M-B hoàn tất bước 1 và 2 trừ ba quyết định mở ở trên. P09, P12, P10 chưa bắt đầu; D05 vẫn hoãn.
+
+### 13.17 Viewer, toàn vẹn capture, P09 Scope và P10b (2026-10-17, rất khuya)
+
+Theo yêu cầu: khóa viewer với bản gốc (sửa server và ADR cùng lúc); chọn mã lỗi cho capture bị sửa; bắt đầu P09 và P10.
+
+**Viewer không đọc bản gốc (`129ce9b`).** ADR-0087 quyết định 2 đổi: viewer không đọc bản gốc, kể cả capture standard. Server trả 403 cho standard và 404 cho sensitive (như cũ, để không lộ sự tồn tại). `canReadOriginal` là false với viewer. Capture có bytes không khớp digest trả 409 thay vì 503, vì thử lại không sửa được dữ liệu đã lưu (ADR mục 2a). Test `findings-artifacts`: 11 pass, có thêm test viewer và test sửa bytes. Chưa kiểm viewer trên browser; API đã kiểm.
+
+**P09 Scope/ROE (`2f38fdb`).** Port `ScopeService` trong `features/scope` (đọc revisions và effective scope; submit; decide), adapter thật trong `real/service-adapter/scope.ts`, panel dùng chung `features/scope/panel.tsx`. `RealScopePanel` đã xóa. Capability `scope` được server quảng bá. Mock không dùng port: tab Scope của mock vẫn đọc mock store, vì nó còn phụ thuộc operations và plans chưa có port.
+- Live API: viewer submit → 403; người gửi tự duyệt → 403; reviewer duyệt → 200; effective scope chuyển sang v2.
+- Browser: owner submit từ form → hiện pending và "Awaiting an independent reviewer", không có nút Approve; reviewer bấm Approve → v3 approved, v2 superseded, khớp với server.
+- Đổi nhỏ: placeholder "Removed targets" không còn lấy từ inventory (feature layer không gọi api trực tiếp).
+- Test: 188 pass (`features/scope`, adapter, router, real screens); tsc và eslint sạch.
+
+**P10b roster (`5526cb6`, `1d5ac89`).** Runtime: mỗi dòng dispatch ledger có thêm `role`. Dòng cũ không có role và hiển thị là null, không suy từ transcript (transcript không có `dispatch_id`). Test mới: `test_ledger_row_names_the_role_that_owns_the_dispatch`; 31 test dispatch pass; ruff sạch. Server: `GET /api/engagements/:id/instances` đọc `dispatch_ledger` của state LangGraph ở mỗi thread gắn với engagement. Thread không đọc được được ghi là unavailable, không hiển thị là rỗng.
+- Live: 10 thread đọc được; có instance legacy role null; có outcome `failed` ở attempt 2 (giá trị gốc của runtime); không đăng nhập → 401.
+- Test: 3 file, 16 test pass; tsc server sạch.
+
+Chưa làm và cần bước tiếp theo:
+- P10b R6 (durability): chưa restart `raptix-langgraph` để kiểm roster còn sau restart.
+- P10b: chưa có dispatch mới để xác nhận dòng mới có role; cần chạy một agent thật.
+- Ledger chỉ giữ attempt mới nhất của mỗi dispatch (`merge_dispatch_ledger`). Lịch sử attempt cũ không có trong roster; P10d cần thêm nơi lưu lịch sử.
+- P10b chưa có UI; P10e làm sau.
+- P10c vẫn blocked theo R3 (chưa có safe-point để giao tin nhắn cho child đang chạy).
+- P09 còn lại: Team/Settings, Vault/Audit/Notices, Closure, Analysis, Planning/Governance, Inventory, và tab Scope của mock.
+- P11 cần D07. P12 cần P11 cho lifecycle. P13 sau cùng.
+- D05 (PDF/DOCX) vẫn hoãn.
