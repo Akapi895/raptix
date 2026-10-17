@@ -54,7 +54,7 @@ function lightAssumingOutsidePaper() {
 
 /* One representative surface per route group (router manifest slices). */
 const SWEEP: { hash: string; see: () => Promise<unknown>; auth?: boolean }[] = [
-  { hash: '#/command-center', see: () => screen.findByRole('heading', { name: /command center/i }) },
+  { hash: '#/command-center', see: () => screen.findByRole('heading', { name: /system overview/i }) },
   { hash: '#/projects', see: () => screen.findByRole('table') },
   { hash: '#/project/RT-2026-014', see: () => screen.findByRole('tab', { name: 'Overview' }) },
   { hash: '#/operation/OP-014?tab=live', see: () => screen.findByRole('list', { name: 'Operation steps' }) },
@@ -117,7 +117,7 @@ describe('charts and the always-dark console', () => {
   it('maps the dashboard severity chart to --c-* tokens with no hex colors', async () => {
     mountApp('#/command-center')
     signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     act(() => { useThemeStore.getState().setTheme('dark') })
     const high = screen.getByText('High').closest('li')!
     expect(high.firstElementChild!.getAttribute('style')).toContain('var(--c-orange)')
@@ -131,7 +131,7 @@ describe('charts and the always-dark console', () => {
   it('keeps the operation dock fixed-dark and registers its accent tokens', async () => {
     mountApp('#/command-center')
     signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     act(() => { go('operation', { id: 'OP-014', tab: 'live' }) })
     await screen.findByRole('list', { name: 'Operation steps' })
     act(() => { useThemeStore.getState().setTheme('dark') })
@@ -154,7 +154,7 @@ describe('theme toggle, persistence and reset across consumers', () => {
   it('header and settings write the same store; provider remount restores light', async () => {
     mountApp('#/command-center')
     signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     // Header consumer (account menu segmented control).
     fireEvent.click(screen.getByRole('button', { name: 'Account menu' }))
     const menu = screen.getByRole('menu')
@@ -179,7 +179,7 @@ describe('theme toggle, persistence and reset across consumers', () => {
     window.location.hash = ''
     mountApp('#/command-center')
     signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
 })

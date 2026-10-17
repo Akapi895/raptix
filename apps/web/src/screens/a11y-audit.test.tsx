@@ -80,7 +80,7 @@ describe('accessible names on the real settings route', () => {
   it('Theme and Table-density segmented options keep their own names inside the wrapping labels', async () => {
     mountApp('#/command-center')
     await signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     act(() => { go('settings', { tab: 'notifications' }) })
     await screen.findByText('Notification preferences')
     const theme = screen.getByText('Theme').closest('label')!
@@ -97,7 +97,7 @@ describe('announcements and state (shell)', () => {
   it('announces each route change once through a single polite region and stays silent on same-page tab changes', async () => {
     mountApp('#/command-center')
     await signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     expect(screen.getAllByTestId('route-announcer')).toHaveLength(1)
     const announcer = screen.getByTestId('route-announcer')
     expect(announcer).toHaveTextContent('Navigated to Command Center')
@@ -114,7 +114,7 @@ describe('announcements and state (shell)', () => {
   it('keeps the shared toast region as one polite live region next to the route announcer', async () => {
     mountApp('#/command-center')
     await signIn()
-    await screen.findByRole('heading', { name: /command center/i })
+    await screen.findByRole('heading', { name: /system overview/i })
     // One announcer; the toast container is a single fixed polite region.
     // (The migrated notice center contributes its own status region — ticket 59.)
     expect(screen.getAllByTestId('route-announcer')).toHaveLength(1)
