@@ -16,7 +16,7 @@ import { Button, Card, CardHeader, Empty, Skeleton } from '../../ui'
  * is not registered on this deployment (no Neo4j), which is an honest
  * "not available", not a missing page. Other failures keep their server message.
  */
-export function describeAnalysisError(error: unknown): string {
+function describeAnalysisError(error: unknown): string {
   if (error instanceof ApiTransportError && error.code === 'not_found') {
     return 'Analysis is not available on this server: the knowledge graph is not configured here.'
   }
