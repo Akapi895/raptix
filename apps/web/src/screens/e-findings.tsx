@@ -915,7 +915,8 @@ function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: bool
               return (
                 <li key={e.ref} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5">
                   <div className="min-w-0 flex-1"><div className="truncate text-sm"><Mono className="text-accent">{e.ref}</Mono> {e.masked ? 'Capture name restricted' : e.name}</div><div className="text-xs text-muted">{e.kind} · {e.source}{e.classification ? ` · ${e.classification}` : ''}{other ? ` · linked to ${e.findingId}` : ''}</div></div>
-                  {unclassified && e.canClassify ? <Button size="sm" onClick={() => { setClassifying(e); setAttach(false) }}>Classify</Button> : unclassified ? <span className="text-xs text-muted">Awaiting owner/reviewer</span> : <Button size="sm" disabled={other || inaccessible || !canAdd} title={other ? `Already linked to ${e.findingId}` : inaccessible ? 'Classification restricts original access to owner/reviewer.' : !canAdd ? why : undefined} onClick={() => { void link(e.captureId ?? e.ref) }}>Link</Button>}
+                  {unclassified && e.canClassify ? <Button size="sm" onClick={() => { setClassifying(e); setAttach(false) }}>Classify</Button> : null}
+                  <Button size="sm" disabled={other || inaccessible || !canAdd} title={other ? `Already linked to ${e.findingId}` : inaccessible ? 'Classification restricts original access to owner/reviewer.' : !canAdd ? why : unclassified ? 'Linked now; original bytes stay locked until an owner or reviewer classifies the capture.' : undefined} onClick={() => { void link(e.captureId ?? e.ref) }}>Link</Button>
                 </li>
               )
             })}
@@ -1004,7 +1005,7 @@ function RealCaptureUploadModal({ open, onClose, f, onUploaded }: { open: boolea
       pending.current = null
       clearCaptureRequest(deploymentId, actorId, f.projectId, fingerprint)
       if (fileInput.current) fileInput.current.value = ''
-      toast(`Capture ${result.data.id} retained as unclassified. An owner or reviewer must classify it before linking or reading the bytes.`)
+      toast(`Capture ${result.data.id} retained as unclassified. You can link it now; original bytes stay locked until an owner or reviewer classifies it.`)
       onUploaded()
       onClose()
     } catch (reason) {

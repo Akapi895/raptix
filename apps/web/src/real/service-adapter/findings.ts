@@ -414,7 +414,7 @@ export function createRealFindingService(): FindingService {
       const captures = await fetchRetainedCaptures(ctx.projectId)
       const capture = captures.captures.find((item) => item.id === evidenceId)
       if (!capture) return unsupportedControl<Finding>('finding.evidenceLink')
-      if (capture.classification === 'unclassified') return { ok: false, failure: { kind: 'conflict', message: 'An owner or reviewer must classify this capture before it can be attached to a finding.' } }
+      // An unclassified capture can be linked; its original bytes stay locked on the server until an owner or reviewer classifies it.
       await attachEvidenceApi(ctx.projectId, findingId, { kind: 'artifact', captureId: capture.id, expectedVersion: await versions.expected(ctx.projectId, findingId) })
       const finding = await readCurated(ctx.projectId, findingId)
       versions.observe(finding)
