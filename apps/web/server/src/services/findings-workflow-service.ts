@@ -424,7 +424,7 @@ export class FindingsWorkflowService {
     let producer = typeof body.producer === 'string' ? body.producer : null;
     if (captureId !== null) {
       if (kind !== 'artifact' || !this.artifacts?.captureById) throw new ProjectApiError(503, 'Retained capture lookup is unavailable.');
-      const capture = await this.artifacts.captureById(actorId, engagementId, captureId);
+      const capture = await this.artifacts.captureById(actorId, engagementId, captureId, { requireReadable: false });
       artifactPath = capture.path;
       digest = capture.digest;
       producer = capture.producer;
@@ -432,7 +432,8 @@ export class FindingsWorkflowService {
       if (existing !== null) return this.toEvidenceView(existing);
     }
     if (row.expectedVersion !== expectedVersion) throw new ProjectApiError(409, `Concurrent edit: the finding moved to version ${row.expectedVersion} while you attached evidence at version ${expectedVersion}. Reload and reapply.`);
-    if (kind === 'artifact') {
+    // A retained capture was already resolved and integrity-checked above; only a bare workspace path is retained here.
+    if (kind === 'artifact' && captureId === null) {
       if (!this.artifacts) throw new ProjectApiError(503, 'The retained artifact authority is unavailable.');
       const capture = await this.artifacts.capture(actorId, engagementId, artifactPath!);
       if (digest !== null && digest !== capture.digest) throw new ProjectApiError(409, 'The claimed digest does not match the retained capture bytes.');
