@@ -5,6 +5,8 @@ import { isProjectSlug } from '../security/project-policy.js';
 export interface RuntimeConfig {
   apiUrl: string; workspaceRoot: string; pinnedSlug?: string
   assistants: readonly string[]; language?: string; sandboxUrl?: string
+  /** ADR-0086 A: each project's runs go to that project's own sandbox (`sbx-<slug>`). */
+  perProjectSandbox: boolean
 }
 function url(value: string): string {
   try {
@@ -26,5 +28,7 @@ export function loadRuntimeConfig(source: NodeJS.ProcessEnv): RuntimeConfig | un
   if (!assistants.length || assistants.some(a => !/^[a-z][a-z0-9_-]{0,63}$/.test(a))) throw new EnvValidationError(['Invalid RAPTIX_RUNTIME_ASSISTANTS allowlist']);
   const language = source.RAPTIX_RUNTIME_LANGUAGE;
   if (language !== undefined && !/^[a-z]{2}$/.test(language)) throw new EnvValidationError(['RAPTIX_RUNTIME_LANGUAGE must be a two-letter language code']);
-  return { apiUrl: url(source.LANGGRAPH_API_URL), workspaceRoot: root, assistants: [...new Set(assistants)], ...(pinnedSlug === undefined ? {} : { pinnedSlug }), ...(language === undefined ? {} : { language }), ...(source.RAPTIX_RUNTIME_SANDBOX_URL === undefined ? {} : { sandboxUrl: url(source.RAPTIX_RUNTIME_SANDBOX_URL) }) };
+  const perProject = source.RAPTIX_SANDBOX_PER_PROJECT ?? '0';
+  if (perProject !== '0' && perProject !== '1') throw new EnvValidationError(['RAPTIX_SANDBOX_PER_PROJECT must be 0 or 1']);
+  return { apiUrl: url(source.LANGGRAPH_API_URL), workspaceRoot: root, perProjectSandbox: perProject === '1', assistants: [...new Set(assistants)], ...(pinnedSlug === undefined ? {} : { pinnedSlug }), ...(language === undefined ? {} : { language }), ...(source.RAPTIX_RUNTIME_SANDBOX_URL === undefined ? {} : { sandboxUrl: url(source.RAPTIX_RUNTIME_SANDBOX_URL) }) };
 }

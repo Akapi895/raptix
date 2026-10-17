@@ -7,6 +7,7 @@ import { RuntimeUnavailableError } from '../../integrations/runtime/read-client.
 import { assertProjectTarget, ProjectPolicyError } from '../../security/project-policy.js';
 import { resolveEngagementWorkspaceDir } from '../../security/workspace-policy.js';
 import { requestFingerprint } from '../../security/request-fingerprint.js';
+import { sandboxUrlFor } from './sandbox-routing.js';
 import type { ProjectsService } from '../projects-service.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 
@@ -53,7 +54,7 @@ export class RuntimeContextService {
     const assistantId = bound?.assistantId ?? selection.assistantId ?? (selection.kind === 'planning' ? PLANNING_ASSISTANT : EXECUTION_ASSISTANTS.find(g => graphs.includes(g)));
     if (!assistantId || !graphs.includes(assistantId)) throw new RuntimeUnavailableError();
     if (selection.kind === 'planning' && assistantId !== 'soundwave' || selection.kind === 'execution' && assistantId === 'soundwave') throw mismatch();
-    const configurable = { engagement_name: project.workspaceSlug, workspace_path: config.pinnedSlug ? config.workspaceRoot : path.posix.join(config.workspaceRoot, project.workspaceSlug), target_type: project.targetType, target_value: project.targetValue, authorization_confirmed: project.authorizationConfirmed, ...(config.language ? { language: config.language } : {}), ...(config.sandboxUrl ? { sandbox_url: config.sandboxUrl } : {}) };
+    const configurable = { engagement_name: project.workspaceSlug, workspace_path: config.pinnedSlug ? config.workspaceRoot : path.posix.join(config.workspaceRoot, project.workspaceSlug), target_type: project.targetType, target_value: project.targetValue, authorization_confirmed: project.authorizationConfirmed, ...(config.language ? { language: config.language } : {}), ...(config.perProjectSandbox ? { sandbox_url: sandboxUrlFor(project.workspaceSlug) } : config.sandboxUrl ? { sandbox_url: config.sandboxUrl } : {}) };
     const runtimeConfigHash = requestFingerprint({ engagementId, assistantId, kind: selection.kind, configurable });
     const metadata = { engagement_id: engagementId, workspace_slug: project.workspaceSlug, ui_assistant_id: assistantId, graph_id: assistantId, ui_flow: selection.kind, runtime_context_hash: runtimeConfigHash };
     if (bound) {

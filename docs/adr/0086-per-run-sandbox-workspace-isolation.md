@@ -1,6 +1,6 @@
 # 0086. Per-run workspace isolation replaces the single-engagement sandbox pin
 
-- **Status:** Proposed — option A chosen by the owner (2026-10-17); provisioning mechanism pending
+- **Status:** Accepted — option A (owner decision 2026-10-17). Built in code; deployment pending
 - **Date:** 2026-10-17
 - **Deciders:** pending (project owner)
 - **Related:** ADR-0082 (dedicated web execution plane), ADR-0085 (single-operator planning scope); commit `f4c7a00`
@@ -122,4 +122,26 @@ runs one such sandbox per project instead of one shared sandbox.
    run writes its documents under its own project only.
 
 Until steps 1–5 are done, the `:3001` deployment has no isolation between projects.
+
+## Status of the build (2026-10-17)
+
+- **Routing (built).** `RAPTIX_SANDBOX_PER_PROJECT=1` makes every run send
+  `configurable.sandbox_url = http://sbx-<slug>:9999`
+  (`apps/web/server/src/services/runtime/sandbox-routing.ts`). The flag is off by
+  default, so existing deployments keep their behaviour. A slug that cannot name a
+  DNS host is refused with 409, never sent to a shared sandbox.
+- **Provisioning (built).** `raptix web sandboxes sync` (`apps/launcher`) starts one
+  sandbox per project directory on the workspace volume, mounting only that
+  subpath at `/workspace/<slug>`, and removes sandboxes whose directory is gone.
+  Each sandbox keeps the hardening of the shared `web-sandbox` service.
+- **Verified on this Docker daemon (2026-10-17).** Two sandboxes from the sandbox
+  image, each mounting one volume subpath: each reads its own file, and reads of the
+  other project's file (direct path, `..`, and the `/workspace` listing) all fail.
+  Test resources were removed afterwards. The compose file the launcher renders is
+  accepted by `docker compose config`.
+- **Not yet done.** Deploying the flag and provisioning sandboxes on `:3001` (this
+  needs the owner's approval, since it recreates the API and creates containers on
+  the shared sandbox network); a live planner run on a project that has its own
+  sandbox; and the decision whether the shared `web-sandbox` service is removed once
+  nothing routes to it.
 
