@@ -40,6 +40,15 @@ function report(overrides: Partial<ReportView> = {}): ReportView {
     reviewedAt: '2026-10-15T01:00:00.000Z',
     reviewComment: 'ok',
     approvedVersion: 2,
+    templateId: null,
+    templateVersion: null,
+    period: null,
+    reviewerId: null,
+    parentReportId: null,
+    rootReportId: null,
+    selectedFindings: [],
+    readiness: { ready: false,
+    checks: [] },
     updatedAt: '2026-10-15T01:00:00.000Z',
     deliveries: [],
     ...overrides,
@@ -58,7 +67,7 @@ beforeEach(() => {
   decideReportReview.mockReset()
   deliverReport.mockReset().mockImplementation(async (_engagement: string, _reportId: string, input: { requestId: string; kind: string; format: string }) => ({
     ...report(),
-    deliveries: [{ id: 'd-1', kind: input.kind, format: 'markdown', status: 'completed', createdAt: '2026-10-15T02:00:00.000Z' }],
+    deliveries: [{ id: 'd-1', kind: input.kind, format: 'markdown', status: 'completed', createdAt: '2026-10-15T02:00:00.000Z', recordedReceipt: null, acknowledgement: null }],
     artifact: { engagementId: 'eng-1', reportId: 'rep-1', version: 2, format: 'markdown', mediaType: 'text/markdown', content: '# Penetration report', digest: 'f'.repeat(64) },
   }))
   exportReport.mockReset()

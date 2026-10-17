@@ -25,13 +25,13 @@ function view(overrides: Partial<import('../api').ReportView> = {}): import('../
     id: 'rep-1', engagementId: 'eng-1', title: 'External assessment', version: 2, status: 'draft',
     body: { summary: 'Scope summary.', sections: [{ title: 'Results', content: 'Two issues.' }, { title: 'Appendix', content: '' }] },
     createdBy: 'user-author', reviewedBy: null, reviewedAt: null, reviewComment: null, approvedVersion: null,
-    updatedAt: '2026-10-14T09:00:00.000Z', deliveries: [],
+    updatedAt: '2026-10-14T09:00:00.000Z', templateId: null, templateVersion: null, period: null, reviewerId: null, parentReportId: null, rootReportId: null, selectedFindings: [], readiness: { ready: false, checks: [] }, deliveries: [],
     ...overrides,
   }
 }
 
 function listOf(...reports: import('../api').ReportView[]) {
-  return { engagementId: 'eng-1', reports, exportFormats: ['json', 'markdown'], source: 'db' as const }
+  return { engagementId: 'eng-1', reports, templates: [], exportFormats: ['json', 'markdown'], source: 'db' as const }
 }
 
 beforeEach(() => {

@@ -47,6 +47,7 @@ function memoryDb() {
       deleteMany: async () => ({ count: 1 }),
     },
     webMembership: {
+      findUnique: async ({ where }: { where: { engagementId_userId: { engagementId: string; userId: string } } }) => find('webMembership', (r) => r.engagementId === where.engagementId_userId.engagementId && r.userId === where.engagementId_userId.userId),
       findFirst: async ({ where }: { where: { engagementId: string; userId: string } }) => find('webMembership', (r) => r.engagementId === where.engagementId && r.userId === where.userId),
       findMany: async () => [...table('webMembership').values()].map((r) => ({ ...r })),
       create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('m') }; table('webMembership').set(String(row.id), row); return { ...row }; },
@@ -56,7 +57,31 @@ function memoryDb() {
     webAuditEntry: {
       create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('a') }; table('webAuditEntry').set(String(row.id), row); return { ...row }; },
     },
+    // P06/P07 models: these lifecycle cases pin no snapshots, templates or acknowledgements.
+    reportTemplate: {
+      findMany: async () => [],
+      findFirst: async ({ where }: { where: { id: string; engagementId: string } }) => where.id === 'TPL-1' && where.engagementId === ENG
+        ? { id: 'TPL-1', engagementId: ENG, name: 'Pentest', version: 1, sections: [], createdBy: 'author', createdAt: new Date() }
+        : null,
+    },
+    reportFindingSnapshot: {
+      findMany: async ({ where }: { where: { reportId: string } }) => [...table('reportFindingSnapshot').values()].filter((r) => r.reportId === where.reportId).map((r) => ({ ...r })),
+      deleteMany: async ({ where }: { where: { reportId: string } }) => { for (const [key, r] of table('reportFindingSnapshot')) if (r.reportId === where.reportId) table('reportFindingSnapshot').delete(key); return { count: 0 }; },
+      createMany: async ({ data }: { data: Row[] }) => { for (const row of data) { const id = seq('s'); table('reportFindingSnapshot').set(id, { ...row, id }); } return { count: data.length }; },
+    },
+    findingRecord: {
+      findMany: async ({ where }: { where: { engagementId: string; id: { in: string[] } } }) => [...table('findingRecord').values()].filter((r) => r.engagementId === where.engagementId && where.id.in.includes(String(r.id))).map((r) => ({ ...r })),
+    },
+    evidenceLink: { findMany: async () => [] },
     reportRecord: {
+      findFirstOrThrow: async ({ where }: { where: { id: string } }) => ({ ...table('reportRecord').get(where.id)! }),
+      updateMany: async ({ where, data }: { where: { id: string; version: number; status: { in: string[] } }; data: Row }) => {
+        const prev = table('reportRecord').get(where.id);
+        if (prev === undefined || Number(prev.version) !== where.version || !where.status.in.includes(String(prev.status))) return { count: 0 };
+        const increment = typeof data.version === 'object' && data.version !== null && 'increment' in (data.version as Record<string, unknown>) ? Number((data.version as { increment: number }).increment) : 0;
+        table('reportRecord').set(where.id, { ...prev, ...data, version: Number(prev.version) + increment, updatedAt: new Date() });
+        return { count: 1 };
+      },
       findFirst: async ({ where }: { where: { id?: string; engagementId: string } }) =>
         find('reportRecord', (r) => r.engagementId === where.engagementId && (where.id === undefined || r.id === where.id)),
       findMany: async ({ where, orderBy }: { where: { engagementId: string }; orderBy?: { createdAt: string } }) => {
@@ -92,12 +117,13 @@ type Db = ReturnType<typeof memoryDb>;
 
 const ENG = 'eng-1';
 
-async function setup(): Promise<{ db: Db; app: FastifyInstance; author: { cookie: string; csrf: string }; reviewer: { cookie: string; csrf: string } }> {
+async function setup(): Promise<{ db: Db; app: FastifyInstance; author: { cookie: string; csrf: string }; reviewer: { cookie: string; csrf: string }; reviewerId: string }> {
   const db = memoryDb();
   const author = await db.webUser.create({ data: { username: 'author', displayName: 'Author', passwordHash: hashPassword('correct horse battery'), status: 'active' } });
   const reviewer = await db.webUser.create({ data: { username: 'rev', displayName: 'Rev', passwordHash: hashPassword('longenough1'), status: 'active' } });
   db.tables.set('engagement', new Map([[ENG, { id: ENG, userId: author.id, name: ENG, targetValue: 'https://t.invalid' }]]));
   await db.webMembership.create({ data: { engagementId: ENG, userId: reviewer.id, role: 'reviewer' } });
+  db.tables.set('findingRecord', new Map([['F-1', { id: 'F-1', engagementId: ENG, title: 'Admin panel exposed', severity: 'high', status: 'confirmed', body: { detail: 'Reachable.' }, expectedVersion: 1, sourceType: 'authored', createdBy: author.id }]]));
   const app = await (buildApp({
     logger: { level: 'error' },
     authMode: 'multi',
@@ -109,7 +135,18 @@ async function setup(): Promise<{ db: Db; app: FastifyInstance; author: { cookie
     expect(res.statusCode).toBe(200);
     return { cookie: `raptix_web_session=${res.cookies.find((c) => c.name === 'raptix_web_session')!.value}`, csrf: res.json().csrfToken };
   };
-  return { db, app, author: await login('author', 'correct horse battery'), reviewer: await login('rev', 'longenough1') };
+  return { db, app, author: await login('author', 'correct horse battery'), reviewer: await login('rev', 'longenough1'), reviewerId: String(reviewer.id) };
+}
+
+/** Puts a draft into the readiness state that submission now requires: template, period, named reviewer and one confirmed finding. */
+async function makeReady(app: FastifyInstance, author: { cookie: string; csrf: string }, reviewerId: string, id: string): Promise<number> {
+  const headers = { cookie: author.cookie, 'x-csrf-token': author.csrf };
+  const setupRes = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}/setup`, headers, payload: { expectedVersion: 1, templateId: 'TPL-1', periodStart: '2026-10-01T00:00:00.000Z', periodEnd: '2026-10-31T00:00:00.000Z', reviewerId } });
+  expect(setupRes.statusCode).toBe(200);
+  const pinned = await app.inject({ method: 'PUT', url: `/api/engagements/${ENG}/report-records/${id}/findings`, headers, payload: { expectedVersion: setupRes.json().version, findingIds: ['F-1'] } });
+  expect(pinned.statusCode).toBe(200);
+  expect(pinned.json().readiness.ready).toBe(true);
+  return pinned.json().version;
 }
 
 describe('ticket 11 report lifecycle and delivery', () => {
@@ -136,29 +173,31 @@ describe('ticket 11 report lifecycle and delivery', () => {
   });
 
   it('enforces independent review with a mandatory comment and pins the version', async () => {
-    const { app, author, reviewer } = await setup();
+    const { app, author, reviewer, reviewerId } = await setup();
     const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Reviewed report' } });
     const id = created.json().id;
+    const v = await makeReady(app, author, reviewerId, id);
     await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
     const self = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { decision: 'approved', comment: 'ship it' } });
     expect(self.statusCode).toBe(403);
     expect(self.json().error.message).toContain('independent actor');
     const noComment = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: '   ' } });
     expect(noComment.statusCode).toBe(400);
-    const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'Verified against findings.', expectedVersion: 1 } });
+    const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'Verified against findings.', expectedVersion: v } });
     expect(approved.statusCode).toBe(200);
     expect(approved.json().status).toBe('approved');
     expect(approved.json().approvedVersion).toBe(approved.json().version);
     // Post-approval edits are refused (re-review required for changes).
-    const edit = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: 1, summary: 'sneaky edit' } });
+    const edit = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: v, summary: 'sneaky edit' } });
     expect(edit.statusCode).toBe(409);
     expect(edit.json().error.message).toContain('pinned review');
   });
 
   it('gates delivery on approval, records truthful outcomes and replays the same request id without duplicates', async () => {
-    const { app, author, reviewer } = await setup();
+    const { app, author, reviewer, reviewerId } = await setup();
     const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Delivery report' } });
     const id = created.json().id;
+    const v = await makeReady(app, author, reviewerId, id);
     const early = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1' } });
         expect(early.statusCode).toBe(409);
     expect(early.json().error.message).toContain('not a reviewed deliverable');
@@ -167,35 +206,36 @@ describe('ticket 11 report lifecycle and delivery', () => {
         expect(exported.statusCode).toBe(200);
     expect(exported.json().deliveries[0].status).toBe('completed');
     await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
-    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'ok', expectedVersion: 1 } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'ok', expectedVersion: v } });
     const missingReceipt = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1' } });
     expect(missingReceipt.statusCode).toBe(400);
-    const delivered = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1', expectedVersion: 1, recipient: 'local client', receipt: 'Signed receipt TEST-1' } });
+    const delivered = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1', expectedVersion: v, recipient: 'local client', receipt: 'Signed receipt TEST-1' } });
     expect(delivered.statusCode).toBe(200);
     expect(delivered.json().status).toBe('delivered');
     // replay with the same request id AND the same payload: no duplicate row, no double state change
-    const replay = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1', expectedVersion: 1, recipient: 'local client', receipt: 'Signed receipt TEST-1' } });
+    const replay = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1', expectedVersion: v, recipient: 'local client', receipt: 'Signed receipt TEST-1' } });
     expect(replay.statusCode).toBe(200);
     expect(replay.json().deliveries.filter((d: { requestId?: string; kind?: string }) => d.kind === 'delivery')).toHaveLength(1);
   });
 
   it('W20: a request id replayed with a different payload is a conflict, and a revision starts fresh review', async () => {
-    const { app, author, reviewer } = await setup();
+    const { app, author, reviewer, reviewerId } = await setup();
     const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Revise me' } });
     const id = created.json().id;
+    const v = await makeReady(app, author, reviewerId, id);
     await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
-    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'ok', expectedVersion: 1 } });
-    const first = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-d1', expectedVersion: 1, recipient: 'client', receipt: 'R-1' } });
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'ok', expectedVersion: v } });
+    const first = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-d1', expectedVersion: v, recipient: 'client', receipt: 'R-1' } });
     expect(first.statusCode).toBe(200);
     // Same request id, different payload: the recorded outcome must not mask the mismatch.
-    const mismatch = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-d1', expectedVersion: 1, recipient: 'client', receipt: 'R-FORGED' } });
+    const mismatch = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-d1', expectedVersion: v, recipient: 'client', receipt: 'R-FORGED' } });
     expect(mismatch.statusCode).toBe(409);
     expect(mismatch.json().error.message).toMatch(/different payload/i);
 
     // A delivered report cannot be edited in place, but a revision can start a fresh review.
-    const edited = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: 1, summary: 'sneak' } });
+    const edited = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: v, summary: 'sneak' } });
     expect(edited.statusCode).toBe(409);
-    const revision = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/revision`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: 1 } });
+    const revision = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/revision`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: v } });
     expect(revision.statusCode).toBe(200);
     expect(revision.json().id).not.toBe(id);
     expect(revision.json().status).toBe('draft');
@@ -204,7 +244,7 @@ describe('ticket 11 report lifecycle and delivery', () => {
     const original = (await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie } })).json();
     const oldRow = original.reports.find((r: { id: string }) => r.id === id);
     expect(oldRow.status).toBe('delivered');
-    expect(oldRow.approvedVersion).toBe(1);
+    expect(oldRow.approvedVersion).toBe(v);
   });
 
   it('answers 404 for foreign reports and engagements', async () => {

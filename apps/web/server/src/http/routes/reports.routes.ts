@@ -38,4 +38,27 @@ export function registerReportsRoutes(app: FastifyInstance, reports: ReportsServ
     const { id, reportId } = request.params as { id: string; reportId: string };
     return reports.revise(identity.id, id, reportId, request.body);
   }));
+  // P06: versioned templates, report setup (template, period, named reviewer) and pinned finding selection.
+  app.get('/api/engagements/:id/report-templates', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id } = request.params as { id: string };
+    return reports.listTemplates(identity.id, id);
+  }));
+  app.post('/api/engagements/:id/report-templates', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id } = request.params as { id: string };
+    return reports.createTemplate(identity.id, id, request.body);
+  }));
+  app.patch('/api/engagements/:id/report-records/:reportId/setup', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, reportId } = request.params as { id: string; reportId: string };
+    return reports.updateSetup(identity.id, id, reportId, request.body);
+  }));
+  app.put('/api/engagements/:id/report-records/:reportId/findings', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, reportId } = request.params as { id: string; reportId: string };
+    return reports.setFindings(identity.id, id, reportId, request.body);
+  }));
+  // P07: recipient acknowledgement of a completed delivery, recorded separately from the delivery.
+  app.post('/api/engagements/:id/report-records/:reportId/deliveries/:deliveryId/acknowledgements', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, reportId, deliveryId } = request.params as { id: string; reportId: string; deliveryId: string };
+    return reports.acknowledge(identity.id, id, reportId, deliveryId, request.body);
+  }));
 }
