@@ -97,7 +97,7 @@ Use [`template.md`](template.md) as the starting point.
 | [0065](0065-tolerate-enveloped-json-in-decision-scoring.md) | Tolerate enveloped JSON in decision scoring | Proposed |
 | [0066](0066-bind-decision-output-to-consumed-provenance.md) | Bind decision output to consumed provenance | Proposed |
 | [0085](0085-single-operator-planning-scope.md) | Approve the planner's scope at the handoff for single-operator engagements | Proposed |
-| [0086](0086-per-run-sandbox-workspace-isolation.md) | Per-run workspace isolation replaces the single-engagement sandbox pin | Proposed |
+| [0086](0086-per-run-sandbox-workspace-isolation.md) | Per-run workspace isolation replaces the single-engagement sandbox pin | Proposed — revision required |
 
 Keep this index in sync when you land a new ADR. (Rows 0027–0048 are missing
 from this index as pre-existing drift, not introduced by ADR-0049 — the files
