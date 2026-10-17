@@ -7,7 +7,7 @@
 import { useState, type ReactElement } from 'react'
 import { ScrollText } from 'lucide-react'
 import { useMemberLabels } from '../../real/member-labels'
-import { AuditTable } from '../../real/screens/settings'
+import { AuditTable } from './table'
 import { Button, Card, CardHeader, Empty, Input, Skeleton } from '../../ui'
 import { useAuditRead } from './query'
 

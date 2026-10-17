@@ -27,7 +27,6 @@ import { RealWorkspace } from '../real/screens/workspace'
 import { RealOverview } from '../real/screens/overview'
 import { RealGlobalResource } from '../real/screens/global-resource'
 import { RealCommandCenter } from '../real/screens/command-center'
-import { RealSettings } from '../real/screens/settings'
 import { RealHeaderNotices } from '../real/screens/notices-bell'
 import { RealLogin } from '../real/screens/login'
 import { Button } from '../ui'
@@ -57,7 +56,6 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   ...Object.fromEntries(Object.keys(FEATURE_ROUTE_SURFACES).map((key) => [key, RealFeatureRoute])),
   'ai-history': RealWorkspace,
   'ai-trace': RealWorkspace,
-  settings: RealSettings,
   login: RealLogin,
 }
 
