@@ -275,7 +275,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                     )
                 self._active.add(key)
         return (
-            DispatchContext(dispatch_id, objective_id, int(prior.get("attempt", 0)) + 1),
+            DispatchContext(dispatch_id, objective_id, int(prior.get("attempt", 0)) + 1, role=role),
             key,
             fingerprint,
         )
@@ -427,6 +427,7 @@ class DispatchMiddleware(SubAgentMiddleware):
         updates["dispatch_ledger"] = {
             context.dispatch_id: {
                 "fingerprint": fingerprint,
+                "role": context.role,
                 "objective_id": context.objective_id,
                 "attempt": context.attempt,
                 "outcome": outcome,

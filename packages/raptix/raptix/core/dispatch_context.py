@@ -12,6 +12,8 @@ class DispatchContext:
     objective_id: str | None
     attempt: int
     failures: list[DispatchFailureOutcome] = field(default_factory=list)
+    # The subagent role that owns this dispatch; the ledger records it so a roster can name the instance.
+    role: str | None = None
 
 
 active_dispatch: ContextVar[DispatchContext | None] = ContextVar("active_dispatch", default=None)
