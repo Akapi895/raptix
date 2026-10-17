@@ -273,22 +273,18 @@ services:
       # since the HTTP-only migration; this stanza pins it explicitly so
       # ``docker compose config`` shows intent.
       - SANDBOX_DAEMON=1
-      # Named engagements require the launcher's single-engagement mount.
-      # Cwd prefixes cannot isolate arbitrary shell commands (ADR-0042).
+      # A pinned engagement's workspace is /workspace/<slug>; the fence keeps
+      # every tool call inside it (ADR-0042).
       - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
-      - RAPTIX_WORKSPACE_ISOLATED=${RAPTIX_ENGAGEMENT_WORKSPACE:+1}
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
       - GHIDRA_INSTALL_DIR=/opt/ghidra
       - GHIDRA_MCP_URL=http://ghidra-mcp:8089
     volumes:
-      # Bind is engagement-scoped. The launcher sets RAPTIX_ENGAGEMENT_WORKSPACE
-      # to <home>/workspace/<slug> after the engagement picker, so the agent only
-      # ever sees its own engagement at /workspace. When the launcher is not in
-      # play (raw `make dev`, benchmark harness, dev workflows), the fallback is
-      # the whole tree under <home>/workspace.
-      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
+      # The workspace root is mounted at /workspace; each engagement lives at
+      # /workspace/<slug> and RAPTIX_ENGAGEMENT fences the runtime to one of them.
+      - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
       # Skills are no longer baked into this image — they live at
       # ``/app/skills/`` in the LANGGRAPH container (see
       # ``infra/containers/langgraph.Dockerfile``) and are read in-process by
@@ -411,10 +407,9 @@ services:
       # all of them. Port 9999 is the FastAPI daemon baked into the sandbox image
       # (see ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
       - SANDBOX_URL=http://raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox:9999
-      # The launcher pins this engagement and binds its directory at /workspace.
-      # The harness verifies both containers' actual mounts before starting.
+      # The same workspace root as the runtime, so a pinned engagement's files
+      # are at /workspace/<slug> in both containers.
       - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
-      - RAPTIX_WORKSPACE_ISOLATED=${RAPTIX_ENGAGEMENT_WORKSPACE:+1}
       - RAPTIX_NEO4J_URI=bolt://neo4j:7687
       - RAPTIX_NEO4J_USER=neo4j
       - RAPTIX_NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
@@ -449,8 +444,8 @@ services:
       - langgraph_state:/app/.langgraph_api
       # Soundwave writes planning documents through the sandbox, while the
       # handoff validator runs in this container and reads them locally.
-      # Mount the same per-engagement workspace at the same in-container path.
-      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
+      # Mount the same workspace root at the same in-container path.
+      - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
     # Wait for litellm to be healthy: langgraph has retry logic but the launcher
     # uses `compose up --wait` and needs healthy as the single readiness signal.
     depends_on:

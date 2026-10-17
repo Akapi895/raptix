@@ -106,7 +106,7 @@ it('requires a new owned thread when topology/language proof changes and refuses
   config.pinnedSlug = 'other-project';
   await expect(service.resolve('local', 'owned', { kind: 'planning' })).rejects.toMatchObject({ code: 'conflict' });
   config.pinnedSlug = 'parity-project';
-  expect((await service.resolve('local', 'owned', { kind: 'planning' })).configurable.workspace_path).toBe('/workspace');
+  expect((await service.resolve('local', 'owned', { kind: 'planning' })).configurable.workspace_path).toBe('/workspace/parity-project');
 });
 it('accepts observed runtime reserved-key filtering and empty optional checkpoint defaults', async () => {
   const { service, control } = await setup();

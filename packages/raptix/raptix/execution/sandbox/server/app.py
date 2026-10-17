@@ -246,40 +246,36 @@ def auth(
     authorization: Annotated[str | None, Header()] = None,
 ) -> None:
     _verify_token(authorization)
-    slug = _fenced_engagement_slug()
-    if slug is not None and os.environ.get("RAPTIX_WORKSPACE_ISOLATED") != "1":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"engagement {slug!r} requires an isolated /workspace bind mount",
-        )
 
 
 def _checked_workspace(path: str | None, *, runtime_root: bool = False) -> str | None:
-    normalized = DaemonSandbox._normalize_workspace_path(path)
     slug = _fenced_engagement_slug()
-    if slug is None and runtime_root:
-        return path
-    if slug is not None:
-        raw = (path or "/workspace").strip().rstrip("/")
-        if normalized != raw or runtime_root and normalized != "/workspace":
-            raise HTTPException(
-                status_code=403, detail="workspace must resolve to the pinned /workspace root"
-            )
-        error = DaemonSandbox.engagement_fence_error(normalized, slug, isolated_root=True)
-        if error is not None:
-            raise HTTPException(status_code=403, detail=error)
+    if slug is None:
+        normalized = DaemonSandbox._normalize_workspace_path(path)
+        return path if runtime_root else normalized
+    root = f"/workspace/{slug}"
+    raw = (path or root).strip().rstrip("/")
+    normalized = DaemonSandbox._normalize_workspace_path(raw)
+    if normalized != raw or runtime_root and normalized != root:
+        raise HTTPException(
+            status_code=403, detail=f"workspace must resolve to the pinned engagement root {root}"
+        )
+    error = DaemonSandbox.engagement_fence_error(normalized, slug)
+    if error is not None:
+        raise HTTPException(status_code=403, detail=error)
     return normalized
 
 
 def _check_file_paths(paths: list[str], workspace_path: str | None = None) -> None:
-    if _fenced_engagement_slug() is not None:
-        root = Path("/workspace").resolve()
+    slug = _fenced_engagement_slug()
+    if slug is not None:
+        root = Path(f"/workspace/{slug}").resolve()
         if any(
             not path.startswith("/") or not Path(path).resolve().is_relative_to(root)
             for path in paths
         ):
             raise HTTPException(
-                status_code=403, detail="file path is outside the isolated engagement workspace"
+                status_code=403, detail="file path is outside the pinned engagement workspace"
             )
     if workspace_path is not None:
         root = Path(workspace_path)

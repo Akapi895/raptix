@@ -193,23 +193,20 @@ class SandboxBase(BaseSandbox):
         return f"{safe_slug}-{digest}"
 
     @staticmethod
-    def engagement_fence_error(
-        workspace_path: str, engagement_slug: str, *, isolated_root: bool = False
-    ) -> str | None:
+    def engagement_fence_error(workspace_path: str, engagement_slug: str) -> str | None:
         """Return an error message when ``workspace_path`` lies outside the
-        engagement subtree, else ``None``.
+        engagement's workspace, else ``None``.
 
-        ``isolated_root`` is deployment metadata, never tool input. It is
-        valid only when /workspace mounts one engagement's directory. A
-        prefix check alone cannot restrict what arbitrary bash can read;
-        named shared-root deployments must be refused before execution.
+        A named engagement's workspace is always ``/workspace/<slug>`` in the
+        container, whether the mount is the shared root or the engagement's own
+        directory, so one rule covers every deployment.
         """
-        prefix = "/workspace" if isolated_root else f"/workspace/{engagement_slug}"
-        if workspace_path == prefix or workspace_path.startswith(prefix + "/"):
+        root = f"/workspace/{engagement_slug}"
+        if workspace_path == root or workspace_path.startswith(root + "/"):
             return None
         return (
             f"workspace {workspace_path!r} is outside engagement {engagement_slug!r} "
-            f"(RAPTIX_ENGAGEMENT); the allowed subtree is {prefix}/. Fix the run's "
+            f"(RAPTIX_ENGAGEMENT); its workspace is {root}/. Fix the run's "
             "workspace_path config or the RAPTIX_ENGAGEMENT environment."
         )
 

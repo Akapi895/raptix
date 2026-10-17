@@ -185,13 +185,12 @@ def test_bash_background_uses_engagement_workspace_context():
     assert "[BACKGROUND]" in result
 
 
-def test_bash_uses_isolated_mount_root_from_environment(monkeypatch):
+def test_bash_uses_engagement_workspace_from_environment(monkeypatch):
     sandbox = _fake_sandbox()
     sandbox.execute = MagicMock()
     sandbox.execute_tmux_async = AsyncMock(return_value="ok")
     set_sandbox(sandbox)
     monkeypatch.setenv("RAPTIX_ENGAGEMENT", "env-engagement")
-    monkeypatch.setenv("RAPTIX_WORKSPACE_ISOLATED", "1")
 
     result = asyncio.run(bash.ainvoke({"command": "pwd", "description": "Print working directory"}))
 
@@ -200,6 +199,7 @@ def test_bash_uses_isolated_mount_root_from_environment(monkeypatch):
         session="main",
         timeout=120,
         is_input=False,
+        workspace_path="/workspace/env-engagement",
     )
     assert result == "ok"
 
