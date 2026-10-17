@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { mountServices } from '../../test/helpers'
 import { currentRoute, selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import { setIntegrationConnection } from '../settings/service'
 import { analysisRoutes } from '../../screens/e-analysis'
 import { seed } from '../../data'
@@ -44,7 +45,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
     const cell = screen.getByRole('button', { name: /T1046/ })
     expect(cell).toHaveTextContent('Executed & Detected')
     // Scoping to one project drops the out-of-scope observation: the cell falls back to No Data.
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('button', { name: /T1046/ })).toHaveTextContent('Executed & No Data'))
     expect(screen.getByText(/11\/22 techniques tested/)).toBeInTheDocument()
     // Catalog techniques with no recorded events stay explicitly "Not Tested".
@@ -64,7 +65,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
   it('the heatmap separates detected, verified-undetected and unverified no-data outcomes', async () => {
     const h = mountAnalysis('Taylor Chen', '#/analysis?tab=detection') // operator — viewSensitive granted
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('67%')).toBeInTheDocument()) // 2 detected / 3 with data
     // Tactic bars label their split: Discovery has 2 detected + 2 no data; Initial Access is the verified gap.
     expect(screen.getByRole('img', { name: '2 detected, 0 not detected, 2 no data' })).toBeInTheDocument()
@@ -79,7 +80,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
   it('a disconnected detection source reads as No Data, never as Not Detected', async () => {
     const h = mountAnalysis('Taylor Chen', '#/analysis?tab=matrix')
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('button', { name: /T1078/ })).toHaveTextContent('Executed & Not Detected'))
     h.run(() => { expect(setIntegrationConnection(h.svc().authority, h.svc().clock, { actor: { id: 'Dana Whitfield', role: 'admin' }, projectId: 'all', corr: 'test-disconnect' }, 'IN-1', 'disconnect', 'Verify disconnected detection source').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('Detection integration unavailable')).toBeInTheDocument())
@@ -106,7 +107,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
   it('a recorded step review updates the aggregate without a reload', async () => {
     const h = mountAnalysis('Taylor Chen', '#/analysis?tab=matrix')
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByText(/11\/22 techniques tested/)).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /T1119/ })).toHaveTextContent('Planned Only')
     // Ticket 65 retired the A.reviewStep wrapper; the review commits through
@@ -130,7 +131,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
     })
     h.show()
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('All operations (2)')).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByText('All operations (2)')).toBeInTheDocument()
