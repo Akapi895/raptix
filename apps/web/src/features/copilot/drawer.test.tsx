@@ -18,7 +18,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { mountServices } from '../../test/helpers'
 import { selectProject } from '../../router/navigate'
-import { useProjectStore } from '../../state/stores'
+import { useProjectStore, useUiStore } from '../../state/stores'
 import { setActiveRouter } from '../../router/active'
 import { RouteHost } from '../../router/host'
 import type { ActorRef, RequestContext } from '../../domain/service'
@@ -58,7 +58,7 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
     mountDrawer('Sam Patel', 'RT-2026-015')
     const drawer = await openDrawer()
     expect(drawer).toHaveAttribute('data-testid', 'copilot-drawer')
-    expect(within(drawer).getByText('Context: Operations')).toBeInTheDocument()
+    expect(within(drawer).getByText('Context: Execution')).toBeInTheDocument()
     expect(within(drawer).getByText('RT-2026-015')).toBeInTheDocument()
     // The migrated drawer's context header, not a duplicated store state.
     expect(within(drawer).getByText(/Context follows the page you opened it from/)).toBeInTheDocument()
@@ -133,7 +133,7 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
   it('auto-creates the project conversation through the typed handler when none exists', async () => {
     const h = mountDrawer('Sam Patel', 'PT-2026-006')
     const drawer = await openDrawer()
-    expect(await within(drawer).findByText(/Ask about Operations/)).toBeInTheDocument()
+    expect(await within(drawer).findByText(/Ask about Execution/)).toBeInTheDocument()
     expect(h.db().conversations.find((c) => c.projectId === 'PT-2026-006')).toBeDefined()
   })
 
@@ -147,8 +147,10 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
   })
 
   it('the all-projects scope shows the select-project guard, never aggregate engagement data', async () => {
+    // The header entry is hidden at all-projects scope; the drawer can still be opened there by state, and the guard must hold.
     mountDrawer('Sam Patel')
-    const drawer = await openDrawer()
+    act(() => { useUiStore.getState().setCopilotOpen(true) })
+    const drawer = await screen.findByRole('dialog', { name: 'Ask AI' })
     expect(await within(drawer).findByText('Select a project to continue')).toBeInTheDocument()
     expect(within(drawer).queryByRole('button', { name: 'Send' })).not.toBeInTheDocument()
   })
