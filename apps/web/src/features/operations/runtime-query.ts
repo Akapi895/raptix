@@ -22,6 +22,7 @@ export class RuntimeOperationsError extends Error {
 export const messageOf = (error: unknown, fallback: string): string => (error instanceof Error ? error.message : fallback)
 
 const ACTIVE_POLL_MS = 5_000
+const FLEET_POLL_MS = 15_000
 const IN_FLIGHT = ['pending', 'running', 'submitting']
 
 async function unwrap<T>(result: Promise<ServiceResult<T>>): Promise<T> {
@@ -78,6 +79,17 @@ export function useRuntimeTimeline(engagementId: string) {
     enabled: !!services,
     refetchInterval: 5_000,
     retry: false,
+  })
+}
+
+/** The agent fleet: catalog graphs, bound threads and checkpoint branches. Read-only, re-read on an interval. */
+export function useRuntimeFleet(engagementId: string) {
+  const { services, scope, service } = useRuntimeClient(engagementId)
+  return useQuery({
+    queryKey: consoleKeys.view('runtime-operations', scope, engagementId, 'fleet'),
+    queryFn: () => unwrap(service().fleet(ctxOf(scope, engagementId, 'runtime-fleet'))),
+    enabled: !!services,
+    refetchInterval: FLEET_POLL_MS,
   })
 }
 

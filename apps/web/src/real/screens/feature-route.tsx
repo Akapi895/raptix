@@ -13,7 +13,7 @@ type PanelComponent = ComponentType<{ engagementId: string }>
 const PANEL_COMPONENTS: Record<PanelGroup, PanelComponent> = {
   operations: lazy(() => import('../../features/operations/runtime-tab').then((m) => ({ default: m.RuntimeOperationsTab }))),
   governance: lazy(() => import('../../features/governance/tab').then((m) => ({ default: m.GovernanceTab }))),
-  fleet: lazy(() => import('./fleet-panel').then((m) => ({ default: m.RealFleetPanel }))),
+  fleet: lazy(() => import('../../features/operations/fleet-tab').then((m) => ({ default: m.RuntimeFleetTab }))),
   scope: lazy(() => import('../../features/scope/tab').then((m) => ({ default: m.ScopeTab }))),
   analysis: lazy(() => import('../../features/analysis/observed-tab').then((m) => ({ default: m.ObservedAnalysisTab }))),
   c2: lazy(() => import('../../features/c2/provider-tab').then((m) => ({ default: m.C2ProviderTab }))),
