@@ -2,6 +2,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProjectViewModel } from '@raptix/web-contracts'
 
+// Real data mode for the shared screens embedded in the project detail; the mode is read once at load.
+window.history.replaceState(null, '', '/?dataMode=real')
+vi.stubEnv('VITE_DATA_MODE', 'real')
+
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
 const { RealModeProvider } = await import('../bootstrap')
@@ -156,7 +160,7 @@ describe('RealProjectDetail', () => {
     stubApi()
     go('project', { id: 'eng-8f3c92a1', tab: 'reports' })
     ui(<RealProjectDetail />)
-    expect(await screen.findByText(/Reports unavailable/)).toBeTruthy()
+    expect((await screen.findAllByText(/Could not load reports/)).length).toBeGreaterThan(0)
     expect(globalThis.location.hash).toContain('tab=reports')
   })
 
@@ -169,7 +173,7 @@ describe('RealProjectDetail', () => {
     // Reports is integrated since ticket 11; with no report-records source the
     // panel still renders an honest unavailable alert, never demo data.
     go('project', { id: 'eng-8f3c92a1', tab: 'reports' })
-    expect(await screen.findByText(/Reports unavailable/)).toBeTruthy()
+    expect((await screen.findAllByText(/Could not load reports/)).length).toBeGreaterThan(0)
   })
 
   it('composes the onboarding order (Team, Scope & ROE, Planning) with the truthful handoff status', async () => {

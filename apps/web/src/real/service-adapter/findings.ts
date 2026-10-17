@@ -299,7 +299,7 @@ export function createRealFindingService(): FindingService {
       const producerClaims = producer.findings
         .filter((finding) => !imported.has(`findings/${finding.id}.md`))
         .map((finding) => toProducerFinding(finding, dispositionByPath.get(`findings/${finding.id}.md`)))
-      return { ok: true, data: buildList([...curated.findings.map((finding) => toFinding(finding, ctx.projectId)), ...producerClaims], query, dispositions.dispositions.filter((row) => row.dismissed).length) }
+      return { ok: true, data: { ...buildList([...curated.findings.map((finding) => toFinding(finding, ctx.projectId)), ...producerClaims], query, dispositions.dispositions.filter((row) => row.dismissed).length), truncated: producer.truncated } }
     }),
 
     get: (ctx, id) => guarded(async () => {

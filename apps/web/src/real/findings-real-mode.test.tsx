@@ -145,6 +145,17 @@ beforeEach(() => {
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
+it('warns that the producer projection is incomplete when the workspace skipped sources', async () => {
+  const producerRoute = routes['/engagements/eng-1/findings'] as { truncated: boolean }
+  producerRoute.truncated = true
+  try {
+    render(<App />)
+    await screen.findByText('List truncated', {}, { timeout: 10000 })
+  } finally {
+    producerRoute.truncated = false
+  }
+})
+
 it('lists curated records and producer claims in the shared real-mode findings screen', async () => {
   render(<App />)
   await screen.findByText('Admin panel exposed', {}, { timeout: 10000 })

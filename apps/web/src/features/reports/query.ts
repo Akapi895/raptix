@@ -69,7 +69,7 @@ export function useTemplates() {
   return useQuery({
     queryKey: reportKeys.templates(scope),
     queryFn: async (): Promise<Template[]> => {
-      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).templates()
+      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).templates(ctxOf(scope, 'report-templates'))
       if (!res.ok) throw new ReportReadError(res.failure)
       return res.data
     },
@@ -185,8 +185,8 @@ export function useReportWrites() {
         svc().removeSection(ctx('report-section-remove'), id, sectionId),
       reorderSections: (id: string, order: string[]): Promise<ServiceResult<Report>> =>
         svc().reorderSections(ctx('report-section-reorder'), id, order),
-      setFindings: (id: string, ids: string[]): Promise<ServiceResult<Report>> =>
-        svc().setFindings(ctx('report-findings-set'), id, ids),
+      setFindings: (id: string, ids: string[], expectedVersion: number): Promise<ServiceResult<Report>> =>
+        svc().setFindings(ctx('report-findings-set'), id, ids, expectedVersion),
       /* Ticket 36: submit/approve/return + export/delivery. */
       submit: (id: string, input: ReportSubmitInput): Promise<ServiceResult<Report>> =>
         svc().submit(ctx('report-submit'), id, input),
@@ -194,9 +194,12 @@ export function useReportWrites() {
         svc().decide(ctx('report-decide'), id, decision, note),
       exportVersion: (id: string, format: 'PDF' | 'DOCX') =>
         svc().exportVersion(ctx('report-export'), id, format),
+      exportArtifact: (id: string, format: 'json' | 'markdown') => svc().exportArtifact(ctx('report-artifact'), id, format),
+      revise: (id: string, expectedVersion: number): Promise<ServiceResult<Report>> => svc().revise(ctx('report-revise'), id, expectedVersion),
+      createTemplate: (input: { name: string; sections: { title: string; required: boolean }[] }): Promise<ServiceResult<Template>> => svc().createTemplate(ctx('report-template-create'), input),
       deliver: (id: string, input: DeliveryInput): Promise<ServiceResult<Report>> =>
         svc().deliver(ctx('report-deliver'), id, input),
-      acknowledge: (id: string) => svc().acknowledge(ctx('report-ack'), id),
+      acknowledge: (id: string, input: { deliveryId: string; receipt: string; requestId: string }) => svc().acknowledge(ctx('report-ack'), id, input),
     }
   }, [services, scope.actor, scope.role, scope.project])
 }

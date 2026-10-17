@@ -61,7 +61,6 @@ function DiffView({ sections, a, b, aLabel, bLabel, af, bf }: { sections: { id: 
 
 const CHK_TONE = { pass: 'text-ok', fail: 'text-bad', warn: 'text-warn' }
 function CheckList({ checks }: { checks: RCheck[] }) {
-  if (isRealMode()) return <p className="text-sm text-muted">{realControlGap('report.checks')}</p>
   return (
     <ul className="space-y-3">
       {checks.map((c) => {
@@ -182,7 +181,7 @@ export function ReportNew() {
     setSaveErr(null)
     if (bad || locked || busy) return
     setBusy(true)
-    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: isRealMode() ? '' : `${from} – ${to}` })
+    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: isRealMode() ? (from && to ? `${from}/${to}` : '') : `${from} – ${to}` })
     setBusy(false)
     if (!res.ok) { setSaveErr(res.failure.message); return }
     const id = res.data.id
@@ -195,7 +194,6 @@ export function ReportNew() {
     <>
       <PageHeader title="Create Report" sub="Step 1 of 2. Choose project, template, report type, title and author, then open the editor." back={{ label: 'Reports', to: () => go('reports') }} />
       {locked && <Banner tone="warn" title="Cannot create report">{lockReason}</Banner>}
-      {isRealMode() && <Banner tone="info" title="Only the title is stored at creation">{realControlGap('report.template')}</Banner>}
       <AiExclusion projectId={project.id} />
       {!locked && fs.filter((f) => f.reportable).length === 0 && <Banner tone="info" title="No confirmed findings yet. You can still create a draft.">Saving a draft is always allowed. Submit for Review will need either a confirmed finding or a no-findings closure with a justification and completion evidence.</Banner>}
       {tpl && tpl.status !== 'published' && <Banner tone="warn" title="Template not approved">{tpl.name} is a draft template: you can try it, but formal delivery is blocked.</Banner>}
@@ -416,7 +414,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const insert = (t: string) => { if (editable && sec) setDrafts({ ...drafts, [sec.id]: (drafts[sec.id] ?? sec.body ?? '') + t }) }
   const toggleF = (id: string, on: boolean) => {
     const next = on ? [...r.findings, id] : r.findings.filter((x) => x !== id)
-    runWrite(() => writes.setFindings(r.id, next))
+    runWrite(() => writes.setFindings(r.id, next, Number(r.version.replace(/^v/, ''))))
   }
   const empty = (b: string) => !b.trim()
   const returned = r.status === 'returned'
@@ -441,7 +439,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
       {returned && !perm && <PersonaHint need="Author" persona={r.author}>This report was returned. The author ({r.author}) must revise it and resubmit for review.</PersonaHint>}
       {state === 'error' && <Banner tone="bad" title="Could not save" action={<Button size="sm" onClick={() => saveAll()}>Retry</Button>}>{saveErr || 'The connection was lost during autosave. Your text is still on screen and has not been lost.'}</Banner>}
       <AiExclusion projectId={r.projectId} />
-      {isRealMode() ? <Banner tone="info" title="Findings are not linked to reports yet">{realControlGap('report.findingLink')}</Banner> : r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
+      {!isRealMode() && r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr_340px]">
         <Card pad={false} className="h-fit overflow-hidden">
@@ -682,6 +680,7 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
             <div className="flex flex-wrap gap-2">
               <Button icon={Download} variant="primary" disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'PDF').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else toast('PDF exported. Not delivered yet; go to the review page to mark delivery.') }) }}>Export PDF</Button>
               <Button icon={Download} disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'DOCX').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else toast('DOCX exported. Not delivered yet.') }) }}>Export DOCX</Button>
+              {isRealMode() && <ArtifactDownloads reportId={r.id} />}
               <Button icon={Eye} disabled={me.role === 'viewer'} title={me.role === 'viewer' ? 'The Client / Viewer role cannot create trial exports' : 'Trial copy with watermark; not recorded in export history'} onClick={() => toast('Created a watermarked "DRAFT" trial copy (not saved to export history).', 'info')}>Trial export</Button>
             </div>
             {!canExport && <p className="mt-3 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
@@ -707,6 +706,49 @@ const Missing = ({ children }: { children: ReactNode }) => <div className="round
  * steps whose records land in the canonical export/delivery history. A
  * refused write renders the handler's reason and commits nothing.
  */
+/** W20 (real mode): an approved or delivered version gets a fresh draft; the approved content is not edited in place. */
+function StartRevision({ reportId, status, version }: { reportId: string; status: string; version: string }) {
+  const writes = useReportWrites()
+  const toast = useToastStore((s) => s.toast)
+  if (status !== 'approved' && status !== 'delivered') return null
+  return <Button variant="secondary" onClick={() => void writes.revise(reportId, Number(version.replace(/^v/, ''))).then((res) => {
+    if (!res.ok) return toast(res.failure.message, 'bad')
+    toast('Revision draft created')
+    go('report', { id: res.data.id })
+  })}>Start a revision</Button>
+}
+
+/** Real mode: the stored version's JSON or Markdown bytes, downloaded exactly as the server produced them. */
+function ArtifactDownloads({ reportId }: { reportId: string }) {
+  const writes = useReportWrites()
+  const toast = useToastStore((s) => s.toast)
+  const download = (format: 'json' | 'markdown') => writes.exportArtifact(reportId, format).then((res) => {
+    if (!res.ok) return toast(res.failure.message, 'bad')
+    const url = URL.createObjectURL(new Blob([res.data.content], { type: res.data.mediaType }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = res.data.filename
+    link.click()
+    URL.revokeObjectURL(url)
+  })
+  return <>
+    <Button icon={Download} variant="secondary" onClick={() => void download('markdown')}>Download Markdown</Button>
+    <Button icon={Download} variant="secondary" onClick={() => void download('json')}>Download JSON</Button>
+  </>
+}
+
+/** P07: the recipient's receipt is typed once; the request id is stable so a lost response can be replayed. */
+function AcknowledgeDelivery({ reportId, deliveryId, allowed, reason }: { reportId: string; deliveryId: string; allowed: boolean; reason: string }) {
+  const writes = useReportWrites()
+  const toast = useToastStore((s) => s.toast)
+  const [receipt, setReceipt] = useState('')
+  const [requestId] = useState(() => crypto.randomUUID())
+  return <div className="space-y-2">
+    <Field label="Recipient receipt" required><Input value={receipt} disabled={!allowed} onChange={(e) => setReceipt(e.target.value)} /></Field>
+    <Button size="sm" icon={CheckCircle2} disabled={!allowed || receipt.trim().length === 0} title={reason || undefined} onClick={() => writes.acknowledge(reportId, { deliveryId, receipt: receipt.trim(), requestId }).then((res) => { if (res.ok) toast('Recipient acknowledgement recorded'); else toast(res.failure.message, 'bad') })}>Record recipient acknowledgement</Button>
+  </div>
+}
+
 export function ReportReview() {
   const route = useRoute()
   const [nf] = useNoFind(route.id || '')
@@ -857,6 +899,8 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
             <div className="flex flex-wrap gap-2">
               <Button icon={Download} disabled={!!exportWhy || isRealMode()} title={exportWhy || undefined} onClick={() => doExport('PDF')}>Export PDF</Button>
               <Button icon={Download} disabled={!!exportWhy || isRealMode()} title={exportWhy || undefined} onClick={() => doExport('DOCX')}>Export DOCX</Button>
+              {isRealMode() && <ArtifactDownloads reportId={r.id} />}
+              {isRealMode() && <StartRevision reportId={r.id} status={r.status} version={r.version} />}
             </div>
             {exportWhy && <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
             {exps.length > 0 && (
@@ -886,7 +930,7 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
                   <div className="flex justify-between gap-3"><span className="text-muted">Version</span><Mono className="whitespace-nowrap">{ex?.version || r.version}</Mono></div>
                   <div className="flex justify-between gap-3"><span className="text-muted">Acknowledgement</span><span className={ex?.ackAt ? 'text-ok' : 'text-warn'}>{ex?.ackAt ? `Receipt acknowledged ${ex.ackAt}` : 'Awaiting recipient acknowledgement'}</span></div>
                   <div className="flex justify-between gap-3"><span className="text-muted">Audit event</span><Mono className="whitespace-nowrap">{d.deliveryAuditId || 'AU-archived'} (immutable)</Mono></div>
-                  {ex && !ex.ackAt && <Button size="sm" icon={CheckCircle2} disabled={!d.gates.ack.allowed} title={d.gates.ack.reason || undefined} onClick={() => writes.acknowledge(r.id).then((res) => { if (res.ok) toast('Recipient acknowledgement recorded'); else toast(res.failure.message, 'bad') })}>Record recipient acknowledgement</Button>}
+                  {ex && !ex.ackAt && <AcknowledgeDelivery reportId={r.id} deliveryId={ex.id} allowed={d.gates.ack.allowed} reason={d.gates.ack.reason} />}
                 </div>
               )
             })()}

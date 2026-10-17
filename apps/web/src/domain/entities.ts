@@ -68,6 +68,10 @@ export interface Report {
   reviews: { at: string; by: string; action: string; note: string; version: string }[]
   /** Canonical version snapshots (ticket 36): one per submitted version; approval pins the approved content. */
   snapshots?: ReportSnapshot[]
+  /** Real mode (P06): server-computed readiness, the named reviewer's identity and the reporting period label. */
+  readiness?: { ready: boolean; checks: { id: string; label: string; state: 'pass' | 'fail' | 'unavailable'; detail: string }[] }
+  reviewerId?: string | null
+  period?: string
 }
 /** Immutable content of one submitted report version; `pinned` marks the approved snapshot. */
 export interface ReportSnapshot { version: string; at: string; by: string; bodies: Record<string, string>; findings: string[]; pinned?: boolean }
