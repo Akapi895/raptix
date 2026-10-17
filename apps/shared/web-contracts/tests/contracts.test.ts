@@ -318,6 +318,8 @@ describe('project view model (public DTO, guide section 5.2)', () => {
     targetType: 'web_url',
     targetValue: 'http://authorized-test.invalid',
     authorizationConfirmed: true,
+    brief: null,
+    handoffConfirmedAt: null,
     metadataState: 'needs_review',
     lifecycleStatus: 'planning',
     findingCount: null,
