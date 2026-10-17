@@ -28,7 +28,7 @@ import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
 import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
 import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
 import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../planning-seed'
-import { RealOperationsPanel as RealOperationsHistory } from './operations-panel'
+import { RuntimeOperationsTab as RealOperationsHistory } from '../../features/operations/runtime-tab'
 import { useSession } from '../session'
 
 interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }

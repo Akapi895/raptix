@@ -1,9 +1,20 @@
-﻿/** Real operations panel tests (ticket 05): execution threads, run identities, truthful statuses. */
+/** Operations tab over the runtime (real mode): execution threads, run identities, truthful statuses, cancel, stops, timeline. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ReactElement, ReactNode } from 'react'
+
+vi.mock('../../real/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
+vi.mock('../../state/keys', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../state/keys')>()),
+  useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
+}))
 
 const { cleanup, fireEvent, render, screen, within } = await import('@testing-library/react')
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query')
-const { RealOperationsPanel } = await import('./operations-panel')
+const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
+const { createRealFeatureServices } = await import('../../real/service-adapter/index')
+const { RuntimeOperationsTab } = await import('./runtime-tab')
+
+const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { runs: { supported: true, available: true }, projects: { supported: true, available: true } } } as never
 
 const EXEC = { engagementId: 'eng-1', threadId: 'th-exec', assistantId: 'executor', kind: 'execution', createdAt: '2026-10-14T09:00:00.000Z', updatedAt: '2026-10-14T09:05:00.000Z' }
 const PLAN = { engagementId: 'eng-1', threadId: 'th-plan', assistantId: 'soundwave', kind: 'planning', createdAt: '2026-10-14T08:00:00.000Z', updatedAt: '2026-10-14T08:05:00.000Z' }
@@ -27,17 +38,19 @@ function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[
 
 function renderPanel() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  const services = createRealFeatureServices(CAPABILITIES)
+  const wrapper = ({ children }: { children: ReactNode }): ReactElement => (
     <QueryClientProvider client={client}>
-      <RealOperationsPanel engagementId="eng-1" />
-    </QueryClientProvider>,
+      <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
+    </QueryClientProvider>
   )
+  return render(<RuntimeOperationsTab engagementId="eng-1" />, { wrapper })
 }
 
 beforeEach(() => { window.localStorage.clear() })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
-describe('RealOperationsPanel', () => {
+describe('RuntimeOperationsTab', () => {
   it('lists execution threads with their runs, request ids and raw statuses', async () => {
     stubApi()
     renderPanel()
@@ -82,7 +95,7 @@ describe('RealOperationsPanel', () => {
   })
 })
 
-describe('RealOperationsPanel (W22 operation detail route)', () => {
+describe('RuntimeOperationsTab (W22 operation detail route)', () => {
   it('renders only the URL-selected thread as the operation detail', async () => {
     stubApi()
     window.location.hash = '#/operation/th-exec?engagement=eng-1'
