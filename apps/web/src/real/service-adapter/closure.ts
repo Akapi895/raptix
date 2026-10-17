@@ -51,6 +51,7 @@ export function createRealClosureService(): ClosureService {
           record: surface.closure ? toRecord(surface.closure) : null,
           readOnly: surface.readOnly,
           canRequest: !surface.readOnly && !pending,
+          requestBlockReason: null,
           requestReason: surface.readOnly ? 'This engagement is closed.' : pending ? 'A closure request is already waiting for a decision.' : null,
           canDecide: pending,
           decideReason: null,

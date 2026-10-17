@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 import { seed, toolFacets } from '../data'
 
@@ -68,32 +68,31 @@ const Tab = ({ pid }: { pid: string }) => {
 }
 
 describe('requesting closure is manager-gated and blocked while the checklist fails (requirement 22)', () => {
-  it('a manager sees the failing condition and cannot submit the request yet', () => {
+  // The closure read is asynchronous; the module-level fake timers would stall it.
+  beforeEach(() => { vi.useRealTimers() })
+  it('a manager sees the failing condition and cannot submit the request yet', async () => {
     const view = mountServices(<Tab pid="RT-2026-016" />)
-    const close = screen.getByRole('button', { name: 'Close Project' })
-    expect(close).toBeEnabled()
-    fireEvent.click(close)
-    expect(screen.getByText('Closure is blocked. Resolve these first:')).toBeInTheDocument()
+    expect(await screen.findByText('Closure is blocked. Resolve these first:')).toBeInTheDocument()
     expect(screen.getAllByText('Final report approved and delivered').length).toBeGreaterThan(0)
-    const submit = screen.getByRole('button', { name: 'Submit closure request' })
+    const submit = await screen.findByRole('button', { name: 'Request closure' })
     expect(submit).toBeDisabled()
     expect(submit).toHaveAttribute('title', 'Resolve the blockers first')
-    fireEvent.change(screen.getByPlaceholderText('e.g. All objectives assessed; final report delivered.'), { target: { value: 'All objectives assessed; perimeter findings covered by this closure.' } })
+    fireEvent.change(screen.getByPlaceholderText('Why this engagement is complete'), { target: { value: 'All objectives assessed; perimeter findings covered by this closure.' } })
     expect(submit).toBeDisabled()
     expect(submit).toHaveAttribute('title', 'Resolve the blockers first')
     view.unmount()
   })
 
-  it('an operator cannot request closure', () => {
+  it('an operator cannot request closure', async () => {
     const view = mountServices(<Tab pid="RT-2026-016" />, 'Taylor Chen')
-    const close = screen.getByRole('button', { name: 'Close Project' })
-    expect(close).toBeDisabled()
-    expect(close).toHaveAttribute('title', 'Only a Red Team Manager can request project closure')
+    const request = await screen.findByRole('button', { name: 'Request closure' })
+    expect(request).toBeDisabled()
+    expect(request).toHaveAttribute('title', 'Only a Red Team Manager can request project closure.')
     expect(screen.getByText('Only a Red Team Manager can request project closure.')).toBeInTheDocument()
     view.unmount()
   })
 
-  it('the request accepts a failing checklist (UI-only request) while the confirmation stays gated by the re-derived checklist (ticket 22)', () => {
+  it('the request accepts a failing checklist (UI-only request) while the confirmation stays gated by the re-derived checklist (ticket 22)', async () => {
     const view = mountServices(<Tab pid="RT-2026-016" />)
     act(() => {
       requestCloseTransaction(view.svc().authority, view.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'RT-2026-016', corr: 'close-req' }, 'RT-2026-016', { reason: 'Requesting review of closure readiness.' })
@@ -102,8 +101,8 @@ describe('requesting closure is manager-gated and blocked while the checklist fa
     expect(view.db().approvals.some((a) => a.projectId === 'RT-2026-016' && a.status === 'pending' && a.note === 'Requesting project closure — 1 checklist condition still open.')).toBe(true)
 
     view.as('Pat Kim')
-    expect(screen.getByRole('button', { name: 'Approve Closure' })).toBeEnabled()
-    expect(screen.getByText(/Requested by Alex Morgan on/)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Confirm (independent)' })).toBeEnabled()
+    expect(screen.getByText('Alex Morgan')).toBeInTheDocument()
     const aprId = view.db().approvals.find((a) => a.projectId === 'RT-2026-016')!.id
     const refused = confirmCloseTransaction(view.svc().authority, view.svc().clock, { actor: { id: 'Pat Kim', role: 'reviewer' }, projectId: 'RT-2026-016', corr: 'close-confirm' }, aprId)
     expect(refused.ok).toBe(false)

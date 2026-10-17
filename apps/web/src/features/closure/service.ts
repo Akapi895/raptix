@@ -255,6 +255,8 @@ export interface ClosureRead {
   readOnly: boolean
   canRequest: boolean
   requestReason: string | null
+  /** A source-side gate on submitting the request while conditions fail; null when the source does not gate it. */
+  requestBlockReason: string | null
   canDecide: boolean
   decideReason: string | null
 }
