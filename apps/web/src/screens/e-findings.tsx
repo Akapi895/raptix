@@ -1336,7 +1336,7 @@ function EvidenceInspector() {
   const ev = data.evidence
   const producer = data.producer
   const real = isRealMode()
-  const origWhy = real ? !ev.captureId ? (realControlGap('evidence.original') ?? 'Original bytes are unavailable for this legacy reference.') : !data.canViewOriginal ? 'The capture is unclassified or its classification does not permit your role.' : '' : !ev.sensitive ? 'This item has no sensitive content — nothing is masked.' : !data.canViewSensitive ? `The ${ROLE_LABEL[me.role]} role cannot view sensitive content.` : !data.canViewOriginal ? `The ${ROLE_LABEL[me.role]} role can only view masked content. Ask a Reviewer, Operator or Manager.` : ''
+  const origWhy = real ? !ev.captureId ? (realControlGap('evidence.original') ?? 'Original bytes are unavailable for this legacy reference.') : !data.canViewOriginal ? (me.role === 'viewer' ? 'The viewer role cannot read original bytes.' : 'The capture is unclassified or its classification does not permit your role.') : '' : !ev.sensitive ? 'This item has no sensitive content — nothing is masked.' : !data.canViewSensitive ? `The ${ROLE_LABEL[me.role]} role cannot view sensitive content.` : !data.canViewOriginal ? `The ${ROLE_LABEL[me.role]} role can only view masked content. Ask a Reviewer, Operator or Manager.` : ''
   const masked = real ? !orig : ev.sensitive && !orig
   const isImg = real ? ev.mediaType?.startsWith('image/') === true : ev.kind.startsWith('Image')
   const ro = readOnly(ev.projectId)

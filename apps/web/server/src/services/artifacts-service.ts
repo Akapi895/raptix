@@ -110,7 +110,7 @@ export class ArtifactsService {
       classificationReason: privileged ? row.classificationReason : null,
       classifiedAt: row.classifiedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
-      canReadOriginal: row.classification === 'standard' || row.classification === 'sensitive' && privileged,
+      canReadOriginal: row.classification === 'standard' && role !== 'viewer' || row.classification === 'sensitive' && privileged,
       canClassify: privileged,
     };
   }
@@ -124,6 +124,8 @@ export class ArtifactsService {
   private async assertCaptureReadable(row: RetainedCaptureRow, role: MemberRole): Promise<void> {
     if (row.classification === 'unclassified') throw new ProjectApiError(409, 'Capture original bytes are unavailable until an owner or reviewer classifies them.');
     if (row.classification === 'sensitive' && !privilegedCaptureRole(role)) throw new ProjectApiError(404, 'Capture not found.');
+    // ADR-0087: viewers see the capture record but never its original bytes, whatever the classification.
+    if (role === 'viewer') throw new ProjectApiError(403, 'The viewer role cannot read original capture bytes.');
   }
 
   public async list(userId: string, engagementId: string): Promise<ArtifactsView> {
@@ -239,7 +241,7 @@ export class ArtifactsService {
     if (options.requireReadable !== false) await this.assertCaptureReadable(row, access.role);
     const file = await this.artifactFile(userId, engagementId, row.path);
     const bytes = await readFile(file);
-    if (bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) throw new ProjectApiError(503, 'The retained capture failed its recorded integrity check.');
+    if (bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) throw new ProjectApiError(409, 'The retained capture failed its recorded integrity check.');
     return { captureId, classification: row.classification as CaptureClassification, engagementId, path: row.path, digest: row.digest, sizeBytes: row.sizeBytes, producer: row.producer };
   }
 
@@ -337,7 +339,7 @@ export class ArtifactsService {
     const file = await this.artifactFile(userId, engagementId, row.path);
     const bytes = await readFile(file);
     if (bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) {
-      throw new ProjectApiError(503, 'The retained capture failed its recorded integrity check.');
+      throw new ProjectApiError(409, 'The retained capture failed its recorded integrity check.');
     }
     return { capture: this.toCaptureView(row, access.role), bytes };
   }
