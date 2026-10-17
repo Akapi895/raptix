@@ -12,7 +12,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type ComponentType } from 'react'
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
-import { selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/e'
@@ -84,7 +83,9 @@ describe('evidence list + inspector (ticket 33)', () => {
     const h = mountEvidence('Sam Patel') // manager — reaches both projects
     h.show()
     await waitFor(() => expect(screen.getByText('evidence-027.png')).toBeInTheDocument())
-    h.run(() => selectProject('RT-2026-015')) // 'evidence' is not a redirecting detail route
+    // Active project changes while the inspector stays on the 014 capture (for example from another tab).
+    // selectProject would navigate to the project page, which is a different state from the one under test.
+    h.run(() => useProjectStore.getState().setPid('RT-2026-015'))
     await waitFor(() => expect(screen.getByText('Evidence EV-014-02 belongs to another project')).toBeInTheDocument())
     expect(screen.getByText(/content from RT-2026-014 is not shown in this context/)).toBeInTheDocument()
     expect(screen.queryByText('evidence-027.png')).not.toBeInTheDocument()
@@ -132,7 +133,7 @@ describe('evidence list + inspector (ticket 33)', () => {
     window.location.hash = '#/evidence'
     const h = mountEvidence('Riley Brooks')
     h.show()
-    h.run(() => selectProject('RT-2026-015')) // Riley is not a member
+    h.run(() => useProjectStore.getState().setPid('RT-2026-015')) // Riley is not a member; the list stays in place
     await waitFor(() => expect(screen.getByText('Could not load evidence')).toBeInTheDocument())
     expect(screen.getByText('Evidence for this project is not available for your account.')).toBeInTheDocument()
     expect(screen.queryByText('iam-review.json')).not.toBeInTheDocument()
