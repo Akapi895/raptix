@@ -31,6 +31,8 @@ import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Evidence, Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
 import type { CaptureIntegrity, EvidenceReference } from '../../domain/evidence'
+import type { FindingActivityKind, FindingActivityPage, FindingReferenceOptions, FindingSuggestionDisposition } from '@raptix/web-contracts'
+export type { FindingActivityKind, FindingActivityItem, FindingActivityPage, FindingReferenceOptions, FindingSuggestionDisposition } from '@raptix/web-contracts'
 
 /** Display label for each finding severity (ticket 67: moved from the legacy store; one definition for the findings/report surfaces). */
 export const sevLabel: Record<Severity, string> = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', info: 'Informational' }
@@ -51,6 +53,7 @@ export interface FindingListQuery {
   sort?: FindingSort
   /** Dismissed AI suggestions; excluded from the 'ai' category until restored. */
   dismissed?: string[]
+  showDismissed?: boolean
   /** 1-based page; out-of-range values clamp to the valid range. */
   page?: number
 }
@@ -78,6 +81,7 @@ export interface FindingListRead {
   /** Verified findings awaiting review / resolved (the workflow KPIs). */
   awaitingReview: number
   resolved: number
+  dismissedCount: number
   owners: string[]
   assets: string[]
   ops: string[]
@@ -103,6 +107,21 @@ export interface EvidenceView {
   findingId?: string
   opId?: string
   sensitive: boolean
+  captureId?: string
+  digest?: string
+  sizeBytes?: number
+  classification?: 'unclassified' | 'standard' | 'sensitive'
+  classificationVersion?: number
+  mediaType?: string
+  canClassify?: boolean
+  canViewOriginal?: boolean
+}
+
+export interface EvidenceDownload {
+  bytes: Uint8Array
+  filename: string
+  mediaType: string
+  digest: string
 }
 
 /** One detail read: finding + masked evidence + the labels the detail renders. */
@@ -119,6 +138,16 @@ export interface FindingDetailRead {
   /** Reports that include this finding. */
   inReports: { id: string; title: string }[]
   canViewSensitive: boolean
+  /** Source metadata for a producer claim; the evidence text is not an evidence reference. */
+  producer?: {
+    path: string
+    evidence?: string
+    attackVector?: string
+    quality?: { defaultSeverity: boolean; placeholderDescription: boolean; placeholderEvidence: boolean; unreadable: boolean }
+    sizeBytes?: number
+    resolved?: boolean
+    digest?: string | null
+  }
 }
 
 export interface FindingService {
@@ -127,11 +156,18 @@ export interface FindingService {
   /** Creates (id `null`) or edits a draft/returned finding; `submit` moves it to review. */
   save(ctx: RequestContext, id: string | null, input: FindingSaveInput): Promise<ServiceResult<Finding>>
   /** One lifecycle move; the transition map enforces role + state policy at the handler. */
-  transition(ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string): Promise<ServiceResult<Finding>>
+  transition(ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string, expectedVersion?: number): Promise<ServiceResult<Finding>>
+  referenceOptions(ctx: RequestContext): Promise<ServiceResult<FindingReferenceOptions>>
+  loadActivity(ctx: RequestContext, id: string, kind: FindingActivityKind, cursor: string, version: number): Promise<ServiceResult<FindingActivityPage>>
+  setSuggestionDisposition(ctx: RequestContext, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }): Promise<ServiceResult<FindingSuggestionDisposition>>
+  /** Appends a persisted comment against the version the operator read. */
+  addComment(ctx: RequestContext, id: string, text: string, expectedVersion: number, requestId: string): Promise<ServiceResult<Finding>>
   /** Imports an AI suggestion as a DRAFT (invariant 5 — the AI never publishes a finding). */
   importSuggestion(ctx: RequestContext, id: string): Promise<ServiceResult<Finding>>
   /** Links an existing evidence reference into the finding (same project, masking respected). */
   attachEvidence(ctx: RequestContext, findingId: string, evidenceId: string): Promise<ServiceResult<Finding>>
+  classifyCapture(ctx: RequestContext, captureId: string, classification: 'standard' | 'sensitive', expectedVersion: number, reason: string): Promise<ServiceResult<EvidenceView>>
+  downloadEvidence(ctx: RequestContext, evidenceId: string): Promise<ServiceResult<EvidenceDownload>>
   /** Simulated evidence upload that records and links the capture in one commit. */
   uploadEvidence(ctx: RequestContext, input: EvidenceUploadInput): Promise<ServiceResult<Evidence>>
   /** Records one retest result; a "Resolved" result closes the finding. */
@@ -205,12 +241,12 @@ export function listFindings(db: Db, ctx: RequestContext, query: FindingListQuer
     (!q || (f.id + ' ' + f.title).toLowerCase().includes(q)))
   const dismissed = new Set(query.dismissed || [])
   const categories: FindingCategory[] = ['all', 'confirmed', 'review', 'ai', 'drafts', 'remediation']
-  const counts = Object.fromEntries(categories.map((c) => [c, core.filter((f) => (c === 'all' || matchesStatus(f, c)) && (c !== 'ai' || !dismissed.has(f.id))).length])) as Record<FindingCategory, number>
+  const counts = Object.fromEntries(categories.map((c) => [c, core.filter((f) => (c === 'all' || matchesStatus(f, c)) && (c !== 'ai' || query.showDismissed || !dismissed.has(f.id))).length])) as Record<FindingCategory, number>
   // AI suggestions are proposals: they never enter the severity breakdown or workflow KPIs.
   const verified = core.filter((f) => f.status !== 'ai_suggested')
   const severity = Object.fromEntries(SEVS.map((s) => [s, verified.filter((f) => f.severity === s).length])) as Record<Severity, number>
   const rows = core
-    .filter((f) => (!query.severity || f.severity === query.severity) && matchesStatus(f, query.status || '') && (query.status !== 'ai' || !dismissed.has(f.id)))
+    .filter((f) => (!query.severity || f.severity === query.severity) && matchesStatus(f, query.status || '') && (query.status !== 'ai' || query.showDismissed || !dismissed.has(f.id)))
     .sort((a, b) => compareFindings(a, b, sort))
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
   const page = Math.min(Math.max(1, query.page ?? 1), pages)
@@ -223,6 +259,7 @@ export function listFindings(db: Db, ctx: RequestContext, query: FindingListQuer
       items, page, pageSize: PAGE_SIZE, total: rows.length, counts, severity,
       awaitingReview: verified.filter((f) => f.status === 'review').length,
       resolved: verified.filter((f) => f.status === 'resolved').length,
+      dismissedCount: query.dismissed?.length ?? 0,
       owners: [...new Set(base.map((f) => f.owner))].sort(),
       assets: [...new Set(base.map((f) => f.asset))],
       ops: [...new Set(base.map((f) => f.op).filter(Boolean))],
@@ -373,7 +410,7 @@ export function listEvidence(db: Db, ctx: RequestContext, query: EvidenceListQue
       return { rec, masked, hay }
     })
     .filter((x) => (!q || x.hay.includes(q)) && (!query.kind || x.rec.kind === query.kind))
-    .map(({ rec, masked }) => ({ ref: rec.id, name: masked ? undefined : rec.name, masked, kind: rec.kind, source: rec.source, at: rec.at, by: rec.by, projectId: rec.projectId, findingId: rec.findingId, opId: rec.opId, sensitive: rec.sensitive }))
+    .map(({ rec, masked }) => ({ ref: rec.id, captureId: rec.captureId, name: masked ? undefined : rec.name, masked, kind: rec.kind, source: rec.source, at: rec.at, by: rec.by, projectId: rec.projectId, findingId: rec.findingId, opId: rec.opId, sensitive: rec.sensitive, classification: rec.classification ?? (rec.sensitive ? 'sensitive' : 'standard'), classificationVersion: rec.classificationVersion ?? 1, canClassify: !!db.projects.find((project) => project.id === rec.projectId && policyCan(ctx.actor, 'reviewFinding', project)), canViewOriginal: !rec.sensitive || !!db.projects.find((project) => project.id === rec.projectId && policyCan(ctx.actor, 'viewSensitive', project)) }))
   return { ok: true, data: { items, kinds: [...new Set(base.map((e) => e.kind))].sort() } }
 }
 
@@ -417,7 +454,7 @@ export function getEvidence(db: Db, ctx: RequestContext, id: string): ServiceRes
   return {
     ok: true,
     data: {
-      evidence: { ref: rec.id, name: masked ? undefined : rec.name, masked, kind: rec.kind, source: rec.source, at: rec.at, by: rec.by, projectId: rec.projectId, findingId: rec.findingId, opId: rec.opId, sensitive: rec.sensitive },
+      evidence: { ref: rec.id, name: masked ? undefined : rec.name, masked, kind: rec.kind, source: rec.source, at: rec.at, by: rec.by, projectId: rec.projectId, findingId: rec.findingId, opId: rec.opId, sensitive: rec.sensitive, classification: rec.classification ?? (rec.sensitive ? 'sensitive' : 'standard'), classificationVersion: rec.classificationVersion ?? 1, canClassify: policyCan(ctx.actor, 'reviewFinding', project), canViewOriginal: !rec.sensitive || canSensitive },
       project: { id: project.id, name: project.name, client: project.client },
       integrity: { status: 'verified', digest: simulatedDigest(rec.id) },
       producer: (op || event) ? {
@@ -438,6 +475,8 @@ export function getEvidence(db: Db, ctx: RequestContext, id: string): ServiceRes
 
 /** Validated payload for creating a finding or saving an edit from the finding form. */
 export interface FindingSaveInput {
+  expectedVersion?: number
+  references?: { assetId: string | null; bindingId: string | null; threadId: string | null; runId: string | null; techniqueId: string | null }
   title: string
   severity: Severity
   /** Required for critical severity; stored as a rationale comment. */
@@ -458,11 +497,11 @@ export interface FindingSaveInput {
   submit?: boolean
 }
 
-/** Simulated evidence upload attached to a finding (no real bytes are stored). */
-export interface EvidenceUploadInput { findingId: string; name: string; kind: string; source: string; sensitive: boolean; opId?: string }
+/** The mock records metadata; real mode requires original bytes and a supported media type. */
+export interface EvidenceUploadInput { findingId: string; name: string; kind: string; source: string; sensitive: boolean; opId?: string; bytes?: Uint8Array; mediaType?: string; requestId?: string }
 
 /** One retest observation; result "Resolved" closes the finding. */
-export interface RetestInput { result: string; note: string }
+export interface RetestInput { result: string; note: string; requestId?: string; expectedVersion?: number; captureIds?: string[] }
 
 /** Lifecycle targets a finding can move to (the return path included). */
 export type FindingTransitionTarget = 'draft' | 'review' | 'confirmed' | 'returned' | 'remediation' | 'retest' | 'resolved'
@@ -488,7 +527,7 @@ const TRANSITIONS: Partial<Record<FindingStatus, Partial<Record<FindingTransitio
   review: { confirmed: ['reviewFinding'], returned: ['reviewFinding'] },
   confirmed: { remediation: ['createFinding', 'reviewFinding'] },
   remediation: { retest: ['createFinding', 'reviewFinding'] },
-  retest: { resolved: ['createFinding', 'reviewFinding'] },
+  retest: { remediation: ['createFinding', 'reviewFinding'] },
   resolved: {},
 }
 
@@ -581,9 +620,9 @@ export function saveFinding(authority: DbAuthority, clock: Clock, ctx: RequestCo
     authority.commit(ctx.corr, (d) => {
       d.counters.finding++
       d.findings.unshift({
-        id: newId, projectId: project.id, title: input.title.trim(), severity: input.severity, status: input.submit ? 'review' : 'draft',
+        id: newId, projectId: project.id, title: input.title.trim(), severity: input.severity, status: input.submit ? 'review' : 'draft', version: 1,
         asset: input.asset, op: input.op || '', technique: input.technique || '', owner: input.owner, date: at, updated: at,
-        desc: input.desc, impact: input.impact, rec: input.rec, evidence: [...input.evidence],
+        desc: input.desc, impact: input.impact, rec: input.rec, severityRationale: input.severityReason?.trim() || '', scopeNote: input.scopeNote || '', references: input.references, evidence: [...input.evidence],
         comments: input.severityReason?.trim() ? [{ by: ctx.actor.id, at, text: `Severity rationale (${input.severity}): ${input.severityReason.trim()}` }] : [],
         history: [{ at, by: ctx.actor.id, text: 'Draft created' }, ...(input.submit ? [{ at, by: ctx.actor.id, text: 'Submitted for review' }] : [])],
         retests: [],
@@ -597,6 +636,7 @@ export function saveFinding(authority: DbAuthority, clock: Clock, ctx: RequestCo
   const t = writableFinding(db, ctx, id)
   if (!t.ok) return t
   const { finding, project } = t
+  if (input.expectedVersion !== undefined && input.expectedVersion !== (finding.version ?? 1)) return { ok: false, failure: { kind: 'conflict', message: 'The finding changed while this form was open. Reload and reapply.' } }
   if (!['draft', 'returned'].includes(finding.status)) {
     return { ok: false, failure: { kind: 'conflict', message: `${id} is ${STATUS_TEXT[finding.status]} — only drafts or returned findings can be edited.`, entity: findingRef(finding) } }
   }
@@ -611,7 +651,9 @@ export function saveFinding(authority: DbAuthority, clock: Clock, ctx: RequestCo
     const f = d.findings.find((x) => x.id === id)!
     Object.assign(f, {
       title: input.title.trim(), severity: input.severity, desc: input.desc, impact: input.impact, rec: input.rec,
+      severityRationale: input.severityReason?.trim() || '', scopeNote: input.scopeNote || '', references: input.references ?? finding.references,
       asset: input.asset, technique: input.technique || '', owner: input.owner, op: input.op || '', evidence: [...input.evidence], updated: at,
+      version: (f.version ?? 1) + 1,
     })
     f.history.push({ at, by: ctx.actor.id, text: 'Content updated' })
     input.evidence.filter((ref) => !finding.evidence.includes(ref)).forEach((ref) => { const rec = d.evidence.find((x) => x.id === ref); if (rec) rec.findingId = id })
@@ -627,11 +669,12 @@ export function saveFinding(authority: DbAuthority, clock: Clock, ctx: RequestCo
  * read-only context and role policy → forbidden with the reason, then the
  * stage's own validation rules (evidence for submit, reason for return).
  */
-export function transitionFinding(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string): ServiceResult<Finding> {
+export function transitionFinding(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string, expectedVersion?: number): ServiceResult<Finding> {
   const db = authority.snapshot()
   const t = writableFinding(db, ctx, id)
   if (!t.ok) return t
   const { finding, project } = t
+  if (expectedVersion !== undefined && expectedVersion !== (finding.version ?? 1)) return { ok: false, failure: { kind: 'conflict', message: 'The finding changed before this decision. Reload and retry.' } }
   if (projectLocked(project)) {
     return { ok: false, failure: { kind: 'forbidden', message: `Project ${project.id} is closed or cancelled — findings are read-only.`, entity: findingRef(finding) } }
   }
@@ -652,7 +695,8 @@ export function transitionFinding(authority: DbAuthority, clock: Clock, ctx: Req
     const f = d.findings.find((x) => x.id === id)!
     f.status = to
     f.updated = at
-    f.history.push({ at, by: ctx.actor.id, text: HISTORY_TEXT[to] + (note?.trim() ? `: ${note.trim()}` : '') })
+    f.version = (f.version ?? 1) + 1
+    f.history.push({ at, by: ctx.actor.id, text: HISTORY_TEXT[to] + (note?.trim() ? `: ${note.trim()}` : ''), version: f.version })
     if (to === 'returned') f.comments.push({ by: ctx.actor.id, at, text: note!.trim() })
     d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: HISTORY_TEXT[to], obj: id, projectId: f.projectId, result: 'Success', reason: note?.trim() || '' })
     if (to === 'returned') d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + clock.now() % 10000, group: 'todo', text: `${id} was returned for changes`, projectId: f.projectId, at, read: false, to: { name: 'finding', id } })
@@ -686,10 +730,37 @@ export function attachFindingEvidence(authority: DbAuthority, clock: Clock, ctx:
     const f = d.findings.find((x) => x.id === findingId)!
     f.evidence.push(evidenceId)
     f.updated = at
+    f.version = (f.version ?? 1) + 1
+    f.history.push({ at, by: ctx.actor.id, text: 'Evidence attached', version: f.version, evidenceRefs: [evidenceId] })
     const rec = d.evidence.find((x) => x.id === evidenceId)
     if (rec) rec.findingId = findingId
   })
   return { ok: true, data: authority.snapshot().findings.find((x) => x.id === findingId)! }
+}
+
+/** Demo classification mutates only the simulated sensitivity label; it does not create original capture bytes. */
+export function classifyFindingEvidence(authority: DbAuthority, clock: Clock, ctx: RequestContext, evidenceId: string, classification: 'standard' | 'sensitive', expectedVersion: number, reason: string): ServiceResult<EvidenceView> {
+  const db = authority.snapshot()
+  const rec = db.evidence.find((e) => e.id === evidenceId)
+  if (!rec) return { ok: false, failure: { kind: 'not-found', message: 'Evidence is not available for this project.' } }
+  const project = db.projects.find((p) => p.id === rec.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) return { ok: false, failure: { kind: 'not-found', message: 'Evidence is not available for this project.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== rec.projectId) return { ok: false, failure: { kind: 'forbidden', message: 'Evidence belongs to another project.' } }
+  if (!policyCan(ctx.actor, 'reviewFinding', project)) return { ok: false, failure: { kind: 'forbidden', message: 'Capture classification requires an owner or reviewer.' } }
+  if (!reason.trim()) return { ok: false, failure: { kind: 'validation', message: 'A classification reason is required.' } }
+  const currentVersion = rec.classificationVersion ?? 1
+  if (currentVersion !== expectedVersion) return { ok: false, failure: { kind: 'conflict', message: 'The capture classification changed; reload before deciding.' } }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const current = d.evidence.find((e) => e.id === evidenceId)!
+    current.sensitive = classification === 'sensitive'
+    current.classification = classification
+    current.classificationVersion = currentVersion + 1
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Classified evidence', obj: evidenceId, projectId: rec.projectId, result: 'Success', reason: reason.trim() })
+  })
+  const updated = authority.snapshot().evidence.find((e) => e.id === evidenceId)!
+  const canViewSensitive = policyCan(ctx.actor, 'viewSensitive', project)
+  return { ok: true, data: { ref: updated.id, name: updated.sensitive && !canViewSensitive ? undefined : updated.name, masked: updated.sensitive && !canViewSensitive, kind: updated.kind, source: updated.source, at: updated.at, by: updated.by, projectId: updated.projectId, findingId: updated.findingId, opId: updated.opId, sensitive: updated.sensitive, classification, classificationVersion: updated.classificationVersion, canClassify: true, canViewOriginal: !updated.sensitive || canViewSensitive } }
 }
 
 /** Simulated upload: records the capture in the finding's own project (the
@@ -705,18 +776,18 @@ export function uploadFindingEvidence(authority: DbAuthority, clock: Clock, ctx:
   const at = stampOf(clock)
   const id = 'EV-' + (400 + db.evidence.length + 1)
   authority.commit(ctx.corr, (d) => {
-    d.evidence.push({ id, name: input.name.trim(), kind: input.kind, source: input.source, at, by: ctx.actor.id, projectId: finding.projectId, opId: input.opId, findingId: finding.id, sensitive: input.sensitive })
+    d.evidence.push({ id, captureId: id, name: input.name.trim(), kind: input.kind, source: input.source, at, by: ctx.actor.id, projectId: finding.projectId, opId: input.opId, findingId: finding.id, sensitive: input.sensitive, classification: input.sensitive ? 'sensitive' : 'standard', classificationVersion: 1 })
     const f = d.findings.find((x) => x.id === finding.id)!
     if (!f.evidence.includes(id)) f.evidence.push(id)
     f.updated = at
+    f.version = (f.version ?? 1) + 1
+    f.history.push({ at, by: ctx.actor.id, text: 'Evidence uploaded', version: f.version, evidenceRefs: [id] })
     d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Uploaded evidence', obj: id, projectId: finding.projectId, result: 'Success', reason: '' })
   })
   return { ok: true, data: authority.snapshot().evidence.find((x) => x.id === id)! }
 }
 
-/** Records one retest observation in the same commit as its outcome: a
- *  "Resolved" result closes the finding; a failed retest from `retest`
- *  returns it to remediation with the reason in the history. */
+/** Records one retest with its outcome; a failed result keeps remediation active. */
 export function recordFindingRetest(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: RetestInput): ServiceResult<Finding> {
   const db = authority.snapshot()
   const t = writableFinding(db, ctx, id)
@@ -724,17 +795,28 @@ export function recordFindingRetest(authority: DbAuthority, clock: Clock, ctx: R
   const { finding, project } = t
   const denied = roleDenied(ctx, project, ['createFinding', 'reviewFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot record retests.`)
   if (denied) return { ok: false, failure: denied }
-  if (!['confirmed', 'remediation', 'retest', 'resolved'].includes(finding.status)) {
-    return { ok: false, failure: { kind: 'conflict', message: `Retest is only available after the finding has been confirmed — ${id} is ${STATUS_TEXT[finding.status]}.`, entity: findingRef(finding) } }
+  const existing = input.requestId ? finding.retests.find((retest) => retest.requestId === input.requestId) : undefined
+  if (existing) {
+    if (existing.result !== input.result || existing.note !== input.note.trim()) return { ok: false, failure: { kind: 'conflict', message: 'The retest request ID was already used for different content.' } }
+    return { ok: true, data: finding }
   }
   if (!input.note.trim()) return { ok: false, failure: { kind: 'validation', message: 'Enter notes about the retest.' } }
+  if (input.expectedVersion !== undefined && input.expectedVersion !== (finding.version ?? 1)) return { ok: false, failure: { kind: 'conflict', message: 'The finding changed before the retest was recorded.' } }
+  const captureIds = input.captureIds ?? []
+  const retestEvidence = captureIds.map((captureId) => db.evidence.find((evidence) => evidence.captureId === captureId && evidence.projectId === project.id))
+  if (retestEvidence.some((evidence) => !evidence || !['standard', 'sensitive'].includes(evidence.classification ?? '') || evidence.sensitive && !policyCan(ctx.actor, 'viewSensitive', project))) return { ok: false, failure: { kind: 'forbidden', message: 'Retest evidence must be a retained capture authorized in this project.' } }
+  if (!['confirmed', 'remediation', 'retest'].includes(finding.status)) {
+    return { ok: false, failure: { kind: 'conflict', message: `Retest is only available after the finding has been confirmed — ${id} is ${STATUS_TEXT[finding.status]}.`, entity: findingRef(finding) } }
+  }
+  if (input.result === 'Resolved' && (finding.status !== 'retest' || captureIds.length === 0)) return { ok: false, failure: { kind: 'conflict', message: 'Resolution requires the retest stage and at least one classified retained capture.' } }
   const at = stampOf(clock)
   const resolved = input.result === 'Resolved'
-  const backToRemediation = !resolved && finding.status === 'retest'
+  const backToRemediation = !resolved && finding.status !== 'remediation'
   authority.commit(ctx.corr, (d) => {
     const f = d.findings.find((x) => x.id === id)!
-    f.retests.push({ at, by: ctx.actor.id, result: input.result, note: input.note.trim() })
-    f.history.push({ at, by: ctx.actor.id, text: `Retest: ${input.result}` })
+    f.version = (f.version ?? 1) + 1
+    f.retests.push({ at, by: ctx.actor.id, result: input.result, note: input.note.trim(), requestId: input.requestId, version: f.version, evidenceRefs: [...captureIds] })
+    f.history.push({ at, by: ctx.actor.id, text: `Retest: ${input.result}`, version: f.version, evidenceRefs: [...captureIds] })
     if (resolved) f.status = 'resolved'
     else if (backToRemediation) { f.status = 'remediation'; f.history.push({ at, by: ctx.actor.id, text: `Sent to remediation: Retest not passed (${input.result}): ${input.note.trim()}` }) }
     f.updated = at
@@ -756,6 +838,44 @@ export function addFindingCommentTransaction(authority: DbAuthority, ctx: Reques
   return { ok: true, data: authority.snapshot().findings.find((x) => x.id === id)! }
 }
 
+export function addFindingComment(
+  authority: DbAuthority,
+  clock: Clock,
+  ctx: RequestContext,
+  id: string,
+  text: string,
+  expectedVersion: number,
+  requestId: string,
+): ServiceResult<Finding> {
+  const found = writableFinding(authority.snapshot(), ctx, id)
+  if (!found.ok) return found
+  const { finding, project } = found
+  const denied = roleDenied(ctx, project, ['createFinding', 'reviewFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot comment on findings.`)
+  if (denied) return { ok: false, failure: denied }
+  const comment = text.trim()
+  if (!comment || comment.length > 4000) return { ok: false, failure: { kind: 'validation', message: 'A comment (1-4000 characters) is required.' } }
+  if (!requestId.trim() || requestId.length > 128) return { ok: false, failure: { kind: 'validation', message: 'A valid comment request ID is required.' } }
+  if (finding.status === 'resolved') return { ok: false, failure: { kind: 'conflict', message: 'Resolved findings are immutable and cannot receive new comments.' } }
+  const existing = finding.comments.find((item) => item.requestId === requestId)
+  if (existing) {
+    if (existing.text !== comment) return { ok: false, failure: { kind: 'conflict', message: 'The comment request ID was already used for different content.' } }
+    return { ok: true, data: finding }
+  }
+  const currentVersion = finding.version ?? 1
+  if (!Number.isSafeInteger(expectedVersion) || expectedVersion !== currentVersion) return { ok: false, failure: { kind: 'conflict', message: `The finding moved to version ${currentVersion}; reload before commenting.` } }
+  const at = stampOf(clock)
+  const version = currentVersion + 1
+  authority.commit(ctx.corr, (d) => {
+    const current = d.findings.find((item) => item.id === id)!
+    current.version = version
+    current.updated = at
+    current.comments.push({ id: `comment-${requestId}`, requestId, version, by: ctx.actor.id, at, text: comment })
+    current.history.push({ at, by: ctx.actor.id, text: 'Comment added', version })
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Commented on finding', obj: id, projectId: project.id, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: authority.snapshot().findings.find((item) => item.id === id)! }
+}
+
 /** Builds the typed findings service; `guard` is the factory's superseded-scope read guard.
  *  Reads observe scope cancellation; mutations capture their context at call time and commit once. */
 export function createFindingService(
@@ -767,9 +887,25 @@ export function createFindingService(
     list: (ctx, query) => guard(() => listFindings(authority.snapshot(), ctx, query)),
     get: (ctx, id) => guard(() => getFinding(authority.snapshot(), ctx, id)),
     save: (ctx, id, input) => Promise.resolve(saveFinding(authority, clock, ctx, id, input)),
-    transition: (ctx, id, to, note) => Promise.resolve(transitionFinding(authority, clock, ctx, id, to, note)),
+    transition: (ctx, id, to, note, expectedVersion) => Promise.resolve(transitionFinding(authority, clock, ctx, id, to, note, expectedVersion)),
+    referenceOptions: (ctx) => guard(() => {
+      const db = authority.snapshot()
+      const project = db.projects.find((item) => item.id === ctx.projectId && projectAccessible(item, ctx.actor))
+      if (!project) return { ok: false, failure: { kind: 'not-found', message: 'Finding reference options are not available for this project.' } }
+      return { ok: true, data: { engagementId: project.id, assets: db.assets.filter((asset) => asset.projectId === project.id).map((asset) => ({ id: asset.id, label: asset.name })), executions: [], techniqueAvailable: true, truncated: false } }
+    }),
+    loadActivity: async (ctx, id, kind, _cursor, version) => {
+      const detail = getFinding(authority.snapshot(), ctx, id)
+      if (!detail.ok) return detail
+      if (version > (detail.data.finding.version ?? 1)) return { ok: false, failure: { kind: 'conflict', message: 'The finding version moved forward; reload its activity.' } }
+      return { ok: true, data: { engagementId: detail.data.finding.projectId, findingId: id, kind, version, items: [], nextCursor: null } }
+    },
+    setSuggestionDisposition: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'Mock suggestion dismissal remains session-local.' } }),
+    addComment: (ctx, id, text, expectedVersion, requestId) => Promise.resolve(addFindingComment(authority, clock, ctx, id, text, expectedVersion, requestId)),
     importSuggestion: (ctx, id) => Promise.resolve(transitionFinding(authority, clock, ctx, id, 'draft')),
     attachEvidence: (ctx, findingId, evidenceId) => Promise.resolve(attachFindingEvidence(authority, clock, ctx, findingId, evidenceId)),
+    classifyCapture: (ctx, captureId, classification, expectedVersion, reason) => Promise.resolve(classifyFindingEvidence(authority, clock, ctx, captureId, classification, expectedVersion, reason)),
+    downloadEvidence: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'The mock evidence store does not contain original capture bytes.' } }),
     uploadEvidence: (ctx, input) => Promise.resolve(uploadFindingEvidence(authority, clock, ctx, input)),
     recordRetest: (ctx, id, input) => Promise.resolve(recordFindingRetest(authority, clock, ctx, id, input)),
     listEvidence: (ctx, query) => guard(() => listEvidence(authority.snapshot(), ctx, query)),

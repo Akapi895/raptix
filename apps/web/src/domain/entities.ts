@@ -43,14 +43,23 @@ export interface Operation {
 }
 export interface Agent { id: string; host: string; os: string; version: string; projectId: string; status: AgentStatus; lastSeen: string; op: string | null; group: string; conn: string; ip: string }
 export interface Asset { id: string; name: string; ident: string; ip: string; type: string; os: string; owner: string; projectId: string; scope: 'in' | 'out' | 'pending' | 'unclassified'; source: string; updated: string }
-export interface Evidence { id: string; name: string; kind: string; source: string; at: string; by: string; projectId: string; findingId?: string; opId?: string; sensitive: boolean }
+export interface Evidence { id: string; name: string; kind: string; source: string; at: string; by: string; projectId: string; findingId?: string; opId?: string; sensitive: boolean; captureId?: string; digest?: string; sizeBytes?: number; classification?: 'unclassified' | 'standard' | 'sensitive'; classificationVersion?: number; mediaType?: string; canClassify?: boolean; canViewOriginal?: boolean }
 /** Mock credentials-vault record (parity with the real engagement vault, ticket 16): the list view carries metadata only — `demoPlaintext` is seeded demo material that only an explicit, audited reveal surfaces in-session. */
 export interface VaultSecret { id: string; projectId: string; kind: string; label: string; demoPlaintext: string; revealCount: number; lastRevealedAt?: string; createdAt: string; createdBy: string }
 export interface Finding {
   id: string; projectId: string; title: string; severity: Severity; status: FindingStatus; asset: string; op: string
   technique: string; owner: string; date: string; updated: string; desc: string; impact: string; rec: string
-  evidence: string[]; comments: { by: string; at: string; text: string }[]; history: { at: string; by: string; text: string }[]
-  retests: { at: string; by: string; result: string; note: string }[]
+  severityRationale?: string; scopeNote?: string
+  references?: { assetId: string | null; bindingId: string | null; threadId: string | null; runId: string | null; techniqueId: string | null }
+  activityCursors?: { comments: string | null; history: string | null; retests: string | null }
+  lastReviewDecision?: import('@raptix/web-contracts').FindingReviewDecision | null
+  suggestionDisposition?: { dismissed: boolean; reason: string | null; version: number }
+  evidence: string[]; comments: { by: string; at: string; text: string; id?: string; requestId?: string; version?: number }[]; history: { at: string; by: string; text: string; id?: string; version?: number; evidenceRefs?: string[] }[]
+  retests: { at: string; by: string; result: string; note: string; id?: string; requestId?: string; version?: number; evidenceRefs?: string[] }[]
+  /** Producer provenance/quality for runtime claims that have not yet become curated records. */
+  producer?: { path: string; digest?: string | null; sizeBytes?: number; quality?: { defaultSeverity: boolean; placeholderDescription: boolean; placeholderEvidence: boolean; unreadable: boolean } }
+  /** Server concurrency version for the currently read curated record. */
+  version?: number
 }
 export interface Report {
   id: string; projectId: string; title: string; template: string; version: string; status: ReportStatus

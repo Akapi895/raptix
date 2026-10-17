@@ -239,7 +239,7 @@ async function main(): Promise<void> {
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const inboxService = dbClient && governanceService ? new InboxService(dbClient, governanceService) : undefined;
-  const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient, artifactsService) : undefined;
+  const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient, artifactsService, libraryService) : undefined;
   const reportsService = dbClient ? new ReportsService(dbClient) : undefined;
   const app = await buildApp({
     deploymentId: env.deploymentId,

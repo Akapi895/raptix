@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isCampaignJobView, isCampaignView, isCampaignsView, isEngagementSettingsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isMemberView, isMembersView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isTimelineEntryView, isTimelineView, isVaultRevealView, isVaultSecretView, isVaultView } from '../src/run-api.js';
+import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isCampaignJobView, isCampaignView, isCampaignsView, isEngagementSettingsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isMemberView, isMembersView, isPendingInterruptView, isRetainedCaptureView, isRetainedCapturesView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isTimelineEntryView, isTimelineView, isVaultRevealView, isVaultSecretView, isVaultView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -23,6 +23,19 @@ it('validates optional thread-level transcript history and message ids additivel
   expect(isScopedThreadView({ ...thread, transcripts: [{ ...thread.transcripts[0], payload: { type: 'unknown', agent: 'x' } }] })).toBe(false);
   expect(isScopedThreadView({ ...thread, transcripts: [{ ...thread.transcripts[0], truncated: false }, { ...thread.transcripts[0] }], transcriptsTruncated: undefined })).toBe(false);
   expect(isScopedThreadView({ ...thread, transcripts: undefined, transcriptsTruncated: undefined })).toBe(true);
+});
+it('validates retained capture identity, classification and digest before exposing a descriptor', () => {
+  const capture = {
+    id: 'cap-1', engagementId: 'eng', filename: null, mediaType: 'image/png', sizeBytes: 8,
+    digest: 'a'.repeat(64), producer: null, classification: 'unclassified', classificationVersion: 1,
+    uploadedBy: 'operator', classifiedBy: null, classificationReason: null, classifiedAt: null,
+    createdAt: time, canReadOriginal: false, canClassify: false,
+  };
+  expect(isRetainedCaptureView(capture)).toBe(true);
+  expect(isRetainedCaptureView({ ...capture, digest: 'not-a-digest' })).toBe(false);
+  expect(isRetainedCaptureView({ ...capture, classification: 'verified' })).toBe(false);
+  expect(isRetainedCapturesView({ engagementId: 'eng', captures: [capture], source: 'db' })).toBe(true);
+  expect(isRetainedCapturesView({ engagementId: 'eng', captures: [{ ...capture, engagementId: 'other' }], source: 'db' })).toBe(false);
 });
 it('validates the owner-scoped thread selector list', () => {
   const list = { engagementId: 'eng', threads: [{ engagementId: 'eng', threadId: 'thread', assistantId: 'soundwave', kind: 'planning', createdAt: time, updatedAt: time }], source: 'runtime' };

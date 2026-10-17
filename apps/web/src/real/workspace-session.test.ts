@@ -57,6 +57,7 @@ describe('actor-scoped recovery storage', () => {
     localStorage.setItem('raptix.real.draft.v1.["actor-a","eng-1","thread-1"]', 'unsent plaintext')
     localStorage.setItem('raptix.real.local.eng-1.thread', JSON.stringify({ threadId: 'legacy', kind: 'planning' }))
     localStorage.setItem('raptix.real.execution.agents.width', '520')
+    localStorage.setItem('raptix.real.finding-request.v1.test', 'pending finding request')
     localStorage.setItem('unrelated.key', 'keep me')
     clearWorkspaceRecovery()
     expect(readSelection('actor-a', 'eng-1')).toBeNull()
@@ -65,6 +66,7 @@ describe('actor-scoped recovery storage', () => {
     expect(localStorage.getItem('raptix.real.draft.v1.["actor-a","eng-1","thread-1"]')).toBeNull()
     expect(localStorage.getItem('raptix.real.local.eng-1.thread')).toBeNull()
     expect(localStorage.getItem('unrelated.key')).toBe('keep me')
+    expect(localStorage.getItem('raptix.real.finding-request.v1.test')).toBeNull()
     // A panel-size preference is not recovery state and must survive the wipe.
     expect(localStorage.getItem('raptix.real.execution.agents.width')).toBe('520')
   })

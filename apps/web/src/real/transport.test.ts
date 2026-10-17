@@ -1,6 +1,6 @@
 /** Boundary tests for the same-origin real-mode transport (ticket 03). */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiTransportError, apiFetch } from './transport'
+import { ApiTransportError, apiFetch, apiFetchBytes } from './transport'
 
 type Payload = { ok: true }
 const isPayload = (v: unknown): v is Payload =>
@@ -82,5 +82,30 @@ describe('apiFetch', () => {
     controller.abort()
     vi.stubGlobal('fetch', vi.fn(async () => { throw new DOMException('Aborted', 'AbortError') }))
     await expect(apiFetch('/x', isPayload, { signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' })
+  })
+})
+
+describe('apiFetchBytes', () => {
+  it('preserves the original bytes and validates server digest/length metadata', async () => {
+    const bytes = new Uint8Array([0, 255, 65, 66])
+    const fetchMock = vi.fn(async () => new Response(bytes, { status: 200, headers: {
+      'Content-Type': 'application/octet-stream', 'Content-Disposition': "attachment; filename*=UTF-8''capture%20one.bin",
+      'X-Content-SHA256': 'a'.repeat(64), 'X-Content-Length': String(bytes.length),
+    } }))
+    vi.stubGlobal('fetch', fetchMock)
+    await expect(apiFetchBytes('/captures/cap-1/content')).resolves.toMatchObject({ bytes, digest: 'a'.repeat(64), filename: 'capture one.bin', mediaType: 'application/octet-stream' })
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('/api/captures/cap-1/content')
+    expect(init.credentials).toBe('same-origin')
+  })
+
+  it('rejects a byte count that differs from the retained descriptor headers', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new Uint8Array([1, 2]), { status: 200, headers: { 'X-Content-SHA256': 'a'.repeat(64), 'X-Content-Length': '3' } })))
+    await expect(apiFetchBytes('/captures/cap-1/content')).rejects.toMatchObject({ code: 'internal_error', message: 'The downloaded capture size does not match its recorded length.' })
+  })
+
+  it('keeps server refusal envelopes intact for binary requests', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(409, { statusCode: 409, error: { code: 'conflict', message: 'Classify the capture first.' } })))
+    await expect(apiFetchBytes('/captures/cap-1/content')).rejects.toMatchObject({ status: 409, code: 'conflict', message: 'Classify the capture first.' })
   })
 })

@@ -6,6 +6,8 @@
  * data the engagement API does not carry.
  */
 import {
+  isCuratedFindingView, isCuratedFindingsView, isFindingActivityPage, isFindingReferenceOptions, isFindingSuggestionDispositionsView, isFindingSuggestionDispositionResult,
+  type CuratedFindingView, type CuratedFindingsView, type FindingActivityPage, type FindingReferenceOptions, type FindingSuggestionDispositionsView, type FindingSuggestionDispositionResult,
   isCapabilitiesDocument,
   isProjectViewModel,
   isPlanningView,
@@ -19,6 +21,8 @@ import {
   isFindingsView,
   isArtifactsView,
   isArtifactContentView,
+  isRetainedCaptureView,
+  isRetainedCapturesView,
   isTimelineView,
   isGraphView,
   isAssetsView,
@@ -39,6 +43,10 @@ import {
   type FindingsView,
   type ArtifactsView,
   type ArtifactContentView,
+  type ClassifyCaptureInput,
+  type RetainCaptureInput,
+  type RetainedCaptureView,
+  type RetainedCapturesView,
   type TimelineView,
   type GraphView,
   type AssetsView,
@@ -61,11 +69,12 @@ isC2Profile,
   isCampaignView,
   isCampaignJobView,
 } from '@raptix/web-contracts'
-import { apiFetch, ApiTransportError, setCsrfToken } from './transport'
+export type { CuratedFindingView, CuratedFindingsView, FindingActivityItem, FindingActivityPage, FindingReferenceOptions, FindingReferences, FindingSuggestionDisposition } from '@raptix/web-contracts'
+import { apiFetch, apiFetchBytes, ApiTransportError, setCsrfToken, type BinaryApiResponse } from './transport'
 
 export type {
   CapabilitiesDocument, Capability, ProjectViewModel, PlanningView,
-  RequestRecoveryView, ScopedRunView, ScopedThreadListView, ScopedThreadView, ThreadKind,
+  RequestRecoveryView, RetainedCaptureView, ScopedRunView, ScopedThreadListView, ScopedThreadView, ThreadKind,
 }
 
 /** Response of the workspace-backed HITL decision endpoint. */
@@ -307,9 +316,20 @@ export function fetchArtifactContent(engagementId: string, path: string): Promis
   )
 }
 
-export interface RetainedCaptureView { engagementId: string; path: string; digest: string; sizeBytes: number; producer: string | null }
-export function uploadCapture(engagementId: string, input: { base64: string; mediaType: string }): Promise<RetainedCaptureView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/artifacts/captures`, owned(engagementId, (v): v is RetainedCaptureView => typeof v === 'object' && v !== null && typeof (v as RetainedCaptureView).path === 'string' && /^[a-f0-9]{64}$/.test((v as RetainedCaptureView).digest)), { method: 'POST', body: input })
+export function fetchRetainedCaptures(engagementId: string): Promise<RetainedCapturesView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/artifacts/captures`, owned(engagementId, isRetainedCapturesView))
+}
+
+export function uploadCapture(engagementId: string, input: RetainCaptureInput): Promise<RetainedCaptureView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/artifacts/captures`, owned(engagementId, isRetainedCaptureView), { method: 'POST', body: input })
+}
+
+export function classifyCapture(engagementId: string, captureId: string, input: ClassifyCaptureInput): Promise<RetainedCaptureView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/artifacts/captures/${encodeURIComponent(captureId)}/classification`, owned(engagementId, isRetainedCaptureView), { method: 'PATCH', body: input })
+}
+
+export function downloadCapture(engagementId: string, captureId: string): Promise<BinaryApiResponse> {
+  return apiFetchBytes(`/engagements/${encodeURIComponent(engagementId)}/artifacts/captures/${encodeURIComponent(captureId)}/content`)
 }
 
 export function fetchTimeline(engagementId: string): Promise<TimelineView> {
@@ -754,68 +774,123 @@ export function rescheduleSchedule(engagementId: string, scheduleId: string, inp
 
 /* ───────────── Curated findings/evidence (integration ticket 10) ───────────── */
 
-export interface CuratedFindingView {
-  id: string
-  engagementId: string
-  title: string
-  severity: string
-  status: string
-  body: { detail: string }
-  expectedVersion: number
-  sourceType: 'authored' | 'imported'
-  producerRef: string | null
-  /** W19: true when the producer reference resolved through the retained artifact authority. */
-  producerResolved?: boolean
-  createdBy: string
-  updatedBy: string | null
-  updatedAt: string
-  evidence: { id: string; kind: 'artifact' | 'digest'; artifactPath: string | null; digest: string | null; producer: string | null; createdAt: string }[]
-}
-
-export interface CuratedFindingsView {
-  engagementId: string
-  findings: CuratedFindingView[]
-  transitions: Record<string, string[]>
-  source: 'db'
-}
-
-function isCuratedFindingsView(v: unknown): v is CuratedFindingsView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as CuratedFindingsView
-  return typeof doc.engagementId === 'string' && Array.isArray(doc.findings) && doc.source === 'db' && typeof doc.transitions === 'object'
-}
-
 export function fetchCuratedFindings(engagementId: string): Promise<CuratedFindingsView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings`, owned(engagementId, isCuratedFindingsView))
 }
 
-export function createCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string }): Promise<CuratedFindingView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings`, (v): v is CuratedFindingView =>
-    typeof v === 'object' && v !== null && typeof (v as CuratedFindingView).id === 'string' && (v as CuratedFindingView).status === 'draft',
+export function fetchFindingReferenceOptions(engagementId: string): Promise<FindingReferenceOptions> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/options`, owned(engagementId, isFindingReferenceOptions))
+}
+
+export function fetchFindingActivity(engagementId: string, findingId: string, kind: FindingActivityPage['kind'], cursor: string, version: number): Promise<FindingActivityPage> {
+  const query = new URLSearchParams({ kind, cursor, version: String(version), limit: '20' })
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/activity?${query}`, (value): value is FindingActivityPage => {
+    return isFindingActivityPage(value) && value.engagementId === engagementId && value.findingId === findingId && value.kind === kind && value.version === version
+  })
+}
+
+export function fetchFindingSuggestionDispositions(engagementId: string): Promise<FindingSuggestionDispositionsView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/suggestions`, owned(engagementId, isFindingSuggestionDispositionsView))
+}
+
+export function setFindingSuggestionDisposition(engagementId: string, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }): Promise<FindingSuggestionDispositionResult> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/suggestions`, (value): value is FindingSuggestionDispositionResult => {
+    return isFindingSuggestionDispositionResult(value) && value.engagementId === engagementId && value.disposition.producerRef === input.producerRef && value.disposition.dismissed === input.dismissed
+  }, { method: 'POST', body: input })
+}
+
+export function createCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string; references?: CuratedFindingView['references'] }): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings`, owned(engagementId, (v): v is CuratedFindingView =>
+    isCuratedFindingView(v) && v.status === 'draft'),
   { method: 'POST', body: input })
 }
 
 export function importCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string; producerRef: string }): Promise<CuratedFindingView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/import`, owned(engagementId, (v): v is CuratedFindingView => typeof v === 'object' && v !== null && (v as CuratedFindingView).sourceType === 'imported' && (v as CuratedFindingView).status === 'draft'), { method: 'POST', body: input })
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/import`, owned(engagementId, (v): v is CuratedFindingView =>
+    isCuratedFindingView(v) && v.sourceType === 'imported' && v.producerRef === input.producerRef),
+  { method: 'POST', body: input })
 }
 
-export function updateCuratedFinding(engagementId: string, findingId: string, input: { expectedVersion: number; title: string; severity: string; detail: string }): Promise<CuratedFindingView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}`, owned(engagementId, (v): v is CuratedFindingView => typeof v === 'object' && v !== null && (v as CuratedFindingView).id === findingId && Number.isInteger((v as CuratedFindingView).expectedVersion)), { method: 'PATCH', body: input })
+export function updateCuratedFinding(engagementId: string, findingId: string, input: { expectedVersion: number; title: string; severity: string; detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string; references?: CuratedFindingView['references']; submit?: boolean }): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}`, owned(engagementId, (v): v is CuratedFindingView => isCuratedFindingView(v) && v.id === findingId), { method: 'PATCH', body: input })
 }
 
-export function transitionCuratedFinding(engagementId: string, findingId: string, to: string, expectedVersion: number): Promise<CuratedFindingView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/transition`, (v): v is CuratedFindingView =>
-    typeof v === 'object' && v !== null && typeof (v as CuratedFindingView).status === 'string',
-  { method: 'POST', body: { to, expectedVersion } })
+export function transitionCuratedFinding(engagementId: string, findingId: string, to: string, expectedVersion: number, note?: string): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/transition`, owned(engagementId, (v): v is CuratedFindingView =>
+    isCuratedFindingView(v) && v.id === findingId && v.status === to),
+  { method: 'POST', body: { to, expectedVersion, ...(note === undefined ? {} : { note }) } })
 }
 
-export function attachEvidence(engagementId: string, findingId: string, input: { kind: 'artifact' | 'digest'; artifactPath?: string; digest?: string; producer?: string }): Promise<{ id: string; kind: string }> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/evidence`, (v): v is { id: string; kind: string } =>
-    typeof v === 'object' && v !== null && typeof (v as { id?: unknown }).id === 'string',
+export function addCuratedFindingComment(engagementId: string, findingId: string, input: { text: string; expectedVersion: number; requestId: string }): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/comments`, owned(engagementId, (v): v is CuratedFindingView => isCuratedFindingView(v) && v.id === findingId), { method: 'POST', body: input })
+}
+
+export function recordCuratedFindingRetest(engagementId: string, findingId: string, input: { result: string; note: string; expectedVersion: number; requestId: string; captureIds?: string[] }): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/retests`, owned(engagementId, (v): v is CuratedFindingView => isCuratedFindingView(v) && v.id === findingId), { method: 'POST', body: input })
+}
+
+export interface EvidenceLinkView { id: string; engagementId: string; captureId: string | null; kind: 'artifact' | 'digest'; artifactPath: string | null; digest: string | null; producer: string | null; createdAt: string }
+export function attachEvidence(engagementId: string, findingId: string, input: { kind: 'artifact' | 'digest'; expectedVersion: number; captureId?: string; artifactPath?: string; digest?: string; producer?: string }): Promise<EvidenceLinkView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/evidence`, (v): v is EvidenceLinkView =>
+    typeof v === 'object' && v !== null && typeof (v as EvidenceLinkView).id === 'string' && (v as EvidenceLinkView).engagementId === engagementId,
   { method: 'POST', body: input })
 }
 
 /* ───────────── Report lifecycle/delivery (integration ticket 11) ───────────── */
+
+export interface ReportTemplateSection { title: string; required: boolean }
+
+export interface ReportTemplateView {
+  id: string
+  engagementId: string
+  name: string
+  version: number
+  sections: ReportTemplateSection[]
+  createdBy: string
+  createdAt: string
+}
+
+export interface ReportSnapshotEvidence {
+  id: string
+  captureId: string | null
+  kind: 'artifact' | 'digest'
+  artifactPath: string | null
+  digest: string | null
+  producer: string | null
+}
+
+/** A finding as pinned by a report: the version, content and evidence references at selection time. */
+export interface ReportFindingSnapshotView {
+  id: string
+  findingId: string
+  findingVersion: number
+  position: number
+  title: string
+  severity: string
+  status: string
+  body: { detail: string; impact: string; recommendation: string; severityRationale: string; scopeNote: string }
+  evidence: ReportSnapshotEvidence[]
+}
+
+export interface ReportReadinessCheck {
+  id: 'findings' | 'evidence' | 'template' | 'period' | 'reviewer'
+  label: string
+  state: 'pass' | 'fail' | 'unavailable'
+  detail: string
+}
+
+export interface ReportReadinessView { ready: boolean; checks: ReportReadinessCheck[] }
+
+export interface ReportDeliveryView {
+  id: string
+  kind: string
+  format: string
+  status: string
+  createdAt: string
+  /** Receipt recorded at delivery by the manual flow; it is not a recipient acknowledgement. */
+  recordedReceipt: { recipient: string; receipt: string; actorId: string | null } | null
+  acknowledgement: { id: string; actorId: string; receipt: string; createdAt: string } | null
+}
 
 export interface ReportView {
   id: string
@@ -830,12 +905,21 @@ export interface ReportView {
   reviewComment: string | null
   approvedVersion: number | null
   updatedAt: string
-  deliveries: { id: string; kind: string; format: string; status: string; createdAt: string }[]
+  templateId: string | null
+  templateVersion: number | null
+  period: { start: string; end: string } | null
+  reviewerId: string | null
+  parentReportId: string | null
+  rootReportId: string | null
+  selectedFindings: ReportFindingSnapshotView[]
+  readiness: ReportReadinessView
+  deliveries: ReportDeliveryView[]
 }
 
 export interface ReportsView {
   engagementId: string
   reports: ReportView[]
+  templates: ReportTemplateView[]
   exportFormats: string[]
   source: 'db'
 }
@@ -843,7 +927,7 @@ export interface ReportsView {
 function isReportsView(v: unknown): v is ReportsView {
   if (typeof v !== 'object' || v === null) return false
   const doc = v as ReportsView
-  return typeof doc.engagementId === 'string' && Array.isArray(doc.reports) && doc.source === 'db'
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.reports) && Array.isArray(doc.templates) && doc.source === 'db'
 }
 
 export function fetchReports(engagementId: string): Promise<ReportsView> {
@@ -872,6 +956,34 @@ export function deliverReport(engagementId: string, reportId: string, input: { k
 export function reviseReport(engagementId: string, reportId: string, input: { expectedVersion: number }): Promise<ReportView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/revision`, (v): v is ReportView =>
     typeof v === 'object' && v !== null && (v as ReportView).status === 'draft' && (v as ReportView).version === 1,
+  { method: 'POST', body: input })
+}
+
+/** P06: a new immutable template version; the owner role manages templates. */
+export function createReportTemplate(engagementId: string, input: { name: string; sections: ReportTemplateSection[] }): Promise<ReportTemplateView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-templates`, (v): v is ReportTemplateView =>
+    typeof v === 'object' && v !== null && typeof (v as ReportTemplateView).id === 'string' && typeof (v as ReportTemplateView).version === 'number',
+  { method: 'POST', body: input })
+}
+
+/** P06: template, reporting period and named reviewer; only while the report is a draft at the version the editor read. */
+export function updateReportSetup(engagementId: string, reportId: string, input: { expectedVersion: number; templateId?: string | null; periodStart?: string | null; periodEnd?: string | null; reviewerId?: string | null }): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/setup`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && (v as ReportView).id === reportId && typeof (v as ReportView).readiness === 'object',
+  { method: 'PATCH', body: input })
+}
+
+/** P06: replaces the pinned finding selection of a draft report. */
+export function setReportFindings(engagementId: string, reportId: string, input: { expectedVersion: number; findingIds: string[] }): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/findings`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && (v as ReportView).id === reportId && Array.isArray((v as ReportView).selectedFindings),
+  { method: 'PUT', body: input })
+}
+
+/** P07: a recipient acknowledgement, recorded separately from the delivery; a replay returns the stored receipt. */
+export function acknowledgeReportDelivery(engagementId: string, reportId: string, deliveryId: string, input: { requestId: string; receipt: string }): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/deliveries/${encodeURIComponent(deliveryId)}/acknowledgements`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && (v as ReportView).id === reportId,
   { method: 'POST', body: input })
 }
 
