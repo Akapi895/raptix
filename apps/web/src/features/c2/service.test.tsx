@@ -140,6 +140,8 @@ describe('sessions tab (ticket 45)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Submit request' })).toBeInTheDocument())
     fireEvent.change(screen.getByPlaceholderText(/Why do you need this access/), { target: { value: 'Validate step 8 output on the domain controller.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
+    // The request commits through the C2 port; the drawer navigates to the session once it is recorded.
+    await waitFor(() => expect(window.location.hash).toContain('c2-session'))
     h.run(() => go('c2', { tab: 'sessions' }))
     await waitFor(() => expect(screen.getAllByText('Pending request').length).toBeGreaterThanOrEqual(1))
     h.unmount()

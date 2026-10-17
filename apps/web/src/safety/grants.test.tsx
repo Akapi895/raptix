@@ -104,7 +104,7 @@ describe('grant expiry (requirement 50/51 baseline: enforced by the mounted useG
     act(() => {
       expireGrantTransaction(view.svc().authority, view.svc().clock, 'legacy', 'SS-041', 'Taylor Chen')
     })
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(2500)
     })
     expect(useToastStore.getState().toasts.some((t) => t.text === 'Command interrupted — access changed while it was running.')).toBe(true)

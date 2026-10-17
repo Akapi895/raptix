@@ -6,7 +6,6 @@ import { useCan, useMe } from '../state/console'
 import { useProjectStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { emergencyStop, terminateSession } from '../features/demo/runtime'
-import { expireGrantTransaction, requestSessionAccessTransaction, revokeGrantTransaction, sessionCommandTransaction } from '../features/c2/grants'
 import { recordAudit } from '../features/audit/service'
 import { readSessionProject } from '../features/c2/projection'
 import type { Session } from '../data'
@@ -48,10 +47,10 @@ export function RequestAccessDrawer({ session, open, onClose, initialMode = 'int
   const project = detail.data?.project
   const approvers = project?.approvers ?? []
   const ok = reason.trim().length >= MIN_REASON
-  const submit = () => {
+  const submit = async () => {
     setTouched(true)
     if (!ok) return
-    const r = requestSessionAccessTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: session.projectId, corr: 'legacy' }, { sessionId: session.id, mode, duration, reason: reason.trim() })
+    const r = await services.c2({ id: me.name, role: me.role }, session.projectId).requestAccess({ actor: { id: me.name, role: me.role }, projectId: session.projectId, corr: 'legacy' }, { sessionId: session.id, mode, duration, reason: reason.trim() })
     if (!r.ok) { toast(r.failure.message || 'The request was refused.', 'bad'); return }
     toast(`Request ${r.data.requestId} submitted — the approver has been notified.`)
     onClose()
@@ -160,14 +159,14 @@ export function useRevoke(): ((s: Session, user: string) => void) & { retry: (s:
   const me = useMe()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
-  const perform = (s: Session, user: string, reason: string) => {
+  const perform = async (s: Session, user: string, reason: string) => {
     if (sim.failNext) {
       setSim({ failNext: false, fails: [...sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)), { sessionId: s.id, user, reason }] })
       recordAudit(services, { actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, { action: 'Revocation failed', obj: s.id, result: 'Failed', reason: 'Revoke not acknowledged — grant may still be active' })
       toast(`Revocation failed — ${user} may still have access to ${s.id}.`, 'bad')
       return
     }
-    const res = revokeGrantTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, { sessionId: s.id, user, reason })
+    const res = await services.c2({ id: me.name, role: me.role }, s.projectId).revokeGrant({ actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, { sessionId: s.id, user, reason })
     if (!res.ok) { toast(res.failure.message || 'The revocation was refused.', 'bad'); return }
     setSim({ fails: sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)) })
     toast(`Access revoked for ${user}.`, 'warn')
@@ -357,17 +356,19 @@ export function Console(): ReactElement {
   /* Ticket 67 wave 8: the legacy raw `A.sessionCommand` entry, mirrored — the
      session lookup resolves from the one authority at call time (the store's
      dbRef semantics) and the typed result bridges back to the legacy Res. */
-  const command = (sessionId: string, label: string) => {
+  const command = async (sessionId: string, label: string) => {
     const actor = { id: me.name, role: me.role }
     const projectId = readSessionProject(services, actor, sessionId)
     if (!projectId) return { ok: false as const, error: `Session ${sessionId} does not exist.` }
-    const res = sessionCommandTransaction(services.authority, services.clock, { actor, projectId, corr: 'legacy' }, { sessionId, label })
+    const res = await services.c2(actor, projectId).sendCommand({ actor, projectId, corr: 'legacy' }, { sessionId, label })
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
   /* The legacy raw `A.expireGrant` entry, mirrored — the idempotent
      single-grant expiry through the canonical transaction. */
   const expireGrant = (sessionId: string, user: string) => {
-    expireGrantTransaction(services.authority, services.clock, 'legacy', sessionId, user)
+    const actor = { id: me.name, role: me.role }
+    const projectId = readSessionProject(services, actor, sessionId) ?? 'all'
+    return services.c2(actor, projectId).expireGrant({ actor, projectId, corr: 'legacy' }, sessionId, user)
   }
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading console"><PageSkeleton /></div>
   if (detail.isError || !detail.data) {
@@ -409,9 +410,9 @@ export function Console(): ReactElement {
     /* Ticket 46: the command handler re-checks the grant and its deadline at
        commit time, so an in-flight command interrupted by expiry/revocation
        is refused there and the interrupt is surfaced here. */
-    timer.current = window.setTimeout(() => {
+    timer.current = window.setTimeout(async () => {
       setBusy(null)
-      const res = command(s.id, label)
+      const res = await command(s.id, label)
       if (!res.ok) toast('Command interrupted — access changed while it was running.', 'warn')
     }, BUSY_MS)
   }
@@ -487,7 +488,7 @@ export function Console(): ReactElement {
             <Gated allowed={!!grant && !blocked} reason="You do not currently hold a grant."><Button variant="danger" onClick={() => revoke(s, me.name)}>Revoke my access</Button></Gated>
             <Gated allowed={can('terminate') && !blocked && st !== 'terminated'} reason={blocked || (!can('terminate') ? 'Only a Red Team Manager or Organization Admin can terminate sessions.' : 'Session is already terminated.')}><Button variant="danger" icon={OctagonX} onClick={() => terminate(s)}>Terminate session</Button></Gated>
             <Button size="sm" variant="ghost" onClick={() => go('c2-session', { id: s.id })}>Close</Button>
-            <Gated allowed={st === 'interactive'} reason="Demo control is only available while a grant is active."><Button size="sm" variant="ghost" onClick={() => { expireGrant(s.id, me.name); toast('Demo: grant expiry simulated.', 'warn') }}>Demo: simulate expiry</Button></Gated>
+            <Gated allowed={st === 'interactive'} reason="Demo control is only available while a grant is active."><Button size="sm" variant="ghost" onClick={() => { void expireGrant(s.id, me.name); toast('Demo: grant expiry simulated.', 'warn') }}>Demo: simulate expiry</Button></Gated>
             <label className="ml-auto flex items-center gap-1.5 text-xs text-muted"><input type="checkbox" checked={rs.failNext} onChange={(e) => setFailNext(e.target.checked)} />Demo: next revoke fails</label>
             <Gated allowed={!!s.transcript.length && !blocked} reason={blocked}><Button size="sm" variant="ghost" icon={Copy} onClick={() => { navigator.clipboard?.writeText(s.transcript.map((l) => `${l.ts} ${l.who} ${l.text}`).join('\n')); toast('Transcript copied (demo data).') }}>Copy transcript</Button></Gated>
           </div>

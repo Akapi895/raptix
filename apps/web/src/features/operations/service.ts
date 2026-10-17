@@ -99,6 +99,8 @@ export interface OperationService {
   schedule(ctx: RequestContext, id: string, at: 'now' | string): Promise<ServiceResult<OperationWriteRead>>
   /** Scope-checked detail read: the canonical bundle the console detail page renders (ticket 26). */
   detail(ctx: RequestContext, id: string): Promise<ServiceResult<OperationDetailRead>>
+  /** The eight preflight checks re-derived at this instant; reads only, never commits a preflight run. */
+  preflightChecks(ctx: RequestContext, id: string): Promise<ServiceResult<Check[]>>
   /** Runs preflight: the eight checks are re-derived from canonical state at the handler (ticket 26). */
   preflight(ctx: RequestContext, id: string): Promise<ServiceResult<PreflightRunRead>>
   /** The start gate: re-derived checks; a refusal names the failed check and reason (ticket 26). */
@@ -211,6 +213,7 @@ export function createOperationService(
     update: (ctx, id, patch) => Promise.resolve(updateOperationDraft(authority, clock, ctx, id, patch)),
     schedule: (ctx, id, at) => Promise.resolve(scheduleOperation(authority, clock, ctx, id, at)),
     detail: (ctx, id) => Promise.resolve(operationDetail(authority.snapshot(), ctx, id)),
+    preflightChecks: (ctx, id) => guard(() => readPreflightChecks(authority.snapshot(), clock.now(), ctx, id)),
     preflight: (ctx, id) => Promise.resolve(runOperationPreflight(authority, clock, ctx, id)),
     startGate: (ctx, id) => Promise.resolve(operationStartGate(authority, clock, ctx, id)),
     start: (ctx, id) => Promise.resolve(startOperation(authority, clock, ctx, id)),
@@ -641,6 +644,16 @@ export function operationDetail(db: Db, ctx: RequestContext, id: string): Servic
       eligibility: (({ kind, label }) => ({ kind, label }))(eligibility(db, op.projectId)),
     },
   }
+}
+
+/** The checks of one operation as they stand at `now`, read for the operation's own scope. */
+export function readPreflightChecks(db: Db, now: Instant, ctx: RequestContext, id: string): ServiceResult<Check[]> {
+  const op = db.operations.find((o) => o.id === id)
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
+  }
+  return { ok: true, data: computePreflightChecks(db, op, now) }
 }
 
 /** The committed outcome of one preflight run: re-derived checks plus the op. */
