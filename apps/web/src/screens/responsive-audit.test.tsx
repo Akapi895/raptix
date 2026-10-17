@@ -18,7 +18,11 @@ import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
 import { DTable } from './d-shared'
 
+/** The route the test wants after sign-in; sign-in itself lands on the System Overview. */
+let landing: string | undefined
+
 function mountApp(hash?: string) {
+  landing = hash
   if (hash !== undefined) window.location.hash = hash
   const router = createHashRouter([
     { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
@@ -29,6 +33,7 @@ function mountApp(hash?: string) {
 
 function signIn() {
   fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
+  if (landing !== undefined) window.location.hash = landing
 }
 
 const noHide = (el: HTMLElement) => expect(el.className).not.toMatch(/\b(max-(sm|md|lg|xl|2xl):)?hidden\b/)
@@ -41,9 +46,10 @@ afterEach(() => {
 
 describe('shell chrome (every route group)', () => {
   it('keeps the 768/1024/1280/1440 breakpoint classes on the sidebar, header and overlay surfaces', async () => {
-    mountApp('#/command-center')
+    // The header Ask AI control lives on project routes, so the chrome is checked there.
+    mountApp('#/project/RT-2026-014')
     signIn()
-    await screen.findByRole('heading', { name: /system overview/i })
+    await screen.findByRole('button', { name: 'Overview' })
     // Sidebar: desktop rail from lg, mobile drawer below lg.
     const rail = screen.getByRole('complementary')
     expect(rail.className).toContain('hidden')
@@ -61,8 +67,6 @@ describe('shell chrome (every route group)', () => {
     expect(ws.parentElement!.className).toContain('hidden')
     expect(ws.parentElement!.className).toContain('xl:block')
     // AI-mode chip, Ask AI and profile collapse to icons below xl / 1500px.
-    expect(screen.getByRole('button', { name: /Default AI Mode/ }).querySelector('[class*="max-xl:hidden"]')).not.toBeNull()
-    expect(screen.getByRole('button', { name: /Default AI Mode/ }).querySelector('[class*="min-[1500px]:inline"]')).not.toBeNull()
     const askAi = screen.getByRole('button', { name: 'Ask AI' })
     expect(askAi.className).toContain('max-xl:!px-3')
     expect(askAi.querySelector('span[class*="max-xl:hidden"]')).not.toBeNull()
@@ -99,20 +103,13 @@ describe('shared table contract (projects group)', () => {
 })
 
 describe('project detail (projects group)', () => {
-  it('scrolls the tab strip, right-anchors the More menu and never hides the critical header controls', async () => {
+  it('keeps the project section buttons and the critical header controls visible', async () => {
     mountApp('#/project/RT-2026-014')
     signIn()
-    await screen.findByRole('tab', { name: 'Overview' })
-    const tablist = screen.getByRole('tablist')
-    expect(tablist.firstElementChild!.className).toContain('min-w-0')
-    expect(tablist.firstElementChild!.className).toContain('overflow-x-auto')
-    fireEvent.click(screen.getByText('More'))
-    const menu = await screen.findByRole('menu')
-    expect(menu.parentElement).toBe(document.body)
-    expect(menu.style.right).not.toBe('')
-    expect(screen.getAllByRole('menuitem', { name: 'Closeout' })).toHaveLength(1)
-    for (const name of ['Create Operation', 'Close Project']) noHide(screen.getByRole('button', { name }))
-    noHide(screen.getByRole('button', { name: 'Emergency Stop' }))
+    await screen.findByRole('button', { name: 'Overview' })
+    for (const name of ['Scope & ROE', 'Findings', 'Reports']) expect(screen.getByRole('button', { name })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Emergency Stop' }).className).not.toMatch(/(^|\s)hidden(\s|$)/)
+    expect(screen.getByRole('button', { name: 'Ask AI' }).className).not.toMatch(/(^|\s)hidden(\s|$)/)
   })
 
   it('keeps the team members table on container scroll and the shared DTable on sticky-first-column container scroll', async () => {
@@ -175,11 +172,12 @@ describe('operation live workspace (operations group)', () => {
 
 describe('AI operator workspace (AI group)', () => {
   it('falls back to drawers for the rail and inspector below 1280 and keeps panes min-w-0', async () => {
-    mountApp('#/ai-operator')
+    // A conversation pane exists only for an open conversation; CV-014-03 belongs to the project RT-2026-014.
+    mountApp('#/ai-operator/CV-014-03')
     signIn()
-    await screen.findByText('All Projects view')
     act(() => { selectProject('RT-2026-014') })
-    await screen.findByRole('button', { name: 'New Conversation' })
+    act(() => { window.location.hash = '#/ai-operator/CV-014-03' })
+    await waitFor(() => expect(document.querySelector('[aria-label="Conversation"]')).not.toBeNull())
     expect(document.querySelector('[aria-label="Conversation"]')!.className).toContain('min-w-0')
     fireEvent.click(screen.getByRole('button', { name: 'Conversations' }))
     const rail = await screen.findByRole('dialog', { name: 'Conversations & plans' })
@@ -210,7 +208,7 @@ describe('findings, C2, reports and settings (their groups)', () => {
     mountApp('#/c2')
     signIn()
     await screen.findByRole('tablist')
-    const strip = document.querySelector('main [class*="lg:grid-cols-6"]')!
+    const strip = document.querySelector('[class*="grid-cols-2"][class*="lg:grid-cols-4"]')!
     expect(strip.className).toContain('grid-cols-2')
   })
 

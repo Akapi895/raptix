@@ -26,7 +26,11 @@ import { RouteHost } from '../router/host'
    vitest runs with the app root as cwd). */
 const themeCss = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8')
 
+/** The route the test wants after sign-in; sign-in itself lands on the System Overview. */
+let landing: string | undefined
+
 function mountApp(hash?: string) {
+  landing = hash
   if (hash !== undefined) window.location.hash = hash
   const router = createHashRouter([
     { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
@@ -37,6 +41,7 @@ function mountApp(hash?: string) {
 
 function signIn() {
   fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
+  if (landing !== undefined) window.location.hash = landing
 }
 
 /* Palette shades are theme-independent in Tailwind: mid-tones like
@@ -56,12 +61,12 @@ function lightAssumingOutsidePaper() {
 const SWEEP: { hash: string; see: () => Promise<unknown>; auth?: boolean }[] = [
   { hash: '#/command-center', see: () => screen.findByRole('heading', { name: /system overview/i }) },
   { hash: '#/projects', see: () => screen.findByRole('table') },
-  { hash: '#/project/RT-2026-014', see: () => screen.findByRole('tab', { name: 'Overview' }) },
+  { hash: '#/project/RT-2026-014', see: () => screen.findByRole('button', { name: 'Overview' }) },
   { hash: '#/operation/OP-014?tab=live', see: () => screen.findByRole('list', { name: 'Operation steps' }) },
   { hash: '#/agents', see: () => screen.findByRole('table') },
   { hash: '#/findings', see: () => screen.findByRole('table') },
   { hash: '#/report-preview/REP-014', see: () => screen.findByText('Table of contents') },
-  { hash: '#/ai-operator', see: () => screen.findByText('All Projects view') },
+  { hash: '#/ai-operator', see: () => screen.findByRole('heading', { name: 'AI Operator' }) },
   { hash: '#/c2', see: () => screen.findByRole('tablist') },
   { hash: '#/settings', see: () => screen.findByRole('tablist') },
   { hash: '#/scenarios', see: () => screen.findByRole('table'), auth: false },
