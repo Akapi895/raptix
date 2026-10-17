@@ -63,6 +63,7 @@ from raptix.middleware.hitl import (
     DEFAULT_HIGH_IMPACT_POLICY,
     HITLApprovalMiddleware,
 )
+from raptix.middleware.instance_mailbox import InstanceMailboxMiddleware
 from raptix.middleware.model_override import ModelOverrideMiddleware
 from raptix.middleware.notifications import SandboxNotificationMiddleware
 from raptix.middleware.opscontrol_notifications import (
@@ -717,6 +718,10 @@ def _make_patch_tool_calls(**_: Any):
     return PatchToolCallsMiddleware()
 
 
+def _make_instance_mailbox(**_: Any):
+    return InstanceMailboxMiddleware()
+
+
 def _make_record(*, role: str = "", **_: Any):
     """Full-fidelity run recording — opt-in via ``RAPTIX_RUNTIME__RECORD_PATH``.
 
@@ -822,6 +827,7 @@ DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.SUMMARIZATION: _make_summarization,
     MiddlewareSlot.PROMPT_CACHING: _make_prompt_caching,
     MiddlewareSlot.PATCH_TOOL_CALLS: _make_patch_tool_calls,
+    MiddlewareSlot.INSTANCE_MAILBOX: _make_instance_mailbox,
     MiddlewareSlot.RECORD: _make_record,
 }
 """Slot → factory mapping. Plugin overrides shallow-merge into this

@@ -1,0 +1,138 @@
+"""Durable operator mailbox for running dispatch instances (P10c): state machine, dedup, bounds, restart."""
+
+from __future__ import annotations
+
+import itertools
+
+import pytest
+
+from raptix.execution.session import instance_mailbox as mb
+from raptix.execution.session.instance_mailbox import InstanceMailbox
+
+
+@pytest.fixture
+def path(tmp_path):
+    return tmp_path / "mailbox.sqlite"
+
+
+@pytest.fixture
+def mailbox(path):
+    clock = (f"2026-10-18T00:00:{i:02d}+00:00" for i in itertools.count())
+    box = InstanceMailbox(path, clock=lambda: next(clock))
+    yield box
+    box.close()
+
+
+def _running(box: InstanceMailbox, attempt: int = 1) -> None:
+    box.start_instance("thread-1", "disp-1", attempt, "recon")
+
+
+def test_message_to_running_instance_is_accepted_then_delivered_once(mailbox):
+    _running(mailbox)
+    result = mailbox.accept("m-1", "thread-1", "disp-1", "Check the admin panel first.")
+    assert result.status == "accepted"
+    assert result.message.state == mb.ACCEPTED and result.attempt == 1
+
+    delivered = mailbox.drain("thread-1", "disp-1", 1)
+    assert [m.message_id for m in delivered] == ["m-1"]
+    assert delivered[0].state == mb.DELIVERED
+    # A delivered message is never offered again, even to a later safe point.
+    assert mailbox.drain("thread-1", "disp-1", 1) == []
+
+
+def test_handled_is_recorded_only_after_the_turn_that_received_it(mailbox):
+    _running(mailbox)
+    mailbox.accept("m-1", "thread-1", "disp-1", "Focus on the API.")
+    mailbox.drain("thread-1", "disp-1", 1)
+    _, messages = mailbox.snapshot("thread-1", "disp-1")
+    assert messages[0].state == mb.DELIVERED and messages[0].handled_at is None
+
+    mailbox.mark_handled(["m-1"], "model_turn_completed")
+    _, messages = mailbox.snapshot("thread-1", "disp-1")
+    assert messages[0].state == mb.HANDLED and messages[0].outcome == "model_turn_completed"
+
+
+def test_delivery_keeps_arrival_order(mailbox):
+    _running(mailbox)
+    for i in range(3):
+        mailbox.accept(f"m-{i}", "thread-1", "disp-1", f"note {i}")
+    delivered = mailbox.drain("thread-1", "disp-1", 1)
+    assert [m.message_id for m in delivered] == ["m-0", "m-1", "m-2"]
+    assert [m.seq for m in delivered] == [1, 2, 3]
+
+
+def test_retried_request_with_the_same_id_creates_no_second_message(mailbox):
+    _running(mailbox)
+    first = mailbox.accept("m-1", "thread-1", "disp-1", "one")
+    again = mailbox.accept("m-1", "thread-1", "disp-1", "one")
+    assert first.status == "accepted"
+    assert again.status == "duplicate" and again.message.message_id == "m-1"
+    assert len(mailbox.snapshot("thread-1", "disp-1")[1]) == 1
+
+
+def test_same_message_id_for_another_instance_is_a_conflict(mailbox):
+    _running(mailbox)
+    mailbox.start_instance("thread-1", "disp-2", 1, "exploit")
+    mailbox.accept("m-1", "thread-1", "disp-1", "one")
+    result = mailbox.accept("m-1", "thread-1", "disp-2", "one")
+    assert result.status == "refused" and result.reason == "message_id_conflict"
+
+
+def test_message_is_refused_when_no_instance_is_running(mailbox):
+    result = mailbox.accept("m-1", "thread-1", "disp-1", "hello")
+    assert result.status == "refused" and result.reason == "instance_not_running"
+
+
+def test_message_is_refused_once_the_instance_has_finished_and_pending_ones_become_undelivered(
+    mailbox,
+):
+    _running(mailbox)
+    mailbox.accept("m-1", "thread-1", "disp-1", "too late")
+    mailbox.finish_instance("thread-1", "disp-1", 1)
+    _, messages = mailbox.snapshot("thread-1", "disp-1")
+    assert messages[0].state == mb.UNDELIVERED and messages[0].outcome == "instance_finished"
+    assert mailbox.accept("m-2", "thread-1", "disp-1", "after").reason == "instance_not_running"
+
+
+def test_message_targets_the_latest_attempt_and_never_an_earlier_one(mailbox):
+    _running(mailbox, attempt=1)
+    mailbox.finish_instance("thread-1", "disp-1", 1)
+    _running(mailbox, attempt=2)
+    result = mailbox.accept("m-1", "thread-1", "disp-1", "for attempt two")
+    assert result.status == "accepted" and result.attempt == 2
+    assert mailbox.drain("thread-1", "disp-1", 1) == []
+    assert [m.message_id for m in mailbox.drain("thread-1", "disp-1", 2)] == ["m-1"]
+
+
+def test_bounds_refuse_empty_oversized_and_overfull_mailboxes(mailbox):
+    _running(mailbox)
+    assert mailbox.accept("m-e", "thread-1", "disp-1", "   ").reason == "empty_message"
+    assert (
+        mailbox.accept("m-big", "thread-1", "disp-1", "x" * (mb.MAX_BODY_CHARS + 1)).reason
+        == "message_too_large"
+    )
+    assert mailbox.accept("bad id!", "thread-1", "disp-1", "x").reason == "invalid_message_id"
+    for i in range(mb.MAX_PENDING):
+        assert mailbox.accept(f"m-{i}", "thread-1", "disp-1", "note").status == "accepted"
+    full = mailbox.accept("m-over", "thread-1", "disp-1", "one more")
+    assert full.status == "refused" and full.reason == "mailbox_full"
+
+
+def test_restart_never_redelivers_and_marks_instances_that_were_running_as_interrupted(path):
+    box = InstanceMailbox(path)
+    box.start_instance("thread-1", "disp-1", 1, "recon")
+    box.accept("m-1", "thread-1", "disp-1", "before the restart")
+    assert [m.message_id for m in box.drain("thread-1", "disp-1", 1)] == ["m-1"]
+    box.close()
+
+    reopened = InstanceMailbox(path)
+    try:
+        instances, messages = reopened.snapshot("thread-1", "disp-1")
+        assert instances[0].state == "interrupted"
+        assert messages[0].state == mb.DELIVERED
+        assert reopened.drain("thread-1", "disp-1", 1) == []
+        assert (
+            reopened.accept("m-2", "thread-1", "disp-1", "after").reason == "instance_not_running"
+        )
+    finally:
+        reopened.close()

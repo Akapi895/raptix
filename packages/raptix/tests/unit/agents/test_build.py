@@ -606,6 +606,8 @@ def test_middleware_slot_enum_order_is_assembly_order():
         "summarization",
         "prompt-caching",
         "patch-tool-calls",
+        # P10c: operator messages reach a running dispatch before its recorded model call.
+        "instance-mailbox",
         "record",
     ]
 
