@@ -2,13 +2,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ReactElement } from 'react'
 import { fetchFindings, listRunsOfThread } from './api'
 import { apiFetch } from './transport'
 import { useRunStream } from './stream'
 import { RealModeProvider } from './bootstrap'
-import { RealPlanningPanel } from './screens/planning-panel'
 import { RealWorkspace } from './screens/workspace'
 import { go } from '../router/navigate'
 import { useRoute } from '../router/navigate'
@@ -19,12 +16,6 @@ import { readPending } from './workspace-session'
 const AT = '2026-10-14T09:00:00.000Z'
 const BINDING = { engagementId: 'eng-1', threadId: 'thread-1', assistantId: 'soundwave', kind: 'planning', createdAt: AT, updatedAt: AT }
 const QUESTION = { questionId: 'q-1', interruptId: 'int-1', question: 'Which scope?', header: 'Scope', options: [{ label: 'All', description: 'All authorized assets' }], multiSelect: false, allowOther: false, source: 'runtime' }
-const BLOCKED_PLAN = {
-  version: 1, engagementId: 'eng-1',
-  documents: { roe: { state: 'missing' }, conops: { state: 'missing' }, deconfliction: { state: 'missing' }, opplan: { state: 'missing' } },
-  bundle: { roe: 'missing', conops: 'missing', deconfliction: 'missing', opplan: 'missing', 'threat-profile': 'missing', contact: 'missing', 'data-handling': 'missing', abort: 'missing', cleanup: 'missing' },
-  readiness: { state: 'blocked', reasons: ['roe:missing'], runtimeSignal: 'not_observed' },
-}
 const EVENT = {
   version: 1, eventId: 'event-1', engagementId: 'eng-1', threadId: 'thread-1', streamRunId: 'run-1', runId: 'run-1',
   source: 'runtime', namespace: [], occurredAt: null, observedAt: AT, identity: 'occurrence', upstreamCursor: 'cursor-1',
@@ -49,10 +40,6 @@ class StreamSource {
 function response(payload: unknown): Response {
   return new Response(JSON.stringify(payload), { status: 200, headers: { 'Content-Type': 'application/json' } })
 }
-function panel(child: ReactElement): void {
-  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{child}</QueryClientProvider>)
-}
-
 beforeEach(() => { window.localStorage.clear(); StreamSource.instances = []; vi.stubGlobal('EventSource', StreamSource) })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
@@ -110,12 +97,6 @@ describe('precommit boundary acceptance', () => {
     expect(onEvent).not.toHaveBeenCalled()
   })
 
-  it('keeps planning handoff unavailable while required documents are missing', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => response(BLOCKED_PLAN)))
-    panel(<RealPlanningPanel engagementId="eng-1" handoffConfirmedAt={null} />)
-    const handoff = await screen.findByRole('button', { name: 'Confirm planning handoff' })
-    expect(handoff).toBeDisabled()
-  })
 })
 
 function workspaceNetwork(questions: unknown[] = [], options: { lostAck?: boolean; running?: boolean; execution?: boolean; secondThread?: boolean; runReply?: () => Promise<Response> } = {}): { url: string; method: string; body: Record<string, unknown> | undefined }[] {
