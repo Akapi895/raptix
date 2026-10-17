@@ -1,6 +1,6 @@
 # 0086. Per-run workspace isolation replaces the single-engagement sandbox pin
 
-- **Status:** Accepted — option A (owner decision 2026-10-17). Built in code; deployment pending
+- **Status:** Accepted — option A (owner decision 2026-10-17). Built and deployed to :3001 on 2026-10-17
 - **Date:** 2026-10-17
 - **Deciders:** pending (project owner)
 - **Related:** ADR-0082 (dedicated web execution plane), ADR-0085 (single-operator planning scope); commit `f4c7a00`
@@ -144,4 +144,19 @@ Until steps 1–5 are done, the `:3001` deployment has no isolation between proj
   the shared sandbox network); a live planner run on a project that has its own
   sandbox; and the decision whether the shared `web-sandbox` service is removed once
   nothing routes to it.
+
+## Deployment on :3001 (2026-10-17)
+
+- `RAPTIX_SANDBOX_PER_PROJECT=1` is set on the web API (commit `178b455`), and the
+  API was recreated from the new image.
+- `raptix web sandboxes sync` started one sandbox per project directory. A project is
+  a directory on the workspace volume that has a `plan/` directory. On this
+  deployment that is `popup-lab-lbvq`, so `sbx-popup-lab-lbvq` is the only project
+  sandbox.
+- Checked from inside the runtime container, which is how a run reaches its sandbox:
+  `http://sbx-popup-lab-lbvq:9999` lists only `/workspace/popup-lab-lbvq`.
+- The shared `web-sandbox` service still runs but no run is routed to it.
+
+Still open: a live planner run in a project, observed in its `sbx-<slug>` container
+(this would write to a real project, so it was not started here).
 
