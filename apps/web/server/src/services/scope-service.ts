@@ -181,19 +181,21 @@ export class ScopeService {
    */
   public async confirmPlannerScope(actorId: string, engagementId: string, plan: PlannerScope): Promise<RevisionView | null> {
     const access = await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_WRITE);
-    // The owner row is implicit (no membership row); a single-operator engagement
-    // has no other member at all.
-    const others = await this.db.webMembership.findMany({ where: { engagementId, userId: { not: actorId } } });
-    if (others.length > 0) {
-      throw new ProjectApiError(409, 'The planning scope is approved by the operator only on a single-operator engagement; with more members, a reviewer decides the scope revision.');
-    }
     if (ROLE_RANK[access.role] < ROLE_RANK.reviewer) {
       throw new ProjectApiError(403, 'Confirming the planning scope needs the reviewer role or above.');
     }
     const inScope = new Set((await this.db.webAsset.findMany({ where: { engagementId, classification: 'in_scope' } })).map((row) => row.identifier));
     const approved = await this.latestApproved(engagementId);
     const missing = [...new Set(plan.targets)].filter((target) => !inScope.has(target));
+    // A revision a reviewer already approved and that covers the plan is the independent review,
+    // so the handoff can finish on it even when the engagement has more members.
     if (missing.length === 0 && approved !== null) return null;
+    // The owner row is implicit (no membership row); a single-operator engagement
+    // has no other member at all.
+    const others = await this.db.webMembership.findMany({ where: { engagementId, userId: { not: actorId } } });
+    if (others.length > 0) {
+      throw new ProjectApiError(409, 'The planning scope is approved by the operator only on a single-operator engagement; with more members, a reviewer decides the scope revision.');
+    }
     const added = missing.length > 0 ? missing : [...new Set(plan.targets)];
     const submitted = await this.submitRevision(actorId, engagementId, {
       diff: { added, removed: [], rationale: 'Scope planned in roe.json, confirmed at the planning handoff' },
