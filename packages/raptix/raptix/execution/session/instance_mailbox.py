@@ -289,6 +289,21 @@ class InstanceMailbox:
 
     # ── observation ─────────────────────────────────────────────────────
 
+    def list_instances(self, thread_id: str) -> list[tuple[str, InstanceRow]]:
+        """Every attempt the mailbox recorded on a thread, in start order (includes running attempts)."""
+        with self._lock:
+            return [
+                (
+                    r[1],
+                    InstanceRow(r[0], r[1], int(r[2]), r[3], r[4], r[5], r[6]),
+                )
+                for r in self._conn.execute(
+                    "SELECT thread_id, dispatch_id, attempt, role, state, started_at, finished_at FROM instances"
+                    " WHERE thread_id = ? ORDER BY started_at, dispatch_id, attempt",
+                    (thread_id,),
+                ).fetchall()
+            ]
+
     def snapshot(
         self, thread_id: str, dispatch_id: str
     ) -> tuple[list[InstanceRow], list[MailboxMessage]]:
