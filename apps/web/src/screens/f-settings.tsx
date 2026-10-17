@@ -14,6 +14,8 @@ import { useAccessible, useMe } from '../state/console'
 import { useSettingsTemplates, useDetectionSettings, useSecurityActivity } from '../features/settings/projection'
 import { useAuthStore, useThemeStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
+import { isRealMode } from '../real/mode'
+import { CapabilitiesSection, RealOrganizationSection, WorkspaceAuditSection, WorkspaceSettingsSection } from '../features/settings/real-sections'
 
 type TabId = 'org' | 'users' | 'integrations' | 'policies' | 'retention' | 'templates' | 'detection' | 'audit' | 'notifications' | 'security'
 const ROLES: Role[] = ['admin', 'manager', 'operator', 'reviewer', 'analyst', 'viewer']
@@ -22,6 +24,15 @@ function Forbidden({ reason }: { reason: string }) {
   return <Empty icon={Lock} title="You do not have access to this section">{reason}</Empty>
 }
 const ReadOnlyNote = ({ children }: { children: ReactNode }) => <p className="mb-4 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{children}</p>
+
+/* Real-mode bodies: each tab reads the deployment's own records through its section. */
+const REAL_BODY: Partial<Record<TabId, () => ReactNode>> = {
+  org: () => <RealOrganizationSection />,
+  integrations: () => <CapabilitiesSection />,
+  policies: () => <WorkspaceSettingsSection kind="policy" />,
+  retention: () => <WorkspaceSettingsSection kind="retention" />,
+  audit: () => <WorkspaceAuditSection />,
+}
 
 export function SettingsPage() {
   const route = useRoute()
@@ -41,9 +52,13 @@ export function SettingsPage() {
     notifications: { ok: true, why: '' },
     security: { ok: true, why: '' },
   }
+  /* Real mode serves the tabs this deployment has data for; the rest are mock-only and not offered. */
+  const REAL_TABS: TabId[] = ['org', 'integrations', 'policies', 'retention', 'audit']
   const labels: [TabId, string][] = [['org', 'Organization'], ['users', 'Users & roles'], ['integrations', 'Integrations'], ['policies', 'Policies'], ['retention', 'Retention'], ['templates', 'Templates'], ['detection', 'Detection'], ['audit', 'Audit log'], ['notifications', 'Notifications'], ['security', 'Security']]
   const body = () => {
     if (!acc[tab]) return <Empty title="Settings section not found" />
+    /* Real mode: the server decides who may read each section; the section shows its refusal. */
+    if (isRealMode()) return REAL_BODY[tab] ? REAL_BODY[tab]!() : <Empty title="Not in this deployment">This section has no backing record here.</Empty>
     if (!acc[tab].ok) return <Forbidden reason={acc[tab].why} />
     switch (tab) {
       case 'org': return <OrgTab />
@@ -66,7 +81,7 @@ export function SettingsPage() {
         <span className="font-semibold text-accent">Organization-wide</span>
         <span className="min-w-0 flex-1 text-fg">{personal ? 'You are in your personal preferences. They apply to you across all projects and never change organization policy. Emergency and expired-access alerts cannot be muted by quiet hours.' : 'Changes here apply to every project in this workspace, including RT-2026-014 and RT-2026-017, and to running operations and sessions. Project-specific settings (ROE, scope, members) live inside each project. Every change is audited.'}</span>
       </div>
-      <Tabs value={tab} onChange={(t) => go('settings', { tab: t })} tabs={labels.map(([id, label]) => ({ id, label, icon: acc[id].ok ? undefined : Lock }))} />
+      <Tabs value={tab} onChange={(t) => go('settings', { tab: t })} tabs={labels.filter(([id]) => !isRealMode() || REAL_TABS.includes(id)).map(([id, label]) => ({ id, label, icon: isRealMode() || acc[id].ok ? undefined : Lock }))} />
       {body()}
     </>
   )
