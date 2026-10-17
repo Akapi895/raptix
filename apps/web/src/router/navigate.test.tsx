@@ -94,6 +94,23 @@ describe('route projection (useRoute)', () => {
   })
 })
 
+describe('engagement-scoped resource routes', () => {
+  it('a finding opened under a selected project carries the engagement, so a reload keeps the scope', () => {
+    resetNavStores()
+    useProjectStore.getState().setPid('eng-1')
+    go('finding', { id: 'FIND-1' })
+    expect(window.location.hash).toBe('#/finding/FIND-1?engagement=eng-1')
+    expect(currentRoute()).toEqual({ page: 'finding', id: 'FIND-1', engagementId: 'eng-1' })
+    useProjectStore.getState().setPid('all')
+  })
+
+  it('a finding opened in All Projects carries no engagement', () => {
+    resetNavStores()
+    go('finding', { id: 'FIND-2' })
+    expect(currentRoute()).toEqual({ page: 'finding', id: 'FIND-2' })
+  })
+})
+
 describe('non-component callers', () => {
   it('go navigates from non-component code with no provider or component mounted', () => {
     go('projects')

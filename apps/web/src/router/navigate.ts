@@ -73,8 +73,17 @@ export function navRawRoute(r: Route, epoch?: number) {
 }
 
 /** The guarded navigate: holds the redirect behind the unsaved-changes modal while a form is dirty. */
+/**
+ * Resource pages that belong to one engagement. Their route carries the
+ * engagement while a project is selected, so a reload restores the project
+ * scope from the URL instead of falling back to All Projects.
+ */
+const ENGAGEMENT_RESOURCE_PAGES = new Set(['finding', 'finding-new', 'evidence', 'evidence-inspector', 'report', 'report-new', 'report-preview', 'report-review', 'asset', 'asset-new', 'asset-scope'])
+
 export function go(page: string, opts?: { id?: string; tab?: string; engagementId?: string }, epoch?: number) {
-  useSessionStore.getState().guarded(() => navRawRoute({ page, id: opts?.id, tab: opts?.tab, ...(opts?.engagementId ? { engagementId: opts.engagementId } : {}) }, epoch))
+  const pid = useProjectStore.getState().pid
+  const engagementId = opts?.engagementId ?? (pid !== 'all' && ENGAGEMENT_RESOURCE_PAGES.has(page) ? pid : undefined)
+  useSessionStore.getState().guarded(() => navRawRoute({ page, id: opts?.id, tab: opts?.tab, ...(engagementId ? { engagementId } : {}) }, epoch))
 }
 
 /* Project-switch redirect: a detail route of another entity kind falls back
