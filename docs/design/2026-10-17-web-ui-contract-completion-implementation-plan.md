@@ -838,3 +838,34 @@ Chưa làm và cần bước tiếp theo:
 - P09 còn lại: Team/Settings, Vault/Audit/Notices, Closure, Analysis, Planning/Governance, Inventory, và tab Scope của mock.
 - P11 cần D07. P12 cần P11 cho lifecycle. P13 sau cùng.
 - D05 (PDF/DOCX) vẫn hoãn.
+
+### 13.18 R6, dispatch thật, roster trên browser, Audit và Inventory (2026-10-17, rất khuya hơn)
+
+**R6 (durability), đã kiểm xong.** Restart `raptix-langgraph` ba lần, mỗi lần so trạng thái các thread của engagement với snapshot trước đó:
+- Lần 1 (trước dispatch mới): 10 thread, 5 dòng ledger, giống hệt sau restart.
+- Lần 2 (sau dispatch thật `OBJ-002`): 11 thread, 8 dòng ledger, giống hệt sau restart.
+- Lần 3 (sau khi build lại image và tạo lại container bằng `docker compose up -d --no-deps langgraph`): 11 thread, 7 dòng, giống hệt snapshot trước đó.
+Trạng thái nằm trên volume `raptix_langgraph_state` (`/app/.langgraph_api`), nên sống qua restart và recreate. Pin trong `.env` (`RAPTIX_ENGAGEMENT`, `/workspace`) được giữ nguyên.
+
+**Dispatch thật.** Lần chạy đầu bị từ chối với `The bound ROE version is stale`. Nguyên nhân là chính phê duyệt scope v3 của tôi: nó thay thế ROE mà thread cũ đang gắn. Thread mới cũng bị từ chối vì chưa có plan approved gắn vào. Tôi đã duyệt một plan mới trên ROE hiện tại với reviewer độc lập, gắn vào thread mới, và preflight pass cả 8 check. Sau đó:
+- Agent tạo `OBJ-002` và dispatch `recon` đúng một `GET /` tới `10.129.227.140:80`. Kết quả 200 OK, `Server: Werkzeug/2.1.2`. Không có path, port hay payload nào khác.
+- Đã kiểm trên đĩa: `evidence/http_80_headers.txt` chỉ có status line và headers. SHA-256 bắt đầu bằng `fc1078f6…`, khớp với giá trị agent ghi.
+- Một dispatch thứ hai, chỉ tính toán cục bộ (không gọi mạng), tạo dòng ledger có `role: recon`. Đây là dòng đầu tiên có role từ runtime live.
+
+**Roster trên browser (`3b1687b`).** Tab Agents của thread hiện `recon · attempt 1` cho dòng có role, và `role not recorded` cho các dòng cũ. Browser phải đợi khoảng 9 giây vì endpoint đọc 11 thread state mất khoảng 2 giây.
+
+**Audit (`c63130d`).** Port `AuditService` có adapter thật, panel dùng chung nằm trong `features/audit`, và `RealAuditPanel` đã xóa. Browser: tab Activity & Audit liệt kê bản ghi scope, bộ lọc action giữ đúng các dòng `scope.`. Test: adapter 2 pass, panel 3 pass.
+
+**Inventory (`dc21849`).** `RealInventoryPanel` là code chết: route `assets` là migrated route, host render màn hình chung trước khi tới real page, và không có tab Inventory nào trong real detail. Đã xóa cùng nhóm panel `assets` không còn route nào dùng. Route-table test pass.
+
+Việc còn lại (không làm trong lượt này, không đánh dấu là xong):
+- P09: Team/Settings, Vault, Closure, Analysis, Planning (402 dòng), Governance (482 dòng), và tab Scope của mock. Analysis cần quyết định parity: port mock tính coverage từ operation mock, còn real trả về graph observed. Hai mô hình không khớp nhau, nên không nên ép vào một port mà chưa chốt.
+- P10: P10c vẫn blocked theo R3, vì chưa có safe-point để giao tin cho child đang chạy. P10d cần endpoint retry và reassign theo attempt, và cancel riêng cho child đang unsupported theo R5. Ledger chỉ giữ attempt mới nhất của mỗi dispatch, nên lịch sử attempt cần một nơi lưu riêng.
+- P11: cần pause safe-point và checkpoint trong runtime (D07). Chưa bắt đầu.
+- P12: chưa bắt đầu. Lifecycle phải đợi P11. Phần read-side C2/Operations chưa làm.
+
+Dữ liệu test còn lại trên engagement `ui-live-8b98a9`:
+- Thread execution `93702a2f…` gắn plan đã duyệt (hết hạn 2026-10-18T14:30Z), có dispatch thật.
+- Scope revision v2 và v3 đã approved.
+- Vài reviewer và viewer được invite cho các phiên kiểm tra.
+- Output của agent trong `tests/local/artifacts/ui-contract-target/ui-live-8b98a9/` (`evidence/`, `findings/`, `report/`, `recon/`).
