@@ -18,6 +18,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { mountServices } from '../../test/helpers'
 import { selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import { setActiveRouter } from '../../router/active'
 import { RouteHost } from '../../router/host'
 import type { ActorRef, RequestContext } from '../../domain/service'
@@ -37,7 +38,7 @@ function mountDrawer(me = 'Alex Morgan', pid?: string) {
   const h = mountServices(<RouterProvider router={router} />)
   fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
   h.as(me)
-  if (pid) act(() => { selectProject(pid) })
+  if (pid) act(() => { useProjectStore.getState().setPid(pid) })
   return {
     ...h,
     /** Runs a mutation inside act() so the store projection and Query refetch flush. */
