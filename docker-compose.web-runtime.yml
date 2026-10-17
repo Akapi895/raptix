@@ -6,6 +6,8 @@ services:
       LANGGRAPH_API_URL: http://web-runtime:2024
       RAPTIX_RUNTIME_WORKSPACE_ROOT: /workspace
       RAPTIX_RUNTIME_SANDBOX_URL: http://web-sandbox:9999
+      # ADR-0086 A: each project runs in its own sandbox (sbx-<slug>); the shared web-sandbox is no longer routed to.
+      RAPTIX_SANDBOX_PER_PROJECT: '1'
     volumes:
       - web_runtime_workspace:/workspace
     depends_on:
