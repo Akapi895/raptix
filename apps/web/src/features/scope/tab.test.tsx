@@ -86,7 +86,7 @@ async function renderTab(): Promise<void> {
     </SessionContext.Provider>
   )
   render(<ScopeTab engagementId="eng-1" />, { wrapper })
-  fireEvent.click(await screen.findByRole('button', { name: 'ROE', exact: true }))
+  fireEvent.click(await screen.findByRole('button', { name: 'ROE' }))
 }
 
 beforeEach(() => {

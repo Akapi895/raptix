@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
-import { setProjectMembers } from '../features/projects/team-service'
+import { TeamMembers } from '../features/team/members'
 import { useReopen } from '../features/approvals/hooks'
 import { DocumentWorkspace } from '../features/documents/workspace'
 import { AssetPreviewModal } from '../features/assets/preview-modal'
@@ -54,17 +54,6 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const appr = ds.approvals
   const pend = appr.filter((a) => a.status === 'pending')
   const mayApprove = can('approve', p.id)
-  const names = Array.from(new Set(USERS.map((u) => u.name))).filter((n) => !p.members.some((m) => m.user === n) && n !== p.owner)
-
-  // Membership and audit publish atomically through the project service.
-  const setMembers = (members: Project['members'], act: string, obj: string) => {
-    const res = setProjectMembers(services, { actor: { id: me.name, role: me.role }, projectId: p.id, corr: 'legacy' }, members, act, obj)
-    if (!res.ok) { toast(res.failure.message, 'bad'); return }
-    toast(act)
-  }
-  const changeRole = (user: string, role: Role) => setMembers(p.members.map((m) => (m.user === user ? { ...m, role } : m)), `Changed ${user}'s role to ${ROLE_LABEL[role]}`, user)
-  const remove = (user: string) => confirm({ title: `Remove ${user} from the project?`, body: 'The member loses access to the project immediately.', confirmLabel: 'Remove member', danger: true, onConfirm: () => setMembers(p.members.filter((m) => m.user !== user), `Removed ${user} from the project`, user) })
-
   const decide = (a: Approval, d: 'approved' | 'returned', note: string) => {
     const r = decideApproval(a.id, d, note)
     if (!r.ok) { setErr(r.error || 'Could not complete the decision'); return }
@@ -73,15 +62,6 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const approve = (a: Approval) => confirm({ title: `Approve “${a.type}”?`, body: `Project ${p.id} moves to its next state based on this decision.`, confirmLabel: 'Approve', reasonLabel: 'Comment (optional)', onConfirm: (r) => { if (a.type !== APR.close) { decide(a, 'approved', r); return } /* Ticket 22: closure resolution is gated by the handler (four-eyes + re-derived checklist); the refusal renders here. */ const c = confirmClose(a.id); if (c.ok) toast('Project closure confirmed'); else setErr(c.error || 'Could not confirm closure') } })
   const ret = (a: Approval) => confirm({ title: `Request changes to “${a.type}”`, body: 'The submitter is notified with your reason so they can revise and resubmit.', confirmLabel: 'Request Changes', danger: true, reasonLabel: 'Reason for changes', reasonRequired: true, onConfirm: (r) => decide(a, 'returned', r) })
   const more = (a: Approval) => confirm({ title: 'Request more information', body: 'The request is returned to the submitter with what is needed.', confirmLabel: 'Send request', reasonLabel: 'Information needed', reasonRequired: true, onConfirm: (r) => decide(a, 'returned', 'More information requested: ' + r) })
-
-  type M = Project['members'][number]
-  const mcols: Col<M>[] = [
-    { key: 'u', header: 'Member', render: (m) => <Person name={m.user} /> },
-    { key: 'r', header: 'Project role', render: (m) => (canEdit ? <Select aria-label={`Role of ${m.user}`} className="w-52" value={m.role} onChange={(e) => changeRole(m.user, e.target.value as Role)}>{(Object.keys(ROLE_LABEL) as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</Select> : ROLE_LABEL[m.role]) },
-    { key: 'perm', header: 'Permissions', render: (m) => <span className="text-muted">{m.role === 'viewer' ? 'View only' : m.role === 'reviewer' ? 'View, approve' : m.role === 'operator' ? 'View, execute' : 'Manage'}</span>, hideBelow: 'md' },
-    { key: 's', header: 'Joined', render: (m) => <span className="font-mono text-xs text-muted">{m.since}</span>, hideBelow: 'md' },
-    { key: 'a', header: '', render: (m) => <IconButton icon={Trash2} label={`Remove ${m.user}`} disabled={!canEdit} title={canEdit ? `Remove ${m.user}` : why} onClick={() => remove(m.user)} /> },
-  ]
 
   return (
     <div className="space-y-6">
@@ -123,21 +103,7 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
         )}
       </section>
 
-      <section>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">Members ({p.members.length + 1})</h3>
-          <div className="flex items-center gap-2">{!canEdit && <Locked reason={why} />}<Button icon={Plus} disabled={!canEdit} title={canEdit ? undefined : why} onClick={() => setAdd(true)}>Add Member</Button></div>
-        </div>
-        <div className="mb-2 flex items-center gap-3 rounded-lg border border-line bg-panel px-3 py-2 text-sm"><Person name={p.owner} /><span className="text-muted">Project owner</span></div>
-        <Table cols={mcols} rows={p.members} rowKey={(m) => m.user} empty={<Empty title="No other members">Add operators, reviewers or client viewers to grant access.</Empty>} />
-      </section>
-
-      <Modal open={add} onClose={() => setAdd(false)} title="Add Member" footer={<><Button onClick={() => setAdd(false)}>Cancel</Button><Button variant="primary" disabled={!nu.user} title={nu.user ? undefined : 'Select a user'} onClick={() => { setMembers([...p.members, { user: nu.user, role: nu.role, since: 'Oct 13, 2026' }], `Added ${nu.user} to the project`, nu.user); setAdd(false); setNu({ user: '', role: 'operator' }) }}>Add</Button></>}>
-        <div className="space-y-4">
-          <Field label="User" required><Select value={nu.user} onChange={(e) => setNu({ ...nu, user: e.target.value })}><option value="">Select a user…</option>{names.map((n) => <option key={n}>{n}</option>)}</Select></Field>
-          <Field label="Role"><Select value={nu.role} onChange={(e) => setNu({ ...nu, role: e.target.value as Role })}>{(Object.keys(ROLE_LABEL) as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</Select></Field>
-        </div>
-      </Modal>
+      <TeamMembers engagementId={p.id} />
     </div>
   )
 }
