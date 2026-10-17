@@ -116,7 +116,9 @@ export function listReports(db: Db, ctx: RequestContext, query: ReportListQuery 
 /* ───────────── Templates + delivery history ───────────── */
 
 /** Templates are organization assets: readable by any signed-in actor, created/published only by admins (screen-simulated). */
-export function listTemplates(db: Db): ServiceResult<Template[]> {
+export function listTemplates(db: Db, ctx: RequestContext): ServiceResult<Template[]> {
+  // Readable by any signed-in actor (organization assets); the gallery is not scoped to one project.
+  if (!ctx.actor.id) return { ok: false, failure: { kind: 'forbidden', message: 'Sign in to read the template gallery.' } }
   return { ok: true, data: db.templates }
 }
 
@@ -495,11 +497,14 @@ export function reorderReportSections(authority: DbAuthority, clock: Clock, ctx:
  *  report's own project; newly added ones must be confirmed-or-later —
  *  suggested and unreviewed findings are refused (already-linked findings
  *  may stay, and unlinking is always allowed). */
-export function setReportFindings(authority: DbAuthority, clock: Clock, ctx: RequestContext, reportId: string, ids: string[]): ServiceResult<Report> {
+export function setReportFindings(authority: DbAuthority, clock: Clock, ctx: RequestContext, reportId: string, ids: string[], expectedVersion?: number): ServiceResult<Report> {
   const db = authority.snapshot()
   const t = resolveReport(db, ctx, reportId)
   if (!t.ok) return t
   const { report, project } = t
+  // The selection is pinned to the version the editor read; a newer version is refused, never overwritten.
+  const current = Number(report.version.replace(/^v/, ''))
+  if (expectedVersion !== undefined && current !== expectedVersion) return { ok: false, failure: { kind: 'conflict', message: `The report moved to v${current} while you selected findings for v${expectedVersion}. Reload and reapply.`, entity: reportRef(report) } }
   const denied = sectionWriteFailure(report, project, ctx)
   if (denied) return { ok: false, failure: denied }
   for (const fid of ids) {
@@ -871,7 +876,7 @@ export function deliverReportVersion(authority: DbAuthority, clock: Clock, ctx: 
 }
 
 /** Records the recipient acknowledgement on the delivered export record. */
-export function acknowledgeDelivery(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<ExportRec> {
+export function acknowledgeDelivery(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input?: { deliveryId: string; receipt: string }): ServiceResult<ExportRec> {
   const db = authority.snapshot()
   const t = resolveReport(db, ctx, id)
   if (!t.ok) return t
@@ -882,7 +887,7 @@ export function acknowledgeDelivery(authority: DbAuthority, clock: Clock, ctx: R
   if (projectLocked(project) || !EXPORT_ROLES.includes(ctx.actor.role)) {
     return { ok: false, failure: { kind: 'forbidden', message: projectLocked(project) ? readOnlyReason(project, ctx) : `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot record acknowledgements.`, entity: reportRef(report) } }
   }
-  const rec = db.exportsList.find((e) => e.reportId === id && e.status === 'Delivered')
+  const rec = db.exportsList.find((e) => e.reportId === id && e.status === 'Delivered' && (input === undefined || e.id === input.deliveryId))
   if (!rec) return { ok: false, failure: { kind: 'validation', message: 'No delivery record to acknowledge.', entity: reportRef(report) } }
   if (rec.ackAt) return { ok: true, data: rec }
   const at = stampOf(clock)
@@ -903,7 +908,7 @@ export function createReportService(
 ) {
   return {
     list: (ctx: RequestContext, query?: ReportListQuery) => guard(() => listReports(authority.snapshot(), ctx, query)),
-    templates: () => guard(() => listTemplates(authority.snapshot())),
+    templates: (ctx: RequestContext) => guard(() => listTemplates(authority.snapshot(), ctx)),
     deliveries: (ctx: RequestContext, query?: DeliveryListQuery) => guard(() => listDeliveries(authority.snapshot(), ctx, query)),
     draftOptions: (ctx: RequestContext) => guard(() => draftOptions(authority.snapshot(), ctx)),
     createDraft: (ctx: RequestContext, input: ReportDraftInput) => Promise.resolve(createReportDraft(authority, clock, ctx, input)),
@@ -913,14 +918,20 @@ export function createReportService(
     addSection: (ctx: RequestContext, id: string, title: string) => Promise.resolve(addReportSection(authority, clock, ctx, id, title)),
     removeSection: (ctx: RequestContext, id: string, sectionId: string) => Promise.resolve(removeReportSection(authority, clock, ctx, id, sectionId)),
     reorderSections: (ctx: RequestContext, id: string, order: string[]) => Promise.resolve(reorderReportSections(authority, clock, ctx, id, order)),
-    setFindings: (ctx: RequestContext, id: string, ids: string[]) => Promise.resolve(setReportFindings(authority, clock, ctx, id, ids)),
+    setFindings: (ctx: RequestContext, id: string, ids: string[], expectedVersion: number) => Promise.resolve(setReportFindings(authority, clock, ctx, id, ids, expectedVersion)),
     /* Ticket 36: review read + submit/approve/return + export/delivery. */
     review: (ctx: RequestContext, id: string, nf?: NoFind) => guard(() => readReportReview(authority.snapshot(), ctx, id, nf)),
     submit: (ctx: RequestContext, id: string, input: ReportSubmitInput) => Promise.resolve(submitReportVersion(authority, clock, ctx, id, input)),
     decide: (ctx: RequestContext, id: string, decision: ReportDecision, note: string) => Promise.resolve(decideReport(authority, clock, ctx, id, decision, note)),
     exportVersion: (ctx: RequestContext, id: string, format: 'PDF' | 'DOCX') => Promise.resolve(exportReportVersion(authority, clock, ctx, id, format)),
+    /** Templates are written by the real store; the simulated gallery only records the request. */
+    createTemplate: (ctx: RequestContext, input: { name: string; sections: { title: string; required: boolean }[] }): Promise<ServiceResult<Template>> => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `Template "${input.name}" with ${input.sections.length} section(s) is not stored by the simulated gallery (${ctx.actor.role}).` } }),
+    /** Revisions are created by the real store; the simulated store keeps one record per version. */
+    revise: (ctx: RequestContext, id: string, expectedVersion: number): Promise<ServiceResult<Report>> => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `Revision of ${id} at v${expectedVersion} for ${ctx.projectId} is created in real mode only.` } }),
+    /** The mock store holds no report bytes, so JSON/Markdown downloads exist only in real mode. */
+    exportArtifact: (_ctx: RequestContext, id: string, format: 'json' | 'markdown'): Promise<ServiceResult<{ filename: string; mediaType: string; content: string; digest: string }>> => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `No ${format} bytes exist for ${id} in the simulated store.` } }),
     deliver: (ctx: RequestContext, id: string, input: DeliveryInput) => Promise.resolve(deliverReportVersion(authority, clock, ctx, id, input)),
-    acknowledge: (ctx: RequestContext, id: string) => Promise.resolve(acknowledgeDelivery(authority, clock, ctx, id)),
+    acknowledge: (ctx: RequestContext, id: string, input: { deliveryId: string; receipt: string; requestId: string }) => Promise.resolve(acknowledgeDelivery(authority, clock, ctx, id, input)),
   }
 }
 

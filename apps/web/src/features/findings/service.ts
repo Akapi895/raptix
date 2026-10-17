@@ -74,6 +74,8 @@ export interface FindingListRead {
   page: number
   pageSize: number
   total: number
+  /** Real mode: the producer projection skipped sources, so the list may be incomplete. */
+  truncated?: boolean
   /** Status-tab counts; each category excludes its own dimension so tabs stay live. */
   counts: Record<FindingCategory, number>
   /** Severity breakdown over verified findings only — AI suggestions are proposals, not counts. */

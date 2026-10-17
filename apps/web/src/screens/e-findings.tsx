@@ -198,6 +198,7 @@ export function FindingList() {
 
   return (
     <div>
+      {data?.truncated && <Banner tone="warn" title="List truncated">The producer projection is incomplete; finding sources may have been skipped.</Banner>}
       <PageHeader
         title="Findings"
         sub={pid === 'all' ? 'All findings across the projects you can access (read-only aggregate). Creating one requires a specific project.' : `Findings for ${project?.id} — ${project?.name}. KPIs count verified findings only.`}

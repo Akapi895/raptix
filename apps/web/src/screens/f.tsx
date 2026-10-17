@@ -3,11 +3,11 @@ import { AlertTriangle, Copy, Download, Eye, FileText, History, Lock, Plus, Rock
 import { useServices } from '../state/services'
 import { recordAudit } from '../features/audit/service'
 import type { Template } from '../data'
-import { Banner, Button, Card, Drawer, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, cx } from '../ui'
+import { Banner, Button, Card, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, cx } from '../ui'
 import { type NoFind } from '../features/reports/service'
 import { useReportValidation } from '../features/reports/projection'
 import { isRealMode } from '../real/mode'
-import { ReportReadError, useDeliveryHistory, useReportList, useTemplates } from '../features/reports/query'
+import { ReportReadError, useDeliveryHistory, useReportList, useReportWrites, useTemplates } from '../features/reports/query'
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './f-report'
 import { SettingsPage } from './f-settings'
 import { go, useRoute } from '../router/navigate'
@@ -60,7 +60,7 @@ function ReportsPage() {
       {tab === 'list' && <AiExclusion projectId={pid === 'all' ? undefined : pid} />}
       <Tabs tabs={[
         { id: 'list', label: 'Reports', count: list.data?.total },
-        ...(isRealMode() ? [] : [{ id: 'templates', label: 'Templates', count: tpls.data?.length }]),
+        { id: 'templates', label: 'Templates', count: tpls.data?.length },
         { id: 'exports', label: 'Delivery History', count: exportsQ.data?.total },
       ]} value={tab} onChange={(t) => go('reports', { tab: t })} />
       {tab === 'templates' ? <Templates /> : tab === 'exports' ? <Exports /> : <ReportList />}
@@ -141,6 +141,29 @@ function ReportList() {
   )
 }
 
+/** P06 (real mode): a new immutable template version. Sections are one per line; a trailing * marks a required section. */
+// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
+function TemplateCreateForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const writes = useReportWrites()
+  const toast = useToastStore((s) => s.toast)
+  const [name, setName] = useState('')
+  const [sections, setSections] = useState('')
+  const parsed = sections.split('\n').map((line) => line.trim()).filter((line) => line.length > 0)
+    .map((line) => (line.endsWith('*') ? { title: line.slice(0, -1).trim(), required: true } : { title: line, required: false }))
+  return <Card className="mb-4"><div className="space-y-3">
+    <Field label="Template name" required><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
+    <Field label="Sections" hint="One section per line. End a line with * when the section is required."><Textarea value={sections} onChange={(e) => setSections(e.target.value)} /></Field>
+    <div className="flex gap-2">
+      <Button variant="primary" disabled={name.trim().length === 0 || parsed.length === 0} onClick={() => void writes.createTemplate({ name: name.trim(), sections: parsed }).then((res) => {
+        if (!res.ok) return toast(res.failure.message, 'bad')
+        toast(`Template ${res.data.name} ${res.data.version} created`)
+        onDone()
+      })}>Create template</Button>
+      <Button onClick={onCancel}>Cancel</Button>
+    </div>
+  </div></Card>
+}
+
 // eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function Templates() {
   const services = useServices()
@@ -153,6 +176,7 @@ function Templates() {
     recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const tpls = useTemplates()
   const [sel, setSel] = useState<Template | null>(null)
+  const [creating, setCreating] = useState(false)
   const admin = me.role === 'admin'
   const why = 'Only Organization Admins can create, duplicate or publish templates. Ask an admin to make the change.'
   const sim = (t: string) => toast(`${t} — simulated: the backend executes this and records an audit event.`, 'info')
@@ -164,9 +188,10 @@ function Templates() {
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted">{templates.length} templates. Draft templates can be tried but cannot be used for formal delivery.</p>
-        <Button icon={Plus} disabled={!admin} title={admin ? undefined : why} onClick={() => { sim('Create template'); audit('Created report template (simulated)', 'TP-new', '') }}>Create template</Button>
+        <Button icon={Plus} disabled={!admin} title={admin ? undefined : why} onClick={() => { if (isRealMode()) return setCreating(true); sim('Create template'); audit('Created report template (simulated)', 'TP-new', '') }}>Create template</Button>
       </div>
       {!admin && <p className="-mt-2 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{why}</p>}
+      {creating && <TemplateCreateForm onDone={() => { setCreating(false); void tpls.refetch() }} onCancel={() => setCreating(false)} />}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {templates.map((t) => (
           <Card key={t.id} pad={false} className="flex flex-col overflow-hidden">

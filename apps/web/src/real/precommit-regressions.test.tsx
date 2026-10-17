@@ -9,7 +9,6 @@ import { apiFetch } from './transport'
 import { useRunStream } from './stream'
 import { RealModeProvider } from './bootstrap'
 import { RealPlanningPanel } from './screens/planning-panel'
-import { RealFindingsPanel } from './screens/findings-panel'
 import { RealWorkspace } from './screens/workspace'
 import { go } from '../router/navigate'
 import { useRoute } from '../router/navigate'
@@ -116,15 +115,6 @@ describe('precommit boundary acceptance', () => {
     panel(<RealPlanningPanel engagementId="eng-1" handoffConfirmedAt={null} />)
     const handoff = await screen.findByRole('button', { name: 'Confirm planning handoff' })
     expect(handoff).toBeDisabled()
-  })
-
-  it('warns about an incomplete projection when every finding source was skipped', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => response(url.endsWith('/findings')
-      ? { engagementId: 'eng-1', findings: [], truncated: true, source: 'workspace' }
-      : { engagementId: 'eng-1', folders: [], source: 'workspace' })))
-    panel(<RealFindingsPanel engagementId="eng-1" />)
-    await screen.findByText('No findings recorded')
-    expect(screen.queryByText(/truncated/i)).not.toBeNull()
   })
 })
 

@@ -10,6 +10,14 @@ vi.mock('../api', async (importOriginal) => {
     submitReportForReview: vi.fn(),
     decideReportReview: vi.fn(),
     deliverReport: vi.fn(),
+    fetchMembers: vi.fn(),
+    fetchCuratedFindings: vi.fn(),
+    exportReport: vi.fn(),
+    updateReportSetup: vi.fn(),
+    setReportFindings: vi.fn(),
+    acknowledgeReportDelivery: vi.fn(),
+    reviseReport: vi.fn(),
+    createReportTemplate: vi.fn(),
   }
 })
 
@@ -35,6 +43,11 @@ function listOf(...reports: import('../api').ReportView[]) {
 }
 
 beforeEach(() => {
+  vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', inviteSupported: false, reason: null, source: 'db', members: [
+    { id: 'user-author', label: 'Ada Author', role: 'operator', source: 'membership' },
+    { id: 'user-reviewer', label: 'Rex Reviewer', role: 'reviewer', source: 'membership' },
+  ] })
+  vi.mocked(api.fetchCuratedFindings).mockResolvedValue({ engagementId: 'eng-1', findings: [], transitions: {}, source: 'db' })
   vi.mocked(api.fetchReports).mockReset()
   vi.mocked(api.createReport).mockReset()
   vi.mocked(api.updateReport).mockReset()
@@ -159,17 +172,19 @@ describe('real report writes', () => {
 })
 
 describe('real report gates for capabilities the backend does not model', () => {
-  it('refuses to link findings and to export PDF or DOCX with the registered reason', async () => {
+  it('pins the selected findings at the version the editor read, and exports PDF or DOCX with the registered reason', async () => {
+    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view()))
+    vi.mocked(api.setReportFindings).mockResolvedValue(view({ selectedFindings: [] }))
     const service = createRealReportService()
-    const linked = await service.setFindings(ctx, 'rep-1', ['F-1'])
-    expect(linked.ok === false && linked.failure.kind).toBe('unavailable')
-    expect(linked.ok === false && linked.failure.message).toMatch(/does not link findings/)
+    const linked = await service.setFindings(ctx, 'rep-1', ['F-1'], 2)
+    expect(linked.ok).toBe(true)
+    expect(api.setReportFindings).toHaveBeenCalledWith('eng-1', 'rep-1', { expectedVersion: 2, findingIds: ['F-1'] })
     const exported = await service.exportVersion(ctx, 'rep-1', 'PDF')
     expect(exported.ok === false && exported.failure.message).toMatch(/PDF and DOCX export/)
   })
 
   it('records a delivery only for the operator role and above, never for a reviewer', async () => {
-    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view({ status: 'approved', approvedVersion: 2 })))
+    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view({ status: 'approved', approvedVersion: 2, readiness: { ready: true, checks: [] } })))
     const reviewerView = await createRealReportService().review(reviewerCtx, 'rep-1')
     expect(reviewerView.ok && reviewerView.data.gates.deliver.allowed).toBe(false)
     expect(reviewerView.ok && reviewerView.data.gates.deliver.reason).toMatch(/operator role/)
@@ -178,7 +193,7 @@ describe('real report gates for capabilities the backend does not model', () => 
   })
 
   it('gives the reviewer decision only to a reviewer who did not write the report', async () => {
-    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view({ status: 'in_review' })))
+    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view({ status: 'in_review', readiness: { ready: true, checks: [] } })))
     const own = await createRealReportService().review({ ...reviewerCtx, actor: { id: 'user-author', role: 'reviewer' } }, 'rep-1')
     expect(own.ok && own.data.gates.decide.allowed).toBe(false)
     const other = await createRealReportService().review(reviewerCtx, 'rep-1')
@@ -192,5 +207,62 @@ describe('real report composition', () => {
     const unsupported = createRealFeatureServices({ version: 1, mode: 'multi-user', capabilities: {} } as never)
     const res = await unsupported.reports(ctx.actor, 'eng-1').list(ctx, {})
     expect(res.ok === false && res.failure.message).toBe('Reports is not integrated with the real backend yet.')
+  })
+})
+
+describe('real report composition and acknowledgement (P06-P08)', () => {
+  const template = { id: 'tpl-1', engagementId: 'eng-1', name: 'Pentest', version: 2, sections: [{ title: 'Summary', required: true }], createdBy: 'user-author', createdAt: '2026-10-01T00:00:00.000Z' }
+
+  it('creates a draft with its template, reviewer, period and pinned findings through the server contracts', async () => {
+    vi.mocked(api.fetchReports).mockResolvedValue({ ...listOf(), templates: [template] })
+    vi.mocked(api.createReport).mockResolvedValue(view({ id: 'rep-9', version: 1 }))
+    vi.mocked(api.updateReportSetup).mockResolvedValue(view({ id: 'rep-9', version: 2 }))
+    vi.mocked(api.setReportFindings).mockResolvedValue(view({ id: 'rep-9', version: 3 }))
+    const created = await createRealReportService().createDraft(ctx, { title: 'Q4', template: 'Pentest', kind: 'Red Team', reviewer: 'Rex Reviewer', findings: ['F-1'], period: 'Oct 1, 2026/Oct 31, 2026' })
+    expect(created.ok).toBe(true)
+    expect(api.updateReportSetup).toHaveBeenCalledWith('eng-1', 'rep-9', expect.objectContaining({ expectedVersion: 1, templateId: 'tpl-1', reviewerId: 'user-reviewer' }))
+    expect(api.setReportFindings).toHaveBeenCalledWith('eng-1', 'rep-9', { expectedVersion: 2, findingIds: ['F-1'] })
+  })
+
+  it('refuses a period that is not two dates, before any write', async () => {
+    vi.mocked(api.fetchReports).mockResolvedValue({ ...listOf(), templates: [template] })
+    const res = await createRealReportService().createDraft(ctx, { title: 'Q4', template: 'Pentest', kind: 'Red Team', reviewer: '', findings: [], period: 'not a range' })
+    expect(res.ok === false && res.failure.kind).toBe('validation')
+    expect(api.createReport).not.toHaveBeenCalled()
+  })
+
+  it('records the recipient acknowledgement with its request id and shows it on the export record', async () => {
+    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view({ id: 'rep-1', status: 'delivered', approvedVersion: 2, deliveries: [{ id: 'd-1', kind: 'delivery', format: 'markdown', status: 'completed', createdAt: '2026-10-14T09:00:00.000Z', recordedReceipt: null, acknowledgement: { id: 'ack-1', actorId: 'user-viewer', receipt: 'signed', createdAt: '2026-10-15T09:00:00.000Z' } }] })))
+    vi.mocked(api.acknowledgeReportDelivery).mockResolvedValue(view({ id: 'rep-1', status: 'delivered' }))
+    const res = await createRealReportService().acknowledge(ctx, 'rep-1', { deliveryId: 'd-1', receipt: 'signed', requestId: 'req-ack-1' })
+    expect(api.acknowledgeReportDelivery).toHaveBeenCalledWith('eng-1', 'rep-1', 'd-1', { requestId: 'req-ack-1', receipt: 'signed' })
+    expect(res.ok && res.data.ackAt).toBeTruthy()
+  })
+
+  it('starts a revision only for an approved or delivered version and pins the version the editor read', async () => {
+    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view({ id: 'rep-1', status: 'approved', approvedVersion: 2, version: 2 })))
+    vi.mocked(api.reviseReport).mockResolvedValue(view({ id: 'rep-2', version: 1, status: 'draft' }))
+    const rev = await createRealReportService().revise(ctx, 'rep-1', 2)
+    expect(api.reviseReport).toHaveBeenCalledWith('eng-1', 'rep-1', { expectedVersion: 2 })
+    expect(rev.ok && rev.data.id).toBe('rep-2')
+    const stale = await createRealReportService().revise(ctx, 'rep-1', 1)
+    expect(stale.ok === false && stale.failure.kind).toBe('conflict')
+  })
+
+  it('creates a template version only for an owner-role actor and sends its sections', async () => {
+    vi.mocked(api.createReportTemplate).mockResolvedValue(template)
+    const owner = { ...ctx, actor: { id: 'user-owner', role: 'admin' as const } }
+    const created = await createRealReportService().createTemplate(owner, { name: 'Pentest', sections: [{ title: 'Summary', required: true }] })
+    expect(api.createReportTemplate).toHaveBeenCalledWith('eng-1', { name: 'Pentest', sections: [{ title: 'Summary', required: true }] })
+    expect(created.ok && created.data.name).toBe('Pentest')
+    const refused = await createRealReportService().createTemplate(ctx, { name: 'Pentest', sections: [] })
+    expect(refused.ok === false && refused.failure.kind).toBe('forbidden')
+  })
+
+  it('downloads the server export bytes for JSON and Markdown with their digest', async () => {
+    vi.mocked(api.exportReport).mockResolvedValue({ engagementId: 'eng-1', reportId: 'rep-1', version: 2, format: 'markdown', mediaType: 'text/markdown', content: '# Report', digest: 'd'.repeat(64) })
+    const res = await createRealReportService().exportArtifact(ctx, 'rep-1', 'markdown')
+    expect(res.ok && res.data.filename).toBe('report-rep-1-v2.md')
+    expect(res.ok && res.data.content).toBe('# Report')
   })
 })

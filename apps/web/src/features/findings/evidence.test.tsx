@@ -51,7 +51,8 @@ describe('evidence list + inspector (ticket 33)', () => {
     await waitFor(() => expect(screen.getByText('Content masked by default')).toBeInTheDocument())
     expect(screen.getAllByText('EV-014-02').length).toBeGreaterThan(0) // reference visible, name withheld
     expect(screen.queryByText('evidence-027.png')).not.toBeInTheDocument()
-    const download = screen.getByRole('button', { name: 'Download' })
+    // P04: the inspector downloads the original bytes, so the control is named for them.
+    const download = screen.getByRole('button', { name: 'Download original' })
     expect(download).toBeDisabled()
     expect(download.getAttribute('title')).toContain('cannot download')
     const text = document.body.textContent || ''
