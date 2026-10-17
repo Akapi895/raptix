@@ -720,3 +720,18 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 - **Dữ liệu dùng chung còn lại:** `raptix-web-runtime` gọi `bolt://neo4j:7687`, `http://skillogy:9100` và LiteLLM, và các địa chỉ này đi qua `raptix-net`. Việc tách `raptix-net` sẽ làm đứt đồ thị tri thức của stack web, nên chưa làm. Đây là quyết định về dữ liệu dùng chung cần người sở hữu quyết định.
 - **Kiểm chứng:** execution ghi `recon/ssh_recheck.txt` qua mạng mới, file xuất hiện trên host và trong `raptix-sandbox`, đúng một kết nối tới `10.129.227.140:22`. Lần chạy không yêu cầu làm lại chỉ trả về bằng chứng cũ, vì OBJ-001 đã `COMPLETED` trong OPPLAN.
 - **Còn mở:** bằng chứng OBJ-001 vẫn nằm trong thư mục lồng `ui-live-8b98a9/ui-live-8b98a9/evidence/`.
+
+### 13.14 Hợp nhất layout workspace và tách infra theo từng stack (2026-10-17, khuya)
+
+- **Layout evidence (A + B):** engagement luôn ở `/workspace/<slug>` trong runtime và sandbox, ở mọi chế độ. Bash tool và daemon fence vào đúng thư mục đó, sandbox theo project mount tại cùng đường dẫn, web runtime gửi `workspace_path=/workspace/<slug>`. Validator handoff từ chối `evidence_storage_path` nằm ngoài `/workspace/<slug>/`. Commit `6ccbe8e`, `5e5772f`.
+- **Kiểm chứng layout:** ghi qua `HTTPSandbox` vào `/workspace/<slug>` được; ghi ra ngoài engagement bị daemon chặn 403. Execution ghi `evidence/ssh_22_banner_recheck.txt` đúng đường dẫn tài liệu đã duyệt, không lồng thư mục. Các file bằng chứng cũ bị lồng đã chuyển về `evidence/`.
+- **Tách infra theo stack (đảo ngược quyết định W16):** trước đây stack web dùng chung PostgreSQL, Neo4j và LangGraph với stack gốc qua `raptix-net`. Nay stack web có bộ riêng: postgres, neo4j, skillogy, litellm (`docker-compose.web-raptix.yml`, kế thừa định nghĩa từ `docker-compose.yml`, không publish cổng, mạng và volume riêng). Mạng sandbox của web là `raptix_web_sandbox-net` (`RAPTIX_SANDBOX_NETWORK`). Stack gốc giữ bộ riêng của nó.
+  - DB `raptix_web_raptix` được copy sang postgres của web bằng `pg_dump`/`pg_restore`: 30 bảng, số dòng khớp. Các writer web được dừng trong lúc copy lần cuối.
+  - Corpus skill (`skills.cypher`, `threat-actor-nodes.cypher`) được nạp vào neo4j của web: Skill 324, Technique 697, Tag 885, AssetType 159, khớp với stack gốc.
+  - Đã kiểm chứng: từ runtime web, `neo4j`, `litellm`, `skillogy`, `postgres` chỉ resolve về container web; từ LangGraph của stack gốc chỉ resolve về container gốc. Hai bên không thấy sandbox của nhau. Planning conversation chạy được ở cả hai stack.
+- **Cổng UI web:** `WEB_RAPTIX_PORT=3001` vì `juice-shop` đang giữ cổng 3000.
+- **Còn lại / cần biết:**
+  - `raptix-web-litellm-verify-old` là container thủ công còn sót từ lần kiểm chứng trước (trỏ tới `raptix-verify/`). Đã đổi tên và dừng, chưa xóa.
+  - DB `raptix_web_raptix` vẫn còn trên postgres của stack gốc như bản sao lưu; chưa xóa.
+  - `WEB_RUNTIME_IMAGE_TAG=stable` thay cho `web-m1` để web runtime có các sửa layout và planner.
+  - Stack web vẫn dùng chung `raptix-web-p05-final-db` là DB riêng, không liên quan tới runtime.
