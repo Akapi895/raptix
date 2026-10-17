@@ -698,3 +698,17 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
   - Lỗi: agent báo đã ghi `recon/SUMMARY.md` và `recon/banners_*.txt`, nhưng cả host lẫn sandbox đều không có file nào trong `recon/`. Nghi ngờ đường ghi của sub-agent (`EngagementFilesystemBackend`). Chưa điều tra sâu.
 - **Tồn đọng:** file tạm `abort.json.tmp-cleanup-placeholder` vẫn nằm trong `plan/`, và `.engagement` rỗng do planner tạo.
 - **Ghi chú cho owner:** engagement acceptance đã closed. Các bước mutation tiếp theo cần engagement mới.
+
+### 13.12 Sửa lỗi planner, execution và sandbox dùng chung (2026-10-17, tối)
+
+- **Nguyên nhân gốc của lỗi ghi bằng chứng:** không phải backend của sub-agent. `SANDBOX_URL=http://sandbox:9999` của LangGraph được DNS phân giải luân phiên giữa `raptix-sandbox` và `sbx-popup-lab-lbvq`, vì sandbox theo project do launcher sinh ra có service `sandbox` và cùng nằm trên `raptix_sandbox-net`. Các lần ghi và lệnh có thể rơi vào sandbox của lab khác.
+  - Sửa: `docker-compose.yml` đặt `SANDBOX_URL` về tên container của stack (`raptix<stack>-sandbox`). Launcher (`apps/launcher/internal/sandboxes/sandboxes.go`) đặt tên service bằng tên container `sbx-<slug>`, để alias `sandbox` không còn bị chiếm.
+  - Kiểm chứng: sau khi đổi URL, 26 request `/execute` tới `raptix-sandbox`, 0 request tới `sbx-popup-lab-lbvq`. Ghi qua `HTTPSandbox.write` xuất hiện đúng trên host và trong sandbox của stack.
+- **Lỗi handoff của planner:** `validate_planning_bundle` gom đủ lỗi theo từng file (vị trí field, quy tắc, giá trị sai), thay vì dừng ở lỗi đầu. `complete_engagement_planning` trả `ToolMessage(status="error")` khi bị chặn. Test: 6/6 `test_complete_planning.py`.
+  - Kiểm chứng live: tạm chuyển `cleanup.json` đi, planning thread mới gọi công cụ một lần, công cụ trả `status=error` (180 ký tự), agent báo đúng nguyên nhân và không lặp. Sau đó khôi phục file, bundle `ready` lại.
+- **File tạm trong `plan/`:** `abort.json.tmp-cleanup-placeholder` là bản nháp do lỗi đường dẫn của Soundwave, đã xóa. `soundwave.md` thêm quy tắc không tạo file tạm trong `plan/` và cách xử lý khi handoff bị chặn.
+- **Execution, OBJ-001, thread mới bind plan đã duyệt:** `success` (86 giây). Evidence nằm đúng trong `recon/` trên host và trong sandbox của stack. Banner SSH và `HEAD /` được kiểm chứng độc lập từ sandbox.
+- **Chưa xong và cần quyết định:**
+  - Container `sbx-popup-lab-lbvq` vẫn giữ alias `sandbox` cho tới khi lab được sync lại bằng launcher đã sửa. Lệnh xóa 4 mục do phiên này tạo trong `/workspace` của container đó (`plan/`, `recon/`, `.engagement`, `ui-live-8b98a9/`) đã bị bộ phân loại từ chối. Chúng vẫn còn đó và cần xóa bởi người sở hữu lab.
+  - Agent ghi evidence vào thư mục lồng `ui-live-8b98a9/ui-live-8b98a9/evidence/`, trong khi báo cáo nhắc tới `evidence/` tương đối. Nguyên nhân: engagement đã pin ở `/workspace`, nhưng agent dùng đường dẫn có slug. Cần quyết định có chuẩn hóa đường dẫn trong fence hay không, vì đó là đổi ngữ nghĩa của fence filesystem.
+  - Thread planning tạo trước khi pin trả 409 khi tiếp tục. Đây là hành vi đúng: cấu hình runtime khác với lúc tạo thread.
