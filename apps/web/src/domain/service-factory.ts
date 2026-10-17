@@ -45,6 +45,7 @@ import type { VaultService } from '../features/vault/service'
 import type { ClosureService } from '../features/closure/service'
 import { unavailablePlanningService, type PlanningService } from '../features/planning/service'
 import { unavailableGovernanceService, type GovernanceService } from '../features/governance/service'
+import { unavailableC2ProviderService, type C2ProviderService } from '../features/c2/provider'
 import type { ObservedAnalysisService } from '../features/analysis/observed'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
@@ -100,7 +101,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -156,6 +157,8 @@ export interface ConsoleServices {
   planning(actor: ActorRef, projectId: string): PlanningService
   /** Business plan, preflight, binding, schedules and stops (plan P09 Governance slice). Real mode only: the mock console keeps its own plan review. */
   governance(actor: ActorRef, projectId: string): GovernanceService
+  /** C2 provider sessions, grants and command ledger (plan P12 C2 slice). Real mode only: the mock console keeps its own session model. */
+  c2Provider(actor: ActorRef, projectId: string): C2ProviderService
   /** Observed analysis (plan P09 Analysis slice): the mock adapter maps its executed steps, the real adapter reads the knowledge graph. */
   observedAnalysis(actor: ActorRef, projectId: string): ObservedAnalysisService
   /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
@@ -362,6 +365,7 @@ export function createConsoleServices(): ConsoleServices {
     observedAnalysis: forObservedAnalysis,
     planning: () => unavailablePlanningService(),
     governance: () => unavailableGovernanceService(),
+    c2Provider: () => unavailableC2ProviderService(),
     audit: () => unavailableAuditService(),
     workers: forWorkers,
     notices: forNotices,

@@ -26,6 +26,8 @@ import { unavailablePlanningService, type PlanningService } from '../../features
 import { unavailableGovernanceService, type GovernanceService } from '../../features/governance/service'
 import { createRealPlanningService } from './planning'
 import { createRealGovernanceService } from './governance'
+import { unavailableC2ProviderService, type C2ProviderService } from '../../features/c2/provider'
+import { createRealC2ProviderService } from './c2-provider'
 import { notIntegratedService } from './stub'
 
 /**
@@ -113,5 +115,11 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableGovernanceService()
-  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance }
+  const c2Provider: FeatureServices['c2Provider'] = supported('c2')
+    ? (() => {
+        const service: C2ProviderService = createRealC2ProviderService()
+        return () => service
+      })()
+    : () => unavailableC2ProviderService()
+  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider }
 }
