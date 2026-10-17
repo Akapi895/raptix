@@ -29,7 +29,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed } from 'lucide-react'
 import { APR, type Project } from '../data'
 import { ExecutionWorkspace } from '../features/execution/workspace'
-import { VaultTab } from '../features/vault/panel'
+import { VaultTab } from '../features/vault/tab'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import { useProjectStore, useToastStore } from '../state/stores'
@@ -206,7 +206,7 @@ function Detail({ d }: { d: ProjectDetail }) {
       {tab === 'reports' && <ReportsTab p={p} ds={ds} via={via} />}
       {tab === 'evidence' && <EvidenceTab p={p} d={d} />}
       {tab === 'audit' && <AuditTab p={p} ds={ds} />}
-      {tab === 'vault' && <VaultTab p={p} />}
+      {tab === 'vault' && <VaultTab engagementId={p.id} />}
       {tab === 'close' && <CloseTab p={p} d={d} setTab={setTab} />}
     </>
   )

@@ -1,4 +1,4 @@
-import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { RequestContext } from '../../domain/service'
 import type { TeamMember, TeamRead, TeamService } from '../../features/team/service'
 import { fetchMembers, inviteMember, removeMember, updateMemberRole, type InviteMemberInput } from '../api'
 import { guarded } from './shared'
