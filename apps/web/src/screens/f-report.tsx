@@ -9,6 +9,7 @@ import { useReportValidation, useReportSourceCounts, useReportExclusions } from 
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import { useResourceScope } from './resource-scope'
 import { isRealMode } from '../real/mode'
+import { fetchEffectiveScope } from '../real/api'
 import { realControlGap } from '../state/console'
 import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
@@ -412,6 +413,17 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const insertFindings = () => insert('\n' + confirmedLinked.map((f) => `• ${f.id} (${sevLabel[f.severity]}) — ${f.title}. Asset ${f.asset}.`).join('\n'))
   const lastSnap = snaps[snaps.length - 1]
   const insert = (t: string) => { if (editable && sec) setDrafts({ ...drafts, [sec.id]: (drafts[sec.id] ?? sec.body ?? '') + t }) }
+  // Real mode inserts the engagement's recorded testing windows and scope version from the effective scope.
+  const insertProjectInfo = async () => {
+    if (!isRealMode()) { insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`); return }
+    try {
+      const scope = await fetchEffectiveScope(project.id)
+      const windows = scope.roe.windows.map((w) => `${w.start} to ${w.end} ${w.tz}`).join('; ') || 'no testing window recorded'
+      insert(`\nScope: ${windows}. ROE ${scope.version ?? 'not recorded'}.`)
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'The effective scope could not be read.', 'warn')
+    }
+  }
   const toggleF = (id: string, on: boolean) => {
     const next = on ? [...r.findings, id] : r.findings.filter((x) => x !== id)
     runWrite(() => writes.setFindings(r.id, next, Number(r.version.replace(/^v/, ''))))
@@ -481,7 +493,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
               <div className="mb-3 flex flex-wrap gap-2">
                 <Button size="sm" icon={ListChecks} onClick={() => insert('\n• Item 1\n• Item 2\n• Item 3')}>List</Button>
                 <Button size="sm" icon={Table2} onClick={() => insert('\n| Column A | Column B |\n|----------|----------|\n| …        | …        |')}>Table</Button>
-                <Button size="sm" icon={Wand2} disabled={isRealMode()} title={isRealMode() ? (realControlGap('report.projectInfo') ?? undefined) : undefined} onClick={() => insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`)}>Insert project info</Button>
+                <Button size="sm" icon={Wand2} onClick={() => { void insertProjectInfo() }}>Insert project info</Button>
                 {!isRealMode() && <Button size="sm" icon={Wand2} onClick={fill}>Fill empty sections with simulated text</Button>}
                 {/Findings/i.test(sec?.title || '') && <Button size="sm" icon={Plus} disabled={!confirmedLinked.length} title={confirmedLinked.length ? undefined : 'Link at least one confirmed finding first. AI-suggested and unconfirmed findings cannot be inserted.'} onClick={insertFindings}>Insert confirmed findings</Button>}
               </div>

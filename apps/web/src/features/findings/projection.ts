@@ -8,6 +8,7 @@ import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
 import { DATA_MODE } from '../../real/mode'
 import { usePolicyProjects } from '../../state/console'
+import { useReportList } from '../reports/query'
 
 export interface FindingFormRead { findings: Finding[]; projects: Project[]; assets: Asset[]; operations: Operation[]; evidence: Evidence[] }
 
@@ -33,7 +34,11 @@ export function useFindingFormRead(id?: string): FindingFormRead {
   return useServiceProjection((services, ctx) => readFindingForm(services, ctx, id))
 }
 export function useFindingReportChoices(): { reports: Report[] } {
-  if (DATA_MODE === 'real') return { reports: [] }
+  // Real mode reads the reports through the same list the report screens use, so inclusion and the add-to-report choices agree with them.
+  if (DATA_MODE === 'real') {
+    const list = useReportList({})
+    return { reports: (list.data?.items ?? []).map((item) => item.report) }
+  }
   return useServiceProjection(readFindingReports, 'all')
 }
 export function useFindingEvidenceChoices(projectId: string): { evidence: Evidence[] } {
