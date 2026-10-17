@@ -3,6 +3,7 @@ import type { FindingService } from '../../features/findings/service'
 import type { AssetService } from '../../features/assets/service'
 import type { ReportService } from '../../features/reports/service'
 import type { LibraryService } from '../../features/library/service'
+import type { SettingsService } from '../../features/settings/service'
 import { unavailableScopeService } from '../../features/scope/service'
 import { unavailableAuditService } from '../../features/audit/service'
 import { unavailableTeamService } from '../../features/team/service'
@@ -14,6 +15,9 @@ import { createRealReportService } from './reports'
 import { createRealAuditService } from './audit'
 import { createRealScopeService } from './scope'
 import { createRealTeamService } from './team'
+import { createRealSettingsService } from './settings'
+import { createRealVaultService } from './vault'
+import { unavailableVaultService, type VaultService } from '../../features/vault/service'
 import { notIntegratedService } from './stub'
 
 /**
@@ -65,5 +69,17 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableTeamService()
-  return { findings, reports, assets, library, scope, audit, team }
+  const settings: FeatureServices['settings'] = supported('projects')
+    ? (() => {
+        const service = createRealSettingsService()
+        return () => service
+      })()
+    : () => notIntegratedService<SettingsService>('Settings')
+  const vault: FeatureServices['vault'] = supported('vault')
+    ? (() => {
+        const service = createRealVaultService()
+        return () => service
+      })()
+    : () => unavailableVaultService()
+  return { findings, reports, assets, library, scope, audit, team, settings, vault }
 }

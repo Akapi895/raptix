@@ -9,7 +9,7 @@
 import { can, ROLE_LABEL } from '../../auth/policy'
 import { stamp } from '../../domain/demo-clock'
 import type { Project, VaultSecret } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { DbAuthority } from '../../domain/database'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 /** List-safe metadata projection; never carries the demo plaintext. */
@@ -19,23 +19,23 @@ const toMeta = (s: VaultSecret): VaultSecretMeta => ({ id: s.id, projectId: s.pr
 
 const role = (ctx: RequestContext) => ROLE_LABEL[ctx.actor.role]
 
-const findProject = (services: ConsoleServices, ctx: RequestContext): Project | undefined =>
-  services.authority.snapshot().projects.find((x) => x.id === ctx.projectId)
+const findProject = (authority: DbAuthority, ctx: RequestContext): Project | undefined =>
+  authority.snapshot().projects.find((x) => x.id === ctx.projectId)
 
-export function listVaultSecrets(services: ConsoleServices, ctx: RequestContext): ServiceResult<VaultSecretMeta[]> {
-  const p = findProject(services, ctx)
+export function listVaultSecrets(authority: DbAuthority, ctx: RequestContext): ServiceResult<VaultSecretMeta[]> {
+  const p = findProject(authority, ctx)
   if (!p) return { ok: false, failure: { kind: 'not-found', message: 'Project not found.' } }
-  return { ok: true, data: services.authority.snapshot().vaultSecrets.filter((s) => s.projectId === p.id).map(toMeta) }
+  return { ok: true, data: authority.snapshot().vaultSecrets.filter((s) => s.projectId === p.id).map(toMeta) }
 }
 
 /** Explicit reveal: returns the seeded demo value once, bumps the audited reveal count. */
-export function revealVaultSecret(services: ConsoleServices, ctx: RequestContext, secretId: string): ServiceResult<{ secretId: string; plaintext: string }> {
-  const p = findProject(services, ctx)
+export function revealVaultSecret(authority: DbAuthority, ctx: RequestContext, secretId: string): ServiceResult<{ secretId: string; plaintext: string }> {
+  const p = findProject(authority, ctx)
   if (!p) return { ok: false, failure: { kind: 'not-found', message: 'Project not found.' } }
   if (!can(ctx.actor, 'viewSensitive', p)) return { ok: false, failure: { kind: 'forbidden', message: `The ${role(ctx)} role cannot reveal vault secrets.` } }
-  const secret = services.authority.snapshot().vaultSecrets.find((s) => s.id === secretId && s.projectId === p.id)
+  const secret = authority.snapshot().vaultSecrets.find((s) => s.id === secretId && s.projectId === p.id)
   if (!secret) return { ok: false, failure: { kind: 'not-found', message: 'Secret not found in this project.' } }
-  services.authority.commit(ctx.corr, (db) => {
+  authority.commit(ctx.corr, (db) => {
     const row = db.vaultSecrets.find((s) => s.id === secretId)!
     row.revealCount += 1
     row.lastRevealedAt = stamp()
@@ -44,31 +44,62 @@ export function revealVaultSecret(services: ConsoleServices, ctx: RequestContext
   return { ok: true, data: { secretId, plaintext: secret.demoPlaintext } }
 }
 
-export function createVaultSecret(services: ConsoleServices, ctx: RequestContext, input: { kind: string; label: string; plaintext: string }): ServiceResult<VaultSecretMeta> {
-  const p = findProject(services, ctx)
+export function createVaultSecret(authority: DbAuthority, ctx: RequestContext, input: { kind: string; label: string; plaintext: string }): ServiceResult<VaultSecretMeta> {
+  const p = findProject(authority, ctx)
   if (!p) return { ok: false, failure: { kind: 'not-found', message: 'Project not found.' } }
   if (!can(ctx.actor, 'editScope', p)) return { ok: false, failure: { kind: 'forbidden', message: `The ${role(ctx)} role cannot store vault secrets.` } }
   const kind = input.kind.trim()
   const label = input.label.trim()
   if (!kind || !label || !input.plaintext) return { ok: false, failure: { kind: 'validation', message: 'Kind, label and a secret value are required.' } }
-  const id = `VS-${p.id.slice(-3)}-${String(services.authority.snapshot().vaultSecrets.length + 1).padStart(2, '0')}-${Date.now().toString(36).slice(-4)}`
-  services.authority.commit(ctx.corr, (db) => {
+  const id = `VS-${p.id.slice(-3)}-${String(authority.snapshot().vaultSecrets.length + 1).padStart(2, '0')}-${Date.now().toString(36).slice(-4)}`
+  authority.commit(ctx.corr, (db) => {
     db.vaultSecrets.push({ id, projectId: p.id, kind, label, demoPlaintext: input.plaintext, revealCount: 0, createdAt: stamp(), createdBy: ctx.actor.id })
     db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Stored vault secret', obj: id, projectId: p.id, result: 'Success', reason: `Kind ${kind}` })
   })
-  const stored = services.authority.snapshot().vaultSecrets.find((s) => s.id === id)!
+  const stored = authority.snapshot().vaultSecrets.find((s) => s.id === id)!
   return { ok: true, data: toMeta(stored) }
 }
 
-export function revokeVaultSecret(services: ConsoleServices, ctx: RequestContext, secretId: string): ServiceResult<{ ok: true }> {
-  const p = findProject(services, ctx)
+export function revokeVaultSecret(authority: DbAuthority, ctx: RequestContext, secretId: string): ServiceResult<{ ok: true }> {
+  const p = findProject(authority, ctx)
   if (!p) return { ok: false, failure: { kind: 'not-found', message: 'Project not found.' } }
   if (!can(ctx.actor, 'editScope', p)) return { ok: false, failure: { kind: 'forbidden', message: `The ${role(ctx)} role cannot revoke vault secrets.` } }
-  const secret = services.authority.snapshot().vaultSecrets.find((s) => s.id === secretId && s.projectId === p.id)
+  const secret = authority.snapshot().vaultSecrets.find((s) => s.id === secretId && s.projectId === p.id)
   if (!secret) return { ok: false, failure: { kind: 'not-found', message: 'Secret not found in this project.' } }
-  services.authority.commit(ctx.corr, (db) => {
+  authority.commit(ctx.corr, (db) => {
     db.vaultSecrets = db.vaultSecrets.filter((s) => s.id !== secretId)
     db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Revoked vault secret', obj: secretId, projectId: p.id, result: 'Success', reason: 'Encrypted material deleted (demo)' })
   })
   return { ok: true, data: { ok: true } }
+}
+
+/** Vault port (plan P09, Vault slice): list, reveal, store and revoke for one engagement. */
+export interface VaultRead {
+  secrets: VaultSecretMeta[]
+  truncated: boolean
+  /** Whether this actor may reveal a value or revoke a secret; the reason is shown where the control would be. */
+  canReveal: boolean
+  revealReason: string | null
+  canManage: boolean
+  manageReason: string | null
+}
+
+export interface VaultRevealed { secretId: string; plaintext: string; revealedAt: string | null }
+
+export interface VaultService {
+  list(ctx: RequestContext): Promise<ServiceResult<VaultRead>>
+  reveal(ctx: RequestContext, secretId: string): Promise<ServiceResult<VaultRevealed>>
+  store(ctx: RequestContext, input: { kind: string; label: string; plaintext: string }): Promise<ServiceResult<VaultSecretMeta>>
+  revoke(ctx: RequestContext, secretId: string): Promise<ServiceResult<{ ok: true }>>
+}
+
+/** Every call resolves to an explicit unavailable outcome when the backend does not advertise the vault. */
+export function unavailableVaultService(): VaultService {
+  const failure = { kind: 'unavailable' as const, message: 'The credentials vault is not available on this server.' }
+  return {
+    list: () => Promise.resolve({ ok: false, failure }),
+    reveal: () => Promise.resolve({ ok: false, failure }),
+    store: () => Promise.resolve({ ok: false, failure }),
+    revoke: () => Promise.resolve({ ok: false, failure }),
+  }
 }

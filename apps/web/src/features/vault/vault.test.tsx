@@ -7,7 +7,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
-import { VaultTab } from './panel'
+import { VaultTab } from './tab'
 import type { Project } from '../../domain/entities'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
@@ -15,7 +15,7 @@ afterEach(() => { cleanup(); window.location.hash = '' })
 /** Mounts the vault tab bound to one project. */
 function mountVault(me = 'Alex Morgan', projectId = 'RT-2026-014') {
   const p = { id: projectId } as Project
-  return mountServices(<VaultTab p={p} />, me)
+  return mountServices(<VaultTab engagementId={p.id} />, me)
 }
 
 describe('mock vault tab', () => {
