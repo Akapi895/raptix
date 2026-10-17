@@ -37,7 +37,7 @@ func (f *fakeRunner) Run(name string, args ...string) error {
 func TestSyncStartsOneSandboxPerProjectAndRemovesOrphans(t *testing.T) {
 	home := t.TempDir()
 	fr := &fakeRunner{outputs: map[string]string{
-		"/w/*/": "lab-a\nweb-m1-20261016\n",
+		"/w/*/":      "lab-a\nweb-m1-20261016\n",
 		"name=^sbx-": "sbx-gone\n",
 	}}
 	cfg := Config{Bin: "docker", Home: home, Runner: fr, Settings: Settings{Image: "img", Network: "net", Volume: "vol", EnvFile: "/env"}}
