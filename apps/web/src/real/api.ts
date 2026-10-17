@@ -740,10 +740,10 @@ export function createSchedule(engagementId: string, input: { planId: string; th
   { method: 'POST', body: input })
 }
 
-export function cancelSchedule(engagementId: string, scheduleId: string): Promise<ScheduleView> {
+export function cancelSchedule(engagementId: string, scheduleId: string, expectedVersion: number): Promise<ScheduleView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/schedules/${encodeURIComponent(scheduleId)}/cancel`, (v): v is ScheduleView =>
     typeof v === 'object' && v !== null && (v as ScheduleView).status === 'canceled',
-  { method: 'POST' })
+  { method: 'POST', body: { expectedVersion } })
 }
 
 export function rescheduleSchedule(engagementId: string, scheduleId: string, input: { executeAt: string; timezone: string; expectedVersion: number }): Promise<ScheduleView> {
