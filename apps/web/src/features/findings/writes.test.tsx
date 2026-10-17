@@ -12,9 +12,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
-import { currentRoute, go, selectProject } from '../../router/navigate'
+import { currentRoute, go } from '../../router/navigate'
 import { useSessionStore } from '../../state/session'
-import { useToastStore } from '../../state/stores'
+import { useProjectStore, useToastStore } from '../../state/stores'
 import { createConsoleServices } from '../../domain/service-factory'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
@@ -351,7 +351,7 @@ describe('finding form on the typed service (ticket 32)', () => {
   it('blocks a bad submit with inline errors, commits nothing, and preserves what was typed', async () => {
     window.location.hash = '#/finding-new'
     const h = mountScreenRoute('Taylor Chen')
-    h.run(() => selectProject(P14))
+    h.run(() => useProjectStore.getState().setPid(P14))
     h.show(<Form />)
     const title = await waitFor(() => screen.getByLabelText('Finding title *')) as HTMLInputElement
     fireEvent.change(title, { target: { value: 'abc' } })
