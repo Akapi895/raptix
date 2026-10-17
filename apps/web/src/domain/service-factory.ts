@@ -43,6 +43,7 @@ import { unavailableAuditService, type AuditService } from '../features/audit/se
 import type { TeamService } from '../features/team/service'
 import type { VaultService } from '../features/vault/service'
 import type { ClosureService } from '../features/closure/service'
+import type { ObservedAnalysisService } from '../features/analysis/observed'
 import type { WorkerService } from '../features/workers/service'
 import type { NoticeService } from '../features/notices/service'
 import type { ResultsService } from '../features/results/service'
@@ -97,7 +98,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure'>
+export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -149,6 +150,8 @@ export interface ConsoleServices {
   vault(actor: ActorRef, projectId: string): VaultService
   /** Project closure (plan P09 Closure slice): the mock adapter maps its close approvals, the real adapter reads the closure API. */
   closure(actor: ActorRef, projectId: string): ClosureService
+  /** Observed analysis (plan P09 Analysis slice): the mock adapter maps its executed steps, the real adapter reads the knowledge graph. */
+  observedAnalysis(actor: ActorRef, projectId: string): ObservedAnalysisService
   /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
   workers(actor: ActorRef, projectId: string): WorkerService
   /** Typed notice center handlers (ticket 59 — feature-local implementation). */
@@ -277,6 +280,8 @@ export function createConsoleServices(): ConsoleServices {
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/analysis/service').then((m) => m.createAnalysisService(authority, guard)))
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/settings/service').then((m) => m.createSettingsService(authority, clock, guard)))
+  const forObservedAnalysis = (actor: ActorRef, projectId: string): ObservedAnalysisService =>
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/analysis/observed-mock').then((m) => m.createMockObservedAnalysisService(authority, guard)))
   const forClosure = (actor: ActorRef, projectId: string): ClosureService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/closure/mock').then((m) => m.createMockClosureService(authority, clock, guard)))
   const forVault = (actor: ActorRef, projectId: string): VaultService =>
@@ -348,6 +353,7 @@ export function createConsoleServices(): ConsoleServices {
     team: forTeam,
     vault: forVault,
     closure: forClosure,
+    observedAnalysis: forObservedAnalysis,
     audit: () => unavailableAuditService(),
     workers: forWorkers,
     notices: forNotices,

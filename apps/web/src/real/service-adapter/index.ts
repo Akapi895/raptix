@@ -18,6 +18,8 @@ import { createRealTeamService } from './team'
 import { createRealSettingsService } from './settings'
 import { createRealVaultService } from './vault'
 import { createRealClosureService } from './closure'
+import { createRealObservedAnalysisService } from './analysis'
+import { unavailableObservedAnalysisService, type ObservedAnalysisService } from '../../features/analysis/observed'
 import { unavailableClosureService, type ClosureService } from '../../features/closure/service'
 import { unavailableVaultService, type VaultService } from '../../features/vault/service'
 import { notIntegratedService } from './stub'
@@ -89,5 +91,11 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableClosureService()
-  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure }
+  const observedAnalysis: FeatureServices['observedAnalysis'] = supported('graphs')
+    ? (() => {
+        const service = createRealObservedAnalysisService()
+        return () => service
+      })()
+    : () => unavailableObservedAnalysisService()
+  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis }
 }
