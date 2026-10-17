@@ -9,13 +9,15 @@ const EXEC = { engagementId: 'eng-1', threadId: 'th-exec', assistantId: 'executo
 const PLAN = { engagementId: 'eng-1', threadId: 'th-plan', assistantId: 'soundwave', kind: 'planning', createdAt: '2026-10-14T08:00:00.000Z', updatedAt: '2026-10-14T08:05:00.000Z' }
 const RUN = { engagementId: 'eng-1', threadId: 'th-exec', runId: 'run-9', requestId: 'req-abc12345', rawStatus: 'running', createdAt: '2026-10-14T09:01:00.000Z', updatedAt: '2026-10-14T09:02:00.000Z', source: 'runtime' }
 
-function stubApi(over: { threads?: unknown[]; runs?: unknown[] } = {}) {
+function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[] } = {}) {
   const calls: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     calls.push(`${init?.method ?? 'GET'} ${url}`)
     if (url.endsWith('/threads') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', threads: over.threads ?? [PLAN, EXEC], source: 'runtime' }), { status: 200 })
     if (url.includes('/runs?') || (url.endsWith('/runs') && (init?.method ?? 'GET') === 'GET')) return new Response(JSON.stringify({ runs: over.runs ?? [RUN], offset: 0, nextOffset: null }), { status: 200 })
+    if (url.endsWith('/estops') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', stops: over.stops ?? [], source: 'db' }), { status: 200 })
+    if (url.endsWith('/cancel') && init?.method === 'POST') return new Response(JSON.stringify({ ...RUN, rawStatus: 'cancelled' }), { status: 200 })
     if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ binding: EXEC, rawStatus: 'running', messages: [], messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime', transcriptsTruncated: false, transcripts: [{ key: 'tool-1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_tool_call', agent: 'recon', tool: 'service-mapper', truncated: false } }] }))
     return new Response('unexpected', { status: 404 })
   }))
@@ -101,5 +103,32 @@ describe('RealOperationsPanel (W22 operation detail route)', () => {
     expect(await screen.findByText('Operation thread not found')).toBeTruthy()
     expect(screen.getByText(/th-foreign/)).toBeTruthy()
     expect(screen.queryByText('th-exec')).toBeNull()
+  })
+
+  it('offers Cancel only for runs still in flight, and cancels through the run endpoint', async () => {
+    window.location.hash = '#/operations?engagement=eng-1'
+    const { resetNavStores } = await import('../../router/navigate')
+    resetNavStores()
+    const calls = stubApi({ runs: [RUN, { ...RUN, runId: 'run-done', rawStatus: 'success' }] })
+    renderPanel()
+    const cancelButtons = await screen.findAllByRole('button', { name: 'Cancel run' })
+    expect(cancelButtons).toHaveLength(1)
+    fireEvent.click(cancelButtons[0]!)
+    await vi.waitFor(() => expect(calls).toContain('POST /api/engagements/eng-1/threads/th-exec/runs/run-9/cancel'))
+  })
+
+  it('shows a blocking emergency stop with its way to resolution, and nothing when no stop is active', async () => {
+    window.location.hash = '#/operations?engagement=eng-1'
+    const { resetNavStores } = await import('../../router/navigate')
+    resetNavStores()
+    stubApi({ stops: [{ id: 'stop-1', engagementId: 'eng-1', scope: 'project', targetId: null, requestedBy: 'u-owner', outcome: 'stopped', reason: 'halt', concurrencyVersion: 1, createdAt: '2026-10-14T09:00:00.000Z', updatedAt: '2026-10-14T09:00:00.000Z' }] })
+    renderPanel()
+    expect(await screen.findByText('1 emergency stop still blocks work')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open Governance' })).toBeInTheDocument()
+    cleanup()
+    stubApi({ stops: [{ id: 'stop-2', engagementId: 'eng-1', scope: 'project', targetId: null, requestedBy: 'u-owner', outcome: 'resolved', reason: 'ok', concurrencyVersion: 2, createdAt: '2026-10-14T09:00:00.000Z', updatedAt: '2026-10-14T09:10:00.000Z' }] })
+    renderPanel()
+    await screen.findByText('Execution threads')
+    expect(screen.queryByText(/emergency stop/)).not.toBeInTheDocument()
   })
 })
