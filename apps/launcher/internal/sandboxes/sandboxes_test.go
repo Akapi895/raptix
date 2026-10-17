@@ -36,6 +36,7 @@ func TestRenderComposeMountsOnlyTheProjectSubpathAndIsolatesIt(t *testing.T) {
 	s := string(out)
 	for _, want := range []string{
 		"container_name: sbx-lab-a",
+		"services:\n  sbx-lab-a:\n",
 		"target: /workspace/lab-a",
 		"subpath: lab-a",
 		"RAPTIX_ENGAGEMENT: 'lab-a'",

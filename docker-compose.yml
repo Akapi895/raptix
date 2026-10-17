@@ -405,11 +405,12 @@ services:
     environment:
       - RAPTIX_LLM__PROXY_URL=http://litellm:4000
       - RAPTIX_LLM__PROXY_API_KEY=${LITELLM_MASTER_KEY:-sk-raptix-master}
-      # HTTPSandbox transport target. ``sandbox`` is the compose service
-      # name (resolves via the shared ``sandbox-net`` network below). Port
-      # 9999 is the FastAPI daemon baked into the sandbox image (see
-      # ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
-      - SANDBOX_URL=http://sandbox:9999
+      # HTTPSandbox transport target. The stack's own sandbox container name,
+      # not the ``sandbox`` service alias: per-project sandboxes (sbx-<slug>) join
+      # the same sandbox-net, and a shared alias would resolve round-robin across
+      # all of them. Port 9999 is the FastAPI daemon baked into the sandbox image
+      # (see ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
+      - SANDBOX_URL=http://raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox:9999
       # The launcher pins this engagement and binds its directory at /workspace.
       # The harness verifies both containers' actual mounts before starting.
       - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
