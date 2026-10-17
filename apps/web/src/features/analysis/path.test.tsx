@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { mountServices } from '../../test/helpers'
 import { currentRoute, selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import { analysisRoutes } from '../../screens/e-analysis'
 import { seed } from '../../data'
 import { pathOf } from './path'
@@ -137,7 +138,7 @@ describe('attack-path graph (ticket 55)', () => {
   it('renders the scoped chain with finite geometry; planned hops are never presented as observed', async () => {
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     const svg = await waitFor(() => screen.getByRole('img', { name: 'Attack path graph for operation OP-014' }))
     expectFiniteGeometry(svg)
     // OP-014: 12 recorded steps; S01→S02 is an observed transition, S10→S11 (review) stays planned.
@@ -154,7 +155,7 @@ describe('attack-path graph (ticket 55)', () => {
     const user = userEvent.setup()
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     const step = await waitFor(() => screen.getByRole('button', { name: 'Step S02 Enumerate local accounts' }))
     // Keyboard: focus + Enter opens the same drawer pointer selection would.
     step.focus()
@@ -178,7 +179,7 @@ describe('attack-path graph (ticket 55)', () => {
     const user = userEvent.setup()
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     const step = await waitFor(() => screen.getByRole('button', { name: 'Step S02 Enumerate local accounts' }))
     step.focus()
     await user.keyboard('{Enter}')
@@ -193,7 +194,7 @@ describe('attack-path graph (ticket 55)', () => {
     const user = userEvent.setup()
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     const tech = await waitFor(() => screen.getByRole('button', { name: 'Technique T1078' }))
     tech.focus()
     await user.keyboard('{Enter}')
@@ -207,7 +208,7 @@ describe('attack-path graph (ticket 55)', () => {
   it('a recorded step review updates the graph without a reload', async () => {
     const h = mountAnalysis('Taylor Chen')
     h.show()
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('img', { name: 'Attack path graph for operation OP-014' })).toBeInTheDocument())
     // S11 awaits review: its hop from S10 is planned, never observed.
     expect(screen.getByText('In review')).toBeInTheDocument()
@@ -234,7 +235,7 @@ describe('attack-path graph (ticket 55)', () => {
     })
     h.show()
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('img', { name: 'Attack path graph for operation OP-014' })).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByRole('img', { name: 'Attack path graph for operation OP-014' })).toBeInTheDocument()
