@@ -653,3 +653,16 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 - **P10a:** audit đã viết ở `docs/design/2026-10-17-runtime-instance-audit.md`. Kết luận: roster đọc được từ `dispatch_ledger`; subagent không có inbox; P10c bị blocked cho tới khi có safe-point; restart durability chưa được chứng minh.
 - **P09–P13:** vẫn chưa làm. Trạng thái không đổi so với mục 13.6.
 
+### 13.10 P09 theo từng domain
+
+- **Assets (một phần Assets/Scope): xong.** Commit `59b8694`.
+  - Port `AssetService` có đọc (list, get, scope, observedGraph) và ghi (importRows, changeScope).
+  - Adapter thật đọc inventory managed/observed. Import theo kind. Đổi classification ở version đã đọc; server vẫn chặn `in_scope` khi chưa có scope revision đã duyệt.
+  - Các phần backend không có (operations, findings, evidence, approvals, techniques, history) được ghi là `unmodelled`, không hiển thị như danh sách rỗng.
+  - Đồ thị attack-chain đã quan sát chuyển thành thẻ read-only trong route assets.
+  - Test: 250 test liên quan pass. Phase `--assets` của harness pass trên HTTP thật.
+  - Chưa xong: scope revisions (ROE, khung giờ, người liên hệ, quyết định approve/reject) vẫn nằm ở `real/screens/scope-panel.tsx`.
+  - Chưa kiểm chứng bằng trình duyệt thật cho các action đã chuyển.
+- **Library/Analysis: chưa làm, cần quyết định.** Mock port mô hình playbook có vòng đời revision và approval. Real mô hình corpus skill (chỉ đọc) và proposal (propose, amend, submit, decide, export). Chọn port nào là quyết định parity theo plan D08 của frontend owner, không tự suy ra được.
+- **Team/Settings, Vault/Audit/Notices, Closure: chưa làm.**
+
