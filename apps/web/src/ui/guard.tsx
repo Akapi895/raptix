@@ -29,15 +29,15 @@ export function Gated({ allowed, reason, children }: { allowed: boolean; reason:
 export function Locked({ reason }: { reason: string }) {
   return <span className="inline-flex items-center gap-1.5 text-xs text-muted"><Lock size={13} aria-hidden />{reason}</span>
 }
-/** Suggests switching persona when the current role cannot perform the next demo step */
-export function PersonaHint({ need, persona, children }: { need: string; persona: string; children?: ReactNode }) {
+/** Suggests switching persona when the current role cannot perform the next demo step; a real session passes no persona */
+export function PersonaHint({ need, persona, children }: { need: string; persona?: string; children?: ReactNode }) {
   const me = useMe()
   const setMe = useAuthStore((s) => s.setMe)
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-line bg-hover/50 px-4 py-3 text-sm">
       <Info size={16} className="text-cyan" aria-hidden />
       <span className="flex-1 text-muted">{children || `This step requires ${need}. You are signed in as ${me.role}.`}</span>
-      <Button size="sm" onClick={() => setMe(persona)}>Switch to {persona}</Button>
+      {persona && <Button size="sm" onClick={() => setMe(persona)}>Switch to {persona}</Button>}
     </div>
   )
 }

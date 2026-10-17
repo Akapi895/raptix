@@ -599,6 +599,8 @@ function FindingDetailBody() {
   const ro = readOnly(f.projectId)
   const reviewer = can('reviewFinding', f.projectId)
   const author = can('createFinding', f.projectId)
+  // Four-eyes: the author cannot decide its own review. The server enforces it; the control says so before the click.
+  const selfReview = isRealMode() && !!session?.session?.actor?.id && f.owner === session.session.actor.id
   const proj = data.project
   const op = data.operation
   const step = data.step
@@ -623,7 +625,7 @@ function FindingDetailBody() {
     else toast(res.failure.message, 'warn')
   }
   const doSubmit = () => { void runTransition('review', `${f.id} submitted for review.`) }
-  const approve = () => confirm({ title: `Confirm ${f.id}?`, body: 'The finding will move to "Confirmed" and can be added to reports. This action is written to the audit log.', confirmLabel: 'Confirm Finding', onConfirm: () => { void runTransition('confirmed', `${f.id} was confirmed.`) } })
+  const approve = () => confirm({ title: `Confirm ${f.id}?`, body: 'The finding will move to "Confirmed" and can be added to reports.', confirmLabel: 'Confirm Finding', onConfirm: () => { void runTransition('confirmed', `${f.id} was confirmed.`) } })
   const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: 'Reason for returning', reasonRequired: true, onConfirm: (r) => { void runTransition('returned', `${f.id} returned to the author.`, { note: r, warn: true }) } })
 
   const actions: ReactNode[] = []
@@ -644,8 +646,8 @@ function FindingDetailBody() {
   }
   if (f.status === 'review') {
     actions.push(
-      <Button key="r" variant="danger" icon={RotateCcw} disabled={ro || !reviewer} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can return findings.' : ''} onClick={sendBack}>Return for Changes</Button>,
-      <Button key="c" variant="primary" icon={ShieldCheck} disabled={ro || !reviewer} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can confirm findings.' : ''} onClick={approve}>Confirm Finding</Button>,
+      <Button key="r" variant="danger" icon={RotateCcw} disabled={ro || !reviewer || selfReview} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can return findings.' : selfReview ? 'The author of this finding cannot return its own review.' : ''} onClick={sendBack}>Return for Changes</Button>,
+      <Button key="c" variant="primary" icon={ShieldCheck} disabled={ro || !reviewer || selfReview} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can confirm findings.' : selfReview ? 'The author of this finding cannot confirm its own review.' : ''} onClick={approve}>Confirm Finding</Button>,
     )
   }
   if (f.status === 'confirmed') actions.push(<Button key="rm" variant="primary" disabled={ro || !(reviewer || author)} title={ro ? roReason : ''} onClick={() => confirm({ title: 'Move to remediation?', body: 'Marks the finding as being remediated by the asset owner.', confirmLabel: 'Move to Remediation', onConfirm: () => { void runTransition('remediation', `${f.id} moved to In Remediation.`) } })}>Send to Remediation</Button>)
@@ -709,8 +711,8 @@ function FindingDetailBody() {
           {data.producer ? `Produced from ${data.producer.path}. ` : 'Proposed by the AI Operator. '}Not a finding yet: excluded from confirmed counts, severity charts and reports. {ai.dismissed[f.id] ? `Dismissed: ${ai.dismissed[f.id]}` : 'Verify it against the source output before importing it as a draft.'}
         </Banner>
       )}
-      {f.status === 'review' && !reviewer && !ro && <PersonaHint need="Reviewer" persona="Pat Kim">This finding is awaiting review. Switch to the Reviewer role to Confirm or Return it.</PersonaHint>}
-      {['draft', 'returned'].includes(f.status) && !author && !ro && me.role !== 'viewer' && <PersonaHint need="Operator" persona="Taylor Chen">Editing and submitting for review require the Operator or Manager role.</PersonaHint>}
+      {f.status === 'review' && !reviewer && !ro && <PersonaHint need="Reviewer" persona={real ? undefined : 'Pat Kim'}>{real ? 'This finding is awaiting review by a Reviewer or Manager.' : 'This finding is awaiting review. Switch to the Reviewer role to Confirm or Return it.'}</PersonaHint>}
+      {['draft', 'returned'].includes(f.status) && !author && !ro && me.role !== 'viewer' && <PersonaHint need="Operator" persona={real ? undefined : 'Taylor Chen'}>Editing and submitting for review require the Operator or Manager role.</PersonaHint>}
       <Tabs
         value={tab} onChange={(t) => go('finding', { id: f.id, tab: t })}
         tabs={[{ id: 'overview', label: 'Summary & workflow' }, { id: 'evidence', label: 'Evidence', count: f.evidence.length }, { id: 'retest', label: 'Retest', count: f.retests.length }]}
