@@ -641,3 +641,15 @@ Ghi lại các quyết định của người yêu cầu ngày 2026-10-17 (lư�
 - DTO report vẫn nằm ở `apps/web/src/real/api.ts`, chưa chuyển vào `apps/shared/web-contracts` như §5.2 yêu cầu. Lý do: report chưa có consumer shared; chuyển khi P08.
 - Readiness chưa có check "scope/source version" vì DB chưa lưu scope window. Mục này ghi là chưa có, không báo pass.
 - Plan yêu cầu PDF/DOCX trong DoD §12.2; quyết định người yêu cầu hoãn. Bản ghi này là loại trừ có tên, cần giữ đến khi có quyết định khác.
+
+### 13.9 Lượt sửa test và target (2026-10-17, muộn)
+
+- **Test UI:** 124/124 file, 1270/1270 test pass. Sửa ba file audit (`a11y`, `dark-theme`, `responsive`) theo điều hướng đã phát hành: sign-in về System Overview nên test khôi phục route; mục project là nút trong sidebar (không còn tablist và menu More); chip AI-mode đã bị gỡ; C2 strip là `lg:grid-cols-4`. Commit `4bb2556`.
+- **Test server:** 47/47 file, 437/437 test pass.
+- **Harness acceptance:** `apps/web/tools/verify-ui-contract-completion.mjs` với `--prepare`, `--findings-evidence`, `--target-flow`. Commit `fc885e1`.
+  - `--prepare`: engagement scope `10.129.227.140/32`.
+  - `--findings-evidence` (HTTP thật, DB `raptix_ui_contract_test`, API port 3101): replay upload giữ id; bytes gốc bị chặn 409 trước khi phân loại; sau phân loại tải về đúng bytes và `x-content-sha256`; attach 200 và replay 200; version lệch bị từ chối 409. Pass.
+  - `--target-flow` (chỉ đọc, từ container `raptix-sandbox`, một host trong scope): ICMP up; TCP 22 open (OpenSSH 7.6p1 Ubuntu); TCP 80 open với HTTP 200 ở `/`; 443, 445, 3389, 8080 closed hoặc filtered. Đây chỉ là quan sát kết nối. Lượt này không chạy runtime agent và không có plan đã duyệt. Đã bỏ qua bước này trong harness.
+- **P10a:** audit đã viết ở `docs/design/2026-10-17-runtime-instance-audit.md`. Kết luận: roster đọc được từ `dispatch_ledger`; subagent không có inbox; P10c bị blocked cho tới khi có safe-point; restart durability chưa được chứng minh.
+- **P09–P13:** vẫn chưa làm. Trạng thái không đổi so với mục 13.6.
+
