@@ -869,3 +869,32 @@ Dữ liệu test còn lại trên engagement `ui-live-8b98a9`:
 - Scope revision v2 và v3 đã approved.
 - Vài reviewer và viewer được invite cho các phiên kiểm tra.
 - Output của agent trong `tests/local/artifacts/ui-contract-target/ui-live-8b98a9/` (`evidence/`, `findings/`, `report/`, `recon/`).
+
+### 13.19 P09 hoàn tất, P12 (C2, Operations, Fleet, thông báo), và trạng thái P10/P11 (2026-10-18)
+
+**Commit theo thứ tự:** `1b66a005` (route settings dùng trang chung; HEAD trước đó không build được vì còn import màn hình đã xóa), `751c53fb` (closure chặn gửi yêu cầu khi checklist fail, kèm test), `d6e484b5` (dọn import lint), `0abd37b7` (Planning và Governance), `cadd977e` (thao tác console C2 và operation đi qua port), `13873405` (C2 provider), `1ec7bca4` (Operations), `020b4b11` (Fleet), `ff180f03` (persona switch chỉ ở mock), `bc5ee712` (notice center). Không push, không có dòng co-author.
+
+**P09.** Scope & ROE, Team, Settings, Vault, Audit, Closure, Analysis, Planning, Governance và Notices đều có port và panel/tab dùng chung. Khi mock có cùng model thì mock adapter ánh xạ dữ liệu mock; khi mock không có model tương đương (tài liệu planning, business plan, C2 provider, runtime operations) thì port chỉ có real và mock giữ màn hình riêng, ghi rõ trong code. Inventory đã xóa từ 13.18.
+- Còn lại chỉ ở phía mock, không phải real panel: inbox phê duyệt trong tab Team & Approvals của mock; plan review mock (`g-plan`) và session console mock (`h-session`, `c-console`) chỉ đổi lời gọi sang port.
+- Kiểm chứng tĩnh: `tsc` sạch; `eslint src` sạch; test đơn vị và adapter cho từng slice đều pass.
+- Vitest toàn bộ: lượt cuối 1285/1292. Các lỗi còn lại nằm ở test theo thời gian (RealProjectCreateDialog, a11y-audit, dark-theme-audit, responsive-audit, copilot drawer, tùy lượt), và mỗi file pass khi chạy riêng. Chưa xử lý độ ổn định dưới tải.
+- Live (engagement test `cmvc9u94y000e6gfiknyh78rj`, trình duyệt thật, real mode): Planning tải tài liệu, lưu rồi hủy draft server-side, nội dung published không đổi. Governance: draft → propose; approve bởi cùng người bị server từ chối ("requires an independent actor"); stop cấp project → bind bị preflight từ chối ("An emergency stop is active"); resolve; schedule tạo rồi hủy. Notices: 13 thông báo chưa đọc lấy từ server; không có nút đổi persona.
+- Tồn đọng từ thao tác live: plan `live check mvcpjakk` v3 còn ở trạng thái proposed trên engagement test. Chỉ reviewer độc lập mới quyết định được nó.
+
+**P10.** P10a đã audit (13.9). P10b xong: role trong ledger, endpoint roster, roster trên UI (13.18). P10c vẫn **blocked** theo R3: chưa có safe-point nên không dùng queue in-memory thay thế. P10d chưa làm: cần endpoint runtime cho cancel theo instance, retry và reassign theo attempt, và nơi lưu lịch sử attempt (ledger hiện chỉ giữ attempt mới nhất). P10e chỉ có phần đọc (roster); các control, câu hỏi gắn đúng interrupt và batch answer chưa có.
+
+**P11: chưa bắt đầu.** Cần safe-point pause trong runtime và chốt D07 (semantics resume/checkpoint, điều kiện complete). Đây là thay đổi LangGraph có test riêng, không làm trong lượt này. Hệ quả: Operations không có pause, resume hay complete, và tab nói rõ điều đó.
+
+**P12.**
+- Bước 1 (đưa lời gọi authority/clock của màn hình ra port): xong. `h-session` (cấp, thu hồi, gửi lệnh, hết hạn grant) và `c-console` (pause, resume, stop, complete, và đọc preflight) đi qua port. Clock nằm trong mock adapter. Hai test cũ được sửa để chờ kết quả port.
+- C2 provider: xong. Port, adapter và tab dùng chung gồm grants, listeners/profiles, console và các route session/channel. Adapter test 5 ca; tab test 6 ca. Live: provider không được cấu hình trên deployment này, nên banner hiện "C2 session provider not configured; no session registry exists in this build", không có form dispatch, và route session không trả session thay thế. Round-trip live với provider thành công **blocked**: cần lab provider (theo plan).
+- Operations: xong. Tab thread, run, timeline và cancel dùng chung (10 test; live 8/8). Lifecycle chờ P11.
+- Fleet: xong. Tab dùng port runtime (6 test; live 4/4). Endpoint fleet mất khoảng 5 giây mỗi lần đọc trên deployment này; tab hiện skeleton trong lúc chờ.
+- Campaigns: giữ route thật có tên (retained). Listeners và profiles đã nằm trong C2 tab; generate và deploy giữ nguyên. Chưa đưa vào shared presentation.
+- Results và Trace: cây hiện tại không có panel real nào cho hai màn này. Chưa kiểm.
+
+**Phát hiện cần quyết định (chưa sửa):**
+- Server nhận yêu cầu grant cho session id mà provider không báo cáo (live: `sess-live-check`). Bản ghi `requested` được tạo; gửi lại thì bị từ chối là "identical grant request is already pending review". Bản ghi này còn trên engagement test, và chỉ reviewer độc lập quyết định được. Plan P12 yêu cầu giữ "ROE target checks": cần chốt có kiểm session tồn tại trong namespace khi request hay không. Đề xuất: kiểm ở lúc request và ghi ADR nếu giữ hành vi hiện tại.
+- Hiệu năng: `/fleet` mất khoảng 5 giây mỗi lần đọc trên deployment này.
+
+**Chưa làm trong lượt này:** P10c, P10d, P10e (phần control), P11, Campaigns generate/deploy, Results và Trace trong real mode, và `make quality` đầy đủ. Không đổi Python trong lượt này nên chưa chạy lại suite Python.
