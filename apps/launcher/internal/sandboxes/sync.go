@@ -67,10 +67,13 @@ func Sync(cfg Config) ([]string, error) {
 	return ensure, nil
 }
 
+// listerImage is a plain image used only to list directories; the sandbox image's entrypoint starts a daemon, so it is not used here.
+const listerImage = "alpine:latest"
+
 // listProjects reads the project directories from the workspace volume. A throwaway
 // container lists them, so the launcher never needs the volume on its own filesystem.
 func listProjects(cfg Config) ([]string, error) {
-	out, err := cfg.Runner.Output(cfg.Bin, "run", "--rm", "-v", cfg.Settings.Volume+":/w", cfg.Settings.Image,
+	out, err := cfg.Runner.Output(cfg.Bin, "run", "--rm", "-v", cfg.Settings.Volume+":/w", listerImage,
 		"sh", "-c", `for d in /w/*/; do [ -d "$d" ] && basename "$d"; done; true`)
 	if err != nil {
 		return nil, fmt.Errorf("list project directories on %s: %w", cfg.Settings.Volume, err)
