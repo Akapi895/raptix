@@ -3,6 +3,7 @@ import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRig
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import { TeamMembers } from '../features/team/members'
+import { ClosureTab } from '../features/closure/tab'
 import { useReopen } from '../features/approvals/hooks'
 import { DocumentWorkspace } from '../features/documents/workspace'
 import { AssetPreviewModal } from '../features/assets/preview-modal'
@@ -110,48 +111,18 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 
 /* ───────────── PR-09 Closure ───────────── */
 export function CloseTab({ p, d, setTab }: { p: Project; d: ProjectDetail; setTab: (t: string) => void }) {
-  const services = useServices()
-  const me = useMe()
   const can = useCan()
-  const confirm = useSessionStore((s) => s.confirm)
-  const toast = useToastStore((s) => s.toast)
-  const guard = useGuard(p.id)
   const reopen = useReopen(p)
-  /* Ticket 67 wave 3: the legacy A.confirmClose/A.requestClose entries mirrored —
-     the closure transactions run directly with the same request context and Res bridge. */
-  const confirmClose = (apId: string) => {
-    const res = confirmCloseTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: '', corr: 'legacy' }, apId)
-    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
-  }
-  const requestClose = (pid_: string, input?: { reason?: string; waiverNoFindings?: boolean }) => {
-    const res = requestCloseTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: pid_, corr: 'legacy' }, pid_, { reason: input?.reason ?? '', waiverNoFindings: input?.waiverNoFindings })
-    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
-  }
-  const [modal, setModal] = useState(false)
-  const [reason, setReason] = useState('')
-  const [noFind, setNoFind] = useState(false)
-  /* Ticket 22/23: the checklist is the closure service's canonical derivation
-     over the service read's snapshot — base variant plus the waiver variant
-     the request-time checkbox selects. The panel never re-derives policy. */
   const ds = d.aggregate
-  const noFindingsOk = d.noFindingsWaiverOk
-  const items = noFind && noFindingsOk ? d.closeWaived : d.close
   const ops = ds.operations.filter((o) => o.projectId === p.id)
   const fs = ds.findings.filter((f) => f.projectId === p.id)
   const reps = ds.reports.filter((r) => r.projectId === p.id)
   const evs = d.evidence
-  const closePending = ds.approvals.find((a) => a.projectId === p.id && a.type === APR.close && a.status === 'pending')
   const objDone = p.objectives.filter((o) => o.progress >= 100).length
   const final = reps.find((r) => r.status === 'delivered') || reps[0]
   const closed = p.status === 'closed'
-  const eligible = ['active', 'approved', 'paused'].includes(p.status) && !closePending
-  const failing = items.filter((i) => !i.ok)
-  const canReq = can('requestClose', p.id)
-  const ownerOk = p.members.some((m) => m.role === 'manager') || !!p.owner
-
-  return (
-    <div className="space-y-5">
-      {closed && <Banner tone="info" icon={Lock} title={`Closed on ${p.closedAt || '—'}. Read-only`}>This project is read-only. Reports, evidence and audit remain viewable; no operation, edit or session can start. Review its <button className="text-accent underline" onClick={() => setTab('activity')}>activity</button> and <button className="text-accent underline" onClick={() => setTab('audit')}>audit log</button> for reconciliation.</Banner>}
+  const summary = (
+    <>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Kpi label="Objectives complete" value={`${objDone}/${p.objectives.length}`} sub={p.objectives.length ? undefined : 'No objectives yet'} onClick={() => setTab('objectives')} />
         <Kpi label="Active operations" value={ops.filter((o) => ['running', 'paused'].includes(o.status)).length} tone={ops.some((o) => ['running', 'paused'].includes(o.status)) ? 'warn' : 'ok'} onClick={() => setTab('operations')} />
@@ -159,70 +130,23 @@ export function CloseTab({ p, d, setTab }: { p: Project; d: ProjectDetail; setTa
         <Kpi label="Final report" value={final ? <Status kind="report" value={final.status} size="sm" /> : 'None'} onClick={() => setTab('reports')} />
         <Kpi label="Evidence" value={evs.length} sub={`${evs.filter((e) => e.sensitive).length} sensitive, retained per policy`} onClick={() => setTab('evidence')} />
       </div>
-
       <Card>
-        <CardHeader title="Closeout checklist" sub={`${items.filter((i) => i.ok).length + (ownerOk ? 1 : 0)}/${items.length + 1} conditions met`} />
-        <Progress value={Math.round(((items.filter((i) => i.ok).length + (ownerOk ? 1 : 0)) / (items.length + 1)) * 100)} tone={failing.length ? 'warn' : 'ok'} label="Closure conditions" />
-        <ul className="mt-3 divide-y divide-line/60">
-          {items.map((i) => (
-            <li key={i.id} className="flex flex-wrap items-center gap-3 py-3">
-              <Status kind="check" value={i.ok ? 'pass' : 'fail'} />
-              <div className="min-w-0 flex-1"><div className="text-sm font-medium">{i.label}</div><div className="text-xs text-muted">{i.detail}</div></div>
-              {!i.ok && <Button size="sm" onClick={() => go(i.fix.page, { id: i.fix.id, tab: i.fix.tab })}>Fix</Button>}
-            </li>
-          ))}
+        <CardHeader title="Other closeout conditions" sub="Informational; the checklist below is the source's own read" />
+        <ul className="divide-y divide-line/60">
           <li className="flex flex-wrap items-center gap-3 py-3">
             <Status kind="check" value={evs.length ? 'pass' : 'review'} />
             <div className="min-w-0 flex-1"><div className="text-sm font-medium">Evidence stored</div><div className="text-xs text-muted">{evs.length ? `${evs.length} items retained per policy` : 'No evidence in this project'}</div></div>
           </li>
           <li className="flex flex-wrap items-center gap-3 py-3">
-            <Status kind="check" value={closed ? 'pass' : 'review'} />
-            <div className="min-w-0 flex-1"><div className="text-sm font-medium">Sign-off by Reviewer or Admin</div><div className="text-xs text-muted">{closed ? `Signed off ${p.closedAt || ''}` : closePending ? 'Awaiting sign-off' : 'Requested after the checks above pass'}</div></div>
-          </li>
-          <li className="flex flex-wrap items-center gap-3 py-3">
             <Status kind="check" value="pass" />
-            <div className="min-w-0 flex-1"><div className="text-sm font-medium">Audit trail retained</div><div className="text-xs text-muted">Closing never deletes logs. <button className="text-accent underline" onClick={() => setTab('audit')}>Open audit</button></div></div>
-          </li>
-          <li className="flex flex-wrap items-center gap-3 py-3">
-            <Status kind="check" value={ownerOk ? 'pass' : 'fail'} />
-            <div className="min-w-0 flex-1"><div className="text-sm font-medium">Handover owner assigned</div><div className="text-xs text-muted">{ownerOk ? `Owner: ${p.owner}; closure is confirmed by a Reviewer or Admin` : 'No owner assigned'}</div></div>
+            <div className="min-w-0 flex-1"><div className="text-sm font-medium">Audit trail retained</div><div className="text-xs text-muted">Closing never deletes logs. <button className="text-accent underline" onClick={() => setTab('audit')}>Open Activity &amp; Audit</button></div></div>
           </li>
         </ul>
       </Card>
-
-      <Card>
-        <CardHeader title="Closure actions" />
-        {closed ? (
-          can('reopen', p.id) ? <div className="flex flex-wrap items-center gap-3"><Button variant="danger" onClick={reopen}>Reopen Project</Button><span className="text-xs text-muted">A reason is required and recorded in the audit log.</span></div> : <Locked reason="Only an Organization Admin can reopen a closed project." />
-        ) : p.status === 'review' && closePending ? (
-          can('confirmClose', p.id) ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <Button variant="primary" onClick={() => confirm({ title: `Approve closure of ${p.id}?`, body: 'The project becomes read-only; data is retained per policy.', confirmLabel: 'Approve Closure', danger: true, onConfirm: () => { const r = confirmClose(closePending.id); if (r.ok) toast(`Closed ${p.id}`); else toast(r.error || 'The closure could not be confirmed.', 'bad') } })}>Approve Closure</Button>
-              <span className="text-xs text-muted">Requested by {closePending.by} on {closePending.at}</span>
-            </div>
-          ) : (
-            <PersonaHint need="a Reviewer or Admin" persona="Pat Kim">The closure request is waiting for confirmation. The {ROLE_LABEL[me.role]} role cannot confirm it.</PersonaHint>
-          )
-        ) : (
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="primary" disabled={!canReq || !eligible || guard.ro} title={!canReq ? 'Only a Red Team Manager can request project closure' : !eligible ? 'The current project status does not allow a closure request' : undefined} onClick={() => setModal(true)}>Close Project</Button>
-            {!canReq ? <Locked reason="Only a Red Team Manager can request project closure." /> : !eligible ? <Locked reason={`The project is “${p.status}”, so closure cannot be requested yet.`} /> : failing.length > 0 ? <span className="text-xs text-warn">{failing.length} conditions are not met. Open Request Closure to see them.</span> : null}
-          </div>
-        )}
-      </Card>
-
-      <Modal open={modal} onClose={() => setModal(false)} title="Close Project" footer={<><Button onClick={() => setModal(false)}>Cancel</Button><Button variant="primary" disabled={failing.length > 0 || !reason.trim()} title={failing.length ? 'Resolve the blockers first' : !reason.trim() ? 'A reason is required' : undefined} onClick={() => { const r = requestClose(p.id, { reason: reason.trim(), waiverNoFindings: noFind && noFindingsOk }); if (!r.ok) { toast(r.error || 'The closure request was refused.', 'bad'); return } setModal(false); setReason(''); toast('Closure request submitted for sign-off') }}>Submit closure request</Button></>}>
-        {failing.length === 0 ? (
-          <p className="mb-3 flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-ok" />All conditions are met. A Reviewer or Admin signs off. Closing makes the project read-only and keeps all logs.</p>
-        ) : (
-          <div className="mb-3">
-            <p className="mb-3 text-sm font-medium text-bad">Closure is blocked. Resolve these first:</p>
-            <ul className="space-y-2">{failing.map((i) => <li key={i.id} className="flex gap-2 text-sm"><XCircle size={16} className="mt-0.5 shrink-0 text-bad" /><span className="flex-1"><b className="font-medium">{i.label}</b><br /><span className="text-muted">{i.detail}</span></span><Button size="sm" onClick={() => { setModal(false); go(i.fix.page, { id: i.fix.id, tab: i.fix.tab }) }}>Resolve</Button></li>)}</ul>
-          </div>
-        )}
-        {fs.length === 0 || noFindingsOk ? <div className="mb-3"><Check checked={noFind} onChange={setNoFind} label="Approved no-findings closure: no confirmed findings; documented in the reason below instead of a delivered report" /></div> : null}
-        <Field label="Reason for closing" required><Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. All objectives assessed; final report delivered." /></Field>
-      </Modal>
-    </div>
+    </>
   )
+  const reopenAction = closed && can('reopen', p.id) ? (
+    <div className="flex flex-wrap items-center gap-3"><Button variant="danger" onClick={reopen}>Reopen Project</Button><span className="text-xs text-muted">A reason is required and recorded in the audit log.</span></div>
+  ) : null
+  return <ClosureTab engagementId={p.id} summary={summary} extraActions={reopenAction} />
 }

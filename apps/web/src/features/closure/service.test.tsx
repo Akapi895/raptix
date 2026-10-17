@@ -11,7 +11,7 @@
  * observe the same state from both bridges.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { DbAuthority } from '../../domain/database'
@@ -302,21 +302,19 @@ describe('close console and governance panels agree with the handlers (ticket 22
     h.unmount()
   })
 
-  it('the rendered close console completes a valid request and an independent confirmation', () => {
+  it('the rendered close console completes a valid request and an independent confirmation', async () => {
     const h = mountServices(<ClosePanel />)
     arrangeClosable(h.svc().authority)
-    fireEvent.click(screen.getByRole('button', { name: 'Close Project' }))
-    fireEvent.change(screen.getByPlaceholderText('e.g. All objectives assessed; final report delivered.'), { target: { value: 'All objectives assessed; final report delivered.' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Submit closure request' }))
+    fireEvent.change(await screen.findByPlaceholderText('Why this engagement is complete'), { target: { value: 'All objectives assessed; final report delivered.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Request closure' }))
+    expect(await screen.findByText('All objectives assessed; final report delivered.')).toBeInTheDocument()
     const apr = pendingCloseOf(h.svc().authority)
     expect(apr.note).toBe('Requesting project closure — checklist complete.')
     expect(h.db().projects.find((x) => x.id === P16)?.status).toBe('review')
 
     h.as('Pat Kim')
-    fireEvent.click(screen.getByRole('button', { name: 'Approve Closure' }))
-    expect(useSessionStore.getState().confirmState).not.toBeNull()
-    act(() => { useSessionStore.getState().confirmState!.onConfirm('') })
-    expect(h.db().projects.find((x) => x.id === P16)?.status).toBe('closed')
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm (independent)' }))
+    await waitFor(() => expect(h.db().projects.find((x) => x.id === P16)?.status).toBe('closed'))
     expect(h.db().projects.find((x) => x.id === P16)?.closedAt).toBeTruthy()
     h.unmount()
   })

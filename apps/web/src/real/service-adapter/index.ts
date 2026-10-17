@@ -17,6 +17,8 @@ import { createRealScopeService } from './scope'
 import { createRealTeamService } from './team'
 import { createRealSettingsService } from './settings'
 import { createRealVaultService } from './vault'
+import { createRealClosureService } from './closure'
+import { unavailableClosureService, type ClosureService } from '../../features/closure/service'
 import { unavailableVaultService, type VaultService } from '../../features/vault/service'
 import { notIntegratedService } from './stub'
 
@@ -81,5 +83,11 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableVaultService()
-  return { findings, reports, assets, library, scope, audit, team, settings, vault }
+  const closure: FeatureServices['closure'] = supported('projects')
+    ? (() => {
+        const service = createRealClosureService()
+        return () => service
+      })()
+    : () => unavailableClosureService()
+  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure }
 }
