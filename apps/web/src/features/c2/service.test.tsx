@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
 import { go, selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/h'
 import { seed } from '../../data'
@@ -90,7 +91,7 @@ describe('C2 overview (ticket 45)', () => {
 describe('sessions tab (ticket 45)', () => {
   it('lists only accessible sessions; links resolve to the session detail route', async () => {
     const h = mountC2('#/c2?tab=sessions', 'Riley Brooks')
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getAllByText('SS-041').length).toBeGreaterThan(0))
     expect(screen.getByText('SS-042')).toBeInTheDocument()
     expect(screen.queryByText('SS-043')).not.toBeInTheDocument() // RT-2026-015 — isolated
@@ -115,7 +116,7 @@ describe('sessions tab (ticket 45)', () => {
 
   it('a typed grant decision refetches the mounted session list through the bridge', async () => {
     const h = mountC2('#/c2?tab=sessions', 'Riley Brooks')
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getAllByText('SS-042').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Pending request').length).toBeGreaterThan(0)
     // Ticket 46: the decision is the feature-local transaction — one commit
@@ -217,7 +218,7 @@ describe('requests and audit tabs (ticket 45)', () => {
 
   it('scopes audit views and finds events by correlation id', async () => {
     const h = mountC2('#/c2?tab=audit', 'Riley Brooks')
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('Requested interactive session access')).toBeInTheDocument())
     expect(screen.queryByText('Started operation')).not.toBeInTheDocument() // AU-6 belongs to RT-2026-015 and does not match the access view
     fireEvent.change(screen.getByPlaceholderText('Search or paste COR-014-01…'), { target: { value: 'COR-014-01' } })
@@ -241,7 +242,7 @@ describe('late-response isolation (ticket 45)', () => {
       return { ...inner, overview: async (ctx) => { await gate; return inner.overview(ctx) } }
     })
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => useProjectStore.getState().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('2/3')).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByText('2/3')).toBeInTheDocument()
