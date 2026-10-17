@@ -23,8 +23,8 @@ import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'
 import type { Asset } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
 import { reviseScopeTransaction, type ScopeAssetInput } from '../approvals/service'
+import type { AssetService } from './service'
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */
 const ROLE_LABEL: Record<string, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
@@ -96,16 +96,16 @@ export function validateAssetRows(db: Db, projectId: string, rows: readonly Asse
 export interface AssetImportOutcome {
   /** Number of rows committed (all rows — refusals commit zero). */
   added: number
-  /** True when the governance transaction invalidated the approved scope at submission. */
-  invalidated: boolean
-  /** ROE version after the revision (bumped when invalidated). */
-  roeVersion: string
-  /** Approved plans expired by the submission (Re-validation Required). */
-  plansExpired: string[]
-  /** Ready operations reset to Draft with preflight cleared. */
-  operationsReset: string[]
-  /** True when an independent scope approval is now required before targeting. */
-  needsApproval: boolean
+  /** Mock governance only: true when the transaction invalidated the approved scope. Real sources do not report it. */
+  invalidated?: boolean
+  /** Mock governance only: ROE version after the revision. */
+  roeVersion?: string
+  /** Mock governance only: approved plans expired by the submission. */
+  plansExpired?: string[]
+  /** Mock governance only: ready operations reset to Draft. */
+  operationsReset?: string[]
+  /** Mock governance only: an independent scope approval is required before targeting. */
+  needsApproval?: boolean
 }
 
 /**
@@ -223,13 +223,16 @@ export interface AssetWriteHandlers {
   changeScope(assetId: string, scope: Asset['scope'], input?: AssetScopeWriteInput): Promise<ServiceResult<AssetScopeWriteOutcome>>
 }
 
-/** Builds the asset write handlers for one actor/scope; contexts are built at call time, so a persona/project switch never retargets a mutation. */
-export function createAssetWriteHandlers(svc: ConsoleServices, actor: ActorRef, scopeProject: string): AssetWriteHandlers {
+/**
+ * Builds the asset write handlers for one actor/scope over the feature port, so the
+ * same screen writes through the mock transactions or the real adapter. Contexts are
+ * built at call time, so a persona/project switch never retargets a mutation.
+ */
+export function createAssetWriteHandlers(port: AssetService, actor: ActorRef, scopeProject: string): AssetWriteHandlers {
   let seq = 0
   const ctx = (): RequestContext => ({ actor, projectId: scopeProject === 'all' ? '' : scopeProject, corr: `asset-w-${++seq}` })
-  const pid = scopeProject === 'all' ? '' : scopeProject
   return {
-    importRows: (rows) => Promise.resolve(importAssetsTransaction(svc.authority, svc.clock, ctx(), pid, rows)),
-    changeScope: (assetId, scope, input) => Promise.resolve(changeAssetScopeTransaction(svc.authority, svc.clock, ctx(), assetId, scope, input)),
+    importRows: (rows) => port.importRows(ctx(), rows),
+    changeScope: (assetId, scope, input) => port.changeScope(ctx(), assetId, scope, input),
   }
 }

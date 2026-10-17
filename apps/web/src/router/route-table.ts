@@ -43,9 +43,6 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
   agent: { title: 'Agent detail', panels: ['fleet'], mockScreens: ['d-agents.tsx'] },
   'ai-fanout': { title: 'Observed fanout', panels: ['fleet'], mockScreens: ['g-fanout.tsx'] },
   'ai-branch': { title: 'Observed branch', panels: ['fleet'], mockScreens: ['g-fanout.tsx'] },
-  asset: { title: 'Asset detail', panels: ['assets'], mockScreens: ['d-assets.tsx'] },
-  'asset-new': { title: 'Import assets', panels: ['assets'], mockScreens: ['d-assets.tsx'] },
-  'asset-scope': { title: 'Asset scope', panels: ['assets', 'scope'], mockScreens: ['d-assets.tsx'] },
   analysis: { title: 'Observed analysis', panels: ['analysis'], mockScreens: ['e-analysis.tsx'] },
   'ai-plan': { title: 'Business plan', panels: ['governance'], mockScreens: ['g-plan.tsx'] },
   'ai-plan-review': { title: 'Plan review', panels: ['governance'], mockScreens: ['g-plan.tsx'] },
@@ -58,4 +55,4 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
 }
 
 /** Route keys whose mock screen is the operational UI in both modes (plan 2026-10-16 screens unification); `router/host.tsx` renders them before `REAL_PAGES`. */
-export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'reports', 'report-new', 'report', 'report-preview', 'report-review'])
+export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'reports', 'report-new', 'report', 'report-preview', 'report-review', 'assets', 'asset', 'asset-new', 'asset-scope'])

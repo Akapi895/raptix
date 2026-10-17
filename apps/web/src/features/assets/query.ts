@@ -9,18 +9,20 @@
  * switch cancels the superseded scope's reads before a delayed response can
  * restore old visibility.
  */
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
-import { useServices } from '../../state/services'
+import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
-import type { AssetDetailRead, AssetListQuery, AssetListRead, AssetScopeRead } from './service'
+import type { AssetDetailRead, AssetListQuery, AssetListRead, AssetObservedGraph, AssetScopeRead, AssetService } from './service'
 
 /** Feature-local key namespaces: ['asset', scope, 'list', query] / ['asset', scope, id] / ['asset', scope, 'scope']. */
 export const assetKeys = {
   list: (scope: QueryScope, query: AssetListQuery) => consoleKeys.view('asset', scope, 'list', query),
   detail: (scope: QueryScope, id: string) => consoleKeys.entity('asset', scope, id),
   scope: (scope: QueryScope) => consoleKeys.view('asset', scope, 'scope'),
+  graph: (scope: QueryScope) => consoleKeys.view('asset', scope, 'graph'),
 }
 
 /** A service failure rethrown as the query error, so screens render the kind and message. */
@@ -31,9 +33,16 @@ export class AssetReadError extends Error {
   }
 }
 
+/** The asset port for the current auth/project scope; writes take it as their dependency. */
+export function useAssetPort(): AssetService {
+  const services = useFeatureServices()
+  const scope = useQueryScope()
+  return useMemo(() => services.assets(actorRef(scope.actor, scope.role), scope.project), [services, scope.actor, scope.role, scope.project])
+}
+
 /** Query-backed asset catalog for the current auth/project scope. */
 export function useAssetList(query: AssetListQuery) {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useQuery({
     queryKey: assetKeys.list(scope, query),
@@ -51,7 +60,7 @@ export function useAssetList(query: AssetListQuery) {
 
 /** Query-backed asset detail (scoped relationships, masking, history). */
 export function useAssetDetail(id?: string) {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useQuery({
     queryKey: assetKeys.detail(scope, id || ''),
@@ -67,9 +76,26 @@ export function useAssetDetail(id?: string) {
   })
 }
 
+/** Query-backed observed attack-chain graph (real mode). */
+export function useObservedGraph() {
+  const services = useFeatureServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: assetKeys.graph(scope),
+    queryFn: async (): Promise<AssetObservedGraph> => {
+      const actor = actorRef(scope.actor, scope.role)
+      const res = await services.assets(actor, scope.project).observedGraph({ actor, projectId: scope.project, corr: 'asset-graph' })
+      if (!res.ok) throw new AssetReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+    retry: false,
+  })
+}
+
 /** Query-backed scope-classification view (scoped rows + per-project contexts). */
 export function useAssetScope() {
-  const services = useServices()
+  const services = useFeatureServices()
   const scope = useQueryScope()
   return useQuery({
     queryKey: assetKeys.scope(scope),

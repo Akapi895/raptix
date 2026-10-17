@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
 import { useServices } from '../state/services'
+import { isRealMode } from '../real/mode'
 import { useDirty } from '../state/session'
 import type { Asset } from '../data'
 import { useAssetImportRead, type AssetImportRead } from '../features/assets/import-read'
@@ -9,7 +10,7 @@ import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Filter
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from './d-shared'
 // Ticket 50: catalog list, asset detail and scope views read through the
 // typed asset service via Query (feature-local handlers).
-import { AssetReadError, useAssetDetail, useAssetList, useAssetScope } from '../features/assets/query'
+import { AssetReadError, useAssetDetail, useAssetList, useAssetPort, useAssetScope, useObservedGraph } from '../features/assets/query'
 import type { AssetListItem, AssetScopeProject } from '../features/assets/service'
 // Ticket 51: imports and scope changes run through the feature-local write
 // transactions (validated, atomic, role-gated) via the screen handlers.
@@ -68,7 +69,7 @@ function AssetList() {
   const toast = useToastStore((s) => s.toast)
   const setFilter = useSessionStore((s) => s.setFilter)
   const persistFilters = useSessionStore((s) => s.persistFilters)
-  const svc = useServices()
+  const port = useAssetPort()
   const guard = useGuard(pid === 'all' ? undefined : pid)
   /* Filter convention: persistFilters['assets.scope'] = 'in' | 'out' | 'pending' | 'unclassified' ('in' = Approved In Scope) */
   const sc = (persistFilters['assets.scope'] as string) || ''
@@ -93,7 +94,7 @@ function AssetList() {
   const allOnPage = rows.length > 0 && rows.every((r) => sel.includes(r.asset.id))
   /* Ticket 51: bulk scope changes run through the role-gated transaction; the
      handler's refusal (with its reason) surfaces instead of a silent flip. */
-  const write = useMemo(() => createAssetWriteHandlers(svc, { id: me.name, role: me.role }, pid), [svc, me.name, me.role, pid])
+  const write = useMemo(() => createAssetWriteHandlers(port, { id: me.name, role: me.role }, pid), [port, me.name, me.role, pid])
   const bulkOutMut = useMutation({
     mutationFn: async (input: { ids: string[]; reason: string }) => {
       const results = await Promise.all(input.ids.map((id) => write.changeScope(id, 'out', { action: 'Marked out of scope (bulk)', reason: input.reason })))
@@ -239,7 +240,8 @@ function AssetScope() {
   const reqWhy = pid === 'all' ? 'Select a specific project to request scope approval.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can request scope approval.' : ''
   /* Ticket 51: the review decision flips each pending asset through the
      role-gated transaction; refusals surface with the handler's reason. */
-  const write = useMemo(() => createAssetWriteHandlers(services, { id: me.name, role: me.role }, pid), [services, me.name, me.role, pid])
+  const port = useAssetPort()
+  const write = useMemo(() => createAssetWriteHandlers(port, { id: me.name, role: me.role }, pid), [port, me.name, me.role, pid])
   const reviewMut = useMutation({
     mutationFn: async (input: { decision: 'approved' | 'rejected'; reason: string }) => {
       const action = input.decision === 'approved' ? 'Approved scope change' : 'Rejected scope change'
@@ -263,11 +265,12 @@ function AssetScope() {
     body: <>The assets will return to <b>Unclassified</b> and remain unavailable as targets. The requester is notified with your reason.</>,
     onConfirm: (r) => reviewMut.mutate({ decision: 'rejected', reason: r }),
   })
-  const requestApproval = () => confirm({
+  // Real mode raises scope changes from the Scope revisions panel; the mock approval transaction has no real counterpart here.
+  const requestApproval = () => (isRealMode() ? toast('Scope change requests are raised from the Scope revisions panel in real mode.', 'info') : confirm({
     title: 'Request scope approval?', confirmLabel: 'Submit request', reasonLabel: 'Justification', reasonRequired: true,
     body: <>A scope change request covering {pending.length || 'the selected'} pending {pending.length === 1 ? 'asset' : 'assets'} is sent to the reviewer. Nothing becomes in scope until it is approved.</>,
     onConfirm: (r) => { /* The legacy `A.submitApproval` entry's exact transaction + request context. */ submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: pid, corr: 'legacy' }, { projectId: pid, type: 'Scope change', note: r, diff: pending.map((a) => `${a.name} → in scope`).join(', ') || 'Scope review' }); toast('Scope approval requested.', 'info') },
-  })
+  }))
   const impactedOps = [...new Set(pending.flatMap((a) => impactedOf(a.id)))]
   return (
     <>
@@ -424,7 +427,7 @@ function AssetNew() {
   const dirty = useSessionStore((s) => s.dirty)
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const route = useRoute()
-  const svc = useServices()
+  const port = useAssetPort()
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const [tab, setTab] = useState<'manual' | 'bulk' | 'disc'>(route.tab === 'bulk' || route.tab === 'disc' ? route.tab : 'manual')
   const blank = { type: 'Host', name: '', ident: '', ip: '', os: 'Linux', desc: '', owner: '', labels: '', scope: 'in' as 'in' | 'out', note: '' }
@@ -445,14 +448,14 @@ function AssetNew() {
   /* Ticket 51: manual and bulk saves run through the atomic import
      transaction — the handler re-validates every row, so a refusal (with its
      per-row reasons) commits nothing and is surfaced here. */
-  const write = useMemo(() => createAssetWriteHandlers(svc, { id: me.name, role: me.role }, pid), [svc, me.name, me.role, pid])
+  const write = useMemo(() => createAssetWriteHandlers(port, { id: me.name, role: me.role }, pid), [port, me.name, me.role, pid])
   const importMut = useMutation({
     mutationFn: (input: { rows: readonly AssetImportRow[]; stay?: boolean; single?: string }) => write.importRows(input.rows),
     onSuccess: (res, input) => {
       if (!res.ok) { toast(res.failure.message, 'bad'); return }
       toast(input.single ? `Asset ${input.single} saved as pending review.` : `${res.data.added} ${res.data.added === 1 ? 'asset' : 'assets'} imported as pending review.`)
       setRows([]); setPaste(''); setTried(false)
-      setDone({ needs: res.data.needsApproval, n: res.data.added, stay: input.stay })
+      setDone({ needs: !!res.data.needsApproval, n: res.data.added, stay: input.stay })
     },
   })
 
@@ -554,7 +557,7 @@ function AssetDetail() {
   const me = useMe()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
-  const svc = useServices()
+  const port = useAssetPort()
   const detail = useAssetDetail(route.id)
   const read = detail.data
   const tab = route.tab === 'edit' ? 'overview' : route.tab || 'overview'
@@ -562,7 +565,7 @@ function AssetDetail() {
   const back = { label: 'Assets', to: () => go('assets') }
   /* Ticket 51: scope changes run through the role-gated transaction; a
      governed-ROE proposal opens the scope-change review in the same commit. */
-  const write = useMemo(() => createAssetWriteHandlers(svc, { id: me.name, role: me.role }, pid), [svc, me.name, me.role, pid])
+  const write = useMemo(() => createAssetWriteHandlers(port, { id: me.name, role: me.role }, pid), [port, me.name, me.role, pid])
   const scopeMut = useMutation({
     mutationFn: (input: { id: string; name: string; scope: Asset['scope']; reason: string }) =>
       write.changeScope(input.id, input.scope, { reason: input.reason, action: input.scope === 'out' ? 'Asset scope change reason' : undefined }),
@@ -627,9 +630,29 @@ function AssetDetail() {
   )
 }
 
+/** Real mode: the observed attack-chain graph (server-redacted), listed verbatim beside the managed inventory. */
+function ObservedGraphCard() {
+  const graph = useObservedGraph()
+  return (
+    <Card className="mt-4">
+      <CardHeader title="Observed graph" sub="Server-redacted nodes and edges observed during runs, listed verbatim. No attack path is reconstructed." />
+      {graph.isPending ? <Skeleton className="h-16" /> : graph.isError ? (
+        <Banner tone="warn" title="Graph source unavailable">{graph.error instanceof Error ? graph.error.message : 'The graph projection is not available right now.'} No substitute graph is shown.</Banner>
+      ) : graph.data.nodes.length === 0 ? (
+        <p className="text-sm text-muted">The graph is empty - no relationships have been observed yet.</p>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-muted">{graph.data.nodes.length} nodes, {graph.data.edges.length} edges observed{graph.data.truncated ? ' (truncated)' : ''}.</p>
+          <ul className="space-y-1">{graph.data.edges.slice(0, 50).map((e) => <li key={e.id} className="font-mono text-xs text-muted">({e.source}) -[{e.type}]-&gt; ({e.target})</li>)}</ul>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 // eslint-disable-next-line react-refresh/only-export-components -- assets screen module: helper co-exported with screens
 export const assetRoutes = {
-  assets: withLoading(function Assets() { const route = useRoute(); return route.tab === 'scope-map' ? <AssetScope /> : <AssetList /> }),
+  assets: withLoading(function Assets() { const route = useRoute(); return route.tab === 'scope-map' ? <AssetScope /> : <>{<AssetList />}{isRealMode() && <ObservedGraphCard />}</> }),
   'asset-new': withLoading(AssetNew),
   'asset-scope': withLoading(AssetScope),
   asset: withLoading(AssetDetail),

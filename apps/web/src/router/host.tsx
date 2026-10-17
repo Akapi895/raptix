@@ -24,7 +24,6 @@ import { RealPortfolio } from '../real/screens/portfolio'
 import { RealProjectNewRoute } from '../real/screens/create'
 import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
-import { RealAssets } from '../real/screens/assets-panel'
 import { RealLibrary } from '../real/screens/library'
 import { RealOverview } from '../real/screens/overview'
 import { RealGlobalResource } from '../real/screens/global-resource'
@@ -54,7 +53,6 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   'project-new': RealProjectNewRoute,
   project: RealProjectDetail,
   'ai-operator': RealWorkspace,
-  assets: RealAssets,
   playbooks: RealLibrary,
   'command-center': RealOverview,
   tasks: RealCommandCenter,

@@ -28,6 +28,7 @@ export interface CapabilitiesResponse {
     readonly agents: CapabilityState;
     readonly projects: CapabilityState;
     readonly planning: CapabilityState;
+    readonly assets: CapabilityState;
     readonly threads: CapabilityState;
     readonly runs: CapabilityState;
     readonly approvals: CapabilityState;
@@ -135,6 +136,8 @@ export async function buildCapabilitiesResponse(
       agents,
       projects,
       planning: projects,
+      // The managed asset inventory is a DB-backed, engagement-scoped resource, so it shares the projects availability.
+      assets: projects,
       threads: operations,
       runs: operations,
       approvals,
