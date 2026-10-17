@@ -16,7 +16,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { createHashRouter, RouterProvider } from 'react-router'
 import { mountServices } from '../../test/helpers'
 import { currentRoute, selectProject } from '../../router/navigate'
-import { useAuthStore } from '../../state/stores'
+import { useAuthStore, useProjectStore } from '../../state/stores'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
@@ -285,7 +285,7 @@ describe('navigation writes through the router (ticket 34)', () => {
     const signIn = screen.queryAllByRole('button', { name: /Taylor Chen/ })[0]
     if (signIn) fireEvent.click(signIn)
     await waitFor(() => expect(useAuthStore.getState().authed).toBe(true), { timeout: 3000 })
-    act(() => { selectProject('RT-2026-014') })
+    act(() => { useProjectStore.getState().setPid('RT-2026-014') })
     await waitFor(() => expect(screen.getByRole('button', { name: /Create Draft/ })).toBeEnabled(), { timeout: 3000 })
     navigate.mockClear()
     fireEvent.click(screen.getByRole('button', { name: /Create Draft/ }))
