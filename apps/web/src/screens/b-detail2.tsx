@@ -1,22 +1,20 @@
 import { useState } from 'react'
-import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import { TeamMembers } from '../features/team/members'
 import { ClosureTab } from '../features/closure/tab'
 import { useReopen } from '../features/approvals/hooks'
-import { DocumentWorkspace } from '../features/documents/workspace'
-import { AssetPreviewModal } from '../features/assets/preview-modal'
-import { APR, USERS, type Project, type Role, type Approval } from '../data'
-import { decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, type ScopeFieldPatch } from '../features/approvals/service'
-import { confirmCloseTransaction, requestCloseTransaction } from '../features/closure/service'
+import { APR, type Project, type Approval } from '../data'
+import { decideApprovalTransaction } from '../features/approvals/service'
+import { confirmCloseTransaction } from '../features/closure/service'
 import { useCan, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
-import { useProjectStore, useToastStore } from '../state/stores'
-import { go, selectProject } from '../router/navigate'
+import { useToastStore } from '../state/stores'
+import { go } from '../router/navigate'
 import type { DashboardAggregate } from './dashboard/domain'
 import type { ProjectDetail } from './project-detail/service'
-import { Banner, Button, Check, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, SearchBox, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
+import { Banner, Button, Card, CardHeader, Empty, Kpi, PersonaHint, Status, useGuard } from '../ui'
 
 /* Ticket 21: ScopeTab/TeamTab mutations run through the ticket-21 approval
  * and scope-revision transaction handlers (via the delegating store actions),
@@ -38,8 +36,6 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const guard = useGuard(p.id)
   const [err, setErr] = useState('')
   const [open, setOpen] = useState<string | null>(null)
-  const [add, setAdd] = useState(false)
-  const [nu, setNu] = useState<{ user: string; role: Role }>({ user: '', role: 'operator' })
   /* Ticket 67 wave 3: the legacy A.decideApproval/A.confirmClose entries mirrored —
      the transactions run directly with the same request context and Res bridge. */
   const decideApproval = (id: string, decision: 'approved' | 'returned', note: string) => {
@@ -50,8 +46,6 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
     const res = confirmCloseTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: '', corr: 'legacy' }, apId)
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
-  const canEdit = !guard.ro && can('editScope', p.id)
-  const why = guard.ro ? guard.reason : 'Only a Red Team Manager or Organization Admin can manage members.'
   const appr = ds.approvals
   const pend = appr.filter((a) => a.status === 'pending')
   const mayApprove = can('approve', p.id)
