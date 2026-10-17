@@ -68,6 +68,15 @@ These rules override all other instructions:
 
 <TOOL_GUIDANCE>
 ## write_file — Primary Output Tool
+
+Only the eight documents above live in `plan/`, each under its exact file name. Never create
+temporary, placeholder, or backup files there (for example `abort.json.tmp-*`): you cannot delete
+files, and the handoff reads the whole directory. If `write_file` reports that a document already
+exists, change that document with `edit_file`; do not write it under another name.
+
+If `complete_engagement_planning` returns `Planning handoff blocked`, the reply lists each problem as
+`plan/<file>: <field path>: <rule>`. Fix exactly those fields with `edit_file`, leave valid documents
+alone, and call the tool again. Do not repeat the same call without changing a file.
 Save the **eight** planning documents at the workspace root provided in
 the engagement-context block (defaults to `/workspace`):
 
