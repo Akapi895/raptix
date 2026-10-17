@@ -1,19 +1,20 @@
 /**
- * Real scope/ROE governance panel (integration ticket 08, W07). Submits scope
- * revisions (operator), records independent review decisions (reviewer) and
- * shows the authoritative version invalidation contract: submitting a
- * revision supersedes the previously approved one immediately. ROE edits are
- * timezone-true (ISO instants with explicit offsets) and unedited fields are
- * carried forward from the approved revision, never silently reset.
+ * Scope and ROE panel (plan P09, Scope slice). Submits scope revisions
+ * (operator), records independent review decisions (reviewer) and shows the
+ * authoritative version invalidation contract: submitting a revision supersedes
+ * the previously approved one immediately. ROE edits are timezone-true (ISO
+ * instants with explicit offsets) and unedited fields are carried forward from
+ * the approved revision, never silently reset. Reads and writes go through the
+ * scope port; the requester and decider are shown by member label.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState, type ReactElement } from 'react'
 import { FileDiff, Loader2 } from 'lucide-react'
-import { decideScopeRevision, fetchAssetInventory, fetchEffectiveScope, fetchScopeRevisions, submitScopeRevision } from '../api'
-import { zonedToIso } from '../format'
-import { useSession } from '../session'
-import { useMemberLabels } from '../member-labels'
+import { zonedToIso } from '../../real/format'
+import { useSession } from '../../real/session'
+import { useMemberLabels } from '../../real/member-labels'
 import { Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
+import { useScopeRead, useScopeWrites } from './query'
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'pending',
@@ -24,20 +25,9 @@ const STATUS_LABEL: Record<string, string> = {
 
 const TIME_ZONES = ['UTC', 'Asia/Ho_Chi_Minh', 'Asia/Bangkok', 'Asia/Singapore', 'Asia/Tokyo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles']
 
-export function RealScopePanel({ engagementId }: { engagementId: string }): ReactElement {
-  const client = useQueryClient()
-  const revisions = useQuery({
-    queryKey: ['real', 'scope-revisions', engagementId],
-    queryFn: () => fetchScopeRevisions(engagementId),
-  })
-  const inventory = useQuery({
-    queryKey: ['real', 'asset-inventory', engagementId],
-    queryFn: () => fetchAssetInventory(engagementId),
-  })
-  const effective = useQuery({
-    queryKey: ['real', 'effective-scope', engagementId],
-    queryFn: () => fetchEffectiveScope(engagementId),
-  })
+export function ScopePanel({ engagementId }: { engagementId: string }): ReactElement {
+  const read = useScopeRead()
+  const writes = useScopeWrites()
   const actorId = useSession().session?.actor?.id ?? null
   const memberLabel = useMemberLabels(engagementId)
   const [added, setAdded] = useState('')
@@ -50,19 +40,13 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
   const [restrictions, setRestrictions] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // W07: an unedited field carries the approved value forward — never reset
-  // to empty. The baseline refreshes only when a new approval exists.
-  const approved = revisions.data?.revisions.find((r) => r.status === 'approved') ?? null
+  // An unedited field carries the approved value forward, never reset to empty.
+  // The baseline refreshes only when a new approval exists.
+  const approved = read.data?.revisions.find((r) => r.status === 'approved') ?? null
   useEffect(() => {
     setContacts(approved === null ? '' : (approved.roe.emergencyContacts ?? []).join(', '))
     setRestrictions(approved === null ? '' : (approved.roe.restrictions ?? []).join('\n'))
   }, [approved?.id]) // eslint-disable-line react-hooks/exhaustive-deps -- re-baseline on a new approval only
-
-  const invalidate = (): void => {
-    void client.invalidateQueries({ queryKey: ['real', 'scope-revisions', engagementId] })
-    void client.invalidateQueries({ queryKey: ['real', 'asset-inventory', engagementId] })
-    void client.invalidateQueries({ queryKey: ['real', 'effective-scope', engagementId] })
-  }
 
   const submit = useMutation({
     mutationFn: () => {
@@ -70,7 +54,7 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
       if (windowStart !== '' && windowEnd !== '') {
         windows = [{ start: zonedToIso(windowStart, timeZone), end: zonedToIso(windowEnd, timeZone), tz: timeZone }]
       }
-      return submitScopeRevision(engagementId, {
+      return writes.submit({
         diff: {
           added: added.split(/[\n,]/).map((s) => s.trim()).filter(Boolean),
           removed: removed.split(/[\n,]/).map((s) => s.trim()).filter(Boolean),
@@ -90,48 +74,37 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
       setWindowStart('')
       setWindowEnd('')
       setError(null)
-      invalidate()
     },
     onError: (err) => setError(err instanceof Error ? err.message : 'The revision was refused.'),
   })
   const decide = useMutation({
-    mutationFn: (input: { revisionId: string; decision: 'approved' | 'rejected' }) => decideScopeRevision(engagementId, input.revisionId, input.decision),
-    onSuccess: () => {
-      setError(null)
-      invalidate()
-    },
+    mutationFn: (input: { revisionId: string; decision: 'approved' | 'rejected' }) => writes.decide(input.revisionId, input.decision),
+    onSuccess: () => setError(null),
     onError: (err) => setError(err instanceof Error ? err.message : 'The decision was refused.'),
   })
 
-  if (revisions.isPending) {
+  if (read.isPending) {
     return <Card><CardHeader title="Scope & ROE" /><div className="p-4"><Skeleton className="h-24" /></div></Card>
   }
-  if (revisions.isError || !revisions.data) {
-    return <Empty icon={FileDiff} title="Scope data is unavailable" action={<Button onClick={() => void revisions.refetch()}>Retry</Button>}>
-      {revisions.error instanceof Error ? revisions.error.message : 'The revisions read failed.'}
+  if (read.isError || !read.data) {
+    return <Empty icon={FileDiff} title="Scope data is unavailable" action={<Button onClick={() => void read.refetch()}>Retry</Button>}>
+      {read.error instanceof Error ? read.error.message : 'The revisions read failed.'}
     </Empty>
   }
-  const view = revisions.data
+  const view = read.data
+  const effective = view.effective
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader title="Effective scope (runtime bridge)" sub={effective.data === undefined ? 'Loading the cumulative snapshot…' : `Authoritative approved version: ${effective.data.version === null ? 'none yet' : `v${effective.data.version}`} — what the runtime consumes through the read bridge (ADR-0072)`} />
+        <CardHeader title="Effective scope (runtime bridge)" sub={`Authoritative approved version: ${effective.version === null ? 'none yet' : `v${effective.version}`} — what the runtime consumes through the read bridge (ADR-0072)`} />
         <div className="p-4 text-sm">
-          {effective.isError ? (
-            <p className="text-bad" role="alert">{effective.error instanceof Error ? effective.error.message : 'The effective scope read failed.'}</p>
-          ) : effective.data === undefined ? (
-            <Skeleton className="h-12" />
-          ) : (
-            <>
-              <p className="text-muted">
-                Root target (always in scope): <span className="font-mono">{effective.data.rootTarget ?? '—'}</span>
-                {' · '}Approved in-scope targets: <span className="font-mono">{effective.data.inScope.length === 0 ? 'none yet' : effective.data.inScope.join(', ')}</span>
-              </p>
-              {effective.data.roe.restrictions.length > 0 && (
-                <p className="mt-2 text-muted">Restrictions: {effective.data.roe.restrictions.join(' · ')}</p>
-              )}
-            </>
+          <p className="text-muted">
+            Root target (always in scope): <span className="font-mono">{effective.rootTarget ?? '—'}</span>
+            {' · '}Approved in-scope targets: <span className="font-mono">{effective.inScope.length === 0 ? 'none yet' : effective.inScope.join(', ')}</span>
+          </p>
+          {effective.roe.restrictions.length > 0 && (
+            <p className="mt-2 text-muted">Restrictions: {effective.roe.restrictions.join(' · ')}</p>
           )}
         </div>
       </Card>
@@ -215,7 +188,7 @@ export function RealScopePanel({ engagementId }: { engagementId: string }): Reac
           <label className="text-sm text-muted" htmlFor="scope-added">Added targets (one per line)</label>
           <Textarea id="scope-added" value={added} onChange={(e) => setAdded(e.target.value)} placeholder={'10.0.0.5\nweb.example.invalid'} />
           <label className="text-sm text-muted" htmlFor="scope-removed">Removed targets (one per line; the engagement target cannot be removed)</label>
-          <Textarea id="scope-removed" value={removed} onChange={(e) => setRemoved(e.target.value)} placeholder={inventory.data?.assets.filter((a) => a.classification === 'in_scope').map((a) => a.identifier).join('\n')} />
+          <Textarea id="scope-removed" value={removed} onChange={(e) => setRemoved(e.target.value)} placeholder="Identifiers of approved in-scope assets" />
           <label className="text-sm text-muted" htmlFor="scope-rationale">Rationale</label>
           <Input id="scope-rationale" required value={rationale} onChange={(e) => setRationale(e.target.value)} />
           <label className="text-sm text-muted" htmlFor="scope-start">ROE window start (entered in the selected timezone; leave empty to keep the approved windows)</label>

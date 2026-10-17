@@ -3,11 +3,13 @@ import type { FindingService } from '../../features/findings/service'
 import type { AssetService } from '../../features/assets/service'
 import type { ReportService } from '../../features/reports/service'
 import type { LibraryService } from '../../features/library/service'
+import { unavailableScopeService } from '../../features/scope/service'
 import { capabilityState, type CapabilitiesDocument } from '../api'
 import { createRealAssetService } from './assets'
 import { createRealFindingService } from './findings'
 import { createRealLibraryService } from './library'
 import { createRealReportService } from './reports'
+import { createRealScopeService } from './scope'
 import { notIntegratedService } from './stub'
 
 /**
@@ -35,11 +37,17 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => notIntegratedService<AssetService>('Assets')
+  const scope: FeatureServices['scope'] = supported('scope')
+    ? (() => {
+        const service = createRealScopeService()
+        return () => service
+      })()
+    : () => unavailableScopeService()
   const library: FeatureServices['library'] = supported('graphs')
     ? (() => {
         const service = createRealLibraryService()
         return () => service
       })()
     : () => notIntegratedService<LibraryService>('Library')
-  return { findings, reports, assets, library }
+  return { findings, reports, assets, library, scope }
 }
