@@ -31,6 +31,11 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
     const { id } = request.params as { id: string };
     return service.listThreads(identity.id, id);
   }));
+  app.get(`${prefix}/instances`, (request, reply) => runProjectsHandler(request, reply, () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id } = request.params as { id: string };
+    return service.listInstances(identity.id, id);
+  }));
   app.get(`${prefix}/threads/:thread`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');
     const { id, thread } = request.params as { id: string; thread: string };

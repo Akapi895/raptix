@@ -15,6 +15,48 @@ const terminal = (status: string): boolean => ['success', 'error', 'timeout', 'i
 function metadata(actual: Record<string, unknown>, expected: Record<string, string>): void {
   if (Object.entries(expected).some(([k, v]) => actual[k] !== v)) throw conflict();
 }
+/** One dispatch instance as the runtime's dispatch ledger records it. The ledger keeps the latest attempt per dispatch. */
+export interface RuntimeInstanceView {
+  instanceId: string;
+  threadId: string;
+  dispatchId: string;
+  attempt: number;
+  /** Null for rows written before the runtime recorded the role; those are never guessed from transcripts. */
+  role: string | null;
+  objectiveId: string | null;
+  outcome: string;
+  terminal: boolean;
+  source: 'dispatch_ledger';
+}
+
+export interface RuntimeRosterView {
+  engagementId: string;
+  instances: RuntimeInstanceView[];
+  threads: { threadId: string; read: 'read' | 'unavailable'; reason: string | null }[];
+  source: 'runtime';
+}
+
+function ledgerInstances(threadId: string, ledger: unknown): RuntimeInstanceView[] {
+  if (typeof ledger !== 'object' || ledger === null || Array.isArray(ledger)) return [];
+  return Object.entries(ledger as Record<string, unknown>).flatMap(([dispatchId, row]) => {
+    if (typeof row !== 'object' || row === null) return [];
+    const entry = row as { role?: unknown; attempt?: unknown; objective_id?: unknown; outcome?: unknown };
+    if (typeof entry.attempt !== 'number' || !Number.isSafeInteger(entry.attempt) || entry.attempt < 1) return [];
+    const outcome = typeof entry.outcome === 'object' && entry.outcome !== null ? entry.outcome as { status?: unknown; terminal_for_this_dispatch?: unknown } : {};
+    return [{
+      instanceId: `${threadId}:${dispatchId}:${entry.attempt}`,
+      threadId,
+      dispatchId,
+      attempt: entry.attempt,
+      role: typeof entry.role === 'string' && entry.role.length > 0 ? entry.role : null,
+      objectiveId: typeof entry.objective_id === 'string' ? entry.objective_id : null,
+      outcome: typeof outcome.status === 'string' ? outcome.status : 'unknown',
+      terminal: outcome.terminal_for_this_dispatch === true,
+      source: 'dispatch_ledger' as const,
+    }];
+  });
+}
+
 export class RunService {
   public constructor(private readonly options: { ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort; authorizeMutation?: (user: string, engagement: string, kind: 'planning' | 'execution', threadId: string | null) => Promise<void> }) {}
   private async threadState(user: string, engagement: string, thread: string): ReturnType<RuntimeReadPort['state']> {
@@ -113,6 +155,28 @@ export class RunService {
   public async listThreads(user: string, engagement: string): Promise<{ engagementId: string; threads: ThreadBindingView[]; source: 'runtime' }> {
     const threads = await this.options.ownership.listBindings(user, engagement);
     return { engagementId: engagement, threads, source: 'runtime' };
+  }
+  /**
+   * P10b roster: the dispatch instances of every thread bound to the engagement,
+   * read from each thread's dispatch ledger. A thread the runtime cannot read is
+   * named as unavailable, never shown as an empty roster.
+   */
+  public async listInstances(user: string, engagement: string): Promise<RuntimeRosterView> {
+    const bindings = await this.options.ownership.listBindings(user, engagement);
+    const instances: RuntimeInstanceView[] = [];
+    const threads: RuntimeRosterView['threads'] = [];
+    for (const binding of bindings) {
+      try {
+        const { values } = await this.threadState(user, engagement, binding.threadId);
+        instances.push(...ledgerInstances(binding.threadId, values.dispatch_ledger));
+        threads.push({ threadId: binding.threadId, read: 'read', reason: null });
+      } catch (error) {
+        if (!(error instanceof RuntimeUnavailableError || error instanceof RuntimeCheckpointMissingError)) throw error;
+        threads.push({ threadId: binding.threadId, read: 'unavailable', reason: error.message });
+      }
+    }
+    instances.sort((a, b) => a.threadId.localeCompare(b.threadId) || a.dispatchId.localeCompare(b.dispatchId) || a.attempt - b.attempt);
+    return { engagementId: engagement, instances, threads, source: 'runtime' };
   }
   /** W11: resume a pending graph interrupt on the bound thread; ack returns the NEW run identity. */
   public async resume(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
