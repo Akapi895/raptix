@@ -49,7 +49,10 @@ def _write_bundle(root: Path, *, target: str = "https://target.example") -> None
                 "channel": "local:console",
             },
         },
-        "data-handling.json": {"engagement_name": "autohunt-demo"},
+        "data-handling.json": {
+            "engagement_name": "autohunt-demo",
+            "evidence_storage_path": "/workspace/autohunt-demo/evidence/",
+        },
         "abort.json": {"engagement_name": "autohunt-demo"},
         "cleanup.json": {"engagement_name": "autohunt-demo"},
     }
@@ -138,3 +141,19 @@ def test_complete_engagement_planning_succeeds_on_a_complete_bundle(bundle_works
     assert isinstance(result, ToolMessage)
     assert result.status == "success"
     assert result.content.startswith("Planning complete.")
+
+
+def test_validate_planning_bundle_rejects_evidence_path_outside_the_engagement_workspace(tmp_path: Path) -> None:
+    _write_bundle(tmp_path)
+    data = json.loads((tmp_path / "plan" / "data-handling.json").read_text(encoding="utf-8"))
+    data["evidence_storage_path"] = "/workspace/<engagement>/evidence/"
+    (tmp_path / "plan" / "data-handling.json").write_text(json.dumps(data), encoding="utf-8")
+
+    failure = validate_planning_bundle(tmp_path, target_value="https://target.example", authorization_confirmed=True)
+
+    assert failure == (
+        "plan/data-handling.json: evidence_storage_path must be inside /workspace/autohunt-demo/ "
+        "(got '/workspace/<engagement>/evidence/'). Write the concrete path, for example "
+        "/workspace/autohunt-demo/evidence/."
+    )
+

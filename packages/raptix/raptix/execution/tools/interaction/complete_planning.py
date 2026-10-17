@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import posixpath
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -82,6 +83,14 @@ def validate_planning_bundle(
     names = {document.engagement_name.strip() for document in documents.values()}
     if len(names) != 1 or not next(iter(names), ""):
         return "Planning documents must share one non-empty engagement_name."
+
+    evidence = documents["data-handling.json"].evidence_storage_path.strip()
+    root = f"/workspace/{next(iter(names))}"
+    if posixpath.normpath(evidence) != root and not posixpath.normpath(evidence).startswith(f"{root}/"):
+        return (
+            f"plan/data-handling.json: evidence_storage_path must be inside {root}/ "
+            f"(got {evidence!r}). Write the concrete path, for example {root}/evidence/."
+        )
 
     roe = documents["roe.json"]
     if not roe.authorization_reference.strip():
