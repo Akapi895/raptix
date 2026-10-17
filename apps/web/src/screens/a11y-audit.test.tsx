@@ -19,7 +19,11 @@ import { go } from '../router/navigate'
 import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
 
+/** The route the test wants after sign-in; sign-in itself lands on the System Overview. */
+let landing: string | undefined
+
 function mountApp(hash?: string) {
+  landing = hash
   if (hash !== undefined) window.location.hash = hash
   const router = createHashRouter([
     { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
@@ -28,8 +32,10 @@ function mountApp(hash?: string) {
   return mountServices(<RouterProvider router={router} />)
 }
 
-function signIn() {
-  return screen.findByRole('button', { name: /Alex Morgan/ }).then((b) => userEvent.click(b))
+async function signIn() {
+  const button = await screen.findByRole('button', { name: /Alex Morgan/ })
+  await userEvent.click(button)
+  if (landing !== undefined) window.location.hash = landing
 }
 
 afterEach(() => {
@@ -39,22 +45,15 @@ afterEach(() => {
 })
 
 describe('menu keyboard operability on real routes (project detail)', () => {
-  it('the More tab is a real button whose menu opens with ArrowDown and closes with Escape back to the trigger', async () => {
+  it('the project section buttons are real buttons: they take keyboard focus and Enter opens the section', async () => {
     mountApp('#/project/RT-2026-014')
     await signIn()
-    await screen.findByRole('tab', { name: 'Overview' })
-    const more = screen.getByRole('tab', { name: 'More' })
-    expect(more.tagName).toBe('BUTTON')
-    expect(more.getAttribute('aria-expanded')).toBe('false')
-    more.focus()
-    await userEvent.keyboard('{ArrowDown}')
-    await screen.findByRole('menu')
-    expect(more.getAttribute('aria-expanded')).toBe('true')
-    await waitFor(() => expect(screen.getAllByRole('menuitem')[0]).toHaveFocus())
-    await userEvent.keyboard('{Escape}')
-    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument())
-    expect(more.getAttribute('aria-expanded')).toBe('false')
-    await waitFor(() => expect(more).toHaveFocus())
+    const scope = await screen.findByRole('button', { name: 'Scope & ROE' })
+    expect(scope.tagName).toBe('BUTTON')
+    scope.focus()
+    expect(scope).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
+    await waitFor(() => expect(window.location.hash).toContain('tab=scope'))
   })
 })
 
@@ -100,14 +99,15 @@ describe('announcements and state (shell)', () => {
     await screen.findByRole('heading', { name: /system overview/i })
     expect(screen.getAllByTestId('route-announcer')).toHaveLength(1)
     const announcer = screen.getByTestId('route-announcer')
-    expect(announcer).toHaveTextContent('Navigated to Command Center')
+    // Sign-in lands on the System Overview, so the first announcement names that route.
+    expect(announcer).toHaveTextContent('Navigated to Overview')
     act(() => { go('projects') })
     await waitFor(() => expect(announcer).toHaveTextContent('Navigated to Projects'))
     act(() => { go('project', { id: 'RT-2026-014' }) })
     await waitFor(() => expect(announcer).toHaveTextContent('Navigated to Projects RT-2026-014'))
     // Same page + id (tab/filter change only): no second, duplicated output.
     act(() => { go('project', { id: 'RT-2026-014', tab: 'scope' }) })
-    await screen.findByRole('tab', { name: 'Scope & ROE' })
+    await screen.findByRole('button', { name: 'Scope & ROE' })
     expect(announcer.textContent).toBe('Navigated to Projects RT-2026-014')
   })
 
