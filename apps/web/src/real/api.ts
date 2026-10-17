@@ -541,7 +541,8 @@ export interface RuntimeInstanceView {
   objectiveId: string | null
   outcome: string
   terminal: boolean
-  source: 'dispatch_ledger'
+  /** `mailbox` is an attempt the runtime is running now, or one that ended before its ledger row was written. */
+  source: 'dispatch_ledger' | 'mailbox'
 }
 
 export interface RuntimeRosterView {
@@ -555,11 +556,66 @@ function isRuntimeRosterView(v: unknown): v is RuntimeRosterView {
   if (typeof v !== 'object' || v === null) return false
   const doc = v as RuntimeRosterView
   return typeof doc.engagementId === 'string' && Array.isArray(doc.instances) && Array.isArray(doc.threads) && doc.source === 'runtime'
-    && doc.instances.every((i) => typeof i.instanceId === 'string' && typeof i.attempt === 'number' && i.source === 'dispatch_ledger')
+    && doc.instances.every((i) => typeof i.instanceId === 'string' && typeof i.attempt === 'number' && (i.source === 'dispatch_ledger' || i.source === 'mailbox'))
 }
 
 export function fetchRuntimeInstances(engagementId: string): Promise<RuntimeRosterView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/instances`, owned(engagementId, isRuntimeRosterView))
+}
+
+/* ───────────── Operator mailbox for running dispatches (P10c) ───────────── */
+
+export type InstanceMessageState = 'accepted' | 'delivered' | 'handled' | 'undelivered'
+
+export interface InstanceMessageView {
+  messageId: string
+  attempt: number
+  seq: number
+  body: string
+  state: InstanceMessageState
+  acceptedAt: string
+  deliveredAt: string | null
+  handledAt: string | null
+  outcome: string | null
+}
+
+export interface InstanceAttemptView {
+  attempt: number
+  role: string | null
+  state: 'running' | 'finished' | 'interrupted'
+  startedAt: string
+  finishedAt: string | null
+}
+
+export interface InstanceMailboxView {
+  threadId: string
+  dispatchId: string
+  instances: InstanceAttemptView[]
+  messages: InstanceMessageView[]
+  source: 'runtime'
+}
+
+export const INSTANCE_MESSAGE_MAX_CHARS = 2000
+
+function isInstanceMailboxView(v: unknown): v is InstanceMailboxView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as InstanceMailboxView
+  return typeof doc.threadId === 'string' && typeof doc.dispatchId === 'string' && Array.isArray(doc.instances)
+    && Array.isArray(doc.messages) && doc.source === 'runtime'
+}
+
+function instancePath(engagementId: string, threadId: string, dispatchId: string): string {
+  return `/engagements/${encodeURIComponent(engagementId)}/instances/${encodeURIComponent(threadId)}/${encodeURIComponent(dispatchId)}/messages`
+}
+
+export function fetchInstanceMailbox(engagementId: string, threadId: string, dispatchId: string): Promise<InstanceMailboxView> {
+  return apiFetch(instancePath(engagementId, threadId, dispatchId), (v): v is InstanceMailboxView => isInstanceMailboxView(v) && v.threadId === threadId && v.dispatchId === dispatchId)
+}
+
+/** A refused message fails with the server's reason; a duplicate retry is an accepted outcome, not a second message. */
+export function sendInstanceMessage(engagementId: string, threadId: string, dispatchId: string, input: { messageId: string; body: string }): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
+  return apiFetch(instancePath(engagementId, threadId, dispatchId), (v): v is { status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView } =>
+    typeof v === 'object' && v !== null && ((v as { status?: unknown }).status === 'accepted' || (v as { status?: unknown }).status === 'duplicate'), { method: 'POST', body: input })
 }
 
 export interface AssetInventoryView {

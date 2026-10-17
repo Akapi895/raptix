@@ -1,7 +1,8 @@
 import { useState, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Bot, Eye, ShieldCheck } from 'lucide-react'
-import { fetchRuntimeInstances, type FleetBranchView } from '../api'
+import { fetchRuntimeInstances, type FleetBranchView, type RuntimeInstanceView } from '../api'
+import { InstanceMessenger } from './instance-messenger'
 import { go } from '../../router/navigate'
 import { Banner, Button, DescList, Segmented, Textarea, cx } from '../../ui'
 import { utcMinuteOr } from '../format'
@@ -39,13 +40,20 @@ function RuntimeRoster({ engagementId, threadId }: { engagementId: string; threa
     {unread.length > 0 && <Banner tone="warn" title="Some threads could not be read">{unread.map((thread) => `${thread.threadId.slice(0, 8)}: ${thread.reason ?? 'unavailable'}`).join(' · ')}</Banner>}
     {instances.length === 0 ? <p className="text-xs text-muted">No dispatch instances are recorded{threadId ? ' on this thread' : ''}.</p> : (
       <ul className="space-y-2">
-        {instances.map((instance) => <li key={instance.instanceId} className="rounded-xl border border-line p-3 text-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium">{instance.role ?? 'role not recorded'} · attempt {instance.attempt}</span><span className="font-mono">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></div>
-          <p className="mt-1 break-all font-mono text-muted">{instance.dispatchId.slice(0, 12)} · objective {instance.objectiveId ?? '—'} · thread {instance.threadId.slice(0, 8)}</p>
-        </li>)}
+        {instances.map((instance) => <RosterRow key={instance.instanceId} engagementId={engagementId} instance={instance} />)}
       </ul>
     )}
   </section>
+}
+
+function RosterRow({ engagementId, instance }: { engagementId: string; instance: RuntimeInstanceView }): ReactElement {
+  const [open, setOpen] = useState(false)
+  return <li className="rounded-xl border border-line p-3 text-xs">
+    <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium">{instance.role ?? 'role not recorded'} · attempt {instance.attempt}</span><span className="font-mono">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></div>
+    <p className="mt-1 break-all font-mono text-muted">{instance.dispatchId.slice(0, 12)} · objective {instance.objectiveId ?? '—'} · thread {instance.threadId.slice(0, 8)}</p>
+    <Button size="sm" variant="secondary" className="mt-2" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide messages' : 'Messages'}</Button>
+    {open && <InstanceMessenger engagementId={engagementId} threadId={instance.threadId} dispatchId={instance.dispatchId} attempt={instance.attempt} />}
+  </li>
 }
 
 export function ObservedInvocation({ branch, onRoot }: { branch?: FleetBranchView; onRoot: () => void }): ReactElement {
