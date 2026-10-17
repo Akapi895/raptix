@@ -83,6 +83,7 @@ describe('RunService.snapshot history attachment', () => {
     context: { resolve: async () => ({}) } as unknown as ConstructorParameters<typeof RunService>[0]['context'],
     runtime: {} as ConstructorParameters<typeof RunService>[0]['runtime'],
     reads: {
+      instanceExchange: async () => { throw new Error('not used in this test'); },
       catalog: async () => [],
       thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'success' }),
       state: async () => ({ values: {

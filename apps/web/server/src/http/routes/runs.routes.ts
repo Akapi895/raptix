@@ -36,6 +36,17 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
     const { id } = request.params as { id: string };
     return service.listInstances(identity.id, id);
   }));
+  app.post(`${prefix}/instances/:thread/:dispatch/messages`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread, dispatch } = request.params as { id: string; thread: string; dispatch: string };
+    const ack = await service.sendInstanceMessage(identity.id, id, thread, dispatch, request.body);
+    reply.status(ack.status === 'accepted' ? 202 : 200);
+    return ack;
+  }));
+  app.get(`${prefix}/instances/:thread/:dispatch/messages`, (request, reply) => runProjectsHandler(request, reply, () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id, thread, dispatch } = request.params as { id: string; thread: string; dispatch: string };
+    return service.instanceMailbox(identity.id, id, thread, dispatch);
+  }));
   app.get(`${prefix}/threads/:thread`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');
     const { id, thread } = request.params as { id: string; thread: string };

@@ -13,6 +13,8 @@ export interface RuntimeReadPort {
   catalog(): Promise<readonly string[]>;
   thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown>; status?: string }>;
   state(id: string): Promise<{ values: Record<string, unknown>; tasks?: unknown; graphId: string | null }>;
+  /** P10c operator mailbox: a refusal (409) is data the caller explains, never an error. */
+  instanceExchange(method: 'GET' | 'POST', endpoint: string, body?: unknown): Promise<{ status: number; body: unknown }>;
 }
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 export class RuntimeReadClient implements RuntimeReadPort {
@@ -39,6 +41,23 @@ export class RuntimeReadClient implements RuntimeReadPort {
       } finally { await reader.cancel(); }
       return JSON.parse(Buffer.concat(chunks).toString('utf8'));
     } catch (error) { if (error instanceof RuntimeRejectedError) throw error; throw new RuntimeUnavailableError(); }
+    finally { clearTimeout(timer); }
+  }
+  public async instanceExchange(method: 'GET' | 'POST', endpoint: string, body?: unknown): Promise<{ status: number; body: unknown }> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.mutationTimeoutMs);
+    try {
+      const response = await fetch(`${this.apiUrl}${endpoint}`, {
+        method,
+        ...(body === undefined ? {} : { body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }),
+        signal: controller.signal,
+        redirect: 'error',
+      });
+      if (![200, 409].includes(response.status)) throw new RuntimeUnavailableError();
+      const text = await response.text();
+      if (text.length > 64 * 1024) throw new RuntimeUnavailableError();
+      return { status: response.status, body: text.length ? JSON.parse(text) : null };
+    } catch { throw new RuntimeUnavailableError(); }
     finally { clearTimeout(timer); }
   }
   /** Bounded raw mutation returning status + parsed-or-null body (W11 cancel uses 204). */
