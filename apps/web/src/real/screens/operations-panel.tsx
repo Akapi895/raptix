@@ -5,15 +5,18 @@
  * persisted business-operation record is invented).
  */
 import { type ReactElement } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Bot } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Ban, Bot, Loader2 } from 'lucide-react'
 import type { ScopedRunView, ThreadBindingView } from '@raptix/web-contracts'
-import { getThread, listRunsOfThread, listThreads } from '../api'
+import { ACTIVE_STOP_OUTCOMES, cancelRun, fetchEmergencyStops, getThread, listRunsOfThread, listThreads } from '../api'
 import { fetchTimeline } from '../api'
 import { utcMinute } from '../format'
 import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status, cx } from '../../ui'
 import { ExecutionLogs } from './execution-logs'
+
+/** Runs a user may cancel: the ones the runtime still reports as in flight. */
+const CANCELLABLE = ['pending', 'running', 'submitting']
 
 const STATUS_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = {
   // W24: the runtime reports success/error/timeout/interrupted; unknown
@@ -36,6 +39,7 @@ export function RealOperationsPanel({ engagementId }: { engagementId: string }):
     const selected = executionThreads.find((t) => t.threadId === detailThreadId)
     return (
       <div className="space-y-4">
+        <ActiveStopBanner engagementId={engagementId} />
         {threads.isPending ? <Card><CardHeader title={`Operation ${detailThreadId}`} /><div className="p-4 space-y-2" aria-busy="true" role="status"><Skeleton className="h-10" /><Skeleton className="h-10" /></div></Card>
           : threads.isError ? <Banner tone="warn" title="Threads source unavailable">{threads.error instanceof Error ? threads.error.message : 'Threads could not be loaded.'} No substitute operation view is shown.</Banner>
           : selected === undefined ? (
@@ -55,8 +59,10 @@ export function RealOperationsPanel({ engagementId }: { engagementId: string }):
 
   return (
     <div className="space-y-4">
+      <ActiveStopBanner engagementId={engagementId} />
       <Card>
         <CardHeader title="Execution threads" sub="Owned runtime bindings for this engagement. Execution never bypasses the planning handoff." />
+        <p className="px-4 pb-2 text-xs text-muted">A run can be cancelled here. Pause, resume and marking an operation complete have no runtime action, so they are not offered. A stop is requested from Governance.</p>
         {threads.isPending ? <div className="space-y-2" aria-busy="true" role="status"><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
           : threads.isError ? <p className="text-sm text-bad" role="alert">{threads.error instanceof Error ? threads.error.message : 'Threads could not be loaded.'}</p>
           : executionThreads.length === 0 ? (
@@ -73,6 +79,18 @@ export function RealOperationsPanel({ engagementId }: { engagementId: string }):
 
       <TimelineCard engagementId={engagementId} />
     </div>
+  )
+}
+
+/** An emergency stop that still blocks work is shown here, with the place where it is resolved. */
+function ActiveStopBanner({ engagementId }: { engagementId: string }): ReactElement | null {
+  const stops = useQuery({ queryKey: ['real', 'estops', engagementId], queryFn: () => fetchEmergencyStops(engagementId), refetchInterval: 30_000 })
+  const active = (stops.data?.stops ?? []).filter((stop) => (ACTIVE_STOP_OUTCOMES as readonly string[]).includes(stop.outcome))
+  if (active.length === 0) return null
+  return (
+    <Banner tone="warn" title={`${active.length} emergency stop${active.length === 1 ? '' : 's'} still ${active.length === 1 ? 'blocks' : 'block'} work`} action={<Button size="sm" variant="secondary" onClick={() => go('project', { id: engagementId, tab: 'governance' })}>Open Governance</Button>}>
+      Work does not restart until a stop is explicitly resolved in Governance.
+    </Banner>
   )
 }
 
@@ -147,7 +165,8 @@ function ThreadRuns({ thread }: { thread: ThreadBindingView }): ReactElement {
                 <th className="py-1 pr-3 font-medium">Request</th>
                 <th className="py-1 pr-3 font-medium">Status</th>
                 <th className="py-1 pr-3 font-medium">Created</th>
-                <th className="py-1 font-medium">Updated</th>
+                <th className="py-1 pr-3 font-medium">Updated</th>
+                <th className="py-1 font-medium">Control</th>
               </tr>
             </thead>
             <tbody>
@@ -168,7 +187,12 @@ function ThreadRuns({ thread }: { thread: ThreadBindingView }): ReactElement {
 }
 
 function RunRow({ run }: { run: ScopedRunView }): ReactElement {
+  const client = useQueryClient()
   const tone = STATUS_TONE[run.rawStatus] ?? 'neutral'
+  const cancel = useMutation({
+    mutationFn: () => cancelRun(run.engagementId, run.threadId, run.runId),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['real', 'runs', run.engagementId, run.threadId] }),
+  })
   return (
     <tr className="border-t border-line">
       <td className="py-1.5 pr-3 font-mono text-fg">{run.runId}</td>
@@ -177,7 +201,18 @@ function RunRow({ run }: { run: ScopedRunView }): ReactElement {
         ok: 'text-ok', bad: 'text-bad', warn: 'text-warn', neutral: 'text-muted',
       }[tone])}><Status kind="gate" value={tone === 'ok' ? 'passed' : tone === 'bad' ? 'failed' : 'pending'} size="sm" label={run.rawStatus} /></td>
       <td className="py-1.5 pr-3 text-muted">{utcMinute(run.createdAt)}</td>
-      <td className="py-1.5 text-muted">{utcMinute(run.updatedAt)}</td>
+      <td className="py-1.5 pr-3 text-muted">{utcMinute(run.updatedAt)}</td>
+      <td className="py-1.5">
+        {CANCELLABLE.includes(run.rawStatus) ? (
+          <span className="flex flex-col items-start gap-1">
+            <Button variant="secondary" icon={Ban} disabled={cancel.isPending} onClick={() => cancel.mutate()}>
+              {cancel.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
+              Cancel run
+            </Button>
+            {cancel.isError && <span role="alert" className="text-bad">{cancel.error instanceof Error ? cancel.error.message : 'The cancel was refused.'}</span>}
+          </span>
+        ) : <span className="text-muted">—</span>}
+      </td>
     </tr>
   )
 }
