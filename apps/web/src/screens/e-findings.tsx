@@ -865,6 +865,11 @@ function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: bool
   const why = ro ? (me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.') : !canAdd ? `The ${ROLE_LABEL[me.role]} role cannot add evidence.` : ''
   const candidates = (evidenceList.data?.items ?? []).filter((e) => e.projectId === f.projectId && !e.findingId && !f.evidence.includes(e.ref))
   const canClassifyAny = candidates.some((e) => e.classification === 'unclassified' && e.canClassify)
+  // A linked capture is not a candidate, but its owner or reviewer still classifies it from the finding.
+  const classifyTarget = (ev: EvidenceView): EvidenceView | null => {
+    const match = (evidenceList.data?.items ?? []).find((e) => e.ref === ev.ref)
+    return match && match.classification === 'unclassified' && match.canClassify ? match : null
+  }
   const refreshEvidence = (): void => {
     void client.invalidateQueries({ queryKey: ['evidence'] })
     void client.invalidateQueries({ queryKey: ['finding'] })
@@ -901,7 +906,7 @@ function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: bool
         ]}
       />
       <Drawer open={!!view} onClose={() => setView(null)} title={view ? <span><Mono className="text-accent">{view.ref}</Mono> · <MaskedName ev={view} /></span> : ''}
-        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.captureId ?? view.ref })}>Open in Evidence Inspector</Button><Button icon={Download} disabled={view.masked || isRealMode() && !view.canViewOriginal} title={view.masked ? 'Classification has not made this filename visible to your role.' : isRealMode() && !view.canViewOriginal ? 'The current classification does not permit reading the original bytes.' : undefined} onClick={() => void download(view)}>Download original</Button></>}>
+        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.captureId ?? view.ref })}>Open in Evidence Inspector</Button>{classifyTarget(view) && <Button icon={ShieldCheck} onClick={() => { setClassifying(classifyTarget(view)); setView(null) }}>Classify capture</Button>}<Button icon={Download} disabled={view.masked || isRealMode() && !view.canViewOriginal} title={view.masked ? 'Classification has not made this filename visible to your role.' : isRealMode() && !view.canViewOriginal ? 'The current classification does not permit reading the original bytes.' : undefined} onClick={() => void download(view)}>Download original</Button></>}>
         {view && <EvidencePreview ev={view} f={f} onOp={() => view.opId && go('operation', { id: view.opId })} />}
       </Drawer>
       <Modal open={attach} onClose={() => setAttach(false)} title="Link existing evidence" footer={<Button onClick={() => setAttach(false)}>Done</Button>}>
