@@ -1,6 +1,6 @@
 # 0086. Per-run workspace isolation replaces the single-engagement sandbox pin
 
-- **Status:** Proposed
+- **Status:** Proposed — revision required (review finding below)
 - **Date:** 2026-10-17
 - **Deciders:** pending (project owner)
 - **Related:** ADR-0082 (dedicated web execution plane), ADR-0085 (single-operator planning scope); commit `f4c7a00`
@@ -53,3 +53,30 @@ Restore the boundary per run, not per container:
 - **Keep `RAPTIX_WORKSPACE_ISOLATED=0` and rely on the server's `workspace_path`
   alone.** Rejected: nothing in the sandbox enforces it, so one project's run
   could read another's files.
+
+## Review finding (2026-10-17): the per-request fence does not isolate bash
+
+The decision above assumes the sandbox kernel can confine a run to its subtree
+by checking `workspace_path` per request. That does not hold for the agent's
+shell. The web sandbox mounts the whole volume at `/workspace`
+(`docker-compose.web-runtime.yml`), and bash runs commands under that mount. A
+prefix check on the requested path does not stop `cat /workspace/<other>/…` or
+`cd ..` inside a run. The kernel already records this limit in
+`kernel/base.py` (`engagement_fence_error` docstring: "A prefix check alone
+cannot restrict what arbitrary bash can read").
+
+So per-request fencing alone cannot provide the isolation this ADR was
+accepted for. Options that do provide a real boundary, each needing a decision:
+
+- **A. One sandbox container per project**, each mounting only its own
+  directory. Real isolation; costs one container per project and a launcher
+  change. This is the alternative the first draft rejected for resource use.
+- **B. Single engagement per deployment** (revert `f4c7a00`). Real isolation;
+  blocks running several projects on one deployment.
+- **C. Keep one shared sandbox with per-request fences and accept the risk.**
+  Not recommended: the fence does not stop cross-project reads, so this
+  would present as isolation when it is not.
+
+Until one of A/B is chosen, the deployment should be treated as having no
+isolation between projects.
+
