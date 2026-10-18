@@ -242,9 +242,10 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       if (p.type === 'message') {
         if (p.messageId && p.role === 'assistant') {
           const now = Date.now()
-          // A duration needs the reasoning and the answer to arrive in separate events; the same event gives no timing.
+          // A duration is the span of reasoning that arrives before any answer text. Reasoning that interleaves with the
+          // answer has no such span, so no duration is shown for it.
           let window = thinkingWindows.current.get(p.messageId)
-          if (!window && p.reasoning) { window = { startedAt: now, answeredAt: null, openedBy: event.eventId }; thinkingWindows.current.set(p.messageId, window) }
+          if (!window && p.reasoning && p.content.length === 0) { window = { startedAt: now, answeredAt: null, openedBy: event.eventId }; thinkingWindows.current.set(p.messageId, window) }
           if (window && window.answeredAt === null && p.content.length > 0 && window.openedBy !== event.eventId) window.answeredAt = now
         }
         setLive((prev) => {
