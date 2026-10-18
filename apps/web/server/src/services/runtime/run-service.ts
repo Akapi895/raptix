@@ -64,6 +64,9 @@ export interface InstanceMailboxView {
 /** P10d: the answer to a cancel. `cancel_requested` is recorded intent; the final state is observed later on the attempt. */
 export interface InstanceCancelView { threadId: string; dispatchId: string; attempt: number; state: InstanceAttemptState; source: 'runtime' }
 
+/** The operator grant the runtime recorded for a retry or reassign of one ended attempt. */
+interface RuntimeGrantView { commandId: string; kind: 'retry' | 'reassign'; sourceDispatchId: string; sourceAttempt: number; targetDispatchId: string; targetRole: string; state: string }
+
 /** P10d: a retry or reassign request and the orchestrator run that performs the admission. */
 export interface InstanceCommandView {
   commandId: string;
@@ -87,8 +90,13 @@ const REFUSAL_TEXT: Readonly<Record<string, string>> = {
   empty_message: 'The message is empty.',
   invalid_message_id: 'The message id is not valid.',
   message_id_conflict: 'This message id was already used for another instance or with different content.',
+  attempt_not_ended: 'The attempt must end before it can be retried or reassigned.',
+  already_replaced: 'This attempt was already retried or reassigned.',
+  intent_not_recorded: 'This attempt was recorded before its intent was kept, so it cannot be re-issued.',
+  replacement_pending: 'A replacement for this dispatch is already waiting to start.',
+  command_id_conflict: 'This command id was already used for a different request.',
+  invalid_command: 'The retry or reassignment request is not valid for this attempt.',
 };
-const TERMINAL_STATES: ReadonlySet<InstanceAttemptState> = new Set(['cancelled', 'finished', 'interrupted']);
 
 const instancePath = (thread: string, dispatch: string): string => `/_raptix/instances/${encodeURIComponent(thread)}/${encodeURIComponent(dispatch)}`;
 
@@ -289,30 +297,35 @@ export class RunService {
     return this.deliverInstanceMessage(thread, targetDispatch, { messageId, body, expectedAttempt, sourceMessageId });
   }
   /**
-   * P10d retry or reassign. Only an ended attempt can be replaced; a running or cancelling attempt is refused.
-   * The runtime does not start the replacement itself: the orchestrator run carries the exact intent and the
-   * dispatch admission path decides it. The run uses the command id as its request id, so a lost ack replays.
+   * P10d retry or reassign. The runtime records an operator grant only for an ended attempt, with that attempt's
+   * persisted intent, and refuses a second replacement of it. The orchestrator run only names the dispatch to
+   * admit; the runtime supplies the description, role and objective. The run uses the command id as its request id,
+   * so a lost ack replays. A refusal before admission withdraws the grant; an uncertain run is left for reconcile.
    */
   public async commandInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCommandView> {
     const { commandId, kind, expectedAttempt, role } = parseInstanceCommand(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
-    const attempts = await this.attemptRows(thread, dispatch);
-    const source = attempts.at(-1);
-    if (!source || source.attempt !== expectedAttempt) throw new ProjectPolicyError('conflict', 'The instance changed since you looked at it. Refresh the roster and try again.');
-    if (!TERMINAL_STATES.has(source.state)) throw new ProjectPolicyError('conflict', 'The attempt must end before it can be retried or reassigned.');
-    if (!source.intent || !source.role) throw new ProjectPolicyError('conflict', 'This attempt was recorded before its intent was kept, so it cannot be re-issued.');
-    const targetRole = kind === 'retry' ? source.role : role as string;
-    const targetDispatch = kind === 'retry' ? dispatch : `${dispatch}-r${commandId.replace(/[^A-Za-z0-9]/g, '').slice(0, 12)}`;
-    const objective = source.objectiveId ? `objective_id "${source.objectiveId}"` : 'no objective_id';
-    const prompt = [
-      `Operator ${kind} request ${commandId}. Attempt ${source.attempt} of dispatch "${dispatch}" (role ${source.role}) has ended as ${source.state}.`,
-      kind === 'retry'
-        ? `Re-issue the dispatch task call once with dispatch_id "${targetDispatch}", subagent_type "${targetRole}", ${objective}, and the description below copied character for character. This starts a new attempt of the same dispatch.`
-        : `Replace it: issue the dispatch task call once with dispatch_id "${targetDispatch}", subagent_type "${targetRole}", ${objective}, and the description below copied character for character. Do not change the old dispatch "${dispatch}".`,
-      '<<<', source.intent, '>>>',
+    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/grants`, {
+      commandId, kind, expectedAttempt, ...(kind === 'reassign' ? { reassignRole: role } : {}),
+    });
+    const payload = reply.body as { status?: unknown; reason?: unknown; grant?: RuntimeGrantView | null } | null;
+    if (reply.status === 409) throw refusal(payload, 'The runtime refused the retry or reassignment');
+    if (!payload || (payload.status !== 'opened' && payload.status !== 'duplicate') || !payload.grant) throw new RuntimeUnavailableError();
+    const grant = payload.grant;
+    const message = [
+      `Operator ${grant.kind} request ${commandId}: call the dispatch task once with dispatch_id "${grant.targetDispatchId}" and subagent_type "${grant.targetRole}".`,
+      'The runtime supplies the exact description and objective of this dispatch from the persisted attempt; do not write a new description.',
     ].join('\n');
-    const run = await this.submit(user, engagement, thread, { requestId: commandId, message: prompt });
-    return { commandId, kind, threadId: thread, sourceDispatchId: dispatch, sourceAttempt: source.attempt, dispatchId: targetDispatch, role: targetRole, run };
+    let run: RequestRecoveryView;
+    try {
+      run = await this.submit(user, engagement, thread, { requestId: commandId, message });
+    } catch (error) {
+      if (!(error instanceof RuntimeUnavailableError)) {
+        await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/grants/${encodeURIComponent(commandId)}/revoke`).catch(() => undefined);
+      }
+      throw error;
+    }
+    return { commandId, kind, threadId: thread, sourceDispatchId: dispatch, sourceAttempt: grant.sourceAttempt, dispatchId: grant.targetDispatchId, role: grant.targetRole, run };
   }
   private async authorizeInstanceMutation(user: string, engagement: string, thread: string): Promise<void> {
     const binding = await this.options.ownership.getBinding(user, engagement, thread);
@@ -365,9 +378,6 @@ export class RunService {
       messages: view.messages,
       source: 'runtime',
     };
-  }
-  private async attemptRows(thread: string, dispatch: string): Promise<RuntimeAttemptRow[]> {
-    return (await this.instanceView(thread, dispatch)).attempts;
   }
   private async instanceView(thread: string, dispatch: string): Promise<{ attempts: RuntimeAttemptRow[]; messages: InstanceMessageView[] }> {
     const reply = await this.options.reads.instanceExchange('GET', instancePath(thread, dispatch));
