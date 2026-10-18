@@ -99,7 +99,7 @@ Collapse the table into the 5-phase `ObjectivePhase` model:
   **dedicated test tenant** or a sandboxed app registration.
 - **Phishing requires social-engineering authorization** and a lure-deconfliction pass
   (`/skills/standard/phisher/lure-deconfliction/SKILL.md`).
-- Add an `EMERGENCY` abort trigger to `abort.json`: *"real (non-canary) user mailbox or
+- Add an `emergency` abort trigger to `abort.json`: *"real (non-canary) user mailbox or
   document collected, or consent granted on a non-engagement OAuth app."*
 
 ## Deconfliction

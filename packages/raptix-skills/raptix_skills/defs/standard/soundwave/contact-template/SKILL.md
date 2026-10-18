@@ -40,9 +40,9 @@ Typical chain:
 
 ### Step 3: Abort Signal Recipient
 
-The contact paged on EMERGENCY-severity abort triggers. Usually = primary operator but can differ (e.g., engagements with a dedicated on-call rotation).
+The contact paged on emergency-severity abort triggers. Usually = primary operator but can differ (e.g., engagements with a dedicated on-call rotation).
 
-Optional — leave `None` only if the engagement explicitly opts out of EMERGENCY paging (rare).
+Write it as a full contact object with `name`, `role`, and `channel`, the same shape as `primary_operator` — never a bare name string. Use `null` only if the engagement explicitly opts out of emergency paging (rare).
 
 ### Step 4: External SOC Endpoint (Optional)
 

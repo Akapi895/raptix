@@ -84,7 +84,7 @@ metadata:
   in scope.
 - **No real SIM swaps** against personal numbers (illegal). Simulate the SIM-swap effect with
   an authorized engagement-controlled test number only.
-- Ransomware/financial-theft impact is **canary-only**; add an `EMERGENCY` abort trigger:
+- Ransomware/financial-theft impact is **canary-only**; add an `emergency` abort trigger:
   *"real customer data exfiltrated, real funds moved, or production system encrypted."*
 
 ## Deconfliction

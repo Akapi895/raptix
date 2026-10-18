@@ -239,7 +239,7 @@ def test_load_opplan_binds_workspace_when_plan_is_missing(tmp_path: Path) -> Non
     assert "No opplan.json found" in cmd.update["messages"][0].content
 
     scoped = EngagementFilesystemBackend(backend, cmd.update["workspace_path"])
-    result = scoped.write("/workspace/plan/roe.json", "{}")
+    result = scoped.write("/workspace/notes.txt", "{}")
     assert result.error is None
 
 

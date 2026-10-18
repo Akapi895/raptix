@@ -80,7 +80,7 @@ metadata:
 ## RoE / safety gates
 
 - **On-chain exploitation MUST run on testnet or a forked-mainnet (Anvil) RPC.** Never sign a
-  real mainnet transaction. Add an `EMERGENCY` abort: *"a transaction signed against a
+  real mainnet transaction. Add an `emergency` abort: *"a transaction signed against a
   production/mainnet RPC or a real wallet key used."*
 - Developer-targeted social engineering requires authorization + lure-deconfliction
   (`/skills/standard/phisher/lure-deconfliction/SKILL.md`).
