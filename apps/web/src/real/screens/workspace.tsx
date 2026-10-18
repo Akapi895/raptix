@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, Hand, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, submitRun } from '../api'
+import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchReports, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
 import { useCapabilityReady } from '../bootstrap'
 import { awaitRequest, newRequestId, type AckOutcome } from '../request-ledger'
@@ -32,7 +32,9 @@ import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../plan
 import { RuntimeOperationsTab as RealOperationsHistory } from '../../features/operations/runtime-tab'
 import { useSession } from '../session'
 
-interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
+interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null; reasoningStartedAt?: number; thinkingMs?: number }
+/** A transcript row; `thinkingMs` exists only for reasoning streamed in this browser, because the runtime records no timing. */
+type DisplayMessage = ScopedThreadMessage & { thinkingMs?: number }
 interface TraceLine { id: string; label: string; status?: string; error?: boolean }
 
 interface TraceLikePayload {
@@ -238,7 +240,13 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         setLive((prev) => {
           const next = [...prev]
           const at = p.messageId ? next.findIndex((m) => m.messageId === p.messageId) : -1
-          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content: p.mode === 'snapshot' ? p.content : (at >= 0 ? next[at].content + p.content : p.content), reasoning: p.reasoning ?? (at >= 0 ? next[at].reasoning : undefined) }
+          const previous = at >= 0 ? next[at] : undefined
+          const content = p.mode === 'snapshot' ? p.content : (previous ? previous.content + p.content : p.content)
+          const reasoning = p.reasoning ?? previous?.reasoning
+          const now = Date.now()
+          const reasoningStartedAt = previous?.reasoningStartedAt ?? (reasoning ? now : undefined)
+          const thinkingMs = previous?.thinkingMs ?? (reasoningStartedAt !== undefined && content.length > 0 ? now - reasoningStartedAt : undefined)
+          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content, reasoning, reasoningStartedAt, thinkingMs }
           if (at >= 0) next[at] = entry
           else next.push(entry)
           return next
@@ -756,7 +764,7 @@ function KindBadge({ kind }: { kind: ThreadKind }): ReactElement {
 }
 
 /** Messages, then the current run's activity: consecutive tool lines fold into one collapsed group. */
-function Transcript({ messages, trace, onReuse }: { messages: ScopedThreadMessage[]; trace: TraceLine[]; onReuse?: (content: string) => void }): ReactElement {
+function Transcript({ messages, trace, onReuse }: { messages: DisplayMessage[]; trace: TraceLine[]; onReuse?: (content: string) => void }): ReactElement {
   if (messages.length === 0 && trace.length === 0) {
     return <p className="text-sm text-muted">No messages yet. Open with the engagement context, constraints and what you want planned.</p>
   }
@@ -789,7 +797,7 @@ function groupTrace(trace: TraceLine[]): { kind: 'tools' | 'system'; lines: Trac
   return groups
 }
 
-function MessageRow({ message, onReuse }: { message: ScopedThreadMessage; onReuse?: () => void }): ReactElement {
+function MessageRow({ message, onReuse }: { message: DisplayMessage; onReuse?: () => void }): ReactElement {
   const isUser = message.role === 'user'
   const [copied, setCopied] = useState(false)
   const copy = (): void => {
@@ -802,7 +810,7 @@ function MessageRow({ message, onReuse }: { message: ScopedThreadMessage; onReus
   return (
     <li className={cx('group flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
       <span className="text-[11px] font-medium uppercase tracking-wide text-neutral">{isUser ? 'You' : 'Assistant'}</span>
-      {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} />}
+      {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} durationMs={message.thinkingMs} />}
       {isUser
         ? <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border border-line bg-subtle px-3.5 py-2 text-sm leading-relaxed text-fg">{message.content}</div>
         : <div className={cx('w-full min-w-0 text-sm leading-relaxed text-fg', long && 'max-h-96 overflow-y-auto')}>{renderMarkdown(message.content)}</div>}
@@ -815,13 +823,15 @@ function MessageRow({ message, onReuse }: { message: ScopedThreadMessage; onReus
 }
 
 /** Shows the server-projected reasoning summary only on request; it never outweighs the answer. */
-function ThinkingBlock({ text }: { text: string }): ReactElement {
+function ThinkingBlock({ text, durationMs }: { text: string; durationMs?: number }): ReactElement {
   const [open, setOpen] = useState(false)
+  const label = durationMs === undefined ? 'Thinking...' : `Thought for ${durationMs < 1000 ? '<1' : Math.round(durationMs / 1000)}s`
   return (
     <div className="w-full text-xs text-muted">
-      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 hover:text-fg">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 hover:text-fg"
+        title={durationMs === undefined ? undefined : 'Measured in this browser while the reply streamed; the runtime does not record thinking time.'}>
         {open ? <ChevronDown size={12} aria-hidden /> : <ChevronRight size={12} aria-hidden />}
-        {open ? 'Hide thinking' : 'Thinking...'}
+        {open ? 'Hide thinking' : label}
       </button>
       {open && <p className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap break-words border-l border-line pl-3 italic">{text}</p>}
     </div>
@@ -1022,6 +1032,7 @@ const PLANNING_STATE_TONE: Record<string, string> = {
 /** Artifacts: real planning document states from the server, plus shortcuts to the surfaces that own each artifact. */
 function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement {
   const planning = useQuery({ queryKey: ['real', 'planning', engagementId], queryFn: () => fetchPlanning(engagementId) })
+  const reports = useQuery({ queryKey: ['real', 'reports', engagementId], queryFn: () => fetchReports(engagementId) })
   const docs = planning.data ? Object.entries(planning.data.bundle) : []
   const links: { label: string; tab: string }[] = [
     { label: 'Scope & RoE', tab: 'scope' },
@@ -1030,6 +1041,26 @@ function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement
   ]
   return (
     <div className="space-y-4">
+      <section aria-label="Report files" className="space-y-2">
+        <h3 className="text-xs font-semibold text-fg">Report files</h3>
+        {reports.isPending ? <Skeleton className="h-16" /> : reports.isError ? (
+          <p className="text-xs text-bad" role="alert">{reports.error instanceof Error ? reports.error.message : 'Reports could not be read.'}</p>
+        ) : reports.data.reports.length === 0 ? (
+          <p className="text-xs text-muted">No report has been drafted for this project yet.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {reports.data.reports.map((report) => (
+              <li key={report.id}>
+                <button type="button" onClick={() => go('project', { id: engagementId, tab: 'reports' })}
+                  className="flex w-full items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-left text-xs hover:bg-hover">
+                  <span className="min-w-0 truncate text-fg">{report.title} <span className="text-muted">· v{report.version}</span></span>
+                  <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] uppercase text-muted">{report.status.replace('_', ' ')}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <section aria-label="Planning documents" className="space-y-2">
         <h3 className="text-xs font-semibold text-fg">Planning documents</h3>
         {planning.isPending ? <Skeleton className="h-16" /> : planning.isError ? (
