@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import type { RequestRecoveryView, ScopedRunView, ScopedThreadView, ThreadBindingView } from '@raptix/web-contracts';
+import type {
+  InstanceAttemptState, InstanceCancelAck, InstanceMailboxView, InstanceMessageAck, InstanceMessageView, RequestRecoveryView,
+  RuntimeInstanceView, RuntimeRosterView, ScopedRunView, ScopedThreadView, ThreadBindingView,
+} from '@raptix/web-contracts';
 import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtime/execution-client.js';
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
 import { RuntimeCheckpointMissingError, RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
@@ -21,51 +24,6 @@ const terminal = (status: string): boolean => ['success', 'error', 'timeout', 'i
 function metadata(actual: Record<string, unknown>, expected: Record<string, string>): void {
   if (Object.entries(expected).some(([k, v]) => actual[k] !== v)) throw conflict();
 }
-/** One dispatch instance as the runtime's dispatch ledger records it. The ledger keeps the latest attempt per dispatch. */
-export interface RuntimeInstanceView {
-  instanceId: string;
-  threadId: string;
-  dispatchId: string;
-  attempt: number;
-  /** Null for rows written before the runtime recorded the role; those are never guessed from transcripts. */
-  role: string | null;
-  objectiveId: string | null;
-  /** The dispatch that started this one; null for the thread's orchestrator, and for rows written before the runtime recorded parents. */
-  parentDispatchId: string | null;
-  outcome: string;
-  terminal: boolean;
-  /** `mailbox` rows are attempts the runtime is running (or ended without a ledger row); the ledger keeps only each dispatch's latest finished attempt. */
-  source: 'dispatch_ledger' | 'mailbox';
-}
-
-/** P10c: one message as the runtime's mailbox records it. */
-export interface InstanceMessageView {
-  messageId: string;
-  attempt: number;
-  seq: number;
-  body: string;
-  state: 'accepted' | 'delivered' | 'handled' | 'undelivered';
-  acceptedAt: string;
-  deliveredAt: string | null;
-  handledAt: string | null;
-  outcome: string | null;
-  /** Set only on a message the operator forwarded from another attempt's message. */
-  sourceMessageId: string | null;
-}
-
-export type InstanceAttemptState = 'running' | 'cancel_requested' | 'cancelled' | 'finished' | 'interrupted';
-
-export interface InstanceMailboxView {
-  threadId: string;
-  dispatchId: string;
-  instances: { attempt: number; role: string | null; state: InstanceAttemptState; startedAt: string; finishedAt: string | null }[];
-  messages: InstanceMessageView[];
-  source: 'runtime';
-}
-
-/** P10d: the answer to a cancel. `cancel_requested` is recorded intent; the final state is observed later on the attempt. */
-export interface InstanceCancelView { threadId: string; dispatchId: string; attempt: number; state: InstanceAttemptState; source: 'runtime' }
-
 /** The operator grant the runtime recorded for a retry or reassign of one ended attempt. */
 interface RuntimeGrantView { commandId: string; kind: 'retry' | 'reassign'; sourceDispatchId: string; sourceAttempt: number; targetDispatchId: string; targetRole: string; state: string }
 
@@ -104,13 +62,6 @@ const instancePath = (thread: string, dispatch: string): string => `/_raptix/ins
 
 /** The attempt rows the runtime holds for one dispatch, including the internal intent that a retry re-issues. */
 interface RuntimeAttemptRow { attempt: number; role: string | null; state: InstanceAttemptState; startedAt: string; finishedAt: string | null; intent: string | null; objectiveId: string | null }
-
-export interface RuntimeRosterView {
-  engagementId: string;
-  instances: RuntimeInstanceView[];
-  threads: { threadId: string; read: 'read' | 'unavailable'; reason: string | null }[];
-  source: 'runtime';
-}
 
 function ledgerInstances(threadId: string, ledger: unknown): RuntimeInstanceView[] {
   if (typeof ledger !== 'object' || ledger === null || Array.isArray(ledger)) return [];
@@ -394,7 +345,7 @@ export class RunService {
    * engagement, and sending is a mutation, so the operator gate runs here. The runtime decides whether
    * the instance can take the message; a refusal reaches the operator as its reason.
    */
-  public async sendInstanceMessage(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
+  public async sendInstanceMessage(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceMessageAck> {
     const { messageId, body, expectedAttempt } = parseInstanceMessage(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
     return this.deliverInstanceMessage(thread, dispatch, { messageId, body, expectedAttempt, sourceMessageId: null });
@@ -403,7 +354,7 @@ export class RunService {
    * P10d: the operator asks for cooperative cancel of one attempt. The runtime records the request and
    * refuses messages from then on; the attempt is only observed stopped when its dispatch finishes.
    */
-  public async cancelInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCancelView> {
+  public async cancelInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCancelAck> {
     const expectedAttempt = parseInstanceCancel(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
     const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/cancel`, { expectedAttempt });
@@ -416,7 +367,7 @@ export class RunService {
    * P10c forward: the operator repeats one message from this thread's dispatch to a running attempt. The
    * source must be a message the runtime holds for that dispatch on the same thread; the new message names it.
    */
-  public async forwardInstanceMessage(user: string, engagement: string, thread: string, targetDispatch: string, raw: unknown): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
+  public async forwardInstanceMessage(user: string, engagement: string, thread: string, targetDispatch: string, raw: unknown): Promise<InstanceMessageAck> {
     const { messageId, sourceDispatchId, sourceMessageId, expectedAttempt } = parseInstanceForward(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
     const source = (await this.instanceView(thread, sourceDispatchId)).messages.find(m => m.messageId === sourceMessageId);
@@ -459,7 +410,7 @@ export class RunService {
     const binding = await this.options.ownership.getBinding(user, engagement, thread);
     await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
   }
-  private async deliverInstanceMessage(thread: string, dispatch: string, message: { messageId: string; body: string; expectedAttempt: number; sourceMessageId: string | null }): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
+  private async deliverInstanceMessage(thread: string, dispatch: string, message: { messageId: string; body: string; expectedAttempt: number; sourceMessageId: string | null }): Promise<InstanceMessageAck> {
     const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/messages`, {
       messageId: message.messageId, body: message.body, expectedAttempt: message.expectedAttempt,
       ...(message.sourceMessageId ? { sourceMessageId: message.sourceMessageId } : {}),
