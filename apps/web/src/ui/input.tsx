@@ -26,16 +26,17 @@ export function SearchBox({ value, onChange, placeholder = 'Search…', classNam
 }
 export function Check({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label?: ReactNode; disabled?: boolean }) {
   return (
-    <label className={cx('inline-flex cursor-pointer items-center gap-2 text-sm', disabled && 'cursor-not-allowed opacity-50')}>
-      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-[var(--c-accent)]" />
+    <label className={cx('inline-flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-sm transition hover:bg-hover', disabled && 'cursor-not-allowed opacity-50 hover:bg-transparent')}>
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 cursor-pointer rounded accent-[var(--c-accent)]" />
       {label}
     </label>
   )
 }
 export function Toggle({ on, onChange, label, disabled }: { on: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
+  const thumbPos = on ? 'left-[calc(100%-20px)]' : 'left-0.5'
   return (
-    <button role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)} className={cx('relative h-6 w-11 shrink-0 rounded-full border transition disabled:opacity-50', on ? 'border-accent bg-accent' : 'border-line bg-hover')}>
-      <span className={cx('absolute top-0.5 h-4.5 w-4.5 rounded-full bg-white transition-all', on ? 'left-[22px]' : 'left-0.5')} style={{ width: 18, height: 18 }} />
+    <button role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)} className={cx('relative h-6 w-11 shrink-0 rounded-full border border-2 transition disabled:opacity-50', on ? 'border-accent bg-accent' : 'border-line bg-panel')}>
+      <span className={cx('absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all', thumbPos)} />
     </button>
   )
 }
