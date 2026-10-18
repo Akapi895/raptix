@@ -42,6 +42,24 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
     reply.status(ack.status === 'accepted' ? 202 : 200);
     return ack;
   }));
+  app.post(`${prefix}/instances/:thread/:dispatch/messages/forward`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread, dispatch } = request.params as { id: string; thread: string; dispatch: string };
+    const ack = await service.forwardInstanceMessage(identity.id, id, thread, dispatch, request.body);
+    reply.status(ack.status === 'accepted' ? 202 : 200);
+    return ack;
+  }));
+  app.post(`${prefix}/instances/:thread/:dispatch/cancel`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread, dispatch } = request.params as { id: string; thread: string; dispatch: string };
+    const ack = await service.cancelInstance(identity.id, id, thread, dispatch, request.body);
+    reply.status(202);
+    return ack;
+  }));
+  app.post(`${prefix}/instances/:thread/:dispatch/commands`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread, dispatch } = request.params as { id: string; thread: string; dispatch: string };
+    const ack = await service.commandInstance(identity.id, id, thread, dispatch, request.body);
+    reply.status(202);
+    return ack;
+  }));
   app.get(`${prefix}/instances/:thread/:dispatch/messages`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');
     const { id, thread, dispatch } = request.params as { id: string; thread: string; dispatch: string };

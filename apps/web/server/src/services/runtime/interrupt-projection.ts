@@ -21,7 +21,10 @@ function questionFrom(value: unknown, interruptId?: unknown): PendingInterruptVi
   }
   const header = typeof value.header === 'string' ? value.header.slice(0, 200) : '';
   const langgraphInterruptId = typeof interruptId === 'string' && interruptId.length > 0 && interruptId.length <= 256 ? interruptId : undefined;
-  return { questionId, question: value.question, header, options, multiSelect: value.multi_select === true, allowOther: value.allow_other === true, source: 'runtime', ...(langgraphInterruptId ? { interruptId: langgraphInterruptId } : {}) };
+  const dispatchId = typeof value.dispatch_id === 'string' && value.dispatch_id.length > 0 && value.dispatch_id.length <= 256 ? value.dispatch_id : null;
+  const attempt = typeof value.attempt === 'number' && Number.isSafeInteger(value.attempt) && value.attempt >= 1 ? value.attempt : null;
+  const instance = dispatchId !== null && attempt !== null ? { dispatchId, attempt } : undefined;
+  return { questionId, question: value.question, header, options, multiSelect: value.multi_select === true, allowOther: value.allow_other === true, source: 'runtime', ...(langgraphInterruptId ? { interruptId: langgraphInterruptId } : {}), ...(instance ? { instance } : {}) };
 }
 
 /**

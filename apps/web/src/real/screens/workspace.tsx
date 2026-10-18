@@ -723,6 +723,7 @@ function QuestionCard({ question, busy, onAnswer, onValue }: { question: Pending
         <div className="min-w-0">
           {question.header && <div className="text-xs font-semibold uppercase tracking-wider text-neutral">{question.header}</div>}
           <p className="text-sm text-fg">{question.question}</p>
+          {question.instance && <p className="mt-1 text-xs text-muted">Asked by dispatch {question.instance.dispatchId.slice(0, 12)} · attempt {question.instance.attempt}. Answer with the others below.</p>}
         </div>
       </div>
       <div className="mt-2 space-y-1.5">

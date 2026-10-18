@@ -22,7 +22,7 @@ export function RealExecutionAgents({ engagementId, assistantId, threadId, branc
         {!branches.length && <p className="text-xs text-muted">No checkpoint invocations are recorded for this thread.</p>}
       </section>
       <RuntimeRoster engagementId={engagementId} threadId={threadId} />
-      <details className="text-xs"><summary className="cursor-pointer text-muted">Communication & control capabilities</summary><p className="mt-2 leading-relaxed">Observation: checkpoint records only. Direct message / forward / per-instance pause, cancel and retry: unavailable — no endpoint contract. Questions resume their recorded thread. Cancel run remains run-scoped.</p><p className="mt-2 break-all font-mono">Thread: {threadId ?? 'not selected'}</p></details>
+      <details className="text-xs"><summary className="cursor-pointer text-muted">Communication & control capabilities</summary><p className="mt-2 leading-relaxed">Per running instance: messages, forward to another running instance, cancel (cooperative), and retry or reassign once the attempt has ended. Pause for an instance stays unavailable until the runtime has a pause safe point (P11). Questions resume their recorded thread. Cancel run remains run-scoped.</p><p className="mt-2 break-all font-mono">Thread: {threadId ?? 'not selected'}</p></details>
     </>}
   </div>
 }
@@ -40,19 +40,19 @@ function RuntimeRoster({ engagementId, threadId }: { engagementId: string; threa
     {unread.length > 0 && <Banner tone="warn" title="Some threads could not be read">{unread.map((thread) => `${thread.threadId.slice(0, 8)}: ${thread.reason ?? 'unavailable'}`).join(' · ')}</Banner>}
     {instances.length === 0 ? <p className="text-xs text-muted">No dispatch instances are recorded{threadId ? ' on this thread' : ''}.</p> : (
       <ul className="space-y-2">
-        {instances.map((instance) => <RosterRow key={instance.instanceId} engagementId={engagementId} instance={instance} />)}
+        {instances.map((instance) => <RosterRow key={instance.instanceId} engagementId={engagementId} instance={instance} peers={roster.data.instances} />)}
       </ul>
     )}
   </section>
 }
 
-function RosterRow({ engagementId, instance }: { engagementId: string; instance: RuntimeInstanceView }): ReactElement {
+function RosterRow({ engagementId, instance, peers }: { engagementId: string; instance: RuntimeInstanceView; peers: RuntimeInstanceView[] }): ReactElement {
   const [open, setOpen] = useState(false)
   return <li className="rounded-xl border border-line p-3 text-xs">
     <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium">{instance.role ?? 'role not recorded'} · attempt {instance.attempt}</span><span className="font-mono">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></div>
     <p className="mt-1 break-all font-mono text-muted">{instance.dispatchId.slice(0, 12)} · objective {instance.objectiveId ?? '—'} · thread {instance.threadId.slice(0, 8)}</p>
     <Button size="sm" variant="secondary" className="mt-2" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide messages' : 'Messages'}</Button>
-    {open && <InstanceMessenger engagementId={engagementId} threadId={instance.threadId} dispatchId={instance.dispatchId} attempt={instance.attempt} />}
+    {open && <InstanceMessenger engagementId={engagementId} threadId={instance.threadId} dispatchId={instance.dispatchId} attempt={instance.attempt} peers={peers} />}
   </li>
 }
 

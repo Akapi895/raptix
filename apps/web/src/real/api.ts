@@ -577,12 +577,17 @@ export interface InstanceMessageView {
   deliveredAt: string | null
   handledAt: string | null
   outcome: string | null
+  /** Set only on a message the operator forwarded from another attempt's message. */
+  sourceMessageId: string | null
 }
+
+/** `cancel_requested` is the operator's recorded intent; only `cancelled`, `finished` or `interrupted` is an observed end. */
+export type InstanceAttemptState = 'running' | 'cancel_requested' | 'cancelled' | 'finished' | 'interrupted'
 
 export interface InstanceAttemptView {
   attempt: number
   role: string | null
-  state: 'running' | 'finished' | 'interrupted'
+  state: InstanceAttemptState
   startedAt: string
   finishedAt: string | null
 }
@@ -604,18 +609,50 @@ function isInstanceMailboxView(v: unknown): v is InstanceMailboxView {
     && Array.isArray(doc.messages) && doc.source === 'runtime'
 }
 
+function instanceRoot(engagementId: string, threadId: string, dispatchId: string): string {
+  return `/engagements/${encodeURIComponent(engagementId)}/instances/${encodeURIComponent(threadId)}/${encodeURIComponent(dispatchId)}`
+}
+
 function instancePath(engagementId: string, threadId: string, dispatchId: string): string {
-  return `/engagements/${encodeURIComponent(engagementId)}/instances/${encodeURIComponent(threadId)}/${encodeURIComponent(dispatchId)}/messages`
+  return `${instanceRoot(engagementId, threadId, dispatchId)}/messages`
 }
 
 export function fetchInstanceMailbox(engagementId: string, threadId: string, dispatchId: string): Promise<InstanceMailboxView> {
   return apiFetch(instancePath(engagementId, threadId, dispatchId), (v): v is InstanceMailboxView => isInstanceMailboxView(v) && v.threadId === threadId && v.dispatchId === dispatchId)
 }
 
-/** A refused message fails with the server's reason; a duplicate retry is an accepted outcome, not a second message. */
-export function sendInstanceMessage(engagementId: string, threadId: string, dispatchId: string, input: { messageId: string; body: string }): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
-  return apiFetch(instancePath(engagementId, threadId, dispatchId), (v): v is { status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView } =>
-    typeof v === 'object' && v !== null && ((v as { status?: unknown }).status === 'accepted' || (v as { status?: unknown }).status === 'duplicate'), { method: 'POST', body: input })
+type MessageAck = { status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }
+const isMessageAck = (v: unknown): v is MessageAck => typeof v === 'object' && v !== null && ((v as { status?: unknown }).status === 'accepted' || (v as { status?: unknown }).status === 'duplicate')
+
+/** A refused message fails with the server's reason; a duplicate retry is an accepted outcome, not a second message. The attempt pins the target. */
+export function sendInstanceMessage(engagementId: string, threadId: string, dispatchId: string, input: { messageId: string; body: string; expectedAttempt: number }): Promise<MessageAck> {
+  return apiFetch(instancePath(engagementId, threadId, dispatchId), isMessageAck, { method: 'POST', body: input })
+}
+
+/** P10d: cooperative cancel. The answer is the recorded request (`cancel_requested`); the stop is observed on the attempt later. */
+export interface InstanceCancelAck { threadId: string; dispatchId: string; attempt: number; state: InstanceAttemptState }
+export function cancelInstance(engagementId: string, threadId: string, dispatchId: string, expectedAttempt: number): Promise<InstanceCancelAck> {
+  return apiFetch(`${instanceRoot(engagementId, threadId, dispatchId)}/cancel`, (v): v is InstanceCancelAck => typeof v === 'object' && v !== null && (v as { state?: unknown }).state === 'cancel_requested', { method: 'POST', body: { expectedAttempt } })
+}
+
+/** P10c forward: a new message to a running attempt that names the source message on this dispatch. */
+export function forwardInstanceMessage(engagementId: string, threadId: string, targetDispatchId: string, input: { messageId: string; sourceDispatchId: string; sourceMessageId: string; expectedAttempt: number }): Promise<MessageAck> {
+  return apiFetch(`${instanceRoot(engagementId, threadId, targetDispatchId)}/messages/forward`, isMessageAck, { method: 'POST', body: input })
+}
+
+/** P10d: retry the same dispatch (no role) or reassign it to another role. The answer names the run that admits the replacement. */
+export interface InstanceCommandAck {
+  commandId: string
+  kind: 'retry' | 'reassign'
+  threadId: string
+  sourceDispatchId: string
+  sourceAttempt: number
+  dispatchId: string
+  role: string
+  run: { requestId?: string; state?: string; runId?: string | null } & Record<string, unknown>
+}
+export function commandInstance(engagementId: string, threadId: string, dispatchId: string, input: { commandId: string; kind: 'retry' | 'reassign'; expectedAttempt: number; role?: string }): Promise<InstanceCommandAck> {
+  return apiFetch(`${instanceRoot(engagementId, threadId, dispatchId)}/commands`, (v): v is InstanceCommandAck => typeof v === 'object' && v !== null && typeof (v as { commandId?: unknown }).commandId === 'string', { method: 'POST', body: input })
 }
 
 export interface AssetInventoryView {
