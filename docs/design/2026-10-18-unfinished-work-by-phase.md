@@ -16,7 +16,7 @@
 | Phase | Trạng thái | Còn thiếu chính |
 |---|---|---|
 | P00 | Một phần | Inventory 55 key và tabs/actions (real/shared/mock-only); dirty-file ledger; image digest cho baseline. |
-| P01 | Một phần | Test abort và late-ACK cho port/adapter. |
+| P01 | Gần xong | Test abort và late-ACK ở transport đã có (`43efd4c4`, 14 test pass). Còn test cho port/adapter. |
 | P02 | Một phần | A01: artifact runtime thật từ một dedicated run. |
 | P03 | Một phần | Browser: retry attach sau lỗi. |
 | P04 | Một phần | Browser: tamper, traversal/symlink, mất quyền, interrupted download. |
@@ -25,7 +25,7 @@
 | P07 | Một phần | PDF/DOCX **Hoãn** (D05, exclusion có tên). Phần còn lại xong. |
 | P08 | Xong (code) | Còn 3 mục registry (§3). |
 | P09 | Gần xong | Mục mock-only **[UI]**; parity checklist theo domain; 7 test theo thời gian chưa ổn định. |
-| P10 | Một phần | Forward live; hai instance cùng role đồng thời live; pin câu hỏi trong messenger **[UI]**; DTO instance vào `@raptix/web-contracts`. |
+| P10 | Một phần | Forward live; hai instance cùng role đồng thời live; pin câu hỏi trong messenger **[UI]**. DTO instance đã vào `@raptix/web-contracts` (`637e9bb0`). |
 | P11 | Một phần | Backend pause/resume/complete và live đã xong. Còn: UI controls **[UI]**; step controls (cần quyết định mapping step ↔ OPPLAN objective); một số acceptance (§2, P11). |
 | P12 | Một phần | Còn: Results/Trace; C2 round-trip Sliver trong Docker lab; lifecycle UI **[UI]**. Campaigns generate/deploy **Blocked** (ROE loại phishing). |
 | P13 | Chưa | Chờ P09–P12; build/digest/evidence tổng hợp; dọn panel/contract/gate cũ. |
@@ -44,7 +44,8 @@ Ngoài phase: browser click-through của luồng chính chưa chạy (phiên kh
 
 ### P01 — Hoàn thiện feature ports và real transport
 - **Đã có:** `EvidenceUploadInput` có bytes; transport binary kiểm độ dài và SHA-256 (ledger 13.15).
-- **Còn thiếu:** test abort và late-ACK cho port/adapter.
+- **Đã có thêm (`43efd4c4`):** test transport: response đến sau khi caller đã abort hoặc chuyển engagement bị bỏ.
+- **Còn thiếu:** test abort và late-ACK ở tầng port/adapter, phía trên transport.
 
 ### P02 — Producer findings → shared suggestion/import flow
 - **Đã có:** route suggestions/import/options; dismissal theo actor + path; migration `20261022`; gate `p02-p05-workflow-live.ts` pass (import idempotent khi retry đồng thời).
@@ -102,7 +103,7 @@ Ngoài phase: browser click-through của luồng chính chưa chạy (phiên kh
   - **Forward live:** cần attempt đích đang chạy trên cùng thread. Run 1 của kịch bản bị treo do vòng `sleep` của model, nên run 2 bị 409. Attempt A đã nhận message `handled`. Chưa có forward live.
   - **Hai instance cùng role đồng thời live:** model dispatch tuần tự dù được yêu cầu song song. Cần prompt/tool buộc concurrency, hoặc chấp nhận là blocked.
   - **Pin câu hỏi trong messenger [UI]:** execution assistant không có tool `ask_user`; mới kiểm chứng ở planning. Messenger chưa liệt kê câu hỏi pinned; batch resume giữ nguyên.
-  - **DTO instance** còn trong `api.ts` và `run-service.ts`; chưa chuyển vào `@raptix/web-contracts` như ADR-0089 yêu cầu.
+  - **DTO instance** đã chuyển vào `@raptix/web-contracts` (`src/instances.ts`, `637e9bb0`) như ADR-0089 yêu cầu. `api.ts` re-export cho màn hình; `run-service.ts` import từ contracts. DTO lệnh (`InstanceCommandAck`, `InstanceCommandView`) chưa chuyển.
   - Lineage reassign chỉ có trong run message, chưa có bảng riêng (ADR-0089 không yêu cầu; ghi nhận như hạn chế).
 
 ### P11 — Operations lifecycle và step controls tại runtime
@@ -177,15 +178,17 @@ Ngoài phase: browser click-through của luồng chính chưa chạy (phiên kh
 | `2c06098e` | P11: gate plan chấp nhận paused; tin nhắn mới bị chặn khi paused/completed |
 | `2942658a`, `af1befa6` | P12: C2 grant yêu cầu session do provider báo cáo; test |
 | `135390d1` | P10: test deterministic hai dispatch cùng role |
+| `43efd4c4` | P01: test late-ACK sau abort ở transport |
+| `637e9bb0` | P10: DTO instance chuyển vào `@raptix/web-contracts` |
 | `953a4bea` | Ledger 13.24 và file này (phiên trước) |
 
 ## 6. Thứ tự đề xuất để đóng phase
 
 1. **Backend, không chờ UI:**
-   - P10: DTO instance vào `@raptix/web-contracts`; forward live; hai instance đồng thời (cần prompt/tool buộc concurrency hoặc quyết định blocked).
+   - P10: forward live; hai instance đồng thời (cần prompt/tool buộc concurrency hoặc quyết định blocked).
    - P11: acceptance còn lại (paused restart, question-vs-pause, stop race, approval deadline, double resume đồng thời).
    - P12: Results/Trace adapter từ runtime history/events; C2 lab round-trip (Sliver trong Docker cục bộ, cần quyết định).
-   - P01: test abort và late-ACK.
+   - P01: test late-ACK ở tầng port/adapter (transport đã có).
    - P00: inventory 55 key.
 2. **Quyết định cần từ bạn:**
    - P11 step controls: mapping step ↔ OPPLAN objective.
