@@ -18,7 +18,7 @@ function agentStatus(instance: RuntimeInstanceView): { label: string; tone: Agen
 }
 
 const TONE_DOT: Record<AgentTone, string> = {
-  running: 'bg-accent',
+  running: 'bg-cyan',
   done: 'bg-ok',
   failed: 'bg-bad',
   stopped: 'bg-neutral',
