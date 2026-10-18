@@ -3,8 +3,14 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cx } from './cx'
 
 /* ───────────── Layout ───────────── */
-export const Card = ({ children, className, pad = true }: { children: ReactNode; className?: string; pad?: boolean }) => (
-  <div className={cx('rounded-xl border border-line bg-panel', pad && 'p-5', className)}>{children}</div>
+type CardVariant = 'default' | 'elevated' | 'highlight'
+const CardVariants: Record<CardVariant, string> = {
+  default: 'border border-line bg-panel',
+  elevated: 'border border-line bg-panel shadow-sm',
+  highlight: 'border border-accent/20 bg-accent-soft',
+}
+export const Card = ({ children, className, pad = true, variant = 'default' }: { children: ReactNode; className?: string; pad?: boolean; variant?: CardVariant }) => (
+  <div className={cx('rounded-xl', CardVariants[variant], pad && 'p-5', className)}>{children}</div>
 )
 export function CardHeader({ title, sub, actions }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode }) {
   return (

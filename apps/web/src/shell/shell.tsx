@@ -102,10 +102,10 @@ export function GlobalModals() {
 function Toasts() {
   const toasts = useToastStore((s) => s.toasts)
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2" aria-live="polite">
+    <div className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2" aria-live="polite" aria-atomic="true">
       {toasts.map((t) => (
-        <div key={t.id} className={cx('pointer-events-auto flex items-start gap-2 rounded-xl border bg-panel px-4 py-3 text-sm shadow-xl', { ok: 'border-ok/50', warn: 'border-warn/50', bad: 'border-bad/50', info: 'border-cyan/50' }[t.kind])}>
-          <span className={cx('mt-0.5 font-semibold', { ok: 'text-ok', warn: 'text-warn', bad: 'text-bad', info: 'text-cyan' }[t.kind])} aria-hidden>{t.kind === 'ok' ? '✓' : t.kind === 'info' ? 'ℹ' : '!'}</span>{t.text}
+        <div key={t.id} className={cx('pointer-events-auto flex items-start gap-3 rounded-xl border-l-4 bg-panel px-4 py-3 text-sm shadow-xl', { ok: 'border-l-ok border-ok/30 bg-ok-soft text-ok', warn: 'border-l-warn border-warn/30 bg-warn-soft text-warn', bad: 'border-l-bad border-bad/30 bg-bad-soft text-bad', info: 'border-l-cyan border-cyan/30 bg-info-soft text-cyan' }[t.kind])}>
+          <span className={cx('mt-0.5 shrink-0 font-semibold')} aria-hidden>{t.kind === 'ok' ? '✓' : t.kind === 'info' ? 'ℹ' : '!'}</span><span className="flex-1">{t.text}</span>
         </div>
       ))}
     </div>
@@ -178,11 +178,11 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
 }
 function LoadingState() {
   return (
-    <div aria-busy="true" role="status" className="animate-pulse">
+    <div aria-busy="true" role="status" className="animate-pulse [animation-duration:1.5s]">
       <div className="mb-3 h-7 w-64 rounded bg-hover" /><div className="mb-8 h-4 w-96 max-w-full rounded bg-hover" />
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 rounded-xl bg-hover" />)}</div>
       <div className="h-72 rounded-xl bg-hover" />
-      <span className="sr-only">Switching project context…</span>
+      <span className="sr-only">Loading project data…</span>
     </div>
   )
 }
