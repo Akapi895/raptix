@@ -19,7 +19,7 @@ function contextHash(project: Engagement, assistantId: string, kind: ThreadKind)
   return requestFingerprint({ engagementId: project.id, workspaceSlug: project.workspaceSlug, targetType: project.targetType, targetValue: project.targetValue, authorizationConfirmed: project.authorizationConfirmed, assistantId, kind });
 }
 function bindingView(row: EngagementThread): ThreadBindingView {
-  return { engagementId: row.engagementId, threadId: row.threadId, assistantId: row.assistantId, kind: row.kind, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
+  return { engagementId: row.engagementId, threadId: row.threadId, assistantId: row.assistantId, kind: row.kind, title: row.title ?? null, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 function recoveryView(row: WebRequestLedger): RequestRecoveryView {
   return { engagementId: row.engagementId, requestId: row.requestId, operation: row.operation, state: row.state, threadId: row.threadId, runId: row.runId, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
@@ -95,6 +95,16 @@ export class RuntimeOwnershipService {
       if (expected && (expected.assistantId !== row.assistantId || expected.kind !== row.kind)) throw conflict();
       if (expected?.runtimeConfigHash !== undefined && row.runtimeConfigHash !== expected.runtimeConfigHash) throw conflict();
       return bindingView(row);
+    });
+  }
+
+  /** Owner-set display name of a bound thread. Identity, binding and runtime context stay as they were. */
+  public async renameBinding(userId: string, engagementId: string, threadId: string, title: string): Promise<ThreadBindingView> {
+    return this.transaction(async tx => {
+      const project = await this.owned(tx, userId, engagementId, 'operator');
+      await this.binding(tx, project, threadId);
+      await tx.engagementThread.updateMany({ where: { engagementId, threadId }, data: { title } });
+      return bindingView(await this.binding(tx, project, threadId));
     });
   }
 

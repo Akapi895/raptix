@@ -193,6 +193,13 @@ export function listThreads(engagementId: string): Promise<ScopedThreadListView>
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/threads`, (v): v is ScopedThreadListView => isScopedThreadListView(v) && v.engagementId === engagementId && v.threads.every(t => t.engagementId === engagementId))
 }
 
+/** Owner-set display name of a thread. The server validates it; the thread identity never changes. */
+export function renameThread(engagementId: string, threadId: string, title: string): Promise<{ threadId: string; title: string | null }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/threads/${encodeURIComponent(threadId)}`,
+    (v): v is { threadId: string; title: string | null } => typeof v === 'object' && v !== null && (v as { threadId?: unknown }).threadId === threadId,
+    { method: 'PATCH', body: { title } })
+}
+
 export function getThread(engagementId: string, threadId: string): Promise<ScopedThreadView> {
   return apiFetch(
     `/engagements/${encodeURIComponent(engagementId)}/threads/${encodeURIComponent(threadId)}`,
