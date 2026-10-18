@@ -55,7 +55,7 @@ export function Menu({ trigger, items, align = 'right' }: { trigger: ReactNode; 
       {open && createPortal(
         <div ref={panel} role="menu" style={{ position: 'fixed', ...pos }} className="z-50 min-w-52 max-w-[calc(100vw-1.5rem)] rounded-xl border border-line bg-panel p-1 shadow-xl">
           {items.map((it) => (
-            <button key={it.label} role="menuitem" disabled={it.disabled} title={it.hint} onClick={() => { setOpen(false); it.onClick() }} className={cx('flex h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm transition hover:bg-hover disabled:opacity-40', it.danger ? 'text-bad' : 'text-fg')}>
+            <button key={it.label} role="menuitem" disabled={it.disabled} title={it.hint} onClick={() => { setOpen(false); it.onClick() }} className={cx('flex h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40', it.danger ? 'text-bad hover:bg-bad-soft' : 'text-fg')}>
               {it.icon && <it.icon size={15} aria-hidden />}{it.label}
             </button>
           ))}
