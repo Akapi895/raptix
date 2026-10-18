@@ -2,9 +2,9 @@
  * Operations tab over the runtime (plan P12, Operations slice), shared by the real
  * project detail, the operations feature route and the AI workspace history. The
  * engagement's execution threads and their runs show the runtime's raw statuses
- * with their identities. Pause, resume and completion are not offered: the runtime
- * has no action for them until the operation lifecycle lands (plan P11). A stop is
- * requested from Governance, and a stop that still blocks work is named here.
+ * with their identities. Pause, resume and completion follow the operation state the
+ * runtime reports (plan P11). A stop is requested from Governance, and a stop that
+ * still blocks work is named here.
  */
 import type { ReactElement } from 'react'
 import { Bot } from 'lucide-react'
@@ -50,7 +50,7 @@ export function RuntimeOperationsTab({ engagementId }: { engagementId: string })
       <ActiveStopBanner engagementId={engagementId} />
       <Card>
         <CardHeader title="Execution threads" sub="Owned runtime bindings for this engagement. Execution never bypasses the planning handoff." />
-        <p className="px-4 pb-2 text-xs text-muted">A run can be cancelled here. Pause, resume and marking an operation complete have no runtime action, so they are not offered. A stop is requested from Governance.</p>
+        <p className="px-4 pb-2 text-xs text-muted">A run can be paused or cancelled here; a paused operation resumes from its checkpoint, and an operation is marked complete only after its last run ended. A stop is requested from Governance.</p>
         {threads.isPending ? <div className="space-y-2" aria-busy="true" role="status"><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
           : threads.isError ? <p className="text-sm text-bad" role="alert">{messageOf(threads.error, 'Threads could not be loaded.')}</p>
           : executionThreads.length === 0 ? (
