@@ -290,6 +290,7 @@ export class ReportsService {
     this.requireEditable(row, body.expectedVersion, 'changing the report setup');
 
     const data: { templateId?: string | null; templateVersion?: number | null; periodStart?: Date | null; periodEnd?: Date | null; reviewerId?: string | null } = {};
+    let seedSections: ReportTemplateSection[] | null = null;
     if (body.templateId !== undefined) {
       if (body.templateId === null) {
         data.templateId = null;
@@ -300,6 +301,7 @@ export class ReportsService {
         if (template === null) throw new ProjectApiError(404, 'Template not found in this engagement.');
         data.templateId = template.id;
         data.templateVersion = template.version;
+        seedSections = sectionsOf(template.sections);
       }
     }
     if (body.periodStart !== undefined || body.periodEnd !== undefined) {
@@ -322,8 +324,13 @@ export class ReportsService {
         data.reviewerId = body.reviewerId;
       }
     }
+    // A template's sections become the report's empty sections once, so the required ones show as missing until written.
+    const current = (row.body as { sections?: unknown }).sections;
+    const seed = seedSections !== null && (!Array.isArray(current) || current.length === 0)
+      ? { body: { ...(row.body as object), sections: seedSections.map((section) => ({ title: section.title, content: '' })) } as object }
+      : {};
     const updated = await this.db.$transaction(async (tx) => {
-      const bumped = await tx.reportRecord.updateMany({ where: { id: row.id, version: row.version, status: { in: EDITABLE_STATUSES } }, data: { ...data, version: { increment: 1 } } });
+      const bumped = await tx.reportRecord.updateMany({ where: { id: row.id, version: row.version, status: { in: EDITABLE_STATUSES } }, data: { ...data, ...seed, version: { increment: 1 } } });
       if (bumped.count !== 1) throw new ProjectApiError(409, 'Concurrent edit: the report changed while you edited its setup. Reload and reapply.');
       await tx.webAuditEntry.create({ data: { engagementId, actorId, action: 'report.setup_updated', targetType: 'report', targetId: row.id, reason: `v${row.version} -> v${row.version + 1}` } });
       return tx.reportRecord.findFirstOrThrow({ where: { id: row.id } });
