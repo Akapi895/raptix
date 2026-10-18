@@ -1174,10 +1174,12 @@ def _load_opplan_impl(
         except (ValueError, AttributeError):
             pass
 
+    # The file's engagement_name is a display title; the run's identity is the trusted pin or state value (ADR-0090).
+    trusted_name = os.environ.get("RAPTIX_ENGAGEMENT", "").strip() or str(state.get("engagement_name") or "")
     return Command(
         update={
             "objectives": objectives_raw,
-            "engagement_name": opplan.engagement_name,
+            "engagement_name": trusted_name,
             "threat_profile": opplan.threat_profile,
             "objective_counter": counter,
             "workspace_path": workspace_path,
