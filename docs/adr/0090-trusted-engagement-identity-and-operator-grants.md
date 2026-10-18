@@ -28,6 +28,9 @@ validator refused every later run on that thread. Retry and reassign could not r
 4. **Cancelled intents are not reopened automatically.** A ledger row with outcome `cancelled` blocks any
    admission with the same fingerprint (role, objective, description), under any dispatch id. The block is by
    intent, not by role, so other work for the same objective is not locked.
+   The same rule covers an attempt the runtime interrupted (a restart or a parent stop): a mailbox
+   instance with the same fingerprint in state `interrupted` blocks the replayed task call with
+   `interrupted_intent`. An intent the orchestrator rewrites is a new intent and is admitted as one.
 5. **Operator grants are the only way to re-run a cancelled intent.** A Retry or Reassign of an ended attempt
    records an `OperatorGrant` in the instance mailbox with that attempt's persisted intent, objective and role.
    It is refused while the attempt runs or is cancelling, while another replacement is pending, and after a
