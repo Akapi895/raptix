@@ -380,15 +380,13 @@ def _add_objective_impl(
     tool_call_id: str = "",
 ) -> Command[Any]:
     """Add one objective with auto-ID generation."""
-    # Operator-pinned engagement (RAPTIX_ENGAGEMENT) is authoritative:
-    # ignore any model-supplied engagement_name so the OPPLAN metadata and
-    # the state label stay consistent with the pinned-engagement fence in
-    # bash_workspace. Without this, a model-authored slug (e.g. derived
-    # from the target IP) propagates into sub-agent state and every bash
-    # dispatch is refused with "does not match the pinned engagement".
+    # The run's engagement identity is trusted, never model-authored (ADR-0090):
+    # the operator pin when one is set, otherwise the workspace slug the run was
+    # started with (seeded into state from its trusted configurable). A
+    # model-supplied engagement_name, such as a display title from roe.json, is
+    # ignored, so state and the bash/context fences cannot disagree.
     pinned_engagement = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
-    if pinned_engagement:
-        engagement_name = pinned_engagement
+    engagement_name = pinned_engagement or str(state.get("engagement_name") or "")
     counter = state.get("objective_counter", 0) + 1
     obj_id = f"OBJ-{counter:03d}"
 
@@ -479,9 +477,7 @@ def _add_objective_impl(
         ],
     }
 
-    # Set engagement metadata if provided (typically on first call)
-    if engagement_name:
-        update["engagement_name"] = engagement_name
+    # Set threat metadata if provided (typically on first call)
     if threat_profile:
         update["threat_profile"] = threat_profile
 
@@ -1231,7 +1227,7 @@ def build_opplan_tools(
             "cited skill declares concurrent-safe mutating work), fragile_target "
             "(true for lockout-sensitive accounts or single-worker/embedded hosts). "
             "Unset effects means mutate — conservatively serialized by dispatch admission. "
-            "Set engagement_name and threat_profile on the first call to initialize context. "
+            "Set threat_profile on the first call to initialize context; engagement_name is set by the run, not by you. "
             "Auto-persists the OPPLAN through the engagement filesystem backend "
             "to /workspace/plan/opplan.json on success. "
             "Call OPPLAN tools sequentially — never in parallel with other OPPLAN tools."

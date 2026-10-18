@@ -363,18 +363,41 @@ def _with_workspace_kwargs(workspace_path: str) -> dict[str, str]:
     return {"workspace_path": workspace_path}
 
 
+_ENGAGEMENT_SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+
+
 @contextlib.contextmanager
 def bash_workspace(workspace_path: str, *, engagement_name: str | None = None):
-    """Temporarily scope bash tools to one engagement workspace."""
-    if engagement_name and engagement_name != os.environ.get("RAPTIX_ENGAGEMENT", "").strip():
-        raise RuntimeError(
-            f"runtime engagement {engagement_name!r} does not match the pinned engagement; "
-            "recreate the stack for this engagement before executing bash"
-        )
+    """Temporarily scope bash tools to one engagement workspace (ADR-0090).
+
+    With an operator pin (RAPTIX_ENGAGEMENT) the run's identity must equal the pin.
+    Without a pin, the run's identity is its own workspace slug: the workspace must
+    be exactly /workspace/<slug> or inside it. Nothing outside that subtree is reachable.
+    """
     normalized = SandboxBase._normalize_workspace_path(workspace_path)
     if normalized != workspace_path.strip().rstrip("/"):
         raise RuntimeError(f"invalid workspace_path: {workspace_path!r}")
-    safe_path = _engagement_fence(normalized)
+    pinned = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
+    if pinned:
+        if engagement_name and engagement_name != pinned:
+            raise RuntimeError(
+                f"runtime engagement {engagement_name!r} does not match the pinned engagement; "
+                "recreate the stack for this engagement before executing bash"
+            )
+        safe_path = _engagement_fence(normalized)
+    elif engagement_name:
+        if not _ENGAGEMENT_SLUG.fullmatch(engagement_name):
+            raise RuntimeError(f"runtime engagement {engagement_name!r} is not a workspace slug")
+        root = f"/workspace/{engagement_name}"
+        if normalized != root and not normalized.startswith(f"{root}/"):
+            raise RuntimeError(
+                f"workspace {normalized!r} is outside engagement {engagement_name!r}; its workspace is {root}"
+            )
+        safe_path = normalized
+    else:
+        if normalized != "/workspace":
+            raise RuntimeError("bash run has no engagement identity for workspace " f"{normalized!r}")
+        safe_path = normalized
     token = _current_workspace_path.set(safe_path)
     try:
         yield
