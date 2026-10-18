@@ -86,6 +86,16 @@ describe('useRunStream', () => {
     expect(source.closed).toBe(true)
   })
 
+  it('closes the source when the server ends the stream so EventSource does not replay the run', async () => {
+    vi.stubGlobal('EventSource', FakeEventSource)
+    const onControl = vi.fn()
+    renderHook(() => useRunStream({ engagementId: 'eng-1', threadId: 'th-1', runId: 'run-1', onEvent: () => {}, onControl }))
+    const source = FakeEventSource.instances[0]
+    await act(async () => { source.emitRaw('control', JSON.stringify({ type: 'stream_closed', recoveryRequired: false })) })
+    expect(source.closed).toBe(true)
+    expect(onControl).toHaveBeenCalledWith('stream_closed', false)
+  })
+
   it('does not subscribe without a run', () => {
     vi.stubGlobal('EventSource', FakeEventSource)
     renderHook(() => useRunStream({ engagementId: 'eng-1', threadId: 'th-1', runId: null, onEvent: () => {} }))
