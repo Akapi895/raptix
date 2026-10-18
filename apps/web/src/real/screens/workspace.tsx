@@ -592,7 +592,6 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             sendDisabled={!selectedThreadId || !draft.trim() || send.isPending || createThreadByKind.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
             sending={send.isPending}
             onSend={() => { setDispatchError(null); send.mutate(draft.trim()) }}
-            hint={executionBlocked ? 'Execution is blocked: it needs the confirmed planning handoff and a server-verified runtime context.' : 'Sending dispatches exactly one runtime run per request id. Refreshing never re-dispatches.'}
             approvals={selectedKind === 'execution' ? approvals : undefined}
             busyApprovalId={decide.isPending ? decide.variables?.requestId ?? null : null}
             onApprovalDecide={(requestId, action) => decide.mutate({ requestId, action })}
@@ -909,7 +908,7 @@ function growTextarea(el: HTMLTextAreaElement): void {
 }
 
 /** Bottom composer: normal input, or the pending approvals/questions in place of the input. */
-function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batchReady, draft, onDraft, inputDisabled, placeholder, sendDisabled, sending, onSend, hint, approvals, busyApprovalId, onApprovalDecide }: {
+function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batchReady, draft, onDraft, inputDisabled, placeholder, sendDisabled, sending, onSend, approvals, busyApprovalId, onApprovalDecide }: {
   questions: PendingInterruptView[]
   onValue: (questionId: string, value: string | string[]) => void
   onAnswer: (questionId: string, value: string | string[]) => void
@@ -923,7 +922,6 @@ function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batch
   sendDisabled: boolean
   sending: boolean
   onSend: () => void
-  hint: string
   approvals?: { data?: { approvals: ApprovalRequestView[]; truncated?: boolean }; isPending: boolean; isError: boolean; error: unknown; refetch: () => void }
   busyApprovalId?: string | null
   onApprovalDecide?: (requestId: string, action: 'allow' | 'deny') => void
@@ -982,17 +980,16 @@ function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batch
   return (
     <div className="shrink-0 border-t border-line pt-3">
       <div className="rounded-2xl border border-line bg-panel p-2 focus-within:border-accent-line">
-        <Textarea
-          value={draft}
-          rows={1}
-          onChange={(e) => { onDraft(e.target.value); growTextarea(e.currentTarget) }}
-          placeholder={placeholder}
-          aria-label="Workspace message"
-          disabled={inputDisabled}
-          className="min-h-[44px] resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus:ring-0"
-        />
-        <div className="flex items-center justify-between gap-2 px-1 pb-1">
-          <p className="min-w-0 text-[11px] text-neutral">{hint}</p>
+        <div className="flex items-end gap-2">
+          <Textarea
+            value={draft}
+            rows={1}
+            onChange={(e) => { onDraft(e.target.value); growTextarea(e.currentTarget) }}
+            placeholder={placeholder}
+            aria-label="Workspace message"
+            disabled={inputDisabled}
+            className="min-h-[44px] flex-1 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus:ring-0"
+          />
           <Button variant="primary" icon={Send} size="sm" disabled={sendDisabled} onClick={onSend}>{sending ? 'Sending...' : 'Send'}</Button>
         </div>
       </div>
