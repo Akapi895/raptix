@@ -11,6 +11,8 @@ export interface RuntimeExecutionPort {
   createRun(threadId: string, context: TrustedRuntimeContext, requestId: string, message: string): Promise<RuntimeRun>;
   /** W11 graph-interrupt resume: a new run carrying `command.resume`, never an input message. */
   createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, resume: string | string[] | Record<string, string | string[]>): Promise<RuntimeRun>;
+  /** P11 continue: a new run on the same thread that resumes the latest checkpoint; it carries no input message. */
+  continueRun(threadId: string, context: TrustedRuntimeContext, requestId: string): Promise<RuntimeRun>;
   /** W11 pause/cancel semantics: interrupt action keeps the checkpoint resumable. */
   cancelRun(threadId: string, runId: string): Promise<void>;
   run(threadId: string, runId: string): Promise<RuntimeRun>;
@@ -39,6 +41,14 @@ export class RuntimeExecutionClient extends RuntimeReadClient implements Runtime
   public async createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, resume: string | string[] | Record<string, string | string[]>): Promise<RuntimeRun> {
     return run(await this.read(`/threads/${encodeURIComponent(threadId)}/runs`, {
       assistant_id: context.assistantId, command: { resume },
+      config: { configurable: context.configurable }, metadata: { ...context.metadata, ui_request_id: requestId },
+      multitask_strategy: 'reject', if_not_exists: 'reject', stream_mode: STREAM_OPTIONS.streamMode,
+      stream_subgraphs: STREAM_OPTIONS.streamSubgraphs, stream_resumable: STREAM_OPTIONS.streamResumable,
+    }, true), threadId);
+  }
+  public async continueRun(threadId: string, context: TrustedRuntimeContext, requestId: string): Promise<RuntimeRun> {
+    return run(await this.read(`/threads/${encodeURIComponent(threadId)}/runs`, {
+      assistant_id: context.assistantId, input: null,
       config: { configurable: context.configurable }, metadata: { ...context.metadata, ui_request_id: requestId },
       multitask_strategy: 'reject', if_not_exists: 'reject', stream_mode: STREAM_OPTIONS.streamMode,
       stream_subgraphs: STREAM_OPTIONS.streamSubgraphs, stream_resumable: STREAM_OPTIONS.streamResumable,

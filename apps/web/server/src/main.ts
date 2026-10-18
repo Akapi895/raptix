@@ -178,7 +178,14 @@ async function main(): Promise<void> {
      }
    };
    const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService, { readiness: runtimeReadiness }) : undefined;
-   const runsService = ownership && runtimeContext && runtime && dbClient ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime, authorizeMutation: async (actorId, engagementId, kind, threadId) => {
+   const runsService = ownership && runtimeContext && runtime && dbClient ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime,
+     operations: {
+       status: async (engagementId, threadId) => (await dbClient!.operationBinding.findFirst({ where: { engagementId, threadId }, orderBy: { createdAt: 'desc' }, select: { status: true } }))?.status ?? null,
+       transition: async (engagementId, threadId, from, to) => (await dbClient!.operationBinding.updateMany({ where: { engagementId, threadId, status: { in: [...from] } }, data: { status: to, concurrencyVersion: { increment: 1 } } })).count > 0,
+       uncertainRequests: (engagementId, threadId) => dbClient!.webRequestLedger.count({ where: { engagementId, threadId, state: 'uncertain' } }),
+     },
+     audit: async (actorId, engagementId, action, targetId, reason) => { await dbClient!.webAuditEntry.create({ data: { engagementId, actorId, action, targetType: 'thread', targetId, reason } }); },
+     authorizeMutation: async (actorId, engagementId, kind, threadId) => {
      await requireEngagementAccess({ db: dbClient, actorId, multiUser: env.authMode === 'multi' }, engagementId, 'operator');
      await closureService!.assertOpen(engagementId);
      await governanceService!.assertNoActiveStop(engagementId, threadId);

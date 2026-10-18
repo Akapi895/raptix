@@ -18,6 +18,10 @@ export function parseRunCreate(raw: unknown): { requestId: string; message: stri
   if (typeof value.message !== 'string' || !value.message.trim() || Buffer.byteLength(value.message) > 16000) throw invalid();
   return { requestId: value.requestId as string, message: value.message, intent: { message: value.message } };
 }
+/** P11 operation requests carry only a client request id, so a lost ack replays the same operation. */
+export function parseOperationRequest(raw: unknown): { requestId: string } {
+  return { requestId: body(raw, ['requestId']).requestId as string };
+}
 export function parseRunPage(raw: unknown): { offset: number; limit: number } {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw) || Object.keys(raw).some(k => !['offset', 'limit'].includes(k))) throw invalid();
   const query = raw as Record<string, unknown>;
