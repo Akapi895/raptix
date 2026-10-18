@@ -97,4 +97,9 @@ describe('RunService operation lifecycle (P11)', () => {
     await expect(run.resumeRun('local', 'eng', 'thread-1', { requestId: 'resume-req-0001' })).rejects.toMatchObject({ code: 'conflict' });
     expect(runtime.continueRun).not.toHaveBeenCalled();
   });
+
+  it('refuses a new message while the operation is paused, so no run starts beside the checkpoint', async () => {
+    const { run } = service({ operation: 'paused', runStatus: 'interrupted', latestStatus: 'interrupted' });
+    await expect(run.submit('local', 'eng', 'thread-1', { requestId: 'msg-req-00001', message: 'hello' })).rejects.toMatchObject({ code: 'conflict' });
+  });
 });

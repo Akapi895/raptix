@@ -66,7 +66,7 @@ export interface BindingView {
   readonly planId: string;
   readonly planVersion: number;
   readonly threadId: string | null;
-  readonly status: 'bound' | 'running' | 'stopped' | 'completed';
+  readonly status: 'bound' | 'running' | 'stopped' | 'completed' | 'pause_requested' | 'paused';
   readonly concurrencyVersion: number;
   readonly createdBy: string;
   readonly createdAt: string;
@@ -149,7 +149,8 @@ export class GovernanceService {
     // exists, local deployments are subject to exactly the same binding gates.
     if (!requirePlan && plans.length === 0) return;
     const bindings = await this.db.operationBinding.findMany({ where: { engagementId, threadId }, orderBy: { createdAt: 'desc' } });
-    const binding = bindings.find((b) => b.threadId === threadId && ['bound', 'running'].includes(b.status));
+    // P11: a paused operation keeps its plan binding (resume needs it); a completed one does not.
+    const binding = bindings.find((b) => b.threadId === threadId && ['bound', 'running', 'pause_requested', 'paused'].includes(b.status));
     if (!binding) throw new ProjectApiError(409, 'Execution requires a current approved plan binding for this thread.');
     const plan = await this.findPlan(engagementId, binding.planId);
     if (plan.status !== 'approved' || plan.expiresAt === null) throw new ProjectApiError(409, 'The bound plan is not approved; re-review is required.');
