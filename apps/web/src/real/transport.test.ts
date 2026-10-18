@@ -83,6 +83,17 @@ describe('apiFetch', () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new DOMException('Aborted', 'AbortError') }))
     await expect(apiFetch('/x', isPayload, { signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' })
   })
+
+  it('discards a response that arrives after the caller switched away (late ACK after abort)', async () => {
+    const controller = new AbortController()
+    vi.stubGlobal('fetch', vi.fn((_url: string, init: RequestInit) => new Promise<Response>((resolve, reject) => {
+      init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+      setTimeout(() => resolve(jsonResponse(200, { ok: true })), 40)
+    })))
+    const pending = apiFetch('/x', isPayload, { signal: controller.signal })
+    setTimeout(() => controller.abort(), 5)
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+  })
 })
 
 describe('apiFetchBytes', () => {
