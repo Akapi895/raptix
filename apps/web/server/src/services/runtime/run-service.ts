@@ -176,11 +176,26 @@ export class RunService {
       return ownership.accept(user, engagement, requestId, reservation.token, remote.threadId, null);
     });
   }
+  /**
+   * A run that ended without anyone observing it still holds its thread's active slot, and that blocks every
+   * run of the other kind on the engagement. Observing each run releases its slot when the runtime reports it terminal.
+   */
+  private async settleEndedRuns(user: string, engagement: string): Promise<void> {
+    const { ownership } = this.options;
+    for (const binding of await ownership.listBindings(user, engagement)) {
+      for (const row of await ownership.runs(user, engagement, binding.threadId, 0, 25)) {
+        if (row.runId === null) continue;
+        try { await this.getRun(user, engagement, binding.threadId, row.runId); }
+        catch (error) { if (!(error instanceof RuntimeUnavailableError || error instanceof RuntimeRejectedError)) throw error; }
+      }
+    }
+  }
   public async submit(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId, message, intent } = parseRunCreate(raw);
     const { ownership, context, runtime } = this.options;
     const replay = await ownership.replay(user, engagement, requestId, 'create_run', intent, thread);
     if (replay) return replay;
+    await this.settleEndedRuns(user, engagement);
     let trusted: TrustedRuntimeContext;
     try {
       const binding = await ownership.getBinding(user, engagement, thread);
