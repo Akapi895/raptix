@@ -43,7 +43,8 @@ export class MembersService {
       role: row.role,
       source: row.source === 'owner' ? 'local' : 'membership',
     }));
-    return { engagementId, mode: 'multi-user', members, inviteSupported: true, reason: null, source: 'db' };
+    const canManage = members.some((m) => m.role === 'owner' && m.id === userId);
+    return { engagementId, mode: 'multi-user', members, canManage, inviteSupported: true, reason: null, source: 'db' };
   }
 
   public async invite(userId: string, engagementId: string, input: unknown): Promise<{ ok: true; memberId: string }> {
@@ -137,7 +138,7 @@ export class MembersService {
 
   private localView(engagementId: string): MembersView {
     const members: MemberView[] = [{ id: 'local', label: 'Local Operator', role: 'operator', source: 'local' }];
-    return { engagementId, mode: 'local-single-user', members, inviteSupported: false, reason: UNSUPPORTED_REASON, source: 'db' };
+    return { engagementId, mode: 'local-single-user', members, canManage: false, inviteSupported: false, reason: UNSUPPORTED_REASON, source: 'db' };
   }
 }
 

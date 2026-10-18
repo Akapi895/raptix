@@ -25,16 +25,22 @@ beforeEach(() => {
 
 describe('real membership service', () => {
   it('reads the persisted members and offers manage controls only to the owner', async () => {
-    vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', members: [{ id: 'u-owner', label: 'Owner Lee', role: 'owner', source: 'local' }, { id: 'u-v', label: 'Viewer Vera', role: 'viewer', source: 'membership' }], inviteSupported: true, reason: null, source: 'db' } as unknown as Awaited<ReturnType<typeof api.fetchMembers>>)
+    vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', members: [{ id: 'u-owner', label: 'Owner Lee', role: 'owner', source: 'local' }, { id: 'u-v', label: 'Viewer Vera', role: 'viewer', source: 'membership' }], canManage: true, inviteSupported: true, reason: null, source: 'db' } as unknown as Awaited<ReturnType<typeof api.fetchMembers>>)
     const result = await createRealTeamService().read(ctx)
     expect(result).toMatchObject({ ok: true, data: { canManage: true, invite: { supported: true, needsPassword: true } } })
     if (result.ok) expect(result.data.members.map((m) => m.owner)).toEqual([true, false])
   })
 
   it('names the reason in a single-user deployment instead of offering invites', async () => {
-    vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'local-single-user', members: [], inviteSupported: false, reason: 'Memberships need an authentication strategy.', source: 'db' } as unknown as Awaited<ReturnType<typeof api.fetchMembers>>)
+    vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'local-single-user', members: [], canManage: false, inviteSupported: false, reason: 'Memberships need an authentication strategy.', source: 'db' } as unknown as Awaited<ReturnType<typeof api.fetchMembers>>)
     const result = await createRealTeamService().read(ctx)
     expect(result).toMatchObject({ ok: true, data: { canManage: false, manageReason: 'Memberships need an authentication strategy.', invite: { supported: false } } })
+  })
+
+  it('offers no manage controls to a member the server does not name as owner', async () => {
+    vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', members: [{ id: 'u-owner', label: 'Owner Lee', role: 'owner', source: 'local' }, { id: 'u-v', label: 'Viewer Vera', role: 'viewer', source: 'membership' }], canManage: false, inviteSupported: true, reason: null, source: 'db' } as unknown as Awaited<ReturnType<typeof api.fetchMembers>>)
+    const result = await createRealTeamService().read({ ...ctx, actor: { id: 'u-v', role: 'manager' as const } })
+    expect(result).toMatchObject({ ok: true, data: { canManage: false, manageReason: 'Only the engagement owner can manage members.' } })
   })
 
   it('sends the invite with the password and returns the new member', async () => {

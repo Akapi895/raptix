@@ -33,6 +33,7 @@ describe('W19 members', () => {
     expect(view.mode).toBe('local-single-user');
     expect(view.members).toEqual([{ id: 'local', label: 'Local Operator', role: 'operator', source: 'local' }]);
     expect(view.inviteSupported).toBe(false);
+    expect(view.canManage).toBe(false);
     expect(view.reason).toContain('authentication strategy');
   });
 

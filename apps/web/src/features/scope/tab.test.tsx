@@ -40,6 +40,7 @@ const MEMBERS = {
     { id: 'u-owner', label: 'Owner Lee', role: 'owner', source: 'membership' },
     { id: 'u-reviewer', label: 'Reviewer Kim', role: 'reviewer', source: 'membership' },
   ],
+  canManage: true,
   inviteSupported: true,
   reason: null,
   source: 'db',

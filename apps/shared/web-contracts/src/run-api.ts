@@ -365,6 +365,8 @@ export interface MemberView {
 export interface MembersView {
   engagementId: string; mode: 'local-single-user' | 'multi-user'
   members: MemberView[]
+  /** True only when the signed-in actor is the engagement owner; the server decides, the console only shows it. */
+  canManage: boolean
   inviteSupported: boolean; reason: string | null
   source: 'db'
 }
@@ -378,6 +380,7 @@ export function isMembersView(v: unknown): v is MembersView {
   // In the local single-user topology invites can never be supported; a view
   // claiming otherwise would be a fake membership hierarchy.
   if (v.mode === 'local-single-user' && v.inviteSupported !== false) return false
+  if (typeof v.canManage !== 'boolean' || (v.mode === 'local-single-user' && v.canManage)) return false
   if (v.source !== 'db') return false
   return v.reason === null || isNonEmptyString(v.reason)
 }
