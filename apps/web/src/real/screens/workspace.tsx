@@ -563,7 +563,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
                 <Transcript messages={displayed} trace={trace} onReuse={(content) => setDraft(content)} />
               )}
 
-          {selectedKind === 'execution' && (
+          {selectedKind === 'execution' && pendingQuestions.length === 0 && (approvals.data?.approvals?.length ?? 0) === 0 && (
             <ApprovalsCard
               state={approvals}
               busyId={decide.isPending ? decide.variables?.requestId ?? null : null}
@@ -593,6 +593,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             sending={send.isPending}
             onSend={() => { setDispatchError(null); send.mutate(draft.trim()) }}
             hint={executionBlocked ? 'Execution is blocked: it needs the confirmed planning handoff and a server-verified runtime context.' : 'Sending dispatches exactly one runtime run per request id. Refreshing never re-dispatches.'}
+            approvals={selectedKind === 'execution' ? approvals : undefined}
+            busyApprovalId={decide.isPending ? decide.variables?.requestId ?? null : null}
+            onApprovalDecide={(requestId, action) => decide.mutate({ requestId, action })}
           />
           </>}
         </div>
@@ -905,8 +908,8 @@ function growTextarea(el: HTMLTextAreaElement): void {
   el.style.height = `${Math.min(el.scrollHeight, 160)}px`
 }
 
-/** Bottom composer: normal input, or the pending question(s) in place of the input. */
-function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batchReady, draft, onDraft, inputDisabled, placeholder, sendDisabled, sending, onSend, hint }: {
+/** Bottom composer: normal input, or the pending approvals/questions in place of the input. */
+function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batchReady, draft, onDraft, inputDisabled, placeholder, sendDisabled, sending, onSend, hint, approvals, busyApprovalId, onApprovalDecide }: {
   questions: PendingInterruptView[]
   onValue: (questionId: string, value: string | string[]) => void
   onAnswer: (questionId: string, value: string | string[]) => void
@@ -921,18 +924,51 @@ function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batch
   sending: boolean
   onSend: () => void
   hint: string
+  approvals?: { data?: { approvals: ApprovalRequestView[]; truncated?: boolean }; isPending: boolean; isError: boolean; error: unknown; refetch: () => void }
+  busyApprovalId?: string | null
+  onApprovalDecide?: (requestId: string, action: 'allow' | 'deny') => void
 }): ReactElement {
-  if (questions.length > 0) {
+  const hasApprovals = (approvals?.data?.approvals?.length ?? 0) > 0
+  const hasPendingContent = questions.length > 0 || hasApprovals
+
+  if (hasPendingContent) {
     return (
       <div className="shrink-0 border-t border-line pt-3">
-        <div className="space-y-3 rounded-2xl border border-warn/30 bg-panel p-3">
-          <p className="text-xs font-semibold text-warn">The assistant is waiting for your answer. The answer resumes the same thread.</p>
-          <div className="max-h-[40vh] space-y-4 overflow-y-auto pr-1">
-            {questions.map((q) => (
-              <QuestionCard key={`${q.questionId}/${q.interruptId ?? ''}`} question={q} busy={answerBusy}
-                onValue={(value) => onValue(q.questionId, value)}
-                onAnswer={questions.length === 1 ? (value) => onAnswer(q.questionId, value) : undefined} />
-            ))}
+        <div className="space-y-3 rounded-2xl border border-accent/30 bg-panel p-3">
+          {questions.length > 0 && <p className="text-xs font-semibold text-warn">The assistant is waiting for your answer. The answer resumes the same thread.</p>}
+          <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
+            {hasApprovals && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-accent">Tool Approvals (HITL)</p>
+                {approvals!.data!.approvals.map((a) => (
+                  <div key={a.requestId} className="rounded-lg border border-accent/20 bg-accent-soft/30 p-2.5">
+                    <div className="mb-1.5 flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-fg">{a.toolName}</p>
+                        <p className="mt-0.5 text-[11px] text-muted">{a.agentName} • {a.requestId.slice(0, 8)}</p>
+                        <p className="mt-1 text-[11px] text-muted">{a.reason}</p>
+                      </div>
+                      <ShieldQuestion size={16} className="mt-0.5 shrink-0 text-accent" aria-hidden />
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button size="sm" variant="secondary" onClick={() => onApprovalDecide?.(a.requestId, 'deny')} disabled={busyApprovalId === a.requestId}>Deny</Button>
+                      <Button size="sm" variant="primary" onClick={() => onApprovalDecide?.(a.requestId, 'allow')} disabled={busyApprovalId === a.requestId}>{busyApprovalId === a.requestId ? 'Deciding...' : 'Allow'}</Button>
+                    </div>
+                  </div>
+                ))}
+                {approvals!.data!.truncated && <p className="text-[11px] text-muted">+ more approvals (scroll to see all)</p>}
+              </div>
+            )}
+            {questions.length > 0 && (
+              <div className="space-y-2">
+                {hasApprovals && <div className="border-t border-line pt-2" />}
+                {questions.map((q) => (
+                  <QuestionCard key={`${q.questionId}/${q.interruptId ?? ''}`} question={q} busy={answerBusy}
+                    onValue={(value) => onValue(q.questionId, value)}
+                    onAnswer={questions.length === 1 ? (value) => onAnswer(q.questionId, value) : undefined} />
+                ))}
+              </div>
+            )}
           </div>
           {questions.length > 1 && (
             <div className="flex justify-end">
