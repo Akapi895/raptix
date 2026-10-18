@@ -927,3 +927,24 @@ Base `f346e1a9`; thay đổi chưa commit. Theo ADR-0089 (vẫn Proposed cho đ�
 - Lineage reassign chỉ có trong run message, chưa có bảng lineage riêng.
 - Instance DTO còn trong `api.ts` và `run-service.ts`, chưa chuyển vào `@raptix/web-contracts` như ADR-0089 yêu cầu (chỉ `PendingInterruptView` đã vào shared).
 - Pause theo instance thuộc P11, không thuộc P10.
+
+### 13.22 Live P10 trên lab 10.129.227.140 (2026-10-18)
+
+Engagement `cmvbilcji000035pdx8khoigh` (scope v1 đã duyệt, ROE đến 2026-10-24). Reviewer độc lập được tạo riêng cho lượt này. Plan HTTP-only (`cmvdcnpng…`) được owner propose, reviewer duyệt, rồi bind vào các thread execution. Stack web được build lại từ code hiện tại (`web-runtime`, `web-raptix-api`, `web-raptix-ui`).
+
+**Đã kiểm chứng live:**
+- Roster: attempt có role, số attempt tăng dần, nguồn đúng (mailbox khi đang chạy, ledger khi đã ghi).
+- Message tới attempt đang chạy: `accepted`, sau đó `undelivered` với outcome `instance_finished` khi attempt kết thúc trước safe point tiếp theo. Không có tin nào bị mất âm thầm. **Chưa thấy `delivered` hay `handled`**: subagent kết thúc quá nhanh vì bash bị từ chối.
+- Cancel: `cancel_requested` (200), sau đó `cancelled` khi model call đang chạy kết thúc (~1 giây và ~25 giây ở hai lần chạy). Sau khi sửa, ledger và mailbox đều ghi `cancelled`.
+- Durability: mailbox giữ nguyên qua `docker restart` của runtime (hai thread, so sánh từng dòng).
+
+**Lỗi tìm được và đã sửa (commit trong cùng lượt):**
+- Ledger ghi `failed` trong khi mailbox ghi `cancelled`, khi bash lỗi ở cùng boundary với cancel. Roster ưu tiên dòng ledger nên UI sẽ hiện `failed`. Sửa trong `_finish`: cancel của operator quyết định outcome.
+- `test_dispatch_boundary` fail vì mailbox mặc định (`.langgraph_api`) dùng chung giữa các lần chạy. Thêm `packages/raptix/tests/conftest.py` cách ly mailbox theo từng test. Sau đó 28/28 pass.
+
+**Điểm nghẽn chưa sửa (cần quyết định, xem câu hỏi gửi người yêu cầu):**
+- **Identity của engagement không nhất quán.** Web runtime không pin (`RAPTIX_ENGAGEMENT: ''`, commit `f4c7a008`). `opplan.add_objective` chỉ ép tên pin khi có pin, nên khi không có thì nhận `engagement_name` do model cung cấp, tức tên trong `roe.json` ("Popup Lab Assessment"). Slug workspace là `popup-lab-lbvq`. Hệ quả đã kiểm chứng: (a) fence `bash_workspace` refuse mọi bash; (b) `runtime-context.ts:66` refuse mọi run sau trên cùng thread với 409. Vì vậy **retry, reassign và forward không thể chạy live** trên thread đã có một run.
+- **Orchestrator tự dispatch lại sau cancel** trong một trong hai lần chạy (dispatch mới cùng role và objective, không qua operator). Lần còn lại không xảy ra. Đây không phải do P10, nhưng đi ngược ý định cancel của operator.
+- Chưa chạy live: forward (cần hai attempt đồng thời), retry/reassign admission, pin câu hỏi theo instance, hai instance đồng thời, cancel race với parent stop, và restart khi có attempt đang chạy.
+
+**Trạng thái P10:** vẫn mở. Đóng được: identity, history, cancel, durability của mailbox. Chưa đóng: message delivered/handled, forward, retry/reassign, recovery giữa chừng, và acceptance hai instance.
