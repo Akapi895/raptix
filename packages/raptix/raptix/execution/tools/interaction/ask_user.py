@@ -24,6 +24,8 @@ from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
+from raptix.core.dispatch_context import active_dispatch
+
 HEADER_MAX_CHARS = 60
 MAX_OPTIONS = 6
 RECOMMENDED_SUFFIX = " (Recommended)"
@@ -169,6 +171,8 @@ def ask_user_question(
         Multi-select: list of selected labels (selection order).
         Free text via ``Other``: the operator's typed string.
     """
+    # A question asked inside a dispatched instance is pinned to that attempt (P10e); the root conversation keeps it for the batch answer.
+    instance = active_dispatch.get()
     payload = {
         "type": "ask_user_question",
         "agent": "soundwave",
@@ -178,6 +182,8 @@ def ask_user_question(
         "options": [opt.model_dump() for opt in options],
         "multi_select": multi_select,
         "allow_other": allow_other,
+        "dispatch_id": instance.dispatch_id if instance else None,
+        "attempt": instance.attempt if instance else None,
     }
 
     writer = _safe_writer()

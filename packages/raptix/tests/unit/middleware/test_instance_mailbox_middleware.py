@@ -100,7 +100,7 @@ def test_calls_outside_a_dispatch_never_touch_the_mailbox(box):
     assert box.snapshot("thread-1", "disp-1")[1][0].state == "accepted"
 
 
-def test_a_failed_model_turn_leaves_the_message_delivered_and_never_offers_it_again(box):
+def test_a_failed_model_turn_retries_guidance_in_the_same_attempt(box):
     box.start_instance("thread-1", "disp-1", 1, "recon")
     box.accept("m-1", "thread-1", "disp-1", "one shot")
 
@@ -122,7 +122,8 @@ def test_a_failed_model_turn_leaves_the_message_delivered_and_never_offers_it_ag
         asyncio.run(mw.InstanceMailboxMiddleware().awrap_model_call(FakeRequest([]), handler))
     finally:
         active_dispatch.reset(token)
-    assert seen[0] == []
+    assert "one shot" in seen[0][-1].content
+    assert box.snapshot("thread-1", "disp-1")[1][0].state == HANDLED
 
 
 def test_a_message_left_when_the_instance_ends_is_reported_undelivered(box):

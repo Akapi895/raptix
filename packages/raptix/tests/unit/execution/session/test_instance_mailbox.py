@@ -36,7 +36,7 @@ def test_message_to_running_instance_is_accepted_then_delivered_once(mailbox):
     delivered = mailbox.drain("thread-1", "disp-1", 1)
     assert [m.message_id for m in delivered] == ["m-1"]
     assert delivered[0].state == mb.DELIVERED
-    # A delivered message is never offered again, even to a later safe point.
+    mailbox.mark_handled(["m-1"], "model_turn_completed")
     assert mailbox.drain("thread-1", "disp-1", 1) == []
 
 
@@ -129,10 +129,46 @@ def test_restart_never_redelivers_and_marks_instances_that_were_running_as_inter
     try:
         instances, messages = reopened.snapshot("thread-1", "disp-1")
         assert instances[0].state == "interrupted"
-        assert messages[0].state == mb.DELIVERED
+        assert messages[0].state == mb.UNDELIVERED
+        assert messages[0].outcome == "instance_interrupted"
         assert reopened.drain("thread-1", "disp-1", 1) == []
         assert (
             reopened.accept("m-2", "thread-1", "disp-1", "after").reason == "instance_not_running"
         )
     finally:
         reopened.close()
+
+
+def test_stale_attempt_cannot_redirect_a_message_to_its_replacement(mailbox):
+    _running(mailbox)
+    mailbox.finish_instance("thread-1", "disp-1", 1)
+    _running(mailbox, 2)
+    refused = mailbox.accept("stale", "thread-1", "disp-1", "old guidance", expected_attempt=1)
+    assert refused.reason == "stale_attempt"
+    assert mailbox.drain("thread-1", "disp-1", 2) == []
+
+
+def test_same_id_with_changed_body_conflicts(mailbox):
+    _running(mailbox)
+    mailbox.accept("stable", "thread-1", "disp-1", "first", expected_attempt=1)
+    assert mailbox.accept("stable", "thread-1", "disp-1", "changed", expected_attempt=1).reason == "message_id_conflict"
+
+
+def test_cancel_ack_precedes_observed_termination_and_rejects_messages(mailbox):
+    _running(mailbox)
+    assert mailbox.request_cancel("thread-1", "disp-1", 1) == "cancel_requested"
+    assert mailbox.cancellation_requested("thread-1", "disp-1", 1)
+    assert mailbox.accept("late", "thread-1", "disp-1", "hello", expected_attempt=1).reason == "instance_not_running"
+    mailbox.finish_instance("thread-1", "disp-1", 1)
+    assert mailbox.snapshot("thread-1", "disp-1")[0][0].state == "cancelled"
+
+
+def test_replacement_attempt_goes_above_every_recorded_attempt_and_keeps_its_intent(mailbox):
+    mailbox.start_instance("thread-1", "disp-1", 1, "recon", "map the web target")
+    mailbox.request_cancel("thread-1", "disp-1", 1)
+    mailbox.finish_instance("thread-1", "disp-1", 1)
+    assert mailbox.max_attempt("thread-1", "disp-1") == 1
+    mailbox.start_instance("thread-1", "disp-1", 2, "recon", "map the web target")
+    assert mailbox.max_attempt("thread-1", "disp-1") == 2
+    assert [row.intent for row in mailbox.snapshot("thread-1", "disp-1")[0]] == ["map the web target"] * 2
+    assert mailbox.accept("after-retry", "thread-1", "disp-1", "focus on /admin", expected_attempt=2).status == "accepted"

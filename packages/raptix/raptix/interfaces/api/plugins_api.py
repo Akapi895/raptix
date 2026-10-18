@@ -49,7 +49,7 @@ from typing import Annotated
 from uuid import uuid5
 
 from fastapi import FastAPI, HTTPException, Path
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from raptix.graph_registry import _BUNDLE_TO_GRAPHS  # private, but stable: bundle->graphs map
 
@@ -291,6 +291,13 @@ _INSTANCE_PATH = "/_raptix/instances/{thread_id}/{dispatch_id}"
 class InstanceMessageIn(BaseModel):
     messageId: str
     body: str
+    expectedAttempt: int = Field(ge=1)
+    # Set only by the operator's explicit forward; the runtime never copies a message between attempts.
+    sourceMessageId: str | None = None
+
+
+class InstanceCancelIn(BaseModel):
+    expectedAttempt: int = Field(ge=1)
 
 
 @app.post(_INSTANCE_PATH + "/messages")
@@ -303,7 +310,14 @@ def post_instance_message(
 
     from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
 
-    result = default_mailbox().accept(payload.messageId, thread_id, dispatch_id, payload.body)
+    result = default_mailbox().accept(
+        payload.messageId,
+        thread_id,
+        dispatch_id,
+        payload.body,
+        expected_attempt=payload.expectedAttempt,
+        source_message_id=payload.sourceMessageId,
+    )
     body = {
         "status": result.status,
         "reason": result.reason,
@@ -313,6 +327,26 @@ def post_instance_message(
     if result.status == "refused":
         return JSONResponse(status_code=409, content=body)
     return body
+
+
+@app.post(_INSTANCE_PATH + "/cancel")
+def post_instance_cancel(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    payload: InstanceCancelIn,
+) -> dict:
+    """Cooperative cancel of one attempt: the cancel is recorded now; the final observation comes from the dispatch."""
+    from fastapi.responses import JSONResponse  # noqa: PLC0415
+
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    box = default_mailbox()
+    state = box.request_cancel(thread_id, dispatch_id, payload.expectedAttempt)
+    body = {"threadId": thread_id, "dispatchId": dispatch_id, "attempt": payload.expectedAttempt, "state": state}
+    if state == "cancel_requested":
+        return body
+    reason = "unknown_attempt" if state == "not_found" else "instance_not_running"
+    return JSONResponse(status_code=409, content={**body, "reason": reason})
 
 
 @app.get(_INSTANCE_PATH)
@@ -333,6 +367,8 @@ def get_instance(
                 "state": row.state,
                 "startedAt": row.started_at,
                 "finishedAt": row.finished_at,
+                "intent": row.intent,
+                "objectiveId": row.objective_id,
             }
             for row in instances
         ],
@@ -376,4 +412,5 @@ def _message_view(message) -> dict | None:
         "deliveredAt": message.delivered_at,
         "handledAt": message.handled_at,
         "outcome": message.outcome,
+        "sourceMessageId": message.source_message_id,
     }

@@ -16,6 +16,8 @@ class DispatchContext:
     role: str | None = None
     # The LangGraph thread that owns this dispatch; the instance mailbox is keyed by it. None outside a thread.
     thread_id: str | None = None
+    # The task description this attempt runs with; an operator retry re-issues exactly this intent.
+    intent: str | None = None
 
 
 active_dispatch: ContextVar[DispatchContext | None] = ContextVar("active_dispatch", default=None)

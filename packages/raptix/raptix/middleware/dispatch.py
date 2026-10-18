@@ -40,6 +40,7 @@ from raptix.middleware.fanout_admission import (
     WorkUnit,
     decide,
 )
+from raptix.middleware.instance_mailbox import InstanceCancellationRequested
 from raptix.middleware.subagent_transcript_state import SubagentTranscriptState
 from raptix.orchestration.mission.objective_context import ObjectiveContextState
 from raptix_core.types.dispatch_outcome import (
@@ -275,17 +276,31 @@ class DispatchMiddleware(SubAgentMiddleware):
                         "this engagement; wait for one to finish before starting another",
                     )
                 self._active.add(key)
+        # A replacement attempt must go above every attempt the mailbox ever started, including
+        # attempts that never reached the ledger (cancelled or interrupted before finishing).
+        attempt = max(int(prior.get("attempt", 0)), self._mailbox_attempt_floor(thread_id, dispatch_id))
         return (
             DispatchContext(
                 dispatch_id,
                 objective_id,
-                int(prior.get("attempt", 0)) + 1,
+                attempt + 1,
                 role=role,
                 thread_id=str(thread_id) if thread_id else None,
+                intent=description[:2000],
             ),
             key,
             fingerprint,
         )
+
+    @staticmethod
+    def _mailbox_attempt_floor(thread_id: Any, dispatch_id: str) -> int:
+        if not thread_id:
+            return 0
+        try:
+            return default_mailbox().max_attempt(str(thread_id), dispatch_id)
+        except Exception:  # noqa: BLE001 — the ledger stays the floor when the mailbox cannot be read
+            log.warning("instance mailbox attempt floor unavailable", exc_info=True)
+            return 0
 
     @staticmethod
     def _start_instance(context: DispatchContext) -> None:
@@ -294,18 +309,23 @@ class DispatchMiddleware(SubAgentMiddleware):
             return
         try:
             default_mailbox().start_instance(
-                context.thread_id, context.dispatch_id, context.attempt, context.role
+                context.thread_id,
+                context.dispatch_id,
+                context.attempt,
+                context.role,
+                context.intent,
+                context.objective_id,
             )
         except Exception:  # noqa: BLE001 — mailbox bookkeeping must never fail a dispatch
             log.warning("instance mailbox registration failed", exc_info=True)
 
     @staticmethod
-    def _end_instance(context: DispatchContext) -> None:
+    def _end_instance(context: DispatchContext, *, interrupted: bool = False) -> None:
         if not context.thread_id:
             return
         try:
             default_mailbox().finish_instance(
-                context.thread_id, context.dispatch_id, context.attempt
+                context.thread_id, context.dispatch_id, context.attempt, interrupted=interrupted
             )
         except Exception:  # noqa: BLE001 — a failed close leaves the row running until the next restart marks it interrupted
             log.warning("instance mailbox close failed", exc_info=True)
@@ -420,7 +440,8 @@ class DispatchMiddleware(SubAgentMiddleware):
         runtime: ToolRuntime,
         error: Exception | None = None,
     ) -> Command:
-        if error is not None:
+        cancelled = isinstance(error, InstanceCancellationRequested)
+        if error is not None and not cancelled:
             context.failures.append(
                 DispatchFailureOutcome(
                     dispatch_id=context.dispatch_id,
@@ -436,7 +457,13 @@ class DispatchMiddleware(SubAgentMiddleware):
         leaked = _PARENT_PRIVATE_STATE_KEYS.intersection(updates)
         if leaked:
             updates = {k: v for k, v in updates.items() if k not in _PARENT_PRIVATE_STATE_KEYS}
-        if context.failures:
+        if cancelled:
+            outcome = {"status": "cancelled", "terminal_for_this_dispatch": False}
+            updates["messages"] = [ToolMessage(
+                content="This dispatch attempt was cancelled cooperatively by the operator.",
+                tool_call_id=runtime.tool_call_id or context.dispatch_id,
+            )]
+        elif context.failures:
             outcome = context.failures[-1].model_dump(mode="json")
             updates["messages"] = [
                 ToolMessage(
@@ -513,9 +540,9 @@ class DispatchMiddleware(SubAgentMiddleware):
                 error = exc
                 raise
             finally:
-                self._end_instance(context)
+                self._end_instance(context, interrupted=isinstance(error, asyncio.CancelledError))
                 active_dispatch.reset(token)
-                self._record_outcome(key, ok=error is None)
+                self._record_outcome(key, ok=error is None or isinstance(error, InstanceCancellationRequested))
                 self._release(key)
 
         async def atask(
@@ -550,9 +577,9 @@ class DispatchMiddleware(SubAgentMiddleware):
                 error = exc
                 raise
             finally:
-                self._end_instance(context)
+                self._end_instance(context, interrupted=isinstance(error, asyncio.CancelledError))
                 active_dispatch.reset(token)
-                self._record_outcome(key, ok=error is None)
+                self._record_outcome(key, ok=error is None or isinstance(error, InstanceCancellationRequested))
                 self._release(key)
 
         return StructuredTool.from_function(
