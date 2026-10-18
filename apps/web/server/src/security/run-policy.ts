@@ -38,15 +38,48 @@ export interface ResumeAnswer { questionId: string; value: string | string[] }
 /** W11 scoped graph-interrupt resume: one validated value, optional targeting question id, or every pending answer at once. */
 /** Longest operator message the runtime accepts (P10c); the console shows the same limit. */
 export const INSTANCE_MESSAGE_MAX_CHARS = 2000;
-/** P10c: an operator message to one running dispatch instance. The message id is the client's idempotency key. */
-export function parseInstanceMessage(raw: unknown): { messageId: string; body: string } {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw) || Object.keys(raw).some(k => k !== 'messageId' && k !== 'body')) throw invalid();
-  const value = raw as Record<string, unknown>;
-  if (typeof value.messageId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/.test(value.messageId)) throw invalid();
+const INSTANCE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
+const COMMAND_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{7,127}$/;
+const ROLE = /^[a-z][a-z0-9_-]{0,63}$/;
+const attemptOf = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) throw invalid();
+  return value;
+};
+/** Keys are checked against the allowed list so an unknown field is refused, never silently dropped. */
+function exactKeys(raw: unknown, allowed: readonly string[]): Record<string, unknown> {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw) || Object.keys(raw).some(k => !allowed.includes(k))) throw invalid();
+  return raw as Record<string, unknown>;
+}
+/** P10c: an operator message to one running dispatch instance. The message id is the client's idempotency key; the attempt pins the target. */
+export function parseInstanceMessage(raw: unknown): { messageId: string; body: string; expectedAttempt: number } {
+  const value = exactKeys(raw, ['messageId', 'body', 'expectedAttempt']);
+  if (typeof value.messageId !== 'string' || !INSTANCE_ID.test(value.messageId)) throw invalid();
   if (typeof value.body !== 'string') throw invalid();
   const text = value.body.trim();
   if (text.length === 0 || text.length > INSTANCE_MESSAGE_MAX_CHARS) throw invalid();
-  return { messageId: value.messageId, body: text };
+  return { messageId: value.messageId, body: text, expectedAttempt: attemptOf(value.expectedAttempt) };
+}
+/** P10d: cooperative cancel of the attempt the operator is looking at. */
+export function parseInstanceCancel(raw: unknown): number {
+  return attemptOf(exactKeys(raw, ['expectedAttempt']).expectedAttempt);
+}
+/** P10d: retry the same dispatch (`retry`) or replace it with another role (`reassign`), once its attempt has ended. */
+export function parseInstanceCommand(raw: unknown): { commandId: string; kind: 'retry' | 'reassign'; expectedAttempt: number; role: string | null } {
+  const value = exactKeys(raw, ['commandId', 'kind', 'expectedAttempt', 'role']);
+  if (typeof value.commandId !== 'string' || !COMMAND_ID.test(value.commandId)) throw invalid();
+  if (value.kind !== 'retry' && value.kind !== 'reassign') throw invalid();
+  const role = value.role === undefined ? null : value.role;
+  if (value.kind === 'retry' && role !== null) throw invalid();
+  if (value.kind === 'reassign' && (typeof role !== 'string' || !ROLE.test(role))) throw invalid();
+  return { commandId: value.commandId, kind: value.kind, expectedAttempt: attemptOf(value.expectedAttempt), role: role as string | null };
+}
+/** P10c forward: a new message to the target attempt that names the source message it repeats. Nothing is copied automatically. */
+export function parseInstanceForward(raw: unknown): { messageId: string; sourceDispatchId: string; sourceMessageId: string; expectedAttempt: number } {
+  const value = exactKeys(raw, ['messageId', 'sourceDispatchId', 'sourceMessageId', 'expectedAttempt']);
+  if (typeof value.messageId !== 'string' || !INSTANCE_ID.test(value.messageId)) throw invalid();
+  if (typeof value.sourceDispatchId !== 'string' || value.sourceDispatchId.length < 1 || value.sourceDispatchId.length > 256) throw invalid();
+  if (typeof value.sourceMessageId !== 'string' || !INSTANCE_ID.test(value.sourceMessageId)) throw invalid();
+  return { messageId: value.messageId, sourceDispatchId: value.sourceDispatchId, sourceMessageId: value.sourceMessageId, expectedAttempt: attemptOf(value.expectedAttempt) };
 }
 export function parseResumeCreate(raw: unknown): { requestId: string; value: string | string[]; questionId: string | null; answers?: ResumeAnswer[]; intent: { value: string | string[]; questionId: string | null; answers?: ResumeAnswer[] } } {
   const value = body(raw, ['requestId', 'value', 'questionId', 'answers']);

@@ -42,6 +42,8 @@ export interface PendingInterruptView {
   multiSelect: boolean; allowOther: boolean; source: 'runtime'
   /** LangGraph interrupt identity — required to resume when several interrupts are pending at once. */
   interruptId?: string
+  /** P10e: the dispatch attempt that asked, when the question came from a running instance. The batch answer still covers every pending question. */
+  instance?: { dispatchId: string; attempt: number }
 }
 /** One workspace-file-backed HITL approval request, public projection (W11). */
 export interface ApprovalRequestView {
@@ -72,7 +74,7 @@ export function isScopedThreadListView(v: unknown): v is ScopedThreadListView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && v.source === 'runtime' && Array.isArray(v.threads) && v.threads.every(isThreadBindingView)
 }
 export function isPendingInterruptView(v: unknown): v is PendingInterruptView {
-  return isRecord(v) && isNonEmptyString(v.questionId) && isNonEmptyString(v.question) && typeof v.header === 'string' && Array.isArray(v.options) && v.options.every(o => isRecord(o) && isNonEmptyString(o.label) && typeof o.description === 'string') && typeof v.multiSelect === 'boolean' && typeof v.allowOther === 'boolean' && v.source === 'runtime' && (v.interruptId === undefined || isNonEmptyString(v.interruptId))
+  return isRecord(v) && isNonEmptyString(v.questionId) && isNonEmptyString(v.question) && typeof v.header === 'string' && Array.isArray(v.options) && v.options.every(o => isRecord(o) && isNonEmptyString(o.label) && typeof o.description === 'string') && typeof v.multiSelect === 'boolean' && typeof v.allowOther === 'boolean' && v.source === 'runtime' && (v.interruptId === undefined || isNonEmptyString(v.interruptId)) && (v.instance === undefined || isRecord(v.instance) && isNonEmptyString(v.instance.dispatchId) && Number.isSafeInteger(v.instance.attempt) && (v.instance.attempt as number) >= 1)
 }
 export function isApprovalRequestView(v: unknown): v is ApprovalRequestView {
   if (!isRecord(v) || !isNonEmptyString(v.engagementId) || !isNonEmptyString(v.requestId) || typeof v.engagementName !== 'string' || !isNonEmptyString(v.agentName) || !isNonEmptyString(v.toolName) || !isRecord(v.toolArgsRedacted) || !isRecord(v.matchedRule)) return false

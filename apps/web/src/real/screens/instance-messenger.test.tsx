@@ -59,15 +59,27 @@ describe('InstanceMessenger (P10c)', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true))
     const post = calls.find((c) => c.method === 'POST')!
     expect(post.url).toContain('/instances/thread-1/dispatch-recon/messages')
-    expect(post.body).toMatchObject({ body: 'Check the admin panel.' })
+    expect(post.body).toMatchObject({ body: 'Check the admin panel.', expectedAttempt: 1 })
     expect((post.body as { messageId: string }).messageId).toMatch(/^[0-9a-f-]{36}$/)
+  })
+
+  it('cancels the running attempt and says the stop is only recorded, not observed', async () => {
+    const calls = stubFetch(MAILBOX('running'), () => new Response(JSON.stringify({ threadId: 'thread-1', dispatchId: 'dispatch-recon', attempt: 1, state: 'cancel_requested' }), { status: 202 }))
+    renderMessenger()
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel attempt' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Cancel recorded.')
+    const post = calls.find((c) => c.method === 'POST')!
+    expect(post.url).toContain('/instances/thread-1/dispatch-recon/cancel')
+    expect(post.body).toEqual({ expectedAttempt: 1 })
   })
 
   it('closes sending for a finished attempt and says why', async () => {
     stubFetch(MAILBOX('finished'))
     renderMessenger()
     expect(await screen.findByText(/This attempt is finished/)).toBeInTheDocument()
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Send to instance' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cancel attempt' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry attempt' })).toBeInTheDocument()
   })
 
   it('shows a runtime refusal in the server’s own words', async () => {

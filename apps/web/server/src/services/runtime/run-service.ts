@@ -4,13 +4,19 @@ import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtim
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
 import { RuntimeCheckpointMissingError, RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
-import { parseInstanceMessage, parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
+import { parseInstanceCancel, parseInstanceCommand, parseInstanceForward, parseInstanceMessage, parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-context.js';
 import { projectThreadHistory } from './history-projection.js';
 import { assertResumeValue, findPendingQuestions } from './interrupt-projection.js';
 
 const conflict = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Runtime context, readiness or active-run policy prevents this operation');
+/** A runtime 409 on an instance control: its reason in the operator's words; an unknown reason keeps its code. */
+const refusal = (payload: { reason?: unknown } | null, fallback: string): ProjectPolicyError => {
+  const reason = typeof payload?.reason === 'string' ? payload.reason : null;
+  if (reason !== null && REFUSAL_TEXT[reason] !== undefined) return new ProjectPolicyError('conflict', REFUSAL_TEXT[reason]);
+  return new ProjectPolicyError('conflict', reason === null ? `${fallback}.` : `${fallback} (${reason}).`);
+};
 const terminal = (status: string): boolean => ['success', 'error', 'timeout', 'interrupted'].includes(status);
 function metadata(actual: Record<string, unknown>, expected: Record<string, string>): void {
   if (Object.entries(expected).some(([k, v]) => actual[k] !== v)) throw conflict();
@@ -41,27 +47,53 @@ export interface InstanceMessageView {
   deliveredAt: string | null;
   handledAt: string | null;
   outcome: string | null;
+  /** Set only on a message the operator forwarded from another attempt's message. */
+  sourceMessageId: string | null;
 }
+
+export type InstanceAttemptState = 'running' | 'cancel_requested' | 'cancelled' | 'finished' | 'interrupted';
 
 export interface InstanceMailboxView {
   threadId: string;
   dispatchId: string;
-  instances: { attempt: number; role: string | null; state: 'running' | 'finished' | 'interrupted'; startedAt: string; finishedAt: string | null }[];
+  instances: { attempt: number; role: string | null; state: InstanceAttemptState; startedAt: string; finishedAt: string | null }[];
   messages: InstanceMessageView[];
   source: 'runtime';
 }
 
-/** Why the runtime refused a message, in the words the operator sees. Unknown codes keep the runtime's code. */
+/** P10d: the answer to a cancel. `cancel_requested` is recorded intent; the final state is observed later on the attempt. */
+export interface InstanceCancelView { threadId: string; dispatchId: string; attempt: number; state: InstanceAttemptState; source: 'runtime' }
+
+/** P10d: a retry or reassign request and the orchestrator run that performs the admission. */
+export interface InstanceCommandView {
+  commandId: string;
+  kind: 'retry' | 'reassign';
+  threadId: string;
+  sourceDispatchId: string;
+  sourceAttempt: number;
+  /** The dispatch the replacement runs under: the same one for a retry, a new one for a reassign. */
+  dispatchId: string;
+  role: string;
+  run: RequestRecoveryView;
+}
+
+/** Why the runtime refused a message or control, in the words the operator sees. Unknown codes keep the runtime's code. */
 const REFUSAL_TEXT: Readonly<Record<string, string>> = {
   instance_not_running: 'This instance is not running, so the message was not accepted.',
+  stale_attempt: 'The instance changed since you looked at it. Refresh the roster and try again.',
+  unknown_attempt: 'The runtime has no such attempt for this dispatch.',
   mailbox_full: 'This instance already has the maximum number of messages waiting for its next step.',
   message_too_large: 'The message is longer than the instance accepts.',
   empty_message: 'The message is empty.',
   invalid_message_id: 'The message id is not valid.',
-  message_id_conflict: 'This message id was already used for another instance.',
+  message_id_conflict: 'This message id was already used for another instance or with different content.',
 };
+const TERMINAL_STATES: ReadonlySet<InstanceAttemptState> = new Set(['cancelled', 'finished', 'interrupted']);
 
 const instancePath = (thread: string, dispatch: string): string => `/_raptix/instances/${encodeURIComponent(thread)}/${encodeURIComponent(dispatch)}`;
+
+/** The attempt rows the runtime holds for one dispatch, including the internal intent that a retry re-issues. */
+interface RuntimeAttemptRow { attempt: number; role: string | null; state: InstanceAttemptState; startedAt: string; finishedAt: string | null; intent: string | null; objectiveId: string | null }
 
 export interface RuntimeRosterView {
   engagementId: string;
@@ -227,15 +259,72 @@ export class RunService {
    * the instance can take the message; a refusal reaches the operator as its reason.
    */
   public async sendInstanceMessage(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
-    const { messageId, body } = parseInstanceMessage(raw);
+    const { messageId, body, expectedAttempt } = parseInstanceMessage(raw);
+    await this.authorizeInstanceMutation(user, engagement, thread);
+    return this.deliverInstanceMessage(thread, dispatch, { messageId, body, expectedAttempt, sourceMessageId: null });
+  }
+  /**
+   * P10d: the operator asks for cooperative cancel of one attempt. The runtime records the request and
+   * refuses messages from then on; the attempt is only observed stopped when its dispatch finishes.
+   */
+  public async cancelInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCancelView> {
+    const expectedAttempt = parseInstanceCancel(raw);
+    await this.authorizeInstanceMutation(user, engagement, thread);
+    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/cancel`, { expectedAttempt });
+    const payload = reply.body as { state?: unknown; reason?: unknown } | null;
+    if (reply.status === 409) throw refusal(payload, 'The runtime refused the cancel');
+    if (reply.status !== 200 || payload?.state !== 'cancel_requested') throw new RuntimeUnavailableError();
+    return { threadId: thread, dispatchId: dispatch, attempt: expectedAttempt, state: 'cancel_requested', source: 'runtime' };
+  }
+  /**
+   * P10c forward: the operator repeats one message from this thread's dispatch to a running attempt. The
+   * source must be a message the runtime holds for that dispatch on the same thread; the new message names it.
+   */
+  public async forwardInstanceMessage(user: string, engagement: string, thread: string, targetDispatch: string, raw: unknown): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
+    const { messageId, sourceDispatchId, sourceMessageId, expectedAttempt } = parseInstanceForward(raw);
+    await this.authorizeInstanceMutation(user, engagement, thread);
+    const source = (await this.instanceView(thread, sourceDispatchId)).messages.find(m => m.messageId === sourceMessageId);
+    if (!source) throw new ProjectPolicyError('not_found', 'The source message is not recorded for that dispatch on this thread.');
+    const body = `Forwarded from dispatch ${sourceDispatchId}, attempt ${source.attempt} (message ${sourceMessageId}):\n${source.body}`;
+    return this.deliverInstanceMessage(thread, targetDispatch, { messageId, body, expectedAttempt, sourceMessageId });
+  }
+  /**
+   * P10d retry or reassign. Only an ended attempt can be replaced; a running or cancelling attempt is refused.
+   * The runtime does not start the replacement itself: the orchestrator run carries the exact intent and the
+   * dispatch admission path decides it. The run uses the command id as its request id, so a lost ack replays.
+   */
+  public async commandInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCommandView> {
+    const { commandId, kind, expectedAttempt, role } = parseInstanceCommand(raw);
+    await this.authorizeInstanceMutation(user, engagement, thread);
+    const attempts = await this.attemptRows(thread, dispatch);
+    const source = attempts.at(-1);
+    if (!source || source.attempt !== expectedAttempt) throw new ProjectPolicyError('conflict', 'The instance changed since you looked at it. Refresh the roster and try again.');
+    if (!TERMINAL_STATES.has(source.state)) throw new ProjectPolicyError('conflict', 'The attempt must end before it can be retried or reassigned.');
+    if (!source.intent || !source.role) throw new ProjectPolicyError('conflict', 'This attempt was recorded before its intent was kept, so it cannot be re-issued.');
+    const targetRole = kind === 'retry' ? source.role : role as string;
+    const targetDispatch = kind === 'retry' ? dispatch : `${dispatch}-r${commandId.replace(/[^A-Za-z0-9]/g, '').slice(0, 12)}`;
+    const objective = source.objectiveId ? `objective_id "${source.objectiveId}"` : 'no objective_id';
+    const prompt = [
+      `Operator ${kind} request ${commandId}. Attempt ${source.attempt} of dispatch "${dispatch}" (role ${source.role}) has ended as ${source.state}.`,
+      kind === 'retry'
+        ? `Re-issue the dispatch task call once with dispatch_id "${targetDispatch}", subagent_type "${targetRole}", ${objective}, and the description below copied character for character. This starts a new attempt of the same dispatch.`
+        : `Replace it: issue the dispatch task call once with dispatch_id "${targetDispatch}", subagent_type "${targetRole}", ${objective}, and the description below copied character for character. Do not change the old dispatch "${dispatch}".`,
+      '<<<', source.intent, '>>>',
+    ].join('\n');
+    const run = await this.submit(user, engagement, thread, { requestId: commandId, message: prompt });
+    return { commandId, kind, threadId: thread, sourceDispatchId: dispatch, sourceAttempt: source.attempt, dispatchId: targetDispatch, role: targetRole, run };
+  }
+  private async authorizeInstanceMutation(user: string, engagement: string, thread: string): Promise<void> {
     const binding = await this.options.ownership.getBinding(user, engagement, thread);
     await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
-    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/messages`, { messageId, body });
+  }
+  private async deliverInstanceMessage(thread: string, dispatch: string, message: { messageId: string; body: string; expectedAttempt: number; sourceMessageId: string | null }): Promise<{ status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }> {
+    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/messages`, {
+      messageId: message.messageId, body: message.body, expectedAttempt: message.expectedAttempt,
+      ...(message.sourceMessageId ? { sourceMessageId: message.sourceMessageId } : {}),
+    });
     const payload = reply.body as { status?: unknown; reason?: unknown; attempt?: unknown; message?: InstanceMessageView | null } | null;
-    if (reply.status === 409) {
-      const reason = typeof payload?.reason === 'string' ? payload.reason : 'refused';
-      throw new ProjectPolicyError('conflict', REFUSAL_TEXT[reason] ?? `The runtime refused the message (${reason}).`);
-    }
+    if (reply.status === 409) throw refusal(payload, 'The runtime refused the message');
     if (!payload || (payload.status !== 'accepted' && payload.status !== 'duplicate') || typeof payload.attempt !== 'number' || !payload.message) {
       throw new RuntimeUnavailableError();
     }
@@ -267,16 +356,26 @@ export class RunService {
   /** P10c: the attempts and messages of one dispatch on a thread the engagement owns. */
   public async instanceMailbox(user: string, engagement: string, thread: string, dispatch: string): Promise<InstanceMailboxView> {
     await this.options.ownership.getBinding(user, engagement, thread);
-    const reply = await this.options.reads.instanceExchange('GET', instancePath(thread, dispatch));
-    const payload = reply.body as { instances?: unknown; messages?: unknown } | null;
-    if (reply.status !== 200 || !payload || !Array.isArray(payload.instances) || !Array.isArray(payload.messages)) throw new RuntimeUnavailableError();
+    const view = await this.instanceView(thread, dispatch);
+    // The intent is the replacement's source of truth on the server; the browser sees the attempt facts only.
     return {
       threadId: thread,
       dispatchId: dispatch,
-      instances: payload.instances as InstanceMailboxView['instances'],
-      messages: payload.messages as InstanceMessageView[],
+      instances: view.attempts.map(({ attempt, role, state, startedAt, finishedAt }) => ({ attempt, role, state, startedAt, finishedAt })),
+      messages: view.messages,
       source: 'runtime',
     };
+  }
+  private async attemptRows(thread: string, dispatch: string): Promise<RuntimeAttemptRow[]> {
+    return (await this.instanceView(thread, dispatch)).attempts;
+  }
+  private async instanceView(thread: string, dispatch: string): Promise<{ attempts: RuntimeAttemptRow[]; messages: InstanceMessageView[] }> {
+    const reply = await this.options.reads.instanceExchange('GET', instancePath(thread, dispatch));
+    const payload = reply.body as { instances?: unknown; messages?: unknown } | null;
+    if (reply.status !== 200 || !payload || !Array.isArray(payload.instances) || !Array.isArray(payload.messages)) throw new RuntimeUnavailableError();
+    const attempts = (payload.instances as { attempt: number; role: string | null; state: InstanceAttemptState; startedAt: string; finishedAt: string | null; intent: string | null; objectiveId: string | null }[])
+      .map((row) => ({ attempt: row.attempt, role: row.role, state: row.state, startedAt: row.startedAt, finishedAt: row.finishedAt, intent: row.intent, objectiveId: row.objectiveId }));
+    return { attempts, messages: payload.messages as InstanceMessageView[] };
   }
   /** W11: resume a pending graph interrupt on the bound thread; ack returns the NEW run identity. */
   public async resume(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
