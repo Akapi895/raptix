@@ -388,4 +388,62 @@ describe('RealWorkspace', () => {
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 60)) })
     expect(calls.some((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST')).toBe(false)
   })
+
+  it('follows a streamed reply only while the operator is at the bottom of the conversation', async () => {
+    stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const composer = await screen.findByLabelText('Workspace message')
+    await waitFor(() => expect(composer).toBeEnabled())
+    await user.type(composer, 'Stream scroll check')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0]! })
+    const region = document.querySelector<HTMLDivElement>('div.overflow-y-auto.py-4')!
+    // jsdom has no layout: give the conversation a fixed geometry and an assignable scrollTop.
+    Object.defineProperty(region, 'scrollHeight', { configurable: true, value: 1000 })
+    Object.defineProperty(region, 'clientHeight', { configurable: true, value: 400 })
+    Object.defineProperty(region, 'scrollTop', { configurable: true, writable: true, value: 0 })
+    const reply = (messageId: string, content: string) => act(async () => source.emit('run-event', event({
+      eventId: `reply-${messageId}-${content.length}`, runId: 'run-1', streamRunId: 'run-1',
+      payload: { type: 'message', messageId, role: 'assistant', content, mode: 'snapshot', truncated: false },
+    })))
+    await reply('m-1', 'First part of the reply')
+    await screen.findByText('First part of the reply')
+    // Reading older messages: the reply grows and the view stays where the operator is.
+    region.scrollTop = 0
+    await act(async () => region.dispatchEvent(new Event('scroll')))
+    await reply('m-2', 'A second reply arrives while reading history')
+    await screen.findByText('A second reply arrives while reading history')
+    expect(region.scrollTop).toBe(0)
+    expect(screen.getByRole('button', { name: 'Scroll to bottom' })).toBeInTheDocument()
+    // Back at the bottom: the next reply is followed.
+    region.scrollTop = 600
+    await act(async () => region.dispatchEvent(new Event('scroll')))
+    await reply('m-3', 'A third reply while at the bottom')
+    await screen.findByText('A third reply while at the bottom')
+    expect(region.scrollTop).toBe(1000)
+  })
+
+  it('labels streamed reasoning with the time measured in this browser, and only for that stream', async () => {
+    stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const composer = await screen.findByLabelText('Workspace message')
+    await waitFor(() => expect(composer).toBeEnabled())
+    await user.type(composer, 'Thinking label check')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0]! })
+    const emit = (content: string, reasoning?: string) => act(async () => source.emit('run-event', event({
+      eventId: `think-${content.length}-${reasoning?.length ?? 0}`, runId: 'run-1', streamRunId: 'run-1',
+      payload: { type: 'message', messageId: 'm-think', role: 'assistant', content, mode: 'snapshot', truncated: false, ...(reasoning ? { reasoning } : {}) },
+    })))
+    await emit('', 'Weighing the scope options')
+    expect(await screen.findByRole('button', { name: 'Thinking...' })).toBeInTheDocument()
+    await emit('Full range is the better starting scope.', 'Weighing the scope options')
+    expect(await screen.findByRole('button', { name: /^Thought for <1s$/ })).toBeInTheDocument()
+  })
 })
