@@ -63,7 +63,9 @@ export class C2GrantsService {
    */
   public constructor(private readonly db: PrismaClient, private readonly maxGrantHours?: () => Promise<number | null>,
     /** W12: composed in main.ts from the approved ROE revision, its time windows, the stop state and the session→target scope mapping. */
-    private readonly liveScopeGate?: (engagementId: string, target?: string) => Promise<void>) {}
+    private readonly liveScopeGate?: (engagementId: string, target?: string) => Promise<void>,
+    /** P12: the provider must report the session before a grant is requested and again before it is approved. */
+    private readonly verifySession?: (engagementId: string, sessionId: string) => Promise<void>) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -106,6 +108,7 @@ export class C2GrantsService {
     }
     const open = await this.db.c2Grant.findFirst({ where: { engagementId, sessionId, actorId, status: 'requested' } });
     if (open !== null) throw new ProjectApiError(409, 'An identical grant request is already pending review.');
+    await this.verifySession?.(engagementId, sessionId);
     const prefix = typeof body.commandPrefix === 'string' && body.commandPrefix.trim() !== '' ? body.commandPrefix.trim() : null;
     if (prefix !== null && !ABSOLUTE_PATH.test(prefix)) {
       throw new ProjectApiError(400, 'commandPrefix must be an absolute binary path, or a directory ending with a path separator.');
@@ -136,6 +139,7 @@ export class C2GrantsService {
     if (decision === 'approved' || decision === 'rejected') {
       if (row.status !== 'requested') throw new ProjectApiError(409, `Grant is already ${row.status}.`);
       requireIndependentActor(row.actorId, actorId, 'The C2 grant decision');
+      if (decision === 'approved') await this.verifySession?.(engagementId, row.sessionId);
     } else if (row.status !== 'approved') {
       throw new ProjectApiError(409, `Only approved grants can be revoked; this grant is ${row.status}.`);
     }
