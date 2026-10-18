@@ -214,6 +214,9 @@ export class RunService {
   }
   public async submit(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId, message, intent } = parseRunCreate(raw);
+    // A new message would start a fresh run beside a paused checkpoint; resume the operation or start a new plan binding instead.
+    const operation = await this.options.operations?.status(engagement, thread);
+    if (operation === 'pause_requested' || operation === 'paused' || operation === 'completed') throw new ProjectPolicyError('conflict', `This operation is ${operation}; resume it or start a new operation before sending a message.`);
     return this.startRun(user, engagement, thread, requestId, intent, (trusted) => this.options.runtime.createRun(thread, trusted, requestId, message));
   }
   /**
