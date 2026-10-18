@@ -30,6 +30,8 @@ export interface RuntimeInstanceView {
   /** Null for rows written before the runtime recorded the role; those are never guessed from transcripts. */
   role: string | null;
   objectiveId: string | null;
+  /** The dispatch that started this one; null for the thread's orchestrator, and for rows written before the runtime recorded parents. */
+  parentDispatchId: string | null;
   outcome: string;
   terminal: boolean;
   /** `mailbox` rows are attempts the runtime is running (or ended without a ledger row); the ledger keeps only each dispatch's latest finished attempt. */
@@ -114,7 +116,7 @@ function ledgerInstances(threadId: string, ledger: unknown): RuntimeInstanceView
   if (typeof ledger !== 'object' || ledger === null || Array.isArray(ledger)) return [];
   return Object.entries(ledger as Record<string, unknown>).flatMap(([dispatchId, row]) => {
     if (typeof row !== 'object' || row === null) return [];
-    const entry = row as { role?: unknown; attempt?: unknown; objective_id?: unknown; outcome?: unknown };
+    const entry = row as { role?: unknown; attempt?: unknown; objective_id?: unknown; parent_dispatch_id?: unknown; outcome?: unknown };
     if (typeof entry.attempt !== 'number' || !Number.isSafeInteger(entry.attempt) || entry.attempt < 1) return [];
     const outcome = typeof entry.outcome === 'object' && entry.outcome !== null ? entry.outcome as { status?: unknown; terminal_for_this_dispatch?: unknown } : {};
     return [{
@@ -124,6 +126,7 @@ function ledgerInstances(threadId: string, ledger: unknown): RuntimeInstanceView
       attempt: entry.attempt,
       role: typeof entry.role === 'string' && entry.role.length > 0 ? entry.role : null,
       objectiveId: typeof entry.objective_id === 'string' ? entry.objective_id : null,
+      parentDispatchId: typeof entry.parent_dispatch_id === 'string' ? entry.parent_dispatch_id : null,
       outcome: typeof outcome.status === 'string' ? outcome.status : 'unknown',
       terminal: outcome.terminal_for_this_dispatch === true,
       source: 'dispatch_ledger' as const,
@@ -474,7 +477,7 @@ export class RunService {
     const payload = reply.body as { instances?: unknown } | null;
     if (reply.status !== 200 || !payload || !Array.isArray(payload.instances)) throw new RuntimeUnavailableError();
     const rows: RuntimeInstanceView[] = [];
-    for (const raw of payload.instances as { dispatchId?: unknown; attempt?: unknown; role?: unknown; state?: unknown }[]) {
+    for (const raw of payload.instances as { dispatchId?: unknown; attempt?: unknown; role?: unknown; state?: unknown; parentDispatchId?: unknown }[]) {
       if (typeof raw.dispatchId !== 'string' || typeof raw.attempt !== 'number' || typeof raw.state !== 'string') throw new RuntimeUnavailableError();
       if (recorded.has(`${raw.dispatchId}:${raw.attempt}`)) continue;
       rows.push({
@@ -484,6 +487,7 @@ export class RunService {
         attempt: raw.attempt,
         role: typeof raw.role === 'string' && raw.role.length > 0 ? raw.role : null,
         objectiveId: null,
+        parentDispatchId: typeof raw.parentDispatchId === 'string' ? raw.parentDispatchId : null,
         outcome: raw.state,
         terminal: raw.state !== 'running',
         source: 'mailbox',

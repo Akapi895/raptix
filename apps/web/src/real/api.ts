@@ -546,6 +546,8 @@ export interface RuntimeInstanceView {
   attempt: number
   role: string | null
   objectiveId: string | null
+  /** The dispatch that started this one; null for the orchestrator and for rows recorded before parents were kept. */
+  parentDispatchId: string | null
   outcome: string
   terminal: boolean
   /** `mailbox` is an attempt the runtime is running now, or one that ended before its ledger row was written. */

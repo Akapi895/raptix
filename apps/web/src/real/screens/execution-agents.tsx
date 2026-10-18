@@ -53,8 +53,9 @@ export function RealExecutionAgents({ engagementId, assistantId, threadId, branc
 }
 
 /**
- * Agent tree: the runtime records each dispatch under the objective it served, so objectives are the parents and
- * the dispatched agents their children. Agents with no recorded objective sit under their own group, never guessed.
+ * Agent tree: a dispatch sits under the dispatch that started it when the runtime recorded that parent. Dispatches with
+ * no recorded parent (the orchestrator's own) are the top level, grouped by the objective they served. Agents with no
+ * recorded objective sit under their own group, never guessed.
  */
 function RuntimeTree({ engagementId, threadId }: { engagementId: string; threadId: string | null }): ReactElement {
   const roster = useQuery({ queryKey: ['real', 'runtime-instances', engagementId], queryFn: () => fetchRuntimeInstances(engagementId) })
@@ -63,10 +64,11 @@ function RuntimeTree({ engagementId, threadId }: { engagementId: string; threadI
   if (roster.isError) return <Banner tone="warn" title="Runtime roster unavailable">{roster.error instanceof Error ? roster.error.message : 'The roster read failed.'}</Banner>
   const instances = roster.data.instances.filter((instance) => threadId === null || instance.threadId === threadId)
   const unread = roster.data.threads.filter((thread) => thread.read === 'unavailable' && (threadId === null || thread.threadId === threadId))
+  const { roots, childrenOf, latest } = nestRoster(instances)
   const groups = new Map<string, RuntimeInstanceView[]>()
-  for (const instance of instances) {
-    const key = instance.objectiveId ?? 'no-objective'
-    groups.set(key, [...(groups.get(key) ?? []), instance])
+  for (const root of roots) {
+    const key = root.objectiveId ?? 'no-objective'
+    groups.set(key, [...(groups.get(key) ?? []), root])
   }
   const toggle = (key: string): void => setCollapsed((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next })
   return <section aria-label="Agent tree" className="space-y-2">
@@ -74,17 +76,19 @@ function RuntimeTree({ engagementId, threadId }: { engagementId: string; threadI
     {unread.length > 0 && <Banner tone="warn" title="Some threads could not be read">{unread.map((thread) => `${thread.threadId.slice(0, 8)}: ${thread.reason ?? 'unavailable'}`).join(' · ')}</Banner>}
     {instances.length === 0 ? <p className="text-xs text-muted">No dispatch instances are recorded{threadId ? ' on this thread' : ''}.</p> : (
       <ul className="space-y-1">
-        {[...groups.entries()].map(([key, children]) => {
+        {[...groups.entries()].map(([key, members]) => {
           const isOpen = !collapsed.has(key)
-          const running = children.filter((c) => agentStatus(c).tone === 'running').length
+          const subtree = new Set(members.flatMap((root) => [...reachable(root, childrenOf)]))
+          const running = [...subtree].filter((c) => agentStatus(c).tone === 'running').length
           return <li key={key}>
             <button type="button" aria-expanded={isOpen} onClick={() => toggle(key)} className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left text-xs hover:bg-hover">
               {isOpen ? <ChevronDown size={12} aria-hidden /> : <ChevronRight size={12} aria-hidden />}
               <span className="min-w-0 flex-1 truncate font-medium text-fg">{key === 'no-objective' ? 'No objective recorded' : key}</span>
-              <span className="shrink-0 text-muted">{children.length} agent{children.length === 1 ? '' : 's'}{running > 0 ? ` · ${running} running` : ''}</span>
+              <span className="shrink-0 text-muted">{subtree.size} agent{subtree.size === 1 ? '' : 's'}{running > 0 ? ` · ${running} running` : ''}</span>
             </button>
             {isOpen && <ul className="ml-4 mt-1 space-y-1 border-l border-line pl-3">
-              {children.map((instance) => <AgentNode key={instance.instanceId} engagementId={engagementId} instance={instance} peers={instances} />)}
+              {members.map((instance) => <AgentNode key={instance.instanceId} engagementId={engagementId} instance={instance} peers={instances}
+                childrenOf={childrenOf} latest={latest} ancestors={NO_ANCESTORS} />)}
             </ul>}
           </li>
         })}
@@ -93,9 +97,48 @@ function RuntimeTree({ engagementId, threadId }: { engagementId: string; threadI
   </section>
 }
 
-function AgentNode({ engagementId, instance, peers }: { engagementId: string; instance: RuntimeInstanceView; peers: RuntimeInstanceView[] }): ReactElement {
+const NO_ANCESTORS: ReadonlySet<string> = new Set()
+
+/** Parent dispatch id → the instances it started. A dispatch whose parent is not in the roster stays at the top. */
+function nestRoster(instances: RuntimeInstanceView[]): { roots: RuntimeInstanceView[]; childrenOf: Map<string, RuntimeInstanceView[]>; latest: Map<string, number> } {
+  const latest = new Map<string, number>()
+  for (const instance of instances) latest.set(instance.dispatchId, Math.max(latest.get(instance.dispatchId) ?? 0, instance.attempt))
+  const childrenOf = new Map<string, RuntimeInstanceView[]>()
+  const roots: RuntimeInstanceView[] = []
+  for (const instance of instances) {
+    const parent = instance.parentDispatchId
+    if (parent !== null && parent !== instance.dispatchId && latest.has(parent)) childrenOf.set(parent, [...(childrenOf.get(parent) ?? []), instance])
+    else roots.push(instance)
+  }
+  // Parents recorded in a loop would hide every member; each loop surfaces one member at the top so nothing disappears.
+  const seen = new Set<RuntimeInstanceView>()
+  for (const root of roots) reachable(root, childrenOf, seen)
+  for (const instance of instances) {
+    if (seen.has(instance)) continue
+    roots.push(instance)
+    reachable(instance, childrenOf, seen)
+  }
+  return { roots, childrenOf, latest }
+}
+
+function reachable(node: RuntimeInstanceView, childrenOf: Map<string, RuntimeInstanceView[]>, out = new Set<RuntimeInstanceView>()): Set<RuntimeInstanceView> {
+  if (out.has(node)) return out
+  out.add(node)
+  for (const child of childrenOf.get(node.dispatchId) ?? []) reachable(child, childrenOf, out)
+  return out
+}
+
+function AgentNode({ engagementId, instance, peers, childrenOf, latest, ancestors }: {
+  engagementId: string; instance: RuntimeInstanceView; peers: RuntimeInstanceView[]
+  childrenOf: Map<string, RuntimeInstanceView[]>; latest: Map<string, number>; ancestors: ReadonlySet<string>
+}): ReactElement {
   const [open, setOpen] = useState(false)
   const status = agentStatus(instance)
+  const below = new Set([...ancestors, instance.dispatchId])
+  // Children hang under the newest attempt only, so a retried parent does not repeat its children.
+  const children = latest.get(instance.dispatchId) === instance.attempt
+    ? (childrenOf.get(instance.dispatchId) ?? []).filter((child) => !below.has(child.dispatchId))
+    : []
   return <li className="rounded-lg border border-line p-2.5 text-xs">
     <div className="flex items-center justify-between gap-2">
       <span className="flex min-w-0 items-center gap-2">
@@ -107,6 +150,10 @@ function AgentNode({ engagementId, instance, peers }: { engagementId: string; in
     <p className="mt-1 truncate font-mono text-[11px] text-neutral" title={instance.dispatchId}>{instance.dispatchId.slice(0, 12)} · thread {instance.threadId.slice(0, 8)} · <span className="text-muted">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></p>
     <Button size="sm" variant="ghost" className="mt-1" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide messages' : 'Messages'}</Button>
     {open && <InstanceMessenger engagementId={engagementId} threadId={instance.threadId} dispatchId={instance.dispatchId} attempt={instance.attempt} peers={peers} />}
+    {children.length > 0 && <ul className="mt-2 space-y-1 border-l border-line pl-3">
+      {children.map((child) => <AgentNode key={child.instanceId} engagementId={engagementId} instance={child} peers={peers}
+        childrenOf={childrenOf} latest={latest} ancestors={below} />)}
+    </ul>}
   </li>
 }
 

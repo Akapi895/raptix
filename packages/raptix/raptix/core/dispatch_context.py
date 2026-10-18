@@ -22,6 +22,8 @@ class DispatchContext:
     replay_grant: str | None = None
     # The intent fingerprint (role, objective, description); an interrupted intent is found by it.
     fingerprint: str | None = None
+    # The dispatch whose execution created this one; None for a dispatch the thread's orchestrator started.
+    parent_dispatch_id: str | None = None
 
 
 active_dispatch: ContextVar[DispatchContext | None] = ContextVar("active_dispatch", default=None)

@@ -448,6 +448,7 @@ def list_thread_instances(
                 "state": row.state,
                 "startedAt": row.started_at,
                 "finishedAt": row.finished_at,
+                "parentDispatchId": row.parent_dispatch_id,
             }
             for _, row in default_mailbox().list_instances(thread_id)
         ],
