@@ -11,7 +11,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bot, CircleAlert, Hand, ListPlus, MessagesSquare, RefreshCw, Send, ServerCrash, ShieldQuestion, User } from 'lucide-react'
+import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, Hand, ListPlus, MessagesSquare, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
 import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, resumeThread, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
@@ -22,7 +22,7 @@ import { useRunStream } from '../stream'
 import { projectKeys } from '../queries'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, Drawer, Empty, PageHeader, Select, Skeleton, Textarea, cx } from '../../ui'
+import { Banner, Button, Card, CardHeader, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../ui'
 import { utcMinute } from '../format'
 import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
 import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
@@ -104,6 +104,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const [trace, setTrace] = useState<TraceLine[]>([])
   const [recovery, setRecovery] = useState<string | null>(null)
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
+  const [sideTab, setSideTab] = useState<'agents' | 'activity' | 'artifacts'>('agents')
+  const chatScroll = useRef<HTMLDivElement>(null)
+  const [atBottom, setAtBottom] = useState(true)
   const scope = `${engagementId}/${selectedThreadId ?? ''}`
   const scopeRef = useRef(scope)
   scopeRef.current = scope
@@ -417,8 +420,13 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const snapshotIds = new Set(snapshotMessages.map((m) => m.messageId).filter((x): x is string => !!x))
   const displayed = [...snapshotMessages, ...live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))]
   const pendingQuestions = (snapshot.data?.pendingQuestions ?? []).filter(isPendingInterruptView)
+  // Keep the newest content in view only while the operator is already at the bottom; never pull them down while they read older messages.
+  useEffect(() => {
+    const el = chatScroll.current
+    if (el && atBottom) el.scrollTop = el.scrollHeight
+  }, [displayed.length, trace.length, atBottom, selectedThreadId])
   const transcripts = snapshot.data?.transcripts ?? []
-  const fleet = useQuery({ queryKey: ['real', 'fleet', engagementId], queryFn: () => fetchFleet(engagementId), enabled: embedded && agents.ready, refetchInterval: embedded ? 8000 : false })
+  const fleet = useQuery({ queryKey: ['real', 'fleet', engagementId], queryFn: () => fetchFleet(engagementId), enabled: agents.ready, refetchInterval: 8000 })
   const observationKey = observation?.threadId === selectedThreadId ? observation.key : null
   const branches = fleet.data?.branches.filter((branch) => branch.threadId === selectedThreadId) ?? []
   const observedBranch = branches.find((branch) => branch.key === observationKey)
@@ -467,7 +475,6 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
           </div>
         )}
       />}
-      {embedded && <div className="flex flex-wrap items-center justify-between gap-2"><Select aria-label="Execution conversation" value={selectedThreadId ?? ''} onChange={(event) => setSelectedThreadId(event.target.value)}><option value="">Select an execution conversation</option>{allThreads.filter((thread) => thread.kind === 'execution').map((thread) => <option key={thread.threadId} value={thread.threadId}>{thread.assistantId ?? 'Unknown assistant'} · {utcMinute(thread.updatedAt)}</option>)}</Select><div className="flex flex-wrap gap-2"><Button size="sm" disabled={createThreadByKind.isPending || !!unconfirmed || detail.data?.handoffConfirmedAt == null} onClick={() => createThreadByKind.mutate('execution')}>New execution conversation</Button><Button size="sm" onClick={() => setHistorySheet(true)}>Execution history</Button><Button size="sm" onClick={() => wide ? setAgentsOpen(!agentsOpen) : setAgentsSheet(true)}>Agents / Context{pendingQuestions.length ? ` · ${pendingQuestions.length} need you` : ''}</Button></div></div>}
 
       {dispatchError && <Banner tone="bad" title="Request not completed" action={<Button size="sm" variant="ghost" onClick={() => setDispatchError(null)}>Dismiss</Button>}>{dispatchError}</Banner>}
       {unconfirmed && (
@@ -490,53 +497,8 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         </Banner>
       )}
 
-      <div className={embedded ? 'mt-4 flex min-w-0 gap-3' : 'mt-4 grid grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)]'}>
-        {!embedded && <div className="min-w-0 space-y-3">
-          <Card>
-            <CardHeader title="Threads" sub="Owned bindings from the runtime ledger." />
-            <div className="mb-3 flex gap-1" role="group" aria-label="Thread kind filter">
-              {(['planning', 'execution'] as ThreadKind[]).map((k) => (
-                <button key={k} onClick={() => setKindFilter(k)}
-                  aria-pressed={kindFilter === k}
-                  className={cx('h-8 rounded-full border px-3 text-xs font-medium capitalize', kindFilter === k ? 'border-accent-line bg-accent-soft text-accent' : 'border-line text-muted hover:bg-hover')}>
-                  {k}
-                </button>
-              ))}
-            </div>
-            {threads.isPending ? <div className="space-y-2" aria-busy="true" role="status"><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
-              : threads.isError ? <p className="text-sm text-bad" role="alert">{threads.error instanceof Error ? threads.error.message : 'Threads could not be loaded.'}</p>
-              : filteredThreads.length === 0 ? <p className="text-sm text-muted">No {kindFilter} thread yet.</p>
-              : (
-                <ul className="space-y-1">
-                  {filteredThreads.map((t) => (
-                    <li key={t.threadId}>
-                      <button
-                        onClick={() => setSelectedThreadId(t.threadId)}
-                        aria-current={selectedThreadId === t.threadId ? 'true' : undefined}
-                        className={cx('w-full rounded-[10px] px-3 py-2 text-left', selectedThreadId === t.threadId ? 'bg-accent-soft' : 'hover:bg-hover')}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="truncate font-mono text-xs font-medium text-fg">{t.threadId}</span>
-                          <span className={cx('shrink-0 rounded-full border px-1.5 text-[10px] uppercase', t.kind === 'planning' ? 'border-line text-muted' : 'border-warn/40 text-warn')}>{t.kind}</span>
-                        </div>
-                        <div className="text-xs text-muted">assistant {t.assistantId} | {utcMinute(t.updatedAt)}</div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-          </Card>
-          <Card>
-            <CardHeader title="Connection" />
-            <p className="text-xs text-muted" role="status">
-              {activeRunId
-                ? <>Run <span className="font-mono">{activeRunId.slice(0, 12)}...</span> - {stream.connected ? 'streaming events' : 'stream connecting/reconnecting'}{stream.malformedCount > 0 ? ` (${stream.malformedCount} malformed frame(s) ignored)` : ''}</>
-                : 'No active run. Sending a message dispatches exactly one server run.'}
-            </p>
-          </Card>
-        </div>}
-
-        <div className="min-w-0 flex-1 space-y-4">
+      <div className="mt-4 flex min-h-0 min-w-0 gap-3">
+        <div className="flex min-h-[32rem] min-w-0 flex-1 flex-col xl:h-[calc(100dvh-12rem)]">
           {observationKey ? <ObservedInvocation branch={observedBranch} onRoot={() => selectObservation(null)} /> : <>
           {activeRunId && (
             <div className="flex items-center gap-2 text-xs text-muted" role="status">
@@ -552,18 +514,30 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             </Banner>
           )}
 
-          <Card>
-            <CardHeader title={embedded ? `Conversation with ${selectedThread?.assistantId ?? 'orchestrator'}` : 'Conversation'} sub={snapshot.data?.messagesTruncated ? 'Earlier messages are truncated by the server projection.' : undefined} />
-            {!selectedThreadId ? (
-              <Empty icon={MessagesSquare} title="No thread selected">Create a thread to start the conversation.</Empty>
-            ) : snapshot.isPending ? (
-              <div className="space-y-3" aria-busy="true" role="status"><Skeleton className="h-16" /><Skeleton className="h-16" /></div>
-            ) : snapshot.isError ? (
-              <div role="alert" className="text-sm text-bad">{snapshot.error instanceof Error ? snapshot.error.message : 'The thread snapshot failed to load.'}</div>
-            ) : (
-              <Transcript messages={displayed} trace={trace} />
-            )}
-          </Card>
+          <ConversationHeader
+            threads={allThreads}
+            selectedId={selectedThreadId}
+            runLabel={activeRunId ? `Run ${activeRunId.slice(0, 12)}… · ${runStatus ?? 'pending'} · ${stream.connected ? 'streaming' : 'reconnecting'}` : null}
+            creating={createThreadByKind.isPending}
+            executionLocked={detail.data?.handoffConfirmedAt == null || !!unconfirmed}
+            embedded={embedded}
+            agentsOpen={agentsOpen}
+            onSelect={(id) => setSelectedThreadId(id)}
+            onCreate={(kind) => { setDispatchError(null); setKindFilter(kind); createThreadByKind.mutate(kind) }}
+            onHistory={() => setHistorySheet(true)}
+            onToggleAgents={() => (wide ? setAgentsOpen(!agentsOpen) : setAgentsSheet(true))}
+          />
+          <div ref={chatScroll} onScroll={(e) => setAtBottom(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight < 80)} className="relative min-h-0 flex-1 overflow-y-auto py-4 pr-1">
+            <div className="space-y-6">
+              {!selectedThreadId ? (
+                <Empty icon={MessagesSquare} title="No thread selected">Create a thread to start the conversation.</Empty>
+              ) : snapshot.isPending ? (
+                <div className="space-y-3" aria-busy="true" role="status"><Skeleton className="h-16" /><Skeleton className="h-16" /></div>
+              ) : snapshot.isError ? (
+                <div role="alert" className="text-sm text-bad">{snapshot.error instanceof Error ? snapshot.error.message : 'The thread snapshot failed to load.'}</div>
+              ) : (
+                <Transcript messages={displayed} trace={trace} />
+              )}
 
           {transcripts.length > 0 && (
             <Card>
@@ -593,43 +567,32 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             />
           )}
 
-          {pendingQuestions.length > 0 && (
-            <Card>
-              <CardHeader title="Pending questions" sub="The assistant is waiting for your answers before it continues. Answers resume the same thread." />
-              <div className="space-y-4">
-                  {pendingQuestions.map((q) => <QuestionCard key={`${selectedThreadId}/${q.questionId}/${q.interruptId ?? ''}`} question={q} busy={answerQuestion.isPending || !!unconfirmed} onValue={(value) => setAnswers(prev => ({ ...prev, [q.questionId]: value }))} onAnswer={pendingQuestions.length === 1 ? (value) => answerQuestion.mutate([{ questionId: q.questionId, value }]) : undefined} />)}
-                  {pendingQuestions.length > 1 && <Button variant="primary" disabled={answerQuestion.isPending || !!unconfirmed || pendingQuestions.some(q => { const value = answers[q.questionId]; return typeof value === 'string' ? !value.trim() : !value?.length })} onClick={() => answerQuestion.mutate(pendingQuestions.map(q => ({ questionId: q.questionId, value: answers[q.questionId] })))}>Answer all questions</Button>}
-              </div>
-            </Card>
-          )}
-
-          <Card>
-            <div className="flex items-end gap-2">
-              <div className="min-w-0 flex-1">
-                {embedded && <p className="mb-2 text-xs font-semibold">Send to {selectedThread?.assistantId ?? 'orchestrator'} · owned thread</p>}
-                <Textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder={selectedThreadId ? 'Describe what to do next - scope, constraints, instructions...' : 'Create a thread first...'}
-                  aria-label="Workspace message"
-                  title={embedded ? `Send to ${selectedThread?.assistantId ?? 'orchestrator'} through its owned thread` : undefined}
-                  disabled={!selectedThreadId || send.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
-                />
-                <p className="mt-1 text-xs text-neutral">
-                  {executionBlocked
-                    ? 'Execution is blocked: it needs the confirmed planning handoff and a server-verified runtime context.'
-                    : 'Sending dispatches exactly one runtime run per request id. Refreshing never re-dispatches.'}
-                </p>
-              </div>
-              <Button variant="primary" icon={Send} disabled={!selectedThreadId || !draft.trim() || send.isPending || createThreadByKind.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
-                onClick={() => { setDispatchError(null); send.mutate(draft.trim()) }}>
-                {send.isPending ? 'Dispatching...' : 'Send'}
-              </Button>
             </div>
-          </Card>
+            {!atBottom && (
+              <div className="sticky bottom-2 flex justify-center">
+                <Button size="sm" variant="secondary" icon={ArrowDown} onClick={() => { const el = chatScroll.current; if (el) { el.scrollTop = el.scrollHeight; setAtBottom(true) } }}>Scroll to bottom</Button>
+              </div>
+            )}
+          </div>
+          <Composer
+            questions={pendingQuestions}
+            onValue={(questionId, value) => setAnswers((prev) => ({ ...prev, [questionId]: value }))}
+            onAnswer={(questionId, value) => answerQuestion.mutate([{ questionId, value }])}
+            onAnswerAll={() => answerQuestion.mutate(pendingQuestions.map((q) => ({ questionId: q.questionId, value: answers[q.questionId] })))}
+            answerBusy={answerQuestion.isPending || !!unconfirmed}
+            batchReady={pendingQuestions.every((q) => { const value = answers[q.questionId]; return typeof value === 'string' ? value.trim().length > 0 : !!value?.length })}
+            draft={draft}
+            onDraft={setDraft}
+            inputDisabled={!selectedThreadId || send.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
+            placeholder={selectedThreadId ? 'Describe what to do next - scope, constraints, instructions...' : 'Create a thread first...'}
+            sendDisabled={!selectedThreadId || !draft.trim() || send.isPending || createThreadByKind.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
+            sending={send.isPending}
+            onSend={() => { setDispatchError(null); send.mutate(draft.trim()) }}
+            hint={executionBlocked ? 'Execution is blocked: it needs the confirmed planning handoff and a server-verified runtime context.' : 'Sending dispatches exactly one runtime run per request id. Refreshing never re-dispatches.'}
+          />
           </>}
         </div>
-        {embedded && wide && agentsOpen && <><Separator label="Resize real agents panel" side="right" r={agentWidth} cfg={INSP} /><aside style={{ width: agentWidth.w }} className="max-h-[80vh] shrink-0 overflow-y-auto rounded-xl border border-line bg-panel" aria-label="Execution agent observations">{agentPanel}</aside></>}
+        {wide && agentsOpen && <><Separator label="Resize agent sidebar" side="right" r={agentWidth} cfg={INSP} /><aside style={{ width: agentWidth.w }} className="flex min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-panel xl:h-[calc(100dvh-12rem)]" aria-label="Agent and activity sidebar"><AgentSidebar tab={sideTab} onTab={setSideTab} summary={{ state: runStatus === 'pending' || runStatus === 'running' ? 'Running' : pendingQuestions.length > 0 ? 'Waiting' : 'Idle', active: (fleet.data?.branches ?? []).filter((b) => b.state === 'running').length, task: trace.at(-1)?.label ?? null }} agents={agentPanel} activity={<ActivityList trace={trace} history={transcripts} />} artifacts={<ArtifactLinks engagementId={engagementId} />} /></aside></>}
       </div>
       {embedded && <><Drawer open={agentsSheet && !wide} onClose={() => setAgentsSheet(false)} title="Agents / Context" width={420}>{agentPanel}</Drawer><Drawer open={historySheet} onClose={() => setHistorySheet(false)} title="Execution history" width={980}><RealOperationsHistory engagementId={engagementId} /></Drawer></>}
     </>
@@ -672,38 +635,340 @@ function ApprovalsCard({ state, busyId, onDecide }: {
   )
 }
 
-function Transcript({ messages, trace }: { messages: ScopedThreadMessage[]; trace: TraceLine[] }): ReactElement {
+/** Chat header: the conversation switcher sits here instead of a left column. */
+function ConversationHeader({ threads, selectedId, runLabel, creating, executionLocked, embedded, agentsOpen, onSelect, onCreate, onHistory, onToggleAgents }: {
+  threads: { threadId: string; kind: ThreadKind; assistantId: string; updatedAt: string }[]
+  selectedId: string | null
+  runLabel: string | null
+  creating: boolean
+  executionLocked: boolean
+  embedded: boolean
+  agentsOpen: boolean
+  onSelect: (threadId: string) => void
+  onCreate: (kind: ThreadKind) => void
+  onHistory?: () => void
+  onToggleAgents: () => void
+}): ReactElement {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const selected = threads.find((t) => t.threadId === selectedId) ?? null
+  const needle = query.trim().toLowerCase()
+  const shown = threads.filter((t) => !needle || `${t.threadId} ${t.assistantId} ${t.kind}`.toLowerCase().includes(needle))
   return (
-    <div className="space-y-3">
-      {messages.length === 0 && trace.length === 0 ? (
-        <p className="text-sm text-muted">No messages yet. Open with the engagement context, constraints and what you want planned.</p>
-      ) : messages.map((m, i) => (
-        <div key={m.messageId ?? `msg-${i}`} className={cx('flex gap-3', m.role === 'user' ? '' : 'bg-subtle rounded-xl p-3')}>
-          <span className={cx('mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border', m.role === 'user' ? 'border-line text-muted' : 'border-accent-line bg-accent-soft text-accent')} aria-hidden>
-            {m.role === 'user' ? <User size={14} /> : <Bot size={14} />}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted">{m.role === 'user' ? 'You' : 'Planner'}</div>
-            {m.reasoning && <p className="mt-1 text-xs italic text-neutral">{m.reasoning}</p>}
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-fg">{m.content}</p>
+    <div className="flex min-w-0 items-center gap-2 border-b border-line pb-3" onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}>
+      <div className="relative min-w-0 flex-1">
+        <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}
+          className="flex max-w-full items-center gap-2 rounded-[10px] px-2 py-1.5 text-left hover:bg-hover">
+          <MessagesSquare size={16} className="shrink-0 text-muted" aria-hidden />
+          {selected ? (
+            <>
+              <span className="truncate font-mono text-sm font-medium text-fg">{selected.threadId.slice(0, 8)}</span>
+              <KindBadge kind={selected.kind} />
+              <span className="truncate text-xs text-muted">{selected.assistantId}</span>
+            </>
+          ) : <span className="text-sm text-muted">{threads.length === 0 ? 'No planning thread yet · create one to start' : 'No conversation selected'}</span>}
+          <ChevronDown size={14} className="shrink-0 text-muted" aria-hidden />
+        </button>
+        {runLabel && <p role="status" className="px-2 text-xs text-muted">{runLabel}</p>}
+        {open && (
+          <div role="listbox" aria-label="Conversations" className="absolute left-0 top-full z-30 mt-1 w-[min(22rem,90vw)] rounded-xl border border-line bg-panel p-2 shadow-lg">
+            <div className="relative mb-2">
+              <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted" aria-hidden />
+              <input aria-label="Search conversations" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search conversations"
+                className="h-9 w-full rounded-[10px] border border-line bg-subtle pl-7 pr-2 text-sm text-fg" />
+            </div>
+            <ul className="max-h-72 space-y-0.5 overflow-y-auto">
+              {shown.length === 0 && <li className="px-2 py-2 text-xs text-muted">No conversation matches.</li>}
+              {shown.map((t) => (
+                <li key={t.threadId}>
+                  <button type="button" role="option" aria-selected={t.threadId === selectedId}
+                    onClick={() => { onSelect(t.threadId); setOpen(false) }}
+                    className={cx('flex w-full items-center gap-2 rounded-[10px] px-2 py-2 text-left', t.threadId === selectedId ? 'bg-accent-soft' : 'hover:bg-hover')}>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-mono text-xs font-medium text-fg">{t.threadId.slice(0, 8)} · {t.assistantId}</span>
+                      <span className="block text-[11px] text-muted">{utcMinute(t.updatedAt)}</span>
+                    </span>
+                    <KindBadge kind={t.kind} />
+                    {t.threadId === selectedId && <Check size={14} className="shrink-0 text-accent" aria-hidden />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 flex flex-wrap gap-2 border-t border-line pt-2">
+              <Button size="sm" variant="secondary" icon={ListPlus} disabled={creating} onClick={() => { onCreate('planning'); setOpen(false) }}>New planning</Button>
+              <Button size="sm" variant="secondary" icon={ListPlus} disabled={creating || executionLocked}
+                title={executionLocked ? 'Confirm the planning handoff first - execution never bypasses it' : undefined}
+                onClick={() => { onCreate('execution'); setOpen(false) }}>New execution</Button>
+            </div>
           </div>
-        </div>
-      ))}
-      {trace.length > 0 && (
-        <div className="rounded-xl border border-line bg-panel">
-          <div className="border-b border-line px-3 py-2 text-xs font-semibold uppercase tracking-wider text-neutral">Current run activity</div>
-          <ul className="max-h-56 space-y-1 overflow-y-auto px-3 py-2">
-            {trace.map((t) => (
-              <li key={t.id} className="flex items-start gap-2 text-xs">
-                <CircleAlert size={12} className={cx('mt-0.5 shrink-0', t.error ? 'text-bad' : 'text-muted')} aria-hidden />
-                <span className="min-w-0 flex-1 break-words text-muted">{t.label}</span>
-                {t.status && <span className="shrink-0 font-mono text-neutral">{t.status}</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        )}
+      </div>
+      {embedded && onHistory && <Button size="sm" variant="ghost" onClick={onHistory}>History</Button>}
+      <Button size="sm" variant="ghost" icon={agentsOpen ? PanelRightClose : PanelRightOpen} onClick={onToggleAgents}
+        aria-pressed={agentsOpen} aria-label={agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'} title={agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'}>
+        <span className="sr-only">{agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'}</span>
+      </Button>
     </div>
+  )
+}
+
+function KindBadge({ kind }: { kind: ThreadKind }): ReactElement {
+  return <span className={cx('shrink-0 rounded-full border px-1.5 text-[10px] uppercase', kind === 'planning' ? 'border-line text-muted' : 'border-warn/40 text-warn')}>{kind}</span>
+}
+
+/** Messages, then the current run's activity: consecutive tool lines fold into one collapsed group. */
+function Transcript({ messages, trace }: { messages: ScopedThreadMessage[]; trace: TraceLine[] }): ReactElement {
+  if (messages.length === 0 && trace.length === 0) {
+    return <p className="text-sm text-muted">No messages yet. Open with the engagement context, constraints and what you want planned.</p>
+  }
+  const groups = groupTrace(trace)
+  return (
+    <ol className="space-y-5">
+      {messages.map((m, i) => <MessageRow key={m.messageId ?? `msg-${i}`} message={m} />)}
+      {groups.map((g) => (g.kind === 'tools'
+        ? <ToolActivityGroup key={g.lines[0]!.id} lines={g.lines} />
+        : <SystemLine key={g.lines[0]!.id} line={g.lines[0]!} />))}
+    </ol>
+  )
+}
+
+function isToolLine(line: TraceLine): boolean {
+  return line.label.startsWith('tool ') || line.label.startsWith('subagent tool')
+}
+
+function groupTrace(trace: TraceLine[]): { kind: 'tools' | 'system'; lines: TraceLine[] }[] {
+  const groups: { kind: 'tools' | 'system'; lines: TraceLine[] }[] = []
+  for (const line of trace) {
+    const kind = isToolLine(line) ? 'tools' : 'system'
+    const last = groups.at(-1)
+    if (last && last.kind === kind && kind === 'tools') last.lines.push(line)
+    else groups.push({ kind, lines: [line] })
+  }
+  return groups
+}
+
+function MessageRow({ message }: { message: ScopedThreadMessage }): ReactElement {
+  const isUser = message.role === 'user'
+  const [copied, setCopied] = useState(false)
+  const copy = (): void => {
+    void navigator.clipboard?.writeText(message.content).then(() => {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    }).catch(() => undefined)
+  }
+  const long = message.content.length > 1200
+  return (
+    <li className={cx('group flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
+      <span className="text-[11px] font-medium uppercase tracking-wide text-neutral">{isUser ? 'You' : 'Assistant'}</span>
+      {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} />}
+      <div className={cx('min-w-0 whitespace-pre-wrap break-words text-sm leading-relaxed text-fg', isUser ? 'max-w-[85%] rounded-2xl bg-accent-soft px-3.5 py-2' : 'w-full', long && 'max-h-96 overflow-y-auto')}>
+        {message.content}
+      </div>
+      <div className="flex gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
+        <Button size="sm" variant="ghost" icon={copied ? Check : Copy} onClick={copy} aria-label="Copy message">{copied ? 'Copied' : 'Copy'}</Button>
+      </div>
+    </li>
+  )
+}
+
+/** Shows the server-projected reasoning summary only on request; it never outweighs the answer. */
+function ThinkingBlock({ text }: { text: string }): ReactElement {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="w-full text-xs text-muted">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 hover:text-fg">
+        {open ? <ChevronDown size={12} aria-hidden /> : <ChevronRight size={12} aria-hidden />}
+        {open ? 'Hide thinking' : 'Thinking...'}
+      </button>
+      {open && <p className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap break-words border-l border-line pl-3 italic">{text}</p>}
+    </div>
+  )
+}
+
+function ToolActivityGroup({ lines }: { lines: TraceLine[] }): ReactElement {
+  const [groupOpen, setGroupOpen] = useState(false)
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set())
+  const failed = lines.filter((l) => l.error).length
+  return (
+    <li className="rounded-xl border border-line text-xs">
+      <div className="flex items-center justify-between gap-2 px-3 py-2">
+        <button type="button" aria-expanded={groupOpen} onClick={() => setGroupOpen((v) => !v)} className="flex min-w-0 items-center gap-2 text-left text-muted hover:text-fg">
+          {groupOpen ? <ChevronDown size={12} aria-hidden /> : <ChevronRight size={12} aria-hidden />}
+          <Wrench size={12} aria-hidden />
+          <span>{lines.length} tool call{lines.length === 1 ? '' : 's'}</span>
+          {failed > 0 && <span className="text-bad">{failed} failed</span>}
+        </button>
+        {groupOpen && lines.length > 1 && (
+          <div className="flex shrink-0 gap-1">
+            <Button size="sm" variant="ghost" onClick={() => setOpenIds(new Set(lines.map((l) => l.id)))}>Expand all</Button>
+            <Button size="sm" variant="ghost" onClick={() => setOpenIds(new Set())}>Collapse all</Button>
+          </div>
+        )}
+      </div>
+      {groupOpen && (
+        <ul className="space-y-1 border-t border-line px-3 py-2">
+          {lines.map((line) => {
+            const isOpen = openIds.has(line.id)
+            return (
+              <li key={line.id}>
+                <button type="button" aria-expanded={isOpen}
+                  onClick={() => setOpenIds((prev) => { const next = new Set(prev); if (next.has(line.id)) next.delete(line.id); else next.add(line.id); return next })}
+                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:bg-hover">
+                  {isOpen ? <ChevronDown size={11} aria-hidden /> : <ChevronRight size={11} aria-hidden />}
+                  <CircleAlert size={12} className={cx('shrink-0', line.error ? 'text-bad' : 'text-muted')} aria-hidden />
+                  <span className="min-w-0 flex-1 truncate text-muted" title={line.label}>{line.label}</span>
+                  {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
+                </button>
+                {isOpen && <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-subtle p-2 font-mono text-[11px] text-fg">{line.label}</pre>}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </li>
+  )
+}
+
+function SystemLine({ line }: { line: TraceLine }): ReactElement {
+  return (
+    <li className="flex items-center justify-center gap-2 text-xs text-muted">
+      <CircleAlert size={12} className={cx('shrink-0', line.error ? 'text-bad' : 'text-neutral')} aria-hidden />
+      <span className="min-w-0 truncate" title={line.label}>{line.label}</span>
+      {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
+    </li>
+  )
+}
+
+function growTextarea(el: HTMLTextAreaElement): void {
+  el.style.height = 'auto'
+  el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+}
+
+/** Bottom composer: normal input, or the pending question(s) in place of the input. */
+function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batchReady, draft, onDraft, inputDisabled, placeholder, sendDisabled, sending, onSend, hint }: {
+  questions: PendingInterruptView[]
+  onValue: (questionId: string, value: string | string[]) => void
+  onAnswer: (questionId: string, value: string | string[]) => void
+  onAnswerAll: () => void
+  answerBusy: boolean
+  batchReady: boolean
+  draft: string
+  onDraft: (value: string) => void
+  inputDisabled: boolean
+  placeholder: string
+  sendDisabled: boolean
+  sending: boolean
+  onSend: () => void
+  hint: string
+}): ReactElement {
+  if (questions.length > 0) {
+    return (
+      <div className="shrink-0 border-t border-line pt-3">
+        <div className="space-y-3 rounded-2xl border border-warn/30 bg-panel p-3">
+          <p className="text-xs font-semibold text-warn">The assistant is waiting for your answer. The answer resumes the same thread.</p>
+          <div className="max-h-[40vh] space-y-4 overflow-y-auto pr-1">
+            {questions.map((q) => (
+              <QuestionCard key={`${q.questionId}/${q.interruptId ?? ''}`} question={q} busy={answerBusy}
+                onValue={(value) => onValue(q.questionId, value)}
+                onAnswer={questions.length === 1 ? (value) => onAnswer(q.questionId, value) : undefined} />
+            ))}
+          </div>
+          {questions.length > 1 && (
+            <div className="flex justify-end">
+              <Button variant="primary" disabled={answerBusy || !batchReady} onClick={onAnswerAll}>{answerBusy ? 'Sending...' : 'Answer all questions'}</Button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="shrink-0 border-t border-line pt-3">
+      <div className="rounded-2xl border border-line bg-panel p-2 focus-within:border-accent-line">
+        <Textarea
+          value={draft}
+          rows={1}
+          onChange={(e) => { onDraft(e.target.value); growTextarea(e.currentTarget) }}
+          placeholder={placeholder}
+          aria-label="Workspace message"
+          disabled={inputDisabled}
+          className="min-h-[44px] resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus:ring-0"
+        />
+        <div className="flex items-center justify-between gap-2 px-1 pb-1">
+          <p className="min-w-0 text-[11px] text-neutral">{hint}</p>
+          <Button variant="primary" icon={Send} size="sm" disabled={sendDisabled} onClick={onSend}>{sending ? 'Sending...' : 'Send'}</Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type SideTab = 'agents' | 'activity' | 'artifacts'
+
+function AgentSidebar({ tab, onTab, summary, agents, activity, artifacts }: {
+  tab: SideTab
+  onTab: (tab: SideTab) => void
+  summary: { state: string; active: number; task: string | null }
+  agents: ReactElement
+  activity: ReactElement
+  artifacts: ReactElement
+}): ReactElement {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="space-y-1 border-b border-line px-3 py-2.5 text-xs">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-semibold text-fg">{summary.state}</span>
+          <span className="text-muted">{summary.active} active</span>
+        </div>
+        {summary.task && <p className="truncate text-muted" title={summary.task}>{summary.task}</p>}
+      </div>
+      <div className="px-3 pt-2.5">
+        <Segmented value={tab} onChange={onTab} options={[{ id: 'agents', label: 'Agents' }, { id: 'activity', label: 'Activity' }, { id: 'artifacts', label: 'Artifacts' }]} />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        {tab === 'agents' ? agents : tab === 'activity' ? activity : artifacts}
+      </div>
+    </div>
+  )
+}
+
+function ActivityList({ trace, history }: { trace: TraceLine[]; history: { key?: string | null; payload: unknown }[] }): ReactElement {
+  const historyLines = history.map((t, i) => traceLineFor(t.key ?? `hist-${i}`, t.payload as TraceLikePayload)).filter((l): l is TraceLine => l !== null)
+  if (trace.length === 0 && historyLines.length === 0) return <p className="text-xs text-muted">No activity yet. Events appear here as the assistant works.</p>
+  return (
+    <ol className="space-y-1">
+      {[...trace, ...historyLines].map((line) => (
+        <li key={line.id} className="flex items-start gap-2 text-xs">
+          <CircleAlert size={12} className={cx('mt-0.5 shrink-0', line.error ? 'text-bad' : 'text-muted')} aria-hidden />
+          <span className="min-w-0 flex-1 truncate text-muted" title={line.label}>{line.label}</span>
+          {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement {
+  const items: { label: string; hint: string; tab: string }[] = [
+    { label: 'Planning documents', hint: 'Plan drafts and handoff', tab: 'planning' },
+    { label: 'Scope & RoE', hint: 'Authorized scope and rules', tab: 'scope' },
+    { label: 'Findings & evidence', hint: 'Curated findings and captures', tab: 'findings' },
+  ]
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item) => (
+        <li key={item.tab}>
+          <button type="button" onClick={() => go('project', { id: engagementId, tab: item.tab })}
+            className="flex w-full items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-left hover:bg-hover">
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium text-fg">{item.label}</span>
+              <span className="block truncate text-[11px] text-muted">{item.hint}</span>
+            </span>
+            <ChevronRight size={14} className="shrink-0 text-muted" aria-hidden />
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -717,7 +982,7 @@ function QuestionCard({ question, busy, onAnswer, onValue }: { question: Pending
     onAnswer?.(question.multiSelect ? selected : selected[0])
   }
   return (
-    <div className="rounded-xl border border-line bg-subtle p-3" role="group" aria-label={question.header || 'Pending question'}>
+    <div className="space-y-2" role="group" aria-label={question.header || 'Pending question'}>
       <div className="flex items-start gap-2">
         <ShieldQuestion size={16} className="mt-0.5 shrink-0 text-warn" aria-hidden />
         <div className="min-w-0">
