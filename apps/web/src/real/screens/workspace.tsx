@@ -988,6 +988,11 @@ const PLANNING_DOC_LABELS: Record<string, string> = {
   conops: 'CONOPS',
   deconfliction: 'Deconfliction plan',
   opplan: 'OPPLAN',
+  'threat-profile': 'Threat profile',
+  contact: 'Contact plan',
+  'data-handling': 'Data handling',
+  abort: 'Abort plan',
+  cleanup: 'Cleanup plan',
 }
 const PLANNING_STATE_TONE: Record<string, string> = {
   ready: 'border-ok/40 text-ok',
