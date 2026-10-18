@@ -60,9 +60,12 @@ function memoryDb() {
     // P06/P07 models: these lifecycle cases pin no snapshots, templates or acknowledgements.
     reportTemplate: {
       findMany: async () => [],
-      findFirst: async ({ where }: { where: { id: string; engagementId: string } }) => where.id === 'TPL-1' && where.engagementId === ENG
-        ? { id: 'TPL-1', engagementId: ENG, name: 'Pentest', version: 1, sections: [], createdBy: 'author', createdAt: new Date() }
-        : null,
+      findFirst: async ({ where }: { where: { id?: string; engagementId: string; name?: string } }) => {
+        if (where.id === 'TPL-1' && where.engagementId === ENG) return { id: 'TPL-1', engagementId: ENG, name: 'Pentest', version: 1, sections: [], createdBy: 'author', createdAt: new Date() };
+        const rows = [...table('reportTemplate').values()].filter((r) => r.engagementId === where.engagementId && (where.id === undefined || r.id === where.id) && (where.name === undefined || r.name === where.name));
+        return rows.sort((a, b) => Number(b.version) - Number(a.version))[0] ?? null;
+      },
+      create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('tpl'), createdAt: new Date() }; table('reportTemplate').set(String(row.id), row); return { ...row }; },
     },
     reportFindingSnapshot: {
       findMany: async ({ where }: { where: { reportId: string } }) => [...table('reportFindingSnapshot').values()].filter((r) => r.reportId === where.reportId).map((r) => ({ ...r })),
@@ -170,6 +173,24 @@ describe('ticket 11 report lifecycle and delivery', () => {
     const stale = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: 1, summary: 'lost edit' } });
     expect(stale.statusCode).toBe(409);
     expect(stale.json().error.message).toContain('preserved');
+  });
+
+  it('seeds the template sections into an empty draft once and never overwrites them on a later template change', async () => {
+    const { app, author } = await setup();
+    const headers = { cookie: author.cookie, 'x-csrf-token': author.csrf };
+    const first = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-templates`, headers, payload: { name: 'Seeded template', sections: [{ title: 'Findings', required: true }, { title: 'Conclusion', required: true }] } });
+    expect(first.statusCode).toBe(200);
+    const second = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-templates`, headers, payload: { name: 'Other template', sections: [{ title: 'Appendix', required: false }] } });
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers, payload: { title: 'Seeded report' } });
+    const id = created.json().id;
+    const seeded = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}/setup`, headers, payload: { expectedVersion: 1, templateId: first.json().id } });
+    expect(seeded.statusCode).toBe(200);
+    expect(seeded.json().body.sections).toEqual([{ title: 'Findings', content: '' }, { title: 'Conclusion', content: '' }]);
+    const written = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers, payload: { expectedVersion: seeded.json().version, sections: [{ title: 'Findings', content: 'Written by the author.' }, { title: 'Conclusion', content: '' }] } });
+    expect(written.statusCode).toBe(200);
+    const changed = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}/setup`, headers, payload: { expectedVersion: written.json().version, templateId: second.json().id } });
+    expect(changed.statusCode).toBe(200);
+    expect(changed.json().body.sections).toEqual([{ title: 'Findings', content: 'Written by the author.' }, { title: 'Conclusion', content: '' }]);
   });
 
   it('enforces independent review with a mandatory comment and pins the version', async () => {

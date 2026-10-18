@@ -93,6 +93,41 @@ export function useRuntimeFleet(engagementId: string) {
   })
 }
 
+/** P11: the lifecycle the runtime reports for one execution thread; polled so a pause or a finished run shows without a reload. */
+export function useRuntimeOperation(engagementId: string, threadId: string) {
+  const { scope, service } = useRuntimeClient(engagementId)
+  return useQuery({
+    queryKey: ['runtime-operations', 'operation', engagementId, threadId],
+    queryFn: () => unwrap(service().operation(ctxOf(scope, engagementId, 'runtime-operation'), threadId)),
+    refetchInterval: 4_000,
+    retry: false,
+  })
+}
+
+/** P11 controls. Each one settles the operation and the runs it can change. */
+export function useRuntimeOperationControls(engagementId: string) {
+  const { scope, service } = useRuntimeClient(engagementId)
+  const client = useQueryClient()
+  const settle = () => client.invalidateQueries({ queryKey: ['runtime-operations'] })
+  return {
+    pause: async (threadId: string, runId: string) => {
+      const view = await unwrap(service().pauseRun(ctxOf(scope, engagementId, 'runtime-pause'), threadId, runId))
+      await settle()
+      return view
+    },
+    resume: async (threadId: string, requestId: string) => {
+      const recovery = await unwrap(service().resumeOperation(ctxOf(scope, engagementId, 'runtime-resume'), threadId, requestId))
+      await settle()
+      return recovery
+    },
+    complete: async (threadId: string) => {
+      const view = await unwrap(service().completeOperation(ctxOf(scope, engagementId, 'runtime-complete'), threadId))
+      await settle()
+      return view
+    },
+  }
+}
+
 export function useRuntimeCancel(engagementId: string) {
   const { scope, service } = useRuntimeClient(engagementId)
   const client = useQueryClient()

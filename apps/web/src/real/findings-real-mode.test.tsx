@@ -53,7 +53,7 @@ const routes: Record<string, unknown> = {
   },
   '/engagements': [engagement],
   '/engagements/eng-1': engagement,
-  '/engagements/eng-1/members': { engagementId: 'eng-1', mode: 'multi-user', members: [{ id: 'local', label: 'Local Operator', role: 'owner', source: 'membership' }], inviteSupported: true, reason: null, source: 'db' },
+  '/engagements/eng-1/members': { engagementId: 'eng-1', mode: 'multi-user', members: [{ id: 'local', label: 'Local Operator', role: 'owner', source: 'membership' }], canManage: true, inviteSupported: true, reason: null, source: 'db' },
   '/engagements/eng-1/curated-findings': {
     engagementId: 'eng-1', source: 'db', transitions: {},
     findings: [curated('CF-1', 'Admin panel exposed', 'draft'), curated('CF-2', 'Session fixation', 'review')],

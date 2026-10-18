@@ -205,6 +205,7 @@ describe('ticket 07 membership RBAC', () => {
     const view = list.json();
     expect(view.mode).toBe('multi-user');
     expect(view.inviteSupported).toBe(true);
+    expect(view.canManage).toBe(true);
     expect(view.members.map((m: { role: string }) => m.role).sort()).toEqual(['owner', 'reviewer', 'viewer']);
 
     const { cookie: viewerCookie, csrf: viewerCsrf } = await login(app, 'viewer', 'longenough1');

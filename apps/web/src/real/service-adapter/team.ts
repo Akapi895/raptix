@@ -18,8 +18,8 @@ export function createRealTeamService(): TeamService {
       if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
       const view = await fetchMembers(engagementId)
       const members: TeamMember[] = view.members.map((m) => ({ id: m.id, label: m.label, role: m.role, owner: m.role === 'owner' }))
-      // The server decides who may change members; the console offers the controls only to the owner, as the API requires.
-      const canManage = view.inviteSupported && members.some((m) => m.owner && m.id === ctx.actor.id)
+      // The server decides who may change members; the console only shows the controls it reports.
+      const canManage = view.canManage
       const data: TeamRead = {
         members,
         assignableRoles: ASSIGNABLE,
