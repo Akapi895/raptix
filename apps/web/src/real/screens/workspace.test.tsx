@@ -446,4 +446,24 @@ describe('RealWorkspace', () => {
     await emit('Full range is the better starting scope.', 'Weighing the scope options')
     expect(await screen.findByRole('button', { name: /^Thought for <1s$/ })).toBeInTheDocument()
   })
+
+  it('shows no thinking duration when the reasoning and the answer arrive in the same event', async () => {
+    stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const composer = await screen.findByLabelText('Workspace message')
+    await waitFor(() => expect(composer).toBeEnabled())
+    await user.type(composer, 'Same event check')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0]! })
+    await act(async () => source.emit('run-event', event({
+      eventId: 'same-event-1', runId: 'run-1', streamRunId: 'run-1',
+      payload: { type: 'message', messageId: 'm-same', role: 'assistant', content: 'Answer delivered at once.', mode: 'snapshot', truncated: false, reasoning: 'Reasoning delivered at once' },
+    })))
+    await screen.findByText('Answer delivered at once.')
+    expect(screen.getByRole('button', { name: 'Thinking...' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Thought for/ })).toBeNull()
+  })
 })

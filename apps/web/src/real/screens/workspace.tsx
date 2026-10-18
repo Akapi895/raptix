@@ -34,7 +34,7 @@ import { useSession } from '../session'
 
 interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
 /** When a reply's reasoning started and when its answer began, measured in this browser; the runtime records no timing. */
-interface ThinkingWindow { startedAt: number; answeredAt: number | null }
+interface ThinkingWindow { startedAt: number; answeredAt: number | null; openedBy: string }
 /** A transcript row; `thinkingMs` exists only for reasoning streamed in this browser, because the runtime records no timing. */
 type DisplayMessage = ScopedThreadMessage & { thinkingMs?: number }
 interface TraceLine { id: string; label: string; status?: string; error?: boolean }
@@ -242,9 +242,10 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       if (p.type === 'message') {
         if (p.messageId && p.role === 'assistant') {
           const now = Date.now()
+          // A duration needs the reasoning and the answer to arrive in separate events; the same event gives no timing.
           let window = thinkingWindows.current.get(p.messageId)
-          if (!window && p.reasoning) { window = { startedAt: now, answeredAt: null }; thinkingWindows.current.set(p.messageId, window) }
-          if (window && window.answeredAt === null && p.content.length > 0) window.answeredAt = now
+          if (!window && p.reasoning) { window = { startedAt: now, answeredAt: null, openedBy: event.eventId }; thinkingWindows.current.set(p.messageId, window) }
+          if (window && window.answeredAt === null && p.content.length > 0 && window.openedBy !== event.eventId) window.answeredAt = now
         }
         setLive((prev) => {
           const next = [...prev]
