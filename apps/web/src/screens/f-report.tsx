@@ -891,7 +891,7 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
               { id: 'sens', label: 'Sensitive evidence is redacted', state: 'pass', detail: evs.length ? `${evs.length} evidence item(s), ${sensitive} redacted.` : 'No evidence attached.' },
               { id: 'roe', label: 'Referenced ROE version', state: project.roeStatus === 'approved' ? 'pass' : 'warn', detail: `${project.roeVersion} (${project.roeStatus === 'approved' ? 'approved' : 'not approved'})` },
               { id: 'brand', label: 'Client and branding', state: 'pass', detail: `${project.client} · ${r.template}` },
-              checks.find((c) => c.id === 'tpl')!,
+              ...checks.filter((c) => c.id === 'tpl'),
             ]} />
           </Card>
 
