@@ -65,9 +65,31 @@ def test_bash_workspace_rejects_shared_root(monkeypatch) -> None:
             pass
 
 
-def test_bash_workspace_inactive_without_env(monkeypatch) -> None:
-    with bash_workspace("/workspace/lab-99"):
-        assert _workspace_path_from_config(None) == "/workspace/lab-99"
+def test_bash_workspace_without_identity_refuses_an_engagement_subtree(monkeypatch) -> None:
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT", raising=False)
+    with pytest.raises(RuntimeError, match="no engagement identity"):
+        with bash_workspace("/workspace/lab-99"):
+            pass
+
+
+def test_unpinned_run_identity_must_be_its_own_workspace_slug(monkeypatch) -> None:
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT", raising=False)
+    with bash_workspace("/workspace/lab-01", engagement_name="lab-01"):
+        assert _workspace_path_from_config(None) == "/workspace/lab-01"
+
+
+def test_unpinned_display_title_does_not_match_the_workspace_slug(monkeypatch) -> None:
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT", raising=False)
+    with pytest.raises(RuntimeError, match="not a workspace slug"):
+        with bash_workspace("/workspace/popup-lab-lbvq", engagement_name="Popup Lab Assessment"):
+            pass
+
+
+def test_unpinned_sibling_prefix_is_not_inside_the_engagement(monkeypatch) -> None:
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT", raising=False)
+    with pytest.raises(RuntimeError, match="outside engagement"):
+        with bash_workspace("/workspace/lab-01x", engagement_name="lab-01"):
+            pass
 
 
 def test_bash_workspace_rejects_invalid_slug_env(monkeypatch) -> None:

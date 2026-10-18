@@ -73,7 +73,7 @@ class _SessionIsolatingSandbox:
 
 
 def _invoke_bash(command: str, session: str) -> str:
-    with bash_workspace("/workspace/b0-isolation"):
+    with bash_workspace("/workspace/b0-isolation", engagement_name="b0-isolation"):
         return asyncio.run(
             bash.ainvoke(
                 {
@@ -154,7 +154,7 @@ def test_bash_status_lists_running_and_done_jobs():
 def test_bash_status_empty_returns_empty_marker():
     sandbox = _fake_sandbox()
     set_sandbox(sandbox)
-    with bash_workspace("/workspace/test"):
+    with bash_workspace("/workspace/test", engagement_name="test"):
         result = asyncio.run(bash_status.ainvoke({}))
     assert "[EMPTY]" in result
 
@@ -165,7 +165,7 @@ def test_bash_background_uses_engagement_workspace_context():
     sandbox.start_background = MagicMock()
     set_sandbox(sandbox)
 
-    with bash_workspace("/workspace/test"):
+    with bash_workspace("/workspace/test", engagement_name="test"):
         result = asyncio.run(
             bash.ainvoke(
                 {
