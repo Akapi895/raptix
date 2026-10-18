@@ -165,7 +165,7 @@ class InstanceMailbox:
         self._conn.execute("PRAGMA busy_timeout=5000")
         self._conn.executescript(_SCHEMA)
         # Additive migrations for stores created before intent and forwarding were recorded.
-        for table, column in (("instances", "intent"), ("instances", "objective_id"), ("messages", "source_message_id")):
+        for table, column in (("instances", "intent"), ("instances", "objective_id"), ("instances", "fingerprint"), ("messages", "source_message_id")):
             if column not in {row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")}:
                 self._conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} TEXT")
         self._conn.execute(
@@ -193,15 +193,27 @@ class InstanceMailbox:
         role: str | None,
         intent: str | None = None,
         objective_id: str | None = None,
+        fingerprint: str | None = None,
     ) -> None:
         now = self._clock()
         with self._lock:
             self._conn.execute(
                 "INSERT INTO instances (thread_id, dispatch_id, attempt, role, state, started_at, updated_at, intent,"
-                " objective_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                " objective_id, fingerprint) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 " ON CONFLICT (thread_id, dispatch_id, attempt) DO NOTHING",
-                (thread_id, dispatch_id, attempt, role, RUNNING, now, now, intent, objective_id),
+                (thread_id, dispatch_id, attempt, role, RUNNING, now, now, intent, objective_id, fingerprint),
             )
+
+    def interrupted_sources(self, thread_id: str, fingerprint: str) -> list[str]:
+        """Dispatch ids on this thread whose attempt of this intent was interrupted, never resumed by themselves."""
+        with self._lock:
+            return [
+                str(row[0])
+                for row in self._conn.execute(
+                    "SELECT DISTINCT dispatch_id FROM instances WHERE thread_id = ? AND fingerprint = ? AND state = ?",
+                    (thread_id, fingerprint, INTERRUPTED),
+                ).fetchall()
+            ]
 
     def open_grant(
         self,

@@ -223,11 +223,19 @@ class DispatchMiddleware(SubAgentMiddleware):
             for source, row in ledger.items()
             if row.get("fingerprint") == fingerprint and row.get("outcome", {}).get("status") == "cancelled"
         ]
-        if any(source != (grant.source_dispatch_id if grant else None) for source in cancelled):
+        granted = grant.source_dispatch_id if grant else None
+        if any(source != granted for source in cancelled):
             return _reply(
                 runtime,
                 "cancelled_intent",
                 "The operator cancelled this intent; only an explicit operator Retry or Reassign may run it again",
+            )
+        # A restart interrupts the attempt; the replayed task call must not run the same intent again on its own.
+        if any(source != granted for source in self._interrupted_sources(thread_id, fingerprint)):
+            return _reply(
+                runtime,
+                "interrupted_intent",
+                "The runtime interrupted this intent and it was not resumed; only an explicit operator Retry or Reassign may run it again",
             )
         if prior and prior.get("fingerprint") != fingerprint:
             return _reply(
@@ -306,10 +314,17 @@ class DispatchMiddleware(SubAgentMiddleware):
                 thread_id=str(thread_id) if thread_id else None,
                 intent=description,
                 replay_grant=grant.command_id if grant else None,
+                fingerprint=fingerprint,
             ),
             key,
             fingerprint,
         )
+
+    @staticmethod
+    def _interrupted_sources(thread_id: Any, fingerprint: str) -> list[str]:
+        if not thread_id:
+            return []
+        return default_mailbox().interrupted_sources(str(thread_id), fingerprint)
 
     @staticmethod
     def _operator_grant(thread_id: Any, dispatch_id: str | None) -> Any:
@@ -356,6 +371,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 context.role,
                 context.intent,
                 context.objective_id,
+                context.fingerprint,
             )
             if context.replay_grant:
                 default_mailbox().consume_grant(context.replay_grant)

@@ -202,6 +202,22 @@ def test_operator_grant_replays_the_persisted_intent_and_is_consumed(task: tuple
     assert box.snapshot("thread-1", "d1")[0][1].intent == "same intent"
 
 
+def test_interrupted_intent_is_not_resumed_by_a_replayed_task_call(task: tuple) -> None:
+    from raptix.execution.session.instance_mailbox import default_mailbox
+
+    tool, inner = task
+    fingerprint = hashlib.sha256(
+        json.dumps(["exploit", "A", "same intent"], ensure_ascii=False).encode()
+    ).hexdigest()
+    box = default_mailbox()
+    box.start_instance("thread-1", "d9", 1, "exploit", "same intent", "A", fingerprint)
+    box.finish_instance("thread-1", "d9", 1, interrupted=True)
+    state = {"objectives": [{"id": "A"}], "engagement_name": "lab"}
+    refused = _call(tool, state, dispatch="d10")
+    assert "interrupted_intent" in refused.update["messages"][0].content
+    assert inner.calls == 0
+
+
 def test_ledger_row_names_the_role_that_owns_the_dispatch(task: tuple) -> None:
     tool, _ = task
     state = {"objectives": [{"id": "A"}], "engagement_name": "lab"}
