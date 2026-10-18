@@ -3,12 +3,14 @@
  * all act on the attempt the runtime reports as latest, and the runtime decides each one; its reason is
  * shown as written. "Cancel requested" is recorded intent: the attempt has stopped only when it reads cancelled.
  */
-import { useState, type ReactElement } from 'react'
+import { useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  cancelInstance, commandInstance, fetchInstanceMailbox, forwardInstanceMessage, INSTANCE_MESSAGE_MAX_CHARS, sendInstanceMessage,
+  cancelInstance, commandInstance, fetchInstanceMailbox, forwardInstanceMessage, getThread, INSTANCE_MESSAGE_MAX_CHARS, sendInstanceMessage,
   type InstanceAttemptState, type InstanceMailboxView, type InstanceMessageState, type RuntimeInstanceView,
 } from '../api'
+import { go } from '../../router/navigate'
+import { ApiTransportError } from '../transport'
 import { utcMinute } from '../format'
 import { Banner, Button, Input, Select, Skeleton, Textarea } from '../../ui'
 
@@ -27,6 +29,30 @@ const ATTEMPT_TEXT: Record<InstanceAttemptState, string> = {
 }
 const TERMINAL: ReadonlySet<InstanceAttemptState> = new Set(['cancelled', 'finished', 'interrupted'])
 const ROLE_PATTERN = /^[a-z][a-z0-9_-]{0,63}$/
+const UNCONFIRMED = 'The previous request has no confirmed outcome. Send it again unchanged; the runtime answers whether it was recorded.'
+
+/**
+ * One id per unsettled operator intent. A lost ACK leaves the intent open, so the same request reuses its id and the
+ * runtime answers the first outcome instead of recording a second one. A different request waits until the open one
+ * is confirmed or refused.
+ */
+function useIntentId(): { idFor: (content: string) => string; settle: () => void } {
+  const pending = useRef<{ content: string; id: string } | null>(null)
+  return {
+    idFor: (content) => {
+      const current = pending.current
+      if (current !== null && current.content === content) return current.id
+      if (current !== null) throw new Error(UNCONFIRMED)
+      const next = { content, id: crypto.randomUUID() }
+      pending.current = next
+      return next.id
+    },
+    settle: () => { pending.current = null },
+  }
+}
+
+/** A 4xx is the runtime's refusal, with no effect recorded; any other failure may have landed, so its id stays open. */
+const refused = (err: unknown): boolean => err instanceof ApiTransportError && err.status >= 400 && err.status < 500
 
 export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt, peers = [] }: {
   engagementId: string; threadId: string; dispatchId: string; attempt: number
@@ -41,12 +67,22 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
     refetchInterval: 5_000,
     retry: false,
   })
+  // The thread's open questions; the ones this attempt asked are pinned here. Answers go through the workspace's batch resume.
+  const thread = useQuery({
+    queryKey: ['real', 'thread', engagementId, threadId],
+    queryFn: () => getThread(engagementId, threadId),
+    refetchInterval: 5_000,
+    retry: false,
+  })
   const [draft, setDraft] = useState('')
   const [reassignRole, setReassignRole] = useState('')
   const [forwardSource, setForwardSource] = useState('')
   const [forwardTarget, setForwardTarget] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const sendIntent = useIntentId()
+  const commandIntent = useIntentId()
+  const forwardIntent = useIntentId()
 
   const refresh = (): void => {
     void client.invalidateQueries({ queryKey: key })
@@ -60,9 +96,16 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
   const latest = view?.instances.reduce<InstanceMailboxView['instances'][number] | null>((best, row) => (best === null || row.attempt > best.attempt ? row : best), null) ?? null
 
   const send = useMutation({
-    mutationFn: () => sendInstanceMessage(engagementId, threadId, dispatchId, { messageId: crypto.randomUUID(), body: draft.trim(), expectedAttempt: attempt }),
-    onSuccess: () => { setDraft(''); setError(null); setNotice(null); refresh() },
-    onError: (err) => fail(err, 'The message was not sent.'),
+    mutationFn: async () => {
+      const body = draft.trim()
+      const messageId = sendIntent.idFor(`${attempt}\n${body}`)
+      // Reconcile before resending: a message the runtime already recorded under this id is not recorded twice.
+      const current = await fetchInstanceMailbox(engagementId, threadId, dispatchId)
+      if (current.messages.some((m) => m.messageId === messageId)) return null
+      return sendInstanceMessage(engagementId, threadId, dispatchId, { messageId, body, expectedAttempt: attempt })
+    },
+    onSuccess: () => { sendIntent.settle(); setDraft(''); setError(null); setNotice(null); refresh() },
+    onError: (err) => { if (refused(err)) sendIntent.settle(); fail(err, 'The message was not sent.') },
   })
   const cancel = useMutation({
     mutationFn: (expectedAttempt: number) => cancelInstance(engagementId, threadId, dispatchId, expectedAttempt),
@@ -70,24 +113,26 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
     onError: (err) => fail(err, 'The cancel was not recorded.'),
   })
   const command = useMutation({
-    mutationFn: (input: { kind: 'retry' | 'reassign'; expectedAttempt: number; role?: string }) => commandInstance(engagementId, threadId, dispatchId, { commandId: crypto.randomUUID(), ...input }),
+    mutationFn: (input: { kind: 'retry' | 'reassign'; expectedAttempt: number; role?: string }) => commandInstance(engagementId, threadId, dispatchId, { commandId: commandIntent.idFor(`${input.kind}|${input.expectedAttempt}|${input.role ?? ''}`), ...input }),
     onSuccess: (ack) => {
+      commandIntent.settle()
       setError(null)
       const outcome = ack.run.state === 'accepted' ? 'admitted: the orchestrator run has started' : ack.run.state === 'uncertain' ? 'the run outcome is uncertain; the same request replays it' : `the run was ${String(ack.run.state)}`
       setNotice(`${ack.kind === 'retry' ? 'Retry' : 'Reassignment'} to dispatch ${ack.dispatchId.slice(0, 12)} (${ack.role}): ${outcome}.`)
       setReassignRole('')
       refresh()
     },
-    onError: (err) => fail(err, 'The retry or reassignment was not admitted.'),
+    onError: (err) => { if (refused(err)) commandIntent.settle(); fail(err, 'The retry or reassignment was not admitted.') },
   })
   const forward = useMutation({
     mutationFn: () => {
       const target = peers.find((peer) => peer.instanceId === forwardTarget)
       if (!target) throw new Error('Choose a running target instance.')
-      return forwardInstanceMessage(engagementId, threadId, target.dispatchId, { messageId: crypto.randomUUID(), sourceDispatchId: dispatchId, sourceMessageId: forwardSource, expectedAttempt: target.attempt })
+      const messageId = forwardIntent.idFor(`${forwardSource}|${target.instanceId}`)
+      return forwardInstanceMessage(engagementId, threadId, target.dispatchId, { messageId, sourceDispatchId: dispatchId, sourceMessageId: forwardSource, expectedAttempt: target.attempt })
     },
-    onSuccess: () => { setError(null); setNotice('Forwarded as a new message to the target. The source message is unchanged.'); setForwardSource(''); setForwardTarget(''); refresh() },
-    onError: (err) => fail(err, 'The message was not forwarded.'),
+    onSuccess: () => { forwardIntent.settle(); setError(null); setNotice('Forwarded as a new message to the target. The source message is unchanged.'); setForwardSource(''); setForwardTarget(''); refresh() },
+    onError: (err) => { if (refused(err)) forwardIntent.settle(); fail(err, 'The message was not forwarded.') },
   })
 
   if (mailbox.isPending) return <Skeleton className="h-16" />
@@ -99,6 +144,7 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
   const mine = view.messages.filter((m) => m.attempt === attempt)
   const runningPeers = peers.filter((peer) => peer.threadId === threadId && peer.dispatchId !== dispatchId && peer.outcome === 'running')
   const roleValid = ROLE_PATTERN.test(reassignRole)
+  const pinned = (thread.data?.pendingQuestions ?? []).filter((q) => q.instance?.dispatchId === dispatchId)
 
   return (
     <section aria-label={`Operator controls for ${dispatchId}`} className="mt-3 space-y-3 border-t border-line pt-3">
@@ -139,6 +185,16 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
             </li>
           ))}
         </ul>
+      )}
+      {pinned.length > 0 && (
+        <section aria-label="Questions from this instance" className="space-y-2 rounded-lg border border-line p-2">
+          <h4 className="text-xs font-semibold">Waiting for your answer</h4>
+          <ul className="space-y-1">
+            {pinned.map((q) => <li key={q.questionId} className="text-xs text-fg">{q.question}</li>)}
+          </ul>
+          <p className="text-xs text-muted">The thread answers every pending question in one batch, so answer them in the AI workspace.</p>
+          <Button size="sm" variant="secondary" onClick={() => go('project', { id: engagementId, tab: 'ai-workspace' })}>Open AI workspace</Button>
+        </section>
       )}
       {canSend ? (
         <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); if (draft.trim()) send.mutate() }}>

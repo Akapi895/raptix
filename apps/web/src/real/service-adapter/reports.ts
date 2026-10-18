@@ -5,7 +5,7 @@ import type {
   ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead, ReportReviewRead, ReportService, ReportSubmitInput,
 } from '../../features/reports/service'
 import {
-  acknowledgeReportDelivery, createReport, createReportTemplate, decideReportReview, deliverReport, exportReport, fetchCuratedFindings, fetchMembers, fetchReports, reviseReport, setReportFindings,
+  acknowledgeReportDelivery, createReport, createReportTemplate, decideReportReview, deliverReport, exportReport, fetchAuthSession, fetchCuratedFindings, fetchMembers, fetchReports, reviseReport, setReportFindings,
   submitReportForReview, updateReport, updateReportSetup, type CuratedFindingView, type ReportTemplateView, type ReportView, type ReportsView,
 } from '../api'
 import { REAL_CONTROL_GAPS } from './control-gaps'
@@ -260,9 +260,11 @@ export function createRealReportService(): ReportService {
       const rc = await readContext(ctx.projectId)
       const view = findReport(rc, id)
       if (!view) return notFound<ReportReviewRead>(id)
-      const isAuthor = view.createdBy === ctx.actor.id
+      // The stored ids are the account ids the server issued; the console name is not one, so the signed-in account is read from the session.
+      const actorId = (await fetchAuthSession())?.actor?.id ?? ctx.actor.id
+      const isAuthor = view.createdBy === actorId
       const reviewerRole = REVIEW_ROLES.includes(ctx.actor.role)
-      const namedOk = view.reviewerId === null || view.reviewerId === ctx.actor.id
+      const namedOk = view.reviewerId === null || view.reviewerId === actorId
       const data: ReportReviewRead = {
         report: toReport(view, rc),
         project: { id: ctx.projectId, client: '', type: '', roeVersion: '', roeStatus: 'none', window: '' } as ReportReviewRead['project'],

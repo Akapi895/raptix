@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type {
   InstanceAttemptState, InstanceCancelAck, InstanceMailboxView, InstanceMessageAck, InstanceMessageView, RequestRecoveryView,
-  RuntimeInstanceView, RuntimeRosterView, ScopedRunView, ScopedThreadView, ThreadBindingView,
+  OperationView, RuntimeInstanceView, RuntimeRosterView, ScopedRunView, ScopedThreadView, ThreadBindingView,
 } from '@raptix/web-contracts';
 import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtime/execution-client.js';
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
@@ -93,11 +93,6 @@ export interface RunOperationPort {
 }
 
 /** P11 operation view: the durable state plus the latest run the runtime reports. */
-export interface OperationView {
-  engagementId: string; threadId: string; state: string
-  latestRunId: string | null; latestRunStatus: string | null; source: 'runtime'
-}
-
 export class RunService {
   public constructor(private readonly options: {
     ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort

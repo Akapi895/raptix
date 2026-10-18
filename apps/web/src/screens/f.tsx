@@ -1,4 +1,5 @@
 import { useEffect, useState, type ComponentType } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Copy, Download, Eye, FileText, History, Lock, Plus, Rocket, Send, Upload } from 'lucide-react'
 import { useServices } from '../state/services'
 import { recordAudit } from '../features/audit/service'
@@ -7,7 +8,9 @@ import { Banner, Button, Card, Drawer, Empty, Field, FilterBar, IdLink, Input, K
 import { type NoFind } from '../features/reports/service'
 import { useReportValidation } from '../features/reports/projection'
 import { isRealMode } from '../real/mode'
-import { ReportReadError, useDeliveryHistory, useReportList, useReportWrites, useTemplates } from '../features/reports/query'
+import { ReportReadError, reportKeys, useDeliveryHistory, useReportList, useReportWrites, useTemplates } from '../features/reports/query'
+import { useQueryScope } from '../state/keys'
+import { createReportTemplate } from '../real/api'
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './f-report'
 import { SettingsPage } from './f-settings'
 import { go, useRoute } from '../router/navigate'
@@ -165,7 +168,65 @@ function TemplateCreateForm({ onDone, onCancel }: { onDone: () => void; onCancel
 }
 
 // eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
+/** Real-mode template gallery (P06): the versioned templates the server holds, and an admin/manager create form. */
+function RealTemplates() {
+  const me = useMe()
+  const tpls = useTemplates()
+  const scope = useQueryScope()
+  const client = useQueryClient()
+  const pid = useProjectStore((s) => s.pid)
+  const [creating, setCreating] = useState(false)
+  const [name, setName] = useState('')
+  const [sections, setSections] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const allowed = me.role === 'admin' || me.role === 'manager'
+  const why = 'Only organization admins and managers can create report templates.'
+  const create = useMutation({
+    mutationFn: () => createReportTemplate(pid, {
+      name: name.trim(),
+      sections: sections.split('\n').map((line) => line.trim()).filter((line) => line.length > 0).map((title) => ({ title, required: true })),
+    }),
+    onSuccess: () => { setCreating(false); setName(''); setSections(''); setError(null); void client.invalidateQueries({ queryKey: reportKeys.templates(scope) }) },
+    onError: (err) => setError(err instanceof Error ? err.message : 'The template was not created.'),
+  })
+  if (tpls.isPending) return <div aria-busy="true" aria-label="Loading templates"><Skeleton className="h-64" /></div>
+  if (tpls.isError) return <ReadError error={tpls.error} retry={() => tpls.refetch()} />
+  const templates = tpls.data!
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted">{templates.length} templates. Each save is a new immutable version; a report pins the version it uses.</p>
+        <Button icon={Plus} disabled={!allowed} title={allowed ? undefined : why} onClick={() => setCreating(true)}>New template</Button>
+      </div>
+      {!allowed && <p className="-mt-2 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{why}</p>}
+      {creating && (
+        <Card>
+          <div className="space-y-3 p-4">
+            <Field label="Template name" required><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Sections" required hint="One required section per line, in the order the report shows them."><Textarea value={sections} onChange={(e) => setSections(e.target.value)} /></Field>
+            {error && <Banner tone="bad" title="The template was not created">{error}</Banner>}
+            <div className="flex gap-2">
+              <Button onClick={() => setCreating(false)}>Cancel</Button>
+              <Button variant="primary" disabled={create.isPending || name.trim().length === 0 || sections.trim().length === 0} onClick={() => create.mutate()}>{create.isPending ? 'Creating…' : 'Create template'}</Button>
+            </div>
+          </div>
+        </Card>
+      )}
+      {templates.length === 0 ? <Empty title="No templates yet">Create the first template before drafting a report.</Empty> : (
+        <ul className="divide-y divide-line rounded-xl border border-line">
+          {templates.map((t) => <li key={t.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"><span className="font-medium">{t.name}</span><span className="text-muted">{t.version}</span><span className="text-muted">owner {t.owner}</span></li>)}
+        </ul>
+      )}
+    </>
+  )
+}
+
+/** Simulated template gallery: mock-only authority; real mode never reaches it. */
 function Templates() {
+  return isRealMode() ? <RealTemplates /> : <SimulatedTemplates />
+}
+
+function SimulatedTemplates() {
   const services = useServices()
   const me = useMe()
   const toast = useToastStore((s) => s.toast)

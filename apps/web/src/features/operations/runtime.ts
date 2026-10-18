@@ -1,12 +1,12 @@
 /**
  * Runtime operations port (plan P12, Operations slice). The runtime owns the
  * execution threads and the runs on them; the console shows each raw status as
- * the runtime reports it and can cancel a run that is still in flight. Pause,
- * resume and completion have no runtime action until the operation lifecycle
- * lands (plan P11), so this port does not offer them. The mock console keeps
+ * the runtime reports it, cancels a run that is still in flight, and drives the
+ * operation lifecycle (plan P11): pause a run, resume a paused operation, mark it
+ * complete. Approval and step controls are not here. The mock console keeps
  * its own operation lifecycle, so this port has no mock adapter.
  */
-import type { ThreadHistoryEvent, TimelineEntryView } from '@raptix/web-contracts'
+import type { OperationView, RequestRecoveryView, ThreadHistoryEvent, TimelineEntryView } from '@raptix/web-contracts'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export interface RuntimeThread {
@@ -77,6 +77,13 @@ export interface RuntimeOperationsService {
   snapshot(ctx: RequestContext, threadId: string): Promise<ServiceResult<RuntimeThreadSnapshot>>
   /** Cancels one run that the runtime still reports in flight. */
   cancelRun(ctx: RequestContext, threadId: string, runId: string): Promise<ServiceResult<RuntimeRun>>
+  /** P11: the lifecycle the runtime reports for one execution thread. */
+  operation(ctx: RequestContext, threadId: string): Promise<ServiceResult<OperationView>>
+  /** P11: pauses one run; cooperative, so the answer is the operation as recorded. */
+  pauseRun(ctx: RequestContext, threadId: string, runId: string): Promise<ServiceResult<OperationView>>
+  /** P11: continues a paused operation as a new run; the request id makes a retry replay the same run. */
+  resumeOperation(ctx: RequestContext, threadId: string, requestId: string): Promise<ServiceResult<RequestRecoveryView>>
+  completeOperation(ctx: RequestContext, threadId: string): Promise<ServiceResult<OperationView>>
   timeline(ctx: RequestContext): Promise<ServiceResult<RuntimeTimeline>>
 }
 
@@ -90,6 +97,10 @@ export function unavailableRuntimeOperationsService(): RuntimeOperationsService 
     runs: unavailable,
     snapshot: unavailable,
     cancelRun: unavailable,
+    operation: unavailable,
+    pauseRun: unavailable,
+    resumeOperation: unavailable,
+    completeOperation: unavailable,
     timeline: unavailable,
   }
 }

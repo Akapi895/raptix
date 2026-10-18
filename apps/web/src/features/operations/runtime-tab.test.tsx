@@ -8,7 +8,7 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
-const { cleanup, fireEvent, render, screen, within } = await import('@testing-library/react')
+const { cleanup, fireEvent, render, screen, waitFor, within } = await import('@testing-library/react')
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query')
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
 const { createRealFeatureServices } = await import('../../real/service-adapter/index')
@@ -17,17 +17,25 @@ const { RuntimeOperationsTab } = await import('./runtime-tab')
 const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { runs: { supported: true, available: true }, projects: { supported: true, available: true } } } as never
 
 const EXEC = { engagementId: 'eng-1', threadId: 'th-exec', assistantId: 'executor', kind: 'execution', createdAt: '2026-10-14T09:00:00.000Z', updatedAt: '2026-10-14T09:05:00.000Z' }
+const OP_RUNNING = { engagementId: 'eng-1', threadId: 'th-exec', state: 'running', latestRunId: 'run-9', latestRunStatus: 'running', source: 'runtime' }
+const OP_PAUSED = { ...OP_RUNNING, state: 'paused', latestRunStatus: 'interrupted' }
+const OP_FINISHED = { ...OP_RUNNING, state: 'running', latestRunStatus: 'success' }
+const BODIES: string[] = []
 const PLAN = { engagementId: 'eng-1', threadId: 'th-plan', assistantId: 'soundwave', kind: 'planning', createdAt: '2026-10-14T08:00:00.000Z', updatedAt: '2026-10-14T08:05:00.000Z' }
 const RUN = { engagementId: 'eng-1', threadId: 'th-exec', runId: 'run-9', requestId: 'req-abc12345', rawStatus: 'running', createdAt: '2026-10-14T09:01:00.000Z', updatedAt: '2026-10-14T09:02:00.000Z', source: 'runtime' }
 
-function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[]; timeline?: unknown } = {}) {
+function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[]; timeline?: unknown; operation?: unknown } = {}) {
+  BODIES.length = 0
   const calls: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     calls.push(`${init?.method ?? 'GET'} ${url}`)
+    if (init?.body) BODIES.push(String(init.body))
     if (url.endsWith('/threads') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', threads: over.threads ?? [PLAN, EXEC], source: 'runtime' }), { status: 200 })
     if (url.includes('/runs?') || (url.endsWith('/runs') && (init?.method ?? 'GET') === 'GET')) return new Response(JSON.stringify({ runs: over.runs ?? [RUN], offset: 0, nextOffset: null }), { status: 200 })
     if (url.endsWith('/estops') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', stops: over.stops ?? [], source: 'db' }), { status: 200 })
+    if (url.endsWith('/operation')) return new Response(JSON.stringify(over.operation ?? OP_RUNNING), { status: 200 })
+    if (url.endsWith('/resume-run') || url.endsWith('/complete') || url.endsWith('/pause')) return new Response(JSON.stringify(OP_RUNNING), { status: 202 })
     if (url.endsWith('/cancel') && init?.method === 'POST') return new Response(JSON.stringify({ ...RUN, rawStatus: 'cancelled' }), { status: 200 })
     if (url.endsWith('/timeline')) return new Response(JSON.stringify(over.timeline ?? { engagementId: 'eng-1', entries: [], truncated: false, unavailableThreads: 0, source: 'mixed' }), { status: 200 })
     if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ binding: EXEC, rawStatus: 'running', messages: [], messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime', transcriptsTruncated: false, transcripts: [{ key: 'tool-1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_tool_call', agent: 'recon', tool: 'service-mapper', truncated: false } }] }))
@@ -57,7 +65,7 @@ describe('RuntimeOperationsTab', () => {
     expect(await screen.findByText('th-exec')).toBeTruthy()
     expect(await screen.findByText('run-9')).toBeTruthy()
     expect(screen.getByText('req-abc12345')).toBeTruthy()
-    expect(screen.getByText('running')).toBeTruthy()
+    expect(screen.getAllByText('running').length).toBeGreaterThan(0)
     expect(screen.queryByText('th-plan')).toBeNull()
   })
 
@@ -153,5 +161,40 @@ describe('RuntimeOperationsTab (W22 operation detail route)', () => {
     expect(screen.getByText('1 thread has a runtime binding that no longer matches persisted state, so its runs and checkpoints are left out.')).toBeInTheDocument()
     expect(screen.queryByText('Timeline source unavailable')).not.toBeInTheDocument()
     expect(screen.getByText('Planning run success')).toBeInTheDocument()
+  })
+})
+
+describe('RuntimeOperationsTab (P11 lifecycle)', () => {
+  it('resumes a paused operation, and a retry after a lost answer reuses the same request id', async () => {
+    stubApi({ operation: OP_PAUSED })
+    renderPanel()
+    fireEvent.click(await screen.findByRole('button', { name: /Resume operation/ }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Resume operation/ }))
+    await waitFor(() => expect(BODIES.filter((b) => b.includes('requestId')).length).toBe(2))
+    const ids = BODIES.filter((b) => b.includes('requestId')).map((b) => (JSON.parse(b) as { requestId: string }).requestId)
+    expect(ids[1]).toBe(ids[0])
+  })
+
+  it('offers complete only after the operation last run reached a terminal status', async () => {
+    stubApi({ operation: OP_RUNNING })
+    renderPanel()
+    expect(await screen.findByRole('button', { name: 'Cancel run' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Mark operation complete' })).toBeNull()
+    cleanup()
+    stubApi({ operation: OP_FINISHED })
+    renderPanel()
+    expect(await screen.findByRole('button', { name: 'Mark operation complete' })).toBeTruthy()
+  })
+
+  it('offers Pause only for a running run of an operation that is bound or running', async () => {
+    stubApi({ operation: OP_RUNNING })
+    renderPanel()
+    expect(await screen.findByRole('button', { name: 'Pause run' })).toBeTruthy()
+    cleanup()
+    stubApi({ operation: OP_PAUSED })
+    renderPanel()
+    await screen.findByRole('button', { name: /Resume operation/ })
+    expect(screen.queryByRole('button', { name: 'Pause run' })).toBeNull()
   })
 })

@@ -8,6 +8,9 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InstanceMessenger } from './instance-messenger'
+import * as api from '../api'
+
+vi.mock('../api', async (importOriginal) => ({ ...(await importOriginal<typeof import('../api')>()), getThread: vi.fn() }))
 
 const THREAD = 'thread-1'
 const DISPATCH = 'dispatch-recon'
@@ -88,5 +91,56 @@ describe('InstanceMessenger (P10c)', () => {
     await userEvent.type(await screen.findByRole('textbox'), 'too late')
     await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('This instance is not running, so the message was not accepted.')
+  })
+
+  it('resends a message whose ACK was lost under the same client id', async () => {
+    const posts: { messageId: string }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        posts.push(JSON.parse(String(init.body)))
+        if (posts.length === 1) throw new TypeError('Failed to fetch')
+        return new Response(JSON.stringify({ status: 'accepted', attempt: 1, message: { ...MESSAGE, messageId: posts[0].messageId, body: 'Check the admin panel.', state: 'accepted' } }), { status: 202 })
+      }
+      return new Response(JSON.stringify(MAILBOX('running')), { status: 200 })
+    }))
+    renderMessenger()
+    await userEvent.type(await screen.findByRole('textbox'), 'Check the admin panel.')
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    await waitFor(() => expect(posts).toHaveLength(2))
+    expect(posts[1].messageId).toBe(posts[0].messageId)
+  })
+
+  it('does not record a message twice when the lost ACK had already landed', async () => {
+    let recorded: unknown[] = []
+    let posts = 0
+    vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        posts += 1
+        const { messageId } = JSON.parse(String(init.body)) as { messageId: string }
+        recorded = [{ ...MESSAGE, messageId, body: 'Check the admin panel.', state: 'accepted' }]
+        throw new TypeError('Failed to fetch')
+      }
+      return new Response(JSON.stringify(MAILBOX('running', recorded)), { status: 200 })
+    }))
+    renderMessenger()
+    await userEvent.type(await screen.findByRole('textbox'), 'Check the admin panel.')
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue(''))
+    expect(posts).toBe(1)
+  })
+
+  it('pins the open question this attempt asked and leaves another instance question out', async () => {
+    const question = (questionId: string, text: string, dispatchId: string) => ({
+      questionId, question: text, header: 'Scope', options: [], multiSelect: false, allowOther: true, source: 'runtime', instance: { dispatchId, attempt: 1 },
+    })
+    vi.mocked(api.getThread).mockResolvedValue({ pendingQuestions: [question('q-mine', 'Which login form should recon test?', DISPATCH), question('q-other', 'Use the staging host?', 'dispatch-other')] } as never)
+    stubFetch(MAILBOX('running'))
+    renderMessenger()
+    expect(await screen.findByText('Which login form should recon test?')).toBeInTheDocument()
+    expect(screen.queryByText('Use the staging host?')).not.toBeInTheDocument()
   })
 })

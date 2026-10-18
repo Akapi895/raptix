@@ -17,20 +17,35 @@
 |---|---|---|
 | P00 | Một phần | Inventory 55 key và tabs/actions (real/shared/mock-only); dirty-file ledger; image digest cho baseline. |
 | P01 | Gần xong | Test abort và late-ACK ở transport đã có (`43efd4c4`, 14 test pass). Còn test cho port/adapter. |
-| P02 | Một phần | A01: artifact runtime thật từ một dedicated run. |
-| P03 | Một phần | Browser: retry attach sau lỗi. |
-| P04 | Một phần | Browser: tamper, traversal/symlink, mất quyền, interrupted download. |
-| P05 | Một phần | Browser: vòng đầy đủ hai actor kèm một refusal. Xác minh `finding.auditTrail`, `finding.reportLink` đã nối UI **[UI]**. |
-| P06 | Một phần | Browser: hai actor sửa/duyệt (A07). `report.projectInfo` nối UI **[UI]**. |
+| P02 | Chưa chạy được | Wiring có (producer suggestion, import draft). Thiếu bằng chứng live: cần một output producer thật từ dedicated run; run exploit hiện không tạo finding. |
+| P03 | Gần xong | Browser: upload biên (0, 1, 262144, 262145 byte), binary, lost-ACK không trùng, refresh, attach lost-ACK không trùng. Còn: wrong digest, capture của engagement khác, permission loss. |
+| P04 | Một phần | Browser: verified preview khớp digest, tải về byte-identical (text và binary), preview escape, tải bị gián đoạn không tạo file. Còn: tamper, traversal/symlink, mất quyền, missing file. Evidence Inspector chưa có Classify cho capture đã link (drawer có). |
+| P05 | Gần xong | Browser: draft → review (owner), tự duyệt bị 403, reviewer độc lập confirm, nhảy trực tiếp bị 409, remediation, retest, resolved cần capture phân loại. Còn: nhánh Persists/Partial, edit làm mất confirmation, race edit/review. |
+| P06 | Gần xong | Browser: template tạo trong UI, draft từ template với finding đã pin, reviewer được đặt tên, section được seed và ghi, stale write bị 409, owner submit, tự duyệt bị 403, reviewer độc lập duyệt (v7 approved). Còn: drift sau approve, reviewer revoke, race hai editor trên UI. |
 | P07 | Một phần | PDF/DOCX **Hoãn** (D05, exclusion có tên). Phần còn lại xong. |
 | P08 | Xong (code) | Còn 3 mục registry (§3). |
 | P09 | Gần xong | Mục mock-only **[UI]**; parity checklist theo domain; 7 test theo thời gian chưa ổn định. |
-| P10 | Một phần | Forward live; hai instance cùng role đồng thời live; pin câu hỏi trong messenger **[UI]**. DTO instance đã vào `@raptix/web-contracts` (`637e9bb0`). |
-| P11 | Một phần | Backend pause/resume/complete và live đã xong. Còn: UI controls **[UI]**; step controls (cần quyết định mapping step ↔ OPPLAN objective); một số acceptance (§2, P11). |
+| P10 | Một phần | Forward live; hai instance cùng role đồng thời live. DTO instance đã vào `@raptix/web-contracts` (`637e9bb0`). Câu hỏi của instance được pin trong messenger (`dd837e6d`). Retry/forward dùng intent id giữ qua ACK bị mất (`b0309394`). |
+| P11 | Một phần | Backend và UI pause/resume/complete đã nối (`e4ca7f67`), chưa có acceptance live cho từng nút. Còn: step controls (read-only mapping là bước trung gian); acceptance deterministic và live (§2, P11). |
 | P12 | Một phần | Còn: Results/Trace; C2 round-trip Sliver trong Docker lab; lifecycle UI **[UI]**. Campaigns generate/deploy **Blocked** (ROE loại phishing). |
 | P13 | Chưa | Chờ P09–P12; build/digest/evidence tổng hợp; dọn panel/contract/gate cũ. |
 
 Ngoài phase: browser click-through của luồng chính chưa chạy (phiên không có browser tool); sandbox per-project cho project mới phải provision thủ công (§4).
+
+## 1b. Browser acceptance P02–P06 (2026-10-18)
+
+Chạy trên stack web khớp source (worktree `web-golden-path`), lab project `cmvdhxzg700053mqo9dkngnla`, một finding informational về phản hồi root thật của target trong scope. Không có finding nào được bịa để lấp report.
+
+- **Đã pass:** P03 (biên upload, binary, lost-ACK upload và attach không trùng, refresh); P04 (verified preview, download byte-identical, preview escape, tải gián đoạn); P05 (lifecycle đủ vòng với refusal); P06 (template → report → reviewer → approved v7 qua hai browser).
+- **Bug thật tìm và sửa trong lượt này:**
+  - Tab Templates của Reports không hoạt động trong real mode (`41b0b5e3`), nên không có template và không tạo được report.
+  - Section của template không được seed vào draft, nên submit luôn bị từ chối vì section trống (`24f1ae6c`, có test).
+  - Màn review crash khi thiếu check `tpl` (`6b5c091e`), và real mode hiện "ready" khi thiếu check (`877b60d6`).
+  - Reviewer và author được so bằng tên console thay vì id tài khoản, nên reviewer được đặt tên không duyệt được (`dea53200`, có test).
+  - Quyền quản lý thành viên dùng cùng lỗi (`b290b208`).
+- **Chưa chạy:** P02 (cần output producer thật); P04 tamper/traversal/mất quyền; P05 nhánh Persists/Partial; P06 drift sau approve và reviewer revoke.
+- **Lưu ý dữ liệu lab:** đã tạo ba template acceptance trùng (`Acceptance assessment template 1045/1046/1047`) do lần chạy trùng; không có API xóa template (phiên bản bất biến), nên giữ làm bằng chứng.
+- **Run exploit** vẫn busy với bốn approval bash chưa quyết định; không bị restart.
 
 ## 2. Chi tiết theo phase
 
@@ -178,6 +193,10 @@ Ngoài phase: browser click-through của luồng chính chưa chạy (phiên kh
 | `2c06098e` | P11: gate plan chấp nhận paused; tin nhắn mới bị chặn khi paused/completed |
 | `2942658a`, `af1befa6` | P12: C2 grant yêu cầu session do provider báo cáo; test |
 | `135390d1` | P10: test deterministic hai dispatch cùng role |
+| `b0309394` | Messenger giữ một intent id qua ACK bị mất; gửi lại kiểm tra mailbox trước |
+| `b290b208` | Server quyết định `canManage` theo người gọi; owner không còn bị khóa invite |
+| `e4ca7f67` | P11: pause run, resume operation, mark complete trên tab Operations |
+| `dd837e6d` | P10: câu hỏi của instance được pin trong messenger |
 | `43efd4c4` | P01: test late-ACK sau abort ở transport |
 | `637e9bb0` | P10: DTO instance chuyển vào `@raptix/web-contracts` |
 | `953a4bea` | Ledger 13.24 và file này (phiên trước) |

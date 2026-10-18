@@ -18,6 +18,7 @@ vi.mock('../api', async (importOriginal) => {
     acknowledgeReportDelivery: vi.fn(),
     reviseReport: vi.fn(),
     createReportTemplate: vi.fn(),
+    fetchAuthSession: vi.fn(),
   }
 })
 
@@ -43,7 +44,10 @@ function listOf(...reports: import('../api').ReportView[]) {
 }
 
 beforeEach(() => {
-  vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', inviteSupported: false, reason: null, source: 'db', members: [
+  // No session by default: the tests below exercise the single-user identity; the session case sets its own account.
+  vi.mocked(api.fetchAuthSession).mockReset()
+  vi.mocked(api.fetchAuthSession).mockResolvedValue(null)
+  vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', canManage: false, inviteSupported: false, reason: null, source: 'db', members: [
     { id: 'user-author', label: 'Ada Author', role: 'operator', source: 'membership' },
     { id: 'user-reviewer', label: 'Rex Reviewer', role: 'reviewer', source: 'membership' },
   ] })
@@ -190,6 +194,16 @@ describe('real report gates for capabilities the backend does not model', () => 
     expect(reviewerView.ok && reviewerView.data.gates.deliver.reason).toMatch(/operator role/)
     const operatorView = await createRealReportService().review(ctx, 'rep-1')
     expect(operatorView.ok && operatorView.data.gates.deliver.allowed).toBe(true)
+  })
+
+  it('names the reviewer by the signed-in account id, not by the console name', async () => {
+    vi.mocked(api.fetchReports).mockResolvedValue(listOf(view({ status: 'in_review', createdBy: 'acct-author', reviewerId: 'acct-reviewer', readiness: { ready: true, checks: [] } })))
+    vi.mocked(api.fetchAuthSession).mockResolvedValue({ authenticated: true, mode: 'multi-user', csrfToken: 'token', actor: { id: 'acct-reviewer', username: 'reviewer', displayName: 'Reviewer' } })
+    const named = await createRealReportService().review({ ...reviewerCtx, actor: { id: 'Golden Reviewer', role: 'reviewer' } }, 'rep-1')
+    expect(named.ok && named.data.gates.decide.allowed).toBe(true)
+    vi.mocked(api.fetchAuthSession).mockResolvedValue({ authenticated: true, mode: 'multi-user', csrfToken: 'token', actor: { id: 'acct-other', username: 'other', displayName: 'Other' } })
+    const other = await createRealReportService().review({ ...reviewerCtx, actor: { id: 'Golden Reviewer', role: 'reviewer' } }, 'rep-1')
+    expect(other.ok && other.data.gates.decide.allowed).toBe(false)
   })
 
   it('gives the reviewer decision only to a reviewer who did not write the report', async () => {

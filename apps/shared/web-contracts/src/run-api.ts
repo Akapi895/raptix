@@ -362,9 +362,21 @@ export function isVaultRevealView(v: unknown): v is VaultRevealView {
 export interface MemberView {
   id: string; label: string; role: string; source: 'local' | 'membership'
 }
+/** P11: the operation lifecycle the runtime reports for one execution thread. `state` is the server's word. */
+export interface OperationView {
+  engagementId: string; threadId: string; state: string
+  latestRunId: string | null; latestRunStatus: string | null; source: 'runtime'
+}
+export function isOperationView(v: unknown): v is OperationView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && isNonEmptyString(v.threadId) && isNonEmptyString(v.state)
+    && (v.latestRunId === null || isNonEmptyString(v.latestRunId)) && (v.latestRunStatus === null || isNonEmptyString(v.latestRunStatus))
+    && v.source === 'runtime'
+}
 export interface MembersView {
   engagementId: string; mode: 'local-single-user' | 'multi-user'
   members: MemberView[]
+  /** True only when the signed-in actor is the engagement owner; the server decides, the console only shows it. */
+  canManage: boolean
   inviteSupported: boolean; reason: string | null
   source: 'db'
 }
@@ -378,6 +390,7 @@ export function isMembersView(v: unknown): v is MembersView {
   // In the local single-user topology invites can never be supported; a view
   // claiming otherwise would be a fake membership hierarchy.
   if (v.mode === 'local-single-user' && v.inviteSupported !== false) return false
+  if (typeof v.canManage !== 'boolean' || (v.mode === 'local-single-user' && v.canManage)) return false
   if (v.source !== 'db') return false
   return v.reason === null || isNonEmptyString(v.reason)
 }

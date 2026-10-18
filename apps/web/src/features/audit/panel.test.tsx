@@ -29,6 +29,7 @@ const MEMBERS = {
   engagementId: 'eng-1',
   mode: 'multi-user',
   members: [{ id: 'u-owner', label: 'Owner Lee', role: 'owner', source: 'membership' }],
+  canManage: true,
   inviteSupported: true,
   reason: null,
   source: 'db',
