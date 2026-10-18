@@ -48,6 +48,7 @@ const RUNTIME_CTX = (executionReady: boolean) => ({
   authorizationConfirmed: true, planningState: executionReady ? 'ready' : 'blocked',
   executionReady, threadVerified: true, source: 'runtime',
 })
+const SNAPSHOT_NO_QUESTION = { ...SNAPSHOT, pendingQuestions: [] }
 const APPROVAL = {
   engagementId: 'eng-1', requestId: 'apr-123', engagementName: 'E', agentName: 'executor', toolName: 'bash',
   toolArgsRedacted: { command: '***' },
@@ -103,7 +104,7 @@ function stubApi(over: {
     if (url.endsWith('/runs') && init?.method === 'POST') return new Response(JSON.stringify(ACK({ requestId: body?.requestId, operation: 'create_run', runId: 'run-1' })), { status: 202 })
     if (url.endsWith('/resume') && init?.method === 'POST') return new Response(JSON.stringify(ACK({ requestId: body?.requestId, operation: 'resume', runId: 'run-2' })), { status: 202 })
     if (url.endsWith('/threads/th-plan')) return new Response(JSON.stringify(over.snapshot ?? SNAPSHOT), { status: 200 })
-    if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ ...SNAPSHOT, binding: EXEC_THREAD }), { status: 200 })
+    if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ ...(over.snapshot ?? SNAPSHOT), binding: EXEC_THREAD }), { status: 200 })
     return new Response('unexpected', { status: 404 })
   })
   vi.stubGlobal('fetch', fetchMock)
@@ -155,6 +156,16 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+async function pickThread(user: ReturnType<typeof userEvent.setup>, name: RegExp): Promise<void> {
+  const trigger = await waitFor(() => {
+    const el = document.querySelector<HTMLButtonElement>('button[aria-haspopup="listbox"]')
+    if (!el) throw new Error('conversation switcher not rendered')
+    return el
+  })
+  await user.click(trigger)
+  await user.click(await screen.findByRole('option', { name }))
+}
+
 describe('RealWorkspace', () => {
   it('does not restore an operator draft for another authenticated actor', () => {
     saveWorkspaceDraft('eng-1', 'th-exec', 'Actor A instructions', 'actor-a')
@@ -191,13 +202,13 @@ describe('RealWorkspace', () => {
   })
 
   it('opens the AI workspace execution surface without dispatch and keeps checkpoint invocations observe-only', async () => {
-    const calls = stubApi({ threads: [EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true), planning: PLANNING_READY, fleet: { engagementId: 'eng-1', agents: [], threads: [], branches: [{ threadId: 'th-exec', key: 'branch-recon-2', agent: 'recon', state: 'running', outcome: null, startedAt: null, endedAt: null, provenance: 'checkpoint' }], counts: {}, sources: { agents: 'catalog', threads: 'runtime', branches: 'checkpoint' }, source: 'runtime' } })
+    const calls = stubApi({ snapshot: SNAPSHOT_NO_QUESTION, threads: [EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true), planning: PLANNING_READY, fleet: { engagementId: 'eng-1', agents: [], threads: [], branches: [{ threadId: 'th-exec', key: 'branch-recon-2', agent: 'recon', state: 'running', outcome: null, startedAt: null, endedAt: null, provenance: 'checkpoint' }], counts: {}, sources: { agents: 'catalog', threads: 'runtime', branches: 'checkpoint' }, source: 'runtime' } })
     go('project', { id: 'eng-1', tab: 'ai-workspace' })
     ui(<RealProjectDetail />)
     const user = userEvent.setup()
-    await screen.findByText('Conversation with executor')
+    await screen.findByText('executor')
     expect(screen.queryByText('Planning and execution conversations for')).not.toBeInTheDocument()
-    await user.click(await screen.findByRole('button', { name: /Agents \/ Context/ }))
+    await user.click(await screen.findByRole('button', { name: /agent sidebar/ }))
     await user.click(await screen.findByRole('button', { name: 'Observe recon branch-recon-2' }))
     expect(await screen.findByLabelText('Observed invocation — read-only')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument()
@@ -208,25 +219,23 @@ describe('RealWorkspace', () => {
   })
 
   it('preserves separate drafts when switching between existing planning and execution threads', async () => {
-    const calls = stubApi({ threads: [PLANNING_THREAD, EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true) })
+    const calls = stubApi({ snapshot: SNAPSHOT_NO_QUESTION, threads: [PLANNING_THREAD, EXEC_THREAD], runtimeCtx: RUNTIME_CTX(true) })
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     const user = userEvent.setup()
     const composer = await screen.findByLabelText('Workspace message')
     await waitFor(() => expect(composer).toBeEnabled())
     await user.type(composer, 'Planner draft')
-    await user.click(screen.getByRole('button', { name: 'execution' }))
-    await user.click(await screen.findByRole('button', { name: /th-exec/ }))
+    await pickThread(user, /th-exec/)
     expect(screen.getByLabelText('Workspace message')).toHaveValue('')
     await user.type(screen.getByLabelText('Workspace message'), 'Executor draft')
-    await user.click(screen.getByRole('button', { name: 'planning' }))
-    await user.click(await screen.findByRole('button', { name: /th-plan/ }))
+    await pickThread(user, /th-plan/)
     expect(screen.getByLabelText('Workspace message')).toHaveValue('Planner draft')
     expect(calls.filter((call) => call.init?.method === 'POST')).toHaveLength(0)
   })
 
   it('bounds checkpoint snapshot reads during a replay burst', async () => {
-    const calls = stubApi()
+    const calls = stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     const user = userEvent.setup()
@@ -258,7 +267,7 @@ describe('RealWorkspace', () => {
     expect(await screen.findByText('Plan the Q1 external assessment.')).toBeTruthy()
     expect(await screen.findByText('Here is a draft scope outline…')).toBeTruthy()
     expect(await screen.findByText('Which target set should the plan cover?')).toBeTruthy()
-    expect(await screen.findByText(/assistant soundwave/)).toBeTruthy()
+    expect(await screen.findByText('soundwave')).toBeTruthy()
   })
 
   it('creates an owned planning thread through the request ledger', async () => {
@@ -274,7 +283,7 @@ describe('RealWorkspace', () => {
   })
 
   it('sends a message, streams the reply and answers a pending question', async () => {
-    const calls = stubApi()
+    const calls = stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     await screen.findByText('th-plan')
@@ -298,6 +307,14 @@ describe('RealWorkspace', () => {
     source.emit('run-event', event({ payload: { type: 'message', messageId: 'm-live', role: 'assistant', content: ' API section.', mode: 'delta', truncated: false } }))
     expect(await screen.findByText('Working on the API section.')).toBeTruthy()
 
+  })
+
+  it('answers a pending question from the composer and resumes the same thread', async () => {
+    const calls = stubApi()
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await screen.findByText('th-plan')
+    const user = userEvent.setup()
     await user.click(await screen.findByRole('radio', { name: /Full range/ }))
     await user.click(screen.getByRole('button', { name: 'Answer' }))
     await waitFor(() => expect(calls.some((c) => c.url.endsWith('/threads/th-plan/resume'))).toBe(true))
@@ -314,7 +331,7 @@ describe('RealWorkspace', () => {
   })
 
   it('blocks sending on an execution thread when the server context is not ready', async () => {
-    stubApi({ threads: [PLANNING_THREAD, EXEC_THREAD], runtimeCtx: RUNTIME_CTX(false) })
+    stubApi({ snapshot: SNAPSHOT_NO_QUESTION, threads: [PLANNING_THREAD, EXEC_THREAD], runtimeCtx: RUNTIME_CTX(false) })
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     const execButton = (await screen.findByRole('button', { name: /New execution thread/ })) as HTMLButtonElement
