@@ -536,86 +536,21 @@ export function fetchEffectiveScope(engagementId: string): Promise<EffectiveScop
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/scope/effective`, owned(engagementId, isEffectiveScopeView))
 }
 
-/* ───────────── Runtime instance roster (P10b) ───────────── */
+/* ───────────── Runtime instance roster and mailbox (P10) ───────────── */
 
-/** One dispatch the runtime's ledger records. `role` is null for rows written before the runtime recorded roles. */
-export interface RuntimeInstanceView {
-  instanceId: string
-  threadId: string
-  dispatchId: string
-  attempt: number
-  role: string | null
-  objectiveId: string | null
-  /** The dispatch that started this one; null for the orchestrator and for rows recorded before parents were kept. */
-  parentDispatchId: string | null
-  outcome: string
-  terminal: boolean
-  /** `mailbox` is an attempt the runtime is running now, or one that ended before its ledger row was written. */
-  source: 'dispatch_ledger' | 'mailbox'
-}
-
-export interface RuntimeRosterView {
-  engagementId: string
-  instances: RuntimeInstanceView[]
-  threads: { threadId: string; read: 'read' | 'unavailable'; reason: string | null }[]
-  source: 'runtime'
-}
-
-function isRuntimeRosterView(v: unknown): v is RuntimeRosterView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as RuntimeRosterView
-  return typeof doc.engagementId === 'string' && Array.isArray(doc.instances) && Array.isArray(doc.threads) && doc.source === 'runtime'
-    && doc.instances.every((i) => typeof i.instanceId === 'string' && typeof i.attempt === 'number' && (i.source === 'dispatch_ledger' || i.source === 'mailbox'))
-}
+// The wire shapes and their guards live in @raptix/web-contracts; this module keeps the calls and re-exports the names the screens use.
+import {
+  isInstanceCancelAck, isInstanceMailboxView, isInstanceMessageAck, isRuntimeRosterView,
+  type InstanceCancelAck, type InstanceMailboxView, type InstanceMessageAck, type RuntimeRosterView,
+} from '@raptix/web-contracts'
+export type {
+  InstanceAttemptState, InstanceAttemptView, InstanceCancelAck, InstanceMailboxView, InstanceMessageAck,
+  InstanceMessageState, InstanceMessageView, RuntimeInstanceView, RuntimeRosterView,
+} from '@raptix/web-contracts'
+export { INSTANCE_MESSAGE_MAX_CHARS } from '@raptix/web-contracts'
 
 export function fetchRuntimeInstances(engagementId: string): Promise<RuntimeRosterView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/instances`, owned(engagementId, isRuntimeRosterView))
-}
-
-/* ───────────── Operator mailbox for running dispatches (P10c) ───────────── */
-
-export type InstanceMessageState = 'accepted' | 'delivered' | 'handled' | 'undelivered'
-
-export interface InstanceMessageView {
-  messageId: string
-  attempt: number
-  seq: number
-  body: string
-  state: InstanceMessageState
-  acceptedAt: string
-  deliveredAt: string | null
-  handledAt: string | null
-  outcome: string | null
-  /** Set only on a message the operator forwarded from another attempt's message. */
-  sourceMessageId: string | null
-}
-
-/** `cancel_requested` is the operator's recorded intent; only `cancelled`, `finished` or `interrupted` is an observed end. */
-export type InstanceAttemptState = 'running' | 'cancel_requested' | 'cancelled' | 'finished' | 'interrupted'
-
-export interface InstanceAttemptView {
-  attempt: number
-  role: string | null
-  state: InstanceAttemptState
-  startedAt: string
-  finishedAt: string | null
-}
-
-export interface InstanceMailboxView {
-  threadId: string
-  dispatchId: string
-  instances: InstanceAttemptView[]
-  messages: InstanceMessageView[]
-  source: 'runtime'
-}
-
-export const INSTANCE_MESSAGE_MAX_CHARS = 2000
-
-function isInstanceMailboxView(v: unknown): v is InstanceMailboxView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as InstanceMailboxView
-  return typeof doc.threadId === 'string' && typeof doc.dispatchId === 'string' && Array.isArray(doc.instances)
-    && Array.isArray(doc.messages) && doc.source === 'runtime'
 }
 
 function instanceRoot(engagementId: string, threadId: string, dispatchId: string): string {
@@ -630,23 +565,19 @@ export function fetchInstanceMailbox(engagementId: string, threadId: string, dis
   return apiFetch(instancePath(engagementId, threadId, dispatchId), (v): v is InstanceMailboxView => isInstanceMailboxView(v) && v.threadId === threadId && v.dispatchId === dispatchId)
 }
 
-type MessageAck = { status: 'accepted' | 'duplicate'; attempt: number; message: InstanceMessageView }
-const isMessageAck = (v: unknown): v is MessageAck => typeof v === 'object' && v !== null && ((v as { status?: unknown }).status === 'accepted' || (v as { status?: unknown }).status === 'duplicate')
-
 /** A refused message fails with the server's reason; a duplicate retry is an accepted outcome, not a second message. The attempt pins the target. */
-export function sendInstanceMessage(engagementId: string, threadId: string, dispatchId: string, input: { messageId: string; body: string; expectedAttempt: number }): Promise<MessageAck> {
-  return apiFetch(instancePath(engagementId, threadId, dispatchId), isMessageAck, { method: 'POST', body: input })
+export function sendInstanceMessage(engagementId: string, threadId: string, dispatchId: string, input: { messageId: string; body: string; expectedAttempt: number }): Promise<InstanceMessageAck> {
+  return apiFetch(instancePath(engagementId, threadId, dispatchId), isInstanceMessageAck, { method: 'POST', body: input })
 }
 
 /** P10d: cooperative cancel. The answer is the recorded request (`cancel_requested`); the stop is observed on the attempt later. */
-export interface InstanceCancelAck { threadId: string; dispatchId: string; attempt: number; state: InstanceAttemptState }
 export function cancelInstance(engagementId: string, threadId: string, dispatchId: string, expectedAttempt: number): Promise<InstanceCancelAck> {
-  return apiFetch(`${instanceRoot(engagementId, threadId, dispatchId)}/cancel`, (v): v is InstanceCancelAck => typeof v === 'object' && v !== null && (v as { state?: unknown }).state === 'cancel_requested', { method: 'POST', body: { expectedAttempt } })
+  return apiFetch(`${instanceRoot(engagementId, threadId, dispatchId)}/cancel`, isInstanceCancelAck, { method: 'POST', body: { expectedAttempt } })
 }
 
 /** P10c forward: a new message to a running attempt that names the source message on this dispatch. */
-export function forwardInstanceMessage(engagementId: string, threadId: string, targetDispatchId: string, input: { messageId: string; sourceDispatchId: string; sourceMessageId: string; expectedAttempt: number }): Promise<MessageAck> {
-  return apiFetch(`${instanceRoot(engagementId, threadId, targetDispatchId)}/messages/forward`, isMessageAck, { method: 'POST', body: input })
+export function forwardInstanceMessage(engagementId: string, threadId: string, targetDispatchId: string, input: { messageId: string; sourceDispatchId: string; sourceMessageId: string; expectedAttempt: number }): Promise<InstanceMessageAck> {
+  return apiFetch(`${instanceRoot(engagementId, threadId, targetDispatchId)}/messages/forward`, isInstanceMessageAck, { method: 'POST', body: input })
 }
 
 /** P10d: retry the same dispatch (no role) or reassign it to another role. The answer names the run that admits the replacement. */

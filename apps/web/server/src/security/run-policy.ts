@@ -1,3 +1,4 @@
+import { INSTANCE_MESSAGE_MAX_CHARS } from '@raptix/web-contracts';
 import { ProjectPolicyError } from './project-policy.js';
 import { parseContextSelection, type ContextSelection } from '../services/runtime/runtime-context.js';
 
@@ -41,7 +42,6 @@ const isResumeValue = (answer: unknown): boolean =>
 export interface ResumeAnswer { questionId: string; value: string | string[] }
 /** W11 scoped graph-interrupt resume: one validated value, optional targeting question id, or every pending answer at once. */
 /** Longest operator message the runtime accepts (P10c); the console shows the same limit. */
-export const INSTANCE_MESSAGE_MAX_CHARS = 2000;
 const INSTANCE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
 const COMMAND_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{7,127}$/;
 const ROLE = /^[a-z][a-z0-9_-]{0,63}$/;
