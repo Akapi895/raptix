@@ -40,6 +40,11 @@ func Sync(cfg Config) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	// An empty listing usually means the workspace volume name is wrong, not that no project exists.
+	// Removing sandboxes on that evidence would delete the sandboxes of live projects.
+	if len(projects) == 0 && len(containers) > 0 {
+		return nil, fmt.Errorf("no project directories found on volume %s; refusing to remove %d sandbox container(s). Set RAPTIX_WEB_WORKSPACE_VOLUME to the workspace volume name", cfg.Settings.Volume, len(containers))
+	}
 	ensure, orphaned := Plan(projects, containers)
 	dir := filepath.Join(cfg.Home, "web-sandboxes")
 	if err := os.MkdirAll(dir, 0o755); err != nil {

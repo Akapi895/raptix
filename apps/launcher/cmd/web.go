@@ -87,7 +87,7 @@ func init() {
 			Settings: sandboxes.Settings{
 				Image:   "ghcr.io/akapi895/raptix-sandbox:" + version,
 				Network: network,
-				Volume:  base.Web().Project + "_web_runtime_workspace",
+				Volume:  workspaceVolume(env, base.Web().Project),
 				EnvFile: base.EnvFile,
 			},
 		})
@@ -102,4 +102,16 @@ func init() {
 		&cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Web().Ps() }},
 	)
 	rootCmd.AddCommand(web)
+}
+
+// workspaceVolume is the named volume that holds every project directory. The compose project name the
+// stack actually ran under can differ from the launcher's stack name, so the operator can name it in .env.
+func workspaceVolume(env map[string]string, stack string) string {
+	if v := os.Getenv("RAPTIX_WEB_WORKSPACE_VOLUME"); v != "" {
+		return v
+	}
+	if v := env["RAPTIX_WEB_WORKSPACE_VOLUME"]; v != "" {
+		return v
+	}
+	return stack + "_web_runtime_workspace"
 }
