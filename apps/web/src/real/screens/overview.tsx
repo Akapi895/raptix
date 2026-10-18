@@ -47,6 +47,7 @@ function FindingsSection({ view }: { view: OverviewFindingsView }): ReactElement
   const severities = [...SEVERITY_ORDER.filter((s) => (view.bySeverity[s] ?? 0) > 0), ...Object.keys(view.bySeverity).filter((s) => !SEVERITY_ORDER.includes(s))]
   return (
     <div className="p-4">
+      <h2 className="mb-3 text-sm font-semibold text-fg">Findings</h2>
       {view.total === 0 ? (
         <p className="text-sm text-muted">No findings recorded yet across your {view.engagements} authorized project(s).</p>
       ) : (
@@ -69,6 +70,7 @@ function FindingsSection({ view }: { view: OverviewFindingsView }): ReactElement
 function C2Section({ view }: { view: OverviewC2View }): ReactElement {
   return (
     <div className="p-4">
+      <h2 className="mb-3 text-sm font-semibold text-fg">C2 Activity</h2>
       <div className="flex flex-wrap items-center gap-2">
         {C2_STATUS_ORDER.map((s) => (
           <Status key={s} kind="gate" value={s === 'failed' ? 'failed' : s === 'succeeded' ? 'passed' : 'pending'} size="sm" label={`${s}: ${view.commandsByStatus[s] ?? 0}`} />
@@ -95,6 +97,7 @@ function TasksSection({ view }: { view: TasksView }): ReactElement {
   const top = view.tasks.slice(0, 8)
   return (
     <div className="p-4">
+      <h2 className="mb-3 text-sm font-semibold text-fg">Pending Tasks</h2>
       {top.length === 0 ? (
         <p className="text-sm text-muted">No pending work. Approvals, reviews and stops appear here when lifecycle workflows create them.</p>
       ) : (

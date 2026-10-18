@@ -8,7 +8,7 @@
   --c-hover: #F3F4F6;
   --c-line: #E5E7EB;
   --c-fg: #111827;
-  --c-muted: #4B5563;
+  --c-muted: #374151;
   --c-neutral: #6B7280;
   --c-accent: #C62828;
   --c-accent-hover: #A61F1F;
@@ -40,7 +40,7 @@
   --c-console-info: #6EA0FF;
   --c-console-warn: #FBBF24;
   --c-console-bad: #F87171;
-  --c-focus: #DC2626;
+  --c-focus: #7F1D1D;
   color-scheme: light;
 }
 :root.dark {
@@ -50,7 +50,7 @@
   --c-hover: #20242C;
   --c-line: #2A2F39;
   --c-fg: #F3F4F6;
-  --c-muted: #B4BAC6;
+  --c-muted: #D1D5DB;
   --c-neutral: #8F97A6;
   --c-accent: #E5484D;
   --c-accent-hover: #F26166;
@@ -123,4 +123,6 @@ html, body, #root { overflow: hidden; }
 * { scrollbar-width: none; }
 *::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+.scrollable { scrollbar-width: auto; }
+.scrollable::-webkit-scrollbar { display: block; }
 .tnum { font-variant-numeric: tabular-nums; }
