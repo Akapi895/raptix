@@ -218,6 +218,19 @@ def test_interrupted_intent_is_not_resumed_by_a_replayed_task_call(task: tuple) 
     assert inner.calls == 0
 
 
+def test_two_dispatches_of_one_role_keep_separate_ledger_rows_and_mailbox_instances(task: tuple) -> None:
+    from raptix.execution.session.instance_mailbox import default_mailbox
+
+    tool, _ = task
+    state = {"objectives": [{"id": "A"}, {"id": "B"}], "engagement_name": "lab"}
+    state = _apply(state, _call(tool, state, objective="A", intent="scan a", dispatch="d-a"))
+    state = _apply(state, _call(tool, state, objective="B", intent="scan b", dispatch="d-b"))
+    assert state["dispatch_ledger"]["d-a"]["role"] == "exploit"
+    assert state["dispatch_ledger"]["d-b"]["role"] == "exploit"
+    listed = sorted(row.dispatch_id for _, row in default_mailbox().list_instances("thread-1"))
+    assert listed == ["d-a", "d-b"]
+
+
 def test_ledger_row_names_the_role_that_owns_the_dispatch(task: tuple) -> None:
     tool, _ = task
     state = {"objectives": [{"id": "A"}], "engagement_name": "lab"}
