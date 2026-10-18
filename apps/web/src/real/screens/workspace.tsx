@@ -32,7 +32,9 @@ import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../plan
 import { RuntimeOperationsTab as RealOperationsHistory } from '../../features/operations/runtime-tab'
 import { useSession } from '../session'
 
-interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null; reasoningStartedAt?: number; thinkingMs?: number }
+interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
+/** When a reply's reasoning started and when its answer began, measured in this browser; the runtime records no timing. */
+interface ThinkingWindow { startedAt: number; answeredAt: number | null }
 /** A transcript row; `thinkingMs` exists only for reasoning streamed in this browser, because the runtime records no timing. */
 type DisplayMessage = ScopedThreadMessage & { thinkingMs?: number }
 interface TraceLine { id: string; label: string; status?: string; error?: boolean }
@@ -104,6 +106,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const activeRunId = observedRun?.threadId === selectedThreadId ? observedRun.runId : null
   const [runStatus, setRunStatus] = useState<string | null>(null)
   const [live, setLive] = useState<LiveMessage[]>([])
+  const thinkingWindows = useRef(new Map<string, ThinkingWindow>())
   const [trace, setTrace] = useState<TraceLine[]>([])
   const [recovery, setRecovery] = useState<string | null>(null)
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
@@ -163,7 +166,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     (runtimeCtx.isError || runtimeCtx.data?.executionReady !== true || runtimeCtx.data.threadVerified !== true || runtimeCtx.data.assistantId !== selectedThread?.assistantId || snapshot.isError || !snapshot.data || detail.data?.handoffConfirmedAt == null)
 
   /* Live buffers reset whenever the scope (engagement/thread/run) changes. */
-  useEffect(() => { setLive([]); setTrace([]); setRecovery(null); setAnswers({}); setRunStatus(null) }, [engagementId, selectedThreadId])
+  useEffect(() => { setLive([]); setTrace([]); setRecovery(null); setAnswers({}); setRunStatus(null); thinkingWindows.current.clear() }, [engagementId, selectedThreadId])
   useEffect(() => { if (activeRunId) { setLive([]); setTrace([]) } }, [activeRunId])
 
   const runs = useQuery({
@@ -237,16 +240,16 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         return
       }
       if (p.type === 'message') {
+        if (p.messageId && p.role === 'assistant') {
+          const now = Date.now()
+          let window = thinkingWindows.current.get(p.messageId)
+          if (!window && p.reasoning) { window = { startedAt: now, answeredAt: null }; thinkingWindows.current.set(p.messageId, window) }
+          if (window && window.answeredAt === null && p.content.length > 0) window.answeredAt = now
+        }
         setLive((prev) => {
           const next = [...prev]
           const at = p.messageId ? next.findIndex((m) => m.messageId === p.messageId) : -1
-          const previous = at >= 0 ? next[at] : undefined
-          const content = p.mode === 'snapshot' ? p.content : (previous ? previous.content + p.content : p.content)
-          const reasoning = p.reasoning ?? previous?.reasoning
-          const now = Date.now()
-          const reasoningStartedAt = previous?.reasoningStartedAt ?? (reasoning ? now : undefined)
-          const thinkingMs = previous?.thinkingMs ?? (reasoningStartedAt !== undefined && content.length > 0 ? now - reasoningStartedAt : undefined)
-          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content, reasoning, reasoningStartedAt, thinkingMs }
+          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content: p.mode === 'snapshot' ? p.content : (at >= 0 ? next[at].content + p.content : p.content), reasoning: p.reasoning ?? (at >= 0 ? next[at].reasoning : undefined) }
           if (at >= 0) next[at] = entry
           else next.push(entry)
           return next
@@ -432,7 +435,10 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     onSuccess: () => { setDispatchError(null); void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] }) },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'The conversation could not be renamed.'),
   })
-  const displayed = [...snapshotMessages, ...live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))]
+  const displayed: DisplayMessage[] = [...snapshotMessages, ...live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))].map((m) => {
+    const window = m.messageId ? thinkingWindows.current.get(m.messageId) : undefined
+    return window && window.answeredAt !== null ? { ...m, thinkingMs: window.answeredAt - window.startedAt } : m
+  })
   const pendingQuestions = (snapshot.data?.pendingQuestions ?? []).filter(isPendingInterruptView)
   // Keep the newest content in view only while the operator is already at the bottom; never pull them down while they read older messages.
   useEffect(() => {
