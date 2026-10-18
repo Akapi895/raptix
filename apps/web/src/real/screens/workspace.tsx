@@ -103,6 +103,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const [dispatchError, setDispatchError] = useState<string | null>(null)
   const [unconfirmed, setUnconfirmed] = useState<PendingRequest | null>(() => readPending(actorId, engagementId, deploymentId))
   const [observedRun, setObservedRun] = useState<{ threadId: string; runId: string } | null>(null)
+  const finishedRunIds = useRef(new Set<string>())
   const activeRunId = observedRun?.threadId === selectedThreadId ? observedRun.runId : null
   const [runStatus, setRunStatus] = useState<string | null>(null)
   const [live, setLive] = useState<LiveMessage[]>([])
@@ -176,7 +177,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     retry: false,
   })
   useEffect(() => {
-    const running = runs.data?.runs.find(r => !isTerminalRun(r.rawStatus))
+    const running = runs.data?.runs.find(r => !isTerminalRun(r.rawStatus) && !finishedRunIds.current.has(r.runId))
     if (running && !activeRunId) setObservedRun({ threadId: running.threadId, runId: running.runId })
   }, [runs.data, activeRunId])
 
@@ -190,6 +191,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         if (cancelled) return
         setRunStatus(run.rawStatus)
         if (isTerminalRun(run.rawStatus)) {
+          finishedRunIds.current.add(activeRunId)
           setObservedRun(null)
           setLive([])
           void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId] })

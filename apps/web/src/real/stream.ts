@@ -80,6 +80,8 @@ export function useRunStream({ engagementId, threadId, runId, onEvent, onControl
     source.addEventListener('run-event', acceptFrame as EventListener)
     source.addEventListener('control', (frame) => {
       if (!isCurrent()) return
+      source.close()
+      setState((s) => ({ ...s, connected: false }))
       let type: 'stream_closed' | 'stream_error' = 'stream_error'
       let recoveryRequired = true
       try {
