@@ -117,6 +117,8 @@ class InstanceRow:
     # The task description and objective the attempt ran with; a retry re-issues exactly this intent.
     intent: str | None = None
     objective_id: str | None = None
+    # The dispatch that started this attempt; None when the thread's orchestrator started it.
+    parent_dispatch_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -165,7 +167,13 @@ class InstanceMailbox:
         self._conn.execute("PRAGMA busy_timeout=5000")
         self._conn.executescript(_SCHEMA)
         # Additive migrations for stores created before intent and forwarding were recorded.
-        for table, column in (("instances", "intent"), ("instances", "objective_id"), ("instances", "fingerprint"), ("messages", "source_message_id")):
+        for table, column in (
+            ("instances", "intent"),
+            ("instances", "objective_id"),
+            ("instances", "fingerprint"),
+            ("instances", "parent_dispatch_id"),
+            ("messages", "source_message_id"),
+        ):
             if column not in {row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")}:
                 self._conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} TEXT")
         self._conn.execute(
@@ -194,14 +202,17 @@ class InstanceMailbox:
         intent: str | None = None,
         objective_id: str | None = None,
         fingerprint: str | None = None,
+        parent_dispatch_id: str | None = None,
     ) -> None:
         now = self._clock()
         with self._lock:
             self._conn.execute(
                 "INSERT INTO instances (thread_id, dispatch_id, attempt, role, state, started_at, updated_at, intent,"
-                " objective_id, fingerprint) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                " objective_id, fingerprint, parent_dispatch_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 " ON CONFLICT (thread_id, dispatch_id, attempt) DO NOTHING",
-                (thread_id, dispatch_id, attempt, role, RUNNING, now, now, intent, objective_id, fingerprint),
+                (
+                    thread_id, dispatch_id, attempt, role, RUNNING, now, now, intent, objective_id, fingerprint, parent_dispatch_id,
+                ),
             )
 
     def interrupted_sources(self, thread_id: str, fingerprint: str) -> list[str]:
@@ -502,10 +513,10 @@ class InstanceMailbox:
             return [
                 (
                     r[1],
-                    InstanceRow(r[0], r[1], int(r[2]), r[3], r[4], r[5], r[6]),
+                    InstanceRow(r[0], r[1], int(r[2]), r[3], r[4], r[5], r[6], parent_dispatch_id=r[7]),
                 )
                 for r in self._conn.execute(
-                    "SELECT thread_id, dispatch_id, attempt, role, state, started_at, finished_at FROM instances"
+                    "SELECT thread_id, dispatch_id, attempt, role, state, started_at, finished_at, parent_dispatch_id FROM instances"
                     " WHERE thread_id = ? ORDER BY started_at, dispatch_id, attempt",
                     (thread_id,),
                 ).fetchall()

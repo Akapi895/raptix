@@ -174,6 +174,15 @@ def test_replacement_attempt_goes_above_every_recorded_attempt_and_keeps_its_int
     assert mailbox.accept("after-retry", "thread-1", "disp-1", "focus on /admin", expected_attempt=2).status == "accepted"
 
 
+def test_roster_keeps_the_dispatch_that_started_each_attempt(mailbox):
+    mailbox.start_instance("thread-1", "disp-parent", 1, "surface_exploit")
+    mailbox.start_instance("thread-1", "disp-child", 1, "recon", parent_dispatch_id="disp-parent")
+    parents = {
+        row.dispatch_id: row.parent_dispatch_id for _, row in mailbox.list_instances("thread-1")
+    }
+    assert parents == {"disp-parent": None, "disp-child": "disp-parent"}
+
+
 def test_grant_needs_an_ended_attempt_and_admits_one_replacement(mailbox):
     mailbox.start_instance("thread-1", "disp-1", 1, "recon", "map the target", "OBJ-1")
     assert mailbox.open_grant("cmd-early-01", "thread-1", "disp-1", 1, "retry", None).reason == "attempt_not_ended"

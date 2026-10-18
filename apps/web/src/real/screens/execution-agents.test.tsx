@@ -22,9 +22,13 @@ const ROSTER = {
     { threadId: 'thread-bbbb2222', read: 'unavailable', reason: 'Runtime discovery or context verification is unavailable' },
   ],
   instances: [
-    { instanceId: 'thread-aaaa1111:dispatch-recon:1', threadId: 'thread-aaaa1111', dispatchId: 'dispatch-recon', attempt: 1, role: 'recon', objectiveId: 'OBJ-002', outcome: 'success', terminal: false, source: 'dispatch_ledger' },
-    { instanceId: 'thread-aaaa1111:dispatch-legacy:2', threadId: 'thread-aaaa1111', dispatchId: 'dispatch-legacy', attempt: 2, role: null, objectiveId: null, outcome: 'failed', terminal: true, source: 'dispatch_ledger' },
+    { instanceId: 'thread-aaaa1111:dispatch-recon:1', threadId: 'thread-aaaa1111', dispatchId: 'dispatch-recon', attempt: 1, role: 'recon', objectiveId: 'OBJ-002', parentDispatchId: null, outcome: 'success', terminal: false, source: 'dispatch_ledger' },
+    { instanceId: 'thread-aaaa1111:dispatch-legacy:2', threadId: 'thread-aaaa1111', dispatchId: 'dispatch-legacy', attempt: 2, role: null, objectiveId: null, parentDispatchId: null, outcome: 'failed', terminal: true, source: 'dispatch_ledger' },
   ],
+}
+
+function instance(dispatchId: string, role: string, attempt: number, parentDispatchId: string | null) {
+  return { instanceId: `thread-aaaa1111:${dispatchId}:${attempt}`, threadId: 'thread-aaaa1111', dispatchId, attempt, role, objectiveId: 'OBJ-002', parentDispatchId, outcome: 'success', terminal: false, source: 'dispatch_ledger' }
 }
 
 async function renderAgents(threadId: string | null): Promise<void> {
@@ -66,5 +70,27 @@ describe('Agents tab runtime roster', () => {
     fetchRuntimeInstances.mockRejectedValue(new Error('The runtime roster read failed.'))
     await renderAgents(null)
     expect(await screen.findByText('Runtime roster unavailable')).toBeInTheDocument()
+  })
+
+  it('nests a dispatch under the dispatch that started it', async () => {
+    fetchRuntimeInstances.mockResolvedValue({ ...ROSTER, instances: [instance('dispatch-orch', 'surface_exploit', 1, null), instance('dispatch-recon', 'recon', 1, 'dispatch-orch')] })
+    await renderAgents(null)
+    const parent = (await screen.findByText('surface_exploit · attempt 1')).closest('li')
+    expect(parent?.textContent).toContain('recon · attempt 1')
+  })
+
+  it('hangs a child under the newest attempt of its parent only', async () => {
+    fetchRuntimeInstances.mockResolvedValue({ ...ROSTER, instances: [instance('dispatch-orch', 'surface_exploit', 1, null), instance('dispatch-orch', 'surface_exploit', 2, null), instance('dispatch-recon', 'recon', 1, 'dispatch-orch')] })
+    await renderAgents(null)
+    expect(await screen.findByText('recon · attempt 1')).toBeInTheDocument()
+    expect(screen.getAllByText('recon · attempt 1')).toHaveLength(1)
+    expect(screen.getByText('surface_exploit · attempt 1').closest('li')?.textContent).not.toContain('recon · attempt 1')
+  })
+
+  it('keeps every dispatch visible when recorded parents form a loop', async () => {
+    fetchRuntimeInstances.mockResolvedValue({ ...ROSTER, instances: [instance('dispatch-a', 'alpha', 1, 'dispatch-b'), instance('dispatch-b', 'beta', 1, 'dispatch-a')] })
+    await renderAgents(null)
+    expect(await screen.findByText('alpha · attempt 1')).toBeInTheDocument()
+    expect(screen.getByText('beta · attempt 1')).toBeInTheDocument()
   })
 })

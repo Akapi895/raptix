@@ -305,6 +305,8 @@ class DispatchMiddleware(SubAgentMiddleware):
         attempt = max(
             int(prior.get("attempt", 0)), self._mailbox_attempt_floor(thread_id, dispatch_id)
         )
+        # The dispatch executing right now, if any, is this one's parent (a child dispatching a grandchild).
+        parent = active_dispatch.get()
         return (
             DispatchContext(
                 dispatch_id,
@@ -315,6 +317,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 intent=description,
                 replay_grant=grant.command_id if grant else None,
                 fingerprint=fingerprint,
+                parent_dispatch_id=parent.dispatch_id if parent else None,
             ),
             key,
             fingerprint,
@@ -372,6 +375,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 context.intent,
                 context.objective_id,
                 context.fingerprint,
+                context.parent_dispatch_id,
             )
             if context.replay_grant:
                 default_mailbox().consume_grant(context.replay_grant)
@@ -547,6 +551,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 "fingerprint": fingerprint,
                 "role": context.role,
                 "objective_id": context.objective_id,
+                "parent_dispatch_id": context.parent_dispatch_id,
                 "attempt": context.attempt,
                 "outcome": outcome,
             }
