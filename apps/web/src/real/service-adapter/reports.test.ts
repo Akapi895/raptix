@@ -43,7 +43,7 @@ function listOf(...reports: import('../api').ReportView[]) {
 }
 
 beforeEach(() => {
-  vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', inviteSupported: false, reason: null, source: 'db', members: [
+  vi.mocked(api.fetchMembers).mockResolvedValue({ engagementId: 'eng-1', mode: 'multi-user', canManage: false, inviteSupported: false, reason: null, source: 'db', members: [
     { id: 'user-author', label: 'Ada Author', role: 'operator', source: 'membership' },
     { id: 'user-reviewer', label: 'Rex Reviewer', role: 'reviewer', source: 'membership' },
   ] })
