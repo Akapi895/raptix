@@ -27,11 +27,11 @@ export function PageHeader({ title, sub, actions, back, meta, crumbs }: { title:
   return (
     <div className="mb-6">
       {crumbs && (
-        <nav aria-label="Breadcrumb" className="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted">
+        <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs text-muted">
           {crumbs.map((c, i) => (
             <span key={i} className="flex items-center gap-1">
-              {c.to ? <button onClick={c.to} className="hover:text-fg hover:underline">{c.label}</button> : <span className="text-fg">{c.label}</span>}
-              {i < crumbs.length - 1 && <ChevronRight size={12} />}
+              {c.to ? <button onClick={c.to} className="rounded px-1 py-0.5 transition hover:bg-hover hover:text-fg hover:underline">{c.label}</button> : <span className="text-fg font-medium">{c.label}</span>}
+              {i < crumbs.length - 1 && <ChevronRight size={12} className="text-muted" aria-hidden />}
             </span>
           ))}
         </nav>

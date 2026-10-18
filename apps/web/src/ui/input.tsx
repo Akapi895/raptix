@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
-import { AlertTriangle, Search } from 'lucide-react'
+import { AlertTriangle, HelpCircle, Search } from 'lucide-react'
 import { cx } from './cx'
 
 /* ───────────── Forms ───────────── */
@@ -9,7 +9,7 @@ export function Field({ label, hint, error, required, children, className }: { l
     <label className={cx('block', className)}>
       <span className="mb-1.5 block text-xs font-medium text-fg">{label}{required && <span className="text-bad"> *</span>}</span>
       {children}
-      {error ? <div className="mt-2 flex items-start gap-2 rounded-lg border border-bad/30 bg-bad-soft px-3 py-2.5 text-sm text-bad"><AlertTriangle size={14} className="mt-0.5 shrink-0" /><span className="flex-1">{error}</span></div> : hint ? <span className="mt-1 block text-xs text-neutral">{hint}</span> : null}
+      {error ? <div className="mt-2 flex items-start gap-2 rounded-lg border border-bad/30 bg-bad-soft px-3 py-2.5 text-sm text-bad"><AlertTriangle size={14} className="mt-0.5 shrink-0" /><span className="flex-1">{error}</span></div> : hint ? <div className="mt-1.5 flex items-start gap-2 rounded px-2 py-1.5 text-xs text-neutral"><HelpCircle size={12} className="mt-0.5 shrink-0" /><span className="flex-1">{hint}</span></div> : null}
     </label>
   )
 }

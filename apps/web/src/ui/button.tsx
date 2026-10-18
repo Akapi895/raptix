@@ -23,9 +23,9 @@ export function Button({ variant = 'secondary', size = 'md', icon: I, children, 
     </button>
   )
 }
-export function IconButton({ icon: I, label, className, ...r }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: LucideIcon; label: string }) {
+export function IconButton({ icon: I, label, className, disabled, ...r }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: LucideIcon; label: string }) {
   return (
-    <button {...r} aria-label={label} title={label} className={cx('inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition hover:bg-hover hover:text-fg disabled:opacity-40', className)}>
+    <button {...r} disabled={disabled} aria-label={label} title={label} className={cx('inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition hover:bg-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-40', className)}>
       <I size={18} aria-hidden />
     </button>
   )

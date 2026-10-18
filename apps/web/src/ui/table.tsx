@@ -15,14 +15,14 @@ export function Table<T>({ cols, rows, rowKey, onRow, empty, dense, selectedKey 
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {rows.map((r, idx) => (
             <tr
               key={rowKey(r)} onClick={onRow ? () => onRow(r) : undefined}
               onKeyDown={onRow ? (e) => e.key === 'Enter' && onRow(r) : undefined} tabIndex={onRow ? 0 : undefined}
               role={onRow ? 'button' : undefined} aria-pressed={onRow ? selectedKey === rowKey(r) : undefined}
-              className={cx('border-b border-line/60 last:border-0', dense ? 'h-12' : 'h-14', onRow && 'cursor-pointer transition hover:bg-hover', selectedKey === rowKey(r) && 'bg-hover')}
+              className={cx('border-b border-line/60 last:border-0 transition', dense ? 'h-12' : 'h-14', idx % 2 === 1 && 'bg-subtle/40', onRow && 'cursor-pointer hover:bg-hover', selectedKey === rowKey(r) && 'bg-hover')}
             >
-              {cols.map((c) => <td key={c.key} className={cx('px-4 align-middle', c.hideBelow === 'md' && 'max-md:hidden', c.hideBelow === 'lg' && 'max-lg:hidden', c.className)}>{c.render(r)}</td>)}
+              {cols.map((c) => <td key={c.key} className={cx('px-4 align-middle', selectedKey === rowKey(r) && 'font-medium', c.hideBelow === 'md' && 'max-md:hidden', c.hideBelow === 'lg' && 'max-lg:hidden', c.className)}>{c.render(r)}</td>)}
             </tr>
           ))}
         </tbody>

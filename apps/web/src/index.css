@@ -51,7 +51,7 @@
   --c-line: #2A2F39;
   --c-fg: #F3F4F6;
   --c-muted: #D1D5DB;
-  --c-neutral: #8F97A6;
+  --c-neutral: #9CA3AF;
   --c-accent: #E5484D;
   --c-accent-hover: #F26166;
   --c-accent-press: #CF3A3F;
@@ -104,6 +104,12 @@
   --color-console-bad: var(--c-console-bad);
   --font-sans: 'Inter', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-base: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
 }
 
 html, body, #root { height: 100%; }
