@@ -132,14 +132,15 @@ describe('RunService instance controls (P10d) and forward (P10c)', () => {
     expect(ack).toMatchObject({ attempt: 2, state: 'cancel_requested' });
   });
 
-  it('refuses a retry while the attempt is still running or cancelling', async () => {
-    const { run } = service(async () => ({ status: 200, body: { threadId: 'thread-1', dispatchId: 'dispatch-recon', instances: [ENDED, RUNNING], messages: [] } }));
+  it('refuses a retry while the attempt is still running or cancelling, as the runtime reports it', async () => {
+    const { run } = service(async () => ({ status: 409, body: { status: 'refused', reason: 'attempt_not_ended', grant: null } }));
     await expect(run.commandInstance('local', 'eng', 'thread-1', 'dispatch-recon', { commandId: 'cmd-retry-1', kind: 'retry', expectedAttempt: 2 })).rejects.toMatchObject({ code: 'conflict', message: 'The attempt must end before it can be retried or reassigned.' });
   });
 
-  it('refuses a retry against a stale attempt number before any run is started', async () => {
-    const { run } = service(async () => ({ status: 200, body: { threadId: 'thread-1', dispatchId: 'dispatch-recon', instances: [ENDED], messages: [] } }));
+  it('refuses a retry against a stale attempt number, and names the grant it asked the runtime for', async () => {
+    const { run, instanceExchange } = service(async () => ({ status: 409, body: { status: 'refused', reason: 'stale_attempt', grant: null } }));
     await expect(run.commandInstance('local', 'eng', 'thread-1', 'dispatch-recon', { commandId: 'cmd-retry-2', kind: 'retry', expectedAttempt: 9 })).rejects.toMatchObject({ code: 'conflict' });
+    expect(instanceExchange).toHaveBeenCalledWith('POST', '/_raptix/instances/thread-1/dispatch-recon/grants', { commandId: 'cmd-retry-2', kind: 'retry', expectedAttempt: 9 });
   });
 
   it('forwards a source message as a new message that names it', async () => {
