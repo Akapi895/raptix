@@ -6,9 +6,10 @@
 import { useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  cancelInstance, commandInstance, fetchInstanceMailbox, forwardInstanceMessage, INSTANCE_MESSAGE_MAX_CHARS, sendInstanceMessage,
+  cancelInstance, commandInstance, fetchInstanceMailbox, forwardInstanceMessage, getThread, INSTANCE_MESSAGE_MAX_CHARS, sendInstanceMessage,
   type InstanceAttemptState, type InstanceMailboxView, type InstanceMessageState, type RuntimeInstanceView,
 } from '../api'
+import { go } from '../../router/navigate'
 import { ApiTransportError } from '../transport'
 import { utcMinute } from '../format'
 import { Banner, Button, Input, Select, Skeleton, Textarea } from '../../ui'
@@ -63,6 +64,13 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
   const mailbox = useQuery({
     queryKey: key,
     queryFn: () => fetchInstanceMailbox(engagementId, threadId, dispatchId),
+    refetchInterval: 5_000,
+    retry: false,
+  })
+  // The thread's open questions; the ones this attempt asked are pinned here. Answers go through the workspace's batch resume.
+  const thread = useQuery({
+    queryKey: ['real', 'thread', engagementId, threadId],
+    queryFn: () => getThread(engagementId, threadId),
     refetchInterval: 5_000,
     retry: false,
   })
@@ -136,6 +144,7 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
   const mine = view.messages.filter((m) => m.attempt === attempt)
   const runningPeers = peers.filter((peer) => peer.threadId === threadId && peer.dispatchId !== dispatchId && peer.outcome === 'running')
   const roleValid = ROLE_PATTERN.test(reassignRole)
+  const pinned = (thread.data?.pendingQuestions ?? []).filter((q) => q.instance?.dispatchId === dispatchId)
 
   return (
     <section aria-label={`Operator controls for ${dispatchId}`} className="mt-3 space-y-3 border-t border-line pt-3">
@@ -176,6 +185,16 @@ export function InstanceMessenger({ engagementId, threadId, dispatchId, attempt,
             </li>
           ))}
         </ul>
+      )}
+      {pinned.length > 0 && (
+        <section aria-label="Questions from this instance" className="space-y-2 rounded-lg border border-line p-2">
+          <h4 className="text-xs font-semibold">Waiting for your answer</h4>
+          <ul className="space-y-1">
+            {pinned.map((q) => <li key={q.questionId} className="text-xs text-fg">{q.question}</li>)}
+          </ul>
+          <p className="text-xs text-muted">The thread answers every pending question in one batch, so answer them in the AI workspace.</p>
+          <Button size="sm" variant="secondary" onClick={() => go('project', { id: engagementId, tab: 'ai-workspace' })}>Open AI workspace</Button>
+        </section>
       )}
       {canSend ? (
         <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); if (draft.trim()) send.mutate() }}>

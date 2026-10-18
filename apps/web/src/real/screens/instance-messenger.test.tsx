@@ -8,6 +8,9 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InstanceMessenger } from './instance-messenger'
+import * as api from '../api'
+
+vi.mock('../api', async (importOriginal) => ({ ...(await importOriginal<typeof import('../api')>()), getThread: vi.fn() }))
 
 const THREAD = 'thread-1'
 const DISPATCH = 'dispatch-recon'
@@ -128,5 +131,16 @@ describe('InstanceMessenger (P10c)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
     await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue(''))
     expect(posts).toBe(1)
+  })
+
+  it('pins the open question this attempt asked and leaves another instance question out', async () => {
+    const question = (questionId: string, text: string, dispatchId: string) => ({
+      questionId, question: text, header: 'Scope', options: [], multiSelect: false, allowOther: true, source: 'runtime', instance: { dispatchId, attempt: 1 },
+    })
+    vi.mocked(api.getThread).mockResolvedValue({ pendingQuestions: [question('q-mine', 'Which login form should recon test?', DISPATCH), question('q-other', 'Use the staging host?', 'dispatch-other')] } as never)
+    stubFetch(MAILBOX('running'))
+    renderMessenger()
+    expect(await screen.findByText('Which login form should recon test?')).toBeInTheDocument()
+    expect(screen.queryByText('Use the staging host?')).not.toBeInTheDocument()
   })
 })
