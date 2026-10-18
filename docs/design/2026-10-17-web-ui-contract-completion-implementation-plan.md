@@ -948,3 +948,36 @@ Engagement `cmvbilcji000035pdx8khoigh` (scope v1 đã duyệt, ROE đến 2026-1
 - Chưa chạy live: forward (cần hai attempt đồng thời), retry/reassign admission, pin câu hỏi theo instance, hai instance đồng thời, cancel race với parent stop, và restart khi có attempt đang chạy.
 
 **Trạng thái P10:** vẫn mở. Đóng được: identity, history, cancel, durability của mailbox. Chưa đóng: message delivered/handled, forward, retry/reassign, recovery giữa chừng, và acceptance hai instance.
+
+### 13.23 Luồng chính live và điểm dừng (2026-10-18)
+
+**Deployment để mở:** UI `http://127.0.0.1:3001` (proxy tới API `raptix-web-raptix-api`, healthy). Image build từ source `de37925c` (API, UI kèm `66689bc3`) và `66689bc3` (runtime `raptix-web-raptix-web-runtime-1`, `langgraph dev --no-reload`). Engagement lab `cmvbilcji000035pdx8khoigh` (target 10.129.227.140, ROE đến 2026-10-24, scope v1). Plan HTTP-only `cmvdcnpng000337pislty8v1n` đã duyệt bởi reviewer độc lập và bind vào thread execution.
+
+**Đã sửa (commit):**
+- `075eedbb`, `767f12ac`: identity run (ADR-0090). OPPLAN không còn ghi `engagement_name` từ model hay từ `opplan.json`; fence bash kiểm tra theo workspace slug khi không có pin. Thread test mới chạy được nhiều run liên tiếp (`local1`: run gốc, retry, reassign).
+- `42af01b0`, `0cc2fa67`: operator grant. Retry/Reassign chạy persisted intent qua admission; grant `consumed` sau khi attempt bắt đầu.
+- `66689bc3`: intent đã bị interrupted không được replay tự động (`interrupted_intent`).
+- `de37925c`: planning bị chặn 409 vì run cũ kết thúc không ai quan sát vẫn giữ active slot. Submit giờ đối soát run trước khi reserve.
+- `ca928fad`: stack nghiệm thu chạy `langgraph dev --no-reload`.
+
+**Đã quan sát live (API thật, model/tool thật, output thật):**
+- Roster đúng attempt/role; message `accepted → delivered → handled (model_turn_completed)` trên attempt đang chạy (`local1`, attempt 1).
+- Cancel qua Fastify: `cancel_requested` → `cancelled` khoảng 9 giây; ledger ghi `cancelled`, khớp mailbox; không có redispatch tự động.
+- Retry có grant (`local1`, attempt 2, cùng dispatch, intent 1635 ký tự trùng bản đã persist, grant `consumed`).
+- Reassign sang `analyst`: dispatch mới `…-rf6e8e63bc1f4`, attempt chạy đúng role.
+- Restart runtime lúc attempt đang chạy: attempt → `interrupted`, message → `undelivered/instance_interrupted`. Orchestrator sau đó lập intent khác (`REMAINING STEP ONLY`); intent này được admit như dispatch riêng. Retry operator trên attempt bị interrupted chạy lại đúng intent (`recov2`).
+- Parent stop lúc attempt đang chạy (`parent`): attempt → `interrupted`, message chờ → `undelivered`, run → `interrupted`.
+- Planning: run → `pendingQuestions` (ask_user của soundwave) → resume bằng `questionId` → run `success`, pending xóa (thread `340e0f18`).
+- Report: tạo report từ output run thật (thread `f6fa5925`), export JSON và Markdown đều 200 (`cmvdhsdg100033mqobhfpd6dp`). Không có finding nào được tạo; lab hiện có 0 finding.
+- HITL bash: mọi lệnh bash cần duyệt (`RAPTIX_HITL__REQUIRE_BASH_APPROVAL=1`). Trong lượt này duyệt bằng script chỉ cho lệnh cục bộ không chạm target; lệnh tới 10.129.227.140 bị deny. Đây là hành vi duyệt của lượt test, không phải duyệt của người dùng.
+
+**Chưa đạt / còn mở:**
+- **Browser:** không có công cụ browser trong phiên này. Chưa click qua UI. Các API đằng sau từng bước đã kiểm chứng ở trên.
+- **Forward:** attempt A nhận message `handled` (`fwd`); run 2 bị 409 vì run 1 treo do vòng sleep của model. Chưa chạy forward live.
+- **Hai instance cùng role đồng thời:** model dispatch tuần tự dù được yêu cầu song song (`pair`). Chưa có bằng chứng live.
+- **Pin question theo instance:** đường `ask_user` của execution assistant không có tool này. Pin chỉ kiểm chứng ở planning (không có instance). Batch resume giữ nguyên.
+- **P11:** pause/resume/complete chưa implement trong lượt này. Cần runtime pause safe point và continue-run (LangGraph input null) với checkpoint; chưa làm.
+- **P12:** Results/Trace/Fleet/C2 không đổi trong lượt này. Campaign và C2 nằm ngoài luồng chính.
+- Các thread test có run `interrupted` lịch sử và reviewer account trong lab DB, giữ làm evidence.
+
+**Trạng thái P10:** vẫn mở (forward, hai instance đồng thời, pin question live). P11, P12: mở.
