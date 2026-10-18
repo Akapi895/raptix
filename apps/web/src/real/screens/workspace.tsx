@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, Hand, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, resumeThread, submitRun } from '../api'
+import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
 import { useCapabilityReady } from '../bootstrap'
 import { awaitRequest, newRequestId, type AckOutcome } from '../request-ledger'
@@ -419,6 +419,11 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
 
   const snapshotMessages = snapshot.data?.messages ?? []
   const snapshotIds = new Set(snapshotMessages.map((m) => m.messageId).filter((x): x is string => !!x))
+  const rename = useMutation({
+    mutationFn: (input: { threadId: string; title: string }) => renameThread(engagementId, input.threadId, input.title),
+    onSuccess: () => { setDispatchError(null); void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] }) },
+    onError: (error) => setDispatchError(error instanceof Error ? error.message : 'The conversation could not be renamed.'),
+  })
   const displayed = [...snapshotMessages, ...live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))]
   const pendingQuestions = (snapshot.data?.pendingQuestions ?? []).filter(isPendingInterruptView)
   // Keep the newest content in view only while the operator is already at the bottom; never pull them down while they read older messages.
@@ -526,6 +531,8 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             onSelect={(id) => setSelectedThreadId(id)}
             onCreate={(kind) => { setDispatchError(null); setKindFilter(kind); createThreadByKind.mutate(kind) }}
             onHistory={() => setHistorySheet(true)}
+            onRename={(threadId, title) => rename.mutate({ threadId, title })}
+            renaming={rename.isPending}
             onToggleAgents={() => (wide ? setAgentsOpen(!agentsOpen) : setAgentsSheet(true))}
           />
           <div ref={chatScroll} onScroll={(e) => setAtBottom(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight < 80)} className="relative min-h-0 flex-1 overflow-y-auto py-4 pr-1">
@@ -537,7 +544,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
               ) : snapshot.isError ? (
                 <div role="alert" className="text-sm text-bad">{snapshot.error instanceof Error ? snapshot.error.message : 'The thread snapshot failed to load.'}</div>
               ) : (
-                <Transcript messages={displayed} trace={trace} onRegenerate={!selectedThreadId || send.isPending || executionBlocked || !!unconfirmed || !!activeRunId ? undefined : (content) => send.mutate(content)} />
+                <Transcript messages={displayed} trace={trace} onReuse={(content) => setDraft(content)} />
               )}
 
           {selectedKind === 'execution' && (
@@ -617,8 +624,8 @@ function ApprovalsCard({ state, busyId, onDecide }: {
 }
 
 /** Chat header: the conversation switcher sits here instead of a left column. */
-function ConversationHeader({ threads, selectedId, runLabel, creating, executionLocked, embedded, agentsOpen, onSelect, onCreate, onHistory, onToggleAgents }: {
-  threads: { threadId: string; kind: ThreadKind; assistantId: string; createdAt?: string; updatedAt: string }[]
+function ConversationHeader({ threads, selectedId, runLabel, creating, executionLocked, embedded, agentsOpen, onSelect, onCreate, onHistory, onToggleAgents, onRename, renaming }: {
+  threads: { threadId: string; kind: ThreadKind; assistantId: string; title?: string | null; createdAt?: string; updatedAt: string }[]
   selectedId: string | null
   runLabel: string | null
   creating: boolean
@@ -629,8 +636,11 @@ function ConversationHeader({ threads, selectedId, runLabel, creating, execution
   onCreate: (kind: ThreadKind) => void
   onHistory?: () => void
   onToggleAgents: () => void
+  onRename: (threadId: string, title: string) => void
+  renaming: boolean
 }): ReactElement {
   const [open, setOpen] = useState(false)
+  const [renameDraft, setRenameDraft] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [details, setDetails] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -647,14 +657,14 @@ function ConversationHeader({ threads, selectedId, runLabel, creating, execution
     setMenuOpen(false)
   }
   return (
-    <div className="relative flex min-w-0 items-center gap-2 border-b border-line pb-3" onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setMenuOpen(false) } }}>
+    <div className="relative flex min-w-0 flex-wrap items-center gap-2 border-b border-line pb-3" onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setMenuOpen(false) } }}>
       <div className="relative min-w-0 flex-1">
         <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}
           className="flex max-w-full items-center gap-2 rounded-[10px] px-2 py-1.5 text-left hover:bg-hover">
           <MessagesSquare size={16} className="shrink-0 text-muted" aria-hidden />
           {selected ? (
             <>
-              <span className="truncate font-mono text-sm font-medium text-fg">{selected.threadId.slice(0, 8)}</span>
+              <span className="truncate text-sm font-medium text-fg">{selected.title || selected.threadId.slice(0, 8)}</span>
               <KindBadge kind={selected.kind} />
               <span className="truncate text-xs text-muted">{selected.assistantId}</span>
             </>
@@ -677,7 +687,7 @@ function ConversationHeader({ threads, selectedId, runLabel, creating, execution
                     onClick={() => { onSelect(t.threadId); setOpen(false) }}
                     className={cx('flex w-full items-center gap-2 rounded-[10px] px-2 py-2 text-left', t.threadId === selectedId ? 'bg-accent-soft' : 'hover:bg-hover')}>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-mono text-xs font-medium text-fg">{t.threadId.slice(0, 8)} · {t.assistantId}</span>
+                      <span className="block truncate text-xs font-medium text-fg">{t.title || t.threadId.slice(0, 8)} · {t.assistantId}</span>
                       <span className="block text-[11px] text-muted">{utcMinute(t.updatedAt)}</span>
                     </span>
                     <KindBadge kind={t.kind} />
@@ -708,9 +718,8 @@ function ConversationHeader({ threads, selectedId, runLabel, creating, execution
               <button type="button" role="menuitem" onClick={() => { setDetails((v) => !v); setMenuOpen(false) }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover">
                 <CircleAlert size={14} aria-hidden />{details ? 'Hide details' : 'Show details'}
               </button>
-              <button type="button" role="menuitem" disabled title="Renaming needs a thread name stored on the server; no such API exists yet"
-                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm opacity-50">
-                <Pencil size={14} aria-hidden />Rename (not available yet)
+              <button type="button" role="menuitem" onClick={() => { setRenameDraft(selected.title ?? ''); setMenuOpen(false) }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover">
+                <Pencil size={14} aria-hidden />Rename
               </button>
             </div>
           )}
@@ -721,6 +730,15 @@ function ConversationHeader({ threads, selectedId, runLabel, creating, execution
         aria-pressed={agentsOpen} aria-label={agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'} title={agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'}>
         <span className="sr-only">{agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'}</span>
       </Button>
+      {selected && renameDraft !== null && (
+        <form className="flex basis-full items-center gap-2" onSubmit={(e) => { e.preventDefault(); const next = renameDraft.trim(); if (!next || renaming) return; onRename(selected.threadId, next); setRenameDraft(null) }}>
+          <input aria-label="Conversation name" autoFocus maxLength={80} value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setRenameDraft(null) }}
+            className="h-9 min-w-0 flex-1 rounded-[10px] border border-line bg-subtle px-3 text-sm text-fg" placeholder="Name this conversation" />
+          <Button size="sm" variant="primary" type="submit" disabled={renaming || renameDraft.trim().length === 0}>{renaming ? 'Saving...' : 'Save'}</Button>
+          <Button size="sm" variant="ghost" type="button" onClick={() => setRenameDraft(null)}>Cancel</Button>
+        </form>
+      )}
       {selected && details && (
         <dl className="absolute right-0 top-full z-20 mt-1 grid w-80 grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl border border-line bg-panel p-3 text-xs shadow-lg">
           <dt className="text-muted">Kind</dt><dd>{selected.kind}</dd>
@@ -738,7 +756,7 @@ function KindBadge({ kind }: { kind: ThreadKind }): ReactElement {
 }
 
 /** Messages, then the current run's activity: consecutive tool lines fold into one collapsed group. */
-function Transcript({ messages, trace, onRegenerate }: { messages: ScopedThreadMessage[]; trace: TraceLine[]; onRegenerate?: (content: string) => void }): ReactElement {
+function Transcript({ messages, trace, onReuse }: { messages: ScopedThreadMessage[]; trace: TraceLine[]; onReuse?: (content: string) => void }): ReactElement {
   if (messages.length === 0 && trace.length === 0) {
     return <p className="text-sm text-muted">No messages yet. Open with the engagement context, constraints and what you want planned.</p>
   }
@@ -748,7 +766,7 @@ function Transcript({ messages, trace, onRegenerate }: { messages: ScopedThreadM
   return (
     <ol className="space-y-5">
       {messages.map((m, i) => <MessageRow key={m.messageId ?? `msg-${i}`} message={m}
-        onRegenerate={i === lastAssistant && onRegenerate && lastUser ? () => onRegenerate(lastUser) : undefined} />)}
+        onReuse={i === lastAssistant && onReuse && lastUser ? () => onReuse(lastUser) : undefined} />)}
       {groups.map((g) => (g.kind === 'tools'
         ? <ToolActivityGroup key={g.lines[0]!.id} lines={g.lines} />
         : <SystemLine key={g.lines[0]!.id} line={g.lines[0]!} />))}
@@ -771,7 +789,7 @@ function groupTrace(trace: TraceLine[]): { kind: 'tools' | 'system'; lines: Trac
   return groups
 }
 
-function MessageRow({ message, onRegenerate }: { message: ScopedThreadMessage; onRegenerate?: () => void }): ReactElement {
+function MessageRow({ message, onReuse }: { message: ScopedThreadMessage; onReuse?: () => void }): ReactElement {
   const isUser = message.role === 'user'
   const [copied, setCopied] = useState(false)
   const copy = (): void => {
@@ -790,7 +808,7 @@ function MessageRow({ message, onRegenerate }: { message: ScopedThreadMessage; o
         : <div className={cx('w-full min-w-0 text-sm leading-relaxed text-fg', long && 'max-h-96 overflow-y-auto')}>{renderMarkdown(message.content)}</div>}
       <div className="flex gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
         <Button size="sm" variant="ghost" icon={copied ? Check : Copy} onClick={copy} aria-label="Copy message">{copied ? 'Copied' : 'Copy'}</Button>
-        {onRegenerate && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={onRegenerate} title="Sends the last prompt again as a new run">Regenerate</Button>}
+        {onReuse && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={onReuse} title="Puts the last prompt back in the composer; nothing is sent until you press Send">Reuse prompt</Button>}
       </div>
     </li>
   )

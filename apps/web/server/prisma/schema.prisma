@@ -91,6 +91,7 @@ model EngagementThread {
   kind ThreadKind
   contextHash String
   runtimeConfigHash String?
+  title String?
   engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   requests WebRequestLedger[]
   createdAt DateTime @default(now())
