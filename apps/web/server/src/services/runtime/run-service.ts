@@ -4,7 +4,7 @@ import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtim
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
 import { RuntimeCheckpointMissingError, RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
-import { parseInstanceCancel, parseInstanceCommand, parseInstanceForward, parseInstanceMessage, parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
+import { parseInstanceCancel, parseInstanceCommand, parseInstanceForward, parseInstanceMessage, parseOperationRequest, parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-context.js';
 import { projectThreadHistory } from './history-projection.js';
@@ -131,8 +131,30 @@ function ledgerInstances(threadId: string, ledger: unknown): RuntimeInstanceView
   });
 }
 
+/** P11: the operation state of a thread, held by its binding row (OperationBinding.status). */
+export interface RunOperationPort {
+  status(engagement: string, thread: string): Promise<string | null>;
+  transition(engagement: string, thread: string, from: readonly string[], to: string): Promise<boolean>;
+  uncertainRequests(engagement: string, thread: string): Promise<number>;
+}
+
+/** P11 operation view: the durable state plus the latest run the runtime reports. */
+export interface OperationView {
+  engagementId: string; threadId: string; state: string
+  latestRunId: string | null; latestRunStatus: string | null; source: 'runtime'
+}
+
 export class RunService {
-  public constructor(private readonly options: { ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort; authorizeMutation?: (user: string, engagement: string, kind: 'planning' | 'execution', threadId: string | null) => Promise<void> }) {}
+  public constructor(private readonly options: {
+    ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort
+    authorizeMutation?: (user: string, engagement: string, kind: 'planning' | 'execution', threadId: string | null) => Promise<void>
+    operations?: RunOperationPort
+    audit?: (actorId: string, engagementId: string, action: string, targetId: string, reason: string) => Promise<void>
+  }) {}
+  private requireOperations(): RunOperationPort {
+    if (!this.options.operations) throw new ProjectPolicyError('conflict', 'Operation lifecycle is not available in this deployment');
+    return this.options.operations;
+  }
   private async threadState(user: string, engagement: string, thread: string): ReturnType<RuntimeReadPort['state']> {
     const state = await this.options.reads.state(thread);
     if (!Object.keys(state.values).length && !findPendingQuestions(state.values, state.tasks).length) {
@@ -192,6 +214,21 @@ export class RunService {
   }
   public async submit(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId, message, intent } = parseRunCreate(raw);
+    return this.startRun(user, engagement, thread, requestId, intent, (trusted) => this.options.runtime.createRun(thread, trusted, requestId, message));
+  }
+  /**
+   * Admit one runtime run on a thread: the same ownership, gate and dispatch path for a new message and for a
+   * continuation of a paused checkpoint. `precheck` runs inside the gate; `afterAccept` runs once the runtime accepted it.
+   */
+  private async startRun(
+    user: string,
+    engagement: string,
+    thread: string,
+    requestId: string,
+    intent: unknown,
+    launch: (trusted: TrustedRuntimeContext) => Promise<RuntimeRun>,
+    hooks: { precheck?: () => Promise<void>; afterAccept?: () => Promise<void> } = {},
+  ): Promise<RequestRecoveryView> {
     const { ownership, context, runtime } = this.options;
     const replay = await ownership.replay(user, engagement, requestId, 'create_run', intent, thread);
     if (replay) return replay;
@@ -208,10 +245,11 @@ export class RunService {
       if (await ownership.active(user, engagement, thread)) throw conflict();
       for (let offset = 0; offset < 1000; offset += 100) {
         const runs = await runtime.listRuns(thread, offset, 100);
-        if (runs.some(r => !terminal(r.status))) throw conflict();
+        if (runs.some(r => !terminal(r.status) && r.status !== 'interrupted')) throw conflict();
         if (runs.length < 100) break;
         if (offset === 900) throw new RuntimeUnavailableError();
       }
+      await hooks.precheck?.();
     } catch (error) {
       const winner = await ownership.replay(user, engagement, requestId, 'create_run', intent, thread);
       if (winner) return winner;
@@ -221,10 +259,79 @@ export class RunService {
     if (!reservation.reserved) return reservation.request;
     await ownership.recordDispatch(user, engagement, requestId, reservation.token, trusted);
     return this.dispatch(user, engagement, requestId, reservation.token, async () => {
-      const remote = await runtime.createRun(thread, trusted, requestId, message);
+      const remote = await launch(trusted);
       metadata(remote.metadata, { ...trusted.metadata, ui_request_id: requestId });
-      return ownership.accept(user, engagement, requestId, reservation.token, thread, remote.runId);
+      const accepted = await ownership.accept(user, engagement, requestId, reservation.token, thread, remote.runId);
+      await hooks.afterAccept?.();
+      return accepted;
     });
+  }
+  /** P11 pause: the request is durable as `pause_requested` before the runtime is asked to stop at its safe point. */
+  public async pauseRun(user: string, engagement: string, thread: string, runId: string): Promise<OperationView> {
+    const ops = this.requireOperations();
+    const current = await this.getRun(user, engagement, thread, runId);
+    if (!['pending', 'running'].includes(current.rawStatus)) throw new ProjectPolicyError('conflict', 'Only a running run can be paused.');
+    const binding = await this.options.ownership.getBinding(user, engagement, thread);
+    await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
+    if (!(await ops.transition(engagement, thread, ['bound', 'running'], 'pause_requested'))) throw new ProjectPolicyError('conflict', 'This operation cannot be paused in its current state.');
+    try { await this.options.runtime.cancelRun(thread, runId); }
+    catch (error) { await ops.transition(engagement, thread, ['pause_requested'], 'running'); throw error; }
+    return this.operation(user, engagement, thread);
+  }
+  /** P11 resume: continues the paused checkpoint as a new runtime run; the original prompt is never sent again. */
+  public async resumeRun(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
+    const { requestId } = parseOperationRequest(raw);
+    const ops = this.requireOperations();
+    return this.startRun(user, engagement, thread, requestId, { continueThread: thread }, (trusted) => this.options.runtime.continueRun(thread, trusted, requestId), {
+      precheck: async () => {
+        if ((await ops.status(engagement, thread)) !== 'paused') throw new ProjectPolicyError('conflict', 'Only a paused operation can be resumed.');
+        const [latest] = await this.options.runtime.listRuns(thread, 0, 1);
+        if (!latest || latest.status !== 'interrupted') throw new ProjectPolicyError('conflict', 'The paused run is not interrupted in the runtime yet.');
+        const state = await this.threadState(user, engagement, thread);
+        if (findPendingQuestions(state.values, state.tasks).length) throw new ProjectPolicyError('conflict', 'Answer the pending question before resuming this operation.');
+      },
+      afterAccept: async () => { await ops.transition(engagement, thread, ['paused'], 'running'); },
+    });
+  }
+  /**
+   * P11 complete: audited bookkeeping, only after the runtime run is terminal and every recorded attempt has ended.
+   * It never changes the status of a failed run and never terminates sessions.
+   */
+  public async completeOperation(user: string, engagement: string, thread: string): Promise<OperationView> {
+    const ops = this.requireOperations();
+    const binding = await this.options.ownership.getBinding(user, engagement, thread);
+    await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
+    const view = await this.operation(user, engagement, thread);
+    if (view.state === 'completed') return view;
+    if (view.state === 'pause_requested') throw new ProjectPolicyError('conflict', 'The pause is not confirmed by the runtime yet.');
+    if (view.latestRunStatus === null || ['pending', 'running'].includes(view.latestRunStatus)) throw new ProjectPolicyError('conflict', 'The runtime run is still active.');
+    if (view.latestRunStatus === 'interrupted') throw new ProjectPolicyError('conflict', 'The operation is paused; resume it or let its run finish before completing.');
+    const state = await this.threadState(user, engagement, thread);
+    if (findPendingQuestions(state.values, state.tasks).length) throw new ProjectPolicyError('conflict', 'Answer the pending questions before completing this operation.');
+    const reply = await this.options.reads.instanceExchange('GET', `/_raptix/threads/${encodeURIComponent(thread)}/instances`);
+    const payload = reply.body as { instances?: { state?: unknown }[] } | null;
+    if (reply.status !== 200 || !payload || !Array.isArray(payload.instances)) throw new RuntimeUnavailableError();
+    if (payload.instances.some(row => row.state === 'running' || row.state === 'cancel_requested')) throw new ProjectPolicyError('conflict', 'A dispatched instance is still running; wait for it to end before completing.');
+    if (await ops.uncertainRequests(engagement, thread) > 0) throw new ProjectPolicyError('conflict', 'Uncertain requests on this thread must be reconciled before completing.');
+    if (!(await ops.transition(engagement, thread, ['bound', 'running', 'paused'], 'completed'))) throw new ProjectPolicyError('conflict', 'This operation cannot be completed in its current state.');
+    await this.options.audit?.(user, engagement, 'operation.completed', thread, `latest run ${view.latestRunStatus}`);
+    return this.operation(user, engagement, thread);
+  }
+  /** P11 operation state, reconciled with the latest run the runtime reports (the pause is confirmed only here). */
+  public async operation(user: string, engagement: string, thread: string): Promise<OperationView> {
+    const ops = this.requireOperations();
+    await this.options.ownership.getBinding(user, engagement, thread);
+    const [latest] = await this.options.runtime.listRuns(thread, 0, 1);
+    let state = (await ops.status(engagement, thread)) ?? 'bound';
+    if (latest && state !== 'completed') {
+      const interrupted = latest.status === 'interrupted';
+      if (state === 'pause_requested' && interrupted) state = (await ops.transition(engagement, thread, ['pause_requested'], 'paused')) ? 'paused' : state;
+      else if (state === 'running' && interrupted) state = (await ops.transition(engagement, thread, ['running'], 'paused')) ? 'paused' : state;
+      else if (state === 'pause_requested' && terminal(latest.status)) state = (await ops.transition(engagement, thread, ['pause_requested'], 'bound')) ? 'bound' : state;
+      else if (state === 'paused' && ['pending', 'running'].includes(latest.status)) state = (await ops.transition(engagement, thread, ['paused'], 'running')) ? 'running' : state;
+      else if (state === 'running' && terminal(latest.status)) state = (await ops.transition(engagement, thread, ['running'], 'bound')) ? 'bound' : state;
+    }
+    return { engagementId: engagement, threadId: thread, state, latestRunId: latest?.runId ?? null, latestRunStatus: latest?.status ?? null, source: 'runtime' };
   }
   public async getRun(user: string, engagement: string, thread: string, runId: string): Promise<ScopedRunView> {
     const { ownership, runtime } = this.options;

@@ -80,6 +80,26 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
     const { id, thread, run } = request.params as { id: string; thread: string; run: string };
     return service.getRun(identity.id, id, thread, run);
   }));
+  app.get(`${prefix}/threads/:thread/operation`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id, thread } = request.params as { id: string; thread: string };
+    return service.operation(identity.id, id, thread);
+  }));
+  app.post(`${prefix}/threads/:thread/runs/:run/pause`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread, run } = request.params as { id: string; thread: string; run: string };
+    const view = await service.pauseRun(identity.id, id, thread, run);
+    reply.status(202); return view;
+  }));
+  app.post(`${prefix}/threads/:thread/resume-run`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread } = request.params as { id: string; thread: string };
+    const ack = await service.resumeRun(identity.id, id, thread, request.body);
+    reply.status(202); return ack;
+  }));
+  app.post(`${prefix}/threads/:thread/complete`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread } = request.params as { id: string; thread: string };
+    if (request.body !== undefined && (typeof request.body !== 'object' || request.body === null || Object.keys(request.body).length)) throw new ProjectPolicyError('bad_request', 'Completion does not accept overrides');
+    return service.completeOperation(identity.id, id, thread);
+  }));
   app.post(`${prefix}/requests/:requestId/reconcile`, (request, reply) => runProjectsHandler(request, reply, () => {
     if (request.body !== undefined && (typeof request.body !== 'object' || request.body === null || Array.isArray(request.body) || Object.keys(request.body).length)) throw new ProjectPolicyError('bad_request', 'Reconciliation does not accept runtime overrides');
     const { id, requestId } = request.params as { id: string; requestId: string };
