@@ -540,26 +540,6 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
                 <Transcript messages={displayed} trace={trace} onRegenerate={!selectedThreadId || send.isPending || executionBlocked || !!unconfirmed || !!activeRunId ? undefined : (content) => send.mutate(content)} />
               )}
 
-          {transcripts.length > 0 && (
-            <Card>
-              <CardHeader title="Thread history (checkpoints)" sub="Unattributed checkpoint events accumulated across runs - never current-run work." />
-              <ul className="max-h-48 space-y-1 overflow-y-auto">
-                {transcripts.map((t, i) => {
-                  const line = traceLineFor(t.key ?? `hist-${i}`, t.payload as TraceLikePayload)
-                  if (!line) return null
-                  return (
-                    <li key={t.key ?? `hist-${i}`} className="flex items-start gap-2 text-xs">
-                      <CircleAlert size={12} className="mt-0.5 shrink-0 text-muted" aria-hidden />
-                      <span className="min-w-0 flex-1 break-words text-muted">{line.label}</span>
-                      {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
-                    </li>
-                  )
-                })}
-              </ul>
-              {snapshot.data?.transcriptsTruncated && <p className="mt-2 text-xs text-neutral">Older checkpoint events are truncated by the server projection.</p>}
-            </Card>
-          )}
-
           {selectedKind === 'execution' && (
             <ApprovalsCard
               state={approvals}
