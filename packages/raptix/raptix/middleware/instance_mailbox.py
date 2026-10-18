@@ -3,8 +3,8 @@
 The safe point is the boundary before each model call of a dispatched instance: no tool is
 mid-flight and no partial model output exists there. The middleware drains the instance's
 accepted messages, adds them to that one request as operator guidance, and records them as
-handled when the model turn completes. A failed model turn leaves them delivered, never
-re-offered. Calls outside a dispatch (the orchestrator's own turns) pass through unchanged.
+handled when the model turn completes. A failed model turn is offered again to the same
+attempt. Calls outside a dispatch (the orchestrator's own turns) pass through unchanged.
 """
 
 from __future__ import annotations
@@ -20,6 +20,16 @@ from raptix.core.dispatch_context import active_dispatch
 from raptix.execution.session.instance_mailbox import MailboxMessage, default_mailbox
 
 TURN_COMPLETED = "model_turn_completed"
+
+
+class InstanceCancellationRequested(RuntimeError):
+    """The dispatch stops cooperatively before admitting another model or tool call."""
+
+
+def check_instance_cancel() -> None:
+    scope = _safe_point_context()
+    if scope and default_mailbox().cancellation_requested(*scope):
+        raise InstanceCancellationRequested("Operator requested cancellation of this attempt")
 
 
 def render_operator_notice(messages: Sequence[MailboxMessage]) -> HumanMessage:
@@ -43,6 +53,7 @@ class InstanceMailboxMiddleware(AgentMiddleware):
     """Delivers accepted operator messages to a dispatched instance before its next model call."""
 
     async def awrap_model_call(self, request, handler):
+        check_instance_cancel()
         scope = _safe_point_context()
         if scope is None:
             return await handler(request)
@@ -59,6 +70,7 @@ class InstanceMailboxMiddleware(AgentMiddleware):
         return response
 
     def wrap_model_call(self, request, handler):
+        check_instance_cancel()
         scope = _safe_point_context()
         if scope is None:
             return handler(request)
@@ -71,3 +83,11 @@ class InstanceMailboxMiddleware(AgentMiddleware):
         response: Any = handler(request)
         mailbox.mark_handled([m.message_id for m in delivered], TURN_COMPLETED)
         return response
+
+    def wrap_tool_call(self, request, handler):
+        check_instance_cancel()
+        return handler(request)
+
+    async def awrap_tool_call(self, request, handler):
+        check_instance_cancel()
+        return await handler(request)
