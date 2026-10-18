@@ -199,6 +199,12 @@ class DispatchMiddleware(SubAgentMiddleware):
         objective_id: str | None,
         dispatch_id: str | None,
     ) -> tuple[DispatchContext, tuple[str, str], str] | Command:
+        config = getattr(runtime, "config", None) or {}
+        thread_id = (config.get("configurable") or {}).get("thread_id")
+        # An operator's Retry or Reassign runs the persisted intent, never a model rewrite of it (ADR-0090).
+        grant = self._operator_grant(thread_id, dispatch_id)
+        if grant is not None:
+            role, objective_id, description = grant.target_role, grant.objective_id, grant.intent
         if role not in self.subagent_names:
             return _reply(runtime, "unknown_role", f"Unknown subagent {role}")
         if objective_id and not any(
@@ -211,6 +217,18 @@ class DispatchMiddleware(SubAgentMiddleware):
         dispatch_id = dispatch_id or fingerprint
         ledger = runtime.state.get("dispatch_ledger") or {}
         prior = ledger.get(dispatch_id, {})
+        # A cancelled intent is not reopened by the orchestrator under any dispatch id; only the operator's grant may re-run its own source.
+        cancelled = [
+            source
+            for source, row in ledger.items()
+            if row.get("fingerprint") == fingerprint and row.get("outcome", {}).get("status") == "cancelled"
+        ]
+        if any(source != (grant.source_dispatch_id if grant else None) for source in cancelled):
+            return _reply(
+                runtime,
+                "cancelled_intent",
+                "The operator cancelled this intent; only an explicit operator Retry or Reassign may run it again",
+            )
         if prior and prior.get("fingerprint") != fingerprint:
             return _reply(
                 runtime, "dispatch_conflict", "Dispatch identity is already bound to another intent"
@@ -241,8 +259,6 @@ class DispatchMiddleware(SubAgentMiddleware):
                 "dispatch_ledger_full",
                 "Thread dispatch ledger is full; start a new thread",
             )
-        config = getattr(runtime, "config", None) or {}
-        thread_id = (config.get("configurable") or {}).get("thread_id")
         scope = str(thread_id or runtime.state.get("engagement_name") or id(runtime.state))
         key = (scope, dispatch_id)
         with self._lock:
@@ -288,11 +304,22 @@ class DispatchMiddleware(SubAgentMiddleware):
                 attempt + 1,
                 role=role,
                 thread_id=str(thread_id) if thread_id else None,
-                intent=description[:2000],
+                intent=description,
+                replay_grant=grant.command_id if grant else None,
             ),
             key,
             fingerprint,
         )
+
+    @staticmethod
+    def _operator_grant(thread_id: Any, dispatch_id: str | None) -> Any:
+        if not thread_id or not dispatch_id:
+            return None
+        try:
+            return default_mailbox().open_grant_for_target(str(thread_id), dispatch_id)
+        except Exception:  # noqa: BLE001 — without a readable grant the cancelled intent stays blocked
+            log.warning("instance mailbox grant lookup failed", exc_info=True)
+            return None
 
     @staticmethod
     def _mailbox_attempt_floor(thread_id: Any, dispatch_id: str) -> int:
@@ -330,6 +357,8 @@ class DispatchMiddleware(SubAgentMiddleware):
                 context.intent,
                 context.objective_id,
             )
+            if context.replay_grant:
+                default_mailbox().consume_grant(context.replay_grant)
         except Exception:  # noqa: BLE001 — mailbox bookkeeping must never fail a dispatch
             log.warning("instance mailbox registration failed", exc_info=True)
 

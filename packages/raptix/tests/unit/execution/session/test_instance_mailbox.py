@@ -172,3 +172,24 @@ def test_replacement_attempt_goes_above_every_recorded_attempt_and_keeps_its_int
     assert mailbox.max_attempt("thread-1", "disp-1") == 2
     assert [row.intent for row in mailbox.snapshot("thread-1", "disp-1")[0]] == ["map the web target"] * 2
     assert mailbox.accept("after-retry", "thread-1", "disp-1", "focus on /admin", expected_attempt=2).status == "accepted"
+
+
+def test_grant_needs_an_ended_attempt_and_admits_one_replacement(mailbox):
+    mailbox.start_instance("thread-1", "disp-1", 1, "recon", "map the target", "OBJ-1")
+    assert mailbox.open_grant("cmd-early-01", "thread-1", "disp-1", 1, "retry", None).reason == "attempt_not_ended"
+    mailbox.finish_instance("thread-1", "disp-1", 1)
+    opened = mailbox.open_grant("cmd-retry-01", "thread-1", "disp-1", 1, "retry", None)
+    assert opened.status == "opened" and opened.grant.intent == "map the target" and opened.grant.objective_id == "OBJ-1"
+    assert mailbox.open_grant("cmd-retry-02", "thread-1", "disp-1", 1, "retry", None).reason == "replacement_pending"
+    assert mailbox.open_grant("cmd-retry-01", "thread-1", "disp-1", 1, "retry", None).status == "duplicate"
+    mailbox.consume_grant("cmd-retry-01")
+    assert mailbox.open_grant("cmd-retry-03", "thread-1", "disp-1", 1, "retry", None).reason == "already_replaced"
+
+
+def test_revoked_grant_is_withdrawn_and_reassign_gets_a_new_dispatch(mailbox):
+    mailbox.start_instance("thread-1", "disp-1", 1, "recon", "map the target", None)
+    mailbox.finish_instance("thread-1", "disp-1", 1)
+    opened = mailbox.open_grant("cmd-move-0001", "thread-1", "disp-1", 1, "reassign", "exploit")
+    assert opened.grant.target_dispatch_id.startswith("disp-1-r") and opened.grant.target_role == "exploit"
+    assert mailbox.revoke_grant("cmd-move-0001") == "revoked"
+    assert mailbox.open_grant_for_target("thread-1", opened.grant.target_dispatch_id) is None

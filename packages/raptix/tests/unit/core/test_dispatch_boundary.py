@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 from types import SimpleNamespace
 from typing import Any
 
@@ -157,6 +159,47 @@ def test_task_parent_receives_typed_failure_and_terminal_rejects_redispatch(task
         == 1
     )
     assert inner.calls == 4
+
+
+def _cancelled_ledger(dispatch: str, intent: str = "same intent", objective: str = "A") -> dict:
+    fingerprint = hashlib.sha256(
+        json.dumps(["exploit", objective, intent], ensure_ascii=False).encode()
+    ).hexdigest()
+    return {
+        dispatch: {
+            "fingerprint": fingerprint,
+            "role": "exploit",
+            "objective_id": objective,
+            "attempt": 1,
+            "outcome": {"status": "cancelled", "terminal_for_this_dispatch": False},
+        }
+    }
+
+
+def test_cancelled_intent_is_not_reopened_under_a_new_dispatch_id(task: tuple) -> None:
+    tool, inner = task
+    state = {"objectives": [{"id": "A"}], "engagement_name": "lab", "dispatch_ledger": _cancelled_ledger("d1")}
+    refused = _call(tool, state, dispatch="d2")
+    assert "cancelled_intent" in refused.update["messages"][0].content
+    assert inner.calls == 0
+
+
+def test_operator_grant_replays_the_persisted_intent_and_is_consumed(task: tuple) -> None:
+    from raptix.execution.session.instance_mailbox import default_mailbox
+
+    tool, inner = task
+    box = default_mailbox()
+    box.start_instance("thread-1", "d1", 1, "exploit", "same intent", "A")
+    box.finish_instance("thread-1", "d1", 1)
+    assert box.open_grant("cmd-retry-0001", "thread-1", "d1", 1, "retry", None).status == "opened"
+    state = {"objectives": [{"id": "A"}], "engagement_name": "lab", "dispatch_ledger": _cancelled_ledger("d1")}
+    # The orchestrator names the dispatch; the description it writes is ignored in favour of the persisted intent.
+    replay = _call(tool, state, intent="a model rewrite", objective=None, dispatch="d1")
+    state = _apply(state, replay)
+    assert inner.calls == 1
+    assert state["dispatch_ledger"]["d1"]["attempt"] == 2
+    assert box.open_grant_for_target("thread-1", "d1") is None
+    assert box.snapshot("thread-1", "d1")[0][1].intent == "same intent"
 
 
 def test_ledger_row_names_the_role_that_owns_the_dispatch(task: tuple) -> None:
