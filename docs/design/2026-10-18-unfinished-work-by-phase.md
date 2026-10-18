@@ -25,8 +25,8 @@
 | P07 | Một phần | PDF/DOCX **Hoãn** (D05, exclusion có tên). Phần còn lại xong. |
 | P08 | Xong (code) | Còn 3 mục registry (§3). |
 | P09 | Gần xong | Mục mock-only **[UI]**; parity checklist theo domain; 7 test theo thời gian chưa ổn định. |
-| P10 | Một phần | Forward live; hai instance cùng role đồng thời live; pin câu hỏi trong messenger **[UI]**. DTO instance đã vào `@raptix/web-contracts` (`637e9bb0`). |
-| P11 | Một phần | Backend pause/resume/complete và live đã xong. Còn: UI controls **[UI]**; step controls (cần quyết định mapping step ↔ OPPLAN objective); một số acceptance (§2, P11). |
+| P10 | Một phần | Forward live; hai instance cùng role đồng thời live. DTO instance đã vào `@raptix/web-contracts` (`637e9bb0`). Câu hỏi của instance được pin trong messenger (`dd837e6d`). Retry/forward dùng intent id giữ qua ACK bị mất (`b0309394`). |
+| P11 | Một phần | Backend và UI pause/resume/complete đã nối (`e4ca7f67`), chưa có acceptance live cho từng nút. Còn: step controls (read-only mapping là bước trung gian); acceptance deterministic và live (§2, P11). |
 | P12 | Một phần | Còn: Results/Trace; C2 round-trip Sliver trong Docker lab; lifecycle UI **[UI]**. Campaigns generate/deploy **Blocked** (ROE loại phishing). |
 | P13 | Chưa | Chờ P09–P12; build/digest/evidence tổng hợp; dọn panel/contract/gate cũ. |
 
@@ -178,6 +178,10 @@ Ngoài phase: browser click-through của luồng chính chưa chạy (phiên kh
 | `2c06098e` | P11: gate plan chấp nhận paused; tin nhắn mới bị chặn khi paused/completed |
 | `2942658a`, `af1befa6` | P12: C2 grant yêu cầu session do provider báo cáo; test |
 | `135390d1` | P10: test deterministic hai dispatch cùng role |
+| `b0309394` | Messenger giữ một intent id qua ACK bị mất; gửi lại kiểm tra mailbox trước |
+| `b290b208` | Server quyết định `canManage` theo người gọi; owner không còn bị khóa invite |
+| `e4ca7f67` | P11: pause run, resume operation, mark complete trên tab Operations |
+| `dd837e6d` | P10: câu hỏi của instance được pin trong messenger |
 | `43efd4c4` | P01: test late-ACK sau abort ở transport |
 | `637e9bb0` | P10: DTO instance chuyển vào `@raptix/web-contracts` |
 | `953a4bea` | Ledger 13.24 và file này (phiên trước) |
