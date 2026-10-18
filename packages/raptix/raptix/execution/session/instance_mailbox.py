@@ -40,6 +40,22 @@ INTERRUPTED = "interrupted"
 _MESSAGE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,95}\Z")
 
 _SCHEMA = """
+CREATE TABLE IF NOT EXISTS grants (
+    command_id TEXT PRIMARY KEY,
+    thread_id TEXT NOT NULL,
+    source_dispatch_id TEXT NOT NULL,
+    source_attempt INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    target_dispatch_id TEXT NOT NULL,
+    target_role TEXT NOT NULL,
+    intent TEXT NOT NULL,
+    objective_id TEXT,
+    state TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS grants_target ON grants (thread_id, target_dispatch_id, state);
+CREATE INDEX IF NOT EXISTS grants_source ON grants (thread_id, source_dispatch_id, state);
 CREATE TABLE IF NOT EXISTS instances (
     thread_id TEXT NOT NULL,
     dispatch_id TEXT NOT NULL,
@@ -104,6 +120,31 @@ class InstanceRow:
 
 
 @dataclass(frozen=True)
+class OperatorGrant:
+    """An operator's explicit Retry or Reassign of one ended attempt. The intent is copied from that attempt's record."""
+
+    command_id: str
+    thread_id: str
+    source_dispatch_id: str
+    source_attempt: int
+    kind: str
+    target_dispatch_id: str
+    target_role: str
+    intent: str
+    objective_id: str | None
+    state: str
+
+
+@dataclass(frozen=True)
+class GrantResult:
+    """``status`` is ``opened``, ``duplicate`` (same command already recorded) or ``refused``."""
+
+    status: str
+    reason: str | None
+    grant: OperatorGrant | None
+
+
+@dataclass(frozen=True)
 class AcceptResult:
     """``status`` is ``accepted``, ``duplicate`` (same id already recorded) or ``refused``."""
 
@@ -161,6 +202,114 @@ class InstanceMailbox:
                 " ON CONFLICT (thread_id, dispatch_id, attempt) DO NOTHING",
                 (thread_id, dispatch_id, attempt, role, RUNNING, now, now, intent, objective_id),
             )
+
+    def open_grant(
+        self,
+        command_id: str,
+        thread_id: str,
+        dispatch_id: str,
+        attempt: int,
+        kind: str,
+        reassign_role: str | None,
+    ) -> GrantResult:
+        """Record the operator's Retry or Reassign of an ended attempt; the runtime copies the persisted intent."""
+        if kind not in {"retry", "reassign"} or (kind == "reassign") != (reassign_role is not None):
+            return GrantResult("refused", "invalid_command", None)
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                result = self._open_grant_locked(command_id, thread_id, dispatch_id, attempt, kind, reassign_role)
+                self._conn.execute("COMMIT")
+                return result
+            except Exception:
+                self._conn.execute("ROLLBACK")
+                raise
+
+    def _open_grant_locked(
+        self, command_id: str, thread_id: str, dispatch_id: str, attempt: int, kind: str, reassign_role: str | None
+    ) -> GrantResult:
+        if not _MESSAGE_ID.fullmatch(command_id):
+            return GrantResult("refused", "invalid_command", None)
+        existing = self._conn.execute(
+            "SELECT command_id, thread_id, source_dispatch_id, source_attempt, kind, target_dispatch_id, target_role,"
+            " intent, objective_id, state FROM grants WHERE command_id = ?",
+            (command_id,),
+        ).fetchone()
+        if existing is not None:
+            grant = _grant_from_row(existing)
+            if (grant.thread_id, grant.source_dispatch_id, grant.source_attempt, grant.kind) == (
+                thread_id,
+                dispatch_id,
+                attempt,
+                kind,
+            ):
+                return GrantResult("duplicate", None, grant)
+            return GrantResult("refused", "command_id_conflict", None)
+        latest = self._conn.execute(
+            "SELECT attempt, role, state, intent, objective_id FROM instances WHERE thread_id = ? AND dispatch_id = ?"
+            " ORDER BY attempt DESC LIMIT 1",
+            (thread_id, dispatch_id),
+        ).fetchone()
+        if latest is None or int(latest[0]) != attempt:
+            return GrantResult("refused", "stale_attempt", None)
+        if latest[2] in (RUNNING, "cancel_requested"):
+            return GrantResult("refused", "attempt_not_ended", None)
+        if latest[1] is None or latest[3] is None:
+            return GrantResult("refused", "intent_not_recorded", None)
+        pending = self._conn.execute(
+            "SELECT 1 FROM grants WHERE thread_id = ? AND state = 'open' LIMIT 1", (thread_id,)
+        ).fetchone()
+        if pending is not None:
+            return GrantResult("refused", "replacement_pending", None)
+        replaced = self._conn.execute(
+            "SELECT 1 FROM grants WHERE thread_id = ? AND source_dispatch_id = ? AND source_attempt = ?"
+            " AND state = 'consumed' LIMIT 1",
+            (thread_id, dispatch_id, attempt),
+        ).fetchone()
+        if replaced is not None:
+            return GrantResult("refused", "already_replaced", None)
+        suffix = re.sub(r"[^A-Za-z0-9]", "", command_id)[:12]
+        target_dispatch = dispatch_id if kind == "retry" else f"{dispatch_id}-r{suffix}"
+        target_role = str(latest[1]) if kind == "retry" else str(reassign_role)
+        now = self._clock()
+        self._conn.execute(
+            "INSERT INTO grants (command_id, thread_id, source_dispatch_id, source_attempt, kind, target_dispatch_id,"
+            " target_role, intent, objective_id, state, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)",
+            (command_id, thread_id, dispatch_id, attempt, kind, target_dispatch, target_role, str(latest[3]), latest[4], now, now),
+        )
+        grant = OperatorGrant(
+            command_id, thread_id, dispatch_id, attempt, kind, target_dispatch, target_role, str(latest[3]), latest[4], "open"
+        )
+        return GrantResult("opened", None, grant)
+
+    def open_grant_for_target(self, thread_id: str, dispatch_id: str) -> OperatorGrant | None:
+        """The open operator grant whose replacement is this dispatch id, if any."""
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT command_id, thread_id, source_dispatch_id, source_attempt, kind, target_dispatch_id, target_role,"
+                " intent, objective_id, state FROM grants WHERE thread_id = ? AND target_dispatch_id = ? AND state = 'open'",
+                (thread_id, dispatch_id),
+            ).fetchone()
+            return _grant_from_row(row) if row is not None else None
+
+    def consume_grant(self, command_id: str) -> None:
+        """The replacement attempt has started; the grant cannot admit another one."""
+        with self._lock:
+            self._conn.execute(
+                "UPDATE grants SET state = 'consumed', updated_at = ? WHERE command_id = ? AND state = 'open'",
+                (self._clock(), command_id),
+            )
+
+    def revoke_grant(self, command_id: str) -> str:
+        """Withdraw an open grant whose run was refused before anything was admitted."""
+        with self._lock:
+            changed = self._conn.execute(
+                "UPDATE grants SET state = 'revoked', updated_at = ? WHERE command_id = ? AND state = 'open'",
+                (self._clock(), command_id),
+            ).rowcount
+            row = self._conn.execute("SELECT state FROM grants WHERE command_id = ?", (command_id,)).fetchone()
+            return "revoked" if changed else (str(row[0]) if row else "not_found")
 
     def max_attempt(self, thread_id: str, dispatch_id: str) -> int:
         """Highest attempt the mailbox ever started for a dispatch; a new attempt must go above it."""
@@ -394,6 +543,21 @@ class InstanceMailbox:
                 (thread_id, dispatch_id, attempt),
             ).fetchone()
             return row is not None and row[0] in {"cancel_requested", "cancelled", INTERRUPTED}
+
+
+def _grant_from_row(row: tuple) -> OperatorGrant:
+    return OperatorGrant(
+        command_id=row[0],
+        thread_id=row[1],
+        source_dispatch_id=row[2],
+        source_attempt=int(row[3]),
+        kind=row[4],
+        target_dispatch_id=row[5],
+        target_role=row[6],
+        intent=row[7],
+        objective_id=row[8],
+        state=row[9],
+    )
 
 
 def _message_from_row(

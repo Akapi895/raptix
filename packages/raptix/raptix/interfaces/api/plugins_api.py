@@ -300,6 +300,13 @@ class InstanceCancelIn(BaseModel):
     expectedAttempt: int = Field(ge=1)
 
 
+class InstanceGrantIn(BaseModel):
+    commandId: str
+    kind: str
+    expectedAttempt: int = Field(ge=1)
+    reassignRole: str | None = None
+
+
 @app.post(_INSTANCE_PATH + "/messages")
 def post_instance_message(
     thread_id: Annotated[str, Path(min_length=1, max_length=256)],
@@ -347,6 +354,54 @@ def post_instance_cancel(
         return body
     reason = "unknown_attempt" if state == "not_found" else "instance_not_running"
     return JSONResponse(status_code=409, content={**body, "reason": reason})
+
+
+@app.post(_INSTANCE_PATH + "/grants")
+def post_instance_grant(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    payload: InstanceGrantIn,
+) -> dict:
+    """An operator's Retry or Reassign of an ended attempt: the runtime records it with the attempt's persisted intent (ADR-0090)."""
+    from fastapi.responses import JSONResponse  # noqa: PLC0415
+
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    result = default_mailbox().open_grant(
+        payload.commandId, thread_id, dispatch_id, payload.expectedAttempt, payload.kind, payload.reassignRole
+    )
+    body = {
+        "status": result.status,
+        "reason": result.reason,
+        "grant": None if result.grant is None else _grant_view(result.grant),
+    }
+    if result.status == "refused":
+        return JSONResponse(status_code=409, content=body)
+    return body
+
+
+@app.post(_INSTANCE_PATH + "/grants/{command_id}/revoke")
+def post_instance_grant_revoke(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    command_id: Annotated[str, Path(min_length=1, max_length=128)],
+) -> dict:
+    """Withdraw a grant whose run was refused before the replacement was admitted; a consumed grant is never revived."""
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    return {"commandId": command_id, "state": default_mailbox().revoke_grant(command_id)}
+
+
+def _grant_view(grant) -> dict:
+    return {
+        "commandId": grant.command_id,
+        "kind": grant.kind,
+        "sourceDispatchId": grant.source_dispatch_id,
+        "sourceAttempt": grant.source_attempt,
+        "targetDispatchId": grant.target_dispatch_id,
+        "targetRole": grant.target_role,
+        "state": grant.state,
+    }
 
 
 @app.get(_INSTANCE_PATH)
