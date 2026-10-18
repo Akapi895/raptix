@@ -898,3 +898,32 @@ Dữ liệu test còn lại trên engagement `ui-live-8b98a9`:
 - Hiệu năng: `/fleet` mất khoảng 5 giây mỗi lần đọc trên deployment này.
 
 **Chưa làm trong lượt này:** P10c, P10d, P10e (phần control), P11, Campaigns generate/deploy, Results và Trace trong real mode, và `make quality` đầy đủ. Không đổi Python trong lượt này nên chưa chạy lại suite Python.
+
+### 13.20 Quyết định tiếp tục P10 (2026-10-18)
+
+Requester chốt: `handled` nghĩa model turn hoàn thành, không chứng nhận action success; không tự chuyển tin giữa attempts; cancel cooperative, retry/reassign do operator yêu cầu và chỉ tạo replacement sau khi attempt cũ terminal. Giữ đầy đủ P10 và acceptance, không có exclusion mới. [ADR-0089](../adr/0089-pin-instance-delivery-and-controls-to-attempts.md) ghi boundary và semantics.
+
+HEAD khi bắt đầu: `f346e1a9`. Bốn commit sau 13.19 đã thêm mailbox SQLite, model-call hook, running roster, Fastify facade và UI Messages. Đây là implementation ban đầu, chưa đóng P10c: cần pin attempt, stable intent qua lost ACK, retry delivery sau lỗi model và disposition khi restart. P10d/P10e controls và acceptance tiếp tục trong lượt này. Test selection: mailbox store/routes/middleware, dispatch boundary và deterministic child graph; server instance-mailbox/runtime-instances, UI instance-messenger; typecheck/lint owning code. Không chạy full suite.
+
+### 13.21 P10c/P10d/P10e: implementation theo ADR-0089 (2026-10-18, lượt tiếp)
+
+Base `f346e1a9`; thay đổi chưa commit. Theo ADR-0089 (vẫn Proposed cho đến khi có bằng chứng live).
+
+**Đã làm:**
+- **Mailbox runtime** (`execution/session/instance_mailbox.py`): message pin theo attempt (`expectedAttempt`); cùng id khác body/attempt/nguồn là `message_id_conflict`; cancel cooperative (`cancel_requested` → `cancelled` khi dispatch kết thúc, tin chờ thành `undelivered`); restart đưa attempt đang chạy về `interrupted`; lỗi model giữ tin ở cùng attempt để giao lại. Thêm `intent` và `objective_id` theo attempt (retry tái phát đúng intent), `source_message_id` (forward), `max_attempt` (attempt mới luôn vượt mọi attempt đã ghi). Migration additive đã kiểm trên DB cũ: dòng cũ giữ nguyên.
+- **Dispatch** (`middleware/dispatch.py`, `core/dispatch_context.py`): cancel kết thúc với outcome `cancelled` và không tính là lỗi resilience; attempt mới lấy floor từ mailbox (lỗi đọc mailbox không làm hỏng dispatch).
+- **Runtime HTTP** (`interfaces/api/plugins_api.py`): `POST /_raptix/instances/{t}/{d}/cancel`; message yêu cầu `expectedAttempt` và nhận `sourceMessageId`; GET attempt trả `intent`/`objectiveId` (chỉ server dùng).
+- **Fastify** (`services/runtime/run-service.ts`, `runs.routes.ts`): cancel; `commands` cho retry/reassign, chỉ khi attempt đã terminal và `expectedAttempt` khớp, replacement là orchestrator run với `requestId = commandId` nên lost ACK replay được; `messages/forward` chỉ lấy message có thật trên cùng thread. `intent` không ra browser.
+- **UI** (`real/screens/instance-messenger.tsx`, `execution-agents.tsx`, `real/api.ts`): Cancel hiện "requested" cho tới khi attempt đọc `cancelled`; Retry/Reassign sau terminal; Forward giữa các instance đang chạy; mọi tin gửi kèm `expectedAttempt`.
+- **P10e câu hỏi**: payload `ask_user` gắn dispatch/attempt; `PendingInterruptView.instance` (web-contracts); card hiển thị instance nguồn. Batch answer giữ ở cấp thread vì resume bắt buộc trả lời đủ mọi câu hỏi pending.
+
+**Kiểm chứng (tập trung):** ruff sạch trên file đã sửa; pytest mailbox/middleware/routes/dispatch-boundary/fanout/ask_user (xem lượt chạy cuối); server `tsc` sạch + vitest instance/runtime/run-policy 23/23; web `tsc` sạch + vitest messenger/roster/api 16/16.
+
+**Chưa đạt (P10 vẫn mở):**
+- Acceptance live: chưa chạy model thật. Retry/reassign phụ thuộc orchestrator gọi lại đúng description; nếu sai, dispatch refuse bằng `dispatch_conflict`. Chưa có bằng chứng.
+- Chưa có test deterministic child-graph cho cancel race, parent stop, sibling isolation, hai instance cùng role và restart giữa chừng.
+- Restart durability của cột mới chưa chạy trên `raptix-langgraph` thật.
+- Messenger chưa liệt kê câu hỏi pinned; hiện chỉ có nhãn ở root conversation.
+- Lineage reassign chỉ có trong run message, chưa có bảng lineage riêng.
+- Instance DTO còn trong `api.ts` và `run-service.ts`, chưa chuyển vào `@raptix/web-contracts` như ADR-0089 yêu cầu (chỉ `PendingInterruptView` đã vào shared).
+- Pause theo instance thuộc P11, không thuộc P10.
