@@ -981,3 +981,28 @@ Engagement `cmvbilcji000035pdx8khoigh` (scope v1 đã duyệt, ROE đến 2026-1
 - Các thread test có run `interrupted` lịch sử và reviewer account trong lab DB, giữ làm evidence.
 
 **Trạng thái P10:** vẫn mở (forward, hai instance đồng thời, pin question live). P11, P12: mở.
+
+### 13.24 P11 backend và live; C2 grant verification; P10 deterministic (2026-10-18, phiên tiếp)
+
+**Đã làm (commit):**
+- `72ccc1c9`: pause, resume, complete qua runtime checkpoint. Pause ghi `pause_requested` trước khi cancel ở safe point; `paused` chỉ khi runtime báo run `interrupted`. Resume là run mới trên cùng thread với `input: null` (tiếp tục checkpoint, không gửi prompt cũ). Complete là audit `operation.completed` sau khi run terminal, không còn instance chạy, không còn request uncertain, và không đổi status run lỗi. Tái dùng `OperationBinding.status`, không thêm bảng.
+- `2c06098e`: gate plan (`assertExecutionAuthorized`) chấp nhận `pause_requested`/`paused`, vẫn chặn `completed`. Submit tin nhắn mới bị từ chối khi operation paused/completed.
+- `2942658a`: C2 grant yêu cầu session phải được provider báo cáo trong namespace engagement, khi request và khi approve. Provider chưa cấu hình trả 503; không giả định session tồn tại.
+- `af1befa6`, `135390d1`: test C2 verification; test hai dispatch cùng role giữ ledger row và mailbox instance riêng.
+
+**Live (lab `cmvbilcji000035pdx8khoigh`, thread `a81a9b14-…`, plan `cmvdcnpng…`):**
+- Run `01a14e07` chạy, pause → `paused`, run `interrupted`.
+- Tin nhắn mới khi paused bị 409 "This operation is paused; resume it…".
+- Resume → run `01a14e09` `success`; số user message trước/sau = 1/1 (không prompt mới).
+- File `recon/p11.txt` có `part1` một lần (trước pause) và `part2` một lần (sau resume): không side effect lặp.
+- Complete khi run còn active → 409 "The runtime run is still active."; complete sau khi run success → 200 `completed`; audit `operation.completed` ghi trong `WebAuditEntry`.
+- Quan sát: approval bash đang chờ làm run treo; approver (chỉ lệnh cục bộ) được khởi động lại mới đi tiếp.
+
+**Còn mở:**
+- P11 UI: nút pause/resume/complete trong Operations chưa có (thuộc phạm vi session UI đang làm).
+- P11 step controls: chưa có step model; OPPLAN objective là ứng viên, cần quyết định mapping.
+- P12: Results/Trace (panel + adapter), C2 round-trip Sliver trong Docker lab, campaigns vẫn blocked theo ROE.
+- P10: forward live; hai instance đồng thời live; pin câu hỏi trong messenger (UI); DTO instance vào `@raptix/web-contracts`.
+- P01: test abort và late-ACK. P00: inventory 55 key. P02–P06: browser acceptance. P09: parity checklist và mock-only (UI). P13: chưa làm.
+
+**Lưu ý phối hợp:** trong lúc làm, các file runtime Python (`instance_mailbox.py`, `dispatch_context.py`, `dispatch.py`, `plugins_api.py`) đã được sửa bởi phiên khác (có thêm `parent_dispatch_id`). Phiên này không commit các thay đổi đó.
