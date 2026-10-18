@@ -85,7 +85,7 @@ operational agent.
 - The objective is **access, not impact** — default to no destructive or OT-write action.
 - Edge-device exploitation can **brick appliances**; require device-write authorization and
   confirm a config backup exists before exploiting.
-- Add an `EMERGENCY` abort trigger: *"any action against OT/safety systems"* — pre-positioning
+- Add an `emergency` abort trigger: *"any action against OT/safety systems"* — pre-positioning
   stops at the IT/OT boundary unless OT is explicitly authorized (then see the `sandworm`
   playbook's ICS gates).
 

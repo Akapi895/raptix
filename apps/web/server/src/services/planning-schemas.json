@@ -424,6 +424,16 @@
         "title": "C2Tier",
         "type": "string"
       },
+      "EffectClass": {
+        "description": "Blast-radius class of an objective \u2014 drives fan-out admission (ADR-0077).\n\nThe generic dispatch gate compares this across in-flight work units:\n``read`` units may overlap freely, ``mutate`` units serialize on shared\nresources, ``destructive`` units run alone and only in a mission-\nsanctioned final phase. Unset on the objective means ``MUTATE`` \u2014\nunknown is always treated conservatively.",
+        "enum": [
+          "read",
+          "mutate",
+          "destructive"
+        ],
+        "title": "EffectClass",
+        "type": "string"
+      },
       "Objective": {
         "description": "A single engagement objective \u2014 analogous to ralph's user story.\n\nEach objective must be completable in ONE agent context window.\nThe ralph loop picks the highest-priority objective whose status is not completed.",
         "properties": {
@@ -493,6 +503,39 @@
             "title": "Concessions",
             "type": "array",
             "default": []
+          },
+          "effects": {
+            "$ref": "#/$defs/EffectClass",
+            "default": "mutate",
+            "description": "Blast-radius class for fan-out admission (ADR-0077); unset means MUTATE \u2014 unknown is treated conservatively"
+          },
+          "resources": {
+            "description": "Shared mutable resources this objective touches, e.g. 'account:svc', 'host:10.0.0.5', 'surface:/api/Users' \u2014 admission serializes concurrent mutating work on the same resource",
+            "items": {
+              "type": "string"
+            },
+            "title": "Resources",
+            "type": "array",
+            "default": []
+          },
+          "parallel_safe": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "True when declared safe to run concurrently with other work; False forces serialization; None (unset) is treated as False for mutating work",
+            "title": "Parallel Safe"
+          },
+          "fragile_target": {
+            "default": false,
+            "description": "True when the target resource is known fragile (embedded device, single-worker service, lockout-sensitive account): admission keeps its in-flight unit count at per_target_max permanently, bypassing progressive widening (ADR-0077)",
+            "title": "Fragile Target",
+            "type": "boolean"
           },
           "notes": {
             "default": "",

@@ -22,6 +22,10 @@ from deepagents.backends.utils import validate_path
 from deepagents.middleware.filesystem import FilesystemMiddleware as BaseFilesystemMiddleware
 
 from raptix.execution.sandbox.kernel.base import SandboxBase
+from raptix.execution.tools.interaction.complete_planning import (
+    PLANNING_DOCUMENTS,
+    planning_document_issues,
+)
 from raptix.execution.tools.plumbing.filesystem import filesystem_tools_without_execute
 
 WORKSPACE = "/workspace"
@@ -168,12 +172,51 @@ class EngagementFilesystemBackend(BackendProtocol):
             replace(result, error=self._mask(result.error, real_path)) if result.error else result
         )
 
+    def _planning_document(self, real_path: str) -> str | None:
+        if self._root is None:
+            return None
+        prefix = f"{self._root}/plan/"
+        if not real_path.startswith(prefix):
+            return None
+        name = real_path.removeprefix(prefix)
+        return name if name in PLANNING_DOCUMENTS else None
+
+    @staticmethod
+    def _planning_refusal(name: str, issues: list[str]) -> str:
+        fields = "\n".join(f"plan/{name}: {issue}" for issue in issues)
+        return f"plan/{name} was not saved: it does not match its schema. Fix these fields and retry:\n{fields}"
+
+    def _edited_planning_issues(
+        self, name: str, real_path: str, old_string: str, new_string: str, replace_all: bool
+    ) -> list[str]:
+        """Issues an edit would leave behind.
+
+        A valid document must stay valid. An already-invalid document can be
+        repaired piecemeal; the handoff gate still requires every document to validate.
+        """
+        current = self._backend.download_files([real_path])[0]
+        if current.error or current.content is None or not old_string:
+            return []
+        text = current.content.decode("utf-8", errors="replace")
+        if planning_document_issues(name, text):
+            return []
+        occurrences = text.count(old_string)
+        if occurrences == 0 or (occurrences > 1 and not replace_all):
+            return []
+        edited = text.replace(old_string, new_string) if replace_all else text.replace(old_string, new_string, 1)
+        return planning_document_issues(name, edited)
+
     def write(self, file_path: str, content: str) -> WriteResult:
         self._ensure_root()
         try:
             real_path = self._real(file_path)
         except ValueError as e:
             return WriteResult(error=str(e))
+        name = self._planning_document(real_path)
+        if name is not None:
+            issues = planning_document_issues(name, content)
+            if issues:
+                return WriteResult(error=self._planning_refusal(name, issues))
         result = self._backend.write(real_path, content)
         if result.error:
             masked = self._mask(result.error, real_path)
@@ -207,6 +250,11 @@ class EngagementFilesystemBackend(BackendProtocol):
             real_path = self._real(file_path)
         except ValueError as e:
             return EditResult(error=str(e))
+        name = self._planning_document(real_path)
+        if name is not None:
+            issues = self._edited_planning_issues(name, real_path, old_string, new_string, replace_all)
+            if issues:
+                return EditResult(error=self._planning_refusal(name, issues))
         result = self._backend.edit(real_path, old_string, new_string, replace_all)
         if result.error:
             return replace(result, error=self._mask(result.error, real_path))

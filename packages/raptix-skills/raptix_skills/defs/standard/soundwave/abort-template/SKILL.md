@@ -26,9 +26,9 @@ AI-specific gates address the failure modes documented in **OWASP Top 10 for Age
 
 The `AbortPlan` schema seeds three default halt triggers. Keep all three; do not remove unless the engagement is explicitly read-only:
 
-1. `EMERGENCY` — Real-incident alert from blue team / SOC
-2. `CRITICAL` — Production data observed in collected evidence
-3. `CRITICAL` — Scope boundary violation detected
+1. `emergency` — Real-incident alert from blue team / SOC
+2. `critical` — Production data observed in collected evidence
+3. `critical` — Scope boundary violation detected
 
 ### Step 2: Add Engagement-Specific Triggers
 
@@ -36,11 +36,11 @@ Based on the interview answers, add custom `AbortTrigger` entries. Common additi
 
 | Engagement signal | Severity | Response |
 |---|---|---|
-| Tier-3+ adversary emulation against critical infrastructure | `EMERGENCY` | Halt + operator-page + 1hr cooldown |
-| Compliance-bound data class encountered (GDPR / HIPAA) | `CRITICAL` | Halt; redact; await operator |
-| Network outage or latency spike on target | `WARNING` | Pause active scanning; resume after 5min |
-| LLM cost-per-objective threshold exceeded | `WARNING` | Pause; ask operator to approve budget |
-| C2 beacon lost for > 30 minutes during active phase | `WARNING` | Pause; re-establish C2 before continuing |
+| Tier-3+ adversary emulation against critical infrastructure | `emergency` | Halt + operator-page + 1hr cooldown |
+| Compliance-bound data class encountered (GDPR / HIPAA) | `critical` | Halt; redact; await operator |
+| Network outage or latency spike on target | `warning` | Pause active scanning; resume after 5min |
+| LLM cost-per-objective threshold exceeded | `warning` | Pause; ask operator to approve budget |
+| C2 beacon lost for > 30 minutes during active phase | `warning` | Pause; re-establish C2 before continuing |
 
 ### Step 3: Set AI Safety Gates
 
@@ -57,7 +57,7 @@ Based on the interview answers, add custom `AbortTrigger` entries. Common additi
 
 Before writing `plan/abort.json`:
 
-- [ ] At least one `EMERGENCY`-severity trigger exists
+- [ ] At least one `emergency`-severity trigger exists
 - [ ] All custom triggers have non-empty `condition` and `response_action`
 - [ ] `hallucination_threshold` ≥ 1
 - [ ] `output_validation` matches one of the documented methods
@@ -65,9 +65,9 @@ Before writing `plan/abort.json`:
 
 ## Anti-patterns
 
-- Removing the EMERGENCY default — guarantees the agent runs through a SOC real-incident alert
+- Removing the emergency default — guarantees the agent runs through a SOC real-incident alert
 - Setting `destructive_action_gate=False` for engagements that include post-exploit or cleanup phases
-- Conflating WARNING and CRITICAL — WARNING pauses one step; CRITICAL halts the active objective
+- Conflating warning and critical — warning pauses one step; critical halts the active objective
 
 ## Output
 

@@ -80,7 +80,7 @@ metadata:
 - Phishing + phone pretext require explicit authorization + lure-deconfliction
   (`/skills/standard/phisher/lure-deconfliction/SKILL.md`); name in-scope staff.
 - **EDR tampering / BYOVD can destabilize endpoints** — authorize it, run on a lab/canary host
-  first, and confirm rollback. Add an `EMERGENCY` abort: *"production endpoint protection
+  first, and confirm rollback. Add an `emergency` abort: *"production endpoint protection
   disabled outside the authorized test host, or production data encrypted/exfiltrated."*
 - Ransomware impact is **canary-only**.
 

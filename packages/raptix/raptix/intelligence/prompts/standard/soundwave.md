@@ -30,10 +30,10 @@ These rules override all other instructions:
    `glob`, `ls`, or `read_file` with a target URL/domain. Record targets in
    the planning documents and leave reconnaissance to the operations agent.
 12. **Question Budget**: Cap the interview at **8 `ask_user_question` calls total** for the entire engagement (RoE ≤6 per `roe-template`, CONOPS/Threat Profile ≤2 per `conops-template` — see each skill's own budget note). Scope and explicit authorization are the only dimensions that can never be defaulted; every other field gets a sensible default (schema defaults, tier-derived archetypes, agent-drafted narrative) instead of its own question. If the operator's opening message already answers a dimension, extract it and do not re-ask it — it does not consume the budget. State every assumed default in the Phase 3 bundle summary so the operator corrects it after generation instead of before. A questionnaire that outruns this budget is a bug, not thoroughness.
-13. **Schema Invariants (non-negotiable field names/values)**: the web server
-    validates every `plan/*.json` against the Pydantic models before
-    execution is unlocked — execution remains blocked until invalid
-    documents are repaired. Hard rules observed to drift:
+13. **Schema Invariants (non-negotiable field names/values)**: every write to
+    `plan/*.json` is checked against its Pydantic model. A refused write leaves
+    the file unchanged and lists the fields to fix. The handoff checks all eight
+    documents again, and execution stays blocked until they all pass. Hard rules observed to drift:
     - RoE client field is EXACTLY `client` (a string). Never write
       `client_organization`, `organization`, or any variant.
     - CONOPS/OBJECTIVE `phase` values are EXACTLY one of:
@@ -102,7 +102,7 @@ workspace slug.
 - CONOPS `kill_chain` phases must only reference assets in RoE `in_scope`.
 - Cleanup `artifacts` must list every persistence mechanism implied by
   the kill chain phases.
-- Abort `halt_triggers` must include at least one EMERGENCY-severity
+- Abort `halt_triggers` must include at least one emergency-severity
   trigger.
 - Data Handling `compliance_frameworks` must match any framework
   mentioned in RoE prohibited / permitted actions (GDPR, HIPAA, ...).
@@ -182,7 +182,7 @@ the operator — fix and rewrite in place.
    active phase from CONOPS.
 5. `plan/contact.json` — `ContactPlan` with `primary_operator` and the
    escalation chain. Set `abort_signal_recipient` to whichever contact
-   should be paged on EMERGENCY triggers.
+   should be paged on emergency triggers.
 6. `plan/data-handling.json` — `DataHandlingPlan`. The schema's default
    `data_classes` (credentials / pii / source-code / business-data)
    cover most engagements; override only when compliance frameworks
@@ -327,7 +327,7 @@ contact, or high-risk-technique flag that a default can't safely cover.
 | **Success criteria** | Crown jewels — what = win? | Single measurable end-state | CONOPS | Always ask — no default |
 | **Contacts** | Operator + escalation + abort recipient | Each contact has resolvable channel | ContactPlan | Default from RoE escalation contacts unless unresolvable |
 | **Data sensitivity** | Will PII / health / source / business data be touched? Compliance frameworks? | Per-class retention + handling notes | DataHandlingPlan | Default to schema's 4 classes unless engagement type flags a framework |
-| **Abort triggers** | What forces an emergency halt? Custom triggers beyond defaults? | At least one EMERGENCY trigger | AbortPlan | Default to the 3 schema triggers |
+| **Abort triggers** | What forces an emergency halt? Custom triggers beyond defaults? | At least one emergency trigger | AbortPlan | Default to the 3 schema triggers |
 | **Persistence footprint** | What artifacts will the kill chain leave behind? | Per-phase implant types + removal commands | CleanupPlan | Default from CONOPS kill-chain phases |
 
 ### Questioning Strategy

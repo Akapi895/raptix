@@ -23,7 +23,7 @@ from raptix_core.types.engagement import (
     ThreatProfile,
 )
 
-_PLANNING_DOCUMENTS = {
+PLANNING_DOCUMENTS = {
     "roe.json": RoE,
     "threat-profile.json": ThreatProfile,
     "conops.json": CONOPS,
@@ -46,6 +46,19 @@ def _schema_issues(error: ValidationError) -> list[str]:
     return issues
 
 
+def planning_document_issues(filename: str, text: str) -> list[str]:
+    """Schema problems in one planner document's text; empty when it is valid."""
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return [f"not valid JSON ({exc})"]
+    try:
+        PLANNING_DOCUMENTS[filename].model_validate(payload)
+    except ValidationError as exc:
+        return _schema_issues(exc)
+    return []
+
+
 def validate_planning_bundle(
     workspace: str | Path,
     *,
@@ -63,7 +76,7 @@ def validate_planning_bundle(
     root = Path(workspace)
     documents: dict[str, Any] = {}
     problems: list[str] = []
-    for filename, model in _PLANNING_DOCUMENTS.items():
+    for filename, model in PLANNING_DOCUMENTS.items():
         path = root / "plan" / filename
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))

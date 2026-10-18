@@ -60,9 +60,9 @@ Before handing off to raptix, confirm:
 - [ ] Threat Profile `initial_access` techniques are permitted under RoE.
 - [ ] CONOPS `kill_chain` phases reference RoE-in-scope assets only.
 - [ ] Cleanup `artifacts` cover every persistence-leaving phase.
-- [ ] Abort `halt_triggers` includes at least one EMERGENCY-severity trigger.
+- [ ] Abort `halt_triggers` includes at least one emergency-severity trigger.
 - [ ] Data Handling `compliance_frameworks` matches RoE constraints.
-- [ ] Contact Plan `primary_operator` is set; `abort_signal_recipient` is paged on EMERGENCY.
+- [ ] Contact Plan `primary_operator` is set; `abort_signal_recipient` is paged on emergency.
 
 Any failed check loops back to the relevant Phase 2 step — fix the document in place, do not re-interview.
 

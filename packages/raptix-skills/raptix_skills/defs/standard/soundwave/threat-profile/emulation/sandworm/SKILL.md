@@ -85,7 +85,7 @@ metadata:
   ("SAFETY FIRST").
 - **Destruction is lab/canary only.** Never run a real wiper or encryptor against production.
   Use a marked canary file set on an isolated lab host.
-- `abort.json` MUST carry an `EMERGENCY` trigger (see `/skills/standard/soundwave/abort-template/SKILL.md`):
+- `abort.json` MUST carry an `emergency` trigger (see `/skills/standard/soundwave/abort-template/SKILL.md`):
   *"Tier-3 destructive emulation against critical infrastructure — halt + operator-page +
   1hr cooldown"* — plus *"any ICS write outside the named lab test point."*
 - Schedule a maintenance window with physical safety standby before any OT step.
