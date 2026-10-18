@@ -786,7 +786,7 @@ function MessageRow({ message, onRegenerate }: { message: ScopedThreadMessage; o
       <span className="text-[11px] font-medium uppercase tracking-wide text-neutral">{isUser ? 'You' : 'Assistant'}</span>
       {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} />}
       {isUser
-        ? <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-accent-soft px-3.5 py-2 text-sm leading-relaxed text-fg">{message.content}</div>
+        ? <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border border-line bg-subtle px-3.5 py-2 text-sm leading-relaxed text-fg">{message.content}</div>
         : <div className={cx('w-full min-w-0 text-sm leading-relaxed text-fg', long && 'max-h-96 overflow-y-auto')}>{renderMarkdown(message.content)}</div>}
       <div className="flex gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
         <Button size="sm" variant="ghost" icon={copied ? Check : Copy} onClick={copy} aria-label="Copy message">{copied ? 'Copied' : 'Copy'}</Button>
