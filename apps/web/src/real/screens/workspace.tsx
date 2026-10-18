@@ -1003,6 +1003,7 @@ function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement
   const links: { label: string; tab: string }[] = [
     { label: 'Scope & RoE', tab: 'scope' },
     { label: 'Findings & evidence', tab: 'findings' },
+    { label: 'Reports', tab: 'reports' },
   ]
   return (
     <div className="space-y-4">
