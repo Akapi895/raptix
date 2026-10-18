@@ -11,7 +11,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, Hand, ListPlus, MessagesSquare, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
+import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, Hand, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
 import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, resumeThread, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
@@ -23,7 +23,8 @@ import { projectKeys } from '../queries'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { Banner, Button, Card, CardHeader, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../ui'
-import { utcMinute } from '../format'
+import { utcMinute, utcMinuteOr } from '../format'
+import { renderMarkdown } from '../markdown'
 import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
 import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
 import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
@@ -536,7 +537,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
               ) : snapshot.isError ? (
                 <div role="alert" className="text-sm text-bad">{snapshot.error instanceof Error ? snapshot.error.message : 'The thread snapshot failed to load.'}</div>
               ) : (
-                <Transcript messages={displayed} trace={trace} />
+                <Transcript messages={displayed} trace={trace} onRegenerate={!selectedThreadId || send.isPending || executionBlocked || !!unconfirmed || !!activeRunId ? undefined : (content) => send.mutate(content)} />
               )}
 
           {transcripts.length > 0 && (
@@ -637,7 +638,7 @@ function ApprovalsCard({ state, busyId, onDecide }: {
 
 /** Chat header: the conversation switcher sits here instead of a left column. */
 function ConversationHeader({ threads, selectedId, runLabel, creating, executionLocked, embedded, agentsOpen, onSelect, onCreate, onHistory, onToggleAgents }: {
-  threads: { threadId: string; kind: ThreadKind; assistantId: string; updatedAt: string }[]
+  threads: { threadId: string; kind: ThreadKind; assistantId: string; createdAt?: string; updatedAt: string }[]
   selectedId: string | null
   runLabel: string | null
   creating: boolean
@@ -650,12 +651,23 @@ function ConversationHeader({ threads, selectedId, runLabel, creating, execution
   onToggleAgents: () => void
 }): ReactElement {
   const [open, setOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [details, setDetails] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [query, setQuery] = useState('')
   const selected = threads.find((t) => t.threadId === selectedId) ?? null
   const needle = query.trim().toLowerCase()
   const shown = threads.filter((t) => !needle || `${t.threadId} ${t.assistantId} ${t.kind}`.toLowerCase().includes(needle))
+  const copyId = (): void => {
+    if (!selected) return
+    void navigator.clipboard?.writeText(selected.threadId).then(() => {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    }).catch(() => undefined)
+    setMenuOpen(false)
+  }
   return (
-    <div className="flex min-w-0 items-center gap-2 border-b border-line pb-3" onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}>
+    <div className="relative flex min-w-0 items-center gap-2 border-b border-line pb-3" onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setMenuOpen(false) } }}>
       <div className="relative min-w-0 flex-1">
         <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}
           className="flex max-w-full items-center gap-2 rounded-[10px] px-2 py-1.5 text-left hover:bg-hover">
@@ -703,28 +715,60 @@ function ConversationHeader({ threads, selectedId, runLabel, creating, execution
           </div>
         )}
       </div>
+      {selected && (
+        <div className="relative shrink-0">
+          <Button size="sm" variant="ghost" aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Conversation actions" title="Conversation actions" onClick={() => setMenuOpen((v) => !v)}>
+            <MoreHorizontal size={16} aria-hidden />
+          </Button>
+          {menuOpen && (
+            <div role="menu" aria-label="Conversation actions" className="absolute right-0 top-full z-30 mt-1 w-56 rounded-xl border border-line bg-panel p-1 shadow-lg">
+              <button type="button" role="menuitem" onClick={copyId} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover">
+                {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}{copied ? 'Copied' : 'Copy conversation ID'}
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setDetails((v) => !v); setMenuOpen(false) }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover">
+                <CircleAlert size={14} aria-hidden />{details ? 'Hide details' : 'Show details'}
+              </button>
+              <button type="button" role="menuitem" disabled title="Renaming needs a thread name stored on the server; no such API exists yet"
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm opacity-50">
+                <Pencil size={14} aria-hidden />Rename (not available yet)
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       {embedded && onHistory && <Button size="sm" variant="ghost" onClick={onHistory}>History</Button>}
       <Button size="sm" variant="ghost" icon={agentsOpen ? PanelRightClose : PanelRightOpen} onClick={onToggleAgents}
         aria-pressed={agentsOpen} aria-label={agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'} title={agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'}>
         <span className="sr-only">{agentsOpen ? 'Hide agent sidebar' : 'Show agent sidebar'}</span>
       </Button>
+      {selected && details && (
+        <dl className="absolute right-0 top-full z-20 mt-1 grid w-80 grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl border border-line bg-panel p-3 text-xs shadow-lg">
+          <dt className="text-muted">Kind</dt><dd>{selected.kind}</dd>
+          <dt className="text-muted">Assistant</dt><dd className="font-mono">{selected.assistantId}</dd>
+          <dt className="text-muted">Created</dt><dd>{selected.createdAt ? utcMinuteOr(selected.createdAt) : '—'}</dd>
+          <dt className="text-muted">Updated</dt><dd>{utcMinuteOr(selected.updatedAt)}</dd>
+          <dt className="text-muted">ID</dt><dd className="break-all font-mono">{selected.threadId}</dd>
+        </dl>
+      )}
     </div>
   )
 }
-
 function KindBadge({ kind }: { kind: ThreadKind }): ReactElement {
   return <span className={cx('shrink-0 rounded-full border px-1.5 text-[10px] uppercase', kind === 'planning' ? 'border-line text-muted' : 'border-warn/40 text-warn')}>{kind}</span>
 }
 
 /** Messages, then the current run's activity: consecutive tool lines fold into one collapsed group. */
-function Transcript({ messages, trace }: { messages: ScopedThreadMessage[]; trace: TraceLine[] }): ReactElement {
+function Transcript({ messages, trace, onRegenerate }: { messages: ScopedThreadMessage[]; trace: TraceLine[]; onRegenerate?: (content: string) => void }): ReactElement {
   if (messages.length === 0 && trace.length === 0) {
     return <p className="text-sm text-muted">No messages yet. Open with the engagement context, constraints and what you want planned.</p>
   }
   const groups = groupTrace(trace)
+  const lastAssistant = messages.reduce((found, m, i) => (m.role === 'user' ? found : i), -1)
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? null
   return (
     <ol className="space-y-5">
-      {messages.map((m, i) => <MessageRow key={m.messageId ?? `msg-${i}`} message={m} />)}
+      {messages.map((m, i) => <MessageRow key={m.messageId ?? `msg-${i}`} message={m}
+        onRegenerate={i === lastAssistant && onRegenerate && lastUser ? () => onRegenerate(lastUser) : undefined} />)}
       {groups.map((g) => (g.kind === 'tools'
         ? <ToolActivityGroup key={g.lines[0]!.id} lines={g.lines} />
         : <SystemLine key={g.lines[0]!.id} line={g.lines[0]!} />))}
@@ -747,7 +791,7 @@ function groupTrace(trace: TraceLine[]): { kind: 'tools' | 'system'; lines: Trac
   return groups
 }
 
-function MessageRow({ message }: { message: ScopedThreadMessage }): ReactElement {
+function MessageRow({ message, onRegenerate }: { message: ScopedThreadMessage; onRegenerate?: () => void }): ReactElement {
   const isUser = message.role === 'user'
   const [copied, setCopied] = useState(false)
   const copy = (): void => {
@@ -761,11 +805,12 @@ function MessageRow({ message }: { message: ScopedThreadMessage }): ReactElement
     <li className={cx('group flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
       <span className="text-[11px] font-medium uppercase tracking-wide text-neutral">{isUser ? 'You' : 'Assistant'}</span>
       {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} />}
-      <div className={cx('min-w-0 whitespace-pre-wrap break-words text-sm leading-relaxed text-fg', isUser ? 'max-w-[85%] rounded-2xl bg-accent-soft px-3.5 py-2' : 'w-full', long && 'max-h-96 overflow-y-auto')}>
-        {message.content}
-      </div>
+      {isUser
+        ? <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-accent-soft px-3.5 py-2 text-sm leading-relaxed text-fg">{message.content}</div>
+        : <div className={cx('w-full min-w-0 text-sm leading-relaxed text-fg', long && 'max-h-96 overflow-y-auto')}>{renderMarkdown(message.content)}</div>}
       <div className="flex gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
         <Button size="sm" variant="ghost" icon={copied ? Check : Copy} onClick={copy} aria-label="Copy message">{copied ? 'Copied' : 'Copy'}</Button>
+        {onRegenerate && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={onRegenerate} title="Sends the last prompt again as a new run">Regenerate</Button>}
       </div>
     </li>
   )
@@ -933,42 +978,85 @@ function AgentSidebar({ tab, onTab, summary, agents, activity, artifacts }: {
 }
 
 function ActivityList({ trace, history }: { trace: TraceLine[]; history: { key?: string | null; payload: unknown }[] }): ReactElement {
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set())
   const historyLines = history.map((t, i) => traceLineFor(t.key ?? `hist-${i}`, t.payload as TraceLikePayload)).filter((l): l is TraceLine => l !== null)
-  if (trace.length === 0 && historyLines.length === 0) return <p className="text-xs text-muted">No activity yet. Events appear here as the assistant works.</p>
+  const lines = [...trace, ...historyLines]
+  if (lines.length === 0) return <p className="text-xs text-muted">No activity yet. Events appear here as the assistant works.</p>
   return (
     <ol className="space-y-1">
-      {[...trace, ...historyLines].map((line) => (
-        <li key={line.id} className="flex items-start gap-2 text-xs">
-          <CircleAlert size={12} className={cx('mt-0.5 shrink-0', line.error ? 'text-bad' : 'text-muted')} aria-hidden />
-          <span className="min-w-0 flex-1 truncate text-muted" title={line.label}>{line.label}</span>
-          {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
-        </li>
-      ))}
+      {lines.map((line) => {
+        const isOpen = openIds.has(line.id)
+        return (
+          <li key={line.id}>
+            <button type="button" aria-expanded={isOpen} title="Show details"
+              onClick={() => setOpenIds((prev) => { const next = new Set(prev); if (next.has(line.id)) next.delete(line.id); else next.add(line.id); return next })}
+              className="flex w-full items-start gap-2 rounded-lg px-1 py-1 text-left text-xs hover:bg-hover">
+              {isOpen ? <ChevronDown size={11} className="mt-0.5 shrink-0" aria-hidden /> : <ChevronRight size={11} className="mt-0.5 shrink-0" aria-hidden />}
+              <CircleAlert size={12} className={cx('mt-0.5 shrink-0', line.error ? 'text-bad' : 'text-muted')} aria-hidden />
+              <span className={cx('min-w-0 flex-1', isOpen ? 'whitespace-pre-wrap break-words text-fg' : 'truncate text-muted')}>{line.label}</span>
+              {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
+            </button>
+          </li>
+        )
+      })}
     </ol>
   )
 }
 
+const PLANNING_DOC_LABELS: Record<string, string> = {
+  roe: 'Rules of engagement (RoE)',
+  conops: 'CONOPS',
+  deconfliction: 'Deconfliction plan',
+  opplan: 'OPPLAN',
+}
+const PLANNING_STATE_TONE: Record<string, string> = {
+  ready: 'border-ok/40 text-ok',
+  missing: 'border-line text-muted',
+  invalid: 'border-bad/40 text-bad',
+  unavailable: 'border-warn/40 text-warn',
+}
+
+/** Artifacts: real planning document states from the server, plus shortcuts to the surfaces that own each artifact. */
 function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement {
-  const items: { label: string; hint: string; tab: string }[] = [
-    { label: 'Planning documents', hint: 'Plan drafts and handoff', tab: 'planning' },
-    { label: 'Scope & RoE', hint: 'Authorized scope and rules', tab: 'scope' },
-    { label: 'Findings & evidence', hint: 'Curated findings and captures', tab: 'findings' },
+  const planning = useQuery({ queryKey: ['real', 'planning', engagementId], queryFn: () => fetchPlanning(engagementId) })
+  const docs = planning.data ? Object.entries(planning.data.bundle) : []
+  const links: { label: string; tab: string }[] = [
+    { label: 'Scope & RoE', tab: 'scope' },
+    { label: 'Findings & evidence', tab: 'findings' },
   ]
   return (
-    <ul className="space-y-1.5">
-      {items.map((item) => (
-        <li key={item.tab}>
-          <button type="button" onClick={() => go('project', { id: engagementId, tab: item.tab })}
-            className="flex w-full items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-left hover:bg-hover">
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-fg">{item.label}</span>
-              <span className="block truncate text-[11px] text-muted">{item.hint}</span>
-            </span>
-            <ChevronRight size={14} className="shrink-0 text-muted" aria-hidden />
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-4">
+      <section aria-label="Planning documents" className="space-y-2">
+        <h3 className="text-xs font-semibold text-fg">Planning documents</h3>
+        {planning.isPending ? <Skeleton className="h-16" /> : planning.isError ? (
+          <p className="text-xs text-bad" role="alert">{planning.error instanceof Error ? planning.error.message : 'Planning documents could not be read.'}</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {docs.map(([name, state]) => (
+              <li key={name} className="flex items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-xs">
+                <span className="min-w-0 truncate text-fg">{PLANNING_DOC_LABELS[name] ?? name}</span>
+                <span className={cx('shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase', PLANNING_STATE_TONE[state] ?? 'border-line text-muted')}>{state}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Button size="sm" variant="secondary" onClick={() => go('project', { id: engagementId, tab: 'planning' })}>Open planning documents</Button>
+      </section>
+      <section aria-label="Project surfaces" className="space-y-1.5">
+        <h3 className="text-xs font-semibold text-fg">Project surfaces</h3>
+        <ul className="space-y-1.5">
+          {links.map((item) => (
+            <li key={item.tab}>
+              <button type="button" onClick={() => go('project', { id: engagementId, tab: item.tab })}
+                className="flex w-full items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-left text-sm hover:bg-hover">
+                <span className="truncate text-fg">{item.label}</span>
+                <ChevronRight size={14} className="shrink-0 text-muted" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   )
 }
 

@@ -1,57 +1,111 @@
 import { useState, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Bot, Eye, ShieldCheck } from 'lucide-react'
+import { Bot, ChevronDown, ChevronRight, Eye } from 'lucide-react'
 import { fetchRuntimeInstances, type FleetBranchView, type RuntimeInstanceView } from '../api'
 import { InstanceMessenger } from './instance-messenger'
-import { go } from '../../router/navigate'
-import { Banner, Button, DescList, Segmented, Textarea, cx } from '../../ui'
+import { Banner, Button, DescList, Textarea, cx } from '../../ui'
 import { utcMinuteOr } from '../format'
+
+type AgentTone = 'running' | 'done' | 'failed' | 'stopped'
+
+/** The runtime's own outcome words mapped to the four states the operator reads: Running, Completed, Failed, Stopped. */
+function agentStatus(instance: RuntimeInstanceView): { label: string; tone: AgentTone } {
+  if (instance.outcome === 'running') return { label: 'Running', tone: 'running' }
+  if (instance.outcome === 'cancel_requested') return { label: 'Stopping', tone: 'running' }
+  if (instance.outcome === 'success' || instance.outcome === 'finished') return { label: 'Completed', tone: 'done' }
+  if (instance.outcome === 'failed' || instance.outcome === 'error' || instance.outcome === 'timeout') return { label: 'Failed', tone: 'failed' }
+  return { label: 'Stopped', tone: 'stopped' }
+}
+
+const TONE_DOT: Record<AgentTone, string> = {
+  running: 'bg-accent',
+  done: 'bg-ok',
+  failed: 'bg-bad',
+  stopped: 'bg-neutral',
+}
 
 export function RealExecutionAgents({ engagementId, assistantId, threadId, branches, selectedKey, onSelect, sourceError }: {
   engagementId: string; assistantId: string | null; threadId: string | null; branches: FleetBranchView[]; selectedKey: string | null
   onSelect: (key: string | null) => void; sourceError: string | null
 }): ReactElement {
-  const [tab, setTab] = useState<'agents' | 'context'>('agents')
   return <div className="space-y-4 p-4" aria-label="Real execution agents">
-    <Segmented value={tab} onChange={setTab} options={[{ id: 'agents', label: 'Agents' }, { id: 'context', label: 'Context' }]} />
-    {tab === 'context' ? <div className="space-y-3 text-sm"><h3 className="flex items-center gap-2 font-semibold"><ShieldCheck size={16} />Execution context</h3><p className="text-xs text-muted">Scope, plans and evidence remain in their API-backed project surfaces.</p>{[{ tab: 'scope', label: 'Scope & ROE' }, { tab: 'planning', label: 'Planning documents' }, { tab: 'findings', label: 'Findings & evidence' }].map((entry) => <Button key={entry.tab} size="sm" onClick={() => go('project', { id: engagementId, tab: entry.tab })}>{entry.label}</Button>)}</div> : <>
-      <button className={cx('w-full rounded-xl border p-3 text-left', selectedKey === null ? 'border-accent-line bg-accent-soft/40' : 'border-line')} onClick={() => onSelect(null)} aria-pressed={selectedKey === null}><span className="flex items-center gap-2 text-sm font-semibold"><Bot size={17} />{assistantId ?? 'No assistant binding'}</span><p className="mt-2 text-xs text-muted">Owned thread assistant · communication uses this thread's verified runtime context.</p></button>
-      {sourceError && <Banner tone="warn" title="Agent observation unavailable">{sourceError}</Banner>}
-      <section><h3 className="mb-2 text-xs font-semibold">Checkpoint invocations · run attribution unavailable</h3><p className="mb-3 text-xs leading-relaxed text-muted">These are recorded invocations within the selected thread, not a proven live spawn tree. Parent identity and per-instance channels are not supplied.</p>
-        <ul className="space-y-2">{branches.map((branch) => <li key={`${branch.threadId}/${branch.key}`}><button aria-label={`Observe ${branch.agent} ${branch.key}`} aria-pressed={selectedKey === branch.key} onClick={() => onSelect(branch.key)} className={cx('w-full rounded-xl border p-3 text-left', selectedKey === branch.key ? 'border-accent-line bg-accent-soft/40' : 'border-line hover:bg-hover')}><span className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium"><span>{branch.agent} · <span className="font-mono text-xs">{branch.key.slice(-8)}</span></span><Eye size={14} /></span><p className="mt-1 text-xs text-muted">Recorded state: {branch.state} · outcome {branch.outcome ?? 'unknown'}</p><p className="mt-1 text-[11px] text-muted">{utcMinuteOr(branch.endedAt ?? branch.startedAt)}</p></button></li>)}</ul>
-        {!branches.length && <p className="text-xs text-muted">No checkpoint invocations are recorded for this thread.</p>}
-      </section>
-      <RuntimeRoster engagementId={engagementId} threadId={threadId} />
-      <details className="text-xs"><summary className="cursor-pointer text-muted">Communication & control capabilities</summary><p className="mt-2 leading-relaxed">Per running instance: messages, forward to another running instance, cancel (cooperative), and retry or reassign once the attempt has ended. Pause for an instance stays unavailable until the runtime has a pause safe point (P11). Questions resume their recorded thread. Cancel run remains run-scoped.</p><p className="mt-2 break-all font-mono">Thread: {threadId ?? 'not selected'}</p></details>
-    </>}
+    <button className={cx('w-full rounded-xl border p-3 text-left', selectedKey === null ? 'border-accent-line bg-accent-soft/40' : 'border-line hover:bg-hover')} onClick={() => onSelect(null)} aria-pressed={selectedKey === null}>
+      <span className="flex items-center gap-2 text-sm font-semibold"><Bot size={17} aria-hidden />{assistantId ?? 'No assistant binding'}</span>
+      <span className="mt-1 block text-xs text-muted">Orchestrator of this thread</span>
+    </button>
+    {sourceError && <Banner tone="warn" title="Agent observation unavailable">{sourceError}</Banner>}
+    <RuntimeTree engagementId={engagementId} threadId={threadId} />
+    {branches.length > 0 && (
+      <details className="text-xs" open={branches.some((b) => b.key === selectedKey)}>
+        <summary className="cursor-pointer text-muted">Checkpoint invocations ({branches.length}) · recorded, not live</summary>
+        <p className="mb-2 mt-2 leading-relaxed text-muted">Recorded invocations within the selected thread. Parent identity and per-instance channels are not supplied by this projection.</p>
+        <ul className="space-y-2">{branches.map((branch) => <li key={`${branch.threadId}/${branch.key}`}>
+          <button aria-label={`Observe ${branch.agent} ${branch.key}`} aria-pressed={selectedKey === branch.key} onClick={() => onSelect(branch.key)}
+            className={cx('w-full rounded-xl border p-3 text-left', selectedKey === branch.key ? 'border-accent-line bg-accent-soft/40' : 'border-line hover:bg-hover')}>
+            <span className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium"><span>{branch.agent} · <span className="font-mono text-xs">{branch.key.slice(-8)}</span></span><Eye size={14} aria-hidden /></span>
+            <span className="mt-1 block text-xs text-muted">Recorded state: {branch.state} · outcome {branch.outcome ?? 'unknown'}</span>
+          </button>
+        </li>)}</ul>
+      </details>
+    )}
+    <details className="text-xs"><summary className="cursor-pointer text-muted">Communication & control capabilities</summary><p className="mt-2 leading-relaxed">Per running instance: messages, forward to another running instance, cancel (cooperative), and retry or reassign once the attempt has ended. Pause for an instance stays unavailable until the runtime has a pause safe point (P11). Questions resume their recorded thread. Cancel run remains run-scoped.</p><p className="mt-2 break-all font-mono">Thread: {threadId ?? 'not selected'}</p></details>
   </div>
 }
 
-/** P10b roster: the dispatches the runtime ledger records for the engagement. A thread the runtime cannot read is named, never shown as empty. */
-function RuntimeRoster({ engagementId, threadId }: { engagementId: string; threadId: string | null }): ReactElement {
+/**
+ * Agent tree: the runtime records each dispatch under the objective it served, so objectives are the parents and
+ * the dispatched agents their children. Agents with no recorded objective sit under their own group, never guessed.
+ */
+function RuntimeTree({ engagementId, threadId }: { engagementId: string; threadId: string | null }): ReactElement {
   const roster = useQuery({ queryKey: ['real', 'runtime-instances', engagementId], queryFn: () => fetchRuntimeInstances(engagementId) })
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set())
   if (roster.isPending) return <p className="text-xs text-muted">Reading the runtime roster…</p>
   if (roster.isError) return <Banner tone="warn" title="Runtime roster unavailable">{roster.error instanceof Error ? roster.error.message : 'The roster read failed.'}</Banner>
   const instances = roster.data.instances.filter((instance) => threadId === null || instance.threadId === threadId)
   const unread = roster.data.threads.filter((thread) => thread.read === 'unavailable' && (threadId === null || thread.threadId === threadId))
-  return <section aria-label="Runtime dispatch roster" className="space-y-2">
-    <h3 className="text-xs font-semibold">Dispatch instances · runtime ledger</h3>
-    <p className="text-xs leading-relaxed text-muted">Each row is a dispatch the runtime recorded: thread, dispatch and attempt. Dispatches recorded before the runtime named roles show the role as not recorded.</p>
+  const groups = new Map<string, RuntimeInstanceView[]>()
+  for (const instance of instances) {
+    const key = instance.objectiveId ?? 'no-objective'
+    groups.set(key, [...(groups.get(key) ?? []), instance])
+  }
+  const toggle = (key: string): void => setCollapsed((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next })
+  return <section aria-label="Agent tree" className="space-y-2">
+    <h3 className="text-xs font-semibold">Objectives and agents</h3>
     {unread.length > 0 && <Banner tone="warn" title="Some threads could not be read">{unread.map((thread) => `${thread.threadId.slice(0, 8)}: ${thread.reason ?? 'unavailable'}`).join(' · ')}</Banner>}
     {instances.length === 0 ? <p className="text-xs text-muted">No dispatch instances are recorded{threadId ? ' on this thread' : ''}.</p> : (
-      <ul className="space-y-2">
-        {instances.map((instance) => <RosterRow key={instance.instanceId} engagementId={engagementId} instance={instance} peers={roster.data.instances} />)}
+      <ul className="space-y-1">
+        {[...groups.entries()].map(([key, children]) => {
+          const isOpen = !collapsed.has(key)
+          const running = children.filter((c) => agentStatus(c).tone === 'running').length
+          return <li key={key}>
+            <button type="button" aria-expanded={isOpen} onClick={() => toggle(key)} className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left text-xs hover:bg-hover">
+              {isOpen ? <ChevronDown size={12} aria-hidden /> : <ChevronRight size={12} aria-hidden />}
+              <span className="min-w-0 flex-1 truncate font-medium text-fg">{key === 'no-objective' ? 'No objective recorded' : key}</span>
+              <span className="shrink-0 text-muted">{children.length} agent{children.length === 1 ? '' : 's'}{running > 0 ? ` · ${running} running` : ''}</span>
+            </button>
+            {isOpen && <ul className="ml-4 mt-1 space-y-1 border-l border-line pl-3">
+              {children.map((instance) => <AgentNode key={instance.instanceId} engagementId={engagementId} instance={instance} peers={instances} />)}
+            </ul>}
+          </li>
+        })}
       </ul>
     )}
   </section>
 }
 
-function RosterRow({ engagementId, instance, peers }: { engagementId: string; instance: RuntimeInstanceView; peers: RuntimeInstanceView[] }): ReactElement {
+function AgentNode({ engagementId, instance, peers }: { engagementId: string; instance: RuntimeInstanceView; peers: RuntimeInstanceView[] }): ReactElement {
   const [open, setOpen] = useState(false)
-  return <li className="rounded-xl border border-line p-3 text-xs">
-    <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium">{instance.role ?? 'role not recorded'} · attempt {instance.attempt}</span><span className="font-mono">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></div>
-    <p className="mt-1 break-all font-mono text-muted">{instance.dispatchId.slice(0, 12)} · objective {instance.objectiveId ?? '—'} · thread {instance.threadId.slice(0, 8)}</p>
-    <Button size="sm" variant="secondary" className="mt-2" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide messages' : 'Messages'}</Button>
+  const status = agentStatus(instance)
+  return <li className="rounded-lg border border-line p-2.5 text-xs">
+    <div className="flex items-center justify-between gap-2">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className={cx('h-2 w-2 shrink-0 rounded-full', TONE_DOT[status.tone])} aria-hidden />
+        <span className="truncate font-medium text-fg" title={`${instance.role ?? 'role not recorded'} · attempt ${instance.attempt}`}>{instance.role ?? 'role not recorded'} · attempt {instance.attempt}</span>
+      </span>
+      <span className="shrink-0 text-muted" title={`runtime outcome: ${instance.outcome}`}>{status.label}</span>
+    </div>
+    <p className="mt-1 truncate font-mono text-[11px] text-neutral" title={instance.dispatchId}>{instance.dispatchId.slice(0, 12)} · thread {instance.threadId.slice(0, 8)} · <span className="text-muted">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></p>
+    <Button size="sm" variant="ghost" className="mt-1" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide messages' : 'Messages'}</Button>
     {open && <InstanceMessenger engagementId={engagementId} threadId={instance.threadId} dispatchId={instance.dispatchId} attempt={instance.attempt} peers={peers} />}
   </li>
 }
