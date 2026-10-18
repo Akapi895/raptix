@@ -278,7 +278,9 @@ class DispatchMiddleware(SubAgentMiddleware):
                 self._active.add(key)
         # A replacement attempt must go above every attempt the mailbox ever started, including
         # attempts that never reached the ledger (cancelled or interrupted before finishing).
-        attempt = max(int(prior.get("attempt", 0)), self._mailbox_attempt_floor(thread_id, dispatch_id))
+        attempt = max(
+            int(prior.get("attempt", 0)), self._mailbox_attempt_floor(thread_id, dispatch_id)
+        )
         return (
             DispatchContext(
                 dispatch_id,
@@ -301,6 +303,18 @@ class DispatchMiddleware(SubAgentMiddleware):
         except Exception:  # noqa: BLE001 — the ledger stays the floor when the mailbox cannot be read
             log.warning("instance mailbox attempt floor unavailable", exc_info=True)
             return 0
+
+    @staticmethod
+    def _cancel_requested(context: DispatchContext) -> bool:
+        if not context.thread_id:
+            return False
+        try:
+            return default_mailbox().cancellation_requested(
+                context.thread_id, context.dispatch_id, context.attempt
+            )
+        except Exception:  # noqa: BLE001 — an unreadable mailbox cannot show a cancel; the dispatch outcome stands
+            log.warning("instance mailbox cancel check failed", exc_info=True)
+            return False
 
     @staticmethod
     def _start_instance(context: DispatchContext) -> None:
@@ -440,7 +454,9 @@ class DispatchMiddleware(SubAgentMiddleware):
         runtime: ToolRuntime,
         error: Exception | None = None,
     ) -> Command:
-        cancelled = isinstance(error, InstanceCancellationRequested)
+        # The operator's cancel decides the observed outcome even when the attempt also failed at the same boundary,
+        # so the ledger and the mailbox agree on what ended the attempt.
+        cancelled = isinstance(error, InstanceCancellationRequested) or self._cancel_requested(context)
         if error is not None and not cancelled:
             context.failures.append(
                 DispatchFailureOutcome(
