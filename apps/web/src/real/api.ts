@@ -12,6 +12,7 @@ import {
   isProjectViewModel,
   isPlanningView,
   isDocumentSourceView,
+  isOperationView,
   isRequestRecoveryView,
   isRuntimeContextView,
   isScopedRunView,
@@ -33,6 +34,7 @@ import {
   type ProjectViewModel,
   type PlanningView,
   type DocumentSourceView,
+  type OperationView,
   type RequestRecoveryView,
   type RuntimeContextView,
   type ScopedRunView,
@@ -250,6 +252,30 @@ function isRunList(v: unknown): v is { runs: ScopedRunView[]; offset: number; ne
   const page = v as Record<string, unknown>
   return Array.isArray(page.runs) && page.runs.every(isScopedRunView) && Number.isInteger(page.offset) && Number(page.offset) >= 0 &&
     (page.nextOffset === null || Number.isInteger(page.nextOffset) && Number(page.nextOffset) > Number(page.offset))
+}
+
+/* ───────────── Operation lifecycle (P11) ───────────── */
+
+const threadPath = (engagementId: string, threadId: string): string =>
+  `/engagements/${encodeURIComponent(engagementId)}/threads/${encodeURIComponent(threadId)}`
+
+export function fetchOperation(engagementId: string, threadId: string): Promise<OperationView> {
+  return apiFetch(`${threadPath(engagementId, threadId)}/operation`, owned(engagementId, isOperationView))
+}
+
+/** Pause is cooperative: the answer is the operation as recorded; the runtime stops the run at its next safe point. */
+export function pauseOperationRun(engagementId: string, threadId: string, runId: string): Promise<OperationView> {
+  return apiFetch(`${threadPath(engagementId, threadId)}/runs/${encodeURIComponent(runId)}/pause`, isOperationView, { method: 'POST' })
+}
+
+/** Resume continues the paused checkpoint as a new run. The request id is the idempotency key: a retry replays the same run. */
+export function resumeOperation(engagementId: string, threadId: string, requestId: string): Promise<RequestRecoveryView> {
+  return apiFetch(`${threadPath(engagementId, threadId)}/resume-run`, isRequestRecoveryView, { method: 'POST', body: { requestId } })
+}
+
+/** Completion is audited bookkeeping, accepted only once the runtime run is terminal. */
+export function completeOperation(engagementId: string, threadId: string): Promise<OperationView> {
+  return apiFetch(`${threadPath(engagementId, threadId)}/complete`, isOperationView, { method: 'POST' })
 }
 
 export function cancelRun(engagementId: string, threadId: string, runId: string): Promise<ScopedRunView> {

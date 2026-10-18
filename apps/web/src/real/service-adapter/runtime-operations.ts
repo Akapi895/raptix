@@ -1,7 +1,7 @@
-import type { ScopedRunView } from '@raptix/web-contracts'
+import type { OperationView, RequestRecoveryView, ScopedRunView } from '@raptix/web-contracts'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { RuntimeFleet, RuntimeOperationsService, RuntimeRun, RuntimeTimeline } from '../../features/operations/runtime'
-import { cancelRun, fetchFleet, fetchTimeline, getThread, listRunsOfThread, listThreads } from '../api'
+import { cancelRun, completeOperation, fetchFleet, fetchOperation, fetchTimeline, getThread, listRunsOfThread, listThreads, pauseOperationRun, resumeOperation } from '../api'
 import { guarded } from './shared'
 
 const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading its operations.' }
@@ -55,6 +55,10 @@ export function createRealRuntimeOperationsService(): RuntimeOperationsService {
       return { ok: true, data: { transcripts: view.transcripts ?? [], transcriptsTruncated: view.transcriptsTruncated ?? false } }
     }),
     cancelRun: (ctx, threadId, runId) => scoped(ctx, async (engagementId) => ({ ok: true, data: runOf(await cancelRun(engagementId, threadId, runId)) })),
+    operation: (ctx, threadId) => scoped(ctx, async (engagementId): Promise<ServiceResult<OperationView>> => ({ ok: true, data: await fetchOperation(engagementId, threadId) })),
+    pauseRun: (ctx, threadId, runId) => scoped(ctx, async (engagementId): Promise<ServiceResult<OperationView>> => ({ ok: true, data: await pauseOperationRun(engagementId, threadId, runId) })),
+    resumeOperation: (ctx, threadId, requestId) => scoped(ctx, async (engagementId): Promise<ServiceResult<RequestRecoveryView>> => ({ ok: true, data: await resumeOperation(engagementId, threadId, requestId) })),
+    completeOperation: (ctx, threadId) => scoped(ctx, async (engagementId): Promise<ServiceResult<OperationView>> => ({ ok: true, data: await completeOperation(engagementId, threadId) })),
     timeline: (ctx) => scoped(ctx, async (engagementId): Promise<ServiceResult<RuntimeTimeline>> => {
       const view = await fetchTimeline(engagementId)
       return { ok: true, data: { entries: view.entries, truncated: view.truncated, unavailableThreads: view.unavailableThreads } }
