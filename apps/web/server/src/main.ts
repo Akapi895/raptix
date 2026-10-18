@@ -228,7 +228,9 @@ async function main(): Promise<void> {
    // W12: an approved C2 grant authorizes the session, never the target
    // landscape — every command dispatch also consumes the engagement's live
    // approved ROE revision, its time windows and the stop state.
-   const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined, scopeService && governanceService ? async (engagementId, target) => {
+   // The grant service and the C2 service reference each other; the provider is bound once the C2 service exists.
+  let sessionProvider: { assertSessionReported(engagementId: string, sessionId: string): Promise<void> } | undefined;
+  const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined, scopeService && governanceService ? async (engagementId, target) => {
      const approved = await scopeService.latestApproved(engagementId);
      if (approved === null) throw new ProjectApiError(403, 'C2 commands require an approved scope revision for this engagement; complete the scope review first.');
      const roe = await scopeService.roeWindowAllows(engagementId, Date.now());
@@ -240,9 +242,10 @@ async function main(): Promise<void> {
        const decision = await scopeService.targetInScope(engagementId, target);
        if (!decision.ok) throw new ProjectApiError(403, decision.reason ?? `Session target ${target} is outside the approved scope.`);
      }
-   } : undefined) : undefined;
+   } : undefined, (engagementId, sessionId) => sessionProvider!.assertSessionReported(engagementId, sessionId)) : undefined;
   const auditService = dbClient ? new AuditService(dbClient) : undefined;
   const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined, c2Grants?.assertCommandAuthorized.bind(c2Grants)) : undefined;
+  sessionProvider = c2Service;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const inboxService = dbClient && governanceService ? new InboxService(dbClient, governanceService) : undefined;

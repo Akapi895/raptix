@@ -53,6 +53,16 @@ export class C2Service {
     if (!Number.isSafeInteger(jobId) || jobId < 1) throw new ProjectApiError(400, 'Invalid listener job ID');
     return provider.call({ op: 'listeners.stop', engagementId, jobId });
   }
+  /**
+   * P12 grant verification: a grant names a session the provider reports in this engagement's namespace.
+   * The caller has already checked membership; an unconfigured or unreadable provider is refused, never assumed.
+   */
+  public async assertSessionReported(engagementId: string, sessionId: string): Promise<void> {
+    if (!this.provider) throw new ProviderUnavailableError(UNAVAILABLE);
+    const reply = await this.provider.call({ op: 'sessions.list', engagementId });
+    if (!Array.isArray(reply.sessions) || !reply.sessions.every(isC2Session)) throw new ProviderUnavailableError('Invalid scoped Sliver session response');
+    if (!reply.sessions.some(session => session.id === sessionId)) throw new ProjectApiError(409, `Session ${sessionId} is not reported by the provider for this engagement`);
+  }
   public async dispatchCommand(userId: string, engagementId: string, sessionId: string, body?: unknown): Promise<C2CommandView> {
     if (!sessionId.trim()) throw new ProjectApiError(400, 'sessionId is required');
     const provider = await this.authorize(userId, engagementId);
