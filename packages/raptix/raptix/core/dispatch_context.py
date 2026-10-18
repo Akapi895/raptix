@@ -20,6 +20,8 @@ class DispatchContext:
     intent: str | None = None
     # The operator grant this attempt replays (ADR-0090); consumed once the attempt starts.
     replay_grant: str | None = None
+    # The intent fingerprint (role, objective, description); an interrupted intent is found by it.
+    fingerprint: str | None = None
 
 
 active_dispatch: ContextVar[DispatchContext | None] = ContextVar("active_dispatch", default=None)
