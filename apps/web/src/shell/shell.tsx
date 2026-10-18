@@ -165,7 +165,7 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
           </div>
         )}
         <main id="main" data-wide={wide ? '' : undefined} className={cx('no-scrollbar min-h-0 flex-1 overflow-y-auto', wide ? 'p-0' : 'px-5 py-6 lg:px-8')} tabIndex={-1}>
-          <div className={wide ? 'h-full' : 'mx-auto max-w-[1360px]'}>{loading ? <LoadingState /> : children}</div>
+          <div className={wide ? 'mx-auto h-full max-w-6xl' : 'mx-auto max-w-[1360px]'}>{loading ? <LoadingState /> : children}</div>
         </main>
       </div>
       <CopilotDrawerSlot />
