@@ -31,7 +31,11 @@ export function readReportExclusions(services: ConsoleServices, ctx: RequestCont
   return projectView(services, ctx, 'report-ai-exclusions', (db) => ({ findings: scopedRows(db, ctx, db.findings).filter((f) => f.status === 'ai_suggested').map(({ id, projectId }) => ({ id, projectId })) }))
 }
 
-const NO_REAL_CHECKS: ReportValidationRead = { checks: () => [], closure: () => ({ ops: [], run: [], ev: [] }) }
+/* Real mode has no client-side readiness: the server evaluates evidence, template sections, period and reviewer when the draft is submitted, and its refusal is shown in full. An empty list would read as "ready", so the check says it is pending. */
+const NO_REAL_CHECKS: ReportValidationRead = {
+  checks: () => [{ id: 'server-readiness', label: 'Readiness is checked by the server', state: 'warn', detail: 'Evidence integrity, template sections, the reporting period and the reviewer are checked when you submit. The server refusal is shown in full.' }],
+  closure: () => ({ ops: [], run: [], ev: [] }),
+}
 
 /* Real mode: the readiness checks and source counts come from the mock database and are not available; the screens show the registered gap instead of these values. */
 /* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
