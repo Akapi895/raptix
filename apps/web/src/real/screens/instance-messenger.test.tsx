@@ -89,4 +89,44 @@ describe('InstanceMessenger (P10c)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('This instance is not running, so the message was not accepted.')
   })
+
+  it('resends a message whose ACK was lost under the same client id', async () => {
+    const posts: { messageId: string }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        posts.push(JSON.parse(String(init.body)))
+        if (posts.length === 1) throw new TypeError('Failed to fetch')
+        return new Response(JSON.stringify({ status: 'accepted', attempt: 1, message: { ...MESSAGE, messageId: posts[0].messageId, body: 'Check the admin panel.', state: 'accepted' } }), { status: 202 })
+      }
+      return new Response(JSON.stringify(MAILBOX('running')), { status: 200 })
+    }))
+    renderMessenger()
+    await userEvent.type(await screen.findByRole('textbox'), 'Check the admin panel.')
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    await waitFor(() => expect(posts).toHaveLength(2))
+    expect(posts[1].messageId).toBe(posts[0].messageId)
+  })
+
+  it('does not record a message twice when the lost ACK had already landed', async () => {
+    let recorded: unknown[] = []
+    let posts = 0
+    vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        posts += 1
+        const { messageId } = JSON.parse(String(init.body)) as { messageId: string }
+        recorded = [{ ...MESSAGE, messageId, body: 'Check the admin panel.', state: 'accepted' }]
+        throw new TypeError('Failed to fetch')
+      }
+      return new Response(JSON.stringify(MAILBOX('running', recorded)), { status: 200 })
+    }))
+    renderMessenger()
+    await userEvent.type(await screen.findByRole('textbox'), 'Check the admin panel.')
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Send to instance' }))
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue(''))
+    expect(posts).toBe(1)
+  })
 })
