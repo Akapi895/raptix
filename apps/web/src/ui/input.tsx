@@ -7,14 +7,14 @@ const fieldCls = 'w-full rounded-[10px] border border-line bg-panel px-3 text-sm
 export function Field({ label, hint, error, required, children, className }: { label: ReactNode; hint?: ReactNode; error?: ReactNode; required?: boolean; children: ReactNode; className?: string }) {
   return (
     <label className={cx('block', className)}>
-      <span className="mb-1.5 block text-xs font-medium text-muted">{label}{required && <span className="text-bad"> *</span>}</span>
+      <span className="mb-1.5 block text-xs font-medium text-fg">{label}{required && <span className="text-bad"> *</span>}</span>
       {children}
-      {error ? <span className="mt-1 flex items-center gap-1 text-xs text-bad"><AlertTriangle size={12} />{error}</span> : hint ? <span className="mt-1 block text-xs text-neutral">{hint}</span> : null}
+      {error ? <div className="mt-2 flex items-start gap-2 rounded-lg border border-bad/30 bg-bad-soft px-3 py-2.5 text-sm text-bad"><AlertTriangle size={14} className="mt-0.5 shrink-0" /><span className="flex-1">{error}</span></div> : hint ? <span className="mt-1 block text-xs text-neutral">{hint}</span> : null}
     </label>
   )
 }
 export const Input = ({ className, ...r }: InputHTMLAttributes<HTMLInputElement>) => <input {...r} className={cx(fieldCls, 'h-10', className)} />
-export const Textarea = ({ className, ...r }: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...r} className={cx(fieldCls, 'min-h-24 py-2.5 leading-relaxed', className)} />
+export const Textarea = ({ className, ...r }: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...r} className={cx(fieldCls, 'min-h-32 py-2.5 leading-relaxed', className)} />
 export const Select = ({ className, children, ...r }: SelectHTMLAttributes<HTMLSelectElement>) => <select {...r} className={cx(fieldCls, 'h-10 appearance-none pr-8', className)}>{children}</select>
 export function SearchBox({ value, onChange, placeholder = 'Search…', className }: { value: string; onChange: (v: string) => void; placeholder?: string; className?: string }) {
   return (
