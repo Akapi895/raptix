@@ -158,6 +158,97 @@ def rollback(target: Path) -> None:
     print(f"removed {target}")
 
 
+def schema_of(path: Path, tables: list[str]) -> dict[str, list[tuple]]:
+    conn = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)
+    try:
+        return {table: [tuple(row) for row in conn.execute(f'pragma table_info("{table}")')] for table in tables}
+    finally:
+        conn.close()
+
+
+def apply(target: Path, state_dir: Path, workspace_dest: Path) -> dict[str, object]:
+    """Write a verified dry-run into an environment's stopped state store and workspace.
+
+    The caller must stop the environment first: the store is written while the runtime is not running. The store must
+    already exist with the same schema, which an environment creates on its first start. Thread rows that already exist
+    in the store are refused, so an apply never overwrites history.
+    """
+    report_path = target / "report.json"
+    if not report_path.exists():
+        raise SystemExit("no report.json in the target; run dry-run first")
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if report.get("verified") is not True:
+        raise SystemExit("the dry-run did not verify; refusing to apply it")
+    threads = report["threads"]
+    marks: dict[str, dict[str, int]] = {}
+    for name, tables in THREAD_TABLES.items():
+        source = target / "state" / name
+        if not source.exists():
+            continue
+        destination = state_dir / name
+        if not destination.exists():
+            raise SystemExit(f"{destination} does not exist; start the environment once so the runtime creates its store")
+        if schema_of(source, tables) != schema_of(destination, tables):
+            raise SystemExit(f"{name} schema differs from the environment store; refusing to apply")
+        placeholders = ",".join("?" for _ in threads)
+        dst = sqlite3.connect(destination)
+        src = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)
+        try:
+            for table in tables:
+                existing = dst.execute(f'select count(*) from "{table}" where thread_id in ({placeholders})', threads).fetchone()[0]
+                if existing:
+                    raise SystemExit(f"{table} already holds {existing} row(s) for these threads; refusing to overwrite history")
+                columns = [row[1] for row in src.execute(f'pragma table_info("{table}")')]
+                quoted = ",".join(f'"{c}"' for c in columns)
+                rows = src.execute(f'select {quoted} from "{table}"').fetchall()
+                dst.executemany(f'insert into "{table}" ({quoted}) values ({",".join("?" for _ in columns)})', rows)
+                marks.setdefault(name, {})[table] = len(rows)
+            dst.commit()
+        finally:
+            src.close()
+            dst.close()
+    slug = report["slug"]
+    if workspace_dest.exists() and any(workspace_dest.iterdir()):
+        raise SystemExit(f"{workspace_dest} is not empty; refusing to copy the workspace over it")
+    workspace_dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(target / "workspace" / slug, workspace_dest, dirs_exist_ok=True)
+    applied = {"slug": slug, "threads": threads, "rows_applied": marks, "workspace_files": sorted(manifest(workspace_dest))}
+    (target / "apply.json").write_text(json.dumps(applied, indent=2, ensure_ascii=False), encoding="utf-8")
+    return applied
+
+
+def unapply(target: Path, state_dir: Path, workspace_dest: Path) -> dict[str, object]:
+    """Remove exactly what apply wrote: the rows of the migrated threads and the workspace files it copied."""
+    applied_path = target / "apply.json"
+    if not applied_path.exists():
+        raise SystemExit("no apply.json in the target; nothing was applied")
+    applied = json.loads(applied_path.read_text(encoding="utf-8"))
+    threads = applied["threads"]
+    placeholders = ",".join("?" for _ in threads)
+    removed: dict[str, dict[str, int]] = {}
+    for name, tables in THREAD_TABLES.items():
+        destination = state_dir / name
+        if name not in applied["rows_applied"] or not destination.exists():
+            continue
+        dst = sqlite3.connect(destination)
+        try:
+            for table in tables:
+                cursor = dst.execute(f'delete from "{table}" where thread_id in ({placeholders})', threads)
+                removed.setdefault(name, {})[table] = cursor.rowcount
+            dst.commit()
+        finally:
+            dst.close()
+    for relative in applied["workspace_files"]:
+        path = workspace_dest / relative
+        if path.is_file():
+            path.unlink()
+    for directory in sorted((p for p in workspace_dest.rglob("*") if p.is_dir()), reverse=True) if workspace_dest.exists() else []:
+        if not any(directory.iterdir()):
+            directory.rmdir()
+    applied_path.rename(target / "unapply.json")
+    return {"removed_rows": removed, "removed_files": len(applied["workspace_files"])}
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -173,7 +264,21 @@ def main(argv: list[str]) -> int:
     check.add_argument("--target", type=Path, required=True)
     undo = sub.add_parser("rollback")
     undo.add_argument("--target", type=Path, required=True)
+    put = sub.add_parser("apply", help="write a verified dry-run into a stopped environment (state store and workspace)")
+    put.add_argument("--target", type=Path, required=True)
+    put.add_argument("--state", type=Path, required=True)
+    put.add_argument("--workspace", type=Path, required=True)
+    take = sub.add_parser("unapply", help="remove exactly what apply wrote")
+    take.add_argument("--target", type=Path, required=True)
+    take.add_argument("--state", type=Path, required=True)
+    take.add_argument("--workspace", type=Path, required=True)
     args = parser.parse_args(argv)
+    if args.command == "apply":
+        print(json.dumps(apply(args.target, args.state, args.workspace), indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "unapply":
+        print(json.dumps(unapply(args.target, args.state, args.workspace), indent=2, ensure_ascii=False))
+        return 0
     if args.command == "dry-run":
         report = dry_run(args.snapshot, args.slug, load_threads(args.threads), args.target)
         print(json.dumps({k: report[k] for k in ("slug", "verified", "rows", "not_migrated_global_stores")}, indent=2, ensure_ascii=False))
