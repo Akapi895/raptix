@@ -3,8 +3,8 @@ import type { EnvironmentCommandResult, EnvironmentStateView, ProjectSummary } f
 import { runProjectCommand, type ProjectCommandDeps } from "./project.js";
 
 const projects: ProjectSummary[] = [
-  { id: "eng-a", name: "alpha", workspaceSlug: "alpha", status: "draft" },
-  { id: "eng-b", name: "bravo", workspaceSlug: "bravo", status: "draft" },
+  { id: "eng-a", displayName: "alpha", workspaceSlug: "alpha", status: "draft" },
+  { id: "eng-b", displayName: "bravo", workspaceSlug: "bravo", status: "draft" },
 ];
 
 function state(id: string, overrides: { held?: boolean; own?: boolean; version?: number; observed?: EnvironmentStateView["environment"]["observedState"] } = {}): EnvironmentStateView {
