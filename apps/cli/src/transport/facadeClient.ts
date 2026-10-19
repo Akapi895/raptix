@@ -112,6 +112,11 @@ export class FacadeClient {
     return this.json("POST", `/api/engagements/${enc(engagementId)}/threads/${enc(threadId)}/resume`, body);
   }
 
+  /** Continues a paused operation as a new run on the same thread. */
+  public resumeRun(engagementId: string, threadId: string, requestId: string): Promise<RequestAck> {
+    return this.json("POST", `/api/engagements/${enc(engagementId)}/threads/${enc(threadId)}/resume-run`, { requestId });
+  }
+
   public cancelRun(engagementId: string, threadId: string, runId: string): Promise<unknown> {
     return this.json("POST", `/api/engagements/${enc(engagementId)}/threads/${enc(threadId)}/runs/${enc(runId)}/cancel`);
   }
