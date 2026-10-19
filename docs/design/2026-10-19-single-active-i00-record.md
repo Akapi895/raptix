@@ -301,3 +301,25 @@ Test `controller-client` "gives up after the timeout" trước đây đặt time
 - E06 (copy): restart runtime, rồi restart sandbox. Lưu trữ giữ nguyên (75 tin nhắn), thread vẫn đọc được, môi trường vẫn `ready`.
 - Crash controller khi đang start (copy): slot chuyển `uncertain` với lý do `controller_unreachable`, không bị đánh dấu `stopped` giả. Sau khi controller được bật lại, owner stop để reconcile (slot về `idle`), rồi activate lại thành công.
 - Còn lại: bộ server đầy đủ sau thay đổi cuối chưa hoàn tất (bị dừng do thiếu bộ nhớ). Chưa có P10/P11. Cutover trên DB và volume thật chờ duyệt riêng.
+
+## 15. Sửa theo đánh giá rebind và lifecycle (I06, I07)
+
+Rebind (`POST …/threads/:thread/rebind`), theo 4 điểm đã nêu, cộng audit:
+- Kiểm tra operator trước mọi lời gọi runtime. Viewer bị từ chối trước khi tạo thread.
+- Chỉ HTTP 404 là thread thiếu (`threadExists`). Lỗi khác là unavailable, không tạo gì.
+- Project phải có environment record và đang ready. Project legacy không được rebind.
+- Lịch sử không được rỗng và số message phải khớp `expectedMessageCount` đã xác minh với migration record.
+- Mỗi lần rebind ghi `WebAuditEntry` với action `thread.rebound` (fingerprint cũ và mới, số message, created).
+
+Lifecycle:
+- Drain chờ cả run trong ledger và instance đang `running` hoặc `cancel_requested` của mọi thread project. Lỗi khi đọc instance được coi là còn bận.
+- Restart gặp slot `ready` mà container không chạy thì giữ slot ở `uncertain`, lý do `not_running_at_restart`.
+
+Kiểm chứng:
+- Unit rebind 9/9. Routing, context, history projection pass.
+- Live: recovery 9 nhóm, admission 14, lifecycle 6, facade 7 đều pass.
+- Server đầy đủ, chạy một worker: 511/511 (56 file).
+
+Canary `reddish` (chưa thực hiện):
+- Điều kiện đã có: rebind đã sửa, rehearsal trên bản sao đã làm.
+- Còn lại trước khi chạm stack đang chạy: backup Web DB, workspace và checkpoint state (kèm WAL/SHM) vào thư mục lưu giữ; quiesce runtime legacy; rehearsal rollback; rồi duyệt riêng từng bước vì việc này thay đổi container API và runtime của stack bạn.

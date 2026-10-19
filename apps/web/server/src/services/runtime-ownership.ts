@@ -102,6 +102,11 @@ export class RuntimeOwnershipService {
     });
   }
 
+  /** Refuses anything but an operator, before a caller can reach a runtime on the project's behalf. */
+  public async requireOperator(userId: string, engagementId: string): Promise<void> {
+    await this.transaction(async tx => { await this.owned(tx, userId, engagementId, 'operator'); });
+  }
+
   /** The runtime configuration fingerprint a bound thread was last bound under, or null for a thread bound before it was recorded. */
   public async runtimeConfigHashOf(userId: string, engagementId: string, threadId: string): Promise<string | null> {
     return this.transaction(async tx => (await this.binding(tx, await this.owned(tx, userId, engagementId), threadId)).runtimeConfigHash ?? null);

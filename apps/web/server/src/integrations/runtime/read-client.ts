@@ -13,6 +13,8 @@ export interface RuntimeReadPort {
   catalog(): Promise<readonly string[]>;
   thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown>; status?: string }>;
   state(id: string): Promise<{ values: Record<string, unknown>; tasks?: unknown; graphId: string | null }>;
+  /** True only when the runtime answers 404 for the thread. Any other failure is unavailable, never "missing". */
+  threadExists(id: string): Promise<boolean>;
   /** P10c operator mailbox: a refusal (409) is data the caller explains, never an error. */
   instanceExchange(method: 'GET' | 'POST', endpoint: string, body?: unknown): Promise<{ status: number; body: unknown }>;
 }
@@ -86,6 +88,18 @@ export class RuntimeReadClient implements RuntimeReadPort {
       if (page.length < 100) return [...graphs].sort();
     }
     throw new RuntimeUnavailableError();
+  }
+  public async threadExists(id: string): Promise<boolean> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      const response = await fetch(`${this.apiUrl}/threads/${encodeURIComponent(id)}`, { signal: controller.signal, redirect: 'error' });
+      await response.body?.cancel();
+      if (response.status === 404) return false;
+      if (!response.ok) throw new RuntimeUnavailableError();
+      return true;
+    } catch { throw new RuntimeUnavailableError(); }
+    finally { clearTimeout(timer); }
   }
   public async thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown>; status?: string }> {
     const value = await this.read(`/threads/${encodeURIComponent(id)}`);

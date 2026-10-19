@@ -86,6 +86,7 @@ describe('RunService.snapshot history attachment', () => {
       instanceExchange: async () => { throw new Error('not used in this test'); },
       catalog: async () => [],
       thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'success' }),
+      threadExists: async () => true,
       state: async () => ({ values: {
         messages: [{ type: 'human', id: 'm1', content: 'Question' }, { type: 'ai', id: 'm2', content: 'Answer' }],
         subagent_transcripts: [{ type: 'subagent_end', agent: 'recon', session_id: 's1', created_at: '2026-10-02T00:00:01.000000+00:00', elapsed: 1.5, status: 'success' }],
