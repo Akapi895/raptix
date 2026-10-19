@@ -31,7 +31,7 @@ describe('guarded', () => {
     const late = guarded(async () => {
       await new Promise((resolve) => setTimeout(resolve, 5))
       if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError')
-      return { ok: true as const, value: 'accepted' }
+      return { ok: true as const, data: 'accepted' }
     })
     controller.abort()
     const outcome = await late.then((result) => ({ settled: 'resolved' as const, result }), (error: unknown) => ({ settled: 'rejected' as const, error }))
