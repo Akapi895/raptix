@@ -259,7 +259,7 @@ Test `controller-client` "gives up after the timeout" trước đây đặt time
 2. **Cấu hình của thread khác cấu hình môi trường.** Thread legacy mang `runtime_context_hash` của cấu hình legacy (`sandbox_url` khác). Web từ chối với 409. Đây là guard đúng. Có hai hướng:
    - (a) Rebind: tạo lại bản ghi thread trong môi trường với cấu hình môi trường, và ghi proof (hash cũ và mới) có phiên bản. Đề xuất của tôi.
    - (b) Giữ identity legacy và chỉ đọc lịch sử, không cho chạy tiếp trong môi trường.
-3. **Image khác digest.** Runtime legacy là `raptix-langgraph:stable` (`b3cd…`). Môi trường dùng digest `53c4…`. Schema store khớp, nhưng cần quyết định pin image nào (I08).
+3. **Image trùng digest.** Tag `raptix-langgraph:stable` có repo digest `53c4…`, đúng digest môi trường đang dùng. Hai bên chạy cùng image. (Nhận định trước đó "khác digest" là so image ID với digest, sai.) Vẫn cần pin digest trong I08.
 4. **Cutover trên DB và volume thật** vẫn chờ duyệt riêng. Snapshot hiện tại chưa quiesce.
 
 ## 13. I08 và I09: phần tự quyết được
