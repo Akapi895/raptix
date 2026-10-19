@@ -14,6 +14,7 @@ import { ACTIVE_STOP_OUTCOMES } from '../governance/service'
 import { useGovernanceStops } from '../governance/query'
 import { ThreadRuns } from './runtime-runs'
 import { ThreadResults } from './results-panel'
+import { PlanSteps } from './plan-steps'
 import { messageOf, useRuntimeThreads, useRuntimeTimeline } from './runtime-query'
 import type { RuntimeThread } from './runtime'
 
@@ -37,6 +38,7 @@ export function RuntimeOperationsTab({ engagementId }: { engagementId: string })
             </Empty>
           ) : (
             <>
+            <PlanSteps engagementId={engagementId} />
             <ThreadResults engagementId={engagementId} thread={selected} />
             <Card>
               <CardHeader title={`Operation thread ${selected.threadId}`} sub={`Assistant ${selected.assistantId} — bound runtime runs for this thread only`} />

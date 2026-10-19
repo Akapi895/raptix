@@ -101,7 +101,12 @@ function ResultsBody({ thread, runs, branches, findings, engagementId }: {
             ))}
           </ul>
         )}
-        <Button size="sm" variant="secondary" onClick={() => go('project', { id: engagementId, tab: 'findings' })}>Open findings</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="primary" onClick={() => go('finding-new', { engagementId })}>Create finding</Button>
+          <Button size="sm" variant="secondary" onClick={() => go('evidence', { engagementId })}>Attach evidence</Button>
+          <Button size="sm" variant="secondary" onClick={() => go('project', { id: engagementId, tab: 'findings' })}>Open findings</Button>
+        </div>
+        <p className="text-xs text-muted">AI-proposed findings are not verified. They are reviewed and imported as drafts in the Findings tab, and never count as findings until a person confirms them.</p>
       </section>
     </>
   )
