@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -91,8 +92,13 @@ func runEnvironmentController(cmd *cobra.Command, _ []string) error {
 		_ = srv.Shutdown(shutdown)
 	}()
 
+	// Bind first, so the listening line is printed only once the port is held. A port taken by another process fails here.
+	listener, err := net.Listen("tcp", srv.Addr)
+	if err != nil {
+		return fmt.Errorf("controller cannot listen on %s: %w", srv.Addr, err)
+	}
 	fmt.Fprintf(cmd.OutOrStdout(), "environment controller listening on %s\n", environmentControllerFlags.listen)
-	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil
