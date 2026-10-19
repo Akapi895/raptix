@@ -84,7 +84,8 @@ describe('RealPortfolio', () => {
   })
 })
 
-describe('RealProjectCreateDialog', () => {
+// The dialog renders a full project form against a stubbed API; under a parallel suite run it exceeds the 5s default.
+describe('RealProjectCreateDialog', { timeout: 15000 }, () => {
   const openCreate = () => { showCreateProject(); return ui(<RealProjectCreateDialog />) }
   it('auto-derives the workspace slug and requires the authorization confirmation', async () => {
     stubApi()

@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "format": "oxfmt",
-    "test": "vitest run"
+    "test": "vitest run --maxWorkers=4"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
