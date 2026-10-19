@@ -121,7 +121,9 @@ async function main(): Promise<void> {
   // The host controller is optional. Without it, activate and stop answer 503 and the legacy path is unchanged.
   const environmentController = loadEnvironmentControllerConfig(process.env, path => readFileSync(path, 'utf8'));
   const environmentLifecycle = dbClient && environments && environmentController ? new EnvironmentLifecycle(dbClient, environments, new HostControllerClient(environmentController.controllerUrl, environmentController.controllerToken), environmentController) : undefined;
-  const environmentFacade = environments ? new EnvironmentFacade(environments, environmentLifecycle) : undefined;
+  const environmentFacade = environments ? new EnvironmentFacade(environments, environmentLifecycle, {
+    onLifecycleError: error => console.error('environment lifecycle failed', error),
+  }) : undefined;
   const ownership = dbClient ? new RuntimeOwnershipService(dbClient, environments) : undefined;
   const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
   // ADR-0092: a managed project routes to its own ready environment; a project without a record stays on the legacy runtime.
@@ -165,6 +167,7 @@ async function main(): Promise<void> {
          ownership,
          workspaceRoot: env.workspacePath,
          runtime,
+         router: runtimeRouter,
        }) : undefined;
    // W08: preflight readiness reports the actual runtime condition (agent
    // catalog availability) and never fails open when the dependency is
@@ -366,6 +369,8 @@ async function main(): Promise<void> {
 
   try {
     await app.listen({ port: env.port, host: env.host });
+    // A restart can interrupt a start or a stop. Continue it from what the slot records, in the background.
+    void environmentLifecycle?.resumePending().catch(error => console.error('environment resume failed', error));
   } catch (error) {
     await app.close();
     if (dbClient) await disconnectDb(dbClient);

@@ -139,14 +139,14 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'starting', ownerEngagementId: engagementId, commandId: command.id });
         await tx.projectEnvironment.upsert({
           where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } },
-          create: { deploymentId: this.deploymentId, engagementId, desiredState: 'ready' },
-          update: { desiredState: 'ready' },
+          create: { deploymentId: this.deploymentId, engagementId, desiredState: 'ready', observedState: 'starting' },
+          update: { desiredState: 'ready', observedState: 'starting' },
         });
         return view('accepted', { phase: 'starting', ownerEngagementId: engagementId, commandId: command.id, version }, engagementId, command.id);
       }
       if (decision.transition === 'stop') {
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'stopping', ownerEngagementId: slot.ownerEngagementId, commandId: command.id });
-        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId }, data: { desiredState: 'stopped' } });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId }, data: { desiredState: 'stopped', observedState: 'stopping' } });
         return view('accepted', { phase: 'stopping', ownerEngagementId: slot.ownerEngagementId, commandId: command.id, version }, engagementId, command.id);
       }
       if (outcome === 'accepted') return view('accepted', slot, engagementId, slot.commandId);
@@ -183,7 +183,7 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
    * exposed to a browser, CLI or model. The slot is released only by an
    * observed `stopped`; elapsed time never releases it.
    */
-  public async observe(input: { commandId: string; expectedVersion: number; observation: Observation; runtimeUrl?: string }): Promise<EnvironmentCommandResult> {
+  public async observe(input: { commandId: string; expectedVersion: number; observation: Observation; runtimeUrl?: string; generation?: number }): Promise<EnvironmentCommandResult> {
     return this.transaction(async tx => {
       await ensureSlot(tx, this.deploymentId);
       const slot = await lockSlotForUpdate(tx, this.deploymentId);
@@ -195,8 +195,10 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
       if (input.observation === 'ready' && (from === 'starting' || from === 'uncertain')) {
         const row = await tx.projectEnvironment.findUniqueOrThrow({ where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId: owner } } });
         if (input.runtimeUrl !== runtimeUrlFor(this.deploymentId, row.id)) return view('refused', slot, null, slot.commandId, 'invalid_endpoint');
+        // The generation names the container incarnation the endpoint belongs to. It is recorded as given, not counted.
+        if (input.generation === undefined || !Number.isSafeInteger(input.generation) || input.generation < 1) return view('refused', slot, null, slot.commandId, 'invalid_generation');
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'ready', ownerEngagementId: owner, commandId: slot.commandId });
-        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'ready', observedAt: new Date(), generation: { increment: 1 }, runtimeUrl: input.runtimeUrl } });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'ready', observedAt: new Date(), generation: input.generation, runtimeUrl: input.runtimeUrl } });
         await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'observed' } });
         return view('accepted', { ...slot, phase: 'ready', version }, null, slot.commandId);
       }

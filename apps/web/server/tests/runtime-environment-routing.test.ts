@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RuntimeRouter, EnvironmentNotReadyError, type EnvironmentRoute, type EnvironmentRouteSource } from '../src/integrations/runtime/runtime-router.js';
 import { RuntimeUnavailableError } from '../src/integrations/runtime/read-client.js';
 import { RunService } from '../src/services/runtime/run-service.js';
+import { RuntimeContextService } from '../src/services/runtime/runtime-context.js';
 
 // Distinct runtime doubles on loopback. Each answers with its own name, so a reply proves which runtime served it.
 interface Double { name: string; url: string; hits: string[]; server: Server }
@@ -157,5 +158,28 @@ describe('RunService with the runtime router (ADR-0092)', () => {
     routes.rows.set('eng-alpha', { ...ready('env-alpha', alpha.url), observedState: 'stopped' });
     await expect(service().getRun('local', 'eng-alpha', 't-a', 'run-1')).rejects.toMatchObject({ state: 'stopped' });
     expect(alpha.hits).toHaveLength(0);
+  });
+});
+
+describe('RuntimeContextService with the runtime router (ADR-0092)', () => {
+  // The fixed legacy runtime must never answer for a managed project. Any call to it fails the test.
+  const bypass = new Proxy({}, { get: () => () => { throw new Error('the fixed legacy runtime was used for a managed project'); } });
+
+  it('discovers the agent catalog from the runtime of the engagement that asks', async () => {
+    routes.rows.set('eng-alpha', ready('env-alpha', alpha.url));
+    const config = { apiUrl: legacy.url, workspaceRoot: '/workspace', assistants: ['decepticon', 'soundwave'], perProjectSandbox: false };
+    const context = new RuntimeContextService({
+      config,
+      workspaceRoot: '/workspace',
+      projects: { getProject: async () => ({}), getPlanning: async () => ({}) },
+      ownership: {},
+      runtime: bypass,
+      router: router,
+    } as unknown as ConstructorParameters<typeof RuntimeContextService>[0]);
+    // The double does not implement the catalog, so the call fails after it reaches the engagement's runtime. The
+    // point under test is where the request goes: the first catalog read must hit alpha and never the legacy runtime.
+    await expect(context.agents('eng-alpha')).rejects.toThrow();
+    expect(alpha.hits.some(hit => hit.startsWith('GET /info'))).toBe(true);
+    expect(legacy.hits.some(hit => hit.includes('/info'))).toBe(false);
   });
 });

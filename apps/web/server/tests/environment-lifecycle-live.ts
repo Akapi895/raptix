@@ -27,7 +27,7 @@ const lifecycle = new EnvironmentLifecycle(db, service, new HostControllerClient
   sandboxImage: 'ghcr.io/example/sandbox@sha256:' + 'b'.repeat(64),
   workspaceHostRoot: 'D:/work',
   stopTimeoutSeconds: 5,
-});
+}, { probe: async () => true, readinessTimeoutMs: 2000, pollIntervalMs: 10 });
 
 const suffix = randomUUID().slice(0, 8);
 const project = (tag: string) => db.engagement.create({ data: { name: `i02-${tag}-${suffix}`, workspaceSlug: `i02-${tag}-${suffix}`, targetType: 'web_url', targetValue: 'https://lab.invalid', authorizationConfirmed: true } });
@@ -97,6 +97,17 @@ try {
   const fDone = await lifecycle.shutDown(f.id, fStop.commandId!, fStuck.version);
   assert.equal(fDone.phase, 'idle');
   checks.push('a stop the controller cannot confirm holds the slot until a later observed stop releases it');
+
+  // 6. The controller cannot answer even the first observation. The slot is held as uncertain, at the caller's version.
+  const g = await project('g');
+  const gStart = await activate(g.id, 'g', (await slot()).version);
+  injected.set('observe:runtime', { status: 503, body: {} });
+  const unanswered = await lifecycle.bringUp(g.id, gStart.commandId!, gStart.version);
+  assert.equal(unanswered.status, 'accepted');
+  assert.equal(unanswered.phase, 'uncertain', 'an unanswered observation keeps the slot held');
+  assert.equal(unanswered.version, gStart.version + 1);
+  checks.push('a controller that cannot answer the first observation leaves the slot held as uncertain, at the right version');
+
 } finally {
   await double.close();
   await disconnectDb(db);

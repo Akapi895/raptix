@@ -3,6 +3,7 @@ import { lstat, realpath } from 'node:fs/promises';
 import type { ProjectViewModel, ThreadKind, RuntimeContextView } from '@raptix/web-contracts';
 import type { RuntimeConfig } from '../../config/runtime.js';
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
+import type { RuntimeRouter } from '../../integrations/runtime/runtime-router.js';
 import { RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
 import { assertProjectTarget, ProjectPolicyError } from '../../security/project-policy.js';
 import { resolveEngagementWorkspaceDir } from '../../security/workspace-policy.js';
@@ -31,14 +32,19 @@ export function parseContextSelection(raw: unknown): ContextSelection {
   return v as unknown as ContextSelection;
 }
 export class RuntimeContextService {
-  public constructor(private readonly options: { config: RuntimeConfig; workspaceRoot: string; projects: Pick<ProjectsService, 'getProject' | 'getPlanning'>; ownership: Pick<RuntimeOwnershipService, 'getBinding' | 'prepareBinding'>; runtime: RuntimeReadPort }) {}
-  public async agents(): Promise<{ source: 'runtime'; graphs: readonly string[] }> {
-    const graphs = await this.options.runtime.catalog();
+  public constructor(private readonly options: { config: RuntimeConfig; workspaceRoot: string; projects: Pick<ProjectsService, 'getProject' | 'getPlanning'>; ownership: Pick<RuntimeOwnershipService, 'getBinding' | 'prepareBinding'>; runtime: RuntimeReadPort; router?: Pick<RuntimeRouter, 'reads'> }) {}
+  /** The read port for one engagement: its own environment's runtime under ADR-0092, else the fixed legacy runtime. */
+  private async reads(engagementId: string | undefined): Promise<RuntimeReadPort> {
+    return engagementId !== undefined && this.options.router ? this.options.router.reads(engagementId) : this.options.runtime;
+  }
+  public async agents(engagementId?: string): Promise<{ source: 'runtime'; graphs: readonly string[] }> {
+    const graphs = await (await this.reads(engagementId)).catalog();
     return { source: 'runtime', graphs: graphs.filter(g => this.options.config.assistants.includes(g)) };
   }
   public async resolve(userId: string, engagementId: string, raw: unknown): Promise<TrustedRuntimeContext> {
     const selection = parseContextSelection(raw);
-    const { projects, ownership, runtime, config } = this.options;
+    const { projects, ownership, config } = this.options;
+    const runtime = await this.reads(engagementId);
     const project = await projects.getProject(userId, engagementId);
     assertProjectTarget(project.targetType, project.targetValue);
     const dir = await resolveEngagementWorkspaceDir(this.options.workspaceRoot, project.workspaceSlug);
@@ -50,7 +56,7 @@ export class RuntimeContextService {
     if (config.pinnedSlug !== undefined && config.pinnedSlug !== project.workspaceSlug) throw mismatch();
     const bound = selection.threadId ? await ownership.getBinding(userId, engagementId, selection.threadId) : undefined;
     if (bound && (bound.kind !== selection.kind || selection.assistantId !== undefined && bound.assistantId !== selection.assistantId)) throw mismatch();
-    const { graphs } = await this.agents();
+    const { graphs } = await this.agents(engagementId);
     const assistantId = bound?.assistantId ?? selection.assistantId ?? (selection.kind === 'planning' ? PLANNING_ASSISTANT : EXECUTION_ASSISTANTS.find(g => graphs.includes(g)));
     if (!assistantId || !graphs.includes(assistantId)) throw new RuntimeUnavailableError();
     if (selection.kind === 'planning' && assistantId !== 'soundwave' || selection.kind === 'execution' && assistantId === 'soundwave') throw mismatch();

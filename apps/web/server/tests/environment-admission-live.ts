@@ -133,9 +133,9 @@ try {
   assert.equal(claimed.status, 'accepted');
   const claimCommandId = claimed.commandId!;
   const endpointB = await endpointOf(loser.id);
-  const wrong = await service().observe({ commandId: claimCommandId, expectedVersion: 4, observation: 'ready', runtimeUrl: 'http://evil.example:2024' });
+  const wrong = await service().observe({ commandId: claimCommandId, expectedVersion: 4, observation: 'ready', runtimeUrl: 'http://evil.example:2024', generation: 1 });
   assert.equal(wrong.reason, 'invalid_endpoint', 'a ready observation must carry the derived runtime endpoint');
-  const ready = await service().observe({ commandId: claimCommandId, expectedVersion: 4, observation: 'ready', runtimeUrl: endpointB });
+  const ready = await service().observe({ commandId: claimCommandId, expectedVersion: 4, observation: 'ready', runtimeUrl: endpointB, generation: 1 });
   assert.equal(ready.version, 5, 'a refused endpoint does not move the slot');
   assert.equal(ready.phase, 'ready');
   const uncertain = await service().observe({ commandId: claimCommandId, expectedVersion: 5, observation: 'uncertain' });
@@ -172,7 +172,7 @@ try {
   await assert.rejects(() => ownership.reserve('local', a.id, `run-a2-${suffix}`, 'create_run', intent, threadA2), isConflict);
   checks.push('a starting environment refuses a new run for its own project');
 
-  const readyA = await service().observe({ commandId: claimA.commandId!, expectedVersion: claimA.version, observation: 'ready', runtimeUrl: await endpointOf(a.id) });
+  const readyA = await service().observe({ commandId: claimA.commandId!, expectedVersion: claimA.version, observation: 'ready', runtimeUrl: await endpointOf(a.id), generation: 1 });
   assert.equal(readyA.phase, 'ready');
   const runA2 = await ownership.reserve('local', a.id, `run-a2-${suffix}`, 'create_run', intent, threadA2);
   assert.equal(runA2.reserved, true, 'a ready owner admits its own run');
