@@ -2,6 +2,7 @@ import type { EnvironmentCommandResult } from '@raptix/web-contracts';
 import type { PrismaClient } from '../../generated/prisma/client.js';
 import {
   ControllerRefusedError,
+  ControllerUnavailableError,
   type ControllerIdentity,
   type ControllerRequest,
   type ControllerRole,
@@ -42,6 +43,8 @@ interface EnvironmentRow { id: string; engagementId: string; generation: number;
 const TERMINAL_RUN_STATUSES = new Set(['success', 'error', 'timeout', 'interrupted']);
 
 const ROLES: readonly ControllerRole[] = ['runtime', 'sandbox'];
+/** A stop the controller could not answer is tried this many times in all; a refusal is never retried. */
+const STOP_ATTEMPTS = 3;
 /** Refusals that prove nothing of this environment was created, so the slot may be released when nothing runs. */
 const NOTHING_CREATED = new Set(['foreign_resource', 'generation_mismatch', 'image_missing', 'rejected_path', 'rejected_image', 'invalid_request']);
 
@@ -129,6 +132,10 @@ export class EnvironmentLifecycle {
     const endpoint = runtimeUrlFor(this.config.deploymentId, env.id);
     const deadline = Date.now() + this.drainTimeoutMs;
     for (;;) {
+      // A runtime that is not running cannot be executing a run, so there is nothing to cut off. The ledger keeps its
+      // marker: an unknown outcome stays on record for its owner, and it does not hold the stop.
+      const runtime = await this.observeOne(env, 'runtime', env.generation || 1);
+      if (runtime.kind === 'absent' || (runtime.kind === 'present' && !runtime.running)) return true;
       const open = await this.db.webRequestLedger.findMany({
         where: { engagementId: env.engagementId, activeThreadId: { not: null }, operation: { not: 'create_thread' } },
         select: { requestId: true, threadId: true, runId: true },
@@ -196,7 +203,7 @@ export class EnvironmentLifecycle {
       const item = observed[index];
       if (item?.kind !== 'present' || !item.running) continue;
       try {
-        await this.controller.call('stop', { identity: this.identity(env, ROLES[index]!, item.generation), stopTimeoutSeconds: this.config.stopTimeoutSeconds });
+        await this.stopWithRetry(env, ROLES[index]!, item.generation);
       } catch (error) {
         if (!(error instanceof ControllerRefusedError) || error.code !== 'stop_uncertain') unknown = true;
       }
@@ -204,6 +211,19 @@ export class EnvironmentLifecycle {
     const after = await this.observeAll(env, generation);
     const stillRunning = after.some(item => item.kind === 'unknown' || (item.kind === 'present' && item.running));
     return unknown || stillRunning ? 'uncertain' : 'stopped';
+  }
+
+  /** Retries a stop only when the controller did not answer. A refusal, including stop_uncertain, is final for this attempt. */
+  private async stopWithRetry(env: EnvironmentRow, role: ControllerRole, generation: number): Promise<void> {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await this.controller.call('stop', { identity: this.identity(env, role, generation), stopTimeoutSeconds: this.config.stopTimeoutSeconds });
+        return;
+      } catch (error) {
+        if (!(error instanceof ControllerUnavailableError) || attempt >= STOP_ATTEMPTS) throw error;
+        await new Promise(resolve => setTimeout(resolve, this.pollIntervalMs * attempt));
+      }
+    }
   }
 
   private async report(env: EnvironmentRow, commandId: string, slotVersion: number, outcome: 'ready' | 'stopped' | 'uncertain', generation: number, reason?: string): Promise<EnvironmentCommandResult> {
