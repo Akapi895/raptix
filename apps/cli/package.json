@@ -13,7 +13,8 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "login": "node dist/login.js"
   },
   "dependencies": {
     "@raptix/streaming": "*",
