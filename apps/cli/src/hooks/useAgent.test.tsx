@@ -153,7 +153,7 @@ describe("useAgent — engagement handoff lifecycle", () => {
   });
 
   // ── 3. Engagement fields travel only via config.configurable ─────────────
-  it("injects engagement context via config.configurable only — never as top-level run input", async () => {
+  it("keeps planning and handoff runs in the pinned engagement subtree, never the host bind path", async () => {
     const firstStream = createControllableStream();
     const secondStream = createMockStream([noopValuesEvent]);
     const mc = mockState.client!;
@@ -206,7 +206,7 @@ describe("useAgent — engagement handoff lifecycle", () => {
         ?.configurable as Record<string, unknown> | undefined;
       expect(configurable).toMatchObject({
         engagement_name: "eng-abc",
-        workspace_path: "/tmp/ws",
+        workspace_path: "/workspace/eng-abc",
         target_type: "web_url",
         target_value: "https://target.example",
         authorization_confirmed: true,

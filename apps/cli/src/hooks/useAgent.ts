@@ -770,11 +770,12 @@ export function useAgent({
         };
 
         const configurable: Record<string, unknown> = {};
-        const slug = process.env.RAPTIX_ENGAGEMENT;
+        const slug = process.env.RAPTIX_ENGAGEMENT?.trim();
         if (slug) {
           configurable.engagement_name = slug;
-          // The launcher mounts this engagement's directory directly here.
-          configurable.workspace_path = "/workspace";
+          // Compose mounts the workspace root; the sandbox fences /workspace/<slug>.
+          // RAPTIX_WORKSPACE_PATH is the host bind path, not a container path.
+          configurable.workspace_path = `/workspace/${slug}`;
         }
         const targetValue = process.env.RAPTIX_TARGET;
         if (targetValue) {
