@@ -152,3 +152,42 @@ Commit trên `feat/single-active`: `a48cd77b` (bảng, migration, contract) và 
 4. Web: chưa có màn chọn project toàn cục hay nút chuyển trên shell. Test "hai tab" mới kiểm ở tầng server (CAS), chưa có rendered test hai tab. Chưa audit viewport và keyboard của panel.
 5. Chưa chạy E01–E12, live model/tool run, TTY foreground, hay browser acceptance.
 6. Lỗi có sẵn chưa sửa: `prefer-const` ở `main.ts` (`sessionProvider`); drift 40 câu giữa schema và migration; timeout của năm file web khi chạy song song.
+
+## 10. Bằng chứng live (2026-10-19) và phần I06 còn lại
+
+**Commit:** `ddb9e6fe` (controller host), `210c9184` (trạng thái chuyển tiếp và timeout), `01e6ccb0` (CLI displayName).
+
+**Đã chạy thật trên Docker, API trong container, controller trên host:**
+
+- Activate: slot và row đi `starting` → `ready` trong khoảng 15–20 s, với `RAPTIX_USE_SKILLOGY=false` trong runtime env.
+- Stop: row đi `stopping` ngay khi slot đổi, rồi `stopped/idle` trong khoảng 5–10 s.
+- Khi `stopped`, tạo thread bị từ chối với thông báo nêu rõ trạng thái.
+- CLI qua `AgentTransport`: tạo thread planning (assistant `soundwave`) và stream nhận được chunk `values` từ runtime live. Không có chunk lỗi. Run không có câu trả lời của model vì chưa cấu hình LLM.
+- Tạo thread `execution` bị chặn đúng quy tắc: `executionReady` cần planning `ready`. Đây là hành vi đúng, không phải lỗi môi trường.
+
+**Test chạy lại sau thay đổi:**
+
+| Bộ | Kết quả |
+|---|---|
+| Go `internal/environments` và `go vet` cmd/internal | pass |
+| Live DB: admission | exit 0, 14 nhóm |
+| Live DB: lifecycle | exit 0, 6 nhóm |
+| Live DB: facade | exit 0, 7 nhóm |
+| Routing, context, controller client | 28/28 |
+| Server (toàn bộ) | 502/502 (55 file) |
+| CLI | 74/74 (10 file) |
+| Web (toàn bộ) | 1354/1364. Mười lỗi ở 9 file đều dừng ~5 s khi chạy song song. Chạy riêng 9 file đó: 120/120 |
+
+Test `controller-client` "gives up after the timeout" trước đây đặt timeout 20 ms cho op `stop`, nhưng `stop` luôn có budget tối thiểu 120 s. Test đã đổi sang op `observe`.
+
+**Chưa làm, nên I06 chưa đóng:**
+
+1. Archive, delete và retention. Hard-delete vẫn bị từ chối theo quyết định I00.
+2. Cleanup retry và phân loại orphan/partial resource với kết quả có tên.
+3. Tích hợp P10 (mailbox/grant) và P11 (checkpoint/question). Stop-and-drain khi run đang chạy.
+4. Test bắt buộc theo plan: bộ đếm graph/tool, stop giữa model/tool, paused restart, controller mất kết nối sau Docker ACK, partial start runtime/sandbox, lost ACK/cancel race, cleanup fail rồi retry, cross-client delete.
+5. Restart battery cho runtime và sandbox (E06), và controller crash giữa start (đã có test double, chưa chạy lại live sau sửa).
+6. Run có model thật (cần LLM credential) và E12.
+7. Acceptance trình duyệt cho panel (I05).
+
+**Vẫn mở từ trước:** sandbox có thể tới runtime API và host controller (cần ADR quyết định). Skillogy đang tắt cho runtime môi trường. Tài liệu ADR-0092 giữ trạng thái `Proposed` vì chưa đủ điều kiện Accepted.
