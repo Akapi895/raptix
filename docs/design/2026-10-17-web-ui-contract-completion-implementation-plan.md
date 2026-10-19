@@ -1072,3 +1072,31 @@ Engagement `cmvbilcji000035pdx8khoigh` (scope v1 đã duyệt, ROE đến 2026-1
 **Kiểm tra:** server 53 file, 480/480 test; web 140 file, 1344/1344 test (`--maxWorkers=4`); typecheck web và server pass. Lint web còn lỗi ở `apps/web/src/screens/f.tsx` do phiên khác đang sửa; không thuộc các commit trên.
 
 **Còn lại (cần live hoặc quyết định):** P10 forward và hai instance cùng role; P11 acceptance và step controls; P12 Sliver; P02–P06 browser; P09 xác minh checklist và các surface chỉ-mock (inbox phê duyệt, plan review, session console); P13.
+
+### 13.27 Phần không cần live, theo mặc định đã chốt (2026-10-19)
+
+**Mặc định đã áp dụng** (owner chưa đổi):
+- Surface chỉ-mock: inbox phê duyệt làm thật; plan review (`g-plan`) và session console (`h-session`, `c-console`) ghi là **exclusion có tên** chờ owner xác nhận. Lý do: runtime chưa có khái niệm plan review riêng và session console là mock demo.
+- P11 step controls: chỉ đọc. Panel Steps liệt kê OPPLAN objective với status plan mang, không có nút ghi.
+- Trace: giữ tool trace thô; không map facet Policy/Approval/Execution.
+
+**Đã làm:**
+- P04 (server): file retained bị xoá trả 409 "missing from storage" thay vì 404 chung; thành viên bị gỡ nhận 404 "Project not found" (không lộ sự tồn tại project).
+- P05 (server): test Partial đưa finding về remediation; Resolved bị từ chối khi chưa ở retest hoặc chưa có capture đã phân loại.
+- P06 (server): approved export không đổi (content và digest) khi finding được pin bị sửa sau approve; reviewer bị gỡ membership không quyết định được. Race hai editor mới phủ bằng stale write tuần tự (409 khi expectedVersion cũ); race đồng thời chưa có test riêng.
+- P09: inbox "Waiting for a decision" trên tab Team, lấy từ task view server, lọc theo project, có trạng thái rỗng và lỗi.
+- P11 (đọc): panel Steps trong chi tiết operation.
+- P12: nút Create finding và Attach evidence trong Results; ghi chú rằng proposed findings chưa xác minh và được duyệt ở tab Findings. Danh sách proposed findings chưa hiển thị trong Results.
+- P07 kiểm tra: đã render PDF mẫu và xem ảnh; tiếng Việt hiển thị đúng. **Giới hạn:** text layer không ánh xạ được dấu (copy và tìm kiếm trong PDF sai với dấu); cần xử lý ToUnicode của font subset, theo dõi riêng.
+
+**Commit:** `aaa269e0` (artifact thiếu file), `dcedad86` (test P05), `e889fba4` (test P06), `f65d8ee1` (inbox phê duyệt), `797a335d` (steps và hành động Results).
+
+**Kiểm tra:** server 53 file, 485/485; web 142 file, 1349/1349; typecheck web và server pass; eslint sạch trên các file đã đổi. Lint `f.tsx` vẫn lỗi do phiên khác.
+
+**Chưa làm (không phải live nhưng cần quyết định hoặc việc lớn):**
+- Quyết định mở: retry sandbox 150 giây; semantics ghi step (approve, return, skip); xác nhận exclusion plan review và session console.
+- Proposed findings đầy đủ trong Results; Trace facets.
+- Giới hạn text layer của PDF.
+- P13: dọn panel và gate cũ (cần rà soát có hệ thống); dirty-file ledger.
+
+**Còn live:** P10 forward và hai instance cùng role; P11 acceptance (paused restart, question vs pause, stop race, deadline, double resume đồng thời); P12 Sliver; P02 producer output và browser click-through P02–P06; build digest và acceptance trên stack deploy.
