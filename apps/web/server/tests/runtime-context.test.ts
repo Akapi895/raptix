@@ -3,7 +3,6 @@ import { mkdtemp, mkdir, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import type { ProjectViewModel, PlanningView, ThreadBindingView } from '@raptix/web-contracts';
 import { PLANNING_DOCUMENTS } from '@raptix/web-contracts';
 import { RuntimeContextService } from '../src/services/runtime/runtime-context.js';
