@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 ﻿import { describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
@@ -160,6 +161,24 @@ describe('ticket 11 report lifecycle and delivery', () => {
     expect(exported.statusCode).toBe(200);
     expect(exported.json().content).toContain('Only this report summary');
     expect(exported.json().digest).toMatch(/^[a-f0-9]{64}$/);
+    await app.close();
+  });
+  it('exports the reviewed report as PDF and DOCX bytes whose digest matches the content', async () => {
+    const { app, author } = await setup();
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Báo cáo đánh giá — Q3' } });
+    const id = created.json().id;
+    for (const format of ['pdf', 'docx'] as const) {
+      const exported = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records/${id}/export?format=${format}`, headers: { cookie: author.cookie } });
+      expect(exported.statusCode).toBe(200);
+      const artifact = exported.json();
+      expect(artifact.encoding).toBe('base64');
+      const bytes = Buffer.from(artifact.content, 'base64');
+      expect(bytes.subarray(0, format === 'pdf' ? 5 : 4).toString('latin1')).toBe(format === 'pdf' ? '%PDF-' : 'PK');
+      expect(artifact.digest).toBe(createHash('sha256').update(bytes).digest('hex'));
+      if (format === 'pdf') expect(bytes.toString('latin1')).toContain('DejaVuSans');
+    }
+    const markdown = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records/${id}/export?format=markdown`, headers: { cookie: author.cookie } });
+    expect(markdown.json().encoding).toBe('utf8');
     await app.close();
   });
   it('creates a draft, refuses stale edits with a conflict and preserves the stored body', async () => {

@@ -1,5 +1,6 @@
 import type { FindingRecord, PrismaClient, ReportAcknowledgement, ReportDelivery, ReportFindingSnapshot, ReportRecord, ReportTemplate } from '../generated/prisma/client.js';
 import { createHash } from 'node:crypto';
+import { renderReportDocx, renderReportPdf } from './report-render.js';
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
@@ -110,13 +111,17 @@ export interface ReportsView {
   readonly source: 'db';
 }
 
+export type ReportFormat = 'json' | 'markdown' | 'pdf' | 'docx';
+
 export interface ReportArtifactView {
   readonly engagementId: string;
   readonly reportId: string;
   readonly version: number;
-  readonly format: 'json' | 'markdown';
+  readonly format: ReportFormat;
   readonly mediaType: string;
+  /** UTF-8 text for json and markdown; base64 bytes for pdf and docx. Always a string so a recorded delivery can replay. */
   readonly content: string;
+  readonly encoding: 'utf8' | 'base64';
   readonly digest: string;
 }
 
@@ -142,6 +147,11 @@ function sectionsOf(value: unknown): ReportTemplateSection[] {
 
 function evidenceOf(snapshot: ReportFindingSnapshot): ReportSnapshotEvidence[] {
   return Array.isArray(snapshot.evidence) ? snapshot.evidence as unknown as ReportSnapshotEvidence[] : [];
+}
+
+const REPORT_FORMATS: readonly ReportFormat[] = ['json', 'markdown', 'pdf', 'docx'];
+function isReportFormat(value: string): value is ReportFormat {
+  return (REPORT_FORMATS as readonly string[]).includes(value);
 }
 
 function snapshotView(snapshot: ReportFindingSnapshot): ReportFindingSnapshotView {
@@ -441,20 +451,30 @@ export class ReportsService {
 
   public async exportReport(actorId: string, engagementId: string, reportId: string, format: string): Promise<ReportArtifactView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
-    if (format !== 'json' && format !== 'markdown') throw new ProjectApiError(400, 'format must be json or markdown.');
+    if (!isReportFormat(format)) throw new ProjectApiError(400, 'format must be json, markdown, pdf or docx.');
     const row = await this.findOwned(engagementId, reportId);
     return this.artifact(row, format);
   }
 
   /** The export bytes come from the stored report row and its snapshots, never from live finding state. */
-  private async artifact(row: ReportRecord, format: 'json' | 'markdown'): Promise<ReportArtifactView> {
+  private async artifact(row: ReportRecord, format: ReportFormat): Promise<ReportArtifactView> {
     const snapshots = await this.db.reportFindingSnapshot.findMany({ where: { reportId: row.id }, orderBy: { position: 'asc' } });
     const view = { ...await this.toBase(row), selectedFindings: snapshots.map(snapshotView) };
     const period = view.period === null ? null : { start: view.period.start, end: view.period.end };
+    if (format === 'pdf' || format === 'docx') {
+      const renderable = {
+        title: row.title, reportId: row.id, version: row.version, summary: view.body.summary,
+        sections: view.body.sections.map((s) => ({ title: s.title, content: s.content })),
+        findings: view.selectedFindings.map((f) => ({ title: f.title, severity: f.severity, status: f.status, findingVersion: f.findingVersion, detail: f.body.detail })),
+      };
+      const bytes = format === 'pdf' ? await renderReportPdf(renderable) : await renderReportDocx(renderable);
+      const mediaType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      return { engagementId: row.engagementId, reportId: row.id, version: row.version, format, mediaType, content: bytes.toString('base64'), encoding: 'base64', digest: createHash('sha256').update(bytes).digest('hex') };
+    }
     const content = format === 'json'
       ? JSON.stringify({ reportId: row.id, engagementId: row.engagementId, version: row.version, title: row.title, body: view.body, approvedVersion: row.approvedVersion, templateId: row.templateId, templateVersion: row.templateVersion, period, reviewerId: row.reviewerId, findings: view.selectedFindings }, null, 2)
       : `# ${row.title}\n\nReport ${row.id}, version ${row.version}\n\n${view.body.summary}\n\n${view.body.sections.map((s) => `## ${s.title}\n\n${s.content}`).join('\n\n')}\n\n${view.selectedFindings.map((f) => `### ${f.title} (${f.severity}, ${f.status}, finding v${f.findingVersion})\n\n${f.body.detail}`).join('\n\n')}\n`;
-    return { engagementId: row.engagementId, reportId: row.id, version: row.version, format, mediaType: format === 'json' ? 'application/json' : 'text/markdown', content, digest: createHash('sha256').update(content).digest('hex') };
+    return { engagementId: row.engagementId, reportId: row.id, version: row.version, format, mediaType: format === 'json' ? 'application/json' : 'text/markdown', content, encoding: 'utf8', digest: createHash('sha256').update(content).digest('hex') };
   }
 
   /** Export/delivery as separate audited records with truthful outcomes. */
@@ -463,9 +483,9 @@ export class ReportsService {
     await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { kind?: unknown; format?: unknown; requestId?: unknown; recipient?: unknown; receipt?: unknown; expectedVersion?: unknown };
     const kind = typeof body.kind === 'string' && ['export', 'delivery'].includes(body.kind) ? body.kind : '';
-    const format = typeof body.format === 'string' && ['json', 'markdown'].includes(body.format) ? body.format : '';
+    const format = typeof body.format === 'string' && isReportFormat(body.format) ? body.format : '';
     const requestId = typeof body.requestId === 'string' && body.requestId.trim().length > 0 ? body.requestId.trim() : '';
-    if (kind.length === 0 || format.length === 0) throw new ProjectApiError(400, "kind ('export'|'delivery') and format ('json'|'markdown') are required.");
+    if (kind.length === 0 || format.length === 0) throw new ProjectApiError(400, "kind ('export'|'delivery') and format ('json'|'markdown'|'pdf'|'docx') are required.");
     if (requestId.length === 0) throw new ProjectApiError(400, 'requestId is required so a retry cannot duplicate a delivery.');
     const row = await this.findOwned(engagementId, reportId);
     const existing = await this.db.reportDelivery.findFirst({ where: { reportId: row.id, requestId } });
@@ -484,7 +504,7 @@ export class ReportsService {
         throw new ProjectApiError(409, 'This request id was already used with a different payload; a new requestId is required.');
       }
       const replayArtifact = replayDetail?.artifact as ReportArtifactView | undefined;
-      if (replayArtifact === undefined || typeof replayArtifact.content !== 'string') {
+      if (replayArtifact === undefined || typeof replayArtifact.content !== 'string' || replayArtifact.encoding === undefined) {
         throw new ProjectApiError(503, 'The recorded delivery is missing its artifact; a new requestId is required.');
       }
       // Same request id: replay of an already-processed request returns the
@@ -504,7 +524,7 @@ export class ReportsService {
       const readiness = await this.readinessOf(row);
       if (!readiness.ready) throw new ProjectApiError(409, notReadyMessage('delivered', readiness));
     }
-    const artifact = await this.artifact(row, format as 'json' | 'markdown');
+    const artifact = await this.artifact(row, format as ReportFormat);
     const status = 'completed';
     const detail = { artifact, fingerprint, ...(kind === 'delivery' ? { channel: 'manual-acknowledgement', recipient, receipt, acknowledgedBy: actorId } : {}) };
     // W20: the delivery record, the report status transition and the audit
