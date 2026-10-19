@@ -13,7 +13,7 @@ import { requestFingerprint } from '../../security/request-fingerprint.js';
 import { requireProjectAccess, type ExecutionAdmission } from '../runtime-ownership.js';
 
 type Tx = Prisma.TransactionClient;
-type Observation = 'ready' | 'stopped' | 'uncertain';
+type Observation = 'ready' | 'stopped' | 'uncertain' | 'undrained';
 
 /**
  * The only runtime endpoint a ready environment may record: the runtime container name the host
@@ -34,7 +34,7 @@ interface SlotRow {
 interface Decision {
   status: EnvironmentCommandStatus;
   reason?: string;
-  transition?: 'reserve' | 'stop';
+  transition?: 'reserve' | 'stop' | 'archive' | 'unarchive';
 }
 
 const conflict = (message = 'The project environment changed concurrently. Reload and retry.'): ProjectPolicyError =>
@@ -101,6 +101,22 @@ function decide(slot: SlotRow, engagementId: string, action: EnvironmentCommandA
   return { status: 'refused', reason: 'not_active' };
 }
 
+/**
+ * Archive, unarchive, and the activate refusal for an archived project. Archive is refused while the project's own
+ * environment is held or not stopped, so its containers are never left behind a flag.
+ */
+function decideLifecycle(slot: SlotRow, engagementId: string, action: EnvironmentCommandAction, expectedVersion: number, row: { archivedAt: Date | null; observedState: string } | null): Decision {
+  if (expectedVersion !== slot.version) return { status: 'stale', reason: 'stale_version' };
+  if (action === 'archive') {
+    if (slot.ownerEngagementId === engagementId && slot.phase !== 'idle') return { status: 'refused', reason: 'held' };
+    if (row !== null && ['starting', 'ready', 'stopping', 'uncertain'].includes(row.observedState)) return { status: 'refused', reason: 'not_stopped' };
+    return { status: 'accepted', transition: 'archive' };
+  }
+  if (action === 'unarchive') return { status: 'accepted', transition: 'unarchive' };
+  if (action === 'activate' && row?.archivedAt) return { status: 'refused', reason: 'archived' };
+  return decide(slot, engagementId, action, expectedVersion);
+}
+
 export class ProjectEnvironmentService implements ExecutionAdmission {
   public constructor(private readonly db: PrismaClient, private readonly deploymentId: string) {}
 
@@ -130,11 +146,21 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
         if (existing.payloadFingerprint !== fingerprint) throw conflict('This request id was already used for a different command.');
         return view('replayed', slot, engagementId, existing.id, existing.reason ?? undefined);
       }
-      const decision = decide(slot, engagementId, action, expectedVersion);
+      const row = await tx.projectEnvironment.findUnique({ where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } }, select: { archivedAt: true, observedState: true } });
+      const decision = decideLifecycle(slot, engagementId, action, expectedVersion, row);
       const outcome = decision.status === 'accepted' ? 'accepted' : 'refused';
       const command = await tx.environmentCommand.create({
         data: { deploymentId: this.deploymentId, requestId, engagementId, actorUserId: userId, action, expectedVersion, payloadFingerprint: fingerprint, outcome, reason: decision.reason ?? null },
       });
+      if (decision.transition === 'archive' || decision.transition === 'unarchive') {
+        const archivedAt = decision.transition === 'archive' ? new Date() : null;
+        await tx.projectEnvironment.upsert({
+          where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } },
+          create: { deploymentId: this.deploymentId, engagementId, desiredState: 'stopped', archivedAt },
+          update: { archivedAt },
+        });
+        return view('accepted', slot, engagementId, command.id);
+      }
       if (decision.transition === 'reserve') {
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'starting', ownerEngagementId: engagementId, commandId: command.id });
         await tx.projectEnvironment.upsert({
@@ -165,14 +191,14 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
       const slot = await lockSlotForShare(tx, this.deploymentId);
       const row = await tx.projectEnvironment.findUnique({
         where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } },
-        select: { observedState: true, desiredState: true, generation: true, observedAt: true },
+        select: { observedState: true, desiredState: true, generation: true, observedAt: true, archivedAt: true, lastError: true },
       });
       const own = slot.ownerEngagementId === engagementId;
       return {
         engagementId,
         environment: row === null
-          ? { observedState: 'unprovisioned', desiredState: 'stopped', generation: 0, observedAt: null }
-          : { observedState: row.observedState, desiredState: row.desiredState, generation: row.generation, observedAt: row.observedAt?.toISOString() ?? null },
+          ? { observedState: 'unprovisioned', desiredState: 'stopped', generation: 0, observedAt: null, archived: false, lastError: null }
+          : { observedState: row.observedState, desiredState: row.desiredState, generation: row.generation, observedAt: row.observedAt?.toISOString() ?? null, archived: row.archivedAt !== null, lastError: row.lastError },
         slot: { phase: slot.phase, version: slot.version, held: slot.phase !== 'idle', ownedByThisProject: own, activeEngagementId: own ? engagementId : null },
       };
     });
@@ -183,7 +209,7 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
    * exposed to a browser, CLI or model. The slot is released only by an
    * observed `stopped`; elapsed time never releases it.
    */
-  public async observe(input: { commandId: string; expectedVersion: number; observation: Observation; runtimeUrl?: string; generation?: number }): Promise<EnvironmentCommandResult> {
+  public async observe(input: { commandId: string; expectedVersion: number; observation: Observation; runtimeUrl?: string; generation?: number; reason?: string }): Promise<EnvironmentCommandResult> {
     return this.transaction(async tx => {
       await ensureSlot(tx, this.deploymentId);
       const slot = await lockSlotForUpdate(tx, this.deploymentId);
@@ -198,20 +224,27 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
         // The generation names the container incarnation the endpoint belongs to. It is recorded as given, not counted.
         if (input.generation === undefined || !Number.isSafeInteger(input.generation) || input.generation < 1) return view('refused', slot, null, slot.commandId, 'invalid_generation');
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'ready', ownerEngagementId: owner, commandId: slot.commandId });
-        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'ready', observedAt: new Date(), generation: input.generation, runtimeUrl: input.runtimeUrl } });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'ready', observedAt: new Date(), generation: input.generation, runtimeUrl: input.runtimeUrl, lastError: null } });
         await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'observed' } });
         return view('accepted', { ...slot, phase: 'ready', version }, null, slot.commandId);
       }
       if (input.observation === 'stopped' && (from === 'starting' || from === 'stopping' || from === 'uncertain')) {
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'idle', ownerEngagementId: null, commandId: null });
-        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'stopped', desiredState: 'stopped', observedAt: new Date(), runtimeUrl: null } });
-        await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'observed' } });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'stopped', desiredState: 'stopped', observedAt: new Date(), runtimeUrl: null, lastError: input.reason ?? null } });
+        await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'observed', reason: input.reason ?? null } });
         return view('accepted', { phase: 'idle', ownerEngagementId: null, commandId: null, version }, null, slot.commandId);
+      }
+      // The stop was not carried out: a run is still active, so the containers keep running and the slot returns to ready.
+      if (input.observation === 'undrained' && from === 'stopping') {
+        const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'ready', ownerEngagementId: owner, commandId: slot.commandId });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'ready', desiredState: 'ready', observedAt: new Date(), lastError: input.reason ?? 'undrained' } });
+        await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'refused', reason: input.reason ?? 'undrained' } });
+        return view('accepted', { ...slot, phase: 'ready', version }, null, slot.commandId);
       }
       if (input.observation === 'uncertain' && (from === 'starting' || from === 'ready' || from === 'stopping')) {
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'uncertain', ownerEngagementId: owner, commandId: slot.commandId });
-        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'uncertain', observedAt: new Date() } });
-        await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'uncertain' } });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'uncertain', observedAt: new Date(), lastError: input.reason ?? null } });
+        await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'uncertain', reason: input.reason ?? null } });
         return view('accepted', { ...slot, phase: 'uncertain', version }, null, slot.commandId);
       }
       return view('refused', slot, null, input.commandId, 'invalid_transition');
@@ -235,8 +268,9 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
     // the ledger from recording a run the routed runtime cannot take.
     const row = await tx.projectEnvironment.findUnique({
       where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } },
-      select: { observedState: true },
+      select: { observedState: true, archivedAt: true },
     });
+    if (row !== null && row.archivedAt !== null) throw new ProjectPolicyError('conflict', 'The project is archived. Unarchive it to run.');
     if (row !== null && row.observedState !== 'ready') {
       throw new ProjectPolicyError('conflict', 'The project environment is not running. Activate it to start a run.');
     }
