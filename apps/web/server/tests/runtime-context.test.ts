@@ -33,8 +33,10 @@ it('resolves the five CLI configurable fields from persisted metadata and truste
   const context = await service.resolve('local', 'owned', { kind: 'planning' });
   const fixture = JSON.parse(readFileSync(new URL('../../tests/fixtures/w06/cli-context.json', import.meta.url), 'utf8'));
   const cli = readFileSync(new URL('../../../cli/src/hooks/useAgent.ts', import.meta.url), 'utf8');
-  const start = cli.indexOf('const configurable: Record<string, unknown> = {};');
-  expect(createHash('sha256').update(cli.slice(start, cli.indexOf('const hasConfigurable', start))).digest('hex')).toBe(fixture.sourceHash);
+  // ADR-0092: the CLI no longer builds these fields. The control plane supplies them from persisted metadata, so the
+  // parity guard now asserts the opposite: no pinned engagement or client-built configurable block in the CLI.
+  expect(cli).not.toContain('RAPTIX_ENGAGEMENT');
+  expect(cli).not.toContain('const configurable: Record<string, unknown> = {};');
   expect(context.configurable).toEqual(fixture.configurable);
   expect(context.configurable).toEqual(fixture.hydration.fresh);
   expect(fixture.hydration.existingUpdates).toBeNull();

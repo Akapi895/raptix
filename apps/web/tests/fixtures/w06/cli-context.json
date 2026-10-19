@@ -1,6 +1,5 @@
 {
   "provenance": "CLI submit block executed from repository source; installed runtime hydration helper executed without graph runs",
-  "sourceHash": "44b6cb3256a1e2f090e25ec1c83ff80648ef72d68ae6d908db746b00a2968b5b",
   "env": {
     "RAPTIX_ENGAGEMENT": "parity-project",
     "RAPTIX_WORKSPACE_PATH": "/workspace/parity-project",

@@ -159,9 +159,11 @@ try {
     return threadId;
   };
   const intent = { message: 'i01 admission probe', options: {} };
-  const threadA1 = await bind(a.id);
-  const runA1 = await ownership.reserve('local', a.id, `run-a1-${suffix}`, 'create_run', intent, threadA1);
-  assert.equal(runA1.reserved, true, 'an idle deployment admits, as before this change');
+  // Project c has never had an environment record, so it is still the legacy path and an idle slot admits it.
+  const c = await first.engagement.create({ data: project('c') });
+  const threadC1 = await bind(c.id);
+  const runC1 = await ownership.reserve('local', c.id, `run-c1-${suffix}`, 'create_run', intent, threadC1);
+  assert.equal(runC1.reserved, true, 'an idle deployment admits a project with no environment record, as before this change');
   checks.push('an idle deployment admits a run exactly as before the environment slot existed');
 
   const claimA = await service().submit('local', a.id, command('claim-a', 'activate', 7));
@@ -178,9 +180,19 @@ try {
 
   const threadB = await bind(b.id);
   await assert.rejects(() => ownership.reserve('local', b.id, `run-b1-${suffix}`, 'create_run', intent, threadB), isConflict);
-  const replayA1 = await ownership.reserve('local', a.id, `run-a1-${suffix}`, 'create_run', intent, threadA1);
-  assert.equal(replayA1.reserved, false, 'a recorded request replays even after the slot moved');
+  const replayC1 = await ownership.reserve('local', c.id, `run-c1-${suffix}`, 'create_run', intent, threadC1);
+  assert.equal(replayC1.reserved, false, 'a recorded request replays even after the slot moved');
   checks.push('a run for another project is refused while the slot is held; recorded replays are not gated');
+
+  // 11. A managed project whose environment is stopped starts no run, even while the slot is free.
+  const stopA = await service().submit('local', a.id, command('stop-a-final', 'stop', readyA.version));
+  assert.equal(stopA.status, 'accepted');
+  const stoppedA = await service().observe({ commandId: stopA.commandId!, expectedVersion: stopA.version, observation: 'stopped' });
+  assert.equal(stoppedA.phase, 'idle');
+  const threadA3 = await bind(a.id);
+  await assert.rejects(() => ownership.reserve('local', a.id, `run-a3-${suffix}`, 'create_run', intent, threadA3), isConflict);
+  assert.equal(await first.webRequestLedger.count({ where: { requestId: `run-a3-${suffix}` } }), 0, 'a refused run is not recorded');
+  checks.push('a stopped managed project refuses a run while the slot is free, and the ledger records nothing');
 
   console.log(`ADR-0092 I01 environment admission checks passed (${checks.length} groups)`);
   for (const check of checks) console.log(`  - ${check}`);
