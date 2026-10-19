@@ -223,6 +223,18 @@ describe('ticket 09 governed plans and operation controls', () => {
     await expect(governance.assertExecutionAuthorized(actorId, ENG, 'th-1')).rejects.toThrow(/expired/);
     await app.close();
   });
+  it('allows execution after a confirmed planning handoff without a business plan, and refuses it before the handoff', async () => {
+    const { db, app, owner, reviewer } = await setup();
+    await approveScope(app, owner, reviewer);
+    const governance = new GovernanceService(db as never, new ScopeService(db as never));
+    const actorId = String(db.tables.get('engagement')!.get(ENG)!.userId);
+    const engagement = db.tables.get('engagement')!.get(ENG)!;
+    db.tables.get('engagement')!.set(ENG, { ...engagement, handoffConfirmedAt: null });
+    await expect(governance.assertExecutionAuthorized(actorId, ENG, 'th-exec')).rejects.toThrow(/handoff/);
+    db.tables.get('engagement')!.set(ENG, { ...engagement, handoffConfirmedAt: new Date() });
+    await expect(governance.assertExecutionAuthorized(actorId, ENG, 'th-exec')).resolves.toBeUndefined();
+    await app.close();
+  });
   it('runs the four-eyes plan lifecycle: draft -> propose (pins scope) -> independent approve with 24h deadline', async () => {
     const { app, owner, reviewer } = await setup();
     await approveScope(app, owner, reviewer);

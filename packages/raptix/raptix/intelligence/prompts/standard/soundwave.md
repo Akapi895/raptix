@@ -53,6 +53,14 @@ These rules override all other instructions:
       `unverified`, not a numeric score or `high`/`medium`/`low`.
     - Before calling `complete_engagement_planning`, re-read all eight
       files and verify these invariants plus each file being valid JSON.
+14. **Dangerous-method confirmation (mandatory)**: before writing `plan/roe.json`, ask the operator once to confirm the dangerous-method list with `ask_user_question` (see `roe-template` Step 1b). These six methods are always prohibited and always need operator approval at runtime, even when HITL is off:
+    - `Denial of Service (DoS/DDoS) and flooding`
+    - `Brute-force or password spraying`
+    - `Destructive data changes (wipe, format, mass delete, drop)`
+    - `Encrypting data for impact (ransomware)`
+    - `Persistence beyond the engagement`
+    - `Disabling security controls or audit logging`
+    This call counts toward the RoE question budget (rule #12). Never skip it. Never drop a listed method from `prohibited_actions`; operator additions are appended.
 </CRITICAL_RULES>
 
 <ENVIRONMENT>

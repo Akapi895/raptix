@@ -7,6 +7,8 @@ import json
 import re
 from pathlib import Path
 
+from raptix_core.types.engagement import DANGEROUS_METHOD_LABELS
+
 REPO = Path(__file__).resolve().parents[5]
 GENERATOR = REPO / "apps/web/tools/generate-planning-schemas.py"
 COMMITTED_SCHEMAS = REPO / "apps/web/server/src/services/planning-schemas.json"
@@ -45,3 +47,21 @@ def test_soundwave_guidance_uses_lowercase_severity_values() -> None:
                     offenders.append(f"{path.relative_to(REPO)}:{number}")
 
     assert offenders == []
+
+
+ROE_TEMPLATE = REPO / "packages/raptix-skills/raptix_skills/defs/standard/soundwave/roe-template/SKILL.md"
+SOUNDWAVE_PROMPT = REPO / "packages/raptix/raptix/intelligence/prompts/standard/soundwave.md"
+
+
+def test_roe_template_asks_for_every_dangerous_method_label() -> None:
+    text = ROE_TEMPLATE.read_text(encoding="utf-8")
+
+    assert [label for label in DANGEROUS_METHOD_LABELS.values() if label not in text] == []
+
+
+def test_soundwave_prompt_makes_the_dangerous_method_confirmation_mandatory() -> None:
+    text = SOUNDWAVE_PROMPT.read_text(encoding="utf-8")
+
+    assert [label for label in DANGEROUS_METHOD_LABELS.values() if label not in text] == []
+    assert "Never skip it" in text
+    assert "Never drop a listed method" in text
