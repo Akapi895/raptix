@@ -2,7 +2,7 @@ import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 
 // ADR-0092: project environment lifecycle commands and the single active slot.
 
-export const ENVIRONMENT_COMMAND_ACTIONS = ['activate', 'stop'] as const
+export const ENVIRONMENT_COMMAND_ACTIONS = ['activate', 'stop', 'archive', 'unarchive'] as const
 export const DEPLOYMENT_SLOT_PHASES = ['idle', 'starting', 'ready', 'stopping', 'uncertain'] as const
 export const ENVIRONMENT_COMMAND_STATUSES = ['accepted', 'replayed', 'busy', 'stale', 'refused'] as const
 
@@ -55,7 +55,16 @@ export function isEnvironmentCommandResult(v: unknown): v is EnvironmentCommandR
 /** What a caller may see about one project's environment. The slot is shared, so other projects appear only as `held`. */
 export interface EnvironmentStateView {
   engagementId: string
-  environment: { observedState: string; desiredState: string; generation: number; observedAt: string | null }
+  environment: {
+    observedState: string
+    desiredState: string
+    generation: number
+    observedAt: string | null
+    /** True after an archive. Archived data is kept; the project cannot start until it is unarchived. */
+    archived: boolean
+    /** Bounded code for the last failed or undrained attempt, cleared by the next ready. Never free text. */
+    lastError: string | null
+  }
   slot: {
     phase: DeploymentSlotPhase
     version: number
@@ -76,6 +85,7 @@ export function isEnvironmentStateView(v: unknown): v is EnvironmentStateView {
   const slot = v.slot
   if (!(OBSERVED_STATES as readonly unknown[]).includes(env.observedState) || !['stopped', 'ready'].includes(String(env.desiredState))) return false
   if (!Number.isSafeInteger(env.generation) || (env.generation as number) < 0 || (env.observedAt !== null && !isIsoUtcTimestamp(env.observedAt))) return false
+  if (typeof env.archived !== 'boolean' || (env.lastError !== null && typeof env.lastError !== 'string')) return false
   if (!(DEPLOYMENT_SLOT_PHASES as readonly unknown[]).includes(slot.phase) || !Number.isSafeInteger(slot.version) || (slot.version as number) < 0) return false
   if (typeof slot.held !== 'boolean' || typeof slot.ownedByThisProject !== 'boolean') return false
   if (slot.ownedByThisProject && slot.activeEngagementId !== v.engagementId) return false

@@ -7,6 +7,7 @@ import {
   type ControllerRole,
   type HostControllerClient,
 } from '../../integrations/environments/controller-client.js';
+import { RuntimeReadClient } from '../../integrations/runtime/read-client.js';
 import { runtimeUrlFor, type ProjectEnvironmentService } from './project-environment-service.js';
 
 export interface LifecycleConfig {
@@ -24,6 +25,10 @@ export interface LifecycleOptions {
   /** How long a started environment may take to become ready before this attempt rolls back. */
   readinessTimeoutMs?: number;
   pollIntervalMs?: number;
+  /** How long a stop waits for active runs to finish before it gives up and keeps the environment ready (ADR-0092 I06). */
+  drainTimeoutMs?: number;
+  /** Reads the status of one run on an endpoint. The default asks the runtime; a test supplies its own. */
+  runStatus?: (endpoint: string, threadId: string, runId: string) => Promise<string>;
 }
 
 type Seen =
@@ -31,11 +36,20 @@ type Seen =
   | { kind: 'present'; running: boolean; generation: number; health: string }
   | { kind: 'unknown' };
 
-interface EnvironmentRow { id: string; generation: number; workspaceSlug: string }
+interface EnvironmentRow { id: string; engagementId: string; generation: number; workspaceSlug: string }
+
+/** Run states after which the runtime will not execute the run again (the same set RunService treats as ended). */
+const TERMINAL_RUN_STATUSES = new Set(['success', 'error', 'timeout', 'interrupted']);
 
 const ROLES: readonly ControllerRole[] = ['runtime', 'sandbox'];
 /** Refusals that prove nothing of this environment was created, so the slot may be released when nothing runs. */
 const NOTHING_CREATED = new Set(['foreign_resource', 'generation_mismatch', 'image_missing', 'rejected_path', 'rejected_image', 'invalid_request']);
+
+async function defaultRunStatus(endpoint: string, threadId: string, runId: string): Promise<string> {
+  const { body } = await new RuntimeReadClient(endpoint).instanceExchange('GET', `/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}`);
+  const status = (body as { status?: unknown } | null)?.status;
+  return typeof status === 'string' ? status : 'unknown';
+}
 
 async function defaultProbe(endpoint: string): Promise<boolean> {
   try {
@@ -55,6 +69,8 @@ export class EnvironmentLifecycle {
   private readonly probe: (endpoint: string) => Promise<boolean>;
   private readonly readinessTimeoutMs: number;
   private readonly pollIntervalMs: number;
+  private readonly drainTimeoutMs: number;
+  private readonly runStatus: (endpoint: string, threadId: string, runId: string) => Promise<string>;
 
   public constructor(
     private readonly db: PrismaClient,
@@ -66,6 +82,8 @@ export class EnvironmentLifecycle {
     this.probe = options.probe ?? defaultProbe;
     this.readinessTimeoutMs = options.readinessTimeoutMs ?? 600_000;
     this.pollIntervalMs = options.pollIntervalMs ?? 2_000;
+    this.drainTimeoutMs = options.drainTimeoutMs ?? 600_000;
+    this.runStatus = options.runStatus ?? defaultRunStatus;
   }
 
   /** Create and start both containers, wait for readiness, and report ready with the endpoint. */
@@ -73,7 +91,7 @@ export class EnvironmentLifecycle {
     const env = await this.environment(engagementId);
     const found = await this.incarnation(env);
     // Not even the first observation answered. The slot is held as uncertain, at the version the caller passed in.
-    if (found === null) return this.report(env, commandId, slotVersion, 'uncertain', env.generation);
+    if (found === null) return this.report(env, commandId, slotVersion, 'uncertain', env.generation, 'observe_failed');
     const { generation, seen } = found;
     try {
       // A container left at an older generation is recreated at the chosen one. Only a stopped container can be.
@@ -85,19 +103,50 @@ export class EnvironmentLifecycle {
       for (const role of ROLES) await this.controller.call('start', { identity: this.identity(env, role, generation) });
       if (await this.awaitReady(env, generation)) return this.report(env, commandId, slotVersion, 'ready', generation);
       // Not ready in time: stop what this attempt started, then report only what is observed.
-      return this.report(env, commandId, slotVersion, await this.stopAll(env, generation), generation);
+      return this.report(env, commandId, slotVersion, await this.stopAll(env, generation), generation, 'not_ready');
     } catch (error) {
       const seen = await this.observeAll(env, generation);
       const definitive = error instanceof ControllerRefusedError && NOTHING_CREATED.has(error.code);
       const idle = seen.every(item => item.kind === 'absent' || (item.kind === 'present' && !item.running));
-      return this.report(env, commandId, slotVersion, definitive && idle ? 'stopped' : 'uncertain', generation);
+      const reason = error instanceof ControllerRefusedError ? error.code : 'controller_unreachable';
+      return this.report(env, commandId, slotVersion, definitive && idle ? 'stopped' : 'uncertain', generation, reason);
     }
   }
 
   /** Stop both containers. Report stopped only when both are observed not running. */
   public async shutDown(engagementId: string, commandId: string, slotVersion: number): Promise<EnvironmentCommandResult> {
     const env = await this.environment(engagementId);
+    // A stop waits for the runs it would cut off. If they do not finish in time, nothing is stopped and the slot returns to ready.
+    if (!await this.drain(env)) return this.service.observe({ commandId, expectedVersion: slotVersion, observation: 'undrained', reason: 'run_active' });
     return this.report(env, commandId, slotVersion, await this.stopAll(env, env.generation || 1), env.generation);
+  }
+
+  /**
+   * Waits until no run of this project is still in flight, then returns true. A run is released only when the runtime
+   * reports it terminal. An unreadable run status counts as still active, so an unknown run is never cut off.
+   */
+  private async drain(env: EnvironmentRow): Promise<boolean> {
+    const endpoint = runtimeUrlFor(this.config.deploymentId, env.id);
+    const deadline = Date.now() + this.drainTimeoutMs;
+    for (;;) {
+      const open = await this.db.webRequestLedger.findMany({
+        where: { engagementId: env.engagementId, activeThreadId: { not: null }, operation: { not: 'create_thread' } },
+        select: { requestId: true, threadId: true, runId: true },
+      });
+      if (open.length === 0) return true;
+      for (const row of open) {
+        if (row.runId === null || row.threadId === null) continue;
+        const status = await this.runStatus(endpoint, row.threadId, row.runId).catch(() => 'unknown');
+        if (TERMINAL_RUN_STATUSES.has(status)) {
+          await this.db.webRequestLedger.updateMany({
+            where: { engagementId: env.engagementId, requestId: row.requestId, runId: row.runId, state: 'accepted', operation: { not: 'create_thread' } },
+            data: { activeThreadId: null },
+          });
+        }
+      }
+      if (Date.now() >= deadline) return false;
+      await new Promise(resolve => setTimeout(resolve, this.pollIntervalMs));
+    }
   }
 
   /**
@@ -157,11 +206,11 @@ export class EnvironmentLifecycle {
     return unknown || stillRunning ? 'uncertain' : 'stopped';
   }
 
-  private async report(env: EnvironmentRow, commandId: string, slotVersion: number, outcome: 'ready' | 'stopped' | 'uncertain', generation: number): Promise<EnvironmentCommandResult> {
+  private async report(env: EnvironmentRow, commandId: string, slotVersion: number, outcome: 'ready' | 'stopped' | 'uncertain', generation: number, reason?: string): Promise<EnvironmentCommandResult> {
     if (outcome === 'ready') {
       return this.service.observe({ commandId, expectedVersion: slotVersion, observation: 'ready', runtimeUrl: runtimeUrlFor(this.config.deploymentId, env.id), generation });
     }
-    return this.service.observe({ commandId, expectedVersion: slotVersion, observation: outcome });
+    return this.service.observe({ commandId, expectedVersion: slotVersion, observation: outcome, ...(reason === undefined ? {} : { reason }) });
   }
 
   private async environment(engagementId: string): Promise<EnvironmentRow> {
@@ -170,7 +219,7 @@ export class EnvironmentLifecycle {
       select: { id: true, generation: true },
     });
     const project = await this.db.engagement.findUniqueOrThrow({ where: { id: engagementId }, select: { workspaceSlug: true } });
-    return { id: row.id, generation: row.generation, workspaceSlug: project.workspaceSlug };
+    return { id: row.id, engagementId, generation: row.generation, workspaceSlug: project.workspaceSlug };
   }
 
   private identity(env: EnvironmentRow, role: ControllerRole, generation: number): ControllerIdentity {

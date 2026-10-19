@@ -6,7 +6,7 @@ const view = (engagementId: string, overrides: { observed?: EnvironmentStateView
   const phase = overrides.phase ?? 'idle'
   return {
     engagementId,
-    environment: { observedState: overrides.observed ?? 'stopped', desiredState: 'stopped', generation: 1, observedAt: null },
+    environment: { observedState: overrides.observed ?? 'stopped', desiredState: 'stopped', generation: 1, observedAt: null, archived: false, lastError: null },
     slot: { phase, version: overrides.version ?? 2, held: phase !== 'idle', ownedByThisProject: overrides.own ?? false, activeEngagementId: overrides.own ? engagementId : null },
   }
 }

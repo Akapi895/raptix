@@ -179,6 +179,8 @@ model ProjectEnvironment {
   observedAt    DateTime?
   // Set only from the host controller's ready observation (ADR-0092); never from a browser or a model.
   runtimeUrl    String?
+  // ADR-0092 I06: set by archive. Archived data is kept; the project cannot start until it is unarchived.
+  archivedAt    DateTime?
   engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   createdAt     DateTime                 @default(now())
   updatedAt     DateTime                 @updatedAt
@@ -189,6 +191,8 @@ model ProjectEnvironment {
 enum EnvironmentCommandAction {
   activate
   stop
+  archive
+  unarchive
 }
 
 enum EnvironmentCommandOutcome {

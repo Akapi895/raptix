@@ -13,6 +13,8 @@ it('refuses unbounded identifiers, unknown actions and invalid versions', () => 
   expect(isEnvironmentCommandRequest({ ...request, requestId: 'has spaces here' })).toBe(false);
   expect(isEnvironmentCommandRequest({ ...request, requestId: 'x'.repeat(129) })).toBe(false);
   expect(isEnvironmentCommandRequest({ ...request, action: 'delete' })).toBe(false);
+  expect(isEnvironmentCommandRequest({ ...request, action: 'archive' })).toBe(true);
+  expect(isEnvironmentCommandRequest({ ...request, action: 'unarchive' })).toBe(true);
   expect(isEnvironmentCommandRequest({ ...request, expectedVersion: -1 })).toBe(false);
   expect(isEnvironmentCommandRequest({ ...request, expectedVersion: 1.5 })).toBe(false);
   expect(isEnvironmentCommandRequest({ ...request, expectedVersion: '0' })).toBe(false);
@@ -37,8 +39,11 @@ it('refuses results with unknown phases, negative versions or non-string reasons
 
 it('validates the environment state view and never names another project as the holder', async () => {
   const { isEnvironmentStateView } = await import('../src/environments.js');
-  const own = { engagementId: 'eng-a', environment: { observedState: 'ready', desiredState: 'ready', generation: 1, observedAt: '2026-10-19T00:00:00.000Z' }, slot: { phase: 'ready', version: 3, held: true, ownedByThisProject: true, activeEngagementId: 'eng-a' } };
+  const own = { engagementId: 'eng-a', environment: { observedState: 'ready', desiredState: 'ready', generation: 1, observedAt: '2026-10-19T00:00:00.000Z', archived: false, lastError: null }, slot: { phase: 'ready', version: 3, held: true, ownedByThisProject: true, activeEngagementId: 'eng-a' } };
   expect(isEnvironmentStateView(own)).toBe(true);
+  expect(isEnvironmentStateView({ ...own, environment: { ...own.environment, archived: true, lastError: 'rejected_path' } })).toBe(true);
+  expect(isEnvironmentStateView({ ...own, environment: { ...own.environment, archived: 'yes' } })).toBe(false);
+  expect(isEnvironmentStateView({ ...own, environment: { ...own.environment, lastError: 42 } })).toBe(false);
   expect(isEnvironmentStateView({ ...own, slot: { ...own.slot, ownedByThisProject: false, activeEngagementId: 'eng-a' } })).toBe(false);
   expect(isEnvironmentStateView({ ...own, slot: { phase: 'ready', version: 3, held: true, ownedByThisProject: false, activeEngagementId: 'eng-b' } })).toBe(false);
   expect(isEnvironmentStateView({ ...own, slot: { phase: 'idle', version: 3, held: true, ownedByThisProject: false, activeEngagementId: null } })).toBe(false);
