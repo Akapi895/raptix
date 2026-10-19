@@ -191,3 +191,38 @@ Test `controller-client` "gives up after the timeout" trước đây đặt time
 7. Acceptance trình duyệt cho panel (I05).
 
 **Vẫn mở từ trước:** sandbox có thể tới runtime API và host controller (cần ADR quyết định). Skillogy đang tắt cho runtime môi trường. Tài liệu ADR-0092 giữ trạng thái `Proposed` vì chưa đủ điều kiện Accepted.
+
+## 11. Kết quả I06 và I07 (2026-10-19, đã làm, một phần)
+
+**Commit:** `10ae66f2` (controller bind trước khi báo listening), `919e5b7a` (archive, drain, lý do lỗi).
+
+**I06 đã làm:**
+
+- **Archive và unarchive:** lệnh mới, lưu `archivedAt` (migration additive `20261030000000_environment_archive`). Archive bị từ chối khi project đang giữ slot (`held`) hoặc môi trường chưa dừng (`not_stopped`). Project đã archive không activate được (`archived`) và không admit run. Dữ liệu và generation được giữ.
+- **Drain trước khi stop:** stop chỉ dừng container khi không còn run đang in flight. Run được coi là kết thúc khi runtime báo trạng thái terminal. Hết `drainTimeoutMs` (mặc định 10 phút) thì slot trở lại `ready` với lý do `run_active`, container vẫn chạy.
+- **Lý do lỗi có tên:** `ProjectEnvironment.lastError` và `EnvironmentStateView.environment.lastError` (mã đóng, ví dụ `rejected_path`). Lỗi đầu tiên trong ngày (activate im lặng khi thiếu thư mục workspace) nay hiện lý do thay vì chỉ `stopped`.
+- **Kiểm chứng:** `environment-recovery-live.ts` (3 nhóm) pass trên PostgreSQL dùng một lần. Ba bộ live cũ (admission 14, lifecycle 6, facade 7) pass sau thay đổi. Server 502/502. Contracts 54/55, lỗi duy nhất là lỗi có sẵn `run-api.test.ts`. Web panel và CLI typecheck sạch.
+
+**I06 chưa làm:**
+
+- Orphan detection: cần thao tác controller liệt kê container theo label, nằm ngoài sáu thao tác đã duyệt. Chưa làm.
+- Cleanup retry có giới hạn: chưa làm.
+- Tích hợp P10 (mailbox/grant) và P11 (checkpoint/question): chưa làm.
+- Bộ test còn lại trong plan (bộ đếm graph/tool, stop giữa model/tool, paused restart, lost ACK/cancel race): chưa làm.
+- Drain với run thật trên runtime: mới kiểm chứng với runtime status double. Chưa chạy live.
+- CLI và Web chưa hiển thị `lastError`.
+
+**I07 đã làm (dry-run, bản sao, không ghi DB thật):**
+
+- Phạm vi theo quyết định của người yêu cầu: chỉ `reddish`. Project `viettel-peru` không tồn tại trong DB web, DB restore, hay volume workspace, nên không có gì để migrate. Cần xác nhận lại tên.
+- Công cụ `apps/web/server/scripts/legacy-migration/migrate_legacy_project.py` có `dry-run`, `verify`, `rollback`. Rollback chỉ xóa thư mục có marker dry-run.
+- Kết quả dry-run cho `reddish`: workspace 10 file khớp hash. Checkpoint: 51 checkpoint và 215 write (khóa theo `thread_id`). Mailbox: 0 dòng. `verified: true`. Rollback và verify đều kiểm chứng.
+- Chạy trong container với volume chỉ đọc, đầu ra ở thư mục riêng. Không mở runtime legacy và không ghi DB thật.
+
+**I07 chưa làm:**
+
+- Snapshot chưa quiesce: runtime legacy vẫn chạy khi chụp. Cutover thật cần dừng nguồn, và cần duyệt riêng.
+- Pickle toàn cục (`.langgraph_ops.pckl` 4.9 MB, `store.pckl`, `store.vectors.pckl`, retry counter) chưa được migrate. Chưa biết chúng có tham chiếu tới thread của `reddish` hay không. Cần quyết định.
+- Chưa đưa dữ liệu đã migrate vào volume state của môi trường `reddish`. Runtime môi trường hiện bắt đầu với store trống, nên lịch sử thread không hiển thị trong chế độ environment.
+- Cutover dữ liệu thật trên DB web chưa thực hiện (đúng theo phê duyệt).
+- Kiểm tra CLI và Web mở cùng project sau migration chưa làm.
