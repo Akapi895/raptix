@@ -125,6 +125,60 @@ try {
   assert.equal(rState.environment.observedState, 'stopped');
   assert.equal(rState.environment.lastError, 'rejected_path', 'the refusal reason is visible on the project');
   checks.push('a refused start rolls back and the project states the bounded reason rejected_path');
+
+  // 4. A stop the controller did not answer is retried, and the stop still completes.
+  const t = await project('t');
+  const tStart = await command(t.id, 't1', 'activate', (await slot()).version);
+  const tReady = await lifecycle.bringUp(t.id, tStart.commandId!, tStart.version);
+  assert.equal(tReady.phase, 'ready');
+  const tRow = await envRow(t.id);
+  injected.set('stop:runtime', { status: 503, body: {} });
+  const tStop = await command(t.id, 't2', 'stop', tReady.version);
+  const tStopped = await lifecycle.shutDown(t.id, tStop.commandId!, tStop.version);
+  assert.equal(tStopped.phase, 'idle', 'a transient stop failure is retried to completion');
+  assert.equal(running(tRow.id), false);
+  checks.push('a stop the controller does not answer is retried, and the stop completes once it answers');
+
+  // 5. A restart during a stop resumes it. While a run is in flight the restart drains again and returns the slot to
+  // ready; the containers are never stopped or released under a live run.
+  const u = await project('u');
+  const uStart = await command(u.id, 'u1', 'activate', (await slot()).version);
+  const uReady = await lifecycle.bringUp(u.id, uStart.commandId!, uStart.version);
+  const uRow = await envRow(u.id);
+  const uThread = `t-${suffix}-u`;
+  await db.engagementThread.create({ data: { threadId: uThread, engagementId: u.id, assistantId: 'soundwave', kind: 'planning', contextHash: 'ctx' } });
+  await db.webRequestLedger.create({ data: { engagementId: u.id, requestId: `run-u-${suffix}`, operation: 'create_run', payloadHash: 'payload', reservationToken: randomUUID(), threadId: uThread, runId: 'run-u-1', activeThreadId: uThread, state: 'accepted' } });
+  runStatuses.set('run-u-1', 'running');
+  const uStop = await command(u.id, 'u2', 'stop', uReady.version);
+  assert.equal(uStop.phase, 'stopping');
+  await lifecycle.resumePending();
+  const afterRestart = await slot();
+  assert.equal(afterRestart.phase, 'ready', 'a restart with a live run returns the stop to ready');
+  assert.equal(running(uRow.id), true, 'the containers keep running across the restart');
+  runStatuses.set('run-u-1', 'success');
+  const uStop2 = await command(u.id, 'u3', 'stop', afterRestart.version);
+  assert.equal((await lifecycle.shutDown(u.id, uStop2.commandId!, uStop2.version)).phase, 'idle');
+  checks.push('a restart during a stop resumes it: a live run returns the slot to ready, and the stop completes after the run ends');
+
+  // 6. A stale in-flight marker does not hold a stop when the runtime is not running: nothing can be executing, so the
+  // stop completes at once and the marker stays on record for its owner.
+  const v = await project('v');
+  const vStart = await command(v.id, 'v1', 'activate', (await slot()).version);
+  const vReady = await lifecycle.bringUp(v.id, vStart.commandId!, vStart.version);
+  const vRow = await envRow(v.id);
+  const vThread = `t-${suffix}-v`;
+  await db.engagementThread.create({ data: { threadId: vThread, engagementId: v.id, assistantId: 'soundwave', kind: 'planning', contextHash: 'ctx' } });
+  await db.webRequestLedger.create({ data: { engagementId: v.id, requestId: `run-v-${suffix}`, operation: 'create_run', payloadHash: 'payload', reservationToken: randomUUID(), threadId: vThread, runId: 'run-v-1', activeThreadId: vThread, state: 'accepted' } });
+  runStatuses.set('run-v-1', 'running');
+  const containerRuntime = containers.get(`${vRow.id}:runtime`);
+  assert.ok(containerRuntime, 'the runtime container exists');
+  containerRuntime.running = false;
+  const vStop = await command(v.id, 'v2', 'stop', vReady.version);
+  const vStopped = await lifecycle.shutDown(v.id, vStop.commandId!, vStop.version);
+  assert.equal(vStopped.phase, 'idle', 'a stop with a stale marker and a stopped runtime completes');
+  const kept = await db.webRequestLedger.findFirstOrThrow({ where: { engagementId: v.id, requestId: `run-v-${suffix}` } });
+  assert.equal(kept.activeThreadId, vThread, 'the stale marker stays on record for its owner');
+  checks.push('a stop completes at once when the runtime is not running, and the in-flight marker stays on record');
 } finally {
   await double.close();
   await disconnectDb(db);
