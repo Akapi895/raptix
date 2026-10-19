@@ -1056,3 +1056,19 @@ Engagement `cmvbilcji000035pdx8khoigh` (scope v1 đã duyệt, ROE đến 2026-1
 - UX: sandbox thiếu bị retry 150 giây; `_retry_on_connection_error` cố ý retry để chờ VM boot, và test hiện có khẳng định `httpx.ConnectError` là kiểu lỗi khi hết budget. Cần quyết định: giữ budget, hay fail nhanh kèm thông báo rõ.
 - P13: chưa làm.
 - Plan `2026-10-19-single-active-project-environments` (I00–I09) mới được đề xuất. Nó thay đổi cách activate runtime và xung đột với luồng đang chạy; chưa triển khai.
+
+### 13.26 Results, C2/c-console, P07 và checklist P09 (2026-10-19, tiếp)
+
+**Results (P12):** panel `ThreadResults` trong chi tiết operation hiển thị run theo status thô của runtime, branch từ fleet, và findings có `references.threadId` hoặc `runId` của thread. Dùng endpoint runtime và curated findings sẵn có; chưa có adapter backend mới. Còn lại: proposed findings do AI đề xuất, và nút tạo/đính kèm finding từ operation.
+
+**C2 và c-console (P12):** `h-session` và `c-console` không còn gọi `services.authority` hay `services.clock`; chúng đi qua `services.c2` và `services.operations`. Real composition không gọi mock authority hay clock. Vẫn còn import giá trị từ module feature dùng chung (các hàm `unavailable*` không có state, và `demo-clock`). Không đổi cấu trúc import, vì mock và real nằm chung một bundle và chỉ chọn chế độ lúc chạy.
+
+**P07 PDF/DOCX/Markdown:** server render PDF và DOCX từ cùng snapshot với Markdown và JSON (`report-render.ts`). PDF nhúng DejaVu Sans để hiển thị đủ dấu tiếng Việt. Deliver kind `export` nhận `pdf` và `docx`. Artifact có trường `encoding`; byte nhị phân đi dưới dạng base64 để replay của delivery vẫn là chuỗi. UI real bật Export PDF và Export DOCX cho báo cáo đã approved và lưu file trả về. Đã gỡ gap `report.pdfDocx`. Dependency thêm vào server: `docx`, `pdfkit`, `@types/pdfkit`, `dejavu-fonts-ttf`.
+
+**P09 checklist:** `docs/design/2026-10-19-p09-parity-checklist.md` liệt kê 50 nhãn hành động trên màn mock: 9 có bằng chứng trong code, 31 cần kiểm tra UI, 10 chỉ-mock. Đây là danh sách việc, chưa phải bằng chứng parity; cần xác nhận từng dòng trên browser.
+
+**Commit trong lượt này:** `03fa8679` (Results), `4ff23dcb` (sửa type test P01), `5a7e7e24` (PDF/DOCX server), `d2889ba4` (PDF/DOCX UI), `7094c8aa` (checklist P09).
+
+**Kiểm tra:** server 53 file, 480/480 test; web 140 file, 1344/1344 test (`--maxWorkers=4`); typecheck web và server pass. Lint web còn lỗi ở `apps/web/src/screens/f.tsx` do phiên khác đang sửa; không thuộc các commit trên.
+
+**Còn lại (cần live hoặc quyết định):** P10 forward và hai instance cùng role; P11 acceptance và step controls; P12 Sliver; P02–P06 browser; P09 xác minh checklist và các surface chỉ-mock (inbox phê duyệt, plan review, session console); P13.
