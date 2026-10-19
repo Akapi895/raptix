@@ -1,8 +1,8 @@
-# 0093. Packaging of the environment controller and its images (draft)
+# 0093. Packaging of the environment controller and its images
 
-- **Status:** Proposed (draft, not reviewed; written 2026-10-19)
+- **Status:** Accepted (packaging decision, scope: Windows with Docker Desktop). Written 2026-10-19, accepted by the repository owner.
 - **Date:** 2026-10-19
-- **Deciders:** repository owner and maintainer. Not yet decided.
+- **Deciders:** repository owner (accepted the direction and conditions). Maintainer review pending.
 - **Related:** [ADR-0092](0092-single-active-project-environments.md) (Proposed). Runbook: [`docs/design/2026-10-19-single-active-runbook.md`](../design/2026-10-19-single-active-runbook.md).
 
 ## Context
@@ -29,8 +29,8 @@ ADR draft. It does not change the compose file.
 4. **Update and rollback.** A new image digest is added to the allowlist before any project uses it. Active projects
    keep the digest their containers were created with until they are recreated by an explicit action. Rollback is
    restoring the previous allowlist and recreating the container.
-5. **Platforms.** Windows (Docker Desktop, host controller) is verified on the owner's machine. WSL and Linux are not
-   verified and stay marked as unverified until a run on each.
+5. **Platforms.** Scope of this decision is Windows with Docker Desktop, verified on the owner's machine. WSL and Linux are
+   out of scope for this release (gate exclusion E2).
 
 ## Threat model
 
