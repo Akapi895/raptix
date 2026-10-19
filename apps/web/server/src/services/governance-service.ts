@@ -148,6 +148,12 @@ export class GovernanceService {
     // Local R06 supports the pre-governance handoff flow. Once a business plan
     // exists, local deployments are subject to exactly the same binding gates.
     if (!requirePlan && plans.length === 0) return;
+    if (plans.length === 0) {
+      // The confirmed planning handoff and the approved ROE replace a business plan and operation binding.
+      const handoff = await this.preflight(actorId, engagementId, threadId);
+      if (!handoff.ok) throw new ProjectApiError(409, `Preflight refuses execution: ${handoff.checks.filter((c) => c.state !== 'pass').map((c) => `${c.id}: ${c.detail}`).join('; ')}`);
+      return;
+    }
     const bindings = await this.db.operationBinding.findMany({ where: { engagementId, threadId }, orderBy: { createdAt: 'desc' } });
     // P11: a paused operation keeps its plan binding (resume needs it); a completed one does not.
     const binding = bindings.find((b) => b.threadId === threadId && ['bound', 'running', 'pause_requested', 'paused'].includes(b.status));

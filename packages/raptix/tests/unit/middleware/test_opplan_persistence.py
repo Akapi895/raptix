@@ -215,10 +215,11 @@ def test_load_opplan_reads_through_backend(tmp_path: Path) -> None:
     cmd = _call(
         "load_opplan",
         {"workspace_path": "/workspace"},
-        state={},
+        state={"engagement_name": "demo"},
         backend=backend,
     )
 
+    # ADR-0090: the run identity comes from the trusted state/pin, not the file's display title.
     assert cmd.update["engagement_name"] == "demo"
     assert cmd.update["workspace_path"] == "/workspace"
     assert cmd.update["objectives"][0]["id"] == "OBJ-001"
@@ -241,6 +242,33 @@ def test_load_opplan_binds_workspace_when_plan_is_missing(tmp_path: Path) -> Non
     scoped = EngagementFilesystemBackend(backend, cmd.update["workspace_path"])
     result = scoped.write("/workspace/notes.txt", "{}")
     assert result.error is None
+
+
+@pytest.mark.parametrize("has_plan", [False, True])
+def test_load_opplan_keeps_bound_workspace_when_model_uses_virtual_root(
+    tmp_path: Path, has_plan: bool
+) -> None:
+    backend = _backend(tmp_path)
+    root = "/workspace/lab-01"
+    if has_plan:
+        _persist_opplan_to_backend(
+            backend, root, [_obj_dict("OBJ-001")], engagement_name="lab-01", threat_profile="apt-x"
+        )
+
+    cmd = _call(
+        "load_opplan",
+        {"workspace_path": "/workspace"},
+        state={"engagement_name": "lab-01", "workspace_path": root},
+        backend=backend,
+    )
+
+    assert cmd.update["workspace_path"] == root
+    if has_plan:
+        assert cmd.update["objectives"][0]["id"] == "OBJ-001"
+    scoped = EngagementFilesystemBackend(backend, cmd.update["workspace_path"])
+    assert scoped.write("/workspace/plan/notes.txt", "bound planning output").error is None
+    assert (tmp_path / "workspace/lab-01/plan/notes.txt").read_text() == "bound planning output"
+    assert not (tmp_path / "workspace/plan/notes.txt").exists()
 
 
 # ── auto-persist on each mutating tool ─────────────────────────────────

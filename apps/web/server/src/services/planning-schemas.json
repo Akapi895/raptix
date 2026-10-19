@@ -119,7 +119,12 @@
         "title": "Prohibited Actions",
         "type": "array",
         "default": [
-          "Denial of Service (DoS/DDoS)",
+          "Denial of Service (DoS/DDoS) and flooding",
+          "Brute-force or password spraying",
+          "Destructive data changes (wipe, format, mass delete, drop)",
+          "Encrypting data for impact (ransomware)",
+          "Persistence beyond the engagement",
+          "Disabling security controls or audit logging",
           "Social engineering of employees (unless authorized)",
           "Physical access attempts (unless authorized)",
           "Data exfiltration of real customer data",

@@ -1105,6 +1105,8 @@ def _load_opplan_impl(
     tool_call_id: str = "",
 ) -> Command[Any]:
     """Read plan/opplan.json and hydrate agent state."""
+    # Model-authored paths must not replace the workspace already bound by the run.
+    workspace_path = state.get("workspace_path") or workspace_path
     scoped_backend = _scoped_opplan_backend(backend, workspace_path)
     if scoped_backend is None:
         return Command(
