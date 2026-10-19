@@ -1,4 +1,4 @@
-import { isNonEmptyString, isRecord } from './guards.js'
+import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 
 // ADR-0092: project environment lifecycle commands and the single active slot.
 
@@ -50,4 +50,35 @@ export function isEnvironmentCommandResult(v: unknown): v is EnvironmentCommandR
   // A busy answer means the slot is held: it can never be idle, and it never names the active project.
   if (v.status === 'busy') return v.phase !== 'idle' && !('activeEngagementId' in v)
   return true
+}
+
+/** What a caller may see about one project's environment. The slot is shared, so other projects appear only as `held`. */
+export interface EnvironmentStateView {
+  engagementId: string
+  environment: { observedState: string; desiredState: string; generation: number; observedAt: string | null }
+  slot: {
+    phase: DeploymentSlotPhase
+    version: number
+    /** True when some project holds the deployment slot, including this one. */
+    held: boolean
+    /** True only when this project holds the slot. */
+    ownedByThisProject: boolean
+    /** Set only when this project holds the slot; never another project's id. */
+    activeEngagementId: string | null
+  }
+}
+
+const OBSERVED_STATES = ['unprovisioned', 'starting', 'ready', 'stopping', 'stopped', 'uncertain'] as const
+
+export function isEnvironmentStateView(v: unknown): v is EnvironmentStateView {
+  if (!isRecord(v) || !isNonEmptyString(v.engagementId) || !isRecord(v.environment) || !isRecord(v.slot)) return false
+  const env = v.environment
+  const slot = v.slot
+  if (!(OBSERVED_STATES as readonly unknown[]).includes(env.observedState) || !['stopped', 'ready'].includes(String(env.desiredState))) return false
+  if (!Number.isSafeInteger(env.generation) || (env.generation as number) < 0 || (env.observedAt !== null && !isIsoUtcTimestamp(env.observedAt))) return false
+  if (!(DEPLOYMENT_SLOT_PHASES as readonly unknown[]).includes(slot.phase) || !Number.isSafeInteger(slot.version) || (slot.version as number) < 0) return false
+  if (typeof slot.held !== 'boolean' || typeof slot.ownedByThisProject !== 'boolean') return false
+  if (slot.ownedByThisProject && slot.activeEngagementId !== v.engagementId) return false
+  if (!slot.ownedByThisProject && slot.activeEngagementId !== null) return false
+  return slot.held === (slot.phase !== 'idle')
 }

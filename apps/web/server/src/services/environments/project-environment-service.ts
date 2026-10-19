@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   isEnvironmentCommandRequest,
+  type EnvironmentStateView,
   type DeploymentSlotPhase,
   type EnvironmentCommandAction,
   type EnvironmentCommandResult,
@@ -150,6 +151,30 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
       }
       if (outcome === 'accepted') return view('accepted', slot, engagementId, slot.commandId);
       return view(decision.status, slot, engagementId, command.id, decision.reason);
+    });
+  }
+
+  /**
+   * What one caller may see of a project's environment. The slot is shared, so another project appears only as
+   * `held`, and its id is never returned.
+   */
+  public async state(userId: string, engagementId: string): Promise<EnvironmentStateView> {
+    return this.transaction(async tx => {
+      await requireProjectAccess(tx, userId, engagementId, 'viewer');
+      await ensureSlot(tx, this.deploymentId);
+      const slot = await lockSlotForShare(tx, this.deploymentId);
+      const row = await tx.projectEnvironment.findUnique({
+        where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } },
+        select: { observedState: true, desiredState: true, generation: true, observedAt: true },
+      });
+      const own = slot.ownerEngagementId === engagementId;
+      return {
+        engagementId,
+        environment: row === null
+          ? { observedState: 'unprovisioned', desiredState: 'stopped', generation: 0, observedAt: null }
+          : { observedState: row.observedState, desiredState: row.desiredState, generation: row.generation, observedAt: row.observedAt?.toISOString() ?? null },
+        slot: { phase: slot.phase, version: slot.version, held: slot.phase !== 'idle', ownedByThisProject: own, activeEngagementId: own ? engagementId : null },
+      };
     });
   }
 

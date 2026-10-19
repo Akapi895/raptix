@@ -34,3 +34,12 @@ it('refuses results with unknown phases, negative versions or non-string reasons
   expect(isEnvironmentCommandResult({ status: 'stale', phase: 'idle', version: -1, commandId: null })).toBe(false);
   expect(isEnvironmentCommandResult({ status: 'refused', phase: 'idle', version: 0, commandId: null, reason: 42 })).toBe(false);
 });
+
+it('validates the environment state view and never names another project as the holder', async () => {
+  const { isEnvironmentStateView } = await import('../src/environments.js');
+  const own = { engagementId: 'eng-a', environment: { observedState: 'ready', desiredState: 'ready', generation: 1, observedAt: '2026-10-19T00:00:00.000Z' }, slot: { phase: 'ready', version: 3, held: true, ownedByThisProject: true, activeEngagementId: 'eng-a' } };
+  expect(isEnvironmentStateView(own)).toBe(true);
+  expect(isEnvironmentStateView({ ...own, slot: { ...own.slot, ownedByThisProject: false, activeEngagementId: 'eng-a' } })).toBe(false);
+  expect(isEnvironmentStateView({ ...own, slot: { phase: 'ready', version: 3, held: true, ownedByThisProject: false, activeEngagementId: 'eng-b' } })).toBe(false);
+  expect(isEnvironmentStateView({ ...own, slot: { phase: 'idle', version: 3, held: true, ownedByThisProject: false, activeEngagementId: null } })).toBe(false);
+});
