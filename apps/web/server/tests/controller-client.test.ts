@@ -54,12 +54,19 @@ describe('HostControllerClient', () => {
       init.signal?.addEventListener('abort', () => reject(new Error('aborted')));
     })) as typeof fetch;
     const client = new HostControllerClient('http://127.0.0.1:9100', TOKEN, fetchImpl, 20);
-    await expect(client.call('stop', { identity, stopTimeoutSeconds: 5 })).rejects.toBeInstanceOf(ControllerUnavailableError);
+    // A stop has its own longer budget, so the short timeout is exercised on a read-only operation.
+    await expect(client.call('observe', { identity })).rejects.toBeInstanceOf(ControllerUnavailableError);
+  });
+
+  it('accepts the host.docker.internal name a container uses to reach the host controller', () => {
+    expect(() => new HostControllerClient('http://host.docker.internal:9100', TOKEN)).not.toThrow();
   });
 
   it('refuses a non-loopback controller address and a short token before any request', () => {
     expect(() => new HostControllerClient('http://10.0.0.5:9100', TOKEN)).toThrow(/loopback/);
     expect(() => new HostControllerClient('http://localhost:9100', TOKEN)).toThrow(/loopback/);
+    expect(() => new HostControllerClient('http://host.docker.internal.example:9100', TOKEN)).toThrow(/loopback/);
+    expect(() => new HostControllerClient('https://host.docker.internal:9100', TOKEN)).toThrow(/loopback/);
     expect(() => new HostControllerClient('http://127.0.0.1:9100', 'short')).toThrow(/32 bytes/);
   });
 });

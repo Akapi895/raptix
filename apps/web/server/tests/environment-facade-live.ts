@@ -24,11 +24,21 @@ const lifecycle = new EnvironmentLifecycle(db, service, new HostControllerClient
   sandboxImage: 'ghcr.io/example/sandbox@sha256:' + 'b'.repeat(64),
   workspaceHostRoot: 'D:/work',
   stopTimeoutSeconds: 5,
-});
+}, { probe: async () => true, readinessTimeoutMs: 2000, pollIntervalMs: 10 });
 const app = await buildApp({ environments: new EnvironmentFacade(service, lifecycle) });
 const bare = await buildApp({ environments: new EnvironmentFacade(service) });
 const checks: string[] = [];
 const suffix = randomUUID().slice(0, 8);
+
+// Clients poll the state while a transition runs, as the Web UI and the CLI do. This waits for the settled state.
+async function settled(engagementId: string, observed: string, phase: string): Promise<void> {
+  for (let attempt = 0; attempt < 1200; attempt += 1) {
+    const state = await app.inject({ method: 'GET', url: `/api/engagements/${engagementId}/environment` });
+    if (state.json().environment.observedState === observed && state.json().slot.phase === phase) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error(`the environment never settled at ${observed}/${phase}`);
+}
 
 const project = (tag: string, userId = 'local') => db.engagement.create({ data: { name: `i05-${tag}-${suffix}`, workspaceSlug: `i05-${tag}-${suffix}`, userId, targetType: 'web_url', targetValue: 'https://lab.invalid', authorizationConfirmed: true } });
 
@@ -47,7 +57,8 @@ try {
   // 2. Activate brings the environment up through the controller and answers ready.
   const activated = await app.inject({ method: 'POST', url: `/api/engagements/${a.id}/environment/commands`, payload: { requestId: `act-a-${suffix}`, action: 'activate', expectedVersion: 0 } });
   assert.equal(activated.statusCode, 200, activated.body);
-  assert.equal(activated.json().phase, 'ready');
+  assert.equal(activated.json().phase, 'starting', 'the answer returns at once; the work runs in the background');
+  await settled(a.id, 'ready', 'ready');
   const ready = await app.inject({ method: 'GET', url: `/api/engagements/${a.id}/environment` });
   assert.equal(ready.json().environment.observedState, 'ready');
   assert.equal(ready.json().slot.ownedByThisProject, true);
@@ -78,10 +89,12 @@ try {
   // 6. Stop shuts the containers down and releases the slot, and then another project can start.
   const stopped = await app.inject({ method: 'POST', url: `/api/engagements/${a.id}/environment/commands`, payload: { requestId: `stop-a-${suffix}`, action: 'stop', expectedVersion: ready.json().slot.version } });
   assert.equal(stopped.statusCode, 200, stopped.body);
-  assert.equal(stopped.json().phase, 'idle');
-  const started = await app.inject({ method: 'POST', url: `/api/engagements/${b.id}/environment/commands`, payload: { requestId: `act-b2-${suffix}`, action: 'activate', expectedVersion: stopped.json().version } });
+  assert.equal(stopped.json().phase, 'stopping');
+  await settled(a.id, 'stopped', 'idle');
+  const started = await app.inject({ method: 'POST', url: `/api/engagements/${b.id}/environment/commands`, payload: { requestId: `act-b2-${suffix}`, action: 'activate', expectedVersion: (await app.inject({ method: 'GET', url: `/api/engagements/${a.id}/environment` })).json().slot.version } });
   assert.equal(started.statusCode, 200, started.body);
-  assert.equal(started.json().phase, 'ready');
+  assert.equal(started.json().phase, 'starting');
+  await settled(b.id, 'ready', 'ready');
   checks.push('stop releases the slot, and the next project starts in the same deployment');
 
   // 7. Without a controller the facade answers 503 and records nothing.
