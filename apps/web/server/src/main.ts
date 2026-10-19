@@ -11,6 +11,11 @@ import { EngagementsRepository } from './repositories/engagements-repository.js'
 import { ProjectsService, ProjectApiError } from './services/projects-service.js';
 import { RuntimeOwnershipService } from './services/runtime-ownership.js';
 import { ProjectEnvironmentService } from './services/environments/project-environment-service.js';
+import { EnvironmentFacade } from './services/environments/environment-facade.js';
+import { EnvironmentLifecycle } from './services/environments/environment-lifecycle.js';
+import { HostControllerClient } from './integrations/environments/controller-client.js';
+import { loadEnvironmentControllerConfig } from './config/environment-controller.js';
+import { readFileSync } from 'node:fs';
 import { loadRuntimeConfig } from './config/runtime.js';
 import { RuntimeExecutionClient } from './integrations/runtime/execution-client.js';
 import { RuntimeContextService, EXECUTION_ASSISTANTS } from './services/runtime/runtime-context.js';
@@ -113,6 +118,10 @@ async function main(): Promise<void> {
 
   // ADR-0092: every run-starting path is admitted by the same deployment slot.
   const environments = dbClient ? new ProjectEnvironmentService(dbClient, env.deploymentId ?? 'default') : undefined;
+  // The host controller is optional. Without it, activate and stop answer 503 and the legacy path is unchanged.
+  const environmentController = loadEnvironmentControllerConfig(process.env, path => readFileSync(path, 'utf8'));
+  const environmentLifecycle = dbClient && environments && environmentController ? new EnvironmentLifecycle(dbClient, environments, new HostControllerClient(environmentController.controllerUrl, environmentController.controllerToken), environmentController) : undefined;
+  const environmentFacade = environments ? new EnvironmentFacade(environments, environmentLifecycle) : undefined;
   const ownership = dbClient ? new RuntimeOwnershipService(dbClient, environments) : undefined;
   const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
   // ADR-0092: a managed project routes to its own ready environment; a project without a record stays on the legacy runtime.
@@ -263,6 +272,7 @@ async function main(): Promise<void> {
     projectsService,
     databaseHealth,
     runtimeOwnership: ownership,
+    environments: environmentFacade,
     runtimeContext,
     runsService,
     streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl), undefined, runtimeRouter) : undefined,
