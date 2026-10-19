@@ -10,6 +10,7 @@ import type { DatabaseHealth } from './http/routes/health.routes.js';
 import { EngagementsRepository } from './repositories/engagements-repository.js';
 import { ProjectsService, ProjectApiError } from './services/projects-service.js';
 import { RuntimeOwnershipService } from './services/runtime-ownership.js';
+import { ProjectEnvironmentService } from './services/environments/project-environment-service.js';
 import { loadRuntimeConfig } from './config/runtime.js';
 import { RuntimeExecutionClient } from './integrations/runtime/execution-client.js';
 import { RuntimeContextService, EXECUTION_ASSISTANTS } from './services/runtime/runtime-context.js';
@@ -109,7 +110,9 @@ async function main(): Promise<void> {
     });
   }
 
-  const ownership = dbClient ? new RuntimeOwnershipService(dbClient) : undefined;
+  // ADR-0092: every run-starting path is admitted by the same deployment slot.
+  const environments = dbClient ? new ProjectEnvironmentService(dbClient, env.deploymentId ?? 'default') : undefined;
+  const ownership = dbClient ? new RuntimeOwnershipService(dbClient, environments) : undefined;
   const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
   const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
    const closureService = dbClient ? new ClosureService(dbClient, approvalsService ? async (_userId, engagementId) => {
