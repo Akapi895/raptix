@@ -226,3 +226,69 @@ Test `controller-client` "gives up after the timeout" trước đây đặt time
 - Chưa đưa dữ liệu đã migrate vào volume state của môi trường `reddish`. Runtime môi trường hiện bắt đầu với store trống, nên lịch sử thread không hiển thị trong chế độ environment.
 - Cutover dữ liệu thật trên DB web chưa thực hiện (đúng theo phê duyệt).
 - Kiểm tra CLI và Web mở cùng project sau migration chưa làm.
+
+## 12. I06 và I07: trạng thái sau vòng tiếp theo (2026-10-19)
+
+**I06 đã làm và kiểm chứng:**
+
+- Archive và unarchive; drain trước khi stop; lý do lỗi có tên (`lastError`).
+- Drain hoàn tất ngay khi runtime không chạy. Run mà runtime không biết (HTTP 404) không giữ stop, và dấu active của nó được giải phóng.
+- Stop bị controller không trả lời được retry tối đa 3 lần. Từ chối không bao giờ được retry.
+- Controller tự tạo thư mục workspace của project khi chưa có, dưới một root phải tồn tại sẵn. Trước đây activate thất bại im lặng với `rejected_path`.
+- Lệnh `environment-orphans` (chỉ đọc): liệt kê container của một deployment mà environment không còn được biết. Không xóa gì.
+- Kiểm chứng: recovery live 7 nhóm pass. Admission 14, lifecycle 6, facade 7 pass. Go `internal/environments` pass, gồm test workspace và test orphan.
+- Lỗi thật đã tìm và sửa trong vòng này: `instanceExchange` ném lỗi với mọi mã ngoài 200/409, nên nhánh 404 không bao giờ chạy. Stop của `reddish` đã treo đến hết timeout 10 phút. Nay gọi trực tiếp và kiểm chứng lại.
+
+**I06 chưa làm:**
+
+- Tích hợp P10 (mailbox/grant) và P11 (checkpoint/question). Pause và câu hỏi chưa được phân biệt với stop.
+- Bộ đếm graph/tool deterministic.
+- Restart battery live cho runtime và sandbox (E06), và controller bị crash sau Docker ACK trên container thật.
+- Xóa orphan: để người vận hành quyết định, theo báo cáo của `environment-orphans`.
+
+**I07 đã làm và kiểm chứng (copy, không ghi DB thật):**
+
+- Công cụ `migrate_legacy_project.py` có `dry-run`, `verify`, `apply`, `unapply`, `rollback`. Unit test 6/6 pass trên snapshot tổng hợp.
+- `reddish` đã đi qua chuỗi: dry-run từ snapshot thật (chỉ đọc) → apply vào store và workspace của môi trường đã dừng → môi trường `ready` → `stopped`.
+- Kết quả: store của môi trường chứa 51 checkpoint và 215 write, khớp dry-run. Workspace có đủ 10 file. Schema store khớp, nên apply không từ chối.
+- Dữ liệu của `viettel-peru` không tìm thấy ở đâu, nên không có gì để migrate.
+
+**I07 chưa làm, cần quyết định của bạn:**
+
+1. **Bản ghi thread không được migrate.** Thread (metadata) nằm trong `.langgraph_ops.pckl`, một kho toàn cục của runtime legacy. Công cụ chưa di chuyển nó. Vì vậy `GET /threads/{id}` trên môi trường trả 404, dù checkpoint đã có.
+2. **Cấu hình của thread khác cấu hình môi trường.** Thread legacy mang `runtime_context_hash` của cấu hình legacy (`sandbox_url` khác). Web từ chối với 409. Đây là guard đúng. Có hai hướng:
+   - (a) Rebind: tạo lại bản ghi thread trong môi trường với cấu hình môi trường, và ghi proof (hash cũ và mới) có phiên bản. Đề xuất của tôi.
+   - (b) Giữ identity legacy và chỉ đọc lịch sử, không cho chạy tiếp trong môi trường.
+3. **Image khác digest.** Runtime legacy là `raptix-langgraph:stable` (`b3cd…`). Môi trường dùng digest `53c4…`. Schema store khớp, nhưng cần quyết định pin image nào (I08).
+4. **Cutover trên DB và volume thật** vẫn chờ duyệt riêng. Snapshot hiện tại chưa quiesce.
+
+## 13. I08 và I09: phần tự quyết được
+
+**I08:**
+
+- Đã có: lệnh `environment-controller` (bind trước khi báo listening), lệnh `environment-orphans`, và runbook vận hành (`docs/design/2026-10-19-single-active-runbook.md`).
+- Chưa làm, và vì sao:
+  - Đóng gói Compose và installer Windows/WSL/Linux: đổi hardening container cần ADR và threat model theo CLAUDE.md. WSL và Linux không kiểm được ở đây.
+  - Image profile, offline cache, pin digest, update và rollback: cần quyết định image nào được pin (xem mục 12.3).
+  - Retire đường cũ: cần parity pass và thời điểm do bạn chốt.
+
+**I09:**
+
+- Đã có: runbook và ma trận acceptance bên dưới (chỉ ghi những gì đã chạy).
+- Chưa làm: release gate và chuyển ADR-0092 sang Accepted. Đây là quyết định của bạn. Chưa có một run có model với planning rồi đến output/findings/report. Chưa test mock mode không gọi controller. Chưa test upgrade và rollback thực tế.
+
+**Ma trận acceptance (trạng thái thật):**
+
+| Gate | Trạng thái | Bằng chứng |
+|---|---|---|
+| Activate/stop trên Docker thật | Pass | copy `reddish`, nhiều lần |
+| Admission một winner giữa hai client | Pass | admission live 14 nhóm |
+| Stop chờ run đang chạy | Pass (runtime status giả) | recovery nhóm 2, 6, 7 |
+| Stop bị controller không trả lời | Pass | recovery nhóm 4 |
+| Restart giữa stop | Pass | recovery nhóm 5, và stop treo được hoàn tất khi API khởi động lại |
+| Run có model thật | Pass một lần | `xin chào` qua proxy test |
+| Thread lịch sử đọc được trong môi trường | Chưa pass | 404/409, xem mục 12 |
+| Restart runtime/sandbox (E06) | Chưa chạy | |
+| Crash controller sau Docker ACK, trên container thật | Chưa chạy | |
+| Web và CLI mở cùng project sau migration | Chưa chạy | |
+| Upgrade và rollback của migration | Chưa chạy | |
