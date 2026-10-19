@@ -14,13 +14,22 @@ export function failureFrom(error: unknown): ServiceFailure {
   return { kind: 'unavailable', message: error instanceof Error ? error.message : 'The request failed.' }
 }
 
-/** Runs a service call so that a transport error becomes an explicit failure result. */
+/**
+ * Runs a service call so that a transport error becomes an explicit failure result.
+ * A caller that switched away (unmount, engagement change) aborts its request; that
+ * cancellation is not a failure to show, so it propagates for the query layer to drop.
+ */
 export async function guarded<T>(run: () => Promise<ServiceResult<T>>): Promise<ServiceResult<T>> {
   try {
     return await run()
   } catch (error) {
+    if (isAbortError(error)) throw error
     return { ok: false, failure: failureFrom(error) }
   }
+}
+
+export function isAbortError(error: unknown): boolean {
+  return (error as { name?: string } | null)?.name === 'AbortError'
 }
 
 export function instant(iso: string): number {
