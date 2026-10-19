@@ -57,6 +57,9 @@ model Engagement {
   c2Commands C2Command[]
   documentDrafts PlanDocumentDraft[]
   retainedCaptures RetainedCapture[]
+  deploymentSlots DeploymentSlot[]
+  environments ProjectEnvironment[]
+  environmentCommands EnvironmentCommand[]
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -127,6 +130,93 @@ model WebRequestLedger {
   @@index([state, updatedAt])
 }
 
+
+// -- Project environments (ADR-0092) ----------------------------------
+// The deployment slot is the single admission authority for the active
+// project. Only the environment service changes it, by compare-and-set on
+// `version`. No row means idle, so existing deployments admit unchanged.
+enum DeploymentSlotPhase {
+  idle
+  starting
+  ready
+  stopping
+  uncertain
+}
+
+model DeploymentSlot {
+  deploymentId      String              @id
+  phase             DeploymentSlotPhase @default(idle)
+  ownerEngagementId String?
+  commandId         String?
+  version           Int                 @default(0)
+  updatedAt         DateTime            @updatedAt
+  owner Engagement? @relation(fields: [ownerEngagementId], references: [id], onDelete: Restrict)
+}
+
+enum EnvironmentDesiredState {
+  stopped
+  ready
+}
+
+enum EnvironmentObservedState {
+  unprovisioned
+  starting
+  ready
+  stopping
+  stopped
+  uncertain
+}
+
+model ProjectEnvironment {
+  id            String                   @id @default(cuid())
+  deploymentId  String
+  engagementId  String
+  desiredState  EnvironmentDesiredState  @default(stopped)
+  observedState EnvironmentObservedState @default(unprovisioned)
+  generation    Int                      @default(0)
+  version       Int                      @default(0)
+  lastError     String?
+  observedAt    DateTime?
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@unique([deploymentId, engagementId])
+}
+
+enum EnvironmentCommandAction {
+  activate
+  stop
+}
+
+enum EnvironmentCommandOutcome {
+  accepted
+  observed
+  refused
+  uncertain
+}
+
+// Every decided command is recorded so a retry with the same requestId gets
+// the same answer. `reason` holds a bounded refusal code, never another
+// project's identifiers.
+model EnvironmentCommand {
+  id                 String                    @id @default(cuid())
+  deploymentId       String
+  requestId          String
+  engagementId       String
+  actorUserId        String
+  action             EnvironmentCommandAction
+  expectedVersion    Int
+  payloadFingerprint String
+  outcome            EnvironmentCommandOutcome @default(accepted)
+  reason             String?
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@unique([deploymentId, requestId])
+  @@index([deploymentId, outcome])
+}
 
 // -- W17 vector campaigns ---------------------------------------------
 // Persisted drafts plus truthful provider jobs. The campaign provider is not
