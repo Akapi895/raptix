@@ -25,8 +25,32 @@ function recoveryView(row: WebRequestLedger): RequestRecoveryView {
   return { engagementId: row.engagementId, requestId: row.requestId, operation: row.operation, state: row.state, threadId: row.threadId, runId: row.runId, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 
+/**
+ * Shared project access check for every runtime and environment write. Locks
+ * the engagement row and answers 404 for foreign or unknown ids.
+ */
+export async function requireProjectAccess(tx: Prisma.TransactionClient, userId: string, engagementId: string, minRole: MemberRole = 'viewer'): Promise<Engagement> {
+  const rows = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Engagement" WHERE "id" = ${engagementId} AND ("userId" = ${userId} OR EXISTS (SELECT 1 FROM "WebMembership" WHERE "engagementId" = ${engagementId} AND "userId" = ${userId})) FOR UPDATE`;
+  if (!rows.length) throw new ProjectNotFoundError();
+  const project = await tx.engagement.findUniqueOrThrow({ where: { id: engagementId } });
+  if (!isProjectSlug(project.name)) throw new ProjectNotFoundError();
+  // W02: an invited member is an authorized runtime actor on this engagement,
+  // not just the owner. The membership role must still satisfy the action's
+  // minimum role; foreign ids keep answering 404.
+  if (project.userId !== userId) {
+    const membership = await tx.webMembership.findFirst({ where: { engagementId, userId } });
+    if (membership === null || !isMemberRole(membership.role) || ROLE_RANK[membership.role] < ROLE_RANK[minRole]) throw new ProjectNotFoundError();
+  }
+  return project;
+}
+
+/** Admission for execution-starting operations, checked inside the reserving transaction. */
+export interface ExecutionAdmission {
+  assertAdmits(tx: Prisma.TransactionClient, engagementId: string): Promise<void>;
+}
+
 export class RuntimeOwnershipService {
-  public constructor(private readonly db: PrismaClient) {}
+  public constructor(private readonly db: PrismaClient, private readonly admission?: ExecutionAdmission) {}
 
   private async transaction<T>(action: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     try { return await this.db.$transaction(action); }
@@ -36,19 +60,8 @@ export class RuntimeOwnershipService {
     }
   }
 
-  private async owned(tx: Prisma.TransactionClient, userId: string, engagementId: string, minRole: MemberRole = 'viewer'): Promise<Engagement> {
-    const rows = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Engagement" WHERE "id" = ${engagementId} AND ("userId" = ${userId} OR EXISTS (SELECT 1 FROM "WebMembership" WHERE "engagementId" = ${engagementId} AND "userId" = ${userId})) FOR UPDATE`;
-    if (!rows.length) throw new ProjectNotFoundError();
-    const project = await tx.engagement.findUniqueOrThrow({ where: { id: engagementId } });
-    if (!isProjectSlug(project.name)) throw new ProjectNotFoundError();
-    // W02: an invited member is an authorized runtime actor on this engagement,
-    // not just the owner. The membership role must still satisfy the action's
-    // minimum role; foreign ids keep answering 404.
-    if (project.userId !== userId) {
-      const membership = await tx.webMembership.findFirst({ where: { engagementId, userId } });
-      if (membership === null || !isMemberRole(membership.role) || ROLE_RANK[membership.role] < ROLE_RANK[minRole]) throw new ProjectNotFoundError();
-    }
-    return project;
+  private owned(tx: Prisma.TransactionClient, userId: string, engagementId: string, minRole: MemberRole = 'viewer'): Promise<Engagement> {
+    return requireProjectAccess(tx, userId, engagementId, minRole);
   }
 
   private async binding(tx: Prisma.TransactionClient, project: Engagement, threadId: string): Promise<EngagementThread> {
@@ -141,6 +154,8 @@ export class RuntimeOwnershipService {
         return { reserved: false, request: recoveryView(existing) };
       }
       if (bound && await tx.webRequestLedger.count({ where: { engagementId, activeThreadId: { not: null }, thread: { kind: bound.kind === 'planning' ? 'execution' : 'planning' } } })) throw conflict();
+      // ADR-0092: a new execution start must hold the deployment slot. Replays above return the recorded answer.
+      if (operation !== 'create_thread') await this.admission?.assertAdmits(tx, engagementId);
       // A resume never double-holds the active slot: the interrupted run keeps
       // the slot until the resume dispatch is acknowledged (accept transfers it).
       const row = await tx.webRequestLedger.create({ data: { engagementId, requestId, operation, payloadHash, threadId, activeThreadId: operation === 'resume' ? null : threadId, reservationToken: randomUUID() } });
