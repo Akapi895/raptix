@@ -323,3 +323,11 @@ Kiểm chứng:
 Canary `reddish` (chưa thực hiện):
 - Điều kiện đã có: rebind đã sửa, rehearsal trên bản sao đã làm.
 - Còn lại trước khi chạm stack đang chạy: backup Web DB, workspace và checkpoint state (kèm WAL/SHM) vào thư mục lưu giữ; quiesce runtime legacy; rehearsal rollback; rồi duyệt riêng từng bước vì việc này thay đổi container API và runtime của stack bạn.
+
+## 16. Manifest xác minh và audit best-effort (I07)
+
+- `expectedMessageCount` không còn nhận từ client. Operator import số message đã xác minh từ runtime legacy qua `POST /api/engagements/:id/migration/manifest` (bảng `ThreadMigrationRecord`, migration additive `20261031000000_thread_migration_record`). `rebindThread` đọc số này từ bảng; thread không có bản ghi thì bị từ chối trước khi chạm runtime.
+- Manifest chỉ nhận slug của đúng project. Số message nằm trong khoảng 1 đến 100000.
+- Audit `thread.rebound` là best-effort sau khi binding đã đổi. Nếu ghi audit lỗi, rebind vẫn báo thành công và lỗi đi vào `onAuditFailure` (log). Không báo "rebind thất bại" khi binding đã đổi.
+- Kiểm chứng: unit rebind 10/10. Live manifest 6 nhóm (`thread-migration-manifest-live.ts`). Live recovery 9, admission 14, lifecycle 6, facade 7 đều pass.
+- Chưa làm: canary `reddish` trên dữ liệu thật (từng bước, chờ xác nhận). ADR-0092 vẫn `Proposed`. Compose/installer (I08) và release gate (I09) chưa ký.

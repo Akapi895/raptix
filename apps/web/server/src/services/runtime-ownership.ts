@@ -107,6 +107,40 @@ export class RuntimeOwnershipService {
     await this.transaction(async tx => { await this.owned(tx, userId, engagementId, 'operator'); });
   }
 
+  /**
+   * ADR-0092 I07: records the message count an operator verified for one migrated thread, read directly from the
+   * legacy runtime before cutover. A rebind later reads this instead of trusting a client-supplied count. Operator-only.
+   */
+  public async importMigrationManifest(userId: string, engagementId: string, records: { threadId: string; verifiedMessageCount: number; sourceSlug: string }[]): Promise<number> {
+    if (records.length === 0 || records.length > 500) throw new ProjectPolicyError('bad_request', 'A manifest holds 1 to 500 thread records');
+    for (const record of records) {
+      identifier(record.threadId);
+      if (!Number.isSafeInteger(record.verifiedMessageCount) || record.verifiedMessageCount < 1 || record.verifiedMessageCount > 100000) throw new ProjectPolicyError('bad_request', 'Invalid verified message count');
+      if (!isProjectSlug(record.sourceSlug)) throw new ProjectPolicyError('bad_request', 'Invalid source slug');
+    }
+    return this.transaction(async tx => {
+      const project = await this.owned(tx, userId, engagementId, 'operator');
+      if (records.some(record => record.sourceSlug !== project.workspaceSlug)) throw new ProjectPolicyError('bad_request', 'The manifest names a different project');
+      for (const record of records) {
+        await tx.threadMigrationRecord.upsert({
+          where: { engagementId_threadId: { engagementId, threadId: record.threadId } },
+          create: { engagementId, threadId: record.threadId, verifiedMessageCount: record.verifiedMessageCount, sourceSlug: record.sourceSlug, importedByUserId: userId },
+          update: { verifiedMessageCount: record.verifiedMessageCount, sourceSlug: record.sourceSlug, importedByUserId: userId },
+        });
+      }
+      return records.length;
+    });
+  }
+
+  /** The verified message count imported for a thread, or null when no manifest named it. */
+  public async verifiedMessageCount(userId: string, engagementId: string, threadId: string): Promise<number | null> {
+    return this.transaction(async tx => {
+      await this.owned(tx, userId, engagementId, 'operator');
+      const row = await tx.threadMigrationRecord.findUnique({ where: { engagementId_threadId: { engagementId, threadId } } });
+      return row?.verifiedMessageCount ?? null;
+    });
+  }
+
   /** The runtime configuration fingerprint a bound thread was last bound under, or null for a thread bound before it was recorded. */
   public async runtimeConfigHashOf(userId: string, engagementId: string, threadId: string): Promise<string | null> {
     return this.transaction(async tx => (await this.binding(tx, await this.owned(tx, userId, engagementId), threadId)).runtimeConfigHash ?? null);

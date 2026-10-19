@@ -60,6 +60,7 @@ model Engagement {
   deploymentSlots DeploymentSlot[]
   environments ProjectEnvironment[]
   environmentCommands EnvironmentCommand[]
+  migrationRecords ThreadMigrationRecord[]
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -85,6 +86,22 @@ enum WebRequestState {
   accepted
   uncertain
   rejected
+}
+
+/// ADR-0092 I07: the verified message count of one migrated thread, recorded by an operator from the
+/// legacy runtime before cutover. rebindThread reads this instead of trusting a client-supplied count.
+model ThreadMigrationRecord {
+  id String @id @default(cuid())
+  engagementId String
+  threadId String
+  verifiedMessageCount Int
+  sourceSlug String
+  importedByUserId String
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([engagementId, threadId])
 }
 
 model EngagementThread {
