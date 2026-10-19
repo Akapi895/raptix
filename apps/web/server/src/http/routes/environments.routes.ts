@@ -12,8 +12,6 @@ export function registerEnvironmentRoutes(app: FastifyInstance, facade: Environm
   }));
   app.post(`${prefix}/commands`, (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id } = request.params as { id: string };
-    const { statusCode, result } = await facade.command(identity.id, id, request.body);
-    reply.status(statusCode);
-    return result;
+    return facade.command(identity.id, id, request.body);
   }));
 }

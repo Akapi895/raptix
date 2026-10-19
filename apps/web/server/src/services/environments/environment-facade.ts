@@ -16,8 +16,11 @@ export class EnvironmentFacade {
     return this.service.state(userId, engagementId);
   }
 
-  /** Busy, stale and refused answers are 409 with their reason. Accepted and replayed answers are 200. */
-  public async command(userId: string, engagementId: string, input: unknown): Promise<{ statusCode: number; result: EnvironmentCommandResult }> {
+  /**
+   * A decided answer is data with its status, including busy, stale and refused. Only malformed, unauthorized or
+   * unconfigured requests are errors, so a client can always read the reason the slot gave.
+   */
+  public async command(userId: string, engagementId: string, input: unknown): Promise<EnvironmentCommandResult> {
     if (!isEnvironmentCommandRequest(input)) throw new ProjectPolicyError('bad_request', 'Invalid environment command');
     if (this.lifecycle === undefined) throw new ProjectApiError(503, 'The environment controller is not configured on this deployment.');
     const decided = await this.service.submit(userId, engagementId, input);
@@ -27,7 +30,6 @@ export class EnvironmentFacade {
     } else if (decided.status === 'accepted' && input.action === 'stop' && decided.phase === 'stopping') {
       result = await this.lifecycle.shutDown(engagementId, decided.commandId!, decided.version);
     }
-    const refused = result.status === 'busy' || result.status === 'stale' || result.status === 'refused';
-    return { statusCode: refused ? 409 : 200, result };
+    return result;
   }
 }

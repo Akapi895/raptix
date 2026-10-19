@@ -28,6 +28,7 @@ import { VaultTab } from '../../features/vault/tab'
 import { AuditPanel } from '../../features/audit/panel'
 import { ClosureTab } from '../../features/closure/tab'
 import { ProjectSettingsPanel } from './project-settings-panel'
+import { EnvironmentPanel } from './environment-panel'
 import { go, useRoute } from '../../router/navigate'
 import { REAL_PROJECT_NAV } from '../../shell/nav'
 import { useProjectStore } from '../../state/stores'
@@ -109,6 +110,7 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
           </Banner>
         )}
         <Onboarding d={d} />
+        <EnvironmentPanel engagementId={d.id} projectName={d.displayName} />
         {d.brief && (
           <Card>
             <CardHeader title="Operator brief" />
