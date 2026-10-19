@@ -73,3 +73,10 @@ The `flag-suspicious` notes accumulated through Phase 0 batches are
 collected into follow-up issues labelled `skill-body-audit`. Those PRs
 happen against the cleaned-up frontmatter and are not gated by this
 plan.
+
+A proposed contract for this follow-up work (the section skeleton to
+check bodies against, since none existed before) now lives in
+[docs/skill-body-contract.md](skill-body-contract.md) — Phase 1.5,
+status: proposal, not yet CI-enforced. Batch progress against it is
+tracked in [docs/skill-body-audit-progress.md](skill-body-audit-progress.md)
+(first batch — `standard/wireless/` — done 2026-10-14).

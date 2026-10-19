@@ -190,6 +190,7 @@ dev:
 ##
 ## Build chain: shared/streaming dist → cli dist → run.
 ## `npm run dev` only watches tsc; `node --watch` re-execs on dist changes.
+## Load the same .env as Compose so the local CLI receives the engagement pin.
 ## The CLI is an Ink app, so `node` MUST stay in the foreground — Ink needs a
 ## real TTY (raw mode) on stdin, which a backgrounded job does not get. So tsc
 ## watch runs in the background and a trap tears it down when the foreground
@@ -200,7 +201,7 @@ cli-dev: infra
 	cd apps/cli && npm run build
 	cd apps/cli && npm run dev & TSC_PID=$$!; \
 	  trap "kill $$TSC_PID 2>/dev/null" EXIT INT TERM; \
-	  cd apps/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:$(LANGGRAPH_HOST_PORT)} node --watch dist/index.js
+	  cd apps/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:$(LANGGRAPH_HOST_PORT)} node --env-file-if-exists=../../.env --watch dist/index.js
 
 ## New-stack web dashboard dev server (W20 replaces the retired legacy
 ## web-dev): build shared workspaces then run UI + API locally.
