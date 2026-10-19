@@ -51,7 +51,7 @@ const RUNTIME_CTX = (executionReady: boolean) => ({
 const SNAPSHOT_NO_QUESTION = { ...SNAPSHOT, pendingQuestions: [] }
 const APPROVAL = {
   engagementId: 'eng-1', requestId: 'apr-123', engagementName: 'E', agentName: 'executor', toolName: 'bash',
-  toolArgsRedacted: { command: '***' },
+  toolArgsRedacted: { command: 'nmap -sV -p 80 10.129.84.232' },
   matchedRule: { techniqueTag: 'T1059', toolPattern: null, timeoutSeconds: 300, defaultOnTimeout: 'deny' },
   reason: 'Policy requires operator approval for shell commands', createdAtSeconds: 1791988800, source: 'workspace',
 }
@@ -78,6 +78,7 @@ const PLANNING_BLOCKED = {
 function stubApi(over: {
   threads?: unknown[]
   snapshot?: unknown
+  execBinding?: Record<string, unknown>
   engagement?: unknown
   runtimeCtx?: unknown
   approvals?: unknown
@@ -103,8 +104,10 @@ function stubApi(over: {
     if (url.match(/\/runs\/[^/]+$/) && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', threadId: 'th-plan', runId: 'run-1', requestId: 'req-abc12345', rawStatus: over.runStatus ?? 'running', createdAt: '2026-10-14T08:00:00.000Z', updatedAt: '2026-10-14T08:00:02.000Z', source: 'runtime' }), { status: 200 })
     if (url.endsWith('/runs') && init?.method === 'POST') return new Response(JSON.stringify(ACK({ requestId: body?.requestId, operation: 'create_run', runId: 'run-1' })), { status: 202 })
     if (url.endsWith('/resume') && init?.method === 'POST') return new Response(JSON.stringify(ACK({ requestId: body?.requestId, operation: 'resume', runId: 'run-2' })), { status: 202 })
+    const hitl = url.match(/\/threads\/([^/]+)\/hitl$/)
+    if (hitl && init?.method === 'PATCH') return new Response(JSON.stringify({ threadId: decodeURIComponent(hitl[1]!), hitlEnabled: body?.enabled }), { status: 200 })
     if (url.endsWith('/threads/th-plan')) return new Response(JSON.stringify(over.snapshot ?? SNAPSHOT), { status: 200 })
-    if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ ...(over.snapshot ?? SNAPSHOT), binding: EXEC_THREAD }), { status: 200 })
+    if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ ...(over.snapshot ?? SNAPSHOT), binding: { ...EXEC_THREAD, ...(over.execBinding ?? {}) } }), { status: 200 })
     return new Response('unexpected', { status: 404 })
   })
   vi.stubGlobal('fetch', fetchMock)
@@ -322,6 +325,78 @@ describe('RealWorkspace', () => {
     expect(resume?.body).toMatchObject({ questionId: 'q-1', value: 'Full range' })
   })
 
+  it('collects several pending questions in tabs and sends every answer only from the Confirm tab', async () => {
+    const question = (questionId: string, header: string) => ({
+      questionId, question: `Pick the ${header.toLowerCase()}`, header,
+      options: [{ label: 'Yes', description: '' }, { label: 'No', description: '' }],
+      multiSelect: false, allowOther: false, source: 'runtime',
+    })
+    const calls = stubApi({ snapshot: { ...SNAPSHOT_NO_QUESTION, pendingQuestions: [question('q-1', 'Scope'), question('q-2', 'Window')] }, runtimeCtx: RUNTIME_CTX(false) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const scopeRadios = await screen.findAllByRole('radio')
+    expect(scopeRadios).toHaveLength(2)
+    await user.click(scopeRadios[0]!)
+    await user.click(screen.getByRole('tab', { name: /Window/ }))
+    const windowRadios = await screen.findAllByRole('radio')
+    expect(windowRadios).toHaveLength(2)
+    await user.click(windowRadios[0]!)
+    await user.click(screen.getByRole('tab', { name: 'Confirm' }))
+    expect(screen.getAllByText('Scope').length).toBeGreaterThan(1)
+    expect(calls.some((c) => c.url.endsWith('/resume') && c.init?.method === 'POST')).toBe(false)
+    await user.click(screen.getByRole('button', { name: 'Send answers' }))
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/resume') && c.init?.method === 'POST')).toBe(true))
+    const sent = calls.find((c) => c.url.endsWith('/resume') && c.init?.method === 'POST')
+    expect(sent?.body).toMatchObject({ answers: [{ questionId: 'q-1', value: 'Yes' }, { questionId: 'q-2', value: 'Yes' }] })
+  })
+
+  it('keeps Execute disabled until the planning handoff is confirmed', async () => {
+    stubApi({ engagement: ENGAGEMENT(null) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const execute = (await screen.findByRole('button', { name: 'Execute' })) as HTMLButtonElement
+    expect(execute.disabled).toBe(true)
+    expect(execute.title).toMatch(/Confirm the planning handoff/)
+  })
+
+  it('creates the execution thread on send in Execute mode, then submits the run to it', async () => {
+    const calls = stubApi({ threads: [PLANNING_THREAD], snapshot: SNAPSHOT_NO_QUESTION, runtimeCtx: RUNTIME_CTX(true) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Execute' }))
+    await user.type(await screen.findByLabelText('Workspace message'), 'Run the recon objective')
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST' && c.body?.kind === 'execution')).toBe(true))
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/threads/th-exec/runs') && c.init?.method === 'POST')).toBe(true))
+    const created = calls.findIndex((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST')
+    const submitted = calls.findIndex((c) => c.url.endsWith('/threads/th-exec/runs') && c.init?.method === 'POST')
+    expect(created).toBeLessThan(submitted)
+  })
+
+  it('turns tool approval off for this conversation through the HITL switch', async () => {
+    const calls = stubApi({ threads: [PLANNING_THREAD, EXEC_THREAD], snapshot: SNAPSHOT_NO_QUESTION, runtimeCtx: RUNTIME_CTX(true) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Execute' }))
+    const hitl = (await screen.findByRole('switch', { name: 'Tool approval (HITL)' })) as HTMLButtonElement
+    expect(hitl.getAttribute('aria-checked')).toBe('true')
+    await waitFor(() => expect(hitl.disabled).toBe(false))
+    await user.click(hitl)
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/threads/th-exec/hitl') && c.init?.method === 'PATCH' && c.body?.enabled === false)).toBe(true))
+  })
+
+  it('explains that dangerous methods still need approval while the switch is off', async () => {
+    stubApi({ threads: [PLANNING_THREAD, EXEC_THREAD], snapshot: SNAPSHOT_NO_QUESTION, execBinding: { hitlEnabled: false }, runtimeCtx: RUNTIME_CTX(true) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Execute' }))
+    expect(await screen.findByRole('switch', { name: 'Tool approval (HITL)' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('switch', { name: 'Tool approval (HITL)' })).toHaveAttribute('title', expect.stringMatching(/Dangerous methods .*still require approval/))
+  })
+
   it('keeps the execution-thread button disabled until the handoff is confirmed', async () => {
     stubApi({ engagement: ENGAGEMENT(null) })
     go('ai-operator', { id: 'eng-1' })
@@ -340,7 +415,6 @@ describe('RealWorkspace', () => {
     expect(await screen.findByText('th-exec')).toBeTruthy()
     const composer = (await screen.findByLabelText('Workspace message')) as HTMLTextAreaElement
     await waitFor(() => expect(composer.disabled).toBe(true))
-    expect(screen.getByText(/Execution is blocked/)).toBeTruthy()
     expect(screen.getByText(/planning blocked/)).toBeTruthy()
   })
 
@@ -351,9 +425,9 @@ describe('RealWorkspace', () => {
     const execButton = (await screen.findByRole('button', { name: /New execution thread/ })) as HTMLButtonElement
     await waitFor(() => expect(execButton.disabled).toBe(false))
     await userEvent.setup().click(execButton)
-    expect(await screen.findByText('Tool approvals (HITL)')).toBeTruthy()
+    expect(await screen.findByText('Tool Approvals (HITL)')).toBeTruthy()
     expect(await screen.findByText(/Policy requires operator approval/)).toBeTruthy()
-    expect(screen.getByText(/timeout 300s/)).toBeTruthy()
+    expect(screen.getByText('nmap -sV -p 80 10.129.84.232')).toBeTruthy()
     await userEvent.setup().click(screen.getByRole('button', { name: 'Allow' }))
     await waitFor(() => expect(calls.some((c) => c.url.endsWith('/approvals') && c.init?.method === 'POST')).toBe(true))
     const decided = calls.find((c) => c.url.endsWith('/approvals') && c.init?.method === 'POST')
@@ -426,6 +500,34 @@ describe('RealWorkspace', () => {
     expect(region.scrollTop).toBe(1000)
   })
 
+  it('interleaves assistant text and subagent activity in the order they arrived', async () => {
+    stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const composer = await screen.findByLabelText('Workspace message')
+    await waitFor(() => expect(composer).toBeEnabled())
+    await user.type(composer, 'Order check')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0]! })
+    const message = (messageId: string, content: string) => act(async () => source.emit('run-event', event({
+      eventId: `msg-${messageId}`, runId: 'run-1', streamRunId: 'run-1',
+      payload: { type: 'message', messageId, role: 'assistant', content, mode: 'snapshot', truncated: false },
+    })))
+    await message('m-1', 'Checking the scope first')
+    await act(async () => source.emit('run-event', event({
+      eventId: 'sub-start', runId: 'run-1', streamRunId: 'run-1',
+      payload: { type: 'subagent_start', agent: 'recon', status: 'running', truncated: false },
+    })))
+    await message('m-2', 'Scope confirmed')
+    const first = await screen.findByText('Checking the scope first')
+    const activity = await screen.findByText('subagent started: recon')
+    const last = await screen.findByText('Scope confirmed')
+    expect(first.compareDocumentPosition(activity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(activity.compareDocumentPosition(last) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('labels streamed reasoning with the time measured in this browser, and only for that stream', async () => {
     stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
     go('ai-operator', { id: 'eng-1' })
@@ -463,7 +565,7 @@ describe('RealWorkspace', () => {
       payload: { type: 'message', messageId: 'm-same', role: 'assistant', content: 'Answer delivered at once.', mode: 'snapshot', truncated: false, reasoning: 'Reasoning delivered at once' },
     })))
     await screen.findByText('Answer delivered at once.')
-    expect(screen.getByRole('button', { name: 'Thinking...' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Thought for/ })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Reasoning' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Thought for|Thinking\.\.\./ })).toBeNull()
   })
 })

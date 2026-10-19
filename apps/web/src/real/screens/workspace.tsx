@@ -11,9 +11,9 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, Hand, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
+import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchReports, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, submitRun } from '../api'
+import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchReports, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
 import { useCapabilityReady } from '../bootstrap'
 import { awaitRequest, newRequestId, type AckOutcome } from '../request-ledger'
@@ -22,22 +22,25 @@ import { useRunStream } from '../stream'
 import { projectKeys } from '../queries'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../ui'
+import { Banner, Button, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../ui'
 import { utcMinute, utcMinuteOr } from '../format'
 import { renderMarkdown } from '../markdown'
 import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
 import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
 import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
+import { type ConversationMode, HitlSwitch, ModeToggle } from './workspace-mode'
 import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../planning-seed'
 import { RuntimeOperationsTab as RealOperationsHistory } from '../../features/operations/runtime-tab'
 import { useSession } from '../session'
 
-interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
+/** `seq` orders live items against trace lines: arrival order, after every checkpoint message. */
+interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null; seq: number }
+const LIVE_SEQ_BASE = 1_000_000
 /** When a reply's reasoning started and when its answer began, measured in this browser; the runtime records no timing. */
 interface ThinkingWindow { startedAt: number; answeredAt: number | null; openedBy: string }
 /** A transcript row; `thinkingMs` exists only for reasoning streamed in this browser, because the runtime records no timing. */
 type DisplayMessage = ScopedThreadMessage & { thinkingMs?: number }
-interface TraceLine { id: string; label: string; status?: string; error?: boolean }
+interface TraceLine { id: string; label: string; status?: string; error?: boolean; seq?: number }
 
 interface TraceLikePayload {
   type: string
@@ -92,8 +95,10 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const [kindFilter, setKindFilter] = useState<ThreadKind>(() => embedded ? 'execution' : readSelection(actorId, engagementId, deploymentId)?.kind ?? 'planning')
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => initialThreadId ?? (embedded && readSelection(actorId, engagementId, deploymentId)?.kind !== 'execution' ? null : readSelection(actorId, engagementId, deploymentId)?.threadId ?? null))
   const [drafts, setDrafts] = useState<Record<string, string>>({})
-  const draft = selectedThreadId ? drafts[selectedThreadId] ?? readWorkspaceDraft(engagementId, selectedThreadId, actorId, deploymentId) : ''
-  const setDraft = (text: string): void => { if (selectedThreadId) { setDrafts((previous) => ({ ...previous, [selectedThreadId]: text })); try { saveWorkspaceDraft(engagementId, selectedThreadId, text, actorId, deploymentId) } catch { setDispatchError('Draft recovery storage is unavailable.') } } }
+  /* Drafts are kept per conversation; before a thread exists the draft belongs to the mode, so typing survives the first send. */
+  const draftKey = selectedThreadId ?? `new-${kindFilter}`
+  const draft = drafts[draftKey] ?? (selectedThreadId ? readWorkspaceDraft(engagementId, selectedThreadId, actorId, deploymentId) : '')
+  const setDraft = (text: string): void => { setDrafts((previous) => ({ ...previous, [draftKey]: text })); if (selectedThreadId) { try { saveWorkspaceDraft(engagementId, selectedThreadId, text, actorId, deploymentId) } catch { setDispatchError('Draft recovery storage is unavailable.') } } }
   const [observation, setObservation] = useState<{ threadId: string; key: string } | null>(null)
   const [agentsOpen, setAgentsOpen] = useState(true)
   const [agentsSheet, setAgentsSheet] = useState(false)
@@ -109,6 +114,8 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const [live, setLive] = useState<LiveMessage[]>([])
   const thinkingWindows = useRef(new Map<string, ThinkingWindow>())
   const [trace, setTrace] = useState<TraceLine[]>([])
+  const seqCounter = useRef(LIVE_SEQ_BASE)
+  const nextSeq = (): number => seqCounter.current++
   const [recovery, setRecovery] = useState<string | null>(null)
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
   const [sideTab, setSideTab] = useState<'agents' | 'activity' | 'artifacts'>('agents')
@@ -135,14 +142,14 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const allThreads = useMemo(() => [...(threads.data?.threads ?? [])].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [threads.data])
   const filteredThreads = useMemo(() => allThreads.filter((t) => t.kind === kindFilter), [allThreads, kindFilter])
   const selectedThread = allThreads.find((t) => t.threadId === selectedThreadId) ?? null
-  const selectedKind: ThreadKind = selectedThread?.kind ?? kindFilter
+  const selectedKind: ThreadKind = kindFilter
 
   useEffect(() => {
     if (threads.isPending || initialThreadId) return
-    if (!selectedThreadId || !allThreads.some((t) => t.threadId === selectedThreadId && (!embedded || t.kind === 'execution'))) {
+    if (!selectedThreadId || !allThreads.some((t) => t.threadId === selectedThreadId && t.kind === kindFilter && (!embedded || t.kind === 'execution'))) {
       setSelectedThreadId(filteredThreads[0]?.threadId ?? null)
     }
-  }, [allThreads, filteredThreads, selectedThreadId, threads.isPending, initialThreadId, embedded])
+  }, [allThreads, filteredThreads, selectedThreadId, threads.isPending, initialThreadId, embedded, kindFilter])
   useEffect(() => {
     if (selectedThread) {
       try { saveSelection(actorId, engagementId, selectedThread, deploymentId) }
@@ -163,8 +170,10 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     enabled: !!selectedThreadId && !threads.isPending,
     retry: false,
   })
-  const executionBlocked = selectedKind === 'execution' &&
-    (runtimeCtx.isError || runtimeCtx.data?.executionReady !== true || runtimeCtx.data.threadVerified !== true || runtimeCtx.data.assistantId !== selectedThread?.assistantId || snapshot.isError || !snapshot.data || detail.data?.handoffConfirmedAt == null)
+  /* Execute needs the confirmed handoff; once a thread exists its server context must verify too. A thread is created on send. */
+  const handoffPending = detail.data?.handoffConfirmedAt == null
+  const executionBlocked = selectedKind === 'execution' && (handoffPending ||
+    (selectedThreadId !== null && (runtimeCtx.isError || runtimeCtx.data?.executionReady !== true || runtimeCtx.data.threadVerified !== true || runtimeCtx.data.assistantId !== selectedThread?.assistantId || snapshot.isError || !snapshot.data)))
 
   /* Live buffers reset whenever the scope (engagement/thread/run) changes. */
   useEffect(() => { setLive([]); setTrace([]); setRecovery(null); setAnswers({}); setRunStatus(null); thinkingWindows.current.clear() }, [engagementId, selectedThreadId])
@@ -253,7 +262,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         setLive((prev) => {
           const next = [...prev]
           const at = p.messageId ? next.findIndex((m) => m.messageId === p.messageId) : -1
-          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content: p.mode === 'snapshot' ? p.content : (at >= 0 ? next[at].content + p.content : p.content), reasoning: p.reasoning ?? (at >= 0 ? next[at].reasoning : undefined) }
+          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content: p.mode === 'snapshot' ? p.content : (at >= 0 ? next[at].content + p.content : p.content), reasoning: p.reasoning ?? (at >= 0 ? next[at].reasoning : undefined), seq: at >= 0 ? next[at].seq : nextSeq() }
           if (at >= 0) next[at] = entry
           else next.push(entry)
           return next
@@ -265,7 +274,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         return
       }
       const line = traceLineFor(event.eventId, p as TraceLikePayload)
-      if (line) setTrace((prev) => [...prev.slice(-199), line])
+      if (line) setTrace((prev) => [...prev.slice(-199), { ...line, seq: nextSeq() }])
     },
     onControl: (type, recoveryRequired) => {
       /* A run that pauses for an answer closes its stream normally: reconcile the thread (pending questions) without a warning. */
@@ -339,17 +348,22 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
 
   const send = useMutation({
     mutationFn: async (message: string) => {
-      const threadId = selectedThreadId
-      if (!threadId) throw new Error('Select or create a thread first.')
-      if (executionBlocked) throw new Error('Execution is not ready: confirm the planning handoff and let the server verify the runtime context.')
-      const pending = { requestId: newRequestId(), threadId, kind: selectedKind }
+      const kind = selectedKind
+      if (executionBlocked) throw new Error(handoffPending ? 'Execute is available after the planning handoff is confirmed.' : 'Execution is not ready: the server has not verified this thread context.')
+      let threadId = selectedThreadId && selectedThread?.kind === kind ? selectedThreadId : (filteredThreads[0]?.threadId ?? null)
+      if (threadId === null) {
+        const created = await createThreadByKind.mutateAsync(kind)
+        if (created.outcome.kind !== 'accepted') throw new Error('The conversation could not be started; nothing was dispatched.')
+        threadId = created.outcome.threadId
+      }
+      const pending = { requestId: newRequestId(), threadId, kind }
       return dispatch(pending, () => submitRun(engagementId, threadId, { requestId: pending.requestId, message }))
     },
     onSuccess: (result) => {
       if (!current(result.scope) || result.outcome.kind !== 'accepted') return
       setDraft('')
       if (result.outcome.runId) { setRunStatus('pending'); setObservedRun({ threadId: result.outcome.threadId, runId: result.outcome.runId }) }
-      void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId, selectedThreadId] })
+      void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId] })
     },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'Message dispatch failed.'),
   })
@@ -379,6 +393,14 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     seedMessage.current = null
     send.mutate(message)
   }, [selectedKind, selectedThreadId, send])
+
+  const setHitl = useMutation({
+    mutationFn: (enabled: boolean) => setThreadHitl(engagementId, selectedThreadId!, enabled),
+    onSuccess: () => { void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId] }) },
+    onError: (error) => setDispatchError(error instanceof Error ? error.message : 'The approval setting could not be saved.'),
+  })
+  const hitlEnabled = snapshot.data?.binding?.hitlEnabled !== false
+  const switchMode = (mode: ConversationMode): void => { setDispatchError(null); setKindFilter(mode) }
 
   const answerQuestion = useMutation({
     mutationFn: async (responses: { questionId: string; value: string | string[] }[]) => {
@@ -439,7 +461,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     onSuccess: () => { setDispatchError(null); void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] }) },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'The conversation could not be renamed.'),
   })
-  const displayed: DisplayMessage[] = [...snapshotMessages, ...live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))].map((m) => {
+  const liveRemaining = live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))
+  const displayedSeq: number[] = [...snapshotMessages.map((_, i) => i), ...liveRemaining.map((m) => m.seq)]
+  const displayed: DisplayMessage[] = [...snapshotMessages, ...liveRemaining].map((m) => {
     const window = m.messageId ? thinkingWindows.current.get(m.messageId) : undefined
     return window && window.answeredAt !== null ? { ...m, thinkingMs: window.answeredAt - window.startedAt } : m
   })
@@ -546,7 +570,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             executionLocked={detail.data?.handoffConfirmedAt == null || !!unconfirmed}
             embedded={embedded}
             agentsOpen={agentsOpen}
-            onSelect={(id) => setSelectedThreadId(id)}
+            onSelect={(id) => { const picked = allThreads.find((th) => th.threadId === id); if (picked) setKindFilter(picked.kind); setSelectedThreadId(id) }}
             onCreate={(kind) => { setDispatchError(null); setKindFilter(kind); createThreadByKind.mutate(kind) }}
             onHistory={() => setHistorySheet(true)}
             onRename={(threadId, title) => rename.mutate({ threadId, title })}
@@ -562,16 +586,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
               ) : snapshot.isError ? (
                 <div role="alert" className="text-sm text-bad">{snapshot.error instanceof Error ? snapshot.error.message : 'The thread snapshot failed to load.'}</div>
               ) : (
-                <Transcript messages={displayed} trace={trace} onReuse={(content) => setDraft(content)} />
+                <Transcript messages={displayed} seqs={displayedSeq} trace={trace} onReuse={(content) => setDraft(content)} streaming={!!activeRunId} />
               )}
 
-          {selectedKind === 'execution' && pendingQuestions.length === 0 && (approvals.data?.approvals?.length ?? 0) === 0 && (
-            <ApprovalsCard
-              state={approvals}
-              busyId={decide.isPending ? decide.variables?.requestId ?? null : null}
-              onDecide={(requestId, action) => decide.mutate({ requestId, action })}
-            />
-          )}
 
             </div>
             {!atBottom && (
@@ -580,8 +597,13 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
               </div>
             )}
           </div>
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 pt-2">
+            <ModeToggle mode={selectedKind} executionEnabled={!handoffPending} executionReason={handoffPending ? 'Confirm the planning handoff to enable Execute' : null} onMode={switchMode} />
+            {selectedKind === 'execution' && <HitlSwitch enabled={hitlEnabled} busy={setHitl.isPending || !selectedThreadId} onChange={(enabled) => setHitl.mutate(enabled)} />}
+          </div>
           <Composer
             questions={pendingQuestions}
+            answers={answers}
             onValue={(questionId, value) => setAnswers((prev) => ({ ...prev, [questionId]: value }))}
             onAnswer={(questionId, value) => answerQuestion.mutate([{ questionId, value }])}
             onAnswerAll={() => answerQuestion.mutate(pendingQuestions.map((q) => ({ questionId: q.questionId, value: answers[q.questionId] })))}
@@ -589,9 +611,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             batchReady={pendingQuestions.every((q) => { const value = answers[q.questionId]; return typeof value === 'string' ? value.trim().length > 0 : !!value?.length })}
             draft={draft}
             onDraft={setDraft}
-            inputDisabled={!selectedThreadId || send.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
-            placeholder={selectedThreadId ? 'Describe what to do next - scope, constraints, instructions...' : 'Create a thread first...'}
-            sendDisabled={!selectedThreadId || !draft.trim() || send.isPending || createThreadByKind.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
+            inputDisabled={send.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
+            placeholder={selectedKind === 'execution' ? 'Describe the execution request. The execution thread is created when you send.' : 'Describe what to do next - scope, constraints, instructions...'}
+            sendDisabled={!draft.trim() || send.isPending || createThreadByKind.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
             sending={send.isPending}
             onSend={() => { setDispatchError(null); send.mutate(draft.trim()) }}
             approvals={selectedKind === 'execution' ? approvals : undefined}
@@ -607,40 +629,12 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   )
 }
 
-function ApprovalsCard({ state, busyId, onDecide }: {
-  state: { data?: { approvals: ApprovalRequestView[]; truncated?: boolean }; isPending: boolean; isError: boolean; error: unknown; refetch: () => void }
-  busyId: string | null
-  onDecide: (requestId: string, action: 'allow' | 'deny') => void
-}): ReactElement {
-  return (
-    <Card>
-      <CardHeader title="Tool approvals (HITL)" sub="Workspace policy requests for this engagement's tools. Allow/Deny is an operational tool decision - never business plan approval." />
-      {state.isPending ? <div className="space-y-2" aria-busy="true" role="status"><Skeleton className="h-12" /></div>
-        : state.isError ? <p className="text-sm text-bad" role="alert">{state.error instanceof Error ? state.error.message : 'Approvals could not be loaded.'}</p>
-        : (state.data?.approvals.length ?? 0) === 0 ? <p className="text-sm text-muted">No pending tool approvals.</p>
-        : (
-          <ul className="space-y-3">
-            {state.data!.approvals.map((a) => (
-              <li key={a.requestId} className="rounded-xl border border-warn/30 bg-warn-soft p-3">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <Hand size={14} className="text-warn" aria-hidden />
-                  <span className="font-medium text-fg">{a.toolName}</span>
-                  <span className="text-xs text-muted">agent {a.agentName}</span>
-                  <span className="font-mono text-xs text-neutral">{a.requestId}</span>
-                </div>
-                <p className="mt-1 text-xs text-muted">{a.reason}</p>
-                <p className="mt-1 font-mono text-xs text-neutral">{JSON.stringify(a.toolArgsRedacted).slice(0, 240)}</p>
-                <p className="mt-1 text-xs text-neutral">rule: {a.matchedRule.techniqueTag ?? a.matchedRule.toolPattern ?? 'unmatched'} | timeout {a.matchedRule.timeoutSeconds}s | on timeout: {a.matchedRule.defaultOnTimeout}</p>
-                <div className="mt-2 flex gap-2">
-                  <Button size="sm" variant="primary" disabled={busyId === a.requestId} onClick={() => onDecide(a.requestId, 'allow')}>Allow</Button>
-                  <Button size="sm" variant="secondary" disabled={busyId === a.requestId} onClick={() => onDecide(a.requestId, 'deny')}>Deny</Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-    </Card>
-  )
+/** The exact command or arguments the operator is approving; the server already redacts secret values. */
+function ApprovalArgs({ args }: { args: Record<string, unknown> }): ReactElement | null {
+  const command = typeof args.command === 'string' ? args.command : null
+  const text = command ?? JSON.stringify(args)
+  if (!command && Object.keys(args).length === 0) return null
+  return <pre className="mt-1.5 max-h-28 overflow-auto whitespace-pre-wrap break-all rounded-md bg-subtle p-2 font-mono text-[11px] text-fg">{text.length > 1200 ? `${text.slice(0, 1200)}…` : text}</pre>
 }
 
 /** Chat header: the conversation switcher sits here instead of a left column. */
@@ -776,40 +770,49 @@ function KindBadge({ kind }: { kind: ThreadKind }): ReactElement {
 }
 
 /** Messages, then the current run's activity: consecutive tool lines fold into one collapsed group. */
-function Transcript({ messages, trace, onReuse }: { messages: DisplayMessage[]; trace: TraceLine[]; onReuse?: (content: string) => void }): ReactElement {
+/** Messages and trace lines in one chronological sequence; consecutive tool lines fold into one group. */
+function Transcript({ messages, seqs, trace, onReuse, streaming }: { messages: DisplayMessage[]; seqs: number[]; trace: TraceLine[]; onReuse?: (content: string) => void; streaming: boolean }): ReactElement {
   if (messages.length === 0 && trace.length === 0) {
     return <p className="text-sm text-muted">No messages yet. Open with the engagement context, constraints and what you want planned.</p>
   }
-  const groups = groupTrace(trace)
   const lastAssistant = messages.reduce((found, m, i) => (m.role === 'user' ? found : i), -1)
   const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? null
-  return (
-    <ol className="space-y-5">
-      {messages.map((m, i) => <MessageRow key={m.messageId ?? `msg-${i}`} message={m}
-        onReuse={i === lastAssistant && onReuse && lastUser ? () => onReuse(lastUser) : undefined} />)}
-      {groups.map((g) => (g.kind === 'tools'
-        ? <ToolActivityGroup key={g.lines[0]!.id} lines={g.lines} />
-        : <SystemLine key={g.lines[0]!.id} line={g.lines[0]!} />))}
-    </ol>
-  )
+  const items: ({ seq: number; message: DisplayMessage; index: number; line?: undefined } | { seq: number; line: TraceLine; message?: undefined; index?: undefined })[] = [
+    ...messages.map((message, index) => ({ seq: seqs[index] ?? index, message, index })),
+    ...trace.map((line) => ({ seq: line.seq ?? 0, line })),
+  ].sort((a, b) => a.seq - b.seq)
+  const rows: ReactElement[] = []
+  let tools: TraceLine[] = []
+  const flushTools = (): void => {
+    if (tools.length > 0) rows.push(<ToolActivityGroup key={`tools-${tools[0]!.id}`} lines={tools} />)
+    tools = []
+  }
+  for (const item of items) {
+    if (item.message) {
+      flushTools()
+      const { message, index } = item
+      if (message.role === 'assistant' && message.content.trim() === '') {
+        if (message.reasoning) rows.push(<li key={`think-${message.messageId ?? index}`}><ThinkingBlock text={message.reasoning} durationMs={message.thinkingMs} streaming={streaming && index === lastAssistant} /></li>)
+        continue
+      }
+      rows.push(<MessageRow key={message.messageId ?? `msg-${index}`} message={message}
+        onReuse={index === lastAssistant && onReuse && lastUser ? () => onReuse(lastUser) : undefined} streaming={streaming && index === lastAssistant} />)
+    } else if (isToolLine(item.line)) {
+      tools.push(item.line)
+    } else {
+      flushTools()
+      rows.push(<SystemLine key={item.line.id} line={item.line} />)
+    }
+  }
+  flushTools()
+  return <ol className="space-y-5">{rows}</ol>
 }
 
 function isToolLine(line: TraceLine): boolean {
   return line.label.startsWith('tool ') || line.label.startsWith('subagent tool')
 }
 
-function groupTrace(trace: TraceLine[]): { kind: 'tools' | 'system'; lines: TraceLine[] }[] {
-  const groups: { kind: 'tools' | 'system'; lines: TraceLine[] }[] = []
-  for (const line of trace) {
-    const kind = isToolLine(line) ? 'tools' : 'system'
-    const last = groups.at(-1)
-    if (last && last.kind === kind && kind === 'tools') last.lines.push(line)
-    else groups.push({ kind, lines: [line] })
-  }
-  return groups
-}
-
-function MessageRow({ message, onReuse }: { message: DisplayMessage; onReuse?: () => void }): ReactElement {
+function MessageRow({ message, onReuse, streaming }: { message: DisplayMessage; onReuse?: () => void; streaming: boolean }): ReactElement {
   const isUser = message.role === 'user'
   const [copied, setCopied] = useState(false)
   const copy = (): void => {
@@ -821,23 +824,25 @@ function MessageRow({ message, onReuse }: { message: DisplayMessage; onReuse?: (
   const long = message.content.length > 1200
   return (
     <li className={cx('group flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
-      <span className="text-[11px] font-medium uppercase tracking-wide text-neutral">{isUser ? 'You' : 'Assistant'}</span>
-      {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} durationMs={message.thinkingMs} />}
+      <div className={cx('flex w-full items-center gap-2', isUser ? 'justify-end' : 'justify-between')}>
+        <span className="text-[11px] font-medium uppercase tracking-wide text-neutral">{isUser ? 'You' : 'Assistant'}</span>
+        <div className="flex gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
+          <Button size="sm" variant="ghost" icon={copied ? Check : Copy} onClick={copy} aria-label="Copy message">{copied ? 'Copied' : 'Copy'}</Button>
+          {onReuse && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={onReuse} title="Puts the last prompt back in the composer; nothing is sent until you press Send">Reuse prompt</Button>}
+        </div>
+      </div>
+      {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} durationMs={message.thinkingMs} streaming={streaming && message.content.trim() === ''} />}
       {isUser
         ? <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border border-line bg-subtle px-3.5 py-2 text-sm leading-relaxed text-fg">{message.content}</div>
         : <div className={cx('w-full min-w-0 text-sm leading-relaxed text-fg', long && 'max-h-96 overflow-y-auto')}>{renderMarkdown(message.content)}</div>}
-      <div className="flex gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
-        <Button size="sm" variant="ghost" icon={copied ? Check : Copy} onClick={copy} aria-label="Copy message">{copied ? 'Copied' : 'Copy'}</Button>
-        {onReuse && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={onReuse} title="Puts the last prompt back in the composer; nothing is sent until you press Send">Reuse prompt</Button>}
-      </div>
     </li>
   )
 }
 
 /** Shows the server-projected reasoning summary only on request; it never outweighs the answer. */
-function ThinkingBlock({ text, durationMs }: { text: string; durationMs?: number }): ReactElement {
+function ThinkingBlock({ text, durationMs, streaming }: { text: string; durationMs?: number; streaming: boolean }): ReactElement {
   const [open, setOpen] = useState(false)
-  const label = durationMs === undefined ? 'Thinking...' : `Thought for ${durationMs < 1000 ? '<1' : Math.round(durationMs / 1000)}s`
+  const label = streaming ? 'Thinking...' : durationMs === undefined ? 'Reasoning' : `Thought for ${durationMs < 1000 ? '<1' : Math.round(durationMs / 1000)}s`
   return (
     <div className="w-full text-xs text-muted">
       <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 hover:text-fg"
@@ -909,9 +914,57 @@ function growTextarea(el: HTMLTextAreaElement): void {
   el.style.height = `${Math.min(el.scrollHeight, 160)}px`
 }
 
-/** Bottom composer: normal input, or the pending approvals/questions in place of the input. */
-function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batchReady, draft, onDraft, inputDisabled, placeholder, sendDisabled, sending, onSend, approvals, busyApprovalId, onApprovalDecide }: {
+/** Several pending questions: one tab each, then a Confirm tab that lists every answer before anything is sent. */
+function QuestionTabs({ questions, answers, busy, batchReady, onValue, onConfirm }: {
   questions: PendingInterruptView[]
+  answers: Record<string, string | string[]>
+  busy: boolean
+  batchReady: boolean
+  onValue: (questionId: string, value: string | string[]) => void
+  onConfirm: () => void
+}): ReactElement {
+  const [active, setActive] = useState(0)
+  const confirmIndex = questions.length
+  const answered = (id: string): boolean => { const v = answers[id]; return typeof v === 'string' ? v.trim().length > 0 : !!v?.length }
+  const formatted = (id: string): string => { const v = answers[id]; return typeof v === 'string' ? (v.trim() || '(no answer)') : v?.length ? v.join(', ') : '(no answer)' }
+  const tabClass = (on: boolean): string => cx('h-8 rounded-[10px] px-3 text-xs font-medium', on ? 'bg-accent-soft text-fg' : 'text-muted hover:bg-hover hover:text-fg')
+  return (
+    <div className="space-y-3">
+      <div role="tablist" aria-label="Pending questions" className="flex flex-wrap gap-1">
+        {questions.map((q, i) => (
+          <button key={`tab-${q.questionId}`} type="button" role="tab" aria-selected={active === i} onClick={() => setActive(i)} className={tabClass(active === i)}>
+            {q.header || `Question ${i + 1}`}{answered(q.questionId) ? ' ✓' : ''}
+          </button>
+        ))}
+        <button type="button" role="tab" aria-selected={active === confirmIndex} onClick={() => setActive(confirmIndex)} className={tabClass(active === confirmIndex)}>Confirm</button>
+      </div>
+      {questions.map((q, i) => (
+        <div key={`panel-${q.questionId}/${q.interruptId ?? ''}`} role="tabpanel" hidden={active !== i}>
+          <QuestionCard question={q} busy={busy} onValue={(value) => onValue(q.questionId, value)} />
+        </div>
+      ))}
+      <div role="tabpanel" hidden={active !== confirmIndex} className="space-y-3">
+        <p className="text-xs text-muted">Check every answer. Nothing is sent until you press Send answers.</p>
+        <ul className="space-y-1.5 text-sm">
+          {questions.map((q) => (
+            <li key={`review-${q.questionId}`} className="rounded-[10px] border border-line bg-subtle px-3 py-2">
+              <span className="block text-xs text-muted">{q.header || q.question}</span>
+              <span className="text-fg">{formatted(q.questionId)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex justify-end">
+          <Button variant="primary" disabled={busy || !batchReady} onClick={onConfirm}>{busy ? 'Sending...' : 'Send answers'}</Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Bottom composer: normal input, or the pending approvals/questions in place of the input. */
+function Composer({ questions, answers, onValue, onAnswer, onAnswerAll, answerBusy, batchReady, draft, onDraft, inputDisabled, placeholder, sendDisabled, sending, onSend, approvals, busyApprovalId, onApprovalDecide }: {
+  questions: PendingInterruptView[]
+  answers: Record<string, string | string[]>
   onValue: (questionId: string, value: string | string[]) => void
   onAnswer: (questionId: string, value: string | string[]) => void
   onAnswerAll: () => void
@@ -947,6 +1000,7 @@ function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batch
                         <p className="text-xs font-medium text-fg">{a.toolName}</p>
                         <p className="mt-0.5 text-[11px] text-muted">{a.agentName} • {a.requestId.slice(0, 8)}</p>
                         <p className="mt-1 text-[11px] text-muted">{a.reason}</p>
+                        <ApprovalArgs args={a.toolArgsRedacted} />
                       </div>
                       <ShieldQuestion size={16} className="mt-0.5 shrink-0 text-accent" aria-hidden />
                     </div>
@@ -959,22 +1013,22 @@ function Composer({ questions, onValue, onAnswer, onAnswerAll, answerBusy, batch
                 {approvals!.data!.truncated && <p className="text-[11px] text-muted">+ more approvals (scroll to see all)</p>}
               </div>
             )}
-            {questions.length > 0 && (
+            {questions.length === 1 && (
               <div className="space-y-2">
                 {hasApprovals && <div className="border-t border-line pt-2" />}
-                {questions.map((q) => (
-                  <QuestionCard key={`${q.questionId}/${q.interruptId ?? ''}`} question={q} busy={answerBusy}
-                    onValue={(value) => onValue(q.questionId, value)}
-                    onAnswer={questions.length === 1 ? (value) => onAnswer(q.questionId, value) : undefined} />
-                ))}
+                <QuestionCard key={`${questions[0]!.questionId}/${questions[0]!.interruptId ?? ''}`} question={questions[0]!} busy={answerBusy}
+                  onValue={(value) => onValue(questions[0]!.questionId, value)}
+                  onAnswer={(value) => onAnswer(questions[0]!.questionId, value)} />
+              </div>
+            )}
+            {questions.length > 1 && (
+              <div className="space-y-2">
+                {hasApprovals && <div className="border-t border-line pt-2" />}
+                <QuestionTabs questions={questions} answers={answers} busy={answerBusy} batchReady={batchReady}
+                  onValue={onValue} onConfirm={onAnswerAll} />
               </div>
             )}
           </div>
-          {questions.length > 1 && (
-            <div className="flex justify-end">
-              <Button variant="primary" disabled={answerBusy || !batchReady} onClick={onAnswerAll}>{answerBusy ? 'Sending...' : 'Answer all questions'}</Button>
-            </div>
-          )}
         </div>
       </div>
     )
