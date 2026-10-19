@@ -1,7 +1,8 @@
 /**
  * Ticket 69 route-manifest gate: compare the keys exported by the live route
  * registry (src/router/registry.tsx MANIFEST) and each screen slice's exported
- * `routes` record against the frozen 53-key inventory from the final
+ * `routes` record against the reconciled 55-key inventory (route-inventory-reconciled.md, P00).
+ * Supersedes the frozen 53-key list from the final
  * verification plan (section 4). Read-only; exits non-zero on mismatch.
  *
  * Usage: node route-manifest-check.mjs [appSrcDir]
@@ -11,16 +12,17 @@ import { join } from 'node:path'
 
 const SRC = process.argv[2] || 'src'
 
-/** Frozen inventory, plan section 4 (ticket 07's 53 keys, group = registry slice). */
+/** Reconciled inventory (P00, 2026-10-19): 55 MANIFEST keys, group = registry slice. */
 const FROZEN = {
-  a: ['login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'command-center', 'tasks'],
+  a: ['login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'overview', 'command-center', 'tasks'],
   b: ['projects', 'project-new', 'project'],
   c: ['operations', 'operation-new', 'preflight', 'operation-schedule', 'operation'],
-  d: ['agents', 'agent', 'assets', 'asset-new', 'asset-scope', 'asset', 'playbooks', 'playbook', 'technique', 'playbook-review'],
+  d: ['agent', 'assets', 'asset-new', 'asset-scope', 'asset', 'playbooks', 'playbook', 'technique', 'playbook-review'],
   e: ['analysis', 'findings', 'finding-new', 'finding', 'evidence', 'evidence-inspector'],
   f: ['reports', 'report-new', 'report', 'report-preview', 'report-review', 'settings'],
   g: ['ai-operator', 'ai-plan', 'ai-plan-review', 'ai-plan-compare', 'ai-trace', 'ai-history', 'ai-fanout', 'ai-branch'],
-  h: ['c2', 'c2-channel', 'c2-session', 'c2-console'],
+  h: ['c2-channel', 'c2-session', 'c2-console'],
+  i: ['infrastructure', 'agents', 'c2'],
   s: ['scenarios', 'workspaces'],
 }
 const FROZEN_KEYS = Object.values(FROZEN).flat()
@@ -54,8 +56,8 @@ function parseKeys(body) {
 const registrySrc = readFileSync(join(SRC, 'router', 'registry.tsx'), 'utf8')
 const manifestBody = literalBody(registrySrc, 'const MANIFEST')
 if (!manifestBody) { console.error('MANIFEST block not found'); process.exit(2) }
-const pairs = [...manifestBody.matchAll(/(?:'([^']+)')\s*:\s*'([a-hs])'/g)]
-const bare = [...manifestBody.matchAll(/(?:^|[,{\s])([A-Za-z][\w-]*)\s*:\s*'([a-hs])'/g)]
+const pairs = [...manifestBody.matchAll(/(?:'([^']+)')\s*:\s*'([a-is])'/g)]
+const bare = [...manifestBody.matchAll(/(?:^|[,{\s])([A-Za-z][\w-]*)\s*:\s*'([a-is])'/g)]
 const actual = new Map()
 for (const [, key, slice] of [...pairs, ...bare]) actual.set(key, slice)
 if (/\bdashboard\b/.test(manifestBody)) { console.error('FAIL: a dashboard alias exists in the manifest'); process.exit(2) }
@@ -70,7 +72,7 @@ const groupMismatch = Object.entries(FROZEN).flatMap(([g, keys]) => keys.filter(
 console.log(`frozen inventory: ${FROZEN_KEYS.length} keys | registry MANIFEST: ${actualKeys.length} keys`)
 const groupCounts = {}
 for (const k of actualKeys) groupCounts[actual.get(k)] = (groupCounts[actual.get(k)] || 0) + 1
-console.log('actual group counts:', JSON.stringify(groupCounts), '(frozen: a=9 b=3 c=5 d=10 e=6 f=6 g=8 h=4 s=2)')
+console.log('actual group counts:', JSON.stringify(groupCounts), '(frozen:', JSON.stringify(Object.fromEntries(Object.entries(FROZEN).map(([g, keys]) => [g, keys.length]))) + ')')
 
 const sliceFailures = []
 /** A slice may export its routes record directly (a/c/f/s) or compose it from
@@ -97,7 +99,8 @@ function sliceExportedKeys(slice, file, src) {
   return { keys, file }
 }
 for (const [slice, keys] of Object.entries(FROZEN)) {
-  const file = slice === 's' ? join(SRC, 'screens', 'demo', 'pages.tsx') : join(SRC, 'screens', `${slice}.tsx`)
+  const sliceFile = { s: join('demo', 'pages'), i: 'infrastructure' }
+  const file = join(SRC, 'screens', `${sliceFile[slice] ?? slice}.tsx`)
   const src = readFileSync(file, 'utf8')
   const { keys: exported } = sliceExportedKeys(slice, file, src)
   for (const k of keys) if (!exported.has(k)) sliceFailures.push(`${file}: key "${k}" missing from exported routes record`)
