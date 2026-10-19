@@ -39,19 +39,19 @@ async function listOrView(deps: ProjectCommandDeps, args: string): Promise<void>
     if (projects.length === 0) deps.say("No project exists yet. Create one in the Web UI first.");
     for (const project of projects) {
       const marker = project.id === current ? "*" : " ";
-      deps.say(`${marker} ${project.name} (${project.id}): ${describeState(states.get(project.id))}`);
+      deps.say(`${marker} ${project.displayName} (${project.id}): ${describeState(states.get(project.id))}`);
     }
     deps.say("Use /project <name or id> to view a project. Activation is a separate step: /activate.");
     return;
   }
   const wanted = args.trim();
-  const match = projects.find(project => project.id === wanted || project.name === wanted || project.workspaceSlug === wanted);
+  const match = projects.find(project => project.id === wanted || project.displayName === wanted || project.workspaceSlug === wanted);
   if (match === undefined) {
     deps.say(`No project matches "${wanted}".`);
     return;
   }
   deps.select(match.id);
-  deps.say(`Viewing ${match.name}. Nothing was started; use /activate to start it.`);
+  deps.say(`Viewing ${match.displayName}. Nothing was started; use /activate to start it.`);
 }
 
 async function activate(deps: ProjectCommandDeps): Promise<void> {
@@ -70,7 +70,7 @@ async function activate(deps: ProjectCommandDeps): Promise<void> {
   }
   if (plan.kind === "stop_then_activate") {
     const holder = projects.find(project => project.id === plan.stopEngagementId);
-    deps.say(`${holder?.name ?? "Another project"} is running. Use /project ${holder?.name ?? plan.stopEngagementId} then /stop, then /activate here.`);
+    deps.say(`${holder?.displayName ?? "Another project"} is running. Use /project ${holder?.displayName ?? plan.stopEngagementId} then /stop, then /activate here.`);
     return;
   }
   const result = await deps.facade.environmentCommand(current, { requestId: `activate-${randomUUID()}`, action: "activate", expectedVersion: self.slot.version });

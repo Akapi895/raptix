@@ -43,7 +43,7 @@ export interface ThreadBinding {
   updatedAt: string;
 }
 
-export interface ProjectSummary { id: string; name: string; workspaceSlug: string; status: string }
+export interface ProjectSummary { id: string; displayName: string; workspaceSlug: string; status: string }
 
 /** One frame of a run's event stream, as the web projects it. Shape mirrors PublicStreamEvent. */
 export interface ProjectedEvent {
