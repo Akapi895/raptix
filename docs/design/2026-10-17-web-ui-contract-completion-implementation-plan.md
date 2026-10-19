@@ -1006,3 +1006,53 @@ Engagement `cmvbilcji000035pdx8khoigh` (scope v1 đã duyệt, ROE đến 2026-1
 - P01: test abort và late-ACK. P00: inventory 55 key. P02–P06: browser acceptance. P09: parity checklist và mock-only (UI). P13: chưa làm.
 
 **Lưu ý phối hợp:** trong lúc làm, các file runtime Python (`instance_mailbox.py`, `dispatch_context.py`, `dispatch.py`, `plugins_api.py`) đã được sửa bởi phiên khác (có thêm `parent_dispatch_id`). Phiên này không commit các thay đổi đó.
+
+### 13.25 Phần C đã xử lý và quyết định của owner (2026-10-19)
+
+**Quyết định của owner:**
+- Tách thay đổi đang dở thành commit theo concern (đã làm, xem bảng commit).
+- Map step với OPPLAN objective (D07). Phần đọc đã có từ planning view (`opplan.objectives`, `status`, `blockedBy`); phần ghi (approve/return/skip) chưa làm vì đổi trạng thái plan mà runtime đọc khi chạy, nên cần làm khi không có run đang hoạt động.
+- Cho phép đổi prompt/tool để chạy song song (P10). Chưa thực hiện: cần chạy live trên project đang hoạt động.
+- Dựng Sliver trong Docker lab cục bộ (P12). Chưa thực hiện: cấu hình provider cần khởi động lại web API.
+- PDF, DOCX, Markdown đều thuộc phạm vi và được phép tải thêm dependency (D05). Chưa thực hiện.
+- Owner D06/D07/D08: owner chốt theo đề xuất mặc định trong §4 khi có quyết định cụ thể; mục này vẫn mở cho từng phần ghi.
+- `apps/web/.scratch/frontend-backend-integration` có trong checkout; các tham chiếu tới thư mục này là hợp lệ.
+- Lab: project `cmvdticfo000036n169e70nz9` (Reddish-1.0), target `10.129.84.232`, authorization đã xác nhận.
+- HITL: owner đã test tạm hoàn chỉnh.
+- Cho phép chạy `raptix web sandboxes sync` và tự cài tool khi thiếu.
+
+**Ràng buộc trong lượt này:** runtime đang chạy `make cli-dev` trên project thực tế, không được interrupt. Không restart container, không chạy live test trên lab, không sửa `apps/cli`. Image API/UI/runtime đã build nhưng chưa deploy.
+
+**Commit đã tạo (từ `f41e4cfa`):**
+
+| Commit | Nội dung |
+|---|---|
+| `3011292c` | runtime: per-conversation HITL switch và dangerous-method approval |
+| `2d4939f3` | CLI gửi `workspace_path` của subtree engagement; cập nhật hash fixture parity |
+| `26d60eb7` | web: lưu HITL switch theo thread và expose qua HTTP |
+| `06a47c09` | web: HITL switch và Plan \| Execute toggle trong AI workspace |
+| `27ff9f44` | planning: validate plan document, gate execution theo handoff; regenerate skill graph |
+| `7e69e84b` | web: render markdown table; cập nhật audit test |
+| `a4ab6bb5` | web: Evidence trong sidebar project thật |
+| `3b971a61` | launcher: sandbox sync không xóa sandbox đang chạy |
+| `2c2c67e6` | docs: thuật ngữ capture classification, env cho CLI local, skill cleanup |
+| `3108fc5c` | P12: panel Trace và Results thật cho route `ai-trace` |
+| `b69a3a98` | P10: chuyển DTO lệnh instance vào web-contracts, có wire guard |
+| `2cec344a` | P01: abort của caller không bị hiển thị như lỗi (`guarded`) |
+| `5b33f30e` | P00: inventory 55 key đối chiếu với registry; gate manifest cập nhật |
+| `5990ba68` | P09: ổn định test UI (maxWorkers=4, timeout) |
+
+**Chưa commit (không thuộc phạm vi):** `README.md` (viết lại toàn bộ, cần owner quyết định), `.gitignore` (thêm `benchmarks/scenarios/`, đang ảnh hưởng benchmark đã track), `benchmarks/scenarios/reddish/inputs/prompt.txt`, `apps/web/src/screens/f.tsx` (phiên khác đang sửa; lint còn 5 lỗi `react-refresh/only-export-components`), các file untracked (`infra-test.log`, `now.txt`, `report-do-an/`, `report-vdt/`, `web-sandboxes/`, `docs/proposals/temp.md`, `docs/design/2026-10-12-*`, `docs/design/2026-10-19-*`).
+
+**Kiểm tra đã chạy:** pytest raptix-core + middleware + tools: 1865 pass, 2 skip. Server vitest: pass (graph-service timeout khi chạy song song, pass khi chạy riêng). Web vitest: 1333/1333 pass với `--maxWorkers=4`. Typecheck web và server: pass. ESLint: `f.tsx` còn lỗi. Launcher go test: pass. CLI useAgent test: pass. Skill audit strict: 0 vi phạm.
+
+**Chưa làm (cần runtime hoặc quyết định):**
+- P10: forward live, hai instance cùng role live (cần prompt/tool, cần chạy trên project đang hoạt động).
+- P11: acceptance còn lại (paused restart, question vs pause, stop race, deadline, double resume); step controls (cần quyết định ghi).
+- P12: C2 Sliver round-trip; campaigns giữ blocked.
+- P02–P06: browser acceptance còn lại (xem §2).
+- P04/P05/P06 nhánh còn thiếu; P07 PDF/DOCX/Markdown (đã được duyệt, chưa làm).
+- P09: mock-only (inbox phê duyệt trong Team, `g-plan`, `h-session`, `c-console`); lint `f.tsx`.
+- UX: sandbox thiếu bị retry 150 giây; `_retry_on_connection_error` cố ý retry để chờ VM boot, và test hiện có khẳng định `httpx.ConnectError` là kiểu lỗi khi hết budget. Cần quyết định: giữ budget, hay fail nhanh kèm thông báo rõ.
+- P13: chưa làm.
+- Plan `2026-10-19-single-active-project-environments` (I00–I09) mới được đề xuất. Nó thay đổi cách activate runtime và xung đột với luồng đang chạy; chưa triển khai.
