@@ -20,6 +20,7 @@ const checks: string[] = [];
 const double = await startControllerDouble(TOKEN);
 const { containers, injected } = double;
 const runStatuses = new Map<string, string>();
+const busyThreads = new Set<string>();
 
 const service = new ProjectEnvironmentService(db, DEPLOYMENT);
 const lifecycle = new EnvironmentLifecycle(db, service, new HostControllerClient(double.url, TOKEN), {
@@ -34,6 +35,7 @@ const lifecycle = new EnvironmentLifecycle(db, service, new HostControllerClient
   pollIntervalMs: 10,
   drainTimeoutMs: 300,
   runStatus: async (_endpoint, _threadId, runId) => runStatuses.get(runId) ?? 'running',
+  threadBusy: async (_endpoint, threadId) => busyThreads.has(threadId),
 });
 
 const suffix = randomUUID().slice(0, 8);
@@ -194,6 +196,39 @@ try {
   const released = await db.webRequestLedger.findFirstOrThrow({ where: { engagementId: w.id, requestId: `run-w-${suffix}` } });
   assert.equal(released.activeThreadId, null, 'the marker of a run that is not executing is released');
   checks.push('a run the runtime does not know does not hold the stop, and its marker is released');
+
+  // 8. The ledger can be empty while the runtime still runs an instance of a thread. That instance holds the stop, and
+  // the stop completes once the runtime reports it finished.
+  const y = await project('y');
+  const yStart = await command(y.id, 'y1', 'activate', (await slot()).version);
+  const yReady = await lifecycle.bringUp(y.id, yStart.commandId!, yStart.version);
+  const yRow = await envRow(y.id);
+  const yThread = `t-${suffix}-y`;
+  await db.engagementThread.create({ data: { threadId: yThread, engagementId: y.id, assistantId: 'soundwave', kind: 'planning', contextHash: 'ctx' } });
+  busyThreads.add(yThread);
+  const yStop = await command(y.id, 'y2', 'stop', yReady.version);
+  const yHeld = await lifecycle.shutDown(y.id, yStop.commandId!, yStop.version);
+  assert.equal(yHeld.phase, 'ready', 'a running instance with an empty ledger returns the stop to ready');
+  assert.equal(running(yRow.id), true, 'nothing is stopped while the instance runs');
+  busyThreads.delete(yThread);
+  const yStop2 = await command(y.id, 'y3', 'stop', yHeld.version);
+  assert.equal((await lifecycle.shutDown(y.id, yStop2.commandId!, yStop2.version)).phase, 'idle');
+  checks.push('a running instance holds a stop even when the ledger is empty, and the stop completes once it finishes');
+
+  // 9. A restart finds a ready slot whose containers are gone. The slot is held as uncertain with the reason, not left ready.
+  const z = await project('z');
+  const zStart = await command(z.id, 'z1', 'activate', (await slot()).version);
+  const zReady = await lifecycle.bringUp(z.id, zStart.commandId!, zStart.version);
+  const zRow = await envRow(z.id);
+  containers.get(`${zRow.id}:runtime`)!.running = false;
+  await lifecycle.resumePending();
+  const zAfterRestart = await slot();
+  assert.equal(zAfterRestart.phase, 'uncertain', 'a ready slot whose containers are gone is not ready after a restart');
+  const zState = await service.state('local', z.id);
+  assert.equal(zState.environment.lastError, 'not_running_at_restart');
+  const zStop = await command(z.id, 'z2', 'stop', zAfterRestart.version);
+  assert.equal((await lifecycle.shutDown(z.id, zStop.commandId!, zStop.version)).phase, 'idle', 'the owner reconciles the uncertain slot by stopping');
+  checks.push('a restart finds a ready slot whose containers are gone and holds it as uncertain with the reason, and the owner reconciles it');
 } finally {
   await double.close();
   await disconnectDb(db);

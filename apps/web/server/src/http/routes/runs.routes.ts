@@ -92,8 +92,7 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
   }));
   app.post(`${prefix}/threads/:thread/rebind`, (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id, thread } = request.params as { id: string; thread: string };
-    if (request.body !== undefined && (typeof request.body !== 'object' || request.body === null || Object.keys(request.body).length)) throw new ProjectPolicyError('bad_request', 'Rebind does not accept overrides');
-    return service.rebindThread(identity.id, id, thread);
+    return service.rebindThread(identity.id, id, thread, request.body);
   }));
   app.post(`${prefix}/threads/:thread/resume-run`, (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id, thread } = request.params as { id: string; thread: string };

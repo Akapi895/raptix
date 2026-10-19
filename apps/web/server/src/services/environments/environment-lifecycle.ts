@@ -29,6 +29,8 @@ export interface LifecycleOptions {
   drainTimeoutMs?: number;
   /** Reads the status of one run on an endpoint. The default asks the runtime; a test supplies its own. */
   runStatus?: (endpoint: string, threadId: string, runId: string) => Promise<string>;
+  /** Reports whether the runtime has an instance of the thread running. The default asks the runtime; a test supplies its own. */
+  threadBusy?: (endpoint: string, threadId: string) => Promise<boolean>;
 }
 
 type Seen =
@@ -56,6 +58,15 @@ async function defaultRunStatus(endpoint: string, threadId: string, runId: strin
   return typeof body?.status === 'string' ? body.status : 'unknown';
 }
 
+/** True when the runtime reports an instance of the thread as running or cancelling. A thread the runtime does not know has none. */
+async function defaultThreadBusy(endpoint: string, threadId: string): Promise<boolean> {
+  const response = await fetch(`${endpoint}/_raptix/threads/${encodeURIComponent(threadId)}/instances`, { signal: AbortSignal.timeout(5000), redirect: 'error' });
+  if (response.status === 404) return false;
+  if (!response.ok) throw new Error(`instances ${response.status}`);
+  const body = (await response.json()) as { instances?: { state?: unknown }[] };
+  return (body.instances ?? []).some(instance => instance.state === 'running' || instance.state === 'cancel_requested');
+}
+
 async function defaultProbe(endpoint: string): Promise<boolean> {
   try {
     const response = await fetch(`${endpoint}/ok`, { signal: AbortSignal.timeout(3000), redirect: 'error' });
@@ -76,6 +87,7 @@ export class EnvironmentLifecycle {
   private readonly pollIntervalMs: number;
   private readonly drainTimeoutMs: number;
   private readonly runStatus: (endpoint: string, threadId: string, runId: string) => Promise<string>;
+  private readonly threadBusyCheck: (endpoint: string, threadId: string) => Promise<boolean>;
 
   public constructor(
     private readonly db: PrismaClient,
@@ -89,6 +101,7 @@ export class EnvironmentLifecycle {
     this.pollIntervalMs = options.pollIntervalMs ?? 2_000;
     this.drainTimeoutMs = options.drainTimeoutMs ?? 600_000;
     this.runStatus = options.runStatus ?? defaultRunStatus;
+    this.threadBusyCheck = options.threadBusy ?? defaultThreadBusy;
   }
 
   /** Create and start both containers, wait for readiness, and report ready with the endpoint. */
@@ -133,8 +146,9 @@ export class EnvironmentLifecycle {
   private async drain(env: EnvironmentRow): Promise<boolean> {
     const endpoint = runtimeUrlFor(this.config.deploymentId, env.id);
     const deadline = Date.now() + this.drainTimeoutMs;
+    const threads = await this.db.engagementThread.findMany({ where: { engagementId: env.engagementId }, select: { threadId: true } });
     for (;;) {
-      // A runtime that is not running cannot be executing a run, so there is nothing to cut off. The ledger keeps its
+      // A runtime that is not running cannot be executing anything, so there is nothing to cut off. The ledger keeps its
       // marker: an unknown outcome stays on record for its owner, and it does not hold the stop.
       const runtime = await this.observeOne(env, 'runtime', env.generation || 1);
       if (runtime.kind === 'absent' || (runtime.kind === 'present' && !runtime.running)) return true;
@@ -142,7 +156,6 @@ export class EnvironmentLifecycle {
         where: { engagementId: env.engagementId, activeThreadId: { not: null }, operation: { not: 'create_thread' } },
         select: { requestId: true, threadId: true, runId: true },
       });
-      if (open.length === 0) return true;
       for (const row of open) {
         if (row.runId === null || row.threadId === null) continue;
         const status = await this.runStatus(endpoint, row.threadId, row.runId).catch(() => 'unknown');
@@ -153,10 +166,19 @@ export class EnvironmentLifecycle {
           });
         }
       }
+      // The ledger can be empty while the runtime still works: an instance the runtime reports as running is busy too.
+      // A thread whose instances cannot be read counts as busy, so an unknown state is never cut off.
+      let busy = (await this.db.webRequestLedger.count({ where: { engagementId: env.engagementId, activeThreadId: { not: null }, operation: { not: 'create_thread' } } })) > 0;
+      for (const thread of threads) {
+        if (busy) break;
+        busy = await this.threadBusyCheck(endpoint, thread.threadId).catch(() => true);
+      }
+      if (!busy) return true;
       if (Date.now() >= deadline) return false;
       await new Promise(resolve => setTimeout(resolve, this.pollIntervalMs));
     }
   }
+
 
   /**
    * The container incarnation this attempt uses. Containers that already exist keep their generation, so a stopped
@@ -180,6 +202,14 @@ export class EnvironmentLifecycle {
     const slot = await this.db.deploymentSlot.findUnique({ where: { deploymentId: this.config.deploymentId } });
     if (slot === null || slot.ownerEngagementId === null || slot.commandId === null) return;
     if (slot.phase === 'starting') await this.bringUp(slot.ownerEngagementId, slot.commandId, slot.version);
+    // A ready slot whose containers are gone after a restart is not ready. It is held as uncertain until its owner acts.
+    if (slot.phase === 'ready' && slot.ownerEngagementId !== null && slot.commandId !== null) {
+      const env = await this.environment(slot.ownerEngagementId);
+      const seen = await this.observeAll(env, env.generation || 1);
+      if (!seen.every(item => item.kind === 'present' && item.running)) {
+        await this.service.observe({ commandId: slot.commandId, expectedVersion: slot.version, observation: 'uncertain', reason: 'not_running_at_restart' });
+      }
+    }
     if (slot.phase === 'stopping') await this.shutDown(slot.ownerEngagementId, slot.commandId, slot.version);
   }
 

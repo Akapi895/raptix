@@ -14,6 +14,13 @@ import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-con
 import { projectThreadHistory } from './history-projection.js';
 import { assertResumeValue, findPendingQuestions } from './interrupt-projection.js';
 
+function parseRebindRequest(raw: unknown): number {
+  const body = raw as { expectedMessageCount?: unknown } | null | undefined;
+  if (typeof body !== 'object' || body === null || Object.keys(body).length !== 1 || !Number.isSafeInteger(body.expectedMessageCount) || (body.expectedMessageCount as number) < 1 || (body.expectedMessageCount as number) > 100000) {
+    throw new ProjectPolicyError('bad_request', 'Rebind needs the verified message count of the thread');
+  }
+  return body.expectedMessageCount as number;
+}
 const conflict = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Runtime context, readiness or active-run policy prevents this operation');
 /** A runtime 409 on an instance control: its reason in the operator's words; an unknown reason keeps its code. */
 const refusal = (payload: { reason?: unknown } | null, fallback: string): ProjectPolicyError => {
@@ -287,31 +294,39 @@ export class RunService {
     return { engagementId: engagement, threadId: thread, state, latestRunId: latest?.runId ?? null, latestRunStatus: latest?.status ?? null, source: 'runtime' };
   }
   /**
-   * ADR-0092 I07: reconciles a migrated thread with the environment that serves it now. The runtime gets the thread
-   * record under this environment's configuration, with the same thread id and the metadata the web checks, and the
-   * binding moves to that configuration. Nothing runs, and no checkpoint is rewritten.
+   * ADR-0092 I07: reconciles a migrated thread with the environment that serves it. Operator-only, and only for a managed
+   * project whose environment is ready. The history must be non-empty and hold exactly the number of messages the
+   * operator verified against the migration record. Nothing runs and no checkpoint is rewritten. The move is audited.
    */
-  public async rebindThread(user: string, engagement: string, thread: string): Promise<{ threadId: string; previousRuntimeConfigHash: string | null; runtimeConfigHash: string; created: boolean }> {
-    const { ownership, context } = this.options;
+  public async rebindThread(user: string, engagement: string, thread: string, raw: unknown): Promise<{ threadId: string; previousRuntimeConfigHash: string | null; runtimeConfigHash: string; created: boolean }> {
+    const { ownership, context, router } = this.options;
+    const expectedMessageCount = parseRebindRequest(raw);
+    // Every check that can refuse runs before the runtime is touched.
+    await ownership.requireOperator(user, engagement);
     const binding = await ownership.getBinding(user, engagement, thread);
+    if (!router) throw conflict();
+    // A project without an environment record would rebind inside the legacy runtime, which is not a cutover. The endpoint call also refuses when the environment is not ready.
+    const endpoint = await router.endpoint(engagement);
+    if (endpoint.environmentId === null) throw conflict();
+    await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
     const previousRuntimeConfigHash = await ownership.runtimeConfigHashOf(user, engagement, thread);
     // Resolved without the thread: a bound resolution refuses the configuration change this step records.
     const trusted = await context.resolve(user, engagement, { kind: binding.kind, assistantId: binding.assistantId });
     if (!trusted.configurable.authorization_confirmed) throw conflict();
     const runtime = await this.execution(engagement);
-    const reads = this.options.router ? await this.options.router.reads(engagement) : this.options.reads;
+    const reads = await router.reads(engagement);
     const expected = { ...trusted.metadata };
-    let remote: { metadata: Record<string, unknown> } | null = null;
-    try { remote = await reads.thread(thread); } catch { remote = null; }
     let created = false;
-    if (remote !== null) metadata(remote.metadata, expected);
+    // Only a 404 means the thread is missing. Any other failure stops here, with nothing created.
+    if (await reads.threadExists(thread)) metadata((await reads.thread(thread)).metadata, expected);
     else { await runtime.createThread(thread, expected, trusted.configurable); created = true; }
-    // The history must agree with this environment's configuration before the binding moves. The same fields the bound
-    // resolution compares are checked here.
     const { values, graphId } = await reads.state(thread);
+    const messages = Array.isArray(values.messages) ? values.messages.length : -1;
+    if (Object.keys(values).length === 0 || messages < 1 || messages !== expectedMessageCount) throw conflict();
     const fields = Object.entries(trusted.configurable).filter(([k]) => k !== 'sandbox_url' && k !== 'hitl_enabled');
-    if (Object.keys(values).length && (graphId !== binding.assistantId || fields.some(([k, v]) => values[k] !== v))) throw conflict();
+    if (graphId !== binding.assistantId || fields.some(([k, v]) => values[k] !== v)) throw conflict();
     await ownership.rebindThreadConfig(user, engagement, { threadId: thread, expectedRuntimeConfigHash: previousRuntimeConfigHash, contextHash: trusted.bindingHash, runtimeConfigHash: trusted.runtimeConfigHash });
+    await this.options.audit?.(user, engagement, 'thread.rebound', thread, `previous=${previousRuntimeConfigHash ?? 'none'} next=${trusted.runtimeConfigHash} messages=${messages} created=${created}`);
     return { threadId: thread, previousRuntimeConfigHash, runtimeConfigHash: trusted.runtimeConfigHash, created };
   }
 
