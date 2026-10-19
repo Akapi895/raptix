@@ -65,6 +65,8 @@ export class FacadeError extends Error {
 export interface FacadeConfig {
   baseUrl: string;
   fetchImpl?: typeof fetch;
+  /** The signed-in session, when the control plane runs in multi-user mode. */
+  session?: { cookie: string; csrfToken: string; origin: string };
 }
 
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
@@ -72,6 +74,7 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
 export class FacadeClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
+  private readonly session: FacadeConfig["session"];
 
   public constructor(config: FacadeConfig) {
     const parsed = new URL(config.baseUrl);
@@ -79,6 +82,7 @@ export class FacadeClient {
     if (parsed.username || parsed.password || parsed.search || parsed.hash) throw new Error("The control plane URL must not carry credentials, a query or a fragment.");
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.fetchImpl = config.fetchImpl ?? fetch;
+    this.session = config.session;
   }
 
   public listProjects(): Promise<ProjectSummary[]> {
@@ -133,7 +137,7 @@ export class FacadeClient {
   public async *events(engagementId: string, threadId: string, runId: string, cursor: string, signal: AbortSignal): AsyncGenerator<{ event: string; data: unknown; id?: string }> {
     const response = await this.fetchImpl(`${this.baseUrl}/api/engagements/${enc(engagementId)}/threads/${enc(threadId)}/runs/${enc(runId)}/events`, {
       method: "GET",
-      headers: { accept: "text/event-stream", "last-event-id": cursor },
+      headers: { accept: "text/event-stream", "last-event-id": cursor, ...this.authHeaders("GET") },
       signal,
       redirect: "error",
     });
@@ -151,10 +155,15 @@ export class FacadeClient {
     throw toError(response.status, response.body);
   }
 
+  private authHeaders(method: "GET" | "POST"): Record<string, string> {
+    if (this.session === undefined) return {};
+    return { cookie: this.session.cookie, origin: this.session.origin, ...(method === "POST" ? { "x-csrf-token": this.session.csrfToken } : {}) };
+  }
+
   private async send(method: "GET" | "POST", path: string, body?: unknown): Promise<{ status: number; body: unknown }> {
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
       method,
-      headers: body === undefined ? { accept: "application/json" } : { accept: "application/json", "content-type": "application/json" },
+      headers: { ...(body === undefined ? { accept: "application/json" } : { accept: "application/json", "content-type": "application/json" }), ...this.authHeaders(method) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       redirect: "error",
     });
