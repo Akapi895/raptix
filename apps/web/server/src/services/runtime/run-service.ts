@@ -14,13 +14,6 @@ import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-con
 import { projectThreadHistory } from './history-projection.js';
 import { assertResumeValue, findPendingQuestions } from './interrupt-projection.js';
 
-function parseRebindRequest(raw: unknown): number {
-  const body = raw as { expectedMessageCount?: unknown } | null | undefined;
-  if (typeof body !== 'object' || body === null || Object.keys(body).length !== 1 || !Number.isSafeInteger(body.expectedMessageCount) || (body.expectedMessageCount as number) < 1 || (body.expectedMessageCount as number) > 100000) {
-    throw new ProjectPolicyError('bad_request', 'Rebind needs the verified message count of the thread');
-  }
-  return body.expectedMessageCount as number;
-}
 const conflict = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Runtime context, readiness or active-run policy prevents this operation');
 /** A runtime 409 on an instance control: its reason in the operator's words; an unknown reason keeps its code. */
 const refusal = (payload: { reason?: unknown } | null, fallback: string): ProjectPolicyError => {
@@ -96,6 +89,8 @@ export class RunService {
     authorizeMutation?: (user: string, engagement: string, kind: 'planning' | 'execution', threadId: string | null) => Promise<void>
     operations?: RunOperationPort
     audit?: (actorId: string, engagementId: string, action: string, targetId: string, reason: string) => Promise<void>
+    /** An audit write that failed after its action already took effect. Defaults to silence; a deployment wires logging. */
+    onAuditFailure?: (error: unknown) => void
   }) {}
   private requireOperations(): RunOperationPort {
     if (!this.options.operations) throw new ProjectPolicyError('conflict', 'Operation lifecycle is not available in this deployment');
@@ -295,14 +290,17 @@ export class RunService {
   }
   /**
    * ADR-0092 I07: reconciles a migrated thread with the environment that serves it. Operator-only, and only for a managed
-   * project whose environment is ready. The history must be non-empty and hold exactly the number of messages the
-   * operator verified against the migration record. Nothing runs and no checkpoint is rewritten. The move is audited.
+   * project whose environment is ready. The history must be non-empty and hold exactly the number of messages an
+   * operator verified against the legacy runtime and imported through the migration manifest (never a client-supplied
+   * count). Nothing runs and no checkpoint is rewritten. The move is audited, best-effort: an audit failure does not
+   * undo or mis-report a binding move that already happened.
    */
-  public async rebindThread(user: string, engagement: string, thread: string, raw: unknown): Promise<{ threadId: string; previousRuntimeConfigHash: string | null; runtimeConfigHash: string; created: boolean }> {
+  public async rebindThread(user: string, engagement: string, thread: string): Promise<{ threadId: string; previousRuntimeConfigHash: string | null; runtimeConfigHash: string; created: boolean }> {
     const { ownership, context, router } = this.options;
-    const expectedMessageCount = parseRebindRequest(raw);
     // Every check that can refuse runs before the runtime is touched.
     await ownership.requireOperator(user, engagement);
+    const expectedMessageCount = await ownership.verifiedMessageCount(user, engagement, thread);
+    if (expectedMessageCount === null) throw new ProjectPolicyError('conflict', 'No verified message count was imported for this thread. Import the migration manifest first.');
     const binding = await ownership.getBinding(user, engagement, thread);
     if (!router) throw conflict();
     // A project without an environment record would rebind inside the legacy runtime, which is not a cutover. The endpoint call also refuses when the environment is not ready.
@@ -326,7 +324,12 @@ export class RunService {
     const fields = Object.entries(trusted.configurable).filter(([k]) => k !== 'sandbox_url' && k !== 'hitl_enabled');
     if (graphId !== binding.assistantId || fields.some(([k, v]) => values[k] !== v)) throw conflict();
     await ownership.rebindThreadConfig(user, engagement, { threadId: thread, expectedRuntimeConfigHash: previousRuntimeConfigHash, contextHash: trusted.bindingHash, runtimeConfigHash: trusted.runtimeConfigHash });
-    await this.options.audit?.(user, engagement, 'thread.rebound', thread, `previous=${previousRuntimeConfigHash ?? 'none'} next=${trusted.runtimeConfigHash} messages=${messages} created=${created}`);
+    // Best-effort: the binding has already moved, so a logging failure here must not be reported as a failed rebind.
+    try {
+      await this.options.audit?.(user, engagement, 'thread.rebound', thread, `previous=${previousRuntimeConfigHash ?? 'none'} next=${trusted.runtimeConfigHash} messages=${messages} created=${created}`);
+    } catch (error) {
+      this.options.onAuditFailure?.(error);
+    }
     return { threadId: thread, previousRuntimeConfigHash, runtimeConfigHash: trusted.runtimeConfigHash, created };
   }
 

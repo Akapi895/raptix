@@ -92,7 +92,7 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
   }));
   app.post(`${prefix}/threads/:thread/rebind`, (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id, thread } = request.params as { id: string; thread: string };
-    return service.rebindThread(identity.id, id, thread, request.body);
+    return service.rebindThread(identity.id, id, thread);
   }));
   app.post(`${prefix}/threads/:thread/resume-run`, (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id, thread } = request.params as { id: string; thread: string };

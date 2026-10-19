@@ -203,6 +203,7 @@ async function main(): Promise<void> {
        uncertainRequests: (engagementId, threadId) => dbClient!.webRequestLedger.count({ where: { engagementId, threadId, state: 'uncertain' } }),
      },
      audit: async (actorId, engagementId, action, targetId, reason) => { await dbClient!.webAuditEntry.create({ data: { engagementId, actorId, action, targetType: 'thread', targetId, reason } }); },
+     onAuditFailure: (error) => console.error('audit write failed after its action took effect', error),
      authorizeMutation: async (actorId, engagementId, kind, threadId) => {
      await requireEngagementAccess({ db: dbClient, actorId, multiUser: env.authMode === 'multi' }, engagementId, 'operator');
      await closureService!.assertOpen(engagementId);
