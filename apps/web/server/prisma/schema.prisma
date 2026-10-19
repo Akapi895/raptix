@@ -92,6 +92,7 @@ model EngagementThread {
   contextHash String
   runtimeConfigHash String?
   title String?
+  hitlEnabled Boolean @default(true)
   engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   requests WebRequestLedger[]
   createdAt DateTime @default(now())

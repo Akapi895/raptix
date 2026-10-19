@@ -17,6 +17,7 @@ import type { RuntimeContextService } from './services/runtime/runtime-context.j
 import type { RunService } from './services/runtime/run-service.js';
 import { registerRunRoutes } from './http/routes/runs.routes.js';
 import { registerThreadTitleRoutes } from './http/routes/thread-title.routes.js';
+import { registerThreadHitlRoutes } from './http/routes/thread-hitl.routes.js';
 import { registerApprovalRoutes } from './http/routes/approvals.routes.js';
 import { registerFindingsRoutes } from './http/routes/findings.routes.js';
 import { registerGraphRoutes } from './http/routes/graph.routes.js';
@@ -183,6 +184,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
 
   if (options.runsService) registerRunRoutes(app, options.runsService, identity);
   if (options.runtimeOwnership) registerThreadTitleRoutes(app, options.runtimeOwnership, identity);
+  if (options.runtimeOwnership) registerThreadHitlRoutes(app, options.runtimeOwnership, identity);
   if (options.streamService) registerEventRoutes(app, options.streamService, identity);
   if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, identity);
   if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, identity);

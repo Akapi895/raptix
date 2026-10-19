@@ -18,7 +18,7 @@ export interface RuntimeReadPort {
 }
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 export class RuntimeReadClient implements RuntimeReadPort {
-  public constructor(private readonly apiUrl: string, private readonly timeoutMs = 5000, private readonly mutationTimeoutMs = 15000) {}
+  public constructor(private readonly apiUrl: string, private readonly timeoutMs = 15000, private readonly mutationTimeoutMs = 15000) {}
   protected async read(endpoint: string, body?: unknown, mutation = false): Promise<unknown> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), mutation ? this.mutationTimeoutMs : this.timeoutMs);

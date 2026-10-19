@@ -15,10 +15,10 @@ export interface ContextSelection { kind: ThreadKind; assistantId?: string; thre
 /** The singular planning assistant graph. */
 export const PLANNING_ASSISTANT = 'soundwave';
 /** Assistant graphs accepted for execution threads, in preference order. */
-export const EXECUTION_ASSISTANTS = ['decepticon', 'raptix'] as const;
+export const EXECUTION_ASSISTANTS = ['raptix', 'decepticon'] as const;
 export interface TrustedRuntimeContext {
   engagementId: string; workspaceSlug: string; assistantId: string; kind: ThreadKind
-  configurable: { engagement_name: string; workspace_path: string; target_type: ProjectViewModel['targetType']; target_value: string; authorization_confirmed: boolean; language?: string; sandbox_url?: string }
+  configurable: { engagement_name: string; workspace_path: string; target_type: ProjectViewModel['targetType']; target_value: string; authorization_confirmed: boolean; language?: string; sandbox_url?: string; hitl_enabled?: false }
   runtimeConfigHash: string; bindingHash: string; metadata: Record<string, string>
   publicView: RuntimeContextView
 }
@@ -54,15 +54,17 @@ export class RuntimeContextService {
     const assistantId = bound?.assistantId ?? selection.assistantId ?? (selection.kind === 'planning' ? PLANNING_ASSISTANT : EXECUTION_ASSISTANTS.find(g => graphs.includes(g)));
     if (!assistantId || !graphs.includes(assistantId)) throw new RuntimeUnavailableError();
     if (selection.kind === 'planning' && assistantId !== 'soundwave' || selection.kind === 'execution' && assistantId === 'soundwave') throw mismatch();
-    const configurable = { engagement_name: project.workspaceSlug, workspace_path: path.posix.join(config.workspaceRoot, project.workspaceSlug), target_type: project.targetType, target_value: project.targetValue, authorization_confirmed: project.authorizationConfirmed, ...(config.language ? { language: config.language } : {}), ...(config.perProjectSandbox ? { sandbox_url: sandboxUrlFor(project.workspaceSlug) } : config.sandboxUrl ? { sandbox_url: config.sandboxUrl } : {}) };
-    const runtimeConfigHash = requestFingerprint({ engagementId, assistantId, kind: selection.kind, configurable });
+    const stableConfigurable = { engagement_name: project.workspaceSlug, workspace_path: path.posix.join(config.workspaceRoot, project.workspaceSlug), target_type: project.targetType, target_value: project.targetValue, authorization_confirmed: project.authorizationConfirmed, ...(config.language ? { language: config.language } : {}), ...(config.perProjectSandbox ? { sandbox_url: sandboxUrlFor(project.workspaceSlug) } : config.sandboxUrl ? { sandbox_url: config.sandboxUrl } : {}) };
+    // The HITL switch is not part of the runtime identity: toggling it must not invalidate a bound thread.
+    const runtimeConfigHash = requestFingerprint({ engagementId, assistantId, kind: selection.kind, configurable: stableConfigurable });
+    const configurable = bound?.hitlEnabled === false ? { ...stableConfigurable, hitl_enabled: false as const } : stableConfigurable;
     const metadata = { engagement_id: engagementId, workspace_slug: project.workspaceSlug, ui_assistant_id: assistantId, graph_id: assistantId, ui_flow: selection.kind, runtime_context_hash: runtimeConfigHash };
     if (bound) {
       await ownership.getBinding(userId, engagementId, bound.threadId, { assistantId, kind: selection.kind, runtimeConfigHash });
       const remote = await runtime.thread(bound.threadId);
       if (Object.entries(metadata).some(([k, v]) => remote.metadata[k] !== v) || remote.metadata.assistantId !== undefined && remote.metadata.assistantId !== assistantId) throw mismatch();
       const { values, graphId } = await runtime.state(bound.threadId);
-      const fields = Object.entries(configurable).filter(([k]) => k !== 'sandbox_url');
+      const fields = Object.entries(configurable).filter(([k]) => k !== 'sandbox_url' && k !== 'hitl_enabled');
       if (Object.keys(values).length && (graphId !== assistantId || fields.some(([k, v]) => values[k] !== v))) throw mismatch();
       if (values.kg_engagement !== undefined && values.kg_engagement !== '' && values.kg_engagement !== project.workspaceSlug || values.language !== undefined && values.language !== '' && values.language !== config.language || values.sandbox_url !== undefined && values.sandbox_url !== '' && values.sandbox_url !== config.sandboxUrl) throw mismatch();
     }
