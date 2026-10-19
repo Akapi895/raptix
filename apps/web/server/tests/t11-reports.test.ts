@@ -215,7 +215,7 @@ describe('ticket 11 report lifecycle and delivery', () => {
   it('enforces independent review with a mandatory comment and pins the version', async () => {
     const { app, author, reviewer, reviewerId } = await setup();
     const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Reviewed report' } });
-    const id = created.json().id;
+    const id = created.json().id as string;
     const v = await makeReady(app, author, reviewerId, id);
     await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
     const self = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { decision: 'approved', comment: 'ship it' } });
@@ -231,6 +231,41 @@ describe('ticket 11 report lifecycle and delivery', () => {
     const edit = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { expectedVersion: v, summary: 'sneaky edit' } });
     expect(edit.statusCode).toBe(409);
     expect(edit.json().error.message).toContain('pinned review');
+  });
+
+  it('P06: an approved export does not drift when a pinned finding changes after approval', async () => {
+    const { db, app, author, reviewer, reviewerId } = await setup();
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Drift-checked report' } });
+    const id = created.json().id;
+    const v = await makeReady(app, author, reviewerId, id);
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
+    const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'Verified against the finding.', expectedVersion: v } });
+    expect(approved.statusCode).toBe(200);
+    const before = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records/${id}/export?format=markdown`, headers: { cookie: reviewer.cookie } });
+    expect(before.json().content).toContain('Reachable.');
+    const finding = db.tables.get('findingRecord')!.get('F-1')!;
+    db.tables.get('findingRecord')!.set('F-1', { ...finding, body: { detail: 'Changed after approval.' }, expectedVersion: Number(finding.expectedVersion) + 1 });
+    const after = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records/${id}/export?format=markdown`, headers: { cookie: reviewer.cookie } });
+    expect(after.json().content).toBe(before.json().content);
+    expect(after.json().digest).toBe(before.json().digest);
+    expect(after.json().content).not.toContain('Changed after approval.');
+    await app.close();
+  });
+
+  it('P06: a reviewer whose membership was removed after assignment cannot decide the review', async () => {
+    const { db, app, author, reviewer, reviewerId } = await setup();
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { title: 'Revoked-reviewer report' } });
+    const id = created.json().id;
+    await makeReady(app, author, reviewerId, id);
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { action: 'submit' } });
+    const membership = [...db.tables.get('webMembership')!.values()].find((row) => row.userId === reviewerId)!;
+    db.webMembership.delete({ where: { id: String(membership.id) } });
+    const decision = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { decision: 'approved', comment: 'Still approving.' } });
+    expect([403, 404]).toContain(decision.statusCode);
+    const listed = (await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/report-records`, headers: { cookie: author.cookie } })).json();
+    const rows = Array.isArray(listed) ? listed : listed.reports ?? [];
+    expect(rows.find((r: { id: string }) => r.id === id)?.status).toBe('in_review');
+    await app.close();
   });
 
   it('gates delivery on approval, records truthful outcomes and replays the same request id without duplicates', async () => {
