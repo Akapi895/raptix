@@ -13,6 +13,7 @@ import { ExecutionLogs } from '../../real/screens/execution-logs'
 import { Banner, Button, Skeleton, Status, cx } from '../../ui'
 import { messageOf, useRuntimeCancel, useRuntimeOperation, useRuntimeOperationControls, useRuntimeRuns, useRuntimeSnapshot } from './runtime-query'
 import type { RuntimeRun, RuntimeThread } from './runtime'
+import { runStatusTone } from './runtime-status'
 
 /** Runs a user may cancel: the ones the runtime still reports as in flight. */
 const CANCELLABLE = ['pending', 'running', 'submitting']
@@ -27,15 +28,6 @@ const OPERATION_TEXT: Record<string, string> = {
   pause_requested: 'pause requested, not yet paused',
   paused: 'paused at a checkpoint',
   completed: 'completed',
-}
-
-const STATUS_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = {
-  // W24: the runtime reports success/error/timeout/interrupted; unknown
-  // statuses must never be rendered as success.
-  success: 'ok', completed: 'ok',
-  failed: 'bad', error: 'bad', timeout: 'bad', rejected: 'bad',
-  interrupted: 'warn', running: 'warn', pending: 'warn', submitting: 'warn', submitted: 'warn', awaiting_approval: 'warn', uncertain: 'warn',
-  cancelled: 'neutral', canceled: 'neutral',
 }
 
 export function ThreadRuns({ engagementId, thread }: { engagementId: string; thread: RuntimeThread }): ReactElement {
@@ -120,7 +112,7 @@ function RunRow({ engagementId, run, canPause }: { engagementId: string; run: Ru
   const cancel = useMutation({ mutationFn: () => cancelRun(run.threadId, run.runId) })
   const controls = useRuntimeOperationControls(engagementId)
   const pause = useMutation({ mutationFn: () => controls.pause(run.threadId, run.runId) })
-  const tone = STATUS_TONE[run.rawStatus] ?? 'neutral'
+  const tone = runStatusTone(run.rawStatus)
   return (
     <tr className="border-t border-line">
       <td className="py-1.5 pr-3 font-mono text-fg">{run.runId}</td>

@@ -13,6 +13,7 @@ import { Banner, Button, Card, CardHeader, Empty, Skeleton, cx } from '../../ui'
 import { ACTIVE_STOP_OUTCOMES } from '../governance/service'
 import { useGovernanceStops } from '../governance/query'
 import { ThreadRuns } from './runtime-runs'
+import { ThreadResults } from './results-panel'
 import { messageOf, useRuntimeThreads, useRuntimeTimeline } from './runtime-query'
 import type { RuntimeThread } from './runtime'
 
@@ -35,10 +36,13 @@ export function RuntimeOperationsTab({ engagementId }: { engagementId: string })
               No execution thread <span className="font-mono">{detailThreadId}</span> is owned by this engagement. Planning threads and foreign ids are not operation resources.
             </Empty>
           ) : (
+            <>
+            <ThreadResults engagementId={engagementId} thread={selected} />
             <Card>
               <CardHeader title={`Operation thread ${selected.threadId}`} sub={`Assistant ${selected.assistantId} — bound runtime runs for this thread only`} />
               <div className="p-4"><ul><ThreadRuns engagementId={engagementId} thread={selected} /></ul></div>
             </Card>
+            </>
           )}
         <TimelineCard engagementId={engagementId} />
       </div>
