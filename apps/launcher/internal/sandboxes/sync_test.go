@@ -74,6 +74,31 @@ func TestSyncStopsAtTheFirstFailedStart(t *testing.T) {
 	}
 }
 
+func TestMissingModeStartsProjectsWithoutRunningSandboxAndRemovesNothing(t *testing.T) {
+	home := t.TempDir()
+	fr := &fakeRunner{outputs: map[string]string{
+		"/w/*/":       "lab-a\nlab-b\nlab-c\n",
+		"ps -a":       "sbx-lab-a\nsbx-lab-c\nsbx-gone\n",
+		"ps --filter": "sbx-lab-a\n",
+	}}
+	cfg := Config{Bin: "docker", Home: home, Runner: fr, Missing: true, Settings: Settings{Image: "img", Network: "net", Volume: "vol", EnvFile: "/env"}}
+	started, err := Sync(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(started, []string{"lab-b", "lab-c"}) {
+		t.Fatalf("started = %v, want the projects without a running sandbox", started)
+	}
+	if contains(fr.calls, "run docker compose -p raptix-sbx-lab-a -f "+filepath.Join(home, "web-sandboxes", "lab-a.compose.yml")+" --env-file /env up -d") {
+		t.Error("a project with a running sandbox was started again")
+	}
+	for _, call := range fr.calls {
+		if strings.Contains(call, " rm ") {
+			t.Errorf("missing mode removed a container: %s", call)
+		}
+	}
+}
+
 func contains(calls []string, want string) bool {
 	for _, c := range calls {
 		if c == want {

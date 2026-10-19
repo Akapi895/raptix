@@ -23,6 +23,9 @@ type Config struct {
 	Settings Settings
 	// Runner executes the runtime commands.
 	Runner Runner
+	// Missing starts only projects without a running sandbox and removes nothing.
+	// The watch loop uses it so a transient listing can never delete a live sandbox.
+	Missing bool
 }
 
 // Sync makes one sandbox container per project directory on the workspace volume and
@@ -46,6 +49,14 @@ func Sync(cfg Config) ([]string, error) {
 		return nil, fmt.Errorf("no project directories found on volume %s; refusing to remove %d sandbox container(s). Set RAPTIX_WEB_WORKSPACE_VOLUME to the workspace volume name", cfg.Settings.Volume, len(containers))
 	}
 	ensure, orphaned := Plan(projects, containers)
+	if cfg.Missing {
+		running, err := listRunningSandboxes(cfg)
+		if err != nil {
+			return nil, err
+		}
+		ensure = withoutRunning(ensure, running)
+		orphaned = nil
+	}
 	dir := filepath.Join(cfg.Home, "web-sandboxes")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("create %s: %w", dir, err)
@@ -79,6 +90,28 @@ const listerImage = "alpine:latest"
 // with a plan/ directory, as the web server creates it (projects-service prepares the plan dir); other
 // top-level entries on the volume are not projects. A throwaway
 // container lists them, so the launcher never needs the volume on its own filesystem.
+func listRunningSandboxes(cfg Config) ([]string, error) {
+	out, err := cfg.Runner.Output(cfg.Bin, "ps", "--filter", "name=^"+HostPrefix, "--format", "{{.Names}}")
+	if err != nil {
+		return nil, fmt.Errorf("list running sandbox containers: %w", err)
+	}
+	return splitLines(out), nil
+}
+
+func withoutRunning(slugs []string, running []string) []string {
+	up := map[string]bool{}
+	for _, name := range running {
+		up[name] = true
+	}
+	var missing []string
+	for _, slug := range slugs {
+		if !up[HostPrefix+slug] {
+			missing = append(missing, slug)
+		}
+	}
+	return missing
+}
+
 func listProjects(cfg Config) ([]string, error) {
 	out, err := cfg.Runner.Output(cfg.Bin, "run", "--rm", "-v", cfg.Settings.Volume+":/w", listerImage,
 		"sh", "-c", `for d in /w/*/; do n=$(basename "$d"); [ -d "$d/plan" ] && echo "$n"; done; true`)
