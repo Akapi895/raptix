@@ -17,7 +17,7 @@ ADR-0093 vẫn là `Proposed`.
 | G10 Cutover dữ liệu thật | Backup, quiesce, rehearsal, rollback, duyệt từng bước | **Chưa làm** | Chờ xác nhận |
 | G11 P10/P11 đầy đủ | Mailbox/grant, checkpoint/question | **Exclusion E1** | Không làm trong mốc này (xem bảng exclusion) |
 | G12 Bộ restart/crash đầy đủ | Nhiều kịch bản, nhiều lần lặp | **Chưa làm** | Chỉ có một lần mỗi loại |
-| G13 Server suite | Toàn bộ pass trên cây cuối | **Cần chạy lại** | 511/511 chạy trước commit manifest audit; lần chạy cuối bị dừng vì thiếu RAM |
+| G13 Server suite | Toàn bộ pass trên cây cuối | Đạt | 512/512 (56 file), chạy bốn shard tuần tự, một worker mỗi shard, trên commit `7c42e758` |
 | G14 Compose/installer | Bootstrap controller trên Windows | Thu hẹp: Windows (Docker Desktop) là phạm vi | ADR-0093 Accepted (phạm vi Windows). WSL/Linux là exclusion E2 |
 | G15 Thread và CLI/Web cùng project sau migration | Mở cùng project và thread | **Chưa làm** | Chờ G10 |
 | G16 Upgrade và rollback của DB | Migration additive, rehearsal rollback | **Chưa làm** | Migration additive đã áp trên bản sao |
