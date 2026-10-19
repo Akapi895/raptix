@@ -43,10 +43,23 @@ function renderText(chunk: string, base: string): ReactNode[] {
       items = []
     }
   }
-  for (const line of chunk.split('\n')) {
+  const lines = chunk.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!
     const heading = /^(#{1,3})\s+(.*)$/.exec(line)
     const bullet = /^\s*[-*]\s+(.*)$/.exec(line)
-    if (heading) {
+    if (line.includes('|') && i + 1 < lines.length && TABLE_SEPARATOR.test(lines[i + 1]!.trim())) {
+      flush()
+      const header = splitRow(line)
+      const rows: string[][] = []
+      let j = i + 2
+      while (j < lines.length && lines[j]!.includes('|') && lines[j]!.trim() !== '') {
+        rows.push(splitRow(lines[j]!))
+        j++
+      }
+      out.push(renderTable(header, rows, `${base}-tbl${out.length}`))
+      i = j - 1
+    } else if (heading) {
       flush()
       out.push(<p key={`${base}-h${out.length}`} className={cx('font-semibold text-fg', heading[1]!.length === 1 ? 'text-base' : 'text-sm')}>{inline(heading[2]!)}</p>)
     } else if (bullet) {
@@ -61,6 +74,31 @@ function renderText(chunk: string, base: string): ReactNode[] {
   }
   flush()
   return out
+}
+
+const TABLE_SEPARATOR = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?$/
+
+function splitRow(line: string): string[] {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim())
+}
+
+function renderTable(header: string[], rows: string[][], key: string): ReactElement {
+  return (
+    <div key={key} className="overflow-x-auto rounded-lg border border-line">
+      <table className="w-full border-collapse text-xs">
+        <thead className="bg-subtle">
+          <tr>{header.map((cell, c) => <th key={c} className="border-b border-line px-3 py-2 text-left font-semibold text-fg">{inline(cell)}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((row, r) => (
+            <tr key={r} className="border-b border-line/60 last:border-0">
+              {row.map((cell, c) => <td key={c} className="px-3 py-2 align-top text-fg">{inline(cell)}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 function inline(text: string): ReactNode[] {

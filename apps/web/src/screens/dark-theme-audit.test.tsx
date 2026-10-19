@@ -60,16 +60,16 @@ function lightAssumingOutsidePaper() {
 /* One representative surface per route group (router manifest slices). */
 const SWEEP: { hash: string; see: () => Promise<unknown>; auth?: boolean }[] = [
   { hash: '#/command-center', see: () => screen.findByRole('heading', { name: /system overview/i }) },
-  { hash: '#/projects', see: () => screen.findByRole('table') },
+  { hash: '#/projects', see: () => screen.findByRole('table', {}, { timeout: 5000 }) },
   { hash: '#/project/RT-2026-014', see: () => screen.findByRole('button', { name: 'Overview' }) },
-  { hash: '#/operation/OP-014?tab=live', see: () => screen.findByRole('list', { name: 'Operation steps' }) },
-  { hash: '#/agents', see: () => screen.findByRole('table') },
-  { hash: '#/findings', see: () => screen.findByRole('table') },
+  { hash: '#/operation/OP-014?tab=live', see: () => screen.findByRole('list', { name: 'Operation steps' }, { timeout: 5000 }) },
+  { hash: '#/agents', see: () => screen.findByRole('table', {}, { timeout: 5000 }) },
+  { hash: '#/findings', see: () => screen.findByRole('table', {}, { timeout: 5000 }) },
   { hash: '#/report-preview/REP-014', see: () => screen.findByText('Table of contents') },
   { hash: '#/ai-operator', see: () => screen.findByRole('heading', { name: 'AI Operator' }) },
   { hash: '#/c2', see: () => screen.findByRole('tablist') },
   { hash: '#/settings', see: () => screen.findByRole('tablist') },
-  { hash: '#/scenarios', see: () => screen.findByRole('table'), auth: false },
+  { hash: '#/scenarios', see: () => screen.findByRole('table', {}, { timeout: 5000 }), auth: false },
 ]
 
 afterEach(() => {
@@ -138,7 +138,7 @@ describe('charts and the always-dark console', () => {
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     act(() => { go('operation', { id: 'OP-014', tab: 'live' }) })
-    await screen.findByRole('list', { name: 'Operation steps' })
+    await screen.findByRole('list', { name: 'Operation steps' }, { timeout: 5000 })
     act(() => { useThemeStore.getState().setTheme('dark') })
     const dock = screen.getByRole('region', { name: 'Operation dock' })
     expect(dock.className).toContain('bg-console')

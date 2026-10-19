@@ -39,7 +39,7 @@ describe('asset catalog (ticket 50)', () => {
     const h = mountAssets('assets', 'Riley Brooks') // analyst — member of RT-2026-014 only
     h.show()
     await waitFor(() => expect(screen.getByText('web-01')).toBeInTheDocument())
-    expect(screen.getByText('14 records')).toBeInTheDocument()
+    expect(screen.getByText('14 total records')).toBeInTheDocument()
     expect(screen.queryByText('cloud-app-01')).not.toBeInTheDocument() // RT-2026-015 — not a member
     expect(screen.queryByText('shop-web')).not.toBeInTheDocument()
     expect(screen.queryByText('purple-lab-dc')).not.toBeInTheDocument()
@@ -70,11 +70,11 @@ describe('asset catalog (ticket 50)', () => {
     h.show()
     await waitFor(() => expect(screen.getByText('Page 1 of 3')).toBeInTheDocument())
     fireEvent.change(screen.getByPlaceholderText('Search name, IP, hostname or URL'), { target: { value: 'win-dc' } })
-    await waitFor(() => expect(screen.getByText('1 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Showing all 1 record')).toBeInTheDocument())
     expect(screen.getByText('win-dc-01')).toBeInTheDocument()
     fireEvent.change(await screen.findByPlaceholderText('Search name, IP, hostname or URL'), { target: { value: '' } })
     fireEvent.change(await screen.findByRole('combobox', { name: 'Type' }), { target: { value: 'Host' } })
-    await waitFor(() => expect(screen.getByText('5 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Showing all 5 records')).toBeInTheDocument())
     expect(screen.getByText('mail-relay')).toBeInTheDocument()
     expect(screen.queryByText('win-dc-01')).not.toBeInTheDocument()
     h.unmount()
@@ -87,7 +87,7 @@ describe('asset catalog (ticket 50)', () => {
     // Ticket 65 retired the A.addAssets wrapper; the import commits through
     // the same feature transaction the wrapper forwarded to.
     h.run(() => importAssetsTransaction(h.svc().authority, h.svc().clock, legacyCtx(P14), P14, [{ name: 'bridge-01', ident: 'bridge-01.example.test', type: 'Host', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'Manual' }]))
-    await waitFor(() => expect(screen.getByText('22 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('22 total records')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Next page' }))
     await waitFor(() => expect(screen.getByText('bridge-01')).toBeInTheDocument())

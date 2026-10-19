@@ -68,7 +68,7 @@ describe('accessible canonical projects', () => {
   it('renders only the projects the persona can access; a non-member project is hidden', async () => {
     mountPortfolio({ me: 'Riley Brooks' })
     expect(await screen.findByText('RT-2026-014')).toBeInTheDocument()
-    expect(screen.getByText('1 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 1 record')).toBeInTheDocument()
     expect(screen.queryByText('RT-2026-015')).not.toBeInTheDocument()
     expect(screen.queryByText('PT-2026-006')).not.toBeInTheDocument()
   })
@@ -84,7 +84,7 @@ describe('search, filters and pagination', () => {
     expect(screen.queryByText('RT-2026-015')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
     expect(await screen.findByText('RT-2026-015')).toBeInTheDocument()
-    expect(screen.getByText('6 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 6 records')).toBeInTheDocument()
   })
 
   it('the status filter narrows rows and the pager paginates past the page size', async () => {
@@ -198,7 +198,7 @@ describe('loading, error and delayed-response isolation', () => {
     act(() => { selectProject('RT-2026-014') })
     expect(await screen.findByText('RT-2026-014')).toBeInTheDocument()
     expect(screen.queryByText('RT-2026-015')).not.toBeInTheDocument()
-    expect(screen.getByText('1 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 1 record')).toBeInTheDocument()
 
     await act(async () => { resolveAll(); await new Promise((r) => setTimeout(r, 0)) })
     expect(screen.getByText('RT-2026-014')).toBeInTheDocument()

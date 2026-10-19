@@ -252,7 +252,7 @@ describe('bridge both directions (ticket 51)', () => {
     // Ticket 65 retired the A.addAssets wrapper; the legacy-context entry is
     // the same import transaction the wrapper forwarded to (corr 'legacy').
     h.run(() => { importAssetsTransaction(h.svc().authority, h.svc().clock, { actor: ALEX, projectId: P14, corr: 'legacy' }, P14, [row({ name: 'legacy-bridge', ident: 'legacy-bridge.example.test' })]) })
-    await waitFor(() => expect(screen.getByText('22 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('22 total records')).toBeInTheDocument())
     h.unmount()
   })
 
@@ -260,10 +260,10 @@ describe('bridge both directions (ticket 51)', () => {
     const h = mountAssets('assets')
     await waitFor(() => expect(screen.getByText('Page 1 of 3')).toBeInTheDocument())
     h.run(() => selectProject(P14))
-    await waitFor(() => expect(screen.getByText('14 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('14 total records')).toBeInTheDocument())
     const write = createAssetWriteHandlers(h.svc().assets(ALEX, P14), ALEX, P14)
     await act(async () => { await write.importRows([row(), row({ name: 'hook-02', ident: 'hook-02.example.test' })]) })
-    await waitFor(() => expect(screen.getByText('16 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('16 total records')).toBeInTheDocument())
     const importedId = h.db().assets.find((a) => a.projectId === P14 && a.name === 'hook-02')!.id
     await act(async () => { await write.changeScope(importedId, 'out', { reason: 'Out for the demo' }) })
     // The scope view (same [asset] key prefix) refetches the changed classification.
