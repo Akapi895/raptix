@@ -336,8 +336,10 @@ export class ArtifactsService {
     const access = await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
     const row = await this.retainedCapture(engagementId, captureId);
     await this.assertCaptureReadable(row, access.role);
-    const file = await this.artifactFile(userId, engagementId, row.path);
-    const bytes = await readFile(file);
+    const missing = (): never => { throw new ProjectApiError(409, 'The retained capture file is missing from storage, so its integrity cannot be verified.'); };
+    // A recorded capture whose bytes were removed from storage is an explicit conflict, not a generic artifact 404 or a 500.
+    const file = await this.artifactFile(userId, engagementId, row.path).catch((error: unknown) => (error instanceof ProjectPolicyError && error.code === 'not_found' ? missing() : Promise.reject(error)));
+    const bytes = await readFile(file).catch((error: unknown) => ((error as NodeJS.ErrnoException).code === 'ENOENT' ? missing() : Promise.reject(error)));
     if (bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) {
       throw new ProjectApiError(409, 'The retained capture failed its recorded integrity check.');
     }
