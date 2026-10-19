@@ -176,7 +176,7 @@ describe('real report writes', () => {
 })
 
 describe('real report gates for capabilities the backend does not model', () => {
-  it('pins the selected findings at the version the editor read, and exports PDF or DOCX with the registered reason', async () => {
+  it('pins the selected findings at the version the editor read, and refuses a PDF export before approval', async () => {
     vi.mocked(api.fetchReports).mockResolvedValue(listOf(view()))
     vi.mocked(api.setReportFindings).mockResolvedValue(view({ selectedFindings: [] }))
     const service = createRealReportService()
@@ -184,7 +184,19 @@ describe('real report gates for capabilities the backend does not model', () => 
     expect(linked.ok).toBe(true)
     expect(api.setReportFindings).toHaveBeenCalledWith('eng-1', 'rep-1', { expectedVersion: 2, findingIds: ['F-1'] })
     const exported = await service.exportVersion(ctx, 'rep-1', 'PDF')
-    expect(exported.ok === false && exported.failure.message).toMatch(/PDF and DOCX export/)
+    expect(exported.ok === false && exported.failure.message).toMatch(/only after the report is approved/)
+    expect(api.deliverReport).not.toHaveBeenCalled()
+  })
+
+  it('records an approved PDF export and returns the file the server produced', async () => {
+    const approved = view({ status: 'approved', approvedVersion: 2, version: 2, readiness: { ready: true, checks: [] }, deliveries: [] })
+    const recorded = { ...approved, deliveries: [{ id: 'dl-1', kind: 'export', format: 'pdf', status: 'recorded', createdAt: '2026-10-19T09:00:00.000Z', recordedReceipt: null, acknowledgement: null }] }
+    vi.mocked(api.fetchReports).mockResolvedValueOnce(listOf(approved)).mockResolvedValue(listOf(recorded as never))
+    vi.mocked(api.deliverReport).mockResolvedValue({ ...recorded, artifact: { reportId: 'rep-1', version: 2, format: 'pdf', mediaType: 'application/pdf', content: 'JVBERi0=', encoding: 'base64', digest: 'a'.repeat(64) } } as never)
+    const res = await createRealReportService().exportVersion(ctx, 'rep-1', 'PDF')
+    expect(api.deliverReport).toHaveBeenCalledWith('eng-1', 'rep-1', expect.objectContaining({ kind: 'export', format: 'pdf' }))
+    expect(res.ok && res.data.rec.id).toBe('dl-1')
+    expect(res.ok && res.data.artifact).toEqual({ filename: 'report-rep-1-v2.pdf', mediaType: 'application/pdf', content: 'JVBERi0=', encoding: 'base64' })
   })
 
   it('records a delivery only for the operator role and above, never for a reviewer', async () => {
@@ -274,7 +286,7 @@ describe('real report composition and acknowledgement (P06-P08)', () => {
   })
 
   it('downloads the server export bytes for JSON and Markdown with their digest', async () => {
-    vi.mocked(api.exportReport).mockResolvedValue({ engagementId: 'eng-1', reportId: 'rep-1', version: 2, format: 'markdown', mediaType: 'text/markdown', content: '# Report', digest: 'd'.repeat(64) })
+    vi.mocked(api.exportReport).mockResolvedValue({ engagementId: 'eng-1', reportId: 'rep-1', version: 2, format: 'markdown', mediaType: 'text/markdown', content: '# Report', encoding: 'utf8', digest: 'd'.repeat(64) })
     const res = await createRealReportService().exportArtifact(ctx, 'rep-1', 'markdown')
     expect(res.ok && res.data.filename).toBe('report-rep-1-v2.md')
     expect(res.ok && res.data.content).toBe('# Report')

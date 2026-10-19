@@ -9,8 +9,8 @@ import { useReportValidation, useReportSourceCounts, useReportExclusions } from 
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import { useResourceScope } from './resource-scope'
 import { isRealMode } from '../real/mode'
+import { saveArtifact } from '../real/artifact'
 import { fetchEffectiveScope } from '../real/api'
-import { realControlGap } from '../state/console'
 import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject, useCan, useMe } from '../state/console'
@@ -620,8 +620,8 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
   const checks = validation.checks(r, nf)
   const blocking = checks.filter((c) => c.state === 'fail')
   const finalOk = ['approved', 'exported', 'delivered'].includes(r.status)
-  const canExport = !isRealMode() && finalOk && r.status !== 'delivered' && me.role !== 'viewer' && me.role !== 'operator' && !g.ro
-  const exportWhy = isRealMode() ? (realControlGap('report.pdfDocx') ?? '') : !finalOk ? 'Export is available only after the report is approved. Submit it for review first.' : r.status === 'delivered' ? 'This report is already delivered. Create a new version to export changes.' : me.role === 'viewer' || me.role === 'operator' ? 'Your role cannot export reports. Ask a Manager or Reviewer.' : g.reason
+  const canExport = finalOk && r.status !== 'delivered' && me.role !== 'viewer' && me.role !== 'operator' && !g.ro
+  const exportWhy = !finalOk ? 'Export is available only after the report is approved. Submit it for review first.' : r.status === 'delivered' ? 'This report is already delivered. Create a new version to export changes.' : me.role === 'viewer' || me.role === 'operator' ? 'Your role cannot export reports. Ask a Manager or Reviewer.' : g.reason
   const linked = d.linked
   const canSubmit = (r.status === 'draft' || r.status === 'returned') && can('editReport', r.projectId) && !g.ro
   const submitWhy = !canSubmit ? 'Only the author can submit, and only while the report is a draft or returned.' : blocking.length ? `Not ready: ${blocking.map((c) => c.label).join('; ')}.` : ''
@@ -690,8 +690,8 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
           <Card>
             <CardHeader title="Export" sub="Exporting PDF or DOCX only creates a file. It does not deliver the report to the client." />
             <div className="flex flex-wrap gap-2">
-              <Button icon={Download} variant="primary" disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'PDF').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else toast('PDF exported. Not delivered yet; go to the review page to mark delivery.') }) }}>Export PDF</Button>
-              <Button icon={Download} disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'DOCX').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else toast('DOCX exported. Not delivered yet.') }) }}>Export DOCX</Button>
+              <Button icon={Download} variant="primary" disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'PDF').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { if (res.data.artifact) saveArtifact(res.data.artifact); toast('PDF exported. Not delivered yet; go to the review page to mark delivery.') } }) }}>Export PDF</Button>
+              <Button icon={Download} disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'DOCX').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { if (res.data.artifact) saveArtifact(res.data.artifact); toast('DOCX exported. Not delivered yet.') } }) }}>Export DOCX</Button>
               {isRealMode() && <ArtifactDownloads reportId={r.id} />}
               <Button icon={Eye} disabled={me.role === 'viewer'} title={me.role === 'viewer' ? 'The Client / Viewer role cannot create trial exports' : 'Trial copy with watermark; not recorded in export history'} onClick={() => toast('Created a watermarked "DRAFT" trial copy (not saved to export history).', 'info')}>Trial export</Button>
             </div>
@@ -736,12 +736,7 @@ function ArtifactDownloads({ reportId }: { reportId: string }) {
   const toast = useToastStore((s) => s.toast)
   const download = (format: 'json' | 'markdown') => writes.exportArtifact(reportId, format).then((res) => {
     if (!res.ok) return toast(res.failure.message, 'bad')
-    const url = URL.createObjectURL(new Blob([res.data.content], { type: res.data.mediaType }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = res.data.filename
-    link.click()
-    URL.revokeObjectURL(url)
+    saveArtifact(res.data)
   })
   return <>
     <Button icon={Download} variant="secondary" onClick={() => void download('markdown')}>Download Markdown</Button>
@@ -810,7 +805,7 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
     })
   const approve = () => confirm({ title: `Approve ${r.id} (${r.version})?`, body: 'Approval only unlocks export. Exporting PDF/DOCX and marking delivery are separate steps that follow.', confirmLabel: 'Approve Report', reasonLabel: 'Approval reasoning (recorded with the pinned version)', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'approve', note), () => toast(`Approved ${r.id} ${r.version}. Not exported or delivered yet.`)) })
   const ret = () => confirm({ title: `Return ${r.id} with comments`, body: 'The report goes back to its author. Your comment is saved in the review history and is never deleted.', confirmLabel: 'Return with Comments', danger: true, reasonLabel: 'Comments for the author', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'return', note), () => { toast(`Returned ${r.id} to ${r.author}`, 'warn'); go('report', { id: r.id }) }) })
-  const doExport = (f: 'PDF' | 'DOCX') => runWrite(() => writes.exportVersion(r.id, f).then((res) => (res.ok ? { ok: true as const, data: res.data.report } : res)), () => toast(`Exported ${f} for ${r.version}. Not delivered yet.`))
+  const doExport = (f: 'PDF' | 'DOCX') => runWrite(() => writes.exportVersion(r.id, f).then((res) => { if (res.ok && res.data.artifact) saveArtifact(res.data.artifact); return res.ok ? { ok: true as const, data: res.data.report } : res }), () => toast(`Exported ${f} for ${r.version}. Not delivered yet.`))
   const deliver = () => runWrite(() => writes.deliver(r.id, { recipient: recipient.trim(), channel, notes, confirm: confirmed }), () => toast(`Marked ${r.id} as delivered to ${recipient.trim()}`))
 
   return (
