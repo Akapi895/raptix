@@ -23,7 +23,9 @@ try {
   const imported = await ownership.importMigrationManifest('local', a.id, [{ threadId: t1, verifiedMessageCount: 75, sourceSlug: a.workspaceSlug }]);
   assert.equal(imported, 1);
   assert.equal(await ownership.verifiedMessageCount('local', a.id, t1), 75);
-  checks.push('an operator imports a manifest and the verified count is readable back');
+  const auditsA = await db.webAuditEntry.count({ where: { engagementId: a.id, action: 'migration.manifest.imported' } });
+  assert.equal(auditsA, 1, 'the import is audited in the same transaction');
+  checks.push('an operator imports a manifest, the verified count is readable back, and the import is audited');
 
   // 2. A thread with no imported record has no verified count.
   assert.equal(await ownership.verifiedMessageCount('local', a.id, randomUUID()), null);
@@ -39,6 +41,7 @@ try {
   const t2 = randomUUID();
   await assert.rejects(ownership.importMigrationManifest('local', b.id, [{ threadId: t2, verifiedMessageCount: 10, sourceSlug: a.workspaceSlug }]), /Invalid|different project/);
   assert.equal(await ownership.verifiedMessageCount('local', b.id, t2), null);
+  assert.equal(await db.webAuditEntry.count({ where: { engagementId: b.id, action: 'migration.manifest.imported' } }), 0, 'a refused manifest leaves no audit entry');
   checks.push('a manifest naming a different project\'s slug is refused, and nothing is written');
 
   // 5. A non-owner, non-member actor cannot import a manifest for the project.
