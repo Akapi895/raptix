@@ -22,3 +22,8 @@ export function currentEngagement(): Promise<string> {
   });
   return engagement;
 }
+
+/** Views another project. Viewing never activates anything; activation is a separate command. */
+export function setCurrentEngagement(engagementId: string): void {
+  engagement = Promise.resolve(engagementId);
+}
