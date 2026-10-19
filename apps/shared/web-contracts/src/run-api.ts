@@ -26,6 +26,8 @@ export interface ScopedThreadView {
   messages: ScopedThreadMessage[]
   messagesTruncated: boolean; historyScope: 'root_messages_only'; source: 'runtime'
   transcripts?: ThreadHistoryEvent[]; transcriptsTruncated?: boolean
+  /** Per-conversation tool approval switch; absent means on (the default). */
+  hitlEnabled?: boolean
   /** Restored graph-interrupt question (W11): lets the picker survive reloads. */
   pendingQuestion?: PendingInterruptView
   /** Every restorable `ask_user_question` interrupt (parallel tool calls raise several at once). */

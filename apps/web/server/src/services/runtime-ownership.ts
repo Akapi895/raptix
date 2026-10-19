@@ -19,7 +19,7 @@ function contextHash(project: Engagement, assistantId: string, kind: ThreadKind)
   return requestFingerprint({ engagementId: project.id, workspaceSlug: project.workspaceSlug, targetType: project.targetType, targetValue: project.targetValue, authorizationConfirmed: project.authorizationConfirmed, assistantId, kind });
 }
 function bindingView(row: EngagementThread): ThreadBindingView {
-  return { engagementId: row.engagementId, threadId: row.threadId, assistantId: row.assistantId, kind: row.kind, title: row.title ?? null, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
+  return { engagementId: row.engagementId, threadId: row.threadId, assistantId: row.assistantId, kind: row.kind, title: row.title ?? null, hitlEnabled: row.hitlEnabled, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 function recoveryView(row: WebRequestLedger): RequestRecoveryView {
   return { engagementId: row.engagementId, requestId: row.requestId, operation: row.operation, state: row.state, threadId: row.threadId, runId: row.runId, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
@@ -104,6 +104,17 @@ export class RuntimeOwnershipService {
       const project = await this.owned(tx, userId, engagementId, 'operator');
       await this.binding(tx, project, threadId);
       await tx.engagementThread.updateMany({ where: { engagementId, threadId }, data: { title } });
+      return bindingView(await this.binding(tx, project, threadId));
+    });
+  }
+
+  /** Per-conversation HITL switch. Dangerous methods stay gated whatever the value is. */
+  public async setThreadHitl(userId: string, engagementId: string, threadId: string, enabled: boolean): Promise<ThreadBindingView> {
+    return this.transaction(async tx => {
+      const project = await this.owned(tx, userId, engagementId, 'operator');
+      await this.binding(tx, project, threadId);
+      await tx.engagementThread.updateMany({ where: { engagementId, threadId }, data: { hitlEnabled: enabled } });
+      await tx.webAuditEntry.create({ data: { engagementId, actorId: userId, action: 'thread.hitl.set', targetType: 'thread', targetId: threadId, detail: { enabled } } });
       return bindingView(await this.binding(tx, project, threadId));
     });
   }
