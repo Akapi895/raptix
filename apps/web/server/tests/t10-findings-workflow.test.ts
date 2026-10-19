@@ -431,6 +431,29 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     await app.close();
   });
 
+  it('P05: a Partial retest returns to remediation, and Resolved is refused without the retest stage or evidence', async () => {
+    const { app, owner, reviewer } = await setup();
+    const headers = { cookie: owner.cookie, 'x-csrf-token': owner.csrf };
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings`, headers, payload: { title: 'Partially fixed finding' } });
+    const id = created.json().id as string;
+    const transition = (to: string, expectedVersion: number, as = { headers, cookie: owner.cookie }) => app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: as.headers, payload: { to, expectedVersion } });
+    await transition('review', 1);
+    await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/transition`, headers: { cookie: reviewer.cookie, 'x-csrf-token': reviewer.csrf }, payload: { to: 'confirmed', expectedVersion: 2 } });
+    const refused = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/retests`, headers, payload: { result: 'Resolved', note: 'Looks fixed.', expectedVersion: 3, requestId: 'early-resolve' } });
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json().error.message).toMatch(/Resolution requires the retest stage/);
+    await transition('remediation', 3);
+    await transition('retest', 4);
+    const resolvedWithoutEvidence = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/retests`, headers, payload: { result: 'Resolved', note: 'Looks fixed.', expectedVersion: 5, requestId: 'resolve-no-evidence' } });
+    expect(resolvedWithoutEvidence.statusCode).toBe(409);
+    expect(resolvedWithoutEvidence.json().error.message).toMatch(/Resolution requires the retest stage and at least one classified retained capture/);
+    const partial = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/${id}/retests`, headers, payload: { result: 'Partial', note: 'Only the login path is fixed.', expectedVersion: 5, requestId: 'retest-partial' } });
+    expect(partial.statusCode).toBe(200);
+    expect(partial.json()).toMatchObject({ status: 'remediation' });
+    expect(partial.json().retests.at(-1)).toMatchObject({ result: 'Partial' });
+    await app.close();
+  });
+
   it('binds only managed in-engagement assets and owned execution identities', async () => {
     const { app, db, owner } = await setup();
     db.tables.set('webAsset', new Map([['asset-1', { id: 'asset-1', engagementId: ENG, identifier: 'web-01' }]]));
