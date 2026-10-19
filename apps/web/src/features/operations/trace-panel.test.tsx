@@ -1,4 +1,4 @@
-/** Trace and results panel (real mode): thread selection from the route, run status words as reported, and explicit empty and error states. */
+/** Tool trace page (real mode): thread selection from the route and explicit empty and error states. */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 
@@ -14,7 +14,6 @@ vi.mock('../../state/stores', () => ({
 vi.mock('./runtime-query', () => ({
   messageOf: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
   useRuntimeThreads: vi.fn(),
-  useRuntimeRuns: vi.fn(),
   useRuntimeSnapshot: vi.fn(),
 }))
 
@@ -23,7 +22,6 @@ const runtime = await import('./runtime-query')
 
 const THREAD_A = { engagementId: 'eng-1', threadId: 'th-1', assistantId: 'executor', kind: 'execution', createdAt: '2026-10-14T09:00:00.000Z', updatedAt: '2026-10-14T09:05:00.000Z' }
 const THREAD_B = { ...THREAD_A, threadId: 'th-2', assistantId: 'raptix' }
-const RUN = { runId: 'run-7', requestId: 'req-1', threadId: 'th-2', rawStatus: 'interrupted', createdAt: '2026-10-14T09:01:00.000Z', updatedAt: '2026-10-14T09:02:00.000Z' }
 
 function threads(data: unknown[], over: { isError?: boolean; error?: unknown } = {}) {
   vi.mocked(runtime.useRuntimeThreads).mockReturnValue({ isPending: false, isError: over.isError ?? false, error: over.error, data } as never)
@@ -33,9 +31,6 @@ beforeEach(() => {
   cleanup()
   state.pid = 'eng-1'
   state.routeId = undefined
-  vi.mocked(runtime.useRuntimeRuns).mockImplementation((_engagement: string, threadId: string) => ({
-    isPending: false, isError: false, data: threadId === 'th-2' ? [RUN] : [],
-  }) as never)
   vi.mocked(runtime.useRuntimeSnapshot).mockReturnValue({ isPending: false, isError: false, data: { transcripts: [], transcriptsTruncated: false } } as never)
 })
 
@@ -53,13 +48,11 @@ describe('RealTrace', () => {
     expect(screen.getByText('No execution thread yet')).toBeInTheDocument()
   })
 
-  it('selects the thread named in the route and shows its runs with the runtime status word', () => {
+  it('selects the thread named in the route and shows its tool trace', () => {
     state.routeId = 'th-2'
     threads([THREAD_A, THREAD_B])
     render(<RealTrace />)
     expect(screen.getByRole('combobox', { name: 'Execution thread' })).toHaveValue('th-2')
-    expect(screen.getByText('run-7')).toBeInTheDocument()
-    expect(screen.getByText('interrupted')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Tool trace' })).toBeInTheDocument()
   })
 
@@ -68,7 +61,6 @@ describe('RealTrace', () => {
     threads([THREAD_A, THREAD_B])
     render(<RealTrace />)
     expect(screen.getByRole('combobox', { name: 'Execution thread' })).toHaveValue('th-1')
-    expect(screen.getByText('No run has started on this thread.')).toBeInTheDocument()
   })
 
   it('shows the thread source error and no substitute trace', () => {
