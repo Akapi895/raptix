@@ -128,6 +128,11 @@ export class RuntimeOwnershipService {
           update: { verifiedMessageCount: record.verifiedMessageCount, sourceSlug: record.sourceSlug, importedByUserId: userId },
         });
       }
+      // The count a rebind later trusts is decided here, so the import is audited in the same transaction: a manifest
+      // that lands always has its audit entry, and one that fails leaves neither.
+      await tx.webAuditEntry.create({
+        data: { engagementId, actorId: userId, action: 'migration.manifest.imported', targetType: 'project', targetId: engagementId, reason: `threads=${records.length} source=${project.workspaceSlug}`, detail: { threadIds: records.map(record => record.threadId), verifiedMessageCounts: records.map(record => record.verifiedMessageCount) } },
+      });
       return records.length;
     });
   }
