@@ -32,6 +32,7 @@ import { Button } from '../ui'
 import { Shell } from '../shell'
 import { HeaderNotices } from '../features/notices/header-notices'
 import { LazyCopilotDrawer } from '../features/copilot/lazy'
+import { RealTrace } from '../features/operations/trace-panel'
 import { OUTSIDE_SHELL, type Route } from './history'
 import { routeComponent } from './registry'
 
@@ -54,7 +55,7 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   tasks: RealCommandCenter,
   ...Object.fromEntries(Object.keys(FEATURE_ROUTE_SURFACES).map((key) => [key, RealFeatureRoute])),
   'ai-history': RealWorkspace,
-  'ai-trace': RealWorkspace,
+  'ai-trace': RealTrace,
   login: RealLogin,
 }
 
