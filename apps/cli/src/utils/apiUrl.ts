@@ -26,3 +26,16 @@ export function resolveApiUrl(): string {
   }
   return "http://localhost:2024";
 }
+
+/**
+ * The web control plane that serves the project facade. The CLI talks only to it. Precedence: RAPTIX_CONTROL_URL,
+ * then WEB_API_PORT on localhost, then the compose default.
+ */
+export function resolveControlUrl(): string {
+  const explicit = process.env.RAPTIX_CONTROL_URL?.trim();
+  if (explicit) {
+    return explicit;
+  }
+  const port = process.env.WEB_API_PORT?.trim();
+  return `http://127.0.0.1:${port || "8081"}`;
+}

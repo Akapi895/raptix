@@ -15,8 +15,9 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Client } from "@langchain/langgraph-sdk";
-import { saveThread, touchThread, loadThreadByIndex } from "../utils/threadStore.js";
+import { loadThreadByIndex } from "../utils/threadStore.js";
+import { controlPlane, currentEngagement } from "../project/session.js";
+import { createAgentTransport } from "../transport/agentTransport.js";
 import type { ActiveQuestion, AgentEvent, AskUserOption } from "../types.js";
 import {
   type SubagentCustomEvent,
@@ -26,7 +27,6 @@ import {
 } from "@raptix/streaming";
 import { getModelOverride } from "../commands/modelOverride.js";
 import { getAssistantOverride } from "../commands/assistantOverride.js";
-import { resolveApiUrl } from "../utils/apiUrl.js";
 
 interface LangChainMessage {
   type: string; // "human", "ai", "tool"
@@ -49,7 +49,6 @@ interface LangChainMessage {
 }
 
 interface UseAgentOptions {
-  apiUrl?: string;
   /** Load the previous thread from disk (--resume flag). */
   resumeThread?: boolean;
 }
@@ -118,10 +117,10 @@ let _nextEventId = 0;
 
 
 export function useAgent({
-  apiUrl = resolveApiUrl(),
   resumeThread = false,
 }: UseAgentOptions = {}): UseAgentReturn {
-  const clientRef = useRef(new Client({ apiUrl }));
+  // ADR-0092: every call goes through the control plane for the session project. No raw runtime client.
+  const clientRef = useRef(createAgentTransport(controlPlane(), currentEngagement, { assistantId: INITIAL_ASSISTANT_ID }));
   // Thread ID priority: env var (from web terminal) > --resume flag > new thread
   const envThreadId = process.env.RAPTIX_THREAD_ID || null;
   const threadIdRef = useRef<string | null>(envThreadId ?? null);
@@ -169,7 +168,7 @@ export function useAgent({
   useEffect(() => {
     if (envThreadId || !resumeThread || resumeInitialized.current) return;
     resumeInitialized.current = true;
-    loadThreadByIndex(0).then((saved) => {
+    currentEngagement().then((engagementId) => loadThreadByIndex(controlPlane(), engagementId, 0)).then((saved) => {
       if (saved) {
         threadIdRef.current = saved.threadId;
       }
@@ -730,7 +729,6 @@ export function useAgent({
             try {
               const thread = await client.threads.create();
               threadIdRef.current = thread.thread_id;
-              await saveThread(thread.thread_id, assistantIdRef.current, message);
               break;
             } catch (err) {
               if (attempt === maxRetries) {
@@ -769,28 +767,14 @@ export function useAgent({
           messages: [{ role: "user", content: message }],
         };
 
-        const configurable: Record<string, unknown> = {};
-        const slug = process.env.RAPTIX_ENGAGEMENT?.trim();
-        if (slug) {
-          configurable.engagement_name = slug;
-          // Compose mounts the workspace root; the sandbox fences /workspace/<slug>.
-          // RAPTIX_WORKSPACE_PATH is the host bind path, not a container path.
-          configurable.workspace_path = `/workspace/${slug}`;
+        // ADR-0092: the engagement, workspace and target come from the control plane's trusted context, so the CLI
+        // sends none of them. A per-run model override has no path through the control plane yet, so it is refused
+        // explicitly rather than dropped.
+        if (getModelOverride()) {
+          setError("A model override cannot be applied through the control plane yet. Clear it with /model to continue.");
+          handleStreamComplete(abortController);
+          return;
         }
-        const targetValue = process.env.RAPTIX_TARGET;
-        if (targetValue) {
-          configurable.target_value = targetValue;
-          configurable.target_type = process.env.RAPTIX_TARGET_TYPE ?? "";
-          configurable.authorization_confirmed =
-            process.env.RAPTIX_AUTHORIZATION_CONFIRMED === "true";
-        }
-        const modelOverride = getModelOverride();
-        if (modelOverride) {
-          configurable.model_override = modelOverride;
-        }
-
-        const hasConfigurable = Object.keys(configurable).length > 0;
-        const streamConfig = hasConfigurable ? { configurable } : undefined;
 
         try {
           const stream = client.runs.stream(
@@ -798,7 +782,6 @@ export function useAgent({
             getAssistantOverride() || assistantIdRef.current,
             {
               input,
-              ...(streamConfig ? { config: streamConfig } : {}),
               ...STREAM_OPTIONS,
               onDisconnect: "continue",
               signal: abortController.signal,
@@ -976,7 +959,6 @@ export function useAgent({
         setEvents([]);
 
         threadIdRef.current = value;
-        touchThread(value).catch(() => {});
         addEvent({ type: "system", content: "Restoring session..." });
 
         // Fetch thread state and restore conversation history

@@ -39,6 +39,7 @@ import type { AgentEvent, ScreenMode, SubAgentSession } from "../types.js";
 import { ErrorMessage } from "../components/messages/ErrorMessage.js";
 import { SessionPicker } from "../components/SessionPicker.js";
 import { listThreads } from "../utils/threadStore.js";
+import { controlPlane, currentEngagement } from "../project/session.js";
 import type { ThreadEntry } from "../utils/threadStore.js";
 import type { ToolGroup } from "../utils/groupEvents.js";
 
@@ -110,7 +111,7 @@ export function REPL({ initialMessage, resumeThread }: REPLProps) {
             return;
           }
           // Otherwise show session picker (async)
-          listThreads().then((savedSessions) => {
+          currentEngagement().then((engagementId) => listThreads(controlPlane(), engagementId)).then((savedSessions) => {
             if (savedSessions.length === 0) {
               agent.addSystemEvent("No previous sessions found.");
               return;

@@ -3,7 +3,7 @@
  * the environment states it is allowed to see and acts on the plan it gets back.
  */
 
-import type { EnvironmentStateView } from "../transport/facadeClient.js";
+import type { EnvironmentStateView, FacadeClient } from "../transport/facadeClient.js";
 
 export type ActivationPlan =
   | { kind: "activate"; engagementId: string }
@@ -42,4 +42,18 @@ export function verifyThreadForResume(threadEngagementId: string, viewing: strin
     return { ok: false, code: "environment_not_ready", message: "This project's environment is not running. Activate it before resuming." };
   }
   return { ok: true };
+}
+
+/**
+ * The project this CLI session works in. The one whose environment this caller owns and holds is preferred, so a
+ * restarted CLI reattaches to the project it was running. Otherwise the first project the caller can see is used.
+ */
+export async function chooseProject(facade: Pick<FacadeClient, "listProjects" | "environment">): Promise<string> {
+  const projects = await facade.listProjects();
+  if (projects.length === 0) throw new Error("No project exists yet. Create one in the Web UI first.");
+  for (const project of projects.slice(0, 50)) {
+    const state = await facade.environment(project.id);
+    if (state.slot.ownedByThisProject) return project.id;
+  }
+  return projects[0]!.id;
 }

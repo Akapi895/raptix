@@ -1,95 +1,39 @@
 /**
- * Thread persistence — query/update LangGraph threads via the SDK.
- *
- * Replaces the previous file-based storage (~/.raptix/threads.json)
- * with server-side thread metadata, so all clients (CLI, Web) share
- * the same thread list.
+ * Conversation listing for the session's project. The control plane owns the conversations, their titles and their
+ * recency, so the CLI only reads them. The list is scoped to one project and never shows another project's threads.
  */
 
-import { Client } from "@langchain/langgraph-sdk";
-import { resolveApiUrl } from "./apiUrl.js";
+import type { FacadeClient } from "../transport/facadeClient.js";
 
 export interface ThreadEntry {
-  /** LangGraph thread ID. */
+  /** Conversation id on the control plane. */
   threadId: string;
-  /** Assistant ID used with this thread. */
+  /** Assistant the conversation was created with. */
   assistantId: string;
-  /** ISO timestamp when the thread was last used. */
+  /** ISO timestamp of the conversation's last update. */
   lastUsed: string;
-  /** First user message — serves as session title. */
   title: string;
 }
 
 const MAX_ENTRIES = 20;
 
-let _client: Client | null = null;
-
-function getClient(): Client {
-  if (!_client) {
-    const apiUrl = resolveApiUrl();
-    _client = new Client({ apiUrl });
-  }
-  return _client;
-}
-
-/** Save or update a thread's metadata on the server. */
-export async function saveThread(
-  threadId: string,
-  assistantId: string,
-  title: string,
-): Promise<void> {
+/** Conversations of one project, most recent first. A failed read is an empty list, as before. */
+export async function listThreads(facade: FacadeClient, engagementId: string): Promise<ThreadEntry[]> {
   try {
-    const client = getClient();
-    await client.threads.update(threadId, {
-      metadata: {
-        assistantId,
-        title: title.slice(0, 100),
-        lastUsed: new Date().toISOString(),
-      },
-    });
-  } catch {
-    // Non-critical — don't crash if metadata update fails
-  }
-}
-
-/** Update the lastUsed timestamp for an existing thread. */
-export async function touchThread(threadId: string): Promise<void> {
-  try {
-    const client = getClient();
-    await client.threads.update(threadId, {
-      metadata: {
-        lastUsed: new Date().toISOString(),
-      },
-    });
-  } catch {
-    // Non-critical
-  }
-}
-
-/** Load all saved thread entries from the server, most recent first. */
-export async function listThreads(): Promise<ThreadEntry[]> {
-  try {
-    const client = getClient();
-    const threads = await client.threads.search({
-      sortBy: "updated_at",
-      sortOrder: "desc",
-      limit: MAX_ENTRIES,
-    });
-    return threads.map((t) => ({
-      threadId: t.thread_id,
-      assistantId: (t.metadata?.assistantId as string) ?? "",
-      lastUsed: t.updated_at,
-      title: (t.metadata?.title as string) || `Session ${t.thread_id.slice(0, 8)}`,
+    const { threads } = await facade.listThreads(engagementId);
+    return threads.slice(0, MAX_ENTRIES).map(thread => ({
+      threadId: thread.threadId,
+      assistantId: thread.assistantId,
+      lastUsed: thread.updatedAt,
+      title: thread.title || `Session ${thread.threadId.slice(0, 8)}`,
     }));
   } catch {
     return [];
   }
 }
 
-/** Load a single thread by index (0-based) from the server list. */
-export async function loadThreadByIndex(
-  index: number,
-): Promise<ThreadEntry | null> {
-  const entries = await listThreads();
+/** One conversation by its position in the list, or null. */
+export async function loadThreadByIndex(facade: FacadeClient, engagementId: string, index: number): Promise<ThreadEntry | null> {
+  const entries = await listThreads(facade, engagementId);
   return entries[index] ?? null;
 }

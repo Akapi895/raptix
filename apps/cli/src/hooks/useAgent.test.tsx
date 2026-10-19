@@ -16,13 +16,18 @@ const { mockState } = vi.hoisted(() => ({
   mockState: { client: null as MockClient | null },
 }));
 
-vi.mock("@langchain/langgraph-sdk", () => ({
-  Client: vi.fn(() => mockState.client),
+// The hook talks to the control plane only through its agent transport (ADR-0092). The fake transport has the same
+// call shapes, so these tests drive the hook's reducer directly.
+vi.mock("../transport/agentTransport.js", () => ({
+  createAgentTransport: () => mockState.client,
+}));
+
+vi.mock("../project/session.js", () => ({
+  controlPlane: () => ({}),
+  currentEngagement: async () => "eng-abc",
 }));
 
 vi.mock("../utils/threadStore.js", () => ({
-  saveThread: vi.fn(async () => {}),
-  touchThread: vi.fn(async () => {}),
   loadThreadByIndex: vi.fn(async () => null),
 }));
 
@@ -152,8 +157,8 @@ describe("useAgent — engagement handoff lifecycle", () => {
     expect(secondInput.messages[0].content).toBe("queued follow-up");
   });
 
-  // ── 3. Engagement fields travel only via config.configurable ─────────────
-  it("keeps planning and handoff runs in the pinned engagement subtree, never the host bind path", async () => {
+  // ── 3. The CLI sends no engagement, workspace or target fields ───────────
+  it("keeps planning and handoff runs free of CLI-supplied engagement fields", async () => {
     const firstStream = createControllableStream();
     const secondStream = createMockStream([noopValuesEvent]);
     const mc = mockState.client!;
@@ -199,18 +204,9 @@ describe("useAgent — engagement handoff lifecycle", () => {
       expect(inputJson).not.toContain("target_value");
       expect(inputJson).not.toContain("authorization_confirmed");
 
-      // Engagement fields must be present in config.configurable for every
-      // run (the env vars are set for the full test, so both submits route
-      // context this way per the post-#182 architecture).
-      const configurable = (opts.config as Record<string, unknown> | undefined)
-        ?.configurable as Record<string, unknown> | undefined;
-      expect(configurable).toMatchObject({
-        engagement_name: "eng-abc",
-        workspace_path: "/workspace/eng-abc",
-        target_type: "web_url",
-        target_value: "https://target.example",
-        authorization_confirmed: true,
-      });
+      // The control plane supplies the engagement, workspace and target from its trusted context, so the CLI sends
+      // no run config for them, even when the operator's environment still carries the old variables.
+      expect(opts.config).toBeUndefined();
     }
   });
 
