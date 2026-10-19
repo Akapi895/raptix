@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	maxRequestBytes  = 64 << 10
-	operationTimeout = 30 * time.Second
+	maxRequestBytes = 64 << 10
+	// operationTimeout bounds one operation. It is deliberately not tied to the request: a stop that is already running
+	// must finish or be reported, even when the caller has given up waiting, so the outcome stays observable.
+	operationTimeout = 2 * time.Minute
 	minTokenBytes    = 32
 )
 
@@ -81,7 +83,7 @@ func (h *handler) serve(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, response{Error: "invalid_request"})
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), operationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), operationTimeout)
 	defer cancel()
 	obs, err := h.run(ctx, r.PathValue("op"), req)
 	if err != nil {

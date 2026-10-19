@@ -43,7 +43,7 @@ func (f *fakeDocker) Run(_ context.Context, args ...string) (string, string, err
 		name := args[len(args)-1]
 		c, ok := f.containers[name]
 		if !ok {
-			return "", "Error: No such container: " + name, errors.New("exit 1")
+			return "", "Error response from daemon: No such container: " + name, errors.New("exit 1")
 		}
 		nets := map[string]json.RawMessage{}
 		for n := range c.networks {
@@ -59,15 +59,21 @@ func (f *fakeDocker) Run(_ context.Context, args ...string) (string, string, err
 		if _, ok := f.networks[args[2]]; ok {
 			return "[{}]", "", nil
 		}
-		return "", "Error: No such network: " + args[2], errors.New("exit 1")
+		return "", "Error response from daemon: No such network: " + args[2], errors.New("exit 1")
 	case args[0] == "network" && args[1] == "create":
 		f.networks[args[len(args)-1]] = parseLabels(args)
 		return "", "", nil
 	case args[0] == "volume" && args[1] == "create":
 		f.volumes[args[len(args)-1]] = parseLabels(args)
 		return "", "", nil
-	case args[0] == "create":
+	case args[0] == "image" && args[1] == "inspect":
 		image := args[len(args)-1]
+		if !f.images[image] {
+			return "", "Error response from daemon: No such image: " + image, errors.New("exit 1")
+		}
+		return "sha256:test", "", nil
+	case args[0] == "create":
+		image := imageArg(args)
 		if !f.images[image] {
 			return "", "Unable to find image '" + image + "' locally", errors.New("exit 125")
 		}
@@ -105,7 +111,7 @@ func (f *fakeDocker) Run(_ context.Context, args ...string) (string, string, err
 func (f *fakeDocker) labelsOr(store map[string]map[string]string, name, kind string) (string, string, error) {
 	labels, ok := store[name]
 	if !ok {
-		return "", "Error: No such " + kind + ": " + name, errors.New("exit 1")
+		return "", "Error response from daemon: No such " + kind + ": " + name, errors.New("exit 1")
 	}
 	out, _ := json.Marshal(labels)
 	return string(out), "", nil
@@ -264,8 +270,8 @@ func TestEnsureReportsMissingImageAndRefusesUnlistedImagesBeforeDocker(t *testin
 		if _, err := ctrl.Ensure(ctx, requestFor("alpha", RoleSandbox, 1)); !errors.Is(err, ErrImageMissing) {
 			t.Fatalf("Ensure = %v, want ErrImageMissing", err)
 		}
-		if got := docker.mutating(); len(got) == 0 || slices.Contains(docker.calls[len(docker.calls)-1], "pull") {
-			t.Fatalf("missing image must fail without pulling: %v", got)
+		if got := docker.mutating(); len(got) != 0 {
+			t.Fatalf("a missing image must leave nothing behind: %v", got)
 		}
 	})
 
@@ -402,4 +408,35 @@ func TestNewRejectsUnsafeConfiguration(t *testing.T) {
 			t.Fatalf("config %d accepted: %+v", i, cfg)
 		}
 	}
+}
+
+func TestSandboxJoinsTheSharedNetworkThatTheRuntimeCreated(t *testing.T) {
+	ctx := context.Background()
+	docker := newFakeDocker()
+	ctrl := newTestController(t, docker, echoPath)
+	if _, err := ctrl.Ensure(ctx, requestFor("alpha", RoleRuntime, 1)); err != nil {
+		t.Fatalf("runtime Ensure: %v", err)
+	}
+	docker.calls = nil
+	if _, err := ctrl.Ensure(ctx, requestFor("alpha", RoleSandbox, 1)); err != nil {
+		t.Fatalf("sandbox Ensure after the runtime created the shared network: %v", err)
+	}
+	for _, call := range docker.calls {
+		if len(call) > 1 && call[0] == "network" && call[1] == "create" {
+			t.Fatalf("the sandbox created the shared network again: %v", call)
+		}
+	}
+	if !docker.containers[identityFor("alpha", RoleSandbox, 1).ContainerName()].networks[identityFor("alpha", RoleSandbox, 1).NetworkName()] {
+		t.Fatal("the sandbox must join its environment network")
+	}
+}
+
+// imageArg finds the image in a docker create call, which is followed by the runtime's command when there is one.
+func imageArg(args []string) string {
+	for i := len(args) - 1; i >= 0; i-- {
+		if strings.Contains(args[i], "@sha256:") {
+			return args[i]
+		}
+	}
+	return args[len(args)-1]
 }
