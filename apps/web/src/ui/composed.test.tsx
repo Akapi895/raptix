@@ -269,7 +269,7 @@ describe('skeletons and tags', () => {
   it('Skeleton renders a pulsing block with merged classes', () => {
     const { container } = render(<Skeleton className="h-4 w-40" />)
     const el = container.firstElementChild as HTMLElement
-    expect(el.className).toContain('animate-pulse rounded-md bg-hover h-4 w-40')
+    expect(el.className).toContain('animate-pulse rounded-md bg-hover [animation-duration:1.5s] h-4 w-40')
   })
 
   it('PageSkeleton announces loading with the full block layout', () => {

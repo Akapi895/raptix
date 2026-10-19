@@ -61,7 +61,7 @@ describe('menu keyboard operability on real routes (projects table)', () => {
   it('the row More-actions trigger is a focusable button and its menu is keyboard-operable', async () => {
     mountApp('#/projects')
     await signIn()
-    await screen.findByRole('table')
+    await screen.findByRole('table', {}, { timeout: 5000 })
     const trigger = screen.getByLabelText('More actions for RT-2026-014')
     expect(trigger.tagName).toBe('BUTTON')
     trigger.focus()

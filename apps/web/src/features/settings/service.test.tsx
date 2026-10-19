@@ -724,7 +724,7 @@ describe('settings retention and audit tabs on the typed service (ticket 58)', (
     const h = mountScreenRoute('Dana Whitfield')
     h.show(<routes.settings />)
     await waitFor(() => expect(screen.getByText('Requested interactive session access')).toBeInTheDocument())
-    expect(screen.getByText('8 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 8 records')).toBeInTheDocument()
     // Legacy actions append rows; the ChangeSet bridge refetches the typed view.
     for (let i = 1; i <= 6; i++) h.run(() => legacyAudit(h, `Legacy probe ${i}`, 'X-1', 'RT-2026-014', 'Success', 'committed by the legacy seam'))
     await waitFor(() => expect(screen.getByText('Page 1 of 2')).toBeInTheDocument())
@@ -732,7 +732,7 @@ describe('settings retention and audit tabs on the typed service (ticket 58)', (
     await waitFor(() => expect(screen.getByText('Closed project')).toBeInTheDocument())
     // Search narrows through the handler (the filter is part of the query key).
     fireEvent.change(screen.getByPlaceholderText('Search actor, action, object…'), { target: { value: 'Legacy probe' } })
-    await waitFor(() => expect(screen.getByText('6 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Showing all 6 records')).toBeInTheDocument())
     expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument()
     h.unmount()
   })

@@ -99,6 +99,16 @@ describe('precommit boundary acceptance', () => {
 
 })
 
+/** The conversation picker is a listbox trigger; its options are the threads. */
+async function openConversationPicker(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  const trigger = await waitFor(() => {
+    const found = screen.getAllByRole('button').find(b => b.getAttribute('aria-haspopup') === 'listbox')
+    if (!found) throw new Error('conversation picker trigger not rendered yet')
+    return found
+  })
+  await user.click(trigger)
+}
+
 function workspaceNetwork(questions: unknown[] = [], options: { lostAck?: boolean; running?: boolean; execution?: boolean; secondThread?: boolean; runReply?: () => Promise<Response> } = {}): { url: string; method: string; body: Record<string, unknown> | undefined }[] {
   const calls: { url: string; method: string; body: Record<string, unknown> | undefined }[] = []
   const binding = { ...BINDING, kind: options.execution ? 'execution' : 'planning' }
@@ -153,7 +163,8 @@ describe('precommit execution acceptance', () => {
     await user.type(screen.getByLabelText('Workspace message'), 'Plan next step')
     await user.click(screen.getByRole('button', { name: 'Send' }))
     await waitFor(() => expect(calls.some(c => c.method === 'POST')).toBe(true))
-    await user.click(screen.getByRole('button', { name: /thread-2/ }))
+    await openConversationPicker(user)
+    await user.click(await screen.findByRole('option', { name: /thread-2/ }))
     await screen.findByText('Other conversation')
     const requestId = calls.find(c => c.method === 'POST')!.body!.requestId
     await act(async () => settle(response({ engagementId: 'eng-1', requestId, operation: 'create_run', state: 'accepted', threadId: 'thread-1', runId: 'run-1', createdAt: AT, updatedAt: AT })))
@@ -181,7 +192,9 @@ describe('precommit execution acceptance', () => {
 
   it('keeps execution disabled when the selected thread has not been verified', async () => {
     workspaceNetwork([], { execution: true })
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'execution' }))
+    const user = userEvent.setup()
+    await openConversationPicker(user)
+    await user.click(await screen.findByRole('option', { name: /thread-1/ }))
     await screen.findByText('Restored conversation')
     await screen.findByText('Server-verified runtime context')
     expect(screen.getByLabelText('Workspace message')).toBeDisabled()
@@ -202,9 +215,12 @@ describe('precommit execution acceptance', () => {
     const calls = workspaceNetwork([QUESTION, { ...QUESTION, questionId: 'q-2', interruptId: 'int-2', question: 'Which timing?' }])
     await screen.findByText('Which timing?')
     const user = userEvent.setup()
+    const tabs = screen.getAllByRole('tab')
     for (const option of screen.getAllByRole('radio')) await user.click(option)
-    const buttons = screen.getAllByRole('button', { name: /Answer/ })
-    await user.click(buttons[buttons.length - 1])
+    await user.click(tabs[1]!)
+    for (const option of screen.getAllByRole('radio')) await user.click(option)
+    await user.click(screen.getByRole('tab', { name: 'Confirm' }))
+    await user.click(screen.getByRole('button', { name: 'Send answers' }))
     await waitFor(() => expect(calls.some((c) => c.url.endsWith('/resume'))).toBe(true))
     expect(calls.find((c) => c.url.endsWith('/resume'))?.body?.answers).toEqual([
       { questionId: 'q-1', value: 'All' }, { questionId: 'q-2', value: 'All' },

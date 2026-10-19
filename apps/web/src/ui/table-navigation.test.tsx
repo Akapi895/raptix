@@ -87,7 +87,7 @@ describe('pagination (usePaged + Pager)', () => {
 
   it('slices rows per page and moves through pages with boundary-disabled buttons', async () => {
     render(<Host total={25} />)
-    expect(screen.getByText('25 records')).toBeInTheDocument()
+    expect(screen.getByText('25 total records')).toBeInTheDocument()
     expect(screen.getByText('Page 1 of 3')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled()
     expect(screen.getByText('10')).toBeInTheDocument()
@@ -107,12 +107,12 @@ describe('pagination (usePaged + Pager)', () => {
 
   it('collapses to a records label on a single page and for empty data', () => {
     const { unmount } = render(<Host total={5} />)
-    expect(screen.getByText('5 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 5 records')).toBeInTheDocument()
     expect(screen.queryByText(/Page /)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument()
     unmount()
     render(<Host total={0} />)
-    expect(screen.getByText('0 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 0 records')).toBeInTheDocument()
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
   })
 
@@ -132,7 +132,7 @@ describe('pagination (usePaged + Pager)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next page' }))
     expect(screen.getByText('Page 3 of 3')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'shrink' }))
-    expect(screen.getByText('5 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 5 records')).toBeInTheDocument()
     expect(screen.queryByText(/Page /)).not.toBeInTheDocument()
     expect(screen.getByText('1')).toBeInTheDocument()
     expect(screen.queryByText('21')).not.toBeInTheDocument()

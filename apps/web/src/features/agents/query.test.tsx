@@ -37,13 +37,13 @@ describe('agent fleet (ticket 48)', () => {
     const h = mountAgents('agents', 'Riley Brooks') // analyst — member of RT-2026-014 only
     h.show()
     await waitFor(() => expect(screen.getByText('WIN-LAB-01')).toBeInTheDocument())
-    expect(screen.getByText('3 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 3 records')).toBeInTheDocument()
     expect(screen.queryByText('CLOUD-LAB-01')).not.toBeInTheDocument() // RT-2026-015 — not a member
     expect(screen.queryByText('RETAIL-LAB-01')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /Shared Pool/ }))
     await waitFor(() => expect(screen.getByText('POOL-LAB-01')).toBeInTheDocument())
     expect(screen.getByText('POOL-LAB-02')).toBeInTheDocument()
-    expect(screen.getByText('2 records')).toBeInTheDocument()
+    expect(screen.getByText('Showing all 2 records')).toBeInTheDocument()
     h.unmount()
   })
 
@@ -80,9 +80,9 @@ describe('agent fleet (ticket 48)', () => {
     await waitFor(() => expect(screen.getByText('POOL-LAB-01')).toBeInTheDocument())
     // Pool KPI: connected, unassigned, unreserved — both pool agents initially.
     fireEvent.click(screen.getByRole('button', { name: /Available in Shared Pool/ }))
-    await waitFor(() => expect(screen.getByText('2 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Showing all 2 records')).toBeInTheDocument())
     h.run(() => { expect(assignAgentTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'RT-2026-014', corr: 'assignment-refetch' }, 'AG-012', { projectId: 'RT-2026-014' }).ok).toBe(true) })
-    await waitFor(() => expect(screen.getByText('1 records')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Showing all 1 record')).toBeInTheDocument())
     expect(screen.getByText('POOL-LAB-02')).toBeInTheDocument()
     expect(screen.queryByText('POOL-LAB-01')).not.toBeInTheDocument()
     h.unmount()

@@ -18,6 +18,18 @@ describe('renderMarkdown', () => {
     expect(container.querySelector('code')?.textContent).toBe('80')
   })
 
+  it('renders a pipe table as a real table with header, rows and inline code in cells', () => {
+    const text = 'Summary:\n| Hạng mục | Giá trị |\n|---|---|\n| Phạm vi | `10.129.84.232` host |\n| Cửa sổ | 24x7 |\n\nAfter.'
+    const { container } = render(renderMarkdown(text))
+    const table = container.querySelector('table')
+    expect(table).not.toBeNull()
+    expect(table?.querySelectorAll('thead th')).toHaveLength(2)
+    expect(table?.querySelectorAll('tbody tr')).toHaveLength(2)
+    expect(table?.querySelector('tbody code')?.textContent).toBe('10.129.84.232')
+    expect(container.textContent).not.toContain('|---|')
+    expect(screen.getByText('After.')).toBeTruthy()
+  })
+
   it('never injects markup from message content', () => {
     const { container } = render(renderMarkdown('<img src=x onerror="alert(1)"> **<script>x</script>**'))
     expect(container.querySelector('img')).toBeNull()
