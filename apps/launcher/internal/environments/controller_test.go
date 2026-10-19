@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -439,4 +440,29 @@ func imageArg(args []string) string {
 		}
 	}
 	return args[len(args)-1]
+}
+
+func TestHostWorkspaceCreatesTheProjectDirectoryUnderAnExistingRoot(t *testing.T) {
+	root := t.TempDir()
+	ctrl, err := New(newFakeDocker(), Config{WorkspaceRoot: root, ManagementNetwork: "raptix-net", Images: []string{testDigest}, MemoryBytes: 1, PidsLimit: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	host, err := ctrl.hostWorkspace(root + "/reddish")
+	if err != nil {
+		t.Fatalf("hostWorkspace for a missing project directory: %v", err)
+	}
+	if info, statErr := os.Stat(host); statErr != nil || !info.IsDir() {
+		t.Fatalf("the project directory was not created at %s: %v", host, statErr)
+	}
+	if _, err := ctrl.hostWorkspace(root + "/a/b"); !errors.Is(err, ErrRejectedPath) {
+		t.Fatalf("a nested path must not be created: err = %v", err)
+	}
+	if _, err := New(newFakeDocker(), Config{WorkspaceRoot: root + "-missing", ManagementNetwork: "raptix-net", Images: []string{testDigest}, MemoryBytes: 1, PidsLimit: 1}); err != nil {
+		t.Fatalf("New with a missing root: %v", err)
+	}
+	missing, _ := New(newFakeDocker(), Config{WorkspaceRoot: root + "-missing", ManagementNetwork: "raptix-net", Images: []string{testDigest}, MemoryBytes: 1, PidsLimit: 1})
+	if _, err := missing.hostWorkspace(root + "-missing/reddish"); !errors.Is(err, ErrRejectedPath) {
+		t.Fatalf("a missing root must be refused, not created: err = %v", err)
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -313,7 +314,18 @@ func (c *Controller) hostWorkspace(raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// The project workspace is created on first use, one directory under a root that must already exist (ADR-0092 I06).
+	// The path was checked against the root above and is checked again below, once it exists.
 	real, err := c.resolve(norm)
+	if errors.Is(err, fs.ErrNotExist) {
+		if _, rootErr := os.Stat(c.cfg.WorkspaceRoot); rootErr != nil {
+			return "", ErrRejectedPath
+		}
+		if mkErr := os.Mkdir(norm, 0o750); mkErr != nil {
+			return "", ErrRejectedPath
+		}
+		real, err = c.resolve(norm)
+	}
 	if err != nil {
 		return "", ErrRejectedPath
 	}
