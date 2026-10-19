@@ -8,7 +8,6 @@ import {
   type ControllerRole,
   type HostControllerClient,
 } from '../../integrations/environments/controller-client.js';
-import { RuntimeReadClient } from '../../integrations/runtime/read-client.js';
 import { runtimeUrlFor, type ProjectEnvironmentService } from './project-environment-service.js';
 
 export interface LifecycleConfig {
@@ -40,7 +39,7 @@ type Seen =
 interface EnvironmentRow { id: string; engagementId: string; generation: number; workspaceSlug: string }
 
 /** Run states after which the runtime will not execute the run again (the same set RunService treats as ended). */
-const TERMINAL_RUN_STATUSES = new Set(['success', 'error', 'timeout', 'interrupted']);
+const TERMINAL_RUN_STATUSES = new Set(['success', 'error', 'timeout', 'interrupted', 'not_found']);
 
 const ROLES: readonly ControllerRole[] = ['runtime', 'sandbox'];
 /** A stop the controller could not answer is tried this many times in all; a refusal is never retried. */
@@ -49,9 +48,12 @@ const STOP_ATTEMPTS = 3;
 const NOTHING_CREATED = new Set(['foreign_resource', 'generation_mismatch', 'image_missing', 'rejected_path', 'rejected_image', 'invalid_request']);
 
 async function defaultRunStatus(endpoint: string, threadId: string, runId: string): Promise<string> {
-  const { body } = await new RuntimeReadClient(endpoint).instanceExchange('GET', `/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}`);
-  const status = (body as { status?: unknown } | null)?.status;
-  return typeof status === 'string' ? status : 'unknown';
+  const response = await fetch(`${endpoint}/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}`, { signal: AbortSignal.timeout(5000), redirect: 'error' });
+  // A runtime that answers and does not know the run is not executing it. Only an unreadable answer stays unknown.
+  if (response.status === 404) return 'not_found';
+  if (!response.ok) throw new Error(`run status ${response.status}`);
+  const body = (await response.json()) as { status?: unknown } | null;
+  return typeof body?.status === 'string' ? body.status : 'unknown';
 }
 
 async function defaultProbe(endpoint: string): Promise<boolean> {

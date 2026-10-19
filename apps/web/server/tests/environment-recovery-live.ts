@@ -179,6 +179,21 @@ try {
   const kept = await db.webRequestLedger.findFirstOrThrow({ where: { engagementId: v.id, requestId: `run-v-${suffix}` } });
   assert.equal(kept.activeThreadId, vThread, 'the stale marker stays on record for its owner');
   checks.push('a stop completes at once when the runtime is not running, and the in-flight marker stays on record');
+
+  // 7. A run the running runtime does not know is not executing, so it does not hold the stop and its marker is released.
+  const w = await project('w');
+  const wStart = await command(w.id, 'w1', 'activate', (await slot()).version);
+  const wReady = await lifecycle.bringUp(w.id, wStart.commandId!, wStart.version);
+  const wThread = `t-${suffix}-w`;
+  await db.engagementThread.create({ data: { threadId: wThread, engagementId: w.id, assistantId: 'soundwave', kind: 'planning', contextHash: 'ctx' } });
+  await db.webRequestLedger.create({ data: { engagementId: w.id, requestId: `run-w-${suffix}`, operation: 'create_run', payloadHash: 'payload', reservationToken: randomUUID(), threadId: wThread, runId: 'run-w-1', activeThreadId: wThread, state: 'accepted' } });
+  runStatuses.set('run-w-1', 'not_found');
+  const wStop = await command(w.id, 'w2', 'stop', wReady.version);
+  const wStopped = await lifecycle.shutDown(w.id, wStop.commandId!, wStop.version);
+  assert.equal(wStopped.phase, 'idle', 'a run the runtime does not know does not hold the stop');
+  const released = await db.webRequestLedger.findFirstOrThrow({ where: { engagementId: w.id, requestId: `run-w-${suffix}` } });
+  assert.equal(released.activeThreadId, null, 'the marker of a run that is not executing is released');
+  checks.push('a run the runtime does not know does not hold the stop, and its marker is released');
 } finally {
   await double.close();
   await disconnectDb(db);

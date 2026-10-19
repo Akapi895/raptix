@@ -187,6 +187,9 @@ def apply(target: Path, state_dir: Path, workspace_dest: Path) -> dict[str, obje
             continue
         destination = state_dir / name
         if not destination.exists():
+            # A store the runtime has not created yet is fine when the project has no rows in it: there is no history to place.
+            if sum(source_counts(source, threads).values()) == 0:
+                continue
             raise SystemExit(f"{destination} does not exist; start the environment once so the runtime creates its store")
         if schema_of(source, tables) != schema_of(destination, tables):
             raise SystemExit(f"{name} schema differs from the environment store; refusing to apply")
