@@ -56,7 +56,7 @@ try {
 
   // 3. Another project is refused as busy. The answer carries no id of the project that holds the slot.
   const busy = await app.inject({ method: 'POST', url: `/api/engagements/${b.id}/environment/commands`, payload: { requestId: `act-b-${suffix}`, action: 'activate', expectedVersion: ready.json().slot.version } });
-  assert.equal(busy.statusCode, 409);
+  assert.equal(busy.statusCode, 200, "a busy answer is data, not an error");
   assert.equal(busy.json().status, 'busy');
   assert.equal(busy.body.includes(a.id), false, 'the busy answer must not name the active project');
   const bState = await app.inject({ method: 'GET', url: `/api/engagements/${b.id}/environment` });
