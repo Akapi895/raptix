@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type {
-  InstanceAttemptState, InstanceCancelAck, InstanceMailboxView, InstanceMessageAck, InstanceMessageView, RequestRecoveryView,
+  InstanceAttemptState, InstanceCancelAck, InstanceCommandAck, InstanceMailboxView, InstanceMessageAck, InstanceMessageView, RequestRecoveryView,
   OperationView, RuntimeInstanceView, RuntimeRosterView, ScopedRunView, ScopedThreadView, ThreadBindingView,
 } from '@raptix/web-contracts';
 import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtime/execution-client.js';
@@ -26,19 +26,6 @@ function metadata(actual: Record<string, unknown>, expected: Record<string, stri
 }
 /** The operator grant the runtime recorded for a retry or reassign of one ended attempt. */
 interface RuntimeGrantView { commandId: string; kind: 'retry' | 'reassign'; sourceDispatchId: string; sourceAttempt: number; targetDispatchId: string; targetRole: string; state: string }
-
-/** P10d: a retry or reassign request and the orchestrator run that performs the admission. */
-export interface InstanceCommandView {
-  commandId: string;
-  kind: 'retry' | 'reassign';
-  threadId: string;
-  sourceDispatchId: string;
-  sourceAttempt: number;
-  /** The dispatch the replacement runs under: the same one for a retry, a new one for a reassign. */
-  dispatchId: string;
-  role: string;
-  run: RequestRecoveryView;
-}
 
 /** Why the runtime refused a message or control, in the words the operator sees. Unknown codes keep the runtime's code. */
 const REFUSAL_TEXT: Readonly<Record<string, string>> = {
@@ -376,7 +363,7 @@ export class RunService {
    * admit; the runtime supplies the description, role and objective. The run uses the command id as its request id,
    * so a lost ack replays. A refusal before admission withdraws the grant; an uncertain run is left for reconcile.
    */
-  public async commandInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCommandView> {
+  public async commandInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCommandAck> {
     const { commandId, kind, expectedAttempt, role } = parseInstanceCommand(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
     const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/grants`, {

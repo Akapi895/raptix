@@ -572,7 +572,7 @@ export function fetchEffectiveScope(engagementId: string): Promise<EffectiveScop
 
 // The wire shapes and their guards live in @raptix/web-contracts; this module keeps the calls and re-exports the names the screens use.
 import {
-  isInstanceCancelAck, isInstanceMailboxView, isInstanceMessageAck, isRuntimeRosterView,
+  isInstanceCancelAck, isInstanceCommandAck, isInstanceMailboxView, isInstanceMessageAck, isRuntimeRosterView, type InstanceCommandAck,
   type InstanceCancelAck, type InstanceMailboxView, type InstanceMessageAck, type RuntimeRosterView,
 } from '@raptix/web-contracts'
 export type {
@@ -613,18 +613,8 @@ export function forwardInstanceMessage(engagementId: string, threadId: string, t
 }
 
 /** P10d: retry the same dispatch (no role) or reassign it to another role. The answer names the run that admits the replacement. */
-export interface InstanceCommandAck {
-  commandId: string
-  kind: 'retry' | 'reassign'
-  threadId: string
-  sourceDispatchId: string
-  sourceAttempt: number
-  dispatchId: string
-  role: string
-  run: { requestId?: string; state?: string; runId?: string | null } & Record<string, unknown>
-}
 export function commandInstance(engagementId: string, threadId: string, dispatchId: string, input: { commandId: string; kind: 'retry' | 'reassign'; expectedAttempt: number; role?: string }): Promise<InstanceCommandAck> {
-  return apiFetch(`${instanceRoot(engagementId, threadId, dispatchId)}/commands`, (v): v is InstanceCommandAck => typeof v === 'object' && v !== null && typeof (v as { commandId?: unknown }).commandId === 'string', { method: 'POST', body: input })
+  return apiFetch(`${instanceRoot(engagementId, threadId, dispatchId)}/commands`, isInstanceCommandAck, { method: 'POST', body: input })
 }
 
 export interface AssetInventoryView {

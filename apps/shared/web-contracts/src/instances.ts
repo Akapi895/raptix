@@ -4,6 +4,7 @@
  * these shapes itself.
  */
 import { isRecord } from './guards.js'
+import { isRequestRecoveryView, type RequestRecoveryView } from './ownership.js'
 
 export const INSTANCE_MESSAGE_MAX_CHARS = 2000
 
@@ -101,4 +102,23 @@ export function isInstanceMessageAck(v: unknown): v is InstanceMessageAck {
 
 export function isInstanceCancelAck(v: unknown): v is InstanceCancelAck {
   return isRecord(v) && v.state === 'cancel_requested'
+}
+
+/** P10d: a retry or reassign request and the orchestrator run that admits the replacement attempt. */
+export interface InstanceCommandAck {
+  commandId: string
+  kind: 'retry' | 'reassign'
+  threadId: string
+  sourceDispatchId: string
+  sourceAttempt: number
+  /** The dispatch the replacement runs under: the same one for a retry, a new one for a reassign. */
+  dispatchId: string
+  role: string
+  run: RequestRecoveryView
+}
+
+export function isInstanceCommandAck(v: unknown): v is InstanceCommandAck {
+  return isRecord(v) && typeof v.commandId === 'string' && (v.kind === 'retry' || v.kind === 'reassign')
+    && typeof v.threadId === 'string' && typeof v.sourceDispatchId === 'string' && typeof v.sourceAttempt === 'number'
+    && typeof v.dispatchId === 'string' && typeof v.role === 'string' && isRequestRecoveryView(v.run)
 }
