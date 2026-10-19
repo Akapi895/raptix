@@ -258,6 +258,47 @@ describe('W12 artifact browser', () => {
     });
   });
 
+  it('refuses a retained capture whose file was removed from storage with an explicit conflict', async () => {
+    await withHarness(async (h) => {
+      const bytes = Buffer.from('removed from storage');
+      const uploaded = await h.app.inject({
+        method: 'POST', url: '/api/engagements/eng-1/artifacts/captures',
+        payload: { requestId: 'upload-missing', filename: 'missing.txt', base64: bytes.toString('base64'), mediaType: 'text/plain' },
+      });
+      const id = uploaded.json().id as string;
+      await h.app.inject({
+        method: 'PATCH', url: `/api/engagements/eng-1/artifacts/captures/${id}/classification`,
+        payload: { classification: 'standard', expectedVersion: 1, reason: 'Standard lab capture for the missing-file check.' },
+      });
+      const entries = await readdir(h.workspaceRoot, { recursive: true, withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isFile()) continue;
+        const file = path.join(entry.parentPath, entry.name);
+        if ((await readFile(file)).equals(bytes)) await rm(file);
+      }
+      await expect(h.artifacts.downloadCapture('operator', 'eng-1', id)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('missing from storage') });
+      const response = await h.app.inject({ method: 'GET', url: `/api/engagements/eng-1/artifacts/captures/${id}/content` });
+      expect(response.statusCode).toBe(409);
+    });
+  });
+
+  it('refuses original bytes to a former member whose membership was removed', async () => {
+    await withHarness(async (h) => {
+      const bytes = Buffer.from('former member check');
+      const uploaded = await h.app.inject({
+        method: 'POST', url: '/api/engagements/eng-1/artifacts/captures',
+        payload: { requestId: 'upload-former', filename: 'former.txt', base64: bytes.toString('base64'), mediaType: 'text/plain' },
+      });
+      const id = uploaded.json().id as string;
+      await h.app.inject({
+        method: 'PATCH', url: `/api/engagements/eng-1/artifacts/captures/${id}/classification`,
+        payload: { classification: 'standard', expectedVersion: 1, reason: 'Standard lab capture for the membership check.' },
+      });
+      await expect(h.artifacts.downloadCapture('operator', 'eng-1', id)).resolves.toMatchObject({ bytes });
+      await expect(h.artifacts.downloadCapture('former-member', 'eng-1', id)).rejects.toMatchObject({ statusCode: 404, message: 'Project not found' });
+    });
+  });
+
   it('lists allowlisted folders non-recursively with sizes and engagement scoping', async () => {
     await withHarness(async (h) => {
       const root = path.join(h.workspaceRoot, h.slug);
