@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Akapi895/raptix/apps/launcher/internal/compose"
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
@@ -62,11 +63,11 @@ func init() {
 	start.Flags().Bool("pull", true, "Pull version-selected images before starting (disable for local built images)")
 	start.Flags().Bool("start-infra", true, "Start base infrastructure first (disable when an existing shared stack is already running)")
 	sandboxCmd := &cobra.Command{Use: "sandboxes", Short: "Provision one sandbox container per web project (ADR-0086 A)"}
-	sandboxCmd.AddCommand(&cobra.Command{Use: "sync", Short: "Start a sandbox for every project directory and remove orphaned ones", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+	sandboxConfig := func(missing bool) (sandboxes.Config, error) {
 		base := compose.New()
 		env, err := config.LoadEnv(base.EnvFile)
 		if err != nil {
-			return err
+			return sandboxes.Config{}, err
 		}
 		version := env["RAPTIX_VERSION"]
 		if version == "" {
@@ -80,22 +81,52 @@ func init() {
 			}
 			network += "_sandbox-net"
 		}
-		started, err := sandboxes.Sync(sandboxes.Config{
-			Bin:    base.Runtime.Bin,
-			Home:   base.Home,
-			Runner: sandboxes.ExecRunner{},
+		return sandboxes.Config{
+			Bin:     base.Runtime.Bin,
+			Home:    base.Home,
+			Runner:  sandboxes.ExecRunner{},
+			Missing: missing,
 			Settings: sandboxes.Settings{
 				Image:   "ghcr.io/akapi895/raptix-sandbox:" + version,
 				Network: network,
 				Volume:  workspaceVolume(env, base.Web().Project),
 				EnvFile: base.EnvFile,
 			},
-		})
+		}, nil
+	}
+	sandboxCmd.AddCommand(&cobra.Command{Use: "sync", Short: "Start a sandbox for every project directory and remove orphaned ones", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		cfg, err := sandboxConfig(false)
+		if err != nil {
+			return err
+		}
+		started, err := sandboxes.Sync(cfg)
 		for _, slug := range started {
 			fmt.Fprintln(cmd.OutOrStdout(), "sandbox ready for project "+slug)
 		}
 		return err
 	}})
+	watch := &cobra.Command{Use: "watch", Short: "Keep a sandbox running for every project directory (starts missing ones, never removes)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		cfg, err := sandboxConfig(true)
+		if err != nil {
+			return err
+		}
+		interval, err := cmd.Flags().GetDuration("interval")
+		if err != nil {
+			return err
+		}
+		for {
+			started, err := sandboxes.Sync(cfg)
+			for _, slug := range started {
+				fmt.Fprintln(cmd.OutOrStdout(), "sandbox ready for project "+slug)
+			}
+			if err != nil {
+				fmt.Fprintln(cmd.ErrOrStderr(), "sandbox watch: "+err.Error())
+			}
+			time.Sleep(interval)
+		}
+	}}
+	watch.Flags().Duration("interval", 15*time.Second, "How often to look for project directories without a sandbox")
+	sandboxCmd.AddCommand(watch)
 	web.AddCommand(sandboxCmd)
 	web.AddCommand(start,
 		&cobra.Command{Use: "stop", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Web().Down() }},
