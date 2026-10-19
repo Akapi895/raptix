@@ -202,6 +202,12 @@ export function renameThread(engagementId: string, threadId: string, title: stri
     { method: 'PATCH', body: { title } })
 }
 
+export function setThreadHitl(engagementId: string, threadId: string, enabled: boolean): Promise<{ threadId: string; hitlEnabled: boolean }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/threads/${encodeURIComponent(threadId)}/hitl`,
+    (v): v is { threadId: string; hitlEnabled: boolean } => typeof v === 'object' && v !== null && (v as { threadId?: unknown }).threadId === threadId && typeof (v as { hitlEnabled?: unknown }).hitlEnabled === 'boolean',
+    { method: 'PATCH', body: { enabled } })
+}
+
 export function getThread(engagementId: string, threadId: string): Promise<ScopedThreadView> {
   return apiFetch(
     `/engagements/${encodeURIComponent(engagementId)}/threads/${encodeURIComponent(threadId)}`,
