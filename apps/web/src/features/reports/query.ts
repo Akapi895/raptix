@@ -194,7 +194,7 @@ export function useReportWrites() {
         svc().decide(ctx('report-decide'), id, decision, note),
       exportVersion: (id: string, format: 'PDF' | 'DOCX') =>
         svc().exportVersion(ctx('report-export'), id, format),
-      exportArtifact: (id: string, format: 'json' | 'markdown') => svc().exportArtifact(ctx('report-artifact'), id, format),
+      exportArtifact: (id: string, format: 'json' | 'markdown' | 'pdf' | 'docx') => svc().exportArtifact(ctx('report-artifact'), id, format),
       revise: (id: string, expectedVersion: number): Promise<ServiceResult<Report>> => svc().revise(ctx('report-revise'), id, expectedVersion),
       createTemplate: (input: { name: string; sections: { title: string; required: boolean }[] }): Promise<ServiceResult<Template>> => svc().createTemplate(ctx('report-template-create'), input),
       deliver: (id: string, input: DeliveryInput): Promise<ServiceResult<Report>> =>

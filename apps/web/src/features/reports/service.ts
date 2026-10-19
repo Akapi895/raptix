@@ -787,7 +787,10 @@ const checksumOf = () => 'sha256:' + Math.random().toString(16).slice(2, 6) + 'â
  * export record (never on preview content). An approved report advances to
  * exported; the export alone is not a delivery.
  */
-export function exportReportVersion(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, format: 'PDF' | 'DOCX'): ServiceResult<{ report: Report; rec: ExportRec }> {
+/** A recorded export's file, as the server produced it (P07). Text is UTF-8; PDF and DOCX are base64 bytes. */
+export interface ReportArtifactDownload { filename: string; mediaType: string; content: string; encoding: 'utf8' | 'base64' }
+
+export function exportReportVersion(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, format: 'PDF' | 'DOCX'): ServiceResult<{ report: Report; rec: ExportRec; artifact?: ReportArtifactDownload }> {
   const db = authority.snapshot()
   const t = resolveReport(db, ctx, id)
   if (!t.ok) return t
@@ -929,7 +932,7 @@ export function createReportService(
     /** Revisions are created by the real store; the simulated store keeps one record per version. */
     revise: (ctx: RequestContext, id: string, expectedVersion: number): Promise<ServiceResult<Report>> => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `Revision of ${id} at v${expectedVersion} for ${ctx.projectId} is created in real mode only.` } }),
     /** The mock store holds no report bytes, so JSON/Markdown downloads exist only in real mode. */
-    exportArtifact: (_ctx: RequestContext, id: string, format: 'json' | 'markdown'): Promise<ServiceResult<{ filename: string; mediaType: string; content: string; digest: string }>> => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `No ${format} bytes exist for ${id} in the simulated store.` } }),
+    exportArtifact: (_ctx: RequestContext, id: string, format: 'json' | 'markdown' | 'pdf' | 'docx'): Promise<ServiceResult<{ filename: string; mediaType: string; content: string; encoding: 'utf8' | 'base64'; digest: string }>> => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `No ${format} bytes exist for ${id} in the simulated store.` } }),
     deliver: (ctx: RequestContext, id: string, input: DeliveryInput) => Promise.resolve(deliverReportVersion(authority, clock, ctx, id, input)),
     acknowledge: (ctx: RequestContext, id: string, input: { deliveryId: string; receipt: string; requestId: string }) => Promise.resolve(acknowledgeDelivery(authority, clock, ctx, id, input)),
   }

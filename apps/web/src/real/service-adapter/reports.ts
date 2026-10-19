@@ -8,9 +8,8 @@ import {
   acknowledgeReportDelivery, createReport, createReportTemplate, decideReportReview, deliverReport, exportReport, fetchAuthSession, fetchCuratedFindings, fetchMembers, fetchReports, reviseReport, setReportFindings,
   submitReportForReview, updateReport, updateReportSetup, type CuratedFindingView, type ReportTemplateView, type ReportView, type ReportsView,
 } from '../api'
-import { REAL_CONTROL_GAPS } from './control-gaps'
 import { displayTime, guarded } from './shared'
-import { unavailable, unsupportedControl } from './stub'
+import { unavailable } from './stub'
 
 const PAGE_SIZE = 10
 const SUMMARY_ID = 'summary'
@@ -278,7 +277,7 @@ export function createRealReportService(): ReportService {
             allowed: view.status === 'in_review' && reviewerRole && !isAuthor && namedOk && view.readiness.ready,
             reason: view.status !== 'in_review' ? 'Only a report in review can be approved or returned.' : !reviewerRole ? 'Approving or returning requires the reviewer role.' : isAuthor ? 'The author cannot review their own report.' : !namedOk ? 'Only the named reviewer of this report can decide.' : !view.readiness.ready ? 'Readiness checks must pass before approval.' : '',
           },
-          export: { allowed: false, reason: REAL_CONTROL_GAPS['report.pdfDocx'] },
+          export: { allowed: view.status === 'approved' && view.approvedVersion === view.version, reason: view.status === 'approved' ? '' : 'Export is available only after the report is approved.' },
           deliver: {
             allowed: view.status === 'approved' && EDIT_ROLES.includes(ctx.actor.role) && view.readiness.ready,
             reason: view.status !== 'approved' ? 'Delivery requires an approved version.' : !EDIT_ROLES.includes(ctx.actor.role) ? 'Recording a delivery requires the operator role on this engagement.' : !view.readiness.ready ? 'Readiness checks must pass before delivery.' : '',
@@ -363,7 +362,29 @@ export function createRealReportService(): ReportService {
       return { ok: true, data: toReport(decided, rc) }
     }),
 
-    exportVersion: () => unsupportedControl<{ report: Report; rec: ExportRec }>('report.pdfDocx'),
+    /** P07: a recorded export of the approved version. The server stores the export record and returns the file to save. */
+    exportVersion: (ctx, id: string, format: 'PDF' | 'DOCX') => guarded(async () => {
+      const before = await readContext(ctx.projectId)
+      const view = findReport(before, id)
+      if (!view) return notFound<{ report: Report; rec: ExportRec }>(id)
+      if (view.approvedVersion !== view.version || view.status !== 'approved') {
+        return validation<{ report: Report; rec: ExportRec }>('Export is available only after the report is approved.')
+      }
+      const knownDeliveries = new Set(view.deliveries.map((d) => d.id))
+      const exported = await deliverReport(ctx.projectId, id, { kind: 'export', format: format.toLowerCase(), requestId: crypto.randomUUID() })
+      const after = await readContext(ctx.projectId)
+      const rec = toExportRec(findReport(after, id) ?? exported, after).find((r) => !knownDeliveries.has(r.id))
+      if (!rec) return validation<{ report: Report; rec: ExportRec }>('The export was recorded but could not be read back.')
+      const extension = format.toLowerCase()
+      return {
+        ok: true,
+        data: {
+          report: toReport(exported, after),
+          rec,
+          artifact: { filename: `report-${id}-v${view.version}.${extension}`, mediaType: exported.artifact.mediaType, content: exported.artifact.content, encoding: exported.artifact.encoding },
+        },
+      }
+    }),
 
     deliver: (ctx, id: string, input: DeliveryInput) => guarded(async () => {
       if (!input.confirm) return validation<Report>('Confirm the handover before recording the delivery.')
@@ -406,10 +427,11 @@ export function createRealReportService(): ReportService {
     }),
 
     /** JSON and Markdown bytes of the stored version (the server's read export); PDF/DOCX stay a registered gap. */
-    exportArtifact: (ctx, id: string, format: 'json' | 'markdown') => guarded(async () => {
-      if (!id) return notFound<{ filename: string; mediaType: string; content: string; digest: string }>(id)
+    exportArtifact: (ctx, id: string, format: 'json' | 'markdown' | 'pdf' | 'docx') => guarded(async () => {
+      if (!id) return notFound<{ filename: string; mediaType: string; content: string; encoding: 'utf8' | 'base64'; digest: string }>(id)
       const artifact = await exportReport(ctx.projectId, id, format)
-      return { ok: true, data: { filename: `report-${artifact.reportId}-v${artifact.version}.${format === 'json' ? 'json' : 'md'}`, mediaType: artifact.mediaType, content: artifact.content, digest: artifact.digest } }
+      const extension = format === 'markdown' ? 'md' : format
+      return { ok: true, data: { filename: `report-${artifact.reportId}-v${artifact.version}.${extension}`, mediaType: artifact.mediaType, content: artifact.content, encoding: artifact.encoding, digest: artifact.digest } }
     }),
 
     /** P07: the recipient's acknowledgement is its own request, keyed by a stable request id so a lost response can be replayed. */

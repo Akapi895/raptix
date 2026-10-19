@@ -1034,8 +1034,8 @@ export function decideReportReview(engagementId: string, reportId: string, body:
   { method: 'POST', body })
 }
 
-export function deliverReport(engagementId: string, reportId: string, input: { kind: 'export' | 'delivery'; format: string; requestId: string; expectedVersion?: number; recipient?: string; receipt?: string }): Promise<ReportView & { artifact: { reportId: string; version: number; format: string; mediaType: string; content: string; digest: string } }> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/deliveries`, (v): v is ReportView & { artifact: { reportId: string; version: number; format: string; mediaType: string; content: string; digest: string } } =>
+export function deliverReport(engagementId: string, reportId: string, input: { kind: 'export' | 'delivery'; format: string; requestId: string; expectedVersion?: number; recipient?: string; receipt?: string }): Promise<ReportView & { artifact: { reportId: string; version: number; format: string; mediaType: string; content: string; encoding: 'utf8' | 'base64'; digest: string } }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/deliveries`, (v): v is ReportView & { artifact: { reportId: string; version: number; format: string; mediaType: string; content: string; encoding: 'utf8' | 'base64'; digest: string } } =>
     typeof v === 'object' && v !== null && typeof (v as { artifact?: { content?: unknown } }).artifact?.content === 'string' && typeof (v as { artifact?: { digest?: unknown } }).artifact?.digest === 'string',
   { method: 'POST', body: input })
 }
@@ -1724,7 +1724,9 @@ export function updateReport(engagementId: string, reportId: string, input: { ex
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}`, owned(engagementId, (v): v is ReportView => typeof v === 'object' && v !== null && (v as ReportView).id === reportId && Number.isInteger((v as ReportView).version)), { method: 'PATCH', body: input })
 }
 
-export interface ReportArtifactView { engagementId: string; reportId: string; version: number; format: string; mediaType: string; content: string; digest: string }
-export function exportReport(engagementId: string, reportId: string, format: 'json' | 'markdown'): Promise<ReportArtifactView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/export?format=${format}`, owned(engagementId, (v): v is ReportArtifactView => typeof v === 'object' && v !== null && (v as ReportArtifactView).reportId === reportId && typeof (v as ReportArtifactView).content === 'string' && /^[a-f0-9]{64}$/.test((v as ReportArtifactView).digest)))
+/** json and markdown are text; pdf and docx are base64 bytes (P07). */
+export type ReportExportFormat = 'json' | 'markdown' | 'pdf' | 'docx'
+export interface ReportArtifactView { engagementId: string; reportId: string; version: number; format: string; mediaType: string; content: string; encoding: 'utf8' | 'base64'; digest: string }
+export function exportReport(engagementId: string, reportId: string, format: ReportExportFormat): Promise<ReportArtifactView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/export?format=${format}`, owned(engagementId, (v): v is ReportArtifactView => typeof v === 'object' && v !== null && (v as ReportArtifactView).reportId === reportId && typeof (v as ReportArtifactView).content === 'string' && ((v as ReportArtifactView).encoding === 'utf8' || (v as ReportArtifactView).encoding === 'base64') && /^[a-f0-9]{64}$/.test((v as ReportArtifactView).digest)))
 }
