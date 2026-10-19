@@ -224,10 +224,19 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
   public async assertAdmits(tx: Tx, engagementId: string): Promise<void> {
     await ensureSlot(tx, this.deploymentId);
     const slot = await lockSlotForShare(tx, this.deploymentId);
-    if (slot.phase === 'idle') return;
-    if (slot.ownerEngagementId === engagementId && slot.phase === 'ready') return;
-    throw new ProjectPolicyError('conflict', slot.ownerEngagementId === engagementId
-      ? 'The project environment is not ready for execution.'
-      : 'Another project environment is active on this deployment.');
+    if (slot.phase !== 'idle' && !(slot.ownerEngagementId === engagementId && slot.phase === 'ready')) {
+      throw new ProjectPolicyError('conflict', slot.ownerEngagementId === engagementId
+        ? 'The project environment is not ready for execution.'
+        : 'Another project environment is active on this deployment.');
+    }
+    // A managed project whose environment is stopped starts no run, even while the slot is free. Refusing here keeps
+    // the ledger from recording a run the routed runtime cannot take.
+    const row = await tx.projectEnvironment.findUnique({
+      where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } },
+      select: { observedState: true },
+    });
+    if (row !== null && row.observedState !== 'ready') {
+      throw new ProjectPolicyError('conflict', 'The project environment is not running. Activate it to start a run.');
+    }
   }
 }
