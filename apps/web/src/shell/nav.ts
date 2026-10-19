@@ -149,7 +149,8 @@ export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
   {
     group: 'RESULTS',
     items: [
-      { to: 'findings', label: 'Findings', icon: ShieldAlert, match: ['findings'] },
+      { to: 'findings', label: 'Findings', icon: ShieldAlert, match: ['findings', 'finding', 'finding-new'] },
+      { to: 'evidence', label: 'Evidence', icon: Archive, match: ['evidence', 'evidence-inspector'] },
       { to: 'analysis', label: 'Analysis', icon: Network, match: ['analysis'] },
       { to: 'reports', label: 'Reports', icon: FileText, match: ['reports'] },
     ],

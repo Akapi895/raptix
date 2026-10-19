@@ -1249,7 +1249,7 @@ function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: str
  * only its name (the reference stays visible). Missing/cross-project reads
  * are handler refusals rendered as errors, never content.
  */
-function EvidenceList() {
+export function EvidenceList() {
   const pid = useProjectStore((s) => s.pid)
   const [q, setQ] = useState('')
   const [kind, setKind] = useState('')

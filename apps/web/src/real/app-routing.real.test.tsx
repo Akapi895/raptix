@@ -71,13 +71,16 @@ it('replaces global navigation after opening a project from the portfolio and re
   fireEvent.click(await screen.findByText('Q1 External Assessment'))
   await screen.findByRole('heading', { name: 'Overview' })
   expect(screen.getByRole('button', { name: 'All projects' })).toBeInTheDocument()
-  for (const label of ['Overview', 'Planning', 'AI Workspace', 'Execution', 'Fleet', 'C2 Sessions', 'Findings', 'Analysis', 'Reports', 'Team & Approvals', 'Scope & ROE', 'Governance', 'Vault', 'Activity & Audit', 'Project Settings', 'Closeout']) {
+  for (const label of ['Overview', 'Planning', 'AI Workspace', 'Execution', 'Fleet', 'C2 Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Scope & ROE', 'Governance', 'Vault', 'Activity & Audit', 'Project Settings', 'Closeout']) {
     expect(screen.getAllByRole('button', { name: label }).length).toBeGreaterThan(0)
   }
   expect(screen.queryByRole('button', { name: 'Library' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Findings' }))
   await waitFor(() => expect(window.location.hash).toBe('#/project/eng-1?tab=findings'))
   expect(screen.getByRole('button', { name: 'Findings' })).toHaveAttribute('aria-current', 'page')
+  fireEvent.click(screen.getByRole('button', { name: 'Evidence' }))
+  await waitFor(() => expect(window.location.hash).toBe('#/project/eng-1?tab=evidence'))
+  expect(screen.getByRole('button', { name: 'Evidence' })).toHaveAttribute('aria-current', 'page')
   fireEvent.click(screen.getByRole('button', { name: 'All projects' }))
   await screen.findByRole('heading', { name: 'Projects' })
   expect(screen.getByRole('button', { name: 'Library' })).toBeInTheDocument()
