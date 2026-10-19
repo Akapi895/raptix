@@ -292,3 +292,12 @@ Test `controller-client` "gives up after the timeout" trước đây đặt time
 | Crash controller sau Docker ACK, trên container thật | Chưa chạy | |
 | Web và CLI mở cùng project sau migration | Chưa chạy | |
 | Upgrade và rollback của migration | Chưa chạy | |
+
+## 14. Rebind thread lịch sử (I07, cập nhật sau mục 12)
+
+- Endpoint: `POST /api/engagements/:id/threads/:thread/rebind` (operator). Thread được đưa vào runtime của môi trường với cùng id và metadata của cấu hình môi trường. Binding chuyển sang cấu hình đó, kèm fingerprint cũ được ghi trong kết quả. Không chạy run và không ghi lại checkpoint.
+- Kiểm tra trước khi đổi binding: metadata thread trên runtime, và các trường cấu hình so với giá trị checkpoint. Lệch thì trả 409 và giữ nguyên binding.
+- Kết quả trên bản sao của `reddish` (3 thread): cả ba trả 200 sau rebind. Số tin nhắn ở tầng runtime khớp legacy (2/2 và 75/75). Web chiếu lịch sử 75 tin nhắn thành 13 mục, đó là phép chiếu, không phải số lượng thô.
+- E06 (copy): restart runtime, rồi restart sandbox. Lưu trữ giữ nguyên (75 tin nhắn), thread vẫn đọc được, môi trường vẫn `ready`.
+- Crash controller khi đang start (copy): slot chuyển `uncertain` với lý do `controller_unreachable`, không bị đánh dấu `stopped` giả. Sau khi controller được bật lại, owner stop để reconcile (slot về `idle`), rồi activate lại thành công.
+- Còn lại: bộ server đầy đủ sau thay đổi cuối chưa hoàn tất (bị dừng do thiếu bộ nhớ). Chưa có P10/P11. Cutover trên DB và volume thật chờ duyệt riêng.

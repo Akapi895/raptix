@@ -102,6 +102,28 @@ export class RuntimeOwnershipService {
     });
   }
 
+  /** The runtime configuration fingerprint a bound thread was last bound under, or null for a thread bound before it was recorded. */
+  public async runtimeConfigHashOf(userId: string, engagementId: string, threadId: string): Promise<string | null> {
+    return this.transaction(async tx => (await this.binding(tx, await this.owned(tx, userId, engagementId), threadId)).runtimeConfigHash ?? null);
+  }
+
+  /**
+   * ADR-0092 I07: moves a bound thread to the runtime configuration of the environment that now serves it. The move is
+   * a compare-and-set on the fingerprint it leaves, and the new fingerprints must match the project as it is now.
+   */
+  public async rebindThreadConfig(userId: string, engagementId: string, input: { threadId: string; expectedRuntimeConfigHash: string | null; contextHash: string; runtimeConfigHash: string }): Promise<ThreadBindingView> {
+    identifier(input.threadId);
+    if (!/^[a-f0-9]{64}$/.test(input.contextHash) || !/^[a-f0-9]{64}$/.test(input.runtimeConfigHash)) throw new ProjectPolicyError('bad_request', 'Invalid trusted runtime context fingerprint');
+    return this.transaction(async tx => {
+      const project = await this.owned(tx, userId, engagementId, 'operator');
+      const row = await this.binding(tx, project, input.threadId);
+      if ((row.runtimeConfigHash ?? null) !== input.expectedRuntimeConfigHash) throw conflict();
+      if (input.contextHash !== contextHash(project, row.assistantId, row.kind)) throw conflict();
+      const updated = await tx.engagementThread.update({ where: { threadId: row.threadId }, data: { contextHash: input.contextHash, runtimeConfigHash: input.runtimeConfigHash } });
+      return bindingView(updated);
+    });
+  }
+
   public async getBinding(userId: string, engagementId: string, threadId: string, expected?: { assistantId: string; kind: ThreadKind; runtimeConfigHash?: string }): Promise<ThreadBindingView> {
     return this.transaction(async tx => {
       const row = await this.binding(tx, await this.owned(tx, userId, engagementId), threadId);

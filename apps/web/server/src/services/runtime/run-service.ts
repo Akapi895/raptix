@@ -286,6 +286,35 @@ export class RunService {
     }
     return { engagementId: engagement, threadId: thread, state, latestRunId: latest?.runId ?? null, latestRunStatus: latest?.status ?? null, source: 'runtime' };
   }
+  /**
+   * ADR-0092 I07: reconciles a migrated thread with the environment that serves it now. The runtime gets the thread
+   * record under this environment's configuration, with the same thread id and the metadata the web checks, and the
+   * binding moves to that configuration. Nothing runs, and no checkpoint is rewritten.
+   */
+  public async rebindThread(user: string, engagement: string, thread: string): Promise<{ threadId: string; previousRuntimeConfigHash: string | null; runtimeConfigHash: string; created: boolean }> {
+    const { ownership, context } = this.options;
+    const binding = await ownership.getBinding(user, engagement, thread);
+    const previousRuntimeConfigHash = await ownership.runtimeConfigHashOf(user, engagement, thread);
+    // Resolved without the thread: a bound resolution refuses the configuration change this step records.
+    const trusted = await context.resolve(user, engagement, { kind: binding.kind, assistantId: binding.assistantId });
+    if (!trusted.configurable.authorization_confirmed) throw conflict();
+    const runtime = await this.execution(engagement);
+    const reads = this.options.router ? await this.options.router.reads(engagement) : this.options.reads;
+    const expected = { ...trusted.metadata };
+    let remote: { metadata: Record<string, unknown> } | null = null;
+    try { remote = await reads.thread(thread); } catch { remote = null; }
+    let created = false;
+    if (remote !== null) metadata(remote.metadata, expected);
+    else { await runtime.createThread(thread, expected, trusted.configurable); created = true; }
+    // The history must agree with this environment's configuration before the binding moves. The same fields the bound
+    // resolution compares are checked here.
+    const { values, graphId } = await reads.state(thread);
+    const fields = Object.entries(trusted.configurable).filter(([k]) => k !== 'sandbox_url' && k !== 'hitl_enabled');
+    if (Object.keys(values).length && (graphId !== binding.assistantId || fields.some(([k, v]) => values[k] !== v))) throw conflict();
+    await ownership.rebindThreadConfig(user, engagement, { threadId: thread, expectedRuntimeConfigHash: previousRuntimeConfigHash, contextHash: trusted.bindingHash, runtimeConfigHash: trusted.runtimeConfigHash });
+    return { threadId: thread, previousRuntimeConfigHash, runtimeConfigHash: trusted.runtimeConfigHash, created };
+  }
+
   public async getRun(user: string, engagement: string, thread: string, runId: string): Promise<ScopedRunView> {
     const { ownership } = this.options;
     const runtime = await this.execution(engagement);
