@@ -3,6 +3,7 @@ import { Readable } from 'node:stream';
 import type { SseFrame } from '@raptix/streaming';
 import type { StreamScope } from '@raptix/web-contracts';
 import type { RuntimeJoinPort, JoinSubscription } from '../../integrations/runtime/join-client.js';
+import type { RuntimeRouter } from '../../integrations/runtime/runtime-router.js';
 import type { RunService } from './run-service.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
 import { projectStreamFrame } from './stream-projection.js';
@@ -15,11 +16,12 @@ export function streamCursor(value: unknown): string {
 /** `recoveryRequired` is false only when the run itself ended or paused normally (e.g. waiting for an answer); access loss and transport errors need recovery. */
 const control = (type: 'stream_closed' | 'stream_error', recoveryRequired = true): string => `event: control\ndata: ${JSON.stringify({ type, recoveryRequired })}\n\n`;
 export class StreamService {
-  public constructor(private readonly runs: Pick<RunService, 'getRun'>, private readonly join: RuntimeJoinPort, private readonly heartbeatMs = 15000) {}
+  public constructor(private readonly runs: Pick<RunService, 'getRun'>, private readonly join: RuntimeJoinPort, private readonly heartbeatMs = 15000, private readonly router?: RuntimeRouter) {}
   public async open(user: string, scope: StreamScope, cursor: unknown, signal: AbortSignal): Promise<Readable> {
     const position = streamCursor(cursor);
     await this.runs.getRun(user, scope.engagementId, scope.threadId, scope.runId);
-    const subscription = await this.join.open(scope.threadId, scope.runId, position, signal);
+    const port = this.router ? await this.router.join(scope.engagementId) : this.join;
+    const subscription = await port.open(scope.threadId, scope.runId, position, signal);
     return Readable.from(this.publish(user, scope, subscription, signal));
   }
   /**

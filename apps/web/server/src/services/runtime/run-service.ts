@@ -8,6 +8,7 @@ import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js'
 import { RuntimeCheckpointMissingError, RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
 import { parseInstanceCancel, parseInstanceCommand, parseInstanceForward, parseInstanceMessage, parseOperationRequest, parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
+import type { RuntimeRouter } from '../../integrations/runtime/runtime-router.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-context.js';
 import { projectThreadHistory } from './history-projection.js';
@@ -83,6 +84,8 @@ export interface RunOperationPort {
 export class RunService {
   public constructor(private readonly options: {
     ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort
+    /** ADR-0092: when set, each call resolves the endpoint of its own engagement; the fixed ports are the legacy path. */
+    router?: RuntimeRouter
     authorizeMutation?: (user: string, engagement: string, kind: 'planning' | 'execution', threadId: string | null) => Promise<void>
     operations?: RunOperationPort
     audit?: (actorId: string, engagementId: string, action: string, targetId: string, reason: string) => Promise<void>
@@ -91,11 +94,18 @@ export class RunService {
     if (!this.options.operations) throw new ProjectPolicyError('conflict', 'Operation lifecycle is not available in this deployment');
     return this.options.operations;
   }
+  /** ADR-0092: the runtime port for this engagement. Without a router the fixed legacy ports serve every call. */
+  private async execution(engagement: string): Promise<RuntimeExecutionPort> {
+    return this.options.router ? this.options.router.execution(engagement) : this.options.runtime;
+  }
+  private async readPort(engagement: string): Promise<RuntimeReadPort> {
+    return this.options.router ? this.options.router.reads(engagement) : this.options.reads;
+  }
   private async threadState(user: string, engagement: string, thread: string): ReturnType<RuntimeReadPort['state']> {
-    const state = await this.options.reads.state(thread);
+    const state = await (await this.readPort(engagement)).state(thread);
     if (!Object.keys(state.values).length && !findPendingQuestions(state.values, state.tasks).length) {
       const previous = (await this.options.ownership.runs(user, engagement, thread, 0, 1))[0];
-      if (previous?.runId && terminal((await this.options.runtime.run(thread, previous.runId)).status)) throw new RuntimeCheckpointMissingError();
+      if (previous?.runId && terminal((await (await this.execution(engagement)).run(thread, previous.runId)).status)) throw new RuntimeCheckpointMissingError();
     }
     return state;
   }
@@ -109,7 +119,8 @@ export class RunService {
   }
   public async createThread(user: string, engagement: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId, intent, selection } = parseThreadCreate(raw);
-    const { ownership, context, runtime } = this.options;
+    const { ownership, context } = this.options;
+    const runtime = await this.execution(engagement);
     const replay = await ownership.replay(user, engagement, requestId, 'create_thread', intent);
     if (replay) return replay;
     let trusted: TrustedRuntimeContext;
@@ -153,7 +164,8 @@ export class RunService {
     // A new message would start a fresh run beside a paused checkpoint; resume the operation or start a new plan binding instead.
     const operation = await this.options.operations?.status(engagement, thread);
     if (operation === 'pause_requested' || operation === 'paused' || operation === 'completed') throw new ProjectPolicyError('conflict', `This operation is ${operation}; resume it or start a new operation before sending a message.`);
-    return this.startRun(user, engagement, thread, requestId, intent, (trusted) => this.options.runtime.createRun(thread, trusted, requestId, message));
+    const runtime = await this.execution(engagement);
+    return this.startRun(user, engagement, thread, requestId, intent, (trusted) => runtime.createRun(thread, trusted, requestId, message));
   }
   /**
    * Admit one runtime run on a thread: the same ownership, gate and dispatch path for a new message and for a
@@ -168,7 +180,8 @@ export class RunService {
     launch: (trusted: TrustedRuntimeContext) => Promise<RuntimeRun>,
     hooks: { precheck?: () => Promise<void>; afterAccept?: () => Promise<void> } = {},
   ): Promise<RequestRecoveryView> {
-    const { ownership, context, runtime } = this.options;
+    const { ownership, context } = this.options;
+    const runtime = await this.execution(engagement);
     const replay = await ownership.replay(user, engagement, requestId, 'create_run', intent, thread);
     if (replay) return replay;
     await this.settleEndedRuns(user, engagement);
@@ -213,7 +226,7 @@ export class RunService {
     const binding = await this.options.ownership.getBinding(user, engagement, thread);
     await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
     if (!(await ops.transition(engagement, thread, ['bound', 'running'], 'pause_requested'))) throw new ProjectPolicyError('conflict', 'This operation cannot be paused in its current state.');
-    try { await this.options.runtime.cancelRun(thread, runId); }
+    try { await (await this.execution(engagement)).cancelRun(thread, runId); }
     catch (error) { await ops.transition(engagement, thread, ['pause_requested'], 'running'); throw error; }
     return this.operation(user, engagement, thread);
   }
@@ -221,10 +234,11 @@ export class RunService {
   public async resumeRun(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId } = parseOperationRequest(raw);
     const ops = this.requireOperations();
-    return this.startRun(user, engagement, thread, requestId, { continueThread: thread }, (trusted) => this.options.runtime.continueRun(thread, trusted, requestId), {
+    const runtime = await this.execution(engagement);
+    return this.startRun(user, engagement, thread, requestId, { continueThread: thread }, (trusted) => runtime.continueRun(thread, trusted, requestId), {
       precheck: async () => {
         if ((await ops.status(engagement, thread)) !== 'paused') throw new ProjectPolicyError('conflict', 'Only a paused operation can be resumed.');
-        const [latest] = await this.options.runtime.listRuns(thread, 0, 1);
+        const [latest] = await (await this.execution(engagement)).listRuns(thread, 0, 1);
         if (!latest || latest.status !== 'interrupted') throw new ProjectPolicyError('conflict', 'The paused run is not interrupted in the runtime yet.');
         const state = await this.threadState(user, engagement, thread);
         if (findPendingQuestions(state.values, state.tasks).length) throw new ProjectPolicyError('conflict', 'Answer the pending question before resuming this operation.');
@@ -247,7 +261,7 @@ export class RunService {
     if (view.latestRunStatus === 'interrupted') throw new ProjectPolicyError('conflict', 'The operation is paused; resume it or let its run finish before completing.');
     const state = await this.threadState(user, engagement, thread);
     if (findPendingQuestions(state.values, state.tasks).length) throw new ProjectPolicyError('conflict', 'Answer the pending questions before completing this operation.');
-    const reply = await this.options.reads.instanceExchange('GET', `/_raptix/threads/${encodeURIComponent(thread)}/instances`);
+    const reply = await (await this.readPort(engagement)).instanceExchange('GET', `/_raptix/threads/${encodeURIComponent(thread)}/instances`);
     const payload = reply.body as { instances?: { state?: unknown }[] } | null;
     if (reply.status !== 200 || !payload || !Array.isArray(payload.instances)) throw new RuntimeUnavailableError();
     if (payload.instances.some(row => row.state === 'running' || row.state === 'cancel_requested')) throw new ProjectPolicyError('conflict', 'A dispatched instance is still running; wait for it to end before completing.');
@@ -260,7 +274,7 @@ export class RunService {
   public async operation(user: string, engagement: string, thread: string): Promise<OperationView> {
     const ops = this.requireOperations();
     await this.options.ownership.getBinding(user, engagement, thread);
-    const [latest] = await this.options.runtime.listRuns(thread, 0, 1);
+    const [latest] = await (await this.execution(engagement)).listRuns(thread, 0, 1);
     let state = (await ops.status(engagement, thread)) ?? 'bound';
     if (latest && state !== 'completed') {
       const interrupted = latest.status === 'interrupted';
@@ -273,7 +287,8 @@ export class RunService {
     return { engagementId: engagement, threadId: thread, state, latestRunId: latest?.runId ?? null, latestRunStatus: latest?.status ?? null, source: 'runtime' };
   }
   public async getRun(user: string, engagement: string, thread: string, runId: string): Promise<ScopedRunView> {
-    const { ownership, runtime } = this.options;
+    const { ownership } = this.options;
+    const runtime = await this.execution(engagement);
     const row = await ownership.runOwner(user, engagement, thread, runId);
     if (!row.dispatchAssistantId || !row.dispatchKind || !row.dispatchConfigHash) throw conflict();
     await ownership.getBinding(user, engagement, thread, { assistantId: row.dispatchAssistantId, kind: row.dispatchKind, runtimeConfigHash: row.dispatchConfigHash });
@@ -308,7 +323,7 @@ export class RunService {
         const recorded = new Set(ledger.map(row => `${row.dispatchId}:${row.attempt}`));
         // P10: a running attempt is not in the ledger until it finishes; the mailbox is where it is visible now.
         try {
-          instances.push(...await this.mailboxInstances(binding.threadId, recorded));
+          instances.push(...await this.mailboxInstances(engagement, binding.threadId, recorded));
           threads.push({ threadId: binding.threadId, read: 'read', reason: null });
         } catch (error) {
           if (!(error instanceof RuntimeUnavailableError)) throw error;
@@ -330,7 +345,7 @@ export class RunService {
   public async sendInstanceMessage(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceMessageAck> {
     const { messageId, body, expectedAttempt } = parseInstanceMessage(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
-    return this.deliverInstanceMessage(thread, dispatch, { messageId, body, expectedAttempt, sourceMessageId: null });
+    return this.deliverInstanceMessage(engagement, thread, dispatch, { messageId, body, expectedAttempt, sourceMessageId: null });
   }
   /**
    * P10d: the operator asks for cooperative cancel of one attempt. The runtime records the request and
@@ -339,7 +354,7 @@ export class RunService {
   public async cancelInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCancelAck> {
     const expectedAttempt = parseInstanceCancel(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
-    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/cancel`, { expectedAttempt });
+    const reply = await (await this.readPort(engagement)).instanceExchange('POST', `${instancePath(thread, dispatch)}/cancel`, { expectedAttempt });
     const payload = reply.body as { state?: unknown; reason?: unknown } | null;
     if (reply.status === 409) throw refusal(payload, 'The runtime refused the cancel');
     if (reply.status !== 200 || payload?.state !== 'cancel_requested') throw new RuntimeUnavailableError();
@@ -352,10 +367,10 @@ export class RunService {
   public async forwardInstanceMessage(user: string, engagement: string, thread: string, targetDispatch: string, raw: unknown): Promise<InstanceMessageAck> {
     const { messageId, sourceDispatchId, sourceMessageId, expectedAttempt } = parseInstanceForward(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
-    const source = (await this.instanceView(thread, sourceDispatchId)).messages.find(m => m.messageId === sourceMessageId);
+    const source = (await this.instanceView(engagement, thread, sourceDispatchId)).messages.find(m => m.messageId === sourceMessageId);
     if (!source) throw new ProjectPolicyError('not_found', 'The source message is not recorded for that dispatch on this thread.');
     const body = `Forwarded from dispatch ${sourceDispatchId}, attempt ${source.attempt} (message ${sourceMessageId}):\n${source.body}`;
-    return this.deliverInstanceMessage(thread, targetDispatch, { messageId, body, expectedAttempt, sourceMessageId });
+    return this.deliverInstanceMessage(engagement, thread, targetDispatch, { messageId, body, expectedAttempt, sourceMessageId });
   }
   /**
    * P10d retry or reassign. The runtime records an operator grant only for an ended attempt, with that attempt's
@@ -366,7 +381,7 @@ export class RunService {
   public async commandInstance(user: string, engagement: string, thread: string, dispatch: string, raw: unknown): Promise<InstanceCommandAck> {
     const { commandId, kind, expectedAttempt, role } = parseInstanceCommand(raw);
     await this.authorizeInstanceMutation(user, engagement, thread);
-    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/grants`, {
+    const reply = await (await this.readPort(engagement)).instanceExchange('POST', `${instancePath(thread, dispatch)}/grants`, {
       commandId, kind, expectedAttempt, ...(kind === 'reassign' ? { reassignRole: role } : {}),
     });
     const payload = reply.body as { status?: unknown; reason?: unknown; grant?: RuntimeGrantView | null } | null;
@@ -382,7 +397,7 @@ export class RunService {
       run = await this.submit(user, engagement, thread, { requestId: commandId, message });
     } catch (error) {
       if (!(error instanceof RuntimeUnavailableError)) {
-        await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/grants/${encodeURIComponent(commandId)}/revoke`).catch(() => undefined);
+        await (await this.readPort(engagement)).instanceExchange('POST', `${instancePath(thread, dispatch)}/grants/${encodeURIComponent(commandId)}/revoke`).catch(() => undefined);
       }
       throw error;
     }
@@ -392,8 +407,8 @@ export class RunService {
     const binding = await this.options.ownership.getBinding(user, engagement, thread);
     await this.options.authorizeMutation?.(user, engagement, binding.kind, thread);
   }
-  private async deliverInstanceMessage(thread: string, dispatch: string, message: { messageId: string; body: string; expectedAttempt: number; sourceMessageId: string | null }): Promise<InstanceMessageAck> {
-    const reply = await this.options.reads.instanceExchange('POST', `${instancePath(thread, dispatch)}/messages`, {
+  private async deliverInstanceMessage(engagement: string, thread: string, dispatch: string, message: { messageId: string; body: string; expectedAttempt: number; sourceMessageId: string | null }): Promise<InstanceMessageAck> {
+    const reply = await (await this.readPort(engagement)).instanceExchange('POST', `${instancePath(thread, dispatch)}/messages`, {
       messageId: message.messageId, body: message.body, expectedAttempt: message.expectedAttempt,
       ...(message.sourceMessageId ? { sourceMessageId: message.sourceMessageId } : {}),
     });
@@ -405,8 +420,8 @@ export class RunService {
     return { status: payload.status, attempt: payload.attempt, message: payload.message };
   }
   /** P10: attempts the mailbox records on a thread that the ledger does not hold yet (running, or ended before the ledger write). */
-  private async mailboxInstances(thread: string, recorded: Set<string>): Promise<RuntimeInstanceView[]> {
-    const reply = await this.options.reads.instanceExchange('GET', `/_raptix/threads/${encodeURIComponent(thread)}/instances`);
+  private async mailboxInstances(engagement: string, thread: string, recorded: Set<string>): Promise<RuntimeInstanceView[]> {
+    const reply = await (await this.readPort(engagement)).instanceExchange('GET', `/_raptix/threads/${encodeURIComponent(thread)}/instances`);
     const payload = reply.body as { instances?: unknown } | null;
     if (reply.status !== 200 || !payload || !Array.isArray(payload.instances)) throw new RuntimeUnavailableError();
     const rows: RuntimeInstanceView[] = [];
@@ -431,7 +446,7 @@ export class RunService {
   /** P10c: the attempts and messages of one dispatch on a thread the engagement owns. */
   public async instanceMailbox(user: string, engagement: string, thread: string, dispatch: string): Promise<InstanceMailboxView> {
     await this.options.ownership.getBinding(user, engagement, thread);
-    const view = await this.instanceView(thread, dispatch);
+    const view = await this.instanceView(engagement, thread, dispatch);
     // The intent is the replacement's source of truth on the server; the browser sees the attempt facts only.
     return {
       threadId: thread,
@@ -441,8 +456,8 @@ export class RunService {
       source: 'runtime',
     };
   }
-  private async instanceView(thread: string, dispatch: string): Promise<{ attempts: RuntimeAttemptRow[]; messages: InstanceMessageView[] }> {
-    const reply = await this.options.reads.instanceExchange('GET', instancePath(thread, dispatch));
+  private async instanceView(engagement: string, thread: string, dispatch: string): Promise<{ attempts: RuntimeAttemptRow[]; messages: InstanceMessageView[] }> {
+    const reply = await (await this.readPort(engagement)).instanceExchange('GET', instancePath(thread, dispatch));
     const payload = reply.body as { instances?: unknown; messages?: unknown } | null;
     if (reply.status !== 200 || !payload || !Array.isArray(payload.instances) || !Array.isArray(payload.messages)) throw new RuntimeUnavailableError();
     const attempts = (payload.instances as { attempt: number; role: string | null; state: InstanceAttemptState; startedAt: string; finishedAt: string | null; intent: string | null; objectiveId: string | null }[])
@@ -452,7 +467,8 @@ export class RunService {
   /** W11: resume a pending graph interrupt on the bound thread; ack returns the NEW run identity. */
   public async resume(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId, value, questionId, answers, intent } = parseResumeCreate(raw);
-    const { ownership, context, runtime } = this.options;
+    const { ownership, context } = this.options;
+    const runtime = await this.execution(engagement);
     const replay = await ownership.replay(user, engagement, requestId, 'resume', intent, thread);
     if (replay) return replay;
     let trusted: TrustedRuntimeContext;
@@ -506,7 +522,7 @@ export class RunService {
   }
   /** W11 pause/cancel: interrupt keeps the checkpoint resumable; terminal runs return truthfully unchanged. */
   public async cancelRun(user: string, engagement: string, thread: string, runId: string): Promise<ScopedRunView> {
-    const { runtime } = this.options;
+    const runtime = await this.execution(engagement);
     const current = await this.getRun(user, engagement, thread, runId);
     if (['pending', 'running'].includes(current.rawStatus)) {
       // W02: cancel is a mutation. getRun is a read, so the operator gate must
@@ -528,7 +544,8 @@ export class RunService {
     return current;
   }
   public async snapshot(user: string, engagement: string, thread: string): Promise<ScopedThreadView> {
-    const { ownership, context, reads } = this.options;
+    const { ownership, context } = this.options;
+    const reads = await this.readPort(engagement);
     const binding = await ownership.getBinding(user, engagement, thread);
     await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
     const remote = await reads.thread(thread);
@@ -555,7 +572,9 @@ export class RunService {
     return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated, ...(pendingQuestion ? { pendingQuestion } : {}), ...(pendingQuestions.length > 0 ? { pendingQuestions } : {}) };
   }
   public async reconcile(user: string, engagement: string, requestId: string): Promise<RequestRecoveryView> {
-    const { ownership, context, runtime, reads } = this.options;
+    const { ownership, context } = this.options;
+    const runtime = await this.execution(engagement);
+    const reads = await this.readPort(engagement);
     const row = await ownership.inspect(user, engagement, requestId);
     if (!['creating', 'uncertain'].includes(row.state) || !row.dispatchConfigHash || !row.dispatchAssistantId || !row.dispatchKind) return ownership.recover(user, engagement, requestId);
     const trusted = await context.resolve(user, engagement, { kind: row.dispatchKind, assistantId: row.dispatchAssistantId, ...(row.threadId ? { threadId: row.threadId } : {}) });

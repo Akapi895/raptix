@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   isEnvironmentCommandRequest,
   type DeploymentSlotPhase,
@@ -12,6 +13,15 @@ import { requireProjectAccess, type ExecutionAdmission } from '../runtime-owners
 
 type Tx = Prisma.TransactionClient;
 type Observation = 'ready' | 'stopped' | 'uncertain';
+
+/**
+ * The only runtime endpoint a ready environment may record: the runtime container name the host
+ * controller derives from the deployment and environment ids (apps/launcher/internal/environments).
+ */
+export function runtimeUrlFor(deploymentId: string, environmentId: string): string {
+  const stem = createHash('sha256').update(`${deploymentId}\0${environmentId}`).digest('hex').slice(0, 12);
+  return `http://raptix-env-${stem}-runtime:2024`;
+}
 
 interface SlotRow {
   phase: DeploymentSlotPhase;
@@ -148,7 +158,7 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
    * exposed to a browser, CLI or model. The slot is released only by an
    * observed `stopped`; elapsed time never releases it.
    */
-  public async observe(input: { commandId: string; expectedVersion: number; observation: Observation }): Promise<EnvironmentCommandResult> {
+  public async observe(input: { commandId: string; expectedVersion: number; observation: Observation; runtimeUrl?: string }): Promise<EnvironmentCommandResult> {
     return this.transaction(async tx => {
       await ensureSlot(tx, this.deploymentId);
       const slot = await lockSlotForUpdate(tx, this.deploymentId);
@@ -158,14 +168,16 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
       if (owner === null) return view('refused', slot, null, input.commandId, 'invalid_transition');
       const from = slot.phase;
       if (input.observation === 'ready' && (from === 'starting' || from === 'uncertain')) {
+        const row = await tx.projectEnvironment.findUniqueOrThrow({ where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId: owner } } });
+        if (input.runtimeUrl !== runtimeUrlFor(this.deploymentId, row.id)) return view('refused', slot, null, slot.commandId, 'invalid_endpoint');
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'ready', ownerEngagementId: owner, commandId: slot.commandId });
-        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'ready', observedAt: new Date(), generation: { increment: 1 } } });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'ready', observedAt: new Date(), generation: { increment: 1 }, runtimeUrl: input.runtimeUrl } });
         await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'observed' } });
         return view('accepted', { ...slot, phase: 'ready', version }, null, slot.commandId);
       }
       if (input.observation === 'stopped' && (from === 'starting' || from === 'stopping' || from === 'uncertain')) {
         const version = await writeSlot(tx, this.deploymentId, slot.version, { phase: 'idle', ownerEngagementId: null, commandId: null });
-        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'stopped', desiredState: 'stopped', observedAt: new Date() } });
+        await tx.projectEnvironment.updateMany({ where: { deploymentId: this.deploymentId, engagementId: owner }, data: { observedState: 'stopped', desiredState: 'stopped', observedAt: new Date(), runtimeUrl: null } });
         await tx.environmentCommand.update({ where: { id: slot.commandId }, data: { outcome: 'observed' } });
         return view('accepted', { phase: 'idle', ownerEngagementId: null, commandId: null, version }, null, slot.commandId);
       }
