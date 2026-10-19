@@ -118,3 +118,37 @@ Commit trên `feat/single-active`: `a48cd77b` (bảng, migration, contract) và 
 - Test `run-api.test.ts` "members view" lỗi có sẵn.
 - Admission kiểm tại thời điểm reserve. Nếu slot đổi sau đó nhưng run đã vào runtime thì chưa bị chặn. Chặn thật cần routing theo environment (I03) và stop-and-drain (I06).
 - Đường revoke grant khi retry bị refused chưa có test. Nên bổ sung ở I03 cùng với routing.
+
+## 9. Kết quả I02–I05 (đã làm trong branch, chưa có live)
+
+**Commit:** `27db9d72` (controller Go), `9b3d2187` (định tuyến runtime), `7a035096` (cầu nối control plane và facade), `269e0bff`, `aaf56258`, `049956b9` (CLI), `c64e7cb5` (panel Web), `06bdabf4` và `360d0118` (sửa admission và chốt parity).
+
+**Đã làm:**
+
+- **I02:** `apps/launcher/internal/environments` gồm identity, render argv, controller và transport loopback. Cầu nối phía control plane gồm `HostControllerClient` (chỉ loopback, bearer token ≥32 byte, timeout, mã lỗi ổn định) và `EnvironmentLifecycle` (bring-up và shut-down). Lifecycle chỉ giải phóng slot khi quan sát được cả hai container đã dừng.
+- **I03:** `RuntimeRouter` chọn endpoint theo project. Project không có bản ghi môi trường đi đường legacy. Project được quản lý chỉ đi tới runtime của nó khi `ready`, và không bao giờ fallback. `RunService` và `StreamService` resolve theo engagement khi có router. Endpoint chỉ được lưu khi khớp tên container mà controller dẫn xuất.
+- **I04:** CLI không còn gọi LangGraph trực tiếp. Có facade client, adapter chuyển sự kiện đã chiếu sang chunk mà reducer hiện có đã hiểu, phiên project, và các lệnh `/project`, `/activate`, `/stop`. CLI không còn đọc `RAPTIX_ENGAGEMENT`.
+- **I05:** Panel vòng đời trong tổng quan project. Chuyển project là hai bước xác nhận rõ ràng. Click lặp không tạo lệnh trùng, và trạng thái đang chuyển tiếp được polling cho tới khi ổn định.
+
+**Số liệu kiểm chứng:**
+
+| Bộ | Kết quả |
+|---|---|
+| Controller Go `internal/environments` | 20/20 |
+| Server (toàn bộ) | 500/500 |
+| Live DB: admission | 14/14 nhóm (đột biến "luôn admit" làm đỏ) |
+| Live DB: lifecycle | 5/5 nhóm (đột biến "lỗi không xác định giải phóng slot" làm đỏ) |
+| Live DB: facade qua Fastify | 7/7 nhóm |
+| Định tuyến runtime (double HTTP) | 10/10 (đột biến "fallback legacy" làm đỏ 4 test) |
+| CLI | 74/74, typecheck sạch |
+| Web: panel và logic | 15/15 và logic pass. Toàn bộ web: năm file timeout 5 s khi chạy song song, và pass 48/48 khi chạy riêng |
+| `web-contracts` | 54/55. Lỗi có sẵn ở `run-api.test.ts` |
+
+**Chưa làm hoặc chưa được kiểm chứng (cần live hoặc việc còn lại):**
+
+1. Controller chưa được đăng ký làm subcommand của binary launcher. Chưa có Docker thật: create, start, stop, mount và inspect mạng đều chưa chạy. Chưa có compose packaging và digest image thật.
+2. Container chưa thể chạy agent thật: chưa có cấu hình runtime (endpoint sandbox, model) được cấp cho container. Đây là việc của I08.
+3. CLI: không gửi được model override qua control plane, nên lệnh bị từ chối rõ ràng. Thống kê token về 0 vì projection không mang usage. Hàm `verifyThreadForResume` đã có và được test, nhưng chưa gắn vào luồng restore. Dispatch vẫn do server từ chối khi môi trường không ready. Chưa xử lý dirty draft khi đổi project vì CLI chưa có draft.
+4. Web: chưa có màn chọn project toàn cục hay nút chuyển trên shell. Test "hai tab" mới kiểm ở tầng server (CAS), chưa có rendered test hai tab. Chưa audit viewport và keyboard của panel.
+5. Chưa chạy E01–E12, live model/tool run, TTY foreground, hay browser acceptance.
+6. Lỗi có sẵn chưa sửa: `prefer-const` ở `main.ts` (`sessionProvider`); drift 40 câu giữa schema và migration; timeout của năm file web khi chạy song song.
