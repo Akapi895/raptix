@@ -123,7 +123,7 @@ func TestCreateArgsMountOnlyOwnWorkspaceAndHardenEveryContainer(t *testing.T) {
 				t.Fatalf("%s args contain forbidden %q: %s", name, forbidden, joined)
 			}
 		}
-		for _, required := range []string{"--cap-drop", "ALL", "no-new-privileges:true", "--restart", "no", "--memory", "--pids-limit"} {
+		for _, required := range []string{"--cap-drop", "ALL", "no-new-privileges:true", "--restart", "no", "--pull", "never", "--memory", "--pids-limit"} {
 			if !slices.Contains(args, required) {
 				t.Fatalf("%s args miss %q", name, required)
 			}
@@ -131,8 +131,11 @@ func TestCreateArgsMountOnlyOwnWorkspaceAndHardenEveryContainer(t *testing.T) {
 		if !slices.Contains(args, "type=bind,source=D:/work/proj-alpha,target=/workspace/proj-alpha") {
 			t.Fatalf("%s args do not bind the project workspace at its canonical target: %s", name, joined)
 		}
-		if args[len(args)-1] != testDigest {
+		if name == "sandbox" && args[len(args)-1] != testDigest {
 			t.Fatalf("%s args must end with the digest-pinned image", name)
+		}
+		if name == "runtime" && !slices.Contains(args, "--no-reload") {
+			t.Fatalf("runtime must start without file watching: %s", joined)
 		}
 	}
 	if !slices.Contains(runtime, "type=volume,source="+validIdentity(RoleRuntime).StateVolumeName()+",target="+RuntimeStatePath) {

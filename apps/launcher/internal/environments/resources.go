@@ -92,6 +92,8 @@ type Spec struct {
 	WorkspaceHostPath string
 	MemoryBytes       int64
 	PidsLimit         int
+	// RuntimeEnv is the bootstrap allowlist the host grants the runtime only (ADR-0092 §5.2). The sandbox receives none.
+	RuntimeEnv map[string]string
 }
 
 // WorkspaceTarget is the canonical in-container workspace for this project.
@@ -115,6 +117,8 @@ func (s Spec) CreateArgs() ([]string, error) {
 		"--name", s.Identity.ContainerName(),
 		"--network", s.Identity.NetworkName(),
 		"--restart", "no",
+		// Never pull from inside create. docker create pulls a missing image by default. The host decides when to pull.
+		"--pull", "never",
 		"--cap-drop", "ALL",
 		"--security-opt", "no-new-privileges:true",
 		"--memory", fmt.Sprint(s.MemoryBytes),
@@ -134,11 +138,22 @@ func (s Spec) CreateArgs() ([]string, error) {
 	for _, key := range sortedKeys(env) {
 		args = append(args, "--env", key+"="+env[key])
 	}
+	if s.Identity.Role == RoleRuntime {
+		for _, key := range sortedKeys(s.RuntimeEnv) {
+			args = append(args, "--env", key+"="+s.RuntimeEnv[key])
+		}
+	}
 	args = append(args, "--mount", "type=bind,source="+s.WorkspaceHostPath+",target="+s.WorkspaceTarget())
 	if s.Identity.Role == RoleRuntime {
 		args = append(args, "--mount", "type=volume,source="+s.Identity.StateVolumeName()+",target="+RuntimeStatePath)
 	}
-	return append(args, s.Image), nil
+	args = append(args, s.Image)
+	// The runtime starts the way the compose stack starts it: no reload, so a stable process serves the API. The image
+	// default enables file watching, which reloads the graph every time the runtime writes its own state.
+	if s.Identity.Role == RoleRuntime {
+		args = append(args, runtimeCommand...)
+	}
+	return args, nil
 }
 
 func sortedKeys[V any](m map[string]V) []string {
@@ -148,4 +163,29 @@ func sortedKeys[V any](m map[string]V) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// runtimeCommand is the runtime's launch command, the same as the web runtime in docker-compose.web-runtime.yml.
+// Port 2024 is the port the runtime endpoint is derived with.
+var runtimeCommand = []string{"langgraph", "dev", "--host", "0.0.0.0", "--port", "2024", "--no-browser", "--no-reload", "--n-jobs-per-worker", "10", "--allow-blocking"}
+
+// RuntimeEnvAllowlist is every environment variable the host may grant a runtime. Anything else is refused at startup,
+// so the host never forwards a whole .env file to a project container.
+var RuntimeEnvAllowlist = []string{"RAPTIX_LLM__PROXY_URL", "RAPTIX_LLM__PROXY_API_KEY", "RAPTIX_LITELLM_MODELS", "RAPTIX_MODEL_PROFILE", "RAPTIX_AUTH_PRIORITY", "RAPTIX_LANGUAGE", "CUSTOM_OPENAI_API_BASE", "CUSTOM_OPENAI_API_KEY", "CUSTOM_OPENAI_MODEL", "RAPTIX_USE_SKILLOGY"}
+
+// ValidateRuntimeEnv refuses a key outside the allowlist or a value that could split an argument.
+func ValidateRuntimeEnv(env map[string]string) error {
+	allowed := make(map[string]struct{}, len(RuntimeEnvAllowlist))
+	for _, key := range RuntimeEnvAllowlist {
+		allowed[key] = struct{}{}
+	}
+	for key, value := range env {
+		if _, ok := allowed[key]; !ok {
+			return fmt.Errorf("%w: %s is not an allowed runtime variable", errInvalidSpec, key)
+		}
+		if strings.ContainsAny(value, "\n\r\x00") {
+			return fmt.Errorf("%w: %s has a control character", errInvalidSpec, key)
+		}
+	}
+	return nil
 }

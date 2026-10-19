@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -36,7 +37,18 @@ func (ExecRunner) Run(ctx context.Context, args ...string) (string, string, erro
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
+	if err != nil {
+		// Operator diagnostics only: the verb and the first line of docker's own message. The caller never sees it.
+		fmt.Fprintf(os.Stderr, "environment controller: docker %s failed: %s\n", strings.Join(args[:min(2, len(args))], " "), firstLine(stderr.String()))
+	}
 	return stdout.String(), stderr.String(), err
+}
+
+func firstLine(text string) string {
+	if i := strings.IndexByte(text, '\n'); i >= 0 {
+		return strings.TrimSpace(text[:i])
+	}
+	return strings.TrimSpace(text)
 }
 
 // Config is the host's trusted configuration. Callers never supply these values.
@@ -46,6 +58,8 @@ type Config struct {
 	Images            []string
 	MemoryBytes       int64
 	PidsLimit         int
+	// RuntimeEnv is granted to runtimes only, after ValidateRuntimeEnv. Empty means none.
+	RuntimeEnv map[string]string
 	// Resolve returns the real path behind a host path. Default: filepath.EvalSymlinks.
 	Resolve func(string) (string, error)
 }
@@ -65,6 +79,8 @@ type Observation struct {
 	Exists     bool   `json:"exists"`
 	Running    bool   `json:"running"`
 	Generation int64  `json:"generation"`
+	// Health is docker's health status when the image declares a check: "starting", "healthy", "unhealthy". Empty otherwise.
+	Health string `json:"health"`
 }
 
 type Controller struct {
@@ -85,6 +101,9 @@ func New(runner Runner, cfg Config) (*Controller, error) {
 	if cfg.ManagementNetwork == "" || strings.ContainsAny(cfg.ManagementNetwork, ",= \t") {
 		return nil, fmt.Errorf("%w: management network", errInvalidSpec)
 	}
+	if err := ValidateRuntimeEnv(cfg.RuntimeEnv); err != nil {
+		return nil, err
+	}
 	resolve := cfg.Resolve
 	if resolve == nil {
 		resolve = filepath.EvalSymlinks
@@ -100,6 +119,13 @@ func (c *Controller) Ensure(ctx context.Context, req Request) (Observation, erro
 		return Observation{}, err
 	}
 	id := req.Identity
+	// The image must already be here before anything is created, so a missing image leaves no network or volume behind.
+	if _, stderr, err := c.runner.Run(ctx, "image", "inspect", "--format", "{{.Id}}", req.Image); err != nil {
+		if isMissingImage(stderr) {
+			return Observation{}, ErrImageMissing
+		}
+		return Observation{}, ErrUnavailable
+	}
 	existing, err := c.inspectContainer(ctx, id.ContainerName())
 	if err != nil {
 		return Observation{}, err
@@ -277,6 +303,7 @@ func (c *Controller) spec(req Request) (Spec, error) {
 		WorkspaceHostPath: host,
 		MemoryBytes:       c.cfg.MemoryBytes,
 		PidsLimit:         c.cfg.PidsLimit,
+		RuntimeEnv:        c.cfg.RuntimeEnv,
 	}, nil
 }
 
@@ -323,12 +350,12 @@ func (c *Controller) ensureNetwork(ctx context.Context, id Identity) error {
 		return err
 	}
 	if labels != nil {
-		if !id.Owns(labels) {
+		if !id.OwnsShared(labels) {
 			return ErrForeignResource
 		}
 		return nil
 	}
-	return c.createWithLabels(ctx, "network", id.NetworkName(), id)
+	return c.createWithLabels(ctx, "network", id.NetworkName(), id.SharedLabels())
 }
 
 func (c *Controller) ensureVolume(ctx context.Context, id Identity) error {
@@ -337,17 +364,16 @@ func (c *Controller) ensureVolume(ctx context.Context, id Identity) error {
 		return err
 	}
 	if labels != nil {
-		if !id.Owns(labels) {
+		if !id.OwnsShared(labels) {
 			return ErrForeignResource
 		}
 		return nil
 	}
-	return c.createWithLabels(ctx, "volume", id.StateVolumeName(), id)
+	return c.createWithLabels(ctx, "volume", id.StateVolumeName(), id.SharedLabels())
 }
 
-func (c *Controller) createWithLabels(ctx context.Context, kind, name string, id Identity) error {
+func (c *Controller) createWithLabels(ctx context.Context, kind, name string, labels map[string]string) error {
 	args := []string{kind, "create"}
-	labels := id.Labels()
 	for _, key := range sortedKeys(labels) {
 		args = append(args, "--label", key+"="+labels[key])
 	}
@@ -362,7 +388,7 @@ func (c *Controller) createWithLabels(ctx context.Context, kind, name string, id
 func (c *Controller) inspectLabels(ctx context.Context, kind, name string) (map[string]string, error) {
 	stdout, stderr, err := c.runner.Run(ctx, kind, "inspect", "--format", "{{json .Labels}}", name)
 	if err != nil {
-		if strings.Contains(stderr, "No such") {
+		if isNotFound(stderr) {
 			return nil, nil
 		}
 		return nil, ErrUnavailable
@@ -381,7 +407,7 @@ func (c *Controller) inspectLabels(ctx context.Context, kind, name string) (map[
 func (c *Controller) inspectContainer(ctx context.Context, name string) (*containerInspect, error) {
 	stdout, stderr, err := c.runner.Run(ctx, "inspect", "--type", "container", name)
 	if err != nil {
-		if strings.Contains(stderr, "No such") {
+		if isNotFound(stderr) {
 			return nil, nil
 		}
 		return nil, ErrUnavailable
@@ -399,6 +425,9 @@ type containerInspect struct {
 	} `json:"Config"`
 	State struct {
 		Running bool `json:"Running"`
+		Health  struct {
+			Status string `json:"Status"`
+		} `json:"Health"`
 	} `json:"State"`
 	NetworkSettings struct {
 		Networks map[string]json.RawMessage `json:"Networks"`
@@ -406,7 +435,7 @@ type containerInspect struct {
 }
 
 func observationOf(name string, container *containerInspect) Observation {
-	return Observation{Name: name, Exists: true, Running: container.State.Running, Generation: generationOf(container.Config.Labels)}
+	return Observation{Name: name, Exists: true, Running: container.State.Running, Generation: generationOf(container.Config.Labels), Health: container.State.Health.Status}
 }
 
 func generationOf(labels map[string]string) int64 {
@@ -415,4 +444,18 @@ func generationOf(labels map[string]string) int64 {
 		return -1
 	}
 	return gen
+}
+
+// isNotFound reports a daemon answer that a resource is absent. Docker words it differently per kind: "No such
+// container", "No such volume", "network X not found". Only a daemon error counts, so a missing docker client
+// binary is never mistaken for an absent resource.
+func isNotFound(stderr string) bool {
+	lower := strings.ToLower(stderr)
+	return strings.Contains(lower, "error response from daemon") && (strings.Contains(lower, "no such") || strings.Contains(lower, "not found"))
+}
+
+// isMissingImage reports the daemon's answer for an image that is not present locally.
+func isMissingImage(stderr string) bool {
+	lower := strings.ToLower(stderr)
+	return strings.Contains(lower, "no such image") || strings.Contains(lower, "unable to find image")
 }

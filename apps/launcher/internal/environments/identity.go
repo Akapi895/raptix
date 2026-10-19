@@ -99,3 +99,27 @@ func (id Identity) Owns(labels map[string]string) bool {
 		labels[LabelEnvironment] == id.EnvironmentID &&
 		labels[LabelRole] == string(id.Role)
 }
+
+// SharedRole labels the resources that every role of one environment uses: its private network and state volume.
+const SharedRole = "environment"
+
+// SharedLabels is the label set for the environment's shared network and volume. It names the environment, not a
+// role, so the runtime and the sandbox both recognise the same resources as their own.
+func (id Identity) SharedLabels() map[string]string {
+	return map[string]string{
+		LabelManaged:     "true",
+		LabelDeployment:  id.DeploymentID,
+		LabelProject:     id.ProjectID,
+		LabelEnvironment: id.EnvironmentID,
+		LabelRole:        SharedRole,
+	}
+}
+
+// OwnsShared reports whether labels mark a shared resource of this environment, whichever role created it.
+func (id Identity) OwnsShared(labels map[string]string) bool {
+	return labels[LabelManaged] == "true" &&
+		labels[LabelDeployment] == id.DeploymentID &&
+		labels[LabelProject] == id.ProjectID &&
+		labels[LabelEnvironment] == id.EnvironmentID &&
+		labels[LabelRole] == SharedRole
+}
