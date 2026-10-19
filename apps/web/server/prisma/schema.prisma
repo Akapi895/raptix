@@ -177,6 +177,8 @@ model ProjectEnvironment {
   version       Int                      @default(0)
   lastError     String?
   observedAt    DateTime?
+  // Set only from the host controller's ready observation (ADR-0092); never from a browser or a model.
+  runtimeUrl    String?
   engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   createdAt     DateTime                 @default(now())
   updatedAt     DateTime                 @updatedAt

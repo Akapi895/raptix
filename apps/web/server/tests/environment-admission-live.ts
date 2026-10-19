@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import type { EnvironmentCommandResult } from '@raptix/web-contracts';
 import { createDbClient, disconnectDb } from '../src/db/client.js';
-import { ProjectEnvironmentService } from '../src/services/environments/project-environment-service.js';
+import { ProjectEnvironmentService, runtimeUrlFor } from '../src/services/environments/project-environment-service.js';
 import { RuntimeOwnershipService } from '../src/services/runtime-ownership.js';
 import { ProjectNotFoundError } from '../src/services/projects-service.js';
 import { ProjectPolicyError } from '../src/security/project-policy.js';
@@ -24,6 +24,9 @@ const isConflict = (error: unknown): boolean => error instanceof ProjectPolicyEr
 const service = (client = first): ProjectEnvironmentService => new ProjectEnvironmentService(client, DEPLOYMENT);
 const command = (tag: string, action: 'activate' | 'stop', expectedVersion: number) => ({ requestId: `${tag}-${suffix}`, action, expectedVersion });
 const mentions = (result: EnvironmentCommandResult, engagementId: string): boolean => JSON.stringify(result).includes(engagementId);
+
+// The derived endpoint of an environment, as the controller reports it on a ready observation.
+const endpointOf = async (engagementId: string): Promise<string> => runtimeUrlFor(DEPLOYMENT, (await first.projectEnvironment.findUniqueOrThrow({ where: { deploymentId_engagementId: { deploymentId: DEPLOYMENT, engagementId } } })).id);
 
 try {
   const project = (tag: string) => ({ name: `i01-${tag}-${suffix}`, workspaceSlug: `i01-${tag}-${suffix}`, targetType: 'web_url' as const, targetValue: 'https://lab.invalid', authorizationConfirmed: true });
@@ -129,7 +132,11 @@ try {
   const claimed = await service().submit('local', loser.id, command('claim-loser', 'activate', 3));
   assert.equal(claimed.status, 'accepted');
   const claimCommandId = claimed.commandId!;
-  const ready = await service().observe({ commandId: claimCommandId, expectedVersion: 4, observation: 'ready' });
+  const endpointB = await endpointOf(loser.id);
+  const wrong = await service().observe({ commandId: claimCommandId, expectedVersion: 4, observation: 'ready', runtimeUrl: 'http://evil.example:2024' });
+  assert.equal(wrong.reason, 'invalid_endpoint', 'a ready observation must carry the derived runtime endpoint');
+  const ready = await service().observe({ commandId: claimCommandId, expectedVersion: 4, observation: 'ready', runtimeUrl: endpointB });
+  assert.equal(ready.version, 5, 'a refused endpoint does not move the slot');
   assert.equal(ready.phase, 'ready');
   const uncertain = await service().observe({ commandId: claimCommandId, expectedVersion: 5, observation: 'uncertain' });
   assert.equal(uncertain.phase, 'uncertain');
@@ -163,7 +170,7 @@ try {
   await assert.rejects(() => ownership.reserve('local', a.id, `run-a2-${suffix}`, 'create_run', intent, threadA2), isConflict);
   checks.push('a starting environment refuses a new run for its own project');
 
-  const readyA = await service().observe({ commandId: claimA.commandId!, expectedVersion: claimA.version, observation: 'ready' });
+  const readyA = await service().observe({ commandId: claimA.commandId!, expectedVersion: claimA.version, observation: 'ready', runtimeUrl: await endpointOf(a.id) });
   assert.equal(readyA.phase, 'ready');
   const runA2 = await ownership.reserve('local', a.id, `run-a2-${suffix}`, 'create_run', intent, threadA2);
   assert.equal(runA2.reserved, true, 'a ready owner admits its own run');

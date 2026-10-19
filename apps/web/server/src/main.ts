@@ -17,6 +17,7 @@ import { RuntimeContextService, EXECUTION_ASSISTANTS } from './services/runtime/
 import { RunService } from './services/runtime/run-service.js';
 import { StreamService } from './services/runtime/stream-service.js';
 import { RuntimeJoinClient } from './integrations/runtime/join-client.js';
+import { RuntimeRouter, prismaRouteSource } from './integrations/runtime/runtime-router.js';
 import { ApprovalsService } from './services/approvals-service.js';
 import { FindingsService } from './services/findings-service.js';
 import { ArtifactsService } from './services/artifacts-service.js';
@@ -114,6 +115,8 @@ async function main(): Promise<void> {
   const environments = dbClient ? new ProjectEnvironmentService(dbClient, env.deploymentId ?? 'default') : undefined;
   const ownership = dbClient ? new RuntimeOwnershipService(dbClient, environments) : undefined;
   const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
+  // ADR-0092: a managed project routes to its own ready environment; a project without a record stays on the legacy runtime.
+  const runtimeRouter = runtimeConfig && dbClient ? new RuntimeRouter(runtimeConfig.apiUrl, prismaRouteSource(dbClient, env.deploymentId ?? 'default')) : undefined;
   const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
    const closureService = dbClient ? new ClosureService(dbClient, approvalsService ? async (_userId, engagementId) => {
      const engagement = await dbClient.engagement.findUniqueOrThrow({ where: { id: engagementId } });
@@ -181,7 +184,7 @@ async function main(): Promise<void> {
      }
    };
    const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService, { readiness: runtimeReadiness }) : undefined;
-   const runsService = ownership && runtimeContext && runtime && dbClient ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime,
+   const runsService = ownership && runtimeContext && runtime && dbClient ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime, router: runtimeRouter,
      operations: {
        status: async (engagementId, threadId) => (await dbClient!.operationBinding.findFirst({ where: { engagementId, threadId }, orderBy: { createdAt: 'desc' }, select: { status: true } }))?.status ?? null,
        transition: async (engagementId, threadId, from, to) => (await dbClient!.operationBinding.updateMany({ where: { engagementId, threadId, status: { in: [...from] } }, data: { status: to, concurrencyVersion: { increment: 1 } } })).count > 0,
@@ -262,7 +265,7 @@ async function main(): Promise<void> {
     runtimeOwnership: ownership,
     runtimeContext,
     runsService,
-    streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl)) : undefined,
+    streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl), undefined, runtimeRouter) : undefined,
     approvalsService,
     findingsService,
     artifactsService,
