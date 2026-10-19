@@ -77,3 +77,44 @@ Mục tiêu: registry bền vững, lifecycle intent có idempotency, và slot t
 - Định nghĩa image digest allowlist và cách cấp bootstrap config cho environment.
 - Threat model riêng cho thay đổi Compose hardening khi đến I02.
 - Quyết định về Neo4j: role theo database hay scoped facade.
+
+## 8. Kết quả I01
+
+Commit trên `feat/single-active`: `a48cd77b` (bảng, migration, contract) và `763fcc01` (service, admission, test DB thật).
+
+**Đã làm:**
+
+- Migration `20261028000000_project_environments`: 5 enum, 3 bảng, 3 index, 3 FK. Chỉ additive.
+- `apps/shared/web-contracts/src/environments.ts`: request và result của lệnh, cùng validator. Kết quả `busy` không bao giờ chứa `activeEngagementId`, và phải có phase khác `idle`.
+- `ProjectEnvironmentService`: `submit` (activate/stop), `observe` (nội bộ, dành cho controller ở I02), `assertAdmits` (đường admission).
+- `RuntimeOwnershipService.reserve`: kiểm admission cho `create_run` và `resume` ngay sau nhánh replay.
+- `requireProjectAccess`: tách từ `owned` để service mới và `reserve` dùng chung một kiểm tra quyền.
+- Retry và reassign đi qua `submit → startRun → reserve(create_run)`, nên cũng bị admission chặn. Khi bị từ chối, nhánh `catch` đã có sẵn trong `commandInstance` sẽ revoke operator grant. Đường revoke này **chưa có test riêng**.
+
+**Kết quả kiểm chứng:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Migration: clean (26) rồi upgrade (+1) trên Postgres 17 dùng một lần | Pass |
+| Diff schema với DB sau upgrade | Không có drift mới. 40 câu drift có sẵn giữ nguyên (xem §8.2) |
+| `web-contracts` `environments.test.ts` | 5/5 |
+| `web-contracts` toàn bộ | 53/54. Một lỗi có sẵn (xem §1) |
+| Typecheck: server, web-raptix, cli | Pass |
+| Server test toàn bộ | 485/485, không đổi so với baseline |
+| `tests/environment-admission-live.ts` trên Postgres thật | 13/13 nhóm pass |
+| Đột biến: cho admission luôn qua | Test đỏ ở `Missing expected rejection (isConflict)`. File được khôi phục và khớp byte |
+| ESLint các file mới và file sửa | Sạch |
+
+**Lệch so với plan hoặc quyết định đã ghi:**
+
+1. **Thứ tự kiểm tra: stale trước busy.** Hai client cùng gửi version 0 thì client thứ hai nhận `stale` kèm phase và version mới, không nhận `busy` ngay. Đây là hành vi compare-and-set. Retry với version mới sẽ nhận `busy`. Test được sửa theo hành vi này.
+2. **Chưa có route HTTP cho activate/stop.** Route thuộc I03 và I05. Trong I01, entrypoint duy nhất là service.
+3. **Khi `RAPTIX_WEB_DEPLOYMENT_ID` không được đặt**, deployment key là `default`.
+4. Lỗi lint `main.ts:235` (`prefer-const`) có sẵn ở HEAD và không thuộc thay đổi này.
+
+**Nợ kỹ thuật, không sửa trong I01:**
+
+- Schema hiện đã lệch migration ở HEAD (40 câu: FK, default, một index đổi tên). Nên mở issue riêng. Không gộp vào I01 vì sẽ sinh migration không liên quan.
+- Test `run-api.test.ts` "members view" lỗi có sẵn.
+- Admission kiểm tại thời điểm reserve. Nếu slot đổi sau đó nhưng run đã vào runtime thì chưa bị chặn. Chặn thật cần routing theo environment (I03) và stop-and-drain (I06).
+- Đường revoke grant khi retry bị refused chưa có test. Nên bổ sung ở I03 cùng với routing.
