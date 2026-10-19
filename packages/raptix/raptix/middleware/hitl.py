@@ -74,18 +74,26 @@ from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from typing_extensions import override
 
+from raptix_core.types.engagement import DANGEROUS_METHOD_LABELS
+
 log = logging.getLogger(__name__)
 
 
 @dataclass
 class ApprovalPolicyRule:
-    """Single approval rule. Either ``technique_tag`` or ``tool_pattern`` MUST be set."""
+    """Single approval rule. Either ``technique_tag`` or ``tool_pattern`` MUST be set.
+
+    ``command_pattern`` narrows a bash rule to commands whose ``command`` argument
+    matches it. ``dangerous`` rules apply even when the conversation's HITL is off.
+    """
 
     technique_tag: str | None = None
     tool_pattern: str | None = None
     timeout_seconds: float = 300.0
     default_on_timeout: str = "deny"
     reason: str = ""
+    command_pattern: str | None = None
+    dangerous: bool = False
 
 
 @dataclass
@@ -313,12 +321,13 @@ class HITLApprovalMiddleware(AgentMiddleware):
         require_bash_approval: bool = False,
     ) -> None:
         super().__init__()
-        self._policy = list(policy)
+        self._policy = [*DANGEROUS_RULES, *policy]
         if require_bash_approval:
             self._policy = [
                 rule
-                for rule in policy
-                if not (rule.tool_pattern and re.fullmatch(rule.tool_pattern, "bash"))
+                for rule in self._policy
+                if rule.dangerous
+                or not (rule.tool_pattern and re.fullmatch(rule.tool_pattern, "bash"))
             ]
             self._policy.append(
                 ApprovalPolicyRule(
@@ -355,13 +364,35 @@ class HITLApprovalMiddleware(AgentMiddleware):
         self._transport_cache[workspace] = transport
         return transport
 
-    def _match_rule(self, tool_name: str, technique_tag: str | None) -> ApprovalPolicyRule | None:
+    def _match_rule(
+        self,
+        tool_name: str,
+        technique_tag: str | None,
+        tool_args: Any = None,
+        hitl_enabled: bool = True,
+    ) -> ApprovalPolicyRule | None:
+        command = tool_args.get("command") if isinstance(tool_args, dict) else None
+        command = command if isinstance(command, str) else ""
         for rule in self._policy:
+            if not hitl_enabled and not rule.dangerous:
+                continue
             if rule.technique_tag and technique_tag and rule.technique_tag == technique_tag:
                 return rule
             if rule.tool_pattern and re.search(rule.tool_pattern, tool_name):
+                if rule.command_pattern is not None and not re.search(
+                    rule.command_pattern, command, re.IGNORECASE
+                ):
+                    continue
                 return rule
         return None
+
+    def _hitl_enabled(self, request: Any) -> bool:
+        runtime = getattr(request, "runtime", None)
+        config = getattr(runtime, "config", None)
+        configurable = config.get("configurable") if isinstance(config, dict) else None
+        if isinstance(configurable, dict) and "hitl_enabled" in configurable:
+            return bool(configurable["hitl_enabled"])
+        return True
 
     def _engagement(self, request: Any) -> str:
         if self._engagement_name:
@@ -469,7 +500,9 @@ class HITLApprovalMiddleware(AgentMiddleware):
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
         tool_args = _tool_call(request).get("args", {}) or {}
-        rule = self._match_rule(tool_name, self._technique_tag(request))
+        rule = self._match_rule(
+            tool_name, self._technique_tag(request), tool_args, self._hitl_enabled(request)
+        )
         if rule is None:
             return handler(request)
         transport = self._resolve_transport(request)
@@ -483,7 +516,9 @@ class HITLApprovalMiddleware(AgentMiddleware):
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
         tool_args = _tool_call(request).get("args", {}) or {}
-        rule = self._match_rule(tool_name, self._technique_tag(request))
+        rule = self._match_rule(
+            tool_name, self._technique_tag(request), tool_args, self._hitl_enabled(request)
+        )
         if rule is None:
             return await handler(request)
         import asyncio
@@ -527,12 +562,14 @@ DEFAULT_HIGH_IMPACT_POLICY: list[ApprovalPolicyRule] = [
         timeout_seconds=600,
         default_on_timeout="deny",
         reason="Data Encrypted for Impact (T1486) — destructive operation.",
+        dangerous=True,
     ),
     ApprovalPolicyRule(
         technique_tag="T1485",
         timeout_seconds=600,
         default_on_timeout="deny",
         reason="Data Destruction (T1485) — destructive operation.",
+        dangerous=True,
     ),
     ApprovalPolicyRule(
         tool_pattern=r"^(sliver_implant|sliver_generate|c2_deploy)",
@@ -553,3 +590,50 @@ DEFAULT_HIGH_IMPACT_POLICY: list[ApprovalPolicyRule] = [
         reason="(informational) bash invocation logged for audit only.",
     ),
 ]
+
+
+# Methods the operator confirms during planning. Their rules are always enforced,
+# even when a conversation's HITL is off. Labels are what the planner asks about.
+DANGEROUS_METHODS: dict[str, tuple[str, str]] = {
+    "denial_of_service": (
+        DANGEROUS_METHOD_LABELS["denial_of_service"],
+        r"\b(hping3\b.*--flood|slowloris|goldeneye|\bloic\b|hulk\.py|udp-flood|mausezahn|ab\s+-n\s*\d{5,})",
+    ),
+    "brute_force": (
+        DANGEROUS_METHOD_LABELS["brute_force"],
+        r"\b(hydra|medusa|patator|ncrack|brutespray|kerbrute\s+passwordspray|--password-spray)\b",
+    ),
+    "data_destruction": (
+        DANGEROUS_METHOD_LABELS["data_destruction"],
+        r"(\brm\s+-[a-z]*r[a-z]*f|\brm\s+-[a-z]*f[a-z]*r|\bmkfs(\.|\s)|\bdd\s+if=|\bshred\s|\bformat\s+[a-z]:|\bdrop\s+(table|database)\b)",
+    ),
+    "ransomware": (
+        DANGEROUS_METHOD_LABELS["ransomware"],
+        r"(vssadmin\s+delete\s+shadows|wbadmin\s+delete|\bcipher\s+/w|bcdedit\b.*recoveryenabled\s+no)",
+    ),
+    "persistence": (
+        DANGEROUS_METHOD_LABELS["persistence"],
+        r"(\bcrontab\s+-[el]\b|\bschtasks\s+/create|\bsc(\.exe)?\s+create\b|\run\|/etc/rc\.local|authorized_keys|\bsystemctl\s+enable\b|\bnet\s+user\s+\S+\s+/add\b|\buseradd\b)",
+    ),
+    "disable_security_controls": (
+        DANGEROUS_METHOD_LABELS["disable_security_controls"],
+        r"(setenforce\s+0|\bufw\s+disable\b|systemctl\s+(stop|disable)\s+(auditd|falcon|defender|wazuh|sysmon|rsyslog|osquery)|set-mppreference\b.*disable|auditctl\s+-(e\s+0|d\b))",
+    ),
+}
+
+
+def _dangerous_rules() -> list[ApprovalPolicyRule]:
+    return [
+        ApprovalPolicyRule(
+            tool_pattern=r"^bash$",
+            command_pattern=pattern,
+            timeout_seconds=600,
+            default_on_timeout="deny",
+            reason=f"Dangerous method, always requires approval: {label}.",
+            dangerous=True,
+        )
+        for label, pattern in DANGEROUS_METHODS.values()
+    ]
+
+
+DANGEROUS_RULES: list[ApprovalPolicyRule] = _dangerous_rules()

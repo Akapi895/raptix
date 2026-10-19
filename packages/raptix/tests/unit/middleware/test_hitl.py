@@ -477,3 +477,70 @@ def test_resolve_transport_falls_back_to_env(tmp_path: Path, monkeypatch):
     mw = HITLApprovalMiddleware(policy=[], transport=None)
     transport = mw._resolve_transport(_Req("x", {}))
     assert transport._requests_path == tmp_path / "approvals" / "requests.jsonl"
+
+
+class _RunRequest(_Req):
+    def __init__(self, tool_name: str, args: dict, configurable: dict | None = None):
+        super().__init__(tool_name, args)
+        self.runtime = type("Runtime", (), {"config": {"configurable": configurable or {}}})()
+
+
+class _NeverDecides(InProcessApprovalTransport):
+    def wait_for_decision(self, request_id: str, timeout: float) -> ApprovalDecision | None:
+        return None
+
+
+def test_hitl_off_lets_ordinary_tools_run_without_approval():
+    from raptix.middleware.hitl import DEFAULT_HIGH_IMPACT_POLICY
+
+    transport = _NeverDecides()
+    middleware = HITLApprovalMiddleware(DEFAULT_HIGH_IMPACT_POLICY, transport)
+    result = middleware.wrap_tool_call(
+        _RunRequest("sliver_implant_build", {}, {"hitl_enabled": False}), _allow_handler
+    )
+    assert result.content == "executed"
+    assert transport.pending() == []
+
+
+def test_hitl_off_still_requires_approval_for_dangerous_bash():
+    from raptix.middleware.hitl import DEFAULT_HIGH_IMPACT_POLICY
+
+    transport = _NeverDecides()
+    middleware = HITLApprovalMiddleware(DEFAULT_HIGH_IMPACT_POLICY, transport)
+    result = middleware.wrap_tool_call(
+        _RunRequest(
+            "bash",
+            {"command": "hydra -l admin -P list.txt ssh://10.0.0.5"},
+            {"hitl_enabled": False},
+        ),
+        _allow_handler,
+    )
+    assert result.status == "error"
+    assert transport.pending()[0].matched_rule.dangerous
+
+
+def test_hitl_defaults_to_on_when_the_run_carries_no_flag():
+    from raptix.middleware.hitl import DEFAULT_HIGH_IMPACT_POLICY
+
+    transport = _NeverDecides()
+    middleware = HITLApprovalMiddleware(DEFAULT_HIGH_IMPACT_POLICY, transport)
+    result = middleware.wrap_tool_call(_RunRequest("sliver_implant_build", {}), _allow_handler)
+    assert result.status == "error"
+    assert not transport.pending()[0].matched_rule.dangerous
+
+
+def test_dangerous_command_patterns_match_only_the_listed_methods():
+    middleware = HITLApprovalMiddleware([], InProcessApprovalTransport())
+    for command in [
+        "rm -rf /var/data",
+        "hping3 --flood 10.0.0.5",
+        "vssadmin delete shadows /all",
+        "crontab -e",
+        "setenforce 0",
+    ]:
+        rule = middleware._match_rule("bash", None, {"command": command}, hitl_enabled=False)
+        assert rule is not None and rule.dangerous, command
+    for command in ["ls -la /workspace", "nmap -sV 10.0.0.5", "cat plan/roe.json"]:
+        assert (
+            middleware._match_rule("bash", None, {"command": command}, hitl_enabled=False) is None
+        ), command

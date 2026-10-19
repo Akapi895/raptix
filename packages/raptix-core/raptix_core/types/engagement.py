@@ -269,6 +269,18 @@ class EscalationContact(BaseModel):
     available: str = Field(default="24/7", description="Availability window")
 
 
+# Methods the operator confirms during planning. The runtime enforces them as bash
+# approval rules (raptix.middleware.hitl) even when a conversation's HITL is off.
+DANGEROUS_METHOD_LABELS: dict[str, str] = {
+    "denial_of_service": "Denial of Service (DoS/DDoS) and flooding",
+    "brute_force": "Brute-force or password spraying",
+    "data_destruction": "Destructive data changes (wipe, format, mass delete, drop)",
+    "ransomware": "Encrypting data for impact (ransomware)",
+    "persistence": "Persistence beyond the engagement",
+    "disable_security_controls": "Disabling security controls or audit logging",
+}
+
+
 class RoE(BaseModel):
     """Rules of Engagement — legally binding scope and boundaries.
 
@@ -291,7 +303,7 @@ class RoE(BaseModel):
     # Boundaries
     prohibited_actions: list[str] = Field(
         default_factory=lambda: [
-            "Denial of Service (DoS/DDoS)",
+            *DANGEROUS_METHOD_LABELS.values(),
             "Social engineering of employees (unless authorized)",
             "Physical access attempts (unless authorized)",
             "Data exfiltration of real customer data",
