@@ -216,6 +216,14 @@ export function getThread(engagementId: string, threadId: string): Promise<Scope
   )
 }
 
+/** One older page of a conversation: messages ending before index `before`, with the cursor for the page before it. */
+export function getThreadPage(engagementId: string, threadId: string, before: number): Promise<ScopedThreadView> {
+  return apiFetch(
+    `/engagements/${encodeURIComponent(engagementId)}/threads/${encodeURIComponent(threadId)}?before=${before}`,
+    (v): v is ScopedThreadView => isScopedThreadView(v) && v.binding.engagementId === engagementId && v.binding.threadId === threadId,
+  )
+}
+
 export function submitRun(engagementId: string, threadId: string, input: { requestId: string; message: string }): Promise<RequestRecoveryView> {
   return apiFetch(
     `/engagements/${encodeURIComponent(engagementId)}/threads/${encodeURIComponent(threadId)}/runs`,

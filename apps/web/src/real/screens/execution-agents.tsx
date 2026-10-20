@@ -139,17 +139,19 @@ function AgentNode({ engagementId, instance, peers, childrenOf, latest, ancestor
   const children = latest.get(instance.dispatchId) === instance.attempt
     ? (childrenOf.get(instance.dispatchId) ?? []).filter((child) => !below.has(child.dispatchId))
     : []
-  return <li className="rounded-lg border border-line p-2.5 text-xs">
-    <div className="flex items-center justify-between gap-2">
-      <span className="flex min-w-0 items-center gap-2">
-        <span className={cx('h-2 w-2 shrink-0 rounded-full', TONE_DOT[status.tone])} aria-hidden />
-        <span className="truncate font-medium text-fg" title={`${instance.role ?? 'role not recorded'} · attempt ${instance.attempt}`}>{instance.role ?? 'role not recorded'} · attempt {instance.attempt}</span>
-      </span>
-      <span className="shrink-0 text-muted" title={`runtime outcome: ${instance.outcome}`}>{status.label}</span>
-    </div>
-    <p className="mt-1 truncate font-mono text-[11px] text-neutral" title={instance.dispatchId}>{instance.dispatchId.slice(0, 12)} · thread {instance.threadId.slice(0, 8)} · <span className="text-muted">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></p>
-    <Button size="sm" variant="ghost" className="mt-1" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide messages' : 'Messages'}</Button>
-    {open && <InstanceMessenger engagementId={engagementId} threadId={instance.threadId} dispatchId={instance.dispatchId} attempt={instance.attempt} peers={peers} />}
+  const label = `${instance.role ?? 'role not recorded'} · attempt ${instance.attempt}`
+  return <li className="text-xs">
+    <button type="button" aria-expanded={open} aria-label={`${label}, ${status.label}`} onClick={() => setOpen(!open)}
+      title={`dispatch ${instance.dispatchId} · thread ${instance.threadId.slice(0, 8)} · runtime outcome: ${instance.outcome}${instance.terminal ? ' · terminal' : ''}`}
+      className={cx('flex w-full min-w-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left hover:bg-hover', open ? 'border-accent-line bg-accent-soft/40' : 'border-line')}>
+      <span className={cx('h-2 w-2 shrink-0 rounded-full', TONE_DOT[status.tone])} aria-hidden />
+      <span className="min-w-0 flex-1 truncate font-medium text-fg">{label}</span>
+      <span className="shrink-0 text-muted">{status.label}</span>
+    </button>
+    {open && <div className="mt-2 space-y-2 rounded-lg border border-line p-2.5">
+      <p className="font-mono text-[11px] text-neutral">{instance.dispatchId.slice(0, 12)} · thread {instance.threadId.slice(0, 8)} · <span className="text-muted">{instance.outcome}{instance.terminal ? ' · terminal' : ''}</span></p>
+      <InstanceMessenger engagementId={engagementId} threadId={instance.threadId} dispatchId={instance.dispatchId} attempt={instance.attempt} peers={peers} />
+    </div>}
     {children.length > 0 && <ul className="mt-2 space-y-1 border-l border-line pl-3">
       {children.map((child) => <AgentNode key={child.instanceId} engagementId={engagementId} instance={child} peers={peers}
         childrenOf={childrenOf} latest={latest} ancestors={below} />)}

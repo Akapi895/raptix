@@ -4,7 +4,7 @@
  * readiness gates, workspace HITL approvals and honest unavailability.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PublicStreamEvent } from '@raptix/web-contracts'
+import type { EnvironmentStateView, PublicStreamEvent } from '@raptix/web-contracts'
 
 const { act, cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
@@ -12,8 +12,8 @@ const { RealModeProvider } = await import('../bootstrap')
 const { RealWorkspace } = await import('./workspace')
 const { RealProjectDetail } = await import('./detail')
 const { go } = await import('../../router/navigate')
-const { useProjectStore } = await import('../../state/stores')
-const { readWorkspaceDraft, saveWorkspaceDraft } = await import('../workspace-session')
+const { useProjectStore, useToastStore } = await import('../../state/stores')
+const { readPending, readWorkspaceDraft, saveWorkspaceDraft } = await import('../workspace-session')
 
 const CAPS = {
   version: 1, mode: 'local-single-user',
@@ -85,17 +85,27 @@ function stubApi(over: {
   runStatus?: string
   planning?: unknown
   fleet?: unknown
+  environment?: () => Promise<EnvironmentStateView>
 } = {}) {
   const calls: { url: string; init?: RequestInit; body?: Record<string, unknown> }[] = []
+  let environmentReady = false
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : undefined
     calls.push({ url, init, body })
+    if (url.endsWith('/environment') && over.environment) {
+      const environment = await over.environment()
+      environmentReady = environment.environment.observedState === 'ready'
+      return new Response(JSON.stringify(environment), { status: 200 })
+    }
     if (url.endsWith('/api/capabilities')) return new Response(JSON.stringify(CAPS), { status: 200 })
     if (url.endsWith('/api/engagements/eng-1')) return new Response(JSON.stringify(over.engagement ?? ENGAGEMENT('2026-10-14T08:30:00.000Z')), { status: 200 })
     if (url.endsWith('/fleet')) return new Response(JSON.stringify(over.fleet ?? { engagementId: 'eng-1', agents: [], threads: [], branches: [], counts: { threads: 0, threadsTruncated: false, activeRuns: 0, branches: 0, runningBranches: 0 }, excludedActions: [], sources: { agents: 'catalog', threads: 'runtime', branches: 'checkpoint' }, source: 'runtime' }), { status: 200 })
     if (url.endsWith('/threads') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', threads: over.threads ?? [PLANNING_THREAD], source: 'runtime' }), { status: 200 })
-    if (url.endsWith('/threads') && init?.method === 'POST') return new Response(JSON.stringify(ACK({ requestId: body?.requestId, threadId: body?.kind === 'execution' ? 'th-exec' : 'th-plan' })), { status: 201 })
+    if (url.endsWith('/threads') && init?.method === 'POST') {
+      if (over.environment && !environmentReady) return new Response(JSON.stringify({ code: 'conflict', message: 'Preparing the project environment.', details: { field: 'environment' } }), { status: 409 })
+      return new Response(JSON.stringify(ACK({ requestId: body?.requestId, threadId: body?.kind === 'execution' ? 'th-exec' : 'th-plan' })), { status: 201 })
+    }
     if (url.endsWith('/approvals') && (init?.method ?? 'GET') === 'GET') return new Response(JSON.stringify({ engagementId: 'eng-1', approvals: over.approvals ?? [], source: 'workspace' }), { status: 200 })
     if (url.endsWith('/approvals') && init?.method === 'POST') return new Response(JSON.stringify({ ok: true, requestId: (body as { requestId?: string }).requestId, action: body?.action, decidedAtSeconds: 1791988800 }), { status: 200 })
     if (url.endsWith('/plan-docs')) return new Response(JSON.stringify(over.planning ?? PLANNING_BLOCKED), { status: 200 })
@@ -170,6 +180,60 @@ async function pickThread(user: ReturnType<typeof userEvent.setup>, name: RegExp
 }
 
 describe('RealWorkspace', () => {
+  it('waits for the managed environment before creating a planning thread and sending its brief', async () => {
+    const { markPlanningSeed } = await import('../planning-seed')
+    let release!: () => void
+    const ready = new Promise<void>(resolve => { release = resolve })
+    const calls = stubApi({ threads: [], engagement: ENGAGEMENT(null), environment: async () => {
+      await ready
+      return { engagementId: 'eng-1', environment: { observedState: 'ready', desiredState: 'ready', generation: 1, observedAt: null, archived: false, lastError: null }, slot: { phase: 'ready', version: 2, held: true, ownedByThisProject: true, activeEngagementId: 'eng-1' } }
+    } })
+    markPlanningSeed('eng-1')
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await screen.findByText('Preparing project environment…')
+    expect(calls.filter(call => call.url.endsWith('/runs') && call.init?.method === 'POST')).toHaveLength(0)
+    release()
+    await waitFor(() => expect(calls.filter(call => call.url.endsWith('/runs') && call.init?.method === 'POST')).toHaveLength(1))
+    const attempts = calls.filter(call => call.url.endsWith('/threads') && call.init?.method === 'POST')
+    expect(attempts).toHaveLength(2)
+    expect(attempts[0]?.body?.requestId).toBe(attempts[1]?.body?.requestId)
+  })
+
+  it('shows a failed environment preparation without creating another thread or sending a run', async () => {
+    const { markPlanningSeed } = await import('../planning-seed')
+    const calls = stubApi({ threads: [], engagement: ENGAGEMENT(null), environment: async () => ({
+      engagementId: 'eng-1', environment: { observedState: 'stopped', desiredState: 'stopped', generation: 1, observedAt: null, archived: false, lastError: 'legacy_not_quiescent' }, slot: { phase: 'idle', version: 2, held: false, ownedByThisProject: false, activeEngagementId: null },
+    }) })
+    markPlanningSeed('eng-1')
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await screen.findByText('Another project still has unfinished work. Reconcile it before starting this project.')
+    expect(calls.filter(call => call.url.endsWith('/threads') && call.init?.method === 'POST')).toHaveLength(1)
+    expect(calls.filter(call => call.url.endsWith('/runs') && call.init?.method === 'POST')).toHaveLength(0)
+    expect(screen.queryByText('Preparing project environment…')).toBeNull()
+  })
+
+  it('cancels thread creation when the workspace is left while its environment is preparing', async () => {
+    const { markPlanningSeed } = await import('../planning-seed')
+    let release!: () => void
+    const ready = new Promise<void>(resolve => { release = resolve })
+    const calls = stubApi({ threads: [], engagement: ENGAGEMENT(null), environment: async () => {
+      await ready
+      return { engagementId: 'eng-1', environment: { observedState: 'ready', desiredState: 'ready', generation: 1, observedAt: null, archived: false, lastError: null }, slot: { phase: 'ready', version: 2, held: true, ownedByThisProject: true, activeEngagementId: 'eng-1' } }
+    } })
+    markPlanningSeed('eng-1')
+    go('ai-operator', { id: 'eng-1' })
+    const view = ui(<RealWorkspace />)
+    await screen.findByText('Preparing project environment…')
+    expect(readPending('local', 'eng-1')).toBeNull()
+    view.unmount()
+    await act(async () => { release(); await ready })
+    await waitFor(() => expect(readPending('local', 'eng-1')).toBeNull())
+    expect(calls.filter(call => call.url.endsWith('/threads') && call.init?.method === 'POST')).toHaveLength(1)
+    expect(calls.filter(call => call.url.endsWith('/runs') && call.init?.method === 'POST')).toHaveLength(0)
+  })
+
   it('does not restore an operator draft for another authenticated actor', () => {
     saveWorkspaceDraft('eng-1', 'th-exec', 'Actor A instructions', 'actor-a')
     expect(readWorkspaceDraft('eng-1', 'th-exec', 'actor-a')).toBe('Actor A instructions')
@@ -351,6 +415,35 @@ describe('RealWorkspace', () => {
     expect(sent?.body).toMatchObject({ answers: [{ questionId: 'q-1', value: 'Yes' }, { questionId: 'q-2', value: 'Yes' }] })
   })
 
+  it('moves between question tabs with the arrow keys and wraps from Confirm back to the first question', async () => {
+    const question = (questionId: string, header: string) => ({
+      questionId, question: `Pick the ${header.toLowerCase()}`, header,
+      options: [{ label: 'Yes', description: '' }, { label: 'No', description: '' }],
+      multiSelect: false, allowOther: false, source: 'runtime',
+    })
+    stubApi({ snapshot: { ...SNAPSHOT_NO_QUESTION, pendingQuestions: [question('q-1', 'Scope'), question('q-2', 'Window')] }, runtimeCtx: RUNTIME_CTX(false) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const scope = await screen.findByRole('tab', { name: /Scope/ })
+    await user.click(scope)
+    await user.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: /Window/ }).getAttribute('aria-selected')).toBe('true')
+    await user.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: 'Confirm' }).getAttribute('aria-selected')).toBe('true')
+    await user.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: /Scope/ }).getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('shows Waiting for input as the agent state while a question is pending', async () => {
+    const question = { questionId: 'q-1', question: 'Pick the scope', header: 'Scope', options: [{ label: 'Yes', description: '' }], multiSelect: false, allowOther: false, source: 'runtime' }
+    stubApi({ snapshot: { ...SNAPSHOT_NO_QUESTION, pendingQuestions: [question] }, runtimeCtx: RUNTIME_CTX(false) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    await screen.findAllByRole('radio')
+    expect(document.querySelector('[data-agent-state="waiting"]')?.textContent).toBe('Waiting for input')
+  })
+
   it('keeps Execute disabled until the planning handoff is confirmed', async () => {
     stubApi({ engagement: ENGAGEMENT(null) })
     go('ai-operator', { id: 'eng-1' })
@@ -415,7 +508,7 @@ describe('RealWorkspace', () => {
     expect(await screen.findByText('th-exec')).toBeTruthy()
     const composer = (await screen.findByLabelText('Workspace message')) as HTMLTextAreaElement
     await waitFor(() => expect(composer.disabled).toBe(true))
-    expect(screen.getByText(/planning blocked/)).toBeTruthy()
+    await waitFor(() => expect(useToastStore.getState().toasts.some((t) => /planning blocked/.test(t.text))).toBe(true))
   })
 
   it('renders workspace tool HITL approvals and records an allow decision', async () => {
@@ -450,7 +543,7 @@ describe('RealWorkspace', () => {
     await waitFor(() => expect(calls.some((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST')).toBe(true))
     const posted = calls.find((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST')
     expect(posted?.body).toMatchObject({ kind: 'execution' })
-    expect(await screen.findByText(/nothing is dispatched automatically/)).toBeTruthy()
+    await waitFor(() => expect(useToastStore.getState().toasts.some((t) => /nothing is dispatched automatically/.test(t.text))).toBe(true))
     expect(calls.some((c) => c.url.endsWith('/runs') && c.init?.method === 'POST')).toBe(false)
   })
 
@@ -528,6 +621,35 @@ describe('RealWorkspace', () => {
     expect(activity.compareDocumentPosition(last) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
+  it('places a tool call group between the messages it arrived between, even when those messages are already in the snapshot', async () => {
+    // Both replies are already persisted in the snapshot, so they are no longer "live": this is the state after a run ends.
+    stubApi({ snapshot: { ...SNAPSHOT_NO_QUESTION, messages: [
+      { role: 'user', content: 'Scan the host' },
+      { role: 'assistant', messageId: 'm-a', content: 'Planning the scan' },
+      { role: 'assistant', messageId: 'm-b', content: 'Found port 80 open' },
+    ] } })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    const composer = await screen.findByLabelText('Workspace message')
+    await waitFor(() => expect(composer).toBeEnabled())
+    await user.type(composer, 'Scan the host')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0]! })
+    const emit = (eventId: string, payload: Record<string, unknown>) => act(async () => source.emit('run-event', event({ eventId, runId: 'run-1', streamRunId: 'run-1', payload: payload as PublicStreamEvent['payload'] })))
+    await emit('msg-a', { type: 'message', messageId: 'm-a', role: 'assistant', content: 'Planning the scan', mode: 'snapshot', truncated: false })
+    await emit('tool-call', { type: 'tool_call', toolCallId: 'tc-1', name: 'nmap_scan', delegation: false, truncated: false })
+    await emit('tool-result', { type: 'tool_result', toolCallId: 'tc-1', name: 'nmap_scan', status: 'success', content: 'ports 80', delegation: false, truncated: false })
+    await emit('msg-b', { type: 'message', messageId: 'm-b', role: 'assistant', content: 'Found port 80 open', mode: 'snapshot', truncated: false })
+    const before = await screen.findByText('Planning the scan')
+    // The group is collapsed by default, so its summary row is the element that marks the position.
+    const tool = await screen.findByText(/^\d+ tool calls?$/)
+    const after = await screen.findByText('Found port 80 open')
+    expect(before.compareDocumentPosition(tool) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(tool.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('labels streamed reasoning with the time measured in this browser, and only for that stream', async () => {
     stubApi({ snapshot: SNAPSHOT_NO_QUESTION })
     go('ai-operator', { id: 'eng-1' })
@@ -538,6 +660,7 @@ describe('RealWorkspace', () => {
     await user.type(composer, 'Thinking label check')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
     await user.click(screen.getByRole('button', { name: 'Send' }))
+    await user.click(screen.getByRole('button', { name: 'Show thinking' }))
     const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0]! })
     const emit = (content: string, reasoning?: string) => act(async () => source.emit('run-event', event({
       eventId: `think-${content.length}-${reasoning?.length ?? 0}`, runId: 'run-1', streamRunId: 'run-1',
@@ -559,6 +682,7 @@ describe('RealWorkspace', () => {
     await user.type(composer, 'Same event check')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled())
     await user.click(screen.getByRole('button', { name: 'Send' }))
+    await user.click(screen.getByRole('button', { name: 'Show thinking' }))
     const source = await waitFor(() => { expect(FakeEventSource.instances.length).toBeGreaterThan(0); return FakeEventSource.instances[0]! })
     await act(async () => source.emit('run-event', event({
       eventId: 'same-event-1', runId: 'run-1', streamRunId: 'run-1',
