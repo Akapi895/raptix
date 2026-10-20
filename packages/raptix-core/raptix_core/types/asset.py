@@ -10,7 +10,7 @@ import hashlib
 from dataclasses import dataclass
 from enum import StrEnum
 
-ASSET_KEY_VERSION = 1
+ASSET_KEY_VERSION = 2
 
 
 class AssetKind(StrEnum):
@@ -41,13 +41,33 @@ class AssetRef:
 
     @property
     def key(self) -> str:
-        """Versioned string form used as input to :func:`asset_id`."""
+        """Human-readable form for logs and diagnostics. Not an identity input."""
         return f"v{ASSET_KEY_VERSION}:{self.kind.value}:{self.namespace}:{self.canonical_key}"
 
 
+def _field(value: str) -> str:
+    """Length-prefixed field: ``len(utf8 bytes):value``. Unambiguous for any content."""
+    return f"{len(value.encode('utf-8'))}:{value}"
+
+
 def asset_id(engagement: str, ref: AssetRef) -> str:
-    """Stable catalog ID for ``ref`` inside one engagement."""
+    """Stable catalog ID for ``ref`` inside one engagement.
+
+    The input is the length-prefixed tuple (engagement, version, kind, namespace,
+    canonical key). Joining with a separator is ambiguous when a namespace or key
+    contains that separator, so every field carries its own byte length. The Web
+    server computes the same encoding (``assetIdFor`` in graph-service.ts).
+    """
     if not engagement:
         raise ValueError("asset id requires an engagement")
-    digest = hashlib.sha256(f"{engagement}\x1f{ref.key}".encode()).hexdigest()
-    return f"asset_{digest[:32]}"
+    encoded = "".join(
+        _field(part)
+        for part in (
+            engagement,
+            str(ASSET_KEY_VERSION),
+            ref.kind.value,
+            ref.namespace,
+            ref.canonical_key,
+        )
+    )
+    return f"asset_{hashlib.sha256(encoded.encode('utf-8')).hexdigest()[:32]}"
