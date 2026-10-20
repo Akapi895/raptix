@@ -12,6 +12,7 @@ import {
 import { useServiceProjection } from '../state/projection'
 import { DATA_MODE } from '../real/mode'
 import { readNavigationBadges } from '../features/navigation/service'
+import { isAssetMapEnabled } from '../features/asset-map/flag'
 
 /**
  * Global sidebar (plan 2026-10-16, slice S3): 3 groups / 8 items. Global nav
@@ -99,6 +100,8 @@ export const MOCK_PROJECT_NAV: ProjectNavGroup[] = [
     items: [
       { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
       { to: 'operations', label: 'Execution', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
+      // Flagged: the map sits beside Execution until the phase 8 gate, so run controls stay reachable.
+      ...(isAssetMapEnabled() ? [{ to: 'asset-map', label: 'Asset Map', icon: Network, match: ['asset-map'] }] : []),
       { to: 'sessions', label: 'C2 Sessions', icon: RadioTower, match: ['sessions', 'c2-session', 'c2-console', 'c2-channel'] },
     ],
   },
@@ -143,6 +146,7 @@ export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
     items: [
       { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
       { to: 'operations', label: 'Execution', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
+      ...(isAssetMapEnabled() ? [{ to: 'asset-map', label: 'Asset Map', icon: Network, match: ['asset-map'] }] : []),
       { to: 'c2', label: 'C2 Sessions', icon: RadioTower, match: ['c2', 'c2-channel', 'c2-session', 'c2-console'] },
     ],
   },
