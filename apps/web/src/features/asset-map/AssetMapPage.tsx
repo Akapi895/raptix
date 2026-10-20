@@ -12,6 +12,7 @@ import {
 } from '../../real/asset-map-api'
 import { AssetMapCanvas, type CanvasFocus } from './AssetMapCanvas'
 import { toCanvasElements, VISIBLE_EDGE_BUDGET, VISIBLE_NODE_BUDGET } from './canvas-model'
+import { rendererFor, rendererLabel } from './domain-renderers'
 import { loadSavedSelection, saveSelection } from './saved-view'
 
 /** Kinds the operator can switch off on the canvas. Centres are never switched off. */
@@ -85,6 +86,9 @@ function Inspector({
         <p className="font-semibold">{detail.asset.canonicalKey}</p>
         <p className="text-xs text-slate-600">
           {detail.asset.kind} · namespace {detail.asset.namespace} · {detail.provenance.graphNodes} observed node(s)
+        </p>
+        <p className="text-xs text-slate-600" data-testid="renderer">
+          {rendererLabel(rendererFor(detail.asset.kind))}
         </p>
       </div>
       <section aria-label="Sources" className="space-y-1">
