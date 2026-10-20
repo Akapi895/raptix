@@ -69,11 +69,15 @@ function toRef(row: CatalogRow): AssetMapAssetRef {
   return { assetId: row.id, kind: row.kind as AssetMapKind, namespace: row.namespace, canonicalKey: row.canonicalKey };
 }
 
-function encodeCursor(revision: string, offset: number): string {
-  return Buffer.from(JSON.stringify({ r: revision, k: String(offset) }), 'utf8').toString('base64url');
+/** Longest sitemap filter the server accepts; the filter is a substring match on URL and path. */
+const FILTER_MAX_LENGTH = 200;
+
+/** A cursor names the revision it was issued under, the offset, and the filter it was issued for. */
+function encodeCursor(revision: string, offset: number, filter = ''): string {
+  return Buffer.from(JSON.stringify({ r: revision, k: String(offset), q: filter }), 'utf8').toString('base64url');
 }
 
-function decodeCursor(cursor: string, revision: string): string {
+function decodeCursor(cursor: string, revision: string): { offset: string; filter: string } {
   let parsed: unknown;
   try {
     parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
@@ -83,14 +87,16 @@ function decodeCursor(cursor: string, revision: string): string {
   if (typeof parsed !== 'object' || parsed === null || typeof (parsed as { r?: unknown }).r !== 'string' || typeof (parsed as { k?: unknown }).k !== 'string') {
     throw new AssetMapInputError('cursor is malformed');
   }
-  const { r, k } = parsed as { r: string; k: string };
+  const { r, k, q } = parsed as { r: string; k: string; q?: unknown };
   if (r !== revision) throw new AssetMapRevisionError('the graph or catalog changed; restart paging from the first page');
-  return k;
+  return { offset: k, filter: typeof q === 'string' ? q : '' };
 }
 
-function pageOffset(cursor: string | null, revision: string): number {
+function pageOffset(cursor: string | null, revision: string, filter = ''): number {
   if (cursor === null) return 0;
-  const offset = Number(decodeCursor(cursor, revision));
+  const decoded = decodeCursor(cursor, revision);
+  if (decoded.filter !== filter) throw new AssetMapInputError('cursor was issued for another filter; restart from the first page');
+  const offset = Number(decoded.offset);
   if (!Number.isInteger(offset) || offset < 0) throw new AssetMapInputError('cursor is malformed');
   return offset;
 }
@@ -159,9 +165,10 @@ const SERVICE_PAGE_STATEMENT = [
   'ORDER BY s.port SKIP $skip LIMIT $limit',
 ].join(' ');
 
-const ENDPOINT_COUNT_STATEMENT = 'MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL RETURN count(e) AS count';
+const ENDPOINT_FILTER = "($filter = '' OR e.url CONTAINS $filter OR e.path CONTAINS $filter)";
+const ENDPOINT_COUNT_STATEMENT = `MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL AND ${ENDPOINT_FILTER} RETURN count(e) AS count`;
 const ENDPOINT_PAGE_STATEMENT = [
-  'MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL',
+  `MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL AND ${ENDPOINT_FILTER}`,
   'OPTIONAL MATCH (e)-[:HAS]->(p) WHERE p.engagement = $engagement AND p.name IS NOT NULL',
   'WITH e, collect(p.name) AS parameters',
   'RETURN elementId(e) AS id, e.method AS method, e.path AS path, e.url AS url, e.status_code AS status, e.source AS source, e.source_episode_id AS episode, parameters',
@@ -209,7 +216,7 @@ export class AssetMapService {
   public async members(actorId: string, engagementId: string, kind: AssetMapKind, cursor: string | null, limit: number = ASSET_MAP_LIMITS.membersDefault): Promise<AssetMapMembersPage> {
     await this.access(actorId, engagementId);
     const revision = await this.catalogRevision(engagementId);
-    const after = cursor === null ? null : decodeCursor(cursor, revision);
+    const after = cursor === null ? null : decodeCursor(cursor, revision).offset;
     const rows = await this.db.assetIdentity.findMany({
       where: { engagementId, kind, ...(after === null ? {} : { id: { gt: after } }) },
       orderBy: { id: 'asc' },
@@ -287,10 +294,11 @@ export class AssetMapService {
     };
   }
 
-  /** Inspector plus typed domain detail for one asset; kinds without a view say so. */
-  public async detail(actorId: string, engagementId: string, assetId: string, cursor: string | null, limit: number = ASSET_MAP_LIMITS.detailDefault): Promise<AssetMapDetail> {
+  /** Inspector plus typed domain detail for one asset; kinds without a view say so. `filter` narrows a sitemap by URL or path. */
+  public async detail(actorId: string, engagementId: string, assetId: string, cursor: string | null, limit: number = ASSET_MAP_LIMITS.detailDefault, filter = ''): Promise<AssetMapDetail> {
     const slug = await this.access(actorId, engagementId);
     if (!ASSET_ID.test(assetId)) throw new AssetMapInputError('assetId is malformed');
+    if (filter.length > FILTER_MAX_LENGTH) throw new AssetMapInputError(`filter is longer than ${FILTER_MAX_LENGTH} characters`);
     const row = await this.db.assetIdentity.findFirst({ where: { engagementId, id: assetId } });
     if (row === null) throw new AssetMapNotFoundError('asset not found in this engagement');
     const asset = toRef(row);
@@ -320,9 +328,9 @@ export class AssetMapService {
     }
 
     if (asset.kind === 'web_origin') {
-      const skip = pageOffset(cursor, revision);
-      const [countRow] = await neo4jQuery(this.config, ENDPOINT_COUNT_STATEMENT, { engagement: slug, assetId });
-      const rows = await neo4jQuery(this.config, ENDPOINT_PAGE_STATEMENT, { engagement: slug, assetId, skip, limit: limit + 1 });
+      const skip = pageOffset(cursor, revision, filter);
+      const [countRow] = await neo4jQuery(this.config, ENDPOINT_COUNT_STATEMENT, { engagement: slug, assetId, filter });
+      const rows = await neo4jQuery(this.config, ENDPOINT_PAGE_STATEMENT, { engagement: slug, assetId, filter, skip, limit: limit + 1 });
       const items = rows.map(item => ({
         id: String(item[0]),
         method: String(item[1] ?? 'GET'),
@@ -333,7 +341,7 @@ export class AssetMapService {
         sourceEpisodeId: stringOrNull(item[6]),
         parameters: Array.isArray(item[7]) ? item[7].filter((name): name is string => typeof name === 'string').slice(0, 20) : [],
       }));
-      return pageDetail({ engagementId, asset, provenance, source }, revision, skip, limit, items.length > limit, Number(countRow?.[0] ?? 0), items.slice(0, limit), 'endpoints');
+      return pageDetail({ engagementId, asset, provenance, source }, revision, skip, limit, items.length > limit, Number(countRow?.[0] ?? 0), items.slice(0, limit), 'endpoints', filter);
     }
 
     return {
@@ -365,6 +373,7 @@ function pageDetail(
   total: number,
   page: Array<AssetMapDetailItems>,
   kind: 'services' | 'endpoints',
+  filter = '',
 ): AssetMapDetail {
   const fitted = fitPrefix(page, ASSET_MAP_LIMITS.detailBytes, list => ({ kind, items: list }));
   const cutByBudget = fitted.length < page.length;
@@ -375,7 +384,7 @@ function pageDetail(
     asset: base.asset,
     provenance: base.provenance,
     detail,
-    nextCursor: more ? encodeCursor(revision, skip + fitted.length) : null,
+    nextCursor: more ? encodeCursor(revision, skip + fitted.length, filter) : null,
     completeness: { loaded: fitted.length, total, hasMore: more, truncated: cutByBudget, source: base.source, revision },
   };
 }
