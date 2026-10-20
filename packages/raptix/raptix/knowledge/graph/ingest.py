@@ -239,6 +239,7 @@ def _adapt_nmap_xml(
                 scheme = "https" if port in {443, 8443} else "http"
                 url = f"{scheme}://{host_label}:{port}/"
                 ep_key = f"entrypoint::{url}"
+                host_edges.append({"to_key": ep_key, "kind": "HAS", "weight": 0.5})
                 observations.append(
                     {
                         "kind": "Entrypoint",
@@ -321,6 +322,8 @@ def _adapt_nuclei_jsonl(
         severity = str(info.get("severity") or "info").lower()
         rule_id = str(record.get("template-id") or "unknown-template")
         target = str(record.get("matched-at") or record.get("host") or "unknown-target")
+        if "://" in target:
+            target = redact_url(target)
 
         vuln_key = f"vuln::nuclei::{rule_id}::{target}"
         observations.append(
@@ -421,7 +424,8 @@ def _adapt_httpx_jsonl(
 
         host_key = f"host::{host_value}"
         svc_key = f"service::{host_value}:{port_int}"
-        ep_key = f"entrypoint::{url}"
+        safe_url = redact_url(url)
+        ep_key = f"entrypoint::{safe_url}"
 
         service_obs: dict[str, Any] = {
             "kind": "Service",
@@ -466,12 +470,13 @@ def _adapt_httpx_jsonl(
                         "source": "httpx",
                         **_asset_props(engagement, host_or_dns_ref, host_value),
                     },
+                    "edges_out": [{"to_key": ep_key, "kind": "HAS", "weight": 0.5}],
                 },
                 service_obs,
                 {
                     "kind": "Entrypoint",
                     "key": ep_key,
-                    "label": url,
+                    "label": safe_url,
                     "props": {
                         "host": host_value,
                         "scheme": scheme,

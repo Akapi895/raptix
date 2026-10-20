@@ -741,3 +741,36 @@ def test_credentials_and_secret_query_values_never_reach_the_graph(tmp_path: Pat
         if o["kind"] == "Parameter" and o["props"]["name"] == "token"
     )
     assert token["props"]["value_hint"] == "REDACTED"
+
+
+def test_nmap_host_links_to_its_web_origin(tmp_path: Path) -> None:
+    store = _StubStore()
+    _adapt_nmap_xml(_nmap_host_xml(tmp_path / "scan.xml"), store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+    host = next(o for o in obs if o["kind"] == "Host")
+    entrypoint = next(o for o in obs if o["kind"] == "Entrypoint")
+    assert {e["to_key"] for e in host["edges_out"] if e["kind"] == "HAS"} == {entrypoint["key"]}
+
+
+def test_httpx_redacts_the_origin_and_links_the_host_to_it(tmp_path: Path) -> None:
+    f = tmp_path / "httpx.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "url": "http://alice:hunter2@10.0.0.5:8080/admin?token=abc",
+                "port": 8080,
+                "status-code": 200,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_httpx_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+    rendered = json.dumps(obs, default=str)
+    assert "hunter2" not in rendered and "abc" not in rendered
+    entrypoint = next(o for o in obs if o["kind"] == "Entrypoint")
+    host = next(o for o in obs if o["kind"] == "Host")
+    assert entrypoint["label"] == "http://10.0.0.5:8080/admin?token=REDACTED"
+    assert {e["to_key"] for e in host["edges_out"]} == {entrypoint["key"]}
