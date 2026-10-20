@@ -152,3 +152,17 @@ func TestCreateArgsRefusesUnboundedLimits(t *testing.T) {
 		t.Fatal("zero memory limit must be refused")
 	}
 }
+
+func TestRuntimeBootstrapsWithItsOwnSandboxEndpoint(t *testing.T) {
+	for _, role := range []Role{RoleRuntime, RoleSandbox} {
+		spec := Spec{Identity: validIdentity(role), Image: testDigest, WorkspaceSlug: "proj-alpha", WorkspaceHostPath: "D:/work/proj-alpha", MemoryBytes: 2 << 30, PidsLimit: 512}
+		args, err := spec.CreateArgs()
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := "SANDBOX_URL=http://raptix-env-6cc31c8e49aa-sandbox:9999"
+		if slices.Contains(args, want) != (role == RoleRuntime) {
+			t.Fatalf("%s sandbox endpoint in bootstrap args: %v", role, args)
+		}
+	}
+}
