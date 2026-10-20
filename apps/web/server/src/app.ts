@@ -22,6 +22,7 @@ import { registerThreadTitleRoutes } from './http/routes/thread-title.routes.js'
 import { registerThreadHitlRoutes } from './http/routes/thread-hitl.routes.js';
 import { registerApprovalRoutes } from './http/routes/approvals.routes.js';
 import { registerFindingsRoutes } from './http/routes/findings.routes.js';
+import { registerAssetMapRoutes } from './http/routes/asset-map.routes.js';
 import { registerGraphRoutes } from './http/routes/graph.routes.js';
 import { registerTimelineRoutes } from './http/routes/timeline.routes.js';
 import { registerSettingsRoutes } from './http/routes/settings.routes.js';
@@ -46,6 +47,7 @@ import type { ApprovalsService } from './services/approvals-service.js';
 import type { FindingsService } from './services/findings-service.js';
 import type { ArtifactsService } from './services/artifacts-service.js';
 import type { GraphService } from './services/graph-service.js';
+import type { AssetMapService } from './services/asset-map-service.js';
 import type { TimelineService } from './services/timeline-service.js';
 import type { ExportService } from './services/export-service.js';
 import type { SettingsService } from './services/settings-service.js';
@@ -88,6 +90,7 @@ export interface AppOptions {
   readonly findingsService?: FindingsService;
   readonly artifactsService?: ArtifactsService;
   readonly graphService?: GraphService;
+  readonly assetMapService?: AssetMapService;
   readonly timelineService?: TimelineService;
   readonly exportService?: ExportService;
   readonly settingsService?: SettingsService;
@@ -193,6 +196,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, identity);
   if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, identity);
   if (options.graphService) registerGraphRoutes(app, options.graphService, identity);
+  if (options.assetMapService) registerAssetMapRoutes(app, options.assetMapService, identity);
   if (options.timelineService && options.exportService) registerTimelineRoutes(app, options.timelineService, options.exportService, identity);
   if (options.settingsService) registerSettingsRoutes(app, options.settingsService, identity);
   if (options.campaignsService && options.c2Service) registerCampaignRoutes(app, options.campaignsService, options.c2Service, identity);
