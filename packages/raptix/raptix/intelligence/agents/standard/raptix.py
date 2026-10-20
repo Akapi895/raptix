@@ -89,6 +89,8 @@ def create_raptix_agent(
     tools: list[Any] | None = None,
     middleware: list[Any] | None = None,
     system_prompt: str | None = None,
+    # ── State surface (checkpoint variants, e.g. the delta-messages graph) ──
+    state_schema: type | None = None,
     # ── Tuning ───────────────────────────────────────────────────────
     recursion_limit: int | None = None,
 ):
@@ -194,6 +196,7 @@ def create_raptix_agent(
         tools=tools,
         middleware=middleware,
         name=_ROLE,
+        state_schema=state_schema,
     ).with_config(
         {
             "recursion_limit": recursion_limit or _RECURSION_LIMIT,

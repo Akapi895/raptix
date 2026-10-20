@@ -43,6 +43,8 @@ from langchain_core.messages import AIMessage
 from langchain_core.messages.tool import ToolCall
 from langchain_core.runnables import Runnable, RunnableBinding
 
+from raptix.execution.session.transcript_sidecar import DurableTranscript
+
 log = logging.getLogger("raptix.subagent_streaming")
 
 # State key forwarded to the parent graph by deepagents' task()/atask() tool
@@ -581,8 +583,8 @@ class StreamingRunnable(RunnableBinding):
         # ``agent`` field is identical.
         session_id = uuid.uuid4().hex[:12]
         # Durable transcript: mirrors every streamed event so it survives in
-        # the parent checkpoint (deepagents forwards this state key upward).
-        transcript: list[dict] = []
+        # the transcript sidecar (transcript_sidecar.py); it is not part of the parent checkpoint state.
+        transcript = DurableTranscript.for_current_thread()
         self._emit_start(renderer, has_renderer, writer, prompt, session_id, transcript)
 
         start = time.monotonic()
@@ -641,8 +643,8 @@ class StreamingRunnable(RunnableBinding):
             if last_state is not None:
                 last_state.setdefault("messages", []).append(error_msg)
                 projected_state = _public_child_state(self._runnable, last_state)
-                return {**projected_state, TRANSCRIPT_STATE_KEY: transcript}
-            return {"messages": [error_msg], TRANSCRIPT_STATE_KEY: transcript}
+                return {**projected_state}
+            return {"messages": [error_msg]}
 
         self._emit_end(
             renderer,
@@ -672,12 +674,10 @@ class StreamingRunnable(RunnableBinding):
                         )
                     )
                 ],
-                TRANSCRIPT_STATE_KEY: transcript,
             }
 
         return {
             **_public_child_state(self._runnable, last_state),
-            TRANSCRIPT_STATE_KEY: transcript,
         }
 
     async def ainvoke(self, input: Any, config: Any = None, **kwargs: Any) -> Any:
@@ -707,8 +707,8 @@ class StreamingRunnable(RunnableBinding):
         # ``task("recon", ...)`` dispatches by SESSION (see invoke() above).
         session_id = uuid.uuid4().hex[:12]
         # Durable transcript: mirrors every streamed event so it survives in
-        # the parent checkpoint (deepagents forwards this state key upward).
-        transcript: list[dict] = []
+        # the transcript sidecar (transcript_sidecar.py); it is not part of the parent checkpoint state.
+        transcript = DurableTranscript.for_current_thread()
         self._emit_start(renderer, has_renderer, writer, prompt, session_id, transcript)
 
         start = time.monotonic()
@@ -774,8 +774,8 @@ class StreamingRunnable(RunnableBinding):
             if last_state is not None:
                 last_state.setdefault("messages", []).append(error_msg)
                 projected_state = _public_child_state(self._runnable, last_state)
-                return {**projected_state, TRANSCRIPT_STATE_KEY: transcript}
-            return {"messages": [error_msg], TRANSCRIPT_STATE_KEY: transcript}
+                return {**projected_state}
+            return {"messages": [error_msg]}
 
         self._emit_end(
             renderer,
@@ -803,10 +803,8 @@ class StreamingRunnable(RunnableBinding):
                         )
                     )
                 ],
-                TRANSCRIPT_STATE_KEY: transcript,
             }
 
         return {
             **_public_child_state(self._runnable, last_state),
-            TRANSCRIPT_STATE_KEY: transcript,
         }

@@ -123,11 +123,11 @@ class TestInvokeNoStateReturnsErrorNotDoubleExec:
 
         assert fake.stream_calls == 1
         assert fake.invoke_calls == 0
-        # The wrapper now attaches the durable ``subagent_transcripts`` channel,
-        # so it returns a shallow copy (``{**last_state, ...}``) rather than the
-        # exact stream object. The carried messages must be preserved.
+        # The wrapper returns a shallow copy (``{**last_state}``) rather than the
+        # exact stream object. The carried messages must be preserved, and the
+        # transcript goes to the sidecar, not into the returned state.
         assert out["messages"] is state_final["messages"]
-        assert "subagent_transcripts" in out
+        assert "subagent_transcripts" not in out
 
 
 @pytest.mark.asyncio
@@ -158,9 +158,9 @@ class TestAinvokeNoStateReturnsErrorNotDoubleExec:
 
         assert fake.astream_calls == 1
         assert fake.ainvoke_calls == 0
-        # See the sync sibling: durable transcript means a shallow copy now.
+        # See the sync sibling: a shallow copy, with no transcript in the state.
         assert out["messages"] is state_final["messages"]
-        assert "subagent_transcripts" in out
+        assert "subagent_transcripts" not in out
 
 
 class TestNoneIdToolCallGuard:

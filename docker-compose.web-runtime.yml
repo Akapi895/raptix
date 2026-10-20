@@ -38,6 +38,11 @@ services:
       # Overrides the same keys from env_file, which would otherwise pin the benchmark engagement.
       RAPTIX_ENGAGEMENT: ''
       RAPTIX_ENGAGEMENT_WORKSPACE: ''
+      # Snapshot the files DeltaChannel every 100 supersteps so /state stops walking to the root
+      # (research: docs/research/2026-10-20-checkpoint-storage-options.md, option A). Default is 5000.
+      LANGGRAPH_DELTA_MAX_SUPERSTEPS_SINCE_SNAPSHOT: '100'
+      # Sub-agent transcript sidecar (checkpoint state slimming, option E): one SQLite file beside the checkpoints.
+      RAPTIX_TRANSCRIPT_SIDECAR_PATH: /app/.langgraph_api/transcripts.sqlite
       RAPTIX_LLM__PROXY_URL: http://litellm:4000
       RAPTIX_LLM__PROXY_API_KEY: ${LITELLM_MASTER_KEY:-sk-raptix-master}
       RAPTIX_NEO4J_URI: bolt://neo4j:7687

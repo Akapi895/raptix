@@ -136,7 +136,7 @@ def test_caught_failure_branch_returns_public_projection(renderer: _Renderer) ->
     result = wrapper.invoke({"messages": [HumanMessage(content="go")]})
 
     assert "_summarization_event" not in result
-    assert "subagent_transcripts" in result
+    assert "subagent_transcripts" not in result  # transcripts live in the sidecar
 
 
 @pytest.mark.asyncio
@@ -149,7 +149,7 @@ async def test_acaught_failure_branch_returns_public_projection(
     result = await wrapper.ainvoke({"messages": [HumanMessage(content="go")]})
 
     assert "_summarization_event" not in result
-    assert "subagent_transcripts" in result
+    assert "subagent_transcripts" not in result  # transcripts live in the sidecar
 
 
 def test_unresolvable_annotations_pass_through_conservatively(

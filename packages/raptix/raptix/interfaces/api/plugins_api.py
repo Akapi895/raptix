@@ -48,7 +48,7 @@ import logging
 from typing import Annotated
 from uuid import uuid5
 
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import FastAPI, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from raptix.graph_registry import _BUNDLE_TO_GRAPHS  # private, but stable: bundle->graphs map
@@ -452,6 +452,27 @@ def list_thread_instances(
             }
             for _, row in default_mailbox().list_instances(thread_id)
         ],
+    }
+
+
+@app.get("/_raptix/threads/{thread_id}/transcripts")
+def list_thread_transcripts(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    before: Annotated[int | None, Query(ge=1)] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 500,
+) -> dict:
+    """Sub-agent events recorded on a thread, newest page first by ``before`` (exclusive sequence number).
+
+    The events are the sidecar copy written as they streamed (see ``transcript_sidecar``), so they are not part of the
+    graph state. ``oldestSeq`` is the cursor for the next older page; it is null when this page starts the thread.
+    """
+    from raptix.execution.session.transcript_sidecar import default_sidecar  # noqa: PLC0415
+
+    rows = default_sidecar().page(thread_id, before, limit)
+    return {
+        "threadId": thread_id,
+        "events": [{"seq": seq, "event": event} for seq, event in rows],
+        "oldestSeq": rows[0][0] if rows else None,
     }
 
 
