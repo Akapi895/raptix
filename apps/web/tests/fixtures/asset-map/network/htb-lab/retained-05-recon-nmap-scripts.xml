@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Wed Oct 14 01:05:41 2026 as: /usr/lib/nmap/nmap -sC -sV -p 22,80 -oA /workspace/recon/recon-nmap-scripts 10.129.14.169 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -sC -sV -p 22,80 -oA /workspace/recon/recon-nmap-scripts 10.129.14.169" start="1791939941" startstr="Wed Oct 14 01:05:41 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="2" services="22,80"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.14.169" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1791939941" endtime="1791939956"><status state="up" reason="reset" reason_ttl="63"/>
+<address addr="10.129.14.169" addrtype="ipv4"/>
+<hostnames>
+<hostname name="mentorquotes.htb" type="PTR"/>
+</hostnames>
+<ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="8.9p1 Ubuntu 3" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:8.9p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="ssh-hostkey" output="&#xa;  256 c7:3b:fc:3c:f9:ce:ee:8b:48:18:d5:d1:af:8e:c2:bb (ECDSA)&#xa;  256 44:40:08:4c:0e:cb:d4:f1:8e:7e:ed:a8:5c:68:a4:f7 (ED25519)"><table>
+<elem key="type">ecdsa-sha2-nistp256</elem>
+<elem key="bits">256</elem>
+<elem key="key">AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBO6yWCATcj2UeU/SgSa+wK2fP5ixsrHb6pgufdO378n+BLNiDB6ljwm3U3PPdbdQqGZo1K7Tfsz+ejZj1nV80RY=</elem>
+<elem key="fingerprint">c73bfc3cf9ceee8b4818d5d1af8ec2bb</elem>
+</table>
+<table>
+<elem key="type">ssh-ed25519</elem>
+<elem key="bits">256</elem>
+<elem key="key">AAAAC3NzaC1lZDI1NTE5AAAAIJjv9f3Jbxj42smHEXcChFPMNh1bqlAFHLi4Nr7w9fdv</elem>
+<elem key="fingerprint">4440084c0ecbd4f18e7eeda85c68a4f7</elem>
+</table>
+</script></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="2.4.52" hostname="mentorquotes.htb" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.52</cpe></service><script id="http-server-header" output="&#xa;  Apache/2.4.52 (Ubuntu)&#xa;  Werkzeug/2.0.3 Python/3.6.9"><elem>Apache/2.4.52 (Ubuntu)</elem>
+<elem>Werkzeug/2.0.3 Python/3.6.9</elem>
+</script><script id="http-title" output="MentorQuotes"><elem key="title">MentorQuotes</elem>
+</script></port>
+</ports>
+<times srtt="49190" rttvar="86663" to="395842"/>
+</host>
+<runstats><finished time="1791939956" timestr="Wed Oct 14 01:05:56 2026" summary="Nmap done at Wed Oct 14 01:05:56 2026; 1 IP address (1 host up) scanned in 15.06 seconds" elapsed="15.06" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

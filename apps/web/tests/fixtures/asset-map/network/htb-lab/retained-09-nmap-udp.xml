@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Sat Oct 10 15:00:42 2026 as: /usr/lib/nmap/nmap -sU -&#45;top-ports 100 -sV -&#45;version-light -&#45;max-retries 2 -&#45;host-timeout 25m -oA /workspace/recon/nmap-udp 10.129.245.103 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -sU -&#45;top-ports 100 -sV -&#45;version-light -&#45;max-retries 2 -&#45;host-timeout 25m -oA /workspace/recon/nmap-udp 10.129.245.103" start="1791644442" startstr="Sat Oct 10 15:00:42 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="udp" protocol="udp" numservices="100" services="7,9,17,19,49,53,67-69,80,88,111,120,123,135-139,158,161-162,177,427,443,445,497,500,514-515,518,520,593,623,626,631,996-999,1022-1023,1025-1030,1433-1434,1645-1646,1701,1718-1719,1812-1813,1900,2000,2048-2049,2222-2223,3283,3456,3703,4444,4500,5000,5060,5353,5632,9200,10000,17185,20031,30718,31337,32768-32769,32771,32815,33281,49152-49154,49156,49181-49182,49185-49186,49188,49190-49194,49200-49201,65024"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.245.103" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1791644443" endtime="1791644553"><status state="up" reason="reset" reason_ttl="63"/>
+<address addr="10.129.245.103" addrtype="ipv4"/>
+<hostnames>
+<hostname name="silentium.htb" type="PTR"/>
+</hostnames>
+<ports><extraports state="open|filtered" count="100">
+<extrareasons reason="no-response" count="100" proto="udp" ports="7,9,17,19,49,53,67-69,80,88,111,120,123,135-139,158,161-162,177,427,443,445,497,500,514-515,518,520,593,623,626,631,996-999,1022-1023,1025-1030,1433-1434,1645-1646,1701,1718-1719,1812-1813,1900,2000,2048-2049,2222-2223,3283,3456,3703,4444,4500,5000,5060,5353,5632,9200,10000,17185,20031,30718,31337,32768-32769,32771,32815,33281,49152-49154,49156,49181-49182,49185-49186,49188,49190-49194,49200-49201,65024"/>
+</extraports>
+</ports>
+<times srtt="1466" rttvar="4016" to="100000"/>
+</host>
+<runstats><finished time="1791644553" timestr="Sat Oct 10 15:02:33 2026" summary="Nmap done at Sat Oct 10 15:02:33 2026; 1 IP address (1 host up) scanned in 110.52 seconds" elapsed="110.52" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>
