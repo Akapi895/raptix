@@ -9,11 +9,12 @@
  * Checks, in a real browser (layout is not evidenced by jsdom):
  *   1. selecting a host draws its relations: node and edge counts from the canvas itself;
  *   2. zoom: wheel in and out changes the canvas zoom, and wheel-out does not go below the minimum;
- *   3. keyboard: a list entry is reachable with the keyboard and selects an origin, whose sitemap opens;
- *   4. saved view: after a reload the last asset reopens for the same project;
- *   5. responsive: at a 390 px viewport the page does not scroll sideways.
- *
- * Not checked here: pan drag and group expand/collapse (the canvas has no collapse control yet).
+ *   3. pan: a drag on empty canvas moves the viewport;
+ *   4. groups: collapse hides the members of a host's group and expand brings them back;
+ *   5. refresh: re-reading the lists keeps every node where it was (position digest unchanged);
+ *   6. keyboard: a list entry is reachable with the keyboard and selects an origin, whose sitemap opens;
+ *   7. saved view: after a reload the last asset reopens for the same project;
+ *   8. responsive: at a 390 px viewport the page does not scroll sideways.
  */
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -70,7 +71,34 @@ try {
   record('wheel zooms in and out within bounds', zoomedIn > before && zoomedOut < zoomedIn && zoomedOut >= 0.2, `${before} -> ${zoomedIn} -> ${zoomedOut}`)
   await page.screenshot({ path: path.join(outDir, '01-canvas-zoom.png') })
 
-  // 3. Keyboard: the origin entry is reached by Tab from the host list and selected with Enter.
+  // 3. Pan: a drag on empty canvas moves the viewport.
+  const panBefore = [await canvas.getAttribute('data-pan-x'), await canvas.getAttribute('data-pan-y')]
+  const box = await canvas.boundingBox()
+  await page.mouse.move(box.x + box.width * 0.92, box.y + box.height * 0.92)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.8, { steps: 8 })
+  await page.mouse.up()
+  await page.waitForTimeout(300)
+  const panAfter = [await canvas.getAttribute('data-pan-x'), await canvas.getAttribute('data-pan-y')]
+  record('drag pans the viewport', panBefore.join(',') !== panAfter.join(','), `${panBefore.join(',')} -> ${panAfter.join(',')}`)
+
+  // 4. Groups: collapse hides the host's members; expand brings them back.
+  const visibleBefore = Number(await canvas.getAttribute('data-visible-node-count'))
+  await page.getByRole('button', { name: 'Collapse groups' }).click()
+  const visibleCollapsed = Number(await canvas.getAttribute('data-visible-node-count'))
+  await page.getByRole('button', { name: 'Expand groups' }).click()
+  const visibleExpanded = Number(await canvas.getAttribute('data-visible-node-count'))
+  record('collapse hides group members and expand restores them', visibleCollapsed < visibleBefore && visibleExpanded === visibleBefore, `${visibleBefore} -> ${visibleCollapsed} -> ${visibleExpanded}`)
+
+  // 5. Refresh: the lists are read again and no node moves.
+  const digestBefore = await canvas.getAttribute('data-position-digest')
+  await page.getByRole('button', { name: 'Refresh' }).click()
+  await page.getByRole('status').waitFor({ timeout: 20000 })
+  await page.waitForTimeout(500)
+  const digestAfter = await canvas.getAttribute('data-position-digest')
+  record('refresh keeps node positions', digestBefore !== null && digestBefore === digestAfter, `${digestBefore} -> ${digestAfter}`)
+
+  // 6. Keyboard: the origin entry is reached by Tab from the host list and selected with Enter.
   const originButton = page.getByRole('button', { name: /^http:\/\// }).first()
   await originButton.focus()
   await page.keyboard.press('Enter')
@@ -79,12 +107,12 @@ try {
   const endpointRows = await sitemap.locator('tbody tr').count()
   record('keyboard selects an origin and opens its sitemap', endpointRows > 0, `endpoints: ${endpointRows}`)
 
-  // 4. Saved view: the last asset reopens after a reload, for this project only.
+  // 7. Saved view: the last asset reopens after a reload, for this user and project only.
   await page.reload()
   await page.locator('section[aria-label="Sitemap"]').waitFor({ timeout: 20000 })
   record('saved view reopens the last asset after reload', true)
 
-  // 5. Responsive: a phone-width viewport must not scroll sideways.
+  // 8. Responsive: a phone-width viewport must not scroll sideways.
   await page.setViewportSize({ width: 390, height: 844 })
   await page.waitForTimeout(300)
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
