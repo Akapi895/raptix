@@ -38,3 +38,28 @@ Version 1 joined fields with `:` and `\x1f`, so `(namespace="a:b", canonicalKey=
 `assetIdFor` in the Web server, and `ASSET_KEY_VERSION` becomes 2. No version-1 identity reached a
 persisted catalog outside development engagements, which were removed, so no identity migration is
 needed. Future changes follow the same rule: bump the version and record the change here.
+
+## Amendment: identity at the KG write boundary (2026-10-21)
+
+Writers reached the graph by four paths: the legacy adapters (`knowledge/graph/ingest.py`), the
+parser registry (`knowledge/ingest/parsers`, used by auto-ingest for subfinder, dnsx, ffuf, masscan
+and gobuster), the agent tools (`kg_record`, `kg_ingest`), and the legacy graph shim
+(`research/_state.py`). Only the first path stamped identity, so decision 2 was not met for the other
+three. The rule now lives in `KGStore.record_observations`, the one entry point every writer uses:
+
+- A Host or Entrypoint node without `asset_id` receives the identity of its locator: the key suffix
+  first (`host::`, `entrypoint::`), then the `ip` or `url` property. A node whose locator does not
+  resolve is written without identity and counted in the result as `unidentified`.
+- Entrypoint keys, labels, `url` properties and edge targets that name an entrypoint are redacted with
+  `redact_url` before the write. A key never keeps userinfo, a fragment or a sensitive query value.
+- A node that already carries `asset_id` keeps it. Ingest stamps the same identity, so nothing changes
+  for the adapters.
+- The canonical rule is the one in `asset_identity.py` (IPv4 compressed; DNS names lowercase, without a
+  trailing dot; origins with the default port explicit). The Web catalog mirrors it for WebAsset
+  identifiers of kind `host` only (`catalogIdForWebAsset`); other kinds stay unlinked.
+
+**Why:** decision 2 requires the runtime to write the identity onto every asset-bearing node, and the
+registry and agent paths did not. **Alternative rejected:** refusing Host and Entrypoint from
+`kg_record`. That loses agent observations, and the rule belongs in code, not in the agent's prompt.
+**Consequence:** AD labels (AD_USER, AD_COMPUTER and the rest) stay outside the catalog until the
+phase 7 mapping; the coverage matrix says so.

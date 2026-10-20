@@ -31,7 +31,13 @@ design spec, §13.4).
   migration runner (V001–V006); the runtime does not run it at startup yet.
 - Web console: flagged Asset Map (off by default; VITE_ASSET_MAP=1 or raptix.assetMap=1 in the
   browser) with a Cytoscape canvas, inspector, relation and sitemap paging, visible budget
-  (100 nodes / 250 relations), and a per-project saved selection kept in the browser only.
+  (100 nodes / 250 relations), a saved selection per user and project kept in the browser only,
+  search that opens any catalogued asset, refresh that reports graph changes, fit, group collapse
+  and expand, a kind switch, a sitemap filter by URL or path, and a findings section linked
+  through the owning web asset (findings with no link are counted as unknown attribution).
+- Runtime: every KG write stamps the ADR-0094 identity on Host and Entrypoint nodes that do not
+  carry one, and redacts entrypoint URLs before storage. A locator that does not resolve is
+  written without identity and counted as `unidentified`; it is not guessed.
 - Runtime:  (make webraptix-kg-bootstrap) runs the
   KG migrations after a duplicate-node preflight; a rerun applies nothing.
 - Runtime: nmap and httpx hosts link to their web origins; httpx and nuclei URLs are redacted
