@@ -1,4 +1,4 @@
-import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapKind, AssetMapMembersPage, AssetMapNeighborhood, AssetMapOverview, AssetMapSearchResult } from '@raptix/web-contracts';
+import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapKind, AssetMapMembersPage, AssetMapNeighborhood, AssetMapOverview, AssetMapSearchResult } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { requireEngagementAccess } from '../auth/membership-policy.js';
 import { neo4jQuery, type GraphConfig } from './graph-service.js';
@@ -18,6 +18,8 @@ export const ASSET_MAP_LIMITS = {
   searchMax: 50,
   neighborEdges: 250,
   neighborhoodBytes: 512 * 1024,
+  detailDefault: 50,
+  detailMax: 100,
 } as const;
 
 const ASSET_ID = /^asset_[0-9a-f]{32}$/;
@@ -143,8 +145,7 @@ export class AssetMapService {
     const known = await this.db.assetIdentity.findFirst({ where: { engagementId, id: assetId }, select: { id: true } });
     if (known === null) throw new AssetMapNotFoundError('asset not found in this engagement');
 
-    const [revisionRow] = await neo4jQuery(this.config, GRAPH_REVISION_STATEMENT, { engagement: slug });
-    const revision = `g${String(revisionRow?.[0] ?? 0)}:${String(revisionRow?.[1] ?? 'none')}`;
+    const revision = await this.graphRevision(slug);
     const rows = await neo4jQuery(this.config, NEIGHBOR_STATEMENT, { engagement: slug, assetId, limit: ASSET_MAP_LIMITS.neighborEdges + 1 });
 
     const nodes = new Map<string, AssetMapNeighborhood['nodes'][number]>();
@@ -168,7 +169,126 @@ export class AssetMapService {
     };
     return withinBudget(result);
   }
+
+  private async graphRevision(slug: string): Promise<string> {
+    const [row] = await neo4jQuery(this.config, GRAPH_REVISION_STATEMENT, { engagement: slug });
+    return `g${String(row?.[0] ?? 0)}:${String(row?.[1] ?? 'none')}`;
+  }
+
+  /** Inspector and typed domain detail for one asset; kinds without a view say so. */
+  public async detail(actorId: string, engagementId: string, assetId: string, cursor: string | null, limit: number = ASSET_MAP_LIMITS.detailDefault): Promise<AssetMapDetail> {
+    const slug = await this.access(actorId, engagementId);
+    if (!ASSET_ID.test(assetId)) throw new AssetMapInputError('assetId is malformed');
+    const row = await this.db.assetIdentity.findFirst({ where: { engagementId, id: assetId } });
+    if (row === null) throw new AssetMapNotFoundError('asset not found in this engagement');
+    const asset = toRef(row);
+    const revision = await this.graphRevision(slug);
+    const provenanceRows = await neo4jQuery(this.config, PROVENANCE_STATEMENT, { engagement: slug, assetId });
+    const sources = provenanceRows.map(item => ({ source: String(item[0] ?? 'unknown'), count: Number(item[1] ?? 0) }));
+    const provenance = { sources, graphNodes: sources.reduce((sum, item) => sum + item.count, 0) };
+    const base = { engagementId, asset, provenance, source: { catalog: 'ok' as const, graph: 'ok' as const } };
+
+    if (asset.kind === 'host' || asset.kind === 'dns_name') {
+      const skip = pageOffset(cursor, revision);
+      const [countRow] = await neo4jQuery(this.config, SERVICE_COUNT_STATEMENT, { engagement: slug, assetId });
+      const rows = await neo4jQuery(this.config, SERVICE_PAGE_STATEMENT, { engagement: slug, assetId, skip, limit: limit + 1 });
+      const items = rows.filter(item => item[0] !== null).map(item => ({
+        id: String(item[0]),
+        port: numberOrNull(item[1]),
+        protocol: stringOrNull(item[2]),
+        service: stringOrNull(item[3]),
+        product: stringOrNull(item[4]),
+        version: stringOrNull(item[5]),
+        source: stringOrNull(item[6]),
+      }));
+      return pageDetail(base, revision, { kind: 'services', items: items.slice(0, limit) }, skip, limit, items.length > limit, Number(countRow?.[0] ?? 0));
+    }
+
+    if (asset.kind === 'web_origin') {
+      const skip = pageOffset(cursor, revision);
+      const [countRow] = await neo4jQuery(this.config, ENDPOINT_COUNT_STATEMENT, { engagement: slug, assetId });
+      const rows = await neo4jQuery(this.config, ENDPOINT_PAGE_STATEMENT, { engagement: slug, assetId, skip, limit: limit + 1 });
+      const items = rows.map(item => ({
+        id: String(item[0]),
+        method: String(item[1] ?? 'GET'),
+        path: clip(String(item[2] ?? '/')),
+        url: clip(String(item[3] ?? '')),
+        statusCode: numberOrNull(item[4]),
+        source: stringOrNull(item[5]),
+        parameters: Array.isArray(item[6]) ? item[6].filter((name): name is string => typeof name === 'string').slice(0, 20) : [],
+      }));
+      return pageDetail(base, revision, { kind: 'endpoints', items: items.slice(0, limit) }, skip, limit, items.length > limit, Number(countRow?.[0] ?? 0));
+    }
+
+    return {
+      engagementId,
+      asset,
+      provenance,
+      detail: { kind: 'unsupported', reason: `no typed detail view for ${asset.kind} yet` },
+      nextCursor: null,
+      completeness: { loaded: 0, total: null, hasMore: false, truncated: false, source: base.source, revision },
+    };
+  }
 }
+
+function pageOffset(cursor: string | null, revision: string): number {
+  if (cursor === null) return 0;
+  const offset = Number(decodeCursor(cursor, revision));
+  if (!Number.isInteger(offset) || offset < 0) throw new AssetMapInputError('cursor is malformed');
+  return offset;
+}
+
+function pageDetail(
+  base: { engagementId: string; asset: AssetMapAssetRef; provenance: AssetMapDetail['provenance']; source: AssetMapCompleteness['source'] },
+  revision: string,
+  detail: AssetMapDetail['detail'],
+  skip: number,
+  limit: number,
+  hasMore: boolean,
+  total: number,
+): AssetMapDetail {
+  const loaded = detail.kind === 'unsupported' ? 0 : detail.items.length;
+  return {
+    engagementId: base.engagementId,
+    asset: base.asset,
+    provenance: base.provenance,
+    detail,
+    nextCursor: hasMore ? encodeCursor(revision, String(skip + limit)) : null,
+    completeness: { loaded, total, hasMore, truncated: false, source: base.source, revision },
+  };
+}
+
+function numberOrNull(value: unknown): number | null {
+  return typeof value === 'number' ? value : null;
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+/** Keeps one oversized URL from consuming the detail byte budget. */
+function clip(value: string): string {
+  return value.length > 1024 ? `${value.slice(0, 1024)}…` : value;
+}
+
+const PROVENANCE_STATEMENT = "MATCH (n) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, count(n) AS count ORDER BY source LIMIT 50";
+
+const SERVICE_COUNT_STATEMENT = 'MATCH (h) WHERE h.engagement = $engagement AND h.asset_id = $assetId OPTIONAL MATCH (h)-[:HOSTS]->(s) WHERE s.engagement = $engagement RETURN count(s) AS count';
+const SERVICE_PAGE_STATEMENT = [
+  'MATCH (h) WHERE h.engagement = $engagement AND h.asset_id = $assetId',
+  'OPTIONAL MATCH (h)-[:HOSTS]->(s) WHERE s.engagement = $engagement',
+  'RETURN elementId(s) AS id, s.port AS port, s.protocol AS protocol, s.service AS service, s.product AS product, s.version AS version, s.source AS source',
+  'ORDER BY s.port SKIP $skip LIMIT $limit',
+].join(' ');
+
+const ENDPOINT_COUNT_STATEMENT = 'MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL RETURN count(e) AS count';
+const ENDPOINT_PAGE_STATEMENT = [
+  'MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL',
+  'OPTIONAL MATCH (e)-[:HAS]->(p) WHERE p.engagement = $engagement AND p.name IS NOT NULL',
+  'WITH e, collect(p.name) AS parameters',
+  'RETURN elementId(e) AS id, e.method AS method, e.path AS path, e.url AS url, e.status_code AS status, e.source AS source, parameters',
+  'ORDER BY e.path, e.method SKIP $skip LIMIT $limit',
+].join(' ');
 
 /**
  * Drops trailing edges, and the nodes only they reached, until the serialized

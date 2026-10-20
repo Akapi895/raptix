@@ -74,4 +74,16 @@ export function registerAssetMapRoutes(app: FastifyInstance, assets: AssetMapSer
     const { assetId } = request.params as { assetId: string };
     return assets.neighborhood(identity.id, id, assetId);
   }));
+
+  app.get(`${prefix}/assets/:assetId/detail`, handler((request, id) => {
+    const { assetId } = request.params as { assetId: string };
+    const query = request.query as { cursor?: string; limit?: string };
+    return assets.detail(
+      identity.id,
+      id,
+      assetId,
+      query.cursor ?? null,
+      clampLimit(query.limit, ASSET_MAP_LIMITS.detailDefault, ASSET_MAP_LIMITS.detailMax),
+    );
+  }));
 }
