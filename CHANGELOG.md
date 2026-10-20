@@ -29,6 +29,13 @@ design spec, §13.4).
 - Runtime: edge writes match endpoints by label when the batch knows it, so the KG
   constraint index is used. Live KG constraints and indexes come from the existing
   migration runner (V001–V006); the runtime does not run it at startup yet.
+- Web console: flagged Asset Map (off by default; VITE_ASSET_MAP=1 or raptix.assetMap=1 in the
+  browser) with a Cytoscape canvas, inspector, relation and sitemap paging, visible budget
+  (100 nodes / 250 relations), and a per-project saved selection kept in the browser only.
+- Runtime:  (make webraptix-kg-bootstrap) runs the
+  KG migrations after a duplicate-node preflight; a rerun applies nothing.
+- Runtime: nmap and httpx hosts link to their web origins; httpx and nuclei URLs are redacted
+  before they are stored.
 - Web console: planning documents gain server-side drafts with a digest
   precondition (O06, ADR-0083) — the Planning panel can open a source/draft
   editor for every allowlisted plan document; drafts persist in Postgres,
