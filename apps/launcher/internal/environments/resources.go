@@ -135,6 +135,11 @@ func (s Spec) CreateArgs() ([]string, error) {
 		"RAPTIX_ENVIRONMENT_GENERATION": fmt.Sprint(s.Identity.Generation),
 		"RAPTIX_WORKSPACE_SLUG":         s.WorkspaceSlug,
 	}
+	if s.Identity.Role == RoleRuntime {
+		sandbox := s.Identity
+		sandbox.Role = RoleSandbox
+		env["SANDBOX_URL"] = "http://" + sandbox.ContainerName() + ":9999"
+	}
 	for _, key := range sortedKeys(env) {
 		args = append(args, "--env", key+"="+env[key])
 	}

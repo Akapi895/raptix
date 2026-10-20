@@ -53,7 +53,7 @@ func TestSyncStartsOneSandboxPerProjectAndRemovesOrphans(t *testing.T) {
 			t.Errorf("compose file for %s not written: %v", slug, err)
 		}
 	}
-	want := "run docker compose -p raptix-sbx-lab-a -f " + filepath.Join(home, "web-sandboxes", "lab-a.compose.yml") + " --env-file /env up -d"
+	want := "run docker compose -p raptix-sandbox -f " + filepath.Join(home, "web-sandboxes", "lab-a.compose.yml") + " --env-file /env up -d"
 	if !contains(fr.calls, want) {
 		t.Errorf("missing %q in calls:\n%s", want, strings.Join(fr.calls, "\n"))
 	}
@@ -64,12 +64,12 @@ func TestSyncStartsOneSandboxPerProjectAndRemovesOrphans(t *testing.T) {
 
 func TestSyncStopsAtTheFirstFailedStart(t *testing.T) {
 	home := t.TempDir()
-	fr := &fakeRunner{outputs: map[string]string{"/w/*/": "lab-a\nlab-b\n"}, failRun: "raptix-sbx-lab-a"}
+	fr := &fakeRunner{outputs: map[string]string{"/w/*/": "lab-a\nlab-b\n"}, failRun: "lab-a.compose.yml"}
 	cfg := Config{Bin: "docker", Home: home, Runner: fr, Settings: Settings{Image: "img", Network: "net", Volume: "vol", EnvFile: "/env"}}
 	if _, err := Sync(cfg); err == nil {
 		t.Fatal("Sync = nil, want the start failure")
 	}
-	if contains(fr.calls, "raptix-sbx-lab-b") {
+	if contains(fr.calls, "lab-b.compose.yml") {
 		t.Error("Sync continued after a failed start")
 	}
 }
@@ -89,7 +89,7 @@ func TestMissingModeStartsProjectsWithoutRunningSandboxAndRemovesNothing(t *test
 	if !reflect.DeepEqual(started, []string{"lab-b", "lab-c"}) {
 		t.Fatalf("started = %v, want the projects without a running sandbox", started)
 	}
-	if contains(fr.calls, "run docker compose -p raptix-sbx-lab-a -f "+filepath.Join(home, "web-sandboxes", "lab-a.compose.yml")+" --env-file /env up -d") {
+	if contains(fr.calls, "run docker compose -p raptix-sandbox -f "+filepath.Join(home, "web-sandboxes", "lab-a.compose.yml")+" --env-file /env up -d") {
 		t.Error("a project with a running sandbox was started again")
 	}
 	for _, call := range fr.calls {

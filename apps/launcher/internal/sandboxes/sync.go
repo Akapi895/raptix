@@ -70,7 +70,7 @@ func Sync(cfg Config) ([]string, error) {
 		if err := os.WriteFile(file, body, 0o644); err != nil {
 			return nil, fmt.Errorf("write %s: %w", file, err)
 		}
-		args := []string{"compose", "-p", ComposeProject(slug), "-f", file, "--env-file", cfg.Settings.EnvFile, "up", "-d"}
+		args := []string{"compose", "-p", ComposeProject, "-f", file, "--env-file", cfg.Settings.EnvFile, "up", "-d"}
 		if err := cfg.Runner.Run(cfg.Bin, args...); err != nil {
 			return ensure, fmt.Errorf("start sandbox for project %s: %w", slug, err)
 		}

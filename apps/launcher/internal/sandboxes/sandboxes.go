@@ -47,10 +47,9 @@ func ContainerName(slug string) (string, error) {
 	return HostPrefix + slug, nil
 }
 
-// ComposeProject returns the compose project name owning a project's sandbox.
-func ComposeProject(slug string) string {
-	return "raptix-" + HostPrefix + slug
-}
+// ComposeProject is the compose project every project sandbox joins. Each project keeps its own
+// compose file and service, so its container starts, restarts and is removed without touching the others.
+const ComposeProject = "raptix-sandbox"
 
 // Settings are the deployment values a sandbox compose file needs.
 type Settings struct {
