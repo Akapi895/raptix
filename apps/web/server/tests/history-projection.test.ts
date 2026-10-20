@@ -87,6 +87,7 @@ describe('RunService.snapshot history attachment', () => {
       catalog: async () => [],
       thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'success' }),
       threadExists: async () => true,
+      transcripts: async () => ({ events: [{ seq: 1, event: { type: 'subagent_end', agent: 'recon', session_id: 's1', created_at: '2026-10-02T00:00:01.000000+00:00', elapsed: 1.5, status: 'success' } }], oldestSeq: 1 }),
       state: async () => ({ values: {
         messages: [{ type: 'human', id: 'm1', content: 'Question' }, { type: 'ai', id: 'm2', content: 'Answer' }],
         subagent_transcripts: [{ type: 'subagent_end', agent: 'recon', session_id: 's1', created_at: '2026-10-02T00:00:01.000000+00:00', elapsed: 1.5, status: 'success' }],

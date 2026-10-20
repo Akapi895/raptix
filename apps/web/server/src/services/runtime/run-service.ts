@@ -21,6 +21,9 @@ const refusal = (payload: { reason?: unknown } | null, fallback: string): Projec
   if (reason !== null && REFUSAL_TEXT[reason] !== undefined) return new ProjectPolicyError('conflict', REFUSAL_TEXT[reason]);
   return new ProjectPolicyError('conflict', reason === null ? `${fallback}.` : `${fallback} (${reason}).`);
 };
+/** Messages per snapshot page (newest first); older pages are requested with `before`. Longest content kept per message. */
+export const SNAPSHOT_PAGE_SIZE = 50;
+const SNAPSHOT_CONTENT_LIMIT = 20000;
 const terminal = (status: string): boolean => ['success', 'error', 'timeout', 'interrupted'].includes(status);
 function metadata(actual: Record<string, unknown>, expected: Record<string, string>): void {
   if (Object.entries(expected).some(([k, v]) => actual[k] !== v)) throw conflict();
@@ -87,6 +90,7 @@ export class RunService {
     /** ADR-0092: when set, each call resolves the endpoint of its own engagement; the fixed ports are the legacy path. */
     router?: RuntimeRouter
     authorizeMutation?: (user: string, engagement: string, kind: 'planning' | 'execution', threadId: string | null) => Promise<void>
+    prepareEnvironment?: (user: string, engagement: string, requestId: string) => Promise<void>
     operations?: RunOperationPort
     audit?: (actorId: string, engagementId: string, action: string, targetId: string, reason: string) => Promise<void>
     /** An audit write that failed after its action already took effect. Defaults to silence; a deployment wires logging. */
@@ -122,13 +126,15 @@ export class RunService {
   public async createThread(user: string, engagement: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId, intent, selection } = parseThreadCreate(raw);
     const { ownership, context } = this.options;
-    const runtime = await this.execution(engagement);
     const replay = await ownership.replay(user, engagement, requestId, 'create_thread', intent);
     if (replay) return replay;
     let trusted: TrustedRuntimeContext;
+    let runtime: RuntimeExecutionPort;
     try {
+      await this.options.authorizeMutation?.(user, engagement, selection.kind, null);
+      if (selection.kind === 'planning') await this.options.prepareEnvironment?.(user, engagement, requestId);
+      runtime = await this.execution(engagement);
       trusted = await context.resolve(user, engagement, selection);
-      await this.options.authorizeMutation?.(user, engagement, trusted.kind, null);
       if (!trusted.configurable.authorization_confirmed) throw conflict();
     } catch (error) {
       const winner = await ownership.replay(user, engagement, requestId, 'create_thread', intent);
@@ -352,6 +358,21 @@ export class RunService {
   public async listThreads(user: string, engagement: string): Promise<{ engagementId: string; threads: ThreadBindingView[]; source: 'runtime' }> {
     const threads = await this.options.ownership.listBindings(user, engagement);
     return { engagementId: engagement, threads, source: 'runtime' };
+  }
+  /** Legacy work must be quiescent before a managed environment takes over the deployment. */
+  public async isQuiescent(user: string, engagement: string): Promise<boolean> {
+    const limit = 100;
+    const bindings = await this.options.ownership.listBindings(user, engagement, limit + 1);
+    if (bindings.length > limit) return false;
+    for (const binding of bindings) {
+      const operation = await this.operation(user, engagement, binding.threadId);
+      if (['pending', 'running', 'interrupted'].includes(operation.latestRunStatus ?? '')) return false;
+      if (['paused', 'pause_requested'].includes(operation.state)) return false;
+      const state = await this.threadState(user, engagement, binding.threadId);
+      if (findPendingQuestions(state.values, state.tasks).length) return false;
+    }
+    const roster = await this.listInstances(user, engagement);
+    return roster.threads.every(thread => thread.read === 'read' && thread.reason === null) && roster.instances.every(instance => instance.terminal);
   }
   /**
    * P10b roster: the dispatch instances of every thread bound to the engagement,
@@ -590,7 +611,7 @@ export class RunService {
     }
     return current;
   }
-  public async snapshot(user: string, engagement: string, thread: string): Promise<ScopedThreadView> {
+  public async snapshot(user: string, engagement: string, thread: string, page: { before?: number; limit: number } = { limit: SNAPSHOT_PAGE_SIZE }): Promise<ScopedThreadView> {
     const { ownership, context } = this.options;
     const reads = await this.readPort(engagement);
     const binding = await ownership.getBinding(user, engagement, thread);
@@ -599,24 +620,28 @@ export class RunService {
     const { values, tasks } = await this.threadState(user, engagement, thread);
     const messages: ScopedThreadView['messages'] = [];
     const history = Array.isArray(values.messages) ? values.messages : [];
-    let truncated = history.length > 50;
-    for (const value of history.slice(-50)) {
+    // One page ending at `before` (default: the newest message). `olderCursor` is where the next older page ends.
+    const end = Math.min(page.before ?? history.length, history.length);
+    const start = Math.max(0, end - page.limit);
+    const olderCursor = start > 0 ? start : null;
+    for (const value of history.slice(start, end)) {
       if (typeof value !== 'object' || value === null) continue;
       const { type, role, content, id, additional_kwargs } = value as Record<string, unknown>;
       const tag = role ?? type;
       if (typeof tag !== 'string' || !['user', 'human', 'assistant', 'ai'].includes(tag)) continue;
-      if (typeof content !== 'string') { truncated = true; continue; }
-      if (content.length > 8000) truncated = true;
+      if (typeof content !== 'string') continue;
       const messageId = typeof id === 'string' && id.length > 0 && id.length <= 256 ? id : null;
       const kwargs = typeof additional_kwargs === 'object' && additional_kwargs !== null ? additional_kwargs as Record<string, unknown> : {};
       const reasoning = typeof kwargs.reasoning_content === 'string' && kwargs.reasoning_content ? kwargs.reasoning_content.slice(0, 16000) : undefined;
-      messages.push({ role: ['user', 'human'].includes(String(tag)) ? 'user' : 'assistant', content: content.slice(0, 8000), messageId, ...(reasoning ? { reasoning } : {}) });
+      messages.push({ role: ['user', 'human'].includes(String(tag)) ? 'user' : 'assistant', content: content.slice(0, SNAPSHOT_CONTENT_LIMIT), messageId, ...(reasoning ? { reasoning } : {}) });
     }
     const scope = { engagementId: engagement, threadId: thread, runId: '' };
-    const transcripts = projectThreadHistory(scope, values);
+    // Sub-agent events come from the sidecar (checkpoint state slimming, option E); `older` marks a longer history.
+    const transcriptPage = await reads.transcripts(thread, null, 500);
+    const transcripts = projectThreadHistory(scope, values, { events: transcriptPage.events.map((row) => row.event), older: transcriptPage.oldestSeq !== null && transcriptPage.oldestSeq > 1 });
     const pendingQuestions = findPendingQuestions(values, tasks);
     const pendingQuestion = pendingQuestions[0];
-    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated, ...(pendingQuestion ? { pendingQuestion } : {}), ...(pendingQuestions.length > 0 ? { pendingQuestions } : {}) };
+    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: olderCursor !== null, olderCursor, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated, ...(pendingQuestion ? { pendingQuestion } : {}), ...(pendingQuestions.length > 0 ? { pendingQuestions } : {}) };
   }
   public async reconcile(user: string, engagement: string, requestId: string): Promise<RequestRecoveryView> {
     const { ownership, context } = this.options;

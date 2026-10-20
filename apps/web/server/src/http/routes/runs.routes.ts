@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { LocalIdentity } from '../../auth/identity-provider.js';
 import type { RunService } from '../../services/runtime/run-service.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
+import { SNAPSHOT_PAGE_SIZE } from '../../services/runtime/run-service.js';
 import { runProjectsHandler } from './projects.routes.js';
 
 export function registerRunRoutes(app: FastifyInstance, service: RunService, identity: LocalIdentity): void {
@@ -68,7 +69,12 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
   app.get(`${prefix}/threads/:thread`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');
     const { id, thread } = request.params as { id: string; thread: string };
-    return service.snapshot(identity.id, id, thread);
+    const query = request.query as { before?: string; limit?: string };
+    const before = query.before === undefined ? undefined : Number(query.before);
+    const limit = query.limit === undefined ? undefined : Number(query.limit);
+    if (before !== undefined && (!Number.isInteger(before) || before < 0)) throw new ProjectPolicyError('bad_request', 'before must be a non-negative message index.');
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 200)) throw new ProjectPolicyError('bad_request', 'limit must be between 1 and 200.');
+    return service.snapshot(identity.id, id, thread, { before, limit: limit ?? SNAPSHOT_PAGE_SIZE });
   }));
   app.get(`${prefix}/threads/:thread/runs`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');

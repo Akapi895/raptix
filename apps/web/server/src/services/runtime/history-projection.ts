@@ -17,12 +17,16 @@ import { projectCustomPayload, projectStreamFrame } from './stream-projection.js
  */
 const transcriptLimit = 500;
 const marker = '…[truncated]';
-export function projectThreadHistory(scope: StreamScope, values: Record<string, unknown>): { transcripts: ThreadHistoryEvent[]; transcriptsTruncated: boolean } {
-  const raw = values.subagent_transcripts;
+/**
+ * `sidecar` is the newest page of the durable transcript store; `older` says events exist before that page. Without
+ * it the function reads the legacy `values.subagent_transcripts` channel, which only old checkpoints still carry.
+ */
+export function projectThreadHistory(scope: StreamScope, values: Record<string, unknown>, sidecar?: { events: readonly unknown[]; older: boolean }): { transcripts: ThreadHistoryEvent[]; transcriptsTruncated: boolean } {
+  const raw = sidecar ? sidecar.events : values.subagent_transcripts;
   const recent = Array.isArray(raw) ? raw.slice(-transcriptLimit) : [];
   const transcripts: ThreadHistoryEvent[] = [];
   const seen = new Set<string>();
-  let lossy = raw !== undefined && (!Array.isArray(raw) || raw.length > transcriptLimit);
+  let lossy = (raw !== undefined && (!Array.isArray(raw) || raw.length > transcriptLimit)) || (sidecar?.older ?? false);
   if (Array.isArray(values.messages)) {
     lossy ||= values.messages.length > transcriptLimit;
     const events = projectStreamFrame(scope, { event: 'values', data: JSON.stringify({ messages: values.messages.slice(-transcriptLimit) }) }, 'checkpoint-history');
