@@ -28,7 +28,6 @@ const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileTe
 }
 
 /** Shared read states for the migrated catalog tabs (ticket 34). */
-// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function ReadError({ error, retry }: { error: unknown; retry: () => void }) {
   return (
     <Empty icon={AlertTriangle} title="Could not load reports" action={<Button onClick={retry}>Retry</Button>}>
@@ -37,7 +36,6 @@ function ReadError({ error, retry }: { error: unknown; retry: () => void }) {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function ReportsPage() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -71,7 +69,6 @@ function ReportsPage() {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function ReportList() {
   const pid = useProjectStore((s) => s.pid)
   const persistFilters = useSessionStore((s) => s.persistFilters)
@@ -145,7 +142,6 @@ function ReportList() {
 }
 
 /** P06 (real mode): a new immutable template version. Sections are one per line; a trailing * marks a required section. */
-// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function TemplateCreateForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const writes = useReportWrites()
   const toast = useToastStore((s) => s.toast)
@@ -167,8 +163,8 @@ function TemplateCreateForm({ onDone, onCancel }: { onDone: () => void; onCancel
   </div></Card>
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 /** Real-mode template gallery (P06): the versioned templates the server holds, and an admin/manager create form. */
+// eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function RealTemplates() {
   const me = useMe()
   const tpls = useTemplates()
@@ -222,10 +218,12 @@ function RealTemplates() {
 }
 
 /** Simulated template gallery: mock-only authority; real mode never reaches it. */
+// eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function Templates() {
   return isRealMode() ? <RealTemplates /> : <SimulatedTemplates />
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function SimulatedTemplates() {
   const services = useServices()
   const me = useMe()
@@ -292,7 +290,6 @@ function SimulatedTemplates() {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function Exports() {
   const me = useMe()
   const can = useCan()
