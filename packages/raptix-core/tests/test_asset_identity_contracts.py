@@ -53,3 +53,18 @@ def test_asset_id_separates_kind_and_namespace() -> None:
 def test_asset_id_requires_engagement() -> None:
     with pytest.raises(ValueError):
         asset_id("", AssetRef(AssetKind.HOST, "default", "10.0.0.5"))
+
+
+def test_separator_inside_fields_cannot_forge_another_identity() -> None:
+    # Joined with ":" both tuples read "host:a:b:c"; length-prefixed fields keep them apart.
+    first = AssetRef(AssetKind.HOST, "a:b", "c")
+    second = AssetRef(AssetKind.HOST, "a", "b:c")
+    assert asset_id("eng", first) != asset_id("eng", second)
+
+
+def test_multibyte_fields_are_length_counted_in_bytes() -> None:
+    ref = AssetRef(AssetKind.DNS_NAME, "default", "bán.example")
+    assert asset_id("eng", ref) == asset_id("eng", ref)
+    assert asset_id("eng", ref) != asset_id(
+        "eng", AssetRef(AssetKind.DNS_NAME, "default", "ban.example")
+    )
