@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http';
 import { afterEach, describe, expect, it } from 'vitest';
 import { isAssetMapDetail } from '@raptix/web-contracts';
-import { AssetMapInputError, AssetMapNotFoundError, AssetMapService } from '../src/services/asset-map-service.js';
+import { AssetMapInputError, AssetMapNotFoundError, AssetMapService, catalogIdForWebAsset } from '../src/services/asset-map-service.js';
 import { GraphUnavailableError, type GraphConfig, assetIdFor } from '../src/services/graph-service.js';
 import { ProjectApiError } from '../src/services/projects-service.js';
 
@@ -22,10 +22,35 @@ function row(kind: string, canonicalKey: string) {
 
 const HOST = row('host', '10.0.0.5');
 const ORIGIN = row('web_origin', 'http://app.example.com:80');
+const DNS = row('dns_name', 'app.example.com');
 
-/** Prisma surface the service touches: the owner, one viewer, and two catalog rows. */
+/** Web inventory: two host identifiers the catalog can resolve, and two it cannot (a URL and an IPv6 address). */
+const WEB_ASSETS = [
+  { id: 'wa-ip', kind: 'host', identifier: '10.0.0.5' },
+  { id: 'wa-dns', kind: 'host', identifier: 'App.Example.com.' },
+  { id: 'wa-url', kind: 'web_url', identifier: 'http://10.0.0.5:8080' },
+  { id: 'wa-v6', kind: 'host', identifier: 'fe80::1' },
+];
+/** Findings with their owning record: three name a web asset, one names none. */
+const FINDINGS = [
+  { id: 'f-1', title: 'Open admin panel', severity: 'high', status: 'draft', assetId: 'wa-ip', updatedAt: new Date('2026-10-20T11:00:00Z') },
+  { id: 'f-2', title: 'Weak TLS', severity: 'medium', status: 'confirmed', assetId: 'wa-ip', updatedAt: new Date('2026-10-20T10:00:00Z') },
+  { id: 'f-3', title: 'Stale banner', severity: 'low', status: 'draft', assetId: 'wa-dns', updatedAt: new Date('2026-10-20T09:00:00Z') },
+  { id: 'f-4', title: 'On a URL', severity: 'low', status: 'draft', assetId: 'wa-url', updatedAt: new Date('2026-10-20T08:00:00Z') },
+  { id: 'f-5', title: 'No owner', severity: 'info', status: 'draft', assetId: null, updatedAt: new Date('2026-10-20T07:00:00Z') },
+];
+
+/** Prisma surface the service touches: the owner, one viewer, catalog rows, web inventory and findings. */
 function fakeDb() {
-  const rows = [HOST, ORIGIN];
+  const rows = [HOST, ORIGIN, DNS];
+  const linkedTo = (where: { assetId?: unknown }) => {
+    const ids = (where.assetId as { in?: string[] } | undefined)?.in;
+    return ids === undefined ? FINDINGS : FINDINGS.filter(item => item.assetId !== null && ids.includes(item.assetId));
+  };
+  const unlinkedOf = (where: { OR?: Array<{ assetId: null | { notIn: string[] } }> }) => {
+    const notIn = where.OR?.find(clause => clause.assetId !== null && typeof clause.assetId === 'object')?.assetId as { notIn: string[] };
+    return FINDINGS.filter(item => item.assetId === null || (notIn !== undefined && !notIn.notIn.includes(item.assetId)));
+  };
   return {
     engagement: {
       findFirst: async ({ where }: { where: { id: string } }) => (where.id === ENGAGEMENT ? { id: ENGAGEMENT, userId: OWNER } : null),
@@ -38,6 +63,18 @@ function fakeDb() {
     assetIdentity: {
       findFirst: async ({ where }: { where: { engagementId: string; id: string } }) =>
         rows.find(item => item.engagementId === where.engagementId && item.id === where.id) ?? null,
+    },
+    webAsset: {
+      findMany: async () => WEB_ASSETS,
+    },
+    findingRecord: {
+      findMany: async ({ where, take }: { where: { assetId?: unknown }; take?: number }) => linkedTo(where).slice(0, take),
+      groupBy: async ({ where }: { where: { assetId?: unknown } }) => {
+        const counts = new Map<string, number>();
+        for (const item of linkedTo(where)) counts.set(item.status, (counts.get(item.status) ?? 0) + 1);
+        return [...counts].map(([status, n]) => ({ status, _count: { _all: n } }));
+      },
+      count: async ({ where }: { where: { OR?: Array<{ assetId: null | { notIn: string[] } }> } }) => unlinkedOf(where).length,
     },
   } as never;
 }
@@ -177,5 +214,44 @@ describe('domain detail: access and failures', () => {
   it('reports an unreachable graph as unavailable, which the route answers with 503 and never an empty view', async () => {
     const service = new AssetMapService(fakeDb(), { httpUri: 'http://127.0.0.1:1', user: 'neo4j', password: 'x' });
     await expect(service.detail(OWNER, ENGAGEMENT, HOST.id, null, 50)).rejects.toBeInstanceOf(GraphUnavailableError);
+  });
+});
+
+const UNUSED_GRAPH: GraphConfig = { httpUri: 'http://127.0.0.1:1', user: 'neo4j', password: 'x' };
+
+describe('findings on an asset', () => {
+  it('links a finding only through an owning web asset that resolves to the asset, without the graph', async () => {
+    const view = await new AssetMapService(fakeDb(), UNUSED_GRAPH).overlay(OWNER, ENGAGEMENT, HOST.id);
+    expect(view.linked.total).toBe(2);
+    expect(view.linked.byStatus).toEqual({ draft: 1, confirmed: 1 });
+    expect(view.linked.items.map(item => item.id)).toEqual(['f-1', 'f-2']);
+    expect(view.unlinkedFindings).toBe(2);
+  });
+
+  it('links the finding of a DNS-name asset to that asset and leaves the rest unlinked', async () => {
+    const view = await new AssetMapService(fakeDb(), UNUSED_GRAPH).overlay(OWNER, ENGAGEMENT, DNS.id);
+    expect(view.linked.items.map(item => item.id)).toEqual(['f-3']);
+    expect(view.unlinkedFindings).toBe(2);
+  });
+
+  it('reports no linked findings for an origin, since no web asset resolves to an origin yet', async () => {
+    const view = await new AssetMapService(fakeDb(), UNUSED_GRAPH).overlay(OWNER, ENGAGEMENT, ORIGIN.id);
+    expect(view.linked).toEqual({ total: 0, byStatus: {}, items: [] });
+    expect(view.unlinkedFindings).toBe(2);
+  });
+
+  it('keeps a stranger out of the overlay the same way as the rest of the asset map', async () => {
+    await expect(new AssetMapService(fakeDb(), UNUSED_GRAPH).overlay('stranger-1', ENGAGEMENT, HOST.id)).rejects.toBeInstanceOf(ProjectApiError);
+  });
+});
+
+describe('web inventory identities', () => {
+  it('resolves IPv4 and DNS host identifiers the way the catalog does, and nothing else', () => {
+    expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: '10.0.0.5' })).toBe(HOST.id);
+    expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: 'App.Example.com.' })).toBe(DNS.id);
+    expect(catalogIdForWebAsset(SLUG, { kind: 'web_url', identifier: 'http://10.0.0.5:8080' })).toBeNull();
+    expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: 'fe80::1' })).toBeNull();
+    // Leading zeros are not an IPv4 address, so the runtime reads it as a DNS name; the web side must agree.
+    expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: '010.0.0.5' })).toBe(assetIdFor(SLUG, 'dns_name', 'default', '010.0.0.5'));
   });
 });

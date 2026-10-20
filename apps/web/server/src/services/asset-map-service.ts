@@ -1,7 +1,7 @@
-import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapEvidenceRef, AssetMapKind, AssetMapMembersPage, AssetMapNeighborhood, AssetMapNeighborNode, AssetMapOverview, AssetMapSearchResult } from '@raptix/web-contracts';
+import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapEvidenceRef, AssetMapKind, AssetMapMembersPage, AssetMapNeighborhood, AssetMapNeighborNode, AssetMapOverlay, AssetMapOverview, AssetMapSearchResult } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { requireEngagementAccess } from '../auth/membership-policy.js';
-import { neo4jQuery, type GraphConfig } from './graph-service.js';
+import { assetIdFor, neo4jQuery, type GraphConfig } from './graph-service.js';
 import { ProjectNotFoundError } from './projects-service.js';
 
 /**
@@ -25,6 +25,7 @@ export const ASSET_MAP_LIMITS = {
   detailMax: 100,
   detailBytes: 512 * 1024,
   evidenceMax: 20,
+  overlayItems: 20,
 } as const;
 
 const ASSET_ID = /^asset_[0-9a-f]{32}$/;
@@ -175,6 +176,22 @@ const ENDPOINT_PAGE_STATEMENT = [
   'ORDER BY e.path, e.method SKIP $skip LIMIT $limit',
 ].join(' ');
 
+const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+const DNS_NAME = /^[a-z0-9_-]+(?:\.[a-z0-9_-]+)*$/;
+
+/**
+ * Catalog identity of a WebAsset that its owning record names as a host: an IPv4 address or a DNS name,
+ * canonicalized the way the runtime canonicalizes them (ADR-0094). Other kinds and identifiers have no
+ * catalog identity here, so findings on them stay unlinked rather than being matched by guesswork.
+ */
+export function catalogIdForWebAsset(slug: string, item: { kind: string; identifier: string }): string | null {
+  if (item.kind !== 'host') return null;
+  const value = item.identifier.trim().replace(/\.$/, '').toLowerCase();
+  if (IPV4.test(value)) return assetIdFor(slug, 'host', 'default', value);
+  if (DNS_NAME.test(value)) return assetIdFor(slug, 'dns_name', 'default', value);
+  return null;
+}
+
 export class AssetMapService {
   public constructor(private readonly db: PrismaClient, private readonly config: GraphConfig) {}
 
@@ -291,6 +308,40 @@ export class AssetMapService {
       edges: kept,
       nextCursor: hasMore ? encodeCursor(revision, skip + kept.length) : null,
       completeness: { loaded: kept.length, total: null, hasMore, truncated: cutByBudget, source: { catalog: 'ok', graph: 'ok' }, revision },
+    };
+  }
+
+  /**
+   * Findings on one asset. A finding is linked only through its owning record: a WebAsset whose identifier
+   * resolves to this catalog asset. Every other finding of the engagement is counted as unlinked.
+   */
+  public async overlay(actorId: string, engagementId: string, assetId: string): Promise<AssetMapOverlay> {
+    const slug = await this.access(actorId, engagementId);
+    if (!ASSET_ID.test(assetId)) throw new AssetMapInputError('assetId is malformed');
+    const row = await this.db.assetIdentity.findFirst({ where: { engagementId, id: assetId } });
+    if (row === null) throw new AssetMapNotFoundError('asset not found in this engagement');
+    const webAssets = await this.db.webAsset.findMany({ where: { engagementId }, select: { id: true, kind: true, identifier: true } });
+    const catalogOf = new Map<string, string>();
+    for (const item of webAssets) {
+      const catalogId = catalogIdForWebAsset(slug, item);
+      if (catalogId !== null) catalogOf.set(item.id, catalogId);
+    }
+    const linkedWebAssetIds = [...catalogOf].filter(([, catalogId]) => catalogId === assetId).map(([webAssetId]) => webAssetId);
+    const mappedWebAssetIds = [...catalogOf.keys()];
+    const linkedWhere = { engagementId, assetId: { in: linkedWebAssetIds } };
+    const [items, groups, unlinked] = await Promise.all([
+      linkedWebAssetIds.length === 0
+        ? []
+        : this.db.findingRecord.findMany({ where: linkedWhere, select: { id: true, title: true, severity: true, status: true }, orderBy: { updatedAt: 'desc' }, take: ASSET_MAP_LIMITS.overlayItems }),
+      linkedWebAssetIds.length === 0 ? [] : this.db.findingRecord.groupBy({ by: ['status'], where: linkedWhere, _count: { _all: true } }),
+      this.db.findingRecord.count({ where: { engagementId, OR: [{ assetId: null }, { assetId: { notIn: mappedWebAssetIds } }] } }),
+    ]);
+    const byStatus = Object.fromEntries(groups.map(group => [group.status, group._count._all]));
+    return {
+      engagementId,
+      asset: toRef(row),
+      linked: { total: Object.values(byStatus).reduce((sum, count) => sum + count, 0), byStatus, items },
+      unlinkedFindings: unlinked,
     };
   }
 
