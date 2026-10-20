@@ -42,6 +42,9 @@ export function AssetMapCanvas({ elements, onSelectAsset }: Props) {
       const assetId = event.target.data('assetId') as string | null
       if (assetId) select.current(assetId)
     })
+    instance.on('zoom', () => {
+      if (container.current) container.current.dataset.zoom = instance.zoom().toFixed(2)
+    })
     core.current = instance
     return () => {
       instance.destroy()
@@ -68,7 +71,11 @@ export function AssetMapCanvas({ elements, onSelectAsset }: Props) {
         added.layout({ name: 'breadthfirst', directed: true, fit: false, animate: false, spacingFactor: 1.2 }).run()
       }
     })
+    if (container.current) {
+      container.current.dataset.nodeCount = String(instance.nodes().length)
+      container.current.dataset.edgeCount = String(instance.edges().length)
+    }
   }, [elements])
 
-  return <div ref={container} data-testid="asset-map-canvas" role="img" aria-label="Asset relationship map" className="h-[420px] w-full rounded border border-slate-300 bg-white" />
+  return <div ref={container} data-testid="asset-map-canvas" role="img" aria-label="Asset relationship map" data-zoom="1.00" className="h-[420px] w-full rounded border border-slate-300 bg-white" />
 }

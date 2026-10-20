@@ -1,6 +1,6 @@
 import type { AssetMapNeighborhood } from '@raptix/web-contracts'
 import { describe, expect, it } from 'vitest'
-import { toCanvasElements } from './graph-model'
+import { toCanvasElements, VISIBLE_NODE_BUDGET } from './graph-model'
 
 const completeness = { loaded: 2, total: null, hasMore: false, truncated: false, source: { catalog: 'ok', graph: 'ok' }, revision: 'rev-1' } as const
 
@@ -41,5 +41,21 @@ describe('toCanvasElements', () => {
   it('drops an edge whose far end was not loaded so a cut page never draws a dangling line', () => {
     const { edges } = toCanvasElements(neighborhood({ edges: [{ id: '5:9', source: '4:host', target: '4:missing', type: 'HOSTS' }] }))
     expect(edges).toEqual([])
+  });
+});
+
+describe('visible budget', () => {
+  it('draws at most the node budget and counts what was left out', () => {
+    const many = Array.from({ length: VISIBLE_NODE_BUDGET + 30 }, (_, i) => ({ id: `4:n${i}`, assetId: null, labels: ['Service'], label: `svc-${i}` }))
+    const elements = toCanvasElements(neighborhood({ nodes: many, edges: [] }))
+    // The centre counts against the budget: 1 centre + 30 extra services are loaded beyond the 100 drawn.
+    expect(elements.nodes.length).toBe(VISIBLE_NODE_BUDGET)
+    expect(elements.hiddenNodes).toBe(31)
+  });
+
+  it('never hides a centre, even when the budget is full', () => {
+    const many = Array.from({ length: VISIBLE_NODE_BUDGET + 5 }, (_, i) => ({ id: `4:n${i}`, assetId: null, labels: ['Service'], label: `svc-${i}` }))
+    const { nodes } = toCanvasElements(neighborhood({ nodes: many, edges: [] }))
+    expect(nodes.some(node => node.data.id === '4:host')).toBe(true)
   });
 });
