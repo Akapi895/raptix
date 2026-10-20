@@ -2,7 +2,7 @@
 
 - **Plan:** [implementation plan](2026-10-20-asset-map-implementation-plan.md)
 - **Branch:** `asset-map`. Không push, không mở PR. Commit không có trailer AI, theo `CLAUDE.md` của repo.
-- **Lượt này:** 20 commit từ `ca3c78ec` đến `fa7d8e57` (`git log ca3c78ec..HEAD`). Lượt trước là gate phase 1–8 đầu tiên.
+- **Lượt này:** các commit sau `ca3c78ec` (`git log ca3c78ec..HEAD`). Lượt trước là gate phase 1–8 đầu tiên. Ứng dụng đang chạy trên stack là đúng code của `HEAD` ở các phần runtime, API và UI; sau lần triển khai cuối chỉ đổi test, tài liệu và công cụ kiểm chứng.
 - **Máy đo:** Windows 11, Intel Core i9-13900HX, Docker Desktop. Neo4j Community 5.26 (dev stack, `127.0.0.1:7688`), PostgreSQL 16 (dev stack, `127.0.0.1:5433`).
 
 ## Trạng thái tổng
