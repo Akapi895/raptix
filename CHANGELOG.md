@@ -14,6 +14,12 @@ design spec, §13.4).
   `asset_id()` shared by the runtime and the Web catalog (ADR-0094). Runtime locator
   normalization for hosts, DNS names and web origins lives in
   `raptix.knowledge.graph.asset_identity`.
+- Runtime: nmap and httpx ingest stamp `asset_id` and its parts onto Host and Entrypoint
+  nodes; existing node keys are unchanged.
+- Web console: `POST /api/engagements/:id/assets/catalog/reconcile` upserts the additive
+  `AssetIdentity` catalog from KG identity nodes (operator role, idempotent, rejected rows
+  reported by reason). Migration `20261031000100_asset_identity` is additive; its rollback
+  script lives in `prisma/rollback/`.
 - Web console: planning documents gain server-side drafts with a digest
   precondition (O06, ADR-0083) — the Planning panel can open a source/draft
   editor for every allowlisted plan document; drafts persist in Postgres,

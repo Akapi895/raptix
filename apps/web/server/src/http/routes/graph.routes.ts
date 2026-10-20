@@ -26,4 +26,5 @@ export function registerGraphRoutes(app: FastifyInstance, graphs: GraphService, 
     });
   app.get(`${prefix}/graph`, handler(id => graphs.graph(identity.id, id)));
   app.get(`${prefix}/assets`, handler(id => graphs.assets(identity.id, id)));
+  app.post(`${prefix}/assets/catalog/reconcile`, handler(id => graphs.reconcileCatalog(identity.id, id)));
 }
