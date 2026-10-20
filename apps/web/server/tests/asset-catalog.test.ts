@@ -6,13 +6,26 @@ import type { GraphConfig } from '../src/services/graph-service.js';
 const SLUG = 'w13-graph-proj';
 
 // Expected values produced by raptix_core.types.asset.asset_id (Python) for the same inputs.
-const PYTHON_HOST_ID = 'asset_c6102d397ce0da5a2cc12930f027d2b9';
-const PYTHON_ORIGIN_ID = 'asset_55b8f466a41ed6e19f6d69460cb63e2f';
+const PYTHON_HOST_ID = 'asset_fa64cc84d789a09af51956bc796c2d55';
+const PYTHON_ORIGIN_ID = 'asset_eb603c8daf819e88969327db14086070';
+const PYTHON_COLON_FIELD_ID = 'asset_32e5bfbf48541f46b62e722cfff2863b';
+const PYTHON_COLON_FIELD_ALT_ID = 'asset_47a2b51c167330a4cbb034a00da013b2';
+const PYTHON_MULTIBYTE_ID = 'asset_ddcdb32a57893dd1b2a5ca3197299129';
 
 describe('assetIdFor parity with raptix_core', () => {
   it('derives the same identifiers as the Python runtime', () => {
     expect(assetIdFor(SLUG, 'host', 'default', '10.0.0.5')).toBe(PYTHON_HOST_ID);
     expect(assetIdFor(SLUG, 'web_origin', 'default', 'https://app.example.com:443')).toBe(PYTHON_ORIGIN_ID);
+  });
+
+  it('keeps separator-like content from forging another identity, matching Python', () => {
+    expect(assetIdFor(SLUG, 'host', 'a:b', 'c')).toBe(PYTHON_COLON_FIELD_ID);
+    expect(assetIdFor(SLUG, 'host', 'a', 'b:c')).toBe(PYTHON_COLON_FIELD_ALT_ID);
+    expect(PYTHON_COLON_FIELD_ID).not.toBe(PYTHON_COLON_FIELD_ALT_ID);
+  });
+
+  it('counts multi-byte fields in UTF-8 bytes, matching Python', () => {
+    expect(assetIdFor(SLUG, 'dns_name', 'default', 'bán.example')).toBe(PYTHON_MULTIBYTE_ID);
   });
 });
 
@@ -57,11 +70,11 @@ describe('GraphService.reconcileCatalog', () => {
   it('catalogues valid identities once and reports every rejected row by reason', async () => {
     const host = assetIdFor(SLUG, 'host', 'default', '10.0.0.5');
     const { server, config } = await neo4jRows([
-      [host, 'host', 'default', '10.0.0.5', 1],
-      [host, 'host', 'default', '10.0.0.5', 1],
-      ['asset_00000000000000000000000000000000', 'host', 'default', '10.0.0.6', 1],
-      [assetIdFor(SLUG, 'printer', 'default', 'lobby'), 'printer', 'default', 'lobby', 1],
-      [assetIdFor(SLUG, 'host', 'default', '10.0.0.7', 2), 'host', 'default', '10.0.0.7', 2],
+      [host, 'host', 'default', '10.0.0.5', 2],
+      [host, 'host', 'default', '10.0.0.5', 2],
+      ['asset_00000000000000000000000000000000', 'host', 'default', '10.0.0.6', 2],
+      [assetIdFor(SLUG, 'printer', 'default', 'lobby'), 'printer', 'default', 'lobby', 2],
+      [assetIdFor(SLUG, 'host', 'default', '10.0.0.7', 99), 'host', 'default', '10.0.0.7', 99],
     ]);
     servers.push(server);
 
@@ -72,7 +85,7 @@ describe('GraphService.reconcileCatalog', () => {
     expect(report.observed).toBe(5);
     expect(report.created).toBe(1);
     expect(created).toEqual([
-      { id: host, engagementId: 'eng-1', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.5', keyVersion: 1 },
+      { id: host, engagementId: 'eng-1', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.5', keyVersion: 2 },
     ]);
     expect(report.rejected.sort((a, b) => a.reason.localeCompare(b.reason))).toEqual([
       { reason: 'id_mismatch', count: 1 },

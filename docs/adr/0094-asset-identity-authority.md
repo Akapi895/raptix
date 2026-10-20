@@ -29,3 +29,12 @@ Assets are identified three different ways today: the Web inventory uses `WebAss
 - **Runtime-issued random IDs reconciled into the catalog.** Rejected: two writers for the same asset would need a merge step before they can agree.
 - **Neo4j as the identity authority.** Rejected: Web business ownership and scope bindings must live in the relational store that owns them.
 - **Synchronous Web call before every KG write.** Rejected: observations must be recorded while the Web server is unavailable.
+
+## Amendment: key version 2 (2026-10-20)
+
+Version 1 joined fields with `:` and `\x1f`, so `(namespace="a:b", canonicalKey="c")` and
+`(namespace="a", canonicalKey="b:c")` produced the same identity. Version 2 writes every field as
+`<utf-8 byte length>:<value>` before hashing, in both `raptix_core.types.asset.asset_id` and
+`assetIdFor` in the Web server, and `ASSET_KEY_VERSION` becomes 2. No version-1 identity reached a
+persisted catalog outside development engagements, which were removed, so no identity migration is
+needed. Future changes follow the same rule: bump the version and record the change here.

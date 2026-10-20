@@ -210,7 +210,7 @@ export function toAssetSummaries(view: { nodes: ReadonlyArray<{ id: string; labe
 }
 
 /** Must match raptix_core.types.asset.ASSET_KEY_VERSION (ADR-0094). */
-export const ASSET_KEY_VERSION = 1;
+export const ASSET_KEY_VERSION = 2;
 const ASSET_KINDS: ReadonlySet<string> = new Set(['host', 'dns_name', 'web_origin', 'network_segment', 'cloud_resource', 'identity', 'mobile_app', 'device', 'artifact']);
 const CATALOG_PAGE = 1000;
 
@@ -224,10 +224,14 @@ export interface AssetCatalogReport {
   rejected: Array<{ reason: string; count: number }>;
 }
 
-/** Same derivation as raptix_core.types.asset.asset_id; the KG partition key is the workspace slug. */
+/**
+ * Same derivation as raptix_core.types.asset.asset_id: each field is written as
+ * `<utf-8 byte length>:<value>` so no separator inside a value can forge another
+ * identity. The KG partition key is the workspace slug.
+ */
 export function assetIdFor(workspaceSlug: string, kind: string, namespace: string, canonicalKey: string, keyVersion: number = ASSET_KEY_VERSION): string {
-  const key = `v${keyVersion}:${kind}:${namespace}:${canonicalKey}`;
-  return `asset_${createHash('sha256').update(`${workspaceSlug}\u001f${key}`, 'utf8').digest('hex').slice(0, 32)}`;
+  const encoded = [workspaceSlug, String(keyVersion), kind, namespace, canonicalKey].map(part => `${Buffer.byteLength(part, 'utf8')}:${part}`).join('');
+  return `asset_${createHash('sha256').update(encoded, 'utf8').digest('hex').slice(0, 32)}`;
 }
 
 const CATALOG_STATEMENT = [

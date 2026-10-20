@@ -72,7 +72,8 @@ export function registerAssetMapRoutes(app: FastifyInstance, assets: AssetMapSer
 
   app.get(`${prefix}/assets/:assetId/neighborhood`, handler((request, id) => {
     const { assetId } = request.params as { assetId: string };
-    return assets.neighborhood(identity.id, id, assetId);
+    const query = request.query as { cursor?: string };
+    return assets.neighborhood(identity.id, id, assetId, query.cursor ?? null);
   }));
 
   app.get(`${prefix}/assets/:assetId/detail`, handler((request, id) => {
