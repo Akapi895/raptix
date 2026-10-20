@@ -22,9 +22,9 @@
       ],
       "read_model": "implemented: overview, neighborhood, host detail (services)",
       "renderer": "implemented: Asset Map canvas and inspector (flagged, default off)",
-      "fixture": "apps/web/tests/fixtures/asset-map/network/ (real nmap XML from the lab sandboxes and juice-shop)",
+      "fixture": "apps/web/tests/fixtures/asset-map/network/ (lab nmap XML from the sandboxes and juice-shop) and apps/web/tests/fixtures/asset-map/network/htb-lab/ (nine nmap XML files retained from the benchmark runs; one is truncated and is refused)",
       "verification": "verified-data",
-      "gap": "live acquisition is one scan of three lab hosts; no multi-subnet or large-scan evidence yet"
+      "gap": "nmap UDP output yields hosts only; nmap script output is not ingested; UI check ran on the lab engagement only"
     },
     {
       "name": "web",
@@ -44,7 +44,7 @@
       "renderer": "implemented: sitemap table in the inspector",
       "fixture": "apps/web/tests/fixtures/asset-map/web/ (not yet captured)",
       "verification": "partial",
-      "gap": "no retained web-scanner output: the sandbox httpx is the Python client and katana is not installed; endpoint data is fixture-level only"
+      "gap": "no retained web-scanner output: benchmark runs have no httpx, katana or nuclei output (the sandbox httpx is a Python client and katana is absent); ffuf and gobuster are mentioned only in agent text; no writer exists for ffuf"
     },
     {
       "name": "active-directory",
@@ -62,7 +62,7 @@
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no AD lab running (BloodHound CE is opt-in and not started); no retained BloodHound output in workspace/ or report folders"
+      "gap": "benchmark runs contain only agent text about secretsdump, ldapsearch and smbclient, not tool output; no AD lab running (BloodHound CE is opt-in and not started)"
     },
     {
       "name": "cloud",
