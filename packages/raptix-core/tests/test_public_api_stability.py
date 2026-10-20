@@ -55,6 +55,9 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     ("raptix_core.types.kg", "EdgeKind"),
     ("raptix_core.types.kg", "Severity"),
     ("raptix_core.types.kg", "KnowledgeGraph"),
+    ("raptix_core.types.asset", "AssetKind"),
+    ("raptix_core.types.asset", "AssetRef"),
+    ("raptix_core.types.asset", "asset_id"),
     # raptix_core.types.roe — machine-readable RoE enforcement schema
     ("raptix_core.types.roe", "EnforcementMode"),
     ("raptix_core.types.roe", "ScopeRule"),
@@ -158,7 +161,7 @@ def test_manifest_count_unchanged() -> None:
     a major-version bump is an audit signal.
     """
     # Update this number deliberately when adding/removing public names.
-    expected = 96
+    expected = 99
     actual = len(CORE_PUBLIC_API)
     assert actual == expected, (
         f"CORE_PUBLIC_API has {actual} entries, expected {expected}. "
