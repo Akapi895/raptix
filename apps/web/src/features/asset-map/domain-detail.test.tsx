@@ -6,12 +6,14 @@ const fetchOverview = vi.fn()
 const fetchMembers = vi.fn()
 const fetchNeighborhood = vi.fn()
 const fetchDetail = vi.fn()
+const fetchOverlay = vi.fn()
 
 vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapOverview: (...args: unknown[]) => fetchOverview(...args),
   fetchAssetMapMembers: (...args: unknown[]) => fetchMembers(...args),
   fetchAssetMapNeighborhood: (...args: unknown[]) => fetchNeighborhood(...args),
   fetchAssetMapDetail: (...args: unknown[]) => fetchDetail(...args),
+  fetchAssetMapOverlay: (...args: unknown[]) => fetchOverlay(...args),
 }))
 vi.mock('../../real/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
 vi.mock('./AssetMapCanvas', () => ({ AssetMapCanvas: () => <div data-testid="asset-map-canvas" /> }))
@@ -23,13 +25,14 @@ const provenance = { sources: [{ source: 'katana', count: 2 }], graphNodes: 2, e
 const savedKey = 'raptix.assetMap.selected.user-1.eng-1'
 
 beforeEach(() => {
-  for (const fn of [fetchOverview, fetchMembers, fetchNeighborhood, fetchDetail]) fn.mockReset()
+  for (const fn of [fetchOverview, fetchMembers, fetchNeighborhood, fetchDetail, fetchOverlay]) fn.mockReset()
   globalThis.localStorage.clear()
   useProjectStore.setState({ pid: 'eng-1' })
   fetchOverview.mockResolvedValue({ engagementId: 'eng-1', groups: [], completeness })
   fetchMembers.mockImplementation((_e: string, kind: string) =>
     Promise.resolve({ engagementId: 'eng-1', kind, items: kind === 'host' ? [host] : kind === 'web_origin' ? [origin] : [], nextCursor: null, completeness }))
   fetchNeighborhood.mockResolvedValue({ engagementId: 'eng-1', assetId: 'asset_o', centers: [], nodes: [], edges: [], nextCursor: null, completeness })
+  fetchOverlay.mockResolvedValue({ engagementId: 'eng-1', asset: origin, linked: { total: 0, byStatus: {}, items: [] }, unlinkedFindings: 0 })
 })
 
 afterEach(() => {

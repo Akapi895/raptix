@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapNeighborhood, AssetMapOverview } from '@raptix/web-contracts'
+import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapNeighborhood, AssetMapOverlay, AssetMapOverview } from '@raptix/web-contracts'
 import { useProjectStore } from '../../state/stores'
 import { useSession } from '../../real/session'
 import { ApiTransportError } from '../../real/transport'
@@ -7,6 +7,7 @@ import {
   fetchAssetMapDetail,
   fetchAssetMapMembers,
   fetchAssetMapNeighborhood,
+  fetchAssetMapOverlay,
   fetchAssetMapOverview,
   fetchAssetMapSearch,
 } from '../../real/asset-map-api'
@@ -71,11 +72,15 @@ function Inspector({
   filter,
   onFilter,
   onLoadMore,
+  overlay,
+  overlayError,
 }: {
   detail: AssetMapDetail
   filter: string
   onFilter: (value: string) => void
   onLoadMore: () => void
+  overlay: AssetMapOverlay | null
+  overlayError: string | null
 }) {
   const body = detail.detail
   const [draft, setDraft] = useState(filter)
@@ -109,6 +114,32 @@ function Inspector({
             </li>
           ))}
         </ul>
+      </section>
+      <section aria-label="Work and findings" className="space-y-1">
+        <h4 className="font-semibold">Work and findings</h4>
+        {overlayError ? (
+          <p role="alert" className="text-xs">
+            {overlayError}
+          </p>
+        ) : null}
+        {overlay ? (
+          <>
+            <p className="text-xs" data-testid="linked-findings">
+              Linked findings: {overlay.linked.total}
+              {overlay.linked.total > 0 ? ` (${Object.entries(overlay.linked.byStatus).map(([status, count]) => `${status} ${count}`).join(', ')})` : ''}
+            </p>
+            <ul className="text-xs">
+              {overlay.linked.items.map(item => (
+                <li key={item.id}>
+                  {item.severity} · {item.title} · {item.status}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-slate-600" data-testid="unlinked-findings">
+              Unlinked findings in this engagement: {overlay.unlinkedFindings} (attribution unknown: no owning record names an asset)
+            </p>
+          </>
+        ) : null}
       </section>
       {body.kind === 'services' ? (
         <section aria-label="Services" className="space-y-1">
@@ -232,6 +263,8 @@ export function AssetMapPage() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<AssetMapAssetRef[] | null>(null)
   const [focus, setFocus] = useState<CanvasFocus | null>(null)
+  const [overlay, setOverlay] = useState<AssetMapOverlay | null>(null)
+  const [overlayError, setOverlayError] = useState<string | null>(null)
   /** Every in-flight read carries the token it started under; a result with an old token is dropped. */
   const request = useRef(0)
   const focusCount = useRef(0)
@@ -282,6 +315,16 @@ export function AssetMapPage() {
       .catch(reason => {
         if (token === request.current) setError(describeFailure(reason))
       })
+    // Findings load on their own: a failure here is shown in the inspector and does not hide the map.
+    fetchAssetMapOverlay(engagementId, asset)
+      .then(view => {
+        if (token !== request.current) return
+        setOverlay(view)
+        setOverlayError(null)
+      })
+      .catch(reason => {
+        if (token === request.current) setOverlayError(`Findings for this asset could not be loaded (${reason instanceof Error ? reason.message : 'unknown error'}).`)
+      })
   }
 
   useEffect(() => {
@@ -289,6 +332,8 @@ export function AssetMapPage() {
     setFilter('')
     setNeighborhood(null)
     setDetail(null)
+    setOverlay(null)
+    setOverlayError(null)
     saveSelection(actorId, engagementId, selected)
     loadSelection(selected, '')
     // loadSelection reads the current engagement; it is re-run only when the selection changes.
@@ -471,7 +516,7 @@ export function AssetMapPage() {
       </main>
       <aside>
         {detail ? (
-          <Inspector detail={detail} filter={filter} onFilter={applyFilter} onLoadMore={loadMoreDetail} />
+          <Inspector detail={detail} filter={filter} onFilter={applyFilter} onLoadMore={loadMoreDetail} overlay={overlay} overlayError={overlayError} />
         ) : (
           <p className="text-sm text-slate-600">Select a host or origin to inspect it.</p>
         )}
