@@ -103,53 +103,88 @@ def _types(transcript: list[dict]) -> list[str]:
     return [e["type"] for e in transcript]
 
 
-class TestTranscriptInReturnedState:
-    def test_invoke_returns_transcript_with_expected_event_types(
-        self, writer_renderer: None
+@pytest.fixture
+def sidecar(tmp_path, monkeypatch: pytest.MonkeyPatch):
+    """A fresh per-test transcript sidecar at a temporary path, so no test shares the process-wide store."""
+    import raptix.execution.session.transcript_sidecar as sidecar_module
+
+    monkeypatch.setenv(sidecar_module.PATH_ENV, str(tmp_path / "transcripts.sqlite"))
+    monkeypatch.setattr(sidecar_module, "_default", None)
+    store = sidecar_module.default_sidecar()
+    yield store
+    store.close()
+    monkeypatch.setattr(sidecar_module, "_default", None)
+
+
+def _run_in_thread(wrapper: StreamingRunnable, payload: dict, thread_id: str | None) -> Any:
+    """Invoke the sub-agent wrapper inside a runnable context, so get_config() carries the parent's thread id."""
+    from langchain_core.runnables import RunnableLambda
+
+    config = {"configurable": {"thread_id": thread_id}} if thread_id is not None else {}
+    return RunnableLambda(lambda x: wrapper.invoke(x)).invoke(payload, config)
+
+
+async def _arun_in_thread(wrapper: StreamingRunnable, payload: dict, thread_id: str) -> Any:
+    from langchain_core.runnables import RunnableLambda
+
+    async def go(x: dict) -> Any:
+        return await wrapper.ainvoke(x)
+
+    return await RunnableLambda(go).ainvoke(payload, {"configurable": {"thread_id": thread_id}})
+
+
+def _thread_types(sidecar, thread_id: str) -> list[str]:
+    return [event["type"] for _, event in sidecar.page(thread_id, None, 10_000)]
+
+
+class TestTranscriptInSidecar:
+    def test_invoke_appends_transcript_to_the_sidecar_and_keeps_it_out_of_state(
+        self, writer_renderer: None, sidecar
+    ) -> None:
+        wrapper = StreamingRunnable(FakeSubagentRunnable(_tool_using_growth()), "recon")
+
+        out = _run_in_thread(
+            wrapper, {"messages": [HumanMessage(content="scan target")]}, "thread-a"
+        )
+
+        assert TRANSCRIPT_STATE_KEY not in out, "transcript must not travel in the graph state"
+        types = _thread_types(sidecar, "thread-a")
+        assert types[0] == "subagent_start"
+        assert types[-1] == "subagent_end"
+        for expected in ("subagent_tool_call", "subagent_tool_result", "subagent_message"):
+            assert expected in types, f"missing {expected} in {types}"
+        events = [event for _, event in sidecar.page("thread-a", None, 10_000)]
+        assert len({e["session_id"] for e in events}) == 1
+        assert all(datetime.fromisoformat(e["created_at"]).tzinfo == timezone.utc for e in events)
+
+    @pytest.mark.asyncio
+    async def test_ainvoke_appends_transcript_to_the_sidecar(
+        self, writer_renderer: None, sidecar
+    ) -> None:
+        wrapper = StreamingRunnable(FakeSubagentRunnable(_tool_using_growth()), "recon")
+
+        out = await _arun_in_thread(
+            wrapper, {"messages": [HumanMessage(content="scan target")]}, "thread-b"
+        )
+
+        assert TRANSCRIPT_STATE_KEY not in out
+        types = _thread_types(sidecar, "thread-b")
+        assert types[0] == "subagent_start"
+        assert types[-1] == "subagent_end"
+        assert "subagent_tool_result" in types
+
+    def test_without_a_thread_id_nothing_is_written_and_state_is_unchanged(
+        self, writer_renderer: None, sidecar
     ) -> None:
         wrapper = StreamingRunnable(FakeSubagentRunnable(_tool_using_growth()), "recon")
 
         out = wrapper.invoke({"messages": [HumanMessage(content="scan target")]})
 
-        assert isinstance(out, dict)
-        transcript = out[TRANSCRIPT_STATE_KEY]
-        assert isinstance(transcript, list) and transcript, "transcript must be a non-empty list"
-        assert all(isinstance(e, dict) for e in transcript)
-
-        types = _types(transcript)
-        # Brackets the run with start/end and carries the tool round-trip.
-        assert types[0] == "subagent_start"
-        assert types[-1] == "subagent_end"
-        for expected in ("subagent_tool_call", "subagent_tool_result", "subagent_message"):
-            assert expected in types, f"missing {expected} in {types}"
-
-        # Every persisted entry is tagged with this invocation's session_id.
-        session_ids = {e["session_id"] for e in transcript}
-        assert len(session_ids) == 1
-        assert all(
-            datetime.fromisoformat(e["created_at"]).tzinfo == timezone.utc for e in transcript
-        )
-
-    @pytest.mark.asyncio
-    async def test_ainvoke_returns_transcript_with_expected_event_types(
-        self, writer_renderer: None
-    ) -> None:
-        wrapper = StreamingRunnable(FakeSubagentRunnable(_tool_using_growth()), "recon")
-
-        out = await wrapper.ainvoke({"messages": [HumanMessage(content="scan target")]})
-
-        transcript = out[TRANSCRIPT_STATE_KEY]
-        assert isinstance(transcript, list) and transcript
-        types = _types(transcript)
-        assert types[0] == "subagent_start"
-        assert types[-1] == "subagent_end"
-        assert "subagent_tool_result" in types
-        assert all(
-            datetime.fromisoformat(e["created_at"]).tzinfo == timezone.utc for e in transcript
-        )
+        assert TRANSCRIPT_STATE_KEY not in out
+        assert sidecar.page("", None, 10) == []
 
     def test_persisted_tool_result_is_capped_while_stream_stays_full(
-        self, writer_renderer: None, monkeypatch: pytest.MonkeyPatch
+        self, writer_renderer: None, monkeypatch: pytest.MonkeyPatch, sidecar
     ) -> None:
         monkeypatch.setenv("RAPTIX_SUBAGENT_TRANSCRIPT_RESULT_CAP", "10")
         big = "A" * 5000
@@ -162,16 +197,65 @@ class TestTranscriptInReturnedState:
         growth = [base + [tool_call_msg], base + [tool_call_msg, tool_result_msg]]
 
         wrapper = StreamingRunnable(FakeSubagentRunnable(growth), "recon")
-        out = wrapper.invoke({"messages": base})
+        _run_in_thread(wrapper, {"messages": base}, "thread-c")
 
         persisted_results = [
-            e for e in out[TRANSCRIPT_STATE_KEY] if e["type"] == "subagent_tool_result"
+            event
+            for _, event in sidecar.page("thread-c", None, 10_000)
+            if event["type"] == "subagent_tool_result"
         ]
         assert persisted_results, "expected a persisted tool_result event"
         capped = persisted_results[0]["content"]
         assert capped.startswith("A" * 10)
         assert capped.endswith("…[truncated]")
         assert len(capped) < len(big)
+
+
+class TestTranscriptSidecar:
+    def test_appends_keep_order_and_continue_the_sequence(self, tmp_path) -> None:
+        from raptix.execution.session.transcript_sidecar import TranscriptSidecar
+
+        store = TranscriptSidecar(tmp_path / "t.sqlite")
+        store.append("t1", [{"n": 1}, {"n": 2}])
+        store.append("t1", [{"n": 3}])
+        store.append("t2", [{"n": 9}])
+        rows = store.page("t1", None, 10)
+        assert [seq for seq, _ in rows] == [1, 2, 3]
+        assert [event["n"] for _, event in rows] == [1, 2, 3]
+        assert store.page("t2", None, 10)[0][0] == 1
+        store.close()
+
+    def test_pages_newest_first_by_sequence_cursor(self, tmp_path) -> None:
+        from raptix.execution.session.transcript_sidecar import TranscriptSidecar
+
+        store = TranscriptSidecar(tmp_path / "t.sqlite")
+        store.append("t1", [{"n": i} for i in range(1, 8)])
+        newest = store.page("t1", None, 3)
+        assert [event["n"] for _, event in newest] == [5, 6, 7]
+        older = store.page("t1", newest[0][0], 3)
+        assert [event["n"] for _, event in older] == [2, 3, 4]
+        assert store.page("t1", older[0][0], 3) == [(1, {"n": 1})]
+        store.close()
+
+    def test_durable_transcript_writes_on_append_only_when_it_has_a_thread(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        import raptix.execution.session.transcript_sidecar as sidecar_module
+        from raptix.execution.session.transcript_sidecar import DurableTranscript, default_sidecar
+
+        monkeypatch.setenv(sidecar_module.PATH_ENV, str(tmp_path / "d.sqlite"))
+        monkeypatch.setattr(sidecar_module, "_default", None)
+
+        in_thread = DurableTranscript("t9")
+        in_thread.append({"type": "subagent_start"})
+        assert list(in_thread) == [{"type": "subagent_start"}]
+        assert default_sidecar().page("t9", None, 10) == [(1, {"type": "subagent_start"})]
+
+        detached = DurableTranscript(None)
+        detached.append({"type": "subagent_end"})
+        assert default_sidecar().page("", None, 10) == []
+        default_sidecar().close()
+        monkeypatch.setattr(sidecar_module, "_default", None)
 
 
 class TestReduceConcatTranscript:
@@ -188,6 +272,17 @@ class TestReduceConcatTranscript:
             "subagent_tool_call",
         ]
 
+    def test_keeps_only_the_newest_events_so_the_state_stays_bounded(self) -> None:
+        from raptix.middleware.state_reducers import TRANSCRIPT_CHANNEL_LIMIT
+
+        full = [{"seq": i} for i in range(TRANSCRIPT_CHANNEL_LIMIT)]
+        merged = reduce_concat_transcript(
+            full, [{"seq": TRANSCRIPT_CHANNEL_LIMIT}, {"seq": TRANSCRIPT_CHANNEL_LIMIT + 1}]
+        )
+        assert len(merged) == TRANSCRIPT_CHANNEL_LIMIT
+        assert merged[-1] == {"seq": TRANSCRIPT_CHANNEL_LIMIT + 1}
+        assert merged[0] == {"seq": 2}
+
     def test_idempotent_on_none_and_empty(self) -> None:
         assert reduce_concat_transcript(None, None) == []
         assert reduce_concat_transcript(None, []) == []
@@ -197,15 +292,12 @@ class TestReduceConcatTranscript:
 
 
 class TestSchemaExtendsAgentState:
-    def test_schema_declares_transcript_channel_and_keeps_base_channels(self) -> None:
+    def test_schema_no_longer_declares_the_transcript_channel_and_keeps_base_channels(self) -> None:
         # TypedDict subclasses don't keep the base in __mro__ or support
         # issubclass(); the real proof that we EXTENDED (not replaced) AgentState
-        # is that the subclass __annotations__ merge in the base channels. If
-        # this regressed to a bare TypedDict, "messages"/"jump_to" would vanish
-        # and create_agent would drop deepagents' own state surface.
+        # is that the subclass __annotations__ merge in the base channels.
         keys = SubagentTranscriptState.__annotations__
-        assert TRANSCRIPT_STATE_KEY in keys
-        # Base channels preserved (inherited from langchain AgentState).
+        assert TRANSCRIPT_STATE_KEY not in keys, "transcripts live in the sidecar, not in the state"
         assert "messages" in keys
         assert "jump_to" in keys
         assert "structured_response" in keys
