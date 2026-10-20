@@ -1,6 +1,6 @@
 import { createServer, type Server } from 'node:http';
 import { afterEach, describe, expect, it } from 'vitest';
-import { isAssetMapMembersPage, isAssetMapNeighborhood, isAssetMapOverview, isAssetMapSearchResult } from '@raptix/web-contracts';
+import { isAssetMapDetail, isAssetMapMembersPage, isAssetMapNeighborhood, isAssetMapOverview, isAssetMapSearchResult } from '@raptix/web-contracts';
 import {
   ASSET_MAP_LIMITS,
   AssetMapInputError,
@@ -215,3 +215,100 @@ describe('AssetMapService neighborhood', () => {
   });
 });
 
+
+/** Neo4j HTTP stub that answers each statement by the key it contains. */
+function neo4jRouter(routes: Array<[string, unknown[][]]>): Promise<{ server: Server; config: GraphConfig }> {
+  return new Promise(resolve => {
+    const server = createServer((request, response) => {
+      let raw = '';
+      request.on('data', chunk => {
+        raw += chunk;
+      });
+      request.on('end', () => {
+        const body = JSON.parse(raw) as { statements: Array<{ statement: string }> };
+        const statement = body.statements[0]?.statement ?? '';
+        const match = routes.find(([key]) => statement.includes(key));
+        const rows = match ? match[1] : [[1, '2026-10-20T10:00:00Z']];
+        response.writeHead(200, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ results: [{ data: rows.map(row => ({ row })) }] }));
+      });
+    });
+    server.listen(0, '127.0.0.1', () => {
+      const port = (server.address() as { port: number }).port;
+      resolve({ server, config: { httpUri: `http://127.0.0.1:${port}`, user: 'neo4j', password: 'x' } });
+    });
+  });
+}
+
+const DETAIL_ROUTES: Array<[string, unknown[][]]> = [
+  ['max(n.lastupdated)', [[3, '2026-10-20T10:00:00Z']]],
+  ['coalesce(n.source', [['nmap', 2], ['httpx', 1]]],
+  ['count(s) AS count', [[2]]],
+  ['elementId(s) AS id', [['4:s1', 80, 'tcp', 'http', 'nginx', '1.18', 'nmap'], ['4:s2', 22, 'tcp', 'ssh', null, null, 'nmap']]],
+  ['count(e) AS count', [[1]]],
+  ['elementId(e) AS id', [['4:e1', 'GET', '/users', 'https://app.example.com/users?id=1', 200, 'katana', ['id']]]],
+];
+
+describe('AssetMapService detail', () => {
+  it('lists services for a host with provenance and a complete total', async () => {
+    const host = makeRows(1)[0]!;
+    const { server, config } = await neo4jRouter(DETAIL_ROUTES);
+    servers.push(server);
+    const view = await new AssetMapService(fakeDb([host]), config).detail('local', ENGAGEMENT, host.id, null, 50);
+    expect(isAssetMapDetail(view)).toBe(true);
+    expect(view.detail).toEqual({
+      kind: 'services',
+      items: [
+        { id: '4:s1', port: 80, protocol: 'tcp', service: 'http', product: 'nginx', version: '1.18', source: 'nmap' },
+        { id: '4:s2', port: 22, protocol: 'tcp', service: 'ssh', product: null, version: null, source: 'nmap' },
+      ],
+    });
+    expect(view.provenance).toEqual({ sources: [{ source: 'nmap', count: 2 }, { source: 'httpx', count: 1 }], graphNodes: 3 });
+    expect(view.completeness).toMatchObject({ loaded: 2, total: 2, hasMore: false, source: { graph: 'ok' } });
+  });
+
+  it('pages services and refuses a cursor from an older graph revision', async () => {
+    const host = makeRows(1)[0]!;
+    const { server, config } = await neo4jRouter(DETAIL_ROUTES);
+    servers.push(server);
+    const service = new AssetMapService(fakeDb([host]), config);
+    const first = await service.detail('local', ENGAGEMENT, host.id, null, 1);
+    expect(first.detail.kind === 'services' && first.detail.items).toHaveLength(1);
+    expect(first.nextCursor).not.toBeNull();
+    const second = await service.detail('local', ENGAGEMENT, host.id, first.nextCursor, 1);
+    expect(isAssetMapDetail(second)).toBe(true);
+
+    const stale = Buffer.from(JSON.stringify({ r: 'g0:none', k: '1' }), 'utf8').toString('base64url');
+    await expect(service.detail('local', ENGAGEMENT, host.id, stale, 1)).rejects.toBeInstanceOf(AssetMapRevisionError);
+  });
+
+  it('lists the sitemap for a web origin with parameters per endpoint', async () => {
+    const origin = makeRows(1, 'web_origin')[0]!;
+    const { server, config } = await neo4jRouter(DETAIL_ROUTES);
+    servers.push(server);
+    const view = await new AssetMapService(fakeDb([origin]), config).detail('local', ENGAGEMENT, origin.id, null, 50);
+    expect(view.detail).toEqual({
+      kind: 'endpoints',
+      items: [{ id: '4:e1', method: 'GET', path: '/users', url: 'https://app.example.com/users?id=1', statusCode: 200, source: 'katana', parameters: ['id'] }],
+    });
+    expect(view.completeness.total).toBe(1);
+  });
+
+  it('answers unsupported with a reason for a kind that has no typed view yet', async () => {
+    const cloud = makeRows(1, 'cloud_resource')[0]!;
+    const { server, config } = await neo4jRouter(DETAIL_ROUTES);
+    servers.push(server);
+    const view = await new AssetMapService(fakeDb([cloud]), config).detail('local', ENGAGEMENT, cloud.id, null, 50);
+    expect(view.detail).toEqual({ kind: 'unsupported', reason: 'no typed detail view for cloud_resource yet' });
+    expect(view.completeness.total).toBeNull();
+    expect(isAssetMapDetail(view)).toBe(true);
+  });
+
+  it('rejects an unknown asset and a malformed identifier', async () => {
+    const { server, config } = await neo4jRouter(DETAIL_ROUTES);
+    servers.push(server);
+    const service = new AssetMapService(fakeDb([]), config);
+    await expect(service.detail('local', ENGAGEMENT, makeRows(1)[0]!.id, null, 50)).rejects.toBeInstanceOf(AssetMapNotFoundError);
+    await expect(service.detail('local', ENGAGEMENT, 'web_origin::x', null, 50)).rejects.toBeInstanceOf(AssetMapInputError);
+  });
+});
