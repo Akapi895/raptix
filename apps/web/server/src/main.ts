@@ -26,6 +26,7 @@ import { RuntimeRouter, prismaRouteSource } from './integrations/runtime/runtime
 import { ApprovalsService } from './services/approvals-service.js';
 import { FindingsService } from './services/findings-service.js';
 import { ArtifactsService } from './services/artifacts-service.js';
+import { AssetMapService } from './services/asset-map-service.js';
 import { GraphService } from './services/graph-service.js';
 import { TimelineService } from './services/timeline-service.js';
 import { ExportService } from './services/export-service.js';
@@ -298,6 +299,7 @@ async function main(): Promise<void> {
     findingsService,
     artifactsService,
     graphService,
+  assetMapService: dbClient && env.graph ? new AssetMapService(dbClient, env.graph) : undefined,
   timelineService,
   exportService,
   settingsService,
