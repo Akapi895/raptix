@@ -57,7 +57,7 @@ function validateContent(input: Record<string, unknown>): void {
 export type EvidenceView = FindingEvidenceLink;
 
 export class FindingsWorkflowService {
-  public constructor(private readonly db: PrismaClient, private readonly artifacts?: Pick<ArtifactsService, 'capture'> & Partial<Pick<ArtifactsService, 'captureById'>>, private readonly library?: Pick<LibraryService, 'techniqueDetail'>) {}
+  public constructor(private readonly db: PrismaClient, private readonly artifacts?: Pick<ArtifactsService, 'capture'> & Partial<Pick<ArtifactsService, 'captureById' | 'importWorkspaceEvidence'>>, private readonly library?: Pick<LibraryService, 'techniqueDetail'>) {}
 
   public async options(actorId: string, engagementId: string): Promise<FindingReferenceOptions> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
@@ -160,7 +160,7 @@ export class FindingsWorkflowService {
       }
     }
     const existing = await this.db.findingRecord.findFirst({ where: { engagementId, producerRef } });
-    if (existing !== null) return this.replayProducerImport(producerRef, producerDigest, producerResolved, existing);
+    if (existing !== null) return this.replayProducerImport(actorId, engagementId, producerRef, producerDigest, producerResolved, existing);
     try {
       const row = await this.db.$transaction(async (tx) => {
         const created = await tx.findingRecord.create({
@@ -181,16 +181,50 @@ export class FindingsWorkflowService {
         await tx.webAuditEntry.create({ data: { engagementId, actorId, action: 'finding.imported', targetType: 'finding', targetId: created.id, reason: `${title} <- ${producerRef}${producerResolved === true ? ' (resolved)' : producerResolved === false ? ' (unverified)' : ''}` } });
         return created;
       });
-      return this.toView(row, [], producerResolved);
+      await this.attachProducerEvidence(actorId, engagementId, row.id, producerRef);
+      const attached = await this.findOwned(engagementId, row.id);
+      const links = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
+      return this.toView(attached, links, producerResolved);
     } catch (error) {
       if (!isUniqueConstraintError(error)) throw error;
       const raced = await this.db.findingRecord.findFirst({ where: { engagementId, producerRef } });
       if (raced === null) throw error;
-      return this.replayProducerImport(producerRef, producerDigest, producerResolved, raced);
+      return this.replayProducerImport(actorId, engagementId, producerRef, producerDigest, producerResolved, raced);
+    }
+  }
+
+  /**
+   * Imports the evidence an agent wrote for a producer finding (`findings/FIND-<id>.md` -> `findings/evidence/FIND-<id>_*`)
+   * as unclassified captures and attaches each one to the draft that imported it. Evidence that cannot be imported or
+   * attached is recorded in the audit log and skipped; the draft itself is kept.
+   */
+  private async attachProducerEvidence(actorId: string, engagementId: string, findingId: string, producerRef: string): Promise<void> {
+    const match = /^findings\/(FIND-[A-Za-z0-9_-]{1,64})\.md$/.exec(producerRef);
+    if (match === null || this.artifacts?.importWorkspaceEvidence === undefined) return;
+    const skip = (reason: string) => this.db.webAuditEntry.create({ data: { engagementId, actorId, action: 'evidence.skipped', targetType: 'finding', targetId: findingId, reason } });
+    let batch;
+    try {
+      batch = await this.artifacts.importWorkspaceEvidence(actorId, engagementId, match[1]!);
+    } catch (error) {
+      if (!(error instanceof ProjectApiError)) throw error;
+      await skip(error.message);
+      return;
+    }
+    for (const item of batch.skipped) await skip(`${item.path}: ${item.reason}`);
+    for (const capture of batch.captures) {
+      const current = await this.findOwned(engagementId, findingId);
+      try {
+        await this.attachEvidence(actorId, engagementId, findingId, { kind: 'artifact', captureId: capture.id, expectedVersion: current.expectedVersion });
+      } catch (error) {
+        if (!(error instanceof ProjectApiError)) throw error;
+        await skip(`${capture.id}: ${error.message}`);
+      }
     }
   }
 
   private async replayProducerImport(
+    actorId: string,
+    engagementId: string,
     producerRef: string,
     producerDigest: string | null,
     producerResolved: boolean | undefined,
@@ -199,8 +233,12 @@ export class FindingsWorkflowService {
     if (existing.producerDigest !== producerDigest) {
       throw new ProjectApiError(409, `Producer source ${producerRef} changed after it was imported. The existing draft is preserved; import of a changed source requires an explicit revision.`);
     }
+    // A draft whose first import ran before its evidence was attached (or whose evidence was written later) gets the
+    // evidence on replay. Attaching is idempotent, and only drafts are touched: submitted or resolved findings stay as they are.
+    if (existing.status === 'draft') await this.attachProducerEvidence(actorId, engagementId, existing.id, producerRef);
+    const current = await this.findOwned(engagementId, existing.id);
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: existing.id } });
-    return this.toView(existing, evidence, producerResolved);
+    return this.toView(current, evidence, producerResolved);
   }
 
   public async update(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {

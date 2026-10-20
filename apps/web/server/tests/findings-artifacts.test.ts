@@ -373,3 +373,59 @@ describe('W12 artifact browser', () => {
     });
   });
 });
+
+describe('workspace evidence import', () => {
+  it('imports the evidence an agent wrote as unclassified captures, idempotently, and keeps its bytes locked', async () => {
+    await withHarness(async (h) => {
+      const evidence = path.join(h.workspaceRoot, h.slug, 'findings', 'evidence');
+      await mkdir(evidence, { recursive: true });
+      await writeFile(path.join(evidence, 'FIND-001_rce.txt'), 'uid=0(root)\n', 'utf8');
+      await writeFile(path.join(evidence, 'FIND-002_dump.exe'), 'MZ', 'utf8');
+
+      const first = await h.artifacts.importWorkspaceEvidence('local', 'eng-1');
+      expect(first.captures).toHaveLength(1);
+      expect(first.captures[0]).toMatchObject({ classification: 'unclassified', filename: 'FIND-001_rce.txt', sizeBytes: 12, canReadOriginal: false });
+      expect(isRetainedCaptureView(first.captures[0]), JSON.stringify(first.captures[0])).toBe(true);
+      expect(first.skipped).toEqual([{ path: 'findings/evidence/FIND-002_dump.exe', reason: 'unsupported file type' }]);
+
+      const replay = await h.artifacts.importWorkspaceEvidence('local', 'eng-1');
+      expect(replay.captures.map((capture) => capture.id)).toEqual([first.captures[0]!.id]);
+
+      const viaRoute = await h.app.inject({ method: 'POST', url: '/api/engagements/eng-1/artifacts/workspace-evidence/import' });
+      expect(viaRoute.statusCode).toBe(200);
+      expect(viaRoute.json().captures.map((capture: { id: string }) => capture.id)).toEqual([first.captures[0]!.id]);
+
+      const blocked = await h.app.inject({ method: 'GET', url: `/api/engagements/eng-1/artifacts/captures/${first.captures[0]!.id}/content` });
+      expect(blocked.statusCode).toBe(409);
+
+      await writeFile(path.join(evidence, 'FIND-001_rce.txt'), 'changed\n', 'utf8');
+      const changed = await h.artifacts.importWorkspaceEvidence('local', 'eng-1');
+      expect(changed.captures).toEqual([]);
+      expect(changed.skipped).toEqual([
+        { path: 'findings/evidence/FIND-001_rce.txt', reason: 'changed since it was imported; the imported copy is kept' },
+        { path: 'findings/evidence/FIND-002_dump.exe', reason: 'unsupported file type' },
+      ]);
+    });
+  });
+
+  it('imports only the evidence of the given producer, and refuses viewers', async () => {
+    await withHarness(async (h) => {
+      const evidence = path.join(h.workspaceRoot, h.slug, 'findings', 'evidence');
+      await mkdir(evidence, { recursive: true });
+      await writeFile(path.join(evidence, 'FIND-001_rce.txt'), 'one', 'utf8');
+      await writeFile(path.join(evidence, 'FIND-002_other.txt'), 'two', 'utf8');
+      const scoped = await h.artifacts.importWorkspaceEvidence('local', 'eng-1', 'FIND-002');
+      expect(scoped.captures.map((capture) => capture.filename)).toEqual(['FIND-002_other.txt']);
+      await expect(h.artifacts.importWorkspaceEvidence('viewer', 'eng-1')).rejects.toMatchObject({ statusCode: 403 });
+    });
+  });
+
+  it('does not open evidence files through the generic artifact path, so the capture gate still applies', async () => {
+    await withHarness(async (h) => {
+      const evidence = path.join(h.workspaceRoot, h.slug, 'findings', 'evidence');
+      await mkdir(evidence, { recursive: true });
+      await writeFile(path.join(evidence, 'FIND-001_rce.txt'), 'secret', 'utf8');
+      await expect(h.artifacts.content('local', 'eng-1', 'findings/evidence/FIND-001_rce.txt')).rejects.toMatchObject({ message: 'Invalid artifact path' });
+    });
+  });
+});

@@ -1,7 +1,7 @@
 import { realpath, readFile, readdir, stat, open, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import * as path from 'node:path';
-import type { ArtifactContentView, ArtifactsView, CaptureClassification, ClassifyCaptureInput, RetainCaptureInput, RetainedCaptureView, RetainedCapturesView } from '@raptix/web-contracts';
+import type { ArtifactContentView, ArtifactsView, CaptureClassification, ClassifyCaptureInput, RetainCaptureInput, RetainedCaptureView, RetainedCapturesView, WorkspaceEvidenceImportView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectPolicyError } from '../security/project-policy.js';
 import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
@@ -213,6 +213,109 @@ export class ArtifactsService {
       truncated,
       source: 'workspace',
     };
+  }
+
+  /**
+   * Workspace evidence files an agent wrote: `findings/evidence/*`, or only `findings/evidence/<FIND-id>_*` when a
+   * producer id is given. Only regular files are listed; a missing folder is an empty list.
+   */
+  public async workspaceEvidenceFiles(userId: string, engagementId: string, producerId?: string): Promise<string[]> {
+    if (producerId !== undefined && !/^FIND-[A-Za-z0-9_-]{1,64}$/.test(producerId)) return [];
+    await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
+    const dir = await this.workspaceDir(userId, engagementId);
+    const folder = path.join(dir, 'findings', 'evidence');
+    let entries;
+    try {
+      entries = await readdir(folder, { withFileTypes: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+      throw new ProjectApiError(503, 'The workspace evidence listing is unavailable.');
+    }
+    return entries
+      .filter((entry) => entry.isFile() && (producerId === undefined || entry.name.startsWith(`${producerId}_`)))
+      .map((entry) => `findings/evidence/${entry.name}`)
+      .sort()
+      .slice(0, 50);
+  }
+
+  /**
+   * Imports the evidence files an agent wrote under `findings/evidence/` as retained captures, so they appear in the
+   * evidence inventory and can be attached to findings. Each file becomes an unclassified capture (ADR-0087): its bytes
+   * stay locked until an owner or reviewer classifies it. Re-running is idempotent per file. A file whose bytes changed
+   * after its import is reported as skipped and the imported copy is kept.
+   */
+  public async importWorkspaceEvidence(userId: string, engagementId: string, producerId?: string): Promise<WorkspaceEvidenceImportView> {
+    const access = await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'operator');
+    await assertEngagementOpen(this.db, engagementId);
+    const captures: RetainedCaptureView[] = [];
+    const skipped: { path: string; reason: string }[] = [];
+    const paths = await this.workspaceEvidenceFiles(userId, engagementId, producerId);
+    if (paths.length === 0) return { engagementId, captures, skipped };
+    const workspace = await this.workspaceDir(userId, engagementId);
+    const root = await realpath(workspace);
+    const realFindings = await realpath(path.join(workspace, 'findings'));
+    if (!realFindings.startsWith(root + path.sep)) throw new ProjectPolicyError('bad_request', 'Invalid capture folder');
+    const realEvidence = await realpath(path.join(realFindings, 'evidence'));
+    for (const artifactPath of paths) {
+      const filename = path.basename(artifactPath);
+      const extension = path.extname(filename).slice(1).toLowerCase();
+      const mediaType = Object.keys(CAPTURE_MEDIA_TYPES).find((type) => CAPTURE_MEDIA_TYPES[type] === extension);
+      if (mediaType === undefined) {
+        skipped.push({ path: artifactPath, reason: 'unsupported file type' });
+        continue;
+      }
+      const source = await realpath(path.join(realEvidence, filename)).catch(() => null);
+      if (source === null || !source.startsWith(realEvidence + path.sep)) {
+        skipped.push({ path: artifactPath, reason: 'not a readable workspace file' });
+        continue;
+      }
+      const info = await stat(source);
+      if (info.size > MAX_CONTENT_BYTES) {
+        skipped.push({ path: artifactPath, reason: 'exceeds the 256 KiB bound' });
+        continue;
+      }
+      const bytes = await readFile(source);
+      if (!bytes.length) {
+        skipped.push({ path: artifactPath, reason: 'empty file' });
+        continue;
+      }
+      const digest = createHash('sha256').update(bytes).digest('hex');
+      const requestId = `ws-${createHash('sha256').update(artifactPath).digest('hex').slice(0, 40)}`;
+      const requestFingerprint = createHash('sha256').update(JSON.stringify({ filename, mediaType, digest })).digest('hex');
+      const existing = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
+      if (existing !== null) {
+        if (existing.requestFingerprint === requestFingerprint) captures.push(this.toCaptureView(existing as RetainedCaptureRow, access.role));
+        else skipped.push({ path: artifactPath, reason: 'changed since it was imported; the imported copy is kept' });
+        continue;
+      }
+      const id = randomUUID();
+      const relativePath = `findings/capture-${id}.${extension}`;
+      const storedPath = path.join(realFindings, path.basename(relativePath));
+      await writeFile(storedPath, bytes, { flag: 'wx' });
+      try {
+        const row = await this.db.$transaction(async (tx) => {
+          const created = await tx.retainedCapture.create({ data: {
+            id, engagementId, requestId, requestFingerprint, path: relativePath, filename, mediaType,
+            sizeBytes: bytes.length, digest, producer: `workspace:${artifactPath}`, uploadedBy: userId,
+            classification: 'unclassified', classificationVersion: 1,
+          } });
+          await tx.webAuditEntry.create({ data: { engagementId, actorId: userId, action: 'evidence.workspace_imported', targetType: 'retained_capture', targetId: id, reason: `${artifactPath} unclassified ${digest}` } });
+          return created;
+        });
+        captures.push(this.toCaptureView(row as RetainedCaptureRow, access.role));
+      } catch (error) {
+        await unlink(storedPath).catch((cleanupError: NodeJS.ErrnoException) => {
+          if (cleanupError.code !== 'ENOENT') throw new ProjectApiError(503, 'Capture metadata was not committed and temporary-file cleanup failed; reconcile the engagement workspace before retrying.');
+        });
+        if (!isUniqueConstraintError(error)) throw error;
+        // A concurrent import of the same file won the race; keep its row and report the same outcome.
+        const raced = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
+        if (raced === null) throw error;
+        if (raced.requestFingerprint === requestFingerprint) captures.push(this.toCaptureView(raced as RetainedCaptureRow, access.role));
+        else skipped.push({ path: artifactPath, reason: 'changed since it was imported; the imported copy is kept' });
+      }
+    }
+    return { engagementId, captures, skipped };
   }
 
   public async capture(userId: string, engagementId: string, artifactPath: string): Promise<RetainedArtifactView> {

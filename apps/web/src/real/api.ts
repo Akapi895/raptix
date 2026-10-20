@@ -24,6 +24,7 @@ import {
   isArtifactContentView,
   isRetainedCaptureView,
   isRetainedCapturesView,
+  isWorkspaceEvidenceImportView,
   isTimelineView,
   isGraphView,
   isAssetsView,
@@ -47,7 +48,7 @@ import {
   type ArtifactContentView,
   type ClassifyCaptureInput,
   type RetainCaptureInput,
-  type RetainedCaptureView,
+  type RetainedCaptureView, type WorkspaceEvidenceImportView,
   type RetainedCapturesView,
   type TimelineView,
   type GraphView,
@@ -361,6 +362,10 @@ export function fetchRetainedCaptures(engagementId: string): Promise<RetainedCap
 
 export function uploadCapture(engagementId: string, input: RetainCaptureInput): Promise<RetainedCaptureView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/artifacts/captures`, owned(engagementId, isRetainedCaptureView), { method: 'POST', body: input })
+}
+
+export function importWorkspaceEvidence(engagementId: string): Promise<WorkspaceEvidenceImportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/artifacts/workspace-evidence/import`, owned(engagementId, isWorkspaceEvidenceImportView), { method: 'POST' })
 }
 
 export function classifyCapture(engagementId: string, captureId: string, input: ClassifyCaptureInput): Promise<RetainedCaptureView> {
