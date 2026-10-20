@@ -520,25 +520,39 @@ def _surface_observations(
     if status is not None:
         endpoint_props["status_code"] = status
     # Links the endpoint to its web origin so the asset map can list a sitemap per origin.
+    # The origin is also observed as an Entrypoint so reconciliation catalogues it,
+    # even when no scanner reported that origin on its own (for example an IP origin).
     origin = _asset_props(engagement, web_origin_ref, url)
+    observations: list[dict[str, Any]] = []
     if "asset_id" in origin:
         endpoint_props["origin_asset_id"] = origin["asset_id"]
-    observations: list[dict[str, Any]] = [
-        {
-            "kind": "Host",
-            "key": f"host::{host}",
-            "label": host,
-            "props": {"hostname": host, "source": source},
-            "edges_out": [{"to_key": endpoint_key, "kind": "HAS", "weight": 0.5}],
-        },
-        {
-            "kind": "Endpoint",
-            "key": endpoint_key,
-            "label": f"{normalized_method} {parsed.path or '/'}",
-            "props": endpoint_props,
-            "edges_out": [],
-        },
-    ]
+        origin_label = web_origin_ref(url).canonical_key
+        observations.append(
+            {
+                "kind": "Entrypoint",
+                "key": f"entrypoint::{origin_label}/",
+                "label": origin_label,
+                "props": {"host": parsed.hostname or "", "source": source, **origin},
+            }
+        )
+    observations.extend(
+        [
+            {
+                "kind": "Host",
+                "key": f"host::{host}",
+                "label": host,
+                "props": {"hostname": host, "source": source},
+                "edges_out": [{"to_key": endpoint_key, "kind": "HAS", "weight": 0.5}],
+            },
+            {
+                "kind": "Endpoint",
+                "key": endpoint_key,
+                "label": f"{normalized_method} {parsed.path or '/'}",
+                "props": endpoint_props,
+                "edges_out": [],
+            },
+        ]
+    )
     for name, value in parse_qsl(parsed.query, keep_blank_values=True):
         parameter_key = f"parameter::{endpoint_key}::query::{name}"
         observations.append(

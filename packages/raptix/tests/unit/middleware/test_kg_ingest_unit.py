@@ -688,3 +688,9 @@ def test_katana_endpoint_is_linked_to_its_web_origin(tmp_path: Path) -> None:
     assert endpoint["origin_asset_id"] == asset_id(
         "acme", web_origin_ref("https://app.example.com")
     )
+    origins = [
+        props
+        for props in _props(store.calls[0]["observations"], "Entrypoint")
+        if props.get("asset_kind") == "web_origin"
+    ]
+    assert [props["asset_canonical"] for props in origins] == ["https://app.example.com:443"]
