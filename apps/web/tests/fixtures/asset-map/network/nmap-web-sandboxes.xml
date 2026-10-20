@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.991 scan initiated Tue Oct 20 17:07:12 2026 as: /usr/lib/nmap/nmap -Pn -sT -F -oX - 172.31.0.2 172.31.0.5 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -Pn -sT -F -oX - 172.31.0.2 172.31.0.5" start="1792516032" startstr="Tue Oct 20 17:07:12 2026" version="7.991" xmloutputversion="1.05">
+<scaninfo type="connect" protocol="tcp" numservices="100" services="7,9,13,21-23,25-26,37,53,79-81,88,106,110-111,113,119,135,139,143-144,179,199,389,427,443-445,465,513-515,543-544,548,554,587,631,646,873,990,993,995,1025-1029,1110,1433,1720,1723,1755,1900,2000-2001,2049,2121,2717,3000,3128,3306,3389,3986,4899,5000,5009,5051,5060,5101,5190,5357,5432,5631,5666,5800,5900,6000-6001,6646,7070,8000,8008-8009,8080-8081,8443,8888,9100,9999-10000,32768,49152-49157"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1792516032" endtime="1792516032"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="172.31.0.2" addrtype="ipv4"/>
+<hostnames>
+<hostname name="sbx-viettel-networks.raptix_web_sandbox-net" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="99">
+<extrareasons reason="conn-refused" count="99" proto="tcp" ports="7,9,13,21-23,25-26,37,53,79-81,88,106,110-111,113,119,135,139,143-144,179,199,389,427,443-445,465,513-515,543-544,548,554,587,631,646,873,990,993,995,1025-1029,1110,1433,1720,1723,1755,1900,2000-2001,2049,2121,2717,3000,3128,3306,3389,3986,4899,5000,5009,5051,5060,5101,5190,5357,5432,5631,5666,5800,5900,6000-6001,6646,7070,8000,8008-8009,8080-8081,8443,8888,9100,10000,32768,49152-49157"/>
+</extraports>
+<port protocol="tcp" portid="9999"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="abyss" method="table" conf="3"/></port>
+</ports>
+<times srtt="367" rttvar="316" to="100000"/>
+</host>
+<host starttime="1792516032" endtime="1792516032"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="172.31.0.5" addrtype="ipv4"/>
+<hostnames>
+<hostname name="sbx-reddish-v1.raptix_web_sandbox-net" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="99">
+<extrareasons reason="conn-refused" count="99" proto="tcp" ports="7,9,13,21-23,25-26,37,53,79-81,88,106,110-111,113,119,135,139,143-144,179,199,389,427,443-445,465,513-515,543-544,548,554,587,631,646,873,990,993,995,1025-1029,1110,1433,1720,1723,1755,1900,2000-2001,2049,2121,2717,3000,3128,3306,3389,3986,4899,5000,5009,5051,5060,5101,5190,5357,5432,5631,5666,5800,5900,6000-6001,6646,7070,8000,8008-8009,8080-8081,8443,8888,9100,10000,32768,49152-49157"/>
+</extraports>
+<port protocol="tcp" portid="9999"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="abyss" method="table" conf="3"/></port>
+</ports>
+<times srtt="404" rttvar="317" to="100000"/>
+</host>
+<runstats><finished time="1792516032" timestr="Tue Oct 20 17:07:12 2026" summary="Nmap done at Tue Oct 20 17:07:12 2026; 2 IP addresses (2 hosts up) scanned in 0.07 seconds" elapsed="0.07" exit="success"/><hosts up="2" down="0" total="2"/>
+</runstats>
+</nmaprun>

@@ -73,12 +73,16 @@ try {
   record('hosts list from the catalog', hostCount > 0, `hosts: ${hostCount}`)
   await page.screenshot({ path: path.join(outDir, '02-overview.png') })
 
+  const selectedAt = Date.now()
   await hostButtons.first().click()
   await page.locator('section[aria-label="Services"]').waitFor({ timeout: 20000 })
   const serviceRows = await page.locator('section[aria-label="Services"] tbody tr').count()
   record('host shows its services', serviceRows > 0, `services: ${serviceRows}`)
   await page.locator('[data-testid="asset-map-canvas"] canvas').first().waitFor({ timeout: 20000 })
-  record('relations render on the canvas', true)
+  const canvasReadyMs = Date.now() - selectedAt
+  report.canvasReadyMs = canvasReadyMs
+  record('relations render on the canvas', true, `ready ${canvasReadyMs} ms after selection, budget 2000 ms`)
+  record('canvas ready within 2 s of selection', canvasReadyMs <= 2000, `${canvasReadyMs} ms`)
   const evidence = await page.locator('[data-testid="evidence"] li').count()
   record('inspector lists evidence', evidence > 0, `evidence refs: ${evidence}`)
   await page.screenshot({ path: path.join(outDir, '03-host.png') })
