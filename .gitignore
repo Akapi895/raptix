@@ -86,6 +86,7 @@ workspace/
 /telemetry/
 test-results*/
 generated/
+benchmarks/scenarios/
 
 # Published evidence excludes raw logs and full transcript dumps.
 benchmarks/results/published/**/logs/
