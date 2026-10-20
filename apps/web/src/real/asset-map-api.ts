@@ -7,12 +7,14 @@ import {
   isAssetMapDetail,
   isAssetMapMembersPage,
   isAssetMapNeighborhood,
+  isAssetMapOverlay,
   isAssetMapOverview,
   isAssetMapSearchResult,
   type AssetMapDetail,
   type AssetMapKind,
   type AssetMapMembersPage,
   type AssetMapNeighborhood,
+  type AssetMapOverlay,
   type AssetMapOverview,
   type AssetMapSearchResult,
 } from '@raptix/web-contracts'
@@ -40,6 +42,11 @@ export function fetchAssetMapNeighborhood(engagementId: string, assetId: string,
 export function fetchAssetMapDetail(engagementId: string, assetId: string, cursor?: string | null, filter = ''): Promise<AssetMapDetail> {
   const filtered = filter ? `&q=${encodeURIComponent(filter)}` : ''
   return apiFetch(withCursor(`${base(engagementId)}/assets/${encodeURIComponent(assetId)}/detail?limit=50${filtered}`, cursor), isAssetMapDetail)
+}
+
+/** Findings linked to the asset through their owning record, and how many findings have no such link. */
+export function fetchAssetMapOverlay(engagementId: string, assetId: string): Promise<AssetMapOverlay> {
+  return apiFetch(`${base(engagementId)}/assets/${encodeURIComponent(assetId)}/overlay`, isAssetMapOverlay)
 }
 
 export function fetchAssetMapSearch(engagementId: string, query: string): Promise<AssetMapSearchResult> {

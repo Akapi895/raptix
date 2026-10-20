@@ -7,6 +7,7 @@ const fetchMembers = vi.fn()
 const fetchNeighborhood = vi.fn()
 const fetchDetail = vi.fn()
 const fetchSearch = vi.fn()
+const fetchOverlay = vi.fn()
 
 vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapOverview: (...args: unknown[]) => fetchOverview(...args),
@@ -14,6 +15,7 @@ vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapNeighborhood: (...args: unknown[]) => fetchNeighborhood(...args),
   fetchAssetMapDetail: (...args: unknown[]) => fetchDetail(...args),
   fetchAssetMapSearch: (...args: unknown[]) => fetchSearch(...args),
+  fetchAssetMapOverlay: (...args: unknown[]) => fetchOverlay(...args),
 }))
 vi.mock('../../real/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
 vi.mock('./AssetMapCanvas', () => ({ AssetMapCanvas: () => <div data-testid="asset-map-canvas" /> }))
@@ -39,6 +41,7 @@ beforeEach(() => {
     completeness,
   })
   fetchSearch.mockResolvedValue({ engagementId: 'eng-1', query: '', items: [], completeness })
+  fetchOverlay.mockResolvedValue({ engagementId: 'eng-1', asset: host, linked: { total: 0, byStatus: {}, items: [] }, unlinkedFindings: 0 })
 })
 
 afterEach(() => {
@@ -165,5 +168,30 @@ describe('AssetMapPage state handling', () => {
     fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Origins' }))
     expect(await screen.findByText('Switched off: 1 node(s) of the kinds unticked above.')).toBeTruthy()
+  });
+
+  it('shows the findings linked to the asset and the number that no owning record links', async () => {
+    fetchOverlay.mockResolvedValueOnce({
+      engagementId: 'eng-1',
+      asset: host,
+      linked: { total: 2, byStatus: { draft: 1, confirmed: 1 }, items: [{ id: 'f1', title: 'Exposed admin panel', severity: 'high', status: 'draft' }] },
+      unlinkedFindings: 3,
+    })
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
+    expect((await screen.findByTestId('linked-findings')).textContent).toContain('Linked findings: 2 (draft 1, confirmed 1)')
+    expect(screen.getByText('high · Exposed admin panel · draft')).toBeTruthy()
+    expect(screen.getByTestId('unlinked-findings').textContent).toContain('Unlinked findings in this engagement: 3 (attribution unknown')
+  });
+
+  it('reports a failed findings read in the inspector and keeps the map and its relations on screen', async () => {
+    fetchOverlay.mockRejectedValueOnce(new Error('Findings store unreachable'))
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('Findings for this asset could not be loaded (Findings store unreachable)')
+    expect(screen.getByRole('region', { name: 'Services' })).toBeTruthy()
+    expect(screen.getByTestId('asset-map-canvas')).toBeTruthy()
   });
 });
