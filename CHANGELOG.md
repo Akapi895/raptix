@@ -20,6 +20,15 @@ design spec, §13.4).
   `AssetIdentity` catalog from KG identity nodes (operator role, idempotent, rejected rows
   reported by reason). Migration `20261031000100_asset_identity` is additive; its rollback
   script lives in `prisma/rollback/`.
+- Web console: asset map read models (`/api/engagements/:id/asset-map/...`): overview,
+  group members with revision-bound cursors, search, neighborhood and asset detail
+  (services for hosts, sitemap for web origins). Every response reports total, loaded,
+  hasMore, truncated, per-source state and revision.
+- Runtime: katana and arjun endpoints link to their web origin and observe that origin,
+  so IP origins reach the catalog.
+- Runtime: edge writes match endpoints by label when the batch knows it, so the KG
+  constraint index is used. Live KG constraints and indexes come from the existing
+  migration runner (V001–V006); the runtime does not run it at startup yet.
 - Web console: planning documents gain server-side drafts with a digest
   precondition (O06, ADR-0083) — the Planning panel can open a source/draft
   editor for every allowlisted plan document; drafts persist in Postgres,
