@@ -11,20 +11,24 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, Check, ChevronDown, ChevronRight, CircleAlert, Copy, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench } from 'lucide-react'
+import { ArrowDown, Brain, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock, Copy, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench, XCircle, type LucideIcon } from 'lucide-react'
+import { TONE, type Tone } from '../../ui/status-map'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, fetchApprovals, fetchFleet, fetchPlanning, fetchReports, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from '../api'
+import { cancelRun, createThread, decideApproval, getThreadPage, fetchApprovals, fetchFleet, fetchPlanning, fetchReports, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from '../api'
 import { ApiTransportError } from '../transport'
+import { isEnvironmentPreparingError, withPreparedEnvironment } from '../environment-api'
 import { useCapabilityReady } from '../bootstrap'
 import { awaitRequest, newRequestId, type AckOutcome } from '../request-ledger'
 import { clearPending, isTerminalRun, readPending, readSelection, savePending, saveSelection, type PendingRequest } from '../workspace-session'
 import { useRunStream } from '../stream'
 import { projectKeys } from '../queries'
 import { go, useRoute } from '../../router/navigate'
-import { useProjectStore } from '../../state/stores'
+import { useProjectStore, useToastStore } from '../../state/stores'
 import { Banner, Button, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../ui'
 import { utcMinute, utcMinuteOr } from '../format'
 import { renderMarkdown } from '../markdown'
+import { ProgressCard, UpdatesGroup, type ToolProgress } from './workspace-progress'
+import { isFoldableUpdate } from './workspace-updates'
 import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
 import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
 import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
@@ -33,14 +37,13 @@ import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../plan
 import { RuntimeOperationsTab as RealOperationsHistory } from '../../features/operations/runtime-tab'
 import { useSession } from '../session'
 
-/** `seq` orders live items against trace lines: arrival order, after every checkpoint message. */
-interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null; seq: number }
-const LIVE_SEQ_BASE = 1_000_000
+interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
 /** When a reply's reasoning started and when its answer began, measured in this browser; the runtime records no timing. */
 interface ThinkingWindow { startedAt: number; answeredAt: number | null; openedBy: string }
 /** A transcript row; `thinkingMs` exists only for reasoning streamed in this browser, because the runtime records no timing. */
 type DisplayMessage = ScopedThreadMessage & { thinkingMs?: number }
-interface TraceLine { id: string; label: string; status?: string; error?: boolean; seq?: number }
+/** `after` is the id of the message that was newest when the line arrived; null means before any message. */
+interface TraceLine { id: string; label: string; status?: string; error?: boolean; after?: string | null }
 
 interface TraceLikePayload {
   type: string
@@ -106,6 +109,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const wide = useViewportW() >= 1280
   const agentWidth = useResizable('raptix.real.execution.agents.width', INSP)
   const [dispatchError, setDispatchError] = useState<string | null>(null)
+  const [preparingEnvironment, setPreparingEnvironment] = useState(false)
   const [unconfirmed, setUnconfirmed] = useState<PendingRequest | null>(() => readPending(actorId, engagementId, deploymentId))
   const [observedRun, setObservedRun] = useState<{ threadId: string; runId: string } | null>(null)
   const finishedRunIds = useRef(new Set<string>())
@@ -114,17 +118,20 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const [live, setLive] = useState<LiveMessage[]>([])
   const thinkingWindows = useRef(new Map<string, ThinkingWindow>())
   const [trace, setTrace] = useState<TraceLine[]>([])
-  const seqCounter = useRef(LIVE_SEQ_BASE)
-  const nextSeq = (): number => seqCounter.current++
+  /** The newest message id seen in the stream or the transcript; trace lines anchor to it. */
+  const anchorRef = useRef<string | null>(null)
   const [recovery, setRecovery] = useState<string | null>(null)
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
-  const [sideTab, setSideTab] = useState<'agents' | 'activity' | 'artifacts'>('agents')
+  /** Reasoning is hidden by default so long threads stay readable; the operator can show it again. */
+  const [showThinking, setShowThinking] = useState(false)
+  const [sideTab, setSideTab] = useState<SideTab>('agents')
   const chatScroll = useRef<HTMLDivElement>(null)
   const [atBottom, setAtBottom] = useState(true)
-  const scope = `${engagementId}/${selectedThreadId ?? ''}`
+  const scope = `${actorId}/${deploymentId}/${engagementId}/${kindFilter}/${selectedThreadId ?? ''}`
   const scopeRef = useRef(scope)
   scopeRef.current = scope
   const mounted = useRef(true)
+  const createdThread = useRef<{ threadId: string; kind: ThreadKind } | null>(null)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const current = (captured: string): boolean => mounted.current && scopeRef.current === captured
 
@@ -146,6 +153,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
 
   useEffect(() => {
     if (threads.isPending || initialThreadId) return
+    if (createdThread.current?.threadId === selectedThreadId && createdThread.current?.kind === kindFilter && !allThreads.some(t => t.threadId === selectedThreadId)) return
     if (!selectedThreadId || !allThreads.some((t) => t.threadId === selectedThreadId && t.kind === kindFilter && (!embedded || t.kind === 'execution'))) {
       setSelectedThreadId(filteredThreads[0]?.threadId ?? null)
     }
@@ -163,6 +171,29 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     enabled: !!selectedThreadId,
   })
 
+  /* Older pages load as the operator scrolls up. `cursor` undefined means "the newest page's cursor". */
+  const [older, setOlder] = useState<{ thread: string | null; messages: ScopedThreadMessage[]; cursor: number | null | undefined }>({ thread: null, messages: [], cursor: undefined })
+  const olderOfThread = older.thread === selectedThreadId ? older : { thread: selectedThreadId, messages: [] as ScopedThreadMessage[], cursor: undefined }
+  const olderCursor = olderOfThread.cursor === undefined ? (snapshot.data?.olderCursor ?? null) : olderOfThread.cursor
+  const olderLoading = useRef(false)
+  const loadOlder = async (): Promise<void> => {
+    if (!selectedThreadId || olderCursor === null || olderLoading.current) return
+    olderLoading.current = true
+    const threadId = selectedThreadId
+    const chat = chatScroll.current
+    const heightBefore = chat?.scrollHeight ?? 0
+    try {
+      const page = await getThreadPage(engagementId, threadId, olderCursor)
+      setOlder((prev) => ({ thread: threadId, messages: [...page.messages, ...(prev.thread === threadId ? prev.messages : [])], cursor: page.olderCursor ?? null }))
+      // Keep the rows the operator is reading in place while the older ones appear above them.
+      requestAnimationFrame(() => { if (chat) chat.scrollTop += chat.scrollHeight - heightBefore })
+    } catch (error) {
+      setDispatchError(error instanceof Error ? error.message : 'Earlier messages could not be loaded.')
+    } finally {
+      olderLoading.current = false
+    }
+  }
+
   /* Server-verified runtime context (R06): gates execution runs. */
   const runtimeCtx = useQuery({
     queryKey: ['real', 'runtime-context', engagementId, selectedKind, selectedThreadId],
@@ -177,7 +208,6 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
 
   /* Live buffers reset whenever the scope (engagement/thread/run) changes. */
   useEffect(() => { setLive([]); setTrace([]); setRecovery(null); setAnswers({}); setRunStatus(null); thinkingWindows.current.clear() }, [engagementId, selectedThreadId])
-  useEffect(() => { if (activeRunId) { setLive([]); setTrace([]) } }, [activeRunId])
 
   const runs = useQuery({
     queryKey: ['real', 'runs', engagementId, selectedThreadId],
@@ -202,7 +232,6 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         if (isTerminalRun(run.rawStatus)) {
           finishedRunIds.current.add(activeRunId)
           setObservedRun(null)
-          setLive([])
           void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId] })
           void client.invalidateQueries({ queryKey: ['real', 'planning'] })
           void client.invalidateQueries({ queryKey: ['real', 'approvals'] })
@@ -251,6 +280,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         return
       }
       if (p.type === 'message') {
+        if (p.messageId) anchorRef.current = p.messageId
         if (p.messageId && p.role === 'assistant') {
           const now = Date.now()
           // A duration is the span of reasoning that arrives before any answer text. Reasoning that interleaves with the
@@ -262,7 +292,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         setLive((prev) => {
           const next = [...prev]
           const at = p.messageId ? next.findIndex((m) => m.messageId === p.messageId) : -1
-          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content: p.mode === 'snapshot' ? p.content : (at >= 0 ? next[at].content + p.content : p.content), reasoning: p.reasoning ?? (at >= 0 ? next[at].reasoning : undefined), seq: at >= 0 ? next[at].seq : nextSeq() }
+          const entry: LiveMessage = { role: p.role, messageId: p.messageId, content: p.mode === 'snapshot' ? p.content : (at >= 0 ? next[at].content + p.content : p.content), reasoning: p.reasoning ?? (at >= 0 ? next[at].reasoning : undefined), }
           if (at >= 0) next[at] = entry
           else next.push(entry)
           return next
@@ -274,7 +304,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         return
       }
       const line = traceLineFor(event.eventId, p as TraceLikePayload)
-      if (line) setTrace((prev) => [...prev.slice(-199), { ...line, seq: nextSeq() }])
+      if (line) setTrace((prev) => prev.some((l) => l.id === line.id) ? prev : [...prev.slice(-999), { ...line, after: anchorRef.current }])
     },
     onControl: (type, recoveryRequired) => {
       /* A run that pauses for an answer closes its stream normally: reconcile the thread (pending questions) without a warning. */
@@ -299,11 +329,14 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       return { outcome, scope: captured }
     } catch (error) {
       const rejected = error instanceof ApiTransportError && ['bad_request', 'forbidden', 'unauthorized', 'conflict'].includes(error.code)
-      if (rejected) clearPending(actorId, engagementId, pending.requestId, deploymentId)
+      if (rejected) {
+        clearPending(actorId, engagementId, pending.requestId, deploymentId)
+        if (mounted.current) setUnconfirmed(previous => previous?.requestId === pending.requestId ? null : previous)
+      }
       if (current(captured)) {
         setDispatchError(error instanceof Error ? error.message : 'Dispatch outcome is unknown; reconcile the existing request.')
-        if (rejected) setUnconfirmed(null)
       }
+      if (isEnvironmentPreparingError(error)) { if (current(captured)) setDispatchError(null); throw error }
       return { outcome: { kind: rejected ? 'rejected' : 'unconfirmed', requestId: pending.requestId, message: 'Check the same request identity before any new dispatch.' }, scope: captured }
     }
   }
@@ -311,14 +344,24 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const createThreadByKind = useMutation({
     mutationFn: async (kind: ThreadKind) => {
       const pending = { requestId: newRequestId(), threadId: null, kind }
-      return dispatch(pending, () => createThread(engagementId, { requestId: pending.requestId, kind }))
+      const captured = scope
+      try {
+        return await withPreparedEnvironment(engagementId,
+          () => dispatch(pending, () => createThread(engagementId, { requestId: pending.requestId, kind })),
+          () => current(captured),
+          () => { if (current(captured)) setPreparingEnvironment(true) })
+      } finally { if (mounted.current) setPreparingEnvironment(false) }
     },
     onSuccess: (result, kind) => {
       if (!current(result.scope) || result.outcome.kind !== 'accepted') return
       void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] })
+      createdThread.current = { threadId: result.outcome.threadId, kind }
       setKindFilter(kind)
       setSelectedThreadId(result.outcome.threadId)
-      if (kind === 'execution' && autoRequested.current === engagementId) setAutoTransitioned(true)
+      if (kind === 'execution' && autoRequested.current === engagementId) {
+        setAutoTransitioned(true)
+        useToastStore.getState().toast('Planning handoff is confirmed — execution thread ready. Press Send to start execution; nothing is dispatched automatically.', 'ok')
+      }
     },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'Recovery identity could not be saved; nothing dispatched.'),
   })
@@ -350,7 +393,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     mutationFn: async (message: string) => {
       const kind = selectedKind
       if (executionBlocked) throw new Error(handoffPending ? 'Execute is available after the planning handoff is confirmed.' : 'Execution is not ready: the server has not verified this thread context.')
-      let threadId = selectedThreadId && selectedThread?.kind === kind ? selectedThreadId : (filteredThreads[0]?.threadId ?? null)
+      // The accepted creation can precede the thread-list refresh; its identity still owns this first message.
+      const selectedMatches = selectedThread?.kind === kind || createdThread.current?.threadId === selectedThreadId && createdThread.current?.kind === kind
+      let threadId = selectedThreadId && selectedMatches ? selectedThreadId : (filteredThreads[0]?.threadId ?? null)
       if (threadId === null) {
         const created = await createThreadByKind.mutateAsync(kind)
         if (created.outcome.kind !== 'accepted') throw new Error('The conversation could not be started; nothing was dispatched.')
@@ -455,25 +500,42 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   })
 
   const snapshotMessages = snapshot.data?.messages ?? []
-  const snapshotIds = new Set(snapshotMessages.map((m) => m.messageId).filter((x): x is string => !!x))
+  const snapshotIds = new Set([...olderOfThread.messages, ...snapshotMessages].map((m) => m.messageId).filter((x): x is string => !!x))
   const rename = useMutation({
     mutationFn: (input: { threadId: string; title: string }) => renameThread(engagementId, input.threadId, input.title),
     onSuccess: () => { setDispatchError(null); void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] }) },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'The conversation could not be renamed.'),
   })
   const liveRemaining = live.filter((m) => !m.messageId || !snapshotIds.has(m.messageId))
-  const displayedSeq: number[] = [...snapshotMessages.map((_, i) => i), ...liveRemaining.map((m) => m.seq)]
-  const displayed: DisplayMessage[] = [...snapshotMessages, ...liveRemaining].map((m) => {
+  const newestId = [...snapshotMessages, ...liveRemaining].reverse().find((m) => m.messageId)?.messageId ?? null
+  useEffect(() => { if (newestId) anchorRef.current = newestId }, [newestId])
+  const displayed: DisplayMessage[] = [...olderOfThread.messages, ...snapshotMessages, ...liveRemaining].map((m) => {
     const window = m.messageId ? thinkingWindows.current.get(m.messageId) : undefined
     return window && window.answeredAt !== null ? { ...m, thinkingMs: window.answeredAt - window.startedAt } : m
   })
   const pendingQuestions = (snapshot.data?.pendingQuestions ?? []).filter(isPendingInterruptView)
+  // The server-verified runtime context is a notice, not a state to keep on screen: it toasts once per thread and result.
+  const runtimeNotice = selectedKind === 'execution' && runtimeCtx.data
+    ? `Server-verified runtime context: assistant ${runtimeCtx.data.assistantId} | workspace ${runtimeCtx.data.workspaceSlug} | planning ${runtimeCtx.data.planningState} | execution ${runtimeCtx.data.executionReady ? 'ready' : 'blocked'}`
+    : null
+  const runtimeNoticeKey = runtimeNotice && selectedThreadId ? `${selectedThreadId}:${runtimeNotice}` : null
+  const runtimeNoticeShown = useRef<string | null>(null)
+  useEffect(() => {
+    if (runtimeNotice === null || runtimeNoticeKey === null || runtimeNoticeShown.current === runtimeNoticeKey) return
+    runtimeNoticeShown.current = runtimeNoticeKey
+    useToastStore.getState().toast(runtimeNotice, runtimeCtx.data?.executionReady ? 'ok' : 'warn')
+  }, [runtimeNotice, runtimeNoticeKey, runtimeCtx.data?.executionReady])
+  const shownMessages = showThinking ? displayed : displayed.map((m) => ({ ...m, reasoning: undefined }))
+  const lastLine = trace[trace.length - 1]
+  const agentState = agentStateFor({ running: !!activeRunId, runStatus, waiting: pendingQuestions.length > 0, lastLine })
+  const lastUserText = [...displayed].reverse().find((m) => m.role === 'user')?.content ?? null
+  const toolCalls = trace.filter((l) => l.label.startsWith('tool call'))
+  const toolProgress: ToolProgress = { calls: toolCalls.length, failed: trace.filter((l) => l.error).length, running: activeRunId && lastLine?.label.startsWith('tool call') ? lastLine.label : null }
   // Keep the newest content in view only while the operator is already at the bottom; never pull them down while they read older messages.
   useEffect(() => {
     const el = chatScroll.current
     if (el && atBottom) el.scrollTop = el.scrollHeight
   }, [displayed.length, trace.length, atBottom, selectedThreadId])
-  const transcripts = snapshot.data?.transcripts ?? []
   const fleet = useQuery({ queryKey: ['real', 'fleet', engagementId], queryFn: () => fetchFleet(engagementId), enabled: agents.ready, refetchInterval: 8000 })
   const observationKey = observation?.threadId === selectedThreadId ? observation.key : null
   const branches = fleet.data?.branches.filter((branch) => branch.threadId === selectedThreadId) ?? []
@@ -525,7 +587,8 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       />}
 
       {dispatchError && <Banner tone="bad" title="Request not completed" action={<Button size="sm" variant="ghost" onClick={() => setDispatchError(null)}>Dismiss</Button>}>{dispatchError}</Banner>}
-      {unconfirmed && (
+      {preparingEnvironment && <Banner tone="info" title="Preparing project environment…">Starting the runtime and sandbox before creating the conversation.</Banner>}
+      {unconfirmed && !preparingEnvironment && (
         <Banner tone="warn" title="Request still unconfirmed" action={(
           <Button size="sm" variant="secondary" icon={RefreshCw} disabled={reconcilePending.isPending} onClick={() => reconcilePending.mutate(unconfirmed.requestId)}>
             {reconcilePending.isPending ? 'Reconciling...' : 'Reconcile request'}
@@ -539,14 +602,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
           {recovery}
         </Banner>
       )}
-      {autoTransitioned && selectedKind === 'execution' && (
-        <Banner tone="ok" title="Planning handoff is confirmed — execution thread ready" action={<Button size="sm" variant="ghost" onClick={() => setAutoTransitioned(false)}>Dismiss</Button>}>
-          All required plan documents are ready, so the execution thread was created and selected. Review it, then press Send to start execution — nothing is dispatched automatically.
-        </Banner>
-      )}
 
       <div className="mt-4 flex min-h-0 min-w-0 gap-3">
-        <div className="flex min-h-[32rem] min-w-0 flex-1 flex-col xl:h-[calc(100dvh-12rem)]">
+        <div className="flex min-h-[24rem] min-w-0 flex-1 flex-col md:min-h-[32rem] h-[calc(100dvh-12rem)]">
           {observationKey ? <ObservedInvocation branch={observedBranch} onRoot={() => selectObservation(null)} /> : <>
           {activeRunId && (
             <div className="flex items-center gap-2 text-xs text-muted" role="status">
@@ -556,11 +614,6 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             </div>
           )}
 
-          {selectedKind === 'execution' && runtimeCtx.data && (
-            <Banner tone={runtimeCtx.data.executionReady ? 'ok' : 'warn'} title="Server-verified runtime context">
-              assistant <span className="font-mono">{runtimeCtx.data.assistantId}</span> | workspace <span className="font-mono">{runtimeCtx.data.workspaceSlug}</span> | planning {runtimeCtx.data.planningState} | execution {runtimeCtx.data.executionReady ? 'ready' : 'blocked'}
-            </Banner>
-          )}
 
           <ConversationHeader
             threads={allThreads}
@@ -577,7 +630,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             renaming={rename.isPending}
             onToggleAgents={() => (wide ? setAgentsOpen(!agentsOpen) : setAgentsSheet(true))}
           />
-          <div ref={chatScroll} onScroll={(e) => setAtBottom(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight < 80)} className="relative min-h-0 flex-1 overflow-y-auto py-4 pr-1">
+          <div ref={chatScroll} onScroll={(e) => { setAtBottom(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight < 80); if (e.currentTarget.scrollTop < 120) void loadOlder() }} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 pr-1">
             <div className="space-y-6">
               {!selectedThreadId ? (
                 <Empty icon={MessagesSquare} title="No thread selected">Create a thread to start the conversation.</Empty>
@@ -586,7 +639,14 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
               ) : snapshot.isError ? (
                 <div role="alert" className="text-sm text-bad">{snapshot.error instanceof Error ? snapshot.error.message : 'The thread snapshot failed to load.'}</div>
               ) : (
-                <Transcript messages={displayed} seqs={displayedSeq} trace={trace} onReuse={(content) => setDraft(content)} streaming={!!activeRunId} />
+                <>
+                  {olderCursor !== null && (
+                    <div className="flex justify-center">
+                      <Button size="sm" variant="ghost" disabled={olderLoading.current} onClick={() => void loadOlder()}>Load earlier messages</Button>
+                    </div>
+                  )}
+                  <Transcript messages={shownMessages} trace={trace} onReuse={(content) => setDraft(content)} streaming={!!activeRunId} />
+                </>
               )}
 
 
@@ -599,7 +659,13 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
           </div>
           <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 pt-2">
             <ModeToggle mode={selectedKind} executionEnabled={!handoffPending} executionReason={handoffPending ? 'Confirm the planning handoff to enable Execute' : null} onMode={switchMode} />
-            {selectedKind === 'execution' && <HitlSwitch enabled={hitlEnabled} busy={setHitl.isPending || !selectedThreadId} onChange={(enabled) => setHitl.mutate(enabled)} />}
+            <AgentStateChip state={agentState} />
+            <Button size="sm" variant="ghost" aria-pressed={showThinking} onClick={() => setShowThinking((v) => !v)}>{showThinking ? 'Hide thinking' : 'Show thinking'}</Button>
+            {agentState === 'failed' && lastUserText !== null && (
+              <Button size="sm" variant="secondary" icon={RefreshCw} disabled={send.isPending || !!activeRunId || executionBlocked}
+                title="Sends the last prompt again as a new run" onClick={() => { setDispatchError(null); send.mutate(lastUserText) }}>Retry</Button>
+            )}
+            {selectedKind === 'execution' && <HitlSwitch enabled={hitlEnabled} busy={setHitl.isPending || !selectedThreadId} noThread={!selectedThreadId} onChange={(enabled) => setHitl.mutate(enabled)} />}
           </div>
           <Composer
             questions={pendingQuestions}
@@ -612,7 +678,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             draft={draft}
             onDraft={setDraft}
             inputDisabled={send.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
-            placeholder={selectedKind === 'execution' ? 'Describe the execution request. The execution thread is created when you send.' : 'Describe what to do next - scope, constraints, instructions...'}
+            placeholder={placeholderFor(agentState) ?? (selectedKind === 'execution' ? 'Describe the execution request. The execution thread is created when you send.' : 'Describe what to do next - scope, constraints, instructions...')}
             sendDisabled={!draft.trim() || send.isPending || createThreadByKind.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
             sending={send.isPending}
             onSend={() => { setDispatchError(null); send.mutate(draft.trim()) }}
@@ -622,7 +688,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
           />
           </>}
         </div>
-        {wide && agentsOpen && <><Separator label="Resize agent sidebar" side="right" r={agentWidth} cfg={INSP} /><aside style={{ width: agentWidth.w }} className="flex min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-panel xl:h-[calc(100dvh-12rem)]" aria-label="Agent and activity sidebar"><AgentSidebar tab={sideTab} onTab={setSideTab} summary={{ state: runStatus === 'pending' || runStatus === 'running' ? 'Running' : pendingQuestions.length > 0 ? 'Waiting' : 'Idle', active: (fleet.data?.branches ?? []).filter((b) => b.state === 'running').length, task: trace.at(-1)?.label ?? null }} agents={agentPanel} activity={<ActivityList trace={trace} history={transcripts} />} artifacts={<ArtifactLinks engagementId={engagementId} />} /></aside></>}
+        {wide && agentsOpen && <><Separator label="Resize agent sidebar" side="right" r={agentWidth} cfg={INSP} /><aside style={{ width: agentWidth.w }} className="flex min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-panel xl:h-[calc(100dvh-12rem)]" aria-label="Agent and activity sidebar"><AgentSidebar tab={sideTab} onTab={setSideTab} summary={{ state: runStatus === 'pending' || runStatus === 'running' ? 'Running' : pendingQuestions.length > 0 ? 'Waiting' : 'Idle', active: (fleet.data?.branches ?? []).filter((b) => b.state === 'running').length, task: trace.at(-1)?.label ?? null }} agents={agentPanel} progress={<ProgressCard bundle={selectedKind === 'planning' ? planning.data?.bundle ?? null : null} labels={PLANNING_DOC_LABELS} tools={toolProgress} />} artifacts={<ArtifactLinks engagementId={engagementId} />} /></aside></>}
       </div>
       {embedded && <><Drawer open={agentsSheet && !wide} onClose={() => setAgentsSheet(false)} title="Agents / Context" width={420}>{agentPanel}</Drawer><Drawer open={historySheet} onClose={() => setHistorySheet(false)} title="Execution history" width={980}><RealOperationsHistory engagementId={engagementId} /></Drawer></>}
     </>
@@ -769,43 +835,76 @@ function KindBadge({ kind }: { kind: ThreadKind }): ReactElement {
   return <span className={cx('shrink-0 rounded-full border px-1.5 text-[10px] uppercase', kind === 'planning' ? 'border-line text-muted' : 'border-warn/40 text-warn')}>{kind}</span>
 }
 
-/** Messages, then the current run's activity: consecutive tool lines fold into one collapsed group. */
-/** Messages and trace lines in one chronological sequence; consecutive tool lines fold into one group. */
-function Transcript({ messages, seqs, trace, onReuse, streaming }: { messages: DisplayMessage[]; seqs: number[]; trace: TraceLine[]; onReuse?: (content: string) => void; streaming: boolean }): ReactElement {
+/**
+ * Messages and trace lines in one chronological sequence. A trace line sits right after the message that was the newest
+ * when it arrived (`after`), so a tool call shows where the assistant made it. Consecutive tool lines fold into one group.
+ */
+function Transcript({ messages, trace, onReuse, streaming }: { messages: DisplayMessage[]; trace: TraceLine[]; onReuse?: (content: string) => void; streaming: boolean }): ReactElement {
   if (messages.length === 0 && trace.length === 0) {
     return <p className="text-sm text-muted">No messages yet. Open with the engagement context, constraints and what you want planned.</p>
   }
   const lastAssistant = messages.reduce((found, m, i) => (m.role === 'user' ? found : i), -1)
   const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? null
-  const items: ({ seq: number; message: DisplayMessage; index: number; line?: undefined } | { seq: number; line: TraceLine; message?: undefined; index?: undefined })[] = [
-    ...messages.map((message, index) => ({ seq: seqs[index] ?? index, message, index })),
-    ...trace.map((line) => ({ seq: line.seq ?? 0, line })),
-  ].sort((a, b) => a.seq - b.seq)
+  const messageIds = new Set(messages.map((m) => m.messageId).filter((id): id is string => !!id))
+  const leading: TraceLine[] = []
+  const anchored = new Map<string, TraceLine[]>()
+  const trailing: TraceLine[] = []
+  for (const line of trace) {
+    if (line.after == null) leading.push(line)
+    else if (messageIds.has(line.after)) anchored.set(line.after, [...(anchored.get(line.after) ?? []), line])
+    else trailing.push(line)
+  }
   const rows: ReactElement[] = []
   let tools: TraceLine[] = []
+  let updates: { message: DisplayMessage; index: number }[] = []
   const flushTools = (): void => {
     if (tools.length > 0) rows.push(<ToolActivityGroup key={`tools-${tools[0]!.id}`} lines={tools} />)
     tools = []
   }
-  for (const item of items) {
-    if (item.message) {
+  // Short progress lines in a row fold into one group; a single one renders as an ordinary message.
+  const flushUpdates = (): void => {
+    if (updates.length === 1) rows.push(messageRow(updates[0]!.message, updates[0]!.index))
+    else if (updates.length > 1) rows.push(<UpdatesGroup key={`updates-${updates[0]!.index}`} texts={updates.map((u) => u.message.content.trim())} />)
+    updates = []
+  }
+  const messageRow = (message: DisplayMessage, index: number): ReactElement => (
+    <MessageRow key={message.messageId ?? `msg-${index}`} message={message}
+      onReuse={index === lastAssistant && onReuse && lastUser ? () => onReuse(lastUser) : undefined} streaming={streaming && index === lastAssistant} />
+  )
+  // Trace lines in arrival order: tool lines fold into one group, every other line stands alone.
+  const traceRows = (lines: TraceLine[]): void => {
+    for (const line of lines) {
+      if (isToolLine(line)) {
+        flushUpdates()
+        tools.push(line)
+      } else {
+        flushUpdates()
+        flushTools()
+        rows.push(<SystemLine key={line.id} line={line} />)
+      }
+    }
+    flushUpdates()
+    flushTools()
+  }
+  traceRows(leading)
+  messages.forEach((message, index) => {
+    if (index !== lastAssistant && isFoldableUpdate(message)) {
       flushTools()
-      const { message, index } = item
+      updates.push({ message, index })
+    } else {
+      flushUpdates()
+      flushTools()
       if (message.role === 'assistant' && message.content.trim() === '') {
         if (message.reasoning) rows.push(<li key={`think-${message.messageId ?? index}`}><ThinkingBlock text={message.reasoning} durationMs={message.thinkingMs} streaming={streaming && index === lastAssistant} /></li>)
-        continue
+      } else {
+        rows.push(messageRow(message, index))
       }
-      rows.push(<MessageRow key={message.messageId ?? `msg-${index}`} message={message}
-        onReuse={index === lastAssistant && onReuse && lastUser ? () => onReuse(lastUser) : undefined} streaming={streaming && index === lastAssistant} />)
-    } else if (isToolLine(item.line)) {
-      tools.push(item.line)
-    } else {
-      flushTools()
-      rows.push(<SystemLine key={item.line.id} line={item.line} />)
     }
-  }
-  flushTools()
-  return <ol className="space-y-5">{rows}</ol>
+    const lines = message.messageId ? anchored.get(message.messageId) : undefined
+    if (lines) traceRows(lines)
+  })
+  traceRows(trailing)
+  return <ol className="space-y-4">{rows}</ol>
 }
 
 function isToolLine(line: TraceLine): boolean {
@@ -821,7 +920,6 @@ function MessageRow({ message, onReuse, streaming }: { message: DisplayMessage; 
       window.setTimeout(() => setCopied(false), 1500)
     }).catch(() => undefined)
   }
-  const long = message.content.length > 1200
   return (
     <li className={cx('group flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
       <div className={cx('flex w-full items-center gap-2', isUser ? 'justify-end' : 'justify-between')}>
@@ -834,7 +932,7 @@ function MessageRow({ message, onReuse, streaming }: { message: DisplayMessage; 
       {!isUser && message.reasoning && <ThinkingBlock text={message.reasoning} durationMs={message.thinkingMs} streaming={streaming && message.content.trim() === ''} />}
       {isUser
         ? <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border border-line bg-subtle px-3.5 py-2 text-sm leading-relaxed text-fg">{message.content}</div>
-        : <div className={cx('w-full min-w-0 text-sm leading-relaxed text-fg', long && 'max-h-96 overflow-y-auto')}>{renderMarkdown(message.content)}</div>}
+        : <div className="w-full min-w-0 text-sm leading-relaxed text-fg">{renderMarkdown(message.content)}</div>}
     </li>
   )
 }
@@ -855,8 +953,53 @@ function ThinkingBlock({ text, durationMs, streaming }: { text: string; duration
   )
 }
 
+type AgentState = 'thinking' | 'running_tools' | 'waiting' | 'completed' | 'failed'
+
+const AGENT_STATE: Record<AgentState, { label: string; tone: Tone; icon: LucideIcon }> = {
+  thinking: { label: 'Thinking', tone: 'accent', icon: Brain },
+  running_tools: { label: 'Running tools', tone: 'cyan', icon: Wrench },
+  waiting: { label: 'Waiting for input', tone: 'warn', icon: Clock },
+  completed: { label: 'Completed', tone: 'ok', icon: CheckCircle2 },
+  failed: { label: 'Failed', tone: 'bad', icon: XCircle },
+}
+
+/** What the assistant is doing now, read from the live run, pending input, the last run status and the newest trace line. */
+function agentStateFor({ running, runStatus, waiting, lastLine }: { running: boolean; runStatus: string | null; waiting: boolean; lastLine: TraceLine | undefined }): AgentState | null {
+  if (waiting) return 'waiting'
+  if (running) return lastLine?.label.startsWith('tool call') ? 'running_tools' : 'thinking'
+  if (runStatus === 'success') return 'completed'
+  if (runStatus === 'error' || runStatus === 'timeout') return 'failed'
+  if (runStatus === 'interrupted') return 'waiting'
+  return null
+}
+
+/** Composer hint for the state the assistant is in; null keeps the default hint for the mode. */
+function placeholderFor(state: AgentState | null): string | null {
+  switch (state) {
+    case 'thinking':
+    case 'running_tools': return 'The assistant is working. Wait for the reply, or cancel the run above.'
+    case 'waiting': return 'Answer the pending question above to continue.'
+    case 'failed': return 'The last run failed. Adjust the request and send it, or use Retry.'
+    default: return null
+  }
+}
+
+function AgentStateChip({ state }: { state: AgentState | null }): ReactElement | null {
+  if (state === null) return null
+  const view = AGENT_STATE[state]
+  const Icon = view.icon
+  const spinning = state === 'thinking' || state === 'running_tools'
+  return (
+    <span data-agent-state={state} className={cx('inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-xs font-medium', TONE[view.tone])}>
+      <Icon size={13} className={cx(spinning && 'motion-safe:animate-pulse')} aria-hidden />
+      {view.label}
+    </span>
+  )
+}
+
 function ToolActivityGroup({ lines }: { lines: TraceLine[] }): ReactElement {
-  const [groupOpen, setGroupOpen] = useState(false)
+  // A group that contains a failure opens itself, so the error is visible without hunting through the log.
+  const [groupOpen, setGroupOpen] = useState(() => lines.some((l) => l.error))
   const [openIds, setOpenIds] = useState<Set<string>>(() => new Set())
   const failed = lines.filter((l) => l.error).length
   return (
@@ -886,8 +1029,10 @@ function ToolActivityGroup({ lines }: { lines: TraceLine[] }): ReactElement {
                   className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:bg-hover">
                   {isOpen ? <ChevronDown size={11} aria-hidden /> : <ChevronRight size={11} aria-hidden />}
                   <CircleAlert size={12} className={cx('shrink-0', line.error ? 'text-bad' : 'text-muted')} aria-hidden />
-                  <span className="min-w-0 flex-1 truncate text-muted" title={line.label}>{line.label}</span>
-                  {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
+                  <span className={cx('min-w-0 flex-1 truncate', line.error ? 'text-bad' : 'text-muted')} title={line.label}>{line.label}</span>
+                  {line.error
+                    ? <span className="shrink-0 font-medium text-bad">Failed</span>
+                    : line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
                 </button>
                 {isOpen && <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-subtle p-2 font-mono text-[11px] text-fg">{line.label}</pre>}
               </li>
@@ -928,15 +1073,26 @@ function QuestionTabs({ questions, answers, busy, batchReady, onValue, onConfirm
   const answered = (id: string): boolean => { const v = answers[id]; return typeof v === 'string' ? v.trim().length > 0 : !!v?.length }
   const formatted = (id: string): string => { const v = answers[id]; return typeof v === 'string' ? (v.trim() || '(no answer)') : v?.length ? v.join(', ') : '(no answer)' }
   const tabClass = (on: boolean): string => cx('h-8 rounded-[10px] px-3 text-xs font-medium', on ? 'bg-accent-soft text-fg' : 'text-muted hover:bg-hover hover:text-fg')
+  const tabCount = confirmIndex + 1
+  const step = (delta: number): void => setActive((current) => (current + delta + tabCount) % tabCount)
   return (
     <div className="space-y-3">
-      <div role="tablist" aria-label="Pending questions" className="flex flex-wrap gap-1">
-        {questions.map((q, i) => (
-          <button key={`tab-${q.questionId}`} type="button" role="tab" aria-selected={active === i} onClick={() => setActive(i)} className={tabClass(active === i)}>
-            {q.header || `Question ${i + 1}`}{answered(q.questionId) ? ' ✓' : ''}
-          </button>
-        ))}
-        <button type="button" role="tab" aria-selected={active === confirmIndex} onClick={() => setActive(confirmIndex)} className={tabClass(active === confirmIndex)}>Confirm</button>
+      <div className="flex min-w-0 items-center gap-1">
+        <Button size="sm" variant="ghost" icon={ChevronLeft} aria-label="Previous question" onClick={() => step(-1)} />
+        <div role="tablist" aria-label="Pending questions" className="flex min-w-0 flex-1 flex-wrap gap-1"
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+            e.preventDefault()
+            step(e.key === 'ArrowRight' ? 1 : -1)
+          }}>
+          {questions.map((q, i) => (
+            <button key={`tab-${q.questionId}`} type="button" role="tab" aria-selected={active === i} onClick={() => setActive(i)} className={tabClass(active === i)}>
+              {q.header || `Question ${i + 1}`}{answered(q.questionId) ? ' ✓' : ''}
+            </button>
+          ))}
+          <button type="button" role="tab" aria-selected={active === confirmIndex} onClick={() => setActive(confirmIndex)} className={tabClass(active === confirmIndex)}>Confirm</button>
+        </div>
+        <Button size="sm" variant="ghost" icon={ChevronRight} aria-label="Next question" onClick={() => step(1)} />
       </div>
       {questions.map((q, i) => (
         <div key={`panel-${q.questionId}/${q.interruptId ?? ''}`} role="tabpanel" hidden={active !== i}>
@@ -1053,14 +1209,14 @@ function Composer({ questions, answers, onValue, onAnswer, onAnswerAll, answerBu
   )
 }
 
-type SideTab = 'agents' | 'activity' | 'artifacts'
+type SideTab = 'agents' | 'progress' | 'artifacts'
 
-function AgentSidebar({ tab, onTab, summary, agents, activity, artifacts }: {
+function AgentSidebar({ tab, onTab, summary, agents, progress, artifacts }: {
   tab: SideTab
   onTab: (tab: SideTab) => void
   summary: { state: string; active: number; task: string | null }
   agents: ReactElement
-  activity: ReactElement
+  progress: ReactElement
   artifacts: ReactElement
 }): ReactElement {
   return (
@@ -1073,38 +1229,12 @@ function AgentSidebar({ tab, onTab, summary, agents, activity, artifacts }: {
         {summary.task && <p className="truncate text-muted" title={summary.task}>{summary.task}</p>}
       </div>
       <div className="px-3 pt-2.5">
-        <Segmented value={tab} onChange={onTab} options={[{ id: 'agents', label: 'Agents' }, { id: 'activity', label: 'Activity' }, { id: 'artifacts', label: 'Artifacts' }]} />
+        <Segmented value={tab} onChange={onTab} options={[{ id: 'agents', label: 'Agents' }, { id: 'progress', label: 'Progress' }, { id: 'artifacts', label: 'Artifacts' }]} />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        {tab === 'agents' ? agents : tab === 'activity' ? activity : artifacts}
+        {tab === 'agents' ? agents : tab === 'progress' ? progress : artifacts}
       </div>
     </div>
-  )
-}
-
-function ActivityList({ trace, history }: { trace: TraceLine[]; history: { key?: string | null; payload: unknown }[] }): ReactElement {
-  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set())
-  const historyLines = history.map((t, i) => traceLineFor(t.key ?? `hist-${i}`, t.payload as TraceLikePayload)).filter((l): l is TraceLine => l !== null)
-  const lines = [...trace, ...historyLines]
-  if (lines.length === 0) return <p className="text-xs text-muted">No activity yet. Events appear here as the assistant works.</p>
-  return (
-    <ol className="space-y-1">
-      {lines.map((line) => {
-        const isOpen = openIds.has(line.id)
-        return (
-          <li key={line.id}>
-            <button type="button" aria-expanded={isOpen} title="Show details"
-              onClick={() => setOpenIds((prev) => { const next = new Set(prev); if (next.has(line.id)) next.delete(line.id); else next.add(line.id); return next })}
-              className="flex w-full items-start gap-2 rounded-lg px-1 py-1 text-left text-xs hover:bg-hover">
-              {isOpen ? <ChevronDown size={11} className="mt-0.5 shrink-0" aria-hidden /> : <ChevronRight size={11} className="mt-0.5 shrink-0" aria-hidden />}
-              <CircleAlert size={12} className={cx('mt-0.5 shrink-0', line.error ? 'text-bad' : 'text-muted')} aria-hidden />
-              <span className={cx('min-w-0 flex-1', isOpen ? 'whitespace-pre-wrap break-words text-fg' : 'truncate text-muted')}>{line.label}</span>
-              {line.status && <span className="shrink-0 font-mono text-neutral">{line.status}</span>}
-            </button>
-          </li>
-        )
-      })}
-    </ol>
   )
 }
 
@@ -1145,12 +1275,15 @@ function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement
         ) : reports.data.reports.length === 0 ? (
           <p className="text-xs text-muted">No report has been drafted for this project yet.</p>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="grid gap-2">
             {reports.data.reports.map((report) => (
               <li key={report.id}>
                 <button type="button" onClick={() => go('project', { id: engagementId, tab: 'reports' })}
-                  className="flex w-full items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-left text-xs hover:bg-hover">
-                  <span className="min-w-0 truncate text-fg">{report.title} <span className="text-muted">· v{report.version}</span></span>
+                  className="flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-line bg-panel px-3 py-2.5 text-left text-xs hover:bg-hover">
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium text-fg">{report.title}</span>
+                    <span className="block text-[11px] text-muted">Report · v{report.version}</span>
+                  </span>
                   <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] uppercase text-muted">{report.status.replace('_', ' ')}</span>
                 </button>
               </li>
@@ -1163,10 +1296,13 @@ function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement
         {planning.isPending ? <Skeleton className="h-16" /> : planning.isError ? (
           <p className="text-xs text-bad" role="alert">{planning.error instanceof Error ? planning.error.message : 'Planning documents could not be read.'}</p>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="grid gap-2">
             {docs.map(([name, state]) => (
-              <li key={name} className="flex items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-xs">
-                <span className="min-w-0 truncate text-fg">{PLANNING_DOC_LABELS[name] ?? name}</span>
+              <li key={name} className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-line bg-panel px-3 py-2.5 text-xs">
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-fg">{PLANNING_DOC_LABELS[name] ?? name}</span>
+                  <span className="block text-[11px] text-muted">Planning document</span>
+                </span>
                 <span className={cx('shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase', PLANNING_STATE_TONE[state] ?? 'border-line text-muted')}>{state}</span>
               </li>
             ))}

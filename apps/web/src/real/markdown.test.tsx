@@ -30,6 +30,32 @@ describe('renderMarkdown', () => {
     expect(screen.getByText('After.')).toBeTruthy()
   })
 
+  it('renders a table whose separator uses one dash per column, with alignment and escaped pipes', () => {
+    const text = 'Ports:\n| Port | Note |\n|:-|-:|\n| 80 | a \\| b |\n| 443 | tls |'
+    const { container } = render(renderMarkdown(text))
+    const table = container.querySelector('table')
+    expect(table?.querySelectorAll('tbody tr')).toHaveLength(2)
+    expect(table?.querySelectorAll('tbody td')[1]?.textContent).toBe('a | b')
+    expect(container.textContent).not.toContain('|:-|-:|')
+  })
+
+  it('renders numbered lists and task checklists with the checked state', () => {
+    const { container } = render(renderMarkdown('1. recon\n2. exploit\n\n- [x] scope signed\n- [ ] report'))
+    expect(container.querySelector('ol')?.querySelectorAll('li')).toHaveLength(2)
+    const boxes = container.querySelectorAll('input[type="checkbox"]')
+    expect(boxes).toHaveLength(2)
+    expect((boxes[0] as HTMLInputElement).checked).toBe(true)
+    expect((boxes[1] as HTMLInputElement).checked).toBe(false)
+    expect(container.textContent).not.toContain('[x]')
+  })
+
+  it('renders blockquotes and horizontal rules instead of raw markers', () => {
+    const { container } = render(renderMarkdown('> take care\n\n---\n\nDone'))
+    expect(container.querySelector('blockquote')?.textContent).toBe('take care')
+    expect(container.querySelector('hr')).not.toBeNull()
+    expect(screen.getByText('Done')).toBeTruthy()
+  })
+
   it('never injects markup from message content', () => {
     const { container } = render(renderMarkdown('<img src=x onerror="alert(1)"> **<script>x</script>**'))
     expect(container.querySelector('img')).toBeNull()

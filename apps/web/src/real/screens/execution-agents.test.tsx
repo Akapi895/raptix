@@ -49,7 +49,8 @@ describe('Agents tab runtime roster', () => {
     await renderAgents(null)
     expect(await screen.findByText('recon · attempt 1')).toBeInTheDocument()
     expect(screen.getByText('role not recorded · attempt 2')).toBeInTheDocument()
-    expect(screen.getByText('failed · terminal')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /role not recorded · attempt 2, Failed/ })).toBeInTheDocument()
+    expect(screen.getByTitle(/runtime outcome: failed · terminal/)).toBeInTheDocument()
   })
 
   it('names a thread the runtime cannot read instead of showing it as empty', async () => {

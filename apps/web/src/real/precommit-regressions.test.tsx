@@ -8,6 +8,7 @@ import { useRunStream } from './stream'
 import { RealModeProvider } from './bootstrap'
 import { RealWorkspace } from './screens/workspace'
 import { go } from '../router/navigate'
+import { useToastStore } from '../state/stores'
 import { useRoute } from '../router/navigate'
 import { setActiveRouter } from '../router/active'
 import { createMemoryRouter } from 'react-router'
@@ -196,7 +197,7 @@ describe('precommit execution acceptance', () => {
     await openConversationPicker(user)
     await user.click(await screen.findByRole('option', { name: /thread-1/ }))
     await screen.findByText('Restored conversation')
-    await screen.findByText('Server-verified runtime context')
+    await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text.startsWith('Server-verified runtime context'))).toBe(true))
     expect(screen.getByLabelText('Workspace message')).toBeDisabled()
   })
 
