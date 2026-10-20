@@ -10,13 +10,13 @@ const completeness = {
   revision: 'g8:1',
 };
 const asset = { assetId: 'asset_c6102d397ce0da5a2cc12930f027d2b9', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.5' };
-const provenance = { sources: [{ source: 'nmap', count: 1 }], graphNodes: 1 };
+const provenance = { sources: [{ source: 'nmap', count: 1 }], graphNodes: 1, evidence: [{ source: 'nmap', sourceEpisodeId: 'ep-1', observedAt: null }] };
 
 describe('asset detail validator', () => {
   it('accepts services and endpoints detail bodies', () => {
-    const services = { kind: 'services', items: [{ id: '4:s', port: 80, protocol: 'tcp', service: 'http', product: null, version: null, source: 'nmap' }] };
+    const services = { kind: 'services', items: [{ id: '4:s', port: 80, protocol: 'tcp', service: 'http', product: null, version: null, source: 'nmap', sourceEpisodeId: 'ep-1' }] };
     expect(isAssetMapDetail({ engagementId: 'eng-1', asset, provenance, detail: services, nextCursor: null, completeness })).toBe(true);
-    const endpoints = { kind: 'endpoints', items: [{ id: '4:e', method: 'GET', path: '/', url: 'http://h/', statusCode: 200, source: 'katana', parameters: [] }] };
+    const endpoints = { kind: 'endpoints', items: [{ id: '4:e', method: 'GET', path: '/', url: 'http://h/', statusCode: 200, source: 'katana', sourceEpisodeId: 'ep-2', parameters: [] }] };
     expect(isAssetMapDetail({ engagementId: 'eng-1', asset, provenance, detail: endpoints, nextCursor: 'abc', completeness: { ...completeness, hasMore: true } })).toBe(true);
   });
 

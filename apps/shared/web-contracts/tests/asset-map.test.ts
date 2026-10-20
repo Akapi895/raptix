@@ -38,6 +38,8 @@ describe('asset map read-model validators', () => {
       isAssetMapNeighborhood({
         engagementId: 'eng-1',
         assetId: ref.assetId,
+        centers: [{ id: '4:a', assetId: ref.assetId, labels: ['Host'], label: '10.0.0.5' }],
+        nextCursor: null,
         nodes: [
           { id: '4:a', assetId: ref.assetId, labels: ['Host'], label: '10.0.0.5' },
           { id: '4:b', assetId: null, labels: ['Service'], label: '10.0.0.5:80/tcp' },
