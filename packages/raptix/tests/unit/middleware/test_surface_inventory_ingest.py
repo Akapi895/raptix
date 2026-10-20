@@ -9,6 +9,7 @@ import pytest
 from langchain_core.messages import ToolMessage
 
 from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
+from raptix.knowledge.graph.asset_identity import identity_props, web_origin_ref
 from raptix.knowledge.graph.ingest import (
     _adapt_arjun_json,
     _adapt_katana_jsonl,
@@ -74,6 +75,7 @@ def test_katana_adapter_records_endpoint_and_query_parameter(tmp_path: Path) -> 
     observations = store.calls[0]["observations"]
     endpoint = next(item for item in observations if item["kind"] == "Endpoint")
     parameter = next(item for item in observations if item["kind"] == "Parameter")
+    origin = identity_props("eng-1", web_origin_ref("https://app.example.test/users?id=7"))
     assert endpoint["props"] == {
         "method": "GET",
         "url": "https://app.example.test/users?id=7",
@@ -81,6 +83,7 @@ def test_katana_adapter_records_endpoint_and_query_parameter(tmp_path: Path) -> 
         "host": "app.example.test",
         "source": "katana",
         "status_code": 200,
+        "origin_asset_id": origin["asset_id"],
     }
     assert parameter["props"]["name"] == "id"
     assert parameter["props"]["location"] == "query"
