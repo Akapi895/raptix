@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapNeighborhood, AssetMapOverview } from '@raptix/web-contracts'
 import { useProjectStore } from '../../state/stores'
+import { ApiTransportError } from '../../real/transport'
 import {
   fetchAssetMapDetail,
   fetchAssetMapMembers,
@@ -8,12 +9,18 @@ import {
   fetchAssetMapOverview,
 } from '../../real/asset-map-api'
 import { AssetMapCanvas } from './AssetMapCanvas'
-import { toCanvasElements } from './graph-model'
+import { toCanvasElements, VISIBLE_EDGE_BUDGET, VISIBLE_NODE_BUDGET } from './graph-model'
+import { loadSavedSelection, saveSelection } from './saved-view'
 
 /** Maps a failure to a sentence the operator can act on; never an empty map. */
 function describeFailure(error: unknown): string {
   const message = error instanceof Error ? error.message : 'unknown error'
   return `The asset map could not be loaded (${message}). Nothing is shown as complete.`
+}
+
+/** The graph or catalog moved on since a cursor was issued: paging must restart from the first page. */
+function isRevisionChanged(error: unknown): boolean {
+  return error instanceof ApiTransportError && error.status === 409
 }
 
 function Completeness({ label, state }: { label: string; state: AssetMapCompleteness }) {
@@ -142,100 +149,6 @@ function Inspector({ detail, onLoadMore }: { detail: AssetMapDetail; onLoadMore:
   )
 }
 
-/**
- * Asset Map (flagged): hosts and web origins on the left, their relationship graph in the middle,
- * and the inspector with sources, evidence, services and sitemap on the right. Every list is paged
- * and every count says what it covers.
- */
-export function AssetMapPage() {
-  const engagementId = useProjectStore(state => state.pid)
-  const [overview, setOverview] = useState<AssetMapOverview | null>(null)
-  const [hosts, setHosts] = useState<AssetMapAssetRef[]>([])
-  const [origins, setOrigins] = useState<AssetMapAssetRef[]>([])
-  const [selected, setSelected] = useState<string | null>(null)
-  const [neighborhood, setNeighborhood] = useState<AssetMapNeighborhood | null>(null)
-  const [detail, setDetail] = useState<AssetMapDetail | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const elements = useMemo(() => (neighborhood ? toCanvasElements(neighborhood) : { nodes: [], edges: [] }), [neighborhood])
-
-  useEffect(() => {
-    if (!engagementId || engagementId === 'all') return
-    let live = true
-    setError(null)
-    Promise.all([fetchAssetMapOverview(engagementId), fetchAssetMapMembers(engagementId, 'host'), fetchAssetMapMembers(engagementId, 'web_origin')])
-      .then(([view, hostPage, originPage]) => {
-        if (!live) return
-        setOverview(view)
-        setHosts(hostPage.items)
-        setOrigins(originPage.items)
-      })
-      .catch(reason => live && setError(describeFailure(reason)))
-    return () => {
-      live = false
-    }
-  }, [engagementId])
-
-  useEffect(() => {
-    if (!engagementId || !selected) return
-    let live = true
-    setError(null)
-    Promise.all([fetchAssetMapNeighborhood(engagementId, selected), fetchAssetMapDetail(engagementId, selected)])
-      .then(([graph, inspector]) => {
-        if (!live) return
-        setNeighborhood(graph)
-        setDetail(inspector)
-      })
-      .catch(reason => live && setError(describeFailure(reason)))
-    return () => {
-      live = false
-    }
-  }, [engagementId, selected])
-
-  const loadMoreDetail = (): void => {
-    if (!detail || !engagementId || !selected || !detail.nextCursor) return
-    fetchAssetMapDetail(engagementId, selected, detail.nextCursor)
-      .then(next => setDetail(current => (current ? { ...next, detail: appendItems(current.detail, next.detail) } : next)))
-      .catch(reason => setError(describeFailure(reason)))
-  }
-
-  const loadMoreRelations = (): void => {
-    if (!neighborhood || !engagementId || !selected || !neighborhood.nextCursor) return
-    fetchAssetMapNeighborhood(engagementId, selected, neighborhood.nextCursor)
-      .then(next => setNeighborhood(current => (current ? mergeNeighborhood(current, next) : next)))
-      .catch(reason => setError(describeFailure(reason)))
-  }
-
-  if (!engagementId || engagementId === 'all') {
-    return <p className="p-4 text-sm">Open the Asset Map from a project (?engagement=…) to see its assets.</p>
-  }
-
-  return (
-    <div className="grid grid-cols-[220px_1fr_340px] gap-4 p-4" data-testid="asset-map">
-      <aside className="space-y-4">
-        <h2 className="text-base font-semibold">Asset Map</h2>
-        {overview ? <Completeness label="Catalogued" state={overview.completeness} /> : null}
-        <AssetList title="Hosts" items={hosts} selected={selected} onSelect={setSelected} />
-        <AssetList title="Web origins" items={origins} selected={selected} onSelect={setSelected} />
-      </aside>
-      <main className="space-y-2">
-        {error ? (
-          <p role="alert" className="rounded border border-amber-400 bg-amber-50 p-2 text-sm">
-            {error}
-          </p>
-        ) : null}
-        <AssetMapCanvas elements={elements} onSelectAsset={setSelected} />
-        {neighborhood ? <Completeness label="Relations" state={neighborhood.completeness} /> : null}
-        {neighborhood?.nextCursor ? (
-          <button type="button" onClick={loadMoreRelations} className="rounded border px-2 py-1 text-xs">
-            Load more relations
-          </button>
-        ) : null}
-      </main>
-      <aside>{detail ? <Inspector detail={detail} onLoadMore={loadMoreDetail} /> : <p className="text-sm text-slate-600">Select a host or origin to inspect it.</p>}</aside>
-    </div>
-  )
-}
-
 /** Adds the next page of relations; centres and nodes already on screen are not repeated. */
 function mergeNeighborhood(current: AssetMapNeighborhood, next: AssetMapNeighborhood): AssetMapNeighborhood {
   const seenEdges = new Set(current.edges.map(edge => edge.id))
@@ -253,4 +166,145 @@ function appendItems(current: AssetMapDetail['detail'], next: AssetMapDetail['de
   if (current.kind === 'services' && next.kind === 'services') return { kind: 'services', items: [...current.items, ...next.items] }
   if (current.kind === 'endpoints' && next.kind === 'endpoints') return { kind: 'endpoints', items: [...current.items, ...next.items] }
   return next
+}
+
+/**
+ * Asset Map (flagged): hosts and web origins on the left, their relationship graph in the middle,
+ * and the inspector with sources, evidence, services and sitemap on the right. Every list is paged,
+ * every count says what it covers, and a response for an asset the operator already left is dropped.
+ */
+export function AssetMapPage() {
+  const engagementId = useProjectStore(state => state.pid)
+  const [overview, setOverview] = useState<AssetMapOverview | null>(null)
+  const [hosts, setHosts] = useState<AssetMapAssetRef[]>([])
+  const [origins, setOrigins] = useState<AssetMapAssetRef[]>([])
+  const [selected, setSelected] = useState<string | null>(null)
+  const [neighborhood, setNeighborhood] = useState<AssetMapNeighborhood | null>(null)
+  const [detail, setDetail] = useState<AssetMapDetail | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  /** Every in-flight read carries the token it started under; a result with an old token is dropped. */
+  const request = useRef(0)
+  const elements = useMemo(() => (neighborhood ? toCanvasElements(neighborhood) : { nodes: [], edges: [], hiddenNodes: 0, hiddenEdges: 0 }), [neighborhood])
+
+  useEffect(() => {
+    if (!engagementId || engagementId === 'all') return
+    let live = true
+    setError(null)
+    setSelected(null)
+    setNeighborhood(null)
+    setDetail(null)
+    Promise.all([fetchAssetMapOverview(engagementId), fetchAssetMapMembers(engagementId, 'host'), fetchAssetMapMembers(engagementId, 'web_origin')])
+      .then(([view, hostPage, originPage]) => {
+        if (!live) return
+        setOverview(view)
+        setHosts(hostPage.items)
+        setOrigins(originPage.items)
+        const saved = loadSavedSelection(engagementId)
+        if (saved && [...hostPage.items, ...originPage.items].some(item => item.assetId === saved)) setSelected(saved)
+      })
+      .catch(reason => live && setError(describeFailure(reason)))
+    return () => {
+      live = false
+    }
+  }, [engagementId])
+
+  useEffect(() => {
+    if (!engagementId || engagementId === 'all' || !selected) return
+    const token = ++request.current
+    setError(null)
+    setNeighborhood(null)
+    setDetail(null)
+    saveSelection(engagementId, selected)
+    Promise.all([fetchAssetMapNeighborhood(engagementId, selected), fetchAssetMapDetail(engagementId, selected)])
+      .then(([graph, inspector]) => {
+        if (token !== request.current) return
+        setNeighborhood(graph)
+        setDetail(inspector)
+      })
+      .catch(reason => {
+        if (token === request.current) setError(describeFailure(reason))
+      })
+  }, [engagementId, selected])
+
+  const loadMoreRelations = (): void => {
+    if (!neighborhood || !engagementId || !selected || !neighborhood.nextCursor) return
+    const token = request.current
+    const asset = selected
+    fetchAssetMapNeighborhood(engagementId, asset, neighborhood.nextCursor)
+      .then(next => {
+        if (token !== request.current) return
+        setNeighborhood(current => (current ? mergeNeighborhood(current, next) : next))
+      })
+      .catch(reason => {
+        if (token !== request.current) return
+        if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
+        // The graph changed under the cursor: start the relations again from the first page.
+        const restart = ++request.current
+        fetchAssetMapNeighborhood(engagementId, asset)
+          .then(first => {
+            if (restart === request.current) setNeighborhood(first)
+          })
+          .catch(again => {
+            if (restart === request.current) setError(describeFailure(again))
+          })
+      })
+  }
+
+  const loadMoreDetail = (): void => {
+    if (!detail || !engagementId || !selected || !detail.nextCursor) return
+    const token = request.current
+    const asset = selected
+    fetchAssetMapDetail(engagementId, asset, detail.nextCursor)
+      .then(next => {
+        if (token !== request.current) return
+        setDetail(current => (current ? { ...next, detail: appendItems(current.detail, next.detail) } : next))
+      })
+      .catch(reason => {
+        if (token !== request.current) return
+        if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
+        const restart = ++request.current
+        fetchAssetMapDetail(engagementId, asset)
+          .then(first => {
+            if (restart === request.current) setDetail(first)
+          })
+          .catch(again => {
+            if (restart === request.current) setError(describeFailure(again))
+          })
+      })
+  }
+
+  if (!engagementId || engagementId === 'all') {
+    return <p className="p-4 text-sm">Open the Asset Map from a project (?engagement=…) to see its assets.</p>
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-[220px_minmax(0,1fr)_340px]" data-testid="asset-map">
+      <aside className="space-y-4">
+        <h2 className="text-base font-semibold">Asset Map</h2>
+        {overview ? <Completeness label="Catalogued" state={overview.completeness} /> : null}
+        <AssetList title="Hosts" items={hosts} selected={selected} onSelect={setSelected} />
+        <AssetList title="Web origins" items={origins} selected={selected} onSelect={setSelected} />
+      </aside>
+      <main className="space-y-2">
+        {error ? (
+          <p role="alert" className="rounded border border-amber-400 bg-amber-50 p-2 text-sm">
+            {error}
+          </p>
+        ) : null}
+        <AssetMapCanvas elements={elements} onSelectAsset={setSelected} />
+        {elements.hiddenNodes > 0 || elements.hiddenEdges > 0 ? (
+          <p className="text-xs text-slate-600" data-testid="visible-budget">
+            Not drawn: {elements.hiddenNodes} node(s) and {elements.hiddenEdges} relation(s) beyond the visible budget ({VISIBLE_NODE_BUDGET} nodes, {VISIBLE_EDGE_BUDGET} relations).
+          </p>
+        ) : null}
+        {neighborhood ? <Completeness label="Relations" state={neighborhood.completeness} /> : null}
+        {neighborhood?.nextCursor ? (
+          <button type="button" onClick={loadMoreRelations} className="rounded border px-2 py-1 text-xs">
+            Load more relations
+          </button>
+        ) : null}
+      </main>
+      <aside>{detail ? <Inspector detail={detail} onLoadMore={loadMoreDetail} /> : <p className="text-sm text-slate-600">Select a host or origin to inspect it.</p>}</aside>
+    </div>
+  )
 }
