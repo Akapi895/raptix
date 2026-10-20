@@ -116,3 +116,12 @@ def test_rows_that_write_no_catalog_asset_say_why() -> None:
 def test_reached_by_names_only_known_roles() -> None:
     for row in _rows():
         assert set(row["reached_by"]) <= KNOWN_ROLES, row["name"]
+
+
+def test_verified_rows_name_fixtures_that_exist() -> None:
+    for row in _rows():
+        fixtures = row.get("fixtures", [])
+        if row["verification"] == "verified-data":
+            assert fixtures, row["name"]
+        for fixture in fixtures:
+            assert (ROOT / fixture).exists(), f"{row['name']}: {fixture}"

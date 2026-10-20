@@ -64,7 +64,12 @@
         "dns_name",
         "web_origin"
       ],
-      "write_reason": ""
+      "write_reason": "",
+      "fixtures": [
+        "apps/web/tests/fixtures/asset-map/network/htb-lab",
+        "apps/web/tests/fixtures/asset-map/network/nmap-web-sandboxes.xml",
+        "apps/web/tests/fixtures/asset-map/network/nmap-juice-shop.xml"
+      ]
     },
     {
       "name": "web",
@@ -113,7 +118,8 @@
         "host",
         "dns_name"
       ],
-      "write_reason": ""
+      "write_reason": "",
+      "fixtures": []
     },
     {
       "name": "active-directory",
@@ -145,7 +151,8 @@
         "ad_operator"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "BloodHound and ADCS writers store AD labels (AD_USER, AD_COMPUTER, AD_GROUP, AD_ENTERPRISE_CA and others) without asset identity, so the catalog does not reconcile them; mapping them to identity and host is phase 7"
+      "write_reason": "BloodHound and ADCS writers store AD labels (AD_USER, AD_COMPUTER, AD_GROUP, AD_ENTERPRISE_CA and others) without asset identity, so the catalog does not reconcile them; mapping them to identity and host is phase 7",
+      "fixtures": []
     },
     {
       "name": "cloud",
@@ -172,7 +179,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "no KG writer under execution/tools/cloud; cloud_hunter receives KG_AUTOINGEST, so the nmap and httpx output it runs is ingested as host and web_origin (network and web rows), not as cloud resources"
+      "write_reason": "no KG writer under execution/tools/cloud; cloud_hunter receives KG_AUTOINGEST, so the nmap and httpx output it runs is ingested as host and web_origin (network and web rows), not as cloud resources",
+      "fixtures": []
     },
     {
       "name": "mobile",
@@ -199,7 +207,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "no runtime tools under execution/tools and no KG slot (bash only); an APK or IPA path has no writer"
+      "write_reason": "no runtime tools under execution/tools and no KG slot (bash only); an APK or IPA path has no writer",
+      "fixtures": []
     },
     {
       "name": "wireless",
@@ -225,7 +234,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "no runtime tools under execution/tools and no KG slot (bash only); captures have no writer"
+      "write_reason": "no runtime tools under execution/tools and no KG slot (bash only); captures have no writer",
+      "fixtures": []
     },
     {
       "name": "iot",
@@ -256,7 +266,8 @@
         "iot_operator"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no IoT parser or domain writer exists"
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no IoT parser or domain writer exists",
+      "fixtures": []
     },
     {
       "name": "ics",
@@ -287,7 +298,8 @@
         "ics_operator"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no protocol parser or ICS writer exists"
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no protocol parser or ICS writer exists",
+      "fixtures": []
     },
     {
       "name": "contracts",
@@ -319,7 +331,8 @@
         "contract_auditor"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "Slither writes finding and code-location observations, not artifact identities; contracts are not network hosts"
+      "write_reason": "Slither writes finding and code-location observations, not artifact identities; contracts are not network hosts",
+      "fixtures": []
     },
     {
       "name": "reversing",
@@ -345,7 +358,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "bash only (no KG slot); binary bytes stay in artifact storage and no writer exists"
+      "write_reason": "bash only (no KG slot); binary bytes stay in artifact storage and no writer exists",
+      "fixtures": []
     },
     {
       "name": "phishing",
@@ -373,7 +387,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "bash only (no KG slot); campaign state stays with the owning service"
+      "write_reason": "bash only (no KG slot); campaign state stays with the owning service",
+      "fixtures": []
     },
     {
       "name": "recon",
@@ -415,7 +430,8 @@
         "dns_name",
         "web_origin"
       ],
-      "write_reason": ""
+      "write_reason": "",
+      "fixtures": []
     },
     {
       "name": "exploit",
@@ -460,7 +476,8 @@
         "dns_name",
         "web_origin"
       ],
-      "write_reason": ""
+      "write_reason": "",
+      "fixtures": []
     },
     {
       "name": "surface_exploit",
@@ -505,7 +522,8 @@
         "dns_name",
         "web_origin"
       ],
-      "write_reason": ""
+      "write_reason": "",
+      "fixtures": []
     },
     {
       "name": "analyst",
@@ -537,7 +555,8 @@
         "analyst"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; inspect_evidence writes Finding nodes"
+      "write_reason": "generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; inspect_evidence writes Finding nodes",
+      "fixtures": []
     },
     {
       "name": "postexploit",
@@ -582,7 +601,8 @@
         "dns_name",
         "web_origin"
       ],
-      "write_reason": ""
+      "write_reason": "",
+      "fixtures": []
     },
     {
       "name": "blue_cell",
@@ -610,7 +630,8 @@
         "blue_cell"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "writes DefenseAction and DetectionFired nodes (defense observations, not assets)"
+      "write_reason": "writes DefenseAction and DetectionFired nodes (defense observations, not assets)",
+      "fixtures": []
     },
     {
       "name": "defense",
@@ -630,7 +651,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "library package without an entry point; its writer (blue_cell.py) is on the blue_cell row"
+      "write_reason": "library package without an entry point; its writer (blue_cell.py) is on the blue_cell row",
+      "fixtures": []
     },
     {
       "name": "osint_operator",
@@ -661,7 +683,8 @@
         "osint_operator"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary"
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary",
+      "fixtures": []
     },
     {
       "name": "forensicator",
@@ -692,7 +715,8 @@
         "forensicator"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no DFIR domain pack exists"
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no DFIR domain pack exists",
+      "fixtures": []
     },
     {
       "name": "supply_chain_operator",
@@ -722,7 +746,8 @@
         "supply_chain_operator"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no supply-chain domain pack exists"
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no supply-chain domain pack exists",
+      "fixtures": []
     },
     {
       "name": "scanner",
@@ -748,7 +773,8 @@
         "scanner"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "writes CANDIDATE and CODE_LOCATION nodes through the legacy graph shim (findings, not assets)"
+      "write_reason": "writes CANDIDATE and CODE_LOCATION nodes through the legacy graph shim (findings, not assets)",
+      "fixtures": []
     },
     {
       "name": "detector",
@@ -770,7 +796,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "emits vulnerability findings from scanner output; no KG slot, and the kg_ingest_* tools are excluded by design"
+      "write_reason": "emits vulnerability findings from scanner output; no KG slot, and the kg_ingest_* tools are excluded by design",
+      "fixtures": []
     },
     {
       "name": "verifier",
@@ -797,7 +824,8 @@
         "analyst"
       ],
       "catalog_written_kinds": [],
-      "write_reason": "writes Finding nodes for verified evidence (findings, not assets)"
+      "write_reason": "writes Finding nodes for verified evidence (findings, not assets)",
+      "fixtures": []
     },
     {
       "name": "patcher",
@@ -819,7 +847,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "patch output stays in the workspace; no KG slot"
+      "write_reason": "patch output stays in the workspace; no KG slot",
+      "fixtures": []
     },
     {
       "name": "exploiter",
@@ -841,7 +870,8 @@
       "writers": [],
       "reached_by": [],
       "catalog_written_kinds": [],
-      "write_reason": "exploit output stays in workspace evidence; no KG slot"
+      "write_reason": "exploit output stays in workspace evidence; no KG slot",
+      "fixtures": []
     },
     {
       "name": "raptix",
@@ -875,7 +905,8 @@
       "renderer": "not applicable",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "decepticon is a compatibility alias of raptix and shares its graph"
+      "gap": "decepticon is a compatibility alias of raptix and shares its graph",
+      "fixtures": []
     },
     {
       "name": "raptix-delta",
@@ -904,7 +935,8 @@
       "renderer": "not applicable",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "differs from raptix only in the messages channel (DeltaChannel)"
+      "gap": "differs from raptix only in the messages channel (DeltaChannel)",
+      "fixtures": []
     },
     {
       "name": "autohunt",
@@ -926,7 +958,8 @@
       "renderer": "not applicable",
       "fixture": "none",
       "verification": "unverified",
-      "gap": ""
+      "gap": "",
+      "fixtures": []
     },
     {
       "name": "soundwave",
@@ -950,7 +983,8 @@
       "renderer": "not applicable",
       "fixture": "none",
       "verification": "unverified",
-      "gap": ""
+      "gap": "",
+      "fixtures": []
     },
     {
       "name": "vulnresearch",
@@ -972,7 +1006,8 @@
       "renderer": "not applicable",
       "fixture": "none",
       "verification": "unverified",
-      "gap": ""
+      "gap": "",
+      "fixtures": []
     }
   ]
 }
