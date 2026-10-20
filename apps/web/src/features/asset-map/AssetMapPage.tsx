@@ -292,8 +292,10 @@ export function AssetMapPage() {
         setOverview(view)
         setHosts(hostPage.items)
         setOrigins(originPage.items)
+        // The saved asset may sit past the first page of each list (it was reached by search), so it is
+        // restored as it is. The server answers not-found if the asset has left the catalog.
         const saved = loadSavedSelection(actorId, engagementId)
-        if (saved && [...hostPage.items, ...originPage.items].some(item => item.assetId === saved)) setSelected(saved)
+        if (saved) setSelected(saved)
       })
       .catch(reason => live && setError(describeFailure(reason)))
     return () => {

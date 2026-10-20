@@ -121,6 +121,14 @@ describe('AssetMapPage state handling', () => {
     globalThis.localStorage.removeItem(savedKey)
   });
 
+  it('restores a saved asset even when it sits past the first page of the lists', async () => {
+    globalThis.localStorage.setItem(savedKey, 'asset_far')
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    await waitFor(() => expect(fetchDetail).toHaveBeenCalledWith('eng-1', 'asset_far', null, ''))
+    globalThis.localStorage.removeItem(savedKey)
+  });
+
   it('does not restore an asset saved by another user of the same browser', async () => {
     globalThis.localStorage.setItem('raptix.assetMap.selected.user-2.eng-1', 'asset_a')
     const { AssetMapPage } = await import('./AssetMapPage')
