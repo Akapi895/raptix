@@ -1,7 +1,10 @@
 /**
  * Real-mode check of the Asset Map flow on the running web stack (plan phase 4–5).
  *
- *   node tools/verify-asset-map-real-mode.mjs --engagement <id> [--ui http://127.0.0.1:3000] [--out <dir>]
+ *   node tools/verify-asset-map-real-mode.mjs --engagement <id> [--ui http://127.0.0.1:3000] [--out <dir>] [--origin <canonicalKey>]
+ *
+ * --origin picks the web origin whose sitemap is checked (for example http://10.1.0.1:80); without it the
+ * first origin in the list is used, which may have no sitemap at all.
  *
  * Checks, in a real browser against the real API and graph:
  *   1. With the flag off (no opt-in) the page does not render.
@@ -90,7 +93,14 @@ try {
   const originButtons = page.locator('section[aria-label="Web origins"] button')
   const originCount = await originButtons.count()
   record('web origins list from the catalog', originCount > 0, `origins: ${originCount}`)
-  await originButtons.first().click()
+  // A named origin may sit beyond the first page of the list, so it is found through the search box.
+  if (args.origin) {
+    await page.locator('#asset-map-search').fill(args.origin)
+    await page.getByRole('button', { name: 'Find', exact: true }).click()
+    await page.getByRole('region', { name: 'Search results' }).getByRole('button', { name: args.origin, exact: true }).click()
+  } else {
+    await originButtons.first().click()
+  }
   await page.locator('section[aria-label="Sitemap"]').waitFor({ timeout: 20000 })
   const endpointRows = await page.locator('section[aria-label="Sitemap"] tbody tr').count()
   record('origin shows its sitemap', endpointRows > 0, `endpoints: ${endpointRows}`)
