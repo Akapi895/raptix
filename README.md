@@ -1,226 +1,26 @@
-[![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](README.md)
-[![한국어](https://img.shields.io/badge/Language-한국어-red?style=for-the-badge)](README_KO.md)
+# Raptix — A Multi-Agent System for Red Team Engagements
 
-<h1 align="center">Raptix — Autonomous Red Team Agent</h1>
+Raptix is a research project on using a group of LLM-based agents to support an authorized red team engagement, from reconnaissance through initial foothold, privilege escalation, lateral movement and command and control (C2). It is designed for authorized targets in isolated test environments only.
 
-<p align="center"><i>"Another AI hacker? Let us guess — it runs nmap and writes a report."</i></p>
+## The problem
 
-<div align="center">
+After each step of an engagement, a tester usually has several possible next actions. Choosing among them means deciding which lead to follow first, which findings are reliable enough to act on, and which tasks can safely run in parallel. Raptix aims to support these decisions while producing evidence that can be checked afterwards.
 
-<a href="https://github.com/Akapi895/raptix/blob/main/LICENSE">
-  <img src="https://img.shields.io/github/license/Akapi895/raptix?style=for-the-badge&color=blue" alt="License: Apache 2.0">
-</a>
-<a href="https://github.com/Akapi895/raptix/stargazers">
-  <img src="https://img.shields.io/github/stars/Akapi895/raptix?style=for-the-badge&color=yellow" alt="Stargazers">
-</a>
-<a href="https://github.com/Akapi895/raptix/graphs/contributors">
-  <img src="https://img.shields.io/github/contributors/Akapi895/raptix?style=for-the-badge&color=orange" alt="Contributors">
-</a>
+## Approach
 
-<br/>
+- **Engagement setup.** A planning agent produces the engagement package: Rules of Engagement (RoE), a concept of operations (ConOps) and a deconfliction plan. An orchestrator then builds an operation plan (OPPLAN) whose objectives are mapped to MITRE ATT&CK, and waits for operator approval before dispatching work.
+- **Orchestrator and specialists.** The orchestrator reads the OPPLAN and the current attack knowledge graph, selects the next objective and delegates it to a specialist agent such as recon, exploit or post-exploitation. The orchestrator does not run offensive commands itself.
+- **Execution in a sandbox.** Specialists run tools inside an isolated Kali Linux sandbox, using persistent terminal sessions so that interactive tools work.
+- **Shared state.** Observations are stored in a Neo4j attack knowledge graph, so planning depends on recorded evidence rather than on conversation history alone.
+- **Safety controls.** Actions are checked against RoE and network egress limits, high-impact actions require human approval, and output from targets is treated as untrusted input.
+- **Controlled parallelism.** Each task is classified by its effect and the resources it uses. An admission policy decides whether tasks may run concurrently, so that fragile services are not overloaded.
 
-<a href="https://discord.gg/TZUYsZgrRG">
-  <img src="https://img.shields.io/badge/Discord-Join%20Us-7289DA?logo=discord&logoColor=white&style=for-the-badge" alt="Join us on Discord">
-</a>
-<a href="https://decepticon.red">
-  <img src="https://img.shields.io/badge/Website-decepticon.red-brightgreen?logo=vercel&logoColor=white&style=for-the-badge" alt="Website">
-</a>
-<a href="https://docs.decepticon.red">
-  <img src="https://img.shields.io/badge/Docs-docs.decepticon.red-8B5CF6?logo=bookstack&logoColor=white&style=for-the-badge" alt="Documentation">
-</a>
-<a href="https://app.decepticon.red">
-  <img src="https://img.shields.io/badge/Live%20App-app.decepticon.red-FF2D55?logo=rocket&logoColor=white&style=for-the-badge" alt="Live hosted app">
-</a>
+## Goals
 
-</div>
+- Keep every conclusion traceable to evidence collected during the engagement.
+- Bound the number of tasks so that exploration does not grow without limit.
+- Measure how the safety and concurrency controls affect results on lab targets.
 
-<br/>
+## Status
 
-<div align="center">
-  <video src="https://github.com/user-attachments/assets/b3fd40d8-e859-4a39-97f4-bd825694ad96" width="800" controls></video>
-</div>
-
-
-<div align="center">
-
-### ☁️ Don't want to self-host? **Raptix is live in the cloud.**
-
-Skip the Docker setup — run autonomous red-team engagements right from your browser.
-
-<a href="https://app.decepticon.red">
-  <img src="https://img.shields.io/badge/Launch%20the%20Live%20App-app.decepticon.red-FF2D55?logo=rocket&logoColor=white&style=for-the-badge" alt="Launch the live app at app.decepticon.red">
-</a>
-
-</div>
-
-<div align="center">
-  <video src="https://github.com/user-attachments/assets/2344d6f7-fa44-42bb-9492-1c203e56df3c" width="800" controls></video>
-</div>
-
----
-
-## Install
-
-**Prerequisites**: [Docker](https://docs.docker.com/get-docker/) and Docker Compose v2.
-Supported on macOS (Apple Silicon + Intel), Linux (amd64 + arm64), and Windows (amd64 + arm64) — native via PowerShell or via WSL2 (Ubuntu / Kali).
-
-**macOS / Linux / WSL2**
-```bash
-curl -fsSL https://decepticon.red/install | bash
-raptix onboard   # Interactive setup wizard (provider, API key, model profile)
-raptix           # Start the core stack and drop into the terminal CLI
-```
-
-The default start brings up the core management plane (LiteLLM, PostgreSQL, Neo4j, Skillogy, LangGraph, sandbox) and launches the terminal CLI. Specialist workloads (BloodHound CE, Sliver C2, Ghidra MCP, …) and the web dashboard come up on demand — the orchestrator spawns specialists via `ops_start("ad")` etc., and you bring up the dashboard from inside the CLI with `/web` (see [Web Dashboard](docs/web-dashboard.md)).
-
-**Windows (PowerShell, native)**
-```powershell
-irm https://decepticon.red/install.ps1 | iex
-raptix onboard
-raptix
-```
-
-→ **[Quick start](docs/getting-started.md)** · **[Full setup walkthrough](docs/setup-guide.md)**
-
-### Use as a library (pip)
-
-Building on top of the agents — a product, a research integration, or a custom orchestrator? Install the SDK from PyPI:
-
-```bash
-pip install raptix              # core SDK
-pip install "raptix[neo4j]"     # + the knowledge-graph attack-chain tools
-```
-
-`raptix` is a **client SDK**: it ships the agent factories, middleware, tools, and skills, and routes LLM calls and sandbox execution to runtime services over HTTP (`RAPTIX_LLM__PROXY_URL`, `SANDBOX_URL`). Running agents still needs those services — use the Docker stack above, or point the URLs at your own equivalents. See **[Raptix as a library](docs/library-usage.md)** for the factory override surface, declarative `PluginBundle` plugins, and the safety gate.
-
----
-
-## 💖 Support Raptix
-
-[![Sponsor](https://img.shields.io/badge/Sponsor-Raptix-red?style=for-the-badge&logo=github)](https://github.com/sponsors/PurpleCHOIms)
-
-We're building Raptix toward an **Offensive Vaccine** for the AI-driven threat landscape. If you believe in autonomous red teaming as a path to stronger defense, consider supporting the project.
-
----
-
-## Benchmark
-
-| Benchmark | Difficulty | Pass Rate |
-|-----------|------------|-----------|
-| [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | Easy (Level 1)   | **45 / 45** (100 %) |
-| [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | Medium (Level 2) | **50 / 51** (98.0 %) |
-| [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | Hard (Level 3)   | **7 / 8** (87.5 %) |
-| [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | **All levels**   | **102 / 104** (98.08 %) |
-
-- **[Full per-challenge index, attack-class matrix, and LangSmith traces](benchmarks/results/README.md)**
-- **[Comparison vs other AI pentest agents (Strix, PentestGPT, MAPTA, Cyber-AutoAgent, XBOW commercial, …)](docs/benchmark-comparison.md)**
-
----
-
-## What is Raptix?
-
-The "AI + hacking" space is full of demos that run nmap and print a report. That's not what this is.
-
-**Raptix is a professional autonomous Red Team agent.** It executes realistic attack chains — reconnaissance, exploitation, privilege escalation, lateral movement, C2 — the way a real adversary would, not the way a scanner does.
-
-But more importantly: it operates under the discipline that separates red teamers from script kiddies. Before a single packet leaves the wire, Raptix generates a complete engagement package — **RoE**, **ConOps**, **Deconfliction Plan**, and **OPPLAN** with MITRE ATT&CK mapping — and every action runs inside those defined rules.
-
-→ **[Engagement workflow deep dive](docs/engagement-workflow.md)**
-
----
-
-## Why Raptix?
-
-**Real kill chains, not checkbox scans.** Raptix reads an OPPLAN and pursues objectives through whatever path opens up — pivoting, adapting, chaining techniques.
-
-**Interactive shells, actually.** Real offensive tools are interactive (`msfconsole`, `sliver-client`, `evil-winrm`). Raptix runs every command inside persistent tmux sessions with automatic prompt detection — so when a tool drops into an interactive prompt, the agent sends follow-up commands without workarounds.
-
-**Hardened sandbox isolation.** All commands run inside a Kali Linux sandbox on a dedicated operational network (`sandbox-net`), separate from the management plane (`raptix-net`). LangGraph drives the sandbox via the Docker socket. → **[Architecture](docs/architecture.md)**
-
-**Offense serves defense.** The planned [Offensive Vaccine](docs/offensive-vaccine.md) loop will turn findings into defense improvements through an attack → defend → verify cycle.
-
----
-
-## Architecture
-
-Two-network design. The **always-on** management plane (LiteLLM, PostgreSQL, Skillogy, LangGraph) and the always-on sandbox plane stay up across the whole engagement; everything else is **dynamic-spawn** — the Web dashboard comes up on `/web` from the CLI, and specialist workloads (BloodHound CE, Sliver C2, Ghidra MCP, …) come up only when the orchestrator calls `ops_start(...)` (see [ADR-0006](docs/adr/0006-agent-driven-container-lifecycle.md)). Networks: management on `raptix-net`; sandbox + C2 server + targets on `sandbox-net`. Neo4j is dual-homed so the agent (on management) can persist findings written from inside the sandbox.
-
-→ **[Architecture deep dive](docs/architecture.md)** · **[Knowledge graph](docs/knowledge-graph.md)**
-
----
-
-## Agents
-
-16 specialist agents organized by kill chain phase, with a fresh context window per objective — no accumulated noise.
-
-Orchestration · Reconnaissance · Exploitation · Post-Exploitation · Vulnerability Research · Domain Specialists (AD, Cloud, Smart Contracts, Reversing, Analyst).
-
-→ **[Full agent roster and middleware stack](docs/agents.md)**
-
----
-
-## Models & Providers
-
-Tier-based, credentials-aware fallback chain. You declare which credentials you have in priority order; Raptix builds the primary→fallback chain at every tier from there.
-
-| Profile | Tier per agent | Use case |
-|---------|----------------|----------|
-| **eco** (default) | Per-agent (HIGH for orchestrator/exploiter/patcher/analyst, MID for execution, LOW for recon/soundwave) | Production |
-| **max** | Every agent on HIGH | High-value targets |
-| **test** | Every agent on LOW | Development / CI |
-
-**Tier-mapped providers**: Anthropic, OpenAI, Google Gemini, MiniMax, DeepSeek, xAI, Mistral, OpenRouter, Nvidia NIM, Ollama (local).
-**Subscription OAuth**: Claude Max/Pro/Team, ChatGPT Pro/Plus/Team, Gemini Advanced, Copilot Pro, SuperGrok, Perplexity Pro.
-
-Configure via `raptix onboard`. → **[Full model reference & fallback examples](docs/models.md)**
-
----
-
-## Documentation
-
-| Topic | Doc |
-|-------|-----|
-| Installation and first engagement | [Getting Started](docs/getting-started.md) |
-| Complete setup, OAuth, providers, dashboard | [Setup Guide](docs/setup-guide.md) |
-| All CLI commands and keyboard shortcuts | [CLI Reference](docs/cli-reference.md) |
-| All `make` targets | [Makefile Reference](docs/makefile-reference.md) |
-| Agent roster and middleware | [Agents](docs/agents.md) |
-| Model profiles and fallback chain | [Models](docs/models.md) |
-| Skill system and format spec | [Skills](docs/skills.md) |
-| Web dashboard features and setup | [Web Dashboard](docs/web-dashboard.md) |
-| System architecture and network isolation | [Architecture](docs/architecture.md) |
-| Neo4j knowledge graph | [Knowledge Graph](docs/knowledge-graph.md) |
-| End-to-end engagement workflow | [Engagement Workflow](docs/engagement-workflow.md) |
-| Offensive Vaccine loop | [Offensive Vaccine](docs/offensive-vaccine.md) |
-| Contributing to Raptix | [Contributing](docs/contributing.md) |
-
----
-
-## Contributing
-
-```bash
-git clone https://github.com/Akapi895/raptix.git
-cd Raptix
-make dogfood  # Full OSS UX (launcher → onboard → CLI) on local code
-make dev      # Backend hot-reload (compose watch) — daily dev loop
-```
-
-→ **[Contributing guide](docs/contributing.md)**
-
----
-
-## Community
-
-Join the [Discord](https://discord.gg/TZUYsZgrRG) — ask questions, share engagement logs, discuss techniques.
-
----
-
-## Disclaimer
-
-Do not use this project on any system or network without explicit written authorization from the system owner. Unauthorized access to computer systems is illegal. You are solely responsible for your actions. The authors and contributors assume no liability for misuse.
-
----
-
-## License
-
-[Apache-2.0](LICENSE)
+Work in progress. The core architecture, the knowledge graph and the fan-out control logic are implemented. Evaluation on lab environments and benchmarks is ongoing, and the operator interface is still being integrated.
