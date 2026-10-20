@@ -1,11 +1,19 @@
 {
-  "version": 1,
+  "version": 2,
   "status_legend": {
     "unverified": "no retained output has been mapped through ingest to API to UI",
     "partial": "some sources map end to end; the gaps listed in gap are open",
     "verified-data": "retained or lab output passed ingest, persistence, API and UI",
     "blocked": "required tool, provider, lab or hardware is not available"
   },
+  "registration_legend": {
+    "entry-point": "registered through a raptix.subagents or raptix.domains entry point",
+    "graph-only": "served as a LangGraph graph without a subagent entry point",
+    "orchestrator": "a top-level agent that dispatches subagents",
+    "domain-pack": "a raptix.domains entry point without a subagent",
+    "library-only": "installed package with no entry point"
+  },
+  "write_boundary": "packages/raptix/raptix/knowledge/graph/store.py (KGStore.record_observations): every writer passes here; Host and Entrypoint get identity (ADR-0094) and entrypoint keys are redacted",
   "rows": [
     {
       "name": "network",
@@ -14,17 +22,49 @@
       "owner": "plugins/network",
       "asset_kinds": [
         "host",
-        "network_segment",
-        "dns_name"
-      ],
-      "sources": [
-        "packages/raptix/raptix/knowledge/graph/ingest.py (nmap XML host, service and entrypoint parsing)"
+        "dns_name",
+        "web_origin"
       ],
       "read_model": "implemented: overview, neighborhood, host detail (services)",
       "renderer": "implemented: Asset Map canvas and inspector (flagged, default off)",
       "fixture": "apps/web/tests/fixtures/asset-map/network/ (lab nmap XML from the sandboxes and juice-shop) and apps/web/tests/fixtures/asset-map/network/htb-lab/ (nine nmap XML files retained from the benchmark runs; one is truncated and is refused)",
       "verification": "verified-data",
-      "gap": "nmap UDP output yields hosts only; nmap script output is not ingested; UI check ran on the lab engagement only"
+      "gap": "nmap UDP output yields hosts only; nmap script output is not ingested; network_segment is reserved with no writer; the UI check ran on the lab engagement only",
+      "graphs": [],
+      "roles": [],
+      "registration": "domain-pack",
+      "activation": "domain pack (installed)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/masscan.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/dnsx.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/subfinder.py",
+        "packages/raptix/raptix/knowledge/ingest/materialize.py",
+        "packages/raptix/raptix/middleware/kg_autoingest.py",
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "ad_operator",
+        "analyst",
+        "cloud_hunter",
+        "contract_auditor",
+        "exploit",
+        "forensicator",
+        "ics_operator",
+        "iot_operator",
+        "osint_operator",
+        "postexploit",
+        "raptix",
+        "recon",
+        "supply_chain_operator",
+        "surface_exploit"
+      ],
+      "catalog_written_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
+      ],
+      "write_reason": ""
     },
     {
       "name": "web",
@@ -36,15 +76,44 @@
         "host",
         "dns_name"
       ],
-      "sources": [
-        "packages/raptix/raptix/knowledge/graph/ingest.py (Host/Endpoint/Parameter)",
-        "packages/raptix/raptix/execution/tools/proxy/tools.py (Caido sitemap)"
-      ],
       "read_model": "implemented: origin members, sitemap (endpoints) detail with redaction",
       "renderer": "implemented: sitemap table in the inspector",
       "fixture": "apps/web/tests/fixtures/asset-map/web/ (not yet captured)",
       "verification": "partial",
-      "gap": "no retained web-scanner output: benchmark runs have no httpx, katana or nuclei output (the sandbox httpx is a Python client and katana is absent); ffuf and gobuster are mentioned only in agent text; no writer exists for ffuf"
+      "gap": "no retained web-scanner output: benchmark runs have no httpx, katana or nuclei output (the sandbox httpx is a Python client and katana is absent); ffuf and gobuster have parsers but no retained output; the Caido sitemap in proxy/tools.py is read-only with no writer",
+      "graphs": [],
+      "roles": [],
+      "registration": "domain-pack",
+      "activation": "domain pack (installed)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/ffuf.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/gobuster.py",
+        "packages/raptix/raptix/middleware/kg_autoingest.py",
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "ad_operator",
+        "analyst",
+        "cloud_hunter",
+        "contract_auditor",
+        "exploit",
+        "forensicator",
+        "ics_operator",
+        "iot_operator",
+        "osint_operator",
+        "postexploit",
+        "raptix",
+        "recon",
+        "supply_chain_operator",
+        "surface_exploit"
+      ],
+      "catalog_written_kinds": [
+        "web_origin",
+        "host",
+        "dns_name"
+      ],
+      "write_reason": ""
     },
     {
       "name": "active-directory",
@@ -55,14 +124,28 @@
         "identity",
         "host"
       ],
-      "sources": [
-        "to audit in phase 7 (BloodHound and AD tools)"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "benchmark runs contain only agent text about secretsdump, ldapsearch and smbclient, not tool output; no AD lab running (BloodHound CE is opt-in and not started)"
+      "gap": "benchmark runs contain only agent text about secretsdump, ldapsearch and smbclient, not tool output; no AD lab is running (BloodHound CE is opt-in and not started)",
+      "graphs": [
+        "ad_operator"
+      ],
+      "roles": [
+        "ad_operator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/execution/tools/ad/bloodhound.py",
+        "packages/raptix/raptix/execution/tools/ad/adcs_post.py"
+      ],
+      "reached_by": [
+        "ad_operator"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "BloodHound and ADCS writers store AD labels (AD_USER, AD_COMPUTER, AD_GROUP, AD_ENTERPRISE_CA and others) without asset identity, so the catalog does not reconcile them; mapping them to identity and host is phase 7"
     },
     {
       "name": "cloud",
@@ -73,14 +156,23 @@
         "cloud_resource",
         "identity"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no cloud account or retained cloud inventory; provisioning a paid account is out of scope"
+      "gap": "no cloud account or retained cloud inventory; provisioning a paid account is out of scope",
+      "graphs": [
+        "cloud_hunter"
+      ],
+      "roles": [
+        "cloud_hunter"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "no KG writer under execution/tools/cloud; cloud_hunter receives KG_AUTOINGEST, so the nmap and httpx output it runs is ingested as host and web_origin (network and web rows), not as cloud resources"
     },
     {
       "name": "mobile",
@@ -91,14 +183,23 @@
         "mobile_app",
         "web_origin"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 manifest and components view",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no APK or IPA sample and no device or emulator in the stack"
+      "gap": "no APK or IPA sample and no device or emulator in the stack",
+      "graphs": [
+        "mobile_operator"
+      ],
+      "roles": [
+        "mobile_operator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "no runtime tools under execution/tools and no KG slot (bash only); an APK or IPA path has no writer"
     },
     {
       "name": "wireless",
@@ -108,14 +209,23 @@
       "asset_kinds": [
         "device"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no wireless adapter attached and no retained capture (pcap) in the repository or workspace"
+      "gap": "no wireless adapter attached and no retained capture (pcap) in the repository or workspace",
+      "graphs": [
+        "wireless_operator"
+      ],
+      "roles": [
+        "wireless_operator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "no runtime tools under execution/tools and no KG slot (bash only); captures have no writer"
     },
     {
       "name": "iot",
@@ -126,14 +236,27 @@
         "device",
         "artifact"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no device or firmware image available; no retained output found"
+      "gap": "no device or firmware image available; no retained output found",
+      "graphs": [
+        "iot_operator"
+      ],
+      "roles": [
+        "iot_operator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "iot_operator"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no IoT parser or domain writer exists"
     },
     {
       "name": "ics",
@@ -144,14 +267,27 @@
         "device",
         "host"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no PLC or ICS lab in the stack; no retained protocol captures found"
+      "gap": "no PLC or ICS lab in the stack; no retained protocol captures found",
+      "graphs": [
+        "ics_operator"
+      ],
+      "roles": [
+        "ics_operator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "ics_operator"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no protocol parser or ICS writer exists"
     },
     {
       "name": "contracts",
@@ -161,14 +297,29 @@
       "asset_kinds": [
         "artifact"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 source and ABI view",
       "fixture": "to define in phase 7",
       "verification": "unverified",
-      "gap": "contracts are not network hosts; typed artifact entity only"
+      "gap": "contracts are not network hosts; typed artifact entity only",
+      "graphs": [
+        "contract_auditor"
+      ],
+      "roles": [
+        "contract_auditor"
+      ],
+      "registration": "entry-point",
+      "activation": "contracts bundle (config-gated; not in the default enabled list)",
+      "writers": [
+        "packages/raptix/raptix/execution/tools/contracts/slither.py",
+        "packages/raptix/raptix/execution/tools/contracts/tools.py",
+        "packages/raptix/raptix/execution/tools/research/ingest_services.py"
+      ],
+      "reached_by": [
+        "contract_auditor"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "Slither writes finding and code-location observations, not artifact identities; contracts are not network hosts"
     },
     {
       "name": "reversing",
@@ -178,14 +329,23 @@
       "asset_kinds": [
         "artifact"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 binary metadata view",
       "fixture": "to define in phase 7",
       "verification": "unverified",
-      "gap": "artifact references only; bytes stay in artifact storage"
+      "gap": "artifact references only; bytes stay in artifact storage",
+      "graphs": [
+        "reverser"
+      ],
+      "roles": [
+        "reverser"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "bash only (no KG slot); binary bytes stay in artifact storage and no writer exists"
     },
     {
       "name": "phishing",
@@ -197,14 +357,23 @@
         "web_origin",
         "identity"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "unverified",
-      "gap": "campaign lifecycle stays with the owning service"
+      "gap": "campaign lifecycle stays with the owning service",
+      "graphs": [
+        "phisher"
+      ],
+      "roles": [
+        "phisher"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "bash only (no KG slot); campaign state stays with the owning service"
     },
     {
       "name": "recon",
@@ -216,59 +385,159 @@
         "dns_name",
         "web_origin"
       ],
-      "sources": [
-        "recon tool outputs routed through ingest.py"
-      ],
       "read_model": "covered by network and web rows",
       "renderer": "covered by network and web rows",
       "fixture": "covered by network and web rows",
       "verification": "unverified",
-      "gap": "role writes no separate asset type; audit writers in phase 2"
+      "gap": "the role's asset kinds are catalogued by the network and web rows",
+      "graphs": [
+        "recon"
+      ],
+      "roles": [
+        "recon"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/masscan.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/dnsx.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/subfinder.py",
+        "packages/raptix/raptix/knowledge/ingest/materialize.py",
+        "packages/raptix/raptix/middleware/kg_autoingest.py",
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "recon"
+      ],
+      "catalog_written_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
+      ],
+      "write_reason": ""
     },
     {
       "name": "exploit",
       "domain_pack": null,
       "subagent": "exploit",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/exploit.py",
-      "asset_kinds": [],
-      "sources": [
-        "findings and evidence, not assets"
+      "asset_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
       ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "role has no asset writer; relations are reported through the findings path"
+      "gap": "findings and relations are reported through the findings path; tried:: bookkeeping nodes are keyed by a hash of the target and are not assets; they are written only when RAPTIX_KG_TRIED_EDGES is set",
+      "graphs": [
+        "exploit"
+      ],
+      "roles": [
+        "exploit"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/masscan.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/dnsx.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/subfinder.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/ffuf.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/gobuster.py",
+        "packages/raptix/raptix/knowledge/ingest/materialize.py",
+        "packages/raptix/raptix/middleware/kg_autoingest.py",
+        "packages/raptix/raptix/knowledge/graph/tools.py",
+        "packages/raptix/raptix/middleware/tried_edges.py"
+      ],
+      "reached_by": [
+        "exploit"
+      ],
+      "catalog_written_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
+      ],
+      "write_reason": ""
     },
     {
       "name": "surface_exploit",
       "domain_pack": null,
       "subagent": "surface_exploit",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/surface_exploit.py",
-      "asset_kinds": [],
-      "sources": [
-        "findings and evidence, not assets"
+      "asset_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
       ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "role has no asset writer; audit in phase 2"
+      "gap": "the same writers as exploit; the tried:: bookkeeping is off unless RAPTIX_KG_TRIED_EDGES is set",
+      "graphs": [
+        "surface_exploit"
+      ],
+      "roles": [
+        "surface_exploit"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/masscan.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/dnsx.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/subfinder.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/ffuf.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/gobuster.py",
+        "packages/raptix/raptix/knowledge/ingest/materialize.py",
+        "packages/raptix/raptix/middleware/kg_autoingest.py",
+        "packages/raptix/raptix/knowledge/graph/tools.py",
+        "packages/raptix/raptix/middleware/tried_edges.py"
+      ],
+      "reached_by": [
+        "surface_exploit"
+      ],
+      "catalog_written_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
+      ],
+      "write_reason": ""
     },
     {
       "name": "analyst",
       "domain_pack": null,
       "subagent": "analyst",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/analyst.py",
-      "asset_kinds": [],
-      "sources": [
-        "analysis of existing observations"
+      "asset_kinds": [
+        "host",
+        "web_origin"
       ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "reads the graph, writes no asset type"
+      "gap": "the earlier entry said analyst writes no asset type; that was wrong, because kg_record and kg_ingest can write Host and Entrypoint",
+      "graphs": [
+        "analyst"
+      ],
+      "roles": [
+        "analyst"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py",
+        "packages/raptix/raptix/execution/tools/evidence/tools.py"
+      ],
+      "reached_by": [
+        "analyst"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; inspect_evidence writes Finding nodes"
     },
     {
       "name": "postexploit",
@@ -277,16 +546,43 @@
       "owner": "packages/raptix/raptix/intelligence/agents/standard/postexploit.py",
       "asset_kinds": [
         "host",
+        "dns_name",
+        "web_origin",
         "identity"
-      ],
-      "sources": [
-        "to audit in phase 2"
       ],
       "read_model": "phase 3 neighborhood",
       "renderer": "covered by host inspector",
       "fixture": "to define in phase 2",
       "verification": "unverified",
-      "gap": "writers not yet audited"
+      "gap": "no identity writer exists for postexploit; its identity target is covered by the active-directory row",
+      "graphs": [
+        "postexploit"
+      ],
+      "roles": [
+        "postexploit"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/masscan.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/dnsx.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/subfinder.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/ffuf.py",
+        "packages/raptix/raptix/knowledge/ingest/parsers/gobuster.py",
+        "packages/raptix/raptix/knowledge/ingest/materialize.py",
+        "packages/raptix/raptix/middleware/kg_autoingest.py",
+        "packages/raptix/raptix/middleware/tried_edges.py"
+      ],
+      "reached_by": [
+        "postexploit"
+      ],
+      "catalog_written_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
+      ],
+      "write_reason": ""
     },
     {
       "name": "blue_cell",
@@ -294,14 +590,27 @@
       "subagent": "blue_cell",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/blue_cell.py",
       "asset_kinds": [],
-      "sources": [
-        "detection observations, not assets"
-      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "defense pack is a library only; no asset writer identified"
+      "gap": "defense pack is a library only; no asset writer identified",
+      "graphs": [
+        "blue_cell"
+      ],
+      "roles": [
+        "blue_cell"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/execution/tools/defense/blue_cell.py"
+      ],
+      "reached_by": [
+        "blue_cell"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "writes DefenseAction and DetectionFired nodes (defense observations, not assets)"
     },
     {
       "name": "defense",
@@ -309,14 +618,19 @@
       "subagent": null,
       "owner": "plugins/defense",
       "asset_kinds": [],
-      "sources": [
-        "CONOPS workspace resolution; no asset writer"
-      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "library package without a domain entry point; not part of the registry"
+      "gap": "library package without a domain entry point; not part of the registry",
+      "graphs": [],
+      "roles": [],
+      "registration": "library-only",
+      "activation": "none (no entry point)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "library package without an entry point; its writer (blue_cell.py) is on the blue_cell row"
     },
     {
       "name": "osint_operator",
@@ -327,14 +641,27 @@
         "dns_name",
         "identity"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "needs an external provider; no retained OSINT output found; not run against third-party targets"
+      "gap": "needs an external provider; no retained OSINT output found; not run against third-party targets",
+      "graphs": [
+        "osint_operator"
+      ],
+      "roles": [
+        "osint_operator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "osint_operator"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary"
     },
     {
       "name": "forensicator",
@@ -345,14 +672,27 @@
         "host",
         "artifact"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 timeline view",
       "fixture": "to define in phase 7",
       "verification": "unverified",
-      "gap": "no DFIR domain pack; timeline needs event-time fields"
+      "gap": "no DFIR domain pack; timeline needs event-time fields",
+      "graphs": [
+        "forensicator"
+      ],
+      "roles": [
+        "forensicator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "forensicator"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no DFIR domain pack exists"
     },
     {
       "name": "supply_chain_operator",
@@ -362,14 +702,27 @@
       "asset_kinds": [
         "artifact"
       ],
-      "sources": [
-        "to audit in phase 7"
-      ],
       "read_model": "phase 7",
       "renderer": "phase 7 dependency view",
       "fixture": "to define in phase 7",
       "verification": "unverified",
-      "gap": "no supply-chain domain pack"
+      "gap": "no supply-chain domain pack",
+      "graphs": [
+        "supply_chain_operator"
+      ],
+      "roles": [
+        "supply_chain_operator"
+      ],
+      "registration": "entry-point",
+      "activation": "standard bundle (default)",
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "supply_chain_operator"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "only the generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary; no supply-chain domain pack exists"
     },
     {
       "name": "scanner",
@@ -377,14 +730,25 @@
       "subagent": "scanner",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/scanner.py",
       "asset_kinds": [],
-      "sources": [
-        "vulnresearch pipeline; findings, not assets"
-      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "pipeline role; audit writers in phase 2 and close as role-only"
+      "gap": "pipeline role; audit writers in phase 2 and close as role-only",
+      "graphs": [],
+      "roles": [
+        "scanner"
+      ],
+      "registration": "entry-point",
+      "activation": "plugins bundle (enabled in this checkout; not in the OSS default)",
+      "writers": [
+        "packages/raptix/raptix/execution/tools/research/scanner_tools.py"
+      ],
+      "reached_by": [
+        "scanner"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "writes CANDIDATE and CODE_LOCATION nodes through the legacy graph shim (findings, not assets)"
     },
     {
       "name": "detector",
@@ -392,14 +756,21 @@
       "subagent": "detector",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/detector.py",
       "asset_kinds": [],
-      "sources": [
-        "vulnresearch pipeline; findings, not assets"
-      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "pipeline role; audit writers in phase 2 and close as role-only"
+      "gap": "pipeline role; audit writers in phase 2 and close as role-only",
+      "graphs": [],
+      "roles": [
+        "detector"
+      ],
+      "registration": "entry-point",
+      "activation": "plugins bundle (enabled in this checkout; not in the OSS default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "emits vulnerability findings from scanner output; no KG slot, and the kg_ingest_* tools are excluded by design"
     },
     {
       "name": "verifier",
@@ -407,14 +778,26 @@
       "subagent": "verifier",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/verifier.py",
       "asset_kinds": [],
-      "sources": [
-        "vulnresearch pipeline; findings, not assets"
-      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "pipeline role; audit writers in phase 2 and close as role-only"
+      "gap": "pipeline role; audit writers in phase 2 and close as role-only",
+      "graphs": [],
+      "roles": [
+        "verifier"
+      ],
+      "registration": "entry-point",
+      "activation": "plugins bundle (enabled in this checkout; not in the OSS default)",
+      "writers": [
+        "packages/raptix/raptix/execution/tools/evidence/tools.py"
+      ],
+      "reached_by": [
+        "verifier",
+        "analyst"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "writes Finding nodes for verified evidence (findings, not assets)"
     },
     {
       "name": "patcher",
@@ -422,14 +805,21 @@
       "subagent": "patcher",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/patcher.py",
       "asset_kinds": [],
-      "sources": [
-        "vulnresearch pipeline; findings, not assets"
-      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "pipeline role; audit writers in phase 2 and close as role-only"
+      "gap": "pipeline role; audit writers in phase 2 and close as role-only",
+      "graphs": [],
+      "roles": [
+        "patcher"
+      ],
+      "registration": "entry-point",
+      "activation": "plugins bundle (enabled in this checkout; not in the OSS default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "patch output stays in the workspace; no KG slot"
     },
     {
       "name": "exploiter",
@@ -437,14 +827,152 @@
       "subagent": "exploiter",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/exploiter.py",
       "asset_kinds": [],
-      "sources": [
-        "vulnresearch pipeline; findings, not assets"
-      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
       "verification": "unverified",
-      "gap": "pipeline role; audit writers in phase 2 and close as role-only"
+      "gap": "pipeline role; audit writers in phase 2 and close as role-only",
+      "graphs": [],
+      "roles": [
+        "exploiter"
+      ],
+      "registration": "entry-point",
+      "activation": "plugins bundle (enabled in this checkout; not in the OSS default)",
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "exploit output stays in workspace evidence; no KG slot"
+    },
+    {
+      "name": "raptix",
+      "domain_pack": null,
+      "subagent": null,
+      "owner": "packages/raptix/raptix/intelligence/agents/standard/raptix.py",
+      "graphs": [
+        "raptix",
+        "decepticon"
+      ],
+      "roles": [
+        "raptix",
+        "decepticon"
+      ],
+      "registration": "orchestrator",
+      "activation": "always (orchestrator)",
+      "asset_kinds": [
+        "host",
+        "web_origin"
+      ],
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "raptix",
+        "decepticon"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary",
+      "read_model": "not applicable",
+      "renderer": "not applicable",
+      "fixture": "none",
+      "verification": "unverified",
+      "gap": "decepticon is a compatibility alias of raptix and shares its graph"
+    },
+    {
+      "name": "raptix-delta",
+      "domain_pack": null,
+      "subagent": null,
+      "owner": "packages/raptix/raptix/intelligence/agents/standard/raptix_delta.py",
+      "graphs": [
+        "raptix-delta"
+      ],
+      "roles": [],
+      "registration": "orchestrator",
+      "activation": "graph variant of raptix",
+      "asset_kinds": [
+        "host",
+        "web_origin"
+      ],
+      "writers": [
+        "packages/raptix/raptix/knowledge/graph/tools.py"
+      ],
+      "reached_by": [
+        "raptix"
+      ],
+      "catalog_written_kinds": [],
+      "write_reason": "generic kg_record and kg_ingest tools only; the kinds written depend on the agent, and Host and Entrypoint get identity at the KG write boundary",
+      "read_model": "not applicable",
+      "renderer": "not applicable",
+      "fixture": "none",
+      "verification": "unverified",
+      "gap": "differs from raptix only in the messages channel (DeltaChannel)"
+    },
+    {
+      "name": "autohunt",
+      "domain_pack": null,
+      "subagent": null,
+      "owner": "packages/raptix/raptix/intelligence/agents/standard/autohunt.py",
+      "graphs": [
+        "autohunt"
+      ],
+      "roles": [],
+      "registration": "graph-only",
+      "activation": "standalone graph (additive planning lane)",
+      "asset_kinds": [],
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "planning lane with no tools of its own; writes happen in the subagents it dispatches",
+      "read_model": "not applicable",
+      "renderer": "not applicable",
+      "fixture": "none",
+      "verification": "unverified",
+      "gap": ""
+    },
+    {
+      "name": "soundwave",
+      "domain_pack": null,
+      "subagent": null,
+      "owner": "packages/raptix/raptix/intelligence/agents/standard/soundwave.py",
+      "graphs": [
+        "soundwave"
+      ],
+      "roles": [
+        "soundwave"
+      ],
+      "registration": "graph-only",
+      "activation": "standalone graph",
+      "asset_kinds": [],
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "writes the eight engagement planning documents, not assets; no KG slot",
+      "read_model": "not applicable",
+      "renderer": "not applicable",
+      "fixture": "none",
+      "verification": "unverified",
+      "gap": ""
+    },
+    {
+      "name": "vulnresearch",
+      "domain_pack": null,
+      "subagent": null,
+      "owner": "packages/raptix/raptix/intelligence/agents/plugins/vulnresearch.py",
+      "graphs": [],
+      "roles": [
+        "vulnresearch"
+      ],
+      "registration": "orchestrator",
+      "activation": "plugins bundle",
+      "asset_kinds": [],
+      "writers": [],
+      "reached_by": [],
+      "catalog_written_kinds": [],
+      "write_reason": "orchestrates scanner, detector, verifier, patcher and exploiter; those roles own the writes",
+      "read_model": "not applicable",
+      "renderer": "not applicable",
+      "fixture": "none",
+      "verification": "unverified",
+      "gap": ""
     }
   ]
 }
