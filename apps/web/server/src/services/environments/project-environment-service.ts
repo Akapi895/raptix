@@ -15,13 +15,18 @@ import { requireProjectAccess, type ExecutionAdmission } from '../runtime-owners
 type Tx = Prisma.TransactionClient;
 type Observation = 'ready' | 'stopped' | 'uncertain' | 'undrained';
 
-/**
- * The only runtime endpoint a ready environment may record: the runtime container name the host
- * controller derives from the deployment and environment ids (apps/launcher/internal/environments).
- */
-export function runtimeUrlFor(deploymentId: string, environmentId: string): string {
+/** Container names must match apps/launcher/internal/environments across both endpoints. */
+function resourceStem(deploymentId: string, environmentId: string): string {
   const stem = createHash('sha256').update(`${deploymentId}\0${environmentId}`).digest('hex').slice(0, 12);
-  return `http://raptix-env-${stem}-runtime:2024`;
+  return `raptix-env-${stem}`;
+}
+
+export function runtimeUrlFor(deploymentId: string, environmentId: string): string {
+  return `http://${resourceStem(deploymentId, environmentId)}-runtime:2024`;
+}
+
+export function environmentSandboxUrlFor(deploymentId: string, environmentId: string): string {
+  return `http://${resourceStem(deploymentId, environmentId)}-sandbox:9999`;
 }
 
 interface SlotRow {
@@ -120,6 +125,13 @@ function decideLifecycle(slot: SlotRow, engagementId: string, action: Environmen
 export class ProjectEnvironmentService implements ExecutionAdmission {
   public constructor(private readonly db: PrismaClient, private readonly deploymentId: string) {}
 
+  public async isManaged(userId: string, engagementId: string): Promise<boolean> {
+    return this.transaction(async tx => {
+      await requireProjectAccess(tx, userId, engagementId, 'operator');
+      return await tx.projectEnvironment.findUnique({ where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } }, select: { id: true } }) !== null;
+    });
+  }
+
   private async transaction<T>(action: (tx: Tx) => Promise<T>): Promise<T> {
     try { return await this.db.$transaction(action); }
     catch (error) {
@@ -147,7 +159,11 @@ export class ProjectEnvironmentService implements ExecutionAdmission {
         return view('replayed', slot, engagementId, existing.id, existing.reason ?? undefined);
       }
       const row = await tx.projectEnvironment.findUnique({ where: { deploymentId_engagementId: { deploymentId: this.deploymentId, engagementId } }, select: { archivedAt: true, observedState: true } });
-      const decision = decideLifecycle(slot, engagementId, action, expectedVersion, row);
+      let decision = decideLifecycle(slot, engagementId, action, expectedVersion, row);
+      // Legacy reservations also hold execution authority. The slot lock serializes this check with run admission.
+      if (decision.transition === 'reserve' && await tx.webRequestLedger.count({ where: { activeThreadId: { not: null }, engagement: { environments: { none: { deploymentId: this.deploymentId } } } } }) > 0) {
+        decision = { status: 'busy', reason: 'legacy_work_active' };
+      }
       const outcome = decision.status === 'accepted' ? 'accepted' : 'refused';
       const command = await tx.environmentCommand.create({
         data: { deploymentId: this.deploymentId, requestId, engagementId, actorUserId: userId, action, expectedVersion, payloadFingerprint: fingerprint, outcome, reason: decision.reason ?? null },

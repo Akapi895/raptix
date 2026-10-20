@@ -20,6 +20,8 @@ export interface LifecycleConfig {
 }
 
 export interface LifecycleOptions {
+  /** Checks retained legacy runs, questions and instances while the deployment slot blocks new admission. */
+  legacyQuiescent?: () => Promise<boolean>;
   /** Confirms the runtime answers at its endpoint. The default asks GET /ok, the same check the runtime image uses. */
   probe?: (endpoint: string) => Promise<boolean>;
   /** How long a started environment may take to become ready before this attempt rolls back. */
@@ -88,6 +90,7 @@ export class EnvironmentLifecycle {
   private readonly drainTimeoutMs: number;
   private readonly runStatus: (endpoint: string, threadId: string, runId: string) => Promise<string>;
   private readonly threadBusyCheck: (endpoint: string, threadId: string) => Promise<boolean>;
+  private readonly legacyQuiescent: () => Promise<boolean>;
 
   public constructor(
     private readonly db: PrismaClient,
@@ -102,6 +105,7 @@ export class EnvironmentLifecycle {
     this.drainTimeoutMs = options.drainTimeoutMs ?? 600_000;
     this.runStatus = options.runStatus ?? defaultRunStatus;
     this.threadBusyCheck = options.threadBusy ?? defaultThreadBusy;
+    this.legacyQuiescent = options.legacyQuiescent ?? (async () => true);
   }
 
   /** Create and start both containers, wait for readiness, and report ready with the endpoint. */
@@ -112,6 +116,9 @@ export class EnvironmentLifecycle {
     if (found === null) return this.report(env, commandId, slotVersion, 'uncertain', env.generation, 'observe_failed');
     const { generation, seen } = found;
     try {
+      if (!await this.legacyQuiescent().catch(() => false)) {
+        return this.report(env, commandId, slotVersion, await this.stopAll(env, generation), generation, 'legacy_not_quiescent');
+      }
       // A container left at an older generation is recreated at the chosen one. Only a stopped container can be.
       for (let index = 0; index < ROLES.length; index++) {
         const item = seen[index];

@@ -1,12 +1,26 @@
 import { isEnvironmentCommandRequest, type EnvironmentCommandResult, type EnvironmentStateView } from '@raptix/web-contracts';
 import { ProjectPolicyError } from '../../security/project-policy.js';
 import { ProjectApiError } from '../projects-service.js';
+import { requestFingerprint } from '../../security/request-fingerprint.js';
 import type { EnvironmentLifecycle } from './environment-lifecycle.js';
 import type { ProjectEnvironmentService } from './project-environment-service.js';
 
 export interface FacadeOptions {
   /** Receives a lifecycle failure that happened after the answer was sent. Defaults to silence. */
   onLifecycleError?: (error: unknown) => void;
+}
+
+function ownsPhase(state: EnvironmentStateView, phase: 'ready' | 'starting'): boolean {
+  return state.slot.ownedByThisProject && state.slot.phase === phase && state.environment.observedState === phase;
+}
+
+function acceptedPreparation(command: EnvironmentCommandResult, engagementId: string): boolean {
+  return ['accepted', 'replayed'].includes(command.status) && command.phase === 'starting' && command.activeEngagementId === engagementId;
+}
+
+function preparationRefusal(command: EnvironmentCommandResult): ProjectPolicyError {
+  const busy = command.status === 'busy' || command.reason === 'legacy_work_active';
+  return new ProjectPolicyError('conflict', busy ? 'Another project has admitted work. Reconcile it before starting this environment.' : 'The deployment slot changed. Refresh the environment before starting a conversation.');
 }
 
 /**
@@ -26,6 +40,25 @@ export class EnvironmentFacade {
 
   public state(userId: string, engagementId: string): Promise<EnvironmentStateView> {
     return this.service.state(userId, engagementId);
+  }
+
+  /** A thread creation intent may start its managed environment, but never switches another project off. */
+  public async prepare(userId: string, engagementId: string, requestId: string): Promise<void> {
+    if (!await this.service.isManaged(userId, engagementId)) return;
+    const state = await this.state(userId, engagementId);
+    const { environment, slot } = state;
+    if (environment.archived) throw new ProjectPolicyError('conflict', 'Unarchive the project before starting its environment.');
+    if (ownsPhase(state, 'ready')) return;
+    if (slot.held && !slot.ownedByThisProject) throw new ProjectPolicyError('conflict', 'Another project environment holds the deployment slot. Stop it before starting this project.');
+    const starting = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Preparing the project environment. Wait for it to become ready.', { field: 'environment' });
+    if (ownsPhase(state, 'starting')) throw starting();
+    if (slot.phase !== 'idle' || !['stopped', 'unprovisioned'].includes(environment.observedState)) throw new ProjectPolicyError('conflict', 'Reconcile the project environment before starting a conversation.');
+    const decided = await this.command(userId, engagementId, {
+      requestId: `prepare-${requestFingerprint({ userId, engagementId, requestId, version: slot.version })}`,
+      action: 'activate', expectedVersion: slot.version,
+    });
+    if (acceptedPreparation(decided, engagementId)) throw starting();
+    throw preparationRefusal(decided);
   }
 
   /**
