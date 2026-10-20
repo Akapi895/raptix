@@ -8,9 +8,33 @@ those fields through to the graph write instead of silently dropping them.
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
+from raptix.knowledge.graph.asset_identity import identity_for
+from raptix.knowledge.graph.ingest import _adapt_nmap_xml
 from raptix.knowledge.ingest.materialize import apply_observations, observations_to_records
-from raptix_core.types.capability import Observation
+from raptix.knowledge.ingest.registry import default_registry
+from raptix_core.types.capability import Artifact, Observation
 from raptix_core.types.kg import KnowledgeGraph, NodeKind
+
+
+class _CapturingStore:
+    """Stands in for KGStore and keeps the observations the legacy adapter hands over."""
+
+    def __init__(self) -> None:
+        self.calls: list[list[dict[str, Any]]] = []
+
+    def record_observations(
+        self,
+        observations: list[dict[str, Any]],
+        *,
+        engagement: str,
+        created_by: str,
+        source_episode_id: str,
+    ) -> dict[str, Any]:
+        self.calls.append(list(observations))
+        return {"created": 0, "merged": 0, "edges": 0, "revision": "capture"}
 
 
 def _stamped(
@@ -97,3 +121,45 @@ class TestObservationsToRecordsProvenance:
         assert observations_to_records([summary, _stamped()]) == observations_to_records(
             [_stamped()]
         )
+
+
+_NMAP_FIXTURE = (
+    Path(__file__).resolve().parents[6]
+    / "apps"
+    / "web"
+    / "tests"
+    / "fixtures"
+    / "asset-map"
+    / "network"
+    / "htb-lab"
+    / "retained-03-services.xml"
+)
+
+
+class TestRegistryAndLegacyWritersAgree:
+    """The registry parser and the legacy adapter must give one host one asset identity (ADR-0094)."""
+
+    def test_nmap_hosts_get_the_same_identity_from_both_writers(self) -> None:
+        legacy = _CapturingStore()
+        result = _adapt_nmap_xml(_NMAP_FIXTURE, legacy, "htb-lab", "retained", "ep")  # type: ignore[arg-type]
+        assert "error" not in result
+        legacy_ids = {
+            obs["key"]: obs["props"]["asset_id"] for obs in legacy.calls[0] if obs["kind"] == "Host"
+        }
+
+        artifact = Artifact(
+            id="retained-03", artifact_ref="artifact://retained-03", format_hint="nmap_xml"
+        )
+        outcome = default_registry().parse(
+            artifact, _NMAP_FIXTURE.read_bytes(), expected_formats=("nmap_xml",)
+        )
+        registry_ids = {
+            record["key"]: identity_for("htb-lab", "Host", record["key"], record["props"])[
+                "asset_id"
+            ]
+            for record in observations_to_records(outcome.observations)
+            if record["kind"] == "Host"
+        }
+
+        assert legacy_ids
+        assert registry_ids == legacy_ids
