@@ -5,6 +5,7 @@ import { RuntimeRouter, EnvironmentNotReadyError, type EnvironmentRoute, type En
 import { RuntimeUnavailableError } from '../src/integrations/runtime/read-client.js';
 import { RunService } from '../src/services/runtime/run-service.js';
 import { RuntimeContextService } from '../src/services/runtime/runtime-context.js';
+import { ProjectPolicyError } from '../src/security/project-policy.js';
 
 // Distinct runtime doubles on loopback. Each answers with its own name, so a reply proves which runtime served it.
 interface Double { name: string; url: string; hits: string[]; server: Server }
@@ -143,6 +144,22 @@ describe('RunService with the runtime router (ADR-0092)', () => {
     releaseCompletedRun: async () => undefined,
   };
   const service = () => new RunService({ ownership, context: {}, runtime: bypass, reads: bypass, router } as unknown as ConstructorParameters<typeof RunService>[0]);
+
+  it('prepares an authorized managed environment before resolving a runtime or reserving a thread', async () => {
+    routes.rows.set('eng-alpha', { ...ready('env-alpha', alpha.url), observedState: 'unprovisioned' });
+    let authorized = false;
+    const preparing = new RunService({
+      ownership: { replay: async () => null }, context: {}, runtime: bypass, reads: bypass, router,
+      authorizeMutation: async () => { authorized = true; },
+      prepareEnvironment: async () => {
+        expect(authorized).toBe(true);
+        throw new ProjectPolicyError('conflict', 'Preparing environment', { field: 'environment' });
+      },
+    } as unknown as ConstructorParameters<typeof RunService>[0]);
+    await expect(preparing.createThread('local', 'eng-alpha', { requestId: 'prepare-thread-0001', kind: 'planning' })).rejects.toMatchObject({ code: 'conflict', details: { field: 'environment' } });
+    expect(legacy.hits).toHaveLength(0);
+    expect(alpha.hits).toHaveLength(0);
+  });
 
   it('reads a run from the runtime of its own engagement only', async () => {
     routes.rows.set('eng-alpha', ready('env-alpha', alpha.url));

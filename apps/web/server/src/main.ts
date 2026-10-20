@@ -76,6 +76,8 @@ function createDatabaseHealth(client: PrismaClient): DatabaseHealth {
 async function main(): Promise<void> {
   const env = readServerEnv();
   const runtimeConfig = loadRuntimeConfig(process.env);
+  // The host controller is optional. Without it, new projects stay on the legacy runtime and activate/stop answer 503.
+  const environmentController = loadEnvironmentControllerConfig(process.env, path => readFileSync(path, 'utf8'));
 
   let dbClient: PrismaClient | undefined;
   // ADR-0085: the scope service is built below, after the projects service; the handoff reaches it through this holder.
@@ -106,7 +108,7 @@ async function main(): Promise<void> {
     dbClient = createDbClient({ connectionString: env.databaseUrl });
     databaseHealth = createDatabaseHealth(dbClient);
     projectsService = new ProjectsService({
-      repository: new EngagementsRepository(dbClient.engagement, env.authMode === 'multi' ? dbClient.webMembership : undefined),
+      repository: new EngagementsRepository(dbClient.engagement, env.authMode === 'multi' ? dbClient.webMembership : undefined, environmentController ? env.deploymentId ?? 'default' : undefined),
       workspaceRoot: env.workspacePath,
       identity: getLocalIdentity(),
       confirmPlannerScope: (actorId, engagementId, plan) => {
@@ -118,9 +120,7 @@ async function main(): Promise<void> {
 
   // ADR-0092: every run-starting path is admitted by the same deployment slot.
   const environments = dbClient ? new ProjectEnvironmentService(dbClient, env.deploymentId ?? 'default') : undefined;
-  // The host controller is optional. Without it, activate and stop answer 503 and the legacy path is unchanged.
-  const environmentController = loadEnvironmentControllerConfig(process.env, path => readFileSync(path, 'utf8'));
-  const environmentLifecycle = dbClient && environments && environmentController ? new EnvironmentLifecycle(dbClient, environments, new HostControllerClient(environmentController.controllerUrl, environmentController.controllerToken), environmentController) : undefined;
+  const environmentLifecycle = dbClient && environments && environmentController ? new EnvironmentLifecycle(dbClient, environments, new HostControllerClient(environmentController.controllerUrl, environmentController.controllerToken), environmentController, { legacyQuiescent }) : undefined;
   const environmentFacade = environments ? new EnvironmentFacade(environments, environmentLifecycle, {
     onLifecycleError: error => console.error('environment lifecycle failed', error),
   }) : undefined;
@@ -163,6 +163,7 @@ async function main(): Promise<void> {
    const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
      ? new RuntimeContextService({
          config: runtimeConfig,
+         deploymentId: env.deploymentId ?? 'default',
          projects: projectsService,
          ownership,
          workspaceRoot: env.workspacePath,
@@ -177,7 +178,7 @@ async function main(): Promise<void> {
    const runtimeReadiness = async (input: ReadinessInput): Promise<PreflightCheck[]> => {
      if (runtimeContext === undefined) return [{ id: 'runtime', state: 'unavailable', detail: 'The runtime is not configured in this deployment.' }];
      try {
-       const graphs = (await runtimeContext.agents()).graphs;
+       const graphs = (await runtimeContext.agents(input.engagementId)).graphs;
        const executors = EXECUTION_ASSISTANTS.filter((g) => graphs.includes(g));
        const checks: PreflightCheck[] = [
          { id: 'runtime', state: graphs.length > 0 ? 'pass' : 'unavailable', detail: graphs.length > 0 ? null : 'The runtime exposes no agent graphs.' },
@@ -197,6 +198,7 @@ async function main(): Promise<void> {
    };
    const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService, { readiness: runtimeReadiness }) : undefined;
    const runsService = ownership && runtimeContext && runtime && dbClient ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime, router: runtimeRouter,
+     prepareEnvironment: environmentFacade?.prepare.bind(environmentFacade),
      operations: {
        status: async (engagementId, threadId) => (await dbClient!.operationBinding.findFirst({ where: { engagementId, threadId }, orderBy: { createdAt: 'desc' }, select: { status: true } }))?.status ?? null,
        transition: async (engagementId, threadId, from, to) => (await dbClient!.operationBinding.updateMany({ where: { engagementId, threadId, status: { in: [...from] } }, data: { status: to, concurrencyVersion: { increment: 1 } } })).count > 0,
@@ -210,6 +212,18 @@ async function main(): Promise<void> {
      await governanceService!.assertNoActiveStop(engagementId, threadId);
      if (kind === 'execution' && threadId) await governanceService!.assertExecutionAuthorized(actorId, engagementId, threadId, env.authMode === 'multi');
     } }) : undefined;
+    async function legacyQuiescent(): Promise<boolean> {
+      const limit = 100;
+      const legacyProjects = await dbClient!.engagement.findMany({
+        where: { threads: { some: {} }, environments: { none: { deploymentId: env.deploymentId ?? 'default' } } },
+        select: { id: true, userId: true }, take: limit + 1,
+      });
+      if (legacyProjects.length > limit) return false;
+      for (const project of legacyProjects) {
+        if (!runsService || !await runsService.isQuiescent(project.userId, project.id)) return false;
+      }
+      return true;
+    }
    // W11 (ADR-0073): scheduled starts dispatch through the same run ledger and
    // re-run the identical execution gate a manual start runs.
    const scheduleService = dbClient && governanceService ? new ScheduleService(dbClient, {

@@ -136,7 +136,7 @@ function toRecord(row: EngagementRow): EngagementRecord {
 export class EngagementsRepository {
   private readonly db: EngagementDelegate;
 
-  public constructor(db: EngagementDelegate, private readonly memberships?: PrismaClient['webMembership']) {
+  public constructor(db: EngagementDelegate, private readonly memberships?: PrismaClient['webMembership'], private readonly deploymentId?: string) {
     this.db = db;
   }
 
@@ -202,6 +202,7 @@ export class EngagementsRepository {
           brief: data.brief ?? null,
           threadId: data.threadId ?? null,
           workspacePath: data.workspacePath ?? null,
+          ...(this.deploymentId === undefined ? {} : { environments: { create: { deploymentId: this.deploymentId } } }),
         },
       });
       return toRecord(row);
