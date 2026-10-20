@@ -122,3 +122,52 @@ def test_replay_and_concurrent_ingest_create_no_duplicates(tmp_path: Path, store
 
     assert _asset_ids(store) == baseline_ids
     assert _node_count(store) == baseline_nodes
+
+
+@requires_neo4j
+def test_agent_records_get_identity_and_redacted_entrypoints(store: KGStore) -> None:
+    secret_url = "https://u:p@target.local/login?token=abc&page=2"
+    result = store.record_observations(
+        [
+            {"kind": "Host", "key": "host::10.0.0.1", "props": {"source": "agent"}},
+            {"kind": "Host", "key": "host::*.bad", "props": {}},
+            {
+                "kind": "Entrypoint",
+                "key": f"entrypoint::{secret_url}",
+                "label": secret_url,
+                "props": {"source": "ffuf", "url": secret_url},
+                "edges_out": [{"to_key": "host::10.0.0.1", "kind": "HOSTS"}],
+            },
+        ],
+        engagement=ENGAGEMENT,
+        created_by="it",
+        source_episode_id="ep-agent",
+    )
+    assert result["unidentified"] == 1
+
+    entrypoints = store.execute_read(
+        "MATCH (n:Entrypoint) WHERE n.engagement = $engagement "
+        "RETURN n.key AS key, n.url AS url, n.asset_id AS asset_id",
+        {},
+        engagement=ENGAGEMENT,
+    )
+    redacted = "https://target.local/login?token=REDACTED&page=2"
+    assert entrypoints == [
+        {
+            "key": f"entrypoint::{redacted}",
+            "url": redacted,
+            "asset_id": asset_id(
+                ENGAGEMENT, AssetRef(AssetKind.WEB_ORIGIN, "default", "https://target.local:443")
+            ),
+        }
+    ]
+    hosts = store.execute_read(
+        "MATCH (n:Host) WHERE n.engagement = $engagement AND n.key = 'host::10.0.0.1' "
+        "RETURN n.asset_id AS asset_id",
+        {},
+        engagement=ENGAGEMENT,
+    )
+    assert hosts == [
+        {"asset_id": asset_id(ENGAGEMENT, AssetRef(AssetKind.HOST, "default", "10.0.0.1"))}
+    ]
+    assert "u:p" not in repr(entrypoints) and "abc" not in repr(entrypoints)
