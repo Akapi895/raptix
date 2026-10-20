@@ -5,8 +5,11 @@ from __future__ import annotations
 import pytest
 
 from raptix.knowledge.graph.asset_identity import (
+    canonical_key,
     dns_ref,
     host_ref,
+    identity_for,
+    identity_props,
     origin_host_ref,
     web_origin_ref,
 )
@@ -65,3 +68,50 @@ def test_invalid_origins_are_rejected(bad: str) -> None:
 def test_empty_dns_name_is_rejected() -> None:
     with pytest.raises(ValueError):
         dns_ref("  .")
+
+
+def test_identity_for_host_reads_the_key_before_props() -> None:
+    identity = identity_for("eng-1", "Host", "host::app.example.com", {"ip": "10.0.0.5"})
+    assert identity == identity_props("eng-1", dns_ref("app.example.com"))
+
+
+def test_identity_for_host_falls_back_to_the_ip_prop_when_the_key_has_no_locator() -> None:
+    identity = identity_for("eng-1", "Host", "host::", {"ip": "10.0.0.5"})
+    assert identity == identity_props("eng-1", host_ref("10.0.0.5"))
+
+
+@pytest.mark.parametrize(
+    ("kind", "key"),
+    [
+        ("Host", "host::"),
+        ("Host", "host::*.example.com"),
+        ("Host", "host::bad name"),
+        ("Entrypoint", "entrypoint::"),
+        ("Entrypoint", "entrypoint::ftp://example.com/"),
+    ],
+)
+def test_identity_for_rejects_locators_that_do_not_resolve(kind: str, key: str) -> None:
+    assert identity_for("eng-1", kind, key, {}) is None
+
+
+def test_identity_for_leaves_other_kinds_to_their_own_writers() -> None:
+    assert identity_for("eng-1", "Vulnerability", "vuln::1", {"url": "https://a.test/"}) is None
+
+
+def test_entrypoint_identity_is_the_origin_of_its_url() -> None:
+    identity = identity_for("eng-1", "Entrypoint", "entrypoint::https://App.example.com/a?x=1", {})
+    assert identity == identity_props("eng-1", web_origin_ref("https://app.example.com/"))
+
+
+def test_canonical_key_redacts_entrypoint_urls_and_keeps_other_keys() -> None:
+    assert (
+        canonical_key("entrypoint::https://u:p@app.example.com/login?token=abc&page=2")
+        == "entrypoint::https://app.example.com/login?token=REDACTED&page=2"
+    )
+    assert canonical_key("host::10.0.0.5") == "host::10.0.0.5"
+
+
+def test_canonical_key_error_never_echoes_the_malformed_url() -> None:
+    with pytest.raises(ValueError) as exc:
+        canonical_key("entrypoint::https://u:hunter2@[::1/admin")
+    assert "hunter2" not in str(exc.value)

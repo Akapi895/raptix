@@ -31,6 +31,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
+from raptix.knowledge.graph.asset_identity import (
+    ASSET_BEARING_KINDS,
+    canonical_key,
+    identity_for,
+    redact_url,
+)
 from raptix_core.utils.engagement_scope import is_valid_engagement_label
 from raptix_core.utils.logging import get_logger
 
@@ -260,7 +266,11 @@ class KGStore:
         ``raptix.execution.session``, which the middleware does not need to
         pull in just to construct a snapshot.
         """
-        from raptix.execution.session.cart import EngagementSnapshot, SnapshotNodeKey, _hash_snapshot
+        from raptix.execution.session.cart import (
+            EngagementSnapshot,
+            SnapshotNodeKey,
+            _hash_snapshot,
+        )
 
         self._check_engagement(engagement)
 
@@ -371,6 +381,7 @@ class KGStore:
         update_tag = int(time.time())
         node_rows: list[dict[str, Any]] = []
         edge_rows: list[dict[str, Any]] = []
+        unidentified = 0
 
         for obs in obs_list:
             kind = _safe_label(obs.get("kind", ""))
@@ -379,7 +390,11 @@ class KGStore:
                 raise ValueError(
                     f"observation kind={kind!r} missing mandatory 'key' (deterministic dedup)"
                 )
+            # Redacted before anything is written, so the key, label and edges agree.
+            key = canonical_key(key)
             label = str(obs.get("label") or key)
+            if label.startswith(("http://", "https://")):
+                label = redact_url(label)
             raw_props = obs.get("props")
             props = _flatten_props(dict(raw_props) if isinstance(raw_props, dict) else {})
             # Reserve provenance fields — operator-supplied values are
@@ -392,6 +407,17 @@ class KGStore:
                 "source_episode_id",
             ):
                 props.pop(reserved, None)
+            url_prop = props.get("url")
+            if isinstance(url_prop, str) and url_prop.startswith(("http://", "https://")):
+                props["url"] = redact_url(url_prop)
+            # Asset-bearing nodes carry the identity ADR-0094 derives from their locator, whichever
+            # writer produced them. An agent-supplied locator that is not valid stays unidentified.
+            if kind in ASSET_BEARING_KINDS and "asset_id" not in props:
+                identity = identity_for(engagement, kind, key, props)
+                if identity is None:
+                    unidentified += 1
+                else:
+                    props.update(identity)
 
             node_rows.append(
                 {
@@ -409,6 +435,7 @@ class KGStore:
                 rel_kind = edge.get("kind")
                 if not isinstance(to_key, str) or not to_key:
                     continue
+                to_key = canonical_key(to_key)
                 # Fail-fast: silently dropping edges here hides data
                 # loss (the IngestState stats counter already counted
                 # this edge before observation handoff). ``_safe_rel_type``
@@ -548,12 +575,15 @@ class KGStore:
         with self._driver.session(database=self._database) as session:
             created, merged, edges_written, _revision = session.execute_write(_do_writes)
 
-        return {
+        result: dict[str, Any] = {
             "created": created,
             "merged": merged,
             "edges": edges_written,
             "revision": self.revision(engagement=engagement),
         }
+        if unidentified:
+            result["unidentified"] = unidentified
+        return result
 
     # ── Stale-node cleanup (Cartography update_tag pattern) ────────────
 
