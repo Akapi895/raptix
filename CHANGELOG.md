@@ -10,6 +10,10 @@ design spec, §13.4).
 
 ### Added
 
+- Core: `raptix_core.types.asset` defines `AssetKind`, `AssetRef` and the deterministic
+  `asset_id()` shared by the runtime and the Web catalog (ADR-0094). Runtime locator
+  normalization for hosts, DNS names and web origins lives in
+  `raptix.knowledge.graph.asset_identity`.
 - Web console: planning documents gain server-side drafts with a digest
   precondition (O06, ADR-0083) — the Planning panel can open a source/draft
   editor for every allowlisted plan document; drafts persist in Postgres,
