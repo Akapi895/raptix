@@ -70,8 +70,12 @@ export interface AssetMapNeighborEdge {
 export interface AssetMapNeighborhood {
   engagementId: string
   assetId: string
+  /** Every graph node that carries this asset identity, so one asset split across writers stays whole. */
+  centers: AssetMapNeighborNode[]
   nodes: AssetMapNeighborNode[]
   edges: AssetMapNeighborEdge[]
+  /** Opens the next page of edges; null when the neighborhood is complete. */
+  nextCursor: string | null
   completeness: AssetMapCompleteness
 }
 
@@ -130,15 +134,22 @@ export function isAssetMapSearchResult(v: unknown): v is AssetMapSearchResult {
   return isRecord(v) && isNonEmptyString(v.engagementId) && typeof v.query === 'string' && Array.isArray(v.items) && v.items.every(isAssetMapAssetRef) && isAssetMapCompleteness(v.completeness)
 }
 
+function isAssetMapNeighborNode(node: unknown): node is AssetMapNeighborNode {
+  return isRecord(node) && isNonEmptyString(node.id) && (node.assetId === null || isNonEmptyString(node.assetId)) && Array.isArray(node.labels) && typeof node.label === 'string'
+}
+
 export function isAssetMapNeighborhood(v: unknown): v is AssetMapNeighborhood {
   return (
     isRecord(v) &&
     isNonEmptyString(v.engagementId) &&
     isNonEmptyString(v.assetId) &&
+    Array.isArray(v.centers) &&
+    v.centers.every(isAssetMapNeighborNode) &&
     Array.isArray(v.nodes) &&
-    v.nodes.every(node => isRecord(node) && isNonEmptyString(node.id) && (node.assetId === null || isNonEmptyString(node.assetId)) && Array.isArray(node.labels) && typeof node.label === 'string') &&
+    v.nodes.every(isAssetMapNeighborNode) &&
     Array.isArray(v.edges) &&
     v.edges.every(edge => isRecord(edge) && isNonEmptyString(edge.id) && isNonEmptyString(edge.source) && isNonEmptyString(edge.target) && typeof edge.type === 'string') &&
+    (v.nextCursor === null || isNonEmptyString(v.nextCursor)) &&
     isAssetMapCompleteness(v.completeness)
   )
 }
