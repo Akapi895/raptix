@@ -497,6 +497,7 @@ def _adapt_httpx_jsonl(
 
 def _surface_observations(
     *,
+    engagement: str,
     url: str,
     method: str,
     source: str,
@@ -518,6 +519,10 @@ def _surface_observations(
     }
     if status is not None:
         endpoint_props["status_code"] = status
+    # Links the endpoint to its web origin so the asset map can list a sitemap per origin.
+    origin = _asset_props(engagement, web_origin_ref, url)
+    if "asset_id" in origin:
+        endpoint_props["origin_asset_id"] = origin["asset_id"]
     observations: list[dict[str, Any]] = [
         {
             "kind": "Host",
@@ -591,6 +596,7 @@ def _adapt_katana_jsonl(
             continue
         observations.extend(
             _surface_observations(
+                engagement=engagement,
                 url=url,
                 method=str(row.get("method") or request.get("method") or "GET"),
                 source="katana",
@@ -633,6 +639,7 @@ def _adapt_arjun_json(
         if not url:
             continue
         base = _surface_observations(
+            engagement=engagement,
             url=url,
             method=str(row.get("method") or "GET"),
             source="arjun",

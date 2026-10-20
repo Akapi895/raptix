@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from raptix.knowledge.graph.asset_identity import host_ref
+from raptix.knowledge.graph.asset_identity import host_ref, web_origin_ref
 from raptix.knowledge.graph.ingest import (
     _REGISTRY,
     ScannerAdapter,
@@ -666,3 +666,25 @@ def test_httpx_dns_host_and_origin_are_separate_assets(tmp_path: Path) -> None:
         "http://10.0.0.5:8080",
     ]
     assert all(o["asset_kind"] == "web_origin" for o in origins)
+
+
+def test_katana_endpoint_is_linked_to_its_web_origin(tmp_path: Path) -> None:
+    from raptix.knowledge.graph.ingest import _adapt_katana_jsonl
+
+    f = tmp_path / "katana.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "request": {"method": "GET", "endpoint": "https://App.Example.com/users?id=1"},
+                "status_code": 200,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_katana_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    endpoint = _props(store.calls[0]["observations"], "Endpoint")[0]
+    assert endpoint["origin_asset_id"] == asset_id(
+        "acme", web_origin_ref("https://app.example.com")
+    )
