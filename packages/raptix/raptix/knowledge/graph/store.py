@@ -445,15 +445,27 @@ class KGStore:
                     }
                 )
 
+        # Endpoint labels let the edge MATCH use the (key, engagement) constraint
+        # index; without them each edge scans every node in the engagement. A key
+        # seen under two kinds in one batch stays unlabelled rather than guessing.
+        key_kind: dict[str, str | None] = {}
+        for node_row in node_rows:
+            seen = key_kind.get(node_row["key"], node_row["kind"])
+            key_kind[node_row["key"]] = node_row["kind"] if seen == node_row["kind"] else None
+        for edge_row in edge_rows:
+            edge_row["src_kind"] = key_kind.get(edge_row["src_key"])
+            edge_row["dst_kind"] = key_kind.get(edge_row["dst_key"])
+
         # Group node rows by label so we can MERGE under the right
         # label (Cypher doesn't parameterize labels). For each label
-        # batch one UNWIND-MERGE. Same for edges grouped by rel type.
+        # batch one UNWIND-MERGE. Same for edges grouped by rel type and endpoint labels.
         nodes_by_label: dict[str, list[dict[str, Any]]] = {}
         for row in node_rows:
             nodes_by_label.setdefault(row["kind"], []).append(row)
-        edges_by_type: dict[str, list[dict[str, Any]]] = {}
+        edges_by_shape: dict[tuple[str, str | None, str | None], list[dict[str, Any]]] = {}
         for row in edge_rows:
-            edges_by_type.setdefault(row["kind"], []).append(row)
+            shape = (row["kind"], row["src_kind"], row["dst_kind"])
+            edges_by_shape.setdefault(shape, []).append(row)
 
         created = 0
         merged = 0
@@ -489,11 +501,13 @@ class KGStore:
                 ):
                     local_created += int(record["created"] or 0)
                     local_merged += int(record["merged"] or 0)
-            for rel_type, rows in edges_by_type.items():
+            for (rel_type, src_kind, dst_kind), rows in edges_by_shape.items():
+                src_pattern = f"s:{src_kind}" if src_kind else "s"
+                dst_pattern = f"d:{dst_kind}" if dst_kind else "d"
                 edge_query = (
                     "UNWIND $rows AS row "
-                    "MATCH (s {key: row.src_key, engagement: $engagement}) "
-                    "MATCH (d {key: row.dst_key, engagement: $engagement}) "
+                    f"MATCH ({src_pattern} {{key: row.src_key, engagement: $engagement}}) "
+                    f"MATCH ({dst_pattern} {{key: row.dst_key, engagement: $engagement}}) "
                     f"MERGE (s)-[r:{rel_type}]->(d) "
                     # ``r.engagement`` is mandatory: engagement-scoped
                     # reads filter every edge via ``WHERE r.engagement
