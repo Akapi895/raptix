@@ -22,11 +22,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlparse
 
 import defusedxml.ElementTree as ET
 import yaml
@@ -39,9 +38,12 @@ from raptix.knowledge.graph.ai_surface import (
     technology_for_title,
 )
 from raptix.knowledge.graph.asset_identity import (
+    REDACTED,
     host_or_dns_ref,
     host_ref,
     identity_props,
+    is_sensitive_name,
+    redact_url,
     web_origin_ref,
 )
 from raptix.knowledge.graph.store import KGStore
@@ -501,34 +503,6 @@ def _adapt_httpx_jsonl(
     return {"parsed": parsed, "skipped": skipped, "records": records}
 
 
-REDACTED = "REDACTED"
-_SENSITIVE_NAME = re.compile(
-    r"(?i)pass|pwd|secret|token|key|auth|session|sid|cookie|sig|credential|access"
-)
-
-
-def _is_sensitive(name: str) -> bool:
-    """Parameter or query names that usually carry credentials or session material."""
-    return _SENSITIVE_NAME.search(name) is not None
-
-
-def redact_url(url: str) -> str:
-    """Drop userinfo and fragment, and mask sensitive query values. Other content is kept."""
-    parts = urlsplit(url)
-    host = parts.hostname or ""
-    if ":" in host:
-        host = f"[{host}]"
-    netloc = host if parts.port is None else f"{host}:{parts.port}"
-    query = urlencode(
-        [
-            (name, REDACTED if _is_sensitive(name) else value)
-            for name, value in parse_qsl(parts.query, keep_blank_values=True)
-        ],
-        quote_via=quote,
-    )
-    return urlunsplit((parts.scheme, netloc, parts.path, query, ""))
-
-
 def _surface_observations(
     *,
     engagement: str,
@@ -596,7 +570,7 @@ def _surface_observations(
                 "props": {
                     "name": name,
                     "location": "query",
-                    "value_hint": REDACTED if _is_sensitive(name) else value[:128],
+                    "value_hint": REDACTED if is_sensitive_name(name) else value[:128],
                     "source": source,
                 },
                 "edges_out": [],

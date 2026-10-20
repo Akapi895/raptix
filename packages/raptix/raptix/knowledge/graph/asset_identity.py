@@ -7,12 +7,24 @@ share an IP are not merged: the IP only links them.
 from __future__ import annotations
 
 import ipaddress
+import re
+from collections.abc import Mapping
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 from raptix_core.types.asset import ASSET_KEY_VERSION, AssetKind, AssetRef, asset_id
 
 DEFAULT_PORTS: dict[str, int] = {"http": 80, "https": 443}
+
+# Kinds the asset catalog reconciles. The KG write boundary stamps their identity (ADR-0094).
+ASSET_BEARING_KINDS = frozenset({"Host", "Entrypoint"})
+REDACTED = "REDACTED"
+_HOST_PREFIX = "host::"
+_ENTRYPOINT_PREFIX = "entrypoint::"
+_DNS_NAME = re.compile(r"[a-z0-9_-]+(?:\.[a-z0-9_-]+)*")
+_SENSITIVE_NAME = re.compile(
+    r"(?i)pass|pwd|secret|token|key|auth|session|sid|cookie|sig|credential|access"
+)
 
 
 def host_ref(address: str, *, namespace: str = "default") -> AssetRef:
@@ -73,3 +85,73 @@ def _origin_parts(url: str) -> tuple[str, str, int]:
 
 def _bracket(host: str) -> str:
     return f"[{host}]" if ":" in host else host
+
+
+def _host_ref_for_locator(value: str) -> AssetRef:
+    try:
+        return host_ref(value)
+    except ValueError:
+        if _DNS_NAME.fullmatch(value.strip().rstrip(".").lower()) is None:
+            raise
+        return dns_ref(value)
+
+
+def identity_for(
+    engagement: str, kind: str, key: str, props: Mapping[str, Any]
+) -> dict[str, Any] | None:
+    """Identity props for a Host or Entrypoint observation, or None when its locator is invalid.
+
+    The key is read before props: it is the locator the writer merges on, while props can hold a
+    different value for the same node (for example the resolved IP of a DNS name).
+    """
+    try:
+        if kind == "Host":
+            value = key.removeprefix(_HOST_PREFIX) or str(props.get("ip") or "")
+            ref = _host_ref_for_locator(value)
+        elif kind == "Entrypoint":
+            url = key.removeprefix(_ENTRYPOINT_PREFIX) or str(props.get("url") or "")
+            ref = web_origin_ref(url)
+        else:
+            return None
+    except ValueError:
+        return None
+    return identity_props(engagement, ref)
+
+
+def canonical_key(key: str) -> str:
+    """The key an observation is stored under; entrypoint keys hold a URL and are redacted.
+
+    Raises ``ValueError`` for a malformed entrypoint URL without echoing it, so a secret inside it
+    never reaches an error message.
+    """
+    if not key.startswith(_ENTRYPOINT_PREFIX):
+        return key
+    url = key.removeprefix(_ENTRYPOINT_PREFIX)
+    try:
+        if urlsplit(url).scheme not in DEFAULT_PORTS:
+            return key
+        return _ENTRYPOINT_PREFIX + redact_url(url)
+    except ValueError as exc:
+        raise ValueError("entrypoint key is not a valid URL") from exc
+
+
+def redact_url(url: str) -> str:
+    """Drop userinfo and fragment, and mask sensitive query values. Other content is kept."""
+    parts = urlsplit(url)
+    host = parts.hostname or ""
+    if ":" in host:
+        host = f"[{host}]"
+    netloc = host if parts.port is None else f"{host}:{parts.port}"
+    query = urlencode(
+        [
+            (name, REDACTED if is_sensitive_name(name) else value)
+            for name, value in parse_qsl(parts.query, keep_blank_values=True)
+        ],
+        quote_via=quote,
+    )
+    return urlunsplit((parts.scheme, netloc, parts.path, query, ""))
+
+
+def is_sensitive_name(name: str) -> bool:
+    """Parameter or query names that usually carry credentials or session material."""
+    return _SENSITIVE_NAME.search(name) is not None

@@ -15,6 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from raptix.knowledge.graph.asset_identity import dns_ref, identity_props, web_origin_ref
 from raptix.knowledge.graph.store import (
     KGStore,
     KGStoreConfig,
@@ -331,3 +332,88 @@ def test_record_observations_strips_reserved_provenance_from_props() -> None:
             # without pretending to be an attributed observation.
             assert "created_by" not in params
             assert "source_episode_id" not in params
+
+
+# ── Identity and redaction at the write boundary (ADR-0094) ─────────────
+
+
+def _capture_writes(
+    observations: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Run ``record_observations`` on a mock session; return every Cypher parameter and the result."""
+    captured: list[dict[str, Any]] = []
+    driver = _fake_driver()
+    session = driver.session.return_value.__enter__.return_value
+
+    def fake_write(write_fn):  # type: ignore[no-untyped-def]
+        tx = MagicMock()
+
+        def tx_run(query, **params):  # type: ignore[no-untyped-def]
+            captured.append({"query": query, **params})
+            return MagicMock()
+
+        tx.run.side_effect = tx_run
+        return write_fn(tx)
+
+    session.execute_write.side_effect = fake_write
+    result = _make_store(driver).record_observations(
+        observations,
+        engagement="acme",
+        created_by="analyst",
+        source_episode_id="tc-1",
+    )
+    return captured, result
+
+
+def _rows_by_key(captured: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {
+        row["key"]: row for params in captured for row in params.get("rows", []) if "key" in row
+    }
+
+
+def test_record_observations_stamps_identity_on_host_nodes_from_any_writer() -> None:
+    captured, result = _capture_writes(
+        [
+            {"kind": "Host", "key": "host::App.Example.com", "props": {"source": "dnsx"}},
+            {"kind": "Host", "key": "host::10.0.0.5", "props": {"asset_id": "asset_kept"}},
+            {"kind": "Host", "key": "host::*.example.com", "props": {}},
+        ]
+    )
+    rows = _rows_by_key(captured)
+    assert (
+        rows["host::App.Example.com"]["props"]["asset_id"]
+        == identity_props("acme", dns_ref("App.Example.com"))["asset_id"]
+    )
+    assert rows["host::10.0.0.5"]["props"]["asset_id"] == "asset_kept"
+    assert "asset_id" not in rows["host::*.example.com"]["props"]
+    assert result["unidentified"] == 1
+
+
+def test_record_observations_redacts_entrypoint_key_label_props_and_edges_together() -> None:
+    secret_url = "https://u:p@app.example.com/login?token=abc&page=2"
+    captured, result = _capture_writes(
+        [
+            {
+                "kind": "Entrypoint",
+                "key": f"entrypoint::{secret_url}",
+                "label": secret_url,
+                "props": {"source": "ffuf", "url": secret_url},
+                "edges_out": [{"to_key": "host::app.example.com", "kind": "HOSTS"}],
+            }
+        ]
+    )
+    redacted = "https://app.example.com/login?token=REDACTED&page=2"
+    rows = _rows_by_key(captured)
+    node = rows[f"entrypoint::{redacted}"]
+    assert node["label"] == redacted
+    assert node["props"]["url"] == redacted
+    assert (
+        node["props"]["asset_id"]
+        == identity_props("acme", web_origin_ref("https://app.example.com/"))["asset_id"]
+    )
+    edges = [row for params in captured for row in params.get("rows", []) if "dst_key" in row]
+    assert [(row["src_key"], row["dst_key"], row["kind"]) for row in edges] == [
+        (f"entrypoint::{redacted}", "host::app.example.com", "HOSTS")
+    ]
+    assert "abc" not in repr(captured) and "u:p" not in repr(captured)
+    assert "unidentified" not in result
