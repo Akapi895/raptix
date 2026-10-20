@@ -12,6 +12,7 @@
  */
 import { lazy, type ComponentType } from 'react'
 import { routes as systemRoutes } from '../screens/a'
+import { isAssetMapEnabled } from '../features/asset-map/flag'
 import { setKnownPages } from './history'
 
 const slices = {
@@ -38,6 +39,8 @@ const MANIFEST: Record<string, Slice> = {
   'ai-operator': 'g', 'ai-plan': 'g', 'ai-plan-review': 'g', 'ai-plan-compare': 'g', 'ai-trace': 'g', 'ai-history': 'g', 'ai-fanout': 'g', 'ai-branch': 'g',
   c2: 'i', 'c2-channel': 'h', 'c2-session': 'h', 'c2-console': 'h',
   scenarios: 's', workspaces: 's',
+  // Feature-flagged (off by default): when off the key is absent, so the route resolves as unknown.
+  ...(isAssetMapEnabled() ? { 'asset-map': 'a' as Slice } : {}),
 }
 setKnownPages(new Set(Object.keys(MANIFEST)))
 
