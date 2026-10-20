@@ -60,7 +60,7 @@ async function tableExists(client: Client, table: string): Promise<boolean> {
     "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1) AS present",
     [table],
   );
-  return result.rows[0].present;
+  return result.rows[0]?.present === true;
 }
 
 async function applyMigration(client: Client, name: string): Promise<void> {
@@ -127,8 +127,9 @@ async function run(): Promise<void> {
     }
     await withClient(databaseUrl, async client => {
       const count = await client.query<{ count: string }>('SELECT count(*)::text AS count FROM "AssetIdentity"');
-      report.identitiesAfterConcurrentWrites = Number(count.rows[0].count);
-      checks.concurrentWritesLandOnce = Number(count.rows[0].count) === identityCount;
+      const written = Number(count.rows[0]?.count ?? -1);
+      report.identitiesAfterConcurrentWrites = written;
+      checks.concurrentWritesLandOnce = written === identityCount;
     });
 
     // 3. Ambiguity: a different id for an existing locator is refused, not merged.
@@ -147,7 +148,7 @@ async function run(): Promise<void> {
       await client.query(await readFile(rollbackFile, 'utf8'));
       checks.catalogDroppedByRollback = !(await tableExists(client, 'AssetIdentity'));
       const kept = await client.query<{ count: string }>('SELECT count(*)::text AS count FROM "WebAsset"');
-      checks.webAssetUntouchedByRollback = kept.rows[0].count === '2';
+      checks.webAssetUntouchedByRollback = kept.rows[0]?.count === '2';
     });
 
     // 5. The cycle repeats: upgrade again, then roll back again.
@@ -155,7 +156,7 @@ async function run(): Promise<void> {
       await applyMigration(client, identityMigration);
       await insertIdentities(client, rows.slice(0, 10));
       const count = await client.query<{ count: string }>('SELECT count(*)::text AS count FROM "AssetIdentity"');
-      checks.secondUpgradeWritable = count.rows[0].count === '10';
+      checks.secondUpgradeWritable = count.rows[0]?.count === '10';
       await client.query(await readFile(rollbackFile, 'utf8'));
       checks.secondRollbackClean = !(await tableExists(client, 'AssetIdentity'));
     });
