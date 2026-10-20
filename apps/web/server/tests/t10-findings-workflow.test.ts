@@ -260,6 +260,27 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     expect(refused.statusCode).toBe(409);
   });
 
+  it('importing a producer finding imports the workspace evidence the agent wrote and attaches it', async () => {
+    const retained: Pick<ArtifactsService, 'capture' | 'captureById' | 'importWorkspaceEvidence'> = {
+      capture: async (_actor: string, _engagement: string, path: string) => {
+        if (path === 'findings/FIND-9.md') return { digest: 'a'.repeat(64), producer: 'runtime:scanner-1' } as never;
+        throw new (await import('../src/services/projects-service.js')).ProjectApiError(404, 'Artifact not retained.');
+      },
+      importWorkspaceEvidence: async (_actor: string, engagement: string, producerId?: string) => ({
+        engagementId: engagement,
+        captures: producerId === 'FIND-9' ? [{ id: 'cap-rce' } as never] : [],
+        skipped: [],
+      }),
+      captureById: async (_actor: string, engagement: string, captureId: string) =>
+        ({ engagementId: engagement, captureId, path: 'findings/capture-cap-rce.txt', digest: 'b'.repeat(64), sizeBytes: 12, producer: 'workspace:findings/evidence/FIND-9_rce.txt', classification: 'unclassified' }) as never,
+    };
+    const { app, owner } = await setup(retained);
+    const imported = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Scanner claim', producerRef: 'findings/FIND-9.md', detail: 'claim' } });
+    expect(imported.statusCode).toBe(200);
+    const evidence = imported.json().evidence as Array<{ kind: string; artifactPath: string | null }>;
+    expect(evidence.map((item) => [item.kind, item.artifactPath])).toEqual([['artifact', 'findings/capture-cap-rce.txt']]);
+  });
+
   it('W19: import resolves the producer reference through the retained authority and flags unverified claims', async () => {
     const retained: Pick<ArtifactsService, 'capture'> = {
       capture: async (_actor: string, _engagement: string, path: string) => {
@@ -276,6 +297,36 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     const unverified = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Foreign claim', producerRef: 'findings/FOREIGN-77.md', detail: 'claim' } });
     expect(unverified.statusCode).toBe(200);
     expect(unverified.json().producerResolved).toBe(false);
+  });
+
+  it('replaying a draft import attaches workspace evidence written after the first import', async () => {
+    let written = false;
+    const retained: Pick<ArtifactsService, 'capture' | 'captureById' | 'importWorkspaceEvidence'> = {
+      capture: async (_actor: string, _engagement: string, path: string) => {
+        if (path === 'findings/FIND-9.md') return { digest: 'a'.repeat(64), producer: 'runtime:scanner-1' } as never;
+        throw new (await import('../src/services/projects-service.js')).ProjectApiError(404, 'Artifact not retained.');
+      },
+      importWorkspaceEvidence: async (_actor: string, engagement: string, producerId?: string) => ({
+        engagementId: engagement,
+        captures: written && producerId === 'FIND-9' ? [{ id: 'cap-late' } as never] : [],
+        skipped: [],
+      }),
+      captureById: async (_actor: string, engagement: string, captureId: string) =>
+        ({ engagementId: engagement, captureId, path: 'findings/capture-cap-late.txt', digest: 'b'.repeat(64), sizeBytes: 12, producer: 'workspace:findings/evidence/FIND-9_late.txt', classification: 'unclassified' }) as never,
+    };
+    const { app, owner } = await setup(retained);
+    const url = `/api/engagements/${ENG}/curated-findings/import`;
+    const headers = { cookie: owner.cookie, 'x-csrf-token': owner.csrf };
+    const payload = { title: 'Scanner claim', producerRef: 'findings/FIND-9.md', detail: 'Claim from the source.' };
+    const first = await app.inject({ method: 'POST', url, headers, payload });
+    expect(first.statusCode).toBe(200);
+    expect(first.json().evidence).toEqual([]);
+
+    written = true;
+    const replay = await app.inject({ method: 'POST', url, headers, payload });
+    expect(replay.statusCode).toBe(200);
+    expect(replay.json().id).toBe(first.json().id);
+    expect((replay.json().evidence as Array<{ artifactPath: string | null }>).map((item) => item.artifactPath)).toEqual(['findings/capture-cap-late.txt']);
   });
 
   it('replays an import for the same producer path and digest, but refuses changed bytes', async () => {

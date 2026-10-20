@@ -172,6 +172,8 @@ export interface FindingService {
   downloadEvidence(ctx: RequestContext, evidenceId: string): Promise<ServiceResult<EvidenceDownload>>
   /** Simulated evidence upload that records and links the capture in one commit. */
   uploadEvidence(ctx: RequestContext, input: EvidenceUploadInput): Promise<ServiceResult<Evidence>>
+  /** Imports the evidence files the agent wrote in the workspace as unclassified captures (ADR-0087). */
+  importWorkspaceEvidence(ctx: RequestContext): Promise<ServiceResult<WorkspaceEvidenceImport>>
   /** Records one retest result; a "Resolved" result closes the finding. */
   recordRetest(ctx: RequestContext, id: string, input: RetestInput): Promise<ServiceResult<Finding>>
   /** Standalone evidence list for the scope (ticket 33 — masking at the handler). */
@@ -500,6 +502,7 @@ export interface FindingSaveInput {
 }
 
 /** The mock records metadata; real mode requires original bytes and a supported media type. */
+export interface WorkspaceEvidenceImport { files: number; skipped: { path: string; reason: string }[] }
 export interface EvidenceUploadInput { findingId: string; name: string; kind: string; source: string; sensitive: boolean; opId?: string; bytes?: Uint8Array; mediaType?: string; requestId?: string }
 
 /** One retest observation; result "Resolved" closes the finding. */
@@ -909,6 +912,7 @@ export function createFindingService(
     classifyCapture: (ctx, captureId, classification, expectedVersion, reason) => Promise.resolve(classifyFindingEvidence(authority, clock, ctx, captureId, classification, expectedVersion, reason)),
     downloadEvidence: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'The mock evidence store does not contain original capture bytes.' } }),
     uploadEvidence: (ctx, input) => Promise.resolve(uploadFindingEvidence(authority, clock, ctx, input)),
+    importWorkspaceEvidence: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'The mock evidence store has no workspace files to import.' } }),
     recordRetest: (ctx, id, input) => Promise.resolve(recordFindingRetest(authority, clock, ctx, id, input)),
     listEvidence: (ctx, query) => guard(() => listEvidence(authority.snapshot(), ctx, query)),
     getEvidence: (ctx, id) => guard(() => getEvidence(authority.snapshot(), ctx, id)),

@@ -17,6 +17,11 @@ export function registerFindingsRoutes(
     const { id } = request.params as { id: string };
     return artifacts.upload(identity.id, id, request.body);
   }));
+  app.post(`${prefix}/artifacts/workspace-evidence/import`, (request, reply) => runProjectsHandler(request, reply, () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id } = request.params as { id: string };
+    return artifacts.importWorkspaceEvidence(identity.id, id);
+  }));
   app.get(`${prefix}/artifacts/captures`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };

@@ -175,6 +175,7 @@ export function useFindingWrites() {
       downloadEvidence: (evidenceId: string): Promise<ServiceResult<EvidenceDownload>> =>
         svc().downloadEvidence(ctx('evidence-download'), evidenceId),
       uploadEvidence: (input: EvidenceUploadInput) => svc().uploadEvidence(ctx('finding-upload'), input),
+      importWorkspaceEvidence: () => svc().importWorkspaceEvidence(ctx('evidence-import')),
       recordRetest: (id: string, input: RetestInput) => svc().recordRetest(ctx('finding-retest'), id, input),
     }
   }, [services, scope.actor, scope.role, scope.project])

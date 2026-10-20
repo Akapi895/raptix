@@ -1254,13 +1254,27 @@ export function EvidenceList() {
   const [q, setQ] = useState('')
   const [kind, setKind] = useState('')
   const list = useEvidenceList({ q: q || undefined, kind: kind || undefined })
+  const writes = useFindingWrites()
+  const toast = useToastStore((s) => s.toast)
+  const queryClient = useQueryClient()
+  const [importing, setImporting] = useState(false)
   const rows = list.data?.items ?? []
+  const importWorkspace = async () => {
+    setImporting(true)
+    const res = await writes.importWorkspaceEvidence()
+    setImporting(false)
+    if (!res.ok) { toast(res.failure.message, 'warn'); return }
+    const { files, skipped } = res.data
+    toast(`${files} workspace evidence file${files === 1 ? '' : 's'} in the inventory${skipped.length ? `; ${skipped.length} skipped` : ''}.`, skipped.length ? 'warn' : undefined)
+    void queryClient.invalidateQueries({ queryKey: ['evidence'] })
+  }
   return (
     <div>
       <PageHeader title="Evidence" sub={pid === 'all' ? 'Evidence across accessible projects (read-only).' : `Evidence recorded for ${pid}. Open an item to inspect metadata and chain of custody.`} />
       <FilterBar>
         <SearchBox value={q} onChange={setQ} placeholder="Search by ID, name or source…" className="w-full sm:w-72" />
         <Select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value)} className="!w-auto"><option value="">All types</option>{(list.data?.kinds ?? []).map((k) => <option key={k}>{k}</option>)}</Select>
+        <Button onClick={() => void importWorkspace()} disabled={pid === 'all' || importing} title={pid === 'all' ? 'Select an engagement to import its workspace evidence.' : 'Adds the files the agent wrote under findings/evidence/ to this inventory as unclassified captures. Their bytes stay locked until an owner or reviewer classifies them.'}>{importing ? 'Importing…' : 'Import workspace evidence'}</Button>
       </FilterBar>
       {list.isPending ? (
         <div aria-busy="true" aria-label="Loading evidence"><Skeleton className="h-72" /></div>

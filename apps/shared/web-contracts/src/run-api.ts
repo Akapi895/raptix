@@ -117,6 +117,9 @@ export interface RetainedCaptureView {
 export interface RetainedCapturesView {
   engagementId: string; captures: RetainedCaptureView[]; source: 'db'
 }
+export interface WorkspaceEvidenceImportView {
+  engagementId: string; captures: RetainedCaptureView[]; skipped: { path: string; reason: string }[]
+}
 export interface RetainCaptureInput {
   requestId: string; filename: string; mediaType: string; base64: string
 }
@@ -134,6 +137,10 @@ export function isRetainedCaptureView(v: unknown): v is RetainedCaptureView {
 }
 export function isRetainedCapturesView(v: unknown): v is RetainedCapturesView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.captures) && v.captures.every(capture => isRetainedCaptureView(capture) && capture.engagementId === v.engagementId) && v.source === 'db'
+}
+export function isWorkspaceEvidenceImportView(v: unknown): v is WorkspaceEvidenceImportView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.captures) && v.captures.every(capture => isRetainedCaptureView(capture) && capture.engagementId === v.engagementId)
+    && Array.isArray(v.skipped) && v.skipped.every(item => isRecord(item) && typeof item.path === 'string' && typeof item.reason === 'string')
 }
 export interface ArtifactContentView {
   engagementId: string; path: string; content: string

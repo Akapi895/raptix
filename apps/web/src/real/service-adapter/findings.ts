@@ -2,10 +2,10 @@ import type { Evidence, Finding, FindingStatus, Severity } from '../../domain/en
 import type {
   EvidenceListRead, EvidenceDetailRead, EvidenceView,
   FindingActivityPage, FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions, FindingSaveInput,
-  FindingService, FindingSort, FindingSuggestionDisposition, FindingTransitionTarget,
+  FindingService, FindingSort, FindingSuggestionDisposition, FindingTransitionTarget, WorkspaceEvidenceImport,
 } from '../../features/findings/service'
 import {
-  addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, getEngagement, importCuratedFinding, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture,
+  addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, getEngagement, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture,
   type CuratedFindingsView, type CuratedFindingView,
 } from '../api'
 import type { FindingView } from '@raptix/web-contracts'
@@ -447,6 +447,11 @@ export function createRealFindingService(): FindingService {
         mediaType: input.mediaType ?? 'application/octet-stream', base64: bytesToBase64(input.bytes),
       })
       return { ok: true, data: mapCapture(capture, ctx.projectId) }
+    }),
+    importWorkspaceEvidence: (ctx) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<WorkspaceEvidenceImport>('Select an engagement before importing evidence.')
+      const result = await importWorkspaceEvidence(ctx.projectId)
+      return { ok: true, data: { files: result.captures.length, skipped: result.skipped } }
     }),
     recordRetest: (ctx, id, input) => guarded(async () => {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Finding>('Select an engagement before recording a retest.')
