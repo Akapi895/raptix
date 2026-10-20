@@ -1,111 +1,138 @@
 # Asset Map: kết quả triển khai theo phase
 
 - **Plan:** [implementation plan](2026-10-20-asset-map-implementation-plan.md)
-- **Branch:** `asset-map` (từ `web-improve-refactor` tại `9b40b02e`). Không push, không mở PR.
-- **Máy đo:** Windows 11, Intel Core i9-13900HX (24 nhân / 32 luồng), Docker Desktop 32 CPU / 10 GiB.
-- **Trạng thái:** phase 1–4 (backend) và phase 8 (ngân sách read model) có gate đã chạy. Phase 4 UI, phase 5 canvas, phase 6 điều hướng và phần lớn phase 7 chưa làm. Chi tiết ở mục "Chưa hoàn thành".
+- **Branch:** `asset-map` (từ `web-improve-refactor`). Không push, không mở PR. Commit không có trailer AI, theo `CLAUDE.md` của repo.
+- **Máy đo:** Windows 11, Intel Core i9-13900HX (24 nhân / 32 luồng), Docker Desktop 32 CPU / 10 GiB. Neo4j Community 5.26 với heap mặc định của image.
+- **Trạng thái:** A (sửa correctness backend) xong; C (deployment lặp lại được) xong; B (lát UI network/web, Cytoscape, flag, Playwright) xong với một ngưỡng chưa đạt; D (coverage, backfill, stress) làm được một phần, xem từng mục.
 
-Ký hiệu: **pass** = đã chạy và đạt; **blocked** = thiếu tool/lab/dữ liệu thật; **unverified** = chưa chạy.
+Ký hiệu: **pass** = đã chạy và đạt; **fail** = đã chạy và không đạt; **blocked** = thiếu tool, lab, tài khoản hoặc hardware đã kiểm tra; **unverified** = chưa chạy.
 
-## Backup và rollback (trước khi chạm DB)
+## A. Sửa correctness backend
 
-- PostgreSQL `raptix_web_raptix`: `pg_dump -Fc`, lưu ngoài Git tại `C:\Users\tuanp\raptix-backups\asset-map-20261020\raptix_web_raptix.dump`. Restore thử vào DB cách ly `restore_check_asset_map`: 3 `WebAsset`, 2 `Engagement`, khớp dữ liệu gốc. **pass**.
-- Neo4j (Community, không có online dump): export logic bằng driver, `neo4j-web.json` (2.245 node, 5.941 quan hệ), cùng thư mục backup. Restore thử vào container Neo4j tạm: 2.245 / 5.941, khớp. Container tạm đã xóa. **pass**.
-- Rollback migration `20261031000100_asset_identity`: `prisma/rollback/20261031000100_asset_identity.down.sql`. Thử trên bản cách ly: upgrade tạo bảng và 2 index, rollback xóa bảng, `WebAsset` còn 3 dòng. **pass**.
+| Lỗi | Sửa | Kiểm chứng |
+|---|---|---|
+| Parameter gắn nhầm lên Host sau khi thêm origin observation (`observations[1]` đổi nghĩa) | Cạnh HAS trỏ tới đúng Endpoint bằng tham chiếu | Test hồi quy `test_parameter_edges_attach_to_the_endpoint_not_the_host` **pass** |
+| URL lưu thô, có credential và token trong key và prop | Redact ở ingest (userinfo, fragment, giá trị query nhạy cảm); httpx và nuclei cùng quy tắc; detail redact thêm khi trả về | Test `test_credentials_and_secret_query_values_never_reach_the_graph` **pass**; test TS `redactUrl` **pass** |
+| Id nhập nhằng: `(namespace="a:b", key="c")` và `(namespace="a", key="b:c")` cùng ra một asset | Mã hóa từng trường theo độ dài byte (UTF-8), `ASSET_KEY_VERSION` = 2, ADR-0094 ghi amendment | Test separator và multi-byte trong Python và TypeScript; vector parity khớp **pass** |
+| Revision tự chế (`count(n)` và `max(lastupdated)`) | Dùng đúng công thức `KGStore.revision` (counter `KGRevision` cộng timestamp) | Test server **pass** (31/31 gồm các test cursor) |
+| Neighborhood chỉ đọc một node (`WITH c LIMIT 1`) và không có cách mở tiếp | Đọc mọi node mang cùng asset identity, phân trang cạnh bằng cursor gắn revision, trả `centers` | Test paging và revision **pass** |
+| Detail không có byte budget | Cắt phần tử cuối đến khi vừa 512 KiB, cursor tiếp tục đúng chỗ đã cắt | Test budget **pass** |
+| Chưa có evidence reference | `provenance.evidence` (source, episode, thời điểm quan sát); mỗi item có `sourceEpisodeId` | Test contract và server **pass** |
 
-## Phase 1: identity và ranh giới dữ liệu
+**Writer network và web đang ghi gì** (kiểm tra theo code, không theo mô tả):
 
-- ADR-0094 (Accepted): PostgreSQL giữ catalog, Neo4j giữ quan hệ quan sát được, `assetId` xác định từ `(engagement, kind, namespace, canonicalKey, keyVersion)`.
-- Core: `raptix_core.types.asset` (`AssetKind`, `AssetRef`, `asset_id`). Runtime: `raptix.knowledge.graph.asset_identity`.
-- Coverage matrix: `docs/design/2026-10-20-asset-map-coverage-matrix.json`, khớp với entry point `raptix.domains`, `raptix.subagents`, không đếm số cố định. Test: `plugins/tests/test_asset_map_domain_coverage.py`.
-- Gate: unit identity **pass** (22 test core và identity); core suite **pass** (186 test).
+- nmap: Host (`host::IP`, asset props), Service (HOSTS), Entrypoint theo hostname và cổng web (asset props), cạnh HAS Host → Entrypoint.
+- httpx: Host (DNS hoặc IP), Service, Entrypoint (URL đã redact), cạnh HAS Host → Entrypoint.
+- katana và arjun: Host, Endpoint (URL đã redact, `origin_asset_id`), Parameter (HAS từ Endpoint), Entrypoint của origin.
+- nuclei: Vulnerability; target là URL thì redact.
 
-## Phase 2: chuẩn hóa đường ghi graph
+## B. Lát UI network/web
 
-- nmap và httpx ghi `asset_id` và các phần của nó lên node Host và Entrypoint. Key node không đổi.
-- Migration `20261031000100_asset_identity`: additive, đã áp dụng lên DB live bằng `prisma migrate deploy` trong API container.
-- Reconcile `POST /api/engagements/:id/assets/catalog/reconcile`: tính lại `assetId` bằng cùng công thức Python, idempotent.
-- Gate:
-  - Tương đương Python–TypeScript (test vector): **pass**, cùng một `asset_id`.
-  - Live: ingest, replay và reconcile lần hai cho `created 0`: **pass**.
-  - Test tích hợp round trip và replay đồng thời (Neo4j dev stack): **pass** (2 test).
-  - Ingest khi Web API tắt: **pass** (API dừng ~1 phút, ghi vẫn thành công, API khỏe lại).
+- Feature flag: tắt mặc định. Route `asset-map` không được đăng ký khi tắt, nên trả về như route không tồn tại. Bật bằng `VITE_ASSET_MAP=1` lúc build hoặc `localStorage['raptix.assetMap']='1'` trong trình duyệt.
+- Cytoscape 3.34.4: compound group (service và origin nằm trong host), chọn node mở inspector, cập nhật incremental (node đã có giữ vị trí, chỉ layout phần tử mới). Spike chưa có: expand/collapse nhóm và layout đo trên dataset lớn.
+- Inspector: nguồn, bằng chứng (episode, thời điểm), services của host, sitemap của origin với URL đã redact, phân trang "Load more" cho cả cạnh và sitemap.
+- Unit test UI: 8/8 **pass** (model canvas, flag, trang gồm lỗi và trạng thái rỗng).
+- **Playwright trên stack thật** (`apps/web/tools/verify-asset-map-real-mode.mjs`, đăng nhập bằng tài khoản kiểm thử có membership operator):
+  - flag tắt không hiện map: **pass**;
+  - flag bật: hosts (2), services (2), canvas render, bằng chứng (1), origin (1), sitemap (3 endpoint), sitemap không lộ credential: **pass**;
+  - **canvas sẵn sàng trong 2 giây sau khi chọn host: xem mục "Đo canvas" bên dưới.**
 
-## Phase 3: read model cho graph lớn
+### Đo canvas và nguyên nhân độ trễ
 
-- Overview, members (cursor gắn revision), search, neighborhood (bounded, trim theo byte budget). DTO và validator trong `apps/shared/web-contracts`.
-- Cursor đổi revision thì trả 409, không bỏ hoặc lặp dữ liệu. Test: **pass** (21 test server, 5 test contract).
-- Live với engagement tạm: overview, phân trang, search và neighborhood đều đúng số liệu. **pass**.
+Lần đo đầu, khi dataset stress (≈500.000 node) vẫn nằm trong cùng Neo4j, canvas mất 2.431 ms, vượt ngân sách 2 giây. Đo API qua proxy cùng lúc: neighborhood ≈1,05 s, detail ≈1,75 s, trong khi cùng engagement đó chỉ có vài node.
 
-## Phase 4: chi tiết asset (backend)
+Nguyên nhân: query revision (`MATCH (src)-[r]->(dst) WHERE src.engagement = $engagement`) không có label và không có index trên quan hệ, nên Neo4j quét **toàn bộ quan hệ của database**, không chỉ của engagement đang đọc. Latency vì vậy tăng theo tổng kích thước graph, không theo kích thước engagement. Đây cũng là query mà runtime dùng cho `KGStore.revision`, nên ảnh hưởng mọi engagement. Theo chỉ dẫn, không tối ưu ngay; ghi làm follow-up bắt buộc (xem mục Việc còn lại).
 
-- Ingest katana và arjun gắn `origin_asset_id` lên Endpoint. Origin cũng được quan sát như Entrypoint để reconcile đưa vào catalog (phát hiện trong phase 8, xem dưới).
-- API detail: services cho host, sitemap và parameter cho web origin, loại khác trả `unsupported` kèm lý do.
-- Gate: unit **pass** (test katana và origin); server **pass** (6 test detail); live (host 2 service, origin 2 endpoint có parameter) **pass**.
-- UI inspector: **chưa làm**.
+Sau khi xóa dataset stress, phép đo canvas được lặp lại trên DB còn lại: **kết quả điền ở cuối mục này.**
 
-## Phase 5: canvas
+## C. Triển khai lặp lại được
 
-- **Chưa làm.** Đã kiểm tra `cytoscape@3.34.4` có trên npm, chưa cài vào `apps/web`. Canvas cần Playwright trên stack thật để kiểm chứng layout, chưa có.
+- Build và deploy đúng code mới: `docker compose -f docker-compose.web-raptix.yml -f docker-compose.web-runtime.yml build web-raptix-api web-runtime web-raptix-ui`, sau đó `up -d --no-deps` cho ba service. Boot API báo "No pending migrations" (rerun là no-op). Postgres và Neo4j không bị recreate.
+- Bước bootstrap rõ ràng: `make webraptix-kg-bootstrap` (lệnh tương đương: `exec -T web-runtime python -m raptix.knowledge.graph.bootstrap`). Chạy `apply_migrations` có sẵn, sau bước kiểm tra trùng `(key, engagement)`:
+  - **Neo4j sạch**: áp đủ 6 migration (V001–V006), exit 0.
+  - **Có node trùng**: exit 2, báo đúng `label key engagement copies`, không tạo constraint, không merge.
+  - **Sau khi xử lý trùng trong graph**: áp 6 migration; **chạy lại** báo `none (already current)`.
+  - **DB live** đã có sẵn 6 migration: rerun trên runtime đã deploy báo `applied 0`.
+- Test unit bootstrap: 2 test **pass** (trong bộ 31 test identity và migration runner).
+- Script tái lập trong repo `scripts/asset-map/`: `gen_dataset.py` (tham số số host và endpoint), `ingest_dataset.py` (đi qua writer thật trong runtime), `measure_read_models.mjs` (đo qua build API), `backfill_rehearsal.mjs`. Các lệnh đều nằm trong README của thư mục và trong phần cuối tài liệu này.
 
-## Phase 6: hoạt động và điều hướng
+## D. Coverage, backfill, live acquisition, stress
 
-- **Chưa làm.** Chưa có overlay và chưa có feature flag điều hướng.
+### Retained output và live acquisition
 
-## Phase 7: domain và specialist
+- Tìm retained output trong `workspace/`, `report-do-an/`, `report-vdt/`, `web-sandboxes/`: không có output scanner nào (không có nmap XML, httpx, katana, nuclei hay SARIF). `workspace/` chỉ có log sự kiện agent. Không có pcap, APK, IPA, ABI, firmware hay capture ICS/wireless.
+- **Network: live acquisition pass.** nmap thật từ sandbox của stack web quét hai host lab (`172.31.0.2`, `172.31.0.5`, cổng 9999) và juice-shop (`host.docker.internal:3000`). XML được giữ tại `apps/web/tests/fixtures/asset-map/network/` và ingest qua writer thật (`asset-map-live`): 3 host catalog, không rejected, service và bằng chứng đúng.
+- **Web: partial.** Sandbox không có httpx của ProjectDiscovery (`/usr/local/bin/httpx` là client Python) và không có katana. Không có output web-scanner thật; dữ liệu endpoint hiện chỉ ở mức fixture.
+- **AD, cloud, mobile, wireless, IoT, ICS, OSINT: blocked.** Lý do cụ thể đã ghi trong ma trận (không có lab AD đang chạy, không có tài khoản cloud, không có APK, không có adapter wireless hay thiết bị ICS/IoT, OSINT cần provider ngoài). Không có demo nào được tính pass.
 
-- Coverage matrix đã liệt kê toàn bộ registry (11 domain pack, các subagent đã đăng ký). Mỗi hàng có trạng thái và lý do.
-- Chỉ network và web có nguồn ghi thật và đã chạy end to end ở phase 2–4. Các domain khác: **blocked** (thiếu lab, hardware hoặc sample) hoặc **unverified** (chưa kiểm tra nguồn ghi). Không có demo nào được tính pass.
+### Backfill rehearsal (pass)
 
-## Phase 8: migration, hiệu năng và rollout
+Trên 50.000 identity của dataset stress (`asset-map-stress`):
 
-### Phát hiện: KG chưa có constraint và index trên DB live
+| Bước | Kết quả |
+|---|---|
+| Reconcile lần đầu | 50.000 tạo, 0 rejected |
+| Reconcile lần hai (replay) | 0 tạo, SHA-256 tập id không đổi |
+| Xóa catalog (rollback) | 0 dòng |
+| Reconcile sau rollback | 50.000 tạo, cùng SHA-256 tập id |
 
-- `apply_migrations` (runner của V001–V006) không được gọi ở đường production. DB Neo4j web-stack không có `MigrationLog` và không có constraint nào, nên mọi MERGE theo `(key, engagement)` là quét toàn bộ.
-- Hệ quả: ghi cạnh dùng `MATCH (s {key: ...})` không có label, mỗi dòng quét toàn graph. Dataset 1.000 host bị kẹt hơn 15 phút ở batch cạnh đầu tiên.
-- Hành động:
-  1. Kiểm tra không có nhóm trùng `(key, engagement)` trên DB live.
-  2. Áp migration V001–V006 bằng chính runner của dự án. Đã ghi `MigrationLog` cho cả 6. Có thể đảo bằng `DROP CONSTRAINT`.
-  3. Sửa store: thêm label đầu cạnh khi biết (từ cùng batch), dùng MATCH có label để tận dụng index. Trường hợp không biết thì giữ MATCH cũ.
-- Kết quả: cùng dataset, ingest xong trong **8,0 giây** (trước đó bị kẹt). Sau khi bổ sung origin entrypoint: **13,1 giây**.
-- Follow-up chưa làm: đường khởi động production vẫn chưa gọi `apply_migrations`. Cần ADR riêng vì có thể gặp dữ liệu trùng khi tạo constraint trên engagement cũ.
+Tổng thời gian ba lần reconcile: 111,7 giây.
 
-### Phát hiện: origin theo IP không được catalog
+### Stress 10k host / 50k service / 200k endpoint
 
-- nmap tạo Entrypoint theo hostname (`http://h501.lab.local:80`), katana tạo URL theo IP (`http://10.1.2.2:80`). Origin theo IP không có node Entrypoint nên không vào catalog, sitemap không truy cập được.
-- Hành động: katana và arjun phát thêm observation Entrypoint cho origin của mỗi endpoint (key `entrypoint::<origin>/`). Hai origin theo IP và theo hostname vẫn là hai asset riêng, đúng như proposal.
+- Ingest 140 file (100 nmap, 40 katana) qua runtime: 184,3 giây, khoảng 500.000 node (kể cả quan hệ được tạo ra từ endpoint và parameter). Không có lỗi writer.
+- Đo read model trên engagement này (n = 20 mỗi thao tác, sau warm-up):
 
-### Dataset và số đo
+| Thao tác | p50 | p95 | Ghi chú |
+|---|---|---|---|
+| overview (catalog) | 14 ms | 18 ms | ≤ 500 ms |
+| members host, trang 50 | 11 ms | 14 ms | ≤ 500 ms |
+| search "10." | 55 ms | 65 ms | ≤ 500 ms |
+| neighborhood host | 3.282 ms | 3.499 ms | **vượt 500 ms** |
+| detail host (services) | 3.066 ms | 3.371 ms | **vượt 500 ms** |
+| detail origin (trang 100) | 3.289 ms | 3.452 ms | **vượt 500 ms** |
 
-- Dataset tổng hợp: 1.000 host, 5.000 service, 19.990 endpoint (chia đều, lệch 10 so với 20.000 do làm tròn), 2 entrypoint mỗi host. Host 0 có ~10.000 endpoint để đo phân trang sâu.
-- Đo: `measure.mjs`, 20 lần mỗi thao tác sau khi warm, trên Postgres và Neo4j của stack web. Dữ liệu tổng hợp chỉ chứng minh scalability của view, không chứng minh độ phủ ingest.
+Các thao tác đọc catalog đạt ngân sách. Các thao tác có revision vượt ngân sách, và nguyên nhân là query revision đã nêu ở mục B. Không tối ưu ngay, theo chỉ dẫn.
 
-| Thao tác | p50 | p95 | Byte | Ngân sách |
-|---|---|---|---|---|
-| overview (catalog) | 3 ms | 11 ms | 282 | p95 ≤ 500 ms |
-| members host, trang 50 | 3 ms | 5 ms | 6.184 | p95 ≤ 500 ms |
-| search "10.1.2" | 6 ms | 9 ms | 3.150 | p95 ≤ 500 ms |
-| neighborhood host (Neo4j) | 36 ms | 47 ms | 7.575 | p95 ≤ 500 ms, ≤ 512 KiB |
-| detail host (services) | 111 ms | 122 ms | 1.138 | p95 ≤ 500 ms |
-| detail origin (endpoint trang 100) | 123 ms | 221 ms | 2.150 | p95 ≤ 500 ms, ≤ 512 KiB |
-| detail origin lớn, offset ~4000 | 138 ms | 172 ms | 18.366 | p95 ≤ 500 ms, ≤ 512 KiB |
-
-- Tất cả đạt ngân sách p95 500 ms. Thời gian chủ yếu nằm ở query đếm revision trên toàn engagement (`count(n)`, `max(lastupdated)`). Đây là điểm cần tối ưu nếu graph lớn hơn nhiều.
-- Canvas tải trong ≤ 2 giây: **unverified**, cần phase 5.
-- Dataset 10k/50k/200k (stress): **chưa chạy**. Plan yêu cầu chạy sau khi baseline đạt; baseline đã đạt, nhưng chưa có thời gian chạy stress.
-
-### Gate tích hợp và rollout
-
-- Rehearsal backfill trên DB thật: **chưa chạy**. Migration additive đã được kiểm chứng; catalog hiện có được tạo từ KG, không có backfill từ dữ liệu cũ.
-- Real-mode UI qua Playwright: **blocked** (phase 5 và 6 chưa làm).
-- Feature flag mặc định tắt và cutover: **chưa làm**. Execution vẫn là bề mặt hiện tại.
+Dataset stress **chưa dọn xong** (xem "Dọn dẹp", trạng thái dừng).
 
 ## Lỗi test có sẵn (không do thay đổi này)
 
-- `packages/raptix/tests/integration/kg/test_kg_ingest_live.py` và `test_kg_live.py`: 10 test fail với `missing $engagement scope`. Test dùng tham số `$eng` thay vì `$engagement`, bị guard của store chặn. Hai file này không được sửa trong phase này.
-- `apps/web/server/src/main.ts:266` có `prefer-const` (`sessionProvider`), và `ruff` có 3 lỗi I001 ở `resolver.py`, `store.py`, `test_kg_live.py`. Đều có sẵn từ trước.
+- `packages/raptix/tests/integration/kg/test_kg_ingest_live.py` và `test_kg_live.py`: 10 test fail với `missing $engagement scope`, vì test dùng tham số `$eng`. Hai file này không được sửa trong lượt này.
+- `apps/web/server/src/main.ts:266` có `prefer-const` (`sessionProvider`); `ruff` có 3 lỗi I001 có sẵn (`resolver.py`, `store.py`, `test_kg_live.py`); `web-contracts` chưa có cấu hình ESLint hợp lệ.
 
-## Chưa hoàn thành
+## Phát hiện và follow-up
 
-- Phase 4 UI, phase 5 canvas (Cytoscape, chưa cài), phase 6 điều hướng và flag, phase 7 cho các domain còn lại, phase 8 rehearsal backfill, stress 10k/50k/200k, và real-mode Playwright.
-- Follow-up: đưa `apply_migrations` vào đường khởi động production (cần ADR).
+1. **Query revision quét toàn bộ quan hệ của database** (`MATCH (src)-[r]->(dst) WHERE src.engagement = $engagement`). Latency tăng theo tổng kích thước graph. Cần thêm điều kiện theo label hoặc index quan hệ, hoặc tách revision theo engagement. Chưa làm theo chỉ dẫn; là việc bắt buộc tiếp theo trước khi dùng stress set lớn cùng lúc với dữ liệu khác.
+2. **Xóa hub node cần xóa cạnh trước.** `DETACH DELETE` của lô 5.000 node hết heap khi có node có ~100.000 cạnh (host 0 của dataset). Dọn đúng cách: xóa quan hệ theo lô 2.000, rồi xóa node.
+3. **Import package `raptix` mất 40–60 giây** do `_boot` resolve role và tạo LLM factory. Ảnh hưởng mọi lệnh CLI chạy trong runtime, kể cả bootstrap.
+4. Chưa có ADR để chạy `apply_migrations` tự động khi khởi động production. Hiện chạy qua `make webraptix-kg-bootstrap`, có bước kiểm tra trùng.
+
+## Dọn dẹp (đang dở, tạm dừng)
+
+Đã dọn xong:
+
+- Catalog (`AssetIdentity`) của `asset-map-stress-eng` (50.000 dòng) và dòng `Engagement` của nó.
+- Quan hệ KG của `asset-map-stress`: đã xóa từ ~500.000 xuống còn 91.980 (xóa theo lô 2.000 quan hệ, rồi node).
+
+Còn lại (cần làm khi tiếp tục):
+
+- KG `asset-map-stress`: 91.980 quan hệ và 499.980 node. Xóa tiếp: quan hệ theo lô 2.000 (`MATCH ()-[r {engagement:'asset-map-stress'}]->() WITH r LIMIT 2000 DELETE r`), sau đó node theo lô 5.000, rồi `KGRevision` có `scope='asset-map-stress'`. Không dùng `DETACH DELETE` theo lô vì hết heap.
+- Engagement tạm `asset-map-ui-eng` và `asset-map-live-eng`: catalog, dòng `Engagement`, KG theo `workspaceSlug` (`asset-map-ui`, `asset-map-live`).
+- Membership và user kiểm thử `asset-map-verify` (cùng session) trên hai engagement trên.
+- File tạm: `/tmp/asset-map-data`, `/tmp/ui-data`, `/tmp/live-data` trong container runtime; `/tmp/drop-stress-*.sh`, `/tmp/v2-err.txt` trong container Neo4j.
+
+Trạng thái khi dừng: Neo4j khỏe, không có transaction đang chạy, số quan hệ stress ổn định ở 91.980 sau khi dừng job.
+
+## Việc còn lại
+
+0. Tiếp tục dọn dữ liệu stress và các artifact tạm (xem "Dọn dẹp"), rồi chạy lại `verify-asset-map-real-mode.mjs` trên DB sạch để điền số canvas.
+1. Tối ưu query revision (phạm vi theo engagement) và đo lại stress 10k/50k/200k.
+2. Expand và collapse nhóm trên canvas; đo canvas trên dataset lớn.
+3. Phase 7: lab hoặc sample cho AD, cloud, mobile, wireless, IoT, ICS trước khi đổi trạng thái blocked.
+4. Web: scanner web thật (httpx ProjectDiscovery hoặc katana) trong sandbox để có retained output.
+5. Cutover điều hướng mặc định: chưa làm, cần quyết định của bạn sau khi có gate đầy đủ.
+
+## Đo canvas sau khi dọn
+
+_Chưa đo. Lần đo trước (khi dataset stress còn trong DB) cho 2.431 ms, vượt ngân sách; xem mục B._
