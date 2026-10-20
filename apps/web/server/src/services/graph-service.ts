@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import type { AssetSummaryView, AssetsView, GraphView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
+import { requireEngagementAccess } from '../auth/membership-policy.js';
 import { ProjectNotFoundError } from './projects-service.js';
 
 /**
@@ -207,6 +209,53 @@ export function toAssetSummaries(view: { nodes: ReadonlyArray<{ id: string; labe
   return [...assets.values()];
 }
 
+/** Must match raptix_core.types.asset.ASSET_KEY_VERSION (ADR-0094). */
+export const ASSET_KEY_VERSION = 1;
+const ASSET_KINDS: ReadonlySet<string> = new Set(['host', 'dns_name', 'web_origin', 'network_segment', 'cloud_resource', 'identity', 'mobile_app', 'device', 'artifact']);
+const CATALOG_PAGE = 1000;
+
+export interface AssetCatalogReport {
+  engagementId: string;
+  /** KG nodes that carry an assetId for this engagement. */
+  observed: number;
+  /** Catalog rows created by this run; identities already catalogued are not counted. */
+  created: number;
+  /** Nodes that could not be catalogued, counted per reason. */
+  rejected: Array<{ reason: string; count: number }>;
+}
+
+/** Same derivation as raptix_core.types.asset.asset_id; the KG partition key is the workspace slug. */
+export function assetIdFor(workspaceSlug: string, kind: string, namespace: string, canonicalKey: string, keyVersion: number = ASSET_KEY_VERSION): string {
+  const key = `v${keyVersion}:${kind}:${namespace}:${canonicalKey}`;
+  return `asset_${createHash('sha256').update(`${workspaceSlug}\u001f${key}`, 'utf8').digest('hex').slice(0, 32)}`;
+}
+
+const CATALOG_STATEMENT = [
+  'MATCH (n) WHERE n.engagement = $engagement AND n.asset_id IS NOT NULL',
+  'RETURN n.asset_id AS id, n.asset_kind AS kind, n.asset_namespace AS namespace,',
+  'n.asset_canonical AS canonical, n.asset_key_version AS version',
+  'ORDER BY n.asset_id SKIP $skip LIMIT $limit',
+].join(' ');
+
+/** Validates one KG identity row before it may enter the catalog; a bad row is reported, never guessed. */
+function catalogRow(workspaceSlug: string, engagementId: string, raw: unknown[]): { row: AssetIdentityCreate } | { reason: string } {
+  const [id, kind, namespace, canonicalKey, keyVersion] = raw;
+  if (typeof kind !== 'string' || !ASSET_KINDS.has(kind)) return { reason: 'unknown_kind' };
+  if (typeof namespace !== 'string' || namespace === '' || typeof canonicalKey !== 'string' || canonicalKey === '') return { reason: 'invalid_locator' };
+  if (typeof keyVersion !== 'number' || keyVersion !== ASSET_KEY_VERSION) return { reason: 'unsupported_key_version' };
+  if (typeof id !== 'string' || id !== assetIdFor(workspaceSlug, kind, namespace, canonicalKey, keyVersion)) return { reason: 'id_mismatch' };
+  return { row: { id, engagementId, kind, namespace, canonicalKey, keyVersion } };
+}
+
+interface AssetIdentityCreate {
+  id: string;
+  engagementId: string;
+  kind: string;
+  namespace: string;
+  canonicalKey: string;
+  keyVersion: number;
+}
+
 export class GraphService {
   public constructor(private readonly db: PrismaClient, private readonly config: GraphConfig) {}
 
@@ -250,5 +299,34 @@ export class GraphService {
     const view = await this.graph(userId, engagementId);
     const assets = toAssetSummaries(view);
     return { engagementId, assets, truncated: view.truncated, source: 'graph' };
+  }
+
+  /**
+   * ADR-0094 reconciliation: upserts a catalog row for every KG node that carries
+   * an assetId. Idempotent: replaying the same graph creates no rows. The runtime
+   * never calls this; it runs on demand from an operator action.
+   */
+  public async reconcileCatalog(userId: string, engagementId: string): Promise<AssetCatalogReport> {
+    await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'operator');
+    const project = await this.db.engagement.findUnique({ where: { id: engagementId }, select: { workspaceSlug: true } });
+    if (!project) throw new ProjectNotFoundError();
+    const byId = new Map<string, AssetIdentityCreate>();
+    const rejected = new Map<string, number>();
+    let observed = 0;
+    for (let skip = 0; ; skip += CATALOG_PAGE) {
+      const page = await neo4jQuery(this.config, CATALOG_STATEMENT, { engagement: project.workspaceSlug, skip, limit: CATALOG_PAGE });
+      for (const raw of page) {
+        observed += 1;
+        const result = catalogRow(project.workspaceSlug, engagementId, raw);
+        if ('reason' in result) {
+          rejected.set(result.reason, (rejected.get(result.reason) ?? 0) + 1);
+          continue;
+        }
+        byId.set(result.row.id, result.row);
+      }
+      if (page.length < CATALOG_PAGE) break;
+    }
+    const created = await this.db.assetIdentity.createMany({ data: [...byId.values()], skipDuplicates: true });
+    return { engagementId, observed, created: created.count, rejected: [...rejected].map(([reason, count]) => ({ reason, count })) };
   }
 }

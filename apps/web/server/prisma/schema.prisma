@@ -457,6 +457,21 @@ model WebAsset {
   @@index([engagementId, classification])
 }
 
+// ADR-0094: asset identity catalog. `id` is the deterministic assetId that
+// raptix_core derives; reconciliation upserts rows from KG nodes and never
+// reissues an identity. Additive to WebAsset, which stays authoritative for scope.
+model AssetIdentity {
+  id           String   @id
+  engagementId String
+  kind         String
+  namespace    String
+  canonicalKey String
+  keyVersion   Int      @default(1)
+  createdAt    DateTime @default(now())
+  @@unique([engagementId, kind, namespace, canonicalKey])
+  @@index([engagementId, kind])
+}
+
 // Ticket 09: persisted business plans, operation bindings, emergency stops.
 model BusinessPlan {
   id String @id @default(cuid())
