@@ -26,6 +26,7 @@ PROFILES_ALL  := --profile cli --profile c2-sliver
 # W20: the legacy Next.js web lane is retired from active targets; the
 # archived image stays pullable from GHCR for emergency rollback only.
 COMPOSE_WEB_RAPTIX := docker compose -f docker-compose.web-raptix.yml
+COMPOSE_WEB_STACK  := docker compose -f docker-compose.web-raptix.yml -f docker-compose.web-runtime.yml
 WEB_RAPTIX_DB      := raptix_web_raptix
 
 # Dogfood: isolated $RAPTIX_HOME so the launcher can onboard, write .env,
@@ -69,7 +70,7 @@ export CODEX_AUTH_VOLUME ?= $(shell test -f $(HOME)/.codex/auth.json && echo $(H
         dev cli-dev webraptix-dev infra \
         quality quality-strict quality-cli test test-local lint lint-fix \
         ci-lint ci-test ci-test-coverage ci-test-coverage-report \
-        webraptix-build webraptix-db-ensure webraptix-up webraptix-down \
+        webraptix-build webraptix-db-ensure webraptix-up webraptix-down webraptix-kg-bootstrap \
         webraptix-health webraptix-quality \
         status logs health clean \
         node-install \
@@ -358,6 +359,11 @@ webraptix-up: webraptix-db-ensure
 
 webraptix-down:
 	$(COMPOSE_WEB_RAPTIX) down
+
+## KG schema bootstrap (ADR-0094): refuses duplicate nodes; a rerun applies nothing.
+## Run after the stack is up and before the asset-map gates.
+webraptix-kg-bootstrap:
+	$(COMPOSE_WEB_STACK) exec -T web-runtime python -m raptix.knowledge.graph.bootstrap
 
 ## Same-origin acceptance through the proxy: API JSON (never SPA HTML),
 ## SPA fallback for /projects/*, immutable hashed assets.
