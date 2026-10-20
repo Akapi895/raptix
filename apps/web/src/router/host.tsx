@@ -33,11 +33,13 @@ import { Shell } from '../shell'
 import { HeaderNotices } from '../features/notices/header-notices'
 import { LazyCopilotDrawer } from '../features/copilot/lazy'
 import { RealTrace } from '../features/operations/trace-panel'
+import { isAssetMapEnabled } from '../features/asset-map/flag'
 import { OUTSIDE_SHELL, type Route } from './history'
 import { routeComponent } from './registry'
 
 const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
 const RealFeatureRoute = lazy(() => import('../real/screens/feature-route').then((m) => ({ default: m.RealFeatureRoute })))
+const AssetMapRoute = lazy(() => import('../features/asset-map/AssetMapPage').then((m) => ({ default: m.AssetMapPage })))
 
 /**
  * Route keys with a real implementation mounted directly (integration tickets
@@ -57,6 +59,7 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   'ai-history': RealWorkspace,
   'ai-trace': RealTrace,
   login: RealLogin,
+  ...(isAssetMapEnabled() ? { 'asset-map': AssetMapRoute } : {}),
 }
 
 /** Holds popstate/URL-edit traversals while a form is dirty and routes the held navigation through the same unsaved-changes modal as in-app navigation. */
