@@ -24,7 +24,10 @@ export interface ThreadHistoryEvent {
 export interface ScopedThreadView {
   binding: ThreadBindingView; rawStatus: string | null
   messages: ScopedThreadMessage[]
-  messagesTruncated: boolean; historyScope: 'root_messages_only'; source: 'runtime'
+  messagesTruncated: boolean
+  /** Message index where the next older page ends (exclusive); null when this page starts the conversation. */
+  olderCursor?: number | null
+  historyScope: 'root_messages_only'; source: 'runtime'
   transcripts?: ThreadHistoryEvent[]; transcriptsTruncated?: boolean
   /** Per-conversation tool approval switch; absent means on (the default). */
   hitlEnabled?: boolean

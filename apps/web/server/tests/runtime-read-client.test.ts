@@ -42,7 +42,7 @@ it('keeps its deadline through delayed response bodies and bounds decoded JSON s
     });
   }, 20);
   await expect(slow.catalog()).rejects.toMatchObject({ statusCode: 503 });
-  const oversized = await runtime(app => { app.get('/info', async () => 'x'.repeat(2 * 1024 * 1024 + 1)); });
+  const oversized = await runtime(app => { app.get('/info', async () => 'x'.repeat(8 * 1024 * 1024 + 1)); });
   await expect(oversized.catalog()).rejects.toMatchObject({ statusCode: 503 });
 });
 it('does not follow upstream redirects or echo runtime error bodies', async () => {

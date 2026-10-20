@@ -19,7 +19,7 @@ const ports = (overrides: Partial<Ports>): Ports => ({
   } as unknown as Ports['ownership'],
   context: { resolve: async () => ({ configurable: { authorization_confirmed: true }, assistantId: 'soundwave', kind: 'planning', metadata: {}, bindingHash: 'hash', runtimeConfigHash: 'cfg' }) } as unknown as Ports['context'],
   runtime: {} as Ports['runtime'],
-  reads: { state: async () => ({ values: { __interrupt__: [{ value: question, id: 'i1', ns: [] }] }, graphId: 'soundwave' }) } as unknown as Ports['reads'],
+  reads: { transcripts: async () => ({ events: [], oldestSeq: null }), state: async () => ({ values: { __interrupt__: [{ value: question, id: 'i1', ns: [] }] }, graphId: 'soundwave' }) } as unknown as Ports['reads'],
   ...overrides,
 });
 
@@ -70,7 +70,7 @@ describe('RunService.resume', () => {
   });
   it('resumes a question exposed only by LangGraph task interrupts', async () => {
     const service = new RunService(ports({
-      reads: { state: async () => ({ values: {}, tasks: [{ interrupts: [{ value: question }] }], graphId: 'soundwave' }) } as unknown as Ports['reads'],
+      reads: { transcripts: async () => ({ events: [], oldestSeq: null }), state: async () => ({ values: {}, tasks: [{ interrupts: [{ value: question }] }], graphId: 'soundwave' }) } as unknown as Ports['reads'],
       runtime: { createResumeRun: async (_t: string, _c: unknown, requestId: string) => ({ runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }) } as unknown as Ports['runtime'],
     }));
     await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0001', questionId: 'call-1', value: 'Yes (Recommended)' })).resolves.toMatchObject({ operation: 'resume', runId: 'run-new' });
@@ -88,7 +88,7 @@ describe('RunService.resume', () => {
   it('conflicts without a pending interrupt or a mismatched question target and rejects wrong answers', async () => {
     const dispatched: unknown[] = [];
     const runtime = { createResumeRun: async (_t: string, _c: unknown, requestId: string, resume: string | string[] | Record<string, string | string[]>) => { dispatched.push({ requestId, resume }); return { runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }; } } as unknown as Ports['runtime'];
-    const noInterrupt = new RunService(ports({ reads: { state: async () => ({ values: {}, graphId: null }) } as unknown as Ports['reads'] }));
+    const noInterrupt = new RunService(ports({ reads: { transcripts: async () => ({ events: [], oldestSeq: null }), state: async () => ({ values: {}, graphId: null }) } as unknown as Ports['reads'] }));
     await expect(noInterrupt.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: 'Yes (Recommended)' })).rejects.toMatchObject({ code: 'conflict' });
     const service = new RunService(ports({ runtime }));
     await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: 'Yes (Recommended)', questionId: 'other-call' })).rejects.toMatchObject({ code: 'conflict' });
@@ -100,7 +100,7 @@ describe('RunService.resume', () => {
     const q2 = { type: 'ask_user_question', agent: 'soundwave', id: 'call-2', question: 'Reporting language?', header: 'Language', options: [{ label: 'Tiếng Việt', description: 'vn' }], multi_select: false, allow_other: false };
     const dispatched: unknown[] = [];
     const service = new RunService(ports({
-      reads: { state: async () => ({ values: {}, tasks: [{ interrupts: [{ id: 'ig-1', value: question }] }, { interrupts: [{ id: 'ig-2', value: q2 }] }], graphId: 'soundwave' }) } as unknown as Ports['reads'],
+      reads: { transcripts: async () => ({ events: [], oldestSeq: null }), state: async () => ({ values: {}, tasks: [{ interrupts: [{ id: 'ig-1', value: question }] }, { interrupts: [{ id: 'ig-2', value: q2 }] }], graphId: 'soundwave' }) } as unknown as Ports['reads'],
       runtime: { createResumeRun: async (_t: string, _c: unknown, requestId: string, resume: string | string[] | Record<string, string | string[]>) => { dispatched.push({ requestId, resume }); return { runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }; } } as unknown as Ports['runtime'],
     }));
     // Single-value resume against multiple pending interrupts is rejected.
@@ -190,7 +190,7 @@ describe('RunService.snapshot pending interrupt restore', () => {
     ownership: { getBinding: async () => binding, runs: async () => [] } as unknown as Ports['ownership'],
     context: { resolve: async () => ({}) } as unknown as Ports['context'],
     runtime: {} as Ports['runtime'],
-    reads: { thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'interrupted' }), state: async () => ({ values, tasks, graphId: 'soundwave' }) } as unknown as Ports['reads'],
+    reads: { transcripts: async () => ({ events: [], oldestSeq: null }), thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'interrupted' }), state: async () => ({ values, tasks, graphId: 'soundwave' }) } as unknown as Ports['reads'],
   }));
   it('exposes the restoreable question additively and nothing when the thread is clean', async () => {
     const interrupted = await service({ messages: [], __interrupt__: [{ value: question }] }).snapshot('local', 'eng', 'thread');
@@ -207,7 +207,7 @@ describe('RunService.snapshot pending interrupt restore', () => {
       ownership: { getBinding: async () => binding, runs: async () => [{ runId: 'prior-run' }] } as unknown as Ports['ownership'],
       context: { resolve: async () => ({}) } as unknown as Ports['context'],
       runtime: { run: async () => ({ status: 'success' }) } as unknown as Ports['runtime'],
-      reads: { thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'interrupted' }), state: async () => ({ values: {}, tasks: [], graphId: null }) } as unknown as Ports['reads'],
+      reads: { transcripts: async () => ({ events: [], oldestSeq: null }), thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'interrupted' }), state: async () => ({ values: {}, tasks: [], graphId: null }) } as unknown as Ports['reads'],
     }));
     await expect(lost.snapshot('local', 'eng', 'thread')).rejects.toMatchObject({ statusCode: 503, message: expect.stringContaining('checkpoint is missing') });
   });
@@ -216,7 +216,7 @@ describe('RunService.snapshot pending interrupt restore', () => {
       ownership: { getBinding: async () => binding, runs: async () => [{ runId: 'prior-run' }] } as unknown as Ports['ownership'],
       context: { resolve: async () => ({}) } as unknown as Ports['context'],
       runtime: { run: async () => ({ status: 'pending' }) } as unknown as Ports['runtime'],
-      reads: { thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'busy' }), state: async () => ({ values: {}, tasks: [], graphId: null }) } as unknown as Ports['reads'],
+      reads: { transcripts: async () => ({ events: [], oldestSeq: null }), thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'busy' }), state: async () => ({ values: {}, tasks: [], graphId: null }) } as unknown as Ports['reads'],
     }));
     await expect(starting.snapshot('local', 'eng', 'thread')).resolves.toMatchObject({ rawStatus: 'busy', messages: [] });
   });

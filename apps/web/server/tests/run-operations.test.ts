@@ -46,7 +46,7 @@ function service(s: Scenario, audit = vi.fn(async () => undefined)) {
     releaseCompletedRun: vi.fn(async () => undefined),
     runs: async () => [],
     replay: async () => null,
-    listBindings: async () => [],
+    listBindings: async () => [binding],
     active: async () => null,
   };
   const run = new RunService({
@@ -57,6 +57,11 @@ function service(s: Scenario, audit = vi.fn(async () => undefined)) {
 }
 
 describe('RunService operation lifecycle (P11)', () => {
+  it('keeps a paused legacy operation non-quiescent after its ledger active marker was released', async () => {
+    const { run } = service({ operation: 'paused', runStatus: 'interrupted', latestStatus: 'interrupted' });
+    await expect(run.isQuiescent('local', 'eng')).resolves.toBe(false);
+  });
+
   it('refuses to pause a run that has already finished', async () => {
     const { run, runtime } = service({ operation: 'running', runStatus: 'success', latestStatus: 'success' });
     await expect(run.pauseRun('local', 'eng', 'thread-1', 'run-1')).rejects.toMatchObject({ code: 'conflict', message: 'Only a running run can be paused.' });

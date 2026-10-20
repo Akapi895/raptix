@@ -1,5 +1,7 @@
 import { ProjectApiError } from '../../services/projects-service.js';
 
+/** A thread read returns its whole checkpoint state, which grows with every run; the cap guards a runaway response, not normal growth. */
+export const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 export class RuntimeUnavailableError extends ProjectApiError {
   public constructor() { super(503, 'Runtime discovery or context verification is unavailable'); }
 }
@@ -15,13 +17,25 @@ export interface RuntimeReadPort {
   state(id: string): Promise<{ values: Record<string, unknown>; tasks?: unknown; graphId: string | null }>;
   /** True only when the runtime answers 404 for the thread. Any other failure is unavailable, never "missing". */
   threadExists(id: string): Promise<boolean>;
+  /** Sub-agent events recorded on the thread (newest page first, by exclusive sequence cursor `before`). */
+  transcripts(id: string, before: number | null, limit: number): Promise<{ events: { seq: number; event: unknown }[]; oldestSeq: number | null }>;
   /** P10c operator mailbox: a refusal (409) is data the caller explains, never an error. */
   instanceExchange(method: 'GET' | 'POST', endpoint: string, body?: unknown): Promise<{ status: number; body: unknown }>;
 }
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 export class RuntimeReadClient implements RuntimeReadPort {
   public constructor(private readonly apiUrl: string, private readonly timeoutMs = 15000, private readonly mutationTimeoutMs = 15000) {}
-  protected async read(endpoint: string, body?: unknown, mutation = false): Promise<unknown> {
+  /** Identical reads in flight share one request: a page load asks for the same thread state from several places at once. */
+  private readonly inflight = new Map<string, Promise<unknown>>();
+  protected read(endpoint: string, body?: unknown, mutation = false): Promise<unknown> {
+    if (body !== undefined || mutation) return this.fetchJson(endpoint, body, mutation);
+    const pending = this.inflight.get(endpoint);
+    if (pending) return pending;
+    const request = this.fetchJson(endpoint, body, mutation).finally(() => this.inflight.delete(endpoint));
+    this.inflight.set(endpoint, request);
+    return request;
+  }
+  private async fetchJson(endpoint: string, body?: unknown, mutation = false): Promise<unknown> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), mutation ? this.mutationTimeoutMs : this.timeoutMs);
     try {
@@ -37,7 +51,7 @@ export class RuntimeReadClient implements RuntimeReadPort {
           const part = await reader.read();
           if (part.done) break;
           size += part.value.length;
-          if (size > 2 * 1024 * 1024) throw new RuntimeUnavailableError();
+          if (size > MAX_RESPONSE_BYTES) throw new RuntimeUnavailableError();
           chunks.push(part.value);
         }
       } finally { await reader.cancel(); }
@@ -72,7 +86,7 @@ export class RuntimeReadClient implements RuntimeReadPort {
       if (!response.ok) throw new RuntimeUnavailableError();
       if (response.status === 204) return { status: 204, body: null };
       const text = await response.text();
-      if (text.length > 2 * 1024 * 1024) throw new RuntimeUnavailableError();
+      if (text.length > MAX_RESPONSE_BYTES) throw new RuntimeUnavailableError();
       return { status: response.status, body: text.length ? JSON.parse(text) : null };
     } catch (error) { if (error instanceof RuntimeRejectedError) throw error; throw new RuntimeUnavailableError(); }
     finally { clearTimeout(timer); }
@@ -100,6 +114,17 @@ export class RuntimeReadClient implements RuntimeReadPort {
       return true;
     } catch { throw new RuntimeUnavailableError(); }
     finally { clearTimeout(timer); }
+  }
+  public async transcripts(id: string, before: number | null, limit: number): Promise<{ events: { seq: number; event: unknown }[]; oldestSeq: number | null }> {
+    const query = before === null ? `limit=${limit}` : `limit=${limit}&before=${before}`;
+    const value = await this.read(`/_raptix/threads/${encodeURIComponent(id)}/transcripts?${query}`);
+    if (!record(value) || value.threadId !== id || !Array.isArray(value.events)) throw new RuntimeUnavailableError();
+    if (value.oldestSeq !== null && !Number.isInteger(value.oldestSeq)) throw new RuntimeUnavailableError();
+    const events = value.events.map((row) => {
+      if (!record(row) || !Number.isInteger(row.seq) || !record(row.event)) throw new RuntimeUnavailableError();
+      return { seq: row.seq as number, event: row.event };
+    });
+    return { events, oldestSeq: value.oldestSeq as number | null };
   }
   public async thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown>; status?: string }> {
     const value = await this.read(`/threads/${encodeURIComponent(id)}`);
