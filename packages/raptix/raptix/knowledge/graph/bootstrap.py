@@ -64,7 +64,9 @@ def main() -> int:
         return 2
     finally:
         store.close()
-    print(f"kg-bootstrap: applied {len(applied)} migration(s): {', '.join(applied) or 'none (already current)'}")
+    print(
+        f"kg-bootstrap: applied {len(applied)} migration(s): {', '.join(applied) or 'none (already current)'}"
+    )
     return 0
 
 
