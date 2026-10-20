@@ -1,7 +1,7 @@
 /**
  * Browser check of the Asset Map canvas (plan phase 5) on the running web stack.
  *
- *   node tools/verify-asset-map-canvas.mjs --engagement <id> [--ui http://127.0.0.1:3001] [--out <dir>]
+ *   node tools/verify-asset-map-canvas.mjs --engagement <id> [--ui http://127.0.0.1:3001] [--out <dir>] [--origin <canonicalKey>]
  *
  * Needs ASSET_MAP_VERIFY_USER and ASSET_MAP_VERIFY_PASSWORD: a scoped account with operator access
  * to the engagement. It only reads.
@@ -93,15 +93,26 @@ try {
   // 5. Refresh: the lists are read again and no node moves.
   const digestBefore = await canvas.getAttribute('data-position-digest')
   await page.getByRole('button', { name: 'Refresh' }).click()
-  await page.getByRole('status').waitFor({ timeout: 20000 })
+  await page.getByTestId('asset-map').getByRole('status').waitFor({ timeout: 20000 })
   await page.waitForTimeout(500)
   const digestAfter = await canvas.getAttribute('data-position-digest')
   record('refresh keeps node positions', digestBefore !== null && digestBefore === digestAfter, `${digestBefore} -> ${digestAfter}`)
 
   // 6. Keyboard: the origin entry is reached by Tab from the host list and selected with Enter.
-  const originButton = page.getByRole('button', { name: /^http:\/\// }).first()
-  await originButton.focus()
-  await page.keyboard.press('Enter')
+  // The origin is reached through the search results when one is named, since it may sit past the first list page.
+  if (args.origin) {
+    await page.locator('#asset-map-search').focus()
+    await page.keyboard.type(args.origin)
+    await page.keyboard.press('Enter')
+    const result = page.getByRole('region', { name: 'Search results' }).getByRole('button', { name: args.origin, exact: true })
+    await result.waitFor({ timeout: 20000 })
+    await result.focus()
+    await page.keyboard.press('Enter')
+  } else {
+    const originButton = page.getByRole('button', { name: /^http:\/\// }).first()
+    await originButton.focus()
+    await page.keyboard.press('Enter')
+  }
   const sitemap = page.locator('section[aria-label="Sitemap"]')
   await sitemap.waitFor({ timeout: 20000 })
   const endpointRows = await sitemap.locator('tbody tr').count()
