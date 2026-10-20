@@ -29,6 +29,9 @@ class FakeElement {
   connectedEdges(): FakeCollection {
     return new FakeCollection(this.linked)
   }
+  position(): { x: number; y: number } {
+    return { x: 0, y: 0 }
+  }
   style(name: string, value?: string): FakeCollection | string {
     return new FakeCollection([this]).style(name, value)
   }
@@ -41,6 +44,9 @@ class FakeCollection {
   }
   empty(): boolean {
     return this.items.length === 0
+  }
+  toArray(): FakeElement[] {
+    return [...this.items]
   }
   filter(test: (element: FakeElement) => boolean): FakeCollection {
     return new FakeCollection(this.items.filter(test))
@@ -201,12 +207,23 @@ describe('AssetMapCanvas', () => {
 
   it('collapses every group from the toolbar, hides the relations that touch its children, and expands it again', () => {
     render(<AssetMapCanvas elements={twoNodes} onSelectAsset={vi.fn()} />)
+    const canvas = screen.getByTestId('asset-map-canvas')
     fireEvent.click(screen.getByRole('button', { name: 'Collapse groups' }))
     expect(core().nodeList[0].kids[0].styles.display).toBe('none')
     expect(core().edgeList[0].styles.display).toBe('none')
+    expect(canvas.dataset.visibleNodeCount).toBe('1')
     fireEvent.click(screen.getByRole('button', { name: 'Expand groups' }))
     expect(core().nodeList[0].kids[0].styles.display).toBe('element')
     expect(core().edgeList[0].styles.display).toBe('element')
+    expect(canvas.dataset.visibleNodeCount).toBe('2')
+  });
+
+  it('publishes a position digest that stays the same until a node moves', () => {
+    const { rerender } = render(<AssetMapCanvas elements={twoNodes} onSelectAsset={vi.fn()} />)
+    const digest = screen.getByTestId('asset-map-canvas').dataset.positionDigest
+    expect(digest).toMatch(/^[0-9a-f]+$/)
+    rerender(<AssetMapCanvas elements={twoNodes} onSelectAsset={vi.fn()} />)
+    expect(screen.getByTestId('asset-map-canvas').dataset.positionDigest).toBe(digest)
   });
 
   it('toggles one group on a double tap and keeps it closed when children arrive later', () => {

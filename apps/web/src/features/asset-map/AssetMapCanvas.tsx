@@ -39,6 +39,27 @@ function setGroupVisible(group: cytoscape.NodeSingular, visible: boolean): void 
   group.data('collapsed', !visible)
 }
 
+/** A short digest of node positions: equal digests mean nothing moved, so a refresh can be checked from outside. */
+function positionDigest(instance: Core): string {
+  let hash = 5381
+  const ordered = instance.nodes().toArray().sort((a, b) => (a.id() < b.id() ? -1 : 1))
+  for (const node of ordered) {
+    const at = node.position()
+    for (const char of `${node.id()}:${Math.round(at.x)},${Math.round(at.y)};`) hash = ((hash << 5) + hash + char.charCodeAt(0)) | 0
+  }
+  return (hash >>> 0).toString(16)
+}
+
+/** Publishes what a check needs to see: drawn and visible counts, the pan, and the position digest. */
+function publish(container: HTMLDivElement, instance: Core): void {
+  container.dataset.nodeCount = String(instance.nodes().length)
+  container.dataset.edgeCount = String(instance.edges().length)
+  container.dataset.visibleNodeCount = String(instance.nodes().filter(node => node.style('display') !== 'none').length)
+  container.dataset.positionDigest = positionDigest(instance)
+  container.dataset.panX = String(Math.round(instance.pan().x))
+  container.dataset.panY = String(Math.round(instance.pan().y))
+}
+
 /**
  * Cytoscape view of one neighborhood. Updates keep the positions of nodes that are still present:
  * removed nodes leave, new nodes are laid out on their own, and existing nodes do not move. Pan and
@@ -62,14 +83,16 @@ export function AssetMapCanvas({ elements, onSelectAsset, focus = null }: Props)
     instance.on('dbltap', 'node:parent', event => {
       const group = event.target as cytoscape.NodeSingular
       setGroupVisible(group, group.data('collapsed') === true)
+      if (container.current) publish(container.current, instance)
     })
     instance.on('zoom', () => {
       if (container.current) container.current.dataset.zoom = instance.zoom().toFixed(2)
     })
     instance.on('pan', () => {
-      if (!container.current) return
-      container.current.dataset.panX = String(Math.round(instance.pan().x))
-      container.current.dataset.panY = String(Math.round(instance.pan().y))
+      if (container.current) publish(container.current, instance)
+    })
+    instance.on('free', 'node', () => {
+      if (container.current) publish(container.current, instance)
     })
     core.current = instance
     return () => {
@@ -99,10 +122,7 @@ export function AssetMapCanvas({ elements, onSelectAsset, focus = null }: Props)
       // Children that arrive under a collapsed group stay hidden until the group is opened.
       instance.nodes(':parent').forEach(group => setGroupVisible(group, group.data('collapsed') !== true))
     })
-    if (container.current) {
-      container.current.dataset.nodeCount = String(instance.nodes().length)
-      container.current.dataset.edgeCount = String(instance.edges().length)
-    }
+    if (container.current) publish(container.current, instance)
   }, [elements])
 
   useEffect(() => {
@@ -120,7 +140,10 @@ export function AssetMapCanvas({ elements, onSelectAsset, focus = null }: Props)
     core.current?.fit(undefined, 30)
   }
   const setAllGroups = (visible: boolean): void => {
-    core.current?.batch(() => core.current?.nodes(':parent').forEach(group => setGroupVisible(group, visible)))
+    const instance = core.current
+    if (!instance) return
+    instance.batch(() => instance.nodes(':parent').forEach(group => setGroupVisible(group, visible)))
+    if (container.current) publish(container.current, instance)
   }
 
   return (
