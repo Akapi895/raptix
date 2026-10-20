@@ -33,7 +33,9 @@ def _verified_scan_files() -> list[Path]:
             path = ROOT / entry
             files.extend(sorted(path.glob("*.xml")) if path.is_dir() else [path])
     # Truncated output is a failure path with its own test (test_retained_nmap_outputs); it is not mapped here.
-    return [path for path in files if "</nmaprun>" in path.read_text(encoding="utf-8", errors="replace")]
+    return [
+        path for path in files if "</nmaprun>" in path.read_text(encoding="utf-8", errors="replace")
+    ]
 
 
 class _CapturingStore:
@@ -79,7 +81,10 @@ def test_hosts_and_origins_carry_the_identity_of_their_locator(path: Path) -> No
         locator = host_or_dns_ref(host["key"].removeprefix("host::"))
         assert host["props"]["asset_id"] == identity_props(ENGAGEMENT, locator)["asset_id"]
     for origin in origins:
-        assert origin["props"]["asset_id"] == identity_props(ENGAGEMENT, web_origin_ref(origin["label"]))["asset_id"]
+        assert (
+            origin["props"]["asset_id"]
+            == identity_props(ENGAGEMENT, web_origin_ref(origin["label"]))["asset_id"]
+        )
 
 
 @pytest.mark.parametrize("path", VERIFIED, ids=lambda path: path.name)
