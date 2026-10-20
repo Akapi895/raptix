@@ -7,9 +7,10 @@ share an IP are not merged: the IP only links them.
 from __future__ import annotations
 
 import ipaddress
+from typing import Any
 from urllib.parse import urlsplit
 
-from raptix_core.types.asset import AssetKind, AssetRef
+from raptix_core.types.asset import ASSET_KEY_VERSION, AssetKind, AssetRef, asset_id
 
 DEFAULT_PORTS: dict[str, int] = {"http": 80, "https": 443}
 
@@ -28,6 +29,25 @@ def dns_ref(name: str, *, namespace: str = "default") -> AssetRef:
     return AssetRef(AssetKind.DNS_NAME, namespace, canonical)
 
 
+def host_or_dns_ref(value: str, *, namespace: str = "default") -> AssetRef:
+    """A host ref when ``value`` is an IP address, otherwise a DNS ref."""
+    try:
+        return host_ref(value, namespace=namespace)
+    except ValueError:
+        return dns_ref(value, namespace=namespace)
+
+
+def identity_props(engagement: str, ref: AssetRef) -> dict[str, Any]:
+    """Identity properties every asset-bearing KG node carries (ADR-0094)."""
+    return {
+        "asset_id": asset_id(engagement, ref),
+        "asset_kind": ref.kind.value,
+        "asset_namespace": ref.namespace,
+        "asset_canonical": ref.canonical_key,
+        "asset_key_version": ASSET_KEY_VERSION,
+    }
+
+
 def web_origin_ref(url: str, *, namespace: str = "default") -> AssetRef:
     """Web origin ``scheme://host:port``; the default port is made explicit."""
     scheme, host, port = _origin_parts(url)
@@ -37,10 +57,7 @@ def web_origin_ref(url: str, *, namespace: str = "default") -> AssetRef:
 def origin_host_ref(url: str, *, namespace: str = "default") -> AssetRef:
     """The host an origin belongs to: a host ref for an IP, a DNS ref for a name."""
     _, host, _ = _origin_parts(url)
-    try:
-        return host_ref(host, namespace=namespace)
-    except ValueError:
-        return dns_ref(host, namespace=namespace)
+    return host_or_dns_ref(host, namespace=namespace)
 
 
 def _origin_parts(url: str) -> tuple[str, str, int]:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from raptix_core.types.asset import ASSET_KEY_VERSION, AssetKind, AssetRef, asset_id
 
 
@@ -44,7 +45,9 @@ def test_asset_id_separates_kind_and_namespace() -> None:
     dns = AssetRef(AssetKind.DNS_NAME, "default", "app.example.com")
     other_ns = AssetRef(AssetKind.HOST, "net:dmz", "10.0.0.5")
     assert asset_id("eng", host) != asset_id("eng", dns)
-    assert asset_id("eng", AssetRef(AssetKind.HOST, "default", "10.0.0.5")) != asset_id("eng", other_ns)
+    assert asset_id("eng", AssetRef(AssetKind.HOST, "default", "10.0.0.5")) != asset_id(
+        "eng", other_ns
+    )
 
 
 def test_asset_id_requires_engagement() -> None:

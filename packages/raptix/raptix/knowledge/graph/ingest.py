@@ -37,7 +37,14 @@ from raptix.knowledge.graph.ai_surface import (
     technology_for_port,
     technology_for_title,
 )
+from raptix.knowledge.graph.asset_identity import (
+    host_or_dns_ref,
+    host_ref,
+    identity_props,
+    web_origin_ref,
+)
 from raptix.knowledge.graph.store import KGStore
+from raptix_core.types.asset import AssetRef
 from raptix_core.utils.logging import get_logger
 
 log = get_logger("kg.ingest")
@@ -126,6 +133,18 @@ def ingest(
 
 
 _WEB_PORTS = {80, 443, 8000, 8080, 8443, 8888}
+
+
+def _asset_props(
+    engagement: str,
+    normalize: Callable[[str], AssetRef],
+    raw: str,
+) -> dict[str, Any]:
+    """Identity properties for a node; empty when the raw locator does not normalize."""
+    try:
+        return identity_props(engagement, normalize(raw))
+    except ValueError:
+        return {}
 
 
 def _adapt_nmap_xml(
@@ -229,6 +248,7 @@ def _adapt_nmap_xml(
                             "host": host_label,
                             "port": port,
                             "source": "nmap",
+                            **_asset_props(engagement, web_origin_ref, url),
                         },
                     }
                 )
@@ -244,6 +264,7 @@ def _adapt_nmap_xml(
                     "hostname": hostname or "",
                     "explored": True,
                     "source": "nmap",
+                    **_asset_props(engagement, host_ref, ip),
                 },
                 "edges_out": host_edges,
             }
@@ -439,7 +460,11 @@ def _adapt_httpx_jsonl(
                     "kind": "Host",
                     "key": host_key,
                     "label": host_value,
-                    "props": {"hostname": host_value, "source": "httpx"},
+                    "props": {
+                        "hostname": host_value,
+                        "source": "httpx",
+                        **_asset_props(engagement, host_or_dns_ref, host_value),
+                    },
                 },
                 service_obs,
                 {
@@ -452,6 +477,7 @@ def _adapt_httpx_jsonl(
                         "port": port_int,
                         "status_code": status_code,
                         "source": "httpx",
+                        **_asset_props(engagement, web_origin_ref, url),
                     },
                 },
             ]

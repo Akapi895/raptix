@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from raptix.knowledge.graph.asset_identity import (
     dns_ref,
     host_ref,
@@ -21,7 +22,10 @@ def test_dns_name_drops_trailing_dot_and_case() -> None:
 
 
 def test_origin_makes_default_port_explicit() -> None:
-    assert web_origin_ref("HTTPS://App.Example.com/login?next=/").canonical_key == "https://app.example.com:443"
+    assert (
+        web_origin_ref("HTTPS://App.Example.com/login?next=/").canonical_key
+        == "https://app.example.com:443"
+    )
     assert web_origin_ref("http://10.0.0.5").canonical_key == "http://10.0.0.5:80"
 
 
@@ -29,7 +33,11 @@ def test_http_and_https_on_one_ip_share_host_but_not_origin() -> None:
     http = web_origin_ref("http://10.0.0.5")
     https = web_origin_ref("https://10.0.0.5")
     assert http != https
-    assert origin_host_ref("http://10.0.0.5") == origin_host_ref("https://10.0.0.5") == host_ref("10.0.0.5")
+    assert (
+        origin_host_ref("http://10.0.0.5")
+        == origin_host_ref("https://10.0.0.5")
+        == host_ref("10.0.0.5")
+    )
 
 
 def test_virtual_hosts_on_one_ip_are_separate_origins() -> None:

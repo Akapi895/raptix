@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 
+from raptix.knowledge.graph.asset_identity import host_ref
 from raptix.knowledge.graph.ingest import (
     _REGISTRY,
     ScannerAdapter,
@@ -24,6 +25,7 @@ from raptix.knowledge.graph.ingest import (
     ingest,
     register_adapter,
 )
+from raptix_core.types.asset import asset_id
 
 # ── Stub store ──────────────────────────────────────────────────────────
 
@@ -577,3 +579,90 @@ def test_sarif_adapter_handles_empty_runs(tmp_path: Path) -> None:
     result = _adapt_sarif(f, store, "acme", "t", "ep")  # type: ignore[arg-type]
     assert result == {"results_processed": 0, "ingested": 0}
     assert store.calls == []
+
+
+# ── asset identity on asset-bearing nodes (ADR-0094) ────────────────────
+
+
+def _nmap_host_xml(path: Path) -> Path:
+    path.write_text(
+        """<?xml version="1.0"?>
+        <nmaprun>
+          <host>
+            <status state="up"/>
+            <address addr="10.0.0.1" addrtype="ipv4"/>
+            <hostnames><hostname name="target.local"/></hostnames>
+            <ports>
+              <port portid="80" protocol="tcp">
+                <state state="open"/>
+                <service name="http"/>
+              </port>
+            </ports>
+          </host>
+        </nmaprun>
+        """,
+        encoding="utf-8",
+    )
+    return path
+
+
+def _props(obs: list[dict[str, Any]], kind: str) -> list[dict[str, Any]]:
+    return [o["props"] for o in obs if o["kind"] == kind]
+
+
+def test_nmap_host_and_entrypoint_carry_asset_identity(tmp_path: Path) -> None:
+    store = _StubStore()
+    _adapt_nmap_xml(_nmap_host_xml(tmp_path / "scan.xml"), store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+
+    host = _props(obs, "Host")[0]
+    assert host["asset_id"] == asset_id("acme", host_ref("10.0.0.1"))
+    assert host["asset_kind"] == "host"
+    assert host["asset_canonical"] == "10.0.0.1"
+
+    entry = _props(obs, "Entrypoint")[0]
+    assert entry["asset_kind"] == "web_origin"
+    assert entry["asset_canonical"] == "http://target.local:80"
+
+
+def test_replaying_the_same_nmap_scan_keeps_asset_ids(tmp_path: Path) -> None:
+    scan = _nmap_host_xml(tmp_path / "scan.xml")
+    first, second = _StubStore(), _StubStore()
+    _adapt_nmap_xml(scan, first, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    _adapt_nmap_xml(scan, second, "acme", "recon", "ep-2")  # type: ignore[arg-type]
+    assert _props(first.calls[0]["observations"], "Host") == _props(
+        second.calls[0]["observations"], "Host"
+    )
+
+
+def test_httpx_dns_host_and_origin_are_separate_assets(tmp_path: Path) -> None:
+    f = tmp_path / "httpx.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "url": "https://App.Example.com/login",
+                "host": "App.Example.com",
+                "port": 443,
+                "status-code": 200,
+            }
+        )
+        + "\n"
+        + json.dumps({"url": "http://10.0.0.5:8080/", "port": 8080, "status-code": 200})
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_httpx_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+
+    hosts = _props(obs, "Host")
+    assert [(h["asset_kind"], h["asset_canonical"]) for h in hosts] == [
+        ("dns_name", "app.example.com"),
+        ("host", "10.0.0.5"),
+    ]
+    origins = _props(obs, "Entrypoint")
+    assert [o["asset_canonical"] for o in origins] == [
+        "https://app.example.com:443",
+        "http://10.0.0.5:8080",
+    ]
+    assert all(o["asset_kind"] == "web_origin" for o in origins)
