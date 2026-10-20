@@ -22,10 +22,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlsplit, urlunsplit
 
 import defusedxml.ElementTree as ET
 import yaml
@@ -495,6 +496,34 @@ def _adapt_httpx_jsonl(
     return {"parsed": parsed, "skipped": skipped, "records": records}
 
 
+REDACTED = "REDACTED"
+_SENSITIVE_NAME = re.compile(
+    r"(?i)pass|pwd|secret|token|key|auth|session|sid|cookie|sig|credential|access"
+)
+
+
+def _is_sensitive(name: str) -> bool:
+    """Parameter or query names that usually carry credentials or session material."""
+    return _SENSITIVE_NAME.search(name) is not None
+
+
+def redact_url(url: str) -> str:
+    """Drop userinfo and fragment, and mask sensitive query values. Other content is kept."""
+    parts = urlsplit(url)
+    host = parts.hostname or ""
+    if ":" in host:
+        host = f"[{host}]"
+    netloc = host if parts.port is None else f"{host}:{parts.port}"
+    query = urlencode(
+        [
+            (name, REDACTED if _is_sensitive(name) else value)
+            for name, value in parse_qsl(parts.query, keep_blank_values=True)
+        ],
+        quote_via=quote,
+    )
+    return urlunsplit((parts.scheme, netloc, parts.path, query, ""))
+
+
 def _surface_observations(
     *,
     engagement: str,
@@ -509,10 +538,12 @@ def _surface_observations(
     if not host:
         return []
     normalized_method = (method or "GET").upper()
-    endpoint_key = f"endpoint::{normalized_method}::{url}"
+    # Stored and keyed by the redacted URL: credentials and secret-looking query values never reach the graph.
+    safe_url = redact_url(url)
+    endpoint_key = f"endpoint::{normalized_method}::{safe_url}"
     endpoint_props: dict[str, Any] = {
         "method": normalized_method,
-        "url": url,
+        "url": safe_url,
         "path": parsed.path or "/",
         "host": host,
         "source": source,
@@ -535,24 +566,21 @@ def _surface_observations(
                 "props": {"host": parsed.hostname or "", "source": source, **origin},
             }
         )
-    observations.extend(
-        [
-            {
-                "kind": "Host",
-                "key": f"host::{host}",
-                "label": host,
-                "props": {"hostname": host, "source": source},
-                "edges_out": [{"to_key": endpoint_key, "kind": "HAS", "weight": 0.5}],
-            },
-            {
-                "kind": "Endpoint",
-                "key": endpoint_key,
-                "label": f"{normalized_method} {parsed.path or '/'}",
-                "props": endpoint_props,
-                "edges_out": [],
-            },
-        ]
-    )
+    host_obs: dict[str, Any] = {
+        "kind": "Host",
+        "key": f"host::{host}",
+        "label": host,
+        "props": {"hostname": host, "source": source},
+        "edges_out": [{"to_key": endpoint_key, "kind": "HAS", "weight": 0.5}],
+    }
+    endpoint_obs: dict[str, Any] = {
+        "kind": "Endpoint",
+        "key": endpoint_key,
+        "label": f"{normalized_method} {parsed.path or '/'}",
+        "props": endpoint_props,
+        "edges_out": [],
+    }
+    observations.extend([host_obs, endpoint_obs])
     for name, value in parse_qsl(parsed.query, keep_blank_values=True):
         parameter_key = f"parameter::{endpoint_key}::query::{name}"
         observations.append(
@@ -563,13 +591,14 @@ def _surface_observations(
                 "props": {
                     "name": name,
                     "location": "query",
-                    "value_hint": value[:128],
+                    "value_hint": REDACTED if _is_sensitive(name) else value[:128],
                     "source": source,
                 },
                 "edges_out": [],
             }
         )
-        observations[1]["edges_out"].append({"to_key": parameter_key, "kind": "HAS", "weight": 1.0})
+        # Attach to the endpoint by reference: list position shifts when the origin observation is present.
+        endpoint_obs["edges_out"].append({"to_key": parameter_key, "kind": "HAS", "weight": 1.0})
     return observations
 
 

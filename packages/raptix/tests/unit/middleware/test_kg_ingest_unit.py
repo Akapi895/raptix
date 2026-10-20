@@ -694,3 +694,50 @@ def test_katana_endpoint_is_linked_to_its_web_origin(tmp_path: Path) -> None:
         if props.get("asset_kind") == "web_origin"
     ]
     assert [props["asset_canonical"] for props in origins] == ["https://app.example.com:443"]
+
+
+def test_parameter_edges_attach_to_the_endpoint_not_the_host(tmp_path: Path) -> None:
+    from raptix.knowledge.graph.ingest import _adapt_katana_jsonl
+
+    f = tmp_path / "katana.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "request": {"method": "GET", "endpoint": "http://app.example.com/users?id=1"},
+                "status_code": 200,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_katana_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+    host = next(o for o in obs if o["kind"] == "Host")
+    endpoint = next(o for o in obs if o["kind"] == "Endpoint")
+    parameter_keys = {o["key"] for o in obs if o["kind"] == "Parameter"}
+    assert {e["to_key"] for e in endpoint["edges_out"]} == parameter_keys
+    assert {e["to_key"] for e in host["edges_out"]} == {endpoint["key"]}
+
+
+def test_credentials_and_secret_query_values_never_reach_the_graph(tmp_path: Path) -> None:
+    from raptix.knowledge.graph.ingest import _adapt_katana_jsonl
+
+    f = tmp_path / "katana.jsonl"
+    url = "https://alice:hunter2@app.example.com/reset?token=abc123&page=2#frag"
+    f.write_text(
+        json.dumps({"request": {"method": "GET", "endpoint": url}}) + "\n", encoding="utf-8"
+    )
+    store = _StubStore()
+    _adapt_katana_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    rendered = json.dumps(store.calls[0]["observations"], default=str)
+    assert "hunter2" not in rendered and "alice" not in rendered and "abc123" not in rendered
+    assert "page=2" in rendered
+    endpoint = next(o for o in store.calls[0]["observations"] if o["kind"] == "Endpoint")
+    assert endpoint["props"]["url"] == "https://app.example.com/reset?token=REDACTED&page=2"
+    token = next(
+        o
+        for o in store.calls[0]["observations"]
+        if o["kind"] == "Parameter" and o["props"]["name"] == "token"
+    )
+    assert token["props"]["value_hint"] == "REDACTED"
