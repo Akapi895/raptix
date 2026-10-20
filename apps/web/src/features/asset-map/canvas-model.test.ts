@@ -1,6 +1,6 @@
 import type { AssetMapNeighborhood } from '@raptix/web-contracts'
 import { describe, expect, it } from 'vitest'
-import { toCanvasElements, VISIBLE_NODE_BUDGET } from './graph-model'
+import { toCanvasElements, VISIBLE_NODE_BUDGET } from './canvas-model'
 
 const completeness = { loaded: 2, total: null, hasMore: false, truncated: false, source: { catalog: 'ok', graph: 'ok' }, revision: 'rev-1' } as const
 

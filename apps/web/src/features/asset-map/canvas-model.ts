@@ -26,6 +26,13 @@ export interface CanvasElements {
   /** Loaded but not drawn because the visible budget is full. */
   hiddenNodes: number
   hiddenEdges: number
+  /** Loaded but not drawn because the operator switched their kind off. */
+  filteredNodes: number
+}
+
+export interface CanvasOptions {
+  /** Kinds the operator switched off. Centres are always drawn. */
+  hidden?: ReadonlySet<string>
 }
 
 const KIND_BY_LABEL: Readonly<Record<string, string>> = { Host: 'host', Service: 'service', Entrypoint: 'origin', Endpoint: 'endpoint' }
@@ -42,16 +49,24 @@ export function kindOf(node: AssetMapNeighborNode): string {
  * centre reaches directly become children of the centre (a compound group), which is how the host's
  * services and origins read. Anything beyond the visible budget is counted, so the UI can say so.
  */
-export function toCanvasElements(view: AssetMapNeighborhood): CanvasElements {
+export function toCanvasElements(view: AssetMapNeighborhood, options: CanvasOptions = {}): CanvasElements {
   const centreIds = new Set(view.centers.map(centre => centre.id))
   const all = new Map<string, CanvasNodeData>()
   for (const node of [...view.centers, ...view.nodes]) {
     if (all.has(node.id)) continue
     all.set(node.id, { id: node.id, label: node.label || node.labels[0] || node.id, kind: kindOf(node), assetId: node.assetId })
   }
+  const wantedKind = (kind: string) => !options.hidden?.has(kind)
   const kept = new Map<string, CanvasNodeData>()
+  let filteredNodes = 0
   for (const [id, data] of all) {
-    if (centreIds.has(id) || kept.size < VISIBLE_NODE_BUDGET) kept.set(id, data)
+    if (centreIds.has(id)) {
+      kept.set(id, data)
+    } else if (!wantedKind(data.kind)) {
+      filteredNodes += 1
+    } else if (kept.size < VISIBLE_NODE_BUDGET) {
+      kept.set(id, data)
+    }
   }
   const drawableEdges = view.edges.filter(edge => kept.has(edge.source) && kept.has(edge.target))
   const edges = drawableEdges.slice(0, VISIBLE_EDGE_BUDGET).map(edge => ({ data: { id: edge.id, source: edge.source, target: edge.target, label: edge.type } }))
@@ -64,7 +79,8 @@ export function toCanvasElements(view: AssetMapNeighborhood): CanvasElements {
   return {
     nodes: [...kept.values()].map(data => ({ data })),
     edges,
-    hiddenNodes: all.size - kept.size,
+    hiddenNodes: all.size - kept.size - filteredNodes,
     hiddenEdges: view.edges.length - edges.length,
+    filteredNodes,
   }
 }
