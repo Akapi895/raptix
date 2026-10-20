@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
 from raptix.knowledge.graph.bootstrap import DuplicateNodesError, bootstrap
 
 
@@ -17,14 +18,18 @@ class FakeStore:
         self.logged: set[str] = set()
         self.writes: list[str] = []
 
-    def execute_read(self, cypher: str, params: dict[str, Any] | None = None, *, engagement: str) -> list[dict[str, Any]]:
+    def execute_read(
+        self, cypher: str, params: dict[str, Any] | None = None, *, engagement: str
+    ) -> list[dict[str, Any]]:
         if "copies" in cypher:
             return self.duplicates
         if "MigrationLog" in cypher:
             return [{"name": name} for name in sorted(self.logged)]
         return []
 
-    def execute_write(self, cypher: str, params: dict[str, Any] | None = None, *, engagement: str) -> None:
+    def execute_write(
+        self, cypher: str, params: dict[str, Any] | None = None, *, engagement: str
+    ) -> None:
         self.writes.append(cypher)
         if "MigrationLog" in cypher and params:
             self.logged.add(params["name"])
@@ -32,13 +37,19 @@ class FakeStore:
 
 @pytest.fixture
 def migrations(tmp_path: Path) -> Path:
-    (tmp_path / "V001__first.cypher").write_text("CREATE INDEX a IF NOT EXISTS FOR (n:Host) ON (n.key);", encoding="utf-8")
-    (tmp_path / "V002__second.cypher").write_text("CREATE INDEX b IF NOT EXISTS FOR (n:Service) ON (n.key);", encoding="utf-8")
+    (tmp_path / "V001__first.cypher").write_text(
+        "CREATE INDEX a IF NOT EXISTS FOR (n:Host) ON (n.key);", encoding="utf-8"
+    )
+    (tmp_path / "V002__second.cypher").write_text(
+        "CREATE INDEX b IF NOT EXISTS FOR (n:Service) ON (n.key);", encoding="utf-8"
+    )
     return tmp_path
 
 
 def test_duplicates_stop_the_bootstrap_before_any_ddl_and_name_the_group(migrations: Path) -> None:
-    store = FakeStore([{"label": "Host", "key": "host::10.0.0.1", "engagement": "acme", "copies": 2}])
+    store = FakeStore(
+        [{"label": "Host", "key": "host::10.0.0.1", "engagement": "acme", "copies": 2}]
+    )
     with pytest.raises(DuplicateNodesError) as raised:
         bootstrap(store, migrations_dir=migrations)  # type: ignore[arg-type]
     assert "Host key='host::10.0.0.1' engagement='acme' copies=2" in str(raised.value)
