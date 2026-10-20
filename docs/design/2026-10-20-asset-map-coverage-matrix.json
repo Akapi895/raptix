@@ -12,112 +12,158 @@
       "domain_pack": "network",
       "subagent": null,
       "owner": "plugins/network",
-      "asset_kinds": ["host", "network_segment", "dns_name"],
-      "sources": ["packages/raptix/raptix/knowledge/graph/ingest.py (nmap XML host/port parsing)"],
-      "read_model": "phase 3 neighborhood and overview",
-      "renderer": "phase 4 host inspector with services",
-      "fixture": "apps/web/tests/fixtures/asset-map/network/",
-      "verification": "unverified",
-      "gap": "catalog and reconcile not yet wired; no retained scan output mapped end to end"
+      "asset_kinds": [
+        "host",
+        "network_segment",
+        "dns_name"
+      ],
+      "sources": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py (nmap XML host, service and entrypoint parsing)"
+      ],
+      "read_model": "implemented: overview, neighborhood, host detail (services)",
+      "renderer": "implemented: Asset Map canvas and inspector (flagged, default off)",
+      "fixture": "apps/web/tests/fixtures/asset-map/network/ (real nmap XML from the lab sandboxes and juice-shop)",
+      "verification": "verified-data",
+      "gap": "live acquisition is one scan of three lab hosts; no multi-subnet or large-scan evidence yet"
     },
     {
       "name": "web",
       "domain_pack": "web",
       "subagent": null,
       "owner": "plugins/web",
-      "asset_kinds": ["web_origin", "host", "dns_name"],
-      "sources": ["packages/raptix/raptix/knowledge/graph/ingest.py (Host/Endpoint/Parameter)", "packages/raptix/raptix/execution/tools/proxy/tools.py (Caido sitemap)"],
-      "read_model": "phase 3 neighborhood; phase 4 sitemap paging",
-      "renderer": "phase 4 sitemap and endpoint table",
-      "fixture": "apps/web/tests/fixtures/asset-map/web/",
-      "verification": "unverified",
-      "gap": "sitemap read model and endpoint paging not implemented"
+      "asset_kinds": [
+        "web_origin",
+        "host",
+        "dns_name"
+      ],
+      "sources": [
+        "packages/raptix/raptix/knowledge/graph/ingest.py (Host/Endpoint/Parameter)",
+        "packages/raptix/raptix/execution/tools/proxy/tools.py (Caido sitemap)"
+      ],
+      "read_model": "implemented: origin members, sitemap (endpoints) detail with redaction",
+      "renderer": "implemented: sitemap table in the inspector",
+      "fixture": "apps/web/tests/fixtures/asset-map/web/ (not yet captured)",
+      "verification": "partial",
+      "gap": "no retained web-scanner output: the sandbox httpx is the Python client and katana is not installed; endpoint data is fixture-level only"
     },
     {
       "name": "active-directory",
       "domain_pack": "active-directory",
       "subagent": "ad_operator",
       "owner": "plugins/active-directory",
-      "asset_kinds": ["identity", "host"],
-      "sources": ["to audit in phase 7 (BloodHound and AD tools)"],
+      "asset_kinds": [
+        "identity",
+        "host"
+      ],
+      "sources": [
+        "to audit in phase 7 (BloodHound and AD tools)"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no AD lab or retained BloodHound output identified in workspace"
+      "gap": "no AD lab running (BloodHound CE is opt-in and not started); no retained BloodHound output in workspace/ or report folders"
     },
     {
       "name": "cloud",
       "domain_pack": "cloud",
       "subagent": "cloud_hunter",
       "owner": "plugins/cloud",
-      "asset_kinds": ["cloud_resource", "identity"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "cloud_resource",
+        "identity"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no cloud account; cloud provisioning is out of scope for this run"
+      "gap": "no cloud account or retained cloud inventory; provisioning a paid account is out of scope"
     },
     {
       "name": "mobile",
       "domain_pack": "mobile",
       "subagent": "mobile_operator",
       "owner": "plugins/mobile",
-      "asset_kinds": ["mobile_app", "web_origin"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "mobile_app",
+        "web_origin"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 manifest and components view",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no APK/IPA sample identified in workspace"
+      "gap": "no APK or IPA sample and no device or emulator in the stack"
     },
     {
       "name": "wireless",
       "domain_pack": "wireless",
       "subagent": "wireless_operator",
       "owner": "plugins/wireless",
-      "asset_kinds": ["device"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "device"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "requires a wireless adapter; none identified"
+      "gap": "no wireless adapter attached and no retained capture (pcap) in the repository or workspace"
     },
     {
       "name": "iot",
       "domain_pack": "iot",
       "subagent": "iot_operator",
       "owner": "plugins/iot",
-      "asset_kinds": ["device", "artifact"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "device",
+        "artifact"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no device or firmware sample identified"
+      "gap": "no device or firmware image available; no retained output found"
     },
     {
       "name": "ics",
       "domain_pack": "ics",
       "subagent": "ics_operator",
       "owner": "plugins/ics",
-      "asset_kinds": ["device", "host"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "device",
+        "host"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no PLC or ICS lab identified"
+      "gap": "no PLC or ICS lab in the stack; no retained protocol captures found"
     },
     {
       "name": "contracts",
       "domain_pack": "contracts",
       "subagent": "contract_auditor",
       "owner": "plugins/contracts",
-      "asset_kinds": ["artifact"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "artifact"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 source and ABI view",
       "fixture": "to define in phase 7",
@@ -129,8 +175,12 @@
       "domain_pack": "reversing",
       "subagent": "reverser",
       "owner": "plugins/reversing",
-      "asset_kinds": ["artifact"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "artifact"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 binary metadata view",
       "fixture": "to define in phase 7",
@@ -142,8 +192,14 @@
       "domain_pack": "phishing",
       "subagent": "phisher",
       "owner": "plugins/phishing",
-      "asset_kinds": ["dns_name", "web_origin", "identity"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "dns_name",
+        "web_origin",
+        "identity"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
@@ -155,8 +211,14 @@
       "domain_pack": null,
       "subagent": "recon",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/recon.py",
-      "asset_kinds": ["host", "dns_name", "web_origin"],
-      "sources": ["recon tool outputs routed through ingest.py"],
+      "asset_kinds": [
+        "host",
+        "dns_name",
+        "web_origin"
+      ],
+      "sources": [
+        "recon tool outputs routed through ingest.py"
+      ],
       "read_model": "covered by network and web rows",
       "renderer": "covered by network and web rows",
       "fixture": "covered by network and web rows",
@@ -169,7 +231,9 @@
       "subagent": "exploit",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/exploit.py",
       "asset_kinds": [],
-      "sources": ["findings and evidence, not assets"],
+      "sources": [
+        "findings and evidence, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -182,7 +246,9 @@
       "subagent": "surface_exploit",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/surface_exploit.py",
       "asset_kinds": [],
-      "sources": ["findings and evidence, not assets"],
+      "sources": [
+        "findings and evidence, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -195,7 +261,9 @@
       "subagent": "analyst",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/analyst.py",
       "asset_kinds": [],
-      "sources": ["analysis of existing observations"],
+      "sources": [
+        "analysis of existing observations"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -207,8 +275,13 @@
       "domain_pack": null,
       "subagent": "postexploit",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/postexploit.py",
-      "asset_kinds": ["host", "identity"],
-      "sources": ["to audit in phase 2"],
+      "asset_kinds": [
+        "host",
+        "identity"
+      ],
+      "sources": [
+        "to audit in phase 2"
+      ],
       "read_model": "phase 3 neighborhood",
       "renderer": "covered by host inspector",
       "fixture": "to define in phase 2",
@@ -221,7 +294,9 @@
       "subagent": "blue_cell",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/blue_cell.py",
       "asset_kinds": [],
-      "sources": ["detection observations, not assets"],
+      "sources": [
+        "detection observations, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -234,7 +309,9 @@
       "subagent": null,
       "owner": "plugins/defense",
       "asset_kinds": [],
-      "sources": ["CONOPS workspace resolution; no asset writer"],
+      "sources": [
+        "CONOPS workspace resolution; no asset writer"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -246,21 +323,31 @@
       "domain_pack": null,
       "subagent": "osint_operator",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/osint_operator.py",
-      "asset_kinds": ["dns_name", "identity"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "dns_name",
+        "identity"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 typed inspector",
       "fixture": "to define in phase 7",
       "verification": "blocked",
-      "gap": "no OSINT domain pack; source attribution needs an external provider"
+      "gap": "needs an external provider; no retained OSINT output found; not run against third-party targets"
     },
     {
       "name": "forensicator",
       "domain_pack": null,
       "subagent": "forensicator",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/forensicator.py",
-      "asset_kinds": ["host", "artifact"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "host",
+        "artifact"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 timeline view",
       "fixture": "to define in phase 7",
@@ -272,8 +359,12 @@
       "domain_pack": null,
       "subagent": "supply_chain_operator",
       "owner": "packages/raptix/raptix/intelligence/agents/standard/supply_chain_operator.py",
-      "asset_kinds": ["artifact"],
-      "sources": ["to audit in phase 7"],
+      "asset_kinds": [
+        "artifact"
+      ],
+      "sources": [
+        "to audit in phase 7"
+      ],
       "read_model": "phase 7",
       "renderer": "phase 7 dependency view",
       "fixture": "to define in phase 7",
@@ -286,7 +377,9 @@
       "subagent": "scanner",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/scanner.py",
       "asset_kinds": [],
-      "sources": ["vulnresearch pipeline; findings, not assets"],
+      "sources": [
+        "vulnresearch pipeline; findings, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -299,7 +392,9 @@
       "subagent": "detector",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/detector.py",
       "asset_kinds": [],
-      "sources": ["vulnresearch pipeline; findings, not assets"],
+      "sources": [
+        "vulnresearch pipeline; findings, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -312,7 +407,9 @@
       "subagent": "verifier",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/verifier.py",
       "asset_kinds": [],
-      "sources": ["vulnresearch pipeline; findings, not assets"],
+      "sources": [
+        "vulnresearch pipeline; findings, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -325,7 +422,9 @@
       "subagent": "patcher",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/patcher.py",
       "asset_kinds": [],
-      "sources": ["vulnresearch pipeline; findings, not assets"],
+      "sources": [
+        "vulnresearch pipeline; findings, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
@@ -338,7 +437,9 @@
       "subagent": "exploiter",
       "owner": "packages/raptix/raptix/intelligence/agents/plugins/exploiter.py",
       "asset_kinds": [],
-      "sources": ["vulnresearch pipeline; findings, not assets"],
+      "sources": [
+        "vulnresearch pipeline; findings, not assets"
+      ],
       "read_model": "none for assets",
       "renderer": "none for assets",
       "fixture": "none",
