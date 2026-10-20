@@ -8,11 +8,13 @@ import {
   isAssetMapMembersPage,
   isAssetMapNeighborhood,
   isAssetMapOverview,
+  isAssetMapSearchResult,
   type AssetMapDetail,
   type AssetMapKind,
   type AssetMapMembersPage,
   type AssetMapNeighborhood,
   type AssetMapOverview,
+  type AssetMapSearchResult,
 } from '@raptix/web-contracts'
 import { apiFetch } from './transport'
 
@@ -34,6 +36,12 @@ export function fetchAssetMapNeighborhood(engagementId: string, assetId: string,
   return apiFetch(withCursor(`${base(engagementId)}/assets/${encodeURIComponent(assetId)}/neighborhood`, cursor), isAssetMapNeighborhood)
 }
 
-export function fetchAssetMapDetail(engagementId: string, assetId: string, cursor?: string | null): Promise<AssetMapDetail> {
-  return apiFetch(withCursor(`${base(engagementId)}/assets/${encodeURIComponent(assetId)}/detail?limit=50`, cursor), isAssetMapDetail)
+/** `filter` narrows a web origin's sitemap by URL or path; a cursor is only valid for the filter it came from. */
+export function fetchAssetMapDetail(engagementId: string, assetId: string, cursor?: string | null, filter = ''): Promise<AssetMapDetail> {
+  const filtered = filter ? `&q=${encodeURIComponent(filter)}` : ''
+  return apiFetch(withCursor(`${base(engagementId)}/assets/${encodeURIComponent(assetId)}/detail?limit=50${filtered}`, cursor), isAssetMapDetail)
+}
+
+export function fetchAssetMapSearch(engagementId: string, query: string): Promise<AssetMapSearchResult> {
+  return apiFetch(`${base(engagementId)}/search?q=${encodeURIComponent(query)}&limit=25`, isAssetMapSearchResult)
 }

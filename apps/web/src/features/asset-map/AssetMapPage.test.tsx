@@ -6,18 +6,22 @@ const fetchOverview = vi.fn()
 const fetchMembers = vi.fn()
 const fetchNeighborhood = vi.fn()
 const fetchDetail = vi.fn()
+const fetchSearch = vi.fn()
 
 vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapOverview: (...args: unknown[]) => fetchOverview(...args),
   fetchAssetMapMembers: (...args: unknown[]) => fetchMembers(...args),
   fetchAssetMapNeighborhood: (...args: unknown[]) => fetchNeighborhood(...args),
   fetchAssetMapDetail: (...args: unknown[]) => fetchDetail(...args),
+  fetchAssetMapSearch: (...args: unknown[]) => fetchSearch(...args),
 }))
+vi.mock('../../real/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
 vi.mock('./AssetMapCanvas', () => ({ AssetMapCanvas: () => <div data-testid="asset-map-canvas" /> }))
 
 const completeness = { loaded: 1, total: 1, hasMore: false, truncated: false, source: { catalog: 'ok', graph: 'ok' }, revision: 'rev-1' }
 const host = { assetId: 'asset_a', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.1' }
 const origin = { assetId: 'asset_o', kind: 'web_origin', namespace: 'default', canonicalKey: 'http://10.0.0.1:80' }
+const savedKey = 'raptix.assetMap.selected.user-1.eng-1'
 
 beforeEach(() => {
   globalThis.localStorage.clear()
@@ -34,6 +38,7 @@ beforeEach(() => {
     nextCursor: null,
     completeness,
   })
+  fetchSearch.mockResolvedValue({ engagementId: 'eng-1', query: '', items: [], completeness })
 })
 
 afterEach(() => {
@@ -47,7 +52,7 @@ describe('AssetMapPage', () => {
     render(<AssetMapPage />)
     const hostButton = await screen.findByRole('button', { name: '10.0.0.1' })
     fireEvent.click(hostButton)
-    await waitFor(() => expect(fetchDetail).toHaveBeenCalledWith('eng-1', 'asset_a'))
+    await waitFor(() => expect(fetchDetail).toHaveBeenCalledWith('eng-1', 'asset_a', null, ''))
     expect(await screen.findByRole('region', { name: 'Services' })).toBeTruthy()
     expect(screen.getByTestId('evidence').textContent).toContain('episode ep-7')
     expect(screen.getByTestId('asset-map-canvas')).toBeTruthy()
@@ -78,7 +83,7 @@ describe('AssetMapPage state handling', () => {
     render(<AssetMapPage />)
     fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
     fireEvent.click(await screen.findByRole('button', { name: 'http://10.0.0.1:80' }))
-    await waitFor(() => expect(fetchDetail).toHaveBeenLastCalledWith('eng-1', 'asset_o'))
+    await waitFor(() => expect(fetchDetail).toHaveBeenLastCalledWith('eng-1', 'asset_o', null, ''))
     resolveFirst({ engagementId: 'eng-1', assetId: 'asset_a', centers: [{ id: '4:stale', assetId: 'asset_a', labels: ['Host'], label: 'stale' }], nodes: [], edges: [], nextCursor: null, completeness })
     await new Promise(done => setTimeout(done, 10))
     expect(screen.queryByText('stale')).toBeNull()
@@ -99,18 +104,26 @@ describe('AssetMapPage state handling', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Load more relations' })).toBeNull())
   });
 
-  it('restores the last asset per project and does not carry it into another project', async () => {
-    globalThis.localStorage.setItem('raptix.assetMap.selected.eng-1', 'asset_a')
+  it('restores the last asset per user and project and does not carry it into another project', async () => {
+    globalThis.localStorage.setItem(savedKey, 'asset_a')
     const { AssetMapPage } = await import('./AssetMapPage')
     render(<AssetMapPage />)
-    await waitFor(() => expect(fetchDetail).toHaveBeenCalledWith('eng-1', 'asset_a'))
+    await waitFor(() => expect(fetchDetail).toHaveBeenCalledWith('eng-1', 'asset_a', null, ''))
     cleanup()
     fetchDetail.mockClear()
     useProjectStore.setState({ pid: 'eng-2' })
     render(<AssetMapPage />)
     await waitFor(() => expect(fetchOverview).toHaveBeenCalledWith('eng-2'))
     expect(fetchDetail).not.toHaveBeenCalled()
-    globalThis.localStorage.removeItem('raptix.assetMap.selected.eng-1')
+    globalThis.localStorage.removeItem(savedKey)
+  });
+
+  it('does not restore an asset saved by another user of the same browser', async () => {
+    globalThis.localStorage.setItem('raptix.assetMap.selected.user-2.eng-1', 'asset_a')
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    await waitFor(() => expect(fetchOverview).toHaveBeenCalledWith('eng-1'))
+    expect(fetchDetail).not.toHaveBeenCalled()
   });
 
   it('states the visible budget when more nodes were loaded than can be drawn', async () => {
@@ -120,5 +133,37 @@ describe('AssetMapPage state handling', () => {
     render(<AssetMapPage />)
     fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
     expect(await screen.findByTestId('visible-budget')).toBeTruthy()
+  });
+
+  it('finds an asset outside the loaded lists and opens it', async () => {
+    const remote = { assetId: 'asset_far', kind: 'host', namespace: 'default', canonicalKey: '192.168.9.9' }
+    fetchSearch.mockResolvedValueOnce({ engagementId: 'eng-1', query: '192.168.9', items: [remote], completeness })
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.change(await screen.findByLabelText('Find an asset'), { target: { value: '192.168.9' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    fireEvent.click(await screen.findByRole('button', { name: '192.168.9.9' }))
+    await waitFor(() => expect(fetchNeighborhood).toHaveBeenCalledWith('eng-1', 'asset_far'))
+    expect(fetchSearch).toHaveBeenCalledWith('eng-1', '192.168.9')
+  });
+
+  it('refreshes the lists and says when the graph moved since the last load', async () => {
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    await screen.findByRole('button', { name: '10.0.0.1' })
+    fetchOverview.mockResolvedValueOnce({ engagementId: 'eng-1', groups: [{ kind: 'host', total: 2 }], completeness: { ...completeness, revision: 'rev-2' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    expect(await screen.findByRole('status')).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toContain('graph changed')
+  });
+
+  it('switches off the origins kind without dropping the centre', async () => {
+    const children = [{ id: '4:o', assetId: null, labels: ['Entrypoint'], label: 'http://10.0.0.1:80' }]
+    fetchNeighborhood.mockResolvedValueOnce({ engagementId: 'eng-1', assetId: 'asset_a', centers: [{ id: '4:c', assetId: 'asset_a', labels: ['Host'], label: '10.0.0.1' }], nodes: children, edges: [], nextCursor: null, completeness })
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Origins' }))
+    expect(await screen.findByText('Switched off: 1 node(s) of the kinds unticked above.')).toBeTruthy()
   });
 });

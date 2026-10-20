@@ -13,12 +13,14 @@ vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapNeighborhood: (...args: unknown[]) => fetchNeighborhood(...args),
   fetchAssetMapDetail: (...args: unknown[]) => fetchDetail(...args),
 }))
+vi.mock('../../real/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
 vi.mock('./AssetMapCanvas', () => ({ AssetMapCanvas: () => <div data-testid="asset-map-canvas" /> }))
 
 const completeness = { loaded: 1, total: 1, hasMore: false, truncated: false, source: { catalog: 'ok', graph: 'ok' }, revision: 'rev-1' }
 const host = { assetId: 'asset_a', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.1' }
 const origin = { assetId: 'asset_o', kind: 'web_origin', namespace: 'default', canonicalKey: 'http://10.0.0.1:80' }
 const provenance = { sources: [{ source: 'katana', count: 2 }], graphNodes: 2, evidence: [{ source: 'katana', sourceEpisodeId: 'crawl-1', observedAt: null }] }
+const savedKey = 'raptix.assetMap.selected.user-1.eng-1'
 
 beforeEach(() => {
   for (const fn of [fetchOverview, fetchMembers, fetchNeighborhood, fetchDetail]) fn.mockReset()
@@ -81,6 +83,32 @@ describe('domain detail renderer', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Load more' }))
     const services = await screen.findByRole('region', { name: 'Services' })
     await waitFor(() => expect(within(services).getAllByRole('row').length).toBe(3))
-    expect(fetchDetail.mock.calls[1]).toEqual(['eng-1', 'asset_a', 'next'])
+    expect(fetchDetail.mock.calls[1]).toEqual(['eng-1', 'asset_a', 'next', ''])
+  });
+
+  it('filters the sitemap by URL or path and keeps that filter when loading the next page', async () => {
+    const endpoint = (id: string, path: string) => ({ id, method: 'GET', path, url: `http://10.0.0.1:80${path}`, statusCode: 200, source: 'katana', sourceEpisodeId: 'crawl-1', parameters: [] })
+    fetchDetail
+      .mockResolvedValueOnce({ engagementId: 'eng-1', asset: origin, provenance, detail: { kind: 'endpoints', items: [endpoint('4:1', '/a')] }, nextCursor: null, completeness })
+      .mockResolvedValueOnce({ engagementId: 'eng-1', asset: origin, provenance, detail: { kind: 'endpoints', items: [endpoint('4:2', '/login')] }, nextCursor: null, completeness })
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'http://10.0.0.1:80' }))
+    const sitemap = await screen.findByRole('region', { name: 'Sitemap' })
+    fireEvent.change(within(sitemap).getByLabelText('Filter sitemap'), { target: { value: 'login' } })
+    fireEvent.click(within(sitemap).getByRole('button', { name: 'Filter' }))
+    await waitFor(() => expect(within(sitemap).getByText('http://10.0.0.1:80/login')).toBeTruthy())
+    expect(fetchDetail.mock.calls[1]).toEqual(['eng-1', 'asset_o', null, 'login'])
+    expect(within(sitemap).queryByText('http://10.0.0.1:80/a')).toBeNull()
+  });
+
+  it('reopens the asset the operator inspected last, so a reload returns to the same context', async () => {
+    globalThis.localStorage.setItem(savedKey, 'asset_o')
+    fetchDetail.mockResolvedValue({ engagementId: 'eng-1', asset: origin, provenance, detail: { kind: 'endpoints', items: [] }, nextCursor: null, completeness })
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    await waitFor(() => expect(fetchDetail).toHaveBeenCalledWith('eng-1', 'asset_o', null, ''))
+    expect(await screen.findByRole('region', { name: 'Sitemap' })).toBeTruthy()
+    expect(globalThis.localStorage.getItem(savedKey)).toBe('asset_o')
   });
 });

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import cytoscape, { type Core, type ElementDefinition } from 'cytoscape'
-import type { CanvasElements } from './graph-model'
+import type { CanvasElements } from './canvas-model'
 
 const KIND_COLOUR: Readonly<Record<string, string>> = {
   host: '#2b6cb0',
@@ -18,22 +18,39 @@ const STYLE: cytoscape.StylesheetJson = [
   { selector: ':selected', style: { 'border-width': 3, 'border-color': '#1a202c' } },
 ]
 
+/** Asks the canvas to centre one asset. A new token repeats the request for the same asset. */
+export interface CanvasFocus {
+  assetId: string
+  token: number
+}
+
 interface Props {
   elements: CanvasElements
   /** Called with the catalog asset id of the tapped node; nodes without one are ignored. */
   onSelectAsset: (assetId: string) => void
+  focus?: CanvasFocus | null
+}
+
+/** Hides or shows one group's children and the edges that touch them; a collapsed group keeps its position. */
+function setGroupVisible(group: cytoscape.NodeSingular, visible: boolean): void {
+  const children = group.children()
+  children.style('display', visible ? 'element' : 'none')
+  children.connectedEdges().style('display', visible ? 'element' : 'none')
+  group.data('collapsed', !visible)
 }
 
 /**
  * Cytoscape view of one neighborhood. Updates keep the positions of nodes that are still present:
- * removed nodes leave, new nodes are laid out on their own, and existing nodes do not move.
- * Pan and zoom only navigate; the list beside the canvas offers the same selection without a pointer.
+ * removed nodes leave, new nodes are laid out on their own, and existing nodes do not move. Pan and
+ * zoom only navigate; the list beside the canvas offers the same selection without a pointer.
+ * Double-tapping a host toggles its group (services and origins); the toolbar does the same for all.
  */
-export function AssetMapCanvas({ elements, onSelectAsset }: Props) {
+export function AssetMapCanvas({ elements, onSelectAsset, focus = null }: Props) {
   const container = useRef<HTMLDivElement | null>(null)
   const core = useRef<Core | null>(null)
   const select = useRef(onSelectAsset)
   select.current = onSelectAsset
+  const focused = useRef<number | null>(null)
 
   useEffect(() => {
     if (!container.current) return
@@ -42,8 +59,17 @@ export function AssetMapCanvas({ elements, onSelectAsset }: Props) {
       const assetId = event.target.data('assetId') as string | null
       if (assetId) select.current(assetId)
     })
+    instance.on('dbltap', 'node:parent', event => {
+      const group = event.target as cytoscape.NodeSingular
+      setGroupVisible(group, group.data('collapsed') === true)
+    })
     instance.on('zoom', () => {
       if (container.current) container.current.dataset.zoom = instance.zoom().toFixed(2)
+    })
+    instance.on('pan', () => {
+      if (!container.current) return
+      container.current.dataset.panX = String(Math.round(instance.pan().x))
+      container.current.dataset.panY = String(Math.round(instance.pan().y))
     })
     core.current = instance
     return () => {
@@ -70,6 +96,8 @@ export function AssetMapCanvas({ elements, onSelectAsset }: Props) {
       } else {
         added.layout({ name: 'breadthfirst', directed: true, fit: false, animate: false, spacingFactor: 1.2 }).run()
       }
+      // Children that arrive under a collapsed group stay hidden until the group is opened.
+      instance.nodes(':parent').forEach(group => setGroupVisible(group, group.data('collapsed') !== true))
     })
     if (container.current) {
       container.current.dataset.nodeCount = String(instance.nodes().length)
@@ -77,5 +105,38 @@ export function AssetMapCanvas({ elements, onSelectAsset }: Props) {
     }
   }, [elements])
 
-  return <div ref={container} data-testid="asset-map-canvas" role="img" aria-label="Asset relationship map" data-zoom="1.00" className="h-[420px] w-full rounded border border-slate-300 bg-white" />
+  useEffect(() => {
+    const instance = core.current
+    if (!instance || !focus || focused.current === focus.token) return
+    const target = instance.nodes().filter(node => node.data('assetId') === focus.assetId)
+    // The node may not be on the canvas yet; the next update tries again with the same token.
+    if (target.empty()) return
+    focused.current = focus.token
+    instance.center(target)
+    target.select()
+  }, [focus, elements])
+
+  const fit = (): void => {
+    core.current?.fit(undefined, 30)
+  }
+  const setAllGroups = (visible: boolean): void => {
+    core.current?.batch(() => core.current?.nodes(':parent').forEach(group => setGroupVisible(group, visible)))
+  }
+
+  return (
+    <div className="space-y-1">
+      <div role="toolbar" aria-label="Canvas controls" className="flex flex-wrap gap-2 text-xs">
+        <button type="button" onClick={fit} className="rounded border px-2 py-1">
+          Fit view
+        </button>
+        <button type="button" onClick={() => setAllGroups(false)} className="rounded border px-2 py-1">
+          Collapse groups
+        </button>
+        <button type="button" onClick={() => setAllGroups(true)} className="rounded border px-2 py-1">
+          Expand groups
+        </button>
+      </div>
+      <div ref={container} data-testid="asset-map-canvas" role="img" aria-label="Asset relationship map" data-zoom="1.00" className="h-[420px] w-full rounded border border-slate-300 bg-white" />
+    </div>
+  )
 }
