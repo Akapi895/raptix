@@ -48,7 +48,7 @@ Theo quy tắc của plan, gate bắt buộc chưa chạy là blocked và không
 - Gate migration trên PostgreSQL thật (`apps/web/server/tests/asset-map-migration-live.ts`, DB cách ly `raptix_web_asset_map_gate_20261021`, đã xóa sau khi chạy): 9/9 kiểm tra đạt. Gồm nâng cấp và các index, 8 kết nối ghi đồng thời cùng 500 identity (mỗi identity đúng một dòng), xung đột locator bị từ chối bởi unique index, rollback chỉ xóa `AssetIdentity` và giữ `WebAsset`, và chu kỳ lặp lại sạch.
 - Ghi khi Web không chạy: đường ghi chỉ đi tới Neo4j, không gọi Web. Bằng chứng từ lượt trước (dừng API khoảng 1 phút, ingest vẫn thành công) chưa được chạy lại trong lượt này.
 
-**Chưa làm:** `test_kg_autoingest.py` chưa được mở rộng riêng. Identity của đường auto-ingest được kiểm bằng ranh giới store và roundtrip live.
+**Chưa làm:** `test_kg_autoingest.py` không có ca mới. File này đã có test provenance và failure path cho cả hai nhánh (adapter legacy và parser registry, gồm lỗi parse không ghi gì). Identity của đường auto-ingest được kiểm ở ranh giới store và trong roundtrip live, nên không lặp lại trong file này.
 
 ## Phase 3: read model cho graph lớn
 
