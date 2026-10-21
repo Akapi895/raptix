@@ -105,7 +105,7 @@ function neo4jRouter(routes: Array<[string, unknown[][]]>): Promise<{ server: Se
 }
 
 /** KG revision row in the shape KGStore.revision reads: counter, node timestamp, edge timestamp. */
-const REVISION_ROW: [string, unknown[][]] = ['CALL () { MATCH (v:KGRevision', [[3, 1792500000, 1792500100]]];
+const REVISION_ROW: [string, unknown[][]] = ['MATCH (v:KGRevision', [[3]]];
 
 const servers: Server[] = [];
 afterEach(() => {
