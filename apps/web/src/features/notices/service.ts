@@ -24,7 +24,6 @@ import { projectAccessible } from '../../domain/policy'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Role } from '../../domain/entities'
 import type { ConsoleServices } from '../../domain/console-services';
-import { stamp } from '../../demo/display-clock'
 import { projectView } from '../../domain/projection'
 
 /** Display chips in the header popover, in the legacy order. */
@@ -72,7 +71,7 @@ export interface NoticeInput { text: string; to: Notice['to']; group: Notice['gr
 
 export function publishNotice(services: ConsoleServices, ctx: RequestContext, input: NoticeInput): void {
   services.authority.commit(ctx.corr, (db) => {
-    db.notices.unshift({ id: 'N' + (db.notices.length + 1) + '-' + Date.now() % 10000, ...input, projectId: ctx.projectId, at: stamp(), read: false })
+    db.notices.unshift({ id: 'N' + (db.notices.length + 1) + '-' + Date.now() % 10000, ...input, projectId: ctx.projectId, at: formatDemoInstant(services.authority.clock.now()), read: false })
   })
 }
 

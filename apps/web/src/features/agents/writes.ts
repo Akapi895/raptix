@@ -21,7 +21,6 @@
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
-import { stamp } from '../../demo/display-clock'
 import type { DbAuthority } from '../../demo/authority'
 import type { Agent, Group, Project } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
@@ -175,7 +174,7 @@ export function setAgentStatusTransaction(authority: DbAuthority, ctx: RequestCo
   const projectId = authority.snapshot().agents.find((x) => x.id === agentId)?.projectId ?? ''
   authority.commit(ctx.corr, (d) => { d.agents.find((x) => x.id === agentId)!.status = s })
   authority.commit(ctx.corr, (d) => {
-    d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(agentId) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: s === 'disabled' ? 'Disabled agent' : 'Enabled agent', obj: agentId, projectId, result: 'Success', reason: '' })
+    d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(agentId) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(authority.clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: s === 'disabled' ? 'Disabled agent' : 'Enabled agent', obj: agentId, projectId, result: 'Success', reason: '' })
   })
 }
 

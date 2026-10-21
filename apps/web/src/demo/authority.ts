@@ -50,6 +50,8 @@ function singleProject(entities: EntityRef[]): string | undefined {
 }
 
 export interface DbAuthority {
+  /** The dataset clock; mock services stamp the records they write with its instant. */
+  readonly clock: Clock
   /** Current committed snapshot; replaced atomically on every commit. */
   snapshot(): Db
   /**
@@ -85,6 +87,7 @@ export function createDatabaseAuthority(clock: Clock): DbAuthority {
   }
 
   return {
+    clock,
     snapshot: () => db,
     commit(corr, mutate) {
       const before = db

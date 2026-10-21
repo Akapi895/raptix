@@ -41,11 +41,6 @@ import {
   type GrantExpiryOutcome, type GrantRequestInput, type GrantRequestOutcome, type GrantRevokeInput, type GrantRevokeOutcome, type SessionCommandInput, type SessionCommandOutcome,
 } from './grants'
 
-/* Ticket 67 enabler C: the demo wall-clock label is hosted by the canonical
-   projection (src/demo/display-clock.ts — one T0 anchor shared with the
-   store's stamps and the live logs). Re-exported for the session console's
-   grant countdown and its suite. */
-export { hhmm } from '../../demo/display-clock'
 
 /** The actor's access state for one session, derived only from recorded grants/requests. */
 export function accessOf(db: Db, ctx: RequestContext, s: Session): C2AccessInfo {

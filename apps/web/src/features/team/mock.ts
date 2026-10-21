@@ -10,7 +10,7 @@ import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../demo/authority'
 import type { Project, Role } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
-import { stamp } from '../../demo/display-clock'
+import { formatDemoInstant } from '../../domain/clock'
 import { setProjectMembers } from '../projects/team-service'
 import type { TeamMember, TeamRead, TeamService } from './service'
 
@@ -63,7 +63,7 @@ export function createMockTeamService(authority: DbAuthority, guard: <T>(produce
       const found = findProject(authority.snapshot(), ctx)
       if (!found.ok) return found
       if (!USERS.some((u) => u.name === input.username)) return { ok: false, failure: { kind: 'validation', message: `${input.username} is not a user of this console.` } }
-      const members = [...found.data.members, { user: input.username, role: input.role as Role, since: stamp() }]
+      const members = [...found.data.members, { user: input.username, role: input.role as Role, since: formatDemoInstant(authority.clock.now()) }]
       const written = setProjectMembers(authority, ctx, members, `Added ${input.username} as ${ROLE_LABEL[input.role as Role]}`, input.username)
       if (!written.ok) return written
       return { ok: true, data: memberOf(ctx, input.username) ?? { id: input.username, label: input.username, role: input.role, owner: false } }
