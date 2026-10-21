@@ -39,6 +39,7 @@ from raptix.knowledge.graph.ai_surface import (
 )
 from raptix.knowledge.graph.asset_identity import (
     REDACTED,
+    WEB_PORTS,
     host_or_dns_ref,
     host_ref,
     identity_props,
@@ -135,7 +136,7 @@ def ingest(
 # ── Built-in adapters ──────────────────────────────────────────────────
 
 
-_WEB_PORTS = {80, 443, 8000, 8080, 8443, 8888}
+_WEB_PORTS = WEB_PORTS
 
 
 def _asset_props(
