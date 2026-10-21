@@ -2,6 +2,8 @@
 
 **Status: Accepted** — 2026-10-21 (repository owner). Proposed 2026-10-16. The prose was updated at acceptance to match the source: the adapters exist, the presentation location is decided, and Operations controls are wired.
 
+**Decision 2 (adapter location) is superseded by [ADR-0096](0096-feature-owned-web-presentation-and-adapters.md) (2026-10-22).** Adapters move from `src/real/service-adapter/<domain>.ts` to `features/<domain>/remote.ts`. Decisions 1, 3, 4 and 6 stay in force; decision 5 stays until `REAL_PAGES` is removed.
+
 ## Context
 
 `apps/web` renders two UI trees for the same screens: `src/screens/*` (mock,
