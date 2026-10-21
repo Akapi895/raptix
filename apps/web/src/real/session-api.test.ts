@@ -1,7 +1,8 @@
 /** Session restoration must authorize refreshed mutations and fail closed on outage. */
 import { afterEach, expect, it, vi } from 'vitest'
-import { fetchAuthSession, requestC2Grant } from './api'
-import { setCsrfToken } from './transport'
+import { fetchAuthSession } from '../platform/auth-api';
+import { requestC2Grant } from '../features/c2/remote';
+import { setCsrfToken } from '../platform/transport'
 
 afterEach(() => { vi.unstubAllGlobals(); setCsrfToken(null) })
 

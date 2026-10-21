@@ -6,7 +6,8 @@
  */
 import { useMemo } from 'react'
 import { useQuery, type useQueryClient } from '@tanstack/react-query'
-import { engagementToProject, fetchMembers, listEngagements } from './api'
+import { engagementToProject, listEngagements } from '../features/projects/remote';
+import { fetchMembers } from '../features/team/remote';
 import { REAL_IDENTITY } from './identity'
 import { useCapabilityReady } from './bootstrap'
 import type { Project, Role } from '../domain/entities'

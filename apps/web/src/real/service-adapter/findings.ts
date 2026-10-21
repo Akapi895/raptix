@@ -4,12 +4,11 @@ import type {
   FindingActivityPage, FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions, FindingSaveInput,
   FindingService, FindingSort, FindingSuggestionDisposition, FindingTransitionTarget, WorkspaceEvidenceImport,
 } from '../../features/findings'
-import {
-  addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, getEngagement, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture,
-  type CuratedFindingsView, type CuratedFindingView,
-} from '../api'
+import { addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture } from '../../features/findings/remote';
+import { getEngagement } from '../../features/projects/remote';
+import type { CuratedFindingsView, CuratedFindingView } from '@raptix/web-contracts';
 import type { FindingView } from '@raptix/web-contracts'
-import { ApiTransportError } from '../transport'
+import { ApiTransportError } from '../../platform/transport'
 import { displayTime, guarded, instant } from './shared'
 import { unavailable, unsupportedControl } from './stub'
 
@@ -188,7 +187,7 @@ function evidenceName(row: CuratedEvidenceRow): string {
   return row.digest ? `digest ${row.digest.slice(0, 12)}` : row.id
 }
 
-function captureEvidence(capture: import('../api').RetainedCaptureView, engagementId: string, findingId?: string): EvidenceView {
+function captureEvidence(capture: import('@raptix/web-contracts').RetainedCaptureView, engagementId: string, findingId?: string): EvidenceView {
   return {
     ref: capture.id,
     captureId: capture.id,
@@ -211,7 +210,7 @@ function captureEvidence(capture: import('../api').RetainedCaptureView, engageme
   }
 }
 
-function mapCapture(capture: import('../api').RetainedCaptureView, engagementId: string): Evidence {
+function mapCapture(capture: import('@raptix/web-contracts').RetainedCaptureView, engagementId: string): Evidence {
   return {
     id: capture.id,
     name: capture.filename ?? capture.id,
@@ -233,7 +232,7 @@ function mapCapture(capture: import('../api').RetainedCaptureView, engagementId:
 }
 
 /** Evidence links retain their own identity; retained captures supply classification and byte metadata. */
-function evidenceRows(view: CuratedFindingsView, engagementId: string, captures: import('../api').RetainedCaptureView[]): EvidenceView[] {
+function evidenceRows(view: CuratedFindingsView, engagementId: string, captures: import('@raptix/web-contracts').RetainedCaptureView[]): EvidenceView[] {
   const byCaptureId = new Map(captures.map((capture) => [capture.id, capture]))
   return view.findings.flatMap((finding) => finding.evidence.map((row) => {
     const capture = row.captureId ? byCaptureId.get(row.captureId) : undefined

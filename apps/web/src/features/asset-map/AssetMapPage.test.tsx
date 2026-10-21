@@ -20,7 +20,7 @@ vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapSearch: (...args: unknown[]) => fetchSearch(...args),
   fetchAssetMapOverlay: (...args: unknown[]) => fetchOverlay(...args),
 }))
-vi.mock('../../real/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
+vi.mock('../../platform/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
 vi.mock('./AssetMapCanvas', () => ({
   AssetMapCanvas: (props: typeof mockCanvas.props) => {
     mockCanvas.props = props
@@ -101,7 +101,7 @@ describe('AssetMapPage state handling', () => {
   });
 
   it('restarts relation paging from the first page when the graph changed under the cursor', async () => {
-    const { ApiTransportError } = await import('../../real/transport')
+    const { ApiTransportError } = await import('../../platform/transport')
     fetchNeighborhood
       .mockResolvedValueOnce({ engagementId: 'eng-1', assetId: 'asset_a', centers: [], nodes: [], edges: [], nextCursor: 'old', completeness })
       .mockRejectedValueOnce(new ApiTransportError(409, 'conflict', 'graph changed'))

@@ -6,12 +6,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
-import { ApiTransportError } from '../transport'
+import { ApiTransportError } from '../../platform/transport'
 
 const fetchOverviewFindings = vi.fn()
 const fetchOverviewC2 = vi.fn()
 
-vi.mock('../api', () => ({
+vi.mock('../../features/overview/remote', () => ({
   fetchOverviewFindings: (...a: unknown[]) => fetchOverviewFindings(...a),
   fetchOverviewC2: (...a: unknown[]) => fetchOverviewC2(...a),
 }))

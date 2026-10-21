@@ -5,7 +5,7 @@
  */
 import type { ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchTasks, type TaskItemView } from '../../real/api'
+import { fetchTasks, type TaskItemView } from '../overview/remote';
 import { utcMinute } from '../../real/format'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { Banner, Card, CardHeader, Empty } from '../../ui/index'

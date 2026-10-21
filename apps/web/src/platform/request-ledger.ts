@@ -6,7 +6,8 @@
  * reconcile endpoint. A rejected/uncertain request is surfaced honestly; it
  * is never retried as a new dispatch (duplicate-run prevention).
  */
-import { getRequest, reconcileRequest, type RequestRecoveryView } from './api'
+import { getRequest, reconcileRequest } from '../features/aichat/remote';
+import type { RequestRecoveryView } from '@raptix/web-contracts';
 
 /** Server rule (apps/web/server security/run-policy.ts): 8-128 chars, starts
  *  alphanumeric, then alphanumeric/_/- only. */

@@ -10,7 +10,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { FolderKanban } from 'lucide-react'
 import type { ReactElement, ReactNode } from 'react'
-import { fetchOverviewC2, fetchOverviewFindings, fetchTasks, listEngagements, type OverviewC2View, type OverviewFindingsView, type TasksView } from '../api'
+import { fetchOverviewC2, fetchOverviewFindings, fetchTasks, type OverviewC2View, type OverviewFindingsView, type TasksView } from '../../features/overview/remote';
+import { listEngagements } from '../../features/projects/remote';
 import { go } from '../../router/navigate'
 import { showCreateProject } from '../create-project-dialog'
 import { parseHash } from '../../router/history'

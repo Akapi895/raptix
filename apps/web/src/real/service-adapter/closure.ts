@@ -1,6 +1,6 @@
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { ClosureCheckView, ClosureRead, ClosureRecordView, ClosureService } from '../../features/closure/service'
-import { decideClosure, fetchClosure, requestClosure, type ClosureChecklistEntryView, type ClosureView } from '../api'
+import { decideClosure, fetchClosure, requestClosure, type ClosureChecklistEntryView, type ClosureView } from '../../features/closure/remote';
 import { guarded } from './shared'
 
 /** The checks the server reads; the label names each source the checklist depends on. */

@@ -1,7 +1,9 @@
 import type { OperationView, RequestRecoveryView, ScopedRunView } from '@raptix/web-contracts'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { RuntimeFleet, RuntimeOperationsService, RuntimeRun, RuntimeTimeline } from '../../features/operations/runtime'
-import { cancelRun, completeOperation, fetchFleet, fetchOperation, fetchTimeline, getThread, listRunsOfThread, listThreads, pauseOperationRun, resumeOperation } from '../api'
+import { cancelRun, completeOperation, fetchFleet, fetchOperation, pauseOperationRun, resumeOperation } from '../../features/operations/remote';
+import { fetchTimeline } from '../../features/analysis/remote';
+import { getThread, listRunsOfThread, listThreads } from '../../features/aichat/remote';
 import { guarded } from './shared'
 
 const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading its operations.' }

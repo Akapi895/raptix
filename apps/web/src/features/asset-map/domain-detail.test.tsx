@@ -15,7 +15,7 @@ vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapDetail: (...args: unknown[]) => fetchDetail(...args),
   fetchAssetMapOverlay: (...args: unknown[]) => fetchOverlay(...args),
 }))
-vi.mock('../../real/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
+vi.mock('../../platform/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
 vi.mock('./AssetMapCanvas', () => ({ AssetMapCanvas: () => <div data-testid="asset-map-canvas" /> }))
 
 const completeness = { loaded: 1, total: 1, hasMore: false, truncated: false, source: { catalog: 'ok', graph: 'ok' }, revision: 'rev-1' }

@@ -4,10 +4,11 @@ import type {
   DeliveryInput, DeliveryListQuery, DeliveryListRead, DraftOptionsRead, EditorFindingRow, LinkedFindingRow, ReportDecision,
   ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead, ReportReviewRead, ReportService, ReportSubmitInput,
 } from '../../features/reports/service'
-import {
-  acknowledgeReportDelivery, createReport, createReportTemplate, decideReportReview, deliverReport, exportReport, fetchAuthSession, fetchCuratedFindings, fetchMembers, fetchReports, reviseReport, setReportFindings,
-  submitReportForReview, updateReport, updateReportSetup, type CuratedFindingView, type ReportTemplateView, type ReportView, type ReportsView,
-} from '../api'
+import { acknowledgeReportDelivery, createReport, createReportTemplate, decideReportReview, deliverReport, exportReport, fetchReports, reviseReport, setReportFindings, submitReportForReview, updateReport, updateReportSetup, type ReportTemplateView, type ReportView, type ReportsView } from '../../features/reports/remote';
+import { fetchAuthSession } from '../../platform/auth-api';
+import { fetchCuratedFindings } from '../../features/findings/remote';
+import { fetchMembers } from '../../features/team/remote';
+import type { CuratedFindingView } from '@raptix/web-contracts';
 import { displayTime, guarded } from './shared'
 import { unavailable } from './stub'
 

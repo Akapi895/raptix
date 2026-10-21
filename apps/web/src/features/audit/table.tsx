@@ -4,7 +4,7 @@
  * record outside the engagement names its scope as the workspace.
  */
 import type { ReactElement } from 'react'
-import type { AuditEntryView } from '../../real/api'
+import type { AuditEntryView } from './remote';
 import { go } from '../../router/navigate'
 import { Status } from '../../ui/index'
 import { utcMinute } from '../../real/format'

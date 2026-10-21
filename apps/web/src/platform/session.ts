@@ -8,7 +8,7 @@
  */
 import { createContext, useContext } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchAuthSession, type AuthSessionView } from './api'
+import { fetchAuthSession, type AuthSessionView } from './auth-api';
 
 export const SESSION_KEY = ['real', 'session'] as const
 

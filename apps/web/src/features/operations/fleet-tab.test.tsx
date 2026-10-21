@@ -16,8 +16,8 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
-vi.mock('../../real/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../real/api')>()
+vi.mock('./remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./remote')>()
   return {
     ...actual,
     fetchFleet: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('../../real/api', async (importOriginal) => {
   }
 })
 
-const api = await import('../../real/api')
+const api_operations = await import('./remote');
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
 const { createRealFeatureServices } = await import('../../real/service-adapter/index')
 const { resetNavStores } = await import('../../router/navigate')
@@ -64,8 +64,8 @@ function renderDetail(hash: string): void {
 }
 
 beforeEach(() => {
-  vi.mocked(api.fetchFleet).mockReset().mockResolvedValue(fleet() as never)
-  vi.mocked(api.cancelRun).mockReset()
+  vi.mocked(api_operations.fetchFleet).mockReset().mockResolvedValue(fleet() as never)
+  vi.mocked(api_operations.cancelRun).mockReset()
 })
 
 afterEach(() => {

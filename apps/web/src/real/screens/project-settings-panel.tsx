@@ -7,7 +7,8 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
-import { patchEngagement, type ProjectViewModel } from '../api'
+import { patchEngagement } from '../../features/projects/remote';
+import type { ProjectViewModel } from '@raptix/web-contracts';
 import { useDirty } from '../../state/session'
 import { Banner, Button, Card, CardHeader, Input } from '../../ui/index'
 

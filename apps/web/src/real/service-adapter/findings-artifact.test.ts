@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as api from '../api'
+import * as api_findings from '../../features/findings/remote';
 import { createRealFindingService } from './findings'
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+vi.mock('../../features/findings/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/findings/remote')>()
   return { ...actual, downloadCapture: vi.fn() }
 })
 
@@ -15,13 +15,13 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 }
 
 beforeEach(() => {
-  vi.mocked(api.downloadCapture).mockReset()
+  vi.mocked(api_findings.downloadCapture).mockReset()
 })
 
 describe('reproduction artifact reads', () => {
   it('returns the original bytes and their UTF-8 text when the digest matches the recorded one', async () => {
     const digest = await sha256Hex(original)
-    vi.mocked(api.downloadCapture).mockResolvedValue({ bytes: original, mediaType: 'text/x-python', filename: 'exploit.py', digest })
+    vi.mocked(api_findings.downloadCapture).mockResolvedValue({ bytes: original, mediaType: 'text/x-python', filename: 'exploit.py', digest })
 
     const result = await createRealFindingService().readArtifact(ctx, { captureId: 'cap-7', filename: 'exploit.py', mediaType: 'text/x-python', digest, sizeBytes: original.length, classification: 'standard', canReadOriginal: true })
 
@@ -31,7 +31,7 @@ describe('reproduction artifact reads', () => {
   })
 
   it('refuses bytes that no longer match the digest the reproduction recorded', async () => {
-    vi.mocked(api.downloadCapture).mockResolvedValue({ bytes: original, mediaType: 'text/x-python', filename: 'exploit.py', digest: 'stale' })
+    vi.mocked(api_findings.downloadCapture).mockResolvedValue({ bytes: original, mediaType: 'text/x-python', filename: 'exploit.py', digest: 'stale' })
 
     const result = await createRealFindingService().readArtifact(ctx, { captureId: 'cap-7', filename: 'exploit.py', mediaType: 'text/x-python', digest: '0'.repeat(64), sizeBytes: original.length, classification: 'standard', canReadOriginal: true })
 
@@ -41,7 +41,7 @@ describe('reproduction artifact reads', () => {
   it('keeps a binary capture readable as bytes but gives it no text to copy', async () => {
     const binary = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0xff])
     const digest = await sha256Hex(binary)
-    vi.mocked(api.downloadCapture).mockResolvedValue({ bytes: binary, mediaType: 'image/png', filename: 'shot.png', digest })
+    vi.mocked(api_findings.downloadCapture).mockResolvedValue({ bytes: binary, mediaType: 'image/png', filename: 'shot.png', digest })
 
     const result = await createRealFindingService().readArtifact(ctx, { captureId: 'cap-8', filename: 'shot.png', mediaType: 'image/png', digest, sizeBytes: binary.length, classification: 'standard', canReadOriginal: true })
 

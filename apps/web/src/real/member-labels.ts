@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchMembers } from './api'
+import { fetchMembers } from '../features/team/remote';
 
 /**
  * Resolves an actor id to the label of an engagement member, so screens show

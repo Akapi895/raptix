@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { FolderPlus, Info } from 'lucide-react'
-import { createEngagement, type CreateEngagementInput } from '../api'
+import { createEngagement, type CreateEngagementInput } from '../../features/projects/remote';
 import { invalidateProjects, projectKeys } from '../queries'
 import { markPlanningSeed } from '../planning-seed'
 import { showCreateProject, useCreateProjectDialog } from '../create-project-dialog'

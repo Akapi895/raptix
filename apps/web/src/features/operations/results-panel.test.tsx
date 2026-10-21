@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 
 vi.mock('../../router/navigate', () => ({ go: vi.fn(), useRoute: () => ({ page: 'operation' }) }))
-vi.mock('../../real/api', () => ({ fetchCuratedFindings: vi.fn() }))
+vi.mock('../findings/remote', () => ({ fetchCuratedFindings: vi.fn() }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
@@ -18,7 +18,7 @@ vi.mock('./runtime-query', () => ({
 
 const { ThreadResults } = await import('./results-panel')
 const runtime = await import('./runtime-query')
-const api = await import('../../real/api')
+const api_findings = await import('../findings/remote');
 
 const THREAD = { engagementId: 'eng-1', threadId: 'th-1', assistantId: 'raptix', kind: 'execution', createdAt: '2026-10-19T09:00:00.000Z', updatedAt: '2026-10-19T09:05:00.000Z' }
 const RUN = (runId: string, rawStatus: string) => ({ runId, requestId: `req-${runId}`, threadId: 'th-1', rawStatus, createdAt: '2026-10-19T09:00:00.000Z', updatedAt: '2026-10-19T09:01:00.000Z' })
@@ -32,7 +32,7 @@ function withClient(ui: ReactElement) {
 function stub(runs: unknown[], branches: unknown[] = [], findings: unknown[] = []) {
   vi.mocked(runtime.useRuntimeRuns).mockReturnValue({ isPending: false, isError: false, data: runs } as never)
   vi.mocked(runtime.useRuntimeFleet).mockReturnValue({ isPending: false, isError: false, data: { branches } } as never)
-  vi.mocked(api.fetchCuratedFindings).mockResolvedValue({ engagementId: 'eng-1', findings, transitions: {} } as never)
+  vi.mocked(api_findings.fetchCuratedFindings).mockResolvedValue({ engagementId: 'eng-1', findings, transitions: {} } as never)
 }
 
 beforeEach(() => { cleanup(); vi.clearAllMocks() })
@@ -61,7 +61,7 @@ describe('ThreadResults', () => {
 
   it('shows an explicit unavailable state rather than a substitute when the findings source fails', async () => {
     stub([RUN('run-1', 'success')])
-    vi.mocked(api.fetchCuratedFindings).mockRejectedValue(new Error('findings down'))
+    vi.mocked(api_findings.fetchCuratedFindings).mockRejectedValue(new Error('findings down'))
     render(withClient(<ThreadResults engagementId="eng-1" thread={THREAD} />))
     expect(await screen.findByText('Results unavailable')).toBeInTheDocument()
     expect(screen.getByText(/findings down/)).toBeInTheDocument()

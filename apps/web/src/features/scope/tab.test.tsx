@@ -7,14 +7,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
-import { SessionContext, type SessionState } from '../../real/session'
+import { SessionContext, type SessionState } from '../../platform/session'
 
 const useScopeRead = vi.fn()
 const fetchMembers = vi.fn()
 
 vi.mock('../../state/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
 
-vi.mock('../../real/api', () => ({
+vi.mock('../team/remote', () => ({
   fetchMembers: (...a: unknown[]) => fetchMembers(...a),
 }))
 

@@ -11,7 +11,17 @@ const fetchFindings = vi.fn()
 const fetchAssetInventory = vi.fn()
 const fetchFleet = vi.fn()
 
-vi.mock('../api', () => ({
+vi.mock('../../features/findings/remote', () => ({
+  fetchFindings: (...a: unknown[]) => fetchFindings(...a),
+  fetchAssetInventory: (...a: unknown[]) => fetchAssetInventory(...a),
+  fetchFleet: (...a: unknown[]) => fetchFleet(...a),
+}))
+vi.mock('../../features/assets/remote', () => ({
+  fetchFindings: (...a: unknown[]) => fetchFindings(...a),
+  fetchAssetInventory: (...a: unknown[]) => fetchAssetInventory(...a),
+  fetchFleet: (...a: unknown[]) => fetchFleet(...a),
+}))
+vi.mock('../../features/operations/remote', () => ({
   fetchFindings: (...a: unknown[]) => fetchFindings(...a),
   fetchAssetInventory: (...a: unknown[]) => fetchAssetInventory(...a),
   fetchFleet: (...a: unknown[]) => fetchFleet(...a),

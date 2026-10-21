@@ -14,7 +14,19 @@ const fetchWorkspaceSettings = vi.fn()
 const saveWorkspaceSetting = vi.fn()
 const fetchWorkspaceAudit = vi.fn()
 
-vi.mock('../../real/api', () => ({
+vi.mock('./remote', () => ({
+  fetchWorkspaceSettings: (...a: unknown[]) => fetchWorkspaceSettings(...a),
+  saveWorkspaceSetting: (...a: unknown[]) => saveWorkspaceSetting(...a),
+  fetchWorkspaceAudit: (...a: unknown[]) => fetchWorkspaceAudit(...a),
+  fetchCapabilities: vi.fn(),
+}))
+vi.mock('../audit/remote', () => ({
+  fetchWorkspaceSettings: (...a: unknown[]) => fetchWorkspaceSettings(...a),
+  saveWorkspaceSetting: (...a: unknown[]) => saveWorkspaceSetting(...a),
+  fetchWorkspaceAudit: (...a: unknown[]) => fetchWorkspaceAudit(...a),
+  fetchCapabilities: vi.fn(),
+}))
+vi.mock('../../platform/capabilities', () => ({
   fetchWorkspaceSettings: (...a: unknown[]) => fetchWorkspaceSettings(...a),
   saveWorkspaceSetting: (...a: unknown[]) => saveWorkspaceSetting(...a),
   fetchWorkspaceAudit: (...a: unknown[]) => fetchWorkspaceAudit(...a),

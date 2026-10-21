@@ -9,11 +9,11 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
-import type { ProjectViewModel } from '../api'
+import type { ProjectViewModel } from '@raptix/web-contracts';
 
 const patchEngagement = vi.fn()
 
-vi.mock('../api', () => ({
+vi.mock('../../features/projects/remote', () => ({
   patchEngagement: (...a: unknown[]) => patchEngagement(...a),
 }))
 

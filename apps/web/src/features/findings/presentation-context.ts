@@ -1,7 +1,7 @@
 /** Resolves Findings provenance and trusted request identity at the composition seam. */
 import { useContext } from 'react'
 import { DATA_MODE } from '../../state/mode'
-import { SessionContext } from '../../real/session'
+import { SessionContext } from '../../platform/session'
 import { useMe } from '../../state/console'
 
 export const persistentFindings = DATA_MODE === 'real'

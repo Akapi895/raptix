@@ -10,7 +10,7 @@ import { useReportValidation } from '../features/reports/projection'
 import { isRealMode } from '../state/mode'
 import { ReportReadError, reportKeys, useDeliveryHistory, useReportList, useReportWrites, useTemplates } from '../features/reports/query'
 import { useQueryScope } from '../state/keys'
-import { createReportTemplate } from '../real/api'
+import { createReportTemplate } from '../features/reports/remote';
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './f-report'
 import { SettingsPage } from './f-settings'
 import { go, useRoute } from '../router/navigate'

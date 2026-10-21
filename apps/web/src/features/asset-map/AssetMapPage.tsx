@@ -10,8 +10,8 @@ import type {
   AssetMapOverview,
 } from '@raptix/web-contracts'
 import { useProjectStore } from '../../state/stores'
-import { useSession } from '../../real/session'
-import { ApiTransportError } from '../../real/transport'
+import { useSession } from '../../platform/session'
+import { ApiTransportError } from '../../platform/transport'
 import {
   fetchAssetMapDetail,
   fetchAssetMapMembers,

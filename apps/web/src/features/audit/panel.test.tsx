@@ -11,7 +11,7 @@ import type { ReactElement, ReactNode } from 'react'
 const useAuditRead = vi.fn()
 const fetchMembers = vi.fn()
 
-vi.mock('../../real/api', () => ({
+vi.mock('../team/remote', () => ({
   fetchMembers: (...a: unknown[]) => fetchMembers(...a),
 }))
 

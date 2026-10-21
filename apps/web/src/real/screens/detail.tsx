@@ -11,7 +11,12 @@ import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { fetchAssetInventory, fetchFindings, fetchFleet, fetchPlanning, fetchScopeRevisions, getEngagement } from '../api'
+import { fetchAssetInventory } from '../../features/assets/remote';
+import { fetchFindings } from '../../features/findings/remote';
+import { fetchFleet } from '../../features/operations/remote';
+import { fetchPlanning } from '../../features/planning/remote';
+import { fetchScopeRevisions } from '../../features/scope/remote';
+import { getEngagement } from '../../features/projects/remote';
 import { utcMinuteOr } from '../format'
 import { projectKeys } from '../queries'
 import { RealConversation } from './workspace'

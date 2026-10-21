@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+vi.mock('../../features/vault/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/vault/remote')>()
   return {
     ...actual,
     fetchVault: vi.fn(),
@@ -11,24 +11,24 @@ vi.mock('../api', async (importOriginal) => {
   }
 })
 
-const api = await import('../api')
+const api_vault = await import('../../features/vault/remote');
 const { createRealVaultService } = await import('./vault')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'eng-1', corr: 'test' }
 
 beforeEach(() => {
-  vi.mocked(api.fetchVault).mockReset()
-  vi.mocked(api.revealVaultSecret).mockReset()
-  vi.mocked(api.createVaultSecret).mockReset()
-  vi.mocked(api.revokeVaultSecret).mockReset()
+  vi.mocked(api_vault.fetchVault).mockReset()
+  vi.mocked(api_vault.revealVaultSecret).mockReset()
+  vi.mocked(api_vault.createVaultSecret).mockReset()
+  vi.mocked(api_vault.revokeVaultSecret).mockReset()
 })
 
 describe('real vault service', () => {
   it('lists metadata only and never carries a plaintext value into the list', async () => {
-    vi.mocked(api.fetchVault).mockResolvedValue({
+    vi.mocked(api_vault.fetchVault).mockResolvedValue({
       engagementId: 'eng-1', truncated: false, source: 'db',
       secrets: [{ id: 'sec-1', engagementId: 'eng-1', kind: 'api-key', label: 'SIEM token', createdBy: 'u-owner', revealCount: 2, lastRevealedAt: '2026-10-15T01:00:00.000Z', createdAt: '2026-10-14T09:00:00.000Z', updatedAt: '2026-10-14T09:00:00.000Z' }],
-    } as unknown as Awaited<ReturnType<typeof api.fetchVault>>)
+    } as unknown as Awaited<ReturnType<typeof api_vault.fetchVault>>)
 
     const result = await createRealVaultService().list(ctx)
 
@@ -39,15 +39,15 @@ describe('real vault service', () => {
   })
 
   it('returns the revealed value only from an explicit reveal', async () => {
-    vi.mocked(api.revealVaultSecret).mockResolvedValue({ secretId: 'sec-1', engagementId: 'eng-1', plaintext: 'value-once', revealedAt: '2026-10-15T01:00:00.000Z' })
+    vi.mocked(api_vault.revealVaultSecret).mockResolvedValue({ secretId: 'sec-1', engagementId: 'eng-1', plaintext: 'value-once', revealedAt: '2026-10-15T01:00:00.000Z' })
     const result = await createRealVaultService().reveal(ctx, 'sec-1')
-    expect(api.revealVaultSecret).toHaveBeenCalledWith('eng-1', 'sec-1')
+    expect(api_vault.revealVaultSecret).toHaveBeenCalledWith('eng-1', 'sec-1')
     expect(result).toMatchObject({ ok: true, data: { secretId: 'sec-1', plaintext: 'value-once' } })
   })
 
   it('refuses a read without an engagement before calling the backend', async () => {
     const result = await createRealVaultService().list({ ...ctx, projectId: 'all' })
     expect(result).toMatchObject({ ok: false, failure: { kind: 'validation' } })
-    expect(api.fetchVault).not.toHaveBeenCalled()
+    expect(api_vault.fetchVault).not.toHaveBeenCalled()
   })
 })

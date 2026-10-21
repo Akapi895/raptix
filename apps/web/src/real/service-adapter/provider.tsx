@@ -1,6 +1,6 @@
 import { createContext, useMemo, type ReactElement, type ReactNode } from 'react'
 import type { FeatureServices } from '../../domain/service-factory'
-import type { CapabilitiesDocument } from '../api'
+import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { createRealFeatureServices } from './index'
 
 /** Real per-feature services; null outside the real composition root. */

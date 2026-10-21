@@ -1,6 +1,7 @@
 /** Finding wire responses must preserve ownership and nested workflow identity. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { addCuratedFindingComment, fetchCuratedFindings, transitionCuratedFinding, type CuratedFindingView } from './api'
+import { addCuratedFindingComment, fetchCuratedFindings, transitionCuratedFinding } from '../features/findings/remote';
+import type { CuratedFindingView } from '@raptix/web-contracts';
 
 const finding: CuratedFindingView = {
   id: 'finding-1', engagementId: 'eng-1', title: 'Observed issue', severity: 'high', status: 'returned',

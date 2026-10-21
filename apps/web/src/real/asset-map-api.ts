@@ -18,7 +18,7 @@ import {
   type AssetMapOverview,
   type AssetMapSearchResult,
 } from '@raptix/web-contracts'
-import { apiFetch } from './transport'
+import { apiFetch } from '../platform/transport'
 
 const base = (engagementId: string): string => `/engagements/${encodeURIComponent(engagementId)}/asset-map`
 
