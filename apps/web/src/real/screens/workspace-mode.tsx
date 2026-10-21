@@ -31,7 +31,7 @@ export function HitlSwitch({ enabled, busy, noThread = false, onChange }: { enab
   return (
     <div className="flex shrink-0 items-center gap-2 text-xs">
       <span className="text-fg">Tool approval (HITL)</span>
-      {noThread && <span className="text-muted">needs an execution thread</span>}
+      {noThread && <span className="text-muted">creates the execution thread</span>}
       <button type="button" role="switch" aria-checked={enabled} disabled={busy} onClick={() => onChange(!enabled)} title={hint}
         className={cx('relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition disabled:opacity-50', enabled ? 'bg-accent' : 'bg-line')}>
         <span className={cx('inline-block h-4 w-4 transform rounded-full bg-white transition', enabled ? 'translate-x-4' : 'translate-x-0.5')} aria-hidden />

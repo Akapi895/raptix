@@ -439,9 +439,25 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     send.mutate(message)
   }, [selectedKind, selectedThreadId, send])
 
+  // An execution thread only exists once it is created, and before the first message none may be selected. The switch
+  // then creates the thread and saves the choice to it, so the setting can be changed before anything is sent.
   const setHitl = useMutation({
-    mutationFn: (enabled: boolean) => setThreadHitl(engagementId, selectedThreadId!, enabled),
-    onSuccess: () => { void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId] }) },
+    mutationFn: async (enabled: boolean) => {
+      let threadId = selectedThreadId
+      if (threadId === null) {
+        const created = await createThreadByKind.mutateAsync('execution')
+        if (created.outcome.kind !== 'accepted') throw new Error('The execution thread could not be created; the approval setting was not saved.')
+        threadId = created.outcome.threadId
+      }
+      return setThreadHitl(engagementId, threadId, enabled)
+    },
+    onSuccess: (saved) => {
+      // A read of this thread that started before the save may answer after it with the old setting. Cancel that read,
+      // then read the thread again, so the switch shows what was stored.
+      const thread = ['real', 'thread', engagementId, saved.threadId]
+      void client.cancelQueries({ queryKey: thread }).then(() => client.invalidateQueries({ queryKey: thread }))
+      void client.invalidateQueries({ queryKey: ['real', 'threads', engagementId] })
+    },
     onError: (error) => setDispatchError(error instanceof Error ? error.message : 'The approval setting could not be saved.'),
   })
   const hitlEnabled = snapshot.data?.binding?.hitlEnabled !== false
@@ -665,7 +681,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
               <Button size="sm" variant="secondary" icon={RefreshCw} disabled={send.isPending || !!activeRunId || executionBlocked}
                 title="Sends the last prompt again as a new run" onClick={() => { setDispatchError(null); send.mutate(lastUserText) }}>Retry</Button>
             )}
-            {selectedKind === 'execution' && <HitlSwitch enabled={hitlEnabled} busy={setHitl.isPending || !selectedThreadId} noThread={!selectedThreadId} onChange={(enabled) => setHitl.mutate(enabled)} />}
+            {selectedKind === 'execution' && <HitlSwitch enabled={hitlEnabled} busy={setHitl.isPending || createThreadByKind.isPending} noThread={!selectedThreadId} onChange={(enabled) => setHitl.mutate(enabled)} />}
           </div>
           <Composer
             questions={pendingQuestions}
@@ -678,7 +694,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
             draft={draft}
             onDraft={setDraft}
             inputDisabled={send.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
-            placeholder={placeholderFor(agentState) ?? (selectedKind === 'execution' ? 'Describe the execution request. The execution thread is created when you send.' : 'Describe what to do next - scope, constraints, instructions...')}
+            placeholder={placeholderFor(agentState) ?? (selectedKind === 'execution' ? (selectedThreadId === null ? 'Describe the execution request. The execution thread is created when you send.' : 'Describe the execution request.') : 'Describe what to do next - scope, constraints, instructions...')}
             sendDisabled={!draft.trim() || send.isPending || createThreadByKind.isPending || executionBlocked || !!unconfirmed || !!activeRunId}
             sending={send.isPending}
             onSend={() => { setDispatchError(null); send.mutate(draft.trim()) }}
