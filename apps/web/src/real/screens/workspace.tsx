@@ -14,13 +14,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, Brain, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock, Copy, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench, XCircle, type LucideIcon } from 'lucide-react'
 import { TONE, type Tone } from '../../ui/status-map'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, getThreadPage, fetchApprovals, fetchFleet, fetchPlanning, fetchReports, fetchRuntimeContext, getEngagement, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from '../api'
-import { ApiTransportError } from '../transport'
+import { cancelRun, fetchFleet } from '../../features/operations/remote';
+import { createThread, getThreadPage, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from '../../features/aichat/remote';
+import { decideApproval, fetchApprovals } from '../../features/approvals/remote';
+import { fetchPlanning } from '../../features/planning/remote';
+import { fetchReports } from '../../features/reports/remote';
+import { fetchRuntimeContext } from '../../features/execution/remote';
+import { getEngagement } from '../../features/projects/remote';
+import { ApiTransportError } from '../../platform/transport'
 import { isEnvironmentPreparingError, withPreparedEnvironment } from '../environment-api'
 import { useCapabilityReady } from '../bootstrap'
-import { awaitRequest, newRequestId, type AckOutcome } from '../request-ledger'
+import { awaitRequest, newRequestId, type AckOutcome } from '../../platform/request-ledger'
 import { clearPending, isTerminalRun, readPending, readSelection, savePending, saveSelection, type PendingRequest } from '../workspace-session'
-import { useRunStream } from '../stream'
+import { useRunStream } from '../../platform/stream'
 import { projectKeys } from '../queries'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore, useToastStore } from '../../state/stores'
@@ -35,7 +41,7 @@ import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
 import { type ConversationMode, HitlSwitch, ModeToggle } from './workspace-mode'
 import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../planning-seed'
 import { RuntimeOperationsTab as RealOperationsHistory } from '../../features/operations/runtime-tab'
-import { useSession } from '../session'
+import { useSession } from '../../platform/session'
 
 interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
 /** When a reply's reasoning started and when its answer began, measured in this browser; the runtime records no timing. */

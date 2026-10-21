@@ -16,8 +16,8 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
-vi.mock('../../real/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../real/api')>()
+vi.mock('./remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./remote')>()
   return {
     ...actual,
     fetchC2Grants: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('../../real/api', async (importOriginal) => {
   }
 })
 
-const api = await import('../../real/api')
+const api_c2 = await import('./remote');
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
 const { createRealFeatureServices } = await import('../../real/service-adapter/index')
 const { resetNavStores } = await import('../../router/navigate')
@@ -58,12 +58,12 @@ function renderTab(): void {
 }
 
 beforeEach(() => {
-  vi.mocked(api.fetchC2Grants).mockReset().mockResolvedValue(GRANTS as never)
-  vi.mocked(api.fetchC2Sessions).mockReset().mockResolvedValue(SESSIONS as never)
-  vi.mocked(api.fetchC2Commands).mockReset().mockResolvedValue([])
-  vi.mocked(api.configureC2Listener).mockReset().mockResolvedValue({ listener: SESSIONS.listeners[0] })
-  vi.mocked(api.configureC2Profile).mockReset().mockResolvedValue({ profile: { name: 'lab-prof', created: 1, userAgent: 'ua', headerCount: 0, cookieCount: 0, parameterCount: 0, pathSegmentCount: 0 } })
-  vi.mocked(api.stopC2Listener).mockReset().mockResolvedValue({})
+  vi.mocked(api_c2.fetchC2Grants).mockReset().mockResolvedValue(GRANTS as never)
+  vi.mocked(api_c2.fetchC2Sessions).mockReset().mockResolvedValue(SESSIONS as never)
+  vi.mocked(api_c2.fetchC2Commands).mockReset().mockResolvedValue([])
+  vi.mocked(api_c2.configureC2Listener).mockReset().mockResolvedValue({ listener: SESSIONS.listeners[0] })
+  vi.mocked(api_c2.configureC2Profile).mockReset().mockResolvedValue({ profile: { name: 'lab-prof', created: 1, userAgent: 'ua', headerCount: 0, cookieCount: 0, parameterCount: 0, pathSegmentCount: 0 } })
+  vi.mocked(api_c2.stopC2Listener).mockReset().mockResolvedValue({})
 })
 
 afterEach(() => {
@@ -75,16 +75,16 @@ describe('C2ProviderTab infrastructure (W15)', () => {
     renderTab()
     expect(await screen.findByText('mtls · port 8888 · job 7')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /stop listener 7/i }))
-    await waitFor(() => expect(api.stopC2Listener).toHaveBeenCalledWith('eng-1', 7))
+    await waitFor(() => expect(api_c2.stopC2Listener).toHaveBeenCalledWith('eng-1', 7))
   })
 
   it('starts a listener for a supported protocol and creates a lab profile by name', async () => {
     renderTab()
     await userEvent.click(await screen.findByRole('button', { name: /start http listener/i }))
-    await waitFor(() => expect(api.configureC2Listener).toHaveBeenCalledWith('eng-1', 'http'))
+    await waitFor(() => expect(api_c2.configureC2Listener).toHaveBeenCalledWith('eng-1', 'http'))
     await userEvent.type(screen.getByLabelText(/profile name/i), 'lab-prof')
     await userEvent.click(screen.getByRole('button', { name: /create profile/i }))
-    await waitFor(() => expect(api.configureC2Profile).toHaveBeenCalledWith('eng-1', 'lab-prof'))
+    await waitFor(() => expect(api_c2.configureC2Profile).toHaveBeenCalledWith('eng-1', 'lab-prof'))
   })
 })
 
@@ -108,8 +108,8 @@ function renderDetail(hash: string): void {
 
 describe('C2ProviderTab detail routes (W22)', () => {
   beforeEach(() => {
-    vi.mocked(api.fetchC2Sessions).mockResolvedValue({ ...SESSIONS, sessions: [LIVE_SESSION, OTHER_SESSION] } as never)
-    vi.mocked(api.fetchC2Commands).mockResolvedValue([SESSION_COMMAND] as never)
+    vi.mocked(api_c2.fetchC2Sessions).mockResolvedValue({ ...SESSIONS, sessions: [LIVE_SESSION, OTHER_SESSION] } as never)
+    vi.mocked(api_c2.fetchC2Commands).mockResolvedValue([SESSION_COMMAND] as never)
   })
 
   it('renders a single owned session with its own command audit', async () => {

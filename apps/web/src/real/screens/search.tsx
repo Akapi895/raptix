@@ -1,7 +1,7 @@
 /** Search the authorized portfolio and pending-work projection, without a demo index. */
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
-import { fetchTasks } from '../api'
+import { fetchTasks } from '../../features/overview/remote';
 import { useRealProjects } from '../queries'
 import { go } from '../../router/navigate'
 import { parseHash } from '../../router/history'

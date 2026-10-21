@@ -7,7 +7,8 @@ import type { SettingsService } from '../../features/settings/service'
 import type { ScopeService } from '../../features/scope/service'
 import type { AuditService } from '../../features/audit/service'
 import type { TeamService } from '../../features/team/service'
-import { capabilityState, type CapabilitiesDocument } from '../api'
+import { capabilityState } from '../../platform/capabilities';
+import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { createRealAssetService } from './assets'
 import { createRealFindingService } from './findings'
 import { createRealLibraryService } from './library'

@@ -8,9 +8,9 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InstanceMessenger } from './instance-messenger'
-import * as api from '../api'
+import * as api_aichat from '../../features/aichat/remote';
 
-vi.mock('../api', async (importOriginal) => ({ ...(await importOriginal<typeof import('../api')>()), getThread: vi.fn() }))
+vi.mock('../../features/aichat/remote', async (importOriginal) => ({ ...(await importOriginal<typeof import('../../features/aichat/remote')>()), getThread: vi.fn() }))
 
 const THREAD = 'thread-1'
 const DISPATCH = 'dispatch-recon'
@@ -137,7 +137,7 @@ describe('InstanceMessenger (P10c)', () => {
     const question = (questionId: string, text: string, dispatchId: string) => ({
       questionId, question: text, header: 'Scope', options: [], multiSelect: false, allowOther: true, source: 'runtime', instance: { dispatchId, attempt: 1 },
     })
-    vi.mocked(api.getThread).mockResolvedValue({ pendingQuestions: [question('q-mine', 'Which login form should recon test?', DISPATCH), question('q-other', 'Use the staging host?', 'dispatch-other')] } as never)
+    vi.mocked(api_aichat.getThread).mockResolvedValue({ pendingQuestions: [question('q-mine', 'Which login form should recon test?', DISPATCH), question('q-other', 'Use the staging host?', 'dispatch-other')] } as never)
     stubFetch(MAILBOX('running'))
     renderMessenger()
     expect(await screen.findByText('Which login form should recon test?')).toBeInTheDocument()

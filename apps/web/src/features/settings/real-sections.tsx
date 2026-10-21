@@ -9,7 +9,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { Loader2, Save, Settings as SettingsIcon } from 'lucide-react'
-import { fetchCapabilities, fetchWorkspaceAudit, fetchWorkspaceSettings, saveWorkspaceSetting, type WorkspaceSettingView } from '../../real/api'
+import { fetchCapabilities } from '../../platform/capabilities';
+import { fetchWorkspaceAudit } from '../audit/remote';
+import { fetchWorkspaceSettings, saveWorkspaceSetting, type WorkspaceSettingView } from './remote';
 import { REAL_IDENTITY } from '../../real/identity'
 import { utcMinuteOr } from '../../real/format'
 import { go } from '../../router/navigate'

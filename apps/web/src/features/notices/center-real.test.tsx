@@ -15,8 +15,8 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'all' }),
 }))
-vi.mock('../../real/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../real/api')>()
+vi.mock('./remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./remote')>()
   return {
     ...actual,
     fetchNotices: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock('../../real/api', async (importOriginal) => {
   }
 })
 
-const api = await import('../../real/api')
+const api_notices = await import('./remote');
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
 const { createRealFeatureServices } = await import('../../real/service-adapter/index')
 const { useToastStore, useUiStore } = await import('../../state/stores')
@@ -56,10 +56,10 @@ function renderHeader(): void {
 }
 
 beforeEach(() => {
-  vi.mocked(api.fetchNotices).mockReset().mockResolvedValue(NOTICES as never)
-  vi.mocked(api.markNoticeRead).mockReset().mockResolvedValue({ ...NOTICES.notices[0], readAt: '2026-10-17T10:00:00.000Z' } as never)
-  vi.mocked(api.dismissNotice).mockReset().mockResolvedValue({ ...NOTICES.notices[1], dismissedAt: '2026-10-17T10:00:00.000Z' } as never)
-  vi.mocked(api.markAllNoticesRead).mockReset().mockResolvedValue({ updated: 2 })
+  vi.mocked(api_notices.fetchNotices).mockReset().mockResolvedValue(NOTICES as never)
+  vi.mocked(api_notices.markNoticeRead).mockReset().mockResolvedValue({ ...NOTICES.notices[0], readAt: '2026-10-17T10:00:00.000Z' } as never)
+  vi.mocked(api_notices.dismissNotice).mockReset().mockResolvedValue({ ...NOTICES.notices[1], dismissedAt: '2026-10-17T10:00:00.000Z' } as never)
+  vi.mocked(api_notices.markAllNoticesRead).mockReset().mockResolvedValue({ updated: 2 })
   useSessionStore.setState({ confirmation: null } as never)
   useToastStore.setState({ toasts: [] } as never)
   useUiStore.setState({ noticesOpen: false } as never)
@@ -84,7 +84,7 @@ describe('HeaderNotices in real mode (notice center port)', () => {
     fireEvent.click(await screen.findByTestId('notice-bell'))
     await screen.findByTestId('notice-row-n-1')
     await userEvent.click(await screen.findByRole('button', { name: 'Mark n-1 as read' }))
-    await waitFor(() => expect(api.markNoticeRead).toHaveBeenCalledWith('n-1'))
+    await waitFor(() => expect(api_notices.markNoticeRead).toHaveBeenCalledWith('n-1'))
   })
 
   it('offers no Open action for a notice that names no route, and dismisses only after confirmation', async () => {
@@ -93,8 +93,8 @@ describe('HeaderNotices in real mode (notice center port)', () => {
     const row = await screen.findByTestId('notice-row-n-1')
     expect(row.querySelector('button[disabled]')).not.toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Dismiss n-2' }))
-    expect(api.dismissNotice).not.toHaveBeenCalled()
+    expect(api_notices.dismissNotice).not.toHaveBeenCalled()
     await userEvent.click(await screen.findByRole('button', { name: 'Dismiss' }))
-    await waitFor(() => expect(api.dismissNotice).toHaveBeenCalledWith('n-2'))
+    await waitFor(() => expect(api_notices.dismissNotice).toHaveBeenCalledWith('n-2'))
   })
 })

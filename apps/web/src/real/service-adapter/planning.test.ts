@@ -5,8 +5,8 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+vi.mock('../../features/planning/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/planning/remote')>()
   return {
     ...actual,
     fetchPlanning: vi.fn(),
@@ -15,20 +15,20 @@ vi.mock('../api', async (importOriginal) => {
   }
 })
 
-const api = await import('../api')
+const api_planning = await import('../../features/planning/remote');
 const { createRealPlanningService } = await import('./planning')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'eng-1', corr: 'test' }
 
 beforeEach(() => {
-  vi.mocked(api.fetchPlanning).mockReset()
-  vi.mocked(api.fetchDocumentSource).mockReset()
-  vi.mocked(api.discardDocumentDraft).mockReset()
+  vi.mocked(api_planning.fetchPlanning).mockReset()
+  vi.mocked(api_planning.fetchDocumentSource).mockReset()
+  vi.mocked(api_planning.discardDocumentDraft).mockReset()
 })
 
 describe('real planning service', () => {
   it('reads the bundle into documents, facts and OPPLAN objectives, with reasons in plain words', async () => {
-    vi.mocked(api.fetchPlanning).mockResolvedValue({
+    vi.mocked(api_planning.fetchPlanning).mockResolvedValue({
       version: 1, engagementId: 'eng-1',
       documents: {
         roe: { state: 'ready', content: { engagement_name: 'E', client: 'Acme', start_date: '2026-10-01', end_date: '2026-10-31', engagement_type: 'external', testing_window: '09-17', in_scope: [{ target: 't', type: 'cidr' }], out_of_scope: [], prohibited_actions: ['DoS'] } },
@@ -55,13 +55,13 @@ describe('real planning service', () => {
   })
 
   it('marks ROE as not publishable from the console and maps a discard', async () => {
-    vi.mocked(api.fetchDocumentSource).mockResolvedValue({
+    vi.mocked(api_planning.fetchDocumentSource).mockResolvedValue({
       version: 1, engagementId: 'eng-1', name: 'roe', state: 'ready', digest: 'a'.repeat(64), updatedAt: null, sizeBytes: 2,
       source: '{}', validation: { valid: true, errors: [] }, readable: null, draft: { body: '{"x":1}', baseDigest: null, updatedBy: 'u', updatedAt: '2026-10-17T09:00:00.000Z' },
     } as never)
     const source = await createRealPlanningService().source(ctx, 'roe')
     expect(source).toMatchObject({ ok: true, data: { name: 'roe', publishable: false, draft: '{"x":1}', valid: true } })
-    vi.mocked(api.discardDocumentDraft).mockResolvedValue({ discarded: true })
+    vi.mocked(api_planning.discardDocumentDraft).mockResolvedValue({ discarded: true })
     expect(await createRealPlanningService().discardDraft(ctx, 'roe')).toEqual({ ok: true, data: { discarded: true } })
   })
 })

@@ -1,9 +1,6 @@
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalExport, LibraryProposalsRead, LibraryProposalStatus, LibraryService, LibrarySkill, LibrarySkillDetail, LibraryTechniqueRead } from '../../features/library/service'
-import {
-  amendLibraryProposal, decideLibraryProposal, exportLibraryProposal, fetchLibrary, fetchLibraryProposal, fetchLibraryProposals, fetchLibrarySkill, fetchLibraryTechnique,
-  proposeLibraryProposal, submitLibraryProposal, type LibraryProposalView,
-} from '../api'
+import { amendLibraryProposal, decideLibraryProposal, exportLibraryProposal, fetchLibrary, fetchLibraryProposal, fetchLibraryProposals, fetchLibrarySkill, fetchLibraryTechnique, proposeLibraryProposal, submitLibraryProposal, type LibraryProposalView } from '../../features/library/remote';
 import { guarded } from './shared'
 
 const PAGE_SIZE = 10

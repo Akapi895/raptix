@@ -9,11 +9,11 @@
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
 import { KeyRound, Loader2, LogOut, ShieldCheck } from 'lucide-react'
-import { login, logout } from '../api'
+import { login, logout } from '../../platform/auth-api';
 import { clearWorkspaceRecovery } from '../workspace-session'
 import { Button, Input } from '../../ui/index'
 import { createConsoleQueryClient } from '../../state/keys'
-import { SESSION_KEY, SessionContext, useSession, type SessionState } from '../session'
+import { SESSION_KEY, SessionContext, useSession, type SessionState } from '../../platform/session'
 
 /** Each trusted actor owns a cache; late replies can only populate the disposed cache. */
 function ActorQueries({ session, children }: { session: SessionState; children: ReactNode }): ReactElement {

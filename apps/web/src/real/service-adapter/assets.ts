@@ -2,7 +2,10 @@ import type { Asset } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { AssetDetailRead, AssetListQuery, AssetListRead, AssetScopeRead, AssetService, AssetUnmodelled } from '../../features/assets/service'
 import type { AssetImportOutcome, AssetImportRow, AssetScopeWriteOutcome } from '../../features/assets/writes'
-import { classifyAsset, fetchAssetInventory, fetchEffectiveScope, fetchGraph, getEngagement, importAssets, type AssetInventoryView } from '../api'
+import { classifyAsset, fetchAssetInventory, importAssets, type AssetInventoryView } from '../../features/assets/remote';
+import { fetchEffectiveScope } from '../../features/scope/remote';
+import { fetchGraph } from '../../features/analysis/remote';
+import { getEngagement } from '../../features/projects/remote';
 import { displayTime, guarded } from './shared'
 
 type InventoryRow = AssetInventoryView['assets'][number]

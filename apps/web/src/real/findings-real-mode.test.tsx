@@ -1,7 +1,7 @@
 /** The migrated findings screens render the mock UI over the real curated-findings API (ADR-0084). */
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { CuratedFindingView } from './api'
+import type { CuratedFindingView } from '@raptix/web-contracts';
 
 window.history.replaceState(null, '', '/?dataMode=real#/findings')
 vi.stubEnv('VITE_DATA_MODE', 'real')

@@ -5,7 +5,7 @@
  */
 import type { ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchPlanning } from '../../real/api'
+import { fetchPlanning } from '../planning/remote';
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { Banner, Card, CardHeader, Empty } from '../../ui/index'
 import { runStatusTone, type StatusTone } from './runtime-status'

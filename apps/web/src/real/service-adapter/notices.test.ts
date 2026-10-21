@@ -5,8 +5,8 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+vi.mock('../../features/notices/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/notices/remote')>()
   return {
     ...actual,
     fetchNotices: vi.fn(),
@@ -16,22 +16,22 @@ vi.mock('../api', async (importOriginal) => {
   }
 })
 
-const api = await import('../api')
+const api_notices = await import('../../features/notices/remote');
 const { createRealNoticeCenterService } = await import('./notices')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'all', corr: 'test' }
 const NOTICE = { id: 'n-1', engagementId: 'eng-1', kind: 'approval', title: 'Scope revision needs review', detail: null, readAt: null, dismissedAt: null, createdAt: '2026-10-17T09:00:00.000Z' }
 
 beforeEach(() => {
-  vi.mocked(api.fetchNotices).mockReset()
-  vi.mocked(api.markNoticeRead).mockReset()
-  vi.mocked(api.dismissNotice).mockReset()
-  vi.mocked(api.markAllNoticesRead).mockReset()
+  vi.mocked(api_notices.fetchNotices).mockReset()
+  vi.mocked(api_notices.markNoticeRead).mockReset()
+  vi.mocked(api_notices.dismissNotice).mockReset()
+  vi.mocked(api_notices.markAllNoticesRead).mockReset()
 })
 
 describe('real notice center service', () => {
   it('maps a notice to its text, project and read state, with no invented route or chip', async () => {
-    vi.mocked(api.fetchNotices).mockResolvedValue({ notices: [NOTICE], unread: 1, source: 'db' } as never)
+    vi.mocked(api_notices.fetchNotices).mockResolvedValue({ notices: [NOTICE], unread: 1, source: 'db' } as never)
     const result = await createRealNoticeCenterService().list(ctx)
     expect(result).toEqual({
       ok: true,
@@ -46,19 +46,19 @@ describe('real notice center service', () => {
   it('refuses a request to mark a notice unread instead of pretending it happened', async () => {
     const result = await createRealNoticeCenterService().setRead(ctx, 'n-1', false)
     expect(result).toEqual({ ok: false, failure: { kind: 'validation', message: 'Marking a notice unread is not available on this server.' } })
-    expect(api.markNoticeRead).not.toHaveBeenCalled()
+    expect(api_notices.markNoticeRead).not.toHaveBeenCalled()
   })
 
   it('marks a notice read and reports its read state from the server row', async () => {
-    vi.mocked(api.markNoticeRead).mockResolvedValue({ ...NOTICE, readAt: '2026-10-17T10:00:00.000Z' } as never)
+    vi.mocked(api_notices.markNoticeRead).mockResolvedValue({ ...NOTICE, readAt: '2026-10-17T10:00:00.000Z' } as never)
     const result = await createRealNoticeCenterService().setRead(ctx, 'n-1', true)
-    expect(api.markNoticeRead).toHaveBeenCalledWith('n-1')
+    expect(api_notices.markNoticeRead).toHaveBeenCalledWith('n-1')
     expect(result).toMatchObject({ ok: true, data: { id: 'n-1', read: true } })
   })
 
   it('dismisses one notice and clears the unread count on mark-all', async () => {
-    vi.mocked(api.dismissNotice).mockResolvedValue({ ...NOTICE, dismissedAt: '2026-10-17T10:00:00.000Z' } as never)
-    vi.mocked(api.markAllNoticesRead).mockResolvedValue({ updated: 3 })
+    vi.mocked(api_notices.dismissNotice).mockResolvedValue({ ...NOTICE, dismissedAt: '2026-10-17T10:00:00.000Z' } as never)
+    vi.mocked(api_notices.markAllNoticesRead).mockResolvedValue({ updated: 3 })
     const service = createRealNoticeCenterService()
     expect(await service.dismiss(ctx, 'n-1')).toEqual({ ok: true, data: { id: 'n-1' } })
     expect(await service.markAllRead(ctx)).toEqual({ ok: true, data: { unread: 0 } })

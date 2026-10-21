@@ -1,6 +1,6 @@
 import type { RequestContext } from '../../domain/service'
 import type { TeamMember, TeamRead, TeamService } from '../../features/team/service'
-import { fetchMembers, inviteMember, removeMember, updateMemberRole, type InviteMemberInput } from '../api'
+import { fetchMembers, inviteMember, removeMember, updateMemberRole, type InviteMemberInput } from '../../features/team/remote';
 import { guarded } from './shared'
 
 /** The engagement id is the console's project id in real mode. */

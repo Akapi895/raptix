@@ -27,7 +27,7 @@ import { can as policyCan, projectAccessible, readOnlyContext } from '../domain/
 import type { CanAction } from '../domain/permissions'
 import { DATA_MODE } from './mode'
 import { REAL_PERSONA } from '../real/identity'
-import { useSession } from '../real/session'
+import { useSession } from '../platform/session'
 import { useRealMembershipRole, useRealProjectList } from '../real/queries'
 import { REAL_CONTROL_GAPS } from '../real/service-adapter/control-gaps'
 import { useServices, useServicesOrNull } from './services'

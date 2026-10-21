@@ -4,14 +4,14 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 
-vi.mock('../../real/api', () => ({ fetchTasks: vi.fn() }))
+vi.mock('../overview/remote', () => ({ fetchTasks: vi.fn() }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
 const { ApprovalInbox } = await import('./approval-inbox')
-const api = await import('../../real/api')
+const api_overview = await import('../overview/remote');
 
 const TASK = (over: Record<string, unknown>) => ({
   kind: 'scope-revision', engagementId: 'eng-1', engagementName: 'Lab', refId: 'SR-1', title: 'Widen the in-scope range',
@@ -27,7 +27,7 @@ beforeEach(() => { cleanup(); vi.clearAllMocks() })
 
 describe('ApprovalInbox', () => {
   it('lists only the decisions pending on this engagement and flags the ones waiting on the signed-in actor', async () => {
-    vi.mocked(api.fetchTasks).mockResolvedValue({
+    vi.mocked(api_overview.fetchTasks).mockResolvedValue({
       tasks: [
         TASK({ refId: 'SR-1', title: 'Widen the in-scope range', awaitingActor: true }),
         TASK({ kind: 'report-review', refId: 'RPT-9', title: 'Q3 report', engagementId: 'eng-2' }),
@@ -45,13 +45,13 @@ describe('ApprovalInbox', () => {
   })
 
   it('states when nothing is waiting instead of showing an empty list', async () => {
-    vi.mocked(api.fetchTasks).mockResolvedValue({ tasks: [], engagements: [], counts: {}, source: 'db' } as never)
+    vi.mocked(api_overview.fetchTasks).mockResolvedValue({ tasks: [], engagements: [], counts: {}, source: 'db' } as never)
     render(withClient(<ApprovalInbox engagementId="eng-1" />))
     expect(await screen.findByText('Nothing is waiting')).toBeInTheDocument()
   })
 
   it('shows an explicit unavailable state rather than a substitute list when the source fails', async () => {
-    vi.mocked(api.fetchTasks).mockRejectedValue(new Error('inbox down'))
+    vi.mocked(api_overview.fetchTasks).mockRejectedValue(new Error('inbox down'))
     render(withClient(<ApprovalInbox engagementId="eng-1" />))
     expect(await screen.findByText('Approvals unavailable')).toBeInTheDocument()
     expect(screen.getByText(/inbox down/)).toBeInTheDocument()

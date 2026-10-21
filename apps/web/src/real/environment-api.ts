@@ -10,7 +10,7 @@ import {
   type EnvironmentCommandResult,
   type EnvironmentStateView,
 } from '@raptix/web-contracts'
-import { apiFetch, ApiTransportError } from './transport'
+import { apiFetch, ApiTransportError } from '../platform/transport'
 
 const PREPARATION_TIMEOUT_MS = 660_000 // Allow the controller's ten-minute startup window and its final observation.
 const PREPARATION_POLL_MS = 2_000

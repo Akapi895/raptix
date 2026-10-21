@@ -7,7 +7,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { Megaphone, Loader2 } from 'lucide-react'
-import { createCampaign, fetchCampaignCapabilities, fetchCampaigns, reconcileCampaignJob, runCampaignJob } from '../api'
+import { createCampaign, fetchCampaignCapabilities, fetchCampaigns, reconcileCampaignJob, runCampaignJob } from '../../features/c2/remote';
 import type { CampaignView } from '@raptix/web-contracts'
 import { useDirty } from '../../state/session'
 import { Banner, Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui/index'

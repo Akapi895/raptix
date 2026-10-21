@@ -10,7 +10,7 @@ import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, use
 import { useResourceScope } from '../state/resource-scope'
 import { isRealMode } from '../state/mode'
 import { saveArtifact } from '../real/artifact'
-import { fetchEffectiveScope } from '../real/api'
+import { fetchEffectiveScope } from '../features/scope/remote';
 import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject, useCan, useMe } from '../state/console'

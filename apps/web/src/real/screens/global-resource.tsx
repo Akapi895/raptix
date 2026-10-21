@@ -1,7 +1,7 @@
 /** Global resource navigation without pretending scoped APIs are aggregate sources. */
 import type { ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchOverviewC2, fetchOverviewFindings } from '../api'
+import { fetchOverviewC2, fetchOverviewFindings } from '../../features/overview/remote';
 import { useRealProjects } from '../queries'
 import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, DescList, PageHeader, Skeleton, Tabs } from '../../ui/index'

@@ -1,7 +1,7 @@
 import type { ServiceResult } from '../../domain/service'
 import type { Audit } from '../../domain/entities'
 import type { AuditQuery, AuditRead, SettingsService } from '../../features/settings/service'
-import { fetchWorkspaceAudit, type AuditEntryView } from '../api'
+import { fetchWorkspaceAudit, type AuditEntryView } from '../../features/audit/remote';
 import { guarded } from './shared'
 import { unavailable } from './stub'
 

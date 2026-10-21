@@ -1,5 +1,5 @@
 /** Durable browser recovery identities; command bodies remain on the server ledger. */
-import type { ThreadKind } from './api'
+import type { ThreadKind } from '@raptix/web-contracts';
 import { REAL_IDENTITY } from './identity'
 
 export interface PendingRequest { requestId: string; threadId: string | null; kind: ThreadKind }

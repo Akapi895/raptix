@@ -9,7 +9,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Gauge } from 'lucide-react'
 import type { ReactElement } from 'react'
-import { fetchTasks } from '../api'
+import { fetchTasks } from '../../features/overview/remote';
 import { go } from '../../router/navigate'
 import { parseHash } from '../../router/history'
 import { useRoute } from '../../router/navigate'

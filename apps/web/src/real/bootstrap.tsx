@@ -11,7 +11,8 @@
 import { useQuery, QueryClientProvider } from '@tanstack/react-query'
 import { createContext, useContext, useEffect, useMemo, type ReactElement, type ReactNode } from 'react'
 import { Loader2, PlugZap, RefreshCw, ServerCrash } from 'lucide-react'
-import { capabilityState, fetchCapabilities, type CapabilitiesDocument } from './api'
+import { capabilityState, fetchCapabilities } from '../platform/capabilities';
+import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { switchDataMode } from '../state/mode'
 import { REAL_IDENTITY, type RealIdentity } from './identity'
 import { createConsoleQueryClient } from '../state/keys'
