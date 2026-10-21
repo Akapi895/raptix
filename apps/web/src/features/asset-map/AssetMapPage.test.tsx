@@ -1,6 +1,9 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useProjectStore } from '../../state/stores'
+
+/** The props of the canvas on screen, so a test can report a camera the way a real pan or zoom does. */
+const mockCanvas: { props: { onCameraChange?: (camera: { zoom: number; x: number; y: number }) => void; restore?: { camera: { zoom: number; x: number; y: number } } | null } | null } = { props: null }
 
 const fetchOverview = vi.fn()
 const fetchMembers = vi.fn()
@@ -18,7 +21,12 @@ vi.mock('../../real/asset-map-api', () => ({
   fetchAssetMapOverlay: (...args: unknown[]) => fetchOverlay(...args),
 }))
 vi.mock('../../real/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
-vi.mock('./AssetMapCanvas', () => ({ AssetMapCanvas: () => <div data-testid="asset-map-canvas" /> }))
+vi.mock('./AssetMapCanvas', () => ({
+  AssetMapCanvas: (props: typeof mockCanvas.props) => {
+    mockCanvas.props = props
+    return <div data-testid="asset-map-canvas" />
+  },
+}))
 
 const completeness = { loaded: 1, total: 1, hasMore: false, truncated: false, source: { catalog: 'ok', graph: 'ok' }, revision: 'rev-1' }
 const host = { assetId: 'asset_a', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.1' }
@@ -118,6 +126,28 @@ describe('AssetMapPage state handling', () => {
     render(<AssetMapPage />)
     await waitFor(() => expect(fetchOverview).toHaveBeenCalledWith('eng-2'))
     expect(fetchDetail).not.toHaveBeenCalled()
+    globalThis.localStorage.removeItem(savedKey)
+  });
+
+  it('keeps the saved asset and camera of each project apart when the operator goes A to B and back in one session', async () => {
+    const savedEng2 = 'raptix.assetMap.selected.user-1.eng-2'
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
+    await waitFor(() => expect(globalThis.localStorage.getItem(savedKey)).toContain('asset_a'))
+    act(() => mockCanvas.props?.onCameraChange?.({ zoom: 2, x: 40, y: -10 }))
+    await waitFor(() => expect(JSON.parse(globalThis.localStorage.getItem(savedKey) ?? '{}').camera).toEqual({ zoom: 2, x: 40, y: -10 }))
+
+    act(() => useProjectStore.setState({ pid: 'eng-2' }))
+    await waitFor(() => expect(fetchOverview).toHaveBeenCalledWith('eng-2'))
+    await screen.findByRole('button', { name: '10.0.0.1' })
+    expect(globalThis.localStorage.getItem(savedEng2)).toBeNull()
+    expect(mockCanvas.props?.restore ?? null).toBeNull()
+
+    act(() => useProjectStore.setState({ pid: 'eng-1' }))
+    await waitFor(() => expect(mockCanvas.props?.restore?.camera).toEqual({ zoom: 2, x: 40, y: -10 }))
+    expect(JSON.parse(globalThis.localStorage.getItem(savedKey) ?? '{}')).toEqual({ assetId: 'asset_a', camera: { zoom: 2, x: 40, y: -10 } })
+    expect(globalThis.localStorage.getItem(savedEng2)).toBeNull()
     globalThis.localStorage.removeItem(savedKey)
   });
 
