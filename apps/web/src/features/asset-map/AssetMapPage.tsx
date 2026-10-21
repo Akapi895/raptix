@@ -20,10 +20,10 @@ import {
   fetchAssetMapOverview,
   fetchAssetMapSearch,
 } from '../../real/asset-map-api'
-import { AssetMapCanvas, type CanvasFocus } from './AssetMapCanvas'
+import { AssetMapCanvas, type CanvasFocus, type CanvasRestore } from './AssetMapCanvas'
 import { toCanvasElements, VISIBLE_EDGE_BUDGET, VISIBLE_NODE_BUDGET } from './canvas-model'
 import { rendererFor, rendererLabel } from './domain-renderers'
-import { loadSavedSelection, saveSelection } from './saved-view'
+import { loadSavedView, saveSelection, type SavedCamera } from './saved-view'
 
 /** Kinds the operator can switch off on the canvas. Centres are never switched off. */
 const SWITCHABLE_KINDS = [
@@ -312,6 +312,10 @@ export function AssetMapPage() {
   const [focus, setFocus] = useState<CanvasFocus | null>(null)
   const [overlay, setOverlay] = useState<AssetMapOverlay | null>(null)
   const [overlayError, setOverlayError] = useState<string | null>(null)
+  const [restore, setRestore] = useState<CanvasRestore | null>(null)
+  /** The camera last reported by the canvas for this project; saved with the selection. */
+  const camera = useRef<SavedCamera | null>(null)
+  const restoreCount = useRef(0)
   /** Bumped whenever the project or the signed-in user changes; every read compares against it before it applies. */
   const generation = useRef(0)
   /** Within one project, the newest selection read wins. */
@@ -352,8 +356,14 @@ export function AssetMapPage() {
         setOriginList(listFrom(originPage))
         // The saved asset may sit past the first page of each list (it was reached by search), so it is
         // restored as it is. The server answers not-found if the asset has left the catalog.
-        const saved = loadSavedSelection(actorId, engagementId)
-        if (saved) setSelected(saved)
+        const saved = loadSavedView(actorId, engagementId)
+        if (saved) {
+          setSelected(saved.assetId)
+          if (saved.camera) {
+            camera.current = saved.camera
+            setRestore({ camera: saved.camera, token: ++restoreCount.current })
+          }
+        }
       })
       .catch(reason => {
         if (gen === generation.current) setError(describeFailure(reason))
@@ -395,7 +405,7 @@ export function AssetMapPage() {
     setDetail(null)
     setOverlay(null)
     setOverlayError(null)
-    saveSelection(actorId, engagementId, selected)
+    saveSelection(actorId, engagementId, selected, camera.current)
     loadSelection(selected, '')
     // loadSelection reads the current engagement; it is re-run only when the selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -601,7 +611,16 @@ export function AssetMapPage() {
             </label>
           ))}
         </fieldset>
-        <AssetMapCanvas elements={elements} onSelectAsset={setSelected} focus={focus} />
+        <AssetMapCanvas
+          elements={elements}
+          onSelectAsset={setSelected}
+          focus={focus}
+          restore={restore}
+          onCameraChange={next => {
+            camera.current = next
+            if (engagementId && selected) saveSelection(actorId, engagementId, selected, next)
+          }}
+        />
         {elements.hiddenNodes > 0 || elements.hiddenEdges > 0 ? (
           <p className="text-xs text-slate-600" data-testid="visible-budget">
             Not drawn: {elements.hiddenNodes} node(s) and {elements.hiddenEdges} relation(s) beyond the visible budget ({VISIBLE_NODE_BUDGET} nodes, {VISIBLE_EDGE_BUDGET} relations).

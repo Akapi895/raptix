@@ -100,6 +100,7 @@ interface FakeCore {
   layout: () => { run: () => void }
   fit: ReturnType<typeof vi.fn>
   center: ReturnType<typeof vi.fn>
+  viewport: ReturnType<typeof vi.fn>
   zoom: () => number
   pan: () => { x: number; y: number }
   on: (event: string, selector: string | Handler, handler?: Handler) => void
@@ -141,6 +142,7 @@ function createFakeCore(): FakeCore {
     layout: () => ({ run: () => undefined }),
     fit: vi.fn(),
     center: vi.fn(),
+    viewport: vi.fn(),
     zoom: () => 1,
     pan: () => ({ x: 0, y: 0 }),
     on: (event, selector, handler) => {
@@ -264,3 +266,34 @@ describe('AssetMapCanvas', () => {
     expect(core().fit).toHaveBeenCalledWith(undefined, 30)
   });
 });
+
+describe('AssetMapCanvas camera', () => {
+  it('applies the saved camera once, after the graph is drawn', () => {
+    const camera = { zoom: 1.5, x: 40, y: -20 }
+    const { rerender } = render(<AssetMapCanvas elements={empty} onSelectAsset={vi.fn()} restore={{ camera, token: 1 }} />)
+    expect(core().viewport).not.toHaveBeenCalled()
+    rerender(<AssetMapCanvas elements={twoNodes} onSelectAsset={vi.fn()} restore={{ camera, token: 1 }} />)
+    expect(core().viewport).toHaveBeenCalledTimes(1)
+    expect(core().viewport).toHaveBeenCalledWith({ zoom: 1.5, pan: { x: 40, y: -20 } })
+    rerender(<AssetMapCanvas elements={twoNodes} onSelectAsset={vi.fn()} restore={{ camera, token: 1 }} />)
+    expect(core().viewport).toHaveBeenCalledTimes(1)
+  });
+
+  it('reports the camera once it has been still for a moment, not on every movement', () => {
+    vi.useFakeTimers()
+    try {
+      const onCameraChange = vi.fn()
+      render(<AssetMapCanvas elements={twoNodes} onSelectAsset={vi.fn()} onCameraChange={onCameraChange} />)
+      const pan = core().handlers.find(item => item.event === 'pan')?.handler as (event: unknown) => void
+      pan({})
+      pan({})
+      expect(onCameraChange).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(300)
+      expect(onCameraChange).toHaveBeenCalledTimes(1)
+      expect(onCameraChange).toHaveBeenCalledWith({ zoom: 1, x: 0, y: 0 })
+    } finally {
+      vi.useRealTimers()
+    }
+  });
+});
+

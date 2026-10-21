@@ -13,7 +13,7 @@
  *   4. groups: collapse hides the members of a host's group and expand brings them back;
  *   5. refresh: re-reading the lists keeps every node where it was (position digest unchanged);
  *   6. keyboard: a list entry is reachable with the keyboard and selects an origin, whose sitemap opens;
- *   7. saved view: after a reload the last asset reopens for the same project;
+ *   7. saved view: after a reload the last asset reopens for the same user and project, with its camera;
  *   8. responsive: at a 390 px viewport the page does not scroll sideways.
  */
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -119,9 +119,13 @@ try {
   record('keyboard selects an origin and opens its sitemap', endpointRows > 0, `endpoints: ${endpointRows}`)
 
   // 7. Saved view: the last asset reopens after a reload, for this user and project only.
+  const zoomBeforeReload = Number(await canvas.getAttribute('data-zoom'))
   await page.reload()
   await page.locator('section[aria-label="Sitemap"]').waitFor({ timeout: 20000 })
+  await page.waitForFunction(expected => Number(document.querySelector('[data-testid="asset-map-canvas"]')?.dataset.zoom) === expected, zoomBeforeReload, { timeout: 20000 }).catch(() => undefined)
   record('saved view reopens the last asset after reload', true)
+  const zoomAfterReload = Number(await canvas.getAttribute('data-zoom'))
+  record('saved view restores the camera after reload', Math.abs(zoomAfterReload - zoomBeforeReload) < 0.005, `${zoomBeforeReload} -> ${zoomAfterReload}`)
 
   // 8. Responsive: a phone-width viewport must not scroll sideways.
   await page.setViewportSize({ width: 390, height: 844 })
