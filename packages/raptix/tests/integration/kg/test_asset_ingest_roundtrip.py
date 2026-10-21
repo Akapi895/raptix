@@ -171,3 +171,18 @@ def test_agent_records_get_identity_and_redacted_entrypoints(store: KGStore) -> 
         {"asset_id": asset_id(ENGAGEMENT, AssetRef(AssetKind.HOST, "default", "10.0.0.1"))}
     ]
     assert "u:p" not in repr(entrypoints) and "abc" not in repr(entrypoints)
+
+
+@requires_neo4j
+def test_deletes_advance_the_revision_that_cursors_are_bound_to(store: KGStore) -> None:
+    store.record_observations(
+        [{"kind": "Host", "key": "host::10.0.0.1", "props": {"source": "agent"}}],
+        engagement=ENGAGEMENT,
+        created_by="it",
+        source_episode_id="ep-revision",
+    )
+    before = store.revision(engagement=ENGAGEMENT)
+    assert store.delete_engagement(engagement=ENGAGEMENT) >= 1
+    after = store.revision(engagement=ENGAGEMENT)
+    assert after.startswith(f"rev-{ENGAGEMENT}-")
+    assert int(after.rsplit("-", 1)[1]) > int(before.rsplit("-", 1)[1])

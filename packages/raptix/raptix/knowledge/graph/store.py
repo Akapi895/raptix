@@ -53,6 +53,14 @@ _SAFE_LABEL_RE = re.compile(r"^[A-Z][A-Za-z0-9]{0,63}$")
 _SAFE_REL_TYPE_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
 
 
+# Advances the engagement's write counter inside the transaction that changed the graph.
+_REVISION_BUMP = (
+    "MERGE (v:KGRevision {scope: $engagement}) "
+    "ON CREATE SET v.counter = 0 "
+    "SET v.counter = v.counter + 1"
+)
+
+
 class KGStoreUnavailableError(RuntimeError):
     """The Neo4j backend is configured but cannot be reached."""
 
@@ -221,43 +229,68 @@ class KGStore:
         *,
         engagement: str,
     ) -> list[dict[str, Any]]:
-        """Run a write transaction. Driver retries deadlock errors."""
+        """Run a write transaction. Driver retries deadlock errors.
+
+        Every scoped write advances the engagement's ``KGRevision`` counter in the same
+        transaction, so a write that bypasses ``record_observations`` (a delete, a
+        relationship written by a legacy adapter) still moves the revision that cursors
+        are bound to.
+        """
         self._check_engagement(engagement)
         self._check_scoped_cypher(cypher, engagement)
+        self._ensure_revision_schema()
+        return self._write(cypher, params, engagement=engagement, bump=True)
+
+    def _ensure_revision_schema(self) -> None:
+        # The schema migration is not part of every runtime boot. Enforce the uniqueness
+        # invariant before the first write from each store, so two independent processes
+        # cannot create duplicate markers.
+        if self._revision_schema_ready:
+            return
+        self._write(
+            "CREATE CONSTRAINT kg_revision_scope IF NOT EXISTS "
+            "FOR (v:KGRevision) REQUIRE v.scope IS UNIQUE",
+            None,
+            engagement="schema",
+            bump=False,
+        )
+        self._revision_schema_ready = True
+
+    def _write(
+        self,
+        cypher: str,
+        params: dict[str, Any] | None,
+        *,
+        engagement: str,
+        bump: bool,
+    ) -> list[dict[str, Any]]:
         scoped_params = {**(params or {}), "engagement": engagement}
+
+        def _transaction(tx: Any) -> list[dict[str, Any]]:
+            rows = [dict(record) for record in tx.run(cypher, **scoped_params)]
+            if bump:
+                tx.run(_REVISION_BUMP, engagement=engagement).consume()
+            return rows
+
         with self._driver.session(database=self._database) as session:
-            return session.execute_write(
-                lambda tx: [dict(record) for record in tx.run(cypher, **scoped_params)]
-            )
+            return session.execute_write(_transaction)
 
     # ── AttackGraphProtocol implementation ─────────────────────────────
 
     def revision(self, *, engagement: str) -> str:
-        """Read an atomic per-engagement write counter plus legacy graph timestamps.
+        """The engagement's write counter: one indexed lookup on ``KGRevision.scope``.
 
-        Separate subqueries avoid the node × edge Cartesian product. The counter
-        advances inside the observation transaction across stores/processes;
-        legacy graph writers still contribute via node/edge timestamps.
+        Writers advance it in the transaction that changes the graph (``record_observations``
+        and every ``execute_write``), so no scan of the node or relationship set is needed.
         """
         self._check_engagement(engagement)
-        cypher = (
-            "CALL () { MATCH (v:KGRevision {scope: $engagement}) "
-            "RETURN coalesce(max(v.counter), 0) AS seq } "
-            "CALL () { MATCH (n) WHERE n.engagement = $engagement "
-            "RETURN coalesce(max(n.lastupdated), 0) AS node_rev } "
-            "CALL () { MATCH (src)-[r]->(dst) WHERE src.engagement = $engagement "
-            "AND dst.engagement = $engagement AND r.engagement = $engagement "
-            "RETURN coalesce(max(r.lastupdated), 0) AS edge_rev } "
-            "RETURN seq, node_rev, edge_rev"
+        rows = self.execute_read(
+            "MATCH (v:KGRevision {scope: $engagement}) RETURN coalesce(v.counter, 0) AS seq",
+            {},
+            engagement=engagement,
         )
-        rows = self.execute_read(cypher, {"engagement": engagement}, engagement=engagement)
-        row = rows[0] if rows else {}
-        seq = int(row.get("seq") or 0)
-        node = int(row.get("node_rev") or row.get("rev") or 0)
-        edge = int(row.get("edge_rev") or 0)
-        if not seq and not edge:
-            return f"rev-{engagement}-{node}"
-        return f"rev-{engagement}-{seq}:{node}:{edge}"
+        seq = int(rows[0]["seq"]) if rows else 0
+        return f"rev-{engagement}-{seq}"
 
     def snapshot(self, *, engagement: str):
         """Build an EngagementSnapshot for ``cart.diff_snapshots`` consumption.
@@ -367,16 +400,7 @@ class KGStore:
                 "revision": self.revision(engagement=engagement),
             }
 
-        # The schema migration is not part of every runtime boot. Enforce the
-        # uniqueness invariant before the first write from each store as well,
-        # so two independent processes cannot create duplicate markers.
-        if not self._revision_schema_ready:
-            self.execute_write(
-                "CREATE CONSTRAINT kg_revision_scope IF NOT EXISTS "
-                "FOR (v:KGRevision) REQUIRE v.scope IS UNIQUE",
-                engagement="schema",
-            )
-            self._revision_schema_ready = True
+        self._ensure_revision_schema()
 
         update_tag = int(time.time())
         node_rows: list[dict[str, Any]] = []
@@ -410,7 +434,9 @@ class KGStore:
                 if isinstance(prop_value, str):
                     props[prop_name] = redact_text(prop_value)
                 elif isinstance(prop_value, list):
-                    props[prop_name] = [redact_text(item) if isinstance(item, str) else item for item in prop_value]
+                    props[prop_name] = [
+                        redact_text(item) if isinstance(item, str) else item for item in prop_value
+                    ]
             # Asset-bearing nodes carry the identity ADR-0094 derives from their locator, whichever
             # writer produced them. An agent-supplied locator that is not valid stays unidentified.
             if kind in ASSET_BEARING_KINDS and "asset_id" not in props:
