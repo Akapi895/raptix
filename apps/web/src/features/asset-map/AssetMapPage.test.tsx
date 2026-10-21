@@ -203,3 +203,38 @@ describe('AssetMapPage state handling', () => {
     expect(screen.getByTestId('asset-map-canvas')).toBeTruthy()
   });
 });
+
+describe('AssetMapPage project scope and paging', () => {
+  it('drops a search answer that arrives after the operator switched project', async () => {
+    let resolveSearch: (value: unknown) => void = () => undefined
+    fetchSearch.mockImplementationOnce(() => new Promise(resolve => { resolveSearch = resolve }))
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    await screen.findByRole('button', { name: '10.0.0.1' })
+    fireEvent.change(screen.getByLabelText('Find an asset'), { target: { value: '192.168' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    useProjectStore.setState({ pid: 'eng-2' })
+    await waitFor(() => expect(fetchOverview).toHaveBeenCalledWith('eng-2'))
+    resolveSearch({ engagementId: 'eng-1', query: '192.168', items: [{ assetId: 'asset_x', kind: 'host', namespace: 'default', canonicalKey: '192.168.0.9' }], completeness })
+    await new Promise(done => setTimeout(done, 10))
+    expect(screen.queryByRole('region', { name: 'Search results' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '192.168.0.9' })).toBeNull()
+  });
+
+  it('loads the next page of hosts with its cursor and keeps the rows already on screen', async () => {
+    const second = { assetId: 'asset_h2', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.2' }
+    fetchMembers.mockImplementation((_e: string, kind: string, cursor?: string) => {
+      if (kind !== 'host') return Promise.resolve({ engagementId: 'eng-1', kind, items: [origin], nextCursor: null, completeness })
+      if (cursor === 'page-2') return Promise.resolve({ engagementId: 'eng-1', kind, items: [second], nextCursor: null, completeness: { ...completeness, loaded: 2, total: 2 } })
+      return Promise.resolve({ engagementId: 'eng-1', kind, items: [host], nextCursor: 'page-2', completeness: { ...completeness, loaded: 1, total: 2, hasMore: true } })
+    })
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Load more hosts' }))
+    expect(await screen.findByRole('button', { name: '10.0.0.2' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '10.0.0.1' })).toBeTruthy()
+    expect(fetchMembers).toHaveBeenCalledWith('eng-1', 'host', 'page-2')
+    expect(screen.queryByRole('button', { name: 'Load more hosts' })).toBeNull()
+  });
+});
+
