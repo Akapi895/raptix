@@ -12,7 +12,7 @@ import {
 import { go } from '../../router/navigate'
 import { ApiTransportError } from '../transport'
 import { utcMinute } from '../format'
-import { Banner, Button, Input, Select, Skeleton, Textarea } from '../../ui'
+import { Banner, Button, Input, Select, Skeleton, Textarea } from '../../ui/index'
 
 const STATE_TEXT: Record<InstanceMessageState, string> = {
   accepted: 'waiting for the next step',

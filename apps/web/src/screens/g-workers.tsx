@@ -18,7 +18,7 @@ import { BRANCH_LABEL } from '../data'
 import type { BranchState, WorkerState } from '../domain/entities'
 import { WorkerReadError, useWorkers } from '../features/workers/query'
 import type { WorkerRow } from '../features/workers/service'
-import { Banner, Button, DescList, Empty, IdLink, Mono, Segmented, Table, cx } from '../ui'
+import { Banner, Button, DescList, Empty, IdLink, Mono, Segmented, Table, cx } from '../ui/index'
 
 const TONE: Record<string, string> = {
   ok: 'text-ok bg-ok-soft border-ok/30', warn: 'text-warn bg-warn-soft border-warn/30', bad: 'text-bad bg-bad-soft border-bad/30',

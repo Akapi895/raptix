@@ -17,7 +17,7 @@
  * feature-local transactions in ./grants — every commit publishes the
  * session / session-request / audit ChangeSets these reads observe.
  */
-import { projectAccessible, can as policyCan } from '../../auth/policy'
+import { projectAccessible, can as policyCan } from '../../domain/policy'
 import { parseDemoInstant } from '../../domain/clock'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'

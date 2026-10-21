@@ -17,7 +17,7 @@ import { showCreateProject, useCreateProjectDialog } from '../create-project-dia
 import { go } from '../../router/navigate'
 import { useDirty, useSessionStore } from '../../state/session'
 import { useToastStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, Check, Field, Input, Modal, Select, Textarea } from '../../ui'
+import { Banner, Button, Card, CardHeader, Check, Field, Input, Modal, Select, Textarea } from '../../ui/index'
 
 const TARGET_TYPES: { value: CreateEngagementInput['targetType']; label: string }[] = [
   { value: 'web_url', label: 'Web URL' },

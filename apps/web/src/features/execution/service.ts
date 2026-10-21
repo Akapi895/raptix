@@ -1,4 +1,4 @@
-import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView } from '../../domain/projection'

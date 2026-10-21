@@ -14,7 +14,7 @@
  * so deadline events continue without any screen mounted and a demo reset
  * re-arms them against the fresh dataset.
  */
-import { can as policyCan, projectAccessible } from '../../auth/policy'
+import { can as policyCan, projectAccessible } from '../../domain/policy'
 import { DEMO_TZ, formatDemoInstant, parseDemoInstant, type Scheduler } from '../../domain/clock'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'

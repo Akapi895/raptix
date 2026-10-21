@@ -2,7 +2,7 @@
  * Chat-card typed reads (ticket 67, ADR-0067 —
  * docs/adr/0067-web-console-service-domain-boundary.md).
  *
- * The shared chat cards (g-common) resolve their linked plan / tool / asset
+ * The shared chat cards (aichat/common) resolve their linked plan / tool / asset
  * records through these narrow projections instead of the database: one
  * cached derivation per authority publication, keyed by the record the card
  * renders. The reads add no access checks of their own — the cards render

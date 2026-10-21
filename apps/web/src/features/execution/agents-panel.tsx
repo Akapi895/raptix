@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from 'react'
 import { Bot, ChevronDown, ChevronRight, CircleHelp, GitBranch, Hand, Radio, ShieldAlert } from 'lucide-react'
-import { Button, DescList, Textarea, cx } from '../../ui'
+import { Button, DescList, Textarea, cx } from '../../ui/index'
 import type { AgentInstance, AgentWorkspace, InstanceAction, InstanceStatus } from './model'
 
 const LABEL: Record<InstanceStatus, string> = { queued: 'Queued', running: 'Running', waiting: 'Waiting for you', blocked: 'Blocked', completed: 'Completed', failed: 'Failed', cancelled: 'Cancelled', paused: 'Paused', unknown: 'Unknown' }

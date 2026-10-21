@@ -34,7 +34,7 @@ import { EnvironmentPanel } from './environment-panel'
 import { go, useRoute } from '../../router/navigate'
 import { REAL_PROJECT_NAV } from '../../shell/nav'
 import { useProjectStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../ui/index'
 
 /**
  * The sidebar's grouped model is the project nav (plan 2026-10-16 §3.1 — no

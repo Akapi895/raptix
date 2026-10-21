@@ -23,7 +23,7 @@
  * checklist stay with ticket 22; plan expiry enforcement with ticket 39.
  */
 import { APR } from '../../data'
-import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import type { Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'

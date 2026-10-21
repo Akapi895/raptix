@@ -13,7 +13,7 @@
  * the actor-type/AI-related filters and audit pagination apply inside the
  * handler; reads share the factory's superseded-scope guard.
  */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { planVer, toolFacets } from '../../data'
 import type { Db, Facets, Plan } from '../../data'
 import type { AiMode, Audit, Conversation } from '../../domain/entities'

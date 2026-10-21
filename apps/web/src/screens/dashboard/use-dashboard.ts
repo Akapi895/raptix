@@ -15,7 +15,7 @@ import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { toHref } from '../../router/history'
 import { dashboardForScope } from './service'
-import type { DashboardAggregate } from './domain'
+import type { DashboardAggregate } from '../../domain/dashboard'
 
 export interface DashboardView {
   data?: DashboardAggregate

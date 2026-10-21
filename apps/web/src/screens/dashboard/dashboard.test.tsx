@@ -20,7 +20,7 @@ import { selectProject } from '../../router/navigate'
 import { createProjectTransaction } from '../../features/wizard/service'
 import { mountServices } from '../../test/helpers'
 import { aggregateFor, dashboardForScope, readDashboard } from './service'
-import { attentionItems, completion, dashboardKpis, eligibility, formatCountdown, grantMinutesLeft, readiness } from './domain'
+import { attentionItems, completion, dashboardKpis, eligibility, formatCountdown, grantMinutesLeft, readiness } from '../../domain/dashboard'
 import { Dashboard } from '../../screens/a-dashboard'
 import { useDashboard } from './use-dashboard'
 

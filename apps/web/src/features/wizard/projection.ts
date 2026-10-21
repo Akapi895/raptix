@@ -1,5 +1,5 @@
 /** Wizard reference options expose codes, clients and accessible asset identifiers only. */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'

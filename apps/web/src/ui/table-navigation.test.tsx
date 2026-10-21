@@ -11,7 +11,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import { FilterBar, Pager, Segmented, Table, Tabs, usePaged, type Col } from '../ui'
+import { FilterBar, Pager, Segmented, Table, Tabs, usePaged, type Col } from './index'
 
 afterEach(cleanup)
 

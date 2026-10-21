@@ -19,7 +19,7 @@
 import type { Db, Notice } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Role } from '../../domain/entities'
 import type { ConsoleServices } from '../../domain/service-factory'

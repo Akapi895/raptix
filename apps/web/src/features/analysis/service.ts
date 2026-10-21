@@ -20,7 +20,7 @@
  * detection source every executed technique stays `nodata`, never
  * "undetected".
  */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { DetectState, Operation, Step, Technique } from '../../domain/entities'

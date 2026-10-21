@@ -15,7 +15,7 @@ import { ServicesProvider } from '../state/services'
 import { useAuthStore } from '../state/stores'
 import {
   ApprovalBanner, Banner, Button, Card, CardHeader, DemoTag, DescList, Gated, Kpi, Locked, PageHeader, PageSkeleton, PersonaHint, Progress, Skeleton, Stepper, Timeline,
-} from '../ui'
+} from './index'
 
 afterEach(cleanup)
 

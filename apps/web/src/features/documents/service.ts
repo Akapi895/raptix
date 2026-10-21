@@ -9,7 +9,7 @@
  * renders this surface.
  */
 import { APR, planVer, type Db, type Plan, type Project } from '../../data'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { stamp } from '../../domain/demo-clock'
 import { projectView } from '../../domain/projection'
 import type { DbAuthority } from '../../domain/database'

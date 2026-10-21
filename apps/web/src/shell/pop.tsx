@@ -4,7 +4,7 @@
  * Supports keyboard navigation: Escape to close, arrow keys to focus items.
  */
 import { useEffect, useRef, type ReactNode } from 'react'
-import { cx } from '../ui'
+import { cx } from '../ui/index'
 
 export function Pop({ open, onClose, label, align = 'left', width = 340, children }: { open: boolean; onClose: () => void; label: string; align?: 'left' | 'right'; width?: number; children: ReactNode }) {
   const dialogRef = useRef<HTMLDivElement>(null)

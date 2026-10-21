@@ -9,8 +9,8 @@
 import type { ReactElement } from 'react'
 import { ArrowLeft, PlugZap } from 'lucide-react'
 import { go } from '../router/navigate'
-import { switchDataMode } from './mode'
-import { Button } from '../ui'
+import { switchDataMode } from '../state/mode'
+import { Button } from '../ui/index'
 
 /**
  * Route keys reachable via the mock-mode `routeComponent` lookup while still

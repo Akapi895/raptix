@@ -6,7 +6,7 @@
  * record. Demo plaintext is seeded data; the real integration keeps
  * plaintext server-side and never in any list.
  */
-import { can, ROLE_LABEL } from '../../auth/policy'
+import { can, ROLE_LABEL } from '../../domain/policy'
 import { stamp } from '../../domain/demo-clock'
 import type { Project, VaultSecret } from '../../domain/entities'
 import type { DbAuthority } from '../../domain/database'

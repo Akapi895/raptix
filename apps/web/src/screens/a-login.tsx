@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft, Building2, Check, Crosshair, KeyRound, Loader2, LogIn, ShieldCheck, Eye, EyeOff, LifeBuoy, Lock, FlaskConical } from 'lucide-react'
-import { ROLE_LABEL } from '../auth/policy'
+import { ROLE_LABEL } from '../domain/policy'
 import { USERS } from '../data'
 import { signIn, switchPersona } from '../auth/persona'
 import { useMe } from '../state/console'
@@ -8,7 +8,7 @@ import { useAuthStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { currentRoute, navRawRoute } from '../router/navigate'
 import { isKnownPage, OUTSIDE_SHELL } from '../router/history'
-import { Banner, Button, Field, Input, Avatar, cx } from '../ui'
+import { Banner, Button, Field, Input, Avatar, cx } from '../ui/index'
 
 const ORGS = [
   { id: 'Raptix Workspace — Test Lab', name: 'Raptix Workspace — Test Lab', sub: 'Acme Security (Demo) · 4 projects · synthetic data', tag: 'Default' },

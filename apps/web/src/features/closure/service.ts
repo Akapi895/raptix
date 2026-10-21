@@ -19,7 +19,7 @@
  * refusals commit nothing — every check runs before the single atomic commit.
  */
 import { APR } from '../../data'
-import { can, projectAccessible } from '../../auth/policy'
+import { can, projectAccessible } from '../../domain/policy'
 import type { Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'

@@ -9,7 +9,7 @@ import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { OctagonX } from 'lucide-react'
 import { utcMinuteOr } from '../../real/format'
-import { Button, Card, CardHeader, Input, Select, Skeleton, Status } from '../../ui'
+import { Button, Card, CardHeader, Input, Select, Skeleton, Status } from '../../ui/index'
 import { messageOf, useGovernanceStops, useGovernanceWrites } from './query'
 import { ACTIVE_STOP_OUTCOMES, type EmergencyStop } from './service'
 

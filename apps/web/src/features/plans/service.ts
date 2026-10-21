@@ -26,7 +26,7 @@
  * project explicitly and publishes one ChangeSet both the legacy store and
  * Query consumers observe.
  */
-import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant, parseDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import { planVer } from '../../data'

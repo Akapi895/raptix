@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { Copy, Download } from 'lucide-react'
 import type { FindingReproduction, FindingReproductionArtifact } from '@raptix/web-contracts'
-import { Banner, Button, Card, CardHeader, DescList } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList } from '../../ui/index'
 import { useToastStore } from '../../state/stores'
 import type { ServiceResult } from '../../domain/service'
 import type { RetainedArtifact } from './service'

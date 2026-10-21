@@ -18,7 +18,7 @@
  * legacy action mutates `aiWorkers`); a runtime commit touching `aiWorkers`
  * publishes the `ai-worker` ChangeSet the Query binding below observes.
  */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { AiWorker, BranchState, WorkerState } from '../../domain/entities'

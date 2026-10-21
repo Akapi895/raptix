@@ -2,7 +2,7 @@
 import type { Integration, Template, DetectState } from '../../domain/entities'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
 

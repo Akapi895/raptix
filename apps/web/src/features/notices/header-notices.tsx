@@ -14,7 +14,7 @@ import { useMe } from '../../state/console'
 import { useToastStore, useUiStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
 import { go } from '../../router/navigate'
-import { Button, IconButton, cx } from '../../ui'
+import { Button, IconButton, cx } from '../../ui/index'
 import { useNoticeCenterRead, useNoticeCenterWrites } from './center-query'
 import { NOTICE_CHIPS } from './service'
 

@@ -16,7 +16,7 @@
  * project. Validation happens before the single atomic commit, so a refused
  * creation leaves no partial records.
  */
-import { can, projectAccessible, projectLocked } from '../../auth/policy'
+import { can, projectAccessible, projectLocked } from '../../domain/policy'
 import { USERS, type Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'

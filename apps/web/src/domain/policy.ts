@@ -13,9 +13,9 @@
  * - `src/auth/membership.ts` is the service-backed membership view the
  *   interface is checked against.
  */
-import type { Project, Role } from '../domain/entities'
-import type { CanAction } from '../domain/permissions'
-import type { ActorRef } from '../domain/service'
+import type { Project, Role } from './entities'
+import type { CanAction } from './permissions'
+import type { ActorRef } from './service'
 
 /** The subset of a project an authorization decision needs. */
 export type ProjectRef = Pick<Project, 'id' | 'status' | 'members'>

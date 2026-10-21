@@ -8,7 +8,7 @@ import { useAiActions } from './ai-actions'
 import { useCreateReason } from './create-reason'
 import {
   Banner, Button, Empty, Field, FilterBar, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Select, Sev, Skeleton, Status, Table, Tabs,
-} from '../../ui'
+} from '../../ui/index'
 import { go, useRoute } from '../../router/navigate'
 import { useActiveProject } from '../../state/console'
 import { useProjectStore } from '../../state/stores'

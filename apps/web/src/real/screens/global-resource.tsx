@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchOverviewC2, fetchOverviewFindings } from '../api'
 import { useRealProjects } from '../queries'
 import { go, useRoute } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, DescList, PageHeader, Skeleton, Tabs } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList, PageHeader, Skeleton, Tabs } from '../../ui/index'
 
 const SURFACES: Record<string, { title: string; tab: string; gap: string }> = {
   findings: { title: 'Findings', tab: 'findings', gap: 'A cross-project finding list is not integrated. The overview rollup is a count, not a finding inventory.' },

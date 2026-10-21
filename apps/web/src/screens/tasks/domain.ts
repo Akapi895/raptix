@@ -17,8 +17,8 @@ import type { CanAction } from '../../domain/permissions'
 import type { ActorRef, Instant } from '../../domain/service'
 import type { Approval, Finding, Plan, Report, Severity, SessionRequest } from '../../domain/entities'
 import type { Route } from '../../router/history'
-import { canDo } from '../dashboard/domain'
-import type { DashboardAggregate } from '../dashboard/domain'
+import { canDo } from '../../domain/dashboard'
+import type { DashboardAggregate } from '../../domain/dashboard'
 
 /** Task groups the inbox aggregates, by work type. */
 export type TaskKind = 'project' | 'scope' | 'closure' | 'plan' | 'access' | 'report' | 'finding'

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Bot, ChevronDown, ChevronRight, Eye } from 'lucide-react'
 import { fetchRuntimeInstances, type FleetBranchView, type RuntimeInstanceView } from '../api'
 import { InstanceMessenger } from './instance-messenger'
-import { Banner, Button, DescList, Textarea, cx } from '../../ui'
+import { Banner, Button, DescList, Textarea, cx } from '../../ui/index'
 import { utcMinuteOr } from '../format'
 
 type AgentTone = 'running' | 'done' | 'failed' | 'stopped'

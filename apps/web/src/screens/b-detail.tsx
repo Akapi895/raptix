@@ -8,7 +8,7 @@
  * scope collapse into the same `not-found` failure — the blocked state never
  * renders record content. Overview readiness/completion/eligibility come
  * from the Command Center's pure domain functions over the same aggregate
- * projection the dashboard reads (src/screens/dashboard/domain — semantics
+ * projection the dashboard reads (src/domain/dashboard — semantics
  * pinned there, not duplicated). Header pin runs through the typed project
  * write with its policy reason; approval submission and reopen stay on the
  * bridged legacy actions until tickets 21–22 own their handlers.
@@ -31,13 +31,13 @@ import { APR, type Project } from '../data'
 import { ExecutionWorkspace } from '../features/execution/workspace'
 import { VaultTab } from '../features/vault/tab'
 import { useServices } from '../state/services'
-import { ROLE_LABEL } from '../auth/policy'
+import { ROLE_LABEL } from '../domain/policy'
 import { useProjectStore, useToastStore } from '../state/stores'
 import { useCan, useMe } from '../state/console'
 import { go, selectProject, useRoute } from '../router/navigate'
 import { MOCK_PROJECT_NAV, MOCK_PROJECT_TABS } from '../shell/nav'
-import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui'
-import type { DashboardAggregate, Eligibility } from './dashboard/domain'
+import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui/index'
+import type { DashboardAggregate, Eligibility } from '../domain/dashboard'
 import { TeamTab, CloseTab } from './b-detail2'
 import { ScopeTab } from '../features/scope/tab'
 import { DocumentWorkspace } from '../features/documents/workspace'

@@ -21,7 +21,7 @@ import { useAuthStore, useToastStore, type Toast } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
 import { go } from '../../router/navigate'
 import { resetDemo } from '../../features/demo/runtime'
-import { Avatar, Button, Card, Input, Modal, Tabs } from '../../ui'
+import { Avatar, Button, Card, Input, Modal, Tabs } from '../../ui/index'
 import { GUIDES, type Dest } from './guides'
 import { jump, jumpSeam, launchGuide } from './launch'
 

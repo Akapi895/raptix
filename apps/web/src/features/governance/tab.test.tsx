@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 import type { EmergencyStopView } from '../../real/api'
 
-vi.mock('../../real/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
+vi.mock('../../state/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),

@@ -9,7 +9,7 @@
 import type { ReactElement } from 'react'
 import { Bot } from 'lucide-react'
 import { go, useRoute } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, Empty, Skeleton, cx } from '../../ui'
+import { Banner, Button, Card, CardHeader, Empty, Skeleton, cx } from '../../ui/index'
 import { ACTIVE_STOP_OUTCOMES } from '../governance/service'
 import { useGovernanceStops } from '../governance/query'
 import { ThreadRuns } from './runtime-runs'

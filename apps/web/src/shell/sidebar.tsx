@@ -9,7 +9,7 @@ import { ArrowLeft, Crosshair, PanelLeftClose, PanelLeftOpen } from 'lucide-reac
 import { go, goGlobal, useRoute } from '../router/navigate'
 import { useActiveProject } from '../state/console'
 import { useProjectStore } from '../state/stores'
-import { Status, cx } from '../ui'
+import { Status, cx } from '../ui/index'
 import { NAV, projectNavGroups, projectSection, useBadges } from './nav'
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { collapsed: boolean; setCollapsed: (b: boolean) => void; mobileOpen: boolean; closeMobile: () => void }) {

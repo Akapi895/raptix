@@ -9,7 +9,7 @@
 import { useState, type ReactElement } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useSessionStore } from '../../state/session'
-import { Banner, Button, Card, CardHeader, Empty, Field, IconButton, Input, Locked, Modal, Person, Select, Skeleton } from '../../ui'
+import { Banner, Button, Card, CardHeader, Empty, Field, IconButton, Input, Locked, Modal, Person, Select, Skeleton } from '../../ui/index'
 import { useTeamRead, useTeamWrites } from './query'
 
 const PERMISSIONS: Readonly<Record<string, string>> = {

@@ -15,7 +15,7 @@
  * (ticket 49), and the health-failure replacement flow stays with the
  * operations features.
  */
-import { projectAccessible, can as policyCan } from '../../auth/policy'
+import { projectAccessible, can as policyCan } from '../../domain/policy'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, AgentStatus, BranchState, Group, ProjectStatus } from '../../domain/entities'

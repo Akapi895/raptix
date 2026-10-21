@@ -1,5 +1,5 @@
 /** Owns operation evidence uploads and their atomic audit record. */
-import { can, ROLE_LABEL } from '../../auth/policy'
+import { can, ROLE_LABEL } from '../../domain/policy'
 import { stamp } from '../../domain/demo-clock'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext, ServiceResult } from '../../domain/service'

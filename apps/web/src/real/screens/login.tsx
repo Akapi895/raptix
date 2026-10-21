@@ -11,7 +11,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, 
 import { KeyRound, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { login, logout } from '../api'
 import { clearWorkspaceRecovery } from '../workspace-session'
-import { Button, Input } from '../../ui'
+import { Button, Input } from '../../ui/index'
 import { createConsoleQueryClient } from '../../state/keys'
 import { SESSION_KEY, SessionContext, useSession, type SessionState } from '../session'
 

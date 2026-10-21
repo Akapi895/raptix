@@ -9,7 +9,7 @@ import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { zonedToIso } from '../../real/format'
-import { Button, Card, CardHeader, Input, Select, Skeleton, Status } from '../../ui'
+import { Button, Card, CardHeader, Input, Select, Skeleton, Status } from '../../ui/index'
 import { messageOf, useGovernanceSchedules, useGovernanceWrites } from './query'
 import type { ExecutionThread, GovernancePlan } from './service'
 

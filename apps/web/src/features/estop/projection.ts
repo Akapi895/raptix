@@ -3,7 +3,7 @@ import type { Operation, Session, StopState } from '../../domain/entities'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { useServiceProjection } from '../../state/projection'
 
 export interface StopRead {

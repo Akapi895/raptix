@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, Clock, Database, Eye, Filter, Inbox, Lock, Plug, RefreshCw, ShieldOff } from 'lucide-react'
 import { useToastStore, useUiStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status, STATUS, Table, Mono, type StatusKind } from '../../ui'
+import { Banner, Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status, STATUS, Table, Mono, type StatusKind } from '../../ui/index'
 import { useSystemGo } from './nav'
 
 const KIND_LABEL: Record<StatusKind, string> = {

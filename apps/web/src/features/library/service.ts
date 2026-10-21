@@ -15,7 +15,7 @@
  * are simulated; the real adapter reports SHA-256 values from the server.
  */
 import { TECHNIQUES, type Db, type Playbook } from '../../data'
-import { projectAccessible, projectLocked } from '../../auth/policy'
+import { projectAccessible, projectLocked } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'

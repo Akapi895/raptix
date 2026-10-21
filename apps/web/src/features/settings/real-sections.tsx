@@ -13,7 +13,7 @@ import { fetchCapabilities, fetchWorkspaceAudit, fetchWorkspaceSettings, saveWor
 import { REAL_IDENTITY } from '../../real/identity'
 import { utcMinuteOr } from '../../real/format'
 import { go } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Skeleton, Status } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Skeleton, Status } from '../../ui/index'
 import { AuditTable } from '../audit/table'
 
 const PROVIDER_LABEL: Record<string, string> = {

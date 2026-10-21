@@ -12,7 +12,7 @@
  * without `viewSensitive`. Pure projections — import/scope mutations and
  * tags/notes stay with the legacy actions until ticket 51.
  */
-import { projectAccessible, can as policyCan } from '../../auth/policy'
+import { projectAccessible, can as policyCan } from '../../domain/policy'
 import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Asset } from '../../domain/entities'

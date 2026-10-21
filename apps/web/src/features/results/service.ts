@@ -16,7 +16,7 @@
  * that commit through the shared authority, whose ChangeSets refetch this
  * read via the bridge.
  */
-import { can, projectAccessible } from '../../auth/policy'
+import { can, projectAccessible } from '../../domain/policy'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { BranchState, Evidence, FindingStatus, Operation, ReportStatus, SessionState, Step, StepStatus } from '../../domain/entities'

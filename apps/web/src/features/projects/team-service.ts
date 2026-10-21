@@ -1,5 +1,5 @@
 /** Owns atomic project membership edits and their audit publication. */
-import { can, ROLE_LABEL } from '../../auth/policy'
+import { can, ROLE_LABEL } from '../../domain/policy'
 import type { Project } from '../../domain/entities'
 import type { DbAuthority } from '../../domain/database'
 import type { RequestContext, ServiceResult } from '../../domain/service'

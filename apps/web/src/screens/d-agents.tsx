@@ -3,7 +3,7 @@ import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus
 import { useServices } from '../state/services'
 import { USERS, type Agent, type Group } from '../data'
 import { replaceOperationAgent } from '../features/operations/service'
-import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui'
+import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui/index'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from './d-shared'
 import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../features/agents/query'
 import type { AgentKpi } from '../features/agents/service'

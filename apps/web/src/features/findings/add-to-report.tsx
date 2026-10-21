@@ -4,7 +4,7 @@ import type { Finding } from '../../data'
 import { go } from '../../router/navigate'
 import { useSessionStore } from '../../state/session'
 import { useToastStore } from '../../state/stores'
-import { Button, Modal, Mono } from '../../ui'
+import { Button, Modal, Mono } from '../../ui/index'
 import { useReportWrites } from '../reports'
 
 /**

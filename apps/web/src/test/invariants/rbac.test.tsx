@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { seed, USERS } from '../data'
-import type { Role } from '../data'
-import { can, canAccessProject, readOnlyContext } from '../auth/policy'
-import type { CanAction } from '../domain/permissions'
+import { seed, USERS } from '../../data'
+import type { Role } from '../../data'
+import { can, canAccessProject, readOnlyContext } from '../../domain/policy'
+import type { CanAction } from '../../domain/permissions'
 
 const PERSONA: Record<Role, string> = {
   admin: 'Dana Whitfield', manager: 'Alex Morgan', operator: 'Taylor Chen', reviewer: 'Pat Kim', analyst: 'Riley Brooks', viewer: 'Casey Nguyen (Client)',

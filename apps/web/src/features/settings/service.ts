@@ -13,7 +13,7 @@
  * contact is masked for non-admin readers and client (viewer-role) member
  * emails are masked for staff below admin — external personnel PII.
  */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { USERS, type Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'

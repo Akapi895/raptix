@@ -13,10 +13,10 @@
  * stale read before it can restore previous visibility.
  */
 import type { Db } from '../../data'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
-import type { DashboardAggregate } from './domain'
+import type { DashboardAggregate } from '../../domain/dashboard'
 
 const SUPERSEDED = {
   ok: false as const,

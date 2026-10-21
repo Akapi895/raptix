@@ -22,7 +22,7 @@
  * simulated capture integrity, with masking and display gates decided at
  * the handler so they hold no matter which screen linked the capture.
  */
-import { projectAccessible, projectLocked, can as policyCan, ROLE_LABEL } from '../../auth/policy'
+import { projectAccessible, projectLocked, can as policyCan, ROLE_LABEL } from '../../domain/policy'
 import type { CanAction } from '../../domain/permissions'
 import { formatDemoInstant } from '../../domain/clock'
 import { TECHNIQUES, type Db, type FindingRow, type SuggestionDispositionState } from '../../data'

@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup } from '@testing-library/react'
-import { mountServices } from '../test/helpers'
-import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
-import { MockClock } from '../domain/clock'
-import type { Db, Operation } from '../data'
-import type { ActorRef, RequestContext } from '../domain/service'
-import { createOperationDraft, runOperationPreflight, startOperation } from '../features/operations/service'
-import { assignAgentTransaction } from '../features/agents/writes'
-import { seed } from '../data'
+import { mountServices } from '../helpers'
+import { computePreflightChecks, preflightPass } from '../../features/operations/preflight'
+import { MockClock } from '../../domain/clock'
+import type { Db, Operation } from '../../data'
+import type { ActorRef, RequestContext } from '../../domain/service'
+import { createOperationDraft, runOperationPreflight, startOperation } from '../../features/operations/service'
+import { assignAgentTransaction } from '../../features/agents/writes'
+import { seed } from '../../data'
 
 afterEach(cleanup)
 

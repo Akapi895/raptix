@@ -14,7 +14,7 @@ import { fetchOverviewC2, fetchOverviewFindings, fetchTasks, listEngagements, ty
 import { go } from '../../router/navigate'
 import { showCreateProject } from '../create-project-dialog'
 import { parseHash } from '../../router/history'
-import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui'
+import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui/index'
 import { utcMinute } from '../format'
 
 const KIND_LABEL: Record<string, string> = {

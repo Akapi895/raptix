@@ -15,7 +15,7 @@ import type { Db, Plan } from '../../data'
 import type { RequestContext } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'
 import { projectView } from '../../domain/projection'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { useServiceProjection } from '../../state/projection'
 import { policyChecks, type Chk } from './policy'
 

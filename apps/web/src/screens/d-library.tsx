@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- library route bundle: sub-screens co-exported for the registry */
 import { useEffect, useState } from 'react'
 import { BookOpen, Download, Send, ShieldCheck } from 'lucide-react'
-import { Banner, Button, Card, CardHeader, DescList, Empty, Field, Input, Mono, PageHeader, Select, Skeleton, Status, Textarea } from '../ui'
+import { Banner, Button, Card, CardHeader, DescList, Empty, Field, Input, Mono, PageHeader, Select, Skeleton, Status, Textarea } from '../ui/index'
 import { withLoading } from './d-shared'
 import { LibraryReadError, useLibraryCorpus, useLibraryProposal, useLibraryProposals, useLibraryWrites, useSkillDetail, useTechniqueDetail } from '../features/library/query'
 import type { LibraryProposal, LibraryProposalStatus } from '../features/library/service'

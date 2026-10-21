@@ -13,7 +13,7 @@ import { useCreateReason } from './create-reason'
 import { FindingDenied } from './access'
 import {
   Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Input, Modal, Mono, PageHeader, Select, Sev, Skeleton, Status, Textarea, cx, useGuard,
-} from '../../ui'
+} from '../../ui/index'
 import { go, useRoute } from '../../router/navigate'
 import { realControlGap, useCan, useMe } from '../../state/console'
 import { useFindingFormRead, type FindingFormRead } from './projection'

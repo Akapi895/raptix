@@ -4,14 +4,14 @@ import { AlertTriangle, Bug, Download, ExternalLink, FileImage, Link2, Lock, Eye
 import { useSessionStore } from '../../state/session'
 import { captureRequestId, clearCaptureRequest } from './capture-session'
 import { persistentFindings, useFindingIdentity } from './presentation-context'
-import { ROLE_LABEL } from '../../auth/policy'
+import { ROLE_LABEL } from '../../domain/policy'
 import { type Finding } from '../../data'
 import { EvidenceReadError, useEvidenceDetail, useEvidenceList, useFindingWrites } from './query'
 import type { EvidenceDownload, EvidenceView } from './service'
 import { useDelayedNav } from './delayed-nav'
 import {
   Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Locked, Modal, Mono, PageHeader, SearchBox, Select, Skeleton, Table, Textarea, Timeline,
-} from '../../ui'
+} from '../../ui/index'
 import { go, useRoute } from '../../router/navigate'
 import { realControlGap, useCan, useMe, useReadOnly } from '../../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../../state/stores'

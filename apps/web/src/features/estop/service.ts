@@ -16,7 +16,7 @@
  * sweep is scope-matched, so a concurrent stop on another scope never
  * touches out-of-scope records.
  */
-import { can } from '../../auth/policy'
+import { can } from '../../domain/policy'
 import { DEMO_TZ, formatDemoInstant } from '../../domain/clock'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'

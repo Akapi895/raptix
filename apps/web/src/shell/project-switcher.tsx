@@ -13,8 +13,8 @@ import { go, selectProject, useRoute } from '../router/navigate'
 import { useAccessible, useActiveProject, useCan, usePolicyProjects, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
 import { useProjectStore, useUiStore } from '../state/stores'
-import { Button, cx, SearchBox, Status } from '../ui'
-import { DATA_MODE } from '../real/mode'
+import { Button, cx, SearchBox, Status } from '../ui/index'
+import { DATA_MODE } from '../state/mode'
 import { showCreateProject } from '../real/create-project-dialog'
 
 export function ProjectSwitcher() {

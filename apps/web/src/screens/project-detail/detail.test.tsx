@@ -30,7 +30,7 @@ import { mountServices } from '../../test/helpers'
 import { ProjectPage } from '../b-detail'
 import { detailFor, projectDetailForScope } from './service'
 import { aggregateFor } from '../dashboard/service'
-import { readiness, completion, eligibility } from '../dashboard/domain'
+import { readiness, completion, eligibility } from '../../domain/dashboard'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setActiveRouter(null); window.location.hash = '' })
 

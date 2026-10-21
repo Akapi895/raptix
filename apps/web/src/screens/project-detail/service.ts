@@ -15,9 +15,9 @@
  * explicit per scope and never retargeted by a later request context.
  */
 import { aggregateFor } from '../dashboard/service'
-import { completion, eligibility, readiness } from '../dashboard/domain'
-import type { Completion, DashboardAggregate, Eligibility, Readiness } from '../dashboard/domain'
-import { projectAccessible } from '../../auth/policy'
+import { completion, eligibility, readiness } from '../../domain/dashboard'
+import type { Completion, DashboardAggregate, Eligibility, Readiness } from '../../domain/dashboard'
+import { projectAccessible } from '../../domain/policy'
 import { closePanelItems, noConfirmedFindings } from '../../features/closure/service'
 import type { CloseCheck } from '../../features/closure/service'
 import type { Db } from '../../data'

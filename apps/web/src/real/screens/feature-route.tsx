@@ -4,7 +4,7 @@ import { FolderOpen } from 'lucide-react'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { useRealProjects } from '../queries'
-import { Button, Empty, PageHeader, Select } from '../../ui'
+import { Button, Empty, PageHeader, Select } from '../../ui/index'
 import { FEATURE_ROUTE_SURFACES, type PanelGroup } from '../../router/route-table'
 
 type PanelComponent = ComponentType<{ engagementId: string }>

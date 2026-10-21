@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 
 vi.useFakeTimers()
-const { mountServices } = await import('../test/helpers')
-const { hhmm } = await import('../features/c2/service')
-const { expireGrantTransaction } = await import('../features/c2/grants')
-const { minutesUntil, useGrantWatch, Console } = await import('../screens/h-session')
-const { go, selectProject } = await import('../router/navigate')
-const { useToastStore } = await import('../state/stores')
+const { mountServices } = await import('../helpers')
+const { hhmm } = await import('../../features/c2/service')
+const { expireGrantTransaction } = await import('../../features/c2/grants')
+const { minutesUntil, useGrantWatch, Console } = await import('../../screens/h-session')
+const { go, selectProject } = await import('../../router/navigate')
+const { useToastStore } = await import('../../state/stores')
 
 afterEach(() => {
   cleanup()

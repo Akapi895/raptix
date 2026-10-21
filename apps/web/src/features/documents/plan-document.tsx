@@ -2,7 +2,7 @@ import type { ReactElement } from 'react'
 import { ArrowRight, GitBranch, ShieldAlert, Target } from 'lucide-react'
 import { planVer, type Plan, type Project } from '../../data'
 import { go } from '../../router/navigate'
-import { Banner, Button, DescList, Status } from '../../ui'
+import { Banner, Button, DescList, Status } from '../../ui/index'
 
 /** Readable OPPLAN, rendered from the same plan record as the JSON source. */
 export function PlanDocument({ plan, project }: { plan: Plan; project: Project }): ReactElement {

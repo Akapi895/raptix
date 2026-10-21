@@ -11,7 +11,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { Copy, MoreHorizontal } from 'lucide-react'
-import { Button, Drawer, Menu, Modal } from '../ui'
+import { Button, Drawer, Menu, Modal } from './index'
 
 afterEach(cleanup)
 

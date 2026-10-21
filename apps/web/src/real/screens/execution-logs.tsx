@@ -1,7 +1,7 @@
 /** Durable checkpoint tool activity with truthful attribution and a centered inspector. */
 import { useState, type ReactElement } from 'react'
 import type { ThreadHistoryEvent } from '@raptix/web-contracts'
-import { DescList, Empty, Modal, SearchBox, Select } from '../../ui'
+import { DescList, Empty, Modal, SearchBox, Select } from '../../ui/index'
 
 export function ExecutionLogs({ entries, assistantId }: { entries: ThreadHistoryEvent[]; assistantId: string | null }): ReactElement {
   const [query, setQuery] = useState('')

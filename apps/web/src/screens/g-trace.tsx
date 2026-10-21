@@ -17,8 +17,8 @@ import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
 import { useCan } from '../state/console'
 import { useProjectStore, useToastStore } from '../state/stores'
-import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui'
-import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from './g-common'
+import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui/index'
+import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from '../features/aichat/common'
 
 /* ───────────── helpers ───────────── */
 type Bucket = 'proposed' | 'pending' | 'blocked' | 'executed' | 'failed'

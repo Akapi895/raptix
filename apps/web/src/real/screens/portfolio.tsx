@@ -12,7 +12,7 @@ import { useRealProjects } from '../queries'
 import { go } from '../../router/navigate'
 import { showCreateProject } from '../create-project-dialog'
 import { useProjectStore } from '../../state/stores'
-import { Button, Empty, Input, PageHeader, Skeleton, Status, Table, type Col } from '../../ui'
+import { Button, Empty, Input, PageHeader, Skeleton, Status, Table, type Col } from '../../ui/index'
 import { utcMinute } from '../format'
 
 function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
