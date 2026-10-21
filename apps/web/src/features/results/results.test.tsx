@@ -21,7 +21,7 @@ import { currentRoute, selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { GraphTab, ResultsTab } from '../../screens/c-results'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { operationResults } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })

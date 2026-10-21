@@ -15,7 +15,7 @@ import { currentRoute, go, selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/e'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { getFinding, importFindingSuggestion, listFindings, saveFinding, setFindingSuggestionDisposition, transitionFinding, uploadFindingEvidence } from './service'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'

@@ -19,7 +19,7 @@ import { currentRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { setIntegrationConnection } from '../settings/service'
 import { analysisRoutes } from '../../screens/e-analysis'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { coverageOf } from './service'
 import { reviewOperationStep } from '../operations/service'
 import type { ActorRef } from '../../domain/service'

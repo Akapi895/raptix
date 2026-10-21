@@ -12,7 +12,7 @@
  * layer's abort signal, so the ScopeCancelBridge (ticket 05) supersedes a
  * stale read before it can restore previous visibility.
  */
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import { projectAccessible } from '../../domain/policy'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'

@@ -21,8 +21,8 @@ import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-libra
 import { mountServices } from '../../test/helpers'
 import { selectProject } from '../../router/navigate'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import type { Db } from '../../data'
-import { toolFacets } from '../../data'
+import type { Db } from '../../demo/seed';
+import { toolFacets } from '../../domain/catalog';
 import { AiTrace } from '../../screens/g-trace'
 import { decideToolEventTransaction } from './writes'
 

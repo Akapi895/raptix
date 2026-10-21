@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
 import { useServices } from '../state/services'
-import { USERS, type Agent, type Group } from '../data'
+import { USERS } from '../domain/catalog';
+import { type Agent, type Group } from '../domain/entities'
 import { replaceOperationAgent } from '../features/operations/service'
 import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui/index'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from './d-shared'
 import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../features/agents/query'
 import type { AgentKpi } from '../features/agents/service'
-import { BRANCH_LABEL } from '../data'
+import { BRANCH_LABEL } from '../domain/catalog';
 import { go, selectProject, useRoute } from '../router/navigate'
 import { useAccessible, useCan, useMe, useScoped } from '../state/console'
 import { useGroupOptions, useAssignmentOptions, useAgentRecovery } from '../features/agents/projection'

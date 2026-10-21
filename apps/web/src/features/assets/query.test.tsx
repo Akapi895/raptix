@@ -15,7 +15,7 @@ import { currentRoute, go, selectProject } from '../../router/navigate'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
 import { hasRoute } from '../../router/registry'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { changeAssetScopeTransaction, importAssetsTransaction } from './writes'
 import { getAsset, getAssetScope, listAssets } from './service'
 

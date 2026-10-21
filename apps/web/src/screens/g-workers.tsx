@@ -14,7 +14,7 @@
 import { useState } from 'react'
 import { Bot } from 'lucide-react'
 import { go } from '../router/navigate'
-import { BRANCH_LABEL } from '../data'
+import { BRANCH_LABEL } from '../domain/catalog';
 import type { BranchState, WorkerState } from '../domain/entities'
 import { WorkerReadError, useWorkers } from '../features/workers/query'
 import type { WorkerRow } from '../features/workers/service'

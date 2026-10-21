@@ -21,7 +21,8 @@
  */
 /* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
-import { type Db, type Project } from '../data'
+import type { Db } from '../demo/seed';
+import { type Project } from '../domain/entities'
 import { readPersona, readPolicyProjects, type Persona } from '../auth/identity'
 import { can as policyCan, projectAccessible, readOnlyContext } from '../domain/policy'
 import type { CanAction } from '../domain/permissions'

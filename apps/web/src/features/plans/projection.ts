@@ -11,7 +11,8 @@
  * derived per candidate plan version (locally edited drafts included) with
  * the derivation the approval handlers enforce.
  */
-import type { Db, Plan } from '../../data'
+import type { Db } from '../../demo/seed';
+import type { Plan } from '../../domain/entities'
 import type { RequestContext } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'
 import { projectView } from '../../domain/projection'

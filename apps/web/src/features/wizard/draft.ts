@@ -13,7 +13,7 @@
  * database is introduced.
  */
 import { z } from 'zod'
-import type { Role } from '../../data'
+import type { Role } from '../../domain/entities'
 
 export interface ProjectDraft {
   name: string; id: string; client: string; type: string; desc: string; start: string; end: string; tz: string; owner: string; tags: string[]

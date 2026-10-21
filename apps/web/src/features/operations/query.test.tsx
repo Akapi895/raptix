@@ -14,7 +14,7 @@ import { useSessionStore } from '../../state/session'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/c'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { createOperationDraft, listOperations } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })

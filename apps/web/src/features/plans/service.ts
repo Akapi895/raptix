@@ -29,8 +29,9 @@
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant, parseDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
-import { planVer } from '../../data'
-import type { Db, Plan, PlanStep, Project } from '../../data'
+import { planVer } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import type { Plan, PlanStep, Project } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { PlanStatus } from '../../domain/entities'
 

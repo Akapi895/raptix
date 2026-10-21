@@ -6,7 +6,7 @@
  * actors have no access; a recorded grant wins; project members read-only.
  */
 import { projectAccessible } from '../../domain/policy'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import type { Session } from '../../domain/entities'
 import type { RequestContext } from '../../domain/service'
 

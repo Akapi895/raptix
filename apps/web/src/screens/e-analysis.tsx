@@ -1,7 +1,8 @@
 import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut, type LucideProps } from 'lucide-react'
 import { ROLE_LABEL } from '../domain/policy'
-import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../data'
+import { TACTICS, TECHNIQUES } from '../domain/catalog';
+import { type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../domain/entities'
 import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../ui/index'
 import { AnalysisReadError, useAnalysisCoverage, useAttackPath } from '../features/analysis/query'
 import type { AnalysisCoverageRead, CoverageCell, CoverageCellState, CoveragePair } from '../features/analysis/service'

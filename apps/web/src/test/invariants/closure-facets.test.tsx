@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen } from '@testing-library/react'
-import { seed, toolFacets } from '../../data'
+import { seed } from '../../demo/seed';
+import { toolFacets } from '../../domain/catalog';
 
 vi.useFakeTimers()
 const { mountServices } = await import('../helpers')

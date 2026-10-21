@@ -10,7 +10,9 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { seed, USERS, type Role } from '../data'
+import { seed } from '../demo/seed';
+import { USERS } from '../domain/catalog';
+import { type Role } from '../domain/entities'
 import { Login } from '../screens/a-login'
 import { mountServices } from '../test/helpers'
 import { ServicesProvider } from '../state/services'

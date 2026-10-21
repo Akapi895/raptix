@@ -16,8 +16,8 @@
  * approval at canonical state (rejected/expired/missing plans fail; an
  * approval still in review blocks as `review`).
  */
-import { APR, planVer } from '../../data'
-import type { Db } from '../../data'
+import { APR, planVer } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import type { Agent, Asset, Operation, Project } from '../../domain/entities'
 import type { Instant } from '../../domain/service'
 import type { Route } from '../../router/history'

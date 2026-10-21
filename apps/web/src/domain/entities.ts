@@ -2,9 +2,8 @@
  * Domain entity and status types for the web console.
  *
  * Each type has exactly one definition (ADR-0067,
- * docs/adr/0067-web-console-service-domain-boundary.md). `src/data.ts`
- * re-exports these so legacy `./data` imports keep working until the
- * retirement tickets (65–67) remove the remaining callers.
+ * docs/adr/0067-web-console-service-domain-boundary.md). Importers take
+ * these types from this module.
  *
  * Evidence-bearing string fields (`Step.evidence`, `Finding.evidence`,
  * `ToolEvent.evidence`, `Branch.evidence`) hold opaque evidence references —

@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import { ArrowRight, GitBranch, ShieldAlert, Target } from 'lucide-react'
-import { planVer, type Plan, type Project } from '../../data'
+import { planVer } from '../../domain/catalog';
+import { type Plan, type Project } from '../../domain/entities'
 import { go } from '../../router/navigate'
 import { Banner, Button, DescList, Status } from '../../ui/index'
 

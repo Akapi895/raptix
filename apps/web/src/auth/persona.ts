@@ -8,7 +8,7 @@
  * legacy store forwards its `login`/`logout` here; navigation stays with the
  * legacy shell until the router migration (ticket 07).
  */
-import { USERS } from '../data'
+import { USERS } from '../domain/catalog';
 import type { Role } from '../domain/entities'
 import type { ActorRef } from '../domain/service'
 import { useAuthStore } from '../state/stores'

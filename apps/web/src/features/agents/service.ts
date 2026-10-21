@@ -16,7 +16,7 @@
  * operations features.
  */
 import { projectAccessible, can as policyCan } from '../../domain/policy'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, AgentStatus, BranchState, Group, ProjectStatus } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'

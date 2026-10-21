@@ -17,7 +17,8 @@
  * pending proposal under a governed ROE opens the scope-change request in
  * the same commit and never auto-promotes.
  */
-import { APR, type Db } from '../../data'
+import { APR } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'

@@ -17,7 +17,8 @@
  * creation leaves no partial records.
  */
 import { can, projectAccessible, projectLocked } from '../../domain/policy'
-import { USERS, type Db } from '../../data'
+import { USERS } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'

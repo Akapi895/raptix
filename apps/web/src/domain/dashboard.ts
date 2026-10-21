@@ -11,7 +11,7 @@
  * Semantics are ported verbatim from the pre-migration store helpers and
  * pinned by the feature tests at this site.
  */
-import { APR } from '../data'
+import { APR } from './catalog';
 import { can as policyCan } from './policy'
 import { parseDemoInstant } from './clock'
 import type { CanAction } from './permissions'

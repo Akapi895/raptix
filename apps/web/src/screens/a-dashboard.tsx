@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FolderKanban, Inbox, KeyRound, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
-import { APR } from '../data'
-import type { Severity } from '../data'
+import { APR } from '../domain/catalog';
+import type { Severity } from '../domain/entities'
 import { actorRef } from '../auth/persona'
 import { useAuthStore, useProjectStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'

@@ -11,7 +11,9 @@
  * closure handler (role gate and required reason are enforced there); the
  * panel surfaces its refusal.
  */
-import { APR, type Db, type Project } from '../../data'
+import { APR } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import { type Project } from '../../domain/entities'
 import { useServices } from '../../state/services'
 import { useMe } from '../../state/console'
 import { useToastStore } from '../../state/stores'

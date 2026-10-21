@@ -11,7 +11,8 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
-import type { Db, Plan, PlanStep } from '../../data'
+import type { Db } from '../../demo/seed';
+import type { Plan, PlanStep } from '../../domain/entities'
 import type { DbAuthority } from '../../domain/database'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import { useServices } from '../../state/services'

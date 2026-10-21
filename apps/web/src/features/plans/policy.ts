@@ -9,8 +9,8 @@
  * handler-side approval gates (role, self-approval, current ROE binding)
  * live in service.ts and stay the enforced subset.
  */
-import type { Plan } from '../../data'
-import type { Db } from '../../data'
+import type { Plan } from '../../domain/entities'
+import type { Db } from '../../demo/seed';
 
 export type Chk = { id: string; label: string; state: 'pass' | 'warn' | 'fail'; detail: string; to?: { page: string; id?: string; tab?: string } }
 

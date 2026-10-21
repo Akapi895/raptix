@@ -16,7 +16,8 @@
  * data-mutating roles and appended to the audit log; viewer personas read
  * their notices but cannot dismiss.
  */
-import type { Db, Notice } from '../../data'
+import type { Db } from '../../demo/seed';
+import type { Notice } from '../../domain/entities'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import { projectAccessible } from '../../domain/policy'

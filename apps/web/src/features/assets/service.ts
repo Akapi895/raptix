@@ -13,7 +13,8 @@
  * tags/notes stay with the legacy actions until ticket 51.
  */
 import { projectAccessible, can as policyCan } from '../../domain/policy'
-import { TECHNIQUES, type Db } from '../../data'
+import { TECHNIQUES } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { Asset } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'

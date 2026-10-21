@@ -13,7 +13,8 @@
  * adapter later feature tickets copy: scope-checked reads, one atomic typed
  * write, ChangeSet publication with the factory clock instant.
  */
-import type { Project, SeedVariant } from '../data'
+import type { SeedVariant } from '../demo/seed';
+import type { Project } from './entities'
 import { projectAccessible } from './policy'
 import { createIdentityService, type IdentityService } from '../auth/identity'
 import { MockClock, Scheduler, formatDemoInstant } from './clock'

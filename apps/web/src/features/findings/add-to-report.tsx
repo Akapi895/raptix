@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
-import type { Finding } from '../../data'
+import type { Finding } from '../../domain/entities'
 import { go } from '../../router/navigate'
 import { useSessionStore } from '../../state/session'
 import { useToastStore } from '../../state/stores'

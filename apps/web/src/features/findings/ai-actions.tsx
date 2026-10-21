@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import type { Finding } from '../../data'
+import type { Finding } from '../../domain/entities'
 import { ROLE_LABEL } from '../../domain/policy'
 import { go } from '../../router/navigate'
 import { useCan, useMe, useReadOnly } from '../../state/console'

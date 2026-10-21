@@ -15,7 +15,7 @@
  * every entity unchanged, so a failed submission keeps the caller's draft
  * and permits a clean retry without duplicate entities.
  */
-import { APR } from '../../data'
+import { APR } from '../../domain/catalog';
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'

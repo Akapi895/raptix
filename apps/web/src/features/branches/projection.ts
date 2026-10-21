@@ -8,8 +8,9 @@
  * service's Query reads enforce the one-membership rule; these projections
  * only assemble what an already-authorized surface renders.
  */
-import { BRANCH_TERMINAL } from '../../data'
-import type { BranchState, Db } from '../../data'
+import { BRANCH_TERMINAL } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import type { BranchState } from '../../domain/entities'
 import type { BranchGroup } from '../../domain/entities'
 import type { RequestContext } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'

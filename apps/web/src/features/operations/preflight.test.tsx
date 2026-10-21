@@ -16,13 +16,14 @@ import { mountServices } from '../../test/helpers'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { DEMO_ANCHOR } from '../../domain/clock'
-import { APR } from '../../data'
-import type { Db, Operation } from '../../data'
+import { APR } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import type { Operation } from '../../domain/entities'
 import { reviseScopeTransaction, decideApprovalTransaction } from '../approvals/service'
 import { assignAgentTransaction } from '../agents/writes'
 import { selectProject, go } from '../../router/navigate'
 import { routes } from '../../screens/c'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { computePreflightChecks, eligibility, preflightPass, roeWindowIssue } from './preflight'
 import { createOperationDraft, listOperations, operationDetail, operationStartGate, runOperationPreflight, scheduleOperation, updateOperationDraft } from './service'
 

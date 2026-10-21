@@ -21,7 +21,8 @@
  * "undetected".
  */
 import { projectAccessible } from '../../domain/policy'
-import { TECHNIQUES, type Db } from '../../data'
+import { TECHNIQUES } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { DetectState, Operation, Step, Technique } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'

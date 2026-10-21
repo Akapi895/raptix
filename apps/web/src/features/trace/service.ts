@@ -21,8 +21,9 @@
  * delayed response cannot restore another scope's visibility.
  */
 import { projectAccessible } from '../../domain/policy'
-import { planVer, toolFacets } from '../../data'
-import type { Db, Facets, ToolEvent } from '../../data'
+import { planVer, toolFacets } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import type { Facets, ToolEvent } from '../../domain/entities'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import { decideToolEventTransaction, type ToolDecision, type ToolDecisionOutcome } from './writes'

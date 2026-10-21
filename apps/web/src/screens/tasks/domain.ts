@@ -11,7 +11,7 @@
  * boundary; the display countdown derives from the factory-clock instant the
  * Query hook supplies (24h plan-approval window, §1.7).
  */
-import { APR } from '../../data'
+import { APR } from '../../domain/catalog';
 import { parseDemoInstant } from '../../domain/clock'
 import type { CanAction } from '../../domain/permissions'
 import type { ActorRef, Instant } from '../../domain/service'

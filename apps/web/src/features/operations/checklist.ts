@@ -1,5 +1,7 @@
 /** Derives the displayed preflight checklist alongside the canonical execution checks. */
-import { planVer, type Db, type Operation } from '../../data'
+import { planVer } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import { type Operation } from '../../domain/entities'
 import type { Instant } from '../../domain/service'
 import type { Route } from '../../router/history'
 import { computePreflightChecks, roeWindowIssue, scheduleInstantOf } from './preflight'

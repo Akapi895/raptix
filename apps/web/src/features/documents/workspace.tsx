@@ -9,7 +9,7 @@
  */
 import { useMemo, useState } from 'react'
 import { CircleAlert, Download, FileText, FileWarning, Pencil, Save, Trash2 } from 'lucide-react'
-import type { Project } from '../../data'
+import type { Project } from '../../domain/entities'
 import { useServices } from '../../state/services'
 import { useMe } from '../../state/console'
 import { useQueryScope } from '../../state/keys'

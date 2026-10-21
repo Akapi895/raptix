@@ -21,8 +21,8 @@
  * gates are presentation, not the enforcement site.
  */
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
-import { BRANCH_LABEL, BRANCH_TERMINAL, toolFacets } from '../../data'
-import type { Db } from '../../data'
+import { BRANCH_LABEL, BRANCH_TERMINAL, toolFacets } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import { formatDemoInstant, type MockClock } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Audit, Branch, BranchState, BranchGroup, Facets, Project, ToolEvent } from '../../domain/entities'

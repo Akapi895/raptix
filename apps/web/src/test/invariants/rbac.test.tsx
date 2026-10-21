@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { seed, USERS } from '../../data'
-import type { Role } from '../../data'
+import { seed } from '../../demo/seed';
+import { USERS } from '../../domain/catalog';
+import type { Role } from '../../domain/entities'
 import { can, canAccessProject, readOnlyContext } from '../../domain/policy'
 import type { CanAction } from '../../domain/permissions'
 

@@ -20,7 +20,7 @@ import { go } from '../../router/navigate'
 import { requestPlanReviewTransaction, revisePlanTransaction } from './service'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { AiPlanCompare } from '../../screens/g-plan'
 import { readPlanCompare } from './compare'
 

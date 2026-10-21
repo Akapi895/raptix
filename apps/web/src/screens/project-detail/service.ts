@@ -20,7 +20,7 @@ import type { Completion, DashboardAggregate, Eligibility, Readiness } from '../
 import { projectAccessible } from '../../domain/policy'
 import { closePanelItems, noConfirmedFindings } from '../../features/closure/service'
 import type { CloseCheck } from '../../features/closure/service'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import type { Evidence, Project, VaultSecret } from '../../domain/entities'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'

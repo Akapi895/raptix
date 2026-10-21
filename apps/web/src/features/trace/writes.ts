@@ -26,7 +26,7 @@
  * nothing; every request captures actor and project explicitly.
  */
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Project, ToolEvent, ToolEventResolution, ToolState } from '../../domain/entities'

@@ -4,7 +4,7 @@ import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Serve
 import { useServices } from '../state/services'
 import { isRealMode } from '../state/mode'
 import { useDirty } from '../state/session'
-import type { Asset } from '../data'
+import type { Asset } from '../domain/entities'
 import { useAssetImportRead, type AssetImportRead } from '../features/assets/import-read'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui/index'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from './d-shared'

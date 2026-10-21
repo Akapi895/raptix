@@ -15,7 +15,7 @@
  */
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { ArrowRight, Building2, ExternalLink, FlaskConical, LogIn, Play, RotateCcw, Search, Target, UserRound } from 'lucide-react'
-import { USERS } from '../../data'
+import { USERS } from '../../domain/catalog';
 import { signIn, signOut, switchPersona } from '../../auth/persona'
 import { useAuthStore, useToastStore, type Toast } from '../../state/stores'
 import { useSessionStore } from '../../state/session'

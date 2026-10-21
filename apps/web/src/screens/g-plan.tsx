@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Plus, Rocket, Trash2, XCircle } from 'lucide-react'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
-import { planVer } from '../data'
-import type { Plan, PlanStep } from '../data'
+import { planVer } from '../domain/catalog';
+import type { Plan, PlanStep } from '../domain/entities'
 import type { Chk } from '../features/plans/policy'
 import {
   decidePlanTransaction, discardPlanTransaction, editPlanDraftTransaction, effectivePlanStatus, requestPlanReviewTransaction,

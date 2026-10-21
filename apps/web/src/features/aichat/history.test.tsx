@@ -23,7 +23,7 @@ import { selectProject } from '../../router/navigate'
 import { revisePlanTransaction } from '../plans/service'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { AiHistory } from '../../screens/g-trace'
 import { getAiHistoryRow, listAiHistory } from './history'
 
