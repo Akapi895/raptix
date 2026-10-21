@@ -7,8 +7,8 @@
  *
  * Usage: node route-manifest-check.mjs [appSrcDir]
  */
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 
 const SRC = process.argv[2] || 'src'
 
@@ -66,7 +66,9 @@ const actualKeys = [...actual.keys()]
 const frozenSet = new Set(FROZEN_KEYS)
 const actualSet = new Set(actualKeys)
 const missing = FROZEN_KEYS.filter((k) => !actualSet.has(k))
-const extra = actualKeys.filter((k) => !frozenSet.has(k))
+// asset-map is registered only while its feature flag is on; it is not part of the 55-key inventory.
+const FLAG_GATED = new Set(['asset-map'])
+const extra = actualKeys.filter((k) => !frozenSet.has(k) && !FLAG_GATED.has(k))
 const groupMismatch = Object.entries(FROZEN).flatMap(([g, keys]) => keys.filter((k) => actual.get(k) !== g).map((k) => `${k}: frozen=${g} actual=${actual.get(k)}`))
 
 console.log(`frozen inventory: ${FROZEN_KEYS.length} keys | registry MANIFEST: ${actualKeys.length} keys`)
@@ -88,8 +90,9 @@ function sliceExportedKeys(slice, file, src) {
     const imp = new RegExp(`import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*'([^']+)'`).exec(src)
       || new RegExp(`import\\s*\\{\\s*${name}\\b[^}]*\\}\\s*from\\s*'([^']+)'`).exec(src)
     if (!imp) { sliceFailures.push(`${file}: spread "${name}" import not found`); continue }
-    const rel = imp[1].replace(/^\.\/|^(\.\.\/)+screens\//, '')
-    const subFile = join(SRC, 'screens', `${rel}.tsx`)
+    // Resolve the spread import relative to the importing file (screens may import router modules, which are .ts).
+    const base = resolve(dirname(file), imp[1])
+    const subFile = [`${base}.tsx`, `${base}.ts`, join(base, 'index.tsx'), join(base, 'index.ts')].find((c) => existsSync(c)) ?? `${base}.tsx`
     const subSrc = readFileSync(subFile, 'utf8')
     // The spread's local alias may re-export the sub-file's `routes` record.
     const subBody = literalBody(subSrc, 'export const routes') ?? literalBody(subSrc, `export const ${name}`)
