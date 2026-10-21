@@ -19,12 +19,12 @@
 import type { Db } from '../../demo/seed';
 import type { Notice } from '../../domain/entities'
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import { projectAccessible } from '../../domain/policy'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Role } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
-import { stamp } from '../../domain/demo-clock'
+import type { ConsoleServices } from '../../domain/console-services';
+import { stamp } from '../../demo/display-clock'
 import { projectView } from '../../domain/projection'
 
 /** Display chips in the header popover, in the legacy order. */

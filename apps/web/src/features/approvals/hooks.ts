@@ -21,7 +21,7 @@ import { useSessionStore } from '../../state/session'
 import { useServiceProjection } from '../../state/projection'
 import { projectView } from '../../domain/projection'
 import type { RequestContext } from '../../domain/service'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import { submitApprovalTransaction } from './service'
 import { reopenProjectTransaction } from '../closure/service'
 

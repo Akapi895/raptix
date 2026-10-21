@@ -15,7 +15,7 @@
 import { projectAccessible, can as policyCan } from '../../domain/policy'
 import { TECHNIQUES } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Asset } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import { changeAssetScopeTransaction, importAssetsTransaction, type AssetImportOutcome, type AssetImportRow, type AssetScopeWriteInput, type AssetScopeWriteOutcome } from './writes'

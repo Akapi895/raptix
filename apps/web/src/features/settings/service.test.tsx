@@ -23,9 +23,9 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
-import { createDatabaseAuthority } from '../../domain/database'
+import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
-import { stamp } from '../../domain/demo-clock'
+import { stamp } from '../../demo/display-clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import { ROLE_LABEL } from '../../domain/policy'
 import { useMe, type Persona } from '../../state/console'

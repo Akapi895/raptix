@@ -1,5 +1,5 @@
 /** Project eligibility summaries for synchronous badges and CSV enrichment. */
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView } from '../../domain/projection'
 import { projectAccessible } from '../../domain/policy'

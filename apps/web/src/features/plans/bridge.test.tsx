@@ -18,7 +18,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
+import type { ConsoleServices } from '../../domain/console-services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { selectProject } from '../../router/navigate'
 import { mountServices } from '../../test/helpers'

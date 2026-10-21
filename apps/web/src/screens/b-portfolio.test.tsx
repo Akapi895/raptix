@@ -12,8 +12,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import type { ProjectDraft } from '../features/wizard/draft'
 import { createProjectTransaction } from '../features/wizard/service'
-import type { ConsoleServices } from '../domain/service-factory'
-import { createConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
+import { createConsoleServices } from '../demo/services';
 import type { ActorRef, RequestContext } from '../domain/service'
 import type { Role } from '../domain/entities'
 import { useDb } from '../state/console'

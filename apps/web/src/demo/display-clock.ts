@@ -12,7 +12,7 @@
  * C2 service used to hold private copies with independent module-eval
  * anchors — same value, duplicated mechanism).
  */
-import { DEMO_TZ_LABEL } from './clock'
+import { DEMO_TZ_LABEL } from '../domain/clock'
 
 let T0 = Date.now()
 const pad = (n: number) => String(n).padStart(2, '0')

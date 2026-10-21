@@ -22,7 +22,7 @@ import { APR } from '../../domain/catalog';
 import { can, projectAccessible } from '../../domain/policy'
 import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */

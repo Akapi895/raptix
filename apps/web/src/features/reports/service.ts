@@ -20,7 +20,7 @@ import { can, projectAccessible, projectLocked } from '../../domain/policy'
 import { USERS } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { ExportRec, Finding, FindingStatus, Project, Report, ReportSnapshot, ReportStatus, Role, Severity, Template } from '../../domain/entities'
 

@@ -17,7 +17,7 @@ import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/e'
 import { seed } from '../../demo/seed';
 import { getFinding, importFindingSuggestion, listFindings, saveFinding, setFindingSuggestionDisposition, transitionFinding, uploadFindingEvidence } from './service'
-import { createDatabaseAuthority } from '../../domain/database'
+import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })

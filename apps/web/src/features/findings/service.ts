@@ -27,7 +27,7 @@ import type { CanAction } from '../../domain/permissions'
 import { formatDemoInstant } from '../../domain/clock'
 import { TECHNIQUES } from '../../domain/catalog';
 import type { Db, FindingRow, SuggestionDispositionState } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { ActorRef, Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Evidence, Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
 import type { CaptureIntegrity, EvidenceReference } from '../../domain/evidence'

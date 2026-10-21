@@ -20,7 +20,7 @@
 import { projectAccessible, can as policyCan } from '../../domain/policy'
 import { parseDemoInstant } from '../../domain/clock'
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Agent, Asset, Audit, C2Node, Channel, Session, SessionPerm, SessionRequest, SessionState } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 
@@ -42,10 +42,10 @@ import {
 } from './grants'
 
 /* Ticket 67 enabler C: the demo wall-clock label is hosted by the canonical
-   projection (src/domain/demo-clock.ts — one T0 anchor shared with the
+   projection (src/demo/display-clock.ts — one T0 anchor shared with the
    store's stamps and the live logs). Re-exported for the session console's
    grant countdown and its suite. */
-export { hhmm } from '../../domain/demo-clock'
+export { hhmm } from '../../demo/display-clock'
 
 /** The actor's access state for one session, derived only from recorded grants/requests. */
 export function accessOf(db: Db, ctx: RequestContext, s: Session): C2AccessInfo {

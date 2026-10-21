@@ -23,7 +23,7 @@
 import { projectAccessible } from '../../domain/policy'
 import { TECHNIQUES } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { DetectState, Operation, Step, Technique } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 // Ticket 55 append: the attack-path graph read is a sibling handler in this

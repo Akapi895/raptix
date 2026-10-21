@@ -28,7 +28,7 @@
  */
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant, parseDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import { planVer } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import type { Plan, PlanStep, Project } from '../../domain/entities'

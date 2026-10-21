@@ -4,7 +4,7 @@ import type { RequestContext } from '../../domain/service'
 
 vi.useFakeTimers()
 const { mountServices } = await import('../helpers')
-const { sendChat } = await import('../../features/demo/runtime')
+const { sendChat } = await import('../../demo/runtime')
 const { requestPlanReviewTransaction, decidePlanTransaction } = await import('../../features/plans/service')
 const { createOperationFromPlanTransaction } = await import('../../features/plans/bridge')
 const { importFindingSuggestion, transitionFinding, uploadFindingEvidence } = await import('../../features/findings/service')

@@ -17,7 +17,7 @@ import { projectAccessible } from '../../domain/policy'
 import { USERS } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Audit, Integration, OrgInvite, OrgProfile, Policy, Retention, Role } from '../../domain/entities'
 

@@ -1,8 +1,9 @@
 /** Owns the console authority and its mounted demo lifecycle. */
 import { createContext, useContext, useEffect, useRef, type ReactElement, type ReactNode } from 'react'
-import { createConsoleServices, type ConsoleServices } from '../domain/service-factory'
-import { resetDemoClock } from '../domain/demo-clock'
-import { buildLogs, initDemoRuntime, tickOperations } from '../features/demo/runtime'
+import { createConsoleServices } from '../demo/services';
+import type { ConsoleServices } from '../domain/console-services';
+import { resetDemoClock } from '../demo/display-clock'
+import { buildLogs, initDemoRuntime, tickOperations } from '../demo/runtime'
 import { resetNavStores } from '../router/navigate'
 import { resetSharedStores } from './stores'
 import { resetSessionStores, useSessionStore } from './session'

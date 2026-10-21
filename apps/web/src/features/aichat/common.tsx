@@ -5,7 +5,7 @@ import { useDirty } from '../../state/session'
 import { useServices } from '../../state/services'
 import { planVer, toolFacets } from '../../domain/catalog';
 import type { AiMode, ChatMsg, Conversation, Plan, ToolEvent } from '../../domain/entities'
-import { sendChat, stopChat } from '../demo/runtime'
+import { sendChat, stopChat } from '../../demo/runtime'
 import { editPlanDraftTransaction, revisePlanTransaction } from '../plans/service'
 import { readPlanProject } from '../plans/bridge'
 import { readActor } from '../../auth/identity'
@@ -16,7 +16,7 @@ import { go, useRoute } from '../../router/navigate'
 import { useCan, useReadOnly } from '../../state/console'
 import { useAuthStore, useToastStore, useUiStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import { Banner, Button, DemoTag, Field, Gated, IdLink, Modal, Status, Tabs, Textarea, cx } from '../../ui/index'
 import { Pop } from '../../shell/pop'
 

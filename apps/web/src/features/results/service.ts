@@ -18,7 +18,7 @@
  */
 import { can, projectAccessible } from '../../domain/policy'
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { BranchState, Evidence, FindingStatus, Operation, ReportStatus, SessionState, Step, StepStatus } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 

@@ -1,6 +1,6 @@
 /** Scoped evidence labels and asset inspector choices for analysis views. */
 import type { Asset, Evidence } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'

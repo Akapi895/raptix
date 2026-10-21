@@ -7,10 +7,10 @@
 import { can, ROLE_LABEL } from '../../domain/policy'
 import { USERS } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Project, Role } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
-import { stamp } from '../../domain/demo-clock'
+import { stamp } from '../../demo/display-clock'
 import { setProjectMembers } from '../projects/team-service'
 import type { TeamMember, TeamRead, TeamService } from './service'
 

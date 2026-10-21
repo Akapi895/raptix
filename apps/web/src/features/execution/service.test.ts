@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { observeInstanceRequest, readWorkspaces, saveInstanceDraft, submitInstanceRequest } from './service'
 import { persistExecution, restoreExecution } from './recovery'

@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { seed } from '../../demo/seed';
 import { APR } from '../../domain/catalog';
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { consoleKeys } from '../../state/keys'
 import { useAuthStore, useProjectStore } from '../../state/stores'

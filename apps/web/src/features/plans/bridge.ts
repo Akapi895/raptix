@@ -31,7 +31,7 @@
  */
 import { projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Operation } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import { planVer } from '../../domain/catalog';

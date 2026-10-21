@@ -16,8 +16,8 @@ import type { RequestContext } from '../../domain/service'
 
 vi.useFakeTimers()
 const { mountServices } = await import('../../test/helpers')
-const { createConsoleServices } = await import('../../domain/service-factory')
-const { emergencyStop, retryStop, resolveStop } = await import('../../features/demo/runtime')
+const { createConsoleServices } = await import('../../demo/services');
+const { emergencyStop, retryStop, resolveStop } = await import('../../demo/runtime')
 const { useSessionStore } = await import('../../state/session')
 const { requestEmergencyStopTransaction, acknowledgeEmergencyStopTransaction, finalizeEmergencyStopTransaction, failEmergencyStopTransaction, unknownEmergencyStopTransaction, resolveStopTransaction } = await import('./service')
 

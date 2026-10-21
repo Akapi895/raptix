@@ -20,12 +20,13 @@ import { join } from 'node:path'
 import { seed } from '../../demo/seed';
 import { setActiveRouter } from '../../router/active'
 import type { ActorRef } from '../../domain/service'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
+import type { ConsoleServices } from '../../domain/console-services';
 import { resetSharedStores, useProjectStore } from '../../state/stores'
 import { resetSessionStores, useSessionStore } from '../../state/session'
 import { resetNavStores, go, selectProject } from '../../router/navigate'
 import { Sidebar } from '../../shell/sidebar'
-import { stamp } from '../../domain/demo-clock'
+import { stamp } from '../../demo/display-clock'
 import { mountServices } from '../../test/helpers'
 import { ProjectPage } from '../b-detail'
 import { detailFor, projectDetailForScope } from './service'

@@ -23,7 +23,7 @@
  */
 import { projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant, type MockClock } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { AiMode, Audit, ChatMsg, Conversation, Plan, PlanStep, Project } from '../../domain/entities'
 import type { Db } from '../../demo/seed';
 import type { RequestContext, ServiceResult } from '../../domain/service'

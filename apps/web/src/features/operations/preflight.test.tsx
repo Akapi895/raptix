@@ -13,7 +13,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { DEMO_ANCHOR } from '../../domain/clock'
 import { APR } from '../../domain/catalog';

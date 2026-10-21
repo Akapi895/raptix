@@ -18,7 +18,7 @@ import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
 import { go } from '../../router/navigate'
 import { requestPlanReviewTransaction, revisePlanTransaction } from './service'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { seed } from '../../demo/seed';
 import { AiPlanCompare } from '../../screens/g-plan'

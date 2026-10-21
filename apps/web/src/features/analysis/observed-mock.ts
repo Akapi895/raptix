@@ -5,7 +5,7 @@
  * The corpus is the mock's technique list, so its coverage counts are real.
  */
 import { TECHNIQUES } from '../../domain/catalog';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import { pathOf } from './path'
 import type { ObservedAnalysisRead, ObservedAnalysisService, ObservedPath, ObservedTechnique } from './observed'

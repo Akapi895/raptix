@@ -20,7 +20,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
+import type { ConsoleServices } from '../../domain/console-services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { DEMO_ANCHOR } from '../../domain/clock'
 import { mountServices } from '../../test/helpers'

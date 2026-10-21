@@ -10,10 +10,10 @@
  * service's rules and share the factory's superseded-scope guard.
  */
 import { useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../auth/persona'
+import { actorRef } from '../../demo/persona'
 import type { Db } from '../../demo/seed';
 import type { Plan, PlanStep } from '../../domain/entities'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'

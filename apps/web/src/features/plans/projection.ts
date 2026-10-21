@@ -14,7 +14,7 @@
 import type { Db } from '../../demo/seed';
 import type { Plan } from '../../domain/entities'
 import type { RequestContext } from '../../domain/service'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import { projectView } from '../../domain/projection'
 import { projectAccessible } from '../../domain/policy'
 import { useServiceProjection } from '../../state/projection'

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectAccessible } from '../../domain/policy'
 import { ExecutionWorkspaceError } from './service'

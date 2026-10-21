@@ -1,6 +1,6 @@
 /** Scope-checked emergency-stop state and impact identities for synchronous controls. */
 import type { Operation, Session, StopState } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { projectAccessible } from '../../domain/policy'

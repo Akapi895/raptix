@@ -2,8 +2,8 @@
 import { USERS } from '../domain/catalog';
 import { type Project } from '../domain/entities'
 import type { ActorRef } from '../domain/service'
-import type { ConsoleServices } from '../domain/service-factory'
-import type { DbAuthority } from '../domain/database'
+import type { ConsoleServices } from '../domain/console-services';
+import type { DbAuthority } from '../demo/authority'
 
 export type Persona = (typeof USERS)[number]
 

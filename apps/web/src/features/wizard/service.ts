@@ -17,7 +17,7 @@
  */
 import { APR } from '../../domain/catalog';
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import type { ProjectDraft } from './draft'
 import { nextId } from './draft'

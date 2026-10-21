@@ -23,7 +23,7 @@ import type { CloseCheck } from '../../features/closure/service'
 import type { Db } from '../../demo/seed';
 import type { Evidence, Project, VaultSecret } from '../../domain/entities'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 
 const SUPERSEDED = {
   ok: false as const,

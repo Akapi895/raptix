@@ -1,6 +1,6 @@
 /**
  * Ticket 67 enablers D/E: the canonical console read seam
- * (src/state/console.ts) and the demo runtime (src/features/demo/runtime.ts).
+ * (src/state/console.ts) and the demo runtime (src/demo/runtime.ts).
  *
  * Identity overrides, membership, project selection and permission decisions
  * observe the canonical authority; demo transitions publish actual outcomes.
@@ -12,7 +12,7 @@ import { resetSharedStores, useAuthStore } from './stores'
 import { resetSessionStores, useSessionStore } from './session'
 import { selectProject } from '../router/navigate'
 import { useDb, useMe, useAccessible, useCan, useReadOnly, useScoped, useActiveProject } from './console'
-import { emergencyStop as runtimeEmergencyStop, terminateSession as runtimeTerminateSession } from '../features/demo/runtime'
+import { emergencyStop as runtimeEmergencyStop, terminateSession as runtimeTerminateSession } from '../demo/runtime'
 
 let latest: {
   db: ReturnType<typeof useDb>

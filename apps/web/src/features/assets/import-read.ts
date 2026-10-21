@@ -1,5 +1,5 @@
 /** Synchronous import duplicate identifiers and validation, scoped to the selected project. */
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'

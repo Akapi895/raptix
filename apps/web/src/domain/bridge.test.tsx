@@ -10,10 +10,10 @@ import { act, cleanup } from '@testing-library/react'
 import { seed } from '../demo/seed';
 import { type Project, type Role } from './entities'
 import { mountServices } from '../test/helpers'
-import { resetDemo, terminateSession } from '../features/demo/runtime'
+import { resetDemo, terminateSession } from '../demo/runtime'
 import { changeAssetScopeTransaction } from '../features/assets/writes'
 import { DEMO_ANCHOR, formatDemoInstant, parseDemoInstant } from './clock'
-import { createConsoleServices } from './service-factory'
+import { createConsoleServices } from '../demo/services';
 import type { ActorRef, ChangeSet, RequestContext, ServiceResult } from './service'
 
 afterEach(() => { cleanup(); vi.useRealTimers() })

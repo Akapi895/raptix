@@ -12,11 +12,11 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import type { Project } from '../domain/entities'
-import type { ConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
 import type { ActorRef, ListResult, PageRequest, RequestContext } from '../domain/service'
 import { consoleKeys, useQueryScope } from '../state/keys'
 import { useServices } from '../state/services'
-import { actorRef } from './persona'
+import { actorRef } from '../demo/persona'
 
 /** Lists the actor's accessible projects in a scope via the typed service read. */
 export function listProjectMemberships(

@@ -17,7 +17,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { readGrantWatch } from './projection'
 import { useServiceProjection } from '../../state/projection'
-import { actorRef } from '../../auth/persona'
+import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'

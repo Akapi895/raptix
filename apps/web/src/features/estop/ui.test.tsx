@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query'
 
 vi.useFakeTimers()
 const { mountServices } = await import('../../test/helpers')
-const { emergencyStop, resolveStop, resetDemo } = await import('../../features/demo/runtime')
+const { emergencyStop, resolveStop, resetDemo } = await import('../../demo/runtime')
 const { useSessionStore } = await import('../../state/session')
 const { useDb } = await import('../../state/console')
 const { useServices } = await import('../../state/services')

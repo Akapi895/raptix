@@ -1,7 +1,7 @@
 /** Synchronous report validation and source counts complement editor/catalog Query reads. */
 import type { Report } from '../../domain/entities'
 import { projectAccessible } from '../../domain/policy'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'

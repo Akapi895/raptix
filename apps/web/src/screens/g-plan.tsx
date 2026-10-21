@@ -16,7 +16,7 @@ import { readActor } from '../auth/identity'
 import { go, selectProject, useRoute } from '../router/navigate'
 import { useAccessible, useCan, useMe, useReadOnly } from '../state/console'
 import { useAuthStore, useProjectStore, useToastStore } from '../state/stores'
-import type { ConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
 import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui/index'
 import { NoProject, ReplanPanel, tz, useReplan } from '../features/aichat'
 import { FanOutCard } from '../features/branches'

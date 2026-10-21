@@ -21,7 +21,7 @@ import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-libra
 import { mountServices } from '../../test/helpers'
 import { selectProject } from '../../router/navigate'
 import { revisePlanTransaction } from '../plans/service'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { seed } from '../../demo/seed';
 import { AiHistory } from '../../screens/g-trace'
