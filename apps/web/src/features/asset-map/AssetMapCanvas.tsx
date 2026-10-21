@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import cytoscape, { type Core, type ElementDefinition } from 'cytoscape'
 import type { CanvasElements } from './canvas-model'
+import type { SavedCamera } from './saved-view'
 
 const KIND_COLOUR: Readonly<Record<string, string>> = {
   host: '#2b6cb0',
@@ -24,11 +25,20 @@ export interface CanvasFocus {
   token: number
 }
 
+/** A camera to re-apply once the graph is drawn (after a reload). A new token repeats it. */
+export interface CanvasRestore {
+  camera: SavedCamera
+  token: number
+}
+
 interface Props {
   elements: CanvasElements
   /** Called with the catalog asset id of the tapped node; nodes without one are ignored. */
   onSelectAsset: (assetId: string) => void
   focus?: CanvasFocus | null
+  restore?: CanvasRestore | null
+  /** Called after the camera has been still for a moment, so a reload can bring it back. */
+  onCameraChange?: (camera: SavedCamera) => void
 }
 
 /** Hides or shows one group's children and the edges that touch them; a collapsed group keeps its position. */
@@ -66,12 +76,15 @@ function publish(container: HTMLDivElement, instance: Core): void {
  * zoom only navigate; the list beside the canvas offers the same selection without a pointer.
  * Double-tapping a host toggles its group (services and origins); the toolbar does the same for all.
  */
-export function AssetMapCanvas({ elements, onSelectAsset, focus = null }: Props) {
+export function AssetMapCanvas({ elements, onSelectAsset, focus = null, restore = null, onCameraChange }: Props) {
   const container = useRef<HTMLDivElement | null>(null)
   const core = useRef<Core | null>(null)
   const select = useRef(onSelectAsset)
   select.current = onSelectAsset
   const focused = useRef<number | null>(null)
+  const restored = useRef<number | null>(null)
+  const reportCamera = useRef(onCameraChange)
+  reportCamera.current = onCameraChange
 
   useEffect(() => {
     if (!container.current) return
@@ -85,17 +98,26 @@ export function AssetMapCanvas({ elements, onSelectAsset, focus = null }: Props)
       setGroupVisible(group, group.data('collapsed') === true)
       if (container.current) publish(container.current, instance)
     })
+    let settle: ReturnType<typeof setTimeout> | undefined
+    const camera = (): void => {
+      if (container.current) publish(container.current, instance)
+      clearTimeout(settle)
+      settle = setTimeout(() => {
+        const pan = instance.pan()
+        reportCamera.current?.({ zoom: instance.zoom(), x: pan.x, y: pan.y })
+      }, 300)
+    }
     instance.on('zoom', () => {
       if (container.current) container.current.dataset.zoom = instance.zoom().toFixed(2)
+      camera()
     })
-    instance.on('pan', () => {
-      if (container.current) publish(container.current, instance)
-    })
+    instance.on('pan', camera)
     instance.on('free', 'node', () => {
       if (container.current) publish(container.current, instance)
     })
     core.current = instance
     return () => {
+      clearTimeout(settle)
       instance.destroy()
       core.current = null
     }
@@ -124,6 +146,15 @@ export function AssetMapCanvas({ elements, onSelectAsset, focus = null }: Props)
     })
     if (container.current) publish(container.current, instance)
   }, [elements])
+
+  useEffect(() => {
+    const instance = core.current
+    // The camera is applied after the first layout of the graph, so the layout's fit does not undo it.
+    if (!instance || !restore || restored.current === restore.token || instance.nodes().length === 0) return
+    restored.current = restore.token
+    instance.viewport({ zoom: restore.camera.zoom, pan: { x: restore.camera.x, y: restore.camera.y } })
+    if (container.current) publish(container.current, instance)
+  }, [restore, elements])
 
   useEffect(() => {
     const instance = core.current

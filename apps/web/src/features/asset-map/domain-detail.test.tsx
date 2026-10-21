@@ -112,6 +112,6 @@ describe('domain detail renderer', () => {
     render(<AssetMapPage />)
     await waitFor(() => expect(fetchDetail).toHaveBeenCalledWith('eng-1', 'asset_o', null, ''))
     expect(await screen.findByRole('region', { name: 'Sitemap' })).toBeTruthy()
-    expect(globalThis.localStorage.getItem(savedKey)).toBe('asset_o')
+    expect(JSON.parse(globalThis.localStorage.getItem(savedKey) ?? '{}').assetId).toBe('asset_o')
   });
 });
