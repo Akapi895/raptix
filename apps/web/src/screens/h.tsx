@@ -11,7 +11,7 @@ import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Filte
 import { AccessChip, Console, RequestAccessDrawer, SELECT_PROJECT, SessionDetail, kindLabel, useGrantWatch, useTerminate, MIN_REASON } from './h-session'
 import { C2ReadError, useC2Audit, useC2Channel, useC2Overview, useC2Requests, useC2Sessions } from '../features/c2/query'
 import type { C2AccessKey, C2AuditView, C2NodeRow, C2SessionRow } from '../features/c2/service'
-import type { Channel, Session, SessionRequest } from '../data'
+import type { Channel, Session, SessionRequest } from '../domain/entities'
 
 const TABS = [
   { id: 'infrastructure', label: 'Infrastructure' }, { id: 'channels', label: 'Channels' }, { id: 'sessions', label: 'Active Sessions' },

@@ -9,7 +9,8 @@
  * projection hook. Access follows the one membership rule; an operation
  * outside the actor's grants reads as missing, never as data.
  */
-import type { Db, Operation, Project } from '../../data'
+import type { Db } from '../../demo/seed';
+import type { Operation, Project } from '../../domain/entities'
 import type { Instant, RequestContext } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'
 import { projectView } from '../../domain/projection'

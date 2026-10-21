@@ -14,7 +14,9 @@
  * seed, and keeps proposals in `db.libraryProposals`. Mock content fingerprints
  * are simulated; the real adapter reports SHA-256 values from the server.
  */
-import { TECHNIQUES, type Db, type Playbook } from '../../data'
+import { TECHNIQUES } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import { type Playbook } from '../../domain/entities'
 import { projectAccessible, projectLocked } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'

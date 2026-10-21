@@ -17,7 +17,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { setActiveRouter } from '../../router/active'
 import type { ActorRef } from '../../domain/service'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'

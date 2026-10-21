@@ -25,7 +25,7 @@ import { useToastStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
 import { go } from '../../router/navigate'
 import { emergencyStop, retryStop } from '../demo/runtime'
-import type { Operation } from '../../data'
+import type { Operation } from '../../domain/entities'
 import type { StopState } from '../../domain/entities'
 import { acknowledgeEmergencyStopTransaction, finalizeEmergencyStopTransaction, resolveStopTransaction, type StopResolution } from './service'
 

@@ -25,7 +25,8 @@
 import { projectAccessible, projectLocked, can as policyCan, ROLE_LABEL } from '../../domain/policy'
 import type { CanAction } from '../../domain/permissions'
 import { formatDemoInstant } from '../../domain/clock'
-import { TECHNIQUES, type Db, type FindingRow, type SuggestionDispositionState } from '../../data'
+import { TECHNIQUES } from '../../domain/catalog';
+import type { Db, FindingRow, SuggestionDispositionState } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { ActorRef, Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Evidence, Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'

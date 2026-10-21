@@ -25,7 +25,7 @@ import { projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant, type MockClock } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { AiMode, Audit, ChatMsg, Conversation, Plan, PlanStep, Project } from '../../domain/entities'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 /** The workspace read: the scope's conversations, newest first. */

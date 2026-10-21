@@ -16,7 +16,7 @@ import { go, selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/h'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import {
   acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,
   requestEmergencyStopTransaction, unknownEmergencyStopTransaction,

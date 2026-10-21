@@ -2,7 +2,8 @@ import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
 import { Button, Empty, Status } from '../ui/index'
 import { go, selectProject, useRoute } from '../router/navigate'
-import type { Branch, Db, Operation, Plan, Project, Step } from '../data'
+import type { Db } from '../demo/seed';
+import type { Branch, Operation, Plan, Project, Step } from '../domain/entities'
 import type { PfCheck, PfState } from '../features/operations/checklist'
 // eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export { specChecks } from '../features/operations/checklist'

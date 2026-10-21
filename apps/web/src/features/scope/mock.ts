@@ -6,7 +6,8 @@
  * The mock keeps no per-revision ROE fields, so `supports.roeFields` is false
  * and the tab does not offer them in mock mode.
  */
-import { APR, type Db } from '../../data'
+import { APR } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { Approval, Operation, Project } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'

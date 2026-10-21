@@ -5,7 +5,8 @@
  * transaction, so an edit publishes its audit row with the membership.
  */
 import { can, ROLE_LABEL } from '../../domain/policy'
-import { USERS, type Db } from '../../data'
+import { USERS } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { Project, Role } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'

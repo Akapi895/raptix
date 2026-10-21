@@ -19,7 +19,7 @@
  */
 import { projectAccessible, can as policyCan } from '../../domain/policy'
 import { parseDemoInstant } from '../../domain/clock'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Asset, Audit, C2Node, Channel, Session, SessionPerm, SessionRequest, SessionState } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'

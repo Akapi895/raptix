@@ -21,7 +21,8 @@
  * sequence the provider's `resetDemo` ran (loading and the stop-outcome
  * switch are left alone).
  */
-import { USERS, type SeedVariant } from '../../data'
+import { USERS } from '../../domain/catalog';
+import type { SeedVariant } from '../../demo/seed';
 import { useAuthStore, useProjectStore, useToastStore, useUiStore } from '../../state/stores'
 import { useSessionStore, type LogLine } from '../../state/session'
 import { hhmm, stamp } from '../../domain/demo-clock'
@@ -33,7 +34,7 @@ import {
 } from '../estop/service'
 import type { ActorRef } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 
 /* ───────────── Runtime registration ───────────── */
 

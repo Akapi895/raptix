@@ -6,7 +6,8 @@
  * and approval transactions.
  */
 import { can } from '../../domain/policy'
-import { APR, type Db } from '../../data'
+import { APR } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import { decideApprovalTransaction, withdrawApprovalTransaction } from '../approvals/service'

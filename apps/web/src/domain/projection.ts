@@ -1,5 +1,5 @@
 /** Caches feature service projections between atomic authority publications. */
-import type { Db } from '../data'
+import type { Db } from '../demo/seed';
 import { projectAccessible } from './policy'
 import type { ConsoleServices } from './service-factory'
 import type { RequestContext } from './service'

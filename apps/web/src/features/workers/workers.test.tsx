@@ -19,7 +19,7 @@ import { ServicesProvider } from '../../state/services'
 import { mountServices } from '../../test/helpers'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { WorkerTeamView } from '../../screens/g-workers'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { listWorkers } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

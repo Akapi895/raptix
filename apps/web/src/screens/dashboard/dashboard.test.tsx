@@ -11,7 +11,7 @@
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { consoleKeys } from '../../state/keys'

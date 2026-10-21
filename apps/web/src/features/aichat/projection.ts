@@ -9,7 +9,8 @@
  * whatever the conversation already references, and the conversation reads
  * enforce the one-membership rule.
  */
-import type { ChatMsg, Db } from '../../data'
+import type { Db } from '../../demo/seed';
+import type { ChatMsg } from '../../domain/entities'
 import type { Conversation, ToolEvent } from '../../domain/entities'
 import type { RequestContext } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/service-factory'

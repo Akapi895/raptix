@@ -1,8 +1,8 @@
 import { useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { Bot, FileText, MessageSquare, Pin, PinOff, Plus, ShieldCheck } from 'lucide-react'
 import { useServices } from '../state/services'
-import { planVer } from '../data'
-import type { Conversation } from '../data'
+import { planVer } from '../domain/catalog';
+import type { Conversation } from '../domain/entities'
 import { createChatHandlers } from '../features/aichat/handlers'
 import { useAiBundle, useAiRail, useConversationFocus } from '../features/aichat/projection'
 import { useProjectEligibility } from '../features/operations/views'

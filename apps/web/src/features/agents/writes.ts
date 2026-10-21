@@ -19,7 +19,7 @@
  * nothing.
  */
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
 import { stamp } from '../../domain/demo-clock'
 import type { DbAuthority } from '../../domain/database'

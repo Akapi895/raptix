@@ -15,7 +15,7 @@ import { mountServices } from '../../test/helpers'
 import { go, selectProject } from '../../router/navigate'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/h'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { decideSessionRequestTransaction, requestSessionAccessTransaction } from './grants'
 import { getSessionDetail } from './service'
 

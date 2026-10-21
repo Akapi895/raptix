@@ -3,11 +3,12 @@ import { cleanup } from '@testing-library/react'
 import { mountServices } from '../helpers'
 import { computePreflightChecks, preflightPass } from '../../features/operations/preflight'
 import { MockClock } from '../../domain/clock'
-import type { Db, Operation } from '../../data'
+import type { Db } from '../../demo/seed';
+import type { Operation } from '../../domain/entities'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { createOperationDraft, runOperationPreflight, startOperation } from '../../features/operations/service'
 import { assignAgentTransaction } from '../../features/agents/writes'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 
 afterEach(cleanup)
 

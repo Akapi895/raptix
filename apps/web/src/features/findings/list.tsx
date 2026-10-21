@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Sparkles, Plus, RotateCcw } from 'lucide-react'
 import { sevLabel, SEVS } from './service'
-import { type Finding } from '../../data'
+import { type Finding } from '../../domain/entities'
 import { FindingReadError, useFindingList } from './query'
 import type { FindingSort } from './service'
 import { useAiActions } from './ai-actions'

@@ -19,8 +19,8 @@
  * consumers observe one dataset.
  */
 import { can, projectAccessible, projectLocked, readOnlyContext } from '../../domain/policy'
-import { planVer } from '../../data'
-import type { Db } from '../../data'
+import { planVer } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import { DEMO_TZ, parseDemoInstant, formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Asset, Operation, Plan, Playbook, Project, Step } from '../../domain/entities'

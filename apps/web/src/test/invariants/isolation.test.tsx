@@ -9,7 +9,7 @@ import { assignAgentTransaction } from '../../features/agents/writes'
 import { decideApprovalTransaction, reviseScopeTransaction } from '../../features/approvals/service'
 import { selectProject } from '../../router/navigate'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 
 afterEach(cleanup)
 

@@ -18,9 +18,9 @@ import { mountServices } from '../../test/helpers'
 import { selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import { FanOutPage } from './fanout'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { getBranchGroup, listBranchGroups } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

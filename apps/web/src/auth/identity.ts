@@ -1,5 +1,6 @@
 /** Narrow synchronous identity and project-policy reads over the console services. */
-import { USERS, type Project } from '../data'
+import { USERS } from '../domain/catalog';
+import { type Project } from '../domain/entities'
 import type { ActorRef } from '../domain/service'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { DbAuthority } from '../domain/database'

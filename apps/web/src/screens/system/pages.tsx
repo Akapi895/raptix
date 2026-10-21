@@ -10,7 +10,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, Clock, FileSearch, FolderKanban, Home, LifeBuoy, Loader2, Lock, LogIn, RefreshCw, ShieldOff, ServerCrash, UserCog, WifiOff } from 'lucide-react'
-import { USERS } from '../../data'
+import { USERS } from '../../domain/catalog';
 import type { Role } from '../../domain/entities'
 import { personaRole, signOut, switchPersona } from '../../auth/persona'
 import { useAuthStore, useToastStore, useUiStore } from '../../state/stores'

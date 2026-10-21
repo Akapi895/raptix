@@ -24,7 +24,7 @@ import { useAuthStore, useProjectStore, useThemeStore, useUiStore, type CopilotC
 import { signOut } from '../auth/persona'
 import { resetDemo } from '../features/demo/runtime'
 import { ROLE_LABEL } from '../domain/policy'
-import { USERS } from '../data'
+import { USERS } from '../domain/catalog';
 import { Button, IconButton, Segmented, Avatar, cx } from '../ui/index'
 import { MOCK_PROJECT_NAV, NAV } from './nav'
 import { Pop } from './pop'

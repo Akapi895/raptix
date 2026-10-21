@@ -22,7 +22,8 @@
  * observed/planned chronology.
  */
 import { projectAccessible } from '../../domain/policy'
-import { TECHNIQUES, type Db } from '../../data'
+import { TECHNIQUES } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import type { Operation, Step } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 

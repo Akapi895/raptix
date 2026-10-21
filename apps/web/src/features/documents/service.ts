@@ -8,7 +8,9 @@
  * persistence. Real mode keeps its API-backed panels (ADR-0068) and never
  * renders this surface.
  */
-import { APR, planVer, type Db, type Plan, type Project } from '../../data'
+import { APR, planVer } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import { type Plan, type Project } from '../../domain/entities'
 import { projectAccessible } from '../../domain/policy'
 import { stamp } from '../../domain/demo-clock'
 import { projectView } from '../../domain/projection'

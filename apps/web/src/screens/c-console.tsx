@@ -13,8 +13,9 @@ import { readOperationMeta, useOperationView } from '../features/operations/view
 import { fastForward, loseAgent, restoreAgent } from '../features/demo/runtime'
 import { useSessionPerm } from '../features/c2/projection'
 import { useStopRead } from '../features/estop/projection'
-import { BRANCH_LABEL, planVer, toolFacets } from '../data'
-import type { Db, Operation, Step } from '../data'
+import { BRANCH_LABEL, planVer, toolFacets } from '../domain/catalog';
+import type { Db } from '../demo/seed';
+import type { Operation, Step } from '../domain/entities'
 import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
 import { useReviewStep } from '../features/operations/query'
 import { FanOutCard } from '../features/branches'

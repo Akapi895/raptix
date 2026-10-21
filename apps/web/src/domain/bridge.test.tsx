@@ -7,7 +7,8 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup } from '@testing-library/react'
-import { seed, type Project, type Role } from '../data'
+import { seed } from '../demo/seed';
+import { type Project, type Role } from './entities'
 import { mountServices } from '../test/helpers'
 import { resetDemo, terminateSession } from '../features/demo/runtime'
 import { changeAssetScopeTransaction } from '../features/assets/writes'

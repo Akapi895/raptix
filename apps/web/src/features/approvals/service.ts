@@ -22,9 +22,9 @@
  * call leaves the whole dataset unchanged. Closure specifics and the close
  * checklist stay with ticket 22; plan expiry enforcement with ticket 39.
  */
-import { APR } from '../../data'
+import { APR } from '../../domain/catalog';
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'

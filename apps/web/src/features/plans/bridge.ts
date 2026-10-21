@@ -34,8 +34,9 @@ import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Operation } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import { planVer } from '../../data'
-import type { Db, Plan } from '../../data'
+import { planVer } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
+import type { Plan } from '../../domain/entities'
 import { usableApproval } from './service'
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */

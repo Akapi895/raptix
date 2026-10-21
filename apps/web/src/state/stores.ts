@@ -13,7 +13,7 @@
  * and disposes pending toast timers.
  */
 import { create } from 'zustand'
-import type { AiMode } from '../data'
+import type { AiMode } from '../domain/entities'
 
 export interface Toast { id: number; kind: 'ok' | 'warn' | 'bad' | 'info'; text: string }
 export interface CopilotCtx { kind: string; id?: string; label: string }

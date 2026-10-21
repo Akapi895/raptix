@@ -18,9 +18,9 @@
  * Reopening a closed project requires the admin role and an audited reason;
  * refusals commit nothing — every check runs before the single atomic commit.
  */
-import { APR } from '../../data'
+import { APR } from '../../domain/catalog';
 import { can, projectAccessible } from '../../domain/policy'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'

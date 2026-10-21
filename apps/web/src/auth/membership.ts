@@ -11,7 +11,7 @@
  * entry and the ScopeCancelBridge cancels superseded reads.
  */
 import { useQuery } from '@tanstack/react-query'
-import type { Project } from '../data'
+import type { Project } from '../domain/entities'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { ActorRef, ListResult, PageRequest, RequestContext } from '../domain/service'
 import { consoleKeys, useQueryScope } from '../state/keys'

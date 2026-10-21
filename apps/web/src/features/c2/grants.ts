@@ -16,7 +16,7 @@
  */
 import { can as policyCan, projectAccessible } from '../../domain/policy'
 import { DEMO_TZ, formatDemoInstant, parseDemoInstant, type Scheduler } from '../../domain/clock'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 

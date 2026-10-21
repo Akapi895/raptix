@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import { Hand, History, PanelRight, ShieldCheck } from 'lucide-react'
-import type { Project } from '../../data'
+import type { Project } from '../../domain/entities'
 import { can, readOnlyContext } from '../../domain/policy'
 import { useServices } from '../../state/services'
 import { useQueryScope } from '../../state/keys'

@@ -25,8 +25,9 @@ import { mountServices } from '../../test/helpers'
 import { go, selectProject } from '../../router/navigate'
 import { decideToolEventTransaction } from './writes'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import type { ToolEvent, ToolState } from '../../data'
-import { seed, toolFacets } from '../../data'
+import type { ToolEvent, ToolState } from '../../domain/entities'
+import { seed } from '../../demo/seed';
+import { toolFacets } from '../../domain/catalog';
 import { AiTrace } from '../../screens/g-trace'
 import { ToolProposalCard } from '../aichat'
 import { listToolEvents, maskSensitive } from './service'

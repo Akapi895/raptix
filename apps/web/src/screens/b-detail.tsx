@@ -27,7 +27,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed } from 'lucide-react'
-import { APR, type Project } from '../data'
+import { APR } from '../domain/catalog';
+import { type Project } from '../domain/entities'
 import { ExecutionWorkspace } from '../features/execution/workspace'
 import { VaultTab } from '../features/vault/tab'
 import { useServices } from '../state/services'

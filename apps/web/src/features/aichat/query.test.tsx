@@ -20,9 +20,9 @@ import { selectProject } from '../../router/navigate'
 import { resetDemo, sendChat, stopChat } from '../demo/runtime'
 import { requestPlanReviewTransaction } from '../plans/service'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import type { Db } from '../../data'
+import type { Db } from '../../demo/seed';
 import { AiOperator } from '../../screens/g-chat'
-import { seed } from '../../data'
+import { seed } from '../../demo/seed';
 import { getConversation, listConversations } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

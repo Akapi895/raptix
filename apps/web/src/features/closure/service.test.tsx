@@ -17,7 +17,8 @@ import type { ActorRef, RequestContext } from '../../domain/service'
 import type { DbAuthority } from '../../domain/database'
 import { useDb, useMe } from '../../state/console'
 import { useSessionStore } from '../../state/session'
-import { APR, type Db } from '../../data'
+import { APR } from '../../domain/catalog';
+import type { Db } from '../../demo/seed';
 import { CloseTab, TeamTab } from '../../screens/b-detail2'
 import { aggregateFor } from '../../screens/dashboard/service'
 import { detailFor } from '../../screens/project-detail/service'
