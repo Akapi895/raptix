@@ -11,6 +11,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from raptix.knowledge.graph.asset_identity import identity_for
 from raptix.knowledge.graph.ingest import _adapt_nmap_xml
 from raptix.knowledge.ingest.materialize import apply_observations, observations_to_records
@@ -136,6 +138,26 @@ _NMAP_FIXTURE = (
 )
 
 
+_COMPLETE_NMAP = sorted(
+    path
+    for path in (Path(__file__).resolve().parents[6] / "apps/web/tests/fixtures/asset-map/network").rglob("*.xml")
+    if "</nmaprun>" in path.read_text(encoding="utf-8", errors="replace")
+)
+
+
+def _shape(records: list[dict[str, Any]]) -> tuple[set[str], set[str], set[tuple[str, str, str]]]:
+    """Service keys, origin keys and Host edges: what the inspector and the origin map read."""
+    services = {record["key"] for record in records if record["kind"] == "Service"}
+    entrypoints = {record["key"] for record in records if record["kind"] == "Entrypoint"}
+    edges = {
+        (record["key"], edge["kind"], edge["to_key"])
+        for record in records
+        if record["kind"] == "Host"
+        for edge in record.get("edges_out", [])
+    }
+    return services, entrypoints, edges
+
+
 class TestRegistryAndLegacyWritersAgree:
     """The registry parser and the legacy adapter must give one host one asset identity (ADR-0094)."""
 
@@ -163,3 +185,19 @@ class TestRegistryAndLegacyWritersAgree:
 
         assert legacy_ids
         assert registry_ids == legacy_ids
+
+    @pytest.mark.parametrize("path", _COMPLETE_NMAP, ids=lambda path: path.name)
+    def test_services_web_origins_and_edges_have_the_same_shape_from_both_writers(self, path: Path) -> None:
+        legacy = _CapturingStore()
+        _adapt_nmap_xml(path, legacy, "htb-lab", "retained", "ep")  # type: ignore[arg-type]
+        outcome = default_registry().parse(
+            Artifact(id=path.stem, artifact_ref=f"artifact://{path.stem}", format_hint="nmap_xml"),
+            path.read_bytes(),
+            expected_formats=("nmap_xml",),
+        )
+        assert _shape(legacy.calls[0]) == _shape(observations_to_records(outcome.observations))
+        services, entrypoints, edges = _shape(legacy.calls[0])
+        # The inspector reads Host -HOSTS-> Service; origins hang off their host with HAS.
+        assert {kind for _, kind, _ in edges} <= {"HOSTS", "HAS"}
+        assert {to for _, kind, to in edges if kind == "HOSTS"} == services
+        assert {to for _, kind, to in edges if kind == "HAS"} == entrypoints

@@ -1,23 +1,24 @@
-"""Nmap XML output parser (``nmap -oX``)."""
+"""Nmap XML output parser (``nmap -oX``).
+
+The graph shape matches the legacy adapter in ``knowledge/graph/ingest.py``, so a scan written by either
+path lands on the same keys and edges: ``service::<ip>:<port>`` is a Service that the Host reaches with
+``HOSTS``, and a web port gives an ``entrypoint::<scheme>://<host>:<port>/`` that the Host reaches with
+``HAS``. The asset map's inspector reads exactly these edges.
+"""
 
 from __future__ import annotations
 
 import defusedxml.ElementTree as ET
 
+from raptix.knowledge.graph.asset_identity import WEB_PORTS
 from raptix.knowledge.ingest.parsers._shared import node_observation, summary_observation
 from raptix.knowledge.ingest.registry import ParseError
 from raptix_core.types.capability import Artifact, Observation
 
-_WEB_PORTS = {80, 81, 443, 3000, 5000, 7001, 8000, 8008, 8080, 8443, 8888}
-
-
-def _is_web_port(port: int) -> bool:
-    return port in _WEB_PORTS
-
 
 class NmapXmlParser:
     format_id = "nmap_xml"
-    parser_version = "1.0.0"
+    parser_version = "1.1.0"
 
     def supports(self, artifact: Artifact, content: bytes) -> float:
         head = content[:4096].lstrip()
@@ -33,7 +34,6 @@ class NmapXmlParser:
             root = ET.fromstring(content)
         except ET.ParseError as exc:
             raise ParseError(f"failed to parse nmap xml: {exc}") from exc
-
         observations: list[Observation] = []
         hosts = 0
         services = 0
@@ -70,67 +70,56 @@ class NmapXmlParser:
                 service_name = service_el.get("name") if service_el is not None else "unknown"
                 product = service_el.get("product") if service_el is not None else ""
                 version = service_el.get("version") if service_el is not None else ""
-                service_key = f"service::{host_label}:{port}/{proto}"
-                service_edges: list[dict[str, object]] = [
-                    {"to_key": host_key, "kind": "HOSTS", "weight": 0.6}
-                ]
-                host_edges.append({"to_key": service_key, "kind": "EXPOSES", "weight": 0.6})
-
-                if _is_web_port(port):
-                    scheme = "https" if port in {443, 8443} else "http"
-                    default_port = (scheme == "http" and port == 80) or (
-                        scheme == "https" and port == 443
-                    )
-                    endpoint = (
-                        f"{scheme}://{host_label}/"
-                        if default_port
-                        else f"{scheme}://{host_label}:{port}/"
-                    )
-                    entrypoint_key = f"entrypoint::{endpoint}"
-                    service_edges.append(
-                        {"to_key": entrypoint_key, "kind": "EXPOSES", "weight": 0.5}
-                    )
-                    observations.append(
-                        node_observation(
-                            "Entrypoint",
-                            key=entrypoint_key,
-                            label=endpoint,
-                            props={
-                                "source": scanner_hint,
-                                "host": host_label,
-                                "port": port,
-                                "scheme": scheme,
-                            },
-                            edges_out=[{"to_key": service_key, "kind": "HOSTS", "weight": 0.5}],
-                        )
-                    )
-                    entrypoints += 1
-
+                service_key = f"service::{ip}:{port}"
+                host_edges.append({"to_key": service_key, "kind": "HOSTS", "weight": 0.5})
                 observations.append(
                     node_observation(
                         "Service",
                         key=service_key,
-                        label=f"{host_label}:{port}/{proto}",
+                        label=f"{ip}:{port}/{proto}",
                         props={
-                            "host": host_label,
                             "port": port,
                             "protocol": proto,
-                            "source": scanner_hint,
                             "service": service_name,
-                            "product": product,
-                            "version": version,
+                            "product": product or "",
+                            "version": version or "",
+                            "source": scanner_hint,
                         },
-                        edges_out=service_edges,
                     )
                 )
                 services += 1
+
+                if port in WEB_PORTS:
+                    scheme = "https" if port in {443, 8443} else "http"
+                    url = f"{scheme}://{host_label}:{port}/"
+                    entrypoint_key = f"entrypoint::{url}"
+                    host_edges.append({"to_key": entrypoint_key, "kind": "HAS", "weight": 0.5})
+                    observations.append(
+                        node_observation(
+                            "Entrypoint",
+                            key=entrypoint_key,
+                            label=url,
+                            props={
+                                "scheme": scheme,
+                                "host": host_label,
+                                "port": port,
+                                "source": scanner_hint,
+                            },
+                        )
+                    )
+                    entrypoints += 1
 
             observations.append(
                 node_observation(
                     "Host",
                     key=host_key,
                     label=host_label,
-                    props={"ip": ip, "hostname": hostname, "source": scanner_hint},
+                    props={
+                        "ip": ip,
+                        "hostname": hostname or "",
+                        "explored": True,
+                        "source": scanner_hint,
+                    },
                     edges_out=host_edges,
                 )
             )
