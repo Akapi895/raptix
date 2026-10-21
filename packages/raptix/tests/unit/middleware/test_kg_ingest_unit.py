@@ -21,9 +21,11 @@ from raptix.knowledge.graph.ingest import (
     _adapt_nmap_xml,
     _adapt_nuclei_jsonl,
     _adapt_sarif,
+    _ArtifactStampedStore,
     available_scanners,
     ingest,
     register_adapter,
+    workspace_artifact_ref,
 )
 from raptix_core.types.asset import asset_id
 
@@ -774,3 +776,34 @@ def test_httpx_redacts_the_origin_and_links_the_host_to_it(tmp_path: Path) -> No
     host = next(o for o in obs if o["kind"] == "Host")
     assert entrypoint["label"] == "http://10.0.0.5:8080/admin?token=REDACTED"
     assert {e["to_key"] for e in host["edges_out"]} == {entrypoint["key"]}
+
+
+def test_a_file_under_the_engagement_workspace_gives_its_engagement_relative_reference() -> None:
+    assert (
+        workspace_artifact_ref(Path("/workspace/eng-1/scans/nmap.xml"), "eng-1") == "scans/nmap.xml"
+    )
+    assert workspace_artifact_ref(Path("/workspace/other/scans/nmap.xml"), "eng-1") is None
+    assert workspace_artifact_ref(Path("/tmp/nmap.xml"), "eng-1") is None
+    assert workspace_artifact_ref(Path("/workspace/eng-1/"), "eng-1") is None
+
+
+def test_stamped_writes_keep_existing_props_and_delegate_everything_else() -> None:
+    inner = _StubStore()
+    stamped = _ArtifactStampedStore(inner, "scans/nmap.xml")  # type: ignore[arg-type]
+    observations = [
+        {"kind": "Host", "key": "host::10.0.0.1", "props": {"ip": "10.0.0.1"}},
+        {
+            "kind": "Service",
+            "key": "service::10.0.0.1:80",
+            "props": {"source_artifact_ref": "scans/earlier.xml"},
+        },
+        {"kind": "Summary", "key": "summary"},
+    ]
+    stamped.record_observations(
+        observations, engagement="eng-1", created_by="it", source_episode_id="ep-1"
+    )
+    assert observations[0]["props"]["source_artifact_ref"] == "scans/nmap.xml"
+    assert observations[1]["props"]["source_artifact_ref"] == "scans/earlier.xml"
+    assert "props" not in observations[2]
+    assert inner.calls[0]["engagement"] == "eng-1"
+    assert stamped.calls is inner.calls

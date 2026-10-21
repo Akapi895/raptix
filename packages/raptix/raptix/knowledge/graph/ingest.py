@@ -24,7 +24,7 @@ import hashlib
 import json
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qsl, urlparse
 
 import defusedxml.ElementTree as ET
@@ -91,6 +91,43 @@ def available_scanners() -> list[str]:
     return sorted(_REGISTRY.keys())
 
 
+def workspace_artifact_ref(path: Path, engagement: str) -> str | None:
+    """The engagement-relative path of a file under /workspace/<engagement>/, or None for any other path.
+
+    The Web keeps workspace artifacts under the same engagement folder, so this reference is the one the
+    Web's capture import records as its producer; the two sides join on it, not on a guessed name.
+    """
+    prefix = f"/workspace/{engagement}/"
+    text = path.as_posix()
+    if text.startswith(prefix) and len(text) > len(prefix):
+        return text[len(prefix) :]
+    return None
+
+
+class _ArtifactStampedStore:
+    """Passes writes through to the store and marks each observation with the artifact it came from.
+
+    Adapters keep their own shape; the reference is added once, here, to every observation's props
+    (``source_artifact_ref``), and every other store method is delegated unchanged.
+    """
+
+    def __init__(self, store: KGStore, artifact_ref: str) -> None:
+        self._store = store
+        self._artifact_ref = artifact_ref
+
+    def record_observations(
+        self, observations: list[dict[str, Any]], **scope: Any
+    ) -> dict[str, Any]:
+        for observation in observations:
+            props = observation.get("props") if isinstance(observation, dict) else None
+            if isinstance(props, dict):
+                props.setdefault("source_artifact_ref", self._artifact_ref)
+        return self._store.record_observations(observations, **scope)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._store, name)
+
+
 def ingest(
     scanner_kind: str,
     path: str | Path,
@@ -121,8 +158,14 @@ def ingest(
         }
 
     adapter = _REGISTRY[scanner_kind]
+    artifact_ref = workspace_artifact_ref(target, engagement)
+    writer = (
+        cast(KGStore, _ArtifactStampedStore(store, artifact_ref))
+        if artifact_ref is not None
+        else store
+    )
     try:
-        result = adapter(target, store, engagement, created_by, source_episode_id)
+        result = adapter(target, writer, engagement, created_by, source_episode_id)
     except Exception as exc:
         log.warning("kg_ingest adapter %s raised: %s", scanner_kind, exc)
         return {
