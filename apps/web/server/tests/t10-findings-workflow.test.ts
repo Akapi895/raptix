@@ -162,6 +162,9 @@ function memoryDb() {
       findMany: async ({ where }: { where: { findingId: string } }) => [...table('evidenceLink').values()].filter((r) => r.findingId === where.findingId).map((r) => ({ ...r })),
       create: async ({ data }: { data: Row }) => { const row: Row = { ...data, id: seq('ev'), createdAt: new Date() }; table('evidenceLink').set(String(row.id), row); return { ...row }; },
     },
+    retainedCapture: {
+      findFirst: async ({ where }: { where: Row }) => find('retainedCapture', (row) => Object.entries(where).every(([key, value]) => row[key] === value)),
+    },
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
   return db;
@@ -607,6 +610,113 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     const listed = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/curated-findings`, headers });
     const finding = listed.json().findings[0];
     expect(finding.status === 'confirmed' && finding.body.detail === 'Changed content.').toBe(false);
+    await app.close();
+  });
+});
+
+describe('reproduction package contract', () => {
+  const CAPTURE = 'cap-retained-1';
+  const DIGEST = 'a'.repeat(64);
+  const reproduction = {
+    prerequisites: 'Lab reachable',
+    inputs: 'Base URL',
+    steps: ['Open /admin', 'Read the response'],
+    expectedObservation: 'Console markup',
+    limitations: 'Lab only',
+    artifact: { captureId: CAPTURE, digest: DIGEST },
+  };
+  const seedCapture = (db: Awaited<ReturnType<typeof setup>>['db'], row: Row): void => {
+    db.tables.set('retainedCapture', new Map([[String(row.id), row]]));
+  };
+  const retained = { id: CAPTURE, engagementId: ENG, filename: 'exploit.py', mediaType: 'text/plain', sizeBytes: 190, digest: DIGEST, classification: 'standard' };
+  const createFinding = (app: FastifyInstance, owner: { cookie: string; csrf: string }, extra: Record<string, unknown>) => app.inject({
+    method: 'POST', url: `/api/engagements/${ENG}/curated-findings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf },
+    payload: { title: 'Package finding', severity: 'high', detail: 'Unauthenticated console.', impact: 'Exposure.', recommendation: 'Require a session.', ...extra },
+  });
+
+  it('stores the package bound to its retained capture and returns it with the verification state', async () => {
+    const { app, db, owner } = await setup();
+    seedCapture(db, retained);
+
+    const created = await createFinding(app, owner, { reproduction });
+
+    expect(created.statusCode).toBe(200);
+    expect(created.json().body.reproduction).toEqual({
+      prerequisites: 'Lab reachable', inputs: 'Base URL', steps: ['Open /admin', 'Read the response'], expectedObservation: 'Console markup', limitations: 'Lab only',
+      artifact: { captureId: CAPTURE, filename: 'exploit.py', mediaType: 'text/plain', digest: DIGEST, sizeBytes: 190, classification: 'standard', canReadOriginal: true },
+      verification: 'not_recorded',
+    });
+    await app.close();
+  });
+
+  it('never invents a package for a finding without one, and an update without the key keeps the stored package', async () => {
+    const { app, db, owner } = await setup();
+    seedCapture(db, retained);
+    const bare = await createFinding(app, owner, {});
+    expect(bare.statusCode).toBe(200);
+    expect('reproduction' in bare.json().body).toBe(false);
+
+    const withPackage = await createFinding(app, owner, { reproduction });
+    const edited = await app.inject({
+      method: 'PATCH', url: `/api/engagements/${ENG}/curated-findings/${withPackage.json().id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf },
+      payload: { expectedVersion: withPackage.json().expectedVersion, title: 'Package finding', severity: 'high', detail: 'Edited description only.', impact: 'Exposure.', recommendation: 'Require a session.' },
+    });
+
+    expect(edited.statusCode).toBe(200);
+    expect(edited.json().body.reproduction.artifact.captureId).toBe(CAPTURE);
+    await app.close();
+  });
+
+  it('refuses a capture of another engagement, a digest that moved, and malformed steps', async () => {
+    const { app, db, owner } = await setup();
+    seedCapture(db, retained);
+    db.tables.set('retainedCapture', new Map([
+      [CAPTURE, retained],
+      ['cap-other-engagement', { ...retained, id: 'cap-other-engagement', engagementId: 'eng-2' }],
+    ]));
+
+    const foreign = await createFinding(app, owner, { reproduction: { ...reproduction, artifact: { captureId: 'cap-other-engagement', digest: DIGEST } } });
+    expect(foreign.statusCode).toBe(404);
+    expect(foreign.json().error.message).toBe('Retained capture not found in this engagement.');
+
+    const moved = await createFinding(app, owner, { reproduction: { ...reproduction, artifact: { captureId: CAPTURE, digest: 'b'.repeat(64) } } });
+    expect(moved.statusCode).toBe(409);
+
+    const tooMany = await createFinding(app, owner, { reproduction: { ...reproduction, steps: Array.from({ length: 101 }, (_, i) => `step ${i}`) } });
+    expect(tooMany.statusCode).toBe(400);
+    await app.close();
+  });
+
+  it('shows a sensitive capture by name only to owners and reviewers, and follows its current classification', async () => {
+    const { app, db, owner, viewer } = await setup();
+    seedCapture(db, { ...retained, classification: 'sensitive' });
+    const created = await createFinding(app, owner, { reproduction });
+    const artifactAs = async (session: { cookie: string; csrf: string }) => {
+      const listed = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/curated-findings`, headers: { cookie: session.cookie, 'x-csrf-token': session.csrf } });
+      return listed.json().findings.find((f: { id: string }) => f.id === created.json().id).body.reproduction.artifact;
+    };
+
+    expect(await artifactAs(owner)).toMatchObject({ filename: 'exploit.py', classification: 'sensitive', canReadOriginal: true });
+    expect(await artifactAs(viewer)).toMatchObject({ filename: null, classification: 'sensitive', canReadOriginal: false });
+
+    db.tables.set('retainedCapture', new Map([[CAPTURE, { ...retained, classification: 'standard' }]]));
+    expect(await artifactAs(viewer)).toMatchObject({ filename: 'exploit.py', classification: 'standard', canReadOriginal: false });
+    await app.close();
+  });
+
+  it('clears the stored package when an update sends an explicit null, and keeps it when the key is absent', async () => {
+    const { app, db, owner } = await setup();
+    seedCapture(db, retained);
+    const created = await createFinding(app, owner, { reproduction });
+    const removed = await app.inject({
+      method: 'PATCH', url: `/api/engagements/${ENG}/curated-findings/${created.json().id}`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf },
+      payload: { expectedVersion: created.json().expectedVersion, title: 'Package finding', severity: 'high', detail: 'Unauthenticated console.', impact: 'Exposure.', recommendation: 'Require a session.', reproduction: null },
+    });
+
+    expect(removed.statusCode).toBe(200);
+    expect('reproduction' in removed.json().body).toBe(false);
+    const listed = await app.inject({ method: 'GET', url: `/api/engagements/${ENG}/curated-findings`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf } });
+    expect(listed.json().findings.find((f: { id: string }) => f.id === created.json().id).body.reproduction).toBeUndefined();
     await app.close();
   });
 });
