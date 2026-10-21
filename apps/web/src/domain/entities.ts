@@ -58,6 +58,8 @@ export interface Finding {
   retests: { at: string; by: string; result: string; note: string; id?: string; requestId?: string; version?: number; evidenceRefs?: string[] }[]
   /** Producer provenance/quality for runtime claims that have not yet become curated records. */
   producer?: { path: string; digest?: string | null; sizeBytes?: number; quality?: { defaultSeverity: boolean; placeholderDescription: boolean; placeholderEvidence: boolean; unreadable: boolean } }
+  /** Reproduction package recorded on the curated record; absent when none was recorded (findings that predate it). */
+  reproduction?: import('@raptix/web-contracts').FindingReproduction
   /** Server concurrency version for the currently read curated record. */
   version?: number
 }

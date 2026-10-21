@@ -3,7 +3,7 @@ import type {
   EvidenceListRead, EvidenceDetailRead, EvidenceView,
   FindingActivityPage, FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions, FindingSaveInput,
   FindingService, FindingSort, FindingSuggestionDisposition, FindingTransitionTarget, WorkspaceEvidenceImport,
-} from '../../features/findings/service'
+} from '../../features/findings'
 import {
   addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, getEngagement, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture,
   type CuratedFindingsView, type CuratedFindingView,
@@ -65,6 +65,7 @@ function toFinding(view: CuratedFindingView, engagementId: string): Finding {
     activityCursors: view.activityCursors,
     lastReviewDecision: view.lastReviewDecision,
     ...(view.sourceType === 'imported' && view.producerRef ? { producer: { path: view.producerRef, digest: view.producerDigest } } : {}),
+    ...(view.body.reproduction ? { reproduction: view.body.reproduction } : {}),
   }
 }
 
@@ -118,8 +119,7 @@ function buildList(findings: Finding[], query: FindingListQuery, dismissedCount 
     (!needle || f.id.toLowerCase().includes(needle) || f.title.toLowerCase().includes(needle))
     && (!query.owner || f.owner === query.owner) && (!query.asset || f.asset === query.asset) && (!query.op || f.op === query.op))
   const severities = Object.keys(SEVERITY_RANK) as Severity[]
-  const locallyDismissed = new Set(query.dismissed ?? [])
-  const isHiddenDismissed = (finding: Finding) => finding.suggestionDisposition?.dismissed || locallyDismissed.has(finding.id)
+  const isHiddenDismissed = (finding: Finding) => finding.suggestionDisposition?.dismissed === true
   const filtered = base
     .filter((f) => matchesStatus(f, query.status ?? '') && (query.status !== 'ai' || query.showDismissed || !isHiddenDismissed(f)))
     .filter((f) => !query.severity || f.severity === query.severity)
@@ -274,6 +274,21 @@ function bytesToBase64(bytes: Uint8Array): string {
 }
 
 /** Legacy display labels cannot stand in for owned reference identities. */
+/** SHA-256 of the bytes as lowercase hex, the form the server records as a capture digest. */
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+/** UTF-8 text of the bytes, byte-preserving (the BOM is kept); null when they are not valid UTF-8, so Copy refuses rather than guesses. */
+function decodeText(bytes: Uint8Array): string | null {
+  try {
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
+  } catch {
+    return null
+  }
+}
+
 function unsupportedSaveField(input: FindingSaveInput): string | null {
   if (input.asset && !input.references?.assetId) return 'Select a managed asset identity before saving this asset link.'
   if (input.op && !input.references?.bindingId && !input.references?.runId && !input.references?.threadId) return 'Select an owned execution identity before saving this execution link.'
@@ -359,6 +374,7 @@ export function createRealFindingService(): FindingService {
         severityRationale: input.severityReason,
         scopeNote: input.scopeNote,
         references: input.references,
+        reproduction: input.reproduction,
       }
       const saved = id === null
         ? await createCuratedFinding(ctx.projectId, body)
@@ -383,12 +399,13 @@ export function createRealFindingService(): FindingService {
       return { ok: true, data: await fetchFindingActivity(ctx.projectId, id, kind, cursor, version) }
     }),
 
-    setSuggestionDisposition: (ctx, input) => guarded(async () => {
+    setSuggestionDisposition: (ctx, _findingId, input) => guarded(async () => {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<FindingSuggestionDisposition>('Select an engagement before changing a suggestion disposition.')
       const disposition = await setSuggestionDispositionApi(ctx.projectId, input)
       return { ok: true, data: disposition.disposition }
     }),
 
+    recordOriginalView: async () => ({ ok: true as const, data: undefined }),
     addComment: (ctx, id, text, expectedVersion, requestId) => guarded(async () => {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<Finding>('Select an engagement before commenting on a finding.')
       const updated = await addCuratedFindingComment(ctx.projectId, id, { text, expectedVersion, requestId })
@@ -424,6 +441,23 @@ export function createRealFindingService(): FindingService {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<EvidenceView>('Select an engagement to classify a capture.')
       const capture = await classifyCaptureApi(ctx.projectId, captureId, { classification, expectedVersion, reason })
       return { ok: true, data: captureEvidence(capture, ctx.projectId) }
+    }),
+    readArtifact: (ctx, artifact) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable('Select an engagement before reading an artifact.')
+      // Refused here, before any request, with the reason the server would give: the server stays the gate.
+      if (artifact.classification === null) return unavailable('This capture is no longer retained, so its original bytes cannot be read.')
+      if (artifact.classification === 'unclassified') return unavailable('Classify this capture to read its original bytes.')
+      if (!artifact.canReadOriginal) return unavailable('Your role cannot read the original bytes of this capture.')
+      const original = await downloadCapture(ctx.projectId, artifact.captureId)
+      if (await sha256Hex(original.bytes) !== artifact.digest) {
+        return { ok: false, failure: { kind: 'conflict', message: 'The retained capture no longer matches the digest recorded in this reproduction. Nothing was copied or downloaded.' } }
+      }
+      return { ok: true, data: { captureId: artifact.captureId, filename: artifact.filename ?? artifact.captureId, bytes: original.bytes, text: decodeText(original.bytes) } }
+    }),
+    reproductionCaptures: (ctx) => guarded(async () => {
+      if (!ctx.projectId || ctx.projectId === 'all') return unavailable('Select a specific project before linking a capture.')
+      const captures = await fetchRetainedCaptures(ctx.projectId)
+      return { ok: true, data: captures.captures.map((capture) => ({ captureId: capture.id, filename: capture.filename, mediaType: capture.mediaType, digest: capture.digest, sizeBytes: capture.sizeBytes, classification: capture.classification, canReadOriginal: capture.canReadOriginal })) }
     }),
     downloadEvidence: (ctx, evidenceId) => guarded(async () => {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable('Select an engagement before downloading evidence.')

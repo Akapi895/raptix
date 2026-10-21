@@ -72,6 +72,7 @@ isC2Profile,
   isCampaignView,
   isCampaignJobView,
 } from '@raptix/web-contracts'
+import type { FindingReproductionInput } from '@raptix/web-contracts'
 export type { CuratedFindingView, CuratedFindingsView, FindingActivityItem, FindingActivityPage, FindingReferenceOptions, FindingReferences, FindingSuggestionDisposition } from '@raptix/web-contracts'
 import { apiFetch, apiFetchBytes, ApiTransportError, setCsrfToken, type BinaryApiResponse } from './transport'
 
@@ -900,7 +901,7 @@ export function setFindingSuggestionDisposition(engagementId: string, input: { p
   }, { method: 'POST', body: input })
 }
 
-export function createCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string; references?: CuratedFindingView['references'] }): Promise<CuratedFindingView> {
+export function createCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string; references?: CuratedFindingView['references']; reproduction?: FindingReproductionInput | null }): Promise<CuratedFindingView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings`, owned(engagementId, (v): v is CuratedFindingView =>
     isCuratedFindingView(v) && v.status === 'draft'),
   { method: 'POST', body: input })
@@ -912,7 +913,7 @@ export function importCuratedFinding(engagementId: string, input: { title: strin
   { method: 'POST', body: input })
 }
 
-export function updateCuratedFinding(engagementId: string, findingId: string, input: { expectedVersion: number; title: string; severity: string; detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string; references?: CuratedFindingView['references']; submit?: boolean }): Promise<CuratedFindingView> {
+export function updateCuratedFinding(engagementId: string, findingId: string, input: { expectedVersion: number; title: string; severity: string; detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string; references?: CuratedFindingView['references']; reproduction?: FindingReproductionInput | null; submit?: boolean }): Promise<CuratedFindingView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}`, owned(engagementId, (v): v is CuratedFindingView => isCuratedFindingView(v) && v.id === findingId), { method: 'PATCH', body: input })
 }
 

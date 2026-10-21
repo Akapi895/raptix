@@ -16,7 +16,9 @@ import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/e'
 import { seed } from '../../data'
-import { getFinding, importFindingSuggestion, listFindings, saveFinding, transitionFinding, uploadFindingEvidence } from './service'
+import { getFinding, importFindingSuggestion, listFindings, saveFinding, setFindingSuggestionDisposition, transitionFinding, uploadFindingEvidence } from './service'
+import { createDatabaseAuthority } from '../../domain/database'
+import { MockClock } from '../../domain/clock'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
@@ -225,7 +227,11 @@ describe('findings read handlers', () => {
   })
 
   it('excludes dismissed suggestions only from the ai category', () => {
-    const res = listFindings(seed(), { actor: taylor, projectId: 'RT-2026-014', corr: 't' }, { dismissed: ['FD-012'] })
+    const clock = new MockClock()
+    const authority = createDatabaseAuthority(clock)
+    const ctx = { actor: taylor, projectId: 'RT-2026-014', corr: 't' }
+    expect(setFindingSuggestionDisposition(authority, clock, ctx, 'FD-012', { producerRef: '', dismissed: true, reason: 'Covered by FD-011', expectedVersion: 0 }).ok).toBe(true)
+    const res = listFindings(authority.snapshot(), ctx)
     expect(res.ok).toBe(true)
     if (res.ok) {
       expect(res.data.counts.ai).toBe(0)

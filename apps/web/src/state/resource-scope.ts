@@ -10,7 +10,7 @@
  * without an owning project stays in the aggregate scope.
  */
 import { useEffect } from 'react'
-import { useProjectStore } from '../state/stores'
+import { useProjectStore } from './stores'
 
 export function useResourceScope(projectId: string | undefined): void {
   useEffect(() => {

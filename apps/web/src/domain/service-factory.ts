@@ -24,7 +24,7 @@ import { createDatabaseAuthority, type DbAuthority } from './database'
 // typed call surface is unchanged (handlers already return promises), while
 // the off-page sweep authorities below stay statically wired.
 import type { OperationService } from '../features/operations/service'
-import type { FindingService } from '../features/findings/service'
+import type { FindingService } from '../features/findings'
 import type { ChatService } from '../features/aichat/service'
 import { createChatService } from '../features/aichat/service'
 import type { AiHistoryService } from '../features/aichat/history'
