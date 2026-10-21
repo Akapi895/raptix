@@ -241,6 +241,21 @@ class KGStore:
         self._ensure_revision_schema()
         return self._write(cypher, params, engagement=engagement, bump=True)
 
+    def execute_migration_statement(
+        self,
+        cypher: str,
+        *,
+        engagement: str,
+    ) -> list[dict[str, Any]]:
+        """Run one statement of a schema migration, without advancing any revision counter.
+
+        Neo4j does not allow a schema modification and a write in one transaction, and the counter bump is a
+        write. Migrations change the schema, and the graph a cursor reads is unchanged by them, so no revision moves.
+        """
+        self._check_engagement(engagement)
+        self._check_scoped_cypher(cypher, engagement)
+        return self._write(cypher, None, engagement=engagement, bump=False)
+
     def _ensure_revision_schema(self) -> None:
         # The schema migration is not part of every runtime boot. Enforce the uniqueness
         # invariant before the first write from each store, so two independent processes
