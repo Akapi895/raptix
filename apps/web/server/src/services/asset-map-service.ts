@@ -128,15 +128,11 @@ export function fitPrefix<T>(items: T[], limit: number, wrap: (kept: T[]) => unk
 }
 
 /**
- * KG revision for one engagement, computed exactly as KGStore.revision (raptix runtime):
- * the per-engagement write counter plus node and edge timestamps.
+ * KG revision for one engagement: the engagement's write counter, read by one indexed lookup on
+ * KGRevision.scope. Every scoped runtime write advances it in its own transaction (KGStore.execute_write
+ * and record_observations), so no scan of the node or relationship set is needed to detect a change.
  */
-const KG_REVISION_STATEMENT = [
-  'CALL () { MATCH (v:KGRevision {scope: $engagement}) RETURN coalesce(max(v.counter), 0) AS seq }',
-  'CALL () { MATCH (n) WHERE n.engagement = $engagement RETURN coalesce(max(n.lastupdated), 0) AS node_rev }',
-  'CALL () { MATCH (src)-[r]->(dst) WHERE src.engagement = $engagement AND dst.engagement = $engagement AND r.engagement = $engagement RETURN coalesce(max(r.lastupdated), 0) AS edge_rev }',
-  'RETURN seq, node_rev, edge_rev',
-].join(' ');
+const KG_REVISION_STATEMENT = 'MATCH (v:KGRevision {scope: $engagement}) RETURN coalesce(v.counter, 0) AS seq';
 
 const CENTER_STATEMENT = [
   'MATCH (c) WHERE c.engagement = $engagement AND c.asset_id = $assetId',
@@ -208,14 +204,10 @@ export class AssetMapService {
     return `c${agg._count._all}:${agg._max.createdAt?.toISOString() ?? 'none'}`;
   }
 
-  /** KG revision, identical to KGStore.revision so the runtime and the Web agree on one token. */
+  /** KG revision, the same token KGStore.revision returns for the engagement. */
   private async graphRevision(slug: string): Promise<string> {
     const [row] = await neo4jQuery(this.config, KG_REVISION_STATEMENT, { engagement: slug });
-    const seq = Number(row?.[0] ?? 0);
-    const node = Number(row?.[1] ?? 0);
-    const edge = Number(row?.[2] ?? 0);
-    if (!seq && !edge) return `rev-${slug}-${node}`;
-    return `rev-${slug}-${seq}:${node}:${edge}`;
+    return `rev-${slug}-${Number(row?.[0] ?? 0)}`;
   }
 
   public async overview(actorId: string, engagementId: string): Promise<AssetMapOverview> {

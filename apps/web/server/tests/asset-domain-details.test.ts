@@ -85,7 +85,7 @@ type Statement = { statement: string; parameters: Record<string, unknown> };
 async function recordingGraph(routes: Array<[string, unknown[][]]>): Promise<{ config: GraphConfig; sent: Statement[]; close: () => void }> {
   const sent: Statement[] = [];
   const table: Array<[string, unknown[][]]> = [
-    ['CALL () { MATCH (v:KGRevision', [[3, 1792500000, 1792500100]]],
+    ['MATCH (v:KGRevision', [[3]]],
     ...routes,
   ];
   const server: Server = createServer((request, response) => {

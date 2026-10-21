@@ -43,7 +43,7 @@ afterEach(() => {
 });
 
 async function graph(routes: Array<[string, unknown[][]]>): Promise<GraphConfig> {
-  const table: Array<[string, unknown[][]]> = [['CALL () { MATCH (v:KGRevision', [[1, 1792500000, 1792500000]]], ...routes];
+  const table: Array<[string, unknown[][]]> = [['MATCH (v:KGRevision', [[1]]], ...routes];
   const server: Server = createServer((request, response) => {
     let raw = '';
     request.on('data', chunk => {
