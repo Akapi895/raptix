@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 
 vi.useFakeTimers()
 const { mountServices } = await import('../helpers')
-const { hhmm } = await import('../../features/c2/service')
+const { hhmm } = await import('../../demo/display-clock')
 const { expireGrantTransaction } = await import('../../features/c2/grants')
 const { minutesUntil, useGrantWatch, Console } = await import('../../screens/h-session')
 const { go, selectProject } = await import('../../router/navigate')

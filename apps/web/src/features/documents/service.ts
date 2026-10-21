@@ -12,7 +12,7 @@ import { APR, planVer } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import { type Plan, type Project } from '../../domain/entities'
 import { projectAccessible } from '../../domain/policy'
-import { stamp } from '../../demo/display-clock'
+import { formatDemoInstant } from '../../domain/clock'
 import { projectView } from '../../domain/projection'
 import type { DbAuthority } from '../../demo/authority'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
@@ -156,10 +156,10 @@ export function saveDocumentDraft(authority: DbAuthority, _clock: Clock, ctx: Re
   const p = db.projects.find((x) => x.id === projectId)
   if (!p || !projectAccessible(p, ctx.actor)) return docFailure('The project does not exist or is out of scope.')
   const key = `${projectId}/${docId}`
-  const draft: DocDraft = { text, by: ctx.actor.id, at: stamp() }
+  const draft: DocDraft = { text, by: ctx.actor.id, at: formatDemoInstant(authority.clock.now()) }
   authority.commit(ctx.corr, (d) => {
     d.docDrafts[key] = draft
-    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: ctx.actor.id, role: ctx.actor.role, action: 'Saved document draft (simulated)', obj: `${docId} in ${projectId}`, projectId, result: 'Success', reason: 'Mock draft save — not a real file write' })
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(authority.clock.now()), actor: ctx.actor.id, role: ctx.actor.role, action: 'Saved document draft (simulated)', obj: `${docId} in ${projectId}`, projectId, result: 'Success', reason: 'Mock draft save — not a real file write' })
   })
   return { ok: true, data: draft }
 }
@@ -172,7 +172,7 @@ export function discardDocumentDraft(authority: DbAuthority, ctx: RequestContext
   if (!db.docDrafts[key]) return { ok: true, data: { id: docId } }
   authority.commit(ctx.corr, (d) => {
     delete d.docDrafts[key]
-    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: ctx.actor.id, role: ctx.actor.role, action: 'Discarded document draft (simulated)', obj: `${docId} in ${projectId}`, projectId, result: 'Success', reason: '' })
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(authority.clock.now()), actor: ctx.actor.id, role: ctx.actor.role, action: 'Discarded document draft (simulated)', obj: `${docId} in ${projectId}`, projectId, result: 'Success', reason: '' })
   })
   return { ok: true, data: { id: docId } }
 }

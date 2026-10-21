@@ -1,6 +1,6 @@
 /** Owns operation evidence uploads and their atomic audit record. */
 import { can, ROLE_LABEL } from '../../domain/policy'
-import { stamp } from '../../demo/display-clock'
+import { formatDemoInstant } from '../../domain/clock'
 import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { Evidence } from '../../domain/entities'
@@ -14,8 +14,8 @@ export function addOperationEvidence(services: ConsoleServices, ctx: RequestCont
   if (!input.name.trim() || (input.opId && !db.operations.some((o) => o.id === input.opId && o.projectId === p.id)) || (input.findingId && !db.findings.some((f) => f.id === input.findingId && f.projectId === p.id))) return { ok: false, failure: { kind: 'validation', message: 'Evidence must name an accessible operation or finding in this project.' } }
   const id = 'EV-' + (400 + db.evidence.length + 1)
   services.authority.commit(ctx.corr, (d) => {
-    d.evidence.push({ id, ...input, name: input.name.trim(), projectId: p.id, at: stamp(), by: ctx.actor.id })
-    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Uploaded evidence', obj: id, projectId: p.id, result: 'Success', reason: '' })
+    d.evidence.push({ id, ...input, name: input.name.trim(), projectId: p.id, at: formatDemoInstant(services.authority.clock.now()), by: ctx.actor.id })
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(services.authority.clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Uploaded evidence', obj: id, projectId: p.id, result: 'Success', reason: '' })
   })
   return { ok: true, data: services.authority.snapshot().evidence.find((e) => e.id === id)! }
 }

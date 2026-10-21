@@ -7,7 +7,7 @@
  * plaintext server-side and never in any list.
  */
 import { can, ROLE_LABEL } from '../../domain/policy'
-import { stamp } from '../../demo/display-clock'
+import { formatDemoInstant } from '../../domain/clock'
 import type { Project, VaultSecret } from '../../domain/entities'
 import type { DbAuthority } from '../../demo/authority'
 import type { RequestContext, ServiceResult } from '../../domain/service'
@@ -38,8 +38,8 @@ export function revealVaultSecret(authority: DbAuthority, ctx: RequestContext, s
   authority.commit(ctx.corr, (db) => {
     const row = db.vaultSecrets.find((s) => s.id === secretId)!
     row.revealCount += 1
-    row.lastRevealedAt = stamp()
-    db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Revealed vault secret', obj: secretId, projectId: p.id, result: 'Success', reason: 'Explicit in-session reveal' })
+    row.lastRevealedAt = formatDemoInstant(authority.clock.now())
+    db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: formatDemoInstant(authority.clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Revealed vault secret', obj: secretId, projectId: p.id, result: 'Success', reason: 'Explicit in-session reveal' })
   })
   return { ok: true, data: { secretId, plaintext: secret.demoPlaintext } }
 }
@@ -53,8 +53,8 @@ export function createVaultSecret(authority: DbAuthority, ctx: RequestContext, i
   if (!kind || !label || !input.plaintext) return { ok: false, failure: { kind: 'validation', message: 'Kind, label and a secret value are required.' } }
   const id = `VS-${p.id.slice(-3)}-${String(authority.snapshot().vaultSecrets.length + 1).padStart(2, '0')}-${Date.now().toString(36).slice(-4)}`
   authority.commit(ctx.corr, (db) => {
-    db.vaultSecrets.push({ id, projectId: p.id, kind, label, demoPlaintext: input.plaintext, revealCount: 0, createdAt: stamp(), createdBy: ctx.actor.id })
-    db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Stored vault secret', obj: id, projectId: p.id, result: 'Success', reason: `Kind ${kind}` })
+    db.vaultSecrets.push({ id, projectId: p.id, kind, label, demoPlaintext: input.plaintext, revealCount: 0, createdAt: formatDemoInstant(authority.clock.now()), createdBy: ctx.actor.id })
+    db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: formatDemoInstant(authority.clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Stored vault secret', obj: id, projectId: p.id, result: 'Success', reason: `Kind ${kind}` })
   })
   const stored = authority.snapshot().vaultSecrets.find((s) => s.id === id)!
   return { ok: true, data: toMeta(stored) }
@@ -68,7 +68,7 @@ export function revokeVaultSecret(authority: DbAuthority, ctx: RequestContext, s
   if (!secret) return { ok: false, failure: { kind: 'not-found', message: 'Secret not found in this project.' } }
   authority.commit(ctx.corr, (db) => {
     db.vaultSecrets = db.vaultSecrets.filter((s) => s.id !== secretId)
-    db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Revoked vault secret', obj: secretId, projectId: p.id, result: 'Success', reason: 'Encrypted material deleted (demo)' })
+    db.audit.unshift({ id: 'AU-' + ++db.counters.audit, at: formatDemoInstant(authority.clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Revoked vault secret', obj: secretId, projectId: p.id, result: 'Success', reason: 'Encrypted material deleted (demo)' })
   })
   return { ok: true, data: { ok: true } }
 }
