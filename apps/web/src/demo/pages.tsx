@@ -15,13 +15,13 @@
  */
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { ArrowRight, Building2, ExternalLink, FlaskConical, LogIn, Play, RotateCcw, Search, Target, UserRound } from 'lucide-react'
-import { USERS } from '../../domain/catalog';
-import { signIn, signOut, switchPersona } from '../../demo/persona'
-import { useAuthStore, useToastStore, type Toast } from '../../state/stores'
-import { useSessionStore } from '../../state/session'
-import { go } from '../../router/navigate'
-import { resetDemo } from '../../demo/runtime'
-import { Avatar, Button, Card, Input, Modal, Tabs } from '../../ui/index'
+import { USERS } from '../domain/catalog';
+import { signIn, signOut, switchPersona } from './persona'
+import { useAuthStore, useToastStore, type Toast } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { go } from '../router/navigate'
+import { resetDemo } from './runtime'
+import { Avatar, Button, Card, Input, Modal, Tabs } from '../ui/index'
 import { GUIDES, type Dest } from './guides'
 import { jump, jumpSeam, launchGuide } from './launch'
 

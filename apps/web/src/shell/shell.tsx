@@ -132,7 +132,7 @@ function RouteAnnouncer() {
 /* ───────────── Shell ───────────── */
 /* Ticket 70: the walkthrough panel (and the guide corpus it renders) loads on
    demand; the walkthrough state authority (demo/launch) is untouched. */
-const DemoGuide = lazy(() => import('../screens/demo/guide').then((m) => ({ default: m.DemoGuide })))
+const DemoGuide = lazy(() => import('../demo/guide').then((m) => ({ default: m.DemoGuide })))
 
 export function Shell({ children, slots = {} }: { children: ReactNode; slots?: ShellSlots }) {
   const project = useActiveProject()

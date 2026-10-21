@@ -10,11 +10,11 @@
  * surface, which both panels construct over the canonical authorities).
  */
 import { useSyncExternalStore } from 'react'
-import { signIn } from '../../demo/persona'
-import { currentRoute, go, navRawRoute, selectProject } from '../../router/navigate'
-import { isKnownPage, OUTSIDE_SHELL } from '../../router/history'
-import { useAuthStore, useProjectStore, useToastStore, type Toast } from '../../state/stores'
-import { useSessionStore } from '../../state/session'
+import { signIn } from './persona'
+import { currentRoute, go, navRawRoute, selectProject } from '../router/navigate'
+import { isKnownPage, OUTSIDE_SHELL } from '../router/history'
+import { useAuthStore, useProjectStore, useToastStore, type Toast } from '../state/stores'
+import { useSessionStore } from '../state/session'
 import { GUIDES, type Dest, type Guide } from './guides'
 
 /* ── walkthrough state authority (module-local; no localStorage) ── */

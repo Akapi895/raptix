@@ -7,8 +7,8 @@
  * store type and stays the single source both the launcher and the walkthrough
  * panel render from.
  */
-import type { Route } from '../../router/history'
-import type { Toast } from '../../state/stores'
+import type { Route } from '../router/history'
+import type { Toast } from '../state/stores'
 
 export type Dest = Route
 
