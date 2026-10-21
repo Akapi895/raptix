@@ -38,14 +38,3 @@ export interface NoticeCenterService {
   markAllRead(ctx: RequestContext): Promise<ServiceResult<{ unread: number }>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise notices. */
-export function unavailableNoticeCenterService(): NoticeCenterService {
-  const failure = { kind: 'unavailable' as const, message: 'Notifications are not available on this server.' }
-  const unavailable = () => Promise.resolve({ ok: false as const, failure })
-  return {
-    list: unavailable,
-    setRead: unavailable,
-    dismiss: unavailable,
-    markAllRead: unavailable,
-  }
-}

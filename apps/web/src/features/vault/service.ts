@@ -93,13 +93,3 @@ export interface VaultService {
   revoke(ctx: RequestContext, secretId: string): Promise<ServiceResult<{ ok: true }>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise the vault. */
-export function unavailableVaultService(): VaultService {
-  const failure = { kind: 'unavailable' as const, message: 'The credentials vault is not available on this server.' }
-  return {
-    list: () => Promise.resolve({ ok: false, failure }),
-    reveal: () => Promise.resolve({ ok: false, failure }),
-    store: () => Promise.resolve({ ok: false, failure }),
-    revoke: () => Promise.resolve({ ok: false, failure }),
-  }
-}

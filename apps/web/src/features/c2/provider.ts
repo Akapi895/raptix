@@ -82,20 +82,3 @@ export interface C2ProviderService {
   createProfile(ctx: RequestContext, name: string): Promise<ServiceResult<null>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise the C2 provider. */
-export function unavailableC2ProviderService(): C2ProviderService {
-  const failure = { kind: 'unavailable' as const, message: 'The C2 provider is not available on this server.' }
-  const unavailable = () => Promise.resolve({ ok: false as const, failure })
-  return {
-    surface: unavailable,
-    grants: unavailable,
-    commands: unavailable,
-    requestGrant: unavailable,
-    decideGrant: unavailable,
-    dispatch: unavailable,
-    reconcile: unavailable,
-    startListener: unavailable,
-    stopListener: unavailable,
-    createProfile: unavailable,
-  }
-}

@@ -10,8 +10,8 @@ import { go } from '../router/navigate'
 import { useCan, useMe, useReadOnly } from '../state/console'
 import { useUiStore } from '../state/stores'
 import { Button, DemoTag, IdLink, Status, cx } from '../ui/index'
-import { EligBadge, ExecBanner, MODES, Pill, ReplanPanel, useReplan, useTraceLink } from '../features/aichat/common'
-import { AllocationView, FanOutCard } from './g-fanout'
+import { EligBadge, ExecBanner, MODES, Pill, ReplanPanel, useReplan, useTraceLink } from '../features/aichat'
+import { AllocationView, FanOutCard } from '../features/branches'
 import { WorkerTeamView } from './g-workers'
 
 /* ───────────── Resizable panes ───────────── */

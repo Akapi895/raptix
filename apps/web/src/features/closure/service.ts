@@ -270,12 +270,3 @@ export interface ClosureService {
   decide(ctx: RequestContext, decision: 'confirmed' | 'rejected' | 'cancelled', reason: string): Promise<ServiceResult<ClosureRecordView | null>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise closure. */
-export function unavailableClosureService(): ClosureService {
-  const failure = { kind: 'unavailable' as const, message: 'Closure is not available on this server.' }
-  return {
-    read: () => Promise.resolve({ ok: false, failure }),
-    request: () => Promise.resolve({ ok: false, failure }),
-    decide: () => Promise.resolve({ ok: false, failure }),
-  }
-}

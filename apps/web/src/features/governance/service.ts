@@ -105,26 +105,3 @@ export interface GovernanceService {
   rescheduleSchedule(ctx: RequestContext, scheduleId: string, input: { executeAt: string; timezone: string; expectedVersion: number }): Promise<ServiceResult<GovernanceSchedule>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise governance. */
-export function unavailableGovernanceService(): GovernanceService {
-  const failure = { kind: 'unavailable' as const, message: 'Governance is not available on this server.' }
-  const unavailable = () => Promise.resolve({ ok: false as const, failure })
-  return {
-    plans: unavailable,
-    draftPlan: unavailable,
-    proposePlan: unavailable,
-    decidePlan: unavailable,
-    revisePlan: unavailable,
-    comparePlans: unavailable,
-    preflight: unavailable,
-    bindPlan: unavailable,
-    executionThreads: unavailable,
-    stops: unavailable,
-    requestStop: unavailable,
-    resolveStop: unavailable,
-    schedules: unavailable,
-    createSchedule: unavailable,
-    cancelSchedule: unavailable,
-    rescheduleSchedule: unavailable,
-  }
-}

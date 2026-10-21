@@ -17,7 +17,7 @@ import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Db, Operation, Step } from '../data'
 import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
 import { useReviewStep } from '../features/operations/query'
-import { FanOutCard } from './g-fanout'
+import { FanOutCard } from '../features/branches'
 /* Ticket 28: the emergency-stop machine UI (request dialog, phase banner,
    progress strip) is feature-local (src/features/estop/ui.tsx) and runs the
    typed estop handlers; the console composes it. */

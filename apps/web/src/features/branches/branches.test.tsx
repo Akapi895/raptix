@@ -19,7 +19,7 @@ import { selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../data'
-import { FanOutPage } from '../../screens/g-fanout'
+import { FanOutPage } from './fanout'
 import { seed } from '../../data'
 import { getBranchGroup, listBranchGroups } from './service'
 

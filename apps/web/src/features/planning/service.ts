@@ -73,15 +73,3 @@ export interface PlanningService {
   discardDraft(ctx: RequestContext, name: string): Promise<ServiceResult<{ discarded: boolean }>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise planning. */
-export function unavailablePlanningService(): PlanningService {
-  const failure = { kind: 'unavailable' as const, message: 'Planning documents are not available on this server.' }
-  return {
-    read: () => Promise.resolve({ ok: false, failure }),
-    confirmHandoff: () => Promise.resolve({ ok: false, failure }),
-    source: () => Promise.resolve({ ok: false, failure }),
-    saveDraft: () => Promise.resolve({ ok: false, failure }),
-    publish: () => Promise.resolve({ ok: false, failure }),
-    discardDraft: () => Promise.resolve({ ok: false, failure }),
-  }
-}
