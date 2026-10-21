@@ -87,20 +87,3 @@ export interface RuntimeOperationsService {
   timeline(ctx: RequestContext): Promise<ServiceResult<RuntimeTimeline>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise runs. */
-export function unavailableRuntimeOperationsService(): RuntimeOperationsService {
-  const failure = { kind: 'unavailable' as const, message: 'Runtime operations are not available on this server.' }
-  const unavailable = () => Promise.resolve({ ok: false as const, failure })
-  return {
-    fleet: unavailable,
-    threads: unavailable,
-    runs: unavailable,
-    snapshot: unavailable,
-    cancelRun: unavailable,
-    operation: unavailable,
-    pauseRun: unavailable,
-    resumeOperation: unavailable,
-    completeOperation: unavailable,
-    timeline: unavailable,
-  }
-}

@@ -4,9 +4,9 @@ import type { AssetService } from '../../features/assets/service'
 import type { ReportService } from '../../features/reports/service'
 import type { LibraryService } from '../../features/library/service'
 import type { SettingsService } from '../../features/settings/service'
-import { unavailableScopeService } from '../../features/scope/service'
-import { unavailableAuditService } from '../../features/audit/service'
-import { unavailableTeamService } from '../../features/team/service'
+import type { ScopeService } from '../../features/scope/service'
+import type { AuditService } from '../../features/audit/service'
+import type { TeamService } from '../../features/team/service'
 import { capabilityState, type CapabilitiesDocument } from '../api'
 import { createRealAssetService } from './assets'
 import { createRealFindingService } from './findings'
@@ -19,20 +19,21 @@ import { createRealSettingsService } from './settings'
 import { createRealVaultService } from './vault'
 import { createRealClosureService } from './closure'
 import { createRealObservedAnalysisService } from './analysis'
-import { unavailableObservedAnalysisService } from '../../features/analysis/observed'
-import { unavailableClosureService } from '../../features/closure/service'
-import { unavailableVaultService } from '../../features/vault/service'
-import { unavailablePlanningService, type PlanningService } from '../../features/planning/service'
-import { unavailableGovernanceService, type GovernanceService } from '../../features/governance/service'
+import type { ObservedAnalysisService } from '../../features/analysis/observed'
+import type { ClosureService } from '../../features/closure/service'
+import type { VaultService } from '../../features/vault/service'
+import type { PlanningService } from '../../features/planning/service'
+import type { GovernanceService } from '../../features/governance/service'
 import { createRealPlanningService } from './planning'
 import { createRealGovernanceService } from './governance'
-import { unavailableC2ProviderService, type C2ProviderService } from '../../features/c2/provider'
+import type { C2ProviderService } from '../../features/c2/provider'
 import { createRealC2ProviderService } from './c2-provider'
-import { unavailableRuntimeOperationsService, type RuntimeOperationsService } from '../../features/operations/runtime'
+import type { RuntimeOperationsService } from '../../features/operations/runtime'
 import { createRealRuntimeOperationsService } from './runtime-operations'
-import { unavailableNoticeCenterService, type NoticeCenterService } from '../../features/notices/center'
+import type { NoticeCenterService } from '../../features/notices/center'
 import { createRealNoticeCenterService } from './notices'
 import { notIntegratedService } from './stub'
+import { unavailableService } from '../../domain/unavailable'
 
 /**
  * Composes real per-feature services from the server's capability document
@@ -64,7 +65,7 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         const service = createRealScopeService()
         return () => service
       })()
-    : () => unavailableScopeService()
+    : () => unavailableService<ScopeService>({ read: true, submit: true, decide: true }, 'Scope revisions are not available on this server.')
   const library: FeatureServices['library'] = supported('graphs')
     ? (() => {
         const service = createRealLibraryService()
@@ -76,13 +77,13 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         const service = createRealAuditService()
         return () => service
       })()
-    : () => unavailableAuditService()
+    : () => unavailableService<AuditService>({ read: true }, 'The mock console shows its audit log in the project Activity & Audit tab; this port serves the real backend only.')
   const team: FeatureServices['team'] = supported('projects')
     ? (() => {
         const service = createRealTeamService()
         return () => service
       })()
-    : () => unavailableTeamService()
+    : () => unavailableService<TeamService>({ read: true, invite: true, changeRole: true, remove: true }, 'Memberships are not available on this server.')
   const settings: FeatureServices['settings'] = supported('projects')
     ? (() => {
         const service = createRealSettingsService()
@@ -94,48 +95,48 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         const service = createRealVaultService()
         return () => service
       })()
-    : () => unavailableVaultService()
+    : () => unavailableService<VaultService>({ list: true, reveal: true, store: true, revoke: true }, 'The credentials vault is not available on this server.')
   const closure: FeatureServices['closure'] = supported('projects')
     ? (() => {
         const service = createRealClosureService()
         return () => service
       })()
-    : () => unavailableClosureService()
+    : () => unavailableService<ClosureService>({ read: true, request: true, decide: true }, 'Closure is not available on this server.')
   const observedAnalysis: FeatureServices['observedAnalysis'] = supported('graphs')
     ? (() => {
         const service = createRealObservedAnalysisService()
         return () => service
       })()
-    : () => unavailableObservedAnalysisService()
+    : () => unavailableService<ObservedAnalysisService>({ read: true }, 'Analysis is not available on this server: the knowledge graph is not configured here.')
   const planning: FeatureServices['planning'] = supported('planning')
     ? (() => {
         const service: PlanningService = createRealPlanningService()
         return () => service
       })()
-    : () => unavailablePlanningService()
+    : () => unavailableService<PlanningService>({ read: true, confirmHandoff: true, source: true, saveDraft: true, publish: true, discardDraft: true }, 'Planning documents are not available on this server.')
   const governance: FeatureServices['governance'] = supported('projects')
     ? (() => {
         const service: GovernanceService = createRealGovernanceService()
         return () => service
       })()
-    : () => unavailableGovernanceService()
+    : () => unavailableService<GovernanceService>({ plans: true, draftPlan: true, proposePlan: true, decidePlan: true, revisePlan: true, comparePlans: true, preflight: true, bindPlan: true, executionThreads: true, stops: true, requestStop: true, resolveStop: true, schedules: true, createSchedule: true, cancelSchedule: true, rescheduleSchedule: true }, 'Governance is not available on this server.')
   const c2Provider: FeatureServices['c2Provider'] = supported('c2')
     ? (() => {
         const service: C2ProviderService = createRealC2ProviderService()
         return () => service
       })()
-    : () => unavailableC2ProviderService()
+    : () => unavailableService<C2ProviderService>({ surface: true, grants: true, commands: true, requestGrant: true, decideGrant: true, dispatch: true, reconcile: true, startListener: true, stopListener: true, createProfile: true }, 'The C2 provider is not available on this server.')
   const runtimeOperations: FeatureServices['runtimeOperations'] = supported('runs')
     ? (() => {
         const service: RuntimeOperationsService = createRealRuntimeOperationsService()
         return () => service
       })()
-    : () => unavailableRuntimeOperationsService()
+    : () => unavailableService<RuntimeOperationsService>({ fleet: true, threads: true, runs: true, snapshot: true, cancelRun: true, operation: true, pauseRun: true, resumeOperation: true, completeOperation: true, timeline: true }, 'Runtime operations are not available on this server.')
   const noticeCenter: FeatureServices['noticeCenter'] = supported('projects')
     ? (() => {
         const service: NoticeCenterService = createRealNoticeCenterService()
         return () => service
       })()
-    : () => unavailableNoticeCenterService()
+    : () => unavailableService<NoticeCenterService>({ list: true, setRead: true, dismiss: true, markAllRead: true }, 'Notifications are not available on this server.')
   return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations, noticeCenter }
 }

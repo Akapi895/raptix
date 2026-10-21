@@ -31,12 +31,6 @@ export interface AuditService {
   read(ctx: RequestContext, query: AuditQuery): Promise<ServiceResult<AuditRead>>
 }
 
-/** Mock mode keeps its own Activity & Audit tab; this port answers unavailable there. */
-export function unavailableAuditService(): AuditService {
-  const failure = { kind: 'unavailable' as const, message: 'The mock console shows its audit log in the project Activity & Audit tab; this port serves the real backend only.' }
-  return { read: () => Promise.resolve({ ok: false, failure }) }
-}
-
 export function recordAudit(services: ConsoleServices, ctx: RequestContext, input: AuditInput): void {
   services.authority.commit(ctx.corr, (db) => {
     db.audit.unshift({

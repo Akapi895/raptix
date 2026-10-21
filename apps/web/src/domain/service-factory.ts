@@ -39,14 +39,14 @@ import type { AnalysisService } from '../features/analysis/service'
 import type { SettingsService } from '../features/settings/service'
 import type { AssetService } from '../features/assets/service'
 import type { ScopeService } from '../features/scope/service'
-import { unavailableAuditService, type AuditService } from '../features/audit/service'
+import type { AuditService } from '../features/audit/service'
 import type { TeamService } from '../features/team/service'
 import type { VaultService } from '../features/vault/service'
 import type { ClosureService } from '../features/closure/service'
-import { unavailablePlanningService, type PlanningService } from '../features/planning/service'
-import { unavailableGovernanceService, type GovernanceService } from '../features/governance/service'
-import { unavailableC2ProviderService, type C2ProviderService } from '../features/c2/provider'
-import { unavailableRuntimeOperationsService, type RuntimeOperationsService } from '../features/operations/runtime'
+import type { PlanningService } from '../features/planning/service'
+import type { GovernanceService } from '../features/governance/service'
+import type { C2ProviderService } from '../features/c2/provider'
+import type { RuntimeOperationsService } from '../features/operations/runtime'
 import type { NoticeCenterService } from '../features/notices/center'
 import { createMockNoticeCenter } from '../features/notices/center-mock'
 import type { ObservedAnalysisService } from '../features/analysis/observed'
@@ -65,6 +65,7 @@ import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
 } from './service'
+import { unavailableService } from './unavailable'
 
 /** Fields the representative project write may change (ticket 04 exemplar). */
 export interface ProjectPatch {
@@ -370,12 +371,12 @@ export function createConsoleServices(): ConsoleServices {
     vault: forVault,
     closure: forClosure,
     observedAnalysis: forObservedAnalysis,
-    planning: () => unavailablePlanningService(),
-    governance: () => unavailableGovernanceService(),
-    c2Provider: () => unavailableC2ProviderService(),
-    runtimeOperations: () => unavailableRuntimeOperationsService(),
+    planning: () => unavailableService<PlanningService>({ read: true, confirmHandoff: true, source: true, saveDraft: true, publish: true, discardDraft: true }, 'Planning documents are not available on this server.'),
+    governance: () => unavailableService<GovernanceService>({ plans: true, draftPlan: true, proposePlan: true, decidePlan: true, revisePlan: true, comparePlans: true, preflight: true, bindPlan: true, executionThreads: true, stops: true, requestStop: true, resolveStop: true, schedules: true, createSchedule: true, cancelSchedule: true, rescheduleSchedule: true }, 'Governance is not available on this server.'),
+    c2Provider: () => unavailableService<C2ProviderService>({ surface: true, grants: true, commands: true, requestGrant: true, decideGrant: true, dispatch: true, reconcile: true, startListener: true, stopListener: true, createProfile: true }, 'The C2 provider is not available on this server.'),
+    runtimeOperations: () => unavailableService<RuntimeOperationsService>({ fleet: true, threads: true, runs: true, snapshot: true, cancelRun: true, operation: true, pauseRun: true, resumeOperation: true, completeOperation: true, timeline: true }, 'Runtime operations are not available on this server.'),
     noticeCenter: (actor, projectId) => createMockNoticeCenter(forNotices(actor, projectId)),
-    audit: () => unavailableAuditService(),
+    audit: () => unavailableService<AuditService>({ read: true }, 'The mock console shows its audit log in the project Activity & Audit tab; this port serves the real backend only.'),
     workers: forWorkers,
     notices: forNotices,
     results: forResults,

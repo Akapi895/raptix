@@ -36,8 +36,3 @@ export interface ObservedAnalysisService {
   read(ctx: RequestContext): Promise<ServiceResult<ObservedAnalysisRead>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not serve the analysis graph. */
-export function unavailableObservedAnalysisService(): ObservedAnalysisService {
-  const failure = { kind: 'unavailable' as const, message: 'Analysis is not available on this server: the knowledge graph is not configured here.' }
-  return { read: () => Promise.resolve({ ok: false, failure }) }
-}

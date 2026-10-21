@@ -70,12 +70,3 @@ export interface ScopeService {
   decide(ctx: RequestContext, revisionId: string, decision: 'approved' | 'rejected', comment?: string): Promise<ServiceResult<ScopeRevision>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise scope. */
-export function unavailableScopeService(): ScopeService {
-  const failure = { kind: 'unavailable' as const, message: 'Scope revisions are not available on this server.' }
-  return {
-    read: () => Promise.resolve({ ok: false, failure }),
-    submit: () => Promise.resolve({ ok: false, failure }),
-    decide: () => Promise.resolve({ ok: false, failure }),
-  }
-}

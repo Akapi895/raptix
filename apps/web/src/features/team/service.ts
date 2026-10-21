@@ -42,13 +42,3 @@ export interface TeamService {
   remove(ctx: RequestContext, memberId: string): Promise<ServiceResult<null>>
 }
 
-/** Every call resolves to an explicit unavailable outcome when the backend does not advertise membership. */
-export function unavailableTeamService(): TeamService {
-  const failure = { kind: 'unavailable' as const, message: 'Memberships are not available on this server.' }
-  return {
-    read: () => Promise.resolve({ ok: false, failure }),
-    invite: () => Promise.resolve({ ok: false, failure }),
-    changeRole: () => Promise.resolve({ ok: false, failure }),
-    remove: () => Promise.resolve({ ok: false, failure }),
-  }
-}

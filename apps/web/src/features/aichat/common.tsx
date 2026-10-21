@@ -1,4 +1,4 @@
-import { FanOutCard } from '../../screens/g-fanout'
+import { FanOutCard } from '../branches'
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Ban, BarChart3, Bot, Check, ChevronDown, FileText, GitBranch, Info, Lock, Send, ShieldCheck, Terminal, User, Cog, X } from 'lucide-react'
 import { useDirty } from '../../state/session'
