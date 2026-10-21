@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
@@ -105,15 +106,17 @@ def workspace_artifact_ref(path: Path, engagement: str) -> str | None:
 
 
 class _ArtifactStampedStore:
-    """Passes writes through to the store and marks each observation with the artifact it came from.
+    """Passes writes through to the store and marks each observation with the artifact version it came from.
 
-    Adapters keep their own shape; the reference is added once, here, to every observation's props
-    (``source_artifact_ref``), and every other store method is delegated unchanged.
+    Adapters keep their own shape. The path (``source_artifact_ref``) and the sha256 of the parsed bytes
+    (``source_artifact_digest``) are added once, here, to every observation's props; every other store
+    method is delegated unchanged.
     """
 
-    def __init__(self, store: KGStore, artifact_ref: str) -> None:
+    def __init__(self, store: KGStore, artifact_ref: str, artifact_digest: str) -> None:
         self._store = store
         self._artifact_ref = artifact_ref
+        self._artifact_digest = artifact_digest
 
     def record_observations(
         self, observations: list[dict[str, Any]], **scope: Any
@@ -122,6 +125,7 @@ class _ArtifactStampedStore:
             props = observation.get("props") if isinstance(observation, dict) else None
             if isinstance(props, dict):
                 props.setdefault("source_artifact_ref", self._artifact_ref)
+                props.setdefault("source_artifact_digest", self._artifact_digest)
         return self._store.record_observations(observations, **scope)
 
     def __getattr__(self, name: str) -> Any:
@@ -159,13 +163,27 @@ def ingest(
 
     adapter = _REGISTRY[scanner_kind]
     artifact_ref = workspace_artifact_ref(target, engagement)
+    try:
+        source = target.read_bytes()
+    except OSError as exc:
+        return {
+            "error": f"file unreadable: {exc}",
+            "scanner": scanner_kind,
+            "path": str(target),
+        }
+    # The digest names the bytes the adapter parses. The adapter reads a copy of exactly these bytes, so a
+    # file rewritten during the ingest cannot be parsed under the digest of its earlier version.
+    digest = hashlib.sha256(source).hexdigest()
     writer = (
-        cast(KGStore, _ArtifactStampedStore(store, artifact_ref))
+        cast(KGStore, _ArtifactStampedStore(store, artifact_ref, digest))
         if artifact_ref is not None
         else store
     )
     try:
-        result = adapter(target, writer, engagement, created_by, source_episode_id)
+        with tempfile.TemporaryDirectory(prefix="raptix-kg-") as scratch:
+            copy = Path(scratch) / target.name
+            copy.write_bytes(source)
+            result = adapter(copy, writer, engagement, created_by, source_episode_id)
     except Exception as exc:
         log.warning("kg_ingest adapter %s raised: %s", scanner_kind, exc)
         return {

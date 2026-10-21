@@ -7,6 +7,7 @@ captures the ``record_observations`` payload without hitting Neo4j.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -789,7 +790,7 @@ def test_a_file_under_the_engagement_workspace_gives_its_engagement_relative_ref
 
 def test_stamped_writes_keep_existing_props_and_delegate_everything_else() -> None:
     inner = _StubStore()
-    stamped = _ArtifactStampedStore(inner, "scans/nmap.xml")  # type: ignore[arg-type]
+    stamped = _ArtifactStampedStore(inner, "scans/nmap.xml", DIGEST_A)  # type: ignore[arg-type]
     observations = [
         {"kind": "Host", "key": "host::10.0.0.1", "props": {"ip": "10.0.0.1"}},
         {
@@ -803,7 +804,90 @@ def test_stamped_writes_keep_existing_props_and_delegate_everything_else() -> No
         observations, engagement="eng-1", created_by="it", source_episode_id="ep-1"
     )
     assert observations[0]["props"]["source_artifact_ref"] == "scans/nmap.xml"
+    assert observations[0]["props"]["source_artifact_digest"] == DIGEST_A
     assert observations[1]["props"]["source_artifact_ref"] == "scans/earlier.xml"
     assert "props" not in observations[2]
     assert inner.calls[0]["engagement"] == "eng-1"
     assert stamped.calls is inner.calls
+
+
+DIGEST_A = "a" * 64
+DIGEST_B = "b" * 64
+
+
+def _workspace_nmap_adapter(seen: dict[str, bytes]) -> ScannerAdapter:
+    """Adapter that records the bytes it parsed and writes one Host observation, as an adapter does."""
+
+    def adapter(
+        path: Path, store: Any, engagement: str, created_by: str, source_episode_id: str
+    ) -> dict[str, Any]:
+        seen["bytes"] = path.read_bytes()
+        store.record_observations(
+            [{"kind": "Host", "key": "host::10.0.0.1", "props": {"ip": "10.0.0.1"}}],
+            engagement=engagement,
+            created_by=created_by,
+            source_episode_id=source_episode_id,
+        )
+        return {"records": {}}
+
+    return adapter
+
+
+def test_ingest_stamps_the_digest_of_the_bytes_the_adapter_parsed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "nmap.xml"
+    source.write_bytes(b"<nmaprun>first</nmaprun>")
+    monkeypatch.setattr(
+        "raptix.knowledge.graph.ingest.workspace_artifact_ref",
+        lambda path, engagement: "findings/evidence/nmap.xml",
+    )
+    seen: dict[str, bytes] = {}
+    monkeypatch.setitem(_REGISTRY, "test_workspace_nmap", _workspace_nmap_adapter(seen))
+    store = _StubStore()
+
+    result = ingest(
+        "test_workspace_nmap",
+        source,
+        store=store,  # type: ignore[arg-type]
+        engagement="eng-1",
+        created_by="it",
+        source_episode_id="ep-1",
+    )
+
+    assert "error" not in result
+    assert seen["bytes"] == b"<nmaprun>first</nmaprun>"
+    props = store.calls[0]["observations"][0]["props"]
+    assert props["source_artifact_ref"] == "findings/evidence/nmap.xml"
+    assert props["source_artifact_digest"] == hashlib.sha256(b"<nmaprun>first</nmaprun>").hexdigest()
+
+
+def test_a_file_rewritten_at_the_same_path_gets_the_digest_of_its_new_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "nmap.xml"
+    monkeypatch.setattr(
+        "raptix.knowledge.graph.ingest.workspace_artifact_ref",
+        lambda path, engagement: "findings/evidence/nmap.xml",
+    )
+    monkeypatch.setitem(_REGISTRY, "test_workspace_nmap", _workspace_nmap_adapter({}))
+    store = _StubStore()
+
+    def run() -> str:
+        ingest(
+            "test_workspace_nmap",
+            source,
+            store=store,  # type: ignore[arg-type]
+            engagement="eng-1",
+            created_by="it",
+            source_episode_id="ep-1",
+        )
+        return str(store.calls[-1]["observations"][0]["props"]["source_artifact_digest"])
+
+    source.write_bytes(b"version one")
+    first = run()
+    assert run() == first  # replaying the same bytes stamps the same version
+    source.write_bytes(b"version two")
+    second = run()
+    assert second != first
+    assert second == hashlib.sha256(b"version two").hexdigest()
