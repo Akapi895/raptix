@@ -76,6 +76,16 @@ function privilegedCaptureRole(role: MemberRole): boolean {
   return role === 'owner' || role === 'reviewer'
 }
 
+/** Standard captures show their name to the whole engagement; sensitive ones only to owners and reviewers (ADR-0087). */
+export function captureFilenameVisible(classification: string, role: MemberRole): boolean {
+  return classification === 'standard' || privilegedCaptureRole(role)
+}
+
+/** Original bytes: standard captures for every role but viewers; sensitive captures for owners and reviewers only. */
+export function captureOriginalReadable(classification: string, role: MemberRole): boolean {
+  return (classification === 'standard' && role !== 'viewer') || (classification === 'sensitive' && privilegedCaptureRole(role))
+}
+
 export class ArtifactsService {
   public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
 
@@ -100,7 +110,7 @@ export class ArtifactsService {
     return {
       id: row.id,
       engagementId: row.engagementId,
-      filename: row.classification === 'standard' || privileged ? row.filename : null,
+      filename: captureFilenameVisible(row.classification, role) ? row.filename : null,
       mediaType: row.mediaType,
       sizeBytes: row.sizeBytes,
       digest: row.digest,
@@ -112,7 +122,7 @@ export class ArtifactsService {
       classificationReason: privileged ? row.classificationReason : null,
       classifiedAt: row.classifiedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
-      canReadOriginal: row.classification === 'standard' && role !== 'viewer' || row.classification === 'sensitive' && privileged,
+      canReadOriginal: captureOriginalReadable(row.classification, role),
       canClassify: privileged,
     };
   }

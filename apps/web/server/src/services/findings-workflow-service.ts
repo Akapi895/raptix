@@ -3,12 +3,12 @@ import type { EvidenceLink, FindingRecord, PrismaClient } from '../generated/pri
 import { ProjectApiError } from './projects-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 import { assertEngagementOpen } from './closure-service.js';
-import type { ArtifactsService } from './artifacts-service.js';
+import { captureFilenameVisible, captureOriginalReadable, type ArtifactsService } from './artifacts-service.js';
 import type { LibraryService } from './library-service.js';
 import { readFindingActivity, type FindingActivityKind, type FindingActivityPage } from './finding-activity.js';
 import { findingReferenceOptions, resolveFindingReferences } from './finding-references.js';
 import { writeSuggestionDisposition } from './finding-suggestions.js';
-import type { CuratedFindingView, CuratedFindingsView, FindingEvidenceLink, FindingReferenceOptions, FindingRetestRecord, FindingReviewDecision, FindingSuggestionDispositionsView, FindingSuggestionDispositionResult } from '@raptix/web-contracts';
+import type { CuratedFindingView, CuratedFindingsView, FindingEvidenceLink, FindingReferenceOptions, FindingReproduction, FindingRetestRecord, FindingReviewDecision, FindingSuggestionDispositionsView, FindingSuggestionDispositionResult } from '@raptix/web-contracts';
 
 /**
  * Ticket 10: curated finding records with the review/remediation lifecycle and
@@ -46,6 +46,54 @@ function payloadHash(value: object): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
+const REPRODUCTION_TEXT_LIMIT = 8000;
+const REPRODUCTION_STEP_LIMIT = 100;
+const REPRODUCTION_STEP_TEXT_LIMIT = 2000;
+const CAPTURE_ID_LIMIT = 128;
+const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
+
+/** The package as stored in the finding body; the artifact is bound to its retained capture at write time. */
+interface StoredReproduction {
+  prerequisites: string;
+  inputs: string;
+  steps: string[];
+  expectedObservation: string;
+  limitations: string;
+  artifact: { captureId: string; filename: string; mediaType: string; digest: string; sizeBytes: number } | null;
+}
+
+function parseReproductionInput(value: unknown): Omit<StoredReproduction, 'artifact'> & { artifact: { captureId: string; digest: string } | null } {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new ProjectApiError(400, 'reproduction must be an object.');
+  const input = value as Record<string, unknown>;
+  const text = (field: 'prerequisites' | 'inputs' | 'expectedObservation' | 'limitations'): string => {
+    const found = input[field] ?? '';
+    if (typeof found !== 'string' || found.length > REPRODUCTION_TEXT_LIMIT) throw new ProjectApiError(400, `reproduction.${field} must be text of at most 8000 characters.`);
+    return found;
+  };
+  const steps = input.steps ?? [];
+  if (!Array.isArray(steps) || steps.length > REPRODUCTION_STEP_LIMIT || !steps.every((step) => typeof step === 'string' && step.length <= REPRODUCTION_STEP_TEXT_LIMIT)) {
+    throw new ProjectApiError(400, 'reproduction.steps must be at most 100 steps of 2000 characters each.');
+  }
+  let artifact: { captureId: string; digest: string } | null = null;
+  if (input.artifact !== undefined && input.artifact !== null) {
+    const ref = input.artifact as Record<string, unknown>;
+    if (typeof ref !== 'object' || Array.isArray(ref) || typeof ref.captureId !== 'string' || ref.captureId.length === 0 || ref.captureId.length > CAPTURE_ID_LIMIT
+      || typeof ref.digest !== 'string' || !DIGEST_PATTERN.test(ref.digest)) {
+      throw new ProjectApiError(400, 'reproduction.artifact needs a retained capture id and a lowercase SHA-256 digest.');
+    }
+    artifact = { captureId: ref.captureId, digest: ref.digest };
+  }
+  return {
+    prerequisites: text('prerequisites'),
+    inputs: text('inputs'),
+    steps: steps as string[],
+    expectedObservation: text('expectedObservation'),
+    limitations: text('limitations'),
+    artifact,
+  };
+}
+
+
 function validateContent(input: Record<string, unknown>): void {
   if (input.title !== undefined && (typeof input.title !== 'string' || !input.title.trim() || input.title.trim().length > 300)) throw new ProjectApiError(400, 'title must contain 1-300 characters.');
   if (input.severity !== undefined && (typeof input.severity !== 'string' || !['critical', 'high', 'medium', 'low', 'informational'].includes(input.severity))) throw new ProjectApiError(400, 'Unknown finding severity.');
@@ -57,6 +105,16 @@ function validateContent(input: Record<string, unknown>): void {
 export type EvidenceView = FindingEvidenceLink;
 
 export class FindingsWorkflowService {
+  /** Validates a package and binds its artifact to a retained capture of the same engagement at the digest the operator selected. */
+  private async storedReproduction(engagementId: string, value: unknown): Promise<StoredReproduction> {
+    const draft = parseReproductionInput(value);
+    if (draft.artifact === null) return { ...draft, artifact: null };
+    const capture = await this.db.retainedCapture.findFirst({ where: { id: draft.artifact.captureId, engagementId } });
+    if (capture === null) throw new ProjectApiError(404, 'Retained capture not found in this engagement.');
+    if (capture.digest !== draft.artifact.digest) throw new ProjectApiError(409, 'The retained capture no longer matches the digest you selected. Select it again.');
+    return { ...draft, artifact: { captureId: capture.id, filename: capture.filename, mediaType: capture.mediaType, digest: capture.digest, sizeBytes: capture.sizeBytes } };
+  }
+
   public constructor(private readonly db: PrismaClient, private readonly artifacts?: Pick<ArtifactsService, 'capture'> & Partial<Pick<ArtifactsService, 'captureById' | 'importWorkspaceEvidence'>>, private readonly library?: Pick<LibraryService, 'techniqueDetail'>) {}
 
   public async options(actorId: string, engagementId: string): Promise<FindingReferenceOptions> {
@@ -103,40 +161,41 @@ export class FindingsWorkflowService {
   }
 
   public async list(actorId: string, engagementId: string): Promise<CuratedFindingsView> {
-    await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
+    const access = await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
     const rows = await this.db.findingRecord.findMany({ where: { engagementId }, orderBy: { createdAt: 'desc' } });
     const findings = await Promise.all(rows.map(async (row) => {
       const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-      return this.toView(row, evidence);
+      return this.toView(access, row, evidence);
     }));
     return { engagementId, findings, transitions: TRANSITIONS, source: 'db' };
   }
 
   public async create(actorId: string, engagementId: string, input: unknown): Promise<CuratedFindingView> {
-    await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    const access = await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
     await assertEngagementOpen(this.db, engagementId);
-    const body = (input ?? {}) as { title?: unknown; severity?: unknown; detail?: unknown; impact?: unknown; recommendation?: unknown; severityRationale?: unknown; scopeNote?: unknown; references?: unknown };
+    const body = (input ?? {}) as { title?: unknown; severity?: unknown; detail?: unknown; impact?: unknown; recommendation?: unknown; severityRationale?: unknown; scopeNote?: unknown; references?: unknown; reproduction?: unknown };
     validateContent(body);
     const references = body.references === undefined ? {} : await resolveFindingReferences(this.db, engagementId, body.references, this.library);
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     if (title.length === 0 || title.length > 300) throw new ProjectApiError(400, 'title (1-300 chars) is required.');
     const severity = typeof body.severity === 'string' && ['critical', 'high', 'medium', 'low', 'informational'].includes(body.severity) ? body.severity : 'medium';
     const detail = typeof body.detail === 'string' ? body.detail : '';
+    const reproduction = body.reproduction === undefined || body.reproduction === null ? undefined : await this.storedReproduction(engagementId, body.reproduction);
     const createdAt = new Date();
     const row = await this.db.$transaction(async (tx) => {
       const created = await tx.findingRecord.create({
-        data: { ...references, engagementId, title, severity, status: 'draft', body: { detail, impact: typeof body.impact === 'string' ? body.impact : '', recommendation: typeof body.recommendation === 'string' ? body.recommendation : '', severityRationale: typeof body.severityRationale === 'string' ? body.severityRationale : '', scopeNote: typeof body.scopeNote === 'string' ? body.scopeNote : '' } as object, sourceType: 'authored', createdBy: actorId, contentUpdatedBy: actorId },
+        data: { ...references, engagementId, title, severity, status: 'draft', body: { detail, impact: typeof body.impact === 'string' ? body.impact : '', recommendation: typeof body.recommendation === 'string' ? body.recommendation : '', severityRationale: typeof body.severityRationale === 'string' ? body.severityRationale : '', scopeNote: typeof body.scopeNote === 'string' ? body.scopeNote : '', ...(reproduction === undefined ? {} : { reproduction }) } as object, sourceType: 'authored', createdBy: actorId, contentUpdatedBy: actorId },
       });
       await tx.findingHistory.create({ data: { findingId: created.id, engagementId, actorId, action: 'created', reason: null, fromStatus: null, toStatus: 'draft', findingVersion: 1, createdAt } });
       await tx.webAuditEntry.create({ data: { engagementId, actorId, action: 'finding.created', targetType: 'finding', targetId: created.id, reason: title } });
       return created;
     });
-    return this.toView(row, []);
+    return this.toView(access, row, []);
   }
 
   /** Draft-import from a runtime/producer reference; never mutates producer evidence. */
   public async importDraft(actorId: string, engagementId: string, input: unknown): Promise<CuratedFindingView> {
-    await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    const access = await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
     await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { title?: unknown; producerRef?: unknown; detail?: unknown; severity?: unknown; impact?: unknown; recommendation?: unknown; severityRationale?: unknown; scopeNote?: unknown };
     validateContent(body);
@@ -160,7 +219,7 @@ export class FindingsWorkflowService {
       }
     }
     const existing = await this.db.findingRecord.findFirst({ where: { engagementId, producerRef } });
-    if (existing !== null) return this.replayProducerImport(actorId, engagementId, producerRef, producerDigest, producerResolved, existing);
+    if (existing !== null) return this.replayProducerImport(access, actorId, engagementId, producerRef, producerDigest, producerResolved, existing);
     try {
       const row = await this.db.$transaction(async (tx) => {
         const created = await tx.findingRecord.create({
@@ -184,12 +243,12 @@ export class FindingsWorkflowService {
       await this.attachProducerEvidence(actorId, engagementId, row.id, producerRef);
       const attached = await this.findOwned(engagementId, row.id);
       const links = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-      return this.toView(attached, links, producerResolved);
+      return this.toView(access, attached, links, producerResolved);
     } catch (error) {
       if (!isUniqueConstraintError(error)) throw error;
       const raced = await this.db.findingRecord.findFirst({ where: { engagementId, producerRef } });
       if (raced === null) throw error;
-      return this.replayProducerImport(actorId, engagementId, producerRef, producerDigest, producerResolved, raced);
+      return this.replayProducerImport(access, actorId, engagementId, producerRef, producerDigest, producerResolved, raced);
     }
   }
 
@@ -222,7 +281,7 @@ export class FindingsWorkflowService {
     }
   }
 
-  private async replayProducerImport(
+  private async replayProducerImport(access: { role: MemberRole },
     actorId: string,
     engagementId: string,
     producerRef: string,
@@ -238,17 +297,19 @@ export class FindingsWorkflowService {
     if (existing.status === 'draft') await this.attachProducerEvidence(actorId, engagementId, existing.id, producerRef);
     const current = await this.findOwned(engagementId, existing.id);
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: existing.id } });
-    return this.toView(current, evidence, producerResolved);
+    return this.toView(access, current, evidence, producerResolved);
   }
 
   public async update(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
-    await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
+    const access = await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_CURATE);
     await assertEngagementOpen(this.db, engagementId);
-    const body = (input ?? {}) as { expectedVersion?: unknown; title?: unknown; severity?: unknown; detail?: unknown; impact?: unknown; recommendation?: unknown; severityRationale?: unknown; scopeNote?: unknown; references?: unknown; submit?: unknown };
+    const body = (input ?? {}) as { expectedVersion?: unknown; title?: unknown; severity?: unknown; detail?: unknown; impact?: unknown; recommendation?: unknown; severityRationale?: unknown; scopeNote?: unknown; references?: unknown; reproduction?: unknown; submit?: unknown };
     validateContent(body);
     const references = body.references === undefined ? {} : await resolveFindingReferences(this.db, engagementId, body.references, this.library);
     const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : null;
     if (expectedVersion === null || !Number.isSafeInteger(expectedVersion) || expectedVersion < 1) throw new ProjectApiError(400, 'expectedVersion must be a positive integer for concurrent-edit safety.');
+    // `undefined` keeps the stored package; `null` is an explicit removal, so the stored package is cleared.
+    const reproduction = body.reproduction === undefined ? undefined : body.reproduction === null ? null : await this.storedReproduction(engagementId, body.reproduction);
     const row = await this.findOwned(engagementId, findingId);
     if (row.expectedVersion !== expectedVersion) {
       throw new ProjectApiError(409, `Concurrent edit: the finding moved to version ${row.expectedVersion} while you edited version ${expectedVersion}. Reload and reapply.`);
@@ -280,6 +341,7 @@ export class FindingsWorkflowService {
             recommendation: typeof body.recommendation === 'string' ? body.recommendation : typeof previousBody.recommendation === 'string' ? previousBody.recommendation : '',
             severityRationale: typeof body.severityRationale === 'string' ? body.severityRationale : typeof previousBody.severityRationale === 'string' ? previousBody.severityRationale : '',
             scopeNote: typeof body.scopeNote === 'string' ? body.scopeNote : typeof previousBody.scopeNote === 'string' ? previousBody.scopeNote : '',
+            ...(reproduction === undefined ? {} : { reproduction }),
           } as object,
           expectedVersion: { increment: 1 }, status: nextStatus, updatedBy: actorId, contentUpdatedBy: actorId,
         },
@@ -291,7 +353,7 @@ export class FindingsWorkflowService {
     });
     if (updated === null) throw new ProjectApiError(404, 'Finding not found.');
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-    return this.toView(updated, evidence);
+    return this.toView(access, updated, evidence);
   }
 
   public async transition(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
@@ -341,7 +403,7 @@ export class FindingsWorkflowService {
     });
     if (updated === null) throw new ProjectApiError(404, 'Finding not found.');
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-    return this.toView(updated, evidence);
+    return this.toView(access, updated, evidence);
   }
 
   public async addComment(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
@@ -361,7 +423,7 @@ export class FindingsWorkflowService {
     if (existing !== null) {
       if (existing.payloadHash !== hash) throw new ProjectApiError(409, 'The comment requestId was already used for different content.');
       const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-      return this.toView(row, evidence);
+      return this.toView(access, row, evidence);
     }
     if (row.expectedVersion !== expectedVersion) throw new ProjectApiError(409, `Concurrent edit: the finding moved to version ${row.expectedVersion}; reload before commenting.`);
     if (row.status === 'resolved') throw new ProjectApiError(409, 'Resolved findings are immutable and cannot receive new comments.');
@@ -384,7 +446,7 @@ export class FindingsWorkflowService {
     }
     if (updated === null) throw new ProjectApiError(404, 'Finding not found.');
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-    return this.toView(updated, evidence);
+    return this.toView(access, updated, evidence);
   }
 
   public async recordRetest(actorId: string, engagementId: string, findingId: string, input: unknown): Promise<CuratedFindingView> {
@@ -409,7 +471,7 @@ export class FindingsWorkflowService {
     if (existing !== null) {
       if (existing.payloadHash !== hash) throw new ProjectApiError(409, 'The retest requestId was already used for different content.');
       const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-      return this.toView(row, evidence);
+      return this.toView(access, row, evidence);
     }
     if (row.expectedVersion !== expectedVersion) throw new ProjectApiError(409, `Concurrent edit: the finding moved to version ${row.expectedVersion}; reload before recording a retest.`);
     if (!['confirmed', 'remediation', 'retest'].includes(row.status)) throw new ProjectApiError(409, `Retest is not available while the finding is ${row.status}.`);
@@ -438,7 +500,7 @@ export class FindingsWorkflowService {
     }
     if (updated === null) throw new ProjectApiError(404, 'Finding not found.');
     const evidence = await this.db.evidenceLink.findMany({ where: { findingId: row.id } });
-    return this.toView(updated, evidence);
+    return this.toView(access, updated, evidence);
   }
 
   /** Attaches an opaque evidence reference; cross-engagement ids are refused. */
@@ -507,7 +569,44 @@ export class FindingsWorkflowService {
     return row;
   }
 
-  private async toView(row: FindingRecord, evidence: EvidenceLink[], producerResolved?: boolean): Promise<CuratedFindingView> {
+  /**
+   * The package as this caller may read it. The capture's current classification decides the name and the
+   * read rights, so a reclassification applies on the very next read; nothing about the capture is cached here.
+   */
+  private async reproductionView(engagementId: string, value: unknown, role: MemberRole): Promise<{ reproduction?: FindingReproduction }> {
+    if (typeof value !== 'object' || value === null) return {};
+    const stored = value as StoredReproduction;
+    const recorded = {
+      prerequisites: stored.prerequisites,
+      inputs: stored.inputs,
+      steps: stored.steps,
+      expectedObservation: stored.expectedObservation,
+      limitations: stored.limitations,
+      verification: 'not_recorded' as const,
+    };
+    if (stored.artifact === null) return { reproduction: { ...recorded, artifact: null } };
+    const capture = await this.db.retainedCapture.findFirst({ where: { id: stored.artifact.captureId, engagementId } });
+    if (capture === null) {
+      // No longer retained: keep the recorded identity and report it, without inventing a name, a class or a read right.
+      return { reproduction: { ...recorded, artifact: { ...stored.artifact, filename: null, classification: null, canReadOriginal: false } } };
+    }
+    return {
+      reproduction: {
+        ...recorded,
+        artifact: {
+          captureId: capture.id,
+          filename: captureFilenameVisible(capture.classification, role) ? capture.filename : null,
+          mediaType: capture.mediaType,
+          digest: capture.digest,
+          sizeBytes: capture.sizeBytes,
+          classification: capture.classification as 'unclassified' | 'standard' | 'sensitive',
+          canReadOriginal: captureOriginalReadable(capture.classification, role),
+        },
+      },
+    };
+  }
+
+  private async toView(access: { role: MemberRole }, row: FindingRecord, evidence: EvidenceLink[], producerResolved?: boolean): Promise<CuratedFindingView> {
     const body = bodyRecord(row.body);
     const [comments, history, retests, decision] = await Promise.all([
       readFindingActivity(this.db, row.engagementId, row.id, 'comments', row.expectedVersion),
@@ -527,6 +626,7 @@ export class FindingsWorkflowService {
         recommendation: typeof body.recommendation === 'string' ? body.recommendation : '',
         severityRationale: typeof body.severityRationale === 'string' ? body.severityRationale : '',
         scopeNote: typeof body.scopeNote === 'string' ? body.scopeNote : '',
+        ...(await this.reproductionView(row.engagementId, body.reproduction, access.role)),
       },
       expectedVersion: row.expectedVersion,
       sourceType: row.sourceType as CuratedFindingView['sourceType'],

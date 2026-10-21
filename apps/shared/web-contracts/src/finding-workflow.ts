@@ -26,10 +26,48 @@ export interface FindingHistoryRecord {
   fromStatus: string | null; toStatus: string | null; version: number; evidenceRefs: string[];
 }
 export interface FindingRetestRecord { id: string; actorId: string; createdAt: string; result: 'Resolved' | 'Persists' | 'Partial'; note: string; findingVersion: number; evidenceRefs: string[] }
+/**
+ * A retained capture that carries a finding's reproduction, identified by capture id and the digest recorded when it was linked.
+ * Name, classification and read rights are resolved on every read against the capture's current state: `filename` is null when the
+ * caller may not see it, `classification` is null when the capture is no longer retained, and `canReadOriginal` says whether the
+ * original bytes can be read by this caller.
+ */
+export interface FindingReproductionArtifact {
+  captureId: string
+  filename: string | null
+  mediaType: string
+  digest: string
+  sizeBytes: number
+  classification: 'unclassified' | 'standard' | 'sensitive' | null
+  canReadOriginal: boolean
+}
+/**
+ * Reproduction package of a curated finding. A finding that predates the package carries no `reproduction` key;
+ * callers render that as missing and never infer one from the description or the producer source.
+ */
+export interface FindingReproduction {
+  prerequisites: string
+  inputs: string
+  steps: string[]
+  expectedObservation: string
+  limitations: string
+  artifact: FindingReproductionArtifact | null
+  /** Recorded verification. Only `not_recorded` exists until a re-run ships as a separate execution. */
+  verification: 'not_recorded'
+}
+/** Write shape. The artifact is named by capture id and digest; the server resolves its name and size. */
+export interface FindingReproductionInput {
+  prerequisites: string
+  inputs: string
+  steps: string[]
+  expectedObservation: string
+  limitations: string
+  artifact: { captureId: string; digest: string } | null
+}
 export interface CuratedFindingView {
   id: string; engagementId: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'informational';
   status: 'draft' | 'review' | 'returned' | 'confirmed' | 'remediation' | 'retest' | 'resolved';
-  body: { detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string };
+  body: { detail: string; impact?: string; recommendation?: string; severityRationale?: string; scopeNote?: string; reproduction?: FindingReproduction };
   expectedVersion: number; sourceType: 'authored' | 'imported'; producerRef: string | null; producerDigest: string | null;
   producerResolved?: boolean; createdBy: string; updatedBy: string | null; createdAt: string; updatedAt: string;
   evidence: FindingEvidenceLink[]; references: FindingReferences;
@@ -84,6 +122,16 @@ export function isFindingEvidenceLink(value: unknown): value is FindingEvidenceL
     && ['artifact', 'digest'].includes(String(value.kind)) && nullableText(value.artifactPath) && nullableText(value.digest)
     && nullableText(value.producer) && timestamp(value.createdAt)
 }
+export function isFindingReproduction(value: unknown): value is FindingReproduction {
+  return record(value) && text(value.prerequisites) && text(value.inputs) && text(value.expectedObservation) && text(value.limitations)
+    && Array.isArray(value.steps) && value.steps.every(text)
+    && (value.artifact === null || (record(value.artifact) && text(value.artifact.captureId) && (value.artifact.filename === null || text(value.artifact.filename))
+      && text(value.artifact.mediaType) && text(value.artifact.digest) && typeof value.artifact.sizeBytes === 'number'
+      && [null, 'unclassified', 'standard', 'sensitive'].includes(value.artifact.classification as string | null)
+      && typeof value.artifact.canReadOriginal === 'boolean'))
+    && value.verification === 'not_recorded'
+}
+
 export function isCuratedFindingView(value: unknown): value is CuratedFindingView {
   if (!record(value) || !record(value.body) || !record(value.activityCursors)) return false
   const { activityCursors, expectedVersion } = value
@@ -93,6 +141,7 @@ export function isCuratedFindingView(value: unknown): value is CuratedFindingVie
   return identity(value.id) && identity(value.engagementId) && identity(value.title)
     && ['critical', 'high', 'medium', 'low', 'informational'].includes(String(value.severity)) && statuses.includes(String(value.status))
     && text(body.detail) && [body.impact, body.recommendation, body.severityRationale, body.scopeNote].every((field) => field === undefined || text(field))
+    && (body.reproduction === undefined || isFindingReproduction(body.reproduction))
     && ['authored', 'imported'].includes(String(value.sourceType)) && nullableText(value.producerRef)
     && nullableText(value.producerDigest) && identity(value.createdBy) && nullableText(value.updatedBy) && timestamp(value.createdAt) && timestamp(value.updatedAt)
     && Array.isArray(value.evidence) && value.evidence.every(isFindingEvidenceLink)
