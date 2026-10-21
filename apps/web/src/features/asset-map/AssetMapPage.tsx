@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapNeighborhood, AssetMapOverlay, AssetMapOverview } from '@raptix/web-contracts'
+import type {
+  AssetMapAssetRef,
+  AssetMapCompleteness,
+  AssetMapDetail,
+  AssetMapKind,
+  AssetMapMembersPage,
+  AssetMapNeighborhood,
+  AssetMapOverlay,
+  AssetMapOverview,
+} from '@raptix/web-contracts'
 import { useProjectStore } from '../../state/stores'
 import { useSession } from '../../real/session'
 import { ApiTransportError } from '../../real/transport'
@@ -21,6 +30,25 @@ const SWITCHABLE_KINDS = [
   { kind: 'service', label: 'Services' },
   { kind: 'origin', label: 'Origins' },
 ] as const
+
+/** One catalog list as the page holds it: the rows loaded so far, where the next page starts, and what is known about the total. */
+interface ListState {
+  items: AssetMapAssetRef[]
+  nextCursor: string | null
+  completeness: AssetMapCompleteness | null
+}
+
+const EMPTY_LIST: ListState = { items: [], nextCursor: null, completeness: null }
+
+function listFrom(page: AssetMapMembersPage): ListState {
+  return { items: page.items, nextCursor: page.nextCursor, completeness: page.completeness }
+}
+
+/** Adds the next page to a list; a row already on screen is not repeated. */
+function appendToList(current: ListState, page: AssetMapMembersPage): ListState {
+  const seen = new Set(current.items.map(item => item.assetId))
+  return { items: [...current.items, ...page.items.filter(item => !seen.has(item.assetId))], nextCursor: page.nextCursor, completeness: page.completeness }
+}
 
 /** Maps a failure to a sentence the operator can act on; never an empty map. */
 function describeFailure(error: unknown): string {
@@ -45,12 +73,24 @@ function Completeness({ label, state }: { label: string; state: AssetMapComplete
   )
 }
 
-function AssetList({ title, items, selected, onSelect }: { title: string; items: AssetMapAssetRef[]; selected: string | null; onSelect: (assetId: string) => void }) {
+function AssetList({
+  title,
+  list,
+  selected,
+  onSelect,
+  onLoadMore,
+}: {
+  title: string
+  list: ListState
+  selected: string | null
+  onSelect: (assetId: string) => void
+  onLoadMore: () => void
+}) {
   return (
     <section aria-label={title} className="space-y-1">
       <h3 className="text-sm font-semibold">{title}</h3>
       <ul className="space-y-1">
-        {items.map(item => (
+        {list.items.map(item => (
           <li key={item.assetId}>
             <button
               type="button"
@@ -63,6 +103,12 @@ function AssetList({ title, items, selected, onSelect }: { title: string; items:
           </li>
         ))}
       </ul>
+      {list.completeness ? <Completeness label={title} state={list.completeness} /> : null}
+      {list.nextCursor ? (
+        <button type="button" onClick={onLoadMore} className="rounded border px-2 py-1 text-xs">
+          Load more {title.toLowerCase()}
+        </button>
+      ) : null}
     </section>
   )
 }
@@ -244,15 +290,16 @@ function appendItems(current: AssetMapDetail['detail'], next: AssetMapDetail['de
 
 /**
  * Asset Map (flagged): hosts and web origins on the left, their relationship graph in the middle,
- * and the inspector with sources, evidence, services and sitemap on the right. Every list is paged,
- * every count says what it covers, and a response for an asset the operator already left is dropped.
+ * and the inspector with sources, evidence, services, sitemap and findings on the right. Every list is
+ * paged and says what it covers. Each read belongs to the project it started in: a response that
+ * arrives after the operator switched project, or after the asset moved on, is dropped.
  */
 export function AssetMapPage() {
   const engagementId = useProjectStore(state => state.pid)
   const actorId = useSession().session?.actor?.id ?? null
   const [overview, setOverview] = useState<AssetMapOverview | null>(null)
-  const [hosts, setHosts] = useState<AssetMapAssetRef[]>([])
-  const [origins, setOrigins] = useState<AssetMapAssetRef[]>([])
+  const [hostList, setHostList] = useState<ListState>(EMPTY_LIST)
+  const [originList, setOriginList] = useState<ListState>(EMPTY_LIST)
   const [selected, setSelected] = useState<string | null>(null)
   const [neighborhood, setNeighborhood] = useState<AssetMapNeighborhood | null>(null)
   const [detail, setDetail] = useState<AssetMapDetail | null>(null)
@@ -265,8 +312,11 @@ export function AssetMapPage() {
   const [focus, setFocus] = useState<CanvasFocus | null>(null)
   const [overlay, setOverlay] = useState<AssetMapOverlay | null>(null)
   const [overlayError, setOverlayError] = useState<string | null>(null)
-  /** Every in-flight read carries the token it started under; a result with an old token is dropped. */
+  /** Bumped whenever the project or the signed-in user changes; every read compares against it before it applies. */
+  const generation = useRef(0)
+  /** Within one project, the newest selection read wins. */
   const request = useRef(0)
+  const searchRequest = useRef(0)
   const focusCount = useRef(0)
   /** Revision of the catalog the lists were last loaded from; a refresh reports when it moved. */
   const seenRevision = useRef<string | null>(null)
@@ -277,55 +327,64 @@ export function AssetMapPage() {
 
   useEffect(() => {
     if (!engagementId || engagementId === 'all') return
-    let live = true
+    const gen = ++generation.current
     setError(null)
     setNotice(null)
     setSelected(null)
     setNeighborhood(null)
     setDetail(null)
     setResults(null)
+    setQuery('')
+    setFilter('')
+    setFocus(null)
+    setOverlay(null)
+    setOverlayError(null)
+    setOverview(null)
+    setHostList(EMPTY_LIST)
+    setOriginList(EMPTY_LIST)
     seenRevision.current = null
     Promise.all([fetchAssetMapOverview(engagementId), fetchAssetMapMembers(engagementId, 'host'), fetchAssetMapMembers(engagementId, 'web_origin')])
       .then(([view, hostPage, originPage]) => {
-        if (!live) return
+        if (gen !== generation.current) return
         seenRevision.current = view.completeness.revision
         setOverview(view)
-        setHosts(hostPage.items)
-        setOrigins(originPage.items)
+        setHostList(listFrom(hostPage))
+        setOriginList(listFrom(originPage))
         // The saved asset may sit past the first page of each list (it was reached by search), so it is
         // restored as it is. The server answers not-found if the asset has left the catalog.
         const saved = loadSavedSelection(actorId, engagementId)
         if (saved) setSelected(saved)
       })
-      .catch(reason => live && setError(describeFailure(reason)))
-    return () => {
-      live = false
-    }
+      .catch(reason => {
+        if (gen === generation.current) setError(describeFailure(reason))
+      })
   }, [engagementId, actorId])
 
-  /** Loads the relations and the inspector of one asset. A response for an asset or filter already left is dropped. */
+  /** Loads the relations and the inspector of one asset. A response for an asset, filter or project already left is dropped. */
   const loadSelection = (asset: string, sitemapFilter: string): void => {
     if (!engagementId || engagementId === 'all') return
+    const gen = generation.current
     const token = ++request.current
+    const current = (): boolean => gen === generation.current && token === request.current
     setError(null)
     Promise.all([fetchAssetMapNeighborhood(engagementId, asset), fetchAssetMapDetail(engagementId, asset, null, sitemapFilter)])
       .then(([graph, inspector]) => {
-        if (token !== request.current) return
+        if (!current()) return
         setNeighborhood(graph)
         setDetail(inspector)
       })
       .catch(reason => {
-        if (token === request.current) setError(describeFailure(reason))
+        if (current()) setError(describeFailure(reason))
       })
     // Findings load on their own: a failure here is shown in the inspector and does not hide the map.
     fetchAssetMapOverlay(engagementId, asset)
       .then(view => {
-        if (token !== request.current) return
+        if (!current()) return
         setOverlay(view)
         setOverlayError(null)
       })
       .catch(reason => {
-        if (token === request.current) setOverlayError(`Findings for this asset could not be loaded (${reason instanceof Error ? reason.message : 'unknown error'}).`)
+        if (current()) setOverlayError(`Findings for this asset could not be loaded (${reason instanceof Error ? reason.message : 'unknown error'}).`)
       })
   }
 
@@ -345,17 +404,45 @@ export function AssetMapPage() {
   /** Re-reads the lists and the open asset. The canvas keeps the positions of nodes it already drew. */
   const refresh = (): void => {
     if (!engagementId || engagementId === 'all') return
+    const gen = generation.current
     Promise.all([fetchAssetMapOverview(engagementId), fetchAssetMapMembers(engagementId, 'host'), fetchAssetMapMembers(engagementId, 'web_origin')])
       .then(([view, hostPage, originPage]) => {
+        if (gen !== generation.current) return
         const moved = seenRevision.current !== null && seenRevision.current !== view.completeness.revision
         seenRevision.current = view.completeness.revision
         setOverview(view)
-        setHosts(hostPage.items)
-        setOrigins(originPage.items)
+        setHostList(listFrom(hostPage))
+        setOriginList(listFrom(originPage))
         setNotice(moved ? 'The graph changed since the last load; the lists were refreshed.' : 'The map is up to date.')
       })
-      .catch(reason => setError(describeFailure(reason)))
+      .catch(reason => {
+        if (gen === generation.current) setError(describeFailure(reason))
+      })
     if (selected) loadSelection(selected, filter)
+  }
+
+  /** Next page of the host or origin list. A cursor from before a catalog change starts the list again. */
+  const loadMoreList = (kind: AssetMapKind): void => {
+    const list = kind === 'host' ? hostList : originList
+    if (!engagementId || engagementId === 'all' || list.nextCursor === null) return
+    const gen = generation.current
+    const cursor = list.nextCursor
+    const apply = (update: (state: ListState) => ListState): void => (kind === 'host' ? setHostList(update) : setOriginList(update))
+    fetchAssetMapMembers(engagementId, kind, cursor)
+      .then(page => {
+        if (gen === generation.current) apply(state => appendToList(state, page))
+      })
+      .catch(reason => {
+        if (gen !== generation.current) return
+        if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
+        fetchAssetMapMembers(engagementId, kind)
+          .then(first => {
+            if (gen === generation.current) apply(() => listFrom(first))
+          })
+          .catch(again => {
+            if (gen === generation.current) setError(describeFailure(again))
+          })
+      })
   }
 
   const applyFilter = (value: string): void => {
@@ -367,10 +454,20 @@ export function AssetMapPage() {
   const runSearch = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
     const text = query.trim()
-    if (!engagementId || engagementId === 'all' || text === '') return setResults(null)
+    if (!engagementId || engagementId === 'all') return
+    if (text === '') {
+      setResults(null)
+      return
+    }
+    const gen = generation.current
+    const token = ++searchRequest.current
     fetchAssetMapSearch(engagementId, text)
-      .then(found => setResults(found.items))
-      .catch(reason => setError(describeFailure(reason)))
+      .then(found => {
+        if (gen === generation.current && token === searchRequest.current) setResults(found.items)
+      })
+      .catch(reason => {
+        if (gen === generation.current && token === searchRequest.current) setError(describeFailure(reason))
+      })
   }
 
   /** Opens an asset found by search, wherever it sits in the catalog, and asks the canvas to centre it. */
@@ -390,48 +487,50 @@ export function AssetMapPage() {
 
   const loadMoreRelations = (): void => {
     if (!neighborhood || !engagementId || !selected || !neighborhood.nextCursor) return
+    const gen = generation.current
     const token = request.current
     const asset = selected
     fetchAssetMapNeighborhood(engagementId, asset, neighborhood.nextCursor)
       .then(next => {
-        if (token !== request.current) return
+        if (gen !== generation.current || token !== request.current) return
         setNeighborhood(current => (current ? mergeNeighborhood(current, next) : next))
       })
       .catch(reason => {
-        if (token !== request.current) return
+        if (gen !== generation.current || token !== request.current) return
         if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
         // The graph changed under the cursor: start the relations again from the first page.
         const restart = ++request.current
         fetchAssetMapNeighborhood(engagementId, asset)
           .then(first => {
-            if (restart === request.current) setNeighborhood(first)
+            if (gen === generation.current && restart === request.current) setNeighborhood(first)
           })
           .catch(again => {
-            if (restart === request.current) setError(describeFailure(again))
+            if (gen === generation.current && restart === request.current) setError(describeFailure(again))
           })
       })
   }
 
   const loadMoreDetail = (): void => {
     if (!detail || !engagementId || !selected || !detail.nextCursor) return
+    const gen = generation.current
     const token = request.current
     const asset = selected
     const sitemapFilter = filter
     fetchAssetMapDetail(engagementId, asset, detail.nextCursor, sitemapFilter)
       .then(next => {
-        if (token !== request.current) return
+        if (gen !== generation.current || token !== request.current) return
         setDetail(current => (current ? { ...next, detail: appendItems(current.detail, next.detail) } : next))
       })
       .catch(reason => {
-        if (token !== request.current) return
+        if (gen !== generation.current || token !== request.current) return
         if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
         const restart = ++request.current
         fetchAssetMapDetail(engagementId, asset, null, sitemapFilter)
           .then(first => {
-            if (restart === request.current) setDetail(first)
+            if (gen === generation.current && restart === request.current) setDetail(first)
           })
           .catch(again => {
-            if (restart === request.current) setError(describeFailure(again))
+            if (gen === generation.current && restart === request.current) setError(describeFailure(again))
           })
       })
   }
@@ -484,8 +583,8 @@ export function AssetMapPage() {
             {results.length === 0 ? <p className="text-xs text-slate-600">No asset matches.</p> : null}
           </section>
         ) : null}
-        <AssetList title="Hosts" items={hosts} selected={selected} onSelect={setSelected} />
-        <AssetList title="Web origins" items={origins} selected={selected} onSelect={setSelected} />
+        <AssetList title="Hosts" list={hostList} selected={selected} onSelect={setSelected} onLoadMore={() => loadMoreList('host')} />
+        <AssetList title="Web origins" list={originList} selected={selected} onSelect={setSelected} onLoadMore={() => loadMoreList('web_origin')} />
       </aside>
       <main className="space-y-2">
         {error ? (
