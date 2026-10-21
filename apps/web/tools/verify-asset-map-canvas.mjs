@@ -1,7 +1,9 @@
 /**
  * Browser check of the Asset Map canvas (plan phase 5) on the running web stack.
  *
- *   node tools/verify-asset-map-canvas.mjs --engagement <id> [--ui http://127.0.0.1:3001] [--out <dir>] [--origin <canonicalKey>]
+ *   node tools/verify-asset-map-canvas.mjs --engagement <id> [--ui http://127.0.0.1:3001] [--out <dir>] [--origin <canonicalKey>] [--host <regex>]
+ *
+ * --host picks the host to select by name (a regular expression); without it the first host in the list is used.
  *
  * Needs ASSET_MAP_VERIFY_USER and ASSET_MAP_VERIFY_PASSWORD: a scoped account with operator access
  * to the engagement. It only reads.
@@ -52,7 +54,8 @@ try {
   await page.locator('section[aria-label="Hosts"] button').first().waitFor({ timeout: 20000 })
 
   // 1. Relations drawn from the canvas itself.
-  await page.getByRole('button', { name: /^10\.|^172\./ }).first().click()
+  const hosts = page.locator('section[aria-label="Hosts"]')
+  await (args.host ? hosts.getByRole('button', { name: new RegExp(args.host) }) : hosts.locator('button')).first().click()
   await page.locator('section[aria-label="Services"]').waitFor({ timeout: 20000 })
   await page.waitForFunction(() => Number(document.querySelector('[data-testid="asset-map-canvas"]')?.dataset.nodeCount ?? 0) >= 2, null, { timeout: 20000 })
   const nodes = Number(await canvas.getAttribute('data-node-count'))
