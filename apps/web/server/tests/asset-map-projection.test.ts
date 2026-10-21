@@ -255,7 +255,7 @@ describe('AssetMapService detail', () => {
       { source: 'nmap', count: 2 },
       { source: 'httpx', count: 1 },
     ]);
-    expect(view.provenance.evidence).toEqual([{ source: 'nmap', sourceEpisodeId: 'ep-scan-1', observedAt: new Date(1792500000 * 1000).toISOString(), artifactRef: null, capture: null }]);
+    expect(view.provenance.evidence).toEqual([{ source: 'nmap', sourceEpisodeId: 'ep-scan-1', observedAt: new Date(1792500000 * 1000).toISOString(), artifactRef: null, artifactDigest: null, capture: null }]);
     expect(view.completeness).toMatchObject({ loaded: 2, total: 2, hasMore: false, source: { graph: 'ok' } });
   });
 

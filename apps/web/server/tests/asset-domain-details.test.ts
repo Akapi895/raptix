@@ -27,15 +27,19 @@ const DNS = row('dns_name', 'app.example.com');
 /** Captures imported from workspace artifacts: one in this engagement, one for the same path in another engagement. */
 const CAPTURES = [
   { id: 'cap-1', engagementId: ENGAGEMENT, path: 'findings/capture-cap-1.xml', digest: 'a'.repeat(64), classification: 'unclassified', producer: 'workspace:recon/nmap.xml' },
+  { id: 'cap-v2', engagementId: ENGAGEMENT, path: 'findings/capture-cap-v2.xml', digest: 'e'.repeat(64), classification: 'standard', producer: 'workspace:recon/nmap.xml' },
   { id: 'cap-other', engagementId: 'eng-other', path: 'findings/capture-cap-other.xml', digest: 'b'.repeat(64), classification: 'standard', producer: 'workspace:recon/unimported.xml' },
 ];
 
-/** Web inventory: two host identifiers the catalog can resolve, and two it cannot (a URL and an IPv6 address). */
+/** Web inventory: two host identifiers the catalog can resolve, an IPv6 address it cannot, and web URLs for origins. */
 const WEB_ASSETS = [
   { id: 'wa-ip', kind: 'host', identifier: '10.0.0.5' },
   { id: 'wa-dns', kind: 'host', identifier: 'App.Example.com.' },
   { id: 'wa-url', kind: 'web_url', identifier: 'http://10.0.0.5:8080' },
   { id: 'wa-v6', kind: 'host', identifier: 'fe80::1' },
+  { id: 'wa-origin', kind: 'web_url', identifier: 'HTTP://App.Example.com:80/login?next=/a' },
+  { id: 'wa-https', kind: 'web_url', identifier: 'https://app.example.com/' },
+  { id: 'wa-port', kind: 'web_url', identifier: 'http://app.example.com:8080/' },
 ];
 /** Findings with their owning record: three name a web asset, one names none. */
 const FINDINGS = [
@@ -44,6 +48,9 @@ const FINDINGS = [
   { id: 'f-3', title: 'Stale banner', severity: 'low', status: 'draft', assetId: 'wa-dns', updatedAt: new Date('2026-10-20T09:00:00Z') },
   { id: 'f-4', title: 'On a URL', severity: 'low', status: 'draft', assetId: 'wa-url', updatedAt: new Date('2026-10-20T08:00:00Z') },
   { id: 'f-5', title: 'No owner', severity: 'info', status: 'draft', assetId: null, updatedAt: new Date('2026-10-20T07:00:00Z') },
+  { id: 'f-6', title: 'Login form served over HTTP', severity: 'medium', status: 'draft', assetId: 'wa-origin', updatedAt: new Date('2026-10-20T06:00:00Z') },
+  { id: 'f-7', title: 'Redirect to HTTPS', severity: 'info', status: 'draft', assetId: 'wa-https', updatedAt: new Date('2026-10-20T05:00:00Z') },
+  { id: 'f-8', title: 'Admin on port 8080', severity: 'low', status: 'draft', assetId: 'wa-port', updatedAt: new Date('2026-10-20T04:00:00Z') },
 ];
 
 /** Prisma surface the service touches: the owner, one viewer, catalog rows, web inventory and findings. */
@@ -69,6 +76,8 @@ function fakeDb() {
     assetIdentity: {
       findFirst: async ({ where }: { where: { engagementId: string; id: string } }) =>
         rows.find(item => item.engagementId === where.engagementId && item.id === where.id) ?? null,
+      findMany: async ({ where }: { where: { engagementId: string; id: { in: string[] } } }) =>
+        rows.filter(item => item.engagementId === where.engagementId && where.id.in.includes(item.id)),
     },
     webAsset: {
       findMany: async () => WEB_ASSETS,
@@ -195,6 +204,18 @@ describe('domain detail: sitemap of an origin', () => {
     expect(pages.at(-1)?.parameters).toMatchObject({ filter: 'login', skip: 1 });
   });
 
+  it('labels every identity lookup, so the planner can seek the index instead of scanning the graph', async () => {
+    const stub = await recordingGraph([...SERVICE_ROUTES, ...ENDPOINT_ROUTES]);
+    closers.push(stub.close);
+    const service = new AssetMapService(fakeDb(), stub.config);
+    await service.detail(OWNER, ENGAGEMENT, HOST.id, null, 50);
+    await service.detail(OWNER, ENGAGEMENT, ORIGIN.id, null, 50);
+    await service.neighborhood(OWNER, ENGAGEMENT, HOST.id);
+    const lookups = stub.sent.filter(item => /\basset_id\b|\borigin_asset_id\b/.test(item.statement));
+    expect(lookups.length).toBeGreaterThan(0);
+    for (const item of lookups) expect(item.statement).toMatch(/MATCH \(\w+:(Host|Entrypoint|Endpoint)\b/);
+  });
+
   it('refuses a filter longer than the server accepts before any graph read', async () => {
     const stub = await recordingGraph(ENDPOINT_ROUTES);
     closers.push(stub.close);
@@ -235,19 +256,32 @@ describe('findings on an asset', () => {
     expect(view.linked.total).toBe(2);
     expect(view.linked.byStatus).toEqual({ draft: 1, confirmed: 1 });
     expect(view.linked.items.map(item => item.id)).toEqual(['f-1', 'f-2']);
-    expect(view.unlinkedFindings).toBe(2);
+    expect(view.unlinkedFindings).toBe(4);
   });
 
   it('links the finding of a DNS-name asset to that asset and leaves the rest unlinked', async () => {
     const view = await new AssetMapService(fakeDb(), UNUSED_GRAPH).overlay(OWNER, ENGAGEMENT, DNS.id);
     expect(view.linked.items.map(item => item.id)).toEqual(['f-3']);
-    expect(view.unlinkedFindings).toBe(2);
+    expect(view.unlinkedFindings).toBe(4);
   });
 
-  it('reports no linked findings for an origin, since no web asset resolves to an origin yet', async () => {
+  it('links a finding on a web URL to the origin it names, whatever its path, and to no other origin', async () => {
     const view = await new AssetMapService(fakeDb(), UNUSED_GRAPH).overlay(OWNER, ENGAGEMENT, ORIGIN.id);
-    expect(view.linked).toEqual({ total: 0, byStatus: {}, items: [] });
-    expect(view.unlinkedFindings).toBe(2);
+    expect(view.linked.items.map(item => item.id)).toEqual(['f-6']);
+    expect(view.linked.byStatus).toEqual({ draft: 1 });
+    expect(view.unlinkedFindings).toBe(4);
+  });
+
+  it('keeps web URLs on another scheme, another port or another engagement away from the origin', () => {
+    expect(catalogIdForWebAsset(SLUG, { kind: 'web_url', identifier: 'https://app.example.com/' })).not.toBe(ORIGIN.id);
+    expect(catalogIdForWebAsset(SLUG, { kind: 'web_url', identifier: 'http://app.example.com:8080/' })).not.toBe(ORIGIN.id);
+    expect(catalogIdForWebAsset('other-engagement', { kind: 'web_url', identifier: 'HTTP://App.Example.com:80/login' })).not.toBe(ORIGIN.id);
+  });
+
+  it('counts a finding on an identity the catalog does not hold as unlinked, not as linked', async () => {
+    const view = await new AssetMapService(fakeDb(), UNUSED_GRAPH).overlay(OWNER, ENGAGEMENT, ORIGIN.id);
+    expect(view.linked.items.map(item => item.id)).not.toContain('f-4');
+    expect(view.unlinkedFindings).toBe(4);
   });
 
   it('keeps a stranger out of the overlay the same way as the rest of the asset map', async () => {
@@ -256,10 +290,13 @@ describe('findings on an asset', () => {
 });
 
 describe('web inventory identities', () => {
-  it('resolves IPv4 and DNS host identifiers the way the catalog does, and nothing else', () => {
+  it('resolves host and web URL identifiers the way the catalog does, and nothing else', () => {
     expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: '10.0.0.5' })).toBe(HOST.id);
     expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: 'App.Example.com.' })).toBe(DNS.id);
-    expect(catalogIdForWebAsset(SLUG, { kind: 'web_url', identifier: 'http://10.0.0.5:8080' })).toBeNull();
+    expect(catalogIdForWebAsset(SLUG, { kind: 'web_url', identifier: 'HTTP://App.Example.com:80/login' })).toBe(ORIGIN.id);
+    expect(catalogIdForWebAsset(SLUG, { kind: 'web_url', identifier: 'http://10.0.0.5:8080' })).toBe(assetIdFor(SLUG, 'web_origin', 'default', 'http://10.0.0.5:8080'));
+    expect(catalogIdForWebAsset(SLUG, { kind: 'web_url', identifier: 'ftp://files.example.com/' })).toBeNull();
+    expect(catalogIdForWebAsset(SLUG, { kind: 'other', identifier: 'http://app.example.com/' })).toBeNull();
     expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: 'fe80::1' })).toBeNull();
     // Leading zeros are not an IPv4 address, so the runtime reads it as a DNS name; the web side must agree.
     expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: '010.0.0.5' })).toBe(assetIdFor(SLUG, 'dns_name', 'default', '010.0.0.5'));
@@ -267,18 +304,24 @@ describe('web inventory identities', () => {
 });
 
 describe('evidence and captures', () => {
-  it('links an observation to the capture imported from its workspace artifact, and only in the same engagement', async () => {
+  it('links an observation only to the imported version whose digest it was parsed from, in the same engagement', async () => {
     const evidence = [
-      ['nmap', 'ep-1', 1792500000, 'recon/nmap.xml'],
-      ['nmap', 'ep-2', 1792500001, 'recon/unimported.xml'],
-      ['httpx', 'ep-3', 1792500002, null],
+      ['nmap', 'ep-1', 1792500000, 'recon/nmap.xml', 'a'.repeat(64)],
+      ['nmap', 'ep-2', 1792500001, 'recon/nmap.xml', 'e'.repeat(64)],
+      ['nmap', 'ep-3', 1792500002, 'recon/nmap.xml', 'd'.repeat(64)],
+      ['nmap', 'ep-4', 1792500003, 'recon/nmap.xml', null],
+      ['nmap', 'ep-5', 1792500004, 'recon/unimported.xml', 'b'.repeat(64)],
+      ['httpx', 'ep-6', 1792500005, null, null],
     ];
     const routes = [...SERVICE_ROUTES.filter(([key]) => !key.includes('observed DESC')), ['ORDER BY observed DESC LIMIT 20', evidence] as [string, unknown[][]]];
     const view = await new AssetMapService(fakeDb(), await graphFor(routes)).detail(OWNER, ENGAGEMENT, HOST.id, null, 50);
-    expect(view.provenance.evidence.map(item => [item.artifactRef, item.capture?.id ?? null])).toEqual([
-      ['recon/nmap.xml', 'cap-1'],
-      ['recon/unimported.xml', null],
-      [null, null],
+    expect(view.provenance.evidence.map(item => [item.artifactRef, item.artifactDigest?.slice(0, 1) ?? null, item.capture?.id ?? null])).toEqual([
+      ['recon/nmap.xml', 'a', 'cap-1'],
+      ['recon/nmap.xml', 'e', 'cap-v2'],
+      ['recon/nmap.xml', 'd', null],
+      ['recon/nmap.xml', null, null],
+      ['recon/unimported.xml', 'b', null],
+      [null, null, null],
     ]);
     expect(view.provenance.evidence[0]?.capture).toEqual({ id: 'cap-1', path: 'findings/capture-cap-1.xml', digest: 'a'.repeat(64), classification: 'unclassified' });
   });

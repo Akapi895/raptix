@@ -26,7 +26,9 @@ export interface AssetMapEvidenceRef {
   observedAt: string | null
   /** The engagement-relative workspace artifact the observation was read from, when known. */
   artifactRef: string | null
-  /** The capture imported from that artifact in this engagement, or null while it has not been imported. */
+  /** The sha256 of the artifact bytes the observation was parsed from. A capture links only when its digest equals this. */
+  artifactDigest: string | null
+  /** The capture of that artifact version in this engagement, or null while that version has not been imported. */
   capture: AssetMapEvidenceCapture | null
 }
 
@@ -70,6 +72,7 @@ export interface AssetMapDetail {
 function isEvidenceRef(item: unknown): item is AssetMapEvidenceRef {
   if (!isRecord(item) || !isNonEmptyString(item.source)) return false
   if (item.artifactRef !== null && typeof item.artifactRef !== 'string') return false
+  if (item.artifactDigest !== null && typeof item.artifactDigest !== 'string') return false
   const capture = item.capture
   if (capture === null) return true
   return isRecord(capture) && isNonEmptyString(capture.id) && typeof capture.path === 'string' && typeof capture.digest === 'string' && typeof capture.classification === 'string'

@@ -57,6 +57,8 @@ const CAPTURE_MEDIA_TYPES: Readonly<Record<string, string>> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'text/plain': 'txt',
+  'application/xml': 'xml',
+  'application/x-ndjson': 'jsonl',
 }
 
 type RetainedCaptureRow = {
@@ -241,8 +243,8 @@ export class ArtifactsService {
   /**
    * Imports the evidence files an agent wrote under `findings/evidence/` as retained captures, so they appear in the
    * evidence inventory and can be attached to findings. Each file becomes an unclassified capture (ADR-0087): its bytes
-   * stay locked until an owner or reviewer classifies it. Re-running is idempotent per file. A file whose bytes changed
-   * after its import is reported as skipped and the imported copy is kept.
+   * stay locked until an owner or reviewer classifies it. Re-running is idempotent per version. A rewritten file
+   * imports as a new capture; the version imported earlier stays as it was.
    */
   public async importWorkspaceEvidence(userId: string, engagementId: string, producerId?: string): Promise<WorkspaceEvidenceImportView> {
     const access = await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'operator');
@@ -280,12 +282,12 @@ export class ArtifactsService {
         continue;
       }
       const digest = createHash('sha256').update(bytes).digest('hex');
-      const requestId = `ws-${createHash('sha256').update(artifactPath).digest('hex').slice(0, 40)}`;
+      // One capture per version: the path and the digest of the bytes imported. A rewritten file is a new version.
+      const requestId = `ws-${createHash('sha256').update(`${artifactPath}\n${digest}`).digest('hex').slice(0, 40)}`;
       const requestFingerprint = createHash('sha256').update(JSON.stringify({ filename, mediaType, digest })).digest('hex');
-      const existing = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
+      const existing = await this.findWorkspaceCapture(engagementId, artifactPath, requestId, requestFingerprint);
       if (existing !== null) {
-        if (existing.requestFingerprint === requestFingerprint) captures.push(this.toCaptureView(existing as RetainedCaptureRow, access.role));
-        else skipped.push({ path: artifactPath, reason: 'changed since it was imported; the imported copy is kept' });
+        captures.push(this.toCaptureView(existing, access.role));
         continue;
       }
       const id = randomUUID();
@@ -311,11 +313,22 @@ export class ArtifactsService {
         // A concurrent import of the same file won the race; keep its row and report the same outcome.
         const raced = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
         if (raced === null) throw error;
-        if (raced.requestFingerprint === requestFingerprint) captures.push(this.toCaptureView(raced as RetainedCaptureRow, access.role));
-        else skipped.push({ path: artifactPath, reason: 'changed since it was imported; the imported copy is kept' });
+        captures.push(this.toCaptureView(raced as RetainedCaptureRow, access.role));
       }
     }
     return { engagementId, captures, skipped };
+  }
+
+  /**
+   * The capture of this exact version of a workspace file, if it was already imported. A capture imported before
+   * versions were keyed by digest carries the path alone; it is the same version only when its fingerprint matches.
+   */
+  private async findWorkspaceCapture(engagementId: string, artifactPath: string, requestId: string, requestFingerprint: string): Promise<RetainedCaptureRow | null> {
+    const current = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
+    if (current !== null) return current as RetainedCaptureRow;
+    const legacyRequestId = `ws-${createHash('sha256').update(artifactPath).digest('hex').slice(0, 40)}`;
+    const legacy = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId: legacyRequestId } } });
+    return legacy !== null && legacy.requestFingerprint === requestFingerprint ? (legacy as RetainedCaptureRow) : null;
   }
 
   public async capture(userId: string, engagementId: string, artifactPath: string): Promise<RetainedArtifactView> {
