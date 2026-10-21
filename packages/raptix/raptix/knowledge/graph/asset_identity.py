@@ -18,6 +18,8 @@ DEFAULT_PORTS: dict[str, int] = {"http": 80, "https": 443}
 
 # Kinds the asset catalog reconciles. The KG write boundary stamps their identity (ADR-0094).
 ASSET_BEARING_KINDS = frozenset({"Host", "Entrypoint"})
+# Ports that carry a web origin when a scanner reports them open. Shared by every nmap writer.
+WEB_PORTS = frozenset({80, 443, 8000, 8080, 8443, 8888})
 REDACTED = "REDACTED"
 _HOST_PREFIX = "host::"
 _ENTRYPOINT_PREFIX = "entrypoint::"
@@ -116,6 +118,24 @@ def identity_for(
     except ValueError:
         return None
     return identity_props(engagement, ref)
+
+
+def is_web_url(value: str) -> bool:
+    """True for an http or https URL, whatever the case of the scheme (urlsplit lowercases it)."""
+    try:
+        return urlsplit(value.strip()).scheme in DEFAULT_PORTS
+    except ValueError:
+        return False
+
+
+def redact_text(value: str) -> str:
+    """A text value with any web URL in it redacted. A URL that does not parse becomes REDACTED, never raw."""
+    if not is_web_url(value):
+        return value
+    try:
+        return redact_url(value.strip())
+    except ValueError:
+        return REDACTED
 
 
 def canonical_key(key: str) -> str:

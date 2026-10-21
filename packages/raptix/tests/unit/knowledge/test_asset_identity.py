@@ -10,7 +10,9 @@ from raptix.knowledge.graph.asset_identity import (
     host_ref,
     identity_for,
     identity_props,
+    is_web_url,
     origin_host_ref,
+    redact_text,
     web_origin_ref,
 )
 from raptix_core.types.asset import AssetKind
@@ -115,3 +117,19 @@ def test_canonical_key_error_never_echoes_the_malformed_url() -> None:
     with pytest.raises(ValueError) as exc:
         canonical_key("entrypoint::https://u:hunter2@[::1/admin")
     assert "hunter2" not in str(exc.value)
+
+
+def test_web_urls_are_recognised_whatever_the_case_of_the_scheme() -> None:
+    assert is_web_url("HTTPS://app.example.com/login")
+    assert is_web_url("Http://app.example.com/")
+    assert not is_web_url("ftp://app.example.com/")
+    assert not is_web_url("host::10.0.0.5")
+
+
+def test_redact_text_removes_credentials_from_an_uppercase_scheme_url() -> None:
+    assert redact_text("HTTPS://u:p@app.example.com/x?token=abc") == "https://app.example.com/x?token=REDACTED"
+
+
+def test_redact_text_never_returns_an_unparseable_web_url() -> None:
+    assert redact_text("https://u:hunter2@app.example.com:notaport/") == "REDACTED"
+    assert "hunter2" not in redact_text("https://u:hunter2@app.example.com:notaport/")
