@@ -244,7 +244,7 @@ def test_record_observations_empty_batch_is_noop() -> None:
     # opened beyond the revision() lookup.
     driver = _fake_driver()
     session = driver.session.return_value.__enter__.return_value
-    session.execute_read.return_value = [{"rev": 0}]
+    session.execute_read.return_value = [{"seq": 0}]
     store = _make_store(driver)
 
     result = store.record_observations(
@@ -427,7 +427,11 @@ def test_record_observations_redacts_an_uppercase_scheme_in_label_and_properties
                 "kind": "Vulnerability",
                 "key": "vuln::uppercase-scheme",
                 "label": secret_url,
-                "props": {"source": "nuclei", "matched_at": secret_url, "hits": [secret_url, "plain"]},
+                "props": {
+                    "source": "nuclei",
+                    "matched_at": secret_url,
+                    "hits": [secret_url, "plain"],
+                },
             }
         ]
     )
@@ -437,3 +441,46 @@ def test_record_observations_redacts_an_uppercase_scheme_in_label_and_properties
     assert node["props"]["matched_at"] == "https://target.local/login?token=REDACTED"
     assert node["props"]["hits"] == ["https://target.local/login?token=REDACTED", "plain"]
     assert "abc" not in repr(captured) and "u:p" not in repr(captured)
+
+
+# ── Revision counter (asset map cursors bind to it) ─────────────────────
+
+
+def test_execute_write_advances_the_engagement_revision_in_the_same_transaction() -> None:
+    driver = _fake_driver()
+    session = driver.session.return_value.__enter__.return_value
+    transactions: list[list[str]] = []
+
+    def fake_write(write_fn):  # type: ignore[no-untyped-def]
+        tx = MagicMock()
+        statements: list[str] = []
+        transactions.append(statements)
+
+        def tx_run(query, **params):  # type: ignore[no-untyped-def]
+            statements.append(query)
+            return MagicMock()
+
+        tx.run.side_effect = tx_run
+        return write_fn(tx)
+
+    session.execute_write.side_effect = fake_write
+    store = _make_store(driver)
+    store.execute_write(
+        "MATCH (n) WHERE n.engagement = $engagement DETACH DELETE n", {}, engagement="acme"
+    )
+    write_transaction = transactions[-1]
+    assert write_transaction[0].startswith("MATCH (n) WHERE n.engagement = $engagement")
+    assert write_transaction[-1].startswith("MERGE (v:KGRevision {scope: $engagement})")
+    assert "v.counter = v.counter + 1" in write_transaction[-1]
+
+
+def test_revision_is_one_counter_lookup_not_a_scan_of_the_graph() -> None:
+    store = _make_store()
+    store.execute_read = MagicMock(return_value=[{"seq": 7}])  # type: ignore[method-assign]
+    assert store.revision(engagement="acme") == "rev-acme-7"
+    statement = store.execute_read.call_args[0][0]
+    assert (
+        statement
+        == "MATCH (v:KGRevision {scope: $engagement}) RETURN coalesce(v.counter, 0) AS seq"
+    )
+    assert "-[r]->" not in statement
