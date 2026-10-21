@@ -114,4 +114,29 @@ describe('domain detail renderer', () => {
     expect(await screen.findByRole('region', { name: 'Sitemap' })).toBeTruthy()
     expect(JSON.parse(globalThis.localStorage.getItem(savedKey) ?? '{}').assetId).toBe('asset_o')
   });
+
+  it('shows the imported capture behind an observation and says so when an artifact was never imported', async () => {
+    fetchDetail.mockResolvedValueOnce({
+      engagementId: 'eng-1',
+      asset: host,
+      provenance: {
+        sources: [{ source: 'nmap', count: 2 }],
+        graphNodes: 2,
+        evidence: [
+          { source: 'nmap', sourceEpisodeId: 'scan-1', observedAt: null, artifactRef: 'recon/nmap.xml', capture: { id: 'cap-1', path: 'findings/capture-cap-1.xml', digest: 'ab'.repeat(32), classification: 'standard' } },
+          { source: 'nmap', sourceEpisodeId: 'scan-2', observedAt: null, artifactRef: 'recon/other.xml', capture: null },
+        ],
+      },
+      detail: { kind: 'services', items: [] },
+      nextCursor: null,
+      completeness,
+    })
+    const { AssetMapPage } = await import('./AssetMapPage')
+    render(<AssetMapPage />)
+    fireEvent.click(await screen.findByRole('button', { name: '10.0.0.1' }))
+    const captured = await screen.findByTestId('evidence-capture')
+    expect(captured.textContent).toContain('capture cap-1 (standard')
+    expect(captured.querySelector('a')?.getAttribute('href')).toBe('/api/engagements/eng-1/artifacts/captures/cap-1/content')
+    expect(screen.getByTestId('evidence-uncaptured').textContent).toContain('not imported as a capture')
+  });
 });

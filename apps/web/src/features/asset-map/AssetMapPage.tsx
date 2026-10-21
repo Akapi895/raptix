@@ -114,6 +114,7 @@ function AssetList({
 }
 
 function Inspector({
+  engagementId,
   detail,
   filter,
   onFilter,
@@ -121,6 +122,7 @@ function Inspector({
   overlay,
   overlayError,
 }: {
+  engagementId: string
   detail: AssetMapDetail
   filter: string
   onFilter: (value: string) => void
@@ -157,6 +159,22 @@ function Inspector({
             <li key={`${ref.source}-${index}`}>
               {ref.source} · episode {ref.sourceEpisodeId ?? 'unknown'}
               {ref.observedAt ? ` · ${ref.observedAt}` : ''}
+              {ref.artifactRef ? <span data-testid="evidence-artifact"> · artifact {ref.artifactRef}</span> : null}
+              {ref.capture ? (
+                <span data-testid="evidence-capture">
+                  {' · '}capture {ref.capture.id} ({ref.capture.classification}, digest {ref.capture.digest.slice(0, 12)}…)
+                  {ref.capture.classification === 'unclassified' ? (
+                    ' · classify to open'
+                  ) : (
+                    <>
+                      {' · '}
+                      <a href={`/api/engagements/${encodeURIComponent(engagementId)}/artifacts/captures/${encodeURIComponent(ref.capture.id)}/content`}>open</a>
+                    </>
+                  )}
+                </span>
+              ) : ref.artifactRef ? (
+                <span data-testid="evidence-uncaptured"> · not imported as a capture</span>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -636,7 +654,7 @@ export function AssetMapPage() {
       </main>
       <aside>
         {detail ? (
-          <Inspector detail={detail} filter={filter} onFilter={applyFilter} onLoadMore={loadMoreDetail} overlay={overlay} overlayError={overlayError} />
+          <Inspector engagementId={engagementId} detail={detail} filter={filter} onFilter={applyFilter} onLoadMore={loadMoreDetail} overlay={overlay} overlayError={overlayError} />
         ) : (
           <p className="text-sm text-slate-600">Select a host or origin to inspect it.</p>
         )}
