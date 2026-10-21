@@ -35,7 +35,7 @@ from raptix.knowledge.graph.asset_identity import (
     ASSET_BEARING_KINDS,
     canonical_key,
     identity_for,
-    redact_url,
+    redact_text,
 )
 from raptix_core.utils.engagement_scope import is_valid_engagement_label
 from raptix_core.utils.logging import get_logger
@@ -392,9 +392,7 @@ class KGStore:
                 )
             # Redacted before anything is written, so the key, label and edges agree.
             key = canonical_key(key)
-            label = str(obs.get("label") or key)
-            if label.startswith(("http://", "https://")):
-                label = redact_url(label)
+            label = redact_text(str(obs.get("label") or key))
             raw_props = obs.get("props")
             props = _flatten_props(dict(raw_props) if isinstance(raw_props, dict) else {})
             # Reserve provenance fields — operator-supplied values are
@@ -407,9 +405,12 @@ class KGStore:
                 "source_episode_id",
             ):
                 props.pop(reserved, None)
-            url_prop = props.get("url")
-            if isinstance(url_prop, str) and url_prop.startswith(("http://", "https://")):
-                props["url"] = redact_url(url_prop)
+            # Any web URL carried in a property is redacted, whatever the case of its scheme.
+            for prop_name, prop_value in list(props.items()):
+                if isinstance(prop_value, str):
+                    props[prop_name] = redact_text(prop_value)
+                elif isinstance(prop_value, list):
+                    props[prop_name] = [redact_text(item) if isinstance(item, str) else item for item in prop_value]
             # Asset-bearing nodes carry the identity ADR-0094 derives from their locator, whichever
             # writer produced them. An agent-supplied locator that is not valid stays unidentified.
             if kind in ASSET_BEARING_KINDS and "asset_id" not in props:

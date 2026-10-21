@@ -417,3 +417,23 @@ def test_record_observations_redacts_entrypoint_key_label_props_and_edges_togeth
     ]
     assert "abc" not in repr(captured) and "u:p" not in repr(captured)
     assert "unidentified" not in result
+
+
+def test_record_observations_redacts_an_uppercase_scheme_in_label_and_properties() -> None:
+    secret_url = "HTTPS://u:p@target.local/login?token=abc"
+    captured, _ = _capture_writes(
+        [
+            {
+                "kind": "Vulnerability",
+                "key": "vuln::uppercase-scheme",
+                "label": secret_url,
+                "props": {"source": "nuclei", "matched_at": secret_url, "hits": [secret_url, "plain"]},
+            }
+        ]
+    )
+    rows = _rows_by_key(captured)
+    node = rows["vuln::uppercase-scheme"]
+    assert node["label"] == "https://target.local/login?token=REDACTED"
+    assert node["props"]["matched_at"] == "https://target.local/login?token=REDACTED"
+    assert node["props"]["hits"] == ["https://target.local/login?token=REDACTED", "plain"]
+    assert "abc" not in repr(captured) and "u:p" not in repr(captured)
