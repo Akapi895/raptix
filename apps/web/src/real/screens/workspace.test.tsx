@@ -481,6 +481,24 @@ describe('RealWorkspace', () => {
     await waitFor(() => expect(calls.some((c) => c.url.endsWith('/threads/th-exec/hitl') && c.init?.method === 'PATCH' && c.body?.enabled === false)).toBe(true))
   })
 
+  it('lets the operator turn tool approval off before the first message, by creating the execution thread with that setting', async () => {
+    const calls = stubApi({ threads: [PLANNING_THREAD], runtimeCtx: RUNTIME_CTX(true) })
+    go('ai-operator', { id: 'eng-1' })
+    ui(<RealWorkspace />)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Execute' }))
+    const hitl = (await screen.findByRole('switch', { name: 'Tool approval (HITL)' })) as HTMLButtonElement
+    await waitFor(() => expect(hitl.disabled).toBe(false))
+    await user.click(hitl)
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/threads/th-exec/hitl') && c.init?.method === 'PATCH' && c.body?.enabled === false)).toBe(true))
+    const created = calls.findIndex((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST' && c.body?.kind === 'execution')
+    const saved = calls.findIndex((c) => c.url.endsWith('/threads/th-exec/hitl') && c.init?.method === 'PATCH')
+    expect(created).toBeGreaterThanOrEqual(0)
+    expect(created).toBeLessThan(saved)
+    expect(calls.slice(saved + 1).some((c) => c.url.endsWith('/threads/th-exec') && (c.init?.method ?? 'GET') === 'GET')).toBe(true)
+    expect(calls.filter((c) => c.url.endsWith('/api/engagements/eng-1/threads') && c.init?.method === 'POST').length).toBe(1)
+  })
+
   it('explains that dangerous methods still need approval while the switch is off', async () => {
     stubApi({ threads: [PLANNING_THREAD, EXEC_THREAD], snapshot: SNAPSHOT_NO_QUESTION, execBinding: { hitlEnabled: false }, runtimeCtx: RUNTIME_CTX(true) })
     go('ai-operator', { id: 'eng-1' })
