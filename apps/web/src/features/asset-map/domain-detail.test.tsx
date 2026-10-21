@@ -123,8 +123,8 @@ describe('domain detail renderer', () => {
         sources: [{ source: 'nmap', count: 2 }],
         graphNodes: 2,
         evidence: [
-          { source: 'nmap', sourceEpisodeId: 'scan-1', observedAt: null, artifactRef: 'recon/nmap.xml', capture: { id: 'cap-1', path: 'findings/capture-cap-1.xml', digest: 'ab'.repeat(32), classification: 'standard' } },
-          { source: 'nmap', sourceEpisodeId: 'scan-2', observedAt: null, artifactRef: 'recon/other.xml', capture: null },
+          { source: 'nmap', sourceEpisodeId: 'scan-1', observedAt: null, artifactRef: 'recon/nmap.xml', artifactDigest: 'ab'.repeat(32), capture: { id: 'cap-1', path: 'findings/capture-cap-1.xml', digest: 'ab'.repeat(32), classification: 'standard' } },
+          { source: 'nmap', sourceEpisodeId: 'scan-2', observedAt: null, artifactRef: 'recon/other.xml', artifactDigest: 'cd'.repeat(32), capture: null },
         ],
       },
       detail: { kind: 'services', items: [] },

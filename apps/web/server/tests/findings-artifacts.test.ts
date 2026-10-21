@@ -400,11 +400,37 @@ describe('workspace evidence import', () => {
 
       await writeFile(path.join(evidence, 'FIND-001_rce.txt'), 'changed\n', 'utf8');
       const changed = await h.artifacts.importWorkspaceEvidence('local', 'eng-1');
-      expect(changed.captures).toEqual([]);
-      expect(changed.skipped).toEqual([
-        { path: 'findings/evidence/FIND-001_rce.txt', reason: 'changed since it was imported; the imported copy is kept' },
-        { path: 'findings/evidence/FIND-002_dump.exe', reason: 'unsupported file type' },
-      ]);
+      expect(changed.captures).toHaveLength(1);
+      expect(changed.captures[0]!.id).not.toBe(first.captures[0]!.id);
+      expect(changed.captures[0]!.digest).not.toBe(first.captures[0]!.digest);
+      expect(changed.skipped).toEqual([{ path: 'findings/evidence/FIND-002_dump.exe', reason: 'unsupported file type' }]);
+      const listed = await h.artifacts.listCaptures('local', 'eng-1');
+      expect(listed.captures.filter((capture) => capture.producer === 'workspace:findings/evidence/FIND-001_rce.txt').map((capture) => capture.id).sort())
+        .toEqual([first.captures[0]!.id, changed.captures[0]!.id].sort());
+    });
+  });
+
+  it('imports XML and JSONL evidence as the bytes they were written with, and a download matches that version digest', async () => {
+    await withHarness(async (h) => {
+      const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
+      const evidence = path.join(h.workspaceRoot, h.slug, 'findings', 'evidence');
+      await mkdir(evidence, { recursive: true });
+      const nmap = '<?xml version="1.0"?>\n<nmaprun scanner="nmap"/>\n';
+      const crawl = '{"endpoint":"http://app.example.com:80/"}\n{"endpoint":"http://app.example.com:80/login"}\n';
+      await writeFile(path.join(evidence, 'nmap-juice.xml'), nmap, 'utf8');
+      await writeFile(path.join(evidence, 'crawl-juice.jsonl'), crawl, 'utf8');
+
+      const imported = await h.artifacts.importWorkspaceEvidence('local', 'eng-1');
+      expect(imported.skipped).toEqual([]);
+      const byName = new Map(imported.captures.map((capture) => [capture.filename, capture]));
+      expect(byName.get('nmap-juice.xml')).toMatchObject({ mediaType: 'application/xml', classification: 'unclassified', digest: sha256(nmap) });
+      expect(byName.get('crawl-juice.jsonl')).toMatchObject({ mediaType: 'application/x-ndjson', digest: sha256(crawl) });
+
+      const xml = byName.get('nmap-juice.xml')!;
+      await h.artifacts.classifyCapture('local', 'eng-1', xml.id, { classification: 'standard', expectedVersion: 1, reason: 'Lab scan output for the asset map.' });
+      const download = await h.artifacts.downloadCapture('local', 'eng-1', xml.id);
+      expect(download.bytes.toString('utf8')).toBe(nmap);
+      expect(sha256(download.bytes.toString('utf8'))).toBe(xml.digest);
     });
   });
 

@@ -135,14 +135,14 @@ export function fitPrefix<T>(items: T[], limit: number, wrap: (kept: T[]) => unk
 const KG_REVISION_STATEMENT = 'MATCH (v:KGRevision {scope: $engagement}) RETURN coalesce(v.counter, 0) AS seq';
 
 const CENTER_STATEMENT = [
-  'MATCH (c) WHERE c.engagement = $engagement AND c.asset_id = $assetId',
+  'MATCH (c:Host|Entrypoint) WHERE c.engagement = $engagement AND c.asset_id = $assetId',
   "RETURN elementId(c) AS id, labels(c) AS labels, coalesce(c.asset_canonical, c.label, c.hostname, c.ip, '') AS label",
   'ORDER BY elementId(c) LIMIT 20',
 ].join(' ');
 
 /** Every edge of every node sharing the asset identity, paged over a stable order. */
 const NEIGHBOR_STATEMENT = [
-  'MATCH (c) WHERE c.engagement = $engagement AND c.asset_id = $assetId',
+  'MATCH (c:Host|Entrypoint) WHERE c.engagement = $engagement AND c.asset_id = $assetId',
   'MATCH (c)-[r]-(m) WHERE m.engagement = $engagement AND r.engagement = $engagement',
   'WITH r, m, startNode(r) AS sn, endNode(r) AS en',
   'ORDER BY elementId(r)',
@@ -151,41 +151,87 @@ const NEIGHBOR_STATEMENT = [
   "elementId(m) AS mid, labels(m) AS mLabels, m.asset_id AS mAsset, coalesce(m.asset_canonical, m.label, m.hostname, m.ip, '') AS mLabel",
 ].join(' ');
 
-const PROVENANCE_STATEMENT = "MATCH (n) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, count(n) AS count ORDER BY source LIMIT 50";
-const EVIDENCE_STATEMENT = "MATCH (n) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, n.source_episode_id AS episode, n.lastupdated AS observed, n.source_artifact_ref AS artifact ORDER BY observed DESC LIMIT 20";
+const PROVENANCE_STATEMENT = "MATCH (n:Host|Entrypoint) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, count(n) AS count ORDER BY source LIMIT 50";
+const EVIDENCE_STATEMENT = "MATCH (n:Host|Entrypoint) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, n.source_episode_id AS episode, n.lastupdated AS observed, n.source_artifact_ref AS artifact, n.source_artifact_digest AS artifactDigest ORDER BY observed DESC LIMIT 20";
 
-const SERVICE_COUNT_STATEMENT = 'MATCH (h) WHERE h.engagement = $engagement AND h.asset_id = $assetId OPTIONAL MATCH (h)-[:HOSTS]->(s) WHERE s.engagement = $engagement RETURN count(s) AS count';
+const SERVICE_COUNT_STATEMENT = 'MATCH (h:Host) WHERE h.engagement = $engagement AND h.asset_id = $assetId OPTIONAL MATCH (h)-[:HOSTS]->(s) WHERE s.engagement = $engagement RETURN count(s) AS count';
 const SERVICE_PAGE_STATEMENT = [
-  'MATCH (h) WHERE h.engagement = $engagement AND h.asset_id = $assetId',
+  'MATCH (h:Host) WHERE h.engagement = $engagement AND h.asset_id = $assetId',
   'OPTIONAL MATCH (h)-[:HOSTS]->(s) WHERE s.engagement = $engagement',
   'RETURN elementId(s) AS id, s.port AS port, s.protocol AS protocol, s.service AS service, s.product AS product, s.version AS version, s.source AS source, s.source_episode_id AS episode',
   'ORDER BY s.port SKIP $skip LIMIT $limit',
 ].join(' ');
 
 const ENDPOINT_FILTER = "($filter = '' OR e.url CONTAINS $filter OR e.path CONTAINS $filter)";
-const ENDPOINT_COUNT_STATEMENT = `MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL AND ${ENDPOINT_FILTER} RETURN count(e) AS count`;
+const ENDPOINT_COUNT_STATEMENT = `MATCH (e:Endpoint) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL AND ${ENDPOINT_FILTER} RETURN count(e) AS count`;
 const ENDPOINT_PAGE_STATEMENT = [
-  `MATCH (e) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL AND ${ENDPOINT_FILTER}`,
+  `MATCH (e:Endpoint) WHERE e.engagement = $engagement AND e.origin_asset_id = $assetId AND e.method IS NOT NULL AND ${ENDPOINT_FILTER}`,
   'OPTIONAL MATCH (e)-[:HAS]->(p) WHERE p.engagement = $engagement AND p.name IS NOT NULL',
   'WITH e, collect(p.name) AS parameters',
   'RETURN elementId(e) AS id, e.method AS method, e.path AS path, e.url AS url, e.status_code AS status, e.source AS source, e.source_episode_id AS episode, parameters',
   'ORDER BY e.path, e.method SKIP $skip LIMIT $limit',
 ].join(' ');
 
+/** An http(s) URL with a non-empty authority: the grammar the origin vectors cover (userinfo, host, optional port). */
+const WEB_URL = /^(https?):\/\/(?:[^@/?#]*@)?(\[[^\]/?#]*\]|[^:/?#[\]@]+)(?::([^/?#]*))?(?=[/?#]|$)/i;
+const DNS_HOST = /^[a-z0-9_-]+(?:\.[a-z0-9_-]+)*$/;
+const IPV4_HOST = /^\d{1,3}(?:\.\d{1,3}){3}$/;
+const IPV6_HOST = /^\[[0-9a-f:.]+\]$/;
+const DEFAULT_PORT: Readonly<Record<string, number>> = { http: 80, https: 443 };
+
+/**
+ * Canonical web origin `scheme://host:port` of a web_url identifier, the key the runtime derives
+ * (asset_identity.web_origin_ref). Scheme and host are lowercased, a trailing dot is dropped, userinfo,
+ * path, query and fragment never take part, and the default port is made explicit. A spelling the WHATWG
+ * parser would rewrite (a non-canonical IPv6 or IPv4 literal) is refused, so that identifier stays unlinked.
+ * Shared vectors (fixtures/asset-map/origin-identity-vectors.json) keep this in step with Python.
+ */
+export function webOriginKey(identifier: string): string | null {
+  const value = identifier.trim();
+  const match = WEB_URL.exec(value);
+  if (match === null) return null;
+  const scheme = match[1]!.toLowerCase();
+  const written = match[2]!.toLowerCase().replace(/\.$/, '');
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.replace(/\.$/, '');
+  if (host !== written) return null;
+  const hostOk = DNS_HOST.test(host) || IPV6_HOST.test(host) || (IPV4_HOST.test(host) && host.split('.').every(octet => Number(octet) <= 255));
+  if (!hostOk) return null;
+  const portText = match[3] ?? '';
+  if (portText !== '' && !/^\d{1,5}$/.test(portText)) return null;
+  const port = portText === '' ? 0 : Number(portText);
+  if (port > 65535) return null;
+  return `${scheme}://${host}:${port || DEFAULT_PORT[scheme]}`;
+}
+
 const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 const DNS_NAME = /^[a-z0-9_-]+(?:\.[a-z0-9_-]+)*$/;
 
 /**
- * Catalog identity of a WebAsset that its owning record names as a host: an IPv4 address or a DNS name,
+ * Catalog identity of a WebAsset: a host names an IPv4 address or a DNS name, and a web_url names a web origin,
  * canonicalized the way the runtime canonicalizes them (ADR-0094). Other kinds and identifiers have no
  * catalog identity here, so findings on them stay unlinked rather than being matched by guesswork.
  */
 export function catalogIdForWebAsset(slug: string, item: { kind: string; identifier: string }): string | null {
+  if (item.kind === 'web_url') {
+    const key = webOriginKey(item.identifier);
+    return key === null ? null : assetIdFor(slug, 'web_origin', 'default', key);
+  }
   if (item.kind !== 'host') return null;
   const value = item.identifier.trim().replace(/\.$/, '').toLowerCase();
   if (IPV4.test(value)) return assetIdFor(slug, 'host', 'default', value);
   if (DNS_NAME.test(value)) return assetIdFor(slug, 'dns_name', 'default', value);
   return null;
+}
+
+/** A capture version: the artifact path it was imported from, and the digest of its bytes. */
+function versionKey(producer: string | null, digest: string): string {
+  return `${producer ?? ''}\n${digest}`;
 }
 
 export class AssetMapService {
@@ -313,11 +359,15 @@ export class AssetMapService {
     const row = await this.db.assetIdentity.findFirst({ where: { engagementId, id: assetId } });
     if (row === null) throw new AssetMapNotFoundError('asset not found in this engagement');
     const webAssets = await this.db.webAsset.findMany({ where: { engagementId }, select: { id: true, kind: true, identifier: true } });
-    const catalogOf = new Map<string, string>();
+    const candidates = new Map<string, string>();
     for (const item of webAssets) {
       const catalogId = catalogIdForWebAsset(slug, item);
-      if (catalogId !== null) catalogOf.set(item.id, catalogId);
+      if (catalogId !== null) candidates.set(item.id, catalogId);
     }
+    // A finding links only to an asset the catalog holds. An identity no asset has yet stays unlinked.
+    const held = candidates.size === 0 ? [] : await this.db.assetIdentity.findMany({ where: { engagementId, id: { in: [...new Set(candidates.values())] } }, select: { id: true } });
+    const heldIds = new Set(held.map(item => item.id));
+    const catalogOf = new Map([...candidates].filter(([, catalogId]) => heldIds.has(catalogId)));
     const linkedWebAssetIds = [...catalogOf].filter(([, catalogId]) => catalogId === assetId).map(([webAssetId]) => webAssetId);
     const mappedWebAssetIds = [...catalogOf.keys()];
     const linkedWhere = { engagementId, assetId: { in: linkedWebAssetIds } };
@@ -348,16 +398,18 @@ export class AssetMapService {
       sourceEpisodeId: stringOrNull(item[1]),
       observedAt: isoOrNull(item[2]),
       artifactRef: stringOrNull(item[3]),
+      artifactDigest: stringOrNull(item[4]),
     }));
     const producers = [...new Set(refs.flatMap(ref => (ref.artifactRef === null ? [] : [`workspace:${ref.artifactRef}`])))];
     const captures = producers.length === 0 ? [] : await this.db.retainedCapture.findMany({
       where: { engagementId, producer: { in: producers } },
       select: { id: true, path: true, digest: true, classification: true, producer: true },
     });
-    const byProducer = new Map(captures.map(capture => [capture.producer ?? '', capture]));
+    // One capture per imported version of a path. The observation links to the version whose bytes it was parsed from.
+    const byVersion = new Map(captures.map(capture => [versionKey(capture.producer, capture.digest), capture]));
     return refs.map(ref => {
-      const capture = ref.artifactRef === null ? undefined : byProducer.get(`workspace:${ref.artifactRef}`);
-      const linked: AssetMapEvidenceCapture | null = capture === undefined ? null : { id: capture.id, path: capture.path, digest: capture.digest, classification: capture.classification };
+      const version = ref.artifactRef === null || ref.artifactDigest === null ? undefined : byVersion.get(versionKey(`workspace:${ref.artifactRef}`, ref.artifactDigest));
+      const linked: AssetMapEvidenceCapture | null = version === undefined ? null : { id: version.id, path: version.path, digest: version.digest, classification: version.classification };
       return { ...ref, capture: linked };
     });
   }

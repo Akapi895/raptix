@@ -235,7 +235,7 @@ export function assetIdFor(workspaceSlug: string, kind: string, namespace: strin
 }
 
 const CATALOG_STATEMENT = [
-  'MATCH (n) WHERE n.engagement = $engagement AND n.asset_id IS NOT NULL',
+  'MATCH (n:Host|Entrypoint) WHERE n.engagement = $engagement AND n.asset_id IS NOT NULL',
   'RETURN n.asset_id AS id, n.asset_kind AS kind, n.asset_namespace AS namespace,',
   'n.asset_canonical AS canonical, n.asset_key_version AS version',
   'ORDER BY n.asset_id SKIP $skip LIMIT $limit',
