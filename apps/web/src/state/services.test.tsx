@@ -6,9 +6,9 @@ const { act, cleanup, fireEvent, render, screen } = await import('@testing-libra
 const { ServicesProvider, useServices } = await import('./services')
 const { useSessionStore } = await import('./session')
 const { createChatHandlers } = await import('../features/aichat/handlers')
-const { sendChat, resetDemo } = await import('../features/demo/runtime')
+const { sendChat, resetDemo } = await import('../demo/runtime')
 const { useState } = await import('react')
-const { hhmm } = await import('../domain/demo-clock')
+const { hhmm } = await import('../demo/display-clock')
 
 afterEach(() => { cleanup(); vi.clearAllTimers() })
 

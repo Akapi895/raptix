@@ -1,7 +1,7 @@
 /** Caches feature service projections between atomic authority publications. */
 import type { Db } from '../demo/seed';
 import { projectAccessible } from './policy'
-import type { ConsoleServices } from './service-factory'
+import type { ConsoleServices } from './console-services';
 import type { RequestContext } from './service'
 
 const caches = new WeakMap<ConsoleServices, { source: Db; views: Map<string, unknown> }>()

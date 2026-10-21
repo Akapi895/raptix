@@ -19,7 +19,7 @@ import type { Db } from '../../demo/seed';
 import { type Playbook } from '../../domain/entities'
 import { projectAccessible, projectLocked } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'
 
 /** Roles that may submit, amend and propose a library proposal (server: operator and above). */

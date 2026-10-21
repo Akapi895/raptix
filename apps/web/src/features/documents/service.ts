@@ -12,11 +12,11 @@ import { APR, planVer } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import { type Plan, type Project } from '../../domain/entities'
 import { projectAccessible } from '../../domain/policy'
-import { stamp } from '../../domain/demo-clock'
+import { stamp } from '../../demo/display-clock'
 import { projectView } from '../../domain/projection'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import { useServiceProjection } from '../../state/projection'
 
 export type DocOrigin = 'Applied scope' | 'Human-authored' | 'AI-generated'

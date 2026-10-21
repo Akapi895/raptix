@@ -4,7 +4,7 @@ import { useServices } from '../state/services'
 import { useDirty } from '../state/session'
 import { ROLE_LABEL } from '../domain/policy'
 import { recordAudit } from '../features/audit/service'
-import { signOut } from '../auth/persona'
+import { signOut } from '../demo/persona'
 import { USERS, TECHNIQUES } from '../domain/catalog';
 import { type Integration, type Policy, type Retention, type Role, type DetectState } from '../domain/entities'
 import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites, useRetention, useRetentionWrites } from '../features/settings/query'

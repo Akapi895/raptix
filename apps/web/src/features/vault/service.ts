@@ -7,9 +7,9 @@
  * plaintext server-side and never in any list.
  */
 import { can, ROLE_LABEL } from '../../domain/policy'
-import { stamp } from '../../domain/demo-clock'
+import { stamp } from '../../demo/display-clock'
 import type { Project, VaultSecret } from '../../domain/entities'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 /** List-safe metadata projection; never carries the demo plaintext. */

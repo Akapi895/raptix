@@ -11,7 +11,7 @@ import { mountServices } from '../../test/helpers'
 import { currentRoute, selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/c'
 import { seed } from '../../demo/seed';

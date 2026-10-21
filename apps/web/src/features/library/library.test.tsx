@@ -5,7 +5,7 @@
  * canonical body makes a proposal stale, and only an approved proposal exports.
  */
 import { describe, expect, it } from 'vitest'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 
 const ALEX: ActorRef = { id: 'Alex Morgan', role: 'manager' }

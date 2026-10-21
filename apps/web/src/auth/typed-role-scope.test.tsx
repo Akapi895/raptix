@@ -4,7 +4,7 @@ import { afterEach, expect, it } from 'vitest'
 import { ServicesProvider, useServices } from '../state/services'
 import { ConsoleProviders } from '../state/query'
 import { useQueryScope, type QueryScope } from '../state/keys'
-import type { ConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
 import { useAssetList } from '../features/assets/query'
 import { useAuthStore } from '../state/stores'
 

@@ -3,7 +3,7 @@ import { createElement, type ComponentType, type ReactNode } from 'react'
 import { ConsoleProviders } from '../state/query'
 import { ServicesProvider, useServices } from '../state/services'
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import type { ConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
 import { useAuthStore } from '../state/stores'
 
 // eslint-disable-next-line react-refresh/only-export-components -- test-only provider capture

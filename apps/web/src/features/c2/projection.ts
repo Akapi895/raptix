@@ -1,6 +1,6 @@
 /** Narrow C2 deadline, renewal and request-address reads over the owning service. */
 import type { Session } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { projectAccessible } from '../../domain/policy'
 import { projectView, scopedRows } from '../../domain/projection'

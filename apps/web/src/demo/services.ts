@@ -1,90 +1,47 @@
-/**
- * Service factory — the composition root for console services (ticket 04,
- * ADR-0067 — docs/adr/0067-web-console-service-domain-boundary.md).
- *
- * Creates the one database authority, the mock clock and the scheduler, and
- * hands handlers their context: actor, project and clock are explicit per
- * scope, so a persona/project switch never retargets an in-flight request.
- * Reads observe cancellation when their scope is superseded; mutations are
- * atomic commits through the shared bridge and publish a ChangeSet both the
- * legacy store and migrated consumers observe.
- *
- * The {@link ProjectService} below is the representative typed read/write
- * adapter later feature tickets copy: scope-checked reads, one atomic typed
- * write, ChangeSet publication with the factory clock instant.
- */
-import type { SeedVariant } from '../demo/seed';
-import type { Project } from './entities'
-import { projectAccessible } from './policy'
-import { createIdentityService, type IdentityService } from '../auth/identity'
-import { MockClock, Scheduler, formatDemoInstant } from './clock'
-import { createDatabaseAuthority, type DbAuthority } from './database'
-// Feature appends: every feature service is feature-local (src/features/*);
-// the factory only wires each one into a scope with the shared guard. Ticket
-// 70: non-critical feature handlers load their module on first call — the
-// typed call surface is unchanged (handlers already return promises), while
-// the off-page sweep authorities below stay statically wired.
-import type { OperationService } from '../features/operations/service'
-import type { FindingService } from '../features/findings'
-import type { ChatService } from '../features/aichat/service'
-import { createChatService } from '../features/aichat/service'
-import type { AiHistoryService } from '../features/aichat/history'
-import type { PlanService } from '../features/plans/service'
-import type { PlanBridgeService } from '../features/plans/bridge'
-import type { PlanCompareService } from '../features/plans/compare'
-import type { AgentService } from '../features/agents/service'
-import type { ReportService } from '../features/reports/service'
-import type { BranchService } from '../features/branches/service'
-import type { LibraryService } from '../features/library/service'
-import type { AnalysisService } from '../features/analysis/service'
-import type { SettingsService } from '../features/settings/service'
-import type { AssetService } from '../features/assets/service'
-import type { ScopeService } from '../features/scope/service'
-import type { AuditService } from '../features/audit/service'
-import type { TeamService } from '../features/team/service'
-import type { VaultService } from '../features/vault/service'
-import type { ClosureService } from '../features/closure/service'
-import type { PlanningService } from '../features/planning/service'
-import type { GovernanceService } from '../features/governance/service'
-import type { C2ProviderService } from '../features/c2/provider'
-import type { RuntimeOperationsService } from '../features/operations/runtime'
-import type { NoticeCenterService } from '../features/notices/center'
-import { createMockNoticeCenter } from '../features/notices/center-mock'
-import type { ObservedAnalysisService } from '../features/analysis/observed'
-import type { WorkerService } from '../features/workers/service'
-import type { NoticeService } from '../features/notices/service'
-import type { ResultsService } from '../features/results/service'
-import type { TraceService } from '../features/trace/service'
-import type { C2Service } from '../features/c2/service'
-// Ticket 46 append: the session-grant deadline lifecycle (15 s sweep + exact
-// per-grant deadline callbacks) is feature-local (src/features/c2/grants); the
-// factory registers it once so deadlines fire without any C2 screen mounted,
-// and the authority's 'reset' publication re-arms it against the fresh dataset.
-// It must load eagerly (off-page sweep invariant).
-import { createGrantLifecycle } from '../features/c2/grants'
-import type {
-  ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
-  ReadResult, RequestContext, ServiceResult,
-} from './service'
-import { unavailableService } from './unavailable'
-
-/** Fields the representative project write may change (ticket 04 exemplar). */
-export interface ProjectPatch {
-  pinned?: boolean
-  desc?: string
-}
-
-export interface ProjectService extends EntityReader<Project> {
-  /** Representative typed write: authorization + atomic commit + ChangeSet. */
-  update(ctx: RequestContext, id: string, patch: ProjectPatch): Promise<ServiceResult<Project>>
-}
+import type { Project } from '../domain/entities';
+import { projectAccessible } from '../domain/policy';
+import { createIdentityService } from '../auth/identity';
+import { MockClock, Scheduler, formatDemoInstant } from '../domain/clock';
+import { createDatabaseAuthority, type DbAuthority } from './authority';
+import type { OperationService } from '../features/operations/service';
+import type { FindingService } from '../features/findings/index';
+import { type ChatService, createChatService } from '../features/aichat/service';
+import type { AiHistoryService } from '../features/aichat/history';
+import type { PlanService } from '../features/plans/service';
+import type { AgentService } from '../features/agents/service';
+import type { ReportService } from '../features/reports/service';
+import type { BranchService } from '../features/branches/service';
+import type { LibraryService } from '../features/library/service';
+import type { AnalysisService } from '../features/analysis/service';
+import type { SettingsService } from '../features/settings/service';
+import type { AssetService } from '../features/assets/service';
+import type { ScopeService } from '../features/scope/service';
+import type { AuditService } from '../features/audit/service';
+import type { TeamService } from '../features/team/service';
+import type { VaultService } from '../features/vault/service';
+import type { ClosureService } from '../features/closure/service';
+import type { PlanningService } from '../features/planning/service';
+import type { GovernanceService } from '../features/governance/service';
+import type { C2ProviderService } from '../features/c2/provider';
+import type { RuntimeOperationsService } from '../features/operations/runtime';
+import { createMockNoticeCenter } from '../features/notices/center-mock';
+import type { ObservedAnalysisService } from '../features/analysis/observed';
+import type { WorkerService } from '../features/workers/service';
+import type { NoticeService } from '../features/notices/service';
+import type { ResultsService } from '../features/results/service';
+import type { TraceService } from '../features/trace/service';
+import type { C2Service } from '../features/c2/service';
+import { createGrantLifecycle } from '../features/c2/grants';
+import type { ActorRef, Instant, ListResult, PageRequest, ReadResult, RequestContext, ServiceResult } from '../domain/service';
+import { unavailableService } from '../domain/unavailable';
+import type { ProjectService, ConsoleServices, ScopeGuard } from '../domain/console-services';
 
 /** Scope check: the shared permissions interface is the one membership rule (ticket 06). */
-function canAccess(db: ReturnType<DbAuthority['snapshot']>, actor: ActorRef, projectId: string): boolean {
+export function canAccess(db: ReturnType<DbAuthority['snapshot']>, actor: ActorRef, projectId: string): boolean {
   return projectAccessible(db.projects.find((x) => x.id === projectId), actor)
 }
 
-function readProject(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestContext, id: string): ReadResult<Project> {
+export function readProject(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestContext, id: string): ReadResult<Project> {
   const p = db.projects.find((x) => x.id === id)
   // Out of scope reads are not-found, never a leaked existence signal.
   if (!p || !canAccess(db, ctx.actor, id)) {
@@ -93,7 +50,7 @@ function readProject(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestContex
   return { ok: true, data: p }
 }
 
-function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestContext, page?: PageRequest): ListResult<Project> {
+export function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestContext, page?: PageRequest): ListResult<Project> {
   const accessible = db.projects.filter((p) => canAccess(db, ctx.actor, p.id))
   const items = ctx.projectId ? accessible.filter((p) => p.id === ctx.projectId) : accessible
   const req = page ?? { page: 1, pageSize: Math.max(1, items.length) }
@@ -102,97 +59,11 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
 }
 
 /**
- * Per-feature service surface that real-mode adapters implement
- * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
- * `authority`, `clock` and `schedule` is deliberately absent.
- */
-export type FeatureServices = Pick<ConsoleServices, 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider' | 'runtimeOperations' | 'noticeCenter'>
-
-export interface ConsoleServices {
-  identity: IdentityService
-  authority: DbAuthority
-  clock: MockClock
-  /** Schedules a callback at an absolute clock instant; disposed on reset. */
-  schedule(at: Instant, fn: () => void): () => void
-  /** Recurring sweep every `intervalMs` of clock time; returns cancel. */
-  sweep(intervalMs: number, fn: () => void): () => void
-  /** Bridge subscription: every commit — legacy or service — publishes here. */
-  subscribe(onChange: (cs: ChangeSet) => void): () => void
-  /** Typed handlers with actor/project/clock injected for one scope. */
-  forScope(actor: ActorRef, projectId: string): ProjectService
-  /** Typed operations list/read handlers (ticket 24 — feature-local implementation). */
-  operations(actor: ActorRef, projectId: string): OperationService
-  /** Typed findings inventory list/detail read handlers (ticket 31 — feature-local implementation). */
-  findings(actor: ActorRef, projectId: string): FindingService
-  /** Typed AI chat + plan proposal handlers (ticket 38 — feature-local implementation). */
-  chat(actor: ActorRef, projectId: string): ChatService
-  /** Typed conversation-history/provenance reads (ticket 42 — feature-local implementation). */
-  aiHistory(actor: ActorRef, projectId: string): AiHistoryService
-  /** Typed plan workbench + approval/expiry handlers (ticket 39 — feature-local implementation). */
-  plans(actor: ActorRef, projectId: string): PlanService
-  /** Typed plan→operation bridge (ticket 40 — feature-local implementation). */
-  plansBridge(actor: ActorRef, projectId: string): PlanBridgeService
-  /** Typed plan revision-compare reads (ticket 42 — feature-local implementation). */
-  plansCompare(actor: ActorRef, projectId: string): PlanCompareService
-  /** Typed agent fleet list/detail reads + allocation/group writes (tickets 48–49 — feature-local implementation). */
-  agents(actor: ActorRef, projectId: string): AgentService
-  /** Typed report catalog reads + draft creation (ticket 34 — feature-local implementation). */
-  reports(actor: ActorRef, projectId: string): ReportService
-  /** Typed branch group reads + branch action writes (ticket 43 — feature-local implementation). */
-  branches(actor: ActorRef, projectId: string): BranchService
-  /** Typed tradecraft library reads + revision-review writes (tickets 52–53 — feature-local implementation). */
-  library(actor: ActorRef, projectId: string): LibraryService
-  /** Typed ATT&CK coverage + detection heatmap read handlers (ticket 54 — feature-local implementation). */
-  analysis(actor: ActorRef, projectId: string): AnalysisService
-  /** Typed organization settings handlers (ticket 56 — feature-local implementation). */
-  settings(actor: ActorRef, projectId: string): SettingsService
-  /** Typed asset catalog/detail + scope-classification reads (ticket 50 — feature-local implementation). */
-  assets(actor: ActorRef, projectId: string): AssetService
-  /** Scope and ROE revisions (plan P09 Scope slice): the mock adapter maps approval records, the real adapter reads the API. */
-  scope(actor: ActorRef, projectId: string): ScopeService
-  /** Engagement audit read (plan P09 Vault/Audit slice). Real mode only; the mock Activity & Audit tab does not read this port. */
-  audit(actor: ActorRef, projectId: string): AuditService
-  /** Project membership (plan P09 Team slice): the mock adapter maps its project members, the real adapter reads the API. */
-  team(actor: ActorRef, projectId: string): TeamService
-  /** Credentials vault (plan P09 Vault slice): the mock adapter maps its vault records, the real adapter reads the API. */
-  vault(actor: ActorRef, projectId: string): VaultService
-  /** Project closure (plan P09 Closure slice): the mock adapter maps its close approvals, the real adapter reads the closure API. */
-  closure(actor: ActorRef, projectId: string): ClosureService
-  /** Planning handoff documents (plan P09 Planning slice). Real mode only: the mock console keeps its own document workspace. */
-  planning(actor: ActorRef, projectId: string): PlanningService
-  /** Business plan, preflight, binding, schedules and stops (plan P09 Governance slice). Real mode only: the mock console keeps its own plan review. */
-  governance(actor: ActorRef, projectId: string): GovernanceService
-  /** C2 provider sessions, grants and command ledger (plan P12 C2 slice). Real mode only: the mock console keeps its own session model. */
-  c2Provider(actor: ActorRef, projectId: string): C2ProviderService
-  /** Execution threads, runs and the runtime timeline (plan P12 Operations slice). Real mode only: the mock console keeps its own lifecycle. */
-  runtimeOperations(actor: ActorRef, projectId: string): RuntimeOperationsService
-  /** Observed analysis (plan P09 Analysis slice): the mock adapter maps its executed steps, the real adapter reads the knowledge graph. */
-  observedAnalysis(actor: ActorRef, projectId: string): ObservedAnalysisService
-  /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
-  workers(actor: ActorRef, projectId: string): WorkerService
-  /** Typed notice center handlers (ticket 59 — feature-local implementation). */
-  notices(actor: ActorRef, projectId: string): NoticeService
-  /** The header notification center (plan P09 Notices slice): the mock adapter presents its notices, the real adapter reads the API. */
-  noticeCenter(actor: ActorRef, projectId: string): NoticeCenterService
-  /** Typed operation results + execution graph read (ticket 30 — feature-local implementation). */
-  results(actor: ActorRef, projectId: string): ResultsService
-  /** Typed tool-event trace reads with boundary-derived facets (ticket 41 — feature-local implementation). */
-  trace(actor: ActorRef, projectId: string): TraceService
-  /** Typed C2 overview/session/request/audit/channel reads (ticket 45 — feature-local implementation). */
-  c2(actor: ActorRef, projectId: string): C2Service
-  /** Cancels in-flight reads for a scope (persona/project switch). */
-  cancelScope(actor: ActorRef, projectId: string): void
-  /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
-  reset(variant?: SeedVariant): void
-  dispose(): void
-}
-
-/**
  * A handler object whose module loads on first method call (ticket 70). The
  * proxy memoizes the loaded instance per binding; every method awaits the
  * load and delegates, which matches the already-async handler signatures.
  */
-function lazyService<S extends object>(load: () => Promise<S>): S {
+export function lazyService<S extends object>(load: () => Promise<S>): S {
   let instance: Promise<S> | null = null
   const ensure = () => (instance ??= load())
   return new Proxy({} as S, {
@@ -204,16 +75,13 @@ function lazyService<S extends object>(load: () => Promise<S>): S {
   })
 }
 
-/** The factory's superseded-scope read guard (see createConsoleServices). */
-export type ScopeGuard = <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>
-
 /**
  * Lazy wiring for guard-taking services (ticket 70): the superseded-scope
  * guard is created eagerly at facade-call time so cancelScope supersedes a
  * read even while the service module is still loading; only the module load
  * is deferred.
  */
-function lazyGuarded<S extends object>(
+export function lazyGuarded<S extends object>(
   guard: ScopeGuard,
   load: (guard: ScopeGuard) => Promise<S>,
 ): S {

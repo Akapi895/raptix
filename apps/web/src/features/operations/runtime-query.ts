@@ -5,7 +5,7 @@
  * thread's runs and the timeline.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { actorRef } from '../../auth/persona'
+import { actorRef } from '../../demo/persona'
 import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'

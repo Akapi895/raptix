@@ -9,7 +9,7 @@
  * an approval in either UI updates the inbox without reload.
  */
 import { useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../auth/persona'
+import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { tasksForScope } from './service'

@@ -20,7 +20,7 @@
  */
 import { projectAccessible } from '../../domain/policy'
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { AiWorker, BranchState, WorkerState } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 

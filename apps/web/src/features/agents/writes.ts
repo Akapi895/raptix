@@ -21,8 +21,8 @@
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import type { Db } from '../../demo/seed';
 import { formatDemoInstant } from '../../domain/clock'
-import { stamp } from '../../domain/demo-clock'
-import type { DbAuthority } from '../../domain/database'
+import { stamp } from '../../demo/display-clock'
+import type { DbAuthority } from '../../demo/authority'
 import type { Agent, Group, Project } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 

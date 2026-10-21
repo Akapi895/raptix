@@ -11,7 +11,7 @@
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../auth/persona'
+import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { projectDetailForScope } from './service'

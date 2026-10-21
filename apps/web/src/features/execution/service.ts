@@ -1,5 +1,5 @@
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView } from '../../domain/projection'
 import { formatDemoInstant } from '../../domain/clock'

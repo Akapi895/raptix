@@ -20,12 +20,12 @@ import { useEffect, useMemo, type ReactNode } from 'react'
 import { notifyManager, QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { useServicesOrNull } from './services'
 import { readActor } from '../auth/identity'
-import type { ConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
 import type { ActorRef, ChangeSet, EntityKind } from '../domain/service'
 import { createConsoleQueryClient, scopeOf } from './keys'
 import { useAuthStore, useProjectStore } from './stores'
 
-// Observer delivery must not require another demo-clock tick after a commit.
+// Observer delivery must not require another display-clock tick after a commit.
 notifyManager.setScheduler(queueMicrotask)
 
 function ChangeSetBridge({ client, services }: { client: QueryClient; services: ConsoleServices }) {

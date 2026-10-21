@@ -8,7 +8,7 @@
  * panels or screens never grant authorization. Consumers:
  * - `src/store.tsx` forwards the legacy `can`/`canAccessProject`/`readOnly`
  *   helpers here so baseline screens keep their exact semantics;
- * - `src/domain/service-factory.ts` scope-checks typed reads/writes with the
+ * - `src/demo/services.ts` scope-checks typed reads/writes with the
  *   same membership rule (replacing its interim copy);
  * - `src/auth/membership.ts` is the service-backed membership view the
  *   interface is checked against.

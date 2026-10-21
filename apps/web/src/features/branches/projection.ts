@@ -13,7 +13,7 @@ import type { Db } from '../../demo/seed';
 import type { BranchState } from '../../domain/entities'
 import type { BranchGroup } from '../../domain/entities'
 import type { RequestContext } from '../../domain/service'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import { projectView } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
 

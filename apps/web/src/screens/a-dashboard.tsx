@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FolderKanban, Inbox, KeyRound, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
 import { APR } from '../domain/catalog';
 import type { Severity } from '../domain/entities'
-import { actorRef } from '../auth/persona'
+import { actorRef } from '../demo/persona'
 import { useAuthStore, useProjectStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, PageSkeleton, Progress, STATUS, Status, Timeline, cx } from '../ui/index'

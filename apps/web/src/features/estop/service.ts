@@ -19,7 +19,7 @@
 import { can } from '../../domain/policy'
 import { DEMO_TZ, formatDemoInstant } from '../../domain/clock'
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import type { StopState } from '../../domain/entities'
 

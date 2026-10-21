@@ -21,7 +21,7 @@ import { APR } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'
 import type { Asset } from '../../domain/entities'
 import { reviseScopeTransaction, type ScopeAssetInput } from '../approvals/service'

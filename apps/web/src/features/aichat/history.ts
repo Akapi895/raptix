@@ -18,7 +18,7 @@ import { planVer, toolFacets } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import type { Facets, Plan } from '../../domain/entities'
 import type { AiMode, Audit, Conversation } from '../../domain/entities'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { PageRequest, RequestContext, ServiceResult } from '../../domain/service'
 import { maskSensitive } from '../trace/service'
 

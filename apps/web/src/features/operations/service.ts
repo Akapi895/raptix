@@ -22,7 +22,7 @@ import { can, projectAccessible, projectLocked, readOnlyContext } from '../../do
 import { planVer } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import { DEMO_TZ, parseDemoInstant, formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Agent, Asset, Operation, Plan, Playbook, Project, Step } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 // Ticket 40: the resume re-check consults the plans feature's approval-validity

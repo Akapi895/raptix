@@ -14,7 +14,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { createElement, useState } from 'react'
 import { act, cleanup, screen, waitFor } from '@testing-library/react'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
+import type { ConsoleServices } from '../../domain/console-services';
 import type { Clock, RequestContext } from '../../domain/service'
 import { go, selectProject } from '../../router/navigate'
 import { routes } from '../../screens/h'

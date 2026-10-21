@@ -1,6 +1,6 @@
 /** Scoped fleet form and recovery relationships complement the paged agent Query reads. */
 import type { Agent, Group, Operation, Plan, Approval } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'

@@ -12,9 +12,9 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, RequestContext } from '../../domain/service'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import { useDb, useMe } from '../../state/console'
 import { useSessionStore } from '../../state/session'
 import { APR } from '../../domain/catalog';

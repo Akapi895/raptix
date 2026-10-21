@@ -14,7 +14,7 @@
  */
 import type { Db } from '../../demo/seed';
 import { projectAccessible } from '../../domain/policy'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import type { DashboardAggregate } from '../../domain/dashboard'
 

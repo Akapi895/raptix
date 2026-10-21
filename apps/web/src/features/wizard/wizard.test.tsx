@@ -11,7 +11,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import type { ProjectDraft } from './draft'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { useSessionStore } from '../../state/session'
 import { useProjectStore, useToastStore } from '../../state/stores'

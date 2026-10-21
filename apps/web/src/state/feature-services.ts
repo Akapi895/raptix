@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
 import { useContext } from 'react'
-import type { FeatureServices } from '../domain/service-factory'
+import type { FeatureServices } from '../domain/console-services';
 import { DATA_MODE } from './mode'
 import { RealFeatureServicesCtx } from '../real/service-adapter/provider'
 import { useServices } from './services'

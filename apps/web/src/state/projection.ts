@@ -1,6 +1,6 @@
 /** Subscribes to narrow typed feature service reads without a fetch gap. */
 import { useCallback, useSyncExternalStore } from 'react'
-import type { ConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
 import type { RequestContext } from '../domain/service'
 import { useQueryScope } from './keys'
 import { useServices } from './services'

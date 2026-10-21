@@ -10,7 +10,7 @@
  * surface, which both panels construct over the canonical authorities).
  */
 import { useSyncExternalStore } from 'react'
-import { signIn } from '../../auth/persona'
+import { signIn } from '../../demo/persona'
 import { currentRoute, go, navRawRoute, selectProject } from '../../router/navigate'
 import { isKnownPage, OUTSIDE_SHELL } from '../../router/history'
 import { useAuthStore, useProjectStore, useToastStore, type Toast } from '../../state/stores'

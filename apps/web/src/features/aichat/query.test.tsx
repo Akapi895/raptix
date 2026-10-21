@@ -17,7 +17,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
 import { selectProject } from '../../router/navigate'
-import { resetDemo, sendChat, stopChat } from '../demo/runtime'
+import { resetDemo, sendChat, stopChat } from '../../demo/runtime'
 import { requestPlanReviewTransaction } from '../plans/service'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../demo/seed';

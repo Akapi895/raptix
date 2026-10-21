@@ -3,7 +3,7 @@ import { act, cleanup } from '@testing-library/react'
 
 vi.useFakeTimers()
 const { mountServices } = await import('../helpers')
-const { emergencyStop, retryStop, resolveStop } = await import('../../features/demo/runtime')
+const { emergencyStop, retryStop, resolveStop } = await import('../../demo/runtime')
 const { useSessionStore } = await import('../../state/session')
 
 afterEach(() => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatDemoInstant, MockClock } from '../../domain/clock'
-import { createDatabaseAuthority } from '../../domain/database'
+import { createDatabaseAuthority } from '../../demo/authority'
 import { recordOriginalView } from './service'
 
 describe('mock original-evidence view', () => {

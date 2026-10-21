@@ -4,7 +4,7 @@
  * value once and audits it, store and revoke publish their audit rows.
  */
 import { can, ROLE_LABEL } from '../../domain/policy'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import { createVaultSecret, listVaultSecrets, revealVaultSecret, revokeVaultSecret, type VaultRead, type VaultRevealed, type VaultService } from './service'
 

@@ -14,7 +14,7 @@ import type { Project } from '../domain/entities'
 import type {
   ActorRef, ListResult, ReadResult, RequestContext, ServiceFailure, ServiceResult,
 } from '../domain/service'
-import type { ConsoleServices } from '../domain/service-factory'
+import type { ConsoleServices } from '../domain/console-services';
 
 /** Query-facing error carrying the typed service failure into the error state. */
 export class ServiceReadError extends Error {

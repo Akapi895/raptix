@@ -1,7 +1,7 @@
 /** Owns audit records for simulated UI actions and exports. */
 import { ROLE_LABEL } from '../../domain/policy'
-import { stamp } from '../../domain/demo-clock'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { stamp } from '../../demo/display-clock'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export interface AuditInput { action: string; obj: string; result: string; reason: string }

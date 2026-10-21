@@ -1,5 +1,5 @@
 import { createContext, useMemo, type ReactElement, type ReactNode } from 'react'
-import type { FeatureServices } from '../../domain/service-factory'
+import type { FeatureServices } from '../../domain/console-services';
 import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { createRealFeatureServices } from './index'
 

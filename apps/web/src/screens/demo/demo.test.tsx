@@ -32,7 +32,7 @@ const { go, resetNavStores } = await import('../../router/navigate')
 const { setActiveRouter } = await import('../../router/active')
 const { RouteHost, RouteErrorBoundary } = await import('../../router/host')
 const { mountServices } = await import('../../test/helpers')
-const { loseAgent } = await import('../../features/demo/runtime')
+const { loseAgent } = await import('../../demo/runtime')
 const { launchGuide, stopGuide, jumpSeam } = await import('./launch')
 
 beforeEach(() => {

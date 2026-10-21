@@ -2,7 +2,7 @@
 /** Finding form and attachment choices are service-scoped relationships. */
 import type { Asset, Evidence, Finding, Operation, Project, Report } from '../../domain/entities'
 import { projectAccessible } from '../../domain/policy'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'

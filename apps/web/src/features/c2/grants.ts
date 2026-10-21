@@ -17,7 +17,7 @@
 import { can as policyCan, projectAccessible } from '../../domain/policy'
 import { DEMO_TZ, formatDemoInstant, parseDemoInstant, type Scheduler } from '../../domain/clock'
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */

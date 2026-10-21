@@ -1,6 +1,6 @@
 /** Narrow template, detection and session-security summaries for organization panels. */
 import type { Integration, Template, DetectState } from '../../domain/entities'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectAccessible } from '../../domain/policy'
 import { projectView, scopedRows } from '../../domain/projection'

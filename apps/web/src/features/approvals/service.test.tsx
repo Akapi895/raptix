@@ -17,7 +17,7 @@ import { mountServices } from '../../test/helpers'
 import { useDb, useMe } from '../../state/console'
 import { useSessionStore } from '../../state/session'
 import { computePreflightChecks } from '../operations/preflight'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { parseDemoInstant } from '../../domain/clock'
 import { TeamTab } from '../../screens/b-detail2'

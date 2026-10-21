@@ -21,20 +21,20 @@
  * sequence the provider's `resetDemo` ran (loading and the stop-outcome
  * switch are left alone).
  */
-import { USERS } from '../../domain/catalog';
-import type { SeedVariant } from '../../demo/seed';
-import { useAuthStore, useProjectStore, useToastStore, useUiStore } from '../../state/stores'
-import { useSessionStore, type LogLine } from '../../state/session'
-import { hhmm, stamp } from '../../domain/demo-clock'
-import { ROLE_LABEL } from '../../domain/policy'
-import { createChatHandlers } from '../aichat/handlers'
+import { USERS } from '../domain/catalog';
+import type { SeedVariant } from './seed';
+import { useAuthStore, useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore, type LogLine } from '../state/session'
+import { hhmm, stamp } from './display-clock'
+import { ROLE_LABEL } from '../domain/policy'
+import { createChatHandlers } from '../features/aichat/handlers'
 import {
   acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,
   requestEmergencyStopTransaction, resolveStopTransaction, unknownEmergencyStopTransaction,
-} from '../estop/service'
-import type { ActorRef } from '../../domain/service'
-import type { ConsoleServices } from '../../domain/service-factory'
-import type { Db } from '../../demo/seed';
+} from '../features/estop/service'
+import type { ActorRef } from '../domain/service'
+import type { ConsoleServices } from '../domain/console-services';
+import type { Db } from './seed';
 
 /* ───────────── Runtime registration ───────────── */
 

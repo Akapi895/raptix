@@ -8,8 +8,8 @@
  * publishes one ChangeSet with the affected entity identities, so Query
  * invalidation and legacy subscriptions observe the same publication.
  */
-import { seed, type Db, type SeedVariant } from '../demo/seed';
-import type { ChangeSet, Clock, EntityKind, EntityRef } from './service'
+import { seed, type Db, type SeedVariant } from './seed';
+import type { ChangeSet, Clock, EntityKind, EntityRef } from '../domain/service'
 
 type Row = { id: string; projectId?: string }
 

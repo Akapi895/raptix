@@ -19,10 +19,10 @@ import { ServicesProvider } from '../state/services'
 import { useAuthStore, useUiStore } from '../state/stores'
 import { useCan, useDb, useReadOnly, useScoped } from '../state/console'
 import { selectProject } from '../router/navigate'
-import { createConsoleServices } from '../domain/service-factory'
+import { createConsoleServices } from '../demo/services';
 import type { CanAction } from '../domain/permissions'
 import { accessibleProjectIds, listProjectMemberships } from './membership'
-import { actorRef, signIn, signOut, switchPersona } from './persona'
+import { actorRef, signIn, signOut, switchPersona } from '../demo/persona'
 import { can, canAccessProject, projectAccessible, readOnlyContext, ROLE_ACTIONS } from '../domain/policy'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

@@ -11,7 +11,7 @@
  */
 import type { AiMode, Conversation } from '../../domain/entities'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { ConversationListRead } from './service'
 
 export interface ChatHandlers {

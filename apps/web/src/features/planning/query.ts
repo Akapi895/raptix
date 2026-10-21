@@ -4,7 +4,7 @@
  * page and the conversation read, so it invalidates that detail as well.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { actorRef } from '../../auth/persona'
+import { actorRef } from '../../demo/persona'
 import { projectKeys } from '../../real/queries'
 import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'

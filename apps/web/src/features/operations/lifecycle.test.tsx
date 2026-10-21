@@ -32,7 +32,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../demo/services';
+import type { ConsoleServices } from '../../domain/console-services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { useToastStore } from '../../state/stores'
 import { selectProject, go } from '../../router/navigate'

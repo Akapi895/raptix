@@ -8,7 +8,7 @@
  */
 import { APR } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { Approval, Operation, Project } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import { decideApprovalTransaction, submitApprovalTransaction } from '../approvals/service'

@@ -1,6 +1,6 @@
 /** Scoped navigation badges and search result labels, without entity database access. */
 import { can, projectAccessible } from '../../domain/policy'
-import type { ConsoleServices } from '../../domain/service-factory'
+import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { sessionPermOf } from '../c2/session-perm'

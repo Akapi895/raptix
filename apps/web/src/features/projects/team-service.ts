@@ -1,9 +1,9 @@
 /** Owns atomic project membership edits and their audit publication. */
 import { can, ROLE_LABEL } from '../../domain/policy'
 import type { Project } from '../../domain/entities'
-import type { DbAuthority } from '../../domain/database'
+import type { DbAuthority } from '../../demo/authority'
 import type { RequestContext, ServiceResult } from '../../domain/service'
-import { stamp } from '../../domain/demo-clock'
+import { stamp } from '../../demo/display-clock'
 
 export function setProjectMembers(authority: DbAuthority, ctx: RequestContext, members: Project['members'], action: string, obj: string): ServiceResult<Project> {
   const p = authority.snapshot().projects.find((x) => x.id === ctx.projectId)
