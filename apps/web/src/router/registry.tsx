@@ -24,7 +24,7 @@ const slices = {
   g: () => import('../screens/g'),
   h: () => import('../screens/h'),
   i: () => import('../screens/infrastructure'),
-  s: () => import('../screens/demo/pages'),
+  s: () => import('../demo/pages'),
 }
 type Slice = keyof typeof slices | 'a'
 

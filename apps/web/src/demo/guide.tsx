@@ -2,8 +2,8 @@
  * Guided walkthrough panel (ticket 61c).
  *
  * The `DemoGuide` shell panel: renders the active step from the walkthrough
- * state authority (src/screens/demo/launch.ts) and the corpus
- * (src/screens/demo/guides.ts). Identity/auth flow through the shared
+ * state authority (src/demo/launch.ts) and the corpus
+ * (src/demo/guides.ts). Identity/auth flow through the shared
  * ticket-05 auth authority, toasts through the toast authority, the projected
  * route comes from the router location; navigation and persona/project writes
  * go through the canonical seams the walkthrough seam composes (jump →
@@ -14,9 +14,9 @@
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router'
 import { ChevronDown, ChevronLeft, ChevronRight, Compass, X } from 'lucide-react'
-import { parseLocation } from '../../router/history'
-import { loseAgent, restoreAgent } from '../../demo/runtime'
-import { useAuthStore, useToastStore } from '../../state/stores'
+import { parseLocation } from '../router/history'
+import { loseAgent, restoreAgent } from './runtime'
+import { useAuthStore, useToastStore } from '../state/stores'
 import { GUIDES, type DemoKit, type Dest } from './guides'
 import { jump, jumpSeam, setGs, stepArgs, stopGuide, useGs } from './launch'
 

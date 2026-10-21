@@ -13,7 +13,7 @@ const strict = process.argv.includes('--strict');
 const asJson = process.argv.includes('--json');
 
 // Paths below are relative to src, without extension.
-const DEMO_PATTERNS = [/^demo(\/|$)/, /^state\/services$/, /^screens\/demo(\/|$)/, /^features\/[^/]+\/mock$/];
+const DEMO_PATTERNS = [/^demo(\/|$)/, /^state\/services$/, /^features\/[^/]+\/mock$/];
 const MOCK_PLUMBING = new Set(['useServices', 'useServicesOrNull', 'isRealMode', 'DATA_MODE', 'MockClock']);
 
 const stripExt = (rel) => rel.replace(/\.(ts|tsx)$/, '');
