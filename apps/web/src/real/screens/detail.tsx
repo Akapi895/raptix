@@ -7,7 +7,7 @@
  */
 import { AiRunControls } from '../../features/operations/ai-run-controls'
 import { isAssetMapEnabled } from '../../features/asset-map/flag'
-import { Suspense, useEffect, useMemo, type ReactElement } from 'react'
+import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
@@ -44,6 +44,8 @@ const TABS = REAL_PROJECT_NAV.flatMap((g) => g.items.map(({ to, label }) => ({ i
 const sectionTitle = (tab: string) => TABS.find((t) => t.id === tab)?.label ?? 'Overview'
 
 const ProjectReports = routeComponent('reports')
+/** The Asset Map inside the project it belongs to, so the project sidebar and its selection stay in place. */
+const ProjectAssetMap = lazy(() => import('../../features/asset-map/AssetMapPage').then((m) => ({ default: m.AssetMapPage })))
 
 export function RealProjectDetail(): ReactElement {
   const route = useRoute()
@@ -95,7 +97,7 @@ export function RealProjectDetail(): ReactElement {
         meta={<Status kind="project" value={data.lifecycleStatus} size="sm" />}
       />}
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}>{ProjectReports ? <ProjectReports /> : null}</Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : <NotYetIntegrated label={sectionTitle(tab)} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}>{ProjectReports ? <ProjectReports /> : null}</Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
       </div>
     </>
   )
