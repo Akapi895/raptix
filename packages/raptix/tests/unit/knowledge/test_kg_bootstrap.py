@@ -34,6 +34,9 @@ class FakeStore:
         if "MigrationLog" in cypher and params:
             self.logged.add(params["name"])
 
+    def execute_migration_statement(self, cypher: str, *, engagement: str) -> None:
+        self.writes.append(cypher)
+
 
 @pytest.fixture
 def migrations(tmp_path: Path) -> Path:

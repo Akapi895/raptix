@@ -4,7 +4,8 @@ Reads ``V*.cypher`` files from ``knowledge/graph/migrations/``, executes
 the pending ones in filename order, and records applied names in a
 ``:MigrationLog`` node so reruns no-op. Each Cypher file is split on
 ``;`` boundaries (after line-comment stripping) and run statement by
-statement via :meth:`KGStore.execute_write`.
+statement via :meth:`KGStore.execute_migration_statement`, which does not
+advance the engagement revision counter.
 
 The runner uses the reserved engagement label ``"schema"`` because the
 ``MigrationLog`` and schema DDL are out-of-band of any real engagement.
@@ -110,7 +111,7 @@ def apply_migrations(
             sha[:8],
         )
         for stmt in statements:
-            store.execute_write(stmt, {}, engagement=_MIGRATION_ENGAGEMENT)
+            store.execute_migration_statement(stmt, engagement=_MIGRATION_ENGAGEMENT)
         store.execute_write(
             (
                 "MERGE (m:MigrationLog {name: $name}) "

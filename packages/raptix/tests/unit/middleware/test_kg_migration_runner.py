@@ -119,8 +119,15 @@ def _stub_store(
         calls.append((cypher, dict(params or {}), engagement))
         return []
 
+    def fake_execute_migration_statement(
+        cypher: str, *, engagement: str
+    ) -> list[dict[str, Any]]:
+        calls.append((cypher, {}, engagement))
+        return []
+
     store.execute_read = fake_execute_read  # type: ignore[assignment]
     store.execute_write = fake_execute_write  # type: ignore[assignment]
+    store.execute_migration_statement = fake_execute_migration_statement  # type: ignore[assignment]
     return store, calls
 
 

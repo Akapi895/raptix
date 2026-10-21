@@ -474,6 +474,30 @@ def test_execute_write_advances_the_engagement_revision_in_the_same_transaction(
     assert "v.counter = v.counter + 1" in write_transaction[-1]
 
 
+def test_a_migration_statement_runs_alone_and_advances_no_revision_counter() -> None:
+    driver = _fake_driver()
+    session = driver.session.return_value.__enter__.return_value
+    transactions: list[list[str]] = []
+
+    def fake_write(write_fn):  # type: ignore[no-untyped-def]
+        tx = MagicMock()
+        statements: list[str] = []
+        transactions.append(statements)
+
+        def tx_run(query, **params):  # type: ignore[no-untyped-def]
+            statements.append(query)
+            return MagicMock()
+
+        tx.run.side_effect = tx_run
+        return write_fn(tx)
+
+    session.execute_write.side_effect = fake_write
+    store = _make_store(driver)
+    index = "CREATE INDEX asset_host_identity IF NOT EXISTS FOR (n:Host) ON (n.engagement, n.asset_id)"
+    store.execute_migration_statement(index, engagement="schema")
+    assert transactions == [[index]]
+
+
 def test_revision_is_one_counter_lookup_not_a_scan_of_the_graph() -> None:
     store = _make_store()
     store.execute_read = MagicMock(return_value=[{"seq": 7}])  # type: ignore[method-assign]
