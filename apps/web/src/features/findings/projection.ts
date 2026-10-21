@@ -6,9 +6,9 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
-import { DATA_MODE } from '../../real/mode'
+import { persistentFindings } from './presentation-context'
 import { usePolicyProjects } from '../../state/console'
-import { useReportList } from '../reports/query'
+import { useReportList } from '../reports'
 
 export interface FindingFormRead { findings: Finding[]; projects: Project[]; assets: Asset[]; operations: Operation[]; evidence: Evidence[] }
 
@@ -30,18 +30,18 @@ export function readFindingEvidence(services: ConsoleServices, ctx: RequestConte
 }
 
 export function useFindingFormRead(id?: string): FindingFormRead {
-  if (DATA_MODE === 'real') return { findings: [], projects: usePolicyProjects(), assets: [], operations: [], evidence: [] }
+  if (persistentFindings) return { findings: [], projects: usePolicyProjects(), assets: [], operations: [], evidence: [] }
   return useServiceProjection((services, ctx) => readFindingForm(services, ctx, id))
 }
 export function useFindingReportChoices(): { reports: Report[] } {
   // Real mode reads the reports through the same list the report screens use, so inclusion and the add-to-report choices agree with them.
-  if (DATA_MODE === 'real') {
+  if (persistentFindings) {
     const list = useReportList({})
     return { reports: (list.data?.items ?? []).map((item) => item.report) }
   }
   return useServiceProjection(readFindingReports, 'all')
 }
 export function useFindingEvidenceChoices(projectId: string): { evidence: Evidence[] } {
-  if (DATA_MODE === 'real') return { evidence: [] }
+  if (persistentFindings) return { evidence: [] }
   return useServiceProjection(readFindingEvidence, projectId)
 }

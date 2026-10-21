@@ -1,5 +1,5 @@
 import type { FeatureServices } from '../../domain/service-factory'
-import type { FindingService } from '../../features/findings/service'
+import type { FindingService } from '../../features/findings'
 import type { AssetService } from '../../features/assets/service'
 import type { ReportService } from '../../features/reports/service'
 import type { LibraryService } from '../../features/library/service'

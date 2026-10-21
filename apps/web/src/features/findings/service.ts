@@ -22,13 +22,12 @@
  * simulated capture integrity, with masking and display gates decided at
  * the handler so they hold no matter which screen linked the capture.
  */
-import { projectAccessible, projectLocked, can as policyCan } from '../../auth/policy'
+import { projectAccessible, projectLocked, can as policyCan, ROLE_LABEL } from '../../auth/policy'
 import type { CanAction } from '../../domain/permissions'
 import { formatDemoInstant } from '../../domain/clock'
-import { stamp } from '../../domain/demo-clock'
-import { TECHNIQUES, type Db } from '../../data'
+import { TECHNIQUES, type Db, type FindingRow, type SuggestionDispositionState } from '../../data'
 import type { DbAuthority } from '../../domain/database'
-import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { ActorRef, Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Evidence, Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
 import type { CaptureIntegrity, EvidenceReference } from '../../domain/evidence'
 import type { FindingActivityKind, FindingActivityPage, FindingReferenceOptions, FindingSuggestionDisposition } from '@raptix/web-contracts'
@@ -51,8 +50,7 @@ export interface FindingListQuery {
   /** Linked operation id. */
   op?: string
   sort?: FindingSort
-  /** Dismissed AI suggestions; excluded from the 'ai' category until restored. */
-  dismissed?: string[]
+  /** Include the acting user's dismissed AI suggestions. They stay out of the 'ai' category until restored. */
   showDismissed?: boolean
   /** 1-based page; out-of-range values clamp to the valid range. */
   page?: number
@@ -152,6 +150,12 @@ export interface FindingDetailRead {
   }
 }
 
+/** The verified original bytes of a retained capture a reproduction names; `text` is null when they are not UTF-8 text. */
+export interface RetainedArtifact { captureId: string; filename: string; bytes: Uint8Array; text: string | null }
+
+/** A retained capture a reproduction package can link. */
+export interface RetainedCaptureOption { captureId: string; filename: string | null; mediaType: string; digest: string; sizeBytes: number; classification: string; canReadOriginal: boolean }
+
 export interface FindingService {
   list(ctx: RequestContext, query?: FindingListQuery): Promise<ServiceResult<FindingListRead>>
   get(ctx: RequestContext, id: string): Promise<ServiceResult<FindingDetailRead>>
@@ -161,7 +165,10 @@ export interface FindingService {
   transition(ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string, expectedVersion?: number): Promise<ServiceResult<Finding>>
   referenceOptions(ctx: RequestContext): Promise<ServiceResult<FindingReferenceOptions>>
   loadActivity(ctx: RequestContext, id: string, kind: FindingActivityKind, cursor: string, version: number): Promise<ServiceResult<FindingActivityPage>>
-  setSuggestionDisposition(ctx: RequestContext, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }): Promise<ServiceResult<FindingSuggestionDisposition>>
+  /** The mock keys the suggestion by its finding id; the real server keys it by producerRef and ignores the id. */
+  setSuggestionDisposition(ctx: RequestContext, findingId: string, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }): Promise<ServiceResult<FindingSuggestionDisposition>>
+  /** Review-log entry for opening an original capture. Mock only: the real adapter keeps none, as before. */
+  recordOriginalView(ctx: RequestContext, evidence: { ref: string; projectId: string }): Promise<ServiceResult<void>>
   /** Appends a persisted comment against the version the operator read. */
   addComment(ctx: RequestContext, id: string, text: string, expectedVersion: number, requestId: string): Promise<ServiceResult<Finding>>
   /** Imports an AI suggestion as a DRAFT (invariant 5 — the AI never publishes a finding). */
@@ -170,6 +177,10 @@ export interface FindingService {
   attachEvidence(ctx: RequestContext, findingId: string, evidenceId: string): Promise<ServiceResult<Finding>>
   classifyCapture(ctx: RequestContext, captureId: string, classification: 'standard' | 'sensitive', expectedVersion: number, reason: string): Promise<ServiceResult<EvidenceView>>
   downloadEvidence(ctx: RequestContext, evidenceId: string): Promise<ServiceResult<EvidenceDownload>>
+  /** Reads a reproduction's retained capture and verifies its original bytes against the recorded digest before any copy or download. */
+  readArtifact(ctx: RequestContext, artifact: import('@raptix/web-contracts').FindingReproductionArtifact): Promise<ServiceResult<RetainedArtifact>>
+  /** Retained captures of the project that a reproduction package can link. */
+  reproductionCaptures(ctx: RequestContext): Promise<ServiceResult<RetainedCaptureOption[]>>
   /** Simulated evidence upload that records and links the capture in one commit. */
   uploadEvidence(ctx: RequestContext, input: EvidenceUploadInput): Promise<ServiceResult<Evidence>>
   /** Imports the evidence files the agent wrote in the workspace as unclassified captures (ADR-0087). */
@@ -187,7 +198,7 @@ const CATEGORIES: readonly (readonly [Exclude<FindingCategory, 'all'>, readonly 
   ['confirmed', ['confirmed']], ['review', ['review']], ['ai', ['ai_suggested']],
   ['drafts', ['draft', 'returned']], ['remediation', ['remediation', 'retest', 'resolved']],
 ]
-const SEVS: readonly Severity[] = ['critical', 'high', 'medium', 'low', 'info']
+export const SEVS: readonly Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const SEV_RANK: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
 const PAGE_SIZE = 10
 
@@ -212,6 +223,22 @@ function compareFindings(a: Finding, b: Finding, sort: FindingSort): number {
   if (sort === 'id') return a.id.localeCompare(b.id)
   if (sort === 'created') return ts(b.date) - ts(a.date)
   return ts(b.updated) - ts(a.updated)
+}
+
+/** The acting user's own disposition of a stored finding; another user's dismissal never hides it. */
+function dispositionOf(f: FindingRow, actor: ActorRef): SuggestionDispositionState | undefined {
+  return f.suggestionDispositions?.[actor.id]
+}
+
+function isDismissedFor(f: FindingRow, actor: ActorRef): boolean {
+  return dispositionOf(f, actor)?.dismissed === true
+}
+
+/** The stored finding as the acting user reads it: the record without the per-actor map, plus that user's own disposition. */
+function presentFinding(f: FindingRow, actor: ActorRef): Finding {
+  const { suggestionDispositions: all, ...finding } = f
+  const own = all?.[actor.id]
+  return own ? { ...finding, suggestionDisposition: { dismissed: own.dismissed, reason: own.reason, version: own.version } } : finding
 }
 
 /**
@@ -243,27 +270,26 @@ export function listFindings(db: Db, ctx: RequestContext, query: FindingListQuer
     (!query.asset || f.asset === query.asset) &&
     (!query.op || f.op === query.op) &&
     (!q || (f.id + ' ' + f.title).toLowerCase().includes(q)))
-  const dismissed = new Set(query.dismissed || [])
   const categories: FindingCategory[] = ['all', 'confirmed', 'review', 'ai', 'drafts', 'remediation']
-  const counts = Object.fromEntries(categories.map((c) => [c, core.filter((f) => (c === 'all' || matchesStatus(f, c)) && (c !== 'ai' || query.showDismissed || !dismissed.has(f.id))).length])) as Record<FindingCategory, number>
+  const counts = Object.fromEntries(categories.map((c) => [c, core.filter((f) => (c === 'all' || matchesStatus(f, c)) && (c !== 'ai' || query.showDismissed || !isDismissedFor(f, ctx.actor))).length])) as Record<FindingCategory, number>
   // AI suggestions are proposals: they never enter the severity breakdown or workflow KPIs.
   const verified = core.filter((f) => f.status !== 'ai_suggested')
   const severity = Object.fromEntries(SEVS.map((s) => [s, verified.filter((f) => f.severity === s).length])) as Record<Severity, number>
   const rows = core
-    .filter((f) => (!query.severity || f.severity === query.severity) && matchesStatus(f, query.status || '') && (query.status !== 'ai' || query.showDismissed || !dismissed.has(f.id)))
+    .filter((f) => (!query.severity || f.severity === query.severity) && matchesStatus(f, query.status || '') && (query.status !== 'ai' || query.showDismissed || !isDismissedFor(f, ctx.actor)))
     .sort((a, b) => compareFindings(a, b, sort))
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
   const page = Math.min(Math.max(1, query.page ?? 1), pages)
   const items: FindingListItem[] = rows
     .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-    .map((finding) => ({ finding, projectClient: db.projects.find((p) => p.id === finding.projectId)?.client }))
+    .map((row) => ({ finding: presentFinding(row, ctx.actor), projectClient: db.projects.find((p) => p.id === row.projectId)?.client }))
   return {
     ok: true,
     data: {
       items, page, pageSize: PAGE_SIZE, total: rows.length, counts, severity,
       awaitingReview: verified.filter((f) => f.status === 'review').length,
       resolved: verified.filter((f) => f.status === 'resolved').length,
-      dismissedCount: query.dismissed?.length ?? 0,
+      dismissedCount: base.filter((f) => isDismissedFor(f, ctx.actor)).length,
       owners: [...new Set(base.map((f) => f.owner))].sort(),
       assets: [...new Set(base.map((f) => f.asset))],
       ops: [...new Set(base.map((f) => f.op).filter(Boolean))],
@@ -311,7 +337,7 @@ export function getFinding(db: Db, ctx: RequestContext, id: string): ServiceResu
   return {
     ok: true,
     data: {
-      finding: f,
+      finding: presentFinding(f, ctx.actor),
       evidence,
       project: { id: project.id, name: project.name, client: project.client },
       assetId: asset?.id,
@@ -497,6 +523,8 @@ export interface FindingSaveInput {
   owner: string
   kind?: string
   stepId?: string
+  /** Reproduction package: omit to keep the recorded one, `null` to remove it, an object to set it. */
+  reproduction?: import('@raptix/web-contracts').FindingReproductionInput | null
   /** Submit for review instead of keeping the finding at its current stage. */
   submit?: boolean
 }
@@ -591,7 +619,13 @@ function evidenceScopeFailure(db: Db, ctx: RequestContext, project: Project, ref
 /** Handler-side re-check of the form's inline validation (defense in depth).
  *  Drafts may stay sparse — only a usable title is required; the full field
  *  set and the evidence requirement are enforced when submitting for review. */
+/** Demo packages hold the operator's text only: demo data has no retained capture to link. */
+function demoReproduction(input: import('@raptix/web-contracts').FindingReproductionInput): import('@raptix/web-contracts').FindingReproduction {
+  return { prerequisites: input.prerequisites, inputs: input.inputs, steps: input.steps, expectedObservation: input.expectedObservation, limitations: input.limitations, artifact: null, verification: 'not_recorded' }
+}
+
 function saveValidationFailure(db: Db, input: FindingSaveInput, projectId: string, submit: boolean): ServiceFailure | undefined {
+  if (input.reproduction?.artifact) return { kind: 'validation', message: 'Demo data has no retained captures to link. Link a capture in a real engagement.' }
   if (input.title.trim().length < 5) return { kind: 'validation', message: 'Enter a finding title (at least 5 characters).' }
   if (!submit) return undefined
   if (!input.asset) return { kind: 'validation', message: 'Select the affected asset.' }
@@ -631,6 +665,7 @@ export function saveFinding(authority: DbAuthority, clock: Clock, ctx: RequestCo
         comments: input.severityReason?.trim() ? [{ by: ctx.actor.id, at, text: `Severity rationale (${input.severity}): ${input.severityReason.trim()}` }] : [],
         history: [{ at, by: ctx.actor.id, text: 'Draft created' }, ...(input.submit ? [{ at, by: ctx.actor.id, text: 'Submitted for review' }] : [])],
         retests: [],
+        ...(input.reproduction ? { reproduction: demoReproduction(input.reproduction) } : {}),
       })
       input.evidence.forEach((ref) => { const rec = d.evidence.find((x) => x.id === ref); if (rec) rec.findingId = newId })
       d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: input.submit ? 'Created finding and submitted for review' : 'Created draft finding', obj: newId, projectId: project.id, result: 'Success', reason: '' })
@@ -658,6 +693,7 @@ export function saveFinding(authority: DbAuthority, clock: Clock, ctx: RequestCo
       title: input.title.trim(), severity: input.severity, desc: input.desc, impact: input.impact, rec: input.rec,
       severityRationale: input.severityReason?.trim() || '', scopeNote: input.scopeNote || '', references: input.references ?? finding.references,
       asset: input.asset, technique: input.technique || '', owner: input.owner, op: input.op || '', evidence: [...input.evidence], updated: at,
+      ...(input.reproduction === undefined ? {} : { reproduction: input.reproduction === null ? undefined : demoReproduction(input.reproduction) }),
       version: (f.version ?? 1) + 1,
     })
     f.history.push({ at, by: ctx.actor.id, text: 'Content updated' })
@@ -831,16 +867,47 @@ export function recordFindingRetest(authority: DbAuthority, clock: Clock, ctx: R
 }
 
 /**
- * Ticket 67 wave 6: the legacy `A.addFindingComment` entry, verbatim — one
- * raw comment append (no history entry, no audit row, no `updated` bump),
- * so the detail screen's composer keeps its exact behavior while the store
- * retires. The actor id is the comment author, matching the legacy entry.
+ * Mock suggestion disposition, with the server's policy. Each acting user has
+ * their own state on the finding, and no comment is shared. A change needs the
+ * create gate, a dismissal needs a reason, and a stale expectedVersion is a
+ * conflict. A repeated state is a replay that writes nothing. Each change writes
+ * one audit row stamped by the injected clock.
  */
-export function addFindingCommentTransaction(authority: DbAuthority, ctx: RequestContext, id: string, text: string): ServiceResult<Finding> {
+export function setFindingSuggestionDisposition(authority: DbAuthority, clock: Clock, ctx: RequestContext, findingId: string, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }): ServiceResult<FindingSuggestionDisposition> {
+  const found = writableFinding(authority.snapshot(), ctx, findingId)
+  if (!found.ok) return found
+  const { finding, project } = found
+  const denied = roleDenied(ctx, project, ['createFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot dismiss or restore AI suggestions.`)
+  if (denied) return { ok: false, failure: denied }
+  if (!Number.isSafeInteger(input.expectedVersion) || input.expectedVersion < 0) return { ok: false, failure: { kind: 'validation', message: 'expectedVersion is required (0 for an unseen suggestion).' } }
+  const reason = input.reason.trim()
+  if (input.dismissed && (reason === '' || reason.length > 4000)) return { ok: false, failure: { kind: 'validation', message: 'Dismissal requires a reason (1-4000 characters).' } }
+  const stored = dispositionOf(finding, ctx.actor)
+  const storedReason = input.dismissed ? reason : null
+  if (stored && stored.dismissed === input.dismissed && stored.reason === storedReason) return { ok: true, data: { producerRef: input.producerRef, dismissed: stored.dismissed, reason: stored.reason, version: stored.version } }
+  const current = stored?.version ?? 0
+  if (input.expectedVersion !== current) return { ok: false, failure: { kind: 'conflict', message: 'The suggestion disposition changed. Reload and retry.' } }
+  const at = formatDemoInstant(clock.now())
+  const version = current + 1
   authority.commit(ctx.corr, (d) => {
-    d.findings.find((x) => x.id === id)!.comments.push({ by: ctx.actor.id, at: stamp(), text })
+    const row = d.findings.find((x) => x.id === findingId)!
+    row.suggestionDispositions = { ...row.suggestionDispositions, [ctx.actor.id]: { dismissed: input.dismissed, reason: storedReason, version } }
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], projectId: finding.projectId, action: input.dismissed ? 'Dismissed AI suggestion' : 'Restored AI suggestion', obj: findingId, result: 'Success', reason: storedReason ?? '' })
   })
-  return { ok: true, data: authority.snapshot().findings.find((x) => x.id === id)! }
+  return { ok: true, data: { producerRef: input.producerRef, dismissed: input.dismissed, reason: storedReason, version } }
+}
+
+/** Review-log entry for opening an original capture, stamped by the injected clock. */
+export function recordOriginalView(authority: DbAuthority, clock: Clock, ctx: RequestContext, evidence: { ref: string; projectId: string }): ServiceResult<void> {
+  const detail = getEvidence(authority.snapshot(), ctx, evidence.ref)
+  if (!detail.ok) return detail
+  if (detail.data.evidence.projectId !== evidence.projectId) return { ok: false, failure: { kind: 'not-found', message: 'Evidence is not part of this project.' } }
+  if (!detail.data.canViewOriginal) return { ok: false, failure: { kind: 'forbidden', message: 'Your role cannot view the original evidence.' } }
+  const at = formatDemoInstant(clock.now())
+  authority.commit(ctx.corr, (d) => {
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], projectId: evidence.projectId, action: 'Viewed original evidence', obj: evidence.ref, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: undefined }
 }
 
 export function addFindingComment(
@@ -905,12 +972,15 @@ export function createFindingService(
       if (version > (detail.data.finding.version ?? 1)) return { ok: false, failure: { kind: 'conflict', message: 'The finding version moved forward; reload its activity.' } }
       return { ok: true, data: { engagementId: detail.data.finding.projectId, findingId: id, kind, version, items: [], nextCursor: null } }
     },
-    setSuggestionDisposition: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'Mock suggestion dismissal remains session-local.' } }),
+    setSuggestionDisposition: (ctx, findingId, input) => Promise.resolve(setFindingSuggestionDisposition(authority, clock, ctx, findingId, input)),
+    recordOriginalView: (ctx, evidence) => Promise.resolve(recordOriginalView(authority, clock, ctx, evidence)),
     addComment: (ctx, id, text, expectedVersion, requestId) => Promise.resolve(addFindingComment(authority, clock, ctx, id, text, expectedVersion, requestId)),
     importSuggestion: (ctx, id) => Promise.resolve(transitionFinding(authority, clock, ctx, id, 'draft')),
     attachEvidence: (ctx, findingId, evidenceId) => Promise.resolve(attachFindingEvidence(authority, clock, ctx, findingId, evidenceId)),
     classifyCapture: (ctx, captureId, classification, expectedVersion, reason) => Promise.resolve(classifyFindingEvidence(authority, clock, ctx, captureId, classification, expectedVersion, reason)),
     downloadEvidence: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'The mock evidence store does not contain original capture bytes.' } }),
+    readArtifact: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'Demo data has no retained capture bytes to read.' } }),
+    reproductionCaptures: async () => ({ ok: true, data: [] }),
     uploadEvidence: (ctx, input) => Promise.resolve(uploadFindingEvidence(authority, clock, ctx, input)),
     importWorkspaceEvidence: async () => ({ ok: false, failure: { kind: 'unavailable', message: 'The mock evidence store has no workspace files to import.' } }),
     recordRetest: (ctx, id, input) => Promise.resolve(recordFindingRetest(authority, clock, ctx, id, input)),

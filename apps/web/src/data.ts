@@ -73,6 +73,12 @@ const TOOLS = ['host-info-collector', 'account-enumerator', 'group-enumerator', 
 
 export type SeedVariant = 'default' | 'e2e01'
 
+/** One actor's suggestion disposition of a finding: the server keeps it per actor, and so does the mock. */
+export interface SuggestionDispositionState { dismissed: boolean; reason: string | null; version: number }
+
+/** A stored finding. `suggestionDispositions` is keyed by actor name; reads project only the acting user's entry. */
+export type FindingRow = Finding & { suggestionDispositions?: Record<string, SuggestionDispositionState> }
+
 export function seed(variant: SeedVariant = 'default') {
   const projects: Project[] = [
     { id: 'RT-2026-014', name: 'Internal Red Team Q4', client: 'Northwind Bank (Demo)', owner: 'Alex Morgan', type: 'Red Team', status: 'active', start: 'Oct 1, 2026', end: 'Nov 15, 2026', tz: 'UTC+07:00', desc: 'Simulated insider-threat engagement against the Northwind Bank lab environment.', pinned: true, roeStatus: 'approved', roeVersion: 'ROE-014-v2', emergency: 'Robin Vale — +1 (555) 010-0014', ...roeBase,
@@ -176,7 +182,7 @@ export function seed(variant: SeedVariant = 'default') {
     { id: 'VS-014-02', projectId: 'RT-2026-014', kind: 'password', label: 'Lab service account', demoPlaintext: 'demo-lab-password', revealCount: 0, createdAt: D('Oct 8', '11:20 AM'), createdBy: 'Taylor Chen' },
     { id: 'VS-015-01', projectId: 'RT-2026-015', kind: 'api-key', label: 'Fabrikam scanner key', demoPlaintext: 'demo-scanner-key-9c1d', revealCount: 1, lastRevealedAt: D('Oct 10', '2:40 PM'), createdAt: D('Oct 5', '9:00 AM'), createdBy: 'Sam Patel' },
   ]
-  const findings: Finding[] = [
+  const findings: FindingRow[] = [
     { id: 'FD-011', projectId: 'RT-2026-014', title: 'Excessive account privileges (simulated)', severity: 'high', status: 'confirmed', asset: 'win-dc-01', op: 'OP-014', technique: 'T1078', owner: 'Taylor Chen', date: D('Oct 13', '10:15 AM'), updated: D('Oct 13', '10:20 AM'),
       desc: 'A demo account in the lab holds more privileges than its business role requires.', impact: 'Allows an internal user to reach resources outside their job scope (simulated).', rec: 'Apply least privilege and review group membership on a recurring schedule.',
       evidence: ['EV-014-02'], comments: [], history: [{ at: D('Oct 13', '10:15 AM'), by: 'Taylor Chen', text: 'Draft created' }, { at: D('Oct 13', '10:20 AM'), by: 'Taylor Chen', text: 'Submitted for review' }, { at: D('Oct 13', '10:35 AM'), by: 'Pat Kim', text: 'Confirmed' }], retests: [] },

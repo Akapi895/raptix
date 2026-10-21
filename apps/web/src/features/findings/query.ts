@@ -20,7 +20,7 @@ import type { Finding } from '../../domain/entities'
 import type {
   EvidenceDetailRead, EvidenceListQuery, EvidenceListRead, EvidenceUploadInput,
   EvidenceDownload, FindingActivityKind, FindingActivityPage, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions,
-  FindingSaveInput, FindingTransitionTarget, RetestInput,
+  FindingSaveInput, FindingTransitionTarget, RetainedArtifact, RetainedCaptureOption, RetestInput,
 } from './service'
 
 /** Feature-local key namespaces: ['finding', scope, 'list', query] / ['finding', scope, id]. */
@@ -76,6 +76,22 @@ export function useFindingDetail(id?: string) {
       return res.data
     },
     enabled: !!services && !!id,
+  })
+}
+
+/** Retained captures a reproduction package can link, read through the same service boundary as the finding. */
+export function useReproductionCaptures() {
+  const services = useFeatureServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: consoleKeys.view('finding', scope, 'reproduction-captures'),
+    queryFn: async (): Promise<RetainedCaptureOption[]> => {
+      const actor = actorRef(scope.actor, scope.role)
+      const result = await services.findings(actor, scope.project).reproductionCaptures({ actor, projectId: scope.project, corr: 'reproduction-captures' })
+      if (!result.ok) throw new FindingReadError(result.failure)
+      return result.data
+    },
+    enabled: !!services && !!scope.project && scope.project !== 'all',
   })
 }
 
@@ -165,7 +181,8 @@ export function useFindingWrites() {
       transition: (id: string, to: FindingTransitionTarget, note?: string, expectedVersion?: number) =>
         svc().transition(ctx('finding-transition'), id, to, note, expectedVersion),
       loadActivity: (id: string, kind: FindingActivityKind, cursor: string, version: number): Promise<ServiceResult<FindingActivityPage>> => svc().loadActivity(ctx('finding-activity'), id, kind, cursor, version),
-      setSuggestionDisposition: (id: string, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }) => svc().setSuggestionDisposition(ctx('suggestion-disposition'), input),
+      setSuggestionDisposition: (id: string, input: { producerRef: string; dismissed: boolean; reason: string; expectedVersion: number }) => svc().setSuggestionDisposition(ctx('suggestion-disposition'), id, input),
+      recordOriginalView: (evidence: { ref: string; projectId: string }) => svc().recordOriginalView(ctx('evidence-view'), evidence),
       addComment: (id: string, text: string, expectedVersion: number, requestId: string) => svc().addComment(ctx('finding-comment'), id, text, expectedVersion, requestId),
       importSuggestion: (id: string) => svc().importSuggestion(ctx('finding-import'), id),
       attachEvidence: (findingId: string, evidenceId: string) =>
@@ -174,6 +191,8 @@ export function useFindingWrites() {
         svc().classifyCapture(ctx('capture-classification'), captureId, classification, expectedVersion, reason),
       downloadEvidence: (evidenceId: string): Promise<ServiceResult<EvidenceDownload>> =>
         svc().downloadEvidence(ctx('evidence-download'), evidenceId),
+      readArtifact: (artifact: import('@raptix/web-contracts').FindingReproductionArtifact): Promise<ServiceResult<RetainedArtifact>> =>
+        svc().readArtifact(ctx('artifact-read'), artifact),
       uploadEvidence: (input: EvidenceUploadInput) => svc().uploadEvidence(ctx('finding-upload'), input),
       importWorkspaceEvidence: () => svc().importWorkspaceEvidence(ctx('evidence-import')),
       recordRetest: (id: string, input: RetestInput) => svc().recordRetest(ctx('finding-retest'), id, input),

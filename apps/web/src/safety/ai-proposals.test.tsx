@@ -8,7 +8,7 @@ const { sendChat } = await import('../features/demo/runtime')
 const { requestPlanReviewTransaction, decidePlanTransaction } = await import('../features/plans/service')
 const { createOperationFromPlanTransaction } = await import('../features/plans/bridge')
 const { importFindingSuggestion, transitionFinding, uploadFindingEvidence } = await import('../features/findings/service')
-const { findingRoutes } = await import('../screens/e-findings')
+const { findingRoutes } = await import('../router/findings')
 
 afterEach(() => { cleanup(); vi.clearAllTimers() })
 
