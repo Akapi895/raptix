@@ -149,6 +149,15 @@ design spec, §13.4).
   ledger, a vault ciphertext decrypted by the backed-up key and a restored
   workspace manifest) and `capture-operational-release.mjs` (source digest
   plus deployed image IDs and revision labels).
+- Runtime: a workspace file's observations carry the digest of the bytes they were parsed from
+  (`source_artifact_digest`), so evidence links to the capture of that version only.
+- Web console: a finding on a `web_url` inventory item links to the web origin the URL names (scheme, host
+  and effective port; path, query and fragment ignored). The rule is shared by the runtime and the server
+  through one set of vectors.
+- Web console: workspace evidence in XML and JSONL can be imported as captures as they are written; each
+  version of a file is its own capture.
+- Web console: the AI Workspace run controls show a stop as requested until the runtime reports the run
+  ended; a refused stop keeps the run in flight and says so.
 
 ### Removed
 
@@ -331,6 +340,12 @@ design spec, §13.4).
   kinds as the legacy nmap adapter, so the inspector reads the same graph from either path.
 - Runtime and Web: the Asset Map revision is one counter lookup per engagement (`KGRevision`), advanced
   inside the same transaction as each graph write, instead of a scan of every relation in the database.
+- Runtime: the Asset Map identity lookups name their node labels and use the migration V007 indexes, so a
+  lookup seeks the index instead of scanning every node in the database.
+- Runtime: schema migrations run without the engagement revision counter. A schema change and a write cannot
+  share a transaction, so the counter bump made every schema migration fail once it existed.
+- Web console: a project switch no longer writes the previous project's selection or camera into the saved
+  view of the next project.
 
 ## [1.1.47] — 2026-09-26
 
