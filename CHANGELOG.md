@@ -38,6 +38,19 @@ design spec, §13.4).
 - Runtime: every KG write stamps the ADR-0094 identity on Host and Entrypoint nodes that do not
   carry one, and redacts entrypoint URLs before storage. A locator that does not resolve is
   written without identity and counted as `unidentified`; it is not guessed.
+- Runtime: a file ingested from `/workspace/<engagement>/` stamps its engagement-relative path as
+  `source_artifact_ref` on every observation it writes, so the Web can join the observation to the
+  capture imported from that file. Files outside the workspace are written as before.
+- Web console: the Asset Map inspector shows the imported capture behind each observation, with its
+  classification and digest, and opens it through the capture content route. An artifact that was
+  never imported is shown as not imported; an unclassified capture asks for classification first.
+- Web console: the saved Asset Map view keeps the canvas camera (zoom and pan) per user and project,
+  in the browser only. Pinning an asset is not part of this release.
+- Web console: with the Asset Map flag on, the AI Workspace shows run controls for each thread.
+  Execution keeps its own controls until they are verified in the workspace.
+- Web console: a scope change (another engagement) drops responses still in flight and clears state
+  from the previous one. Hosts, origins, services and sitemap rows load in pages with a
+  completeness indicator and a Load more control instead of stopping at the first page.
 - Runtime:  (make webraptix-kg-bootstrap) runs the
   KG migrations after a duplicate-node preflight; a rerun applies nothing.
 - Runtime: nmap and httpx hosts link to their web origins; httpx and nuclei URLs are redacted
@@ -312,6 +325,12 @@ design spec, §13.4).
   known single-worker-fragile technology such as `werkzeug` is detected,
   else 3); the orchestrator builds the matrix only when
   `recommended_in_flight >= 2`, regardless of phase or wording (ADR-0068).
+- Runtime: entrypoint URLs with an uppercase scheme (`HTTPS://`) are redacted like lowercase ones; the
+  scheme check was case-sensitive, so such a URL could keep its credentials in a label or property.
+- Runtime: the nmap parser in the ingest registry writes the same service keys, web origins and edge
+  kinds as the legacy nmap adapter, so the inspector reads the same graph from either path.
+- Runtime and Web: the Asset Map revision is one counter lookup per engagement (`KGRevision`), advanced
+  inside the same transaction as each graph write, instead of a scan of every relation in the database.
 
 ## [1.1.47] — 2026-09-26
 

@@ -72,6 +72,8 @@ Các đường dẫn test ghi **Tạo** là file dự kiến, chưa tồn tại.
 
 **Pass khi:** một IP với HTTP/HTTPS được gom nhưng vẫn mở từng service/origin; nhóm mở tại chỗ, camera/selection/pin không nhảy khi cập nhật. Saved view khôi phục sau reload đúng user/project, không sửa canonical asset. CIDR không tạo sẵn từng host; graph có giới hạn, keyboard/list tương đương và cơ chế refresh/invalidation có revision để nhận discovery mới.
 
+**Phạm vi pass cập nhật (2026-10-21):** pin được hoãn sang lượt sau. Mục pin trong tiêu chí trên **chưa đạt** và không được tính là đạt. Camera (zoom, pan) được lưu trong saved view theo user và project, đã kiểm chứng trên browser; khôi phục sau reload chưa phân biệt được với giá trị fit mặc định, xem phase 5 của kết quả.
+
 **Test:**
 - **Tạo** `apps/web/src/features/asset-map/canvas-model.test.ts` và `canvas.test.tsx`: grouping, visible budget, selection, stale responses, revision refresh, saved-view reload/isolation và inspector/keyboard behavior.
 - **Tạo** `apps/web/tools/verify-asset-map-canvas.mjs`: dùng Playwright hiện có với fixture xác định để kiểm tra pan/zoom, expand, vị trí và responsive trong browser thật. Không dùng jsdom làm bằng chứng layout hay gọi fixture gate là real-backend E2E.
