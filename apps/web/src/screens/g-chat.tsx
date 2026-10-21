@@ -9,7 +9,7 @@
  * bridged legacy action, which owns the demo's response orchestration
  * (busy flag + timer) and delegates the commits to the same handlers —
  * messages and plan proposals are strictly proposal-shaped (invariant 5).
- * The shared chat cards/rail (g-common/g-workspace, tickets 39–44) keep
+ * The shared chat cards/rail (aichat/common, g-workspace, tickets 39–44) keep
  * their legacy seams until their owners migrate.
  */
 import { useEffect, useMemo, useState } from 'react'
@@ -25,8 +25,8 @@ import { go, useRoute } from '../router/navigate'
 import { useActiveProject, useReadOnly } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { Banner, Button, Drawer, Empty, PageHeader } from '../ui'
-import { AiSubNav, Composer, DefaultAiModePicker, NoProject, Pill, STARTERS, Thread } from './g-common'
+import { Banner, Button, Drawer, Empty, PageHeader } from '../ui/index'
+import { AiSubNav, Composer, DefaultAiModePicker, NoProject, Pill, STARTERS, Thread } from '../features/aichat/common'
 import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from './g-workspace'
 import type { AiMode } from '../domain/entities'
 

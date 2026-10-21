@@ -25,7 +25,7 @@
  * mirrors the proposal onto its branch as blocked. Refusals commit
  * nothing; every request captures actor and project explicitly.
  */
-import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import type { Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'

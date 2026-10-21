@@ -10,7 +10,7 @@ import { Megaphone, Loader2 } from 'lucide-react'
 import { createCampaign, fetchCampaignCapabilities, fetchCampaigns, reconcileCampaignJob, runCampaignJob } from '../api'
 import type { CampaignView } from '@raptix/web-contracts'
 import { useDirty } from '../../state/session'
-import { Banner, Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui'
+import { Banner, Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui/index'
 
 export function RealCampaignsPanel({ engagementId }: { engagementId: string }): ReactElement {
   const client = useQueryClient()

@@ -12,7 +12,7 @@ import type { Session } from '../data'
 import { C2ReadError, useC2GrantWatch, useC2Session, useC2Sessions } from '../features/c2/query'
 import { hhmm } from '../features/c2/service'
 import type { C2AccessInfo } from '../features/c2/service'
-import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui'
+import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui/index'
 import { useResourceScope } from '../state/resource-scope'
 
 // eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry

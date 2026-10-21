@@ -9,7 +9,7 @@
  * authorization reasons come from the shared permission policy (ticket 06)
  * so UI hints and handler refusals state the same rule.
  */
-import { can, projectLocked } from '../auth/policy'
+import { can, projectLocked } from '../domain/policy'
 import type { Project } from '../domain/entities'
 import type {
   ActorRef, ListResult, ReadResult, RequestContext, ServiceFailure, ServiceResult,

@@ -14,7 +14,7 @@ import { USERS } from '../../data'
 import type { Role } from '../../domain/entities'
 import { personaRole, signOut, switchPersona } from '../../auth/persona'
 import { useAuthStore, useToastStore, useUiStore } from '../../state/stores'
-import { Button, Mono } from '../../ui'
+import { Button, Mono } from '../../ui/index'
 import { useSystemGo, useSystemRoute } from './nav'
 
 /** Role display labels (kept local to avoid a store cycle, like the feature services). */

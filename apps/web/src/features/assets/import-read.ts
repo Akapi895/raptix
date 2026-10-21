@@ -3,7 +3,7 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { validateAssetRows, type AssetImportRow, type AssetRowIssue } from './writes'
 
 export interface AssetImportRead {

@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { Activity, FileText, Fingerprint, Network, Server, ShieldCheck } from 'lucide-react'
-import { Banner, Button, Card, DescList, Empty, Modal, Skeleton, Status, Timeline } from '../../ui'
+import { Banner, Button, Card, DescList, Empty, Modal, Skeleton, Status, Timeline } from '../../ui/index'
 import { useAssetDetail } from './query'
 
 /** Contextual asset read; relationships and evidence masking belong to the asset service. */

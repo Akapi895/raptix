@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useServices } from '../state/services'
-import { ROLE_LABEL } from '../auth/policy'
+import { ROLE_LABEL } from '../domain/policy'
 import { TeamMembers } from '../features/team/members'
 import { ClosureTab } from '../features/closure/tab'
 import { useReopen } from '../features/approvals/hooks'
@@ -12,9 +12,9 @@ import { useCan, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
 import { useToastStore } from '../state/stores'
 import { go } from '../router/navigate'
-import type { DashboardAggregate } from './dashboard/domain'
+import type { DashboardAggregate } from '../domain/dashboard'
 import type { ProjectDetail } from './project-detail/service'
-import { Banner, Button, Card, CardHeader, Empty, Kpi, PersonaHint, Status, useGuard } from '../ui'
+import { Banner, Button, Card, CardHeader, Empty, Kpi, PersonaHint, Status, useGuard } from '../ui/index'
 
 /* Ticket 21: ScopeTab/TeamTab mutations run through the ticket-21 approval
  * and scope-revision transaction handlers (via the delegating store actions),

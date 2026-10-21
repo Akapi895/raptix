@@ -17,7 +17,7 @@
  */
 import { useState } from 'react'
 import { CheckCircle2, CircleDot, Clock, OctagonX, XCircle } from 'lucide-react'
-import { Banner, Button, Check, DemoTag, Field, Gated, Modal, Select, Textarea, cx } from '../../ui'
+import { Banner, Button, Check, DemoTag, Field, Gated, Modal, Select, Textarea, cx } from '../../ui/index'
 import { useServices } from '../../state/services'
 import { useCan, useMe } from '../../state/console'
 import { useStopRead } from './projection'

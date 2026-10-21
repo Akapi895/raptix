@@ -10,7 +10,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Bot, CheckCircle2, CircleAlert, FileText, Lock, PenLine, RefreshCw } from 'lucide-react'
 import { go } from '../../router/navigate'
 import { utcMinuteOr } from '../../real/format'
-import { Banner, Button, Card, CardHeader, DescList, Drawer, Skeleton, Status, cx } from '../../ui'
+import { Banner, Button, Card, CardHeader, DescList, Drawer, Skeleton, Status, cx } from '../../ui/index'
 import { PlanningError, usePlanningRead, usePlanningSource, usePlanningWrites } from './query'
 import type { PlanningDocumentCard, PlanningDocumentState, PlanningOpplan } from './service'
 

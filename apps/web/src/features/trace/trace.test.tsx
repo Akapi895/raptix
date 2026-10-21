@@ -28,7 +28,7 @@ import type { ActorRef, RequestContext } from '../../domain/service'
 import type { ToolEvent, ToolState } from '../../data'
 import { seed, toolFacets } from '../../data'
 import { AiTrace } from '../../screens/g-trace'
-import { ToolProposalCard } from '../../screens/g-common'
+import { ToolProposalCard } from '../aichat/common'
 import { listToolEvents, maskSensitive } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

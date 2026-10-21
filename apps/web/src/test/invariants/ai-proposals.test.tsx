@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, screen } from '@testing-library/react'
-import type { RequestContext } from '../domain/service'
+import type { RequestContext } from '../../domain/service'
 
 vi.useFakeTimers()
-const { mountServices } = await import('../test/helpers')
-const { sendChat } = await import('../features/demo/runtime')
-const { requestPlanReviewTransaction, decidePlanTransaction } = await import('../features/plans/service')
-const { createOperationFromPlanTransaction } = await import('../features/plans/bridge')
-const { importFindingSuggestion, transitionFinding, uploadFindingEvidence } = await import('../features/findings/service')
-const { findingRoutes } = await import('../router/findings')
+const { mountServices } = await import('../helpers')
+const { sendChat } = await import('../../features/demo/runtime')
+const { requestPlanReviewTransaction, decidePlanTransaction } = await import('../../features/plans/service')
+const { createOperationFromPlanTransaction } = await import('../../features/plans/bridge')
+const { importFindingSuggestion, transitionFinding, uploadFindingEvidence } = await import('../../features/findings/service')
+const { findingRoutes } = await import('../../router/findings')
 
 afterEach(() => { cleanup(); vi.clearAllTimers() })
 

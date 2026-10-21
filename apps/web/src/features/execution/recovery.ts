@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { ExecutionWorkspaceError } from './service'
 
 const status = z.enum(['queued', 'running', 'waiting', 'blocked', 'completed', 'failed', 'cancelled', 'paused', 'unknown'])

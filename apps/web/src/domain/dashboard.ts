@@ -11,16 +11,16 @@
  * Semantics are ported verbatim from the pre-migration store helpers and
  * pinned by the feature tests at this site.
  */
-import { APR } from '../../data'
-import { can as policyCan } from '../../auth/policy'
-import { parseDemoInstant } from '../../domain/clock'
-import type { CanAction } from '../../domain/permissions'
-import type { ActorRef, Instant } from '../../domain/service'
+import { APR } from '../data'
+import { can as policyCan } from './policy'
+import { parseDemoInstant } from './clock'
+import type { CanAction } from './permissions'
+import type { ActorRef, Instant } from './service'
 import type {
   Agent, Approval, Asset, Audit, C2Node, Finding, FindingStatus, Operation, Plan, Project,
   Report, Session, SessionRequest, Step, ToolEvent,
-} from '../../domain/entities'
-import type { Route } from '../../router/history'
+} from './entities'
+import type { Route } from '../router/history'
 
 /** Cross-entity slice the Command Center aggregates over (service-produced). */
 export interface DashboardAggregate {

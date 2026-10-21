@@ -5,11 +5,11 @@ import type { Severity } from '../data'
 import { actorRef } from '../auth/persona'
 import { useAuthStore, useProjectStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, PageSkeleton, Progress, STATUS, Status, Timeline, cx } from '../ui'
+import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, PageSkeleton, Progress, STATUS, Status, Timeline, cx } from '../ui/index'
 import type { CanAction } from '../domain/permissions'
 import { useConsoleGo, useDashboard, type ConsoleGo } from './dashboard/use-dashboard'
-import { attentionItems, canDo, completion, dashboardKpis, eligibility, formatCountdown, grantMinutesLeft, openFindings, opProgress, readiness } from './dashboard/domain'
-import type { AttnSource, DashboardAggregate } from './dashboard/domain'
+import { attentionItems, canDo, completion, dashboardKpis, eligibility, formatCountdown, grantMinutesLeft, openFindings, opProgress, readiness } from '../domain/dashboard'
+import type { AttnSource, DashboardAggregate } from '../domain/dashboard'
 
 const SEV_COLOR: Record<Severity, string> = { critical: 'var(--c-bad)', high: 'var(--c-orange)', medium: 'var(--c-warn)', low: 'var(--c-cyan)', info: 'var(--c-neutral)' }
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']

@@ -1,11 +1,11 @@
 /** Synchronous report validation and source counts complement editor/catalog Query reads. */
 import type { Report } from '../../domain/entities'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
-import { DATA_MODE } from '../../real/mode'
+import { DATA_MODE } from '../../state/mode'
 import { closureEvidence, reportChecks, type NoFind, type RCheck } from './service'
 
 export interface ReportValidationRead {

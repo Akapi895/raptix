@@ -17,7 +17,7 @@
 import type { ComponentType } from 'react'
 import { go, useRoute } from '../router/navigate'
 import { useProjectStore } from '../state/stores'
-import { PageHeader, Tabs } from '../ui'
+import { PageHeader, Tabs } from '../ui/index'
 import { agentRoutes, AgentsContent } from './d-agents'
 import { C2InfraContent, routes as c2Routes, Sessions } from './h'
 

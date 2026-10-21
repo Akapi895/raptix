@@ -7,13 +7,13 @@
  * (with the ticket 59/60 slot props) is the mount-point export; everything
  * else is re-exported from its extraction module without reimplementation.
  */
-export { Shell, type ShellSlots } from './shell/shell'
+export { Shell, type ShellSlots } from './shell'
 // eslint-disable-next-line react-refresh/only-export-components -- shell module: header slots and shell co-exported
-export { NAV, isWide, useBadges } from './shell/nav'
-export { Sidebar } from './shell/sidebar'
-export { ProjectSwitcher } from './shell/project-switcher'
-export { GlobalSearch } from './shell/search'
-export { Topbar, type HeaderSlots } from './shell/header'
-export { Pop } from './shell/pop'
-export { ContextRibbon, StopBanner } from './shell/context-ribbon'
-export type { Route } from './router/history'
+export { NAV, isWide, useBadges } from './nav'
+export { Sidebar } from './sidebar'
+export { ProjectSwitcher } from './project-switcher'
+export { GlobalSearch } from './search'
+export { Topbar, type HeaderSlots } from './header'
+export { Pop } from './pop'
+export { ContextRibbon, StopBanner } from './context-ribbon'
+export type { Route } from '../router/history'

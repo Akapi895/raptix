@@ -20,7 +20,7 @@
  * agent eligibility (connected, assigned to the branch's project), so the UI
  * gates are presentation, not the enforcement site.
  */
-import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import { BRANCH_LABEL, BRANCH_TERMINAL, toolFacets } from '../../data'
 import type { Db } from '../../data'
 import { formatDemoInstant, type MockClock } from '../../domain/clock'

@@ -5,7 +5,7 @@
  * switch is verified, and the panel is shown only while the asset map flag is on.
  */
 import type { ReactElement } from 'react'
-import { Banner, Card, CardHeader, Skeleton } from '../../ui'
+import { Banner, Card, CardHeader, Skeleton } from '../../ui/index'
 import { messageOf, useRuntimeThreads } from './runtime-query'
 import { ThreadRuns } from './runtime-runs'
 

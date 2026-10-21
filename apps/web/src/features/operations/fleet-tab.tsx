@@ -11,7 +11,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Ban, Bot, Loader2 } from 'lucide-react'
 import { utcMinuteOr } from '../../real/format'
 import { go, useRoute } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status } from '../../ui'
+import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status } from '../../ui/index'
 import { messageOf, useRuntimeCancel, useRuntimeFleet } from './runtime-query'
 import type { RuntimeFleetBranch } from './runtime'
 

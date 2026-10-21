@@ -21,7 +21,7 @@ import { createConsoleServices } from '../domain/service-factory'
 import type { CanAction } from '../domain/permissions'
 import { accessibleProjectIds, listProjectMemberships } from './membership'
 import { actorRef, signIn, signOut, switchPersona } from './persona'
-import { can, canAccessProject, projectAccessible, readOnlyContext, ROLE_ACTIONS } from './policy'
+import { can, canAccessProject, projectAccessible, readOnlyContext, ROLE_ACTIONS } from '../domain/policy'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 

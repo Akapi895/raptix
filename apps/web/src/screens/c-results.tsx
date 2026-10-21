@@ -15,7 +15,7 @@
  */
 import { useRef, useState, type ReactNode } from 'react'
 import { Download, FilePlus2, Maximize2, Network, Paperclip, Plus, Minus, ShieldAlert } from 'lucide-react'
-import { Banner, Button, Card, CardHeader, Check, Empty, Field, IdLink, Input, Modal, Mono, SearchBox, Select, Skeleton, Status, STATUS, Table, useGuard, cx } from '../ui'
+import { Banner, Button, Card, CardHeader, Check, Empty, Field, IdLink, Input, Modal, Mono, SearchBox, Select, Skeleton, Status, STATUS, Table, useGuard, cx } from '../ui/index'
 import { useServices } from '../state/services'
 import { go } from '../router/navigate'
 import { useCan, useMe } from '../state/console'

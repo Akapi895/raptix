@@ -25,7 +25,7 @@ import { USERS, type SeedVariant } from '../../data'
 import { useAuthStore, useProjectStore, useToastStore, useUiStore } from '../../state/stores'
 import { useSessionStore, type LogLine } from '../../state/session'
 import { hhmm, stamp } from '../../domain/demo-clock'
-import { ROLE_LABEL } from '../../auth/policy'
+import { ROLE_LABEL } from '../../domain/policy'
 import { createChatHandlers } from '../aichat/handlers'
 import {
   acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,

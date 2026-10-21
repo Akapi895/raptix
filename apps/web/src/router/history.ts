@@ -11,7 +11,7 @@
  * Overview (the cross-project dashboard); the mock demo still lands on its
  * sign-in screen.
  */
-import { DATA_MODE } from '../real/mode'
+import { DATA_MODE } from '../state/mode'
 export interface Route { page: string; id?: string; tab?: string; engagementId?: string }
 
 /** Landing page for an empty location ('' hash or '/' pathname). */

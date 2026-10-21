@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Info, Lock } from 'lucide-react'
 import { useMe } from '../state/console'
 import { useAuthStore } from '../state/stores'
-import { DATA_MODE } from '../real/mode'
+import { DATA_MODE } from '../state/mode'
 import { Button } from './button'
 
 /* ───────────── Guards ───────────── */

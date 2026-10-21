@@ -5,7 +5,7 @@ import { fetchTasks } from '../api'
 import { useRealProjects } from '../queries'
 import { go } from '../../router/navigate'
 import { parseHash } from '../../router/history'
-import { Input } from '../../ui'
+import { Input } from '../../ui/index'
 
 export function RealSearch(): ReactElement {
   const [query, setQuery] = useState('')

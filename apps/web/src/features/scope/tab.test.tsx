@@ -12,7 +12,7 @@ import { SessionContext, type SessionState } from '../../real/session'
 const useScopeRead = vi.fn()
 const fetchMembers = vi.fn()
 
-vi.mock('../../real/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
+vi.mock('../../state/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
 
 vi.mock('../../real/api', () => ({
   fetchMembers: (...a: unknown[]) => fetchMembers(...a),

@@ -14,7 +14,7 @@
  * write, ChangeSet publication with the factory clock instant.
  */
 import type { Project, SeedVariant } from '../data'
-import { projectAccessible } from '../auth/policy'
+import { projectAccessible } from './policy'
 import { createIdentityService, type IdentityService } from '../auth/identity'
 import { MockClock, Scheduler, formatDemoInstant } from './clock'
 import { createDatabaseAuthority, type DbAuthority } from './database'

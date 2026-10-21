@@ -4,7 +4,7 @@
  * adapter reads them and writes through the atomic project-membership
  * transaction, so an edit publishes its audit row with the membership.
  */
-import { can, ROLE_LABEL } from '../../auth/policy'
+import { can, ROLE_LABEL } from '../../domain/policy'
 import { USERS, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Project, Role } from '../../domain/entities'

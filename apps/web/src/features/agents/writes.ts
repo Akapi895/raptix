@@ -18,7 +18,7 @@
  * the project notice commit atomically with the change, refusals commit
  * nothing.
  */
-import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import type { Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import { stamp } from '../../domain/demo-clock'

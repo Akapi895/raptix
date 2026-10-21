@@ -17,8 +17,8 @@ import { go, selectProject, useRoute } from '../router/navigate'
 import { useAccessible, useCan, useMe, useReadOnly } from '../state/console'
 import { useAuthStore, useProjectStore, useToastStore } from '../state/stores'
 import type { ConsoleServices } from '../domain/service-factory'
-import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui'
-import { NoProject, ReplanPanel, tz, useReplan } from './g-common'
+import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui/index'
+import { NoProject, ReplanPanel, tz, useReplan } from '../features/aichat/common'
 import { FanOutCard } from './g-fanout'
 
 /* The legacy Res bridge shape (the store's private `Res`). */

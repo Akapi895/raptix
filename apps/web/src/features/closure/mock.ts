@@ -5,7 +5,7 @@
  * canonical service the mock Closeout tab used, and writes through the closure
  * and approval transactions.
  */
-import { can } from '../../auth/policy'
+import { can } from '../../domain/policy'
 import { APR, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'

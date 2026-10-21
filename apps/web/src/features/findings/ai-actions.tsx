@@ -1,11 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { Finding } from '../../data'
-import { ROLE_LABEL } from '../../auth/policy'
+import { ROLE_LABEL } from '../../domain/policy'
 import { go } from '../../router/navigate'
 import { useCan, useMe, useReadOnly } from '../../state/console'
 import { useSessionStore } from '../../state/session'
 import { useToastStore } from '../../state/stores'
-import { Mono } from '../../ui'
+import { Mono } from '../../ui/index'
 import { useFindingWrites } from './query'
 
 /**

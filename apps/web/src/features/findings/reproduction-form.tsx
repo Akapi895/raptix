@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import type { FindingReproductionArtifact, FindingReproductionInput } from '@raptix/web-contracts'
-import { Banner, Button, Field, Select, Textarea } from '../../ui'
+import { Banner, Button, Field, Select, Textarea } from '../../ui/index'
 import type { RetainedCaptureOption } from './service'
 import { EMPTY_REPRODUCTION } from './reproduction-draft'
 

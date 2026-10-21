@@ -9,7 +9,7 @@ import { go } from '../router/navigate'
 import { useActiveProject } from '../state/console'
 import { useServiceProjection } from '../state/projection'
 import { readSearchResults } from '../features/navigation/service'
-import { IconButton, cx } from '../ui'
+import { IconButton, cx } from '../ui/index'
 import { NAV } from './nav'
 
 let RECENT: string[] = []

@@ -5,7 +5,7 @@
  * initial load. The rule is unchanged: viewer personas and out-of-project
  * actors have no access; a recorded grant wins; project members read-only.
  */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import type { Db } from '../../data'
 import type { Session } from '../../domain/entities'
 import type { RequestContext } from '../../domain/service'

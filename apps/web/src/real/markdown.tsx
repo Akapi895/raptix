@@ -4,7 +4,7 @@
  * Everything is rendered as React text nodes; no HTML is ever injected, so message content cannot run markup.
  */
 import { Fragment, type ReactElement, type ReactNode } from 'react'
-import { cx } from '../ui'
+import { cx } from '../ui/index'
 
 const FENCE = /```[\w+-]*\n([\s\S]*?)```/g
 const INLINE = /(`[^`\n]+`|\*\*[^*\n]+\*\*)/g

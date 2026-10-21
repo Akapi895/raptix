@@ -20,7 +20,7 @@
  * Reads share the factory's superseded-scope guard (cancel-on-switch), so a
  * delayed response cannot restore another scope's visibility.
  */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { planVer, toolFacets } from '../../data'
 import type { Db, Facets, ToolEvent } from '../../data'
 import type { DbAuthority } from '../../domain/database'

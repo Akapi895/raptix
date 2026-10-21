@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
 import { useServices } from '../state/services'
-import { isRealMode } from '../real/mode'
+import { isRealMode } from '../state/mode'
 import { useDirty } from '../state/session'
 import type { Asset } from '../data'
 import { useAssetImportRead, type AssetImportRead } from '../features/assets/import-read'
-import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
+import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui/index'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from './d-shared'
 // Ticket 50: catalog list, asset detail and scope views read through the
 // typed asset service via Query (feature-local handlers).

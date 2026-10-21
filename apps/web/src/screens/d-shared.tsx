@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, type ComponentType, type ReactNode } from 'react'
 import { Lock, SlidersHorizontal } from 'lucide-react'
 import { useSessionStore } from '../state/session'
-import { Button, Empty, Mono, PageSkeleton, cx } from '../ui'
+import { Button, Empty, Mono, PageSkeleton, cx } from '../ui/index'
 
 /** Wraps a screen: shows a skeleton while the project is switching */
 // eslint-disable-next-line react-refresh/only-export-components -- shared agent/asset/library screen helpers

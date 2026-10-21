@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 
-vi.mock('../../real/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
+vi.mock('../../state/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
 vi.mock('../../state/console', () => ({ useMe: () => ({ name: 'Riley Brooks', email: 'riley@example.test', role: 'manager' }) }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),

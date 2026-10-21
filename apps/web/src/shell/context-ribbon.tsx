@@ -17,7 +17,7 @@ import { useStopRead } from '../features/estop/projection'
 import { useProjectActivity } from '../features/projects/activity-read'
 import { useProjectStore } from '../state/stores'
 import { emergencyStop, resolveStop, retryStop } from '../features/demo/runtime'
-import { Banner, Button, Check, Field, Modal, Textarea, cx } from '../ui'
+import { Banner, Button, Check, Field, Modal, Textarea, cx } from '../ui/index'
 
 function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }) {
   const db = useStopRead('all')

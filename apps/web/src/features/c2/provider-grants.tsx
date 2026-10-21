@@ -9,7 +9,7 @@ import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { KeyRound, Loader2 } from 'lucide-react'
 import { utcMinute } from '../../real/format'
-import { Button, Card, CardHeader, Empty, Input, Skeleton, Status, Textarea } from '../../ui'
+import { Button, Card, CardHeader, Empty, Input, Skeleton, Status, Textarea } from '../../ui/index'
 import { messageOf, useProviderGrants, useProviderWrites } from './provider-query'
 
 const STATUS_LABEL: Record<string, string> = { requested: 'pending', approved: 'approved', rejected: 'rejected', revoked: 'revoked', expired: 'expired' }

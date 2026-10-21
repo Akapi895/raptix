@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { go } from '../../router/navigate'
-import { Button } from '../../ui'
+import { Button } from '../../ui/index'
 
 /** Keeps the legacy producer panel pointed at the shared Evidence workflow instead of offering a duplicate upload path. */
 export function CaptureUpload({ engagementId }: { engagementId: string }): ReactElement {

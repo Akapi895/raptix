@@ -10,7 +10,7 @@ import { listEngagements } from '../api'
 import { fetchEnvironment, submitEnvironmentCommand } from '../environment-api'
 import { needsReconcile, nextAction, outcomeOf, ownHolder, refreshIntervalFor } from '../environment-logic'
 import { ApiTransportError } from '../transport'
-import { Banner, Button, Card, CardHeader } from '../../ui'
+import { Banner, Button, Card, CardHeader } from '../../ui/index'
 
 type Action = 'activate' | 'stop'
 interface Notice { tone: 'info' | 'warn' | 'bad' | 'ok'; text: string }

@@ -28,8 +28,8 @@ import type { BranchGroup } from '../domain/entities'
 import { go, useRoute } from '../router/navigate'
 import { useCan } from '../state/console'
 import { useToastStore } from '../state/stores'
-import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Kpi, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Table, Textarea, Timeline, cx } from '../ui'
-import { tz } from './g-common'
+import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Kpi, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Table, Textarea, Timeline, cx } from '../ui/index'
+import { tz } from '../features/aichat/common'
 
 /* ───────── shared helpers ───────── */
 /* Ticket 67: the fanout derivations (group counts, allocation context, asset

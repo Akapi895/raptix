@@ -1,5 +1,5 @@
 /** Owns audit records for simulated UI actions and exports. */
-import { ROLE_LABEL } from '../../auth/policy'
+import { ROLE_LABEL } from '../../domain/policy'
 import { stamp } from '../../domain/demo-clock'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext, ServiceResult } from '../../domain/service'

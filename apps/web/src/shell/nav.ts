@@ -10,7 +10,7 @@ import {
   Activity, Archive, BookOpen, Bot, ClipboardList, Crosshair, FileText, FolderKanban, Gauge, KeyRound, LayoutDashboard, Lock, Network, RadioTower, Scale, ScrollText, Server, Settings, ShieldAlert, Monitor, Users, type LucideIcon,
 } from 'lucide-react'
 import { useServiceProjection } from '../state/projection'
-import { DATA_MODE } from '../real/mode'
+import { DATA_MODE } from '../state/mode'
 import { readNavigationBadges } from '../features/navigation/service'
 import { isAssetMapEnabled } from '../features/asset-map/flag'
 

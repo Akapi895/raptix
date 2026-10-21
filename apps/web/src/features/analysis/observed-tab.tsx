@@ -10,7 +10,7 @@ import { Radar } from 'lucide-react'
 import { useFeatureServices as useServices } from '../../state/feature-services'
 import { actorRef } from '../../auth/persona'
 import { useQueryScope, consoleKeys } from '../../state/keys'
-import { Card, CardHeader, Empty, Skeleton, Button } from '../../ui'
+import { Card, CardHeader, Empty, Skeleton, Button } from '../../ui/index'
 import type { ObservedAnalysisRead } from './observed'
 
 export function ObservedAnalysisTab({ engagementId }: { engagementId: string }): ReactElement {

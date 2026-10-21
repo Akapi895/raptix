@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen } from '@testing-library/react'
-import { seed, toolFacets } from '../data'
+import { seed, toolFacets } from '../../data'
 
 vi.useFakeTimers()
-const { mountServices } = await import('../test/helpers')
-const { evaluateCloseChecklist: closureChecklist, confirmCloseTransaction, requestCloseTransaction } = await import('../features/closure/service')
-const { useDb, useMe } = await import('../state/console')
-const { CloseTab } = await import('../screens/b-detail2')
-const { detailFor } = await import('../screens/project-detail/service')
+const { mountServices } = await import('../helpers')
+const { evaluateCloseChecklist: closureChecklist, confirmCloseTransaction, requestCloseTransaction } = await import('../../features/closure/service')
+const { useDb, useMe } = await import('../../state/console')
+const { CloseTab } = await import('../../screens/b-detail2')
+const { detailFor } = await import('../../screens/project-detail/service')
 
 afterEach(() => {
   cleanup()

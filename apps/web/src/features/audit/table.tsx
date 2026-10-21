@@ -6,7 +6,7 @@
 import type { ReactElement } from 'react'
 import type { AuditEntryView } from '../../real/api'
 import { go } from '../../router/navigate'
-import { Status } from '../../ui'
+import { Status } from '../../ui/index'
 import { utcMinute } from '../../real/format'
 
 /** `labelFor` resolves an actor id to a name where the caller can (engagement members); by default the id is shown as recorded. */

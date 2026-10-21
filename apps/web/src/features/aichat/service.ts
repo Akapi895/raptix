@@ -21,7 +21,7 @@
  * another project, and a conversation the captured actor cannot access is
  * refused without leaking existence.
  */
-import { projectAccessible, readOnlyContext } from '../../auth/policy'
+import { projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant, type MockClock } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { AiMode, Audit, ChatMsg, Conversation, Plan, PlanStep, Project } from '../../domain/entities'

@@ -6,7 +6,7 @@ import { buildLogs, initDemoRuntime, tickOperations } from '../features/demo/run
 import { resetNavStores } from '../router/navigate'
 import { resetSharedStores } from './stores'
 import { resetSessionStores, useSessionStore } from './session'
-import { DATA_MODE } from '../real/mode'
+import { DATA_MODE } from './mode'
 
 const ServicesCtx = createContext<ConsoleServices | null>(null)
 

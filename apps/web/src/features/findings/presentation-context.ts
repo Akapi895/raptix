@@ -1,6 +1,6 @@
 /** Resolves Findings provenance and trusted request identity at the composition seam. */
 import { useContext } from 'react'
-import { DATA_MODE } from '../../real/mode'
+import { DATA_MODE } from '../../state/mode'
 import { SessionContext } from '../../real/session'
 import { useMe } from '../../state/console'
 

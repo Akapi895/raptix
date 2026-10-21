@@ -21,7 +21,7 @@
  * drawn by the screen between a step and its technique node and carry no
  * observed/planned chronology.
  */
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { TECHNIQUES, type Db } from '../../data'
 import type { Operation, Step } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'

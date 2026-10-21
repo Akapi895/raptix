@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup } from '@testing-library/react'
 
 vi.useFakeTimers()
-const { mountServices } = await import('../test/helpers')
-const { emergencyStop, retryStop, resolveStop } = await import('../features/demo/runtime')
-const { useSessionStore } = await import('../state/session')
+const { mountServices } = await import('../helpers')
+const { emergencyStop, retryStop, resolveStop } = await import('../../features/demo/runtime')
+const { useSessionStore } = await import('../../state/session')
 
 afterEach(() => {
   cleanup()

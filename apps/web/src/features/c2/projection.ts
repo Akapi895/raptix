@@ -2,7 +2,7 @@
 import type { Session } from '../../domain/entities'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
 import { getGrantWatch, sessionPermOf, type C2GrantWatchRead, type C2Perm } from './service'

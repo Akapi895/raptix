@@ -7,7 +7,7 @@ import type { ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchPlanning } from '../../real/api'
 import { consoleKeys, useQueryScope } from '../../state/keys'
-import { Banner, Card, CardHeader, Empty } from '../../ui'
+import { Banner, Card, CardHeader, Empty } from '../../ui/index'
 import { runStatusTone, type StatusTone } from './runtime-status'
 
 const TONE_TEXT: Record<StatusTone, string> = { ok: 'text-ok', bad: 'text-bad', warn: 'text-warn', neutral: 'text-muted' }

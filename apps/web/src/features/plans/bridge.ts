@@ -29,7 +29,7 @@
  * plans service surface stays proposal-shaped — execution is only reachable
  * through this explicit human path, never from chat (ticket 38).
  */
-import { projectAccessible, readOnlyContext } from '../../auth/policy'
+import { projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Operation } from '../../domain/entities'

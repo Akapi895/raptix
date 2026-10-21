@@ -166,11 +166,11 @@ describe('single-writer closure (ticket 61e)', () => {
   it('no module outside the router seam writes the location', () => {
     /* The route inventory's raw-reads list is empty: the router (via
        navigate.ts) is the only location writer. Test files stage deep links
-       by design and are excluded. src/real/mode.ts assigns the location for
+       by design and are excluded. src/state/mode.ts assigns the location for
        a full application reload when switching data modes (integration
        ticket 03, ADR-0068) — an app reload, not an in-app route write. */
     const rawWriter = /(?:\bwindow\.location\.hash\s*=|\blocation\.hash\s*=|\blocation\.assign\(|\bhistory\.(?:replaceState|pushState)\()/
-    const reloadOnModeSwitch = /src[\\/]real[\\/]mode\.ts$/
+    const reloadOnModeSwitch = /src[\\/]state[\\/]mode\.ts$/
     const offenders: string[] = []
     const walk = (dir: string) => {
       for (const e of readdirSync(dir, { withFileTypes: true })) {

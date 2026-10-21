@@ -18,7 +18,7 @@
  * the shared authority and publish a ChangeSet, so legacy screens and Query
  * consumers observe one dataset.
  */
-import { can, projectAccessible, projectLocked, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, projectLocked, readOnlyContext } from '../../domain/policy'
 import { planVer } from '../../data'
 import type { Db } from '../../data'
 import { DEMO_TZ, parseDemoInstant, formatDemoInstant } from '../../domain/clock'

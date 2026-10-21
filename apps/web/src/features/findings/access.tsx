@@ -3,7 +3,7 @@ import { FindingReadError } from './query'
 import { useDelayedNav } from './delayed-nav'
 import {
   Button, Empty,
-} from '../../ui'
+} from '../../ui/index'
 import { go } from '../../router/navigate'
 import { useProjectStore, useUiStore } from '../../state/stores'
 

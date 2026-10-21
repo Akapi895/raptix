@@ -18,7 +18,7 @@
  * the same commit and never auto-promotes.
  */
 import { APR, type Db } from '../../data'
-import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
+import { can, projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'

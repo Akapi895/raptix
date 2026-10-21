@@ -15,7 +15,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Avatar, Button, Check, Field, IconButton, IdLink, Input, Mono, Person, SearchBox, Segmented, Select, Sev, Status, STATUS, Textarea, Toggle,
   type StatusKind, type Tone,
-} from '../ui'
+} from './index'
 
 afterEach(cleanup)
 

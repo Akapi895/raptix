@@ -10,7 +10,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import { BarChart, Donut, Legend, LineChart } from '../ui'
+import { BarChart, Donut, Legend, LineChart } from './index'
 import { BarChart as BarChartModule, Donut as DonutModule, Legend as LegendModule, LineChart as LineChartModule } from './charts'
 
 afterEach(cleanup)

@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { cx } from '../../ui'
+import { cx } from '../../ui/index'
 
 export type ConversationMode = 'planning' | 'execution'
 

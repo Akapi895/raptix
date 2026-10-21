@@ -1,4 +1,4 @@
-import { ROLE_LABEL } from '../../auth/policy'
+import { ROLE_LABEL } from '../../domain/policy'
 import { useCan, useMe, useReadOnly } from '../../state/console'
 import { useProjectStore } from '../../state/stores'
 

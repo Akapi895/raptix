@@ -2,7 +2,7 @@
 import { lazy, Suspense, type ReactElement } from 'react'
 import { useProjectStore, useUiStore } from '../state/stores'
 import { useRoute } from '../router/navigate'
-import { Drawer } from '../ui'
+import { Drawer } from '../ui/index'
 
 const Conversation = lazy(() => import('./screens/workspace').then((m) => ({ default: m.RealConversation })))
 

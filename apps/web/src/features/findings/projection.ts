@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
 /** Finding form and attachment choices are service-scoped relationships. */
 import type { Asset, Evidence, Finding, Operation, Project, Report } from '../../domain/entities'
-import { projectAccessible } from '../../auth/policy'
+import { projectAccessible } from '../../domain/policy'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'

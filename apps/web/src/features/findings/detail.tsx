@@ -4,7 +4,7 @@ import { ExternalLink, FilePlus2, Lock, Sparkles, Pencil, RotateCcw, Send, Shiel
 import { useSessionStore } from '../../state/session'
 import { clearFindingRequest, findingRequestId, type FindingRequestScope } from './finding-session'
 import { persistentFindings, useFindingIdentity } from './presentation-context'
-import { ROLE_LABEL } from '../../auth/policy'
+import { ROLE_LABEL } from '../../domain/policy'
 import { type Finding } from '../../data'
 import { FindingReadError, useEvidenceList, useFindingDetail, useFindingWrites } from './query'
 import type { FindingActivityKind, FindingTransitionTarget } from './service'
@@ -15,7 +15,7 @@ import { EvidenceTab } from './evidence'
 import { FindingDenied } from './access'
 import {
   Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Locked, Mono, PageHeader, Person, PersonaHint, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx,
-} from '../../ui'
+} from '../../ui/index'
 import { go, useRoute } from '../../router/navigate'
 import { realControlGap, useCan, useMe, useReadOnly } from '../../state/console'
 import { useFindingReportChoices } from './projection'

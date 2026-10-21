@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactElement, type ReactNode } from 'react'
 import { Bot, Hand, Send } from 'lucide-react'
-import { Banner, Button, Select, Textarea, cx } from '../../ui'
+import { Banner, Button, Select, Textarea, cx } from '../../ui/index'
 import type { AgentInstance, AgentWorkspace, InstanceRequest, Outcome } from './model'
 import { InstanceBadge } from './agents-panel'
 

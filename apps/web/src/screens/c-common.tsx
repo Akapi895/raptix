@@ -1,6 +1,6 @@
 import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
-import { Button, Empty, Status } from '../ui'
+import { Button, Empty, Status } from '../ui/index'
 import { go, selectProject, useRoute } from '../router/navigate'
 import type { Branch, Db, Operation, Plan, Project, Step } from '../data'
 import type { PfCheck, PfState } from '../features/operations/checklist'

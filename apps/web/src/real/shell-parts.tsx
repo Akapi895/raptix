@@ -15,10 +15,10 @@ import { REAL_IDENTITY } from './bootstrap'
 import { useSession } from './session'
 import { HeaderNotices } from '../features/notices/header-notices'
 import { RealSearch } from './screens/search'
-import { switchDataMode } from './mode'
+import { switchDataMode } from '../state/mode'
 import { ProjectSwitcher } from '../shell/project-switcher'
 import { RealProjectCreateDialog } from './screens/create'
-import { Avatar, Button, IconButton, Segmented, cx } from '../ui'
+import { Avatar, Button, IconButton, Segmented, cx } from '../ui/index'
 
 function RealProfileMenu(): ReactElement {
   const { session } = useSession()

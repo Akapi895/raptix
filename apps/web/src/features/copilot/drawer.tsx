@@ -30,8 +30,8 @@ import { go } from '../../router/navigate'
 import { createChatHandlers } from '../aichat/handlers'
 import { sendChat } from '../demo/runtime'
 import { ChatReadError, useConversationList } from '../aichat/query'
-import { AiModeBadge, Banner, Button, Gated, IconButton, Modal } from '../../ui'
-import { Composer, EligBadge, NoProject, Thread } from '../../screens/g-common'
+import { AiModeBadge, Banner, Button, Gated, IconButton, Modal } from '../../ui/index'
+import { Composer, EligBadge, NoProject, Thread } from '../aichat/common'
 
 const SUGGEST: Record<string, string[]> = {
   operation: ['Explain recent operation results', 'Summarize this operation', 'Review agent readiness'],
