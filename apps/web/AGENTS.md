@@ -2,7 +2,7 @@
 
 Canonical Raptix web console — React 19 + Vite 8 + Tailwind CSS 4, npm
 workspaces. Replaced the previous 13-page browser app in the ticket-02 cutover
-(`.scratch/frontend-backend-integration/` is the active integration tracker).
+(`.scratch/frontend-backend-integration/` is the active integration tracker). Refactor work follows `.scratch/web-improve-refactor/spec.md`, `execution.md` and `coverage.md`; the old root `implementation-plan.md` is archived under `.scratch/web-improve-refactor/archive/`.
 
 ## Development
 
@@ -36,6 +36,8 @@ do not default to the full suite.
 - Node >= 22.12; **npm only** — the root `package-lock.json` is the only lock.
 - Alias `@` → `src/` (ESM-compatible in `vite.config.ts`).
 - Never import Prisma/`fs`/server modules into browser code.
+- Time comes from the factory clock. Presentation and the real interface never receive `MockClock`.
+- No new `eslint-disable`. Fix the cause in the file you touch; no repo-wide suppression cleanup.
 - Production build does not read `.figma/` (Figma tooling removed at cutover).
 - 55-route inventory: `src/router/registry.tsx` (MANIFEST) — hash-based routes.
 - Mock data lives behind the explicit mock authority (`src/domain/`); real-mode
@@ -52,7 +54,9 @@ do not default to the full suite.
 - `src/router/` — route registry/navigation (55 keys).
 - `src/domain/` — contracts, service factory (mode seam), projections.
 - `src/state/` — zustand console state and Query providers.
-- `src/features/` — feature modules (a/b/c/d/e/f/g/h/s groups).
+- `src/features/<domain>/` — one module per domain (service, query, projection, presentation). New features export their public surface from `index.ts`; callers outside a feature import only that entry.
+- `src/screens/`, `src/real/screens/` — legacy presentation trees (ADR-0084). Do not add files there; new presentation goes into `src/features/<domain>/`.
+- `src/real/` — real-mode transport, session and `service-adapter/<domain>.ts`. Do not add presentation or mode branches here.
 - `server/` — Fastify API + Prisma (separate package, own build/tests).
 - `tests/contracts/` — retained API capture regression.
 - `tools/` — deployment/contract verification harnesses.

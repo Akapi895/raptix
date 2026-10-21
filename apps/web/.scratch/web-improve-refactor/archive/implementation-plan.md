@@ -1,3 +1,5 @@
+> **Archived 2026-10-21.** Superseded by `../spec.md`, `../execution.md` and `../coverage.md`. Kept for history only.
+
 # Raptix Web — Implementation Plan
 
 > **Platform:** Red Team Management & AI-Assisted Offensive Security Operations
@@ -5,9 +7,9 @@
 > **Status:** Analysis & Architecture Design (Pre-Implementation)
 
 > **Execution authority (2026-10-13):** Use the corrected
-> [spec](.scratch/web-improve-refactor/spec.md),
-> [execution contract](.scratch/web-improve-refactor/execution.md) and
-> [coverage/ticket mapping](.scratch/web-improve-refactor/coverage.md) for implementation.
+> [spec](../spec.md),
+> [execution contract](../execution.md) and
+> [coverage/ticket mapping](../coverage.md) for implementation.
 > The original weekly tables below are a roadmap, not executable ticket boundaries.
 > Git/worktree preparation is still required. Baseline tests characterize existing
 > behavior at its actual store/helper/UI site; missing deadline and approval enforcement
