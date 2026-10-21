@@ -24,6 +24,12 @@ const HOST = row('host', '10.0.0.5');
 const ORIGIN = row('web_origin', 'http://app.example.com:80');
 const DNS = row('dns_name', 'app.example.com');
 
+/** Captures imported from workspace artifacts: one in this engagement, one for the same path in another engagement. */
+const CAPTURES = [
+  { id: 'cap-1', engagementId: ENGAGEMENT, path: 'findings/capture-cap-1.xml', digest: 'a'.repeat(64), classification: 'unclassified', producer: 'workspace:recon/nmap.xml' },
+  { id: 'cap-other', engagementId: 'eng-other', path: 'findings/capture-cap-other.xml', digest: 'b'.repeat(64), classification: 'standard', producer: 'workspace:recon/unimported.xml' },
+];
+
 /** Web inventory: two host identifiers the catalog can resolve, and two it cannot (a URL and an IPv6 address). */
 const WEB_ASSETS = [
   { id: 'wa-ip', kind: 'host', identifier: '10.0.0.5' },
@@ -66,6 +72,10 @@ function fakeDb() {
     },
     webAsset: {
       findMany: async () => WEB_ASSETS,
+    },
+    retainedCapture: {
+      findMany: async ({ where }: { where: { engagementId: string; producer: { in: string[] } } }) =>
+        CAPTURES.filter(item => item.engagementId === where.engagementId && where.producer.in.includes(item.producer)),
     },
     findingRecord: {
       findMany: async ({ where, take }: { where: { assetId?: unknown }; take?: number }) => linkedTo(where).slice(0, take),
@@ -255,3 +265,22 @@ describe('web inventory identities', () => {
     expect(catalogIdForWebAsset(SLUG, { kind: 'host', identifier: '010.0.0.5' })).toBe(assetIdFor(SLUG, 'dns_name', 'default', '010.0.0.5'));
   });
 });
+
+describe('evidence and captures', () => {
+  it('links an observation to the capture imported from its workspace artifact, and only in the same engagement', async () => {
+    const evidence = [
+      ['nmap', 'ep-1', 1792500000, 'recon/nmap.xml'],
+      ['nmap', 'ep-2', 1792500001, 'recon/unimported.xml'],
+      ['httpx', 'ep-3', 1792500002, null],
+    ];
+    const routes = [...SERVICE_ROUTES.filter(([key]) => !key.includes('observed DESC')), ['ORDER BY observed DESC LIMIT 20', evidence] as [string, unknown[][]]];
+    const view = await new AssetMapService(fakeDb(), await graphFor(routes)).detail(OWNER, ENGAGEMENT, HOST.id, null, 50);
+    expect(view.provenance.evidence.map(item => [item.artifactRef, item.capture?.id ?? null])).toEqual([
+      ['recon/nmap.xml', 'cap-1'],
+      ['recon/unimported.xml', null],
+      [null, null],
+    ]);
+    expect(view.provenance.evidence[0]?.capture).toEqual({ id: 'cap-1', path: 'findings/capture-cap-1.xml', digest: 'a'.repeat(64), classification: 'unclassified' });
+  });
+});
+
