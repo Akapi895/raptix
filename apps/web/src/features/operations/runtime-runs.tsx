@@ -5,7 +5,7 @@
  * for a running run of an operation that can pause; resume and complete follow
  * the operation state the runtime reports.
  */
-import { useRef, type ReactElement } from 'react'
+import { useRef, useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Ban, CheckCheck, Loader2, Pause, Play } from 'lucide-react'
 import { utcMinute } from '../../real/format'
@@ -109,7 +109,10 @@ export function ThreadRuns({ engagementId, thread }: { engagementId: string; thr
 
 function RunRow({ engagementId, run, canPause }: { engagementId: string; run: RuntimeRun; canPause: boolean }): ReactElement {
   const cancelRun = useRuntimeCancel(engagementId)
-  const cancel = useMutation({ mutationFn: () => cancelRun(run.threadId, run.runId) })
+  // The runtime accepts a stop before it ends the run. The row says "requested" from the accepted answer, and it names
+  // the end only from the run's own status once that leaves the in-flight set, never from the request itself.
+  const [stopRequested, setStopRequested] = useState(false)
+  const cancel = useMutation({ mutationFn: () => cancelRun(run.threadId, run.runId), onSuccess: () => setStopRequested(true) })
   const controls = useRuntimeOperationControls(engagementId)
   const pause = useMutation({ mutationFn: () => controls.pause(run.threadId, run.runId) })
   const tone = runStatusTone(run.rawStatus)
@@ -125,10 +128,11 @@ function RunRow({ engagementId, run, canPause }: { engagementId: string; run: Ru
       <td className="py-1.5">
         {CANCELLABLE.includes(run.rawStatus) ? (
           <span className="flex flex-col items-start gap-1">
-            <Button variant="secondary" icon={Ban} disabled={cancel.isPending} onClick={() => cancel.mutate()}>
+            <Button variant="secondary" icon={Ban} disabled={cancel.isPending || stopRequested} onClick={() => cancel.mutate()}>
               {cancel.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
-              Cancel run
+              {stopRequested ? 'Stop requested' : 'Cancel run'}
             </Button>
+            {stopRequested && <span role="status" className="text-warn">The runtime accepted the stop; it has not yet confirmed that the run ended.</span>}
             {canPause && PAUSABLE.includes(run.rawStatus) && (
               <Button variant="secondary" icon={Pause} disabled={pause.isPending} onClick={() => pause.mutate()}>
                 {pause.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
@@ -138,6 +142,8 @@ function RunRow({ engagementId, run, canPause }: { engagementId: string; run: Ru
             {cancel.isError && <span role="alert" className="text-bad">{messageOf(cancel.error, 'The cancel was refused.')}</span>}
             {pause.isError && <span role="alert" className="text-bad">{messageOf(pause.error, 'The pause was refused.')}</span>}
           </span>
+        ) : stopRequested ? (
+          <span role="status" className="text-ok">Run ended after the stop request; the runtime reports {run.rawStatus}.</span>
         ) : <span className="text-muted">—</span>}
       </td>
     </tr>
