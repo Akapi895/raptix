@@ -10,7 +10,7 @@ const completeness = {
   revision: 'g8:1',
 };
 const asset = { assetId: 'asset_c6102d397ce0da5a2cc12930f027d2b9', kind: 'host', namespace: 'default', canonicalKey: '10.0.0.5' };
-const provenance = { sources: [{ source: 'nmap', count: 1 }], graphNodes: 1, evidence: [{ source: 'nmap', sourceEpisodeId: 'ep-1', observedAt: null }] };
+const provenance = { sources: [{ source: 'nmap', count: 1 }], graphNodes: 1, evidence: [{ source: 'nmap', sourceEpisodeId: 'ep-1', observedAt: null, artifactRef: null, capture: null }] };
 
 describe('asset detail validator', () => {
   it('accepts services and endpoints detail bodies', () => {
@@ -30,3 +30,13 @@ describe('asset detail validator', () => {
     expect(isAssetMapDetail({ engagementId: 'eng-1', asset, provenance, detail: { kind: 'graph' }, nextCursor: null, completeness })).toBe(false);
   });
 });
+
+describe('evidence captures', () => {
+  it('accepts an evidence item linked to its capture and refuses a link without an id', () => {
+    const linked = { ...provenance, evidence: [{ source: 'nmap', sourceEpisodeId: 'ep-1', observedAt: null, artifactRef: 'recon/nmap.xml', capture: { id: 'cap-1', path: 'findings/capture-cap-1.xml', digest: 'ab'.repeat(32), classification: 'standard' } }] }
+    expect(isAssetMapDetail({ engagementId: 'eng-1', asset, provenance: linked, detail: { kind: 'services', items: [] }, nextCursor: null, completeness })).toBe(true)
+    const broken = { ...provenance, evidence: [{ source: 'nmap', sourceEpisodeId: 'ep-1', observedAt: null, artifactRef: 'recon/nmap.xml', capture: { path: 'findings/x.xml', digest: 'ab', classification: 'standard' } }] }
+    expect(isAssetMapDetail({ engagementId: 'eng-1', asset, provenance: broken, detail: { kind: 'services', items: [] }, nextCursor: null, completeness })).toBe(false)
+  })
+})
+

@@ -1,4 +1,4 @@
-import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapEvidenceRef, AssetMapKind, AssetMapMembersPage, AssetMapNeighborhood, AssetMapNeighborNode, AssetMapOverlay, AssetMapOverview, AssetMapSearchResult } from '@raptix/web-contracts';
+import type { AssetMapAssetRef, AssetMapCompleteness, AssetMapDetail, AssetMapEvidenceCapture, AssetMapEvidenceRef, AssetMapKind, AssetMapMembersPage, AssetMapNeighborhood, AssetMapNeighborNode, AssetMapOverlay, AssetMapOverview, AssetMapSearchResult } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { requireEngagementAccess } from '../auth/membership-policy.js';
 import { assetIdFor, neo4jQuery, type GraphConfig } from './graph-service.js';
@@ -152,7 +152,7 @@ const NEIGHBOR_STATEMENT = [
 ].join(' ');
 
 const PROVENANCE_STATEMENT = "MATCH (n) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, count(n) AS count ORDER BY source LIMIT 50";
-const EVIDENCE_STATEMENT = "MATCH (n) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, n.source_episode_id AS episode, n.lastupdated AS observed ORDER BY observed DESC LIMIT 20";
+const EVIDENCE_STATEMENT = "MATCH (n) WHERE n.engagement = $engagement AND n.asset_id = $assetId RETURN coalesce(n.source, 'unknown') AS source, n.source_episode_id AS episode, n.lastupdated AS observed, n.source_artifact_ref AS artifact ORDER BY observed DESC LIMIT 20";
 
 const SERVICE_COUNT_STATEMENT = 'MATCH (h) WHERE h.engagement = $engagement AND h.asset_id = $assetId OPTIONAL MATCH (h)-[:HOSTS]->(s) WHERE s.engagement = $engagement RETURN count(s) AS count';
 const SERVICE_PAGE_STATEMENT = [
@@ -337,6 +337,31 @@ export class AssetMapService {
     };
   }
 
+  /**
+   * Evidence of one asset, each item joined to the capture imported from its workspace artifact. The join is
+   * on the engagement and on the producer the import recorded (workspace:<artifact path>), so an artifact
+   * never imported stays unlinked (capture null) instead of being matched by name.
+   */
+  private async evidenceRefs(engagementId: string, rows: unknown[][]): Promise<AssetMapEvidenceRef[]> {
+    const refs = rows.map(item => ({
+      source: String(item[0] ?? 'unknown'),
+      sourceEpisodeId: stringOrNull(item[1]),
+      observedAt: isoOrNull(item[2]),
+      artifactRef: stringOrNull(item[3]),
+    }));
+    const producers = [...new Set(refs.flatMap(ref => (ref.artifactRef === null ? [] : [`workspace:${ref.artifactRef}`])))];
+    const captures = producers.length === 0 ? [] : await this.db.retainedCapture.findMany({
+      where: { engagementId, producer: { in: producers } },
+      select: { id: true, path: true, digest: true, classification: true, producer: true },
+    });
+    const byProducer = new Map(captures.map(capture => [capture.producer ?? '', capture]));
+    return refs.map(ref => {
+      const capture = ref.artifactRef === null ? undefined : byProducer.get(`workspace:${ref.artifactRef}`);
+      const linked: AssetMapEvidenceCapture | null = capture === undefined ? null : { id: capture.id, path: capture.path, digest: capture.digest, classification: capture.classification };
+      return { ...ref, capture: linked };
+    });
+  }
+
   /** Inspector plus typed domain detail for one asset; kinds without a view say so. `filter` narrows a sitemap by URL or path. */
   public async detail(actorId: string, engagementId: string, assetId: string, cursor: string | null, limit: number = ASSET_MAP_LIMITS.detailDefault, filter = ''): Promise<AssetMapDetail> {
     const slug = await this.access(actorId, engagementId);
@@ -349,7 +374,7 @@ export class AssetMapService {
     const provenanceRows = await neo4jQuery(this.config, PROVENANCE_STATEMENT, { engagement: slug, assetId });
     const sources = provenanceRows.map(item => ({ source: String(item[0] ?? 'unknown'), count: Number(item[1] ?? 0) }));
     const evidenceRows = await neo4jQuery(this.config, EVIDENCE_STATEMENT, { engagement: slug, assetId });
-    const evidence: AssetMapEvidenceRef[] = evidenceRows.map(item => ({ source: String(item[0] ?? 'unknown'), sourceEpisodeId: stringOrNull(item[1]), observedAt: isoOrNull(item[2]) }));
+    const evidence = await this.evidenceRefs(engagementId, evidenceRows);
     const provenance = { sources, graphNodes: sources.reduce((sum, item) => sum + item.count, 0), evidence };
     const source = { catalog: 'ok' as const, graph: 'ok' as const };
 

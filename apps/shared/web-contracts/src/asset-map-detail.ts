@@ -12,10 +12,22 @@ export interface AssetMapProvenanceSource {
 }
 
 /** A pointer back to the observation that asserted this asset. Raw payloads stay in artifact storage. */
+/** A capture imported from the workspace artifact an observation came from. */
+export interface AssetMapEvidenceCapture {
+  id: string
+  path: string
+  digest: string
+  classification: string
+}
+
 export interface AssetMapEvidenceRef {
   source: string
   sourceEpisodeId: string | null
   observedAt: string | null
+  /** The engagement-relative workspace artifact the observation was read from, when known. */
+  artifactRef: string | null
+  /** The capture imported from that artifact in this engagement, or null while it has not been imported. */
+  capture: AssetMapEvidenceCapture | null
 }
 
 export interface AssetMapServiceItem {
@@ -55,10 +67,18 @@ export interface AssetMapDetail {
   completeness: AssetMapCompleteness
 }
 
+function isEvidenceRef(item: unknown): item is AssetMapEvidenceRef {
+  if (!isRecord(item) || !isNonEmptyString(item.source)) return false
+  if (item.artifactRef !== null && typeof item.artifactRef !== 'string') return false
+  const capture = item.capture
+  if (capture === null) return true
+  return isRecord(capture) && isNonEmptyString(capture.id) && typeof capture.path === 'string' && typeof capture.digest === 'string' && typeof capture.classification === 'string'
+}
+
 export function isAssetMapDetail(v: unknown): v is AssetMapDetail {
   if (!isRecord(v) || !isNonEmptyString(v.engagementId) || !isAssetMapAssetRef(v.asset)) return false
   if (!isRecord(v.provenance) || typeof v.provenance.graphNodes !== 'number' || !Array.isArray(v.provenance.sources) || !Array.isArray(v.provenance.evidence)) return false
-  if (!v.provenance.evidence.every(item => isRecord(item) && isNonEmptyString(item.source))) return false
+  if (!v.provenance.evidence.every(isEvidenceRef)) return false
   if (!v.provenance.sources.every(item => isRecord(item) && isNonEmptyString(item.source) && typeof item.count === 'number')) return false
   if (!isRecord(v.detail)) return false
   if (v.nextCursor !== null && !isNonEmptyString(v.nextCursor)) return false
