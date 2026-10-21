@@ -127,7 +127,7 @@ Thứ tự slice theo design doc và độ phụ thuộc: S-A → S-B → S-C (d
 | 0 | Hoàn thành | 18c6732c | ADR-0096 Accepted; ADR-0084 ghi nhận điểm 2 được thay thế; gate route sửa; `check:boundaries` và `verify:routes` thêm vào |
 | 1 | Hoàn thành | 561de192, bb48df69 | Mode, policy, dashboard, AI card và ui/shell/safety về owner; Findings và fan-out có module riêng; các unavailable service dựng qua một helper |
 | 2 | Hoàn thành | be2c2f61, d35bb8c7, 793515a5, cbf06696 | real/api.ts chia về features/<x>/remote.ts và platform/; data.ts tách thành domain/catalog.ts và demo/seed.ts; demo/ gồm display-clock, authority, runtime, persona, services; service factory tách thành domain/console-services.ts và demo/services.ts; mock service đóng dấu thời gian qua clock của authority. check:boundaries: 842 (từ 808 ở phase 0), tăng vì adapter import remote.ts theo đường dẫn, xử lý ở phase 3 |
-| 3 | Chưa bắt đầu | — | Theo slice S-A … S-J; route smoke real mode cần stack thật (API, PostgreSQL) |
+| 3 | Đang làm, chưa slice nào hoàn tất | ce789b22 (S-J: screens/demo → demo/) | Chặn ở route smoke real mode: cần RAPTIX_VERIFY_USER/PASSWORD và API nối DB raptix-verify-pg4 (cổng 55444). Mock 55/55 sau mỗi bước. Các slice S-A … S-I còn lại |
 | 4 | Chưa bắt đầu | — | |
 
 ## 9. Baseline ghi nhận ở phase 0 (HEAD fb71c24c)
