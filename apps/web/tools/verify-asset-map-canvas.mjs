@@ -121,14 +121,36 @@ try {
   const endpointRows = await sitemap.locator('tbody tr').count()
   record('keyboard selects an origin and opens its sitemap', endpointRows > 0, `endpoints: ${endpointRows}`)
 
-  // 7. Saved view: the last asset reopens after a reload, for this user and project only.
-  const zoomBeforeReload = Number(await canvas.getAttribute('data-zoom'))
+  // 7. Camera: a zoom and pan away from the fitted default are saved for this user and project, and a reload
+  // restores them. The fitted zoom is read before any interaction on this asset, so the check cannot pass on default.
+  await page.waitForTimeout(500)
+  const fitZoom = Number(await canvas.getAttribute('data-zoom'))
+  for (let step = 0; step < 2; step += 1) {
+    await canvas.hover()
+    await page.mouse.wheel(0, 300)
+    await page.waitForTimeout(150)
+  }
+  const moved = await canvas.boundingBox()
+  await page.mouse.move(moved.x + moved.width * 0.9, moved.y + moved.height * 0.9)
+  await page.mouse.down()
+  await page.mouse.move(moved.x + moved.width * 0.7, moved.y + moved.height * 0.75, { steps: 8 })
+  await page.mouse.up()
+  // The camera is saved 300 ms after it stops moving; wait past that before reading what was saved.
+  await page.waitForTimeout(800)
+  const set = { zoom: Number(await canvas.getAttribute('data-zoom')), x: Number(await canvas.getAttribute('data-pan-x')), y: Number(await canvas.getAttribute('data-pan-y')) }
+  record('camera set away from the fitted default', Math.abs(set.zoom - fitZoom) > 0.01 && (set.x !== 0 || set.y !== 0), `fit ${fitZoom}, set zoom ${set.zoom}, pan ${set.x},${set.y}`)
+  const stored = await page.evaluate(suffix => {
+    const key = Object.keys(globalThis.localStorage).find(item => item.startsWith('raptix.assetMap.selected.') && item.endsWith(suffix))
+    return key ? JSON.parse(globalThis.localStorage.getItem(key) ?? 'null') : null
+  }, `.${engagement}`)
+  record('camera saved under this user and project', stored?.camera !== undefined && stored?.camera !== null && Math.abs(stored.camera.zoom - set.zoom) < 0.01 && Math.abs(stored.camera.x - set.x) <= 2 && Math.abs(stored.camera.y - set.y) <= 2, JSON.stringify(stored?.camera ?? null))
   await page.reload()
   await page.locator('section[aria-label="Sitemap"]').waitFor({ timeout: 20000 })
-  await page.waitForFunction(expected => Number(document.querySelector('[data-testid="asset-map-canvas"]')?.dataset.zoom) === expected, zoomBeforeReload, { timeout: 20000 }).catch(() => undefined)
+  // A restore that never happens times out here and fails the run; it is not treated as a pass.
+  await page.waitForFunction(expected => Number(document.querySelector('[data-testid="asset-map-canvas"]')?.dataset.zoom) === expected, set.zoom, { timeout: 20000 })
   record('saved view reopens the last asset after reload', true)
-  const zoomAfterReload = Number(await canvas.getAttribute('data-zoom'))
-  record('saved view restores the camera after reload', Math.abs(zoomAfterReload - zoomBeforeReload) < 0.005, `${zoomBeforeReload} -> ${zoomAfterReload}`)
+  const restored = { zoom: Number(await canvas.getAttribute('data-zoom')), x: Number(await canvas.getAttribute('data-pan-x')), y: Number(await canvas.getAttribute('data-pan-y')) }
+  record('saved view restores zoom and pan after reload', Math.abs(restored.zoom - set.zoom) < 0.005 && Math.abs(restored.x - set.x) <= 2 && Math.abs(restored.y - set.y) <= 2, `${JSON.stringify(set)} -> ${JSON.stringify(restored)}`)
 
   // 8. Responsive: a phone-width viewport must not scroll sideways.
   await page.setViewportSize({ width: 390, height: 844 })

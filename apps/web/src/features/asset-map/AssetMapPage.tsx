@@ -312,9 +312,17 @@ function appendItems(current: AssetMapDetail['detail'], next: AssetMapDetail['de
  * paged and says what it covers. Each read belongs to the project it started in: a response that
  * arrives after the operator switched project, or after the asset moved on, is dropped.
  */
+/**
+ * One project and one signed-in user at a time. The page is keyed by both, so each scope starts from its own
+ * state, camera and in-flight reads. Nothing from a previous project can then reach the saved view of the next one.
+ */
 export function AssetMapPage() {
   const engagementId = useProjectStore(state => state.pid)
   const actorId = useSession().session?.actor?.id ?? null
+  return <AssetMapScope key={`${actorId ?? ''}\u0000${engagementId ?? ''}`} engagementId={engagementId} actorId={actorId} />
+}
+
+function AssetMapScope({ engagementId, actorId }: { engagementId: string | null; actorId: string | null }) {
   const [overview, setOverview] = useState<AssetMapOverview | null>(null)
   const [hostList, setHostList] = useState<ListState>(EMPTY_LIST)
   const [originList, setOriginList] = useState<ListState>(EMPTY_LIST)
