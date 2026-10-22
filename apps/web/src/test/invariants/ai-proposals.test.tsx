@@ -6,7 +6,7 @@ vi.useFakeTimers()
 const { mountServices } = await import('../helpers')
 const { sendChat } = await import('../../demo/runtime')
 const { requestPlanReviewTransaction, decidePlanTransaction } = await import('../../features/plans/service')
-const { createOperationFromPlanTransaction } = await import('../../features/plans/bridge')
+const { createOperationFromPlanTransaction } = await import('../../features/plans/mock')
 const { importFindingSuggestion, transitionFinding, uploadFindingEvidence } = await import('../../features/findings/service')
 const { findingRoutes } = await import('../../router/findings')
 
