@@ -47,7 +47,7 @@ const BASE_ROUTES: Record<string, RouteDeclaration> = {
   'session-expired': { slice: 'a', real: system },
   states: { slice: 'a', real: unavailable },
   overview: { slice: 'ov', real: shared },
-  tasks: { slice: 'a', real: component(() => import('../real/screens/command-center').then((m) => m.RealCommandCenter)) },
+  tasks: { slice: 'a', real: component(() => import('../features/tasks').then((m) => m.RealCommandCenter)) },
 
   projects: { slice: 'pj', real: shared },
   'project-new': { slice: 'b', real: component(() => import('../features/projects/routes').then((m) => m.RealProjectNewRoute)) },
