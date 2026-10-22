@@ -6,12 +6,10 @@
  * reason), and the workspace audit. The organization registry is named as not
  * modelled, because this deployment has none.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { Loader2, Save, Settings as SettingsIcon } from 'lucide-react'
-import { fetchCapabilities } from '../../platform/capabilities';
-import { fetchWorkspaceAudit } from '../audit/remote';
-import { fetchWorkspaceSettings, saveWorkspaceSetting, type WorkspaceSettingView } from './remote';
+import { useWorkspaceAudit } from '../audit/query';
+import { useRuntimeCapabilities, useWorkspaceSettingWrite, useWorkspaceSettings } from './query';
 import { REAL_IDENTITY } from '../../real/identity'
 import { utcMinuteOr } from '../../real/format'
 import { go } from '../../router/navigate'
@@ -79,7 +77,7 @@ function OrganizationExclusion(): ReactElement {
 }
 
 export function CapabilitiesSection(): ReactElement {
-  const capabilities = useQuery({ queryKey: ['real', 'capabilities'], queryFn: () => fetchCapabilities() })
+  const capabilities = useRuntimeCapabilities()
   if (capabilities.isPending) return <Card><CardHeader title="Integrations" /><div className="p-4"><Skeleton className="h-32" /></div></Card>
   if (capabilities.isError || !capabilities.data) {
     return <Empty icon={SettingsIcon} title="The capability document is unavailable" action={<Button onClick={() => void capabilities.refetch()}>Retry</Button>}>
@@ -117,26 +115,11 @@ export function CapabilitiesSection(): ReactElement {
 }
 
 export function WorkspaceSettingsSection({ kind }: { kind: 'policy' | 'retention' }): ReactElement {
-  const client = useQueryClient()
-  const settings = useQuery({ queryKey: ['real', 'workspace-settings'], queryFn: () => fetchWorkspaceSettings() })
+  const settings = useWorkspaceSettings()
   const [draft, setDraft] = useState<Record<string, { value: string; reason: string }>>({})
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-
-  const save = useMutation({
-    mutationFn: (input: { setting: WorkspaceSettingView; value: number; reason: string }) =>
-      saveWorkspaceSetting(input.setting.key, { value: input.value, expectedVersion: input.setting.version, reason: input.reason }),
-    onSuccess: (_data, input) => {
-      setError(null)
-      setNotice(`${input.setting.key} saved; the new version applies to its consumers immediately.`)
-      setDraft((d) => ({ ...d, [input.setting.key]: { value: '', reason: '' } }))
-      void client.invalidateQueries({ queryKey: ['real', 'workspace-settings'] })
-    },
-    onError: (err) => {
-      setNotice(null)
-      setError(err instanceof Error ? err.message : 'The settings write was refused.')
-    },
-  })
+  const save = useWorkspaceSettingWrite()
 
   if (settings.isPending) return <Card><CardHeader title={kind === 'policy' ? 'Policies' : 'Retention'} /><div className="p-4"><Skeleton className="h-32" /></div></Card>
   if (settings.isError || !settings.data) {
@@ -178,7 +161,17 @@ export function WorkspaceSettingsSection({ kind }: { kind: 'policy' | 'retention
                 onSubmit={(e) => {
                   e.preventDefault()
                   if (!Number.isInteger(parsed) || !form.reason.trim()) return
-                  save.mutate({ setting: s, value: parsed, reason: form.reason.trim() })
+                  save.mutate({ key: s.key, value: parsed, expectedVersion: s.version, reason: form.reason.trim() }, {
+                    onSuccess: () => {
+                      setError(null)
+                      setNotice(`${s.key} saved; the new version applies to its consumers immediately.`)
+                      setDraft((d) => ({ ...d, [s.key]: { value: '', reason: '' } }))
+                    },
+                    onError: (err) => {
+                      setNotice(null)
+                      setError(err instanceof Error ? err.message : 'The settings write was refused.')
+                    },
+                  })
                 }}
               >
                 <label className="grid gap-1 text-xs text-muted" htmlFor={`value-${s.key}`}>
@@ -205,10 +198,7 @@ export function WorkspaceSettingsSection({ kind }: { kind: 'policy' | 'retention
 export function WorkspaceAuditSection(): ReactElement {
   const [action, setAction] = useState('')
   const [q, setQ] = useState('')
-  const audit = useQuery({
-    queryKey: ['real', 'workspace-audit', action, q],
-    queryFn: () => fetchWorkspaceAudit({ action: action || undefined, q: q || undefined }),
-  })
+  const audit = useWorkspaceAudit({ action: action || undefined, q: q || undefined })
   return (
     <Card>
       <CardHeader title="Workspace audit" sub="Consequential actions recorded by this server (web records and vault lifecycle); actors, scopes and timestamps come from the records — never fabricated" />

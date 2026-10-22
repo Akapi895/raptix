@@ -380,6 +380,23 @@ export function setPolicyEnabled(authority: DbAuthority, clock: Clock, ctx: Requ
  * Every control stays clearly simulated — saving or deleting records
  * configuration/audit rows and never destroys seeded data.
  */
+/** A workspace setting: a numeric value the server applies to its consumers, versioned for optimistic writes. */
+export interface WorkspaceSetting {
+  key: string
+  kind: string
+  value: number
+  version: number
+  updatedBy: string | null
+  updatedAt: string | null
+  consumer: string | null
+  enforcement: string
+  description: string
+}
+
+export interface WorkspaceSettingsRead { settings: WorkspaceSetting[] }
+
+export interface WorkspaceSettingWriteInput { value: number; expectedVersion: number; reason: string }
+
 export interface RetentionRead {
   policies: Retention[]
   /** Retention ids currently under a legal hold (blocks scheduled deletion). */
@@ -581,6 +598,9 @@ export interface SettingsService {
   updateRetention(ctx: RequestContext, id: string, patch: RetentionPatch): Promise<ServiceResult<Retention>>
   setRetentionHold(ctx: RequestContext, id: string, held: boolean, reason: string): Promise<ServiceResult<Retention>>
   deleteRetentionData(ctx: RequestContext, id: string, reason: string): Promise<ServiceResult<Retention>>
+  /* Workspace settings are real numeric configuration; the simulated store keeps policies and retention as records instead. */
+  getWorkspaceSettings(ctx: RequestContext): Promise<ServiceResult<WorkspaceSettingsRead>>
+  saveWorkspaceSetting(ctx: RequestContext, key: string, input: WorkspaceSettingWriteInput): Promise<ServiceResult<WorkspaceSetting>>
 }
 
 export function createSettingsService(
@@ -605,5 +625,7 @@ export function createSettingsService(
     updateRetention: (ctx, id, patch) => Promise.resolve(updateRetention(authority, clock, ctx, id, patch)),
     setRetentionHold: (ctx, id, held, reason) => Promise.resolve(setRetentionHold(authority, clock, ctx, id, held, reason)),
     deleteRetentionData: (ctx, id, reason) => Promise.resolve(deleteRetentionData(authority, clock, ctx, id, reason)),
+    getWorkspaceSettings: () => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: 'The simulated store keeps policies and retention as records, not workspace settings.' } }),
+    saveWorkspaceSetting: () => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: 'The simulated store keeps policies and retention as records, not workspace settings.' } }),
   }
 }

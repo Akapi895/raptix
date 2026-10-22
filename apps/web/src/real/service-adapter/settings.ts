@@ -2,6 +2,7 @@ import type { ServiceResult } from '../../domain/service'
 import type { Audit } from '../../domain/entities'
 import type { AuditQuery, AuditRead, SettingsService } from '../../features/settings/service'
 import { fetchWorkspaceAudit, type AuditEntryView } from '../../features/audit/remote';
+import { fetchWorkspaceSettings, saveWorkspaceSetting as writeWorkspaceSetting } from '../../features/settings/remote';
 import { guarded } from '../../platform/adapter-shared'
 import { unavailable } from '../../platform/adapter-stub'
 
@@ -66,5 +67,10 @@ export function createRealSettingsService(): SettingsService {
     updateRetention: () => unmodelled(NOT_MODELLED.write),
     setRetentionHold: () => unmodelled(NOT_MODELLED.holds),
     deleteRetentionData: () => unmodelled(NOT_MODELLED.holds),
+    getWorkspaceSettings: () => guarded(async () => {
+      const view = await fetchWorkspaceSettings()
+      return { ok: true, data: { settings: view.settings } }
+    }),
+    saveWorkspaceSetting: (_ctx, key, input) => guarded(async () => ({ ok: true, data: await writeWorkspaceSetting(key, input) })),
   }
 }

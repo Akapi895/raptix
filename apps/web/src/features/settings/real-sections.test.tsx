@@ -13,25 +13,21 @@ import type { ReactElement, ReactNode } from 'react'
 const fetchWorkspaceSettings = vi.fn()
 const saveWorkspaceSetting = vi.fn()
 const fetchWorkspaceAudit = vi.fn()
+const fetchCapabilities = vi.fn()
 
-vi.mock('./remote', () => ({
-  fetchWorkspaceSettings: (...a: unknown[]) => fetchWorkspaceSettings(...a),
-  saveWorkspaceSetting: (...a: unknown[]) => saveWorkspaceSetting(...a),
-  fetchWorkspaceAudit: (...a: unknown[]) => fetchWorkspaceAudit(...a),
-  fetchCapabilities: vi.fn(),
-}))
-vi.mock('../audit/remote', () => ({
-  fetchWorkspaceSettings: (...a: unknown[]) => fetchWorkspaceSettings(...a),
-  saveWorkspaceSetting: (...a: unknown[]) => saveWorkspaceSetting(...a),
-  fetchWorkspaceAudit: (...a: unknown[]) => fetchWorkspaceAudit(...a),
-  fetchCapabilities: vi.fn(),
-}))
-vi.mock('../../platform/capabilities', () => ({
-  fetchWorkspaceSettings: (...a: unknown[]) => fetchWorkspaceSettings(...a),
-  saveWorkspaceSetting: (...a: unknown[]) => saveWorkspaceSetting(...a),
-  fetchWorkspaceAudit: (...a: unknown[]) => fetchWorkspaceAudit(...a),
-  fetchCapabilities: vi.fn(),
-}))
+// The sections read through the feature hooks; the hooks are bound to the endpoint fakes here, so the section logic is what runs.
+vi.mock('./query', async () => {
+  const { useMutation, useQuery } = await import('@tanstack/react-query')
+  return {
+    useWorkspaceSettings: () => useQuery({ queryKey: ['test', 'workspace-settings'], queryFn: () => fetchWorkspaceSettings() }),
+    useWorkspaceSettingWrite: () => useMutation({ mutationFn: (input: { key: string; value: number; expectedVersion: number; reason: string }) => saveWorkspaceSetting(input.key, { value: input.value, expectedVersion: input.expectedVersion, reason: input.reason }) }),
+    useRuntimeCapabilities: () => useQuery({ queryKey: ['test', 'capabilities'], queryFn: () => fetchCapabilities() }),
+  }
+})
+vi.mock('../audit/query', async () => {
+  const { useQuery } = await import('@tanstack/react-query')
+  return { useWorkspaceAudit: (query: unknown) => useQuery({ queryKey: ["test", "audit", JSON.stringify(query)], queryFn: () => fetchWorkspaceAudit(query) }) }
+})
 
 const SETTINGS_VIEW = {
   settings: [
