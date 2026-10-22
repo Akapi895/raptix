@@ -130,6 +130,54 @@ Thứ tự slice theo design doc và độ phụ thuộc: S-A → S-B → S-C (d
 | 3 | Đang làm, chưa slice nào hoàn tất | ce789b22 (S-J: screens/demo → demo/) | Chặn ở route smoke real mode: cần RAPTIX_VERIFY_USER/PASSWORD và API nối DB raptix-verify-pg4 (cổng 55444). Mock 55/55 sau mỗi bước. Các slice S-A … S-I còn lại |
 | 4 | Chưa bắt đầu | — | |
 
+### 8.1 Phase 2: chia file đã hoàn thành
+
+- `real/api.ts` đã chia về `features/<x>/remote.ts` và `platform/` (`be2c2f61`).
+- `data.ts` tách thành `domain/catalog.ts` và `demo/seed.ts` (`d35bb8c7`).
+- `demo-clock`, `database`, `features/demo/runtime` và `auth/persona` về `demo/` (`display-clock`, `authority`, `runtime`, `persona`). Service factory tách thành `domain/console-services.ts` (kiểu) và `demo/services.ts` (factory) (`793515a5`).
+- Mock service đóng dấu thời gian qua clock của authority; `features/` không còn import `demo-clock` (`cbf06696`).
+- `screens/demo/` (route chỉ có ở mock: `states`, `scenarios`, `workspaces`) về `demo/` (`ce789b22`).
+
+### 8.2 Phase 2: ownership còn đang làm
+
+Số vi phạm theo `check:boundaries`, khóa tại `tools/boundaries-baseline.json` (tổng 866):
+
+| Rule | Số | Ý nghĩa |
+| --- | --- | --- |
+| production-imports-demo | 52 | import giá trị từ `demo/` ngoài ngoại lệ |
+| production-type-imports-demo | 77 | import kiểu từ `demo/`; chuyển kiểu sang `domain/` |
+| production-imports-composition | 46 | code ngoài composition root import `state/services` |
+| presentation-imports-real | 63 | presentation import `real/` |
+| presentation-imports-adapter | 33 | presentation import `remote.ts` hoặc `mock.ts` |
+| presentation-mock-plumbing | 135 | presentation dùng `useServices`, `MockClock`, `.authority` |
+| real-imports-features | 112 | `real/` import `features/` |
+| deep-feature-import | 348 | import sâu vào feature khác |
+
+Ownership chưa đóng:
+- `features/*/service.ts` còn chứa implementation mock (ví dụ `reports/service.ts`, 926 dòng): port và mock chưa tách. 30 feature còn import `demo/`.
+- Adapter còn ở `real/service-adapter/` (36 file), chưa về `features/<x>/remote.ts`.
+- Presentation còn ở `screens/` (42 file) và `real/screens/` (33 file), chưa gộp theo route.
+- `auth/identity.ts` (identity persona) và `auth/membership.ts` chưa có owner.
+
+Phase 2 đóng ở mức chia file. Ownership đóng theo slice trong phase 3.
+
+### 8.3 Ngoại lệ và quy tắc import (có hiệu lực từ commit này)
+
+- **Composition root** (`state/services.tsx`, `App.tsx`, `main.tsx`): chọn mock hoặc real; được import `demo/` lúc chạy. Không module nào khác trong production được import `state/services`.
+- **Demo side** (`demo/**`, `features/<x>/mock.ts`): được import `demo/` và mock; không import `remote.ts` hay `real/`.
+- **Adapter và platform** (`features/<x>/remote.ts`, `platform/**`): không import `demo/`, mock hay `state/services`.
+- **Presentation** (`features/<x>/views/`, `screens/`, `shell/`): chỉ import `index.ts` của feature, hoặc `service.ts` (port) để lấy kiểu; không import `remote.ts`, `mock.ts`, `real/` hay `demo/`.
+- **Import kiểu từ `demo/` trong production** được đếm riêng (`production-type-imports-demo`). Không cấm ngay, nhưng phải chuyển sang `domain/`. Import giá trị từ `demo/` trong production đếm là `production-imports-demo`.
+- **Route chỉ có demo trong real mode** (`states`, `scenarios`, `workspaces`) hiển thị panel "Not connected in real mode" (`RealNotIntegrated`, role `status`). Không mount màn hình demo, không dùng dữ liệu demo (ADR-0068). Route smoke kiểm tra đúng marker này.
+
+### 8.4 Gate trước khi mở rộng migration
+
+- `npm run typecheck`, `npm run lint` (5 lỗi cũ, không tăng), `npm run test`, `npm run build`.
+- `npm run check:boundaries`: ratchet. Thất bại khi một rule vượt baseline. `npm run check:boundaries:write` khóa mức giảm đã được xem xét.
+- `npm run verify:routes`: `tools/verify/route-smoke.mjs` kiểm tra từng route theo kỳ vọng riêng cho mỗi mode (heading của `main` hoặc text hiển thị). Mock đăng nhập một persona; real đăng nhập bằng form và xác nhận `/api/auth/session`. Lỗi ngoài `tools/verify/baseline.json` làm exit khác 0.
+- `tools/verify/stack.mjs`: dựng stack cách ly (PostgreSQL container riêng, mật khẩu ngẫu nhiên, API từ source, Vite, owner bootstrap một lần, fixture qua API), chạy smoke, rồi dừng và xóa mọi thứ đã tạo.
+- Phần chưa kiểm chứng được ghi trong `baseline.json` kèm lý do. Không tính là parity.
+
 ## 9. Baseline ghi nhận ở phase 0 (HEAD fb71c24c)
 
 - **Route smoke** (`npm run verify:routes`): mock 55/55 không lỗi. Real 53/55. Hai route lỗi là `asset-new` và `asset-scope`: màn hình gọi `useServices()` nên ném "Mock console services are unavailable in real mode". Đây là gap có sẵn, xử lý trong slice S-B.

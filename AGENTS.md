@@ -31,8 +31,8 @@ Runtime paths below are relative to `packages/raptix/raptix/`:
 
 ## Web mode and data authority
 
-- Root `npm run dev` serves the UI at `127.0.0.1:5273`; standalone mock mode needs no backend/DB/Docker. `apps/web/src/real/mode.ts` resolves `?dataMode=` > localStorage `raptix.dataMode` > `VITE_DATA_MODE` > `mock`; switching reloads providers/caches. Explicitly select real mode when assessing integration.
-- Mock authority is `apps/web/src/domain/service-factory.ts`; real transport is `src/real/` and must never fall back to demo data. Runtime checkpoints own thread/run state; Prisma owns Web business records/ownership; workspace artifacts and Neo4j retain evidence/knowledge authority.
+- Root `npm run dev` serves the UI at `127.0.0.1:5273`; standalone mock mode needs no backend/DB/Docker. `apps/web/src/state/mode.ts` resolves `?dataMode=` > localStorage `raptix.dataMode` > `VITE_DATA_MODE` > `mock`; switching reloads providers/caches. Explicitly select real mode when assessing integration.
+- Mock authority is `apps/web/src/demo/` (`authority.ts`, `services.ts`); real transport is `apps/web/src/platform/` plus each feature's `remote.ts`. Real mode must never fall back to demo data (ADR-0068, ADR-0096). Runtime checkpoints own thread/run state; Prisma owns Web business records/ownership; workspace artifacts and Neo4j retain evidence/knowledge authority.
 - Database-backed services require `DATABASE_URL` and `WORKSPACE_PATH`. Node startup neither generates Prisma clients nor migrates; API container startup runs `prisma migrate deploy`.
 
 ## Setup and focused checks
