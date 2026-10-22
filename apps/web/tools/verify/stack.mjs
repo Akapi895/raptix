@@ -180,6 +180,14 @@ function runAnalysisClick(env, manifestFile, mode, appUrl) {
   return result.status;
 }
 
+function runGateClick(env, manifestFile) {
+  const clickOut = path.join(out, 'flows-runtime-gate-click.json');
+  const result = spawnSync(process.execPath, [path.join(here, 'flows', 'runtime-gate-click.mjs'), '--app', env.RAPTIX_VERIFY_APP, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  writeFileSync(path.join(out, 'flows-runtime-gate-click.log'), `${result.stdout}${result.stderr}`);
+  process.stdout.write(result.stdout);
+  return result.status;
+}
+
 function runFlows(env, manifestFile) {
   const statuses = [runFlow(env, manifestFile, 'reports.mjs', 'flows-reports'), runFlow(env, manifestFile, 'assets-library.mjs', 'flows-assets-library')];
   return statuses.every((code) => code === 0) ? 0 : 1;
@@ -282,6 +290,7 @@ try {
     statuses.push(runSettingsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
     statuses.push(runProjectsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
     statuses.push(runAnalysisClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
+    statuses.push(runGateClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest));
     statuses.push(runFlows({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest));
   }
   status = statuses.every((code) => code === 0) ? 0 : 1;
