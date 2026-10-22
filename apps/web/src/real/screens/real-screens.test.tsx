@@ -9,7 +9,7 @@ vi.stubEnv('VITE_DATA_MODE', 'real')
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
 const { RealModeProvider } = await import('../bootstrap')
-const { RealPortfolio } = await import('../../features/projects/views/portfolio-page')
+const { ProjectPortfolio } = await import('../../features/projects/views/portfolio-page')
 const { RealProjectCreateDialog, RealProjectNewRoute } = await import('../../features/projects/views/create-page')
 const { useCreateProjectDialog, showCreateProject } = await import('../../features/projects/create-dialog-state')
 const { RealProjectDetail } = await import('./detail')
@@ -65,10 +65,10 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('RealPortfolio', () => {
+describe('ProjectPortfolio', () => {
   it('renders the real engagements, raw statuses and the unavailable marker for API-absent columns', async () => {
     stubApi()
-    ui(<RealPortfolio />)
+    ui(<ProjectPortfolio />)
     await screen.findByText('Q1 External Assessment')
     expect(screen.getByText(/eng-8f3c92a1/)).toBeTruthy()
     expect(screen.getByText(/q1-external-assessment/)).toBeTruthy()
@@ -78,9 +78,9 @@ describe('RealPortfolio', () => {
 
   it('shows the honest empty state when the server has no engagements', async () => {
     stubApi([])
-    ui(<RealPortfolio />)
-    expect(await screen.findByText('No engagements yet')).toBeTruthy()
-    expect(screen.getByText(/Create the first engagement/)).toBeTruthy()
+    ui(<ProjectPortfolio />)
+    expect(await screen.findByText('No projects yet')).toBeTruthy()
+    expect(screen.getByText(/Create the first project/)).toBeTruthy()
   })
 })
 
@@ -113,11 +113,12 @@ describe('RealProjectCreateDialog', { timeout: 15000 }, () => {
     openCreate()
     const user = userEvent.setup()
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1 External Assessment')
-    await user.type(screen.getByPlaceholderText('https://target.example.test or 10.20.0.0/24'), 'https://target.example.test')
-    await user.type(screen.getByPlaceholderText(/Business context, known constraints/), 'Authorized external assessment of the public surface with a documented scope.')
-    await user.click(screen.getByRole('checkbox'))
-    await user.click(screen.getByRole('button', { name: /Create Engagement/ }))
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/engagements', expect.objectContaining({ method: 'POST' })))
+    // The form renders as the popup opens; each field is awaited so a slow render under a parallel run is not read as missing.
+    await user.type(await screen.findByPlaceholderText('https://target.example.test or 10.20.0.0/24', undefined, { timeout: 5000 }), 'https://target.example.test')
+    await user.type(await screen.findByPlaceholderText(/Business context, known constraints/, undefined, { timeout: 5000 }), 'Authorized external assessment of the public surface with a documented scope.')
+    await user.click(await screen.findByRole('checkbox', undefined, { timeout: 5000 }))
+    await user.click(await screen.findByRole('button', { name: /Create Engagement/ }, { timeout: 5000 }))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/engagements', expect.objectContaining({ method: 'POST' })), { timeout: 5000 })
     const init = (fetchMock.mock.calls.find((c) => String(c[0]).endsWith('/api/engagements') && (c[1] as RequestInit).method === 'POST')?.[1] ?? {}) as RequestInit
     const body = JSON.parse(String(init.body)) as Record<string, unknown>
     expect(body).toEqual({

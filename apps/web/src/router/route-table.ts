@@ -54,4 +54,4 @@ export const FEATURE_ROUTE_SURFACES: Record<string, RouteSurface> = {
 }
 
 /** Route keys whose mock screen is the operational UI in both modes (plan 2026-10-16 screens unification); `router/host.tsx` renders them before `REAL_PAGES`. */
-export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['overview', 'findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'reports', 'report-new', 'report', 'report-preview', 'report-review', 'assets', 'asset', 'asset-new', 'asset-scope', 'playbooks', 'playbook', 'technique', 'playbook-review', 'settings'])
+export const MIGRATED_ROUTES: ReadonlySet<string> = new Set(['overview', 'projects', 'findings', 'finding', 'finding-new', 'evidence', 'evidence-inspector', 'reports', 'report-new', 'report', 'report-preview', 'report-review', 'assets', 'asset', 'asset-new', 'asset-scope', 'playbooks', 'playbook', 'technique', 'playbook-review', 'settings'])

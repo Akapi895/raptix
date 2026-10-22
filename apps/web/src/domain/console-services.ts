@@ -14,7 +14,8 @@ import type { AgentService } from '../features/agents/service';
 import type { ReportService } from '../features/reports/service';
 import type { BranchService } from '../features/branches/service';
 import type { LibraryService } from '../features/library';
-import type { OverviewService } from '../features/overview/service';
+import type { OverviewService } from '../features/overview';
+import type { ProjectsService } from '../features/projects';
 import type { AnalysisService } from '../features/analysis/service';
 import type { SettingsService } from '../features/settings/service';
 import type { AssetService } from '../features/assets';
@@ -52,7 +53,7 @@ export interface ProjectService extends EntityReader<Project> {
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
  * `authority`, `clock` and `schedule` is deliberately absent.
  */
-export type FeatureServices = Pick<ConsoleServices, 'overview' | 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider' | 'runtimeOperations' | 'noticeCenter'>
+export type FeatureServices = Pick<ConsoleServices, 'overview' | 'projects' | 'findings' | 'reports' | 'assets' | 'library' | 'scope' | 'audit' | 'team' | 'settings' | 'vault' | 'closure' | 'observedAnalysis' | 'planning' | 'governance' | 'c2Provider' | 'runtimeOperations' | 'noticeCenter'>
 
 export interface ConsoleServices {
   identity: IdentityService
@@ -89,6 +90,8 @@ export interface ConsoleServices {
   /** Typed tradecraft library reads + revision-review writes (tickets 52–53 — feature-local implementation). */
   /** Global overview reads for the actor across accessible projects (migration Mốc 2, feature-local implementation). */
   overview(actor: ActorRef): OverviewService
+  /** Project list reads for the actor (migration Mốc 2, feature-local implementation). */
+  projects(actor: ActorRef): ProjectsService
   library(actor: ActorRef, projectId: string): LibraryService
   /** Typed ATT&CK coverage + detection heatmap read handlers (ticket 54 — feature-local implementation). */
   analysis(actor: ActorRef, projectId: string): AnalysisService
