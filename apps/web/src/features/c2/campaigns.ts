@@ -4,7 +4,7 @@
  * and the caller owns the state it shows for that error.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createCampaign, fetchCampaignCapabilities, fetchCampaigns, reconcileCampaignJob, runCampaignJob } from './remote'
+import { createCampaign, fetchCampaignCapabilities, fetchCampaigns, reconcileCampaignJob, runCampaignJob } from './api'
 
 type CampaignDraft = Parameters<typeof createCampaign>[1]
 

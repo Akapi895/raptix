@@ -6,8 +6,8 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/c2/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/c2/remote')>()
+vi.mock('../../features/c2/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/c2/api')>()
   return {
     ...actual,
     fetchC2Sessions: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock('../../features/c2/remote', async (importOriginal) => {
   }
 })
 
-const api_c2 = await import('../../features/c2/remote');
+const api_c2 = await import('../../features/c2/api');
 const { ApiTransportError } = await import('../../platform/transport')
 const { createRealC2ProviderService } = await import('./c2-provider')
 
