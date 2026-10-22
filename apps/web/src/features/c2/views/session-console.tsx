@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
 import { Ban, Bot, Clock, Copy, Eye, FileText, Loader2, Lock, OctagonX, Radio, ShieldCheck, TerminalSquare, Unplug } from 'lucide-react'
-import { useServices } from '../state/services'
-import { go, useRoute } from '../router/navigate'
-import { useCan, useMe } from '../state/console'
-import { useProjectStore, useToastStore } from '../state/stores'
-import { useSessionStore } from '../state/session'
-import { emergencyStop, terminateSession } from '../demo/runtime'
-import { recordAudit } from '../features/audit/service'
-import { readSessionProject } from '../features/c2/projection'
-import type { Session } from '../domain/entities'
-import { C2ReadError, useC2GrantWatch, useC2Session, useC2Sessions } from '../features/c2/query'
-import { hhmm } from '../demo/display-clock'
-import type { C2AccessInfo } from '../features/c2/service'
-import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui/index'
-import { useResourceScope } from '../state/resource-scope'
+import { go, useRoute } from '../../../router/navigate'
+import { useCan, useMe } from '../../../state/console'
+import { useProjectStore, useToastStore } from '../../../state/stores'
+import { useSessionStore } from '../../../state/session'
+import type { Session } from '../../../domain/entities'
+import { C2ReadError, useC2GrantWatch, useC2MockConsole, useC2Session, useC2Sessions } from '../query'
+import type { C2AccessInfo } from '../service'
+import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../../../ui/index'
+import { useResourceScope } from '../../../state/resource-scope'
 
 // eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export const SELECT_PROJECT = 'Select a project to continue'
@@ -34,8 +29,7 @@ export function minutesUntil(exp: string, nowHHMM: string) {
 
 /* ───────── Request access drawer (C2-08) ───────── */
 export function RequestAccessDrawer({ session, open, onClose, initialMode = 'interactive' }: { session: Session; open: boolean; onClose: () => void; initialMode?: 'read-only' | 'interactive' }): ReactElement {
-  const services = useServices()
-  const me = useMe()
+  const c2m = useC2MockConsole()
   const detail = useC2Session(session.id)
   const toast = useToastStore((s) => s.toast)
   const [mode, setMode] = useState<'read-only' | 'interactive'>(initialMode)
@@ -50,7 +44,7 @@ export function RequestAccessDrawer({ session, open, onClose, initialMode = 'int
   const submit = async () => {
     setTouched(true)
     if (!ok) return
-    const r = await services.c2({ id: me.name, role: me.role }, session.projectId).requestAccess({ actor: { id: me.name, role: me.role }, projectId: session.projectId, corr: 'legacy' }, { sessionId: session.id, mode, duration, reason: reason.trim() })
+    const r = await c2m.requestAccess(session.projectId, { sessionId: session.id, mode, duration, reason: reason.trim() })
     if (!r.ok) { toast(r.failure.message || 'The request was refused.', 'bad'); return }
     toast(`Request ${r.data.requestId} submitted — the approver has been notified.`)
     onClose()
@@ -130,6 +124,7 @@ export const setFailNext = (v: boolean) => setSim({ failNext: v })
 
 // eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export function useTerminate(): (s: Session) => void {
+  const c2m = useC2MockConsole()
   const watch = useC2GrantWatch()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
@@ -148,25 +143,25 @@ export function useTerminate(): (s: Session) => void {
           </ul>
         </div>
       ),
-      onConfirm: (reason) => { terminateSession(s.id, reason); toast(`Termination of ${s.id} requested — waiting for acknowledgement.`, 'warn') },
+      onConfirm: (reason) => { c2m.demo.terminateSession(s.id, reason); toast(`Termination of ${s.id} requested — waiting for acknowledgement.`, 'warn') },
     })
   }
 }
 
 // eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export function useRevoke(): ((s: Session, user: string) => void) & { retry: (s: Session, user: string) => void } {
-  const services = useServices()
+  const c2m = useC2MockConsole()
   const me = useMe()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
   const perform = async (s: Session, user: string, reason: string) => {
     if (sim.failNext) {
       setSim({ failNext: false, fails: [...sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)), { sessionId: s.id, user, reason }] })
-      recordAudit(services, { actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, { action: 'Revocation failed', obj: s.id, result: 'Failed', reason: 'Revoke not acknowledged — grant may still be active' })
+      c2m.audit(s.projectId, { action: 'Revocation failed', obj: s.id, result: 'Failed', reason: 'Revoke not acknowledged — grant may still be active' })
       toast(`Revocation failed — ${user} may still have access to ${s.id}.`, 'bad')
       return
     }
-    const res = await services.c2({ id: me.name, role: me.role }, s.projectId).revokeGrant({ actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, { sessionId: s.id, user, reason })
+    const res = await c2m.revokeGrant(s.projectId, { sessionId: s.id, user, reason })
     if (!res.ok) { toast(res.failure.message || 'The revocation was refused.', 'bad'); return }
     setSim({ fails: sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)) })
     toast(`Access revoked for ${user}.`, 'warn')
@@ -329,7 +324,7 @@ const ACTIONS: Record<Session['kind'], string[]> = {
 const BUSY_MS = 2500
 
 export function Console(): ReactElement {
-  const services = useServices()
+  const c2m = useC2MockConsole()
   const me = useMe()
   const can = useCan()
   const route = useRoute()
@@ -357,18 +352,16 @@ export function Console(): ReactElement {
      session lookup resolves from the one authority at call time (the store's
      dbRef semantics) and the typed result bridges back to the legacy Res. */
   const command = async (sessionId: string, label: string) => {
-    const actor = { id: me.name, role: me.role }
-    const projectId = readSessionProject(services, actor, sessionId)
+    const projectId = c2m.projectOfSession(sessionId)
     if (!projectId) return { ok: false as const, error: `Session ${sessionId} does not exist.` }
-    const res = await services.c2(actor, projectId).sendCommand({ actor, projectId, corr: 'legacy' }, { sessionId, label })
+    const res = await c2m.sendCommand(projectId, { sessionId, label })
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
   /* The legacy raw `A.expireGrant` entry, mirrored — the idempotent
      single-grant expiry through the canonical transaction. */
   const expireGrant = (sessionId: string, user: string) => {
-    const actor = { id: me.name, role: me.role }
-    const projectId = readSessionProject(services, actor, sessionId) ?? 'all'
-    return services.c2(actor, projectId).expireGrant({ actor, projectId, corr: 'legacy' }, sessionId, user)
+    const projectId = c2m.projectOfSession(sessionId) ?? 'all'
+    return c2m.expireGrant(projectId, sessionId, user)
   }
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading console"><PageSkeleton /></div>
   if (detail.isError || !detail.data) {
@@ -379,7 +372,7 @@ export function Console(): ReactElement {
   if (perm === 'none') return <><PageHeader title={s.id} back={back} /><Empty icon={Lock} title="Console not available" action={<Button onClick={() => go('c2-session', { id: s.id })}>View session metadata</Button>}>Your role or project membership does not permit viewing this console.</Empty></>
 
   const grant = read.myGrant?.perm === 'interactive' ? read.myGrant : undefined
-  const left = grant ? minutesUntil(grant.expires, hhmm()) : 0
+  const left = grant ? minutesUntil(grant.expires, c2m.display.hhmm()) : 0
   const asset = read.asset
   const project = read.project
   const hasExpiredLine = !grant && s.transcript.some((l) => l.text.includes(`grant for ${me.name} expired`))

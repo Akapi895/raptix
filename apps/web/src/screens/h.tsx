@@ -8,7 +8,7 @@ import { useRenewalSessions, readRequestProject } from '../features/c2/projectio
 import { useProjectStore, useToastStore } from '../state/stores'
 import { decideSessionRequestTransaction } from '../features/c2/grants'
 import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Gated, IdLink, Kpi, Mono, PageHeader, PageSkeleton, Person, Progress, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Pager, DemoTag, Modal, cx } from '../ui/index'
-import { AccessChip, Console, RequestAccessDrawer, SELECT_PROJECT, SessionDetail, kindLabel, useGrantWatch, useTerminate, MIN_REASON } from './h-session'
+import { AccessChip, Console, RequestAccessDrawer, SELECT_PROJECT, SessionDetail, kindLabel, useGrantWatch, useTerminate, MIN_REASON } from '../features/c2/views/session-console'
 import { C2ReadError, useC2Audit, useC2Channel, useC2Overview, useC2Requests, useC2Sessions } from '../features/c2/query'
 import type { C2AccessKey, C2AuditView, C2NodeRow, C2SessionRow } from '../features/c2/service'
 import type { Channel, Session, SessionRequest } from '../domain/entities'
