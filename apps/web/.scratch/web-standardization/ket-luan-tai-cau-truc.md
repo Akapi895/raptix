@@ -127,7 +127,7 @@ Thứ tự slice theo design doc và độ phụ thuộc: S-A → S-B → S-C (d
 | 0 | Hoàn thành | 18c6732c | ADR-0096 Accepted; ADR-0084 ghi nhận điểm 2 được thay thế; gate route sửa; `check:boundaries` và `verify:routes` thêm vào |
 | 1 | Hoàn thành | 561de192, bb48df69 | Mode, policy, dashboard, AI card và ui/shell/safety về owner; Findings và fan-out có module riêng; các unavailable service dựng qua một helper |
 | 2 | Hoàn thành | be2c2f61, d35bb8c7, 793515a5, cbf06696 | real/api.ts chia về features/<x>/remote.ts và platform/; data.ts tách thành domain/catalog.ts và demo/seed.ts; demo/ gồm display-clock, authority, runtime, persona, services; service factory tách thành domain/console-services.ts và demo/services.ts; mock service đóng dấu thời gian qua clock của authority. check:boundaries: 842 (từ 808 ở phase 0), tăng vì adapter import remote.ts theo đường dẫn, xử lý ở phase 3 |
-| 3 | Đang làm: S-A Reports đạt parity theo checklist (còn phần mock-only); S-B chưa bắt đầu | 031f8a19, c9454b10, d0d53476, 794f808b (S-A); ce789b22 (S-J) | Chi tiết ở mục 8.5. Chặn của S-B: hai lỗi real đã xác định, cần thao tác port cho scope và tách kiểm tra import khỏi mock |
+| 3 | Đang làm: S-A Reports đạt parity theo checklist (còn phần mock-only); S-B: hai lỗi real đã đóng, phần còn lại của slice chưa làm | 031f8a19, c9454b10, d0d53476, 794f808b (S-A); 811dbc5f (S-B); ce789b22 (S-J) | Chi tiết ở mục 8.5 |
 | 4 | Chưa bắt đầu | — | |
 
 ### 8.1 Phase 2: chia file đã hoàn thành
@@ -187,11 +187,13 @@ Phase 2 đóng ở mức chia file. Ownership đóng theo slice trong phase 3.
 - Chưa đạt: `SimulatedTemplates` trong `features/reports/views/list.tsx` (chi tiết mẫu, phê duyệt, dùng mẫu, nhật ký kiểm toán mô phỏng) chỉ có ở mock. Port chưa có thao tác tương ứng và real không có; cần thêm thao tác port trước khi hợp nhất. View này còn một `useServices()`. `screens/f.tsx` còn giữ route settings đến khi S-C.
 - Chưa kiểm chứng: thao tác bằng giao diện (click-through). Route smoke xác nhận màn hình hiển thị; checklist xác nhận thao tác qua adapter.
 
-**S-B Assets/Library: chưa bắt đầu; nguyên nhân hai lỗi real đã xác định.**
-- `asset-new`: AssetNew → `useAssetImportRead` (`features/assets/import-read.ts`) → `useServiceProjection` → `useServices()` của mock. Cần tách kiểm tra trùng và xác thực dòng khỏi dữ liệu mock, lấy định danh từ `useAssetList` ở real.
-- `asset-scope`: AssetScope gọi `useServices()` (`screens/d-assets.tsx`) để tạo giao dịch phê duyệt mock. Cần thao tác port cho yêu cầu đổi phạm vi: mock thực hiện, real trả thông báo chuyển sang Scope revisions.
+**S-B Assets/Library: hai lỗi real đã đóng (`811dbc5f`); phần còn lại của slice chưa làm.**
+- `asset-new`: đạt ở real và mock. Kiểm tra trùng và xác thực dòng lấy định danh từ `useAssetList` (`features/assets/import-read.ts`), không còn đi qua `useServices()`.
+- `asset-scope`: đạt ở real và mock. `AssetService` có `capabilities` và `requestScopeApproval`. Mock chạy giao dịch phê duyệt; real trả `unavailable` và `AssetScope` rẽ nhánh theo capability, không theo chế độ dữ liệu. Nhánh mock trước đây báo "Scope approval requested." dù giao dịch bị từ chối; nay hiện lỗi của giao dịch.
+- Bằng chứng: route smoke `asset-new`, `asset-scope` đạt ở mock (`stack-asset-mock`) và real (`stack-asset3`), không có console error; test đơn vị cho thao tác port mới trong `writes.test.tsx`; tsc sạch; eslint trên các file đã sửa sạch; vitest 13 file, 180 test.
+- Chưa làm: click-through yêu cầu phạm vi trên giao diện; chuyển `real/service-adapter/assets.ts` vào `features/assets/remote.ts`; chuyển mock sang `features/assets/mock.ts`; màn hình sang `features/assets/views`; checklist cho Library; các route playbook/technique real còn thiếu fixture.
 
-**Gate:** baseline khai báo 17 mục (15 route real chưa có fixture, 2 lỗi S-B). `check:boundaries`: 834 vi phạm, từ 866 ở commit gate.
+**Gate:** baseline khai báo 15 mục (đều là route real chưa có fixture). `check:boundaries`: 829 vi phạm sau `811dbc5f`, từ 866 ở commit gate.
 
 ## 9. Baseline ghi nhận ở phase 0 (HEAD fb71c24c)
 
