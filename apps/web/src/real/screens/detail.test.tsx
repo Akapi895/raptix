@@ -16,7 +16,7 @@ vi.mock('../../features/findings/remote', () => ({
   fetchAssetInventory: (...a: unknown[]) => fetchAssetInventory(...a),
   fetchFleet: (...a: unknown[]) => fetchFleet(...a),
 }))
-vi.mock('../../features/assets/remote', () => ({
+vi.mock('../../features/assets/endpoints', () => ({
   fetchFindings: (...a: unknown[]) => fetchFindings(...a),
   fetchAssetInventory: (...a: unknown[]) => fetchAssetInventory(...a),
   fetchFleet: (...a: unknown[]) => fetchFleet(...a),

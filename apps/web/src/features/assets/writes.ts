@@ -25,7 +25,7 @@ import type { DbAuthority } from '../../demo/authority'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'
 import type { Asset } from '../../domain/entities'
 import { reviseScopeTransaction, type ApprovalRef, type ScopeAssetInput } from '../approvals/service'
-import type { AssetService } from './service'
+import type { AssetService } from './service';
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */
 const ROLE_LABEL: Record<string, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }

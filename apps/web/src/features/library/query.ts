@@ -10,7 +10,7 @@ import { actorRef } from '../../demo/persona'
 import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
-import type { LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalsRead, LibrarySkillDetail, LibraryTechniqueRead, LibraryService } from './service'
+import type { LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalsRead, LibrarySkillDetail, LibraryTechniqueRead, LibraryService } from './service';
 
 export const libraryKeys = {
   corpus: (scope: QueryScope, query: LibraryCorpusQuery) => consoleKeys.view('playbook', scope, 'corpus', query),

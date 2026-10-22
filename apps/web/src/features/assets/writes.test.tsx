@@ -24,7 +24,7 @@ import { assignAgentTransaction } from '../agents/writes'
 import { createOperationDraft, runOperationPreflight } from '../operations/service'
 import { changeAssetScopeTransaction, createAssetWriteHandlers, importAssetsTransaction, validateAssetRows } from './writes'
 import type { AssetImportRow } from './writes'
-import { createAssetService } from './service'
+import { createAssetService } from './mock';
 
 afterEach(cleanup)
 
@@ -240,7 +240,7 @@ describe('scope approval request (asset port)', () => {
     const port = createAssetService(svc.authority, svc.clock, guard)
     const before = JSON.stringify(svc.authority.snapshot())
     const input = { note: 'Bring the web tier in scope', diff: 'web-01 → in scope' }
-    expect(port.capabilities).toEqual({ scopeApprovalRequests: true })
+    expect(port.capabilities).toEqual({ scopeApprovalRequests: true, observedGraph: false })
     expect(await createAssetWriteHandlers(port, RILEY, P14).requestScopeApproval(input))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden' }) })
     expect(JSON.stringify(svc.authority.snapshot())).toBe(before)

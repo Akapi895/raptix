@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/assets/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/assets/remote')>()
+vi.mock('./endpoints', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./endpoints')>()
   return {
     ...actual,
     fetchAssetInventory: vi.fn(),
@@ -12,8 +12,8 @@ vi.mock('../../features/assets/remote', async (importOriginal) => {
     classifyAsset: vi.fn(),
   }
 })
-vi.mock('../../features/scope/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/scope/remote')>()
+vi.mock('../scope/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../scope/remote')>()
   return {
     ...actual,
     fetchAssetInventory: vi.fn(),
@@ -24,8 +24,8 @@ vi.mock('../../features/scope/remote', async (importOriginal) => {
     classifyAsset: vi.fn(),
   }
 })
-vi.mock('../../features/analysis/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/analysis/remote')>()
+vi.mock('../analysis/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../analysis/remote')>()
   return {
     ...actual,
     fetchAssetInventory: vi.fn(),
@@ -36,8 +36,8 @@ vi.mock('../../features/analysis/remote', async (importOriginal) => {
     classifyAsset: vi.fn(),
   }
 })
-vi.mock('../../features/projects/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/projects/remote')>()
+vi.mock('../projects/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../projects/remote')>()
   return {
     ...actual,
     fetchAssetInventory: vi.fn(),
@@ -49,15 +49,15 @@ vi.mock('../../features/projects/remote', async (importOriginal) => {
   }
 })
 
-const api_assets = await import('../../features/assets/remote');
-const api_scope = await import('../../features/scope/remote');
-const api_analysis = await import('../../features/analysis/remote');
-const api_projects = await import('../../features/projects/remote');
-const { createRealAssetService } = await import('./assets')
+const api_assets = await import('./endpoints');
+const api_scope = await import('../scope/remote');
+const api_analysis = await import('../analysis/remote');
+const api_projects = await import('../projects/remote');
+const { createRealAssetService } = await import('./remote')
 
 const ctx = { actor: { id: 'user-operator', role: 'operator' as const }, projectId: 'eng-1', corr: 'test' }
 
-function inventory(assets: Partial<import('../../features/assets/remote').AssetInventoryView['assets'][number]>[]): import('../../features/assets/remote').AssetInventoryView {
+function inventory(assets: Partial<import('./endpoints').AssetInventoryView['assets'][number]>[]): import('./endpoints').AssetInventoryView {
   return {
     engagementId: 'eng-1',
     latestApprovedVersion: 1,

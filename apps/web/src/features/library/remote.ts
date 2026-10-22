@@ -1,145 +1,168 @@
-import { apiFetch } from '../../platform/transport';
+import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalExport, LibraryProposalsRead, LibraryProposalStatus, LibraryService, LibrarySkill, LibrarySkillDetail, LibraryTechniqueRead } from './service';
+import { amendLibraryProposal, decideLibraryProposal, exportLibraryProposal, fetchLibrary, fetchLibraryProposal, fetchLibraryProposals, fetchLibrarySkill, fetchLibraryTechnique, proposeLibraryProposal, submitLibraryProposal, type LibraryProposalView } from './endpoints';
+import { guarded } from '../../platform/adapter-shared'
 
-/* ───────────── Tradecraft library and observed analysis (integration ticket 14) ───────────── */
-export interface LibrarySkillView {
-  name: string
-  description: string | null
-  subdomain: string | null
-  mitreIds: string[]
-  whenToUse: string | null
-  path: string | null
+const PAGE_SIZE = 10
+const MAX_PAGE_SIZE = 100
+
+function notFound<T>(message: string): ServiceResult<T> {
+  return { ok: false, failure: { kind: 'not-found', message } }
 }
 
-export interface LibraryView {
-  skills: LibrarySkillView[]
-  counts: { skills: number; techniques: number | null }
-  excludedActions: string[]
-  sources: { skills: string }
-  source: 'graph'
+function toProposal(view: LibraryProposalView): LibraryProposal {
+  return {
+    id: view.id,
+    projectId: view.engagementId,
+    skillName: view.skillName,
+    skillPath: view.skillPath,
+    baseRevision: view.baseRevision,
+    status: view.status,
+    version: view.version,
+    proposedBody: view.proposedBody,
+    baseBody: view.baseBody,
+    rationale: view.rationale,
+    createdBy: view.createdBy,
+    createdAt: view.createdAt,
+    updatedAt: view.updatedAt,
+    reviews: view.reviews.map((review) => ({ id: review.id, proposalVersion: review.proposalVersion, decision: review.decision, comment: review.comment, reviewerId: review.reviewerId, createdAt: review.createdAt })),
+    canonicalCurrent: view.canonicalCurrent ?? undefined,
+  }
 }
 
-export function isLibraryView(v: unknown): v is LibraryView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as LibraryView
-  return Array.isArray(doc.skills) && typeof doc.counts === 'object' && doc.source === 'graph'
+function countOf(rows: readonly LibraryProposal[]): LibraryProposalsRead['counts'] {
+  const counts: Record<LibraryProposalStatus, number> = { draft: 0, proposed: 0, approved: 0, rejected: 0 }
+  for (const row of rows) counts[row.status] += 1
+  return counts
 }
 
-export function fetchLibrary(): Promise<LibraryView> {
-  return apiFetch('/library', isLibraryView)
+/** The canonical corpus is organization-wide reference data, readable by any signed-in actor. */
+function signedIn<T>(ctx: RequestContext): ServiceResult<T> | null {
+  return ctx.actor.id ? null : { ok: false, failure: { kind: 'forbidden', message: 'Sign in to read the library corpus.' } }
 }
 
-/** Canonical single-skill detail (the graph Skill node is the only publication). */
-export interface LibrarySkillDetailView {
-  name: string
-  description: string | null
-  subdomain: string | null
-  mitreIds: string[]
-  whenToUse: string | null
-  path: string | null
-  body: string
-  contentSha256: string | null
-  commitSha: string | null
-  allowedTools: string[]
-  publication: 'canonical'
+function specificProject(ctx: RequestContext): ServiceResult<string> {
+  if (!ctx.projectId || ctx.projectId === 'all') return { ok: false, failure: { kind: 'unavailable', message: 'Select an engagement before working with library proposals.' } }
+  return { ok: true, data: ctx.projectId }
 }
 
-export function fetchLibrarySkill(name: string): Promise<LibrarySkillDetailView> {
-  return apiFetch(`/library/skills/${encodeURIComponent(name)}`, (v): v is LibrarySkillDetailView =>
-    typeof v === 'object' && v !== null && (v as LibrarySkillDetailView).publication === 'canonical' && typeof (v as LibrarySkillDetailView).body === 'string')
-}
+/**
+ * Real LibraryService (ADR-0084). The corpus is the server's canonical skill
+ * set and is read-only here. Proposals are the engagement-scoped review workflow
+ * and every write sends the version the caller read.
+ */
+export function createRealLibraryService(): LibraryService {
+  return {
+    corpus: (ctx, query: LibraryCorpusQuery = {}) => guarded(async (): Promise<ServiceResult<LibraryCorpusRead>> => {
+      const denied = signedIn<LibraryCorpusRead>(ctx)
+      if (denied) return denied
+      const view = await fetchLibrary()
+      const needle = query.q?.trim().toLowerCase() ?? ''
+      const rows: LibrarySkill[] = view.skills.filter((skill) =>
+        (!needle || skill.name.toLowerCase().includes(needle) || (skill.description ?? '').toLowerCase().includes(needle))
+        && (!query.subdomain || skill.subdomain === query.subdomain)
+        && (!query.mitre || skill.mitreIds.includes(query.mitre)))
+      const pageSize = Math.min(Math.max(1, query.pageSize ?? PAGE_SIZE), MAX_PAGE_SIZE)
+      const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+      const page = Math.min(Math.max(1, query.page ?? 1), pageCount)
+      return {
+        ok: true,
+        data: {
+          items: rows.slice((page - 1) * pageSize, page * pageSize),
+          page,
+          pageSize,
+          total: rows.length,
+          counts: view.counts,
+          subdomains: [...new Set(view.skills.map((skill) => skill.subdomain).filter((s): s is string => s !== null))].sort(),
+          excludedActions: view.excludedActions,
+        },
+      }
+    }),
 
-export interface LibraryTechniqueDetailView {
-  id: string
-  name: string | null
-  description: string | null
-  url: string | null
-  skills: { name: string }[]
-}
+    skill: (ctx, name: string) => guarded(async (): Promise<ServiceResult<LibrarySkillDetail>> => {
+      const denied = signedIn<LibrarySkillDetail>(ctx)
+      if (denied) return denied
+      if (!name) return notFound(`Skill ${name} does not exist in the corpus.`)
+      const detail = await fetchLibrarySkill(name)
+      return {
+        ok: true,
+        data: {
+          name: detail.name,
+          description: detail.description,
+          subdomain: detail.subdomain,
+          mitreIds: detail.mitreIds,
+          whenToUse: detail.whenToUse,
+          path: detail.path,
+          body: detail.body,
+          contentSha256: detail.contentSha256,
+          commitSha: detail.commitSha,
+          allowedTools: detail.allowedTools,
+          publication: 'canonical',
+        },
+      }
+    }),
 
-export function fetchLibraryTechnique(id: string): Promise<LibraryTechniqueDetailView> {
-  return apiFetch(`/library/techniques/${encodeURIComponent(id)}`, (v): v is LibraryTechniqueDetailView =>
-    typeof v === 'object' && v !== null && typeof (v as LibraryTechniqueDetailView).id === 'string' && Array.isArray((v as LibraryTechniqueDetailView).skills))
-}
+    technique: (ctx, id: string) => guarded(async (): Promise<ServiceResult<LibraryTechniqueRead>> => {
+      const denied = signedIn<LibraryTechniqueRead>(ctx)
+      if (denied) return denied
+      const detail = await fetchLibraryTechnique(id)
+      return { ok: true, data: { id: detail.id, name: detail.name, description: detail.description, url: detail.url, skills: detail.skills } }
+    }),
 
-/** ADR-0070 engagement-scoped library review proposals (never a corpus mutation API). */
-export interface LibraryProposalReviewView {
-  id: string
-  proposalVersion: number
-  decision: 'approved' | 'rejected'
-  comment: string | null
-  reviewerId: string
-  createdAt: string
-}
+    proposals: (ctx) => guarded(async (): Promise<ServiceResult<LibraryProposalsRead>> => {
+      const project = specificProject(ctx)
+      if (!project.ok) return project
+      const view = await fetchLibraryProposals(project.data)
+      const items = view.proposals.map(toProposal)
+      return { ok: true, data: { items, counts: countOf(items) } }
+    }),
 
-export interface LibraryProposalView {
-  id: string
-  engagementId: string
-  skillName: string
-  skillPath: string
-  baseRevision: string
-  status: 'draft' | 'proposed' | 'approved' | 'rejected'
-  version: number
-  proposedBody: string
-  baseBody: string
-  rationale: string | null
-  createdBy: string
-  createdAt: string
-  updatedAt: string
-  reviews: LibraryProposalReviewView[]
-  canonicalCurrent?: boolean
-}
+    proposal: (ctx, id: string) => guarded(async (): Promise<ServiceResult<LibraryProposal>> => {
+      const project = specificProject(ctx)
+      if (!project.ok) return project
+      return { ok: true, data: toProposal(await fetchLibraryProposal(project.data, id)) }
+    }),
 
-export function isLibraryProposalView(v: unknown): v is LibraryProposalView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as LibraryProposalView
-  return typeof doc.id === 'string' && typeof doc.skillName === 'string' && typeof doc.version === 'number' && Array.isArray(doc.reviews)
-}
+    submit: (ctx, input) => guarded(async (): Promise<ServiceResult<LibraryProposal>> => {
+      const project = specificProject(ctx)
+      if (!project.ok) return project
+      return { ok: true, data: toProposal(await submitLibraryProposal(project.data, input)) }
+    }),
 
-export function fetchLibraryProposals(engagementId: string): Promise<{ engagementId: string; proposals: LibraryProposalView[]; source: 'db' }> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals`, (v): v is { engagementId: string; proposals: LibraryProposalView[]; source: 'db' } =>
-    typeof v === 'object' && v !== null && Array.isArray((v as { proposals?: unknown }).proposals) && (v as { source?: unknown }).source === 'db')
-}
+    amend: (ctx, id, input) => guarded(async (): Promise<ServiceResult<LibraryProposal>> => {
+      const project = specificProject(ctx)
+      if (!project.ok) return project
+      return { ok: true, data: toProposal(await amendLibraryProposal(project.data, id, input)) }
+    }),
 
-/** W18: detail read by proposal id — the only place canonicalCurrent is authoritative. */
-export function fetchLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}`, (v): v is LibraryProposalView =>
-    isLibraryProposalView(v) && (v as LibraryProposalView).engagementId === engagementId)
-}
+    propose: (ctx, id) => guarded(async (): Promise<ServiceResult<LibraryProposal>> => {
+      const project = specificProject(ctx)
+      if (!project.ok) return project
+      return { ok: true, data: toProposal(await proposeLibraryProposal(project.data, id)) }
+    }),
 
-export function submitLibraryProposal(engagementId: string, input: { skillName: string; proposedBody: string; rationale?: string }): Promise<LibraryProposalView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals`, (v): v is LibraryProposalView =>
-    isLibraryProposalView(v) && v.status === 'draft' && v.version === 1,
-  { method: 'POST', body: input })
-}
+    decide: (ctx, id, input) => guarded(async (): Promise<ServiceResult<LibraryProposal>> => {
+      const project = specificProject(ctx)
+      if (!project.ok) return project
+      return { ok: true, data: toProposal(await decideLibraryProposal(project.data, id, input)) }
+    }),
 
-export function amendLibraryProposal(engagementId: string, proposalId: string, input: { proposedBody: string; expectedVersion: number; rationale?: string }): Promise<LibraryProposalView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/amendments`, isLibraryProposalView,
-    { method: 'POST', body: input })
-}
-
-export function proposeLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/propose`, (v): v is LibraryProposalView =>
-    isLibraryProposalView(v) && v.status === 'proposed',
-  { method: 'POST' })
-}
-
-export function decideLibraryProposal(engagementId: string, proposalId: string, input: { decision: 'approved' | 'rejected'; expectedVersion: number; comment?: string }): Promise<LibraryProposalView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/decision`, (v): v is LibraryProposalView =>
-    isLibraryProposalView(v) && (v.status === 'approved' || v.status === 'rejected'),
-  { method: 'POST', body: input })
-}
-
-export interface LibraryProposalExportView {
-  kind: 'library-body-replacement-proposal'
-  proposal: { id: string; engagementId: string; skillName: string; skillPath: string; baseRevision: string; status: string; version: number; createdBy: string }
-  base: { body: string; revision: string }
-  proposed: { body: string }
-  diff: { before: string; after: string }
-  reviews: LibraryProposalReviewView[]
-  publicationContract: string[]
-}
-
-export function exportLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalExportView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/export`, (v): v is LibraryProposalExportView =>
-    typeof v === 'object' && v !== null && (v as LibraryProposalExportView).kind === 'library-body-replacement-proposal' && Array.isArray((v as LibraryProposalExportView).publicationContract))
+    exportProposal: (ctx, id) => guarded(async (): Promise<ServiceResult<LibraryProposalExport>> => {
+      const project = specificProject(ctx)
+      if (!project.ok) return project
+      const view = await exportLibraryProposal(project.data, id)
+      return {
+        ok: true,
+        data: {
+          kind: view.kind,
+          proposal: { id: view.proposal.id, engagementId: view.proposal.engagementId, skillName: view.proposal.skillName, skillPath: view.proposal.skillPath, baseRevision: view.proposal.baseRevision, status: view.proposal.status, version: view.proposal.version, createdBy: view.proposal.createdBy },
+          base: view.base,
+          proposed: view.proposed,
+          diff: view.diff,
+          reviews: view.reviews.map((review) => ({ id: review.id, proposalVersion: review.proposalVersion, decision: review.decision, comment: review.comment, reviewerId: review.reviewerId, createdAt: review.createdAt })),
+          publicationContract: view.publicationContract,
+        },
+      }
+    }),
+  }
 }

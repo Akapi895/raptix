@@ -15,7 +15,7 @@ import { actorRef } from '../../demo/persona'
 import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
-import type { AssetDetailRead, AssetListQuery, AssetListRead, AssetObservedGraph, AssetScopeRead, AssetService } from './service'
+import type { AssetDetailRead, AssetListQuery, AssetListRead, AssetObservedGraph, AssetScopeRead, AssetService } from './service';
 
 /** Feature-local key namespaces: ['asset', scope, 'list', query] / ['asset', scope, id] / ['asset', scope, 'scope']. */
 export const assetKeys = {
