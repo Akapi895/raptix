@@ -7,7 +7,8 @@ import { readActor } from '../../auth/identity'
 import { useAuthStore } from '../../state/stores'
 import type { ConsoleServices } from '../../domain/console-services'
 import type { Plan } from '../../domain/entities'
-import { createOperationFromPlanTransaction, readPlanProject } from './bridge'
+import { createOperationFromPlanTransaction } from './bridge'
+import { projectOfPlan } from './service'
 import { readPlanChecksNow } from './projection'
 import {
   decidePlanTransaction, discardPlanTransaction, editPlanDraftTransaction, requestPlanReviewTransaction,
@@ -24,7 +25,7 @@ function actorCtxOf(services: ConsoleServices, projectId: string) {
 
 export function usePlanActions() {
   const services = useServices()
-  const planProjectOf = (planId: string) => readPlanProject(services.authority, planId)
+  const planProjectOf = (planId: string) => projectOfPlan(services.authority.snapshot().plans, planId)
   return {
     now: () => services.clock.now(),
     checksNow: (plan: Plan) => readPlanChecksNow(services, plan),

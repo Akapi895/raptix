@@ -44,11 +44,6 @@ const ROLE_LABEL: Record<string, string> = { admin: 'Organization Admin', manage
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 
-/** Narrow existence/project lookup for the list screen's bridge click; the transaction re-derives every gate. */
-export function readPlanProject(authority: DbAuthority, planId: string): string | undefined {
-  return authority.snapshot().plans.find((x) => x.id === planId)?.projectId
-}
-
 /** Scope-checked plan resolution for the bridge (the plans service's read rules). */
 function resolveBridgePlan(db: Db, ctx: RequestContext, id: string): { ok: true; plan: Plan } | { ok: false; failure: ServiceFailure } {
   const plan = db.plans.find((x) => x.id === id)

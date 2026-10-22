@@ -7,7 +7,7 @@ import { planVer, toolFacets } from '../../domain/catalog';
 import type { AiMode, ChatMsg, Conversation, Plan, ToolEvent } from '../../domain/entities'
 import { sendChat, stopChat } from '../../demo/runtime'
 import { editPlanDraftTransaction, revisePlanTransaction } from '../plans/service'
-import { readPlanProject } from '../plans/bridge'
+import { projectOfPlan } from '../plans'
 import { readActor } from '../../auth/identity'
 import { useMsgRefs, useToolProposalRefs, useConversationGroups } from './projection'
 import { useProjectEligibility, useProjectReplan } from '../operations/views'
@@ -119,7 +119,7 @@ export function ReplanPanel({ pid, compact }: { pid: string; compact?: boolean }
        the plan's project binding resolves through the typed plans bridge at
        call time and the typed results bridge back to the legacy shapes (a
        refused revision leaves `id` empty and the edit refuses the same way). */
-    const projectId = readPlanProject(services.authority, cur.id)
+    const projectId = projectOfPlan(services.authority.snapshot().plans, cur.id)
     const revised = projectId ? revisePlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), cur.id, changes, 'Created after step review / agent loss') : undefined
     const id = revised?.ok ? revised.data.planId : ''
     const base = cur.steps.map((x, i) => (i === idx ? { ...x, needsApproval: true, risk: (x.risk === 'low' ? 'medium' : x.risk) as typeof x.risk, rationale: `${x.rationale} Revised after review: operator re-check required.` } : lost.includes(x.agent) && healthy[0] ? { ...x, agent: healthy[0] } : x))
