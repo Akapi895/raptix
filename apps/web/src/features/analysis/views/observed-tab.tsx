@@ -5,27 +5,12 @@
  * state, and no execution or detection is inferred.
  */
 import type { ReactElement } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
-import { useFeatureServices as useServices } from '../../state/feature-services'
-import { actorRef } from '../../demo/persona'
-import { useQueryScope, consoleKeys } from '../../state/keys'
-import { Card, CardHeader, Empty, Skeleton, Button } from '../../ui/index'
-import type { ObservedAnalysisRead } from './observed'
+import { Card, CardHeader, Empty, Skeleton, Button } from '../../../ui/index'
+import { useObservedAnalysis } from '../query'
 
 export function ObservedAnalysisTab({ engagementId }: { engagementId: string }): ReactElement {
-  const services = useServices()
-  const scope = useQueryScope()
-  const analysis = useQuery({
-    queryKey: consoleKeys.view('analysis', scope, engagementId, 'observed'),
-    queryFn: async (): Promise<ObservedAnalysisRead> => {
-      const res = await services.observedAnalysis(actorRef(scope.actor, scope.role), engagementId).read({ actor: actorRef(scope.actor, scope.role), projectId: engagementId, corr: 'analysis-observed' })
-      if (!res.ok) throw new Error(res.failure.message)
-      return res.data
-    },
-    enabled: !!services,
-  })
-
+  const analysis = useObservedAnalysis(engagementId)
   if (analysis.isPending) return <Card><CardHeader title="Observed analysis" /><div className="p-4"><Skeleton className="h-24" /></div></Card>
   if (analysis.isError || !analysis.data) {
     return <Empty icon={Radar} title="Analysis data is unavailable" action={<Button onClick={() => void analysis.refetch()}>Retry</Button>}>
