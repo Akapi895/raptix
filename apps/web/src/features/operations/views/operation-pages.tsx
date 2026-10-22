@@ -2,16 +2,12 @@ import { useEffect, useState, type ComponentType } from 'react'
 import { AlertTriangle, ArrowRight, MessageSquare, CalendarClock, CheckCircle2, ClipboardCheck, Lock, Play, Plus, Radio, RefreshCw, ShieldAlert, SlidersHorizontal, ShieldCheck, ShieldX, Wrench, X, Save } from 'lucide-react'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Mono, Pager, PageHeader, Person, PersonaHint, Progress, SearchBox, Segmented, Select, Skeleton, Status, Stepper, Table, Tabs, Textarea, Toggle, useGuard, cx } from '../../../ui/index'
 import { useDirty } from '../../../state/session'
-import { useServices } from '../../../state/services'
 import { go, selectProject, useRoute } from '../../../router/navigate'
 import { useActiveProject, useCan, useMe } from '../../../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../../../state/stores'
 import { useSessionStore } from '../../../state/session'
-import { stamp } from '../../../demo/display-clock'
 import { preflightPass } from '../preflight'
-import { readPlanProject } from '../../plans/bridge'
-import { readOperationPreflight, readOperationSpecChecks, useOperationView, useProjectEligibility, useScheduleConflicts } from '../views'
-import { createOperationFromPlanTransaction } from '../../plans/bridge'
+import { useOperationView, useProjectEligibility, useScheduleConflicts } from '../views'
 import { planVer } from '../../../domain/catalog';
 import type { Operation } from '../../../domain/entities'
 import type { PfCheck, PfSnap, PfState } from './operation-common'
@@ -19,7 +15,7 @@ import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, Runti
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './operation-console'
 import { GraphTab, ResultsTab } from './operation-results'
 import { useResourceScope } from '../../../state/resource-scope'
-import { useCreateOperation, useOperationDetail, useOperationDraftOptions, useOperationList, useRunPreflight, useScheduleOperation, useStartOperation, useUpdateOperation, OperationReadError } from '../query'
+import { useCreateOperation, useOperationDetail, useOperationDraftOptions, useOperationList, useOperationMockConsole, useRunPreflight, useScheduleOperation, useStartOperation, useUpdateOperation, OperationReadError } from '../query'
 import { PROJECT_TZ_OFFSET_MS, roeWindowIssue, scheduleInstantOf } from '../service'
 import type { OperationCategory, OperationDetailRead, OperationWriteRead } from '../service'
 import type { ServiceResult } from '../../../domain/service'
@@ -32,8 +28,7 @@ const STATUS_OPTS: [string, string][] = [['draft', 'Draft'], ['ready', 'Ready'],
 function Operations() {
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
-  const me = useMe()
-  const services = useServices()
+  const mock = useOperationMockConsole()
   const persistFilters = useSessionStore((s) => s.persistFilters)
   const setFilter = useSessionStore((s) => s.setFilter)
   const can = useCan()
@@ -68,9 +63,9 @@ function Operations() {
      project binding resolves through the plans feature's narrow read at call
      time and the bridge transaction runs with the store's exact request context. */
   const executePlan = (planId: string) => {
-    const projectId = readPlanProject(services.authority, planId)
+    const projectId = mock.planProject(planId)
     if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-    const res = createOperationFromPlanTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, planId)
+    const res = mock.createOperationFromPlan(projectId, planId)
     return res.ok ? { ok: true as const, opId: res.data.opId } : { ok: false as const, error: res.failure.message }
   }
   return (
@@ -147,8 +142,9 @@ function Operations() {
 // eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function ConflictPanel({ id, agents, assets, at, mins }: { id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
   const view = useOperationView(id || '')
+  const mock = useOperationMockConsole()
   const inst = scheduleInstantOf(at)
-  const nowInst = (parseStamp(stamp()) ?? (inst ?? 0) + PROJECT_TZ_OFFSET_MS) - PROJECT_TZ_OFFSET_MS
+  const nowInst = (parseStamp(mock.display.stamp()) ?? (inst ?? 0) + PROJECT_TZ_OFFSET_MS) - PROJECT_TZ_OFFSET_MS
   const cs = useScheduleConflicts({ id, agents, assets, at, mins, nowInst })
   if (inst == null) return null
   const win = roeWindowIssue(view?.project, inst)
@@ -182,6 +178,7 @@ function ConflictPanel({ id, agents, assets, at, mins }: { id?: string; agents: 
 const STEPS = ['Basics', 'Playbook', 'Targets and agents', 'Schedule and mode', 'Review']
 // eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function OperationNew() {
+  const mock = useOperationMockConsole()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
@@ -231,7 +228,7 @@ function OperationNew() {
   }
   const assetRows = options?.assets ?? []
   const mins = edit ? stepMinutes(edit) : Math.max(20, (pb?.steps.length || 8) * 7)
-  const nowMs = parseStamp(stamp()) ?? 0
+  const nowMs = parseStamp(mock.display.stamp()) ?? 0
   const conflicts = useScheduleConflicts({ id: edit?.id, agents: d.agents, assets: d.assets, at: d.when === 'later' ? d.at : '', mins, nowInst: nowMs - PROJECT_TZ_OFFSET_MS })
 
   const roeLocked = !!p && (p.roeStatus !== 'approved' || !['approved', 'active'].includes(p.status))
@@ -423,7 +420,7 @@ function PreflightPage({ op }: { op: Operation }) {
   const setFilter = useSessionStore((s) => s.setFilter)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
-  const services = useServices()
+  const mock = useOperationMockConsole()
   const { ro, reason } = useGuard(op.projectId)
   const [checking, setChecking] = useState(false)
   /* Ticket 26: the run goes through the typed handler — the eight checks are
@@ -441,9 +438,8 @@ function PreflightPage({ op }: { op: Operation }) {
   const p = view.project
   const pb = view.playbook
   const pl = view.plan
-  const pfNow = services.clock.now()
-  const live = readOperationSpecChecks(services, op, pfNow)
-  const engine = readOperationPreflight(services, op, pfNow)
+  const pfNow = mock.now()
+  const { spec: live, engine } = mock.checks(op, pfNow)
   const enginePass = preflightPass(engine)
   const snap = persistFilters['preflight.' + op.id] as PfSnap | undefined
   const planV = pl ? planVer(pl) : '—'
@@ -466,8 +462,8 @@ function PreflightPage({ op }: { op: Operation }) {
       /* A refusal (role, in-flight, superseded scope) surfaces its reason and
          records nothing; a run re-derives the checks and commits atomically. */
       if (!r.ok) { toast(r.failure.message, 'bad'); return }
-      const cs = readOperationSpecChecks(services, op, services.clock.now())
-      setFilter('preflight.' + op.id, { at: stamp(), roe: p.roeVersion, plan: planV, checks: cs } as PfSnap)
+      const cs = mock.checks(op, mock.now()).spec
+      setFilter('preflight.' + op.id, { at: mock.display.stamp(), roe: p.roeVersion, plan: planV, checks: cs } as PfSnap)
       toast(pfOverall(cs) === 'fail' ? 'Preflight finished with failures. Start is unavailable.' : 'Preflight snapshot recorded.', pfOverall(cs) === 'fail' ? 'bad' : 'info')
     } })
   }
@@ -558,6 +554,7 @@ function PreflightPage({ op }: { op: Operation }) {
 // eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function SchedulePage({ op }: { op: Operation }) {
   const view = useOperationView(op.id)
+  const mock = useOperationMockConsole()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const { ro, reason } = useGuard(op.projectId)
@@ -569,7 +566,7 @@ function SchedulePage({ op }: { op: Operation }) {
   const [mode, setMode] = useState<'now' | 'later'>(op.schedule && op.schedule !== 'now' ? 'later' : 'now')
   const [at, setAt] = useState(op.schedule && op.schedule !== 'now' ? op.schedule : '')
   const mins = stepMinutes(op)
-  const nowInst = (parseStamp(stamp()) ?? 0) - PROJECT_TZ_OFFSET_MS
+  const nowInst = (parseStamp(mock.display.stamp()) ?? 0) - PROJECT_TZ_OFFSET_MS
   const inst = scheduleInstantOf(at)
   const conflicts = useScheduleConflicts(mode === 'later' ? { id: op.id, agents: op.agents, assets: op.assets, at, mins, nowInst } : { agents: [], assets: [], at: '', mins, nowInst })
   if (!view) return null
