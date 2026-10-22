@@ -8,7 +8,7 @@ import { mountServices } from '../../test/helpers'
 import { GlobalModals } from '../../shell/shell'
 import { go, selectProject } from '../../router/navigate'
 import { useToastStore } from '../../state/stores'
-import { routes } from '../../screens/d'
+import { routes } from '../../router/slice-d'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 

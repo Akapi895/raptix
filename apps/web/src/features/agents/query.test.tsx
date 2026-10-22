@@ -14,7 +14,7 @@ import { go, selectProject } from '../../router/navigate'
 import { assignAgentTransaction } from './writes'
 import { loseAgent, restoreAgent } from '../../demo/runtime'
 import type { RequestContext } from '../../domain/service'
-import { routes } from '../../screens/d'
+import { routes } from '../../router/slice-d'
 import { seed } from '../../demo/seed';
 import { getAgent, listAgents } from './service'
 

@@ -18,7 +18,7 @@ import { computePreflightChecks } from '../operations/preflight'
 import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext, ServiceResult } from '../../domain/service'
 import { selectProject } from '../../router/navigate'
-import { routes } from '../../screens/d'
+import { routes } from '../../router/slice-d'
 import { decideApprovalTransaction } from '../approvals/service'
 import { assignAgentTransaction } from '../agents/writes'
 import { createOperationDraft, runOperationPreflight } from '../operations/service'
