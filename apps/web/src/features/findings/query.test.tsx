@@ -152,9 +152,9 @@ describe('findings inventory (ticket 31)', () => {
     // The severity KPI for medium stays 0 although the suggestion itself is medium.
     expect(screen.getByRole('button', { name: 'Medium 0' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /AI Suggestions 1/ })).toBeInTheDocument()
-    expect(screen.getByText('unverified — not in counts')).toBeInTheDocument()
+    expect(screen.getByText('not curated — not in counts')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: 'AI Suggestions1' }))
-    await waitFor(() => expect(screen.getByText('AI suggestions are not verified findings')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('AI suggestions are not curated findings')).toBeInTheDocument())
     h.unmount()
 
     window.location.hash = '#/finding/FD-012'

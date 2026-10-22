@@ -28,19 +28,19 @@ export function createOverviewService(authority: DbAuthority, actor: ActorRef): 
     },
     async findings(): Promise<ServiceResult<OverviewFindings>> {
       const { db, projects, ids } = accessible()
-      const verified = db.findings.filter((f) => ids.has(f.projectId) && f.status !== 'ai_suggested')
+      const curated = db.findings.filter((f) => ids.has(f.projectId) && f.status !== 'ai_suggested')
       const bySeverity: Record<string, number> = {}
       const byStatus: Record<string, number> = {}
-      for (const f of verified) {
+      for (const f of curated) {
         bySeverity[f.severity] = (bySeverity[f.severity] ?? 0) + 1
         byStatus[f.status] = (byStatus[f.status] ?? 0) + 1
       }
       return {
         ok: true,
         data: {
-          total: verified.length,
+          total: curated.length,
           engagements: projects.length,
-          engagementsWithFindings: new Set(verified.map((f) => f.projectId)).size,
+          engagementsWithFindings: new Set(curated.map((f) => f.projectId)).size,
           bySeverity,
           byStatus,
           truncated: false,

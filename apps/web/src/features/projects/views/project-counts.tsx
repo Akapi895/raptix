@@ -1,6 +1,6 @@
 /**
  * Counts on the project overview, each read through the feature hook that owns its source (migration Mốc 1).
- * Findings are the verified records; AI suggestions are proposals and sit on their own row. A failed source
+ * Findings are the curated records (every status except AI suggestion); AI suggestions are proposals and sit on their own row. A failed source
  * shows "No source" for its own row only and is never shown as zero.
  */
 import type { ReactElement, ReactNode } from 'react'
@@ -26,7 +26,7 @@ export function ProjectCounts({ engagementId }: { engagementId: string }): React
     <DescList
       items={[
         {
-          k: 'Findings (verified)',
+          k: 'Curated findings',
           v: cell(findings, (data) => {
             const total = Object.values(data.severity).reduce((sum, count) => sum + count, 0)
             return (
