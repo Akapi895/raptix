@@ -7,8 +7,7 @@ import type { Template } from '../../../domain/entities'
 import { Banner, Button, Card, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, cx } from '../../../ui/index'
 import type { NoFind } from '../service';
 import { useReportValidation } from '../projection'
-import { isRealMode } from '../../../state/mode'
-import { ReportReadError, reportKeys, useDeliveryHistory, useReportList, useReportWrites, useTemplates } from '../query'
+import { ReportReadError, reportKeys, useDeliveryHistory, useReportCapabilities, useReportList, useReportWrites, useTemplates } from '../query'
 import { useQueryScope } from '../../../state/keys'
 import { createReportTemplate } from '../endpoints';
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './report-pages'
@@ -36,6 +35,7 @@ function ReadError({ error, retry }: { error: unknown; retry: () => void }) {
 }
 
 function ReportsPage() {
+  const caps = useReportCapabilities()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
@@ -52,7 +52,7 @@ function ReportsPage() {
     <>
       <PageHeader title="Reports" sub="Draft, review, approve, export and deliver assessment reports. Creating a draft is always allowed; Submit for Review is gated by policy."
         actions={<>
-          {!isRealMode() && <Button icon={FileText} onClick={() => go('reports', { tab: 'templates' })}>Templates</Button>}
+          {!caps.storedTemplates && <Button icon={FileText} onClick={() => go('reports', { tab: 'templates' })}>Templates</Button>}
           <Button icon={History} onClick={() => go('reports', { tab: 'exports' })}>Export History</Button>
           {pid !== 'all' && <Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : whyNot} onClick={() => go('report-new')}>Create Draft</Button>}
         </>} />
@@ -219,11 +219,13 @@ function RealTemplates() {
 /** Simulated template gallery: mock-only authority; real mode never reaches it. */
 // eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function Templates() {
-  return isRealMode() ? <RealTemplates /> : <SimulatedTemplates />
+  const caps = useReportCapabilities()
+  return caps.storedTemplates ? <RealTemplates /> : <SimulatedTemplates />
 }
 
 // eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function SimulatedTemplates() {
+  const caps = useReportCapabilities()
   const services = useServices()
   const me = useMe()
   const toast = useToastStore((s) => s.toast)
@@ -246,7 +248,7 @@ function SimulatedTemplates() {
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted">{templates.length} templates. Draft templates can be tried but cannot be used for formal delivery.</p>
-        <Button icon={Plus} disabled={!admin} title={admin ? undefined : why} onClick={() => { if (isRealMode()) return setCreating(true); sim('Create template'); audit('Created report template (simulated)', 'TP-new', '') }}>Create template</Button>
+        <Button icon={Plus} disabled={!admin} title={admin ? undefined : why} onClick={() => { if (caps.storedTemplates) return setCreating(true); sim('Create template'); audit('Created report template (simulated)', 'TP-new', '') }}>Create template</Button>
       </div>
       {!admin && <p className="-mt-2 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{why}</p>}
       {creating && <TemplateCreateForm onDone={() => { setCreating(false); void tpls.refetch() }} onCancel={() => setCreating(false)} />}

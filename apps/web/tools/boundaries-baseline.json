@@ -5,10 +5,10 @@
     "production-imports-composition": 46,
     "presentation-imports-real": 63,
     "presentation-imports-adapter": 31,
-    "presentation-mock-plumbing": 135,
+    "presentation-mock-plumbing": 116,
     "real-imports-features": 109,
     "real-imports-screens": 0,
     "features-import-screens": 0,
-    "deep-feature-import": 347
+    "deep-feature-import": 341
   }
 }
