@@ -30,7 +30,7 @@ import { canonicalRoute } from './aliases'
 import { routeComponent } from './registry'
 
 const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
-const RealFeatureRoute = lazy(() => import('../real/screens/feature-route').then((m) => ({ default: m.RealFeatureRoute })))
+const RealFeatureRoute = lazy(() => import('./feature-route').then((m) => ({ default: m.RealFeatureRoute })))
 
 /** One lazy wrapper per real-only component, memoised by route key so a re-render never remounts it. */
 const realComponents = new Map<string, ComponentType>()

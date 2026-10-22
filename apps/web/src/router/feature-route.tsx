@@ -1,23 +1,23 @@
 /** Scoped route composition: resource IDs never substitute for engagement identity. */
 import { lazy, Suspense, type ComponentType, type ReactElement } from 'react'
 import { FolderOpen } from 'lucide-react'
-import { go, useRoute } from '../../router/navigate'
-import { useProjectStore } from '../../state/stores'
-import { useRealProjects } from '../queries'
-import { Button, Empty, PageHeader, Select } from '../../ui/index'
-import { FEATURE_SURFACES, type PanelGroup } from '../../router/routes'
+import { go, useRoute } from './navigate'
+import { useProjectStore } from '../state/stores'
+import { useRealProjects } from '../features/projects'
+import { Button, Empty, PageHeader, Select } from '../ui'
+import { FEATURE_SURFACES, type PanelGroup } from './routes'
 
 type PanelComponent = ComponentType<{ engagementId: string }>
 
 /** Lazy real panel per group; `router/routes.ts` decides which groups a route key renders. */
 const PANEL_COMPONENTS: Record<PanelGroup, PanelComponent> = {
-  operations: lazy(() => import('../../features/operations/runtime-tab').then((m) => ({ default: m.RuntimeOperationsTab }))),
-  governance: lazy(() => import('../../features/governance/tab').then((m) => ({ default: m.GovernanceTab }))),
-  fleet: lazy(() => import('../../features/operations/fleet-tab').then((m) => ({ default: m.RuntimeFleetTab }))),
-  scope: lazy(() => import('../../features/scope/tab').then((m) => ({ default: m.ScopeTab }))),
-  analysis: lazy(() => import('../../features/analysis/views/observed-tab').then((m) => ({ default: m.ObservedAnalysisTab }))),
-  c2: lazy(() => import('../../features/c2/provider-tab').then((m) => ({ default: m.C2ProviderTab }))),
-  campaigns: lazy(() => import('./campaigns-panel').then((m) => ({ default: m.RealCampaignsPanel }))),
+  operations: lazy(() => import('../features/operations/runtime-tab').then((m) => ({ default: m.RuntimeOperationsTab }))),
+  governance: lazy(() => import('../features/governance/tab').then((m) => ({ default: m.GovernanceTab }))),
+  fleet: lazy(() => import('../features/operations/fleet-tab').then((m) => ({ default: m.RuntimeFleetTab }))),
+  scope: lazy(() => import('../features/scope/tab').then((m) => ({ default: m.ScopeTab }))),
+  analysis: lazy(() => import('../features/analysis/views/observed-tab').then((m) => ({ default: m.ObservedAnalysisTab }))),
+  c2: lazy(() => import('../features/c2/provider-tab').then((m) => ({ default: m.C2ProviderTab }))),
+  campaigns: lazy(() => import('../real/screens/campaigns-panel').then((m) => ({ default: m.RealCampaignsPanel }))),
 }
 
 export function RealFeatureRoute(): ReactElement {
