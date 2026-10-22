@@ -1,6 +1,6 @@
 import { type C2View, type C2CommandView, type CampaignProviderCapabilities, type CampaignsView, type CampaignView, type CampaignJobView, type CampaignVector, isC2View, isC2Listener, isC2Profile, isC2CommandView, isCampaignProviderCapabilities, isCampaignsView, isCampaignView, isCampaignJobView } from '@raptix/web-contracts';
 import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 export interface C2GrantView {
   id: string

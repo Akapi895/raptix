@@ -1,6 +1,6 @@
 import { isCuratedFindingView, isCuratedFindingsView, isFindingActivityPage, isFindingReferenceOptions, isFindingSuggestionDispositionsView, isFindingSuggestionDispositionResult, type CuratedFindingView, type CuratedFindingsView, type FindingActivityPage, type FindingReferenceOptions, type FindingSuggestionDispositionsView, type FindingSuggestionDispositionResult, isFindingsView, isArtifactsView, isArtifactContentView, isRetainedCaptureView, isRetainedCapturesView, isWorkspaceEvidenceImportView, type FindingsView, type ArtifactsView, type ArtifactContentView, type ClassifyCaptureInput, type RetainCaptureInput, type RetainedCaptureView, type WorkspaceEvidenceImportView, type RetainedCapturesView, type FindingReproductionInput } from '@raptix/web-contracts';
 import { apiFetch, apiFetchBytes, type BinaryApiResponse } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Observed results (ticket 06, read-only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export function fetchFindings(engagementId: string): Promise<FindingsView> {

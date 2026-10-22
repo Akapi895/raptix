@@ -1,6 +1,6 @@
 import { isTimelineView, isGraphView, type TimelineView, type GraphView } from '@raptix/web-contracts';
 import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 export function fetchTimeline(engagementId: string): Promise<TimelineView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/timeline`, owned(engagementId, isTimelineView))
