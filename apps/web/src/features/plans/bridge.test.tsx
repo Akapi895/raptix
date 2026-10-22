@@ -27,7 +27,7 @@ import { createOperationDraft, pauseOperation, resumeOperation, runOperationPref
 import { DAY_MS } from './service'
 import { createOperationFromPlanTransaction } from './bridge'
 import { MyTasks } from '../../screens/a-tasks'
-import { routes } from '../operations/views/operation-pages'
+import { routes } from '../operations/routes'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 

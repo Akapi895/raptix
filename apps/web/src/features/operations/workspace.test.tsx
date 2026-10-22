@@ -31,7 +31,7 @@ import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { useToastStore } from '../../state/stores'
 import { currentRoute, go } from '../../router/navigate'
-import { routes } from './views/operation-pages'
+import { routes } from './routes'
 import {
   acknowledgeEmergencyStopTransaction, finalizeEmergencyStopTransaction, requestEmergencyStopTransaction,
 } from '../estop/service'
