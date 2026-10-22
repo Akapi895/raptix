@@ -173,7 +173,6 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
   const partial = op.status === 'cancelled' || op.status === 'estop'
   const canFind = can('createFinding', op.projectId) && !ro
   const canAttach = can('run', op.projectId) && !ro
-  const stamp = () => { const d = new Date(Date.now() + 7 * 3600e3); return d.toISOString().slice(0, 16).replace('T', ' ') }
   /* The legacy `A.audit`/`A.addEvidence` entries, mirrored exactly: one
      'legacy' commit each through the one authority (the store helper's exact
      audit/evidence row shapes and the live-count evidence id derivation). */
@@ -242,10 +241,10 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
       </Card>}
       <Card>
         <CardHeader title="Reviewer sign-off" />
-        {signoff ? <p className="text-sm text-ok">Signed off by {signoff.by} at {signoff.at} (UTC+7).</p> : (() => {
+        {signoff ? <p className="text-sm text-ok">Signed off by {signoff.by} at {signoff.at}.</p> : (() => {
           const ok = finals && c.review === 0 && canAttach
           const why = !finals ? 'The operation has not ended.' : c.review > 0 ? 'A step still needs review.' : !canAttach ? (ro ? reason : 'Only a Manager or Operator can sign off.') : ''
-          return <div className="flex flex-wrap items-center gap-3"><Button disabled={!ok} title={ok ? undefined : why} onClick={() => { setFilter('signoff.' + op.id, { by: me.name, at: stamp() }); audit('Results signed off', op.id, op.projectId); toast('Results signed off.') }}>Sign off results</Button>{!ok && <span className="text-xs text-muted">{why}</span>}{partial && <span className="text-xs text-warn">Sign-off applies to partial results only.</span>}</div>
+          return <div className="flex flex-wrap items-center gap-3"><Button disabled={!ok} title={ok ? undefined : why} onClick={() => { setFilter('signoff.' + op.id, { by: me.name, at: mock.display.stamp() }); audit('Results signed off', op.id, op.projectId); toast('Results signed off.') }}>Sign off results</Button>{!ok && <span className="text-xs text-muted">{why}</span>}{partial && <span className="text-xs text-warn">Sign-off applies to partial results only.</span>}</div>
         })()}
       </Card>
       <div>

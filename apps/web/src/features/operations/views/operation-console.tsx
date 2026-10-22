@@ -20,7 +20,6 @@ import { FanOutCard } from '../../branches/index'
 import { EmergencyStopDialog, StopProgress, StopStatePanel } from '../../estop/ui'
 
 /* ───────────── ONE banner per operation (V3.1): highest-priority condition wins, the rest become notes ───────────── */
-const pad = (n: number) => String(n).padStart(2, '0')
 
 export function OpBanner({ op }: { op: Operation }) {
   const view = useOperationView(op.id)
@@ -96,7 +95,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
      project at call time) and the demo log mirrors keep the store's pushLog
      ts format (hhmm + seconds). */
   const pushLog = (opId: string, line: Omit<LogLine, 'id' | 'ts'>) =>
-    useSessionStore.getState().pushLog(opId, line, mock.display.hhmm() + ':' + pad(new Date().getSeconds()))
+    useSessionStore.getState().pushLog(opId, line, mock.display.hhmmss())
   const pauseOp = async (opId: string, reason: string): Promise<string | undefined> => {
     const projectId = mock.projectOf(opId)
     if (!projectId) return 'Operation not found.'

@@ -1,8 +1,7 @@
 import type { Project } from '../domain/entities';
 import { projectAccessible } from '../domain/policy';
 import { createIdentityService } from '../auth/identity';
-import { MockClock, Scheduler, formatDemoInstant } from '../domain/clock';
-import { hhmm, stamp } from './display-clock';
+import { DEMO_TZ, MockClock, Scheduler, formatDemoInstant } from '../domain/clock';
 import { fastForward, loseAgent, restoreAgent } from './runtime';
 import { createDatabaseAuthority, type DbAuthority } from './authority';
 import type { OperationService } from '../features/operations/service';
@@ -39,7 +38,7 @@ import type { C2Service } from '../features/c2/service';
 import { createGrantLifecycle } from '../features/c2/grants';
 import type { ActorRef, Instant, ListResult, PageRequest, ReadResult, RequestContext, ServiceResult } from '../domain/service';
 import { unavailableService } from '../domain/unavailable';
-import type { ProjectService, ConsoleServices, ScopeGuard } from '../domain/console-services';
+import type { DisplayClock, ProjectService, ConsoleServices, ScopeGuard } from '../domain/console-services';
 
 /** Scope check: the shared permissions interface is the one membership rule (ticket 06). */
 export function canAccess(db: ReturnType<DbAuthority['snapshot']>, actor: ActorRef, projectId: string): boolean {
@@ -95,6 +94,17 @@ export function lazyGuarded<S extends object>(
 ): S {
   return lazyService(() => load(guard), sync)
 }
+
+/** The dataset's time fields in the demo zone, read from the factory's injected clock. */
+const demoTimeParts = (t: Instant, fields: Intl.DateTimeFormatOptions): Record<string, string> =>
+  Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: DEMO_TZ, hourCycle: 'h23', ...fields }).formatToParts(new Date(t)).map((p) => [p.type, p.value]))
+
+/** The mock console's display labels, derived from the factory's clock so they advance with the dataset, not the host. */
+const displayAt = (clock: MockClock): DisplayClock => ({
+  stamp: () => formatDemoInstant(clock.now()),
+  hhmm: () => { const p = demoTimeParts(clock.now(), { hour: '2-digit', minute: '2-digit' }); return `${p.hour}:${p.minute}` },
+  hhmmss: () => { const p = demoTimeParts(clock.now(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }); return `${p.hour}:${p.minute}:${p.second}` },
+})
 
 export function createConsoleServices(): ConsoleServices {
   const clock = new MockClock()
@@ -211,7 +221,7 @@ export function createConsoleServices(): ConsoleServices {
     identity,
     authority,
     clock,
-    display: { stamp, hhmm },
+    display: displayAt(clock),
     demo: { loseAgent, restoreAgent, fastForward },
     schedule: (at, fn) => scheduler.schedule(at, fn),
     sweep(intervalMs, fn) {
