@@ -6,7 +6,7 @@ import { fetchFindings } from '../features/findings/remote';
 import { listRunsOfThread } from '../features/aichat/remote';
 import { apiFetch } from '../platform/transport'
 import { useRunStream } from '../platform/stream'
-import { RealModeProvider } from './bootstrap'
+import { RealModeProvider } from '../shell/real-bootstrap'
 import { RealWorkspace } from '../features/aichat/views/workspace'
 import { go } from '../router/navigate'
 import { useToastStore } from '../state/stores'

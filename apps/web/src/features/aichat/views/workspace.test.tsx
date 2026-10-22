@@ -8,7 +8,7 @@ import type { EnvironmentStateView, PublicStreamEvent } from '@raptix/web-contra
 
 const { act, cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
-const { RealModeProvider } = await import('../../../real/bootstrap')
+const { RealModeProvider } = await import('../../../shell/real-bootstrap')
 const { RealWorkspace } = await import('./workspace')
 const { RealProjectDetail } = await import('../../projects/views/project-detail-page')
 const { go } = await import('../../../router/navigate')

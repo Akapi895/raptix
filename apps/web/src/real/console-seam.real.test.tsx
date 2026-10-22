@@ -16,7 +16,7 @@ vi.stubEnv('VITE_DATA_MODE', 'real')
 const { cleanup, renderHook, waitFor } = await import('@testing-library/react')
 const { Component } = await import('react')
 const { DATA_MODE } = await import('../state/mode')
-const { RealModeProvider } = await import('./bootstrap')
+const { RealModeProvider } = await import('../shell/real-bootstrap')
 const { useDb, useMe, usePolicyProjects } = await import('../state/console')
 
 beforeEach(() => {
