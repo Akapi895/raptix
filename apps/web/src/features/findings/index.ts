@@ -4,6 +4,7 @@ export { FindingDetail } from './detail'
 export { FindingForm } from './form'
 export { EvidenceInspector, EvidenceList } from './evidence'
 export { sevLabel } from './service'
+export { fetchFindings } from './remote'
 export type {
   EvidenceListRead, EvidenceDetailRead, EvidenceView, FindingActivityPage,
   FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead,

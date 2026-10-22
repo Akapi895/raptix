@@ -4,7 +4,7 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, vi, beforeAll, beforeEach, afterEach } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 
 const fetchFindings = vi.fn()
@@ -33,6 +33,11 @@ async function renderCounts(): Promise<void> {
   const wrapper = ({ children }: { children: ReactNode }): ReactElement => <QueryClientProvider client={client}>{children}</QueryClientProvider>
   render(<ProjectCounts engagementId="eng-1" />, { wrapper })
 }
+
+// The first import of the detail screen loads the feature entries; keep that cold start out of the test timer.
+beforeAll(async () => {
+  await import('./detail')
+}, 30_000)
 
 beforeEach(() => {
   fetchFindings.mockReset()

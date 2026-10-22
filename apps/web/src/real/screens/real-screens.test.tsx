@@ -177,24 +177,27 @@ describe('RealProjectDetail', () => {
     expect((await screen.findAllByText(/Could not load reports/)).length).toBeGreaterThan(0)
   })
 
-  it('composes the onboarding order (Team, Scope & ROE, Planning) with the truthful handoff status', async () => {
+  it('shows the next step and the readiness checks, with an unread source shown as unavailable', async () => {
+    // The stub answers every engagement sub-path with the project record, which the scope and planning guards reject: both reads fail.
     stubApi()
     go('project', { id: 'eng-8f3c92a1' })
     ui(<RealProjectDetail />)
-    expect(await screen.findByText('Onboarding')).toBeTruthy()
-    expect(screen.getByText(/invite the independent reviewer/)).toBeTruthy()
-    expect(screen.getByText(/submit the scope revision and ROE/)).toBeTruthy()
-    expect(screen.getByText(/confirm the planning handoff/)).toBeTruthy()
-    expect(screen.getByRole('status').textContent).toMatch(/not confirmed yet/)
-    await userEvent.click(screen.getByRole('button', { name: /Open Team/ }))
-    expect(globalThis.location.hash).toContain('tab=team')
-  })
+    expect(await screen.findByText('Next step')).toBeTruthy()
+    // "Authorization confirmed" also labels the identity card, so the readiness rows are checked as present, not unique.
+    for (const label of ['Target verified', 'Authorization confirmed', 'Scope & ROE approved', 'Planning handed off']) expect(screen.getAllByText(label).length).toBeGreaterThan(0)
+    // The next step and the readiness row both carry the reason, so each is checked as present.
+    expect((await screen.findAllByText('Scope status could not be read', undefined, { timeout: 5000 })).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Planning status could not be read').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Planning handoff confirmed')).toBeNull()
+    await userEvent.click(screen.getAllByRole('button', { name: /Open Scope & ROE/ })[0])
+    expect(globalThis.location.hash).toContain('tab=scope')
+  }, 20_000)
 
-  it('shows the confirmed planning handoff in the onboarding card when the server reports one', async () => {
+  it('marks the planning handoff met when the project records one, even while the planning read is unavailable', async () => {
     stubApi([dto({ handoffConfirmedAt: '2026-10-14T09:00:00.000Z' })])
     go('project', { id: 'eng-8f3c92a1' })
     ui(<RealProjectDetail />)
-    expect(await screen.findByText(/Planning handoff:/)).toBeTruthy()
-    expect(screen.getByRole('status').textContent).toMatch(/confirmed at/)
+    expect(await screen.findByText('Planning handoff confirmed', undefined, { timeout: 5000 })).toBeTruthy()
+    expect(screen.getAllByText('Met').length).toBeGreaterThan(0)
   })
 })

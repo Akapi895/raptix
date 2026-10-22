@@ -11,12 +11,12 @@ import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { fetchAssetInventory } from '../../features/assets/endpoints';
-import { fetchFindings } from '../../features/findings/remote';
-import { fetchFleet } from '../../features/operations/remote';
-import { fetchPlanning } from '../../features/planning/remote';
-import { fetchScopeRevisions } from '../../features/scope/remote';
+import { fetchAssetInventory } from '../../features/assets';
+import { fetchFindings } from '../../features/findings';
+import { fetchFleet } from '../../features/operations';
 import { getEngagement } from '../../features/projects/remote';
+import { ProjectShortcuts, WorkspaceStatus } from '../../features/projects/views/workspace-status';
+import { projectStage, STAGE_LABEL } from '../../features/projects/workspace';
 import { utcMinuteOr } from '../format'
 import { projectKeys } from '../../features/projects/query'
 import { RealConversation } from './workspace'
@@ -99,7 +99,7 @@ export function RealProjectDetail(): ReactElement {
         title={sectionTitle(tab)}
         sub={<span><span className="font-mono">{data.id}</span> · {data.displayName}</span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: data.displayName }]}
-        meta={<Status kind="project" value={data.lifecycleStatus} size="sm" />}
+        meta={<span className="flex flex-wrap items-center gap-2"><Status kind="project" value={data.lifecycleStatus} size="sm" /><span className="text-xs text-muted">{STAGE_LABEL[projectStage(data.lifecycleStatus)]}</span></span>}
       />}
       <div className="mt-5">
         {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}>{ProjectReports ? <ProjectReports /> : null}</Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
@@ -118,7 +118,7 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
             The stored target is not policy-verified yet. Fix the target or confirm authorization before planning starts.
           </Banner>
         )}
-        <Onboarding d={d} />
+        <WorkspaceStatus d={d} />
         <EnvironmentPanel engagementId={d.id} projectName={d.displayName} />
         {d.brief && (
           <Card>
@@ -145,13 +145,7 @@ function Overview({ d }: { d: ProjectViewModel }): ReactElement {
         </Card>
       </div>
       <div className="min-w-0 space-y-4">
-        <Card>
-          <CardHeader title="Planning handoff" />
-          <p className="text-sm text-muted">{d.handoffConfirmedAt ? `Confirmed at ${utcMinuteOr(d.handoffConfirmedAt)}` : 'Planning handoff has not been confirmed yet.'}</p>
-          <div className="mt-3">
-            <Button variant="secondary" onClick={() => go('project', { id: d.id, tab: 'planning' })}>Open planning</Button>
-          </div>
-        </Card>
+        <ProjectShortcuts projectId={d.id} />
         <Card>
           <CardHeader title="Counts" sub="Counters exist only when a projection source confirms them." />
           <ProjectCounts engagementId={d.id} />
@@ -181,46 +175,6 @@ export function ProjectCounts({ engagementId }: { engagementId: string }): React
         { k: 'Active runs', v: show(fleet, fleet.data?.counts.activeRuns) },
       ]}
     />
-  )
-}
-
-/**
- * W22 onboarding: composes the real workflows in the order the governance
- * lifecycle expects. No wizard state is persisted — each step opens the tab
- * that owns the real workflow, and only server-known state (the planning
- * handoff) renders a truthful status.
- */
-function Onboarding({ d }: { d: ProjectViewModel }): ReactElement {
-  // Same keys as the Scope and Planning panels, so the overview reuses their reads.
-  const scope = useQuery({ queryKey: ['real', 'scope-revisions', d.id], queryFn: () => fetchScopeRevisions(d.id) })
-  const planning = useQuery({ queryKey: ['real', 'planning', d.id], queryFn: () => fetchPlanning(d.id) })
-  const scopeStatus = scope.data === undefined ? '…' : scope.data.latestApprovedVersion === null ? 'No approved revision yet' : `Approved v${scope.data.latestApprovedVersion}`
-  const planningStatus = planning.data === undefined ? '…'
-    : d.handoffConfirmedAt !== null ? 'Handoff confirmed'
-    : planning.data.readiness.state === 'ready' ? 'Documents ready — review, then confirm'
-    : `${planning.data.readiness.reasons.length} item(s) to resolve`
-  const steps: { label: string; why: string; tab: string; status?: string }[] = [
-    { label: 'Team', why: 'invite the independent reviewer who decides approvals (four-eyes)', tab: 'team' },
-    { label: 'Scope & ROE', why: 'submit the scope revision and ROE that approvals pin', tab: 'scope', status: scopeStatus },
-    { label: 'Planning', why: 'confirm the planning handoff, then draft the business plan', tab: 'planning', status: planningStatus },
-  ]
-  return (
-    <Card>
-      <CardHeader title="Onboarding" sub="Compose the real workflows in order — there is no separate wizard and nothing is persisted outside each workflow's own contract" />
-      <ol className="space-y-2 p-4 text-sm">
-        {steps.map((s, i) => (
-          <li key={s.tab} className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2 last:border-b-0 last:pb-0">
-            <span>{i + 1}. <span className="font-medium">{s.label}</span> — <span className="text-muted">{s.why}</span>{s.status && <span className="ml-2 text-xs text-fg">· {s.status}</span>}</span>
-            <Button variant="secondary" onClick={() => go('project', { id: d.id, tab: s.tab })}>Open {s.label}</Button>
-          </li>
-        ))}
-      </ol>
-      <div className="border-t border-line px-4 py-3">
-        <p className="text-xs text-muted" role="status">
-          Planning handoff: {d.handoffConfirmedAt === null ? 'not confirmed yet — step 3 completes it' : `confirmed at ${utcMinuteOr(d.handoffConfirmedAt)}`}
-        </p>
-      </div>
-    </Card>
   )
 }
 
