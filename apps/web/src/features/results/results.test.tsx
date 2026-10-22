@@ -1,7 +1,7 @@
 /**
  * Ticket 30: operation results + execution graph on the typed read model —
  * the results/graph migration at its new execution site
- * (src/features/results/service.ts + src/screens/c-results.tsx).
+ * (src/features/results/service.ts + src/features/operations/views/operation-results.tsx).
  *
  * Covered here: the read derives graph and results presentation from
  * canonical records only (step outcomes stay distinct, edges are playbook

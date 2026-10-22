@@ -9,7 +9,7 @@ import { FEATURE_SURFACES, type PanelGroup } from '../../router/routes'
 
 type PanelComponent = ComponentType<{ engagementId: string }>
 
-/** Lazy real panel per group; `route-table.ts` decides which groups a route key renders. */
+/** Lazy real panel per group; `router/routes.ts` decides which groups a route key renders. */
 const PANEL_COMPONENTS: Record<PanelGroup, PanelComponent> = {
   operations: lazy(() => import('../../features/operations/runtime-tab').then((m) => ({ default: m.RuntimeOperationsTab }))),
   governance: lazy(() => import('../../features/governance/tab').then((m) => ({ default: m.GovernanceTab }))),
