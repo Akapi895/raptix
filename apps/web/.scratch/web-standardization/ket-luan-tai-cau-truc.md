@@ -127,7 +127,7 @@ Thứ tự slice theo design doc và độ phụ thuộc: S-A → S-B → S-C (d
 | 0 | Hoàn thành | 18c6732c | ADR-0096 Accepted; ADR-0084 ghi nhận điểm 2 được thay thế; gate route sửa; `check:boundaries` và `verify:routes` thêm vào |
 | 1 | Hoàn thành | 561de192, bb48df69 | Mode, policy, dashboard, AI card và ui/shell/safety về owner; Findings và fan-out có module riêng; các unavailable service dựng qua một helper |
 | 2 | Hoàn thành | be2c2f61, d35bb8c7, 793515a5, cbf06696 | real/api.ts chia về features/<x>/remote.ts và platform/; data.ts tách thành domain/catalog.ts và demo/seed.ts; demo/ gồm display-clock, authority, runtime, persona, services; service factory tách thành domain/console-services.ts và demo/services.ts; mock service đóng dấu thời gian qua clock của authority. check:boundaries: 842 (từ 808 ở phase 0), tăng vì adapter import remote.ts theo đường dẫn, xử lý ở phase 3 |
-| 3 | Đang làm, chưa slice nào hoàn tất | ce789b22 (S-J: screens/demo → demo/) | Chặn ở route smoke real mode: cần RAPTIX_VERIFY_USER/PASSWORD và API nối DB raptix-verify-pg4 (cổng 55444). Mock 55/55 sau mỗi bước. Các slice S-A … S-I còn lại |
+| 3 | Đang làm: S-A Reports đạt parity theo checklist (còn phần mock-only); S-B chưa bắt đầu | 031f8a19, c9454b10, d0d53476, 794f808b (S-A); ce789b22 (S-J) | Chi tiết ở mục 8.5. Chặn của S-B: hai lỗi real đã xác định, cần thao tác port cho scope và tách kiểm tra import khỏi mock |
 | 4 | Chưa bắt đầu | — | |
 
 ### 8.1 Phase 2: chia file đã hoàn thành
@@ -177,6 +177,21 @@ Phase 2 đóng ở mức chia file. Ownership đóng theo slice trong phase 3.
 - `npm run verify:routes`: `tools/verify/route-smoke.mjs` kiểm tra từng route theo kỳ vọng riêng cho mỗi mode (heading của `main` hoặc text hiển thị). Mock đăng nhập một persona; real đăng nhập bằng form và xác nhận `/api/auth/session`. Lỗi ngoài `tools/verify/baseline.json` làm exit khác 0.
 - `tools/verify/stack.mjs`: dựng stack cách ly (PostgreSQL container riêng, mật khẩu ngẫu nhiên, API từ source, Vite, owner bootstrap một lần, fixture qua API), chạy smoke, rồi dừng và xóa mọi thứ đã tạo.
 - Phần chưa kiểm chứng được ghi trong `baseline.json` kèm lý do. Không tính là parity.
+
+### 8.5 Phase 3: tiến độ slice (có bằng chứng)
+
+**S-A Reports: đạt parity theo checklist; còn một phần chỉ có ở mock.**
+- Commit: `031f8a19` (port khai báo rõ ràng; mock tách khỏi service; adapter gộp vào `remote.ts`; endpoint ở `endpoints.ts`; helper adapter về `platform/`), `c9454b10` (presentation về `features/reports/views/`, pure move), `d0d53476` (capability thay `isRealMode()`), `794f808b` (checklist và seed).
+- Bằng chứng: checklist real (`flows-reports.json`) đạt 27/27 thao tác qua adapter trong trang đang chạy: capabilities, list, templates, deliveries, draftOptions, editor, review, createTemplate, createDraft, saveSection, addSection, removeSection, reorderSections, setFindings với finding đã xác nhận, submit, decide approve bởi reviewer độc lập, exportVersion PDF, exportArtifact markdown, deliver, acknowledge, revise. Route smoke: năm route báo cáo đạt ở mock và real.
+- Đã xóa: `real/service-adapter/reports.ts`; `screens/f-report.tsx` và phần báo cáo của `screens/f.tsx`; mọi `isRealMode()` trong view báo cáo.
+- Chưa đạt: `SimulatedTemplates` trong `features/reports/views/list.tsx` (chi tiết mẫu, phê duyệt, dùng mẫu, nhật ký kiểm toán mô phỏng) chỉ có ở mock. Port chưa có thao tác tương ứng và real không có; cần thêm thao tác port trước khi hợp nhất. View này còn một `useServices()`. `screens/f.tsx` còn giữ route settings đến khi S-C.
+- Chưa kiểm chứng: thao tác bằng giao diện (click-through). Route smoke xác nhận màn hình hiển thị; checklist xác nhận thao tác qua adapter.
+
+**S-B Assets/Library: chưa bắt đầu; nguyên nhân hai lỗi real đã xác định.**
+- `asset-new`: AssetNew → `useAssetImportRead` (`features/assets/import-read.ts`) → `useServiceProjection` → `useServices()` của mock. Cần tách kiểm tra trùng và xác thực dòng khỏi dữ liệu mock, lấy định danh từ `useAssetList` ở real.
+- `asset-scope`: AssetScope gọi `useServices()` (`screens/d-assets.tsx`) để tạo giao dịch phê duyệt mock. Cần thao tác port cho yêu cầu đổi phạm vi: mock thực hiện, real trả thông báo chuyển sang Scope revisions.
+
+**Gate:** baseline khai báo 17 mục (15 route real chưa có fixture, 2 lỗi S-B). `check:boundaries`: 834 vi phạm, từ 866 ở commit gate.
 
 ## 9. Baseline ghi nhận ở phase 0 (HEAD fb71c24c)
 
