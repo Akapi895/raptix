@@ -9,10 +9,10 @@ vi.stubEnv('VITE_DATA_MODE', 'real')
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
 const { RealModeProvider } = await import('../bootstrap')
-const { RealPortfolio } = await import('./portfolio')
-const { RealProjectCreateDialog, RealProjectNewRoute } = await import('./create')
+const { RealPortfolio } = await import('../../features/projects/views/portfolio-page')
+const { RealProjectCreateDialog, RealProjectNewRoute } = await import('../../features/projects/views/create-page')
 const { useCreateProjectDialog, showCreateProject } = await import('../create-project-dialog')
-const { RealProjectDetail } = await import('./detail')
+const { RealProjectDetail } = await import('../../features/projects/views/detail-page')
 const { go } = await import('../../router/navigate')
 
 const CAPS = {

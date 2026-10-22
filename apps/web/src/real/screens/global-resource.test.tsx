@@ -15,7 +15,7 @@ vi.mock('../../features/overview/remote', () => ({
   fetchOverviewFindings: (...a: unknown[]) => fetchOverviewFindings(...a),
   fetchOverviewC2: (...a: unknown[]) => fetchOverviewC2(...a),
 }))
-vi.mock('../queries', () => ({
+vi.mock('../../features/projects/query', () => ({
   useRealProjects: () => ({ list: { isPending: false, isError: false, data: [] } }),
 }))
 

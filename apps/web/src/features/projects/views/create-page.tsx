@@ -8,16 +8,16 @@
  * integrated — creating never persists them under a real label.
  */
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { FolderPlus, Info } from 'lucide-react'
-import { createEngagement, type CreateEngagementInput } from '../../features/projects/remote';
-import { invalidateProjects, projectKeys } from '../queries'
-import { markPlanningSeed } from '../planning-seed'
-import { showCreateProject, useCreateProjectDialog } from '../create-project-dialog'
-import { go } from '../../router/navigate'
-import { useDirty, useSessionStore } from '../../state/session'
-import { useToastStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, Check, Field, Input, Modal, Select, Textarea } from '../../ui/index'
+import { invalidateProjects, projectKeys, useCreateProject } from '../query'
+import type { CreateEngagementInput } from '../remote'
+import { markPlanningSeed } from '../../../real/planning-seed'
+import { showCreateProject, useCreateProjectDialog } from '../../../real/create-project-dialog'
+import { go } from '../../../router/navigate'
+import { useDirty, useSessionStore } from '../../../state/session'
+import { useToastStore } from '../../../state/stores'
+import { Banner, Button, Card, CardHeader, Check, Field, Input, Modal, Select, Textarea } from '../../../ui/index'
 
 const TARGET_TYPES: { value: CreateEngagementInput['targetType']; label: string }[] = [
   { value: 'web_url', label: 'Web URL' },
@@ -70,8 +70,7 @@ function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactEle
   }
   const valid = !fieldErrors.displayName && !fieldErrors.name && !fieldErrors.targetValue && !fieldErrors.brief && form.authorized
 
-  const create = useMutation({
-    mutationFn: (input: CreateEngagementInput) => createEngagement(input),
+  const create = useCreateProject({
     onSuccess: (created) => {
       clearDirty()
       toast(`Created engagement ${created.id}`)

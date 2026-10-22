@@ -28,7 +28,7 @@ vi.mock('../../features/operations/remote', () => ({
 }))
 
 async function renderCounts(): Promise<void> {
-  const { ProjectCounts } = await import('./detail')
+  const { ProjectCounts } = await import('../../features/projects/views/detail-page')
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { children: ReactNode }): ReactElement => <QueryClientProvider client={client}>{children}</QueryClientProvider>
   render(<ProjectCounts engagementId="eng-1" />, { wrapper })
