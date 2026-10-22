@@ -92,9 +92,16 @@ async function seed(api, owner) {
   const capture = await request(api, owner, 'POST', `${prefix}/artifacts/captures`, { requestId: randomUUID(), filename: 'stack-fixture.txt', mediaType: 'text/plain', base64: bytes.toString('base64') });
   await request(api, owner, 'PATCH', `${prefix}/artifacts/captures/${capture.id}/classification`, { classification: 'standard', expectedVersion: 1, reason: 'Generated verification fixture.' });
   const finding = await request(api, owner, 'POST', `${prefix}/curated-findings`, { title: 'Stack verification finding', severity: 'medium', detail: 'Generated fixture for the route smoke.', reproduction: { prerequisites: 'Generated fixture only', inputs: 'No target', steps: ['Read the retained fixture'], expectedObservation: 'Exact original bytes', limitations: 'No exploitation attempted', artifact: { captureId: capture.id, digest } } });
+  const report = await request(api, owner, 'POST', `${prefix}/report-records`, { title: 'Stack verification report', summary: 'Generated fixture for the route smoke.' });
   const viewerPassword = randomUUID();
   await request(api, owner, 'POST', `${prefix}/members`, { username: 'viewer', displayName: 'Stack Viewer', password: viewerPassword, role: 'viewer' });
-  return { project: project.id, finding: finding.id, evidence: capture.id, viewer: { username: 'viewer', password: viewerPassword } };
+  const reviewerPassword = randomUUID();
+  await request(api, owner, 'POST', `${prefix}/members`, { username: 'reviewer', displayName: 'Stack Reviewer', password: reviewerPassword, role: 'reviewer' });
+  // A confirmed finding is the reporting readiness precondition: the author sends it to review, an independent reviewer confirms it.
+  await request(api, owner, 'POST', `${prefix}/curated-findings/${finding.id}/transition`, { to: 'review', expectedVersion: finding.version ?? 1 });
+  const reviewerSession = await login(api, 'reviewer', reviewerPassword);
+  await request(api, reviewerSession, 'POST', `${prefix}/curated-findings/${finding.id}/transition`, { to: 'confirmed', expectedVersion: (finding.version ?? 1) + 1 });
+  return { project: project.id, finding: finding.id, evidence: capture.id, report: report.id, viewer: { username: 'viewer', password: viewerPassword }, reviewer: { username: 'reviewer', password: reviewerPassword } };
 }
 
 async function runSmoke(env, manifestFile, modesToRun, name) {
@@ -102,6 +109,14 @@ async function runSmoke(env, manifestFile, modesToRun, name) {
   const extra = [...(routes ? ['--routes', routes] : []), ...(process.argv.includes('--discover') ? ['--discover'] : [])];
   const result = spawnSync(process.execPath, [path.join(here, 'route-smoke.mjs'), '--modes', modesToRun, '--fixtures-real', manifestFile, '--out', smokeOut, ...extra], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
   writeFileSync(path.join(out, `${name}.log`), `${result.stdout}${result.stderr}`);
+  process.stdout.write(result.stdout);
+  return result.status;
+}
+
+function runFlows(env, manifestFile) {
+  const flowOut = path.join(out, 'flows-reports.json');
+  const result = spawnSync(process.execPath, [path.join(here, 'flows', 'reports.mjs'), '--app', env.RAPTIX_VERIFY_APP, '--fixtures', manifestFile, '--out', flowOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  writeFileSync(path.join(out, 'flows-reports.log'), `${result.stdout}${result.stderr}`);
   process.stdout.write(result.stdout);
   return result.status;
 }
@@ -162,7 +177,7 @@ try {
   const owner = await login(api, 'verifier', adminPassword);
   const fixtures = await seed(api, owner);
   const manifest = path.join(out, 'fixtures.real.json');
-  writeFileSync(manifest, JSON.stringify({ project: fixtures.project, finding: fixtures.finding, evidence: fixtures.evidence }, null, 2));
+  writeFileSync(manifest, JSON.stringify({ project: fixtures.project, finding: fixtures.finding, evidence: fixtures.evidence, report: fixtures.report }, null, 2));
   log(`fixtures written: ${manifest}`);
   const statuses = [];
   const viteBin = path.join(path.dirname(require.resolve('vite/package.json')), 'bin/vite.js');
@@ -177,6 +192,7 @@ try {
   }
   if (modes.split(',').includes('real')) {
     statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
+    statuses.push(runFlows({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest));
   }
   status = statuses.every((code) => code === 0) ? 0 : 1;
 } catch (error) {
