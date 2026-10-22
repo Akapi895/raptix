@@ -1,6 +1,6 @@
 import type { RequestContext, ServiceResult } from '../../domain/service'
-import type { ObservedAnalysisRead, ObservedAnalysisService } from '../../features/analysis/observed'
-import { fetchAnalysis } from '../../features/analysis/api';
+import type { ObservedAnalysisRead, ObservedAnalysisService } from './observed'
+import { fetchAnalysis } from './api';
 import { ApiTransportError } from '../../platform/transport'
 import { guarded } from '../../platform/adapter-shared'
 

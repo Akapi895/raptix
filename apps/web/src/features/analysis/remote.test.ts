@@ -5,14 +5,14 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/analysis/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/analysis/api')>()
+vi.mock('./api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api')>()
   return { ...actual, fetchAnalysis: vi.fn() }
 })
 
-const api_analysis = await import('../../features/analysis/api');
+const api_analysis = await import('./api');
 const { ApiTransportError } = await import('../../platform/transport')
-const { createRealObservedAnalysisService } = await import('./analysis')
+const { createRealObservedAnalysisService } = await import('./remote')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'eng-1', corr: 'test' }
 
