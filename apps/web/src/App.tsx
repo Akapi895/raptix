@@ -3,7 +3,7 @@ import { createHashRouter, RouterProvider } from 'react-router'
 import { ServicesProvider } from './state/services'
 import { ConsoleProviders } from './state/query'
 import { DATA_MODE } from './state/mode'
-import { RealModeProvider } from './real/bootstrap'
+import { RealModeProvider } from './shell/real-bootstrap'
 import { getActiveRouter, setActiveRouter } from './router/active'
 import { RouteErrorBoundary, RouteHost } from './router/host'
 
