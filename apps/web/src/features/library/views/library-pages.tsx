@@ -1,13 +1,13 @@
 /* eslint-disable react-refresh/only-export-components -- library route bundle: sub-screens co-exported for the registry */
 import { useEffect, useState } from 'react'
 import { BookOpen, Download, Send, ShieldCheck } from 'lucide-react'
-import { Banner, Button, Card, CardHeader, DescList, Empty, Field, Input, Mono, PageHeader, Select, Skeleton, Status, Textarea } from '../ui/index'
-import { withLoading } from './d-shared'
-import { LibraryReadError, useLibraryCorpus, useLibraryProposal, useLibraryProposals, useLibraryWrites, useSkillDetail, useTechniqueDetail } from '../features/library/query'
-import type { LibraryProposal, LibraryProposalStatus } from '../features/library/service'
-import { go, useRoute } from '../router/navigate'
-import { useMe } from '../state/console'
-import { useToastStore } from '../state/stores'
+import { Banner, Button, Card, CardHeader, DescList, Empty, Field, Input, Mono, PageHeader, Select, Skeleton, Status, Textarea } from '../../../ui/index'
+import { withLoading } from '../../../ui/d-shared'
+import { LibraryReadError, useLibraryCorpus, useLibraryProposal, useLibraryProposals, useLibraryWrites, useSkillDetail, useTechniqueDetail } from '../query'
+import type { LibraryProposal, LibraryProposalStatus } from '../service';
+import { go, useRoute } from '../../../router/navigate'
+import { useMe } from '../../../state/console'
+import { useToastStore } from '../../../state/stores'
 
 /** Roles that may decide a proposal (server: reviewer and above; the author never decides their own). */
 const DECIDE_ROLES: readonly string[] = ['admin', 'manager', 'reviewer']

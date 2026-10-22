@@ -1,23 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
-import { isRealMode } from '../state/mode'
-import { useDirty } from '../state/session'
-import type { Asset } from '../domain/entities'
-import { useAssetImportRead, type AssetImportRead } from '../features/assets/import-read'
-import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui/index'
-import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from './d-shared'
+import { useDirty } from '../../../state/session'
+import type { Asset } from '../../../domain/entities'
+import { useAssetImportRead, type AssetImportRead } from '../import-read'
+import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../../../ui/index'
+import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from '../../../ui/d-shared'
 // Ticket 50: catalog list, asset detail and scope views read through the
 // typed asset service via Query (feature-local handlers).
-import { AssetReadError, useAssetDetail, useAssetList, useAssetPort, useAssetScope, useObservedGraph } from '../features/assets/query'
-import type { AssetListItem, AssetScopeProject } from '../features/assets/service'
+import { AssetReadError, useAssetDetail, useAssetList, useAssetPort, useAssetScope, useObservedGraph } from '../query'
+import type { AssetListItem, AssetScopeProject } from '../service';
 // Ticket 51: imports and scope changes run through the feature-local write
 // transactions (validated, atomic, role-gated) via the screen handlers.
-import { ASSET_TYPES, createAssetWriteHandlers, okIp, validateIdent, type AssetImportRow } from '../features/assets/writes'
-import { go, selectProject, useRoute } from '../router/navigate'
-import { useActiveProject, useCan, usePolicyProjects, useMe } from '../state/console'
-import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
-import { useSessionStore } from '../state/session'
+import { ASSET_TYPES, createAssetWriteHandlers, okIp, validateIdent, type AssetImportRow } from '../writes'
+import { go, selectProject, useRoute } from '../../../router/navigate'
+import { useActiveProject, useCan, usePolicyProjects, useMe } from '../../../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../../../state/stores'
+import { useSessionStore } from '../../../state/session'
 
 const SCOPES: Asset['scope'][] = ['in', 'out', 'pending', 'unclassified']
 const SCOPE_LABEL: Record<Asset['scope'], string> = { in: 'Approved In Scope', out: 'Approved Out of Scope', pending: 'Pending Approval', unclassified: 'Unclassified' }
@@ -656,7 +655,7 @@ function ObservedGraphCard() {
 
 // eslint-disable-next-line react-refresh/only-export-components -- assets screen module: helper co-exported with screens
 export const assetRoutes = {
-  assets: withLoading(function Assets() { const route = useRoute(); return route.tab === 'scope-map' ? <AssetScope /> : <>{<AssetList />}{isRealMode() && <ObservedGraphCard />}</> }),
+  assets: withLoading(function Assets() { const route = useRoute(); const port = useAssetPort(); return route.tab === 'scope-map' ? <AssetScope /> : <>{<AssetList />}{port.capabilities.observedGraph && <ObservedGraphCard />}</> }),
   'asset-new': withLoading(AssetNew),
   'asset-scope': withLoading(AssetScope),
   asset: withLoading(AssetDetail),

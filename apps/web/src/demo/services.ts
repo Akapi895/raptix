@@ -161,7 +161,7 @@ export function createConsoleServices(): ConsoleServices {
   const forBranches = (actor: ActorRef, projectId: string): BranchService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/branches/service').then((m) => m.createBranchService(authority, clock, guard)))
   const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/library/service').then((m) => m.createLibraryService(authority, clock, guard)))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/library/mock').then((m) => m.createLibraryService(authority, clock, guard)))
   const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/analysis/service').then((m) => m.createAnalysisService(authority, guard)))
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
@@ -177,7 +177,7 @@ export function createConsoleServices(): ConsoleServices {
   const forRoeScope = (actor: ActorRef, projectId: string): ScopeService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/scope/mock').then((m) => m.createMockScopeService(authority, clock, guard)))
   const forAssets = (actor: ActorRef, projectId: string): AssetService =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/assets/service').then((m) => m.createAssetService(authority, clock, guard)))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/assets/mock').then((m) => m.createAssetService(authority, clock, guard)))
   const forWorkers = (actor: ActorRef, projectId: string): WorkerService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/workers/service').then((m) => m.createWorkerService(authority, guard)))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>

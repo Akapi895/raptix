@@ -16,7 +16,7 @@ import { mountServices } from '../test/helpers'
 import { go, selectProject } from '../router/navigate'
 import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
-import { DTable } from './d-shared'
+import { DTable } from '../ui/d-shared'
 
 /** The route the test wants after sign-in; sign-in itself lands on the System Overview. */
 let landing: string | undefined

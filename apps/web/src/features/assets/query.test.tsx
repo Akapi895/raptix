@@ -17,7 +17,7 @@ import { routes } from '../../screens/d'
 import { hasRoute } from '../../router/registry'
 import { seed } from '../../demo/seed';
 import { changeAssetScopeTransaction, importAssetsTransaction } from './writes'
-import { getAsset, getAssetScope, listAssets } from './service'
+import { getAsset, getAssetScope, listAssets } from './mock';
 
 const P14 = 'RT-2026-014'
 const P15 = 'RT-2026-015'
