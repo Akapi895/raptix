@@ -35,7 +35,7 @@ const DEMOS = [
 /* Interaction matrix (spec section 9): source, CTA, eligible result, ineligible result, real screen. */
 type MRow = [string, string, string, string, Dest, string?]
 const MATRIX: MRow[] = [
-  ['All Projects Command Center', 'New Operation', 'Choose a project first', 'Tooltip: Select a project', { page: 'command-center' }, 'all'],
+  ['All Projects Command Center', 'New Operation', 'Choose a project first', 'Tooltip: Select a project', { page: 'overview' }, 'all'],
   ['Projects', 'Create Project', 'Opens the 5-step wizard', 'Permission denied for roles without access', { page: 'project-new' }],
   ['Project Wizard', 'Save Draft', 'Saves the draft form', 'Minimal inline validation or retry', { page: 'project-new' }],
   ['Project Wizard', 'Submit for Approval', 'Creates a review request and notification', 'Focuses the unmet checklist item', { page: 'project', id: 'RT-2026-017', tab: 'scope' }, 'RT-2026-017'],
@@ -63,7 +63,7 @@ const MATRIX: MRow[] = [
   ['Report Detail', 'Deliver', 'Handover log', 'Needs export first and permission', { page: 'report-preview', id: 'REP-014' }, 'RT-2026-014'],
   ['Project Detail', 'Close Project', 'Checklist and confirmation', 'Blocking issues with affected entities', { page: 'project', id: 'RT-2026-014', tab: 'close' }, 'RT-2026-014'],
   ['Any live page', 'Emergency Stop', 'Impact, confirm, request, ACK states', 'Never shows fake success', { page: 'operation', id: 'OP-014' }, 'RT-2026-014'],
-  ['Search', 'Click entity', 'Context-preserving navigation', 'Access denied without data leak', { page: 'command-center' }],
+  ['Search', 'Click entity', 'Context-preserving navigation', 'Access denied without data leak', { page: 'overview' }],
   ['Project Switcher', 'Change project', 'New dataset and breadcrumb', 'Warns on unsaved work; never mixes data', { page: 'projects' }],
 ]
 
@@ -104,7 +104,7 @@ const COVER: [string, string[]][] = [
 /* Acceptance criteria (V3.1). Status is deliberately conservative: nothing here was verified by automated or manual click-testing. */
 type AStat = 'Prototype-simulated' | 'Not click-tested'
 const ACCEPT: [string, string, AStat, string, Dest][] = [
-  ['Header fits at 1280/1440/1728/1920 with no whole-header scroll; Emergency Stop and contact never clipped', 'Layout', 'Not click-tested', 'Viewport widths were not checked in a browser.', { page: 'command-center' }],
+  ['Header fits at 1280/1440/1728/1920 with no whole-header scroll; Emergency Stop and contact never clipped', 'Layout', 'Not click-tested', 'Viewport widths were not checked in a browser.', { page: 'overview' }],
   ['Project header groups Main, Activity and Safety, and each item is clickable', 'Shell', 'Not click-tested', 'Navigation targets exist; behavior not click-verified.', { page: 'project', id: 'RT-2026-014', tab: 'overview' }],
   ['Default AI Mode affects new conversations only; Conversation Mode, Execution Eligibility and Operation Runtime State are separate', 'AI', 'Prototype-simulated', 'Four concepts are modeled in the UI; no backend.', { page: 'ai-operator', id: 'CV-014-03' }],
   ['A prompt never triggers execution in any mode', 'AI', 'Prototype-simulated', 'Chat only creates demo messages and plan proposals.', { page: 'ai-operator', id: 'CV-014-03' }],
@@ -220,7 +220,7 @@ function ScenariosPage() {
               </select>
             </label>
             <Button icon={RotateCcw} onClick={reset}>Reset Demo State</Button>
-            <Button variant="primary" icon={LogIn} onClick={() => { signIn(meName); go('command-center'); toastFn(`Entered the app as ${meName}.`, 'info') }}>Enter app</Button>
+            <Button variant="primary" icon={LogIn} onClick={() => { signIn(meName); go('overview'); toastFn(`Entered the app as ${meName}.`, 'info') }}>Enter app</Button>
           </div>
         </div>
       </header>
@@ -383,7 +383,7 @@ function WorkspacesPage() {
   const toast = useToastStore((s) => s.toast)
   const [q, setQ] = useState('')
   const rows = ORGS.filter((o) => o.name.toLowerCase().includes(q.toLowerCase()))
-  const open = (name: string) => { signIn(meName, name); toast(`Opened workspace ${name}.`, 'ok'); go('command-center') }
+  const open = (name: string) => { signIn(meName, name); toast(`Opened workspace ${name}.`, 'ok'); go('overview') }
   return (
     <div className="flex min-h-screen flex-col items-center bg-bg px-6 py-12 text-fg">
       <div className="w-full max-w-2xl">

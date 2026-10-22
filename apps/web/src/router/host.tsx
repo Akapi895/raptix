@@ -12,7 +12,7 @@
  * copilot drawer the same way; the `askAi` trigger keeps the legacy default.
  */
 import { Component, lazy, Suspense, useEffect, useRef, type ComponentType, type ReactNode } from 'react'
-import { useBlocker, useRouteError } from 'react-router'
+import { Navigate, useBlocker, useRouteError } from 'react-router'
 import { Loader2, RefreshCw, ServerCrash } from 'lucide-react'
 import { useSessionStore } from '../state/session'
 import { useAuthStore, useProjectStore } from '../state/stores'
@@ -34,7 +34,8 @@ import { HeaderNotices } from '../features/notices/header-notices'
 import { LazyCopilotDrawer } from '../features/copilot/lazy'
 import { RealTrace } from '../features/operations/trace-panel'
 import { isAssetMapEnabled } from '../features/asset-map/flag'
-import { OUTSIDE_SHELL, type Route } from './history'
+import { OUTSIDE_SHELL, toHref, type Route } from './history'
+import { canonicalRoute } from './aliases'
 import { routeComponent } from './registry'
 
 const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
@@ -53,7 +54,6 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   'project-new': RealProjectNewRoute,
   project: RealProjectDetail,
   'ai-operator': RealWorkspace,
-  'command-center': RealOverview,
   tasks: RealCommandCenter,
   ...Object.fromEntries(Object.keys(FEATURE_ROUTE_SURFACES).map((key) => [key, RealFeatureRoute])),
   'ai-history': RealWorkspace,
@@ -186,6 +186,9 @@ export function RouteHost() {
   // Real mode has no sign-in gate: the connected API document is the trust
   // boundary (D1), and the auth store stays untouched by real mode.
   const authed = DATA_MODE === 'real' ? true : storeAuthed
+  const canonical = canonicalRoute(route)
+  // Legacy addresses (aliases.ts) are replaced once with the canonical route, so old links keep working.
+  if (canonical !== route) return <Navigate to={toHref(canonical)} replace />
   return (
     <>
       <DirtyNavBlocker />

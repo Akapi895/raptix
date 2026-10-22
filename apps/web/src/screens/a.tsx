@@ -15,6 +15,5 @@ export const routes: Record<string, ComponentType> = {
   'session-expired': SessionExpired,
   states: lazy(() => import('./system/gallery').then((m) => ({ default: m.StatesGallery }))),
   overview: lazy(() => import('./a-dashboard').then((m) => ({ default: m.Dashboard }))),
-  'command-center': lazy(() => import('./a-dashboard').then((m) => ({ default: m.Dashboard }))),
   tasks: lazy(() => import('./a-tasks').then((m) => ({ default: m.MyTasks }))),
 }

@@ -15,30 +15,30 @@ import { readNavigationBadges } from '../features/navigation/service'
 import { isAssetMapEnabled } from '../features/asset-map/flag'
 
 /**
- * Global sidebar (plan 2026-10-16, slice S3): 3 groups / 8 items. Global nav
- * answers "what is the system doing, what does it have, what needs me" —
- * per-project operations move into the project surface. `match` arrays are
- * nav-highlighting aliases, not route keys: operations/analysis/tasks
- * highlight Overview, global agents/C2 highlight Infrastructure, technique/
- * playbook highlight Library. Every retired screen keeps its route and its
- * entry links; only the sidebar slot is gone.
+ * Global sidebar: 3 groups / 7 items, the order of page-details proposal §2
+ * (2026-10-22). Global nav answers "what is the system doing, what does it
+ * have, what needs me" — per-project operations and Reports move into the
+ * project surface. `match` arrays are nav-highlighting aliases, not route
+ * keys: operations/analysis/tasks highlight Overview, global agents/C2
+ * highlight Infrastructure, technique/playbook highlight Library. Every
+ * retired screen keeps its route and its entry links; only the sidebar slot
+ * is gone.
  */
 export const NAV: { group: string; items: { page: string; label: string; icon: LucideIcon; match: string[] }[] }[] = [
   {
     group: 'WORKSPACE',
     items: [
-      { page: 'overview', label: 'Overview', icon: LayoutDashboard, match: ['overview', 'command-center', 'dashboard', 'tasks', 'operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'analysis'] },
+      { page: 'overview', label: 'Overview', icon: LayoutDashboard, match: ['overview', 'tasks', 'operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'analysis'] },
       { page: 'projects', label: 'Projects', icon: FolderKanban, match: ['projects', 'project-new', 'project', 'approval'] },
       { page: 'findings', label: 'Findings', icon: ShieldAlert, match: ['findings', 'finding', 'finding-new'] },
-      { page: 'reports', label: 'Reports', icon: FileText, match: ['reports', 'report-new', 'report', 'report-preview', 'report-review'] },
     ],
   },
   {
     group: 'RESOURCES',
     items: [
-      { page: 'infrastructure', label: 'Infrastructure', icon: RadioTower, match: ['infrastructure', 'agents', 'agent', 'c2', 'c2-channel', 'c2-session', 'c2-console'] },
       { page: 'assets', label: 'Assets', icon: Server, match: ['assets', 'asset', 'asset-new', 'asset-scope'] },
       { page: 'playbooks', label: 'Library', icon: BookOpen, match: ['playbooks', 'playbook', 'technique', 'playbook-review'] },
+      { page: 'infrastructure', label: 'Infrastructure', icon: RadioTower, match: ['infrastructure', 'agents', 'agent', 'c2', 'c2-channel', 'c2-session', 'c2-console'] },
     ],
   },
   { group: 'ADMINISTRATION', items: [{ page: 'settings', label: 'Settings', icon: Settings, match: ['settings'] }] },
@@ -137,8 +137,8 @@ export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
   {
     group: 'PREPARATION',
     items: [
-      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope'] },
-      { to: 'planning', label: 'Planning', icon: ClipboardList, match: ['planning'] },
+      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope', 'asset', 'asset-new', 'asset-scope'] },
+      { to: 'planning', label: 'Planning', icon: ClipboardList, match: ['planning', 'ai-plan', 'ai-plan-review', 'ai-plan-compare'] },
     ],
   },
   {
@@ -156,7 +156,7 @@ export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
       { to: 'findings', label: 'Findings', icon: ShieldAlert, match: ['findings', 'finding', 'finding-new'] },
       { to: 'evidence', label: 'Evidence', icon: Archive, match: ['evidence', 'evidence-inspector'] },
       { to: 'analysis', label: 'Analysis', icon: Network, match: ['analysis'] },
-      { to: 'reports', label: 'Reports', icon: FileText, match: ['reports'] },
+      { to: 'reports', label: 'Reports', icon: FileText, match: ['reports', 'report', 'report-new', 'report-preview', 'report-review'] },
     ],
   },
   {

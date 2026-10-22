@@ -152,7 +152,7 @@ describe('project wizard (planning group)', () => {
 
 describe('operation live workspace (operations group)', () => {
   it('uses the wide layout, collapse-at-xl panes and wrapped strips; the dock scrolls its console', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     act(() => { go('operation', { id: 'OP-014', tab: 'live' }) })

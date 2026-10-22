@@ -58,7 +58,7 @@ export function jumpSeam(live?: () => boolean): () => JumpSeam {
         useSessionStore.getState().clearDirty()
         return
       }
-      navRawRoute({ page: 'command-center' })
+      navRawRoute({ page: 'overview' })
     },
     pid: useProjectStore.getState().pid,
     setPid: (id) => selectProject(id),

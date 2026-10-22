@@ -55,7 +55,7 @@ describe('real route gating', () => {
   })
 
   it('leaves demo feature surfaces out of the integrated set', () => {
-    for (const page of ['operations', 'command-center', 'c2', 'findings', 'settings', 'scenarios', 'workspaces']) {
+    for (const page of ['operations', 'c2', 'findings', 'settings', 'scenarios', 'workspaces']) {
       expect(REAL_INTEGRATED_ROUTES.has(page), page).toBe(false)
     }
   })

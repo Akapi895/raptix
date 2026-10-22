@@ -28,3 +28,27 @@ describe('navigation model and the asset map flag', () => {
     expect(labels.real).toEqual(['AI Workspace', 'Execution', 'Asset Map', 'C2 Sessions']);
   });
 });
+
+describe('global navigation', () => {
+  it('lists the seven global pages in proposal order and keeps Reports in the project menus only', async () => {
+    const nav = await import('./nav');
+    const globalLabels = nav.NAV.flatMap(group => group.items.map(item => item.label));
+    expect(globalLabels).toEqual(['Overview', 'Projects', 'Findings', 'Assets', 'Library', 'Infrastructure', 'Settings']);
+    for (const groups of [nav.MOCK_PROJECT_NAV, nav.REAL_PROJECT_NAV]) {
+      expect(groups.flatMap(group => group.items.map(item => item.label))).toContain('Reports');
+    }
+  });
+});
+
+describe('project section ownership', () => {
+  it('keeps resource pages inside the real project menu under their owning section', async () => {
+    const nav = await import('./nav');
+    const owner = (page: string) => nav.projectSection({ page }, nav.REAL_PROJECT_NAV)?.to;
+    expect(owner('report')).toBe('reports');
+    expect(owner('report-review')).toBe('reports');
+    expect(owner('finding')).toBe('findings');
+    expect(owner('asset-scope')).toBe('scope');
+    expect(owner('ai-plan-review')).toBe('planning');
+    expect(owner('no-such-page')).toBeUndefined();
+  });
+});
