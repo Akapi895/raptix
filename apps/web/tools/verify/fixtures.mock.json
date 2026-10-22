@@ -1,0 +1,16 @@
+{
+  "project": "RT-2026-014",
+  "operation": "OP-014",
+  "agent": "AG-007",
+  "asset": "AS-0141",
+  "playbook": "PB-001",
+  "proposal": "AP-01",
+  "technique": "T1046",
+  "finding": "FD-011",
+  "evidence": "EV-014-01",
+  "report": "REP-014",
+  "plan": "PL-021",
+  "branch": "BR-014-01",
+  "session": "SS-041",
+  "channel": "CH-014"
+}

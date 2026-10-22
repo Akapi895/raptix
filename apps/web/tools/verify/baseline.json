@@ -1,0 +1,22 @@
+{
+  "real:preflight": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:operation-schedule": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:operation": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:agent": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:asset": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:playbook": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:technique": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:playbook-review": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:report": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:report-preview": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:report-review": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:ai-plan": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:ai-plan-review": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:ai-plan-compare": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:ai-branch": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:c2-channel": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:c2-session": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:c2-console": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:asset-new": "render boundary in real mode: the screen calls useServices(), a mock-only accessor (phase 0 baseline). Closes with the Assets/Library slice.",
+  "real:asset-scope": "render boundary in real mode: the screen calls useServices(), a mock-only accessor (phase 0 baseline). Closes with the Assets/Library slice."
+}

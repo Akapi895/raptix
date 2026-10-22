@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "format": "oxfmt",
     "test": "vitest run --maxWorkers=4",
-    "check:boundaries": "node tools/check-boundaries.mjs",
+    "check:boundaries": "node tools/check-boundaries.mjs --strict",
+    "check:boundaries:write": "node tools/check-boundaries.mjs --write-baseline",
     "verify:routes": "node tools/verify/route-smoke.mjs"
   },
   "dependencies": {
