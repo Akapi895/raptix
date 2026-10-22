@@ -18,7 +18,7 @@ import { useProjectStore, useToastStore } from '../../state/stores'
 import { currentRoute, go } from '../../router/navigate'
 import { decideApprovalTransaction } from '../approvals/service'
 import { mountServices } from '../../test/helpers'
-import { ProjectNew } from '../../screens/b-wizard'
+import { ProjectNew } from './views/project-wizard'
 import { defaultWizardDraft, toLegacyProjectDraft, validateWizardStep } from './draft'
 import { createProjectTransaction } from './service'
 

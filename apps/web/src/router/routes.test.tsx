@@ -33,7 +33,7 @@ function signIn() {
 }
 
 // Resolve the actual lazy bundles before timed DOM assertions (WSL /mnt/d I/O).
-beforeAll(async () => { await Promise.all([import('../screens/b'), import('./slice-d'), import('../features/reports/views/list'), import('../features/settings/routes'), import('../features/agents/routes')]) }, 30_000)
+beforeAll(async () => { await Promise.all([import('../features/wizard/routes'), import('./slice-d'), import('../features/reports/views/list'), import('../features/settings/routes'), import('../features/agents/routes')]) }, 30_000)
 
 beforeEach(() => {
   window.location.hash = ''
