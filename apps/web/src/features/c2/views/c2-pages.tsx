@@ -23,7 +23,7 @@ const short = (t: string) => t.replace('Oct 13, 2026, ', '')
    ticket 46 moves the deadline lifecycle into the service. Request/grant
    decisions and termination keep the legacy bridge until 46. */
 
-function C2Overview() {
+export function C2Overview() {
   const db = useStopRead()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)

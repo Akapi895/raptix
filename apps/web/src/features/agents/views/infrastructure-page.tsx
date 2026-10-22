@@ -13,27 +13,14 @@
  * and reload restore it. Legacy `#/agents` and `#/c2` URLs keep resolving
  * here at global scope through the thin adapters below — project scope keeps
  * rendering the original project pages, so no deep link changes meaning.
- *
- * The C2 tabs are slots: the composition root (screens/infrastructure.tsx)
- * supplies them from the C2 screens, which migrate separately.
  */
-import type { ComponentType } from 'react'
 import { go, useRoute } from '../../../router/navigate'
 import { useProjectStore } from '../../../state/stores'
 import { PageHeader, Tabs } from '../../../ui/index'
+import { C2InfraContent, C2Overview, Sessions } from '../../c2'
 import { agentRoutes, AgentsContent } from './agents-page'
 
 export type InfraTab = 'agents' | 'c2' | 'sessions'
-
-/** The C2 content the Infrastructure tabs render, supplied by the composition root. */
-export interface InfrastructureSlots {
-  /** The C2 infrastructure tab: channels and nodes. */
-  c2: ComponentType
-  /** The sessions tab at global scope (monitoring only). */
-  sessions: ComponentType
-  /** The project-scope C2 page that the legacy `#/c2` route keeps. */
-  projectC2: ComponentType
-}
 
 const INFRA_TABS: { id: InfraTab; label: string }[] = [
   { id: 'agents', label: 'Execution agents' },
@@ -44,45 +31,40 @@ const INFRA_TABS: { id: InfraTab; label: string }[] = [
 /** Legacy `#/c2` tab → Infrastructure tab (plan §4.1: keep the meaning, never lose the tab). */
 const C2_TAB_MAP: Record<string, InfraTab | undefined> = { infrastructure: 'c2', channels: 'c2', sessions: 'sessions', requests: 'c2', audit: 'c2' }
 
-export function InfrastructurePage({ tab, slots }: { tab: InfraTab; slots: InfrastructureSlots }) {
+export function InfrastructurePage({ tab }: { tab: InfraTab }) {
   const route = useRoute()
-  const C2Tab = slots.c2
-  const SessionsTab = slots.sessions
   return (
     <>
       <PageHeader title="Infrastructure" sub="Execution agents, C2 infrastructure and session monitoring across the projects you can access. Agent here means an executor on managed hosts — not an AI specialist." />
       <Tabs tabs={INFRA_TABS} value={tab} onChange={(t) => go('infrastructure', { tab: t })} />
       <div className="mt-4">
         {tab === 'agents' && <AgentsContent initialTab={route.page === 'agents' ? route.tab : undefined} />}
-        {tab === 'c2' && <C2Tab />}
-        {tab === 'sessions' && <SessionsTab />}
+        {tab === 'c2' && <C2InfraContent />}
+        {tab === 'sessions' && <Sessions all monitor />}
       </div>
     </>
   )
 }
 
 /** The `infrastructure` route: the tab named in the URL, `agents` when it names none. */
-export function InfrastructureRoute({ slots }: { slots: InfrastructureSlots }) {
+export function InfrastructureRoute() {
   const route = useRoute()
   const tab: InfraTab = route.tab === 'c2' || route.tab === 'sessions' ? route.tab : 'agents'
-  return <InfrastructurePage tab={tab} slots={slots} />
+  return <InfrastructurePage tab={tab} />
 }
 
 /** Legacy `#/agents`: global scope opens Infrastructure/Execution agents; project scope keeps the project agents page. */
-export function AgentsCompat({ slots }: { slots: InfrastructureSlots }) {
+export function AgentsCompat() {
   const pid = useProjectStore((s) => s.pid)
-  if (pid === 'all') return <InfrastructurePage tab="agents" slots={slots} />
+  if (pid === 'all') return <InfrastructurePage tab="agents" />
   const ProjectAgents = agentRoutes.agents
   return <ProjectAgents />
 }
 
 /** Legacy `#/c2`: global scope maps the requested tab; project scope keeps the project C2 page. */
-export function C2Compat({ slots }: { slots: InfrastructureSlots }) {
+export function C2Compat() {
   const pid = useProjectStore((s) => s.pid)
   const route = useRoute()
-  if (pid !== 'all') {
-    const ProjectC2 = slots.projectC2
-    return <ProjectC2 />
-  }
-  return <InfrastructurePage tab={C2_TAB_MAP[route.tab ?? ''] ?? 'c2'} slots={slots} />
+  if (pid !== 'all') return <C2Overview />
+  return <InfrastructurePage tab={C2_TAB_MAP[route.tab ?? ''] ?? 'c2'} />
 }

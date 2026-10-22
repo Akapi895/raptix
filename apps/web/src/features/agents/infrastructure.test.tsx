@@ -8,12 +8,12 @@
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { resetSharedStores } from '../state/stores'
-import { resetSessionStores } from '../state/session'
-import { go, resetNavStores } from '../router/navigate'
-import { mountServices } from '../test/helpers'
-import { setActiveRouter } from '../router/active'
-import { RouteHost } from '../router/host'
+import { resetSharedStores } from '../../state/stores'
+import { resetSessionStores } from '../../state/session'
+import { go, resetNavStores } from '../../router/navigate'
+import { mountServices } from '../../test/helpers'
+import { setActiveRouter } from '../../router/active'
+import { RouteHost } from '../../router/host'
 
 function mountApp(hash?: string) {
   if (hash !== undefined) window.location.hash = hash
