@@ -6,15 +6,14 @@
  * fake zeros, no demo KPIs. Actions deep-link to the owning feature's
  * authoritative surface.
  */
-import { useQuery } from '@tanstack/react-query'
 import { Gauge } from 'lucide-react'
 import type { ReactElement } from 'react'
-import { fetchTasks } from '../../features/overview/remote';
-import { go } from '../../router/navigate'
-import { parseHash } from '../../router/history'
-import { useRoute } from '../../router/navigate'
-import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui/index'
-import { utcMinute } from '../../platform/format'
+import { useRealTaskInbox } from '../query'
+import { go } from '../../../router/navigate'
+import { parseHash } from '../../../router/history'
+import { useRoute } from '../../../router/navigate'
+import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../../ui'
+import { utcMinute } from '../../../platform/format'
 
 const KIND_LABEL: Record<string, string> = {
   'scope-revision': 'Scope review',
@@ -27,11 +26,7 @@ const KIND_LABEL: Record<string, string> = {
 
 export function RealCommandCenter(): ReactElement {
   const route = useRoute()
-  const tasks = useQuery({
-    queryKey: ['real', 'tasks'],
-    queryFn: () => fetchTasks(),
-    refetchInterval: 30_000,
-  })
+  const tasks = useRealTaskInbox({ refetchInterval: 30_000 })
 
   if (tasks.isPending) {
     return <Card><CardHeader title="Command center" /><div className="p-4"><Skeleton className="h-32" /></div></Card>

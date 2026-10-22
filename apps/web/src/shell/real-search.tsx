@@ -1,16 +1,15 @@
 /** Search the authorized portfolio and pending-work projection, without a demo index. */
-import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
-import { fetchTasks } from '../../features/overview/remote';
-import { useRealProjects } from '../queries'
-import { go } from '../../router/navigate'
-import { parseHash } from '../../router/history'
-import { Input } from '../../ui/index'
+import { useRealProjects } from '../features/projects'
+import { useRealTaskInbox } from '../features/tasks'
+import { go } from '../router/navigate'
+import { parseHash } from '../router/history'
+import { Input } from '../ui'
 
 export function RealSearch(): ReactElement {
   const [query, setQuery] = useState('')
   const { list } = useRealProjects()
-  const tasks = useQuery({ queryKey: ['real', 'tasks'], queryFn: fetchTasks, enabled: query.trim().length > 1 })
+  const tasks = useRealTaskInbox({ enabled: query.trim().length > 1 })
   const needle = query.trim().toLowerCase()
   const projects = (list.data ?? []).filter((p) => `${p.id} ${p.displayName} ${p.targetValue}`.toLowerCase().includes(needle))
   const matches = (tasks.data?.tasks ?? []).filter((t) => `${t.title} ${t.kind} ${t.engagementName}`.toLowerCase().includes(needle))
