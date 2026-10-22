@@ -18,12 +18,13 @@
  */
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
+import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
 import type { AnalysisCoverageQuery, AnalysisCoverageRead } from './service'
 import type { AttackPathQuery, AttackPathRead } from './path'
+import type { ObservedAnalysisRead } from './observed'
 
 /** Feature-local key namespace: ['operation', scope, 'coverage', query]. */
 export const analysisKeys = {
@@ -64,7 +65,7 @@ export function useAnalysisCoverage(query: AnalysisCoverageQuery) {
   return useQuery({
     queryKey: analysisKeys.coverage(scope, { opId, agent, os }),
     queryFn: async (): Promise<AnalysisCoverageRead> => {
-      const actor = actorRef(scope.actor, scope.role)
+      const actor = { id: scope.actor, role: scope.role }
       const res = await services
         .analysis(actor, scope.project)
         .coverage({ actor, projectId: scope.project, corr: 'analysis-coverage' }, { opId, agent, os })
@@ -90,11 +91,27 @@ export function useAttackPath(query: AttackPathQuery) {
   return useQuery({
     queryKey: analysisKeys.path(scope, { opId, agent, os }),
     queryFn: async (): Promise<AttackPathRead> => {
-      const actor = actorRef(scope.actor, scope.role)
+      const actor = { id: scope.actor, role: scope.role }
       const res = await services
         .analysis(actor, scope.project)
         .path({ actor, projectId: scope.project, corr: 'analysis-path' }, { opId, agent, os })
       if (!res.ok) throw new AnalysisReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/** The observed analysis of one engagement: the techniques its observed records hold, and the source the read came from. */
+export function useObservedAnalysis(engagementId: string) {
+  const services = useFeatureServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: consoleKeys.view('analysis', scope, engagementId, 'observed'),
+    queryFn: async (): Promise<ObservedAnalysisRead> => {
+      const actor = { id: scope.actor, role: scope.role }
+      const res = await services.observedAnalysis(actor, engagementId).read({ actor, projectId: engagementId, corr: 'analysis-observed' })
+      if (!res.ok) throw new Error(res.failure.message)
       return res.data
     },
     enabled: !!services,
