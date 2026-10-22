@@ -20,7 +20,7 @@ import { mountServices } from '../../test/helpers'
 import { currentRoute, selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { GraphTab, ResultsTab } from '../../screens/c-results'
+import { GraphTab, ResultsTab } from '../operations/views/operation-results'
 import { seed } from '../../demo/seed';
 import { operationResults } from './service'
 

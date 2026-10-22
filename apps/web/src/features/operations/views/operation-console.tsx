@@ -1,28 +1,28 @@
 import { useEffect, useMemo, useRef, useState, isValidElement } from 'react'
 import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
-import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, Select, Status, Table, Timeline, useGuard, cx } from '../ui/index'
-import { useServices } from '../state/services'
-import { go } from '../router/navigate'
-import { useCan, useMe } from '../state/console'
-import { useToastStore, useUiStore } from '../state/stores'
-import { useSessionStore, type LogLine } from '../state/session'
-import { hhmm, stamp } from '../demo/display-clock'
-import { recordAudit } from '../features/audit/service'
-import { preflightPass } from '../features/operations/preflight'
-import { readOperationMeta, useOperationView } from '../features/operations/views'
-import { fastForward, loseAgent, restoreAgent } from '../demo/runtime'
-import { useSessionPerm } from '../features/c2/projection'
-import { useStopRead } from '../features/estop/projection'
-import { BRANCH_LABEL, planVer, toolFacets } from '../domain/catalog';
-import type { Db } from '../demo/seed';
-import type { Operation, Step } from '../domain/entities'
-import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
-import { useReviewStep } from '../features/operations/query'
-import { FanOutCard } from '../features/branches'
+import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, Select, Status, Table, Timeline, useGuard, cx } from '../../../ui/index'
+import { useServices } from '../../../state/services'
+import { go } from '../../../router/navigate'
+import { useCan, useMe } from '../../../state/console'
+import { useToastStore, useUiStore } from '../../../state/stores'
+import { useSessionStore, type LogLine } from '../../../state/session'
+import { hhmm, stamp } from '../../../demo/display-clock'
+import { recordAudit } from '../../audit/service'
+import { preflightPass } from '../preflight'
+import { readOperationMeta, useOperationView } from '../views'
+import { fastForward, loseAgent, restoreAgent } from '../../../demo/runtime'
+import { useSessionPerm } from '../../c2/projection'
+import { useStopRead } from '../../estop/projection'
+import { BRANCH_LABEL, planVer, toolFacets } from '../../../domain/catalog';
+import type { Db } from '../../../demo/seed';
+import type { Operation, Step } from '../../../domain/entities'
+import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './operation-common'
+import { useReviewStep } from '../query'
+import { FanOutCard } from '../../branches/index'
 /* Ticket 28: the emergency-stop machine UI (request dialog, phase banner,
    progress strip) is feature-local (src/features/estop/ui.tsx) and runs the
    typed estop handlers; the console composes it. */
-import { EmergencyStopDialog, StopProgress, StopStatePanel } from '../features/estop/ui'
+import { EmergencyStopDialog, StopProgress, StopStatePanel } from '../../estop/ui'
 
 /* ───────────── ONE banner per operation (V3.1): highest-priority condition wins, the rest become notes ───────────── */
 const pad = (n: number) => String(n).padStart(2, '0')
