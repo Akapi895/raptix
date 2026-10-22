@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
-import { useServices } from '../../../state/services'
 import { USERS } from '../../../domain/catalog';
 import { type Agent, type Group } from '../../../domain/entities'
-import { replaceOperationAgent } from '../../operations/service'
 import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../../../ui/index'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from '../../../ui/d-shared'
-import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../query'
+import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent, useAgentsMockConsole } from '../query'
 import type { AgentKpi } from '../service'
 import { BRANCH_LABEL } from '../../../domain/catalog';
 import { go, selectProject, useRoute } from '../../../router/navigate'
@@ -14,11 +12,6 @@ import { useAccessible, useCan, useMe, useScoped } from '../../../state/console'
 import { useGroupOptions, useAssignmentOptions, useAgentRecovery } from '../projection'
 import { useProjectStore, useToastStore, useUiStore } from '../../../state/stores'
 import { useSessionStore } from '../../../state/session'
-import { stamp } from '../../../demo/display-clock'
-import { recordAudit } from '../../audit/service'
-import { loseAgent, restoreAgent } from '../../../demo/runtime'
-import { submitApprovalTransaction } from '../../approvals/service'
-import { setAgentStatusTransaction } from '../writes'
 
 const POLICIES = ['Project use only', 'Shared with approval', 'Observe only (no execution)']
 const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle', lost: 'Disconnected', disabled: 'Disabled', unknown: 'Unknown', unhealthy: 'Unhealthy' }
@@ -127,8 +120,7 @@ function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose:
   const db = useAssignmentOptions()
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
-  const me = useMe()
-  const services = useServices()
+  const mock = useAgentsMockConsole()
   const toast = useToastStore((s) => s.toast)
   const can = useCan()
   const assign = useAssignAgent()
@@ -164,7 +156,7 @@ function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose:
     setTried(true)
     if (reqWhy || !agent) return
     /* The legacy `A.submitApproval` entry's exact transaction + request context. */
-    submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { projectId, type: 'Agent assignment', note: note || `Request to assign ${agent.id} for ${duration}`, diff })
+    mock.submitApproval(projectId, { projectId, type: 'Agent assignment', note: note || `Request to assign ${agent.id} for ${duration}`, diff })
     toast(`Assignment of ${agent.id} requested. It takes effect only after ${reviewer} approves.`, 'info')
     setSent({ agentId: agent.id, projectId, reviewer, duration })
   }
@@ -266,8 +258,7 @@ const STEP_IMPACT: Record<string, { label: string; tone: string }> = {
 function FailurePanel({ a }: { a: Agent }) {
   const db = useAgentRecovery(a)
   const accessible = useAccessible()
-  const me = useMe()
-  const services = useServices()
+  const mock = useAgentsMockConsole()
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
   const can = useCan()
@@ -284,16 +275,16 @@ function FailurePanel({ a }: { a: Agent }) {
   const swap = (o: typeof ops[number], c: Agent) => confirm({
     title: `Replace ${a.id} with ${c.id} in ${o.id}?`, confirmLabel: 'Replace agent', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o.id} is {o.status}. {a.id} ({a.host}) is replaced by {c.id} ({c.host}), same project and scope. Preflight must be re-run before the operation starts; nothing is marked complete.</>,
-    onConfirm: (r) => { const res = replaceOperationAgent(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: o.projectId, corr: 'legacy' }, o.id, a.id, c.id, r); if (!res.ok) { toast(res.failure.message, 'bad'); return }; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
+    onConfirm: (r) => { const res = mock.replaceOperationAgent(o.projectId, o.id, a.id, c.id, r); if (!res.ok) { toast(res.failure.message, 'bad'); return }; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
   })
   const requestRepl = (o: typeof ops[number] | null, c: Agent) => confirm({
     title: `Request ${c.id} as replacement for ${a.id}?`, confirmLabel: 'Submit request', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o ? `${o.id} keeps running; ` : ''}the replacement is only reserved after a reviewer approves{!c.projectId ? ` and ${c.id} is assigned from the shared pool to ${a.projectId}` : ''}. The operation is not marked successful and the interrupted steps stay Unknown until re-run.</>,
-    onConfirm: (r) => { submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: a.projectId, corr: 'legacy' }, { projectId: a.projectId, type: 'Agent assignment (replacement)', note: r, diff: `${c.id} → ${a.projectId}; replaces ${a.id}${o ? ` in ${o.id}` : ''}` }); toast('Replacement request sent for review.', 'info') },
+    onConfirm: (r) => { mock.submitApproval(a.projectId, { projectId: a.projectId, type: 'Agent assignment (replacement)', note: r, diff: `${c.id} → ${a.projectId}; replaces ${a.id}${o ? ` in ${o.id}` : ''}` }); toast('Replacement request sent for review.', 'info') },
   })
   return (
     <div className="mb-4 space-y-4">
-      <Banner tone="bad" title={`Health failure: ${a.id} (${a.host}) is disconnected`} action={<Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy || 'Restore connection (simulated)'} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore connection</Button>}>
+      <Banner tone="bad" title={`Health failure: ${a.id} (${a.host}) is disconnected`} action={<Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy || 'Restore connection (simulated)'} onClick={() => { mock.demo.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore connection</Button>}>
         Last heartbeat: <b>{a.lastSeen}</b>. Status reflects the last observation and may be stale. Disconnection never marks an operation as completed or successful.
       </Banner>
       <div className="grid gap-4 xl:grid-cols-2">
@@ -316,7 +307,7 @@ function FailurePanel({ a }: { a: Agent }) {
         <Card><CardHeader title="Replace or restore" sub="Offered only when scope and approval match" />
           {editWhy && <div className="mb-2"><Locked reason={editWhy} /></div>}
           <ul className="divide-y divide-line rounded-lg border border-line text-sm">
-            <li className="flex flex-wrap items-center gap-2 px-3 py-2"><span className="min-w-0 flex-1"><b>Restore {a.id}</b><span className="block text-xs text-muted">Reconnect the same agent; keeps the original scope and approvals. Simulated.</span></span><Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button></li>
+            <li className="flex flex-wrap items-center gap-2 px-3 py-2"><span className="min-w-0 flex-1"><b>Restore {a.id}</b><span className="block text-xs text-muted">Reconnect the same agent; keeps the original scope and approvals. Simulated.</span></span><Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy} onClick={() => { mock.demo.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button></li>
             {cands.map(({ c, why, kind }) => (
               <li key={c.id} className="px-3 py-2">
                 <div className="flex flex-wrap items-center gap-2"><IdL onClick={() => go('agent', { id: c.id })}>{c.id}</IdL><span className="text-xs text-muted">{c.host} · {c.os}</span><Status kind="agent" value={c.status} size="sm" /></div>
@@ -541,7 +532,8 @@ function HealthTab() {
   const toast = useToastStore((s) => s.toast)
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const [gr, setGr] = useState('')
-  const [obs, setObs] = useState(stamp())
+  const mock = useAgentsMockConsole()
+  const [obs, setObs] = useState(mock.display.stamp())
   const [busy, setBusy] = useState(false)
   /* The whole scoped base (assigned + pool): the connectivity tab reads every
      row the actor may see, filtered by group server-side. */
@@ -560,7 +552,7 @@ function HealthTab() {
     ...(a.status === 'unknown' ? [{ a, kind: 'Unknown state', note: 'Not enough data to conclude the agent state.', fix: 'Refresh and wait for the next heartbeat.', tone: 'warn' as const }] : []),
     ...(a.version < '5.2.0' ? [{ a, kind: 'Outdated version', note: `Agent ${a.version} is behind 5.2.1 and may cause connection errors.`, fix: 'Schedule an agent update.', tone: 'warn' as const }] : []),
   ]), [rows])
-  const refresh = () => { setBusy(true); setTimeout(() => { setBusy(false); setObs(stamp()); toast('Connectivity refreshed.', 'info') }, 600) }
+  const refresh = () => { setBusy(true); setTimeout(() => { setBusy(false); setObs(mock.display.stamp()); toast('Connectivity refreshed.', 'info') }, 600) }
   const restoreWhy = guard.ro ? guard.reason : !can('run') ? 'Only Managers and Operators can restore connections.' : ''
   return (
     <>
@@ -602,7 +594,7 @@ function HealthTab() {
               { key: 'act', header: '', render: (a) => (
                 <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                   <Button size="sm" variant="ghost" onClick={() => go('agent', { id: a.id })}>Open Details</Button>
-                  {a.status === 'lost' && <Button size="sm" disabled={!!restoreWhy} title={restoreWhy || 'Restore connection (simulated)'} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button>}
+                  {a.status === 'lost' && <Button size="sm" disabled={!!restoreWhy} title={restoreWhy || 'Restore connection (simulated)'} onClick={() => { mock.demo.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button>}
                 </span>
               ) },
             ]}
@@ -682,13 +674,13 @@ function AgentDetail() {
   const pid = useProjectStore((s) => s.pid)
   const me = useMe()
   const can = useCan()
-  const services = useServices()
+  const mock = useAgentsMockConsole()
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the store helper's exact row shape. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
+    mock.audit(projectId, { action, obj, result, reason })
   const detail = useAgentDetail(route.id)
   const read = detail.data
   const tab = route.tab || 'overview'
@@ -715,11 +707,11 @@ function AgentDetail() {
   const doDisable = () => confirm({
     title: `Disable ${a.id}?`, danger: true, confirmLabel: 'Disable agent', reasonLabel: 'Reason for disabling', reasonRequired: true,
     body: a.op ? <>This agent is used by operation <b>{a.op}</b>. Disabling it may move running steps on this agent to “Unknown”. The operation is not stopped automatically, so check it afterwards.</> : <>The agent cannot be selected for new operations until it is enabled again.</>,
-    onConfirm: (r) => { setAgentStatusTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: a.projectId, corr: 'legacy' }, a.id, 'disabled'); audit('Reason for disabling agent', a.id, a.projectId, 'Success', r); toast(`${a.id} disabled.`, 'warn') },
+    onConfirm: (r) => { mock.setAgentStatus(a.projectId, a.id, 'disabled'); audit('Reason for disabling agent', a.id, a.projectId, 'Success', r); toast(`${a.id} disabled.`, 'warn') },
   })
   const doEnable = () => confirm({
     title: `Enable ${a.id}?`, confirmLabel: 'Enable agent', body: 'The agent can be selected for operations in its assigned project again.',
-    onConfirm: () => { setAgentStatusTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: a.projectId, corr: 'legacy' }, a.id, 'online'); toast(`${a.id} enabled.`) },
+    onConfirm: () => { mock.setAgentStatus(a.projectId, a.id, 'online'); toast(`${a.id} enabled.`) },
   })
   const hist = read.history
   const eligible = read.eligibleProjects
@@ -734,7 +726,7 @@ function AgentDetail() {
         actions={<>
           <Button onClick={() => go('agent', { id: a.id, tab: 'log' })}>View Activity</Button>
           {a.op && <Button icon={ExternalLink} onClick={() => go('operation', { id: a.op! })}>View {a.op}</Button>}
-          {(a.status === 'online' || a.status === 'idle') && !!a.projectId && <Button icon={WifiOff} disabled={!can('run') || projRO} title={projRO ? guard.reason : !can('run') ? 'Only Managers and Operators can simulate this.' : 'Demo: simulate a heartbeat loss (E2E-05)'} onClick={() => confirm({ title: `Simulate disconnect of ${a.id}?`, confirmLabel: 'Simulate disconnect', body: 'Demo only: marks the agent Disconnected so you can review the health-failure and replacement flow. Nothing real is disconnected.', onConfirm: () => { loseAgent(a.id); toast(`${a.id} marked disconnected (simulated).`, 'warn') } })}>Simulate disconnect</Button>}
+          {(a.status === 'online' || a.status === 'idle') && !!a.projectId && <Button icon={WifiOff} disabled={!can('run') || projRO} title={projRO ? guard.reason : !can('run') ? 'Only Managers and Operators can simulate this.' : 'Demo: simulate a heartbeat loss (E2E-05)'} onClick={() => confirm({ title: `Simulate disconnect of ${a.id}?`, confirmLabel: 'Simulate disconnect', body: 'Demo only: marks the agent Disconnected so you can review the health-failure and replacement flow. Nothing real is disconnected.', onConfirm: () => { mock.demo.loseAgent(a.id); toast(`${a.id} marked disconnected (simulated).`, 'warn') } })}>Simulate disconnect</Button>}
           {isPool && <Button variant="primary" icon={UserPlus} disabled={!!assignWhy} title={assignWhy || 'Request assignment to a project (approval-gated)'} onClick={() => setAssign(true)}>Request Assignment</Button>}
           {a.status === 'disabled' ? <Button icon={Power} disabled={!!manageWhy} title={manageWhy || 'Enable agent'} onClick={doEnable}>Enable Agent</Button> : <Button variant="danger" icon={Power} disabled={!!manageWhy} title={manageWhy || 'Disable agent'} onClick={doDisable}>Disable Agent</Button>}
         </>} />
@@ -780,7 +772,7 @@ function AgentDetail() {
         <Card><CardHeader title="Connection health & heartbeat" sub="Simulated data, not live measurements." />
           <div className="mb-4"><Heartbeat a={a} /></div>
           <DescList cols={3} items={[{ k: 'Channel', v: a.conn }, { k: 'Average latency', v: a.status === 'lost' ? '—' : <Mono>{Math.round(lat.reduce((x, y) => x + y, 0) / lat.length)} ms</Mono> }, { k: 'Last verified', v: a.lastSeen }, { k: 'Alert threshold', v: '15 minutes' }, { k: 'Heartbeat', v: a.status === 'lost' ? <span className="text-bad">Signal lost</span> : a.status === 'unhealthy' ? <span className="text-warn">Delayed</span> : 'Every 30 seconds' }, { k: 'Version', v: a.version }]} />
-          {a.status === 'lost' && <div className="mt-4 flex flex-wrap items-center gap-3"><Button disabled={guard.ro || !can('run')} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }} title={guard.ro ? guard.reason : !can('run') ? 'Only Managers and Operators can restore connections.' : ''}>Restore connection (simulated)</Button>{(guard.ro || !can('run')) && <Locked reason={guard.ro ? guard.reason : 'Only Managers and Operators can restore connections.'} />}</div>}
+          {a.status === 'lost' && <div className="mt-4 flex flex-wrap items-center gap-3"><Button disabled={guard.ro || !can('run')} onClick={() => { mock.demo.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }} title={guard.ro ? guard.reason : !can('run') ? 'Only Managers and Operators can restore connections.' : ''}>Restore connection (simulated)</Button>{(guard.ro || !can('run')) && <Locked reason={guard.ro ? guard.reason : 'Only Managers and Operators can restore connections.'} />}</div>}
         </Card>
       )}
       {tab === 'ops' && (
