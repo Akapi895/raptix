@@ -1,23 +1,18 @@
 import { useEffect, useMemo, useRef, useState, isValidElement } from 'react'
 import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, Select, Status, Table, Timeline, useGuard, cx } from '../../../ui/index'
-import { useServices } from '../../../state/services'
 import { go } from '../../../router/navigate'
 import { useCan, useMe } from '../../../state/console'
 import { useToastStore, useUiStore } from '../../../state/stores'
 import { useSessionStore, type LogLine } from '../../../state/session'
-import { hhmm, stamp } from '../../../demo/display-clock'
-import { recordAudit } from '../../audit/service'
 import { preflightPass } from '../preflight'
-import { readOperationMeta, useOperationView } from '../views'
-import { fastForward, loseAgent, restoreAgent } from '../../../demo/runtime'
+import { useOperationView } from '../views'
 import { useSessionPerm } from '../../c2/projection'
 import { useStopRead } from '../../estop/projection'
 import { BRANCH_LABEL, planVer, toolFacets } from '../../../domain/catalog';
-import type { Db } from '../../../demo/seed';
-import type { Operation, Step } from '../../../domain/entities'
+import type { Operation, Session, Step } from '../../../domain/entities'
 import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './operation-common'
-import { useReviewStep } from '../query'
+import { useOperationMockConsole, useReviewStep } from '../query'
 import { FanOutCard } from '../../branches/index'
 /* Ticket 28: the emergency-stop machine UI (request dialog, phase banner,
    progress strip) is feature-local (src/features/estop/ui.tsx) and runs the
@@ -73,7 +68,7 @@ export function OpBanner({ op }: { op: Operation }) {
 export function OpControls({ op, onError, size = 'md' }: { op: Operation; onError: (e: string) => void; size?: 'sm' | 'md' }) {
   const view = useOperationView(op.id)
   const me = useMe()
-  const services = useServices()
+  const mock = useOperationMockConsole()
   const ss = useStopRead(op.projectId).stopState
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
@@ -100,33 +95,31 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
      store's exact request context ('legacy' corr, persona + the operation's
      project at call time) and the demo log mirrors keep the store's pushLog
      ts format (hhmm + seconds). */
-  const entryCtx = (projectId: string) => ({ actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' })
   const pushLog = (opId: string, line: Omit<LogLine, 'id' | 'ts'>) =>
-    useSessionStore.getState().pushLog(opId, line, hhmm() + ':' + pad(new Date().getSeconds()))
-  const opsFor = (projectId: string) => services.operations({ id: me.name, role: me.role }, projectId)
+    useSessionStore.getState().pushLog(opId, line, mock.display.hhmm() + ':' + pad(new Date().getSeconds()))
   const pauseOp = async (opId: string, reason: string) => {
-    const meta = readOperationMeta(services, opId)
-    if (!meta) return
-    const res = await opsFor(meta.projectId).pause(entryCtx(meta.projectId), opId, reason)
+    const projectId = mock.projectOf(opId)
+    if (!projectId) return
+    const res = await mock.pause(projectId, opId, reason)
     if (res.ok) pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` })
   }
   const resumeOp = async (opId: string) => {
-    const meta = readOperationMeta(services, opId)
-    if (!meta) return { ok: false, error: 'Operation not found.' }
-    const res = await opsFor(meta.projectId).resume(entryCtx(meta.projectId), opId)
+    const projectId = mock.projectOf(opId)
+    if (!projectId) return { ok: false, error: 'Operation not found.' }
+    const res = await mock.resume(projectId, opId)
     if (!res.ok) return { ok: false, error: res.failure.message }
     pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: `Operation resumed by ${me.name}` })
     return { ok: true }
   }
   const stopOp = async (opId: string, reason: string) => {
-    const meta = readOperationMeta(services, opId)
-    if (!meta) return
-    await opsFor(meta.projectId).stop(entryCtx(meta.projectId), opId, reason)
+    const projectId = mock.projectOf(opId)
+    if (!projectId) return
+    await mock.stop(projectId, opId, reason)
   }
   const completeOp = async (opId: string) => {
-    const meta = readOperationMeta(services, opId)
-    if (!meta) return { ok: false, error: 'Operation not found.' }
-    const res = await opsFor(meta.projectId).complete(entryCtx(meta.projectId), opId)
+    const projectId = mock.projectOf(opId)
+    if (!projectId) return { ok: false, error: 'Operation not found.' }
+    const res = await mock.complete(projectId, opId)
     if (!res.ok) return { ok: false, error: res.failure.message }
     pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation completed' })
     return { ok: true }
@@ -139,7 +132,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     onConfirm: async (r) => { await pauseOp(op.id, r); toast('Operation paused.', 'warn') },
   })
   const resume = async () => {
-    const read = await opsFor(op.projectId).preflightChecks(entryCtx(op.projectId), op.id)
+    const read = await mock.preflightChecks(op.projectId, op.id)
     if (!read.ok) { onError(read.failure.message); return }
     const checks = read.data
     const rows: [string, boolean, string][] = [
@@ -187,7 +180,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
 const LVL: Record<string, string> = { INFO: 'text-console-info', WARN: 'text-console-warn', ERROR: 'text-console-bad' }
 const LVL_ICON = { INFO: '●', WARN: '▲', ERROR: '✕' } as Record<string, string>
 
-function SessionCard({ s }: { s: Db['sessions'][number] }) {
+function SessionCard({ s }: { s: Session }) {
   /* Ticket 67: the semantic C2 access derivation is a typed c2 read; the
      permission label re-derives from recorded grants per publication. */
   const perm = useSessionPerm(s)
@@ -451,6 +444,7 @@ const NO_LOGS: LogLine[] = []
 
 export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const view = useOperationView(liveOp.id)
+  const mock = useOperationMockConsole()
   const liveLogs = useSessionStore((s) => s.logs)
   const staleOps = useSessionStore((s) => s.staleOps)
   const setStale = useSessionStore((s) => s.setStale)
@@ -542,7 +536,7 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
               <span>Plan <b className="text-fg">{pl ? <IdLink onClick={() => go('ai-plan-review', { id: pl.id })}>{pl.id} {planVer(pl)}</IdLink> : 'None'}</b></span>
               <span>ROE <b className="text-fg">{p.roeVersion}</b></span><span className="whitespace-nowrap">Window <b className="text-fg">{p.window}</b></span>
-              <span>Elapsed <b className="text-fg">{elapsed(op, stamp())}</b></span><span>AI mode <b className="capitalize text-fg">{aiMode}</b></span>
+              <span>Elapsed <b className="text-fg">{elapsed(op, mock.display.stamp())}</b></span><span>AI mode <b className="capitalize text-fg">{aiMode}</b></span>
               <span className="whitespace-nowrap">Steps <b className="text-fg">{c.ok + c.fail}/{c.total}</b></span>
             </div>
           </div>
@@ -615,13 +609,13 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
                 const a = view.agents.find((x) => x.id === id); const online = a?.status === 'online'
                 return (
                   <div key={id} className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">{id}</span>
-                    <Button size="sm" icon={WifiOff} disabled={op.status !== 'running' || !online} title={op.status !== 'running' ? 'Available while the operation is running.' : !online ? `${id} is already disconnected.` : undefined} onClick={() => { loseAgent(id); toast(`Simulated agent offline: ${id}.`, 'warn') }}>Offline</Button>
-                    <Button size="sm" icon={Radio} disabled={online} title={online ? `${id} is already connected.` : undefined} onClick={() => { restoreAgent(id); toast(`${id} restored.`) }}>Restore</Button></div>
+                    <Button size="sm" icon={WifiOff} disabled={op.status !== 'running' || !online} title={op.status !== 'running' ? 'Available while the operation is running.' : !online ? `${id} is already disconnected.` : undefined} onClick={() => { mock.demo.loseAgent(id); toast(`Simulated agent offline: ${id}.`, 'warn') }}>Offline</Button>
+                    <Button size="sm" icon={Radio} disabled={online} title={online ? `${id} is already connected.` : undefined} onClick={() => { mock.demo.restoreAgent(id); toast(`${id} restored.`) }}>Restore</Button></div>
                 )
               })}
               <Button size="sm" icon={ShieldAlert} disabled={!active} title={active ? undefined : 'Available while the operation is active.'} onClick={() => setPolBlock(!polBlock)}>{polBlock ? 'Clear policy block' : 'Simulate policy block'}</Button>
               {stale ? <Button size="sm" icon={Radio} onClick={() => setStale(op.id, false)}>Restore live data</Button> : <Button size="sm" icon={AlertTriangle} disabled={!active} title={active ? undefined : 'Available while the operation is active.'} onClick={() => setStale(op.id, true)}>Simulate delayed data</Button>}
-              <Button size="sm" icon={FlaskConical} disabled={!active || !!reviewStep} title={!active ? 'Available while the operation is active.' : reviewStep ? 'A step is waiting for review. Decide first.' : 'Finish remaining steps with demo output.'} onClick={() => { fastForward(op.id); toast('Demo fast-forward applied.') }}>Fast-forward steps</Button>
+              <Button size="sm" icon={FlaskConical} disabled={!active || !!reviewStep} title={!active ? 'Available while the operation is active.' : reviewStep ? 'A step is waiting for review. Decide first.' : 'Finish remaining steps with demo output.'} onClick={() => { mock.demo.fastForward(op.id); toast('Demo fast-forward applied.') }}>Fast-forward steps</Button>
             </div>
           </Card>
         </aside>
@@ -712,13 +706,12 @@ export function TimelineTab({ op }: { op: Operation }) {
   const logs = useSessionStore((s) => s.logs)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
-  const services = useServices()
-  const me = useMe()
+  const mock = useOperationMockConsole()
   /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the
      store helper's exact row shape (the RT-2026-014 SS/AR corr rule, the demo
      stamp, the override-aware persona). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
+    mock.audit(projectId, { action, obj, result, reason })
   const [lvl, setLvl] = useState('')
   const [ag, setAg] = useState('')
   const [pick, setPick] = useState<string | null>(null)

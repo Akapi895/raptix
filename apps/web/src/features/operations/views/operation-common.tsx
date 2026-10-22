@@ -2,8 +2,7 @@ import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
 import { Button, Empty, Status } from '../../../ui/index'
 import { go, selectProject, useRoute } from '../../../router/navigate'
-import type { Db } from '../../../demo/seed';
-import type { Branch, Operation, Plan, Project, Step } from '../../../domain/entities'
+import type { Branch, BranchGroup, Conversation, Operation, Plan, Project, Step } from '../../../domain/entities'
 import type { PfCheck, PfState } from '../checklist'
 // eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export { specChecks } from '../checklist'
@@ -127,14 +126,14 @@ export const hasReview = (op: Operation) => (op.status === 'running' || op.statu
 // eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const runtimeLabel = (op: Operation) => (hasReview(op) ? 'Paused — Awaiting Review' : op.status === 'estop' ? 'Emergency stopped' : op.status === 'paused' ? 'Paused' : op.status === 'cancelled' ? 'Stopped' : op.status === 'done' ? 'Completed' : op.status === 'running' ? 'Running' : op.status.charAt(0).toUpperCase() + op.status.slice(1))
 // eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
-export const stepBranches = (db: Pick<Db, 'branches'>, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
+export const stepBranches = (db: { branches: Branch[] }, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
 // eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
-export const failedBranches = (db: Pick<Db, 'branches'>, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
+export const failedBranches = (db: { branches: Branch[] }, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
 // eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
-export const opGroups = (db: Pick<Db, 'branchGroups'>, opId: string) => db.branchGroups.filter((g) => g.opId === opId)
+export const opGroups = (db: { branchGroups: BranchGroup[] }, opId: string) => db.branchGroups.filter((g) => g.opId === opId)
 /** Conversation linked via the operation's plan */
 // eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
-export const opConversation = (db: Pick<Db, 'plans' | 'conversations'>, op: Operation) => { const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined; return pl ? db.conversations.find((c) => c.id === pl.conversationId) : undefined }
+export const opConversation = (db: { plans: Plan[]; conversations: Conversation[] }, op: Operation) => { const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined; return pl ? db.conversations.find((c) => c.id === pl.conversationId) : undefined }
 
 /** Status pill that shows the runtime state (e.g. "Paused — Awaiting Review") and flags failed branches; a failed branch is never shown as plain success. */
 export function RuntimeStatus({ op, size }: { op: Operation; size?: 'sm' | 'md' }) {

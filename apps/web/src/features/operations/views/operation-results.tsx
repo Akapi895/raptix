@@ -16,13 +16,11 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { Download, FilePlus2, Maximize2, Network, Paperclip, Plus, Minus, ShieldAlert } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, Check, Empty, Field, IdLink, Input, Modal, Mono, SearchBox, Select, Skeleton, Status, STATUS, Table, useGuard, cx } from '../../../ui/index'
-import { useServices } from '../../../state/services'
 import { go } from '../../../router/navigate'
 import { useCan, useMe } from '../../../state/console'
 import { useToastStore } from '../../../state/stores'
 import { useSessionStore } from '../../../state/session'
-import { recordAudit } from '../../audit/service'
-import { addOperationEvidence } from '../../results/writes'
+import { useOperationMockConsole } from '../query'
 import type { Operation } from '../../../domain/entities'
 import { MASK, STEP_BORDER } from './operation-common'
 import { StepDrawer } from './operation-console'
@@ -57,15 +55,14 @@ const COLS = 4, NW = 170, NH = 72, GX = 40, GY = 56, PAD = 20
 const TONE_TXT: Record<string, string> = { ok: 'text-ok', bad: 'text-bad', accent: 'text-accent', neutral: 'text-neutral', warn: 'text-warn', cyan: 'text-cyan' }
 
 function GraphView({ read }: { read: OperationResultsRead }) {
-  const services = useServices()
-  const me = useMe()
+  const mock = useOperationMockConsole()
   const logs = useSessionStore((s) => s.logs)
   const toast = useToastStore((s) => s.toast)
   /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the
      store helper's exact row shape (the RT-2026-014 SS/AR corr rule, the demo
      stamp, the override-aware persona). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
+    mock.audit(projectId, { action, obj, result, reason })
   const op = read.op
   const [sel, setSel] = useState<string | null>(null)
   const [fa, setFa] = useState('')
@@ -155,7 +152,7 @@ export function ResultsTab({ op }: { op: Operation }) {
 
 function ResultsView({ read }: { read: OperationResultsRead }) {
   const me = useMe()
-  const services = useServices()
+  const mock = useOperationMockConsole()
   const persistFilters = useSessionStore((s) => s.persistFilters)
   const setFilter = useSessionStore((s) => s.setFilter)
   const logs = useSessionStore((s) => s.logs)
@@ -181,9 +178,9 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
      'legacy' commit each through the one authority (the store helper's exact
      audit/evidence row shapes and the live-count evidence id derivation). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
+    mock.audit(projectId, { action, obj, result, reason })
   const addEvidence = (e: { name: string; kind: string; source: string; projectId: string; opId?: string; findingId?: string; sensitive: boolean }) => {
-    const res = addOperationEvidence(services, { actor: { id: me.name, role: me.role }, projectId: e.projectId, corr: 'legacy' }, e)
+    const res = mock.addEvidence(e.projectId, e)
     if (!res.ok) { toast(res.failure.message, 'bad'); return '' }
     return res.data.id
   }
