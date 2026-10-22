@@ -14,7 +14,7 @@ vi.mock('./runtime-query', () => ({
   useRuntimeOperationControls: () => ({ pause: vi.fn(), resume: vi.fn(), complete: vi.fn() }),
   useRuntimeCancel: () => cancelRun,
 }))
-vi.mock('../../real/screens/execution-logs', () => ({ ExecutionLogs: () => null }))
+vi.mock('./views/execution-logs', () => ({ ExecutionLogs: () => null }))
 
 const thread: RuntimeThread = { threadId: 'thr-1', assistantId: 'raptix', createdAt: '2026-10-21T02:00:00Z' }
 
