@@ -125,7 +125,12 @@ function Inspector({
 }) {
   const body = detail.detail
   const [draft, setDraft] = useState(filter)
-  useEffect(() => setDraft(filter), [filter])
+  const [synced, setSynced] = useState(filter)
+  // Adjusted during render: a passive effect would run after the first input and overwrite the typed draft.
+  if (filter !== synced) {
+    setSynced(filter)
+    setDraft(filter)
+  }
   return (
     <div className="space-y-3 text-sm">
       <div>
