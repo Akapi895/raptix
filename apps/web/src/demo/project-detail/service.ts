@@ -14,7 +14,7 @@
  * Scope-bound wrapper mirrors `dashboardForScope`: actor and project are
  * explicit per scope and never retargeted by a later request context.
  */
-import { aggregateFor } from '../../screens/dashboard/service'
+import { aggregateFor } from '../../features/overview/dashboard'
 import { completion, eligibility, readiness } from '../../domain/dashboard'
 import type { Completion, DashboardAggregate, Eligibility, Readiness } from '../../domain/dashboard'
 import { projectAccessible } from '../../domain/policy'

@@ -20,7 +20,7 @@ import { useSessionStore } from '../../state/session'
 import { APR } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import { CloseTab, TeamTab } from '../../demo/project-detail/project-tabs'
-import { aggregateFor } from '../../screens/dashboard/service'
+import { aggregateFor } from '../overview/dashboard'
 import { detailFor } from '../../demo/project-detail/service'
 import { mountServices } from '../../test/helpers'
 import {
