@@ -35,7 +35,7 @@ import { routes } from './routes'
 import {
   acknowledgeEmergencyStopTransaction, finalizeEmergencyStopTransaction, requestEmergencyStopTransaction,
 } from '../estop/service'
-import { pauseOperation, reviewOperationStep, resumeOperation } from './service'
+import { pauseOperation, reviewOperationStep, resumeOperation } from './mock'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
