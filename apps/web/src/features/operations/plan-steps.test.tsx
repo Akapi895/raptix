@@ -4,14 +4,14 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 
-vi.mock('../planning/remote', () => ({ fetchPlanning: vi.fn() }))
+vi.mock('../planning/api', () => ({ fetchPlanning: vi.fn() }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
 const { PlanSteps } = await import('./plan-steps')
-const api_planning = await import('../planning/remote');
+const api_planning = await import('../planning/api');
 
 function withClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
