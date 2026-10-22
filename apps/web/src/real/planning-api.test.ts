@@ -14,7 +14,7 @@ const ACK = (over: Record<string, unknown> = {}) => ({
 
 describe('planning adapters', () => {
   it('fetches and validates the planning view', async () => {
-    const { fetchPlanning } = await import('../features/planning/remote');
+    const { fetchPlanning } = await import('../features/planning/api');
     const view = {
       version: 1, engagementId: 'eng-1',
       documents: {
@@ -31,7 +31,7 @@ describe('planning adapters', () => {
   })
 
   it('rejects a planning view whose document states disagree with the bundle', async () => {
-    const { fetchPlanning } = await import('../features/planning/remote');
+    const { fetchPlanning } = await import('../features/planning/api');
     const { ApiTransportError } = await import('../platform/transport')
     const view = {
       version: 1, engagementId: 'eng-1',
