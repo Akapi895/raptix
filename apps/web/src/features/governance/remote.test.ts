@@ -5,8 +5,8 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/governance/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/governance/api')>()
+vi.mock('./api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     fetchPlans: vi.fn(),
@@ -16,9 +16,9 @@ vi.mock('../../features/governance/api', async (importOriginal) => {
   }
 })
 
-const api_governance = await import('../../features/governance/api');
+const api_governance = await import('./api');
 const { ApiTransportError } = await import('../../platform/transport')
-const { createRealGovernanceService } = await import('./governance')
+const { createRealGovernanceService } = await import('./remote')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'eng-1', corr: 'test' }
 
