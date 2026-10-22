@@ -27,7 +27,8 @@ import {
 } from './service'
 import { importAssetsTransaction } from '../assets'
 import { assignAgentTransaction } from '../agents/writes'
-import { createOperationDraft, runOperationPreflight, startOperation } from '../operations/service'
+import { createOperationDraft, startOperation } from '../operations/service'
+import { runOperationPreflight } from '../operations/mock'
 
 afterEach(cleanup)
 

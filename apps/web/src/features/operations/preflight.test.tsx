@@ -25,7 +25,8 @@ import { selectProject, go } from '../../router/navigate'
 import { routes } from './routes'
 import { seed } from '../../demo/seed';
 import { computePreflightChecks, eligibility, preflightPass, roeWindowIssue } from './preflight'
-import { createOperationDraft, listOperations, operationDetail, operationStartGate, runOperationPreflight } from './service'
+import { createOperationDraft, listOperations, operationDetail, operationStartGate } from './service'
+import { runOperationPreflight } from './mock'
 import { scheduleOperation, updateOperationDraft } from './mock'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })

@@ -39,10 +39,8 @@ import { useToastStore } from '../../state/stores'
 import { selectProject, go } from '../../router/navigate'
 import { routes } from './routes'
 import { useAgentList } from '../agents/query'
-import {
-  completeOperation, createOperationDraft, pauseOperation, resumeOperation, runOperationPreflight,
-  startOperation, stopOperation,
-} from './service'
+import { completeOperation, createOperationDraft, pauseOperation, resumeOperation, startOperation, stopOperation } from './service'
+import { runOperationPreflight } from './mock'
 import type { OperationDraftInput } from './service'
 import { assignAgentTransaction } from '../agents/writes'
 import { reviseScopeTransaction } from '../approvals/service'

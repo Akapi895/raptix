@@ -6,7 +6,8 @@ import { MockClock } from '../../domain/clock'
 import type { Db } from '../../demo/seed';
 import type { Operation } from '../../domain/entities'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { createOperationDraft, runOperationPreflight, startOperation } from '../../features/operations/service'
+import { createOperationDraft, startOperation } from '../../features/operations/service'
+import { runOperationPreflight } from '../../features/operations/mock'
 import { assignAgentTransaction } from '../../features/agents/writes'
 import { seed } from '../../demo/seed';
 
