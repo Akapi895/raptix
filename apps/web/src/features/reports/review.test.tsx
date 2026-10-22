@@ -33,13 +33,10 @@ import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/f'
-import {
-  acknowledgeDelivery, decideReport, deliverReportVersion, exportReportVersion,
-  readReportReview, saveReportSection, submitReportVersion,
-} from './service'
+import { acknowledgeDelivery, decideReport, deliverReportVersion, exportReportVersion, readReportReview, saveReportSection, submitReportVersion } from './mock';
 import { useDeliveryHistory } from './query'
 import { evaluateCloseChecklist } from '../closure/service'
-import type { DeliveryListRead } from './service'
+import type { DeliveryListRead } from './service';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); setActiveRouter(null); window.location.hash = '' })
 

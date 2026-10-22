@@ -1,7 +1,7 @@
 import type { FeatureServices } from '../../domain/console-services';
 import type { FindingService } from '../../features/findings'
 import type { AssetService } from '../../features/assets/service'
-import type { ReportService } from '../../features/reports/service'
+import type { ReportService } from '../../features/reports/service';
 import type { LibraryService } from '../../features/library/service'
 import type { SettingsService } from '../../features/settings/service'
 import type { ScopeService } from '../../features/scope/service'
@@ -12,7 +12,7 @@ import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { createRealAssetService } from './assets'
 import { createRealFindingService } from './findings'
 import { createRealLibraryService } from './library'
-import { createRealReportService } from './reports'
+import { createRealReportService } from '../../features/reports/remote';
 import { createRealAuditService } from './audit'
 import { createRealScopeService } from './scope'
 import { createRealTeamService } from './team'
@@ -33,7 +33,7 @@ import type { RuntimeOperationsService } from '../../features/operations/runtime
 import { createRealRuntimeOperationsService } from './runtime-operations'
 import type { NoticeCenterService } from '../../features/notices/center'
 import { createRealNoticeCenterService } from './notices'
-import { notIntegratedService } from './stub'
+import { notIntegratedService } from '../../platform/adapter-stub'
 import { unavailableService } from '../../domain/unavailable'
 
 /**

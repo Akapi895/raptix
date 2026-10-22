@@ -9,8 +9,8 @@ import { getEngagement } from '../../features/projects/remote';
 import type { CuratedFindingsView, CuratedFindingView } from '@raptix/web-contracts';
 import type { FindingView } from '@raptix/web-contracts'
 import { ApiTransportError } from '../../platform/transport'
-import { displayTime, guarded, instant } from './shared'
-import { unavailable, unsupportedControl } from './stub'
+import { displayTime, guarded, instant } from '../../platform/adapter-shared'
+import { unavailable, unsupportedControl } from '../../platform/adapter-stub'
 
 const PAGE_SIZE = 10
 const SEVERITY_FROM_API: Readonly<Record<string, Severity>> = { critical: 'critical', high: 'high', medium: 'medium', low: 'low', informational: 'info' }

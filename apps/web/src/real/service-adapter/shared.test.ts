@@ -1,7 +1,7 @@
 /** Adapter boundary (P01): transport failures become typed results, while a caller's abort is never shown as a failure. */
 import { describe, expect, it } from 'vitest'
 import { ApiTransportError } from '../../platform/transport'
-import { failureFrom, guarded } from './shared'
+import { failureFrom, guarded } from '../../platform/adapter-shared'
 
 describe('failureFrom', () => {
   it('maps transport statuses onto the console failure kinds', () => {

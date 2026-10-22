@@ -22,7 +22,7 @@ import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import type { Report } from '../../domain/entities'
 import { routes } from '../../screens/f'
-import { createReportDraft, draftOptions, listDeliveries, listReports } from './service'
+import { createReportDraft, draftOptions, listDeliveries, listReports } from './mock';
 import { useReportList } from './query'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })

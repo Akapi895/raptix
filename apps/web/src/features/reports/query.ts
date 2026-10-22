@@ -17,7 +17,7 @@ import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Report, Template } from '../../domain/entities'
-import type { DeliveryListQuery, DraftOptionsRead, DeliveryInput, NoFind, ReportDecision, ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead, ReportReviewRead, ReportSubmitInput } from './service'
+import type { DeliveryListQuery, DraftOptionsRead, DeliveryInput, NoFind, ReportDecision, ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead, ReportReviewRead, ReportSubmitInput } from './service';
 
 /** Feature-local key namespaces, each aligned with its owning entity kind.
  *  The editor/preview key shares the `report` kind prefix, so any committed

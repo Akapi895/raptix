@@ -4,7 +4,7 @@ import { useDirty } from '../state/session'
 import { sevLabel } from '../features/findings'
 import type { Report } from '../domain/entities'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui/index'
-import { type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
+import type { NoFind, RCheck, ReportEditorRead, ReportReviewRead } from '../features/reports/service';
 import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../features/reports/projection'
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import { useResourceScope } from '../state/resource-scope'

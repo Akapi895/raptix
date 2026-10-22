@@ -1,7 +1,7 @@
 import type { ServiceResult } from '../../domain/service'
 import type { NoticeCenterItem, NoticeCenterService } from '../../features/notices/center'
 import { dismissNotice, fetchNotices, markAllNoticesRead, markNoticeRead, type NoticeView } from '../../features/notices/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 /** A real notice names its text, its project and its instants; it carries no route, chip or review flag. */
 function itemOf(n: NoticeView): NoticeCenterItem {

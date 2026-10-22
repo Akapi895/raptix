@@ -2,7 +2,7 @@ import type { RequestContext } from '../../domain/service'
 import type { EmergencyStop, GovernanceBinding, GovernancePlan, GovernanceSchedule, GovernanceService, PlanInput, StopOutcome } from '../../features/governance/service'
 import { bindPlan, cancelSchedule, comparePlans, createSchedule, decidePlan, fetchEmergencyStops, fetchPlans, fetchPreflight, fetchSchedules, proposePlan, requestEmergencyStop, rescheduleSchedule, resolveEmergencyStop, revisePlan, savePlan, type EmergencyStopView, type PlanView, type ScheduleView } from '../../features/governance/remote';
 import { listThreads } from '../../features/aichat/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading or changing its governance.' }
 
