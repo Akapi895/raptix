@@ -21,7 +21,7 @@ import { requestPlanReviewTransaction, revisePlanTransaction } from './service'
 import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { seed } from '../../demo/seed';
-import { AiPlanCompare } from '../../screens/g-plan'
+import { AiPlanCompare } from './views/plan-pages'
 import { readPlanCompare } from './compare'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

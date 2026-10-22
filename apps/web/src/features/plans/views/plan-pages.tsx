@@ -1,91 +1,29 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Plus, Rocket, Trash2, XCircle } from 'lucide-react'
-import { useDirty } from '../state/session'
-import { useServices } from '../state/services'
-import { planVer } from '../domain/catalog';
-import type { Plan, PlanStep } from '../domain/entities'
-import type { Chk } from '../features/plans/policy'
-import {
-  decidePlanTransaction, discardPlanTransaction, editPlanDraftTransaction, effectivePlanStatus, requestPlanReviewTransaction,
-  revisePlanTransaction, withdrawPlanReviewTransaction,
-} from '../features/plans/service'
-import { createOperationFromPlanTransaction, readPlanProject } from '../features/plans/bridge'
-import { readPlanChecksNow, usePlanChecks, usePlanView, useProjectPlans, type PlanView } from '../features/plans/projection'
-import { PlanCompareError, usePlanCompare } from '../features/plans/compare'
-import { readActor } from '../auth/identity'
-import { go, selectProject, useRoute } from '../router/navigate'
-import { useAccessible, useCan, useMe, useReadOnly } from '../state/console'
-import { useAuthStore, useProjectStore, useToastStore } from '../state/stores'
-import type { ConsoleServices } from '../domain/console-services';
-import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui/index'
-import { NoProject, ReplanPanel, tz, useReplan } from '../features/aichat'
-import { FanOutCard } from '../features/branches'
-
-/* The legacy Res bridge shape (the store's private `Res`). */
-type Res = { ok: boolean; error?: string }
+import { useDirty } from '../../../state/session'
+import { planVer } from '../../../domain/catalog';
+import type { Plan, PlanStep } from '../../../domain/entities'
+import type { Chk } from '../policy'
+import { effectivePlanStatus } from '../service'
+import { usePlanChecks, usePlanView, useProjectPlans, type PlanView } from '../projection'
+import { PlanCompareError, usePlanCompare } from '../compare'
+import { go, selectProject, useRoute } from '../../../router/navigate'
+import { useAccessible, useCan, useMe, useReadOnly } from '../../../state/console'
+import { useProjectStore, useToastStore } from '../../../state/stores'
+import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../../../ui/index'
+import { NoProject, ReplanPanel, tz, useReplan } from '../../aichat/index'
+import { FanOutCard } from '../../branches/index'
+import { usePlanActions } from '../actions'
 
 /* Ticket 67 wave 7: the store's request context (actorCtx), mirrored — the
    persona resolves at call time through the identity service (the
    override-aware `me`, read from the authorities so a failing authority read
    never reaches this render) with corr 'legacy'. */
-function actorCtxOf(services: ConsoleServices, projectId: string) {
-  return { actor: readActor(services, useAuthStore.getState().meName), projectId, corr: 'legacy' }
-}
-
 /* Ticket 67 wave 7: the legacy A.* plan-workbench entries, mirrored — each
    addressed plan's project binding resolves through the typed plans bridge
    at call time (same `Plan <id> does not exist.` copy), the request context
    carries the override-aware persona with corr 'legacy', and the typed
    results bridge back to the legacy shapes. */
-function usePlanActions() {
-  const services = useServices()
-  const planProjectOf = (planId: string) => readPlanProject(services.authority, planId)
-  return {
-    requestApproval: (planId: string): Res => {
-      const projectId = planProjectOf(planId)
-      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-      const res = requestPlanReviewTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
-      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
-    },
-    decide: (planId: string, decision: 'approved' | 'rejected' | 'returned', note: string): Res => {
-      const projectId = planProjectOf(planId)
-      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-      const res = decidePlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId, decision, note)
-      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
-    },
-    withdraw: (planId: string): Res => {
-      const projectId = planProjectOf(planId)
-      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-      const res = withdrawPlanReviewTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
-      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
-    },
-    revise: (planId: string, changes: string[], note?: string): string => {
-      const projectId = planProjectOf(planId)
-      if (!projectId) return ''
-      const res = revisePlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId, changes, note)
-      return res.ok ? res.data.planId : ''
-    },
-    editDraft: (planId: string, patch: { steps?: Plan['steps']; title?: string }): Res => {
-      const projectId = planProjectOf(planId)
-      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-      const res = editPlanDraftTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId, patch)
-      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
-    },
-    discard: (planId: string): Res => {
-      const projectId = planProjectOf(planId)
-      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-      const res = discardPlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
-      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
-    },
-    execute: (planId: string): { ok: boolean; opId?: string; error?: string } => {
-      const projectId = planProjectOf(planId)
-      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-      const res = createOperationFromPlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
-      return res.ok ? { ok: true, opId: res.data.opId } : { ok: false, error: res.failure.message }
-    },
-  }
-}
-
 /** Breadcrumb: AI Operator > conversation > plan > leaf. */
 function useCrumbs(plan: Plan, leaf?: string) {
   const c = [
@@ -247,7 +185,6 @@ function ReviseDialog({ plan, open, onClose }: { plan: Plan; open: boolean; onCl
 }
 
 function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void; request: React.ReactNode }) {
-  const services = useServices()
   const actions = usePlanActions()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
@@ -281,7 +218,7 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
   const validate = () => {
     /* Ticket 67: the validation read re-derives the policy checks for the
        edited version from current state at click time. */
-    const f = readPlanChecksNow(services, view).filter((c) => c.state === 'fail')
+    const f = actions.checksNow(view).filter((c) => c.state === 'fail')
     setMsg(f.length ? { ok: false, t: `Scope validation failed: ${f.map((c) => `${c.label} — ${c.detail}`).join(' ')}` } : { ok: true, t: 'Scope validation passed: all targets and agents are within the approved ROE. (Simulated check)' })
   }
   const tip = !canPlan ? 'Your role cannot edit plans.' : !editable ? 'Approved or in-review plans are frozen. Use “Revise” to create a new version.' : ''
@@ -600,7 +537,6 @@ const DEC = { approved: { title: 'Approve plan', btn: 'Confirm approval', varian
 
 function ReviewBody({ plan }: { plan: Plan }) {
   const pv = usePlanView(plan.id)
-  const services = useServices()
   const actions = usePlanActions()
   const can = useCan()
   const me = useMe()
@@ -651,7 +587,7 @@ function ReviewBody({ plan }: { plan: Plan }) {
      the bridge handler enforces — an approval past its absolute deadline is
      unusable even while the stored status still reads approved. The handler
      re-checks at click time either way; this only surfaces the reason. */
-  const bridgeable = services ? effectivePlanStatus(plan, services.clock.now()) : plan.status
+  const bridgeable = effectivePlanStatus(plan, actions.now())
   const expiredApproval = plan.status === 'approved' && bridgeable === 'expired'
   const createWhyBridge = expiredApproval
     ? `The approval expired ${plan.expires ? tz(plan.expires) : ''} — re-approve the plan before an operation can be created.`
