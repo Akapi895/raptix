@@ -1,5 +1,5 @@
 import type { ServiceFailure, ServiceResult } from '../domain/service'
-import { REAL_CONTROL_GAPS } from '../real/service-adapter/control-gaps'
+import { REAL_CONTROL_GAPS } from './control-gaps'
 
 /** Explicit unavailable outcome for a call the real backend cannot serve (ADR-0068 D4). */
 export function unavailable<T>(message: string): Promise<ServiceResult<T>> {
