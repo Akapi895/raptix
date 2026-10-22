@@ -2,7 +2,7 @@ import type { OperationView, RequestRecoveryView, ScopedRunView } from '@raptix/
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { RuntimeFleet, RuntimeOperationsService, RuntimeRun, RuntimeTimeline } from '../../features/operations/runtime'
 import { cancelRun, completeOperation, fetchFleet, fetchOperation, pauseOperationRun, resumeOperation } from '../../features/operations/remote';
-import { fetchTimeline } from '../../features/analysis/remote';
+import { fetchTimeline } from '../../features/analysis/api';
 import { getThread, listRunsOfThread, listThreads } from '../../features/aichat/remote';
 import { guarded } from '../../platform/adapter-shared'
 

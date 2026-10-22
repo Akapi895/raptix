@@ -24,8 +24,8 @@ vi.mock('../scope/api', async (importOriginal) => {
     classifyAsset: vi.fn(),
   }
 })
-vi.mock('../analysis/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../analysis/remote')>()
+vi.mock('../analysis/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../analysis/api')>()
   return {
     ...actual,
     fetchAssetInventory: vi.fn(),
@@ -51,7 +51,7 @@ vi.mock('../projects/remote', async (importOriginal) => {
 
 const api_assets = await import('./endpoints');
 const api_scope = await import('../scope/api');
-const api_analysis = await import('../analysis/remote');
+const api_analysis = await import('../analysis/api');
 const api_projects = await import('../projects/remote');
 const { createRealAssetService } = await import('./remote')
 
