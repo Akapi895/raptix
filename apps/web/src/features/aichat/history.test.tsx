@@ -1,7 +1,7 @@
 /**
  * Ticket 42: conversation history & provenance on typed reads — the archive
  * read model (src/features/aichat/history.ts) and the migrated history
- * screen (src/screens/g-trace.tsx, AiHistory).
+ * screen (src/features/trace/views/ai-trace-pages.tsx, AiHistory).
  *
  * Covered here: the history read is scope-checked per project (a
  * specific-project read works only for members; the aggregate reads only the
