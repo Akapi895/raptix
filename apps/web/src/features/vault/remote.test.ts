@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/vault/remote', async (importOriginal) => {
+vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../features/vault/remote')>()
   return {
     ...actual,
@@ -11,8 +11,8 @@ vi.mock('../../features/vault/remote', async (importOriginal) => {
   }
 })
 
-const api_vault = await import('../../features/vault/remote');
-const { createRealVaultService } = await import('./vault')
+const api_vault = await import('./api');
+const { createRealVaultService } = await import('./remote')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'eng-1', corr: 'test' }
 

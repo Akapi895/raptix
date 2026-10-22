@@ -1,25 +1,50 @@
-import { isVaultView, isVaultRevealView, type VaultView, type VaultSecretView, type VaultRevealView } from '@raptix/web-contracts';
-import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { VaultRead, VaultRevealed, VaultSecretMeta, VaultService } from './service'
+import type { VaultSecretView } from '@raptix/web-contracts'
+import { createVaultSecret, fetchVault, revealVaultSecret, revokeVaultSecret } from './api';
+import { guarded } from '../../platform/adapter-shared'
 
-export function fetchVault(engagementId: string): Promise<VaultView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets`, owned(engagementId, isVaultView))
+const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading its vault.' }
+
+/** Metadata only: the plaintext never crosses the list or the store response. */
+function toMeta(view: VaultSecretView): VaultSecretMeta {
+  return {
+    id: view.id,
+    projectId: view.engagementId,
+    kind: view.kind,
+    label: view.label,
+    revealCount: view.revealCount,
+    lastRevealedAt: view.lastRevealedAt ?? undefined,
+    createdAt: view.createdAt,
+    createdBy: view.createdBy,
+  }
 }
 
-export interface CreateVaultSecretInput { kind: string; label: string; plaintext: string }
-
-export function createVaultSecret(engagementId: string, input: CreateVaultSecretInput): Promise<VaultSecretView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets`, (v): v is VaultSecretView =>
-    typeof v === 'object' && v !== null && typeof (v as VaultSecretView).id === 'string' && typeof (v as VaultSecretView).revealCount === 'number',
-  { method: 'POST', body: input })
-}
-
-export function revealVaultSecret(engagementId: string, secretId: string): Promise<VaultRevealView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets/${encodeURIComponent(secretId)}/reveal`, isVaultRevealView, { method: 'POST', body: {} })
-}
-
-export function revokeVaultSecret(engagementId: string, secretId: string): Promise<{ ok: true }> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets/${encodeURIComponent(secretId)}`, (v): v is { ok: true } =>
-    typeof v === 'object' && v !== null && (v as { ok?: unknown }).ok === true,
-  { method: 'DELETE' })
+export function createRealVaultService(): VaultService {
+  const engagementOf = (ctx: RequestContext): string | null => (ctx.projectId && ctx.projectId !== 'all' ? ctx.projectId : null)
+  return {
+    list: (ctx) => guarded(async (): Promise<ServiceResult<VaultRead>> => {
+      const engagementId = engagementOf(ctx)
+      if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
+      const view = await fetchVault(engagementId)
+      // The server refuses what the role may not do; the console offers the controls and shows the refusal it returns.
+      return { ok: true, data: { secrets: view.secrets.map(toMeta), truncated: view.truncated, canReveal: true, revealReason: null, canManage: true, manageReason: null } }
+    }),
+    reveal: (ctx, secretId) => guarded(async (): Promise<ServiceResult<VaultRevealed>> => {
+      const engagementId = engagementOf(ctx)
+      if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
+      const view = await revealVaultSecret(engagementId, secretId)
+      return { ok: true, data: { secretId: view.secretId, plaintext: view.plaintext, revealedAt: view.revealedAt } }
+    }),
+    store: (ctx, input) => guarded(async () => {
+      const engagementId = engagementOf(ctx)
+      if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
+      return { ok: true, data: toMeta(await createVaultSecret(engagementId, input)) }
+    }),
+    revoke: (ctx, secretId) => guarded(async () => {
+      const engagementId = engagementOf(ctx)
+      if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
+      return { ok: true, data: await revokeVaultSecret(engagementId, secretId) }
+    }),
+  }
 }
