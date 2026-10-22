@@ -15,7 +15,7 @@ import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
 import { routes } from './routes'
 import { seed } from '../../demo/seed';
-import { listOperations } from './service'
+import { listOperations } from './mock'
 import { createOperationDraft } from './mock'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
