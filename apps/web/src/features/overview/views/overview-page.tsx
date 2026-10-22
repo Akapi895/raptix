@@ -43,14 +43,14 @@ function FindingsSection({ view }: { view: OverviewFindings }): ReactElement {
   return (
     <div className="p-4">
       {view.total === 0 ? (
-        <p className="text-sm text-muted">No verified findings recorded yet across your {view.engagements} accessible project(s). AI suggestions are not counted here.</p>
+        <p className="text-sm text-muted">No curated findings recorded yet across your {view.engagements} accessible project(s). AI suggestions are not counted here.</p>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">
             {severities.map((s) => (
               <Status key={s} kind="gate" value={s === 'critical' || s === 'high' ? 'failed' : s === 'medium' ? 'pending' : 'passed'} size="sm" label={`${s}: ${view.bySeverity[s] ?? 0}`} />
             ))}
-            <span className="text-xs text-muted">{view.total} verified · in {view.engagementsWithFindings} of {view.engagements} project(s){view.truncated ? ' · scan truncated (counts are a lower bound)' : ''}</span>
+            <span className="text-xs text-muted">{view.total} curated · in {view.engagementsWithFindings} of {view.engagements} project(s){view.truncated ? ' · scan truncated (counts are a lower bound)' : ''}</span>
           </div>
           <p className="mt-2 text-xs text-muted">{Object.entries(view.byStatus).map(([status, count]) => `${status}: ${count}`).join(' · ') || '—'}</p>
         </>
@@ -178,7 +178,7 @@ export function OverviewPage(): ReactElement {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card>
-          <CardHeader title="Findings" sub="Verified findings across your accessible projects, by severity and workflow status" />
+          <CardHeader title="Findings" sub="Curated findings across your accessible projects, by severity and workflow status" />
           <SourceState label="The findings rollup" pending={findings.isPending} error={error(findings)} onRetry={() => void findings.refetch()}>
             {findings.data && <FindingsSection view={findings.data} />}
           </SourceState>

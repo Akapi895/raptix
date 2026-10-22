@@ -95,7 +95,7 @@ export function FindingList() {
         {SEVS.map((s) => <Kpi key={s} label={sevLabel[s]} value={data?.severity[s] ?? 0} tone={s === 'critical' || s === 'high' ? 'bad' : s === 'medium' ? 'warn' : s === 'low' ? 'cyan' : 'neutral'} onClick={() => setSev(sev === s ? '' : s)} />)}
         <Kpi label="Awaiting Review" value={data?.awaitingReview ?? 0} tone="warn" onClick={() => setTab('review')} />
         <Kpi label="Resolved" value={data?.resolved ?? 0} tone="ok" onClick={() => setTab('remediation')} />
-        <Kpi label="AI Suggestions" value={data?.counts.ai ?? 0} sub="unverified — not in counts" tone="warn" onClick={() => setTab('ai')} />
+        <Kpi label="AI Suggestions" value={data?.counts.ai ?? 0} sub="not curated — not in counts" tone="warn" onClick={() => setTab('ai')} />
       </div>
       <Tabs value={tab} onChange={setTab} tabs={listTabs.map((t) => ({ id: t.id, label: t.label, count: data?.counts[t.id as keyof typeof data.counts] ?? 0 }))} />
       <FilterBar right={filtered ? <Button size="sm" variant="ghost" icon={RotateCcw} onClick={reset}>Reset</Button> : undefined}>
@@ -111,7 +111,7 @@ export function FindingList() {
       </FilterBar>
       {tab === 'ai' && (
         <div className="mb-3 space-y-2">
-          <Banner tone="warn" icon={Sparkles} title="AI suggestions are not verified findings">They are excluded from confirmed counts, severity charts and reports until a human verifies them.</Banner>
+          <Banner tone="warn" icon={Sparkles} title="AI suggestions are not curated findings">They are excluded from confirmed counts, severity charts and reports until a human verifies them.</Banner>
           {(data?.dismissedCount ?? 0) > 0 && <label className="flex cursor-pointer items-center gap-2 text-xs text-muted"><input type="checkbox" className="accent-[var(--c-accent)]" checked={showDis} onChange={(e) => setShowDis(e.target.checked)} />Show dismissed suggestions ({data?.dismissedCount ?? 0})</label>}
         </div>
       )}

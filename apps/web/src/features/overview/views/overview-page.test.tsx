@@ -39,13 +39,13 @@ const emptyFindings = { total: 0, engagements: 2, engagementsWithFindings: 0, by
 const emptyC2 = { pendingGrants: 1, commandsByStatus: null, recentCommands: [] }
 
 describe('OverviewPage', () => {
-  it('says there are no verified findings and names the not-recorded command audit', async () => {
+  it('says there are no curated findings and names the not-recorded command audit', async () => {
     hooks.projects = read([])
     hooks.findings = read(emptyFindings)
     hooks.c2 = read(emptyC2)
     hooks.tasks = read([])
     await renderOverview()
-    expect(screen.getByText(/No verified findings recorded yet across your 2 accessible project/)).toBeTruthy()
+    expect(screen.getByText(/No curated findings recorded yet across your 2 accessible project/)).toBeTruthy()
     expect(screen.getByText('The command audit is not recorded for this source.')).toBeTruthy()
     expect(screen.getByText(/Pending session grants: 1/)).toBeTruthy()
   })

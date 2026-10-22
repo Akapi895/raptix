@@ -18,7 +18,7 @@ export interface OverviewProject {
 }
 
 export interface OverviewFindings {
-  /** Verified findings only; AI suggestions are proposals and never counted here. */
+  /** Curated findings (every status except AI suggestion); AI suggestions are proposals and are never counted here. */
   total: number
   engagements: number
   engagementsWithFindings: number

@@ -77,9 +77,9 @@ export interface FindingListRead {
   truncated?: boolean
   /** Status-tab counts; each category excludes its own dimension so tabs stay live. */
   counts: Record<FindingCategory, number>
-  /** Severity breakdown over verified findings only — AI suggestions are proposals, not counts. */
+  /** Severity breakdown over curated findings only (every status except AI suggestion) — AI suggestions are proposals, not counts. */
   severity: Record<Severity, number>
-  /** Verified findings awaiting review / resolved (the workflow KPIs). */
+  /** Curated findings awaiting review / resolved (the workflow KPIs). */
   awaitingReview: number
   resolved: number
   dismissedCount: number
@@ -274,8 +274,8 @@ export function listFindings(db: Db, ctx: RequestContext, query: FindingListQuer
   const categories: FindingCategory[] = ['all', 'confirmed', 'review', 'ai', 'drafts', 'remediation']
   const counts = Object.fromEntries(categories.map((c) => [c, core.filter((f) => (c === 'all' || matchesStatus(f, c)) && (c !== 'ai' || query.showDismissed || !isDismissedFor(f, ctx.actor))).length])) as Record<FindingCategory, number>
   // AI suggestions are proposals: they never enter the severity breakdown or workflow KPIs.
-  const verified = core.filter((f) => f.status !== 'ai_suggested')
-  const severity = Object.fromEntries(SEVS.map((s) => [s, verified.filter((f) => f.severity === s).length])) as Record<Severity, number>
+  const curated = core.filter((f) => f.status !== 'ai_suggested')
+  const severity = Object.fromEntries(SEVS.map((s) => [s, curated.filter((f) => f.severity === s).length])) as Record<Severity, number>
   const rows = core
     .filter((f) => (!query.severity || f.severity === query.severity) && matchesStatus(f, query.status || '') && (query.status !== 'ai' || query.showDismissed || !isDismissedFor(f, ctx.actor)))
     .sort((a, b) => compareFindings(a, b, sort))
@@ -288,8 +288,8 @@ export function listFindings(db: Db, ctx: RequestContext, query: FindingListQuer
     ok: true,
     data: {
       items, page, pageSize: PAGE_SIZE, total: rows.length, counts, severity,
-      awaitingReview: verified.filter((f) => f.status === 'review').length,
-      resolved: verified.filter((f) => f.status === 'resolved').length,
+      awaitingReview: curated.filter((f) => f.status === 'review').length,
+      resolved: curated.filter((f) => f.status === 'resolved').length,
       dismissedCount: base.filter((f) => isDismissedFor(f, ctx.actor)).length,
       owners: [...new Set(base.map((f) => f.owner))].sort(),
       assets: [...new Set(base.map((f) => f.asset))],

@@ -47,7 +47,7 @@ describe('ProjectCounts', () => {
     hooks.assets = { isPending: false, isError: false, data: { total: 3 } }
     hooks.fleet = { isPending: false, isError: false, data: { counts: { activeRuns: 2 } } }
     await renderCounts()
-    expect(screen.getByText('Findings (verified)')).toBeTruthy()
+    expect(screen.getByText('Curated findings')).toBeTruthy()
     expect(screen.getByText('in review 1 · confirmed 1 · resolved 0')).toBeTruthy()
     // The verified total is the sum of the severities (2), not the four AI suggestions.
     expect(screen.getByText('2', { selector: 'span.block' })).toBeTruthy()
