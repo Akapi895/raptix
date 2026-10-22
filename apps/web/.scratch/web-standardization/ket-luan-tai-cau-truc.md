@@ -244,7 +244,7 @@ Cách đọc: "Đóng" = đã chuyển hoặc sửa và có bằng chứng; "Đ�
 ### 10.2 Đã kiểm chứng, config-gated, chưa kiểm chứng
 
 Đã kiểm chứng trên cây `86beff9f` (mã giống `ad6390a5`; commit sau chỉ đổi baseline):
-- Full suite web: 168 file, 1484 test, pass. Lần chạy đầu, trước khi sửa write gate, có một test fail ở `features/asset-map/domain-detail.test.tsx` ("filters the sitemap by URL or path..."). Chạy lại toàn bộ và chạy riêng đều pass. Nguyên nhân chưa xác định, nghi là lỗi thời gian khi chạy song song. Code asset-map không đổi trong đợt này.
+- Full suite web: 168 file, 1484 test, pass. Lần chạy đầu, trước khi sửa write gate, có một test fail ở `features/asset-map/domain-detail.test.tsx` ("filters the sitemap by URL or path..."). Chạy lại toàn bộ và chạy riêng đều pass. Nguyên nhân chưa xác định tại thời điểm đó, nghi là lỗi thời gian khi chạy song song. Code asset-map không đổi trong đợt này. Đính chính: nguyên nhân đã tìm ra và sửa ở `a2e61465`, xem mục 11.
 - Build (gồm typecheck và `vite build`): exit 0. Cảnh báo `INEFFECTIVE_DYNAMIC_IMPORT` cho `real/screens/login.tsx` còn, đã ghi từ đợt trước.
 - Lint toàn web: exit 0.
 - `check:boundaries --strict`: exit 0, số vi phạm bằng baseline ở cả 10 rule.
@@ -265,11 +265,11 @@ Chưa kiểm chứng trong đợt này:
 
 ### 10.3 Hoãn (follow-up có owner)
 
-- **Operations (owner: Operations):** đổi tên `service.ts` thành `mock.ts` theo lô không quá 10 file. Chuyển `startOperation` khi caller production `features/plans/bridge.ts` được chuyển. Chuyển `createOperationDraft` (10 importer trong test) và `operationStartGate` cùng lô. Thêm click-through cho resume, complete và stop được chấp nhận.
-- **Agents (owner: Agents):** `USERS` trong `features/agents/query.ts` cần port đọc user. Thêm test cho enable và phân công qua giao diện.
-- **C2 (owner: C2):** `features/c2/provider-grants.tsx` tính `expiresAt` bằng `Date.now()` trong presentation. Cần đưa về đồng hồ đã inject. ADR-0095 chỉ chặn phần PTY tương tác, không chặn việc này.
+- **Operations (owner: Operations):** nội dung mock đã nằm ở `mock.ts` (xem 11.2), `service.ts` không đổi tên. Còn mở: click-through cho complete.
+- **Agents (owner: Agents):** click-through cho phân công và thay agent qua giao diện còn mở. Enable đã có trong flow `agents-click` (xem 11.5). `features/agents/query.ts` không còn đọc `USERS`.
+- **C2 (owner: C2):** không đưa `expiresAt` về đồng hồ đã inject. `features/c2/provider-grants.tsx` tính hạn grant bằng `Date.now()` và hạn đó là thời gian thực: server kiểm lại khi ghi, nên đồng hồ demo không được thay vào đó. Bản trước ghi nhầm đây là việc cần làm; đã đính chính. Click-through cho luồng C2 mock vẫn mở (xem mục 11).
 - **Đồng hồ máy còn lại (owner: từng feature):** `features/wizard/service.ts`, `features/notices/service.ts` và `features/vault/service.ts` tạo id bằng `Date.now()`. `features/aichat/views/workspace.tsx` dùng `Date.now()` để giới hạn tần suất đọc checkpoint. `features/projects/environment-api.ts` dùng cho hạn polling trên đường real. Các chỗ này không phải nhãn hiển thị của mock nên không thuộc Mốc 2.
-- **Asset-map (owner: Asset Map):** điều tra lỗi thời gian của `domain-detail.test.tsx` khi chạy song song.
+- **Asset-map (owner: Asset Map):** đã đóng ở `a2e61465`. Ô lọc sitemap đồng bộ draft từ filter trong passive effect nên có thể bị ghi đè sau lần gõ đầu tiên; đã chuyển sang đồng bộ khi render (xem mục 11).
 - **Real (owner: cần gán):** `real/screens/*` (8 file) không thuộc đợt này. Cảnh báo `INEFFECTIVE_DYNAMIC_IMPORT` cho `real/screens/login.tsx` còn lại.
 - **Kiểm lại UX (owner: cần gán):** dark mode, mobile và project identity cho operations, agents, C2, AI, tasks, wizard và system.
 
@@ -312,8 +312,88 @@ Số entry `index.ts` không đổi trong đợt. Mẫu số đếm lại hôm n
 
 ### 10.6 Thứ tự đề xuất cho đợt tiếp
 
-1. Operations: đổi tên `service.ts` thành `mock.ts` theo lô không quá 10 file, kèm flow ghi ở mock cho resume, complete và stop.
-2. Agents: thay `USERS` bằng port đọc người dùng. Thêm test enable và phân công qua giao diện.
-3. C2: đưa `expiresAt` trong `provider-grants.tsx` về đồng hồ đã inject, kèm flow C2 mock.
+1. Operations: flow ghi ở mock cho complete. Không đổi tên `service.ts` (xem 11.2).
+2. Agents: click-through cho phân công và thay agent. `USERS` thuộc mục Identity (xem 11.3).
+3. C2: click-through cho luồng C2 mock. `expiresAt` của grant giữ theo thời gian thực (xem 10.3).
 4. Đồng hồ còn lại trong `wizard`, `notices`, `vault` và các chỗ ở 10.3, theo owner.
 5. Kiểm lại dark mode, mobile và project identity cho các nhóm đã chuyển.
+
+## 11. Đợt khép migration (checkpoint cuối, 2026-10-22)
+
+Đợt này đóng cây `real/`, chuyển hết nội dung mock của Operations ra `mock.ts`, phân loại lại đồng hồ và persona, kiểm chứng luồng ghi và luồng tích hợp trên mock, và điều tra lỗi asset-map. Trạng thái dưới đây đo trên `7504cbdf`. Mục 10 giữ lịch sử của đợt trước; các chỗ sai đã được đính chính trong đó.
+
+### 11.1 Cây legacy
+
+- `apps/web/src/real/` và `apps/web/src/screens/` không còn tồn tại. Không có cây real thứ hai.
+- Nơi ở của các phần đã chuyển: adapter thật ở `features/<x>/remote.ts`, wire HTTP ở `features/<x>/api.ts`; control gap và guard sở hữu response ở `platform/`; composition và provider ở `state/`; chrome, bootstrap, login và search ở `shell/`; route real ở `router/feature-route.tsx`; campaign C2, command center, global resource, environment và execution log ở feature tương ứng.
+- Đã xóa: `real/screens/capture-upload.tsx` và test của nó (không có caller), `real/queries.ts` (query nằm trong từng feature), `demo/display-clock.ts` (thay bằng đồng hồ được inject).
+- Quy tắc trong `AGENTS.md`: presentation không import `remote`, `api` hay `mock` trực tiếp. Hiện còn 10 chỗ vi phạm, liệt kê ở 11.3.
+
+### 11.2 Operations, plans, persona và đồng hồ
+
+- Operations: draft, start gate, `startOperation`, list, detail, preflight và lifecycle gate ở `features/operations/mock.ts`. `service.ts` còn type port và helper thuần, không import demo. Mục "đổi tên `service.ts` thành `mock.ts`" ở mục 10 là sai theo ADR-0096, nơi `service.ts` là port, nên không đổi tên. Đo lại hôm nay có 10 file import `service.ts` (8 trong `features/operations`, 2 ở nơi khác); con số 40 ở bản trước không tái lập được.
+- Plans: type port và tra cứu project của plan ở `features/plans/service.ts`; cài đặt bridge tạo operation từ plan ở `features/plans/mock.ts`; ghi đi qua `services.plansBridge(...)`.
+- Persona: danh sách owner và reviewer của agents đọc từ `demo/persona.ts`. `USERS` còn ở các chỗ liệt kê ở 11.3.
+- Đồng hồ: nhãn hiển thị của demo đọc từ `services.display` (đồng hồ được inject). `Date.now()` còn lại được phân loại ở 11.4.
+
+### 11.3 Còn lại, có owner
+
+| Mục | Chỗ dùng | Owner | Lý do chưa chuyển |
+| --- | --- | --- | --- |
+| Presentation import `remote` hoặc `api` (10 chỗ, 8 file) | `features/agents/views/instance-messenger.tsx`, `features/agents/views/execution-agents.tsx`, `features/audit/table.tsx`, `features/operations/plan-steps.tsx`, `features/projects/views/create-page.tsx`, `features/projects/views/project-settings-panel.tsx`, `features/projects/views/environment-panel.tsx`, `features/team/approval-inbox.tsx` | AI, Agents, Audit, Operations, Projects, Team | Component gọi hàm wire hoặc đọc type từ wire. Cần query hook trong feature, hoặc chuyển type về `service.ts` |
+| `USERS` (`domain/catalog.ts`) | `shell/header.tsx`, `shell/system/pages.tsx`, `auth/identity.ts`, `demo/*` | Identity | Shell đọc danh sách user trực tiếp. Cần port đọc user trước khi bỏ |
+| `features/operations/service.ts` | 10 file import | Operations | Là port theo ADR-0096; không đổi tên trong đợt này |
+
+Số đo boundary còn lại, đã khóa và không tăng: `production-imports-demo` 39, `production-type-imports-demo` 65, `production-imports-composition` 30, `presentation-mock-plumbing` 49, `deep-feature-import` 218. Owner: từng feature, chuyển theo lô.
+
+Cảnh báo build `INEFFECTIVE_DYNAMIC_IMPORT` (không làm build lỗi, không nằm trong gate):
+- `shell/real-login.tsx`: import tĩnh từ `shell/real-bootstrap.tsx`, import động từ `router/routes.ts`. Cảnh báo có từ trước, khi file còn ở `real/screens/login.tsx`. Owner: Shell.
+- `features/tasks/index.ts`: import tĩnh từ `shell/real-search.tsx`, import động từ `router/routes.ts`. Xuất hiện từ `08d0c9b9`. Owner: Tasks, Shell.
+
+### 11.4 Đồng hồ và hạn
+
+- Tạo id, không phải nhãn hiển thị: `state/stores.ts`, `platform/request-ledger.ts` (nhánh dự phòng), `features/notices/service.ts`, `features/wizard/service.ts`, `features/vault/service.ts`, `features/aichat/session.ts` (nhánh dự phòng). Owner: từng feature.
+- Nhịp của đồng hồ demo: `state/services.tsx` đo thời gian máy mỗi 15 giây và cộng vào đồng hồ được inject. Đây là nguồn thời gian máy của đồng hồ demo; giữ nguyên.
+- Polling và throttling, giữ thời gian thực: `features/projects/environment-api.ts` (hạn chờ môi trường trên đường real), `features/aichat/views/workspace.tsx` (giới hạn tần suất đọc checkpoint).
+- Hạn grant thật của C2: `features/c2/provider-grants.tsx` giữ `Date.now()`. Server kiểm lại khi ghi, nên không thay bằng đồng hồ demo.
+
+### 11.5 Kiểm chứng trên cây cuối
+
+- Suite web: 167 file, 1483 test, tất cả pass (chạy sau `a2e61465`).
+- Build (typecheck và `vite build`): exit 0, có hai cảnh báo ở 11.3.
+- Lint (`eslint .`): exit 0.
+- Boundary strict: exit 0. Khóa ở `7504cbdf` cho hai rule đã giảm: `production-type-imports-demo` 69 → 65, `deep-feature-import` 220 → 218. Không rule nào tăng.
+- Route gate mock (`tools/verify/route-smoke.mjs --modes mock`, app trên cổng 5299): 55 của 55 route pass, `new failures: 0`.
+- Flow mock `operations-click`: 7 của 7 bước pass. Taylor Chen (operator của OP-014): pause có lý do báo "Operation paused." và hiện Resume; resume báo "Rechecks passed. Operation resumed."; stop có lý do báo "Stop requested. Stopping…" rồi "Operation stopped.". Casey Nguyen (viewer): nút Pause bị khóa kèm lý do, không mở dialog, không báo thành công.
+- Flow mock `agents-click`: 8 của 8 bước pass. Disable có lý do báo "AG-007 disabled.", enable báo "AG-007 enabled."; viewer thấy Disable Agent bị khóa kèm lý do, không mở dialog.
+- Flow mock `integration-path-click`: 8 của 8 bước pass; lượt chạy có exit 1 vì phần dark mode, xem dưới. Chuỗi: Projects → project overview → AI Operator và Operations → Finding → Reproduce và Evidence → Reports → quay lại. Mỗi bước kiểm định danh project và không để lộ id của project khác.
+- Responsive (390 × 844) và dark (1360 × 960) trên các route đã chuyển: 8 của 8 màn pass ở 390 × 844 (không tràn ngang, control trong viewport và không bị che, chữ đọc được). Ở dark 1360 × 960 chỉ 1 của 8 màn pass; 7 màn fail, và lý do duy nhất là contrast dưới 4.5 (không tràn, không control bị che): operations list, operation console, agents list, agent detail, tasks inbox, finding detail, reports.
+- Refusal ở tầng handler (dialog giữ mở với lý do, không commit, không toast) kiểm bằng test đơn vị `features/operations/controls.test.tsx` và `features/agents/controls.test.tsx`. Flow chỉ thấy refusal ở giao diện, tức control bị khóa.
+- Asset-map: đã đóng ở `a2e61465` (xem 11.7).
+
+### 11.6 Chưa kiểm chứng
+
+- Runtime thật: khi kiểm, không có API ở cổng 5280 và không có Neo4j ở cổng 7474, nên route gate real và flow real chưa chạy. Execute, submit, pause, resume và cancel trên runtime thật, stream hội thoại AI và điều phối lệnh C2 chỉ có trạng thái gate (mục 10.2), chưa chạy.
+- Click-through chưa có: complete của operation, phân công và thay agent qua giao diện, luồng C2.
+
+### 11.7 Nợ còn lại và owner
+
+- Asset-map: đã đóng ở `a2e61465`. Nguyên nhân: draft của ô lọc sitemap đồng bộ từ filter trong passive effect, nên lần gõ đầu tiên có thể bị ghi đè. Sửa: đồng bộ khi render. Bằng chứng: bản probe chạy song song 8 lần có 1 lần fail đúng assertion, log có stack cho thấy filter rỗng được gửi từ `onSubmit`; một lần chạy đầy đủ trước đó cũng fail đúng assertion; sau sửa, file gốc chạy song song 8 lần đều pass; trước sửa, 5 lần chạy riêng đều pass. Owner: Asset Map.
+- Contrast dark mode: 7 của 8 màn chưa đạt 4.5. Số đo thấp nhất: Emergency Stop 2.77 (chữ trắng trên nền đỏ sáng), Open Live Workspace 3.91, Request assignment 3.91, Approve 3.91, All 2 3.96; các ID liên kết (OP-014, OP-013, SS-041, RT-2026-014, win-dc-01, EV-014-02) đo 4.45, sát ngưỡng. Token màu dark theme chưa đổi trong đợt này vì là quyết định thiết kế; `integration-path-click` không hạ ngưỡng để pass. Owner: quyết định token màu của thiết kế, cần người dùng quyết định.
+- Route gate real và flow real: cần stack có API và Neo4j. Owner: người vận hành stack, cần gán.
+- Click-through complete, phân công, thay agent và C2: owner Operations, Agents, C2.
+- Cảnh báo `INEFFECTIVE_DYNAMIC_IMPORT` ở 11.3: owner Shell, Tasks.
+- Đồng hồ và id còn lại ở 11.4: owner từng feature.
+
+### 11.8 Commit của đợt (từ `86beff9f`, theo nhóm việc)
+
+- Cây real đóng, composition, shell và router: `28804b13`, `85472b9e`, `0e0207fa`, `39edd864`, `e271b7cf`, `8b3684f0`, `54e70209`, `08d0c9b9`, `f851027d`, `76882af0`, `93edef1d`, `ff8bedef`, `a3b39355`, `888f8a80`.
+- Adapter real chuyển vào feature, wire trước và adapter sau: closure `baa90cab`; audit `3043153e`; notices `e2d5007f`; scope `9588f0f7`; vault `9dcaa7da`; team `fa446d10`, `f23b2ecf`; governance `6d53c62b`, `6e520e90`; analysis `4968bb5e`, `da8343d5`; C2 `08ebc9f4`, `64eec451`; planning `618f8a3a`, `5dcedc63`; findings `bfbe698f`, `63e846f2`; settings `3b59cdad`, `58eef039`; operations runtime `778fb495`, `b56abcc2`.
+- Guard sở hữu response, asset map và test: `242ddc04`, `b91e64ac`, `8f2c9790`, `13da7dc6`, `b155c3ee`.
+- Operations mock: `d31282fb`, `93348714`, `7e385266`, `85b5ca4a`, `788f5d60`, `dc1b0cab`, `a06584d6`.
+- Plans bridge: `c642ce2c`, `8d4ca48e`, `1b0c9dc2`, `88f6065c`.
+- Persona và đồng hồ demo: `d703782a`, `c0b3fd0b`.
+- Kiểm chứng: `2342d096` (flow operations và agents), `daad6e73` (flow tích hợp, responsive và dark).
+- Asset map: `a2e61465` (draft bộ lọc đồng bộ khi render).
+- Khóa baseline và công cụ boundary: `aca0ae76`, `de5766d4`, `7504cbdf`.
+- Tài liệu: `03a300ed` (AGENTS.md), `20dad9fd` (mục 10 của đợt trước), và commit đính chính mục 10 và 11 (commit này).
