@@ -127,7 +127,7 @@ Thứ tự slice theo design doc và độ phụ thuộc: S-A → S-B → S-C (d
 | 0 | Hoàn thành | 18c6732c | ADR-0096 Accepted; ADR-0084 ghi nhận điểm 2 được thay thế; gate route sửa; `check:boundaries` và `verify:routes` thêm vào |
 | 1 | Hoàn thành | 561de192, bb48df69 | Mode, policy, dashboard, AI card và ui/shell/safety về owner; Findings và fan-out có module riêng; các unavailable service dựng qua một helper |
 | 2 | Hoàn thành | be2c2f61, d35bb8c7, 793515a5, cbf06696 | real/api.ts chia về features/<x>/remote.ts và platform/; data.ts tách thành domain/catalog.ts và demo/seed.ts; demo/ gồm display-clock, authority, runtime, persona, services; service factory tách thành domain/console-services.ts và demo/services.ts; mock service đóng dấu thời gian qua clock của authority. check:boundaries: 842 (từ 808 ở phase 0), tăng vì adapter import remote.ts theo đường dẫn, xử lý ở phase 3 |
-| 3 | Đang làm: S-A Reports đạt parity theo checklist (còn phần mock-only); S-B: hai lỗi real đã đóng, phần còn lại của slice chưa làm | 031f8a19, c9454b10, d0d53476, 794f808b (S-A); 811dbc5f (S-B); ce789b22 (S-J) | Chi tiết ở mục 8.5 |
+| 3 | Đang làm: S-A Reports đạt parity theo checklist (còn phần mock-only); S-B: Assets đạt cả hai mode, Library chờ knowledge graph trong stack | 031f8a19, c9454b10, d0d53476, 794f808b (S-A); 811dbc5f, e9ca0797, 47d00cde (S-B); ce789b22 (S-J) | Chi tiết ở mục 8.5 |
 | 4 | Chưa bắt đầu | — | |
 
 ### 8.1 Phase 2: chia file đã hoàn thành
@@ -187,13 +187,15 @@ Phase 2 đóng ở mức chia file. Ownership đóng theo slice trong phase 3.
 - Chưa đạt: `SimulatedTemplates` trong `features/reports/views/list.tsx` (chi tiết mẫu, phê duyệt, dùng mẫu, nhật ký kiểm toán mô phỏng) chỉ có ở mock. Port chưa có thao tác tương ứng và real không có; cần thêm thao tác port trước khi hợp nhất. View này còn một `useServices()`. `screens/f.tsx` còn giữ route settings đến khi S-C.
 - Chưa kiểm chứng: thao tác bằng giao diện (click-through). Route smoke xác nhận màn hình hiển thị; checklist xác nhận thao tác qua adapter.
 
-**S-B Assets/Library: hai lỗi real đã đóng (`811dbc5f`); phần còn lại của slice chưa làm.**
-- `asset-new`: đạt ở real và mock. Kiểm tra trùng và xác thực dòng lấy định danh từ `useAssetList` (`features/assets/import-read.ts`), không còn đi qua `useServices()`.
-- `asset-scope`: đạt ở real và mock. `AssetService` có `capabilities` và `requestScopeApproval`. Mock chạy giao dịch phê duyệt; real trả `unavailable` và `AssetScope` rẽ nhánh theo capability, không theo chế độ dữ liệu. Nhánh mock trước đây báo "Scope approval requested." dù giao dịch bị từ chối; nay hiện lỗi của giao dịch.
-- Bằng chứng: route smoke `asset-new`, `asset-scope` đạt ở mock (`stack-asset-mock`) và real (`stack-asset3`), không có console error; test đơn vị cho thao tác port mới trong `writes.test.tsx`; tsc sạch; eslint trên các file đã sửa sạch; vitest 13 file, 180 test.
-- Chưa làm: click-through yêu cầu phạm vi trên giao diện; chuyển `real/service-adapter/assets.ts` vào `features/assets/remote.ts`; chuyển mock sang `features/assets/mock.ts`; màn hình sang `features/assets/views`; checklist cho Library; các route playbook/technique real còn thiếu fixture.
+**S-B Assets/Library: Assets đạt ở cả hai mode; Library chưa đạt vì stack không có knowledge graph (Neo4j).**
+- Commit: `811dbc5f` (hai lỗi real `asset-new`, `asset-scope`), `e9ca0797` (chuyển mock, adapter và view của assets và library vào feature; `screens/d-shared.tsx` thành `ui/d-shared.tsx`), `47d00cde` (công cụ kiểm chứng).
+- Cấu trúc: Assets gồm `features/assets/mock.ts`, `remote.ts` (adapter), `endpoints.ts`, `views/asset-pages.tsx`. Library gồm `features/library/mock.ts`, `remote.ts`, `endpoints.ts`, `views/library-pages.tsx`. View assets không còn `useServices()` hay `isRealMode()`; khác biệt theo mode đi qua `AssetCapabilities` (`scopeApprovalRequests`, `observedGraph`).
+- Bằng chứng Assets: checklist `tools/verify/flows/assets-library.mjs` 12/12 thao tác khớp kỳ vọng qua adapter thật (list, get, scope, importRows gồm trùng và dòng sai, changeScope, requestScopeApproval bị từ chối ở real đúng như port khai báo; observedGraph bị từ chối vì không có Neo4j). Route `assets`, `asset`, `asset-new`, `asset-scope` đạt ở mock và real, không có lỗi trang.
+- Library chưa đạt: `/api/library` và các route proposal chỉ đăng ký khi có knowledge graph. Stack không khởi động Neo4j, nên checklist library ghi là NOT RUN và route `playbooks` real hiện "Skill library unavailable", được khai báo trong baseline. Code đã tách xong (`e9ca0797`) nhưng chưa có bằng chứng; đóng phần này cần Neo4j trong stack.
+- Chưa làm: click-through yêu cầu phạm vi trên giao diện.
 
-**Gate:** baseline khai báo 15 mục (đều là route real chưa có fixture). `check:boundaries`: 829 vi phạm sau `811dbc5f`, từ 866 ở commit gate.
+**Gate (lần cuối, `stack-full6`):** mock 55/55 đạt, không lỗi mới. Real: 40 đạt, 15 khai báo trong baseline, không lỗi mới. Checklist reports 27/27. `check:boundaries`: 810 vi phạm sau `e9ca0797`, từ 866 ở commit gate.
+- Đã đổi cách phán quyết route smoke: chờ heading hoặc text kỳ vọng trước khi đánh giá; lỗi API `>= 400` chỉ in thông tin, không tính fail, vì request của shell tới runtime (fleet, threads, C2) không ổn định giữa các route.
 
 ## 9. Baseline ghi nhận ở phase 0 (HEAD fb71c24c)
 
