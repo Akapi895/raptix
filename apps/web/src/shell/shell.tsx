@@ -42,6 +42,7 @@ export function GlobalModals() {
   const toast = useToastStore((s) => s.toast)
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
+  const [pending, setPending] = useState(false)
   // W21: Save Draft waits for the save outcome before leaving.
   const [savingDraft, setSavingDraft] = useState(false)
   useEffect(() => { setReason(''); setErr('') }, [confirmState])
@@ -52,9 +53,19 @@ export function GlobalModals() {
         footer={confirmState && (
           <>
             <Button variant="ghost" onClick={closeConfirm}>{confirmState.cancelLabel || 'Cancel'}</Button>
-            <Button variant={confirmState.danger ? 'destructive' : 'primary'} onClick={() => {
+            <Button variant={confirmState.danger ? 'destructive' : 'primary'} disabled={pending} onClick={() => {
               if (confirmState.reasonRequired && reason.trim().length < 5) { setErr('Please enter a reason (at least 5 characters). It will be recorded in the audit log.'); return }
-              const f = confirmState.onConfirm; closeConfirm(); f(reason.trim())
+              const opened = confirmState
+              setPending(true)
+              // A refusal keeps the dialog open with its reason; an accepted action closes it, unless it has opened another dialog meanwhile.
+              new Promise<string | void>((resolve) => resolve(opened.onConfirm(reason.trim()))).then((refusal) => {
+                setPending(false)
+                if (refusal) { setErr(refusal); return }
+                if (useSessionStore.getState().confirmState === opened) closeConfirm()
+              }, (error: unknown) => {
+                setPending(false)
+                setErr(error instanceof Error ? error.message : 'The action could not be completed.')
+              })
             }}>{confirmState.confirmLabel}</Button>
           </>
         )}
@@ -62,6 +73,7 @@ export function GlobalModals() {
         {confirmState && (
           <div className="space-y-4">
             <div className="text-muted">{confirmState.body}</div>
+            {err && !confirmState.reasonLabel && <p role="alert" className="text-sm text-bad">{err}</p>}
             {confirmState.reasonLabel && <Field label={confirmState.reasonLabel} required={confirmState.reasonRequired} error={err}><Textarea value={reason} onChange={(e) => { setReason(e.target.value); setErr('') }} autoFocus placeholder="Enter a reason…" /></Field>}
             <p className="text-xs text-neutral">This action is recorded in the audit log.</p>
           </div>

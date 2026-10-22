@@ -25,8 +25,12 @@ export interface LogLine { id: string; ts: string; level: 'INFO' | 'WARN' | 'ERR
 export interface ConfirmOpts {
   title: string; body: ReactNode; confirmLabel: string; danger?: boolean
   reasonLabel?: string; reasonRequired?: boolean; cancelLabel?: string
-  onConfirm: (reason: string) => void
+  /** Returns a refusal message to keep the dialog open with that reason; returns nothing when the action was accepted. */
+  onConfirm: (reason: string) => ConfirmOutcome | Promise<ConfirmOutcome>
 }
+
+/** A refusal message, or nothing once the action is accepted. */
+export type ConfirmOutcome = string | void
 
 /** Navigation held behind the unsaved-changes modal by the dirty guard. */
 /** W21: a save is an async contract — the guard waits for the outcome before navigating. */
