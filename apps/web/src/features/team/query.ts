@@ -10,7 +10,7 @@ import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure } from '../../domain/service'
 import type { TeamInviteInput, TeamMember, TeamRead } from './service'
-import { fetchMembers } from './remote'
+import { fetchMembers } from './api'
 
 export class TeamError extends Error {
   constructor(readonly failure: ServiceFailure) {

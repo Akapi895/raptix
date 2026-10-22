@@ -21,8 +21,8 @@ vi.mock('./endpoints', async (importOriginal) => {
     fetchAuthSession: vi.fn(),
   }
 })
-vi.mock('../team/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/team/remote')>()
+vi.mock('../team/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/team/api')>()
   return {
     ...actual,
     fetchReports: vi.fn(),
@@ -86,7 +86,7 @@ vi.mock('../../platform/auth-api', async (importOriginal) => {
 })
 
 const api_authApi = await import('../../platform/auth-api');
-const api_team = await import('../team/remote');
+const api_team = await import('../team/api');
 const api_findings = await import('../findings/remote');
 const api_reports = await import('./endpoints');
 const { createRealReportService } = await import('./remote')

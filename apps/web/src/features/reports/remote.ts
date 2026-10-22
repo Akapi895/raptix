@@ -10,7 +10,7 @@ import { fetchAuthSession } from '../../platform/auth-api';
 
 import { fetchCuratedFindings } from '../../features/findings/remote';
 
-import { fetchMembers } from '../../features/team/remote';
+import { fetchMembers } from '../team/api';
 
 import type { CuratedFindingView } from '@raptix/web-contracts';
 
