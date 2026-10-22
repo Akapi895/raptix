@@ -1,19 +1,14 @@
 /**
- * Real project portfolio (integration ticket 03): the engagement API is the
- * only source. Columns the engagement contract does not carry (client,
- * owner, window, ROE) render as explicitly unavailable instead of demo
- * values, and every action goes through the typed engagement adapters with
- * actionable failure states (R02, R05, R06).
+ * The project portfolio (migration Mốc 2): one presentation for both modes, reading the projects port. A column the
+ * connected source does not record shows as unavailable instead of a demo or zero value.
  */
 import { useMemo, useState, type ReactElement } from 'react'
 import { FolderPlus, RefreshCw, ServerCrash } from 'lucide-react'
-import type { ProjectViewModel } from '@raptix/web-contracts'
-import { useRealProjects } from '../query'
+import { useProjectRows } from '../list-query'
+import type { ProjectRow } from '../service'
 import { go } from '../../../router/navigate'
-import { showCreateProject } from '../create-dialog-state'
 import { useProjectStore } from '../../../state/stores'
 import { Button, Empty, Input, PageHeader, Skeleton, Status, Table, type Col } from '../../../ui/index'
-import { utcMinute } from '../../../platform/format'
 
 function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const message = error instanceof Error ? error.message : 'The projects request failed.'
@@ -27,8 +22,13 @@ function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) 
   )
 }
 
-export function RealPortfolio(): ReactElement {
-  const { ready, reason, list } = useRealProjects()
+/** A value the source does not record reads as unavailable, with its reason in the tooltip. */
+function Unrecorded({ value, reason }: { value: string | null; reason: string }) {
+  return value === null ? <span className="text-neutral" title={reason}>—</span> : <>{value}</>
+}
+
+export function ProjectPortfolio(): ReactElement {
+  const list = useProjectRows()
   const setPid = useProjectStore((s) => s.setPid)
   const [q, setQ] = useState('')
   const [status, setStatus] = useState('')
@@ -36,50 +36,46 @@ export function RealPortfolio(): ReactElement {
   const rows = useMemo(() => {
     const items = list.data ?? []
     const needle = q.trim().toLowerCase()
-    return items
-      .filter((p) => (!status || p.lifecycleStatus === status) && (!needle || `${p.id} ${p.displayName} ${p.workspaceSlug} ${p.targetValue}`.toLowerCase().includes(needle)))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    return items.filter((p) => (!status || p.status === status)
+      && (!needle || `${p.id} ${p.name} ${p.workspaceSlug ?? ''} ${p.target ?? ''} ${p.client ?? ''}`.toLowerCase().includes(needle)))
   }, [list.data, q, status])
 
-  const statuses = useMemo(() => Array.from(new Set((list.data ?? []).map((p) => p.lifecycleStatus))), [list.data])
+  const statuses = useMemo(() => Array.from(new Set((list.data ?? []).map((p) => p.status))), [list.data])
 
-  const open = (p: ProjectViewModel) => {
+  const open = (p: ProjectRow) => {
     setPid(p.id)
     go('project', { id: p.id })
   }
 
-  const cols: Col<ProjectViewModel>[] = [
+  const cols: Col<ProjectRow>[] = [
     { key: 'project', header: 'Project', render: (p) => (
       <div className="min-w-0">
-        <div className="truncate text-sm font-medium">{p.displayName}</div>
-        <div className="truncate font-mono text-xs text-muted">{p.id} · workspace {p.workspaceSlug}</div>
+        <div className="truncate text-sm font-medium">{p.name}</div>
+        <div className="truncate font-mono text-xs text-muted">{p.id}{p.workspaceSlug ? ` · workspace ${p.workspaceSlug}` : ''}</div>
       </div>
     ) },
     { key: 'target', header: 'Target', render: (p) => (
       <div className="min-w-0 text-xs">
-        <div className="font-mono">{p.targetValue}</div>
-        <div className="text-muted">{p.targetType}</div>
+        <div className="font-mono"><Unrecorded value={p.target} reason="The source does not record a target for this project" /></div>
+        {p.targetType && <div className="text-muted">{p.targetType}</div>}
       </div>
     ) },
-    { key: 'metadata', header: 'Metadata', render: (p) => <Status kind="check" value={p.metadataState === 'verified' ? 'pass' : 'review'} size="sm" label={p.metadataState === 'verified' ? 'Verified' : 'Needs review'} /> },
-    { key: 'status', header: 'Status', render: (p) => <Status kind="project" value={p.lifecycleStatus} size="sm" /> },
-    { key: 'client', header: 'Client', className: 'max-lg:hidden', render: () => <span className="text-neutral" title="Not carried by the engagement API">—</span> },
-    { key: 'updated', header: 'Updated', className: 'max-xl:hidden', render: (p) => <span className="whitespace-nowrap text-xs text-muted">{utcMinute(p.updatedAt)}</span> },
+    { key: 'metadata', header: 'Metadata', render: (p) => (p.metadataVerified === null
+      ? <span className="text-neutral" title="The source does not verify metadata">—</span>
+      : <Status kind="check" value={p.metadataVerified ? 'pass' : 'review'} size="sm" label={p.metadataVerified ? 'Verified' : 'Needs review'} />) },
+    { key: 'status', header: 'Status', render: (p) => <Status kind="project" value={p.status} size="sm" /> },
+    { key: 'client', header: 'Client', className: 'max-lg:hidden', render: (p) => <Unrecorded value={p.client} reason="The source does not carry a client for this project" /> },
+    { key: 'updated', header: 'Updated', className: 'max-xl:hidden', render: (p) => <span className="whitespace-nowrap text-xs text-muted">{p.updatedAt}</span> },
   ]
 
   return (
     <>
       <PageHeader
         title="Projects"
-        sub="Real engagements from the connected Raptix API. Columns without an API source show as unavailable rather than demo values."
-        meta={<span className="inline-flex h-6 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>}
-        actions={<Button variant="primary" icon={FolderPlus} onClick={() => showCreateProject()}>New Project</Button>}
+        sub="Projects your account can access. A column the connected source does not record shows as unavailable rather than a placeholder value."
+        actions={<Button variant="primary" icon={FolderPlus} onClick={() => go('project-new')}>New Project</Button>}
       />
-      {!ready ? (
-        <Empty icon={ServerCrash} title="Projects are unavailable on this server">
-          {reason}
-        </Empty>
-      ) : list.isPending ? (
+      {list.isPending ? (
         <div className="space-y-3" aria-busy="true" role="status">
           {[0, 1, 2].map((i) => <Skeleton key={i} className="h-14" />)}
         </div>
@@ -97,11 +93,11 @@ export function RealPortfolio(): ReactElement {
           {rows.length === 0 ? (
             <Empty
               icon={FolderPlus}
-              title={list.data.length === 0 ? 'No engagements yet' : 'No engagements match the filters'}
-              action={<Button variant="primary" icon={FolderPlus} onClick={() => showCreateProject()}>New Project</Button>}
+              title={(list.data ?? []).length === 0 ? 'No projects yet' : 'No projects match the filters'}
+              action={<Button variant="primary" icon={FolderPlus} onClick={() => go('project-new')}>New Project</Button>}
             >
-              {list.data.length === 0
-                ? 'Create the first engagement to start planning against the real runtime.'
+              {(list.data ?? []).length === 0
+                ? 'Create the first project to start planning.'
                 : 'An empty result means no records match — this is not an error.'}
             </Empty>
           ) : (

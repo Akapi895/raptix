@@ -1,5 +1,9 @@
 import { isProjectViewModel, type ProjectViewModel } from '@raptix/web-contracts';
 import { apiFetch } from '../../platform/transport';
+import { guarded } from '../../platform/adapter-shared';
+import { utcMinute } from '../../platform/format';
+import type { ProjectRow, ProjectsService } from './service';
+import type { Capability } from '@raptix/web-contracts';
 
 export function isProjectViewModelArray(value: unknown): value is ProjectViewModel[] {
   return Array.isArray(value) && value.every(isProjectViewModel)
@@ -72,4 +76,35 @@ export function engagementToProject(dto: ProjectViewModel): import('../../domain
     members: [],
     updated: dto.updatedAt,
   }
+}
+
+/** Real project list: the engagement API's records, most recently updated first; each field is what the API carries. */
+export function createRealProjectsService(): ProjectsService {
+  return {
+    list: () => guarded(async () => {
+      const projects = await listEngagements()
+      const sorted = [...projects].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      return {
+        ok: true,
+        data: sorted.map((p): ProjectRow => ({
+          id: p.id,
+          name: p.displayName,
+          workspaceSlug: p.workspaceSlug,
+          target: p.targetValue,
+          targetType: p.targetType,
+          metadataVerified: p.metadataState === 'verified',
+          client: null,
+          status: p.lifecycleStatus,
+          updatedAt: utcMinute(p.updatedAt),
+        })),
+      }
+    }),
+  }
+}
+
+/** Why the project list is unavailable, worded as the capability document states it (the same wording the readiness hook uses). */
+export function projectsUnavailableReason(capability: Capability | null): string {
+  if (!capability || !capability.supported) return 'This capability is not implemented on the connected server.'
+  if (!capability.available) return capability.reason ? `Unavailable: ${capability.reason.replace(/_/g, ' ')}.` : 'This capability is currently unavailable on the server.'
+  return 'Projects are unavailable on this server.'
 }

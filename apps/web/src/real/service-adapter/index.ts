@@ -10,7 +10,8 @@ import type { TeamService } from '../../features/team/service'
 import { capabilityState } from '../../platform/capabilities';
 import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { createRealAssetService } from '../../features/assets/remote'
-import { createRealOverviewService } from '../../features/overview/remote'
+import { createRealOverviewService } from '../../features/overview'
+import { createRealProjectsService, projectsUnavailableReason } from '../../features/projects'
 import { createRealFindingService } from './findings'
 import { createRealLibraryService } from '../../features/library/remote'
 import { createRealReportService } from '../../features/reports/remote';
@@ -141,5 +142,9 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
       })()
     : () => unavailableService<NoticeCenterService>({ list: true, setRead: true, dismiss: true, markAllRead: true }, 'Notifications are not available on this server.')
   const overview = createRealOverviewService()
-  return { overview: () => overview, findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations, noticeCenter }
+  const projectsCapability = capabilityState(capabilities, 'projects')
+  const projectsReader: FeatureServices['projects'] = projectsCapability?.supported && projectsCapability.available
+    ? (() => { const service = createRealProjectsService(); return () => service })()
+    : () => ({ list: async () => ({ ok: false as const, failure: { kind: 'unavailable' as const, message: projectsUnavailableReason(projectsCapability) } }) })
+  return { overview: () => overview, projects: projectsReader, findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations, noticeCenter }
 }

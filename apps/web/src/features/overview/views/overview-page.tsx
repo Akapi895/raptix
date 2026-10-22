@@ -8,7 +8,7 @@ import { FolderKanban } from 'lucide-react'
 import { go } from '../../../router/navigate'
 import { parseHash } from '../../../router/history'
 import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
-import { showCreateProject } from '../../projects/create-dialog-state'
+import { showCreateProject } from '../../projects'
 import { useOverviewC2, useOverviewFindings, useOverviewProjects, useOverviewTasks } from '../query'
 import type { OverviewC2, OverviewFindings, OverviewTask, OverviewTaskKind } from '../service'
 

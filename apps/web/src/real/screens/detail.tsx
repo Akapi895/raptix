@@ -11,7 +11,7 @@ import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { getEngagement } from '../../features/projects/remote';
+import { getEngagement } from '../../features/projects';
 import { ProjectShortcuts, WorkspaceStatus } from '../../features/projects/views/workspace-status';
 import { ProjectCounts } from '../../features/projects/views/project-counts';
 import { projectStage, STAGE_LABEL } from '../../features/projects/workspace';
