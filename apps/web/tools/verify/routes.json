@@ -1,5 +1,5 @@
 {
-  "description": "Shared route inventory of the web console (55 keys, see src/router/registry.tsx). path is the hash route; {name} placeholders come from the fixtures of the mode. expect.mock and expect.real are the screen each route must show: a string is the page heading (the h1 inside main); { \"text\": \"...\" } is visible text inside main; { \"text\": \"...\", \"in\": \"body\" } is visible text anywhere on the page. A route without an expectation for a mode fails. Expectations were recorded from discovery runs and reviewed against the route's purpose.",
+  "description": "Shared route inventory of the web console (54 route keys, see src/router/registry.tsx; the legacy command-center row checks that its address redirects to overview). path is the hash route; {name} placeholders come from the fixtures of the mode. expect.mock and expect.real are the screen each route must show: a string is the page heading (the h1 inside main); { \"text\": \"...\" } is visible text inside main; { \"text\": \"...\", \"in\": \"body\" } is visible text anywhere on the page. A route without an expectation for a mode fails. Expectations were recorded from discovery runs and reviewed against the route's purpose.",
   "routes": [
     {
       "key": "login",
