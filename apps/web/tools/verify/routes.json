@@ -311,21 +311,24 @@
       "key": "report",
       "path": "report/{report}?engagement={project}",
       "expect": {
-        "mock": "Red Team Q4 Report — Northwind Bank"
+        "mock": "Red Team Q4 Report — Northwind Bank",
+        "real": "Stack verification report"
       }
     },
     {
       "key": "report-preview",
       "path": "report-preview/{report}?engagement={project}",
       "expect": {
-        "mock": "Red Team Q4 Report — Northwind Bank"
+        "mock": "Red Team Q4 Report — Northwind Bank",
+        "real": "Stack verification report"
       }
     },
     {
       "key": "report-review",
       "path": "report-review/{report}?engagement={project}",
       "expect": {
-        "mock": "Red Team Q4 Report — Northwind Bank"
+        "mock": "Red Team Q4 Report — Northwind Bank",
+        "real": "Stack verification report"
       }
     },
     {
