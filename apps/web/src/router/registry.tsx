@@ -21,7 +21,7 @@ const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string,
   pj: () => import('../features/projects/routes'),
   g: () => import('../screens/g'),
   h: () => import('../features/c2/views/c2-pages'),
-  i: () => import('../screens/infrastructure'),
+  i: () => import('../features/agents/routes'),
   s: () => import('../demo/pages'),
 }
 
