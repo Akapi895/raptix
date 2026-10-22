@@ -19,11 +19,15 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
+import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Agent, Group } from '../../domain/entities'
 import type { AgentDetailRead, AgentListQuery, AgentListRead } from './service'
-import type { AssignmentInput, GroupInput } from './writes'
+import { setAgentStatusTransaction, type AssignmentInput, type GroupInput } from './writes'
+import { recordAudit, type AuditInput } from '../audit'
+import { submitApprovalTransaction } from '../approvals'
+import { replaceOperationAgent } from '../operations'
 
 /** Feature-local key namespaces: ['agent', scope, 'list', query] / ['agent', scope, id]. */
 export const agentKeys = {
@@ -124,4 +128,24 @@ export function useRemoveFromGroup() {
       return services.agents(actor, scope.project).removeFromGroup({ actor, projectId: scope.project, corr: corr('group-remove') }, v.groupId, v.agentId, v.reason)
     },
   })
+}
+
+/* ── Mock console adapter for the agents screens: the display clock, the demo runtime, and the legacy-correlated approval, reassignment, status and audit writes the mirrored screens always made. Mock mode only. ── */
+
+export function useAgentsMockConsole() {
+  const services = useServices()
+  const me = useMe()
+  const actor = { id: me.name, role: me.role }
+  const ctx = (projectId: string) => ({ actor, projectId, corr: 'legacy' })
+  return {
+    display: services.display,
+    demo: services.demo,
+    submitApproval: (projectId: string, input: Parameters<typeof submitApprovalTransaction>[3]) =>
+      submitApprovalTransaction(services.authority, services.clock, ctx(projectId), input),
+    replaceOperationAgent: (projectId: string, opId: string, from: string, to: string, reason: string) =>
+      replaceOperationAgent(services.authority, services.clock, ctx(projectId), opId, from, to, reason),
+    setAgentStatus: (projectId: string, agentId: string, status: Parameters<typeof setAgentStatusTransaction>[3]) =>
+      setAgentStatusTransaction(services.authority, ctx(projectId), agentId, status),
+    audit: (projectId: string, input: AuditInput) => recordAudit(services, ctx(projectId), input),
+  }
 }
