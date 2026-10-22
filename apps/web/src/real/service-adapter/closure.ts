@@ -1,7 +1,7 @@
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { ClosureCheckView, ClosureRead, ClosureRecordView, ClosureService } from '../../features/closure/service'
 import { decideClosure, fetchClosure, requestClosure, type ClosureChecklistEntryView, type ClosureView } from '../../features/closure/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 /** The checks the server reads; the label names each source the checklist depends on. */
 const CHECK_LABEL: Readonly<Record<string, string>> = {

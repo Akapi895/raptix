@@ -1,7 +1,7 @@
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { AuditQuery, AuditRead, AuditService } from '../../features/audit/service'
 import { fetchEngagementAudit } from '../../features/audit/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 export function createRealAuditService(): AuditService {
   return {

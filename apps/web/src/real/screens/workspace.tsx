@@ -18,7 +18,7 @@ import { cancelRun, fetchFleet } from '../../features/operations/remote';
 import { createThread, getThreadPage, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from '../../features/aichat/remote';
 import { decideApproval, fetchApprovals } from '../../features/approvals/remote';
 import { fetchPlanning } from '../../features/planning/remote';
-import { fetchReports } from '../../features/reports/remote';
+import { fetchReports } from '../../features/reports/endpoints';
 import { fetchRuntimeContext } from '../../features/execution/remote';
 import { getEngagement } from '../../features/projects/remote';
 import { ApiTransportError } from '../../platform/transport'

@@ -1,7 +1,7 @@
 import type { RequestContext } from '../../domain/service'
 import type { TeamMember, TeamRead, TeamService } from '../../features/team/service'
 import { fetchMembers, inviteMember, removeMember, updateMemberRole, type InviteMemberInput } from '../../features/team/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 /** The engagement id is the console's project id in real mode. */
 function engagementOf(ctx: RequestContext): string | null {

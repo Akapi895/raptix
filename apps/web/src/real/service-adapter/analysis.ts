@@ -2,7 +2,7 @@ import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { ObservedAnalysisRead, ObservedAnalysisService } from '../../features/analysis/observed'
 import { fetchAnalysis } from '../../features/analysis/remote';
 import { ApiTransportError } from '../../platform/transport'
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 /**
  * A 404 here means the graph route is not registered on this deployment (no

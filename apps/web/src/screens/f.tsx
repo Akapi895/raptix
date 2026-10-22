@@ -5,12 +5,12 @@ import { useServices } from '../state/services'
 import { recordAudit } from '../features/audit/service'
 import type { Template } from '../domain/entities'
 import { Banner, Button, Card, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, cx } from '../ui/index'
-import { type NoFind } from '../features/reports/service'
+import type { NoFind } from '../features/reports/service';
 import { useReportValidation } from '../features/reports/projection'
 import { isRealMode } from '../state/mode'
 import { ReportReadError, reportKeys, useDeliveryHistory, useReportList, useReportWrites, useTemplates } from '../features/reports/query'
 import { useQueryScope } from '../state/keys'
-import { createReportTemplate } from '../features/reports/remote';
+import { createReportTemplate } from '../features/reports/endpoints';
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './f-report'
 import { SettingsPage } from './f-settings'
 import { go, useRoute } from '../router/navigate'

@@ -157,7 +157,7 @@ export function createConsoleServices(): ConsoleServices {
   const forAgents = (actor: ActorRef, projectId: string): AgentService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/agents/service').then((m) => m.createAgentService(authority, clock, guard)))
   const forReports = (actor: ActorRef, projectId: string): ReportService =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/reports/service').then((m) => m.createReportService(authority, clock, guard)))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/reports/mock').then((m) => m.createReportService(authority, clock, guard)))
   const forBranches = (actor: ActorRef, projectId: string): BranchService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/branches/service').then((m) => m.createBranchService(authority, clock, guard)))
   const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>

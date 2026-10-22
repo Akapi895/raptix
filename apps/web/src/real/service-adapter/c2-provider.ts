@@ -2,7 +2,7 @@ import type { C2CommandView } from '@raptix/web-contracts'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { C2ProviderCommand, C2ProviderGrant, C2ProviderService, C2ProviderSurface } from '../../features/c2/provider'
 import { configureC2Listener, configureC2Profile, decideC2Grant, dispatchC2Command, fetchC2Commands, fetchC2Grants, fetchC2Sessions, reconcileC2Command, requestC2Grant, stopC2Listener, type C2GrantView } from '../../features/c2/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading or changing its C2 console.' }
 

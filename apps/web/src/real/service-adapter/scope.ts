@@ -1,7 +1,7 @@
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { ScopeRead, ScopeRevision, ScopeService } from '../../features/scope/service'
 import { decideScopeRevision, fetchEffectiveScope, fetchScopeRevisions, submitScopeRevision, type ScopeRevisionView } from '../../features/scope/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 /** The engagement id is the console's project id in real mode. */
 function engagementOf(ctx: RequestContext): string | null {

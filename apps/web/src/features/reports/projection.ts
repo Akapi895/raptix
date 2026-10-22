@@ -6,7 +6,7 @@ import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
 import { DATA_MODE } from '../../state/mode'
-import { closureEvidence, reportChecks, type NoFind, type RCheck } from './service'
+import { closureEvidence, reportChecks, type NoFind, type RCheck } from './service';
 
 export interface ReportValidationRead {
   checks(report: Report, nf?: NoFind): RCheck[]

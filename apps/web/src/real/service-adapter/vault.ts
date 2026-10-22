@@ -2,7 +2,7 @@ import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { VaultRead, VaultRevealed, VaultSecretMeta, VaultService } from '../../features/vault/service'
 import type { VaultSecretView } from '@raptix/web-contracts'
 import { createVaultSecret, fetchVault, revealVaultSecret, revokeVaultSecret } from '../../features/vault/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading its vault.' }
 

@@ -4,7 +4,7 @@ import type { RuntimeFleet, RuntimeOperationsService, RuntimeRun, RuntimeTimelin
 import { cancelRun, completeOperation, fetchFleet, fetchOperation, pauseOperationRun, resumeOperation } from '../../features/operations/remote';
 import { fetchTimeline } from '../../features/analysis/remote';
 import { getThread, listRunsOfThread, listThreads } from '../../features/aichat/remote';
-import { guarded } from './shared'
+import { guarded } from '../../platform/adapter-shared'
 
 const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading its operations.' }
 

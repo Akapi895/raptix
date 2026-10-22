@@ -1,5 +1,5 @@
-import type { ServiceFailure, ServiceResult } from '../../domain/service'
-import { ApiTransportError } from '../../platform/transport'
+import type { ServiceFailure, ServiceResult } from '../domain/service'
+import { ApiTransportError } from './transport'
 
 /** Maps a transport failure onto the console's typed failure kinds (ADR-0067). */
 export function failureFrom(error: unknown): ServiceFailure {

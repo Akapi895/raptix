@@ -6,7 +6,7 @@ import { classifyAsset, fetchAssetInventory, importAssets, type AssetInventoryVi
 import { fetchEffectiveScope } from '../../features/scope/remote';
 import { fetchGraph } from '../../features/analysis/remote';
 import { getEngagement } from '../../features/projects/remote';
-import { displayTime, guarded } from './shared'
+import { displayTime, guarded } from '../../platform/adapter-shared'
 
 type InventoryRow = AssetInventoryView['assets'][number]
 type Kind = 'host' | 'web_url' | 'ip_range'

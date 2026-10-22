@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/reports/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/reports/remote')>()
+vi.mock('./endpoints', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./endpoints')>()
   return {
     ...actual,
     fetchReports: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('../../features/reports/remote', async (importOriginal) => {
     fetchAuthSession: vi.fn(),
   }
 })
-vi.mock('../../features/team/remote', async (importOriginal) => {
+vi.mock('../team/remote', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../features/team/remote')>()
   return {
     ...actual,
@@ -42,7 +42,7 @@ vi.mock('../../features/team/remote', async (importOriginal) => {
     fetchAuthSession: vi.fn(),
   }
 })
-vi.mock('../../features/findings/remote', async (importOriginal) => {
+vi.mock('../findings/remote', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../features/findings/remote')>()
   return {
     ...actual,
@@ -86,16 +86,16 @@ vi.mock('../../platform/auth-api', async (importOriginal) => {
 })
 
 const api_authApi = await import('../../platform/auth-api');
-const api_team = await import('../../features/team/remote');
-const api_findings = await import('../../features/findings/remote');
-const api_reports = await import('../../features/reports/remote');
-const { createRealReportService } = await import('./reports')
+const api_team = await import('../team/remote');
+const api_findings = await import('../findings/remote');
+const api_reports = await import('./endpoints');
+const { createRealReportService } = await import('./remote')
 const { ApiTransportError } = await import('../../platform/transport')
 
 const ctx = { actor: { id: 'user-author', role: 'operator' as const }, projectId: 'eng-1', corr: 'test' }
 const reviewerCtx = { actor: { id: 'user-reviewer', role: 'reviewer' as const }, projectId: 'eng-1', corr: 'test' }
 
-function view(overrides: Partial<import('../../features/reports/remote').ReportView> = {}): import('../../features/reports/remote').ReportView {
+function view(overrides: Partial<import('./endpoints').ReportView> = {}): import('./endpoints').ReportView {
   return {
     id: 'rep-1', engagementId: 'eng-1', title: 'External assessment', version: 2, status: 'draft',
     body: { summary: 'Scope summary.', sections: [{ title: 'Results', content: 'Two issues.' }, { title: 'Appendix', content: '' }] },
@@ -105,7 +105,7 @@ function view(overrides: Partial<import('../../features/reports/remote').ReportV
   }
 }
 
-function listOf(...reports: import('../../features/reports/remote').ReportView[]) {
+function listOf(...reports: import('./endpoints').ReportView[]) {
   return { engagementId: 'eng-1', reports, templates: [], exportFormats: ['json', 'markdown'], source: 'db' as const }
 }
 
@@ -295,7 +295,7 @@ describe('real report gates for capabilities the backend does not model', () => 
 
 describe('real report composition', () => {
   it('serves the report adapter only when the reports capability is supported', async () => {
-    const { createRealFeatureServices } = await import('./index')
+    const { createRealFeatureServices } = await import('../../real/service-adapter/index')
     const unsupported = createRealFeatureServices({ version: 1, mode: 'multi-user', capabilities: {} } as never)
     const res = await unsupported.reports(ctx.actor, 'eng-1').list(ctx, {})
     expect(res.ok === false && res.failure.message).toBe('Reports is not integrated with the real backend yet.')
