@@ -13,12 +13,12 @@
  */
 import { useState } from 'react'
 import { Bot } from 'lucide-react'
-import { go } from '../router/navigate'
-import { BRANCH_LABEL } from '../domain/catalog';
-import type { BranchState, WorkerState } from '../domain/entities'
-import { WorkerReadError, useWorkers } from '../features/workers/query'
-import type { WorkerRow } from '../features/workers/service'
-import { Banner, Button, DescList, Empty, IdLink, Mono, Segmented, Table, cx } from '../ui/index'
+import { go } from '../../../router/navigate'
+import { BRANCH_LABEL } from '../../../domain/catalog';
+import type { BranchState, WorkerState } from '../../../domain/entities'
+import { WorkerReadError, useWorkers } from '../query'
+import type { WorkerRow } from '../service'
+import { Banner, Button, DescList, Empty, IdLink, Mono, Segmented, Table, cx } from '../../../ui/index'
 
 const TONE: Record<string, string> = {
   ok: 'text-ok bg-ok-soft border-ok/30', warn: 'text-warn bg-warn-soft border-warn/30', bad: 'text-bad bg-bad-soft border-bad/30',
