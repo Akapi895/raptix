@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useRef, type ReactElement, type ReactNode } from 'react'
 import { createConsoleServices } from '../demo/services';
 import type { ConsoleServices } from '../domain/console-services';
-import { resetDemoClock } from '../demo/display-clock'
 import { buildLogs, initDemoRuntime, tickOperations } from '../demo/runtime'
 import { resetNavStores } from '../router/navigate'
 import { resetSharedStores } from './stores'
@@ -32,7 +31,6 @@ export function ServicesProvider({ children }: { children: ReactNode }): ReactEl
   const lifecycle = useRef({ epoch: 0 })
   if (!servicesRef.current) {
     servicesRef.current = createConsoleServices()
-    resetDemoClock()
     resetSharedStores()
     resetSessionStores()
     resetNavStores()
@@ -44,7 +42,7 @@ export function ServicesProvider({ children }: { children: ReactNode }): ReactEl
     const offRuntime = initDemoRuntime(services)
     useSessionStore.getState().setLogs(buildLogs(services.authority.snapshot()))
     let last = Date.now()
-    const offReset = services.clock.onReset(() => { last = Date.now(); resetDemoClock() })
+    const offReset = services.clock.onReset(() => { last = Date.now() })
     const clock = window.setInterval(() => {
       const elapsed = Date.now() - last
       last = Date.now()
