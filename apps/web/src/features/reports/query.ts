@@ -12,12 +12,14 @@
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
 import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
-import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { ActorRef, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Report, Template } from '../../domain/entities'
 import type { DeliveryListQuery, ReportCapabilities, DraftOptionsRead, DeliveryInput, NoFind, ReportDecision, ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead, ReportReviewRead, ReportSubmitInput } from './service';
+
+/** The acting identity of a scope: the persona in mock mode, the session user in real mode. */
+const actorOf = (actor: string, role: ActorRef['role']): ActorRef => ({ id: actor, role })
 
 /** Feature-local key namespaces, each aligned with its owning entity kind.
  *  The editor/preview key shares the `report` kind prefix, so any committed
@@ -43,7 +45,7 @@ export class ReportReadError extends Error {
 }
 
 const ctxOf = (scope: QueryScope, corr: string): RequestContext => {
-  const actor = actorRef(scope.actor, scope.role)
+  const actor = actorOf(scope.actor, scope.role)
   return { actor, projectId: scope.project, corr }
 }
 
@@ -54,7 +56,7 @@ export function useReportList(query: ReportListQuery) {
   return useQuery({
     queryKey: reportKeys.list(scope, query),
     queryFn: async (): Promise<ReportListRead> => {
-      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).list(ctxOf(scope, 'report-list'), query)
+      const res = await services.reports(actorOf(scope.actor, scope.role), scope.project).list(ctxOf(scope, 'report-list'), query)
       if (!res.ok) throw new ReportReadError(res.failure)
       return res.data
     },
@@ -69,7 +71,7 @@ export function useTemplates() {
   return useQuery({
     queryKey: reportKeys.templates(scope),
     queryFn: async (): Promise<Template[]> => {
-      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).templates(ctxOf(scope, 'report-templates'))
+      const res = await services.reports(actorOf(scope.actor, scope.role), scope.project).templates(ctxOf(scope, 'report-templates'))
       if (!res.ok) throw new ReportReadError(res.failure)
       return res.data
     },
@@ -84,7 +86,7 @@ export function useDeliveryHistory(query: DeliveryListQuery) {
   return useQuery({
     queryKey: reportKeys.deliveries(scope, query),
     queryFn: async () => {
-      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).deliveries(ctxOf(scope, 'report-deliveries'), query)
+      const res = await services.reports(actorOf(scope.actor, scope.role), scope.project).deliveries(ctxOf(scope, 'report-deliveries'), query)
       if (!res.ok) throw new ReportReadError(res.failure)
       return res.data
     },
@@ -105,7 +107,7 @@ export function useDraftOptions(enabled = true) {
   return useQuery({
     queryKey: reportKeys.draftOptions(scope),
     queryFn: async (): Promise<DraftOptionsRead> => {
-      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).draftOptions(ctxOf(scope, 'report-draft-options'))
+      const res = await services.reports(actorOf(scope.actor, scope.role), scope.project).draftOptions(ctxOf(scope, 'report-draft-options'))
       if (!res.ok) throw new ReportReadError(res.failure)
       return res.data
     },
@@ -128,7 +130,7 @@ export function useReportEditor(id: string) {
   return useQuery({
     queryKey: reportKeys.editor(scope, id),
     queryFn: async (): Promise<ReportEditorRead> => {
-      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).editor(ctxOf(scope, 'report-editor'), id)
+      const res = await services.reports(actorOf(scope.actor, scope.role), scope.project).editor(ctxOf(scope, 'report-editor'), id)
       if (!res.ok) throw new ReportReadError(res.failure)
       return res.data
     },
@@ -150,7 +152,7 @@ export function useReportReview(id: string, nf?: NoFind) {
   return useQuery({
     queryKey: reportKeys.review(scope, id, nf?.on ? 'nf' : 'std'),
     queryFn: async (): Promise<ReportReviewRead> => {
-      const res = await services.reports(actorRef(scope.actor, scope.role), scope.project).review(ctxOf(scope, 'report-review'), id, nf)
+      const res = await services.reports(actorOf(scope.actor, scope.role), scope.project).review(ctxOf(scope, 'report-review'), id, nf)
       if (!res.ok) throw new ReportReadError(res.failure)
       return res.data
     },
@@ -171,7 +173,7 @@ export function useReportWrites() {
   const services = useServices()
   const scope = useQueryScope()
   return useMemo(() => {
-    const actor = actorRef(scope.actor, scope.role)
+    const actor = actorOf(scope.actor, scope.role)
     const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
     const svc = () => services.reports(actor, scope.project)
     return {
@@ -208,5 +210,5 @@ export function useReportWrites() {
 export function useReportCapabilities(): ReportCapabilities {
   const services = useServices()
   const scope = useQueryScope()
-  return services.reports(actorRef(scope.actor, scope.role), scope.project).capabilities
+  return services.reports(actorOf(scope.actor, scope.role), scope.project).capabilities
 }

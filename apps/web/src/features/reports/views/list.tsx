@@ -1,15 +1,12 @@
 import { useEffect, useState, type ComponentType } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Copy, Download, Eye, FileText, History, Lock, Plus, Rocket, Send, Upload } from 'lucide-react'
-import { useServices } from '../../../state/services'
-import { recordAudit } from '../../audit/service'
-import type { Template } from '../../../domain/entities'
-import { Banner, Button, Card, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, cx } from '../../../ui/index'
+import { Download, Eye, FileText, History, Lock, Plus, Rocket, Send } from 'lucide-react'
+import { Banner, Button, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, cx } from '../../../ui/index'
 import type { NoFind } from '../service';
 import { useReportValidation } from '../projection'
-import { ReportReadError, reportKeys, useDeliveryHistory, useReportCapabilities, useReportList, useReportWrites, useTemplates } from '../query'
-import { useQueryScope } from '../../../state/keys'
-import { createReportTemplate } from '../endpoints';
+import { ReadError } from './read-error'
+import { SimulatedTemplates } from './simulated-templates'
+import { useDeliveryHistory, useReportCapabilities, useReportList, useTemplates } from '../query'
+import { TemplateCreateForm } from './template-create-form';
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './report-pages'
 import { go, useRoute } from '../../../router/navigate'
 import { useCan, useMe } from '../../../state/console'
@@ -26,13 +23,6 @@ const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileTe
 }
 
 /** Shared read states for the migrated catalog tabs (ticket 34). */
-function ReadError({ error, retry }: { error: unknown; retry: () => void }) {
-  return (
-    <Empty icon={AlertTriangle} title="Could not load reports" action={<Button onClick={retry}>Retry</Button>}>
-      {error instanceof ReportReadError ? error.failure.message : 'The report catalog is temporarily unavailable.'}
-    </Empty>
-  )
-}
 
 function ReportsPage() {
   const caps = useReportCapabilities()
@@ -140,50 +130,15 @@ function ReportList() {
   )
 }
 
-/** P06 (real mode): a new immutable template version. Sections are one per line; a trailing * marks a required section. */
-function TemplateCreateForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
-  const writes = useReportWrites()
-  const toast = useToastStore((s) => s.toast)
-  const [name, setName] = useState('')
-  const [sections, setSections] = useState('')
-  const parsed = sections.split('\n').map((line) => line.trim()).filter((line) => line.length > 0)
-    .map((line) => (line.endsWith('*') ? { title: line.slice(0, -1).trim(), required: true } : { title: line, required: false }))
-  return <Card className="mb-4"><div className="space-y-3">
-    <Field label="Template name" required><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
-    <Field label="Sections" hint="One section per line. End a line with * when the section is required."><Textarea value={sections} onChange={(e) => setSections(e.target.value)} /></Field>
-    <div className="flex gap-2">
-      <Button variant="primary" disabled={name.trim().length === 0 || parsed.length === 0} onClick={() => void writes.createTemplate({ name: name.trim(), sections: parsed }).then((res) => {
-        if (!res.ok) return toast(res.failure.message, 'bad')
-        toast(`Template ${res.data.name} ${res.data.version} created`)
-        onDone()
-      })}>Create template</Button>
-      <Button onClick={onCancel}>Cancel</Button>
-    </div>
-  </div></Card>
-}
-
 /** Real-mode template gallery (P06): the versioned templates the server holds, and an admin/manager create form. */
 // eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function RealTemplates() {
   const me = useMe()
   const tpls = useTemplates()
-  const scope = useQueryScope()
-  const client = useQueryClient()
-  const pid = useProjectStore((s) => s.pid)
   const [creating, setCreating] = useState(false)
-  const [name, setName] = useState('')
-  const [sections, setSections] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const allowed = me.role === 'admin' || me.role === 'manager'
   const why = 'Only organization admins and managers can create report templates.'
-  const create = useMutation({
-    mutationFn: () => createReportTemplate(pid, {
-      name: name.trim(),
-      sections: sections.split('\n').map((line) => line.trim()).filter((line) => line.length > 0).map((title) => ({ title, required: true })),
-    }),
-    onSuccess: () => { setCreating(false); setName(''); setSections(''); setError(null); void client.invalidateQueries({ queryKey: reportKeys.templates(scope) }) },
-    onError: (err) => setError(err instanceof Error ? err.message : 'The template was not created.'),
-  })
+
   if (tpls.isPending) return <div aria-busy="true" aria-label="Loading templates"><Skeleton className="h-64" /></div>
   if (tpls.isError) return <ReadError error={tpls.error} retry={() => tpls.refetch()} />
   const templates = tpls.data!
@@ -194,19 +149,7 @@ function RealTemplates() {
         <Button icon={Plus} disabled={!allowed} title={allowed ? undefined : why} onClick={() => setCreating(true)}>New template</Button>
       </div>
       {!allowed && <p className="-mt-2 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{why}</p>}
-      {creating && (
-        <Card>
-          <div className="space-y-3 p-4">
-            <Field label="Template name" required><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <Field label="Sections" required hint="One required section per line, in the order the report shows them."><Textarea value={sections} onChange={(e) => setSections(e.target.value)} /></Field>
-            {error && <Banner tone="bad" title="The template was not created">{error}</Banner>}
-            <div className="flex gap-2">
-              <Button onClick={() => setCreating(false)}>Cancel</Button>
-              <Button variant="primary" disabled={create.isPending || name.trim().length === 0 || sections.trim().length === 0} onClick={() => create.mutate()}>{create.isPending ? 'Creating…' : 'Create template'}</Button>
-            </div>
-          </div>
-        </Card>
-      )}
+      {creating && <TemplateCreateForm requireAll onDone={() => { setCreating(false); void tpls.refetch() }} onCancel={() => setCreating(false)} />}
       {templates.length === 0 ? <Empty title="No templates yet">Create the first template before drafting a report.</Empty> : (
         <ul className="divide-y divide-line rounded-xl border border-line">
           {templates.map((t) => <li key={t.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"><span className="font-medium">{t.name}</span><span className="text-muted">{t.version}</span><span className="text-muted">owner {t.owner}</span></li>)}
@@ -223,73 +166,6 @@ function Templates() {
   return caps.storedTemplates ? <RealTemplates /> : <SimulatedTemplates />
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
-function SimulatedTemplates() {
-  const caps = useReportCapabilities()
-  const services = useServices()
-  const me = useMe()
-  const toast = useToastStore((s) => s.toast)
-  const setFilter = useSessionStore((s) => s.setFilter)
-  /* The legacy raw `A.audit` entries, mirrored exactly: one 'legacy' commit
-     through the one authority (these simulated actions never touch data). */
-  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
-  const tpls = useTemplates()
-  const [sel, setSel] = useState<Template | null>(null)
-  const [creating, setCreating] = useState(false)
-  const admin = me.role === 'admin'
-  const why = 'Only Organization Admins can create, duplicate or publish templates. Ask an admin to make the change.'
-  const sim = (t: string) => toast(`${t} — simulated: the backend executes this and records an audit event.`, 'info')
-  const use = (t: Template) => { setFilter('reportNewTemplate', t.name); go('report-new') }
-  if (tpls.isPending) return <div aria-busy="true" aria-label="Loading templates"><Skeleton className="h-64" /></div>
-  if (tpls.isError) return <ReadError error={tpls.error} retry={() => tpls.refetch()} />
-  const templates = tpls.data!
-  return (
-    <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted">{templates.length} templates. Draft templates can be tried but cannot be used for formal delivery.</p>
-        <Button icon={Plus} disabled={!admin} title={admin ? undefined : why} onClick={() => { if (caps.storedTemplates) return setCreating(true); sim('Create template'); audit('Created report template (simulated)', 'TP-new', '') }}>Create template</Button>
-      </div>
-      {!admin && <p className="-mt-2 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{why}</p>}
-      {creating && <TemplateCreateForm onDone={() => { setCreating(false); void tpls.refetch() }} onCancel={() => setCreating(false)} />}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {templates.map((t) => (
-          <Card key={t.id} pad={false} className="flex flex-col overflow-hidden">
-            <button onClick={() => setSel(t)} className="block h-36 border-b border-line bg-hover/50 p-4 text-left" aria-label={`View details for ${t.name}`}>
-              {/* Miniature paper thumbnail — intentionally light in both themes. */}
-              <div data-paper className="mx-auto flex h-full w-24 flex-col justify-between rounded-sm bg-white p-2 shadow">
-                <div><div className="h-1 w-10 rounded bg-slate-400" /><div className="mt-2 h-2 w-16 rounded bg-slate-800" /><div className="mt-1 h-1 w-14 rounded bg-slate-300" /></div>
-                <div className="text-[7px] text-slate-500">{t.kind} · {t.version}</div>
-              </div>
-            </button>
-            <div className="flex flex-1 flex-col gap-2 p-4">
-              <div className="font-medium">{t.name}</div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted"><span>{t.kind}</span><span>·</span><span>{t.lang}</span><span>·</span><Mono className="whitespace-nowrap">{t.version}</Mono></div>
-              <div className="flex flex-wrap gap-1.5"><span className={cx('inline-flex w-fit rounded-full border px-2 py-0.5 text-[11px]', t.status === 'published' ? 'border-ok/30 bg-ok/10 text-ok' : 'border-neutral/30 bg-neutral/10 text-neutral')}>{t.status === 'published' ? 'Published' : 'Draft'}</span>{t.status !== 'published' && <span className="inline-flex w-fit rounded-full border border-warn/30 bg-warn/10 px-2 py-0.5 text-[11px] text-warn">Not for formal delivery</span>}</div>
-              <div className="text-xs text-muted">Owner {t.owner} · {t.updated}</div>
-              <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                <Button size="sm" variant="primary" onClick={() => use(t)} title={t.status === 'published' ? undefined : 'Draft template: the report is tagged not for formal delivery'}>{t.status === 'published' ? 'Use template' : 'Try in Draft'}</Button>
-                <Button size="sm" onClick={() => setSel(t)}>{t.status === 'published' ? 'Details' : 'Preview Draft'}</Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-      <Drawer open={!!sel} onClose={() => setSel(null)} title={sel?.name} footer={sel && <>
-        <Button icon={Copy} disabled={!admin} title={admin ? undefined : why} onClick={() => { sim('Duplicate template'); audit('Duplicated report template (simulated)', sel.id, '') }}>Duplicate</Button>
-        <Button icon={Upload} disabled={!admin || sel.status === 'published'} title={!admin ? why : sel.status === 'published' ? 'Template is already published' : undefined} onClick={() => { sim('Publish template'); audit('Published report template (simulated)', sel.id, '') }}>Publish</Button>
-        <Button variant="primary" onClick={() => { use(sel) }}>{sel.status === 'published' ? 'Use template' : 'Try in Draft'}</Button>
-      </>}>
-        {sel && <div className="space-y-5">
-          {sel.status !== 'published' && <Banner tone="warn" title="Template not approved">Reports using this template cannot be formally delivered.</Banner>}
-          <div><div className="mb-2 text-xs font-medium text-muted">Default sections</div><ol className="space-y-1.5 text-sm">{sel.sections.map((s, i) => <li key={s} className="flex gap-2"><span className="w-5 text-neutral">{i + 1}</span>{s}</li>)}</ol></div>
-          <div><div className="mb-2 text-xs font-medium text-muted">Mapped data sources</div><p className="text-sm">Objectives, scope and ROE, operations, verified findings, redacted evidence, coverage charts.</p></div>
-          <div><div className="mb-2 text-xs font-medium text-muted">Usage guidance</div><p className="text-sm text-muted">Pick a template when creating a report. Only verified findings are included. Every report must be approved by a reviewer before export.</p></div>
-        </div>}
-      </Drawer>
-    </>
-  )
-}
 
 function Exports() {
   const me = useMe()
