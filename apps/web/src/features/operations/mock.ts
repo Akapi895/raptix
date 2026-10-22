@@ -9,14 +9,14 @@ import type { Agent, Asset, Operation, Project } from '../../domain/entities'
 import { formatDemoInstant } from '../../domain/clock'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 import {
-  operationDetail, readPreflightChecks, listOperations, draftMinutes, findScheduleConflicts, type OperationService,
-  type PreflightRunRead, type OperationStartRead, type OperationTransitionRead, type StepDecision, opEntity, lifecycleGate, tickOf,
+  operationDetail, readPreflightChecks, draftMinutes, findScheduleConflicts, type OperationService,
+  type PreflightRunRead, type OperationStartRead, type OperationCategory, type OperationListQuery, type OperationListItem, type OperationListRead, type ReadyPlanRef, type OperationTransitionRead, type StepDecision, opEntity, lifecycleGate, tickOf,
   ROLE_LABEL, memberOwnersOf, normalizeScheduleInput, scheduleInstantOf, scheduleLabelOf, roeWindowIssue, type OperationDraftPatch, type OperationWriteRead, type OperationDraftInput, type OperationDraftOptions,
 } from './service'
 import { IN_FLIGHT, draftSteps, operationWriteGate } from './write-gates'
 import { planVer } from '../../domain/catalog'
 import { usableApproval } from '../plans/service'
-import { computePreflightChecks, preflightPass } from './preflight'
+import { computePreflightChecks, eligibility, preflightPass } from './preflight'
 
 /** Builds the typed list service; `guard` is the factory's superseded-scope read guard. */
 export function createOperationService(
@@ -596,4 +596,80 @@ export function createOperationDraft(authority: DbAuthority, clock: Clock, ctx: 
     d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Created operation (draft)', obj: id, projectId: project.id, result: 'Success', reason: '' })
   })
   return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, scheduleInstant: inst } }
+}
+
+/** Category → statuses the category pill covers ("needs" also takes review-pending drafts). */
+const CATEGORIES: readonly (readonly [Exclude<OperationCategory, 'all'>, readonly string[]])[] = [
+  ['draft', ['draft']], ['needs', ['pending']], ['running', ['running', 'paused']], ['done', ['done']],
+]
+const PAGE_SIZE = 10
+
+function matchesStatus(op: Operation, status: string, inReviewPlans: ReadonlySet<string>): boolean {
+  if (!status) return true
+  const cat = CATEGORIES.find(([k]) => k === status)
+  if (cat) {
+    if (cat[1].includes(op.status)) return true
+    return status === 'needs' && op.status === 'draft' && !!op.planId && inReviewPlans.has(op.planId)
+  }
+  return op.status === status
+}
+
+/**
+ * Pure list/read handler. Scope semantics: a specific projectId reads only
+ * that project's operations and only for members (elevated roles included);
+ * `'all'`/`''` aggregates across the actor's accessible projects. Counts and
+ * filter options derive from the same accessible base set, with the status
+ * category excluded from the counts so the pills always show live totals.
+ */
+export function listOperations(db: Db, ctx: RequestContext, query: OperationListQuery = {}): ServiceResult<OperationListRead> {
+  const aggregate = !ctx.projectId || ctx.projectId === 'all'
+  const pid = ctx.projectId
+  if (!aggregate) {
+    const project = db.projects.find((p) => p.id === pid)
+    // Out-of-scope reads are not-found, never a leaked existence signal.
+    if (!project || !projectAccessible(project, ctx.actor)) {
+      return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+    }
+  }
+  const accessible = new Set(db.projects.filter((p) => projectAccessible(p, ctx.actor)).map((p) => p.id))
+  const base = db.operations.filter((o) => (aggregate ? accessible.has(o.projectId) : o.projectId === pid))
+  const inReviewPlans = new Set(db.plans.filter((pl) => pl.status === 'in_review').map((pl) => pl.id))
+  const q = (query.q || '').toLowerCase()
+  const pre = base.filter((o) =>
+    (!query.technique || o.steps.some((s) => s.technique === query.technique)) &&
+    (!query.project || o.projectId === query.project) &&
+    (!query.owner || o.owner === query.owner) &&
+    (!q || (o.id + o.name).toLowerCase().includes(q)))
+  const categories: OperationCategory[] = ['all', 'draft', 'needs', 'running', 'done']
+  const counts = Object.fromEntries(categories.map((c) => [c, pre.filter((o) => matchesStatus(o, c === 'all' ? '' : c, inReviewPlans)).length])) as Record<OperationCategory, number>
+  const rows = pre.filter((o) => matchesStatus(o, query.status || '', inReviewPlans))
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
+  const page = Math.min(Math.max(1, query.page ?? 1), pages)
+  const planById = new Map(db.plans.map((pl) => [pl.id, pl]))
+  const playbookById = new Map(db.playbooks.map((pb) => [pb.id, pb]))
+  const projectById = new Map(db.projects.map((p) => [p.id, p]))
+  const items: OperationListItem[] = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((op) => {
+    const pl = op.planId ? planById.get(op.planId) : undefined
+    const el = eligibility(db, op.projectId)
+    return {
+      op,
+      planLabel: pl ? `${pl.id} ${planVer(pl)}` : undefined,
+      playbookName: !pl ? playbookById.get(op.playbookId)?.name : undefined,
+      roeVersion: projectById.get(op.projectId)?.roeVersion,
+      eligibility: { kind: el.kind, label: el.label },
+    }
+  })
+  const scopePlans = aggregate ? db.plans.filter((pl) => accessible.has(pl.projectId)) : db.plans.filter((pl) => pl.projectId === pid)
+  const readyPlans: ReadyPlanRef[] = scopePlans
+    .filter((pl) => pl.status === 'approved' && !(pl.opId && db.operations.some((o) => o.id === pl.opId)))
+    .map((pl) => ({ id: pl.id, ver: planVer(pl), title: pl.title }))
+  return {
+    ok: true,
+    data: {
+      items, page, pageSize: PAGE_SIZE, total: rows.length, counts,
+      owners: [...new Set(base.map((o) => o.owner))].sort(),
+      projects: [...new Set(base.map((o) => o.projectId))],
+      readyPlans,
+    },
+  }
 }
