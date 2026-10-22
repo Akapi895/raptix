@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
-import { useServices } from '../state/services'
 import { isRealMode } from '../state/mode'
 import { useDirty } from '../state/session'
 import type { Asset } from '../domain/entities'
@@ -19,7 +18,6 @@ import { go, selectProject, useRoute } from '../router/navigate'
 import { useActiveProject, useCan, usePolicyProjects, useMe } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { submitApprovalTransaction } from '../features/approvals/service'
 
 const SCOPES: Asset['scope'][] = ['in', 'out', 'pending', 'unclassified']
 const SCOPE_LABEL: Record<Asset['scope'], string> = { in: 'Approved In Scope', out: 'Approved Out of Scope', pending: 'Pending Approval', unclassified: 'Unclassified' }
@@ -219,7 +217,6 @@ function AssetScope() {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
   const me = useMe()
-  const services = useServices()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
   const guard = useGuard(pid === 'all' ? undefined : pid)
@@ -265,11 +262,18 @@ function AssetScope() {
     body: <>The assets will return to <b>Unclassified</b> and remain unavailable as targets. The requester is notified with your reason.</>,
     onConfirm: (r) => reviewMut.mutate({ decision: 'rejected', reason: r }),
   })
-  // Real mode raises scope changes from the Scope revisions panel; the mock approval transaction has no real counterpart here.
-  const requestApproval = () => (isRealMode() ? toast('Scope change requests are raised from the Scope revisions panel in real mode.', 'info') : confirm({
+  const requestMut = useMutation({
+    mutationFn: (note: string) => write.requestScopeApproval({ note, diff: pending.map((a) => `${a.name} → in scope`).join(', ') || 'Scope review' }),
+    onSuccess: (res) => {
+      if (res.ok) toast('Scope approval requested.', 'info')
+      else toast(res.failure.message, 'bad')
+    },
+  })
+  // Real mode raises scope changes from the Scope revisions panel, so the screen only says so and asks for nothing.
+  const requestApproval = () => (!port.capabilities.scopeApprovalRequests ? toast('Scope change requests are raised from the Scope revisions panel in real mode.', 'info') : confirm({
     title: 'Request scope approval?', confirmLabel: 'Submit request', reasonLabel: 'Justification', reasonRequired: true,
     body: <>A scope change request covering {pending.length || 'the selected'} pending {pending.length === 1 ? 'asset' : 'assets'} is sent to the reviewer. Nothing becomes in scope until it is approved.</>,
-    onConfirm: (r) => { /* The legacy `A.submitApproval` entry's exact transaction + request context. */ submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: pid, corr: 'legacy' }, { projectId: pid, type: 'Scope change', note: r, diff: pending.map((a) => `${a.name} → in scope`).join(', ') || 'Scope review' }); toast('Scope approval requested.', 'info') },
+    onConfirm: (r) => requestMut.mutate(r),
   }))
   const impactedOps = [...new Set(pending.flatMap((a) => impactedOf(a.id)))]
   return (

@@ -13,7 +13,5 @@
   "real:ai-branch": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:c2-channel": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:c2-session": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:c2-console": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:asset-new": "render boundary in real mode: AssetNew -> useAssetImportRead (features/assets/import-read.ts) -> useServiceProjection -> the mock accessor useServices(). Closes with the Assets/Library slice (S-B).",
-  "real:asset-scope": "render boundary in real mode: AssetScope calls the mock accessor useServices() (screens/d-assets.tsx) for the mock scope approval transaction. Closes with the Assets/Library slice (S-B)."
+  "real:c2-console": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
 }

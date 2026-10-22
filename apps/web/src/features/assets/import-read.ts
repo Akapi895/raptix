@@ -1,21 +1,25 @@
-/** Synchronous import duplicate identifiers and validation, scoped to the selected project. */
-import type { ConsoleServices } from '../../domain/console-services';
-import type { RequestContext } from '../../domain/service'
-import { projectView, scopedRows } from '../../domain/projection'
-import { useServiceProjection } from '../../state/projection'
-import { projectAccessible } from '../../domain/policy'
-import { validateAssetRows, type AssetImportRow, type AssetRowIssue } from './writes'
+/** Synchronous import checks (duplicate identifiers and row validation) for the selected project. */
+import { useQueryScope } from '../../state/keys'
+import { useAssetList } from './query'
+import { validateImportRows, type AssetImportRow, type AssetRowIssue } from './writes'
 
 export interface AssetImportRead {
   assets: { projectId: string; ident: string }[]
   validate(projectId: string, rows: readonly AssetImportRow[]): AssetRowIssue[]
 }
 
-export function readAssetImport(services: ConsoleServices, ctx: RequestContext): AssetImportRead {
-  return projectView(services, ctx, 'asset-import-preview', (db) => ({
-    assets: scopedRows(db, ctx, db.assets).map(({ projectId, ident }) => ({ projectId, ident })),
-    validate: (projectId, rows) => projectId === ctx.projectId && projectAccessible(db.projects.find((p) => p.id === projectId), ctx.actor) ? validateAssetRows(db, projectId, rows) : rows.map((r, index) => ({ index, name: r.name, duplicate: false, reasons: ['Select an accessible project before validating the import.'] })),
-  }))
+/**
+ * The checks read the asset list the page shows, so they hold in both modes: the identifiers come from the port, never from the
+ * mock database. The server still refuses duplicates on commit.
+ */
+export function useAssetImportRead(): AssetImportRead {
+  const scope = useQueryScope()
+  const list = useAssetList({ page: 1, pageSize: 500 })
+  const assets = (list.data?.items ?? []).map(({ asset, projectId }) => ({ projectId: projectId ?? asset.projectId, ident: asset.ident }))
+  return {
+    assets,
+    validate: (projectId, rows) => projectId === scope.project && !list.isError
+      ? validateImportRows(assets.filter((a) => a.projectId === projectId).map((a) => a.ident), rows)
+      : rows.map((r, index) => ({ index, name: r.name, duplicate: false, reasons: ['Select an accessible project before validating the import.'] })),
+  }
 }
-
-export function useAssetImportRead(): AssetImportRead { return useServiceProjection(readAssetImport) }

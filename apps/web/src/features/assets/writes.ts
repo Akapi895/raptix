@@ -24,7 +24,7 @@ import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../demo/authority'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'
 import type { Asset } from '../../domain/entities'
-import { reviseScopeTransaction, type ScopeAssetInput } from '../approvals/service'
+import { reviseScopeTransaction, type ApprovalRef, type ScopeAssetInput } from '../approvals/service'
 import type { AssetService } from './service'
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */
@@ -72,7 +72,12 @@ export interface AssetRowIssue { index: number; name: string; duplicate: boolean
  * row error.
  */
 export function validateAssetRows(db: Db, projectId: string, rows: readonly AssetImportRow[]): AssetRowIssue[] {
-  const existing = new Set(db.assets.filter((a) => a.projectId === projectId).map((a) => a.ident.trim().toLowerCase()))
+  return validateImportRows(db.assets.filter((a) => a.projectId === projectId).map((a) => a.ident), rows)
+}
+
+/** Import checks against the identifiers the project already holds: the mock database or the asset list. */
+export function validateImportRows(existingIdents: readonly string[], rows: readonly AssetImportRow[]): AssetRowIssue[] {
+  const existing = new Set(existingIdents.map((ident) => ident.trim().toLowerCase()))
   const seen = new Set<string>()
   const issues: AssetRowIssue[] = []
   rows.forEach((r, index) => {
@@ -157,6 +162,14 @@ export interface AssetScopeWriteInput {
   note?: string
 }
 
+/** A scope change request for the reviewer; the project comes from the write context. */
+export interface AssetScopeApprovalInput {
+  /** The justification the reviewer reads. */
+  note: string
+  /** What the request changes, carried as the approval's diff. */
+  diff: string
+}
+
 export interface AssetScopeWriteOutcome {
   assetId: string
   projectId: string
@@ -222,6 +235,8 @@ export interface AssetWriteHandlers {
   importRows(rows: readonly AssetImportRow[]): Promise<ServiceResult<AssetImportOutcome>>
   /** Role-gated scope change with the audited reason. */
   changeScope(assetId: string, scope: Asset['scope'], input?: AssetScopeWriteInput): Promise<ServiceResult<AssetScopeWriteOutcome>>
+  /** Raises a scope change request for the reviewer; refused where the port has no approval path. */
+  requestScopeApproval(input: AssetScopeApprovalInput): Promise<ServiceResult<ApprovalRef>>
 }
 
 /**
@@ -235,5 +250,6 @@ export function createAssetWriteHandlers(port: AssetService, actor: ActorRef, sc
   return {
     importRows: (rows) => port.importRows(ctx(), rows),
     changeScope: (assetId, scope, input) => port.changeScope(ctx(), assetId, scope, input),
+    requestScopeApproval: (input) => port.requestScopeApproval(ctx(), input),
   }
 }
