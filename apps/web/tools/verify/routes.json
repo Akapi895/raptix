@@ -1,0 +1,456 @@
+{
+  "description": "Shared route inventory of the web console (55 keys, see src/router/registry.tsx). path is the hash route; {name} placeholders come from the fixtures of the mode. expect.mock and expect.real are the screen each route must show: a string is the page heading (the h1 inside main); { \"text\": \"...\" } is visible text inside main; { \"text\": \"...\", \"in\": \"body\" } is visible text anywhere on the page. A route without an expectation for a mode fails. Expectations were recorded from discovery runs and reviewed against the route's purpose.",
+  "routes": [
+    {
+      "key": "login",
+      "path": "login",
+      "expect": {
+        "mock": {
+          "text": "Sign-in, SSO and MFA are simulated"
+        },
+        "real": {
+          "text": "Signed in as verifier"
+        }
+      }
+    },
+    {
+      "key": "forbidden",
+      "path": "forbidden",
+      "expect": {
+        "mock": "Access denied",
+        "real": "Access denied"
+      }
+    },
+    {
+      "key": "notfound",
+      "path": "notfound",
+      "expect": {
+        "mock": "Page not found",
+        "real": "Page not found"
+      }
+    },
+    {
+      "key": "error",
+      "path": "error",
+      "expect": {
+        "mock": "Something went wrong",
+        "real": "Something went wrong"
+      }
+    },
+    {
+      "key": "offline",
+      "path": "offline",
+      "expect": {
+        "mock": "Workspace temporarily unavailable",
+        "real": "Workspace temporarily unavailable"
+      }
+    },
+    {
+      "key": "session-expired",
+      "path": "session-expired",
+      "expect": {
+        "mock": "Your session has expired",
+        "real": "Your session has expired"
+      }
+    },
+    {
+      "key": "states",
+      "path": "states",
+      "expect": {
+        "mock": "Universal state set",
+        "real": {
+          "text": "Not connected in real mode"
+        }
+      }
+    },
+    {
+      "key": "overview",
+      "path": "overview",
+      "expect": {
+        "mock": "System Overview",
+        "real": "System Overview"
+      }
+    },
+    {
+      "key": "command-center",
+      "path": "command-center",
+      "expect": {
+        "mock": "System Overview",
+        "real": "System Overview"
+      }
+    },
+    {
+      "key": "tasks",
+      "path": "tasks",
+      "expect": {
+        "mock": "Tasks & Approval Inbox",
+        "real": "Tasks"
+      }
+    },
+    {
+      "key": "projects",
+      "path": "projects",
+      "expect": {
+        "mock": "Projects",
+        "real": "Projects"
+      }
+    },
+    {
+      "key": "project-new",
+      "path": "project-new",
+      "expect": {
+        "mock": "Create New Project",
+        "real": "Projects"
+      }
+    },
+    {
+      "key": "project",
+      "path": "project/{project}",
+      "expect": {
+        "mock": {
+          "text": "Internal Red Team Q4"
+        },
+        "real": {
+          "text": "Stack verification project"
+        }
+      }
+    },
+    {
+      "key": "operations",
+      "path": "operations?engagement={project}",
+      "expect": {
+        "mock": "Operations",
+        "real": "Operations"
+      }
+    },
+    {
+      "key": "operation-new",
+      "path": "operation-new?engagement={project}",
+      "expect": {
+        "mock": "Create Operation",
+        "real": "New operation"
+      }
+    },
+    {
+      "key": "preflight",
+      "path": "preflight/{operation}?engagement={project}",
+      "expect": {
+        "mock": "Preflight — OP-014"
+      }
+    },
+    {
+      "key": "operation-schedule",
+      "path": "operation-schedule/{operation}?engagement={project}",
+      "expect": {
+        "mock": "Schedule — OP-014"
+      }
+    },
+    {
+      "key": "operation",
+      "path": "operation/{operation}?engagement={project}",
+      "expect": {
+        "mock": {
+          "text": "Internal environment discovery"
+        }
+      }
+    },
+    {
+      "key": "infrastructure",
+      "path": "infrastructure",
+      "expect": {
+        "mock": "Infrastructure",
+        "real": "Infrastructure"
+      }
+    },
+    {
+      "key": "agents",
+      "path": "agents?engagement={project}",
+      "expect": {
+        "mock": "Agents",
+        "real": "Agent fleet"
+      }
+    },
+    {
+      "key": "agent",
+      "path": "agent/{agent}?engagement={project}",
+      "expect": {
+        "mock": "AG-007 WIN-LAB-01"
+      }
+    },
+    {
+      "key": "assets",
+      "path": "assets?engagement={project}",
+      "expect": {
+        "mock": "Assets",
+        "real": "Assets"
+      }
+    },
+    {
+      "key": "asset-new",
+      "path": "asset-new?engagement={project}",
+      "expect": {
+        "mock": "Add Asset",
+        "real": "Add Asset"
+      }
+    },
+    {
+      "key": "asset-scope",
+      "path": "asset-scope?engagement={project}",
+      "expect": {
+        "mock": "Scope Map & Review",
+        "real": "Scope Map & Review"
+      }
+    },
+    {
+      "key": "asset",
+      "path": "asset/{asset}?engagement={project}",
+      "expect": {
+        "mock": "web-01 AS-0141"
+      }
+    },
+    {
+      "key": "playbooks",
+      "path": "playbooks",
+      "expect": {
+        "mock": "Skill library",
+        "real": "Skill library"
+      }
+    },
+    {
+      "key": "playbook",
+      "path": "playbook/{playbook}",
+      "expect": {
+        "mock": "PB-001"
+      }
+    },
+    {
+      "key": "technique",
+      "path": "technique/{technique}",
+      "expect": {
+        "mock": "T1046 · Network Service Discovery"
+      }
+    },
+    {
+      "key": "playbook-review",
+      "path": "playbook-review/{proposal}?engagement={project}",
+      "expect": {
+        "mock": {
+          "text": "Library proposal AP-01 does not exist"
+        }
+      }
+    },
+    {
+      "key": "analysis",
+      "path": "analysis?engagement={project}",
+      "expect": {
+        "mock": "Attack Analysis",
+        "real": "Observed analysis"
+      }
+    },
+    {
+      "key": "findings",
+      "path": "findings?engagement={project}",
+      "expect": {
+        "mock": "Findings",
+        "real": "Findings"
+      }
+    },
+    {
+      "key": "finding-new",
+      "path": "finding-new?engagement={project}",
+      "expect": {
+        "mock": "Create Finding",
+        "real": "Create Finding"
+      }
+    },
+    {
+      "key": "finding",
+      "path": "finding/{finding}?engagement={project}",
+      "expect": {
+        "mock": "Excessive account privileges (simulated)",
+        "real": {
+          "text": "Stack verification finding"
+        }
+      }
+    },
+    {
+      "key": "evidence",
+      "path": "evidence?engagement={project}",
+      "expect": {
+        "mock": "Evidence",
+        "real": "Evidence"
+      }
+    },
+    {
+      "key": "evidence-inspector",
+      "path": "evidence-inspector/{evidence}?engagement={project}",
+      "expect": {
+        "mock": "EV-014-01 accounts-output.txt",
+        "real": {
+          "text": "stack-fixture.txt"
+        }
+      }
+    },
+    {
+      "key": "reports",
+      "path": "reports?engagement={project}",
+      "expect": {
+        "mock": "Reports",
+        "real": "Reports"
+      }
+    },
+    {
+      "key": "report-new",
+      "path": "report-new?engagement={project}",
+      "expect": {
+        "mock": "Create Report",
+        "real": "Create Report"
+      }
+    },
+    {
+      "key": "report",
+      "path": "report/{report}?engagement={project}",
+      "expect": {
+        "mock": "Red Team Q4 Report — Northwind Bank"
+      }
+    },
+    {
+      "key": "report-preview",
+      "path": "report-preview/{report}?engagement={project}",
+      "expect": {
+        "mock": "Red Team Q4 Report — Northwind Bank"
+      }
+    },
+    {
+      "key": "report-review",
+      "path": "report-review/{report}?engagement={project}",
+      "expect": {
+        "mock": "Red Team Q4 Report — Northwind Bank"
+      }
+    },
+    {
+      "key": "settings",
+      "path": "settings?engagement={project}",
+      "expect": {
+        "mock": "Organization Settings",
+        "real": "Organization Settings"
+      }
+    },
+    {
+      "key": "ai-operator",
+      "path": "ai-operator?engagement={project}",
+      "expect": {
+        "mock": "AI Operator",
+        "real": "AI Workspace"
+      }
+    },
+    {
+      "key": "ai-plan",
+      "path": "ai-plan/{plan}?engagement={project}",
+      "expect": {
+        "mock": "Proposed Plan"
+      }
+    },
+    {
+      "key": "ai-plan-review",
+      "path": "ai-plan-review/{plan}?engagement={project}",
+      "expect": {
+        "mock": "Review AI Plan"
+      }
+    },
+    {
+      "key": "ai-plan-compare",
+      "path": "ai-plan-compare/{plan}?engagement={project}",
+      "expect": {
+        "mock": "Plan Revision Compare"
+      }
+    },
+    {
+      "key": "ai-trace",
+      "path": "ai-trace?engagement={project}",
+      "expect": {
+        "mock": "Tool Proposal & Execution Trace",
+        "real": {
+          "text": "Threads source unavailable"
+        }
+      }
+    },
+    {
+      "key": "ai-history",
+      "path": "ai-history?engagement={project}",
+      "expect": {
+        "mock": "Conversation History & Provenance",
+        "real": "AI Workspace"
+      }
+    },
+    {
+      "key": "ai-fanout",
+      "path": "ai-fanout?engagement={project}",
+      "expect": {
+        "mock": "Execution Graph",
+        "real": "Observed fanout"
+      }
+    },
+    {
+      "key": "ai-branch",
+      "path": "ai-branch/{branch}?engagement={project}",
+      "expect": {
+        "mock": "Branch BR-014-01"
+      }
+    },
+    {
+      "key": "c2",
+      "path": "c2?engagement={project}",
+      "expect": {
+        "mock": "C2 & Sessions",
+        "real": "C2 access and console"
+      }
+    },
+    {
+      "key": "c2-channel",
+      "path": "c2-channel/{channel}?engagement={project}",
+      "expect": {
+        "mock": "CH-014 northwind-https"
+      }
+    },
+    {
+      "key": "c2-session",
+      "path": "c2-session/{session}?engagement={project}",
+      "expect": {
+        "mock": "SS-041 Reverse Shell"
+      }
+    },
+    {
+      "key": "c2-console",
+      "path": "c2-console/{session}?engagement={project}",
+      "expect": {
+        "mock": {
+          "text": "Interactive Session SS-041"
+        }
+      }
+    },
+    {
+      "key": "scenarios",
+      "path": "scenarios",
+      "expect": {
+        "mock": "Prototype Home",
+        "real": {
+          "text": "Not connected in real mode"
+        }
+      }
+    },
+    {
+      "key": "workspaces",
+      "path": "workspaces",
+      "expect": {
+        "mock": {
+          "text": "Select a workspace",
+          "in": "body"
+        },
+        "real": {
+          "text": "Not connected in real mode"
+        }
+      }
+    }
+  ]
+}
