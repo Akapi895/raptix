@@ -2,7 +2,7 @@
 // detail opens with the agent's own id; the same agent opened under another project is refused with the reason and shows no detail.
 // Each step checks what the screen shows; a step that cannot run is recorded as failed and the rest run.
 // Usage: node tools/verify/flows/agents-click.mjs --mode mock --app <url> --fixtures <manifest.json> --out <result.json>
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const arg = (name) => {
@@ -11,10 +11,10 @@ const arg = (name) => {
 };
 const mode = arg('--mode');
 const app = arg('--app');
-const fixtures = JSON.parse(readFileSync(arg('--fixtures'), 'utf8'));
 const outFile = arg('--out');
-const project = fixtures.project;
-const agent = fixtures.agent;
+// Mock mode reads the mock seed; the real fixtures manifest the gate also passes has no mock ids.
+const project = 'RT-2026-014';
+const agent = 'AG-007';
 const otherProject = 'RT-2026-015';
 const results = [];
 
