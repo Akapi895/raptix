@@ -6,7 +6,7 @@
  */
 import { useState, type ReactElement } from 'react'
 import { ScrollText } from 'lucide-react'
-import { useMemberLabels } from '../../real/member-labels'
+import { useMemberLabels } from '../team'
 import { AuditTable } from './table'
 import { Button, Card, CardHeader, Empty, Input, Skeleton } from '../../ui/index'
 import { useAuditRead } from './query'
