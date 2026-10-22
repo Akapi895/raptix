@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, mkdtempSync, openSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import net from 'node:net';
@@ -24,12 +24,16 @@ const arg = (name, fallback) => {
 };
 const modes = arg('--modes', 'mock,real');
 const routes = arg('--routes', null);
+// The knowledge graph (Neo4j) backs the library and the observed graph. It runs by default; --no-graph leaves it out.
+const withGraph = !process.argv.includes('--no-graph');
+const graphSeed = path.join(root, 'packages/raptix/raptix/skills/.graph/skills.cypher');
 const out = arg('--out', mkdtempSync(path.join(tmpdir(), 'raptix-stack-')));
 mkdirSync(out, { recursive: true });
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const children = [];
 let container = null;
+let graphContainer = null;
 const log = (message) => console.log(`[stack] ${message}`);
 
 async function freePort() {
@@ -136,6 +140,14 @@ function runFlow(env, manifestFile, script, name) {
   return result.status;
 }
 
+function runClick(env, manifestFile, mode, appUrl) {
+  const clickOut = path.join(out, `flows-assets-click-${mode}.json`);
+  const result = spawnSync(process.execPath, [path.join(here, 'flows', 'assets-click.mjs'), '--mode', mode, '--app', appUrl, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  writeFileSync(path.join(out, `flows-assets-click-${mode}.log`), `${result.stdout}${result.stderr}`);
+  process.stdout.write(result.stdout);
+  return result.status;
+}
+
 function runFlows(env, manifestFile) {
   const statuses = [runFlow(env, manifestFile, 'reports.mjs', 'flows-reports'), runFlow(env, manifestFile, 'assets-library.mjs', 'flows-assets-library')];
   return statuses.every((code) => code === 0) ? 0 : 1;
@@ -172,6 +184,21 @@ try {
   if (!databaseReady) throw new Error(`database container ${container} did not become ready`);
   log(`database ${container} on 127.0.0.1:${dbPort}`);
 
+  let graphAccess = null;
+  if (withGraph) {
+    const graphHttpPort = await freePort();
+    const graphBoltPort = await freePort();
+    const graphPassword = randomUUID();
+    graphContainer = `raptix-stack-${randomUUID().slice(0, 8)}-graph`;
+    command('docker', ['run', '-d', '--name', graphContainer, '--label', 'raptix.verification=stack', '--tmpfs', '/data', '-p', `127.0.0.1:${graphHttpPort}:7474`, '-p', `127.0.0.1:${graphBoltPort}:7687`, '-e', `NEO4J_AUTH=neo4j/${graphPassword}`, '-e', 'NEO4J_server_memory_heap_max__size=512m', '-e', 'NEO4J_server_memory_pagecache_size=128m', 'neo4j:5.26.28-community']);
+    await ready(`http://127.0.0.1:${graphHttpPort}`, 'knowledge graph', 180);
+    const seeded = spawnSync('docker', ['exec', '-i', graphContainer, 'cypher-shell', '-u', 'neo4j', '-p', graphPassword], { input: readFileSync(graphSeed), encoding: 'utf8', timeout: 900000, maxBuffer: 256 * 1024 * 1024 });
+    writeFileSync(path.join(out, 'graph-seed.log'), `${seeded.stdout}${seeded.stderr}`);
+    assert.equal(seeded.status, 0, `the skill graph seed failed: ${seeded.stderr.slice(0, 300)}`);
+    graphAccess = { httpPort: graphHttpPort, password: graphPassword };
+    log(`knowledge graph ${graphContainer} on 127.0.0.1:${graphHttpPort}, seeded from the checked-in skill graph`);
+  }
+
   const api = `http://127.0.0.1:${apiPort}`;
   const app = `http://127.0.0.1:${webPort}`;
   const env = {
@@ -188,6 +215,7 @@ try {
   };
   mkdirSync(env.WORKSPACE_PATH, { recursive: true });
   for (const key of Object.keys(env)) if (/^(LANGGRAPH_|NEO4J_|SLIVER_|RAPTIX_RUNTIME_|RAPTIX_ENVIRONMENT_)/.test(key)) delete env[key];
+  if (graphAccess) Object.assign(env, { NEO4J_PASSWORD: graphAccess.password, NEO4J_HTTP_PORT: String(graphAccess.httpPort), NEO4J_HTTP_URI: `http://127.0.0.1:${graphAccess.httpPort}` });
   writeFileSync(path.join(out, 'migrations.log'), command(process.execPath, [path.join(root, 'node_modules/prisma/build/index.js'), 'migrate', 'deploy'], { cwd: path.join(root, 'apps/web/server'), env }));
   start('api', ['--import', 'tsx', 'src/main.ts'], path.join(root, 'apps/web/server'), env);
   await ready(`${api}/api/health`, 'API');
@@ -209,9 +237,11 @@ try {
     const mockApp = `http://127.0.0.1:${mockPort}`;
     await ready(mockApp, 'mock web');
     statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: mockApp, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'mock', 'smoke-mock'));
+    statuses.push(runClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
   }
   if (modes.split(',').includes('real')) {
     statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
+    statuses.push(runClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'real', app));
     statuses.push(runFlows({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest));
   }
   status = statuses.every((code) => code === 0) ? 0 : 1;
@@ -221,6 +251,7 @@ try {
 } finally {
   stopChildren();
   removeContainer();
+  if (graphContainer) spawnSync('docker', ['rm', '-f', '-v', graphContainer], { timeout: 5000, encoding: 'utf8' });
   log(`output: ${out}`);
 }
 process.exitCode = status;

@@ -3,7 +3,8 @@
 // transport, session and CSRF handling as the screens. The author signs in as the owner of the fixtures; the reviewer signs in
 // for the proposal decision (the adapter refuses a reviewer who is the author). Each operation states the outcome it expects:
 // an operation the port declares refused (for example a scope approval in real mode) is recorded as a match when it is refused.
-// The exit code is 1 when an outcome differs from the expectation or the flow itself fails.
+// Each asset operation is judged on three things: the outcome, the failure kind when it is refused, and the data after it (the total,
+// the scope of the affected asset). The exit code is 1 when any of them differs from the expectation or the flow itself fails.
 // Usage: node tools/verify/flows/assets-library.mjs --app <url> --fixtures <manifest.json> --out <result.json>
 // Env: RAPTIX_VERIFY_USER, RAPTIX_VERIFY_PASSWORD (author), RAPTIX_VERIFY_REVIEWER, RAPTIX_VERIFY_REVIEWER_PASSWORD (reviewer).
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -42,35 +43,66 @@ async function runAssets({ projectId, assetId, ident, knowledgeGraph }) {
     if (typeof data === 'object') return `{${Object.keys(data).slice(0, 12).join(',')}}`;
     return String(data);
   };
-  const attempt = async (op, expect, run) => {
+  // One operation: its outcome, the failure kind when refused, and the verdict of the check run on its result and the data after it.
+  const step = async (op, { expect, kind, run, check }) => {
     try {
       const res = await run();
       const outcome = res.ok ? 'ok' : 'refused';
-      rows.push({ op, expect, outcome, matches: outcome === expect, detail: res.ok ? shape(res.data) : `${res.failure.kind}: ${res.failure.message}` });
+      const failureKind = res.ok ? null : res.failure.kind;
+      const verdict = check ? await check(res) : { ok: true, detail: '' };
+      const matches = outcome === expect && (expect === 'ok' || failureKind === kind) && verdict.ok;
+      const summary = res.ok ? shape(res.data) : `${res.failure.kind}: ${res.failure.message}`;
+      rows.push({ op, expect, expectKind: kind ?? null, outcome, failureKind, matches, detail: verdict.detail ? `${summary} | ${verdict.detail}` : summary });
       return res;
     } catch (error) {
-      rows.push({ op, expect, outcome: 'threw', matches: false, detail: `threw: ${error.message}` });
+      rows.push({ op, expect, expectKind: kind ?? null, outcome: 'threw', failureKind: null, matches: false, detail: `threw: ${error.message}` });
       return { ok: false };
     }
   };
-  rows.push({ op: 'capabilities', expect: 'ok', outcome: 'ok', matches: svc.capabilities.scopeApprovalRequests === false && svc.capabilities.observedGraph === true, detail: JSON.stringify(svc.capabilities) });
-  await attempt('list', 'ok', () => svc.list(ctx, { page: 1, pageSize: 10 }));
-  await attempt('get', 'ok', () => svc.get(ctx, assetId));
-  await attempt('scope', 'ok', () => svc.scope(ctx));
-  await attempt(knowledgeGraph ? 'observedGraph' : 'observedGraph (no knowledge graph in this stack)', knowledgeGraph ? 'ok' : 'refused', () => svc.observedGraph(ctx));
+  const total = async () => {
+    const read = await svc.list(ctx, { page: 1, pageSize: 1 });
+    if (!read.ok) throw new Error(`list failed: ${read.failure.message}`);
+    return read.data.total;
+  };
+  const scopeOf = async (id) => {
+    const got = await svc.get(ctx, id);
+    return got.ok ? got.data.asset.scope : `unreadable (${got.failure.kind})`;
+  };
+  const unchangedTotal = (expected) => async () => {
+    const now = await total();
+    return { ok: now === expected, detail: `total ${expected} -> ${now}` };
+  };
+  rows.push({ op: 'capabilities', expect: 'ok', expectKind: null, outcome: 'ok', failureKind: null, matches: svc.capabilities.scopeApprovalRequests === false && svc.capabilities.observedGraph === true && svc.capabilities.simulated === false, detail: JSON.stringify(svc.capabilities) });
+  const before = await total();
+  await step('list (first page)', { expect: 'ok', run: () => svc.list(ctx, { page: 1, pageSize: 10 }), check: (res) => ({ ok: res.data.total === before && res.data.items.length === Math.min(10, before), detail: `total ${res.data.total}, ${res.data.items.length} on the page` }) });
+  await step('get (the seeded host)', { expect: 'ok', run: () => svc.get(ctx, assetId), check: (res) => ({ ok: res.data.asset.id === assetId && res.data.asset.scope === 'pending', detail: `scope ${res.data.asset.scope}` }) });
+  await step('scope (map rows)', { expect: 'ok', run: () => svc.scope(ctx), check: (res) => ({ ok: res.data.rows.length === before, detail: `${res.data.rows.length} rows for ${before} assets` }) });
+  await step(knowledgeGraph ? 'observedGraph' : 'observedGraph (no knowledge graph: refused)', {
+    expect: knowledgeGraph ? 'ok' : 'refused',
+    kind: knowledgeGraph ? undefined : 'not-found',
+    run: () => svc.observedGraph(ctx),
+    check: knowledgeGraph ? (res) => ({ ok: Array.isArray(res.data.nodes) && Array.isArray(res.data.edges), detail: `${res.data.nodes.length} nodes, ${res.data.edges.length} edges` }) : undefined,
+  });
   const row = { name: 'stack-host-imported', ident, type: 'Host', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'CSV import' };
-  await attempt('importRows (new host)', 'ok', () => svc.importRows(ctx, [row]));
-  await attempt('importRows (same host again, server skips it)', 'ok', () => svc.importRows(ctx, [row]));
-  await attempt('importRows (unknown type refused)', 'refused', () => svc.importRows(ctx, [{ ...row, name: 'stack-mobile', ident: 'stack-mobile.verify.example.test', type: 'Mobile' }]));
-  await attempt('importRows (empty batch refused)', 'refused', () => svc.importRows(ctx, []));
+  await step('importRows (new host)', { expect: 'ok', run: () => svc.importRows(ctx, [row]), check: async (res) => {
+    const now = await total();
+    return { ok: res.data.added === 1 && now === before + 1, detail: `added ${res.data.added}, total ${before} -> ${now}` };
+  } });
   const found = await svc.list(ctx, { q: ident, page: 1, pageSize: 10 });
   const importedId = found.ok ? found.data.items[0]?.asset.id : undefined;
-  if (!importedId) rows.push({ op: 'lookup imported asset', expect: 'ok', outcome: 'refused', matches: false, detail: 'the imported host is not in the list' });
+  const importedScope = importedId ? await scopeOf(importedId) : 'not in the list';
+  rows.push({ op: 'imported host is listed as pending', expect: 'ok', expectKind: null, outcome: importedId ? 'ok' : 'refused', failureKind: null, matches: importedScope === 'pending', detail: `scope ${importedScope}` });
+  await step('importRows (same host again, nothing added)', { expect: 'ok', run: () => svc.importRows(ctx, [row]), check: async (res) => {
+    const now = await total();
+    return { ok: res.data.added === 0 && now === before + 1, detail: `added ${res.data.added}, total ${now}` };
+  } });
+  await step('importRows (unknown type refused, nothing stored)', { expect: 'refused', kind: 'validation', run: () => svc.importRows(ctx, [{ ...row, name: 'stack-mobile', ident: 'stack-mobile.verify.example.test', type: 'Mobile' }]), check: unchangedTotal(before + 1) });
+  await step('importRows (empty batch refused, nothing stored)', { expect: 'refused', kind: 'validation', run: () => svc.importRows(ctx, []), check: unchangedTotal(before + 1) });
   if (importedId) {
-    await attempt('changeScope (to in scope without an approved revision refused)', 'refused', () => svc.changeScope(ctx, importedId, 'in'));
-    await attempt('changeScope (unclassified refused)', 'refused', () => svc.changeScope(ctx, importedId, 'unclassified'));
+    await step('changeScope (to in, no approved revision): refused, scope stays pending', { expect: 'refused', kind: 'conflict', run: () => svc.changeScope(ctx, importedId, 'in'), check: async () => ({ ok: (await scopeOf(importedId)) === 'pending', detail: `scope ${await scopeOf(importedId)}` }) });
+    await step('changeScope (unclassified): refused, scope stays pending', { expect: 'refused', kind: 'validation', run: () => svc.changeScope(ctx, importedId, 'unclassified'), check: async () => ({ ok: (await scopeOf(importedId)) === 'pending', detail: `scope ${await scopeOf(importedId)}` }) });
   }
-  await attempt('requestScopeApproval (real mode refuses here)', 'refused', () => svc.requestScopeApproval(ctx, { note: 'checklist', diff: 'checklist' }));
+  await step('requestScopeApproval (real mode refuses, nothing raised)', { expect: 'refused', kind: 'unavailable', run: () => svc.requestScopeApproval(ctx, { note: 'checklist', diff: 'checklist' }) });
   return { fatal: null, rows };
 }
 
