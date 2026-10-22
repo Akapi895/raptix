@@ -1,6 +1,6 @@
 import { isOperationView, isRequestRecoveryView, isScopedRunView, type OperationView, type RequestRecoveryView, type ScopedRunView } from '@raptix/web-contracts';
 import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 import { threadPath } from '../aichat/remote';
 
 export function fetchOperation(engagementId: string, threadId: string): Promise<OperationView> {

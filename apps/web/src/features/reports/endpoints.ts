@@ -1,5 +1,5 @@
 import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 /* ───────────── Report lifecycle/delivery (integration ticket 11) ───────────── */
 export interface ReportTemplateSection { title: string; required: boolean }

@@ -1,6 +1,6 @@
 import { apiFetch } from '../../platform/transport';
 import { isMembersView, type MembersView } from '@raptix/web-contracts';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 export function fetchMembers(engagementId: string): Promise<MembersView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/members`, owned(engagementId, isMembersView))
