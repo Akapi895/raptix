@@ -3,7 +3,7 @@ import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { AssetDetailRead, AssetListQuery, AssetListRead, AssetScopeRead, AssetService, AssetUnmodelled } from './service';
 import type { AssetImportOutcome, AssetImportRow, AssetScopeWriteOutcome } from './writes'
 import { classifyAsset, fetchAssetInventory, importAssets, type AssetInventoryView } from './endpoints';
-import { fetchEffectiveScope } from '../scope/remote';
+import { fetchEffectiveScope } from '../scope/api';
 import { fetchGraph } from '../analysis/remote';
 import { getEngagement } from '../projects/remote';
 import { displayTime, guarded } from '../../platform/adapter-shared'
