@@ -7,3 +7,4 @@ export { showCreateProject, useCreateProjectDialog } from './create-dialog-state
 export type { ProjectRow, ProjectsService } from './service'
 export { getEngagement } from './remote'
 export { RealProjectNewRoute } from './views/create-page'
+export { isEnvironmentPreparingError, withPreparedEnvironment } from './environment-api'

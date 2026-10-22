@@ -8,9 +8,9 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InstanceMessenger } from './instance-messenger'
-import * as api_aichat from '../../features/aichat/remote';
+import * as api_aichat from '../../aichat/remote';
 
-vi.mock('../../features/aichat/remote', async (importOriginal) => ({ ...(await importOriginal<typeof import('../../features/aichat/remote')>()), getThread: vi.fn() }))
+vi.mock('../../aichat/remote', async (importOriginal) => ({ ...(await importOriginal<typeof import('../../aichat/remote')>()), getThread: vi.fn() }))
 
 const THREAD = 'thread-1'
 const DISPATCH = 'dispatch-recon'

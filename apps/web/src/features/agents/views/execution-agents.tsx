@@ -1,12 +1,12 @@
 import { useState, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Bot, ChevronDown, ChevronRight, Eye } from 'lucide-react'
-import { fetchRuntimeInstances } from '../../features/agents/remote';
-import type { FleetBranchView } from '../../features/operations/remote';
+import { fetchRuntimeInstances } from '../remote';
+import type { FleetBranchView } from '../../operations/remote';
 import type { RuntimeInstanceView } from '@raptix/web-contracts';
 import { InstanceMessenger } from './instance-messenger'
-import { Banner, Button, DescList, Textarea, cx } from '../../ui/index'
-import { utcMinuteOr } from '../../platform/format'
+import { Banner, Button, DescList, Textarea, cx } from '../../../ui/index'
+import { utcMinuteOr } from '../../../platform/format'
 
 type AgentTone = 'running' | 'done' | 'failed' | 'stopped'
 

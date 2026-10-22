@@ -5,13 +5,13 @@
  */
 import { useRef, useState, type ReactElement } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { cancelInstance, commandInstance, fetchInstanceMailbox, forwardInstanceMessage, sendInstanceMessage } from '../../features/agents/remote';
-import { getThread } from '../../features/aichat/remote';
+import { cancelInstance, commandInstance, fetchInstanceMailbox, forwardInstanceMessage, sendInstanceMessage } from '../remote';
+import { getThread } from '../../aichat/remote';
 import { INSTANCE_MESSAGE_MAX_CHARS, type InstanceAttemptState, type InstanceMailboxView, type InstanceMessageState, type RuntimeInstanceView } from '@raptix/web-contracts';
-import { go } from '../../router/navigate'
-import { ApiTransportError } from '../../platform/transport'
-import { utcMinute } from '../../platform/format'
-import { Banner, Button, Input, Select, Skeleton, Textarea } from '../../ui/index'
+import { go } from '../../../router/navigate'
+import { ApiTransportError } from '../../../platform/transport'
+import { utcMinute } from '../../../platform/format'
+import { Banner, Button, Input, Select, Skeleton, Textarea } from '../../../ui/index'
 
 const STATE_TEXT: Record<InstanceMessageState, string> = {
   accepted: 'waiting for the next step',

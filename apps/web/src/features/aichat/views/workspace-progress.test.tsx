@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { ProgressCard, UpdatesGroup } from './workspace-progress'
-import { isFoldableUpdate } from './workspace-updates'
+import { isFoldableUpdate } from '../workspace-updates'
 
 describe('isFoldableUpdate', () => {
   it('folds a short single-line assistant progress line', () => {

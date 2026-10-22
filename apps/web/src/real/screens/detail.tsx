@@ -17,7 +17,7 @@ import { ProjectCounts } from '../../features/projects/views/project-counts';
 import { projectStage, STAGE_LABEL } from '../../features/projects/workspace';
 import { utcMinuteOr } from '../../platform/format'
 import { projectKeys } from '../../features/projects/query'
-import { RealConversation } from './workspace'
+import { RealConversation } from '../../features/aichat'
 import { RuntimeOperationsTab } from '../../features/operations/runtime-tab'
 import { PlanningTab } from '../../features/planning/tab'
 import { TeamMembers } from '../../features/team/members'

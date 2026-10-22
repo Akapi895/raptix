@@ -11,7 +11,7 @@ const fetchEnvironment = vi.fn()
 const submitEnvironmentCommand = vi.fn()
 const listEngagements = vi.fn()
 
-vi.mock('../environment-api', () => ({
+vi.mock('../../features/projects/environment-api', () => ({
   fetchEnvironment: (...a: unknown[]) => fetchEnvironment(...a),
   submitEnvironmentCommand: (...a: unknown[]) => submitEnvironmentCommand(...a),
 }))

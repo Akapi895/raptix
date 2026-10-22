@@ -22,7 +22,7 @@ import { REAL_INTEGRATED_ROUTES, RealNotIntegrated } from '../real/not-integrate
 import { FEATURE_ROUTE_SURFACES, MIGRATED_ROUTES } from './route-table'
 import { RealProjectNewRoute } from '../features/projects'
 import { RealProjectDetail } from '../real/screens/detail'
-import { RealWorkspace } from '../real/screens/workspace'
+import { RealWorkspace } from '../features/aichat'
 import { RealGlobalResource } from '../real/screens/global-resource'
 import { RealCommandCenter } from '../real/screens/command-center'
 import { RealLogin } from '../real/screens/login'

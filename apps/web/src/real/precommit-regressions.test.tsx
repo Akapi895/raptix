@@ -7,13 +7,13 @@ import { listRunsOfThread } from '../features/aichat/remote';
 import { apiFetch } from '../platform/transport'
 import { useRunStream } from '../platform/stream'
 import { RealModeProvider } from './bootstrap'
-import { RealWorkspace } from './screens/workspace'
+import { RealWorkspace } from '../features/aichat/views/workspace'
 import { go } from '../router/navigate'
 import { useToastStore } from '../state/stores'
 import { useRoute } from '../router/navigate'
 import { setActiveRouter } from '../router/active'
 import { createMemoryRouter } from 'react-router'
-import { readPending } from './workspace-session'
+import { readPending } from '../features/aichat/session'
 
 const AT = '2026-10-14T09:00:00.000Z'
 const BINDING = { engagementId: 'eng-1', threadId: 'thread-1', assistantId: 'soundwave', kind: 'planning', createdAt: AT, updatedAt: AT }
