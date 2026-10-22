@@ -5,7 +5,7 @@
 import { useState, type ReactElement } from 'react'
 import { Activity } from 'lucide-react'
 import { go, useRoute } from '../../router/navigate'
-import { ExecutionLogs } from '../../real/screens/execution-logs'
+import { ExecutionLogs } from './views/execution-logs'
 import { useProjectStore } from '../../state/stores'
 import { Banner, Button, Card, CardHeader, Empty, Select, Skeleton } from '../../ui/index'
 import { messageOf, useRuntimeSnapshot, useRuntimeThreads } from './runtime-query'
