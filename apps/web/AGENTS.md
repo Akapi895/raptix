@@ -36,12 +36,12 @@ do not default to the full suite.
 - Node >= 22.12; **npm only** — the root `package-lock.json` is the only lock.
 - Alias `@` → `src/` (ESM-compatible in `vite.config.ts`).
 - Never import Prisma/`fs`/server modules into browser code.
-- Time comes from the factory clock. Presentation and the real interface never receive `MockClock`.
+- Time comes from the dataset clock (`DbAuthority.clock`, formatted with `formatDemoInstant`). Presentation and the real interface never receive `MockClock`.
 - No new `eslint-disable`. Fix the cause in the file you touch; no repo-wide suppression cleanup.
 - Production build does not read `.figma/` (Figma tooling removed at cutover).
-- 55-route inventory: `src/router/registry.tsx` (MANIFEST) — hash-based routes.
-- Mock data lives behind the explicit mock authority (`src/domain/`); real-mode
-  integration lands ticket by ticket and must never fall back to demo data.
+- 55-route inventory: `src/router/registry.tsx` (MANIFEST) — hash-based routes; the route smoke expectations are in `tools/verify/routes.json`.
+- Mock data lives behind the explicit mock authority (`src/demo/`); real-mode
+  integration lands ticket by ticket and must never fall back to demo data (ADR-0068).
 - `tests/contracts/w00-captures.test.ts` + `tests/fixtures/` are retained
   real-API capture regressions from the previous app; `tools/` holds the
   deployment verification harnesses (`verify-docker-real-mode.mjs` is a CI
@@ -49,17 +49,28 @@ do not default to the full suite.
 
 ## Project structure
 
-- `src/main.tsx` — entrypoint, imports `src/index.css`, mounts `App`.
-- `src/App.tsx` — lazy feature composition and shell.
-- `src/router/` — route registry/navigation (55 keys).
-- `src/domain/` — contracts, service factory (mode seam), projections.
-- `src/state/` — zustand console state and Query providers.
-- `src/features/<domain>/` — one module per domain (service, query, projection, presentation). New features export their public surface from `index.ts`; callers outside a feature import only that entry.
-- `src/screens/`, `src/real/screens/` — legacy presentation trees (ADR-0084). Do not add files there; new presentation goes into `src/features/<domain>/`.
-- `src/real/` — real-mode transport, session and `service-adapter/<domain>.ts`. Do not add presentation or mode branches here.
+ADR-0096: each feature owns its presentation, port, mock and real adapter.
+
+- `src/main.tsx`, `src/App.tsx` — entrypoint and shell composition.
+- `src/state/` — composition root. `services.tsx` is the only module that chooses the mock or the real service set; `mode.ts` holds the data mode.
+- `src/router/` — the 55 route keys (`registry.tsx`), hash parsing and the route host.
+- `src/platform/` — shared browser machinery: transport, session, streaming, request ledger. No domain logic.
+- `src/domain/` — shared contracts and pure logic: entities, catalog, ports (`service.ts`, `console-services.ts`), policy, projections.
+- `src/features/<domain>/` — one owner per domain: `index.ts` (public surface), `service.ts` (port), `mock.ts` (demo side), `remote.ts` (real adapter), `query.ts` (hooks), `views/` (presentation shared by both modes). Callers outside a feature import only `index.ts`.
+- `src/demo/` — demo-only code: seed, display clock, mock authority, mock service factory, demo runtime, personas. Real code never imports it.
+- `src/real/` and `src/screens/` — legacy trees that shrink as domains migrate. Do not add files there; new presentation goes into `src/features/<domain>/views/`.
 - `server/` — Fastify API + Prisma (separate package, own build/tests).
 - `tests/contracts/` — retained API capture regression.
-- `tools/` — deployment/contract verification harnesses.
+- `tools/` — gates and verification: `check-boundaries.mjs` (ratchet against `boundaries-baseline.json`), `verify/route-smoke.mjs` (route expectations; known failures in `verify/baseline.json`), `verify/stack.mjs` (isolated real-mode stack with its own PostgreSQL container).
+
+Import exceptions (ADR-0096; `check:boundaries` enforces them):
+- The composition root (`state/services.tsx`, `App.tsx`, `main.tsx`) may import `demo/` at runtime.
+- Demo side (`demo/**`, `features/<x>/mock.ts`) may import demo and mock modules.
+- `features/<x>/remote.ts` and `platform/` import neither `demo/` nor mock modules.
+- Presentation imports a feature through `index.ts` or its `service.ts` port; never `remote.ts`, `mock.ts`, `real/` or `demo/`.
+- Type-only imports of demo from production code are counted apart (`production-type-imports-demo`) and move to `domain/` over time.
+
+Gates before a change lands: `npm run typecheck`, `npm run lint` (the five existing errors, no new ones), `npm run test`, `npm run build`, `npm run check:boundaries` (fails above the baseline), and `npm run verify:routes` for the modes the change touches. `npm run check:boundaries:write` records a reviewed reduction.
 
 ## Windows Temporary Process Safety
 
