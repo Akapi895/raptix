@@ -1,74 +1,63 @@
-import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { ScopeRead, ScopeRevision, ScopeService } from './service'
+import { decideScopeRevision, fetchEffectiveScope, fetchScopeRevisions, submitScopeRevision, type ScopeRevisionView } from './api';
+import { guarded } from '../../platform/adapter-shared'
 
-/* ───────────── Scope/ROE governance (integration ticket 08) ───────────── */
-export interface ScopeRevisionView {
-  id: string
-  engagementId: string
-  version: number
-  status: 'pending' | 'approved' | 'rejected' | 'superseded'
-  diff: { added: string[]; removed: string[]; rationale: string }
-  roe: { windows: { start: string; end: string; tz: string }[]; emergencyContacts: string[]; restrictions: string[] }
-  requestedBy: string
-  decidedBy: string | null
-  decidedAt: string | null
-  decisionComment: string | null
-  createdAt: string
+/** The engagement id is the console's project id in real mode. */
+function engagementOf(ctx: RequestContext): string | null {
+  return ctx.projectId && ctx.projectId !== 'all' ? ctx.projectId : null
 }
 
-export interface ScopeRevisionsView {
-  engagementId: string
-  revisions: ScopeRevisionView[]
-  latestApprovedVersion: number | null
-  submitSupported: true
-  source: 'db'
+function toRevision(view: ScopeRevisionView): ScopeRevision {
+  return {
+    id: view.id,
+    version: view.version,
+    status: view.status,
+    diff: { added: view.diff.added, removed: view.diff.removed, rationale: view.diff.rationale },
+    roe: { windows: view.roe.windows, emergencyContacts: view.roe.emergencyContacts, restrictions: view.roe.restrictions },
+    requestedBy: view.requestedBy,
+    decidedBy: view.decidedBy,
+    decisionComment: view.decisionComment,
+  }
 }
 
-export function isScopeRevisionsView(v: unknown): v is ScopeRevisionsView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as ScopeRevisionsView
-  return typeof doc.engagementId === 'string' && Array.isArray(doc.revisions) && doc.source === 'db'
-    && doc.revisions.every((r) => typeof r.id === 'string' && typeof r.version === 'number' && typeof r.status === 'string'
-      && typeof r.diff === 'object' && Array.isArray(r.diff.added) && typeof r.roe === 'object')
-}
+const NO_ENGAGEMENT = { kind: 'validation' as const, message: 'Select an engagement before reading or changing its scope.' }
 
-export function fetchScopeRevisions(engagementId: string): Promise<ScopeRevisionsView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/scope/revisions`, owned(engagementId, isScopeRevisionsView))
-}
-
-export interface SubmitScopeRevisionInput {
-  diff: { added: string[]; removed: string[]; rationale: string }
-  roe: { windows: { start: string; end: string; tz: string }[]; emergencyContacts: string[]; restrictions: string[] }
-}
-
-export function submitScopeRevision(engagementId: string, input: SubmitScopeRevisionInput): Promise<ScopeRevisionView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/scope/revisions`, (v): v is ScopeRevisionView =>
-    typeof v === 'object' && v !== null && typeof (v as ScopeRevisionView).id === 'string' && typeof (v as ScopeRevisionView).version === 'number',
-  { method: 'POST', body: input })
-}
-
-export function decideScopeRevision(engagementId: string, revisionId: string, decision: 'approved' | 'rejected'): Promise<ScopeRevisionView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/scope/revisions/${encodeURIComponent(revisionId)}/decision`, (v): v is ScopeRevisionView =>
-    typeof v === 'object' && v !== null && (v as ScopeRevisionView).status === decision,
-  { method: 'POST', body: { decision } })
-}
-
-/** W07-3: cumulative effective scope snapshot (ADR-0072 read bridge). */
-export interface EffectiveScopeView {
-  engagementId: string
-  version: number | null
-  rootTarget: string | null
-  inScope: string[]
-  roe: { windows: { start: string; end: string; tz: string }[]; emergencyContacts: string[]; restrictions: string[] }
-  source: 'db'
-}
-
-export function isEffectiveScopeView(v: unknown): v is EffectiveScopeView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as EffectiveScopeView
-  return typeof doc.engagementId === 'string' && Array.isArray(doc.inScope) && doc.source === 'db'
-}
-
-export function fetchEffectiveScope(engagementId: string): Promise<EffectiveScopeView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/scope/effective`, owned(engagementId, isEffectiveScopeView))
+export function createRealScopeService(): ScopeService {
+  return {
+    read: (ctx) => guarded(async (): Promise<ServiceResult<ScopeRead>> => {
+      const engagementId = engagementOf(ctx)
+      if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
+      const [revisions, effective] = await Promise.all([fetchScopeRevisions(engagementId), fetchEffectiveScope(engagementId)])
+      return {
+        ok: true,
+        data: {
+          revisions: revisions.revisions.map(toRevision),
+          latestApprovedVersion: revisions.latestApprovedVersion,
+          effective: {
+            version: effective.version,
+            versionLabel: effective.version === null ? null : `v${effective.version}`,
+            rootTarget: effective.rootTarget,
+            inScope: effective.inScope,
+            roe: effective.roe,
+            windowText: effective.roe.windows.length === 0 ? null : effective.roe.windows.map((w) => `${w.start} → ${w.end} (${w.tz})`).join(' · '),
+          },
+          // The backend has no operations, plans or documents model yet, so a scope change has no impact list here.
+          impact: null,
+          unmodelled: ['operations', 'plans', 'documents'],
+          supports: { roeFields: true },
+        },
+      }
+    }),
+    submit: (ctx, input) => guarded(async () => {
+      const engagementId = engagementOf(ctx)
+      if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
+      return { ok: true, data: toRevision(await submitScopeRevision(engagementId, input)) }
+    }),
+    decide: (ctx, revisionId, decision) => guarded(async () => {
+      const engagementId = engagementOf(ctx)
+      if (engagementId === null) return { ok: false, failure: NO_ENGAGEMENT }
+      return { ok: true, data: toRevision(await decideScopeRevision(engagementId, revisionId, decision)) }
+    }),
+  }
 }

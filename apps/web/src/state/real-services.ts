@@ -16,7 +16,7 @@ import { createRealFindingService } from '../real/service-adapter/findings'
 import { createRealLibraryService } from '../features/library/remote'
 import { createRealReportService } from '../features/reports/remote';
 import { createRealAuditService } from '../features/audit/remote'
-import { createRealScopeService } from '../real/service-adapter/scope'
+import { createRealScopeService } from '../features/scope/remote'
 import { createRealTeamService } from '../real/service-adapter/team'
 import { createRealSettingsService } from '../real/service-adapter/settings'
 import { createRealVaultService } from '../real/service-adapter/vault'
