@@ -69,24 +69,28 @@
     "categories": [
       "api-error"
     ],
+    "apiErrors": [{ "method": "GET", "path": "/api/engagements/:id/fleet", "statuses": [404] }],
     "reason": "the overview reads the fleet endpoint, which answers 404 because the agent runtime (LangGraph) is not started by the verification stack."
   },
   "real:operation-new": {
     "categories": [
       "api-error"
     ],
+    "apiErrors": [{ "method": "GET", "path": "/api/engagements/:id/threads", "statuses": [404] }],
     "reason": "the thread read is served by the agent runtime (LangGraph), which the verification stack does not start; it answers 404."
   },
   "real:infrastructure": {
     "categories": [
       "api-error"
     ],
+    "apiErrors": [{ "method": "GET", "path": "/api/engagements/:id/threads", "statuses": [404] }],
     "reason": "the thread read is served by the agent runtime (LangGraph), which the verification stack does not start; it answers 404 on some loads."
   },
   "real:c2": {
     "categories": [
       "api-error"
     ],
+    "apiErrors": [{ "method": "GET", "path": "/api/engagements/:id/c2/sessions", "statuses": [503] }],
     "reason": "the C2 sessions read answers 503 because the verification stack has no C2 server (Sliver)."
   }
 }

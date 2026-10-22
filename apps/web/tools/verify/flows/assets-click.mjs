@@ -104,16 +104,17 @@ try {
   });
 
   if (mode === 'mock') {
-    await step('the mock request reports its outcome: requested for review, or refused by the approval rules', manager, async () => {
+    await step('the mock request reports the existing pending scope request instead of success', manager, async () => {
       await manager.getByRole('button', { name: 'Request Scope Approval' }).click();
       await manager.getByText('Request scope approval?').first().waitFor({ timeout: 15000 });
       await manager.locator('textarea').last().fill(`Bring ${assetName} into scope`);
       await manager.getByRole('button', { name: 'Submit request' }).click();
-      // The approval transaction either records the request or refuses it with its reason; the toast carries whichever it was.
+      // Adding an asset under this fixture's approved ROE already creates the pending scope request.
+      const expected = `${project} already has a pending “Scope change” request. Wait for its decision or withdraw it first.`;
       const toast = manager.locator('div[aria-atomic="true"][aria-live="polite"]').first();
+      await manager.waitForFunction((message) => [...document.querySelectorAll('[aria-atomic="true"][aria-live="polite"]')].some((node) => node.textContent?.includes(message)), expected, { timeout: 15000 });
       const text = await toast.innerText({ timeout: 15000 }).catch(() => '');
-      const requested = text.includes('Scope approval requested.');
-      return { ok: text.length > 0, detail: text ? `toast "${text.replace(/s+/g, ' ')}" (${requested ? 'requested' : 'refused by the approval rules'})` : 'no outcome toast' };
+      return { ok: text.includes(expected) && !text.includes('Scope approval requested.'), detail: `toast "${text.replace(/\s+/g, ' ')}"` };
     });
   } else {
     await step('the real request is redirected to the Scope revisions panel, with no dialog', manager, async () => {
