@@ -9,7 +9,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
-import type { EmergencyStopView } from './remote';
+import type { EmergencyStopView } from './api';
 
 vi.mock('../../state/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
 vi.mock('../../state/keys', async (importOriginal) => ({
@@ -17,8 +17,8 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
-vi.mock('./remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./remote')>()
+vi.mock('./api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     fetchPlans: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock('../aichat/remote', async (importOriginal) => {
   }
 })
 
-const api_governance = await import('./remote');
+const api_governance = await import('./api');
 const api_aichat = await import('../aichat/remote');
 const { ApiTransportError } = await import('../../platform/transport')
 const { RealFeatureServicesCtx } = await import('../../state/real-services-provider')
