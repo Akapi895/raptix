@@ -13,7 +13,7 @@ import { useProjectStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
 import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext } from '../../domain/service'
-import { routes } from './views/operation-pages'
+import { routes } from './routes'
 import { seed } from '../../demo/seed';
 import { createOperationDraft, listOperations } from './service'
 

@@ -12,7 +12,7 @@ import { setKnownPages } from './history'
 const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string, ComponentType> }>> = {
   b: () => import('../screens/b'),
   dp: () => import('../demo/project-detail/routes'),
-  c: () => import('../features/operations/views/operation-pages'),
+  c: () => import('../features/operations/routes'),
   d: () => import('../screens/d'),
   e: () => import('../screens/e'),
   f: () => import('../features/reports/routes'),

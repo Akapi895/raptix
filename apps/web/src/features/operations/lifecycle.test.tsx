@@ -37,7 +37,7 @@ import type { ConsoleServices } from '../../domain/console-services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { useToastStore } from '../../state/stores'
 import { selectProject, go } from '../../router/navigate'
-import { routes } from './views/operation-pages'
+import { routes } from './routes'
 import { useAgentList } from '../agents/query'
 import {
   completeOperation, createOperationDraft, pauseOperation, resumeOperation, runOperationPreflight,
