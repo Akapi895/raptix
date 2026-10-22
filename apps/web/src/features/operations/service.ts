@@ -27,7 +27,7 @@ import type { Agent, Asset, Operation, Plan, Playbook, Project } from '../../dom
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 // Ticket 40: the resume re-check consults the plans feature's approval-validity
 // gate (execution.md row b — expiry integrated by 40).
-import { IN_FLIGHT, draftSteps, operationWriteGate } from './write-gates'
+import { draftSteps, operationWriteGate } from './write-gates'
 import {
   PROJECT_TZ_OFFSET_MS, scheduleInstantOf, scheduleLabelOf, roeWindowIssue,
   computePreflightChecks, eligibility, type Check, type EligKind,
@@ -468,49 +468,6 @@ export interface PreflightRunRead { op: Operation; checks: Check[]; pass: boolea
 /** The start gate outcome: the operation is eligible; the start transition itself stays with ticket 27. */
 export interface OperationStartRead { op: Operation; checks: Check[] }
 
-/**
- * The execution gate: re-derives the eight checks from canonical state at the
- * handler and refuses start with the first failing check's code, detail and
- * fix. This is the site the spec's "preflight gates execution" invariant
- * lives at — a stale snapshot or a scope revision cleared after the check can
- * never admit a start, because nothing is trusted but the current records.
- */
-export function operationStartGate(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<OperationStartRead> {
-  const db = authority.snapshot()
-  const op = db.operations.find((o) => o.id === id)
-  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
-  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
-    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
-  }
-  const project = db.projects.find((p) => p.id === op.projectId)
-  if (!project || !projectAccessible(project, ctx.actor)) {
-    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
-  }
-  if (readOnlyContext(project, ctx.actor)) {
-    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; operations cannot be started.` } }
-  }
-  if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
-    return { ok: false, failure: { kind: 'forbidden', message: 'Only a Manager or Operator can start operations.' } }
-  }
-  if (IN_FLIGHT.includes(op.status)) {
-    return { ok: false, failure: { kind: 'validation', message: `Operation ${op.id} is ${op.status === 'estop' ? 'emergency stopped' : op.status} — it has already started.` } }
-  }
-  const checks = computePreflightChecks(db, op, clock.now())
-  const firstBad = checks.find((c) => c.state !== 'pass')
-  if (firstBad) {
-    const why = firstBad.reason || firstBad.detail
-    return {
-      ok: false,
-      failure: {
-        kind: 'validation',
-        message: `${firstBad.code} ${firstBad.state === 'review' ? 'is waiting' : 'failed'}: ${firstBad.detail} ${why}`.trim(),
-        entity: { kind: 'operation', id: op.id, projectId: op.projectId },
-      },
-    }
-  }
-  return { ok: true, data: { op, checks } }
-}
-
 /* ═════════════ Ticket 27 — operation lifecycle controls ═════════════ */
 
 /** Transcript time-of-day stamp (HH:MM:SS project time) from the injected clock. */
@@ -548,48 +505,6 @@ export function lifecycleGate(
     return { ok: false, failure: { kind: 'forbidden', message: `Only a Manager or Operator can ${rolePhrase}.` } }
   }
   return { ok: true, data: { op, project } }
-}
-
-/** Creates the operation's first C2 session inside the start commit (legacy parity). */
-function startSession(d: Db, o: Operation, at: string, tick: string): string {
-  const ag = d.agents.find((a) => a.id === o.agents[0])
-  const asset = d.assets.find((a) => a.id === o.assets[0])
-  const ch = d.channels.find((c) => c.projectId === o.projectId) || d.channels[0]
-  const id = 'SS-' + String(++d.counters.session).padStart(3, '0')
-  d.sessions.unshift({ id, projectId: o.projectId, opId: o.id, agentId: ag?.id || '—', asset: asset?.name || '—', kind: 'reverse', channelId: ch?.id || '—', account: 'svc-demo', integrity: 'Standard', state: 'connected', started: at, last: at, grants: [], transcript: [{ ts: tick, who: 'system', text: `Session established via ${ch?.name || 'channel'} (demo).` }] })
-  o.sessionId = id
-  return id
-}
-
-/**
- * Starts an operation (ticket 27). The ticket-26 gate RE-DERIVES the eight
- * checks first — a start without a currently passing preflight, an expired or
- * rejected plan approval or a non-run role is refused with its reason and
- * commits nothing; nothing is trusted but the current records. The transition
- * itself is ONE atomic commit: run state, first-step dispatch, the agent
- * reservations (policy: one agent, one operation), project activation, the
- * first C2 session, the linked plan's executed transition and the audit row —
- * a partial start is impossible, and the single ChangeSet refreshes the
- * operation views and the agent fleet together.
- */
-export function startOperation(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<OperationTransitionRead> {
-  const gate = operationStartGate(authority, clock, ctx, id)
-  if (!gate.ok) return gate
-  const at = formatDemoInstant(clock.now())
-  const tick = tickOf(clock)
-  authority.commit(ctx.corr, (d) => {
-    const o = d.operations.find((x) => x.id === id)!
-    o.status = 'running'; o.startedAt = at; o.updated = at
-    o.steps.forEach((s, i) => { s.status = i === 0 ? 'running' : 'pending'; s.ts = i === 0 ? tick.slice(0, 5) : '—' })
-    o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a) a.op = id })
-    const p = d.projects.find((x) => x.id === o.projectId)!
-    if (p.status === 'approved') p.status = 'active'
-    if (!o.sessionId) startSession(d, o, at, tick)
-    const pl = o.planId ? d.plans.find((x) => x.id === o.planId) : undefined
-    if (pl && pl.status === 'approved') pl.status = 'executed'
-    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Started operation', obj: id, projectId: o.projectId, result: 'Success', reason: 'Preflight passed' })
-  })
-  return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
 }
 
 /* ═════════════ Ticket 29 — the human review gate ═════════════ */
