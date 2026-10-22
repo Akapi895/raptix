@@ -17,9 +17,8 @@
  * detail views refetch without a reload.
  */
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
+import { actorRef, OWNER_PERSONAS, REVIEWER_PERSONAS } from '../../demo/persona'
 import { useServices } from '../../state/services'
-import { USERS } from '../../domain/catalog'
 import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
@@ -146,8 +145,8 @@ export function useAgentsMockConsole() {
       services.operations(actor, projectId).replaceAgent(ctx(projectId), opId, from, to, reason),
     /** The simulated personas the screens offer as group owners and reviewers: demo identities, not users of this server. */
     people: {
-      owners: USERS.filter((u) => u.role !== 'viewer'),
-      reviewers: USERS.filter((u) => ['reviewer', 'manager', 'admin'].includes(u.role)),
+      owners: OWNER_PERSONAS,
+      reviewers: REVIEWER_PERSONAS,
     },
     setAgentStatus: (projectId: string, agentId: string, status: Parameters<typeof setAgentStatusTransaction>[3]) =>
       setAgentStatusTransaction(services.authority, ctx(projectId), agentId, status),

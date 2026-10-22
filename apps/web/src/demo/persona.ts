@@ -23,6 +23,12 @@ export function actorRef(name: string, role: Role = personaRole(name)): ActorRef
   return { id: name, role }
 }
 
+/** Simulated personas the agent screens offer as group owners (everyone but viewers). */
+export const OWNER_PERSONAS = USERS.filter((u) => u.role !== 'viewer')
+
+/** Simulated personas the agent screens offer as reviewers. */
+export const REVIEWER_PERSONAS = USERS.filter((u) => ['reviewer', 'manager', 'admin'].includes(u.role))
+
 /** Signs the persona in, optionally selecting the organization/workspace. */
 export function signIn(name: string, org?: string): void {
   const auth = useAuthStore.getState()
