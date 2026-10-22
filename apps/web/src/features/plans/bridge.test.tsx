@@ -26,7 +26,7 @@ import { mountServices } from '../../test/helpers'
 import { createOperationDraft, pauseOperation, resumeOperation, runOperationPreflight, startOperation, stopOperation } from '../operations/service'
 import { DAY_MS } from './service'
 import { createOperationFromPlanTransaction } from './bridge'
-import { MyTasks } from '../../screens/a-tasks'
+import { MyTasks } from '../tasks/views/my-tasks'
 import { routes } from '../operations/routes'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

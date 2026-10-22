@@ -1,20 +1,14 @@
 import { useState, type ReactNode } from 'react'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
-import { useServices } from '../state/services'
-import { readActor } from '../auth/identity'
-import { useAuthStore, useProjectStore, useToastStore } from '../state/stores'
-import { useSessionStore } from '../state/session'
-import { decideApprovalTransaction } from '../features/approvals/service'
-import { decidePlanTransaction } from '../features/plans/service'
-import { readPlanProject } from '../features/plans/bridge'
-import { decideSessionRequestTransaction } from '../features/c2/grants'
-import { readSessionRequestMeta } from '../features/c2/projection'
-import { Banner, Button, Card, Empty, Gated, Mono, PageHeader, PageSkeleton, Segmented, Status, cx } from '../ui/index'
-import { useConsoleGo } from './dashboard/use-dashboard'
-import { formatCountdown } from '../domain/dashboard'
-import { useTasks } from './tasks/use-tasks'
-import { minutesLeft, TASK_KINDS } from './tasks/domain'
-import type { TaskItem, TaskKind } from './tasks/domain'
+import { useProjectStore, useToastStore } from '../../../state/stores'
+import { useSessionStore } from '../../../state/session'
+import { Banner, Button, Card, Empty, Gated, Mono, PageHeader, PageSkeleton, Segmented, Status, cx } from '../../../ui/index'
+import { useTaskActions } from '../actions'
+import { useConsoleGo } from '../../overview/use-dashboard'
+import { formatCountdown } from '../../../domain/dashboard'
+import { useTasks } from '../use-tasks'
+import { minutesLeft, TASK_KINDS } from '../domain'
+import type { TaskItem, TaskKind } from '../domain'
 
 /** The tasks inbox read failed: the message comes from the read, with a retry. */
 const ErrorNotice = ({ message, retry }: { message?: string; retry: () => void }) => (
@@ -27,7 +21,7 @@ export function MyTasks() {
   const go = useConsoleGo()
   const pid = useProjectStore((s) => s.pid)
   const { data, isError, error, refetch, now } = useTasks()
-  const services = useServices()
+  const taskActions = useTaskActions()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
   const [kind, setKind] = useState<'all' | TaskKind>('all')
@@ -44,54 +38,30 @@ export function MyTasks() {
   }
   const { tasks, counts, mine } = data.summary
 
-  /* Ticket 67 wave 3: the legacy A.decide* entries, mirrored — the plan and
-     access-request project lookups resolve through the typed plans/c2
-     bridge reads at call time, the request context captures the current
-     persona (the override-aware `me`, resolved through the identity service
-     so a failing authority read never reaches this render) with corr
-     'legacy', and the typed result bridges back to the legacy Res shape. */
-  const actorCtx = (projectId: string) => ({ actor: readActor(services, useAuthStore.getState().meName), projectId, corr: 'legacy' })
-  const decidePlan = (planId: string, decision: 'approved' | 'rejected' | 'returned', note: string) => {
-    const projectId = readPlanProject(services.authority, planId)
-    if (!projectId) return { ok: false as const, error: `Plan ${planId} does not exist.` }
-    const res = decidePlanTransaction(services.authority, services.clock, actorCtx(projectId), planId, decision, note)
-    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
-  }
-  const decideApproval = (id: string, decision: 'approved' | 'returned', note: string) => {
-    const res = decideApprovalTransaction(services.authority, services.clock, actorCtx(''), id, decision, note)
-    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
-  }
-  const decideSessionRequest = (id: string, decision: 'approved' | 'rejected' | 'changes', note: string, minutes?: number) => {
-    const r = readSessionRequestMeta(services, id)
-    if (!r) return { ok: false as const, error: `Access request ${id} does not exist.` }
-    const res = decideSessionRequestTransaction(services.authority, services.clock, actorCtx(r.projectId), { requestId: id, decision, note, minutes })
-    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
-  }
-
   const decide = (title: string, confirmLabel: string, danger: boolean, fn: (reason: string) => { ok: boolean; error?: string } | void, okMsg: string, reasonRequired: boolean) =>
-    confirm({ title, body: 'Your decision and reason are recorded in the audit log.', confirmLabel, danger, reasonLabel: reasonRequired ? 'Reason (required)' : 'Reason (optional)', reasonRequired, onConfirm: (reason) => { const r = fn(reason); if (r && !r.ok) toast(r.error || 'Could not complete the decision.', 'bad'); else toast(okMsg, 'ok') } })
+    confirm({ title, body: 'Your decision and reason are recorded in the audit log.', confirmLabel, danger, reasonLabel: reasonRequired ? 'Reason (required)' : 'Reason (optional)', reasonRequired, onConfirm: (reason) => { const r = fn(reason); if (r && !r.ok) return r.error || 'Could not complete the decision.'; toast(okMsg, 'ok') } })
 
 
   const open = (t: TaskItem) => () => go(t.to.page, { id: t.to.id, tab: t.to.tab })
 
   const actions = (t: TaskItem): ReactNode => {
     if (t.kind === 'plan') return <>
-      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={() => decide(`Approve plan ${t.id}`, 'Approve plan', false, (r) => decidePlan(t.id, 'approved', r), `Plan ${t.id} approved.`, false)}>Approve</Button></Gated>
-      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide(`Reject plan ${t.id}`, 'Reject plan', true, (r) => decidePlan(t.id, 'rejected', r), `Plan ${t.id} rejected.`, true)}>Reject</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={() => decide(`Approve plan ${t.id}`, 'Approve plan', false, (r) => taskActions.decidePlan(t.id, 'approved', r), `Plan ${t.id} approved.`, false)}>Approve</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide(`Reject plan ${t.id}`, 'Reject plan', true, (r) => taskActions.decidePlan(t.id, 'rejected', r), `Plan ${t.id} rejected.`, true)}>Reject</Button></Gated>
     </>
     if (t.kind === 'access') return <>
-      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={() => decide(`Approve session access ${t.id}`, 'Approve access', false, (n) => decideSessionRequest(t.id, 'approved', n), `Access ${t.id} approved.`, false)}>Approve</Button></Gated>
-      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide('Request changes', 'Request changes', false, (n) => decideSessionRequest(t.id, 'changes', n), `Changes requested on ${t.id}.`, true)}>Request changes</Button></Gated>
-      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide('Reject access request', 'Reject', true, (n) => decideSessionRequest(t.id, 'rejected', n), `Access ${t.id} rejected.`, true)}>Reject</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={() => decide(`Approve session access ${t.id}`, 'Approve access', false, (n) => taskActions.decideSessionRequest(t.id, 'approved', n), `Access ${t.id} approved.`, false)}>Approve</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide('Request changes', 'Request changes', false, (n) => taskActions.decideSessionRequest(t.id, 'changes', n), `Changes requested on ${t.id}.`, true)}>Request changes</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide('Reject access request', 'Reject', true, (n) => taskActions.decideSessionRequest(t.id, 'rejected', n), `Access ${t.id} rejected.`, true)}>Reject</Button></Gated>
     </>
     if (t.kind === 'report') return <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={open(t)}>Review report</Button></Gated>
     if (t.kind === 'finding') return <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={open(t)}>Review finding</Button></Gated>
     return <>
       <Gated allowed={t.allowed} reason={t.why}>
-        <Button size="sm" variant="primary" onClick={() => decide(`Approve ${t.label.toLowerCase()}`, 'Approve', false, (r) => decideApproval(t.id, 'approved', r), `${t.id} approved.`, false)}>Approve</Button>
+        <Button size="sm" variant="primary" onClick={() => decide(`Approve ${t.label.toLowerCase()}`, 'Approve', false, (r) => taskActions.decideApproval(t.id, 'approved', r), `${t.id} approved.`, false)}>Approve</Button>
       </Gated>
       <Gated allowed={t.allowed} reason="Return requires the same approver role.">
-        <Button size="sm" onClick={() => decide(`Return ${t.label.toLowerCase()} for changes`, 'Return', true, (r) => decideApproval(t.id, 'returned', r), `${t.id} returned for changes.`, true)}>Return</Button>
+        <Button size="sm" onClick={() => decide(`Return ${t.label.toLowerCase()} for changes`, 'Return', true, (r) => taskActions.decideApproval(t.id, 'returned', r), `${t.id} returned for changes.`, true)}>Return</Button>
       </Gated>
     </>
   }
