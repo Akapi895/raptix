@@ -15,7 +15,7 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'all' }),
 }))
-vi.mock('./remote', async (importOriginal) => {
+vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./remote')>()
   return {
     ...actual,
@@ -26,7 +26,7 @@ vi.mock('./remote', async (importOriginal) => {
   }
 })
 
-const api_notices = await import('./remote');
+const api_notices = await import('./api');
 const { RealFeatureServicesCtx } = await import('../../state/real-services-provider')
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { useToastStore, useUiStore } = await import('../../state/stores')

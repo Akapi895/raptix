@@ -34,7 +34,7 @@ import { createRealC2ProviderService } from '../real/service-adapter/c2-provider
 import type { RuntimeOperationsService } from '../features/operations/runtime'
 import { createRealRuntimeOperationsService } from '../real/service-adapter/runtime-operations'
 import type { NoticeCenterService } from '../features/notices/center'
-import { createRealNoticeCenterService } from '../real/service-adapter/notices'
+import { createRealNoticeCenterService } from '../features/notices/remote'
 import { notIntegratedService } from '../platform/adapter-stub'
 import { unavailableService } from '../domain/unavailable'
 

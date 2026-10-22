@@ -5,7 +5,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/notices/remote', async (importOriginal) => {
+vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../features/notices/remote')>()
   return {
     ...actual,
@@ -16,8 +16,8 @@ vi.mock('../../features/notices/remote', async (importOriginal) => {
   }
 })
 
-const api_notices = await import('../../features/notices/remote');
-const { createRealNoticeCenterService } = await import('./notices')
+const api_notices = await import('./api');
+const { createRealNoticeCenterService } = await import('./remote')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'all', corr: 'test' }
 const NOTICE = { id: 'n-1', engagementId: 'eng-1', kind: 'approval', title: 'Scope revision needs review', detail: null, readAt: null, dismissedAt: null, createdAt: '2026-10-17T09:00:00.000Z' }
