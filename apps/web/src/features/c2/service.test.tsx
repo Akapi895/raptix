@@ -15,7 +15,7 @@ import { mountServices } from '../../test/helpers'
 import { go, selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
-import { routes } from '../../screens/h'
+import { routes } from './views/c2-pages'
 import { seed } from '../../demo/seed';
 import {
   acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,

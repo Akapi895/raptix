@@ -4,7 +4,7 @@
  */
 import type { ComponentType } from 'react'
 import { AgentsCompat, C2Compat, InfrastructureRoute } from '../features/agents/views/infrastructure-page'
-import { C2InfraContent, routes as c2Routes, Sessions } from './h'
+import { C2InfraContent, routes as c2Routes, Sessions } from '../features/c2/views/c2-pages'
 
 const slots = {
   c2: C2InfraContent,

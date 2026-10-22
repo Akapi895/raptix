@@ -14,7 +14,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { mountServices } from '../../test/helpers'
 import { go, selectProject } from '../../router/navigate'
 import type { RequestContext } from '../../domain/service'
-import { routes } from '../../screens/h'
+import { routes } from './views/c2-pages'
 import { seed } from '../../demo/seed';
 import { decideSessionRequestTransaction, requestSessionAccessTransaction } from './grants'
 import { getSessionDetail } from './service'

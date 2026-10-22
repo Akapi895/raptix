@@ -15,8 +15,8 @@
  * transactions (./grants, ticket 46) behind the legacy action bridge.
  */
 import { useQuery } from '@tanstack/react-query'
-import { readGrantWatch, readSessionProject } from './projection'
-import type { GrantRequestInput, GrantRevokeInput, SessionCommandInput } from './grants'
+import { readGrantWatch, readRequestProject, readSessionProject } from './projection'
+import { decideSessionRequestTransaction, type GrantRequestInput, type GrantRevokeInput, type SessionCommandInput } from './grants'
 import { useServiceProjection } from '../../state/projection'
 import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
@@ -162,6 +162,9 @@ export function useC2MockConsole() {
     display: services.display,
     demo: services.demo,
     projectOfSession: (sessionId: string) => readSessionProject(services, actor, sessionId),
+    projectOfRequest: (requestId: string) => readRequestProject(services, actor, requestId),
+    decideRequest: (projectId: string, input: Parameters<typeof decideSessionRequestTransaction>[3]) =>
+      decideSessionRequestTransaction(services.authority, services.clock, ctx(projectId), input),
     requestAccess: (projectId: string, input: GrantRequestInput) => c2(projectId).requestAccess(ctx(projectId), input),
     revokeGrant: (projectId: string, input: GrantRevokeInput) => c2(projectId).revokeGrant(ctx(projectId), input),
     sendCommand: (projectId: string, input: SessionCommandInput) => c2(projectId).sendCommand(ctx(projectId), input),

@@ -1,17 +1,15 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Activity, ClipboardCheck, Download, Eye, Lock, OctagonX, Radio, RadioTower, ShieldAlert, SlidersHorizontal, TerminalSquare, TriangleAlert } from 'lucide-react'
-import { useServices } from '../state/services'
-import { go, useRoute } from '../router/navigate'
-import { useAccessible, useCan, useMe } from '../state/console'
-import { useStopRead } from '../features/estop/projection'
-import { useRenewalSessions, readRequestProject } from '../features/c2/projection'
-import { useProjectStore, useToastStore } from '../state/stores'
-import { decideSessionRequestTransaction } from '../features/c2/grants'
-import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Gated, IdLink, Kpi, Mono, PageHeader, PageSkeleton, Person, Progress, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Pager, DemoTag, Modal, cx } from '../ui/index'
-import { AccessChip, Console, RequestAccessDrawer, SELECT_PROJECT, SessionDetail, kindLabel, useGrantWatch, useTerminate, MIN_REASON } from '../features/c2/views/session-console'
-import { C2ReadError, useC2Audit, useC2Channel, useC2Overview, useC2Requests, useC2Sessions } from '../features/c2/query'
-import type { C2AccessKey, C2AuditView, C2NodeRow, C2SessionRow } from '../features/c2/service'
-import type { Channel, Session, SessionRequest } from '../domain/entities'
+import { go, useRoute } from '../../../router/navigate'
+import { useAccessible, useCan, useMe } from '../../../state/console'
+import { useStopRead } from '../../estop/projection'
+import { useRenewalSessions } from '../projection'
+import { useProjectStore, useToastStore } from '../../../state/stores'
+import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Gated, IdLink, Kpi, Mono, PageHeader, PageSkeleton, Person, Progress, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Pager, DemoTag, Modal, cx } from '../../../ui/index'
+import { AccessChip, Console, RequestAccessDrawer, SELECT_PROJECT, SessionDetail, kindLabel, useGrantWatch, useTerminate, MIN_REASON } from './session-console'
+import { C2ReadError, useC2Audit, useC2Channel, useC2MockConsole, useC2Overview, useC2Requests, useC2Sessions } from '../query'
+import type { C2AccessKey, C2AuditView, C2NodeRow, C2SessionRow } from '../service'
+import type { Channel, Session, SessionRequest } from '../../../domain/entities'
 
 const TABS = [
   { id: 'infrastructure', label: 'Infrastructure' }, { id: 'channels', label: 'Channels' }, { id: 'sessions', label: 'Active Sessions' },
@@ -239,7 +237,7 @@ export function Sessions({ all, monitor = false }: { all: boolean; monitor?: boo
 
 
 function Requests({ all }: { all: boolean }) {
-  const services = useServices()
+  const c2m = useC2MockConsole()
   const db = useRenewalSessions()
   const me = useMe()
   const can = useCan()
@@ -257,10 +255,9 @@ function Requests({ all }: { all: boolean }) {
      the request lookup resolves from the one authority at call time (the
      store's dbRef semantics) and the typed result bridges back to the legacy Res. */
   const decideSessionRequest = (id: string, decision: 'approved' | 'rejected' | 'changes', note: string, minutes?: number) => {
-    const actor = { id: me.name, role: me.role }
-    const projectId = readRequestProject(services, actor, id)
+    const projectId = c2m.projectOfRequest(id)
     if (!projectId) return { ok: false as const, error: `Access request ${id} does not exist.` }
-    const res = decideSessionRequestTransaction(services.authority, services.clock, { actor, projectId, corr: 'legacy' }, { requestId: id, decision, note, minutes })
+    const res = c2m.decideRequest(projectId, { requestId: id, decision, note, minutes })
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
   const submit = () => {

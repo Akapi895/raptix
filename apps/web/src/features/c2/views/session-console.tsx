@@ -428,7 +428,7 @@ export function Console(): ReactElement {
           <Clock size={14} aria-hidden />{st === 'interactive' || st === 'revokefail' ? `Expires in ${Math.max(left, 0)} min (${grant?.expires.replace('Oct 13, 2026, ', '')})` : hasExpiredLine ? 'Grant expired' : 'No active grant'}
         </span>
         <Gated allowed={can('estop') && !blocked} reason={blocked || 'Only a Red Team Manager or Organization Admin can trigger an emergency stop.'}>
-          <Button size="sm" variant="danger" icon={OctagonX} onClick={() => confirm({ title: `Emergency stop ${s.opId}?`, confirmLabel: 'Request emergency stop', danger: true, reasonRequired: true, reasonLabel: 'Reason', body: <p className="text-sm">A stop is requested for operation {s.opId}. It is not confirmed until the node and agents acknowledge it.</p>, onConfirm: (r) => { emergencyStop('operation', s.opId, r); toast('Emergency stop requested — waiting for acknowledgement.', 'warn') } })}>Emergency stop</Button>
+          <Button size="sm" variant="danger" icon={OctagonX} onClick={() => confirm({ title: `Emergency stop ${s.opId}?`, confirmLabel: 'Request emergency stop', danger: true, reasonRequired: true, reasonLabel: 'Reason', body: <p className="text-sm">A stop is requested for operation {s.opId}. It is not confirmed until the node and agents acknowledge it.</p>, onConfirm: (r) => { c2m.demo.emergencyStop('operation', s.opId, r); toast('Emergency stop requested — waiting for acknowledgement.', 'warn') } })}>Emergency stop</Button>
         </Gated>
       </div>
       <div className="mb-3"><Banner tone="info" icon={ShieldCheck} title="Simulated Console — no real commands are executed">All output is synthetic and labelled Demo data. Only the safe actions below can be sent.</Banner></div>

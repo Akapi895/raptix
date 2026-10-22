@@ -18,7 +18,7 @@ import { createConsoleServices } from '../../demo/services';
 import type { ConsoleServices } from '../../domain/console-services';
 import type { Clock, RequestContext } from '../../domain/service'
 import { go, selectProject } from '../../router/navigate'
-import { routes } from '../../screens/h'
+import { routes } from './views/c2-pages'
 import { mountServices } from '../../test/helpers'
 import {
   decideSessionRequestTransaction, requestSessionAccessTransaction, revokeGrantTransaction,
