@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const { RealModeProvider } = await import('./bootstrap')
 const { useCapabilityReady } = await import('../state/real-context')
-const { RealNotIntegrated, REAL_INTEGRATED_ROUTES } = await import('./not-integrated')
+const { RealNotIntegrated } = await import('./not-integrated')
+const { ROUTES } = await import('../router/routes')
+/** A key is integrated when real mode renders it with its own presentation, not the unavailable panel. */
+const integrated = (page: string) => ROUTES[page]?.real.kind !== undefined && ROUTES[page].real.kind !== 'unavailable'
 
 const CAPABILITIES = {
   version: 1,
@@ -51,13 +54,13 @@ describe('RealModeProvider', () => {
 describe('real route gating', () => {
   it('integrates exactly the bootstrap/project routes plus the self-rendering system pages', () => {
     for (const page of ['projects', 'project', 'project-new', 'notfound', 'error', 'offline', 'forbidden', 'session-expired']) {
-      expect(REAL_INTEGRATED_ROUTES.has(page), page).toBe(true)
+      expect(integrated(page), page).toBe(true)
     }
   })
 
-  it('leaves demo feature surfaces out of the integrated set', () => {
-    for (const page of ['operations', 'c2', 'findings', 'settings', 'scenarios', 'workspaces']) {
-      expect(REAL_INTEGRATED_ROUTES.has(page), page).toBe(false)
+  it('leaves the unavailable surfaces out of the integrated set', () => {
+    for (const page of ['states', 'infrastructure', 'scenarios', 'workspaces']) {
+      expect(integrated(page), page).toBe(false)
     }
   })
 

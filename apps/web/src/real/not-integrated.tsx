@@ -12,22 +12,6 @@ import { go } from '../router/navigate'
 import { switchDataMode } from '../state/mode'
 import { Button } from '../ui/index'
 
-/**
- * Route keys reachable via the mock-mode `routeComponent` lookup while still
- * honest in real mode: the bootstrap/project surfaces and the system pages
- * that read no console data. `router/host.tsx` checks `REAL_PAGES` (direct
- * components plus everything in `route-table.ts`) first, so a key only ever
- * reaches this set if it has no real-mode implementation there yet.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export const REAL_INTEGRATED_ROUTES: ReadonlySet<string> = new Set([
-  'projects',
-  'project',
-  'project-new',
-  // System pages that do not read console data render themselves.
-  'notfound', 'error', 'offline', 'forbidden', 'session-expired',
-])
-
 export function RealNotIntegrated({ page }: { page: string }): ReactElement {
   return (
     <div className="mx-auto max-w-xl pt-12" role="status">
