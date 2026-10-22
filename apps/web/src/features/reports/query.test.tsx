@@ -21,7 +21,7 @@ import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import type { Report } from '../../domain/entities'
-import { routes } from './views/list'
+import { routes } from './routes'
 import { createReportDraft, draftOptions, listDeliveries, listReports } from './mock';
 import { useReportList } from './query'
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from 'react'
+import { useEffect, useState } from 'react'
 import { Download, Eye, FileText, History, Lock, Plus, Rocket, Send } from 'lucide-react'
 import { Banner, Button, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, cx } from '../../../ui/index'
 import type { NoFind } from '../service';
@@ -7,7 +7,7 @@ import { ReadError } from './read-error'
 import { SimulatedTemplates } from './simulated-templates'
 import { useDeliveryHistory, useReportCapabilities, useReportList, useTemplates } from '../query'
 import { TemplateCreateForm } from './template-create-form';
-import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './report-pages'
+import { AiExclusion } from './report-pages'
 import { go, useRoute } from '../../../router/navigate'
 import { useCan, useMe } from '../../../state/console'
 import { useProjectStore, useToastStore } from '../../../state/stores'
@@ -24,7 +24,7 @@ const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileTe
 
 /** Shared read states for the migrated catalog tabs (ticket 34). */
 
-function ReportsPage() {
+export function ReportsPage() {
   const caps = useReportCapabilities()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -131,7 +131,6 @@ function ReportList() {
 }
 
 /** Real-mode template gallery (P06): the versioned templates the server holds, and an admin/manager create form. */
-// eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function RealTemplates() {
   const me = useMe()
   const tpls = useTemplates()
@@ -160,7 +159,6 @@ function RealTemplates() {
 }
 
 /** Simulated template gallery: mock-only authority; real mode never reaches it. */
-// eslint-disable-next-line react-refresh/only-export-components -- route registry co-exports these screen helpers
 function Templates() {
   const caps = useReportCapabilities()
   return caps.storedTemplates ? <RealTemplates /> : <SimulatedTemplates />
@@ -212,12 +210,4 @@ function Exports() {
       {me.role === 'viewer' && <p className="mt-3 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />The Client / Viewer role cannot download exports.</p>}
     </>
   )
-}
-
-export const routes: Record<string, ComponentType> = {
-  reports: ReportsPage,
-  'report-new': ReportNew,
-  report: ReportEditor,
-  'report-preview': ReportPreview,
-  'report-review': ReportReview,
 }
