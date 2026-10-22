@@ -10,7 +10,7 @@ import { setKnownPages } from './history'
 
 /** The module each slice loads. Every route in routes.ts names one of these. */
 const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string, ComponentType> }>> = {
-  b: () => import('../screens/b'),
+  b: () => import('../features/wizard/routes'),
   dp: () => import('../demo/project-detail/routes'),
   c: () => import('../features/operations/routes'),
   d: () => import('./slice-d'),

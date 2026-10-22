@@ -15,15 +15,15 @@
 import { useState } from 'react'
 import { Controller, useFieldArray } from 'react-hook-form'
 import { AlertTriangle, ArrowDown, ArrowUp, Check as CheckIcon, FileText, Lock, Plus, Trash2, Upload, X } from 'lucide-react'
-import { ROLE_LABEL } from '../domain/policy'
-import { USERS } from '../domain/catalog';
-import { type Role } from '../domain/entities'
-import { useMe } from '../state/console'
-import { useWizardReferences } from '../features/wizard/projection'
-import { go } from '../router/navigate'
-import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, IconButton, Input, PageHeader, Select, Status, Tabs, Textarea, cx } from '../ui/index'
-import { LIMIT_PRESETS, WIZARD_STEPS, fmtDate } from '../features/wizard/draft'
-import { useProjectWizard } from '../features/wizard/use-project-wizard'
+import { ROLE_LABEL } from '../../../domain/policy'
+import { USERS } from '../../../domain/catalog';
+import { type Role } from '../../../domain/entities'
+import { useMe } from '../../../state/console'
+import { useWizardReferences } from '../projection'
+import { go } from '../../../router/navigate'
+import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, IconButton, Input, PageHeader, Select, Status, Tabs, Textarea, cx } from '../../../ui/index'
+import { LIMIT_PRESETS, WIZARD_STEPS, fmtDate } from '../draft'
+import { useProjectWizard } from '../use-project-wizard'
 
 const TYPES = ['Red Team', 'Purple Team', 'Assessment']
 const TZS: [string, string][] = [['UTC+07:00', 'Asia/Ho_Chi_Minh (UTC+7)'], ['UTC+00:00', 'UTC (UTC+0)']]

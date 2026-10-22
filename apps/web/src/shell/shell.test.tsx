@@ -32,7 +32,7 @@ function signIn() {
   fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
 }
 
-beforeAll(async () => { await Promise.all([import('../screens/b'), import('../features/operations/routes')]) }, 30_000)
+beforeAll(async () => { await Promise.all([import('../features/wizard/routes'), import('../features/operations/routes')]) }, 30_000)
 
 beforeEach(() => {
   window.location.hash = ''
