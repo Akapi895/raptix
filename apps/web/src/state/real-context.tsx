@@ -1,6 +1,6 @@
 /**
  * The real-mode context: the trusted capabilities document and the identity the bootstrap read before any data
- * request. The composition root (real/bootstrap.tsx) provides it; features read it through the hooks here, so no
+ * request. The composition root (shell/real-bootstrap.tsx) provides it; features read it through the hooks here, so no
  * feature imports the bootstrap or its login gate.
  */
 import { createContext, useContext } from 'react'

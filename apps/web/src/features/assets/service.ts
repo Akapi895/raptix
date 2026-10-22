@@ -2,7 +2,7 @@
  * Asset inventory port (ticket 50, ADR-0067 — docs/adr/0067-web-console-service-domain-boundary.md).
  *
  * The read models, write operations and capabilities the asset screens use. The mock
- * implementation is `mock.ts`; the real adapter is `real/service-adapter/assets.ts`.
+ * implementation is `mock.ts`; the real adapter is `remote.ts`.
  */
 import type { Asset } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
