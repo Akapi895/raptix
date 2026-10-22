@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/team/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/team/api')>()
+vi.mock('./api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     fetchMembers: vi.fn(),
@@ -11,8 +11,8 @@ vi.mock('../../features/team/api', async (importOriginal) => {
   }
 })
 
-const api_team = await import('../../features/team/api');
-const { createRealTeamService } = await import('./team')
+const api_team = await import('./api');
+const { createRealTeamService } = await import('./remote')
 
 const ctx = { actor: { id: 'u-owner', role: 'manager' as const }, projectId: 'eng-1', corr: 'test' }
 
