@@ -308,6 +308,7 @@ try {
     statuses.push(runAnalysisClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
     statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'operations-click.mjs', 'operations', mockApp));
     statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'agents-click.mjs', 'agents', mockApp));
+    statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'integration-path-click.mjs', 'integration path', mockApp));
   }
   if (modes.split(',').includes('real')) {
     statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
