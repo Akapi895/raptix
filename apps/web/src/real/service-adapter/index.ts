@@ -10,6 +10,7 @@ import type { TeamService } from '../../features/team/service'
 import { capabilityState } from '../../platform/capabilities';
 import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { createRealAssetService } from '../../features/assets/remote'
+import { createRealOverviewService } from '../../features/overview/remote'
 import { createRealFindingService } from './findings'
 import { createRealLibraryService } from '../../features/library/remote'
 import { createRealReportService } from '../../features/reports/remote';
@@ -139,5 +140,6 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableService<NoticeCenterService>({ list: true, setRead: true, dismiss: true, markAllRead: true }, 'Notifications are not available on this server.')
-  return { findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations, noticeCenter }
+  const overview = createRealOverviewService()
+  return { overview: () => overview, findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations, noticeCenter }
 }

@@ -1,49 +1,10 @@
 /**
- * Command Center Query hooks (ticket 14).
- *
- * One aggregate read per scope: the Query key embeds the shared auth/project
- * scope (ticket 05), so a persona or project switch reads a different cache
- * entry, the ScopeCancelBridge cancels the superseded fetch, and the
- * ChangeSetBridge refetches after every committed mutation that touches the
- * scope's project or the aggregate view. Navigation goes through the active
- * data router (ticket 07) — the single location writer.
+ * Console navigation for the legacy screens (ticket 14). The overview reads moved to features/overview; this module keeps the
+ * router-backed navigation the tasks inbox still uses. Navigation goes through the active data router (ticket 07), the single
+ * location writer.
  */
-import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
-import { actorRef } from '../../demo/persona'
-import { useServices } from '../../state/services'
-import { consoleKeys, useQueryScope } from '../../state/keys'
 import { toHref } from '../../router/history'
-import { dashboardForScope } from './service'
-import type { DashboardAggregate } from '../../domain/dashboard'
-
-export interface DashboardView {
-  data?: DashboardAggregate
-  isPending: boolean
-  isError: boolean
-  error: Error | null
-  refetch: () => void
-  /** Absolute factory-clock instant for display-only derivations. */
-  now: number
-}
-
-/** Aggregate dashboard read for the active auth/project scope. */
-export function useDashboard(): DashboardView {
-  const services = useServices()
-  const scope = useQueryScope()
-  const projectId = scope.project === 'all' ? '' : scope.project
-  const q = useQuery({
-    queryKey: consoleKeys.view('dashboard', scope),
-    queryFn: async ({ signal }) => {
-      const res = await dashboardForScope(services, actorRef(scope.actor, scope.role), projectId)
-        .read({ actor: actorRef(scope.actor, scope.role), projectId, corr: 'dashboard' }, signal)
-      if (!res.ok) throw new Error(res.failure.message)
-      return res.data
-    },
-    enabled: !!services,
-  })
-  return { data: q.data, isPending: q.isPending, isError: q.isError, error: q.error, refetch: () => { void q.refetch() }, now: services.clock.now() }
-}
 
 export type ConsoleGo = (page: string, opts?: { id?: string; tab?: string }) => void
 

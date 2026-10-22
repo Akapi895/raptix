@@ -12,6 +12,7 @@ import type { AgentService } from '../features/agents/service';
 import type { ReportService } from '../features/reports/service';
 import type { BranchService } from '../features/branches/service';
 import type { LibraryService } from '../features/library';
+import type { OverviewService } from '../features/overview/service';
 import type { AnalysisService } from '../features/analysis/service';
 import type { SettingsService } from '../features/settings/service';
 import type { AssetService } from '../features/assets';
@@ -164,6 +165,8 @@ export function createConsoleServices(): ConsoleServices {
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/reports/mock').then((m) => m.createReportService(authority, clock, guard)))
   const forBranches = (actor: ActorRef, projectId: string): BranchService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/branches/service').then((m) => m.createBranchService(authority, clock, guard)))
+  const forOverview = (actor: ActorRef): OverviewService =>
+    lazyService(() => import('../features/overview/mock').then((m) => m.createOverviewService(authority, actor)))
   const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/library/mock').then((m) => m.createLibraryService(authority, clock, guard)))
   const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService =>
@@ -236,6 +239,7 @@ export function createConsoleServices(): ConsoleServices {
     reports: forReports,
     branches: forBranches,
     library: forLibrary,
+    overview: forOverview,
     analysis: forAnalysis,
     settings: forSettings,
     assets: forAssets,

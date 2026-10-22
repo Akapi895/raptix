@@ -1,4 +1,8 @@
 import { apiFetch } from '../../platform/transport';
+import { guarded } from '../../platform/adapter-shared';
+import { utcMinute } from '../../platform/format';
+import { listEngagements } from '../projects';
+import type { OverviewService } from './service';
 
 /* ───────────── Command center, tasks and notices (integration ticket 15) ───────────── */
 export interface TaskItemView {
@@ -79,4 +83,27 @@ export function isOverviewC2View(v: unknown): v is OverviewC2View {
 
 export function fetchOverviewC2(): Promise<OverviewC2View> {
   return apiFetch('/overview/c2', isOverviewC2View)
+}
+
+/* ───────────── Real adapter for the overview port (Mốc 2) ───────────── */
+/** Each section reads its own endpoint, so one failing source leaves the others loaded (see service.ts). */
+export function createRealOverviewService(): OverviewService {
+  return {
+    projects: () => guarded(async () => {
+      const projects = await listEngagements()
+      return { ok: true, data: projects.map((p) => ({ id: p.id, name: p.displayName, detail: p.targetValue, status: p.lifecycleStatus, updatedAt: utcMinute(p.updatedAt) })) }
+    }),
+    findings: () => guarded(async () => {
+      const view = await fetchOverviewFindings()
+      return { ok: true, data: { total: view.total, engagements: view.engagements, engagementsWithFindings: view.engagementsWithFindings, bySeverity: view.bySeverity, byStatus: view.byStatus, truncated: view.truncated } }
+    }),
+    c2: () => guarded(async () => {
+      const view = await fetchOverviewC2()
+      return { ok: true, data: { pendingGrants: view.pendingGrants, commandsByStatus: view.commandsByStatus, recentCommands: view.recentCommands.map((c) => ({ ...c, createdAt: utcMinute(c.createdAt) })) } }
+    }),
+    tasks: () => guarded(async () => {
+      const view = await fetchTasks()
+      return { ok: true, data: view.tasks.map((t) => ({ kind: t.kind, refId: t.refId, engagementId: t.engagementId, engagementName: t.engagementName, title: t.title, createdAt: utcMinute(t.createdAt), href: t.href, awaitingActor: t.awaitingActor })) }
+    }),
+  }
 }
