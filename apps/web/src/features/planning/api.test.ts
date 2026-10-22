@@ -14,7 +14,7 @@ const ACK = (over: Record<string, unknown> = {}) => ({
 
 describe('planning adapters', () => {
   it('fetches and validates the planning view', async () => {
-    const { fetchPlanning } = await import('../features/planning/api');
+    const { fetchPlanning } = await import('./api');
     const view = {
       version: 1, engagementId: 'eng-1',
       documents: {
@@ -31,8 +31,8 @@ describe('planning adapters', () => {
   })
 
   it('rejects a planning view whose document states disagree with the bundle', async () => {
-    const { fetchPlanning } = await import('../features/planning/api');
-    const { ApiTransportError } = await import('../platform/transport')
+    const { fetchPlanning } = await import('./api');
+    const { ApiTransportError } = await import('../../platform/transport')
     const view = {
       version: 1, engagementId: 'eng-1',
       documents: {
@@ -50,7 +50,7 @@ describe('planning adapters', () => {
   })
 
   it('confirms the handoff with the one-way PATCH body', async () => {
-    const { confirmHandoff } = await import('../features/projects/remote');
+    const { confirmHandoff } = await import('../projects/remote');
     const fetchMock = vi.fn(async () => jsonResponse(200, { id: 'eng-1', workspaceSlug: 'w', displayName: 'D', targetType: 'web_url', targetValue: 't', authorizationConfirmed: true, brief: null, handoffConfirmedAt: '2026-10-14T09:00:00.000Z', metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null, activeAgentCount: null, createdAt: '2026-10-14T08:00:00.000Z', updatedAt: '2026-10-14T09:00:00.000Z' }))
     vi.stubGlobal('fetch', fetchMock)
     await confirmHandoff('eng-1')
@@ -62,7 +62,7 @@ describe('planning adapters', () => {
 
 describe('scoped runtime adapters', () => {
   it('creates a thread with the request id + kind and no other fields', async () => {
-    const { createThread } = await import('../features/aichat/remote');
+    const { createThread } = await import('../aichat/remote');
     const fetchMock = vi.fn(async () => jsonResponse(201, ACK()))
     vi.stubGlobal('fetch', fetchMock)
     await createThread('eng-1', { requestId: 'req-abc12345', kind: 'planning' })
@@ -73,7 +73,7 @@ describe('scoped runtime adapters', () => {
   })
 
   it('submits a run and resumes with question targeting', async () => {
-    const api_aichat = await import('../features/aichat/remote');
+    const api_aichat = await import('../aichat/remote');
     const runAck = ACK({ operation: 'create_run', state: 'accepted', threadId: 'th-1', runId: 'run-1' })
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => jsonResponse(202, { ...runAck, operation: String(url).endsWith('/resume') ? 'resume' : 'create_run', requestId: JSON.parse(String(init?.body)).requestId }))
     vi.stubGlobal('fetch', fetchMock)
@@ -88,7 +88,7 @@ describe('scoped runtime adapters', () => {
   })
 
   it('reconciles through the stable request id with an empty body', async () => {
-    const { reconcileRequest } = await import('../features/aichat/remote');
+    const { reconcileRequest } = await import('../aichat/remote');
     const fetchMock = vi.fn(async () => jsonResponse(200, ACK()))
     vi.stubGlobal('fetch', fetchMock)
     await reconcileRequest('eng-1', 'req-abc12345')

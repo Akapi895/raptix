@@ -1,8 +1,8 @@
 import type { DocumentSourceView, PlanningDocument, PlanningState, PlanningView, RoEView, ConopsView, DeconflictionView } from '@raptix/web-contracts'
 import type { RequestContext, ServiceResult } from '../../domain/service'
-import type { PlanningDocumentCard, PlanningDocumentSource, PlanningFact, PlanningOpplan, PlanningRead, PlanningService } from '../../features/planning/service'
-import { confirmHandoff } from '../../features/projects/remote';
-import { discardDocumentDraft, fetchDocumentSource, fetchPlanning, publishDocumentDraft, saveDocumentDraft } from '../../features/planning/api';
+import type { PlanningDocumentCard, PlanningDocumentSource, PlanningFact, PlanningOpplan, PlanningRead, PlanningService } from './service'
+import { confirmHandoff } from '../projects/remote';
+import { discardDocumentDraft, fetchDocumentSource, fetchPlanning, publishDocumentDraft, saveDocumentDraft } from './api';
 import { guarded } from '../../platform/adapter-shared'
 
 const TITLES: Readonly<Record<string, string>> = {
