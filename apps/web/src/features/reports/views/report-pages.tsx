@@ -1,21 +1,21 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Eye, FileText, History, Lock, RotateCcw, Save, Send, ShieldCheck, Wand2, XCircle, ListChecks, Plus, Table2 } from 'lucide-react'
-import { useDirty } from '../state/session'
-import { sevLabel } from '../features/findings'
-import type { Report } from '../domain/entities'
-import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui/index'
-import type { NoFind, RCheck, ReportEditorRead, ReportReviewRead } from '../features/reports/service';
-import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../features/reports/projection'
-import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
-import { useResourceScope } from '../state/resource-scope'
-import { isRealMode } from '../state/mode'
-import { saveArtifact } from '../real/artifact'
-import { fetchEffectiveScope } from '../features/scope/remote';
-import type { ServiceResult } from '../domain/service'
-import { go, useRoute } from '../router/navigate'
-import { useActiveProject, useCan, useMe } from '../state/console'
-import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
-import { useSessionStore } from '../state/session'
+import { useDirty } from '../../../state/session'
+import { sevLabel } from '../../findings/index'
+import type { Report } from '../../../domain/entities'
+import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../../../ui/index'
+import type { NoFind, RCheck, ReportEditorRead, ReportReviewRead } from '../service';
+import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../projection'
+import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../query'
+import { useResourceScope } from '../../../state/resource-scope'
+import { isRealMode } from '../../../state/mode'
+import { saveArtifact } from '../../../real/artifact'
+import { fetchEffectiveScope } from '../../scope/remote';
+import type { ServiceResult } from '../../../domain/service'
+import { go, useRoute } from '../../../router/navigate'
+import { useActiveProject, useCan, useMe } from '../../../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../../../state/stores'
+import { useSessionStore } from '../../../state/session'
 
 /* ───────── shared helpers ───────── */
 

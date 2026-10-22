@@ -21,7 +21,7 @@ import { useSessionStore } from '../../state/session'
 import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { routes } from '../../screens/f'
+import { routes } from './views/list'
 import { addReportSection, readReportEditor, removeReportSection, reorderReportSections, saveReportSection, setReportFindings } from './mock';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
