@@ -30,7 +30,7 @@ import { DATA_MODE } from './mode'
 import { REAL_PERSONA } from './real-identity'
 import { useSession } from '../platform/session'
 import { useRealMembershipRole, useRealProjectList } from '../features/projects/query'
-import { REAL_CONTROL_GAPS } from '../real/service-adapter/control-gaps'
+import { REAL_CONTROL_GAPS } from '../platform/control-gaps'
 import { useServices, useServicesOrNull } from './services'
 import { useAuthStore, useProjectStore } from './stores'
 
