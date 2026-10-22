@@ -1,5 +1,5 @@
 import { lazy, type ComponentType } from 'react'
-import { Login } from './a-login'
+import { Login } from '../demo/login-page'
 /* Ticket 61a/61b: the auth/system slice's semantic module (src/screens/system)
    owns the error pages and the states gallery; route keys are unchanged. */
 import { Forbidden, NotFound, Offline, ServerError, SessionExpired } from './system/pages'
