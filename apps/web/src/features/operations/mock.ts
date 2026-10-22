@@ -9,14 +9,14 @@ import type { Agent, Asset, Operation, Project } from '../../domain/entities'
 import { formatDemoInstant } from '../../domain/clock'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 import {
-  operationDetail, readPreflightChecks, draftMinutes, findScheduleConflicts, type OperationService,
-  type PreflightRunRead, type OperationStartRead, type OperationCategory, type OperationListQuery, type OperationListItem, type OperationListRead, type ReadyPlanRef, type OperationTransitionRead, type StepDecision, opEntity, lifecycleGate, tickOf,
+  draftMinutes, findScheduleConflicts, type OperationService,
+  type PreflightRunRead, type OperationStartRead, type OperationCategory, type OperationDetailRead, type OperationListQuery, type OperationListItem, type OperationListRead, type ReadyPlanRef, type OperationTransitionRead, type StepDecision, opEntity, tickOf,
   ROLE_LABEL, memberOwnersOf, normalizeScheduleInput, scheduleInstantOf, scheduleLabelOf, roeWindowIssue, type OperationDraftPatch, type OperationWriteRead, type OperationDraftInput, type OperationDraftOptions,
 } from './service'
 import { IN_FLIGHT, draftSteps, operationWriteGate } from './write-gates'
 import { planVer } from '../../domain/catalog'
 import { usableApproval } from '../plans/service'
-import { computePreflightChecks, eligibility, preflightPass } from './preflight'
+import { computePreflightChecks, eligibility, preflightPass, type Check } from './preflight'
 
 /** Builds the typed list service; `guard` is the factory's superseded-scope read guard. */
 export function createOperationService(
@@ -672,4 +672,68 @@ export function listOperations(db: Db, ctx: RequestContext, query: OperationList
       readyPlans,
     },
   }
+}
+
+export function operationDetail(db: Db, ctx: RequestContext, id: string): ServiceResult<OperationDetailRead> {
+  const op = db.operations.find((o) => o.id === id)
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
+  }
+  const project = db.projects.find((p) => p.id === op.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+  }
+  const plan = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
+  return {
+    ok: true,
+    data: {
+      op,
+      project,
+      plan,
+      planLabel: plan ? `${plan.id} ${planVer(plan)}` : undefined,
+      playbook: db.playbooks.find((x) => x.id === op.playbookId),
+      conversation: plan ? db.conversations.find((c) => c.id === plan.conversationId) : undefined,
+      branchGroups: db.branchGroups.filter((g) => g.opId === op.id),
+      eligibility: (({ kind, label }) => ({ kind, label }))(eligibility(db, op.projectId)),
+    },
+  }
+}
+
+/** The checks of one operation as they stand at `now`, read for the operation's own scope. */
+export function readPreflightChecks(db: Db, now: Instant, ctx: RequestContext, id: string): ServiceResult<Check[]> {
+  const op = db.operations.find((o) => o.id === id)
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
+  }
+  return { ok: true, data: computePreflightChecks(db, op, now) }
+}
+
+/** Addressed-operation gate shared by the control transitions: scope without
+ * existence leak, membership, read-only and role gates with reasons. Ticket 29
+ * appends the message overrides the review gate words its refusals with. */
+export function lifecycleGate(
+  db: Db,
+  ctx: RequestContext,
+  op: Operation | undefined,
+  verb: string,
+  rolePhrase: string = `${verb} operations`,
+  readonlyPhrase: string = verb,
+): ServiceResult<{ op: Operation; project: Project }> {
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: opEntity(op) } }
+  }
+  const project = db.projects.find((p) => p.id === op.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+  }
+  if (readOnlyContext(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; operations cannot be ${readonlyPhrase}.` } }
+  }
+  if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Only a Manager or Operator can ${rolePhrase}.` } }
+  }
+  return { ok: true, data: { op, project } }
 }
