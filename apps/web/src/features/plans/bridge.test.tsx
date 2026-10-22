@@ -27,7 +27,7 @@ import { createOperationDraft, startOperation } from '../operations/mock'
 import { pauseOperation, resumeOperation, stopOperation } from '../operations/mock'
 import { runOperationPreflight } from '../operations/mock'
 import { DAY_MS } from './service'
-import { createOperationFromPlanTransaction } from './bridge'
+import { createOperationFromPlanTransaction } from './mock'
 import { MyTasks } from '../tasks/views/my-tasks'
 import { routes } from '../operations/routes'
 

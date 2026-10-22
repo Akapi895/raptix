@@ -248,7 +248,7 @@ export function createConsoleServices(): ConsoleServices {
     // Ticket 40: the bridge is write-only over the shared authority — no
     // scope-guarded reads, so the wiring needs no per-scope state.
     plansBridge: () =>
-      lazyService(() => import('../features/plans/bridge').then((m) => m.createPlanBridgeService(authority, clock))),
+      lazyService(() => import('../features/plans/mock').then((m) => m.createPlanBridgeService(authority, clock))),
     // Ticket 42: the compare read shares the plans feature's scope rules.
     plansCompare: (actor, projectId) =>
       lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/plans/compare').then((m) => m.createPlanCompareService(authority, guard))),
