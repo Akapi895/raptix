@@ -32,7 +32,7 @@ import { RouteErrorBoundary, RouteHost } from '../../router/host'
 import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { routes } from './views/list'
+import { routes } from './routes'
 import { acknowledgeDelivery, decideReport, deliverReportVersion, exportReportVersion, readReportReview, saveReportSection, submitReportVersion } from './mock';
 import { useDeliveryHistory } from './query'
 import { evaluateCloseChecklist } from '../closure/service'
