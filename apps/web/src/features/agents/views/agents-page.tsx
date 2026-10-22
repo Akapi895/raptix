@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
-import { USERS } from '../../../domain/catalog';
 import { type Agent, type Group } from '../../../domain/entities'
 import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../../../ui/index'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from '../../../ui/d-shared'
@@ -38,6 +37,7 @@ function Heartbeat({ a }: { a: Agent }) {
 /* ───────────── Group modal (AG-03, ticket 49: typed write handler) ───────────── */
 
 function GroupModal({ group, onClose }: { group: Group | null; onClose: () => void }) {
+  const mock = useAgentsMockConsole()
   const db = useGroupOptions('all')
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
@@ -93,7 +93,7 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
         </Field>
         <Field label="Description" className="sm:col-span-2"><Textarea className="min-h-16" value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} /></Field>
         <Field label="Usage policy"><Select value={f.policy} onChange={(e) => setF({ ...f, policy: e.target.value })}>{POLICIES.map((p) => <option key={p}>{p}</option>)}</Select></Field>
-        <Field label="Group manager"><Select value={f.owner} onChange={(e) => setF({ ...f, owner: e.target.value })}>{USERS.filter((u) => u.role !== 'viewer').map((u) => <option key={u.name}>{u.name}</option>)}</Select></Field>
+        <Field label="Group manager"><Select value={f.owner} onChange={(e) => setF({ ...f, owner: e.target.value })}>{mock.people.owners.map((u) => <option key={u.name}>{u.name}</option>)}</Select></Field>
       </div>
       <div className="mt-4">
         <div className="mb-1.5 text-xs font-medium text-muted">Select agents ({f.agents.length} selected)</div>
@@ -209,7 +209,7 @@ function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose:
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Assignment duration"><Select value={duration} onChange={(e) => setDuration(e.target.value)}><option>Until project closes</option><option>7 days</option><option>24 hours</option></Select></Field>
-          <Field label="Reviewer"><Select value={reviewer} onChange={(e) => setReviewer(e.target.value)}>{USERS.filter((u) => ['reviewer', 'manager', 'admin'].includes(u.role)).map((u) => <option key={u.name}>{u.name}</option>)}</Select></Field>
+          <Field label="Reviewer"><Select value={reviewer} onChange={(e) => setReviewer(e.target.value)}>{mock.people.reviewers.map((u) => <option key={u.name}>{u.name}</option>)}</Select></Field>
         </div>
         <Field label="Intended operation (optional)" hint={projectId && !ops.length ? 'This project has no open operations.' : undefined}>
           <Select value={opId} disabled={!projectId} onChange={(e) => setOpId(e.target.value)}><option value="">None yet</option>{ops.map((o) => <option key={o.id} value={o.id}>{o.id} — {o.name}</option>)}</Select>
@@ -276,7 +276,7 @@ function FailurePanel({ a }: { a: Agent }) {
   const swap = (o: typeof ops[number], c: Agent) => confirm({
     title: `Replace ${a.id} with ${c.id} in ${o.id}?`, confirmLabel: 'Replace agent', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o.id} is {o.status}. {a.id} ({a.host}) is replaced by {c.id} ({c.host}), same project and scope. Preflight must be re-run before the operation starts; nothing is marked complete.</>,
-    onConfirm: (r) => { const res = mock.replaceOperationAgent(o.projectId, o.id, a.id, c.id, r); if (!res.ok) return res.failure.message; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
+    onConfirm: async (r) => { const res = await mock.replaceOperationAgent(o.projectId, o.id, a.id, c.id, r); if (!res.ok) return res.failure.message; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
   })
   const requestRepl = (o: typeof ops[number] | null, c: Agent) => confirm({
     title: `Request ${c.id} as replacement for ${a.id}?`, confirmLabel: 'Submit request', reasonLabel: 'Reason', reasonRequired: true,

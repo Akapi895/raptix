@@ -19,6 +19,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
+import { USERS } from '../../domain/catalog'
 import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
@@ -27,7 +28,6 @@ import type { AgentDetailRead, AgentListQuery, AgentListRead } from './service'
 import { setAgentStatusTransaction, type AssignmentInput, type GroupInput } from './writes'
 import { recordAudit, type AuditInput } from '../audit'
 import { submitApprovalTransaction } from '../approvals'
-import { replaceOperationAgent } from '../operations'
 
 /** Feature-local key namespaces: ['agent', scope, 'list', query] / ['agent', scope, id]. */
 export const agentKeys = {
@@ -143,7 +143,12 @@ export function useAgentsMockConsole() {
     submitApproval: (projectId: string, input: Parameters<typeof submitApprovalTransaction>[3]) =>
       submitApprovalTransaction(services.authority, services.clock, ctx(projectId), input),
     replaceOperationAgent: (projectId: string, opId: string, from: string, to: string, reason: string) =>
-      replaceOperationAgent(services.authority, services.clock, ctx(projectId), opId, from, to, reason),
+      services.operations(actor, projectId).replaceAgent(ctx(projectId), opId, from, to, reason),
+    /** The simulated personas the screens offer as group owners and reviewers: demo identities, not users of this server. */
+    people: {
+      owners: USERS.filter((u) => u.role !== 'viewer'),
+      reviewers: USERS.filter((u) => ['reviewer', 'manager', 'admin'].includes(u.role)),
+    },
     setAgentStatus: (projectId: string, agentId: string, status: Parameters<typeof setAgentStatusTransaction>[3]) =>
       setAgentStatusTransaction(services.authority, ctx(projectId), agentId, status),
     audit: (projectId: string, input: AuditInput) => recordAudit(services, ctx(projectId), input),
