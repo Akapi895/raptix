@@ -79,6 +79,13 @@ try {
     return { ok: onOverview && scope.ok, detail: `${onOverview ? 'overview route' : `route ${hash(page)}`}; ${scope.detail}` };
   });
 
+  await step('the project sidebar keeps every section the proposal names', page, async () => {
+    const side = await sidebar(page);
+    const sections = ['Scope & ROE', 'Planning', 'AI Workspace', 'Execution', 'C2 Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Fleet', 'Activity & Audit', 'Vault', 'Closeout'];
+    const missing = sections.filter((label) => !side.includes(label));
+    return { ok: missing.length === 0, detail: missing.length === 0 ? `all ${sections.length} sections listed` : `missing: ${missing.join(', ')}` };
+  });
+
   await step('the sidebar opens AI Workspace inside the same project', page, async () => {
     await navItem(page, 'AI Workspace').click();
     await page.waitForURL(/tab=ai-workspace/);
