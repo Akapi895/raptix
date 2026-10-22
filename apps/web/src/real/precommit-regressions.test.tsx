@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { fetchFindings } from '../features/findings/remote';
+import { fetchFindings } from '../features/findings/api';
 import { listRunsOfThread } from '../features/aichat/remote';
 import { apiFetch } from '../platform/transport'
 import { useRunStream } from '../platform/stream'

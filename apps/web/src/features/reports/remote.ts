@@ -8,7 +8,7 @@ import type { DeliveryInput, DeliveryListQuery, DeliveryListRead, DraftOptionsRe
 
 import { fetchAuthSession } from '../../platform/auth-api';
 
-import { fetchCuratedFindings } from '../../features/findings/remote';
+import { fetchCuratedFindings } from '../findings/api';
 
 import { fetchMembers } from '../team/api';
 

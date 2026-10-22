@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/findings/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/findings/remote')>()
+vi.mock('../../features/findings/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/findings/api')>()
   return {
     ...actual,
     fetchCuratedFindings: vi.fn(),
@@ -43,7 +43,7 @@ vi.mock('../../features/projects/remote', async (importOriginal) => {
   }
 })
 
-const api_findings = await import('../../features/findings/remote');
+const api_findings = await import('../../features/findings/api');
 const api_projects = await import('../../features/projects/remote');
 const { createRealFindingService } = await import('./findings')
 const { createRealFeatureServices } = await import('../../state/real-services')

@@ -1,6 +1,6 @@
 /** Curated findings of an engagement, read for the operation results (P12). */
 import { useQuery } from '@tanstack/react-query'
-import { fetchCuratedFindings } from '../findings/remote';
+import { fetchCuratedFindings } from '../findings/api';
 import { consoleKeys, useQueryScope } from '../../state/keys'
 
 export function useCuratedFindings(engagementId: string) {
