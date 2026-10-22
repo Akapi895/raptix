@@ -10,11 +10,13 @@
  * and a persona/project switch cancels the superseded scope's reads before a
  * delayed response can restore old visibility.
  */
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
-import type { ServiceFailure } from '../../domain/service'
+import type { ActorRef, ServiceFailure } from '../../domain/service'
+import { createChatHandlers } from './handlers'
 import type { ConversationListRead } from './service'
 import type { ActorType, AiHistoryRead, HistoryAuditRow, HistoryQuery } from './history'
 
@@ -119,4 +121,12 @@ export function useAiAudit(id: string | undefined) {
     },
     enabled: !!services && !!id && scope.project !== 'all',
   })
+}
+
+/* ── Mock chat handlers for the AI screens: the chat service bound to one actor and project, memoised so a render never recreates them. ── */
+
+export function useChatHandlers(actor: ActorRef, projectId: string) {
+  const services = useServices()
+  const { id, role } = actor
+  return useMemo(() => createChatHandlers(services, { id, role }, projectId), [services, id, role, projectId])
 }

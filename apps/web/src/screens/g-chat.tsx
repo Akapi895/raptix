@@ -27,7 +27,7 @@ import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { Banner, Button, Drawer, Empty, PageHeader } from '../ui/index'
 import { AiSubNav, Composer, DefaultAiModePicker, NoProject, Pill, STARTERS, Thread } from '../features/aichat'
-import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from './g-workspace'
+import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from '../features/aichat/views/mock-workspace'
 import type { AiMode } from '../domain/entities'
 
 const LS_OPEN = 'raptix.ai.inspectorOpen'

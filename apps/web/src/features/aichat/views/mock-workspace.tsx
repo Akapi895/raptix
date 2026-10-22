@@ -1,24 +1,23 @@
 import { useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { Bot, FileText, MessageSquare, Pin, PinOff, Plus, ShieldCheck } from 'lucide-react'
-import { useServices } from '../state/services'
-import { planVer } from '../domain/catalog';
-import type { Conversation } from '../domain/entities'
-import { createChatHandlers } from '../features/aichat/handlers'
-import { useAiBundle, useAiRail, useConversationFocus } from '../features/aichat/projection'
-import { useProjectEligibility } from '../features/operations/views'
-import { go } from '../router/navigate'
-import { useCan, useMe, useReadOnly } from '../state/console'
-import { useUiStore } from '../state/stores'
-import { Button, DemoTag, IdLink, Status, cx } from '../ui/index'
-import { EligBadge, ExecBanner, MODES, Pill, ReplanPanel, useReplan, useTraceLink } from '../features/aichat'
-import { AllocationView, FanOutCard } from '../features/branches'
-import { WorkerTeamView } from './g-workers'
+import { planVer } from '../../../domain/catalog';
+import type { Conversation } from '../../../domain/entities'
+import { useChatHandlers } from '../query'
+import { useAiBundle, useAiRail, useConversationFocus } from '../projection'
+import { useProjectEligibility } from '../../operations/views'
+import { go } from '../../../router/navigate'
+import { useCan, useMe, useReadOnly } from '../../../state/console'
+import { useUiStore } from '../../../state/stores'
+import { Button, DemoTag, IdLink, Status, cx } from '../../../ui/index'
+import { EligBadge, ExecBanner, MODES, Pill, ReplanPanel, useReplan, useTraceLink } from '../index'
+import { AllocationView, FanOutCard } from '../../branches/index'
+import { WorkerTeamView } from '../../workers/views/worker-team'
 
 /* ───────────── Resizable panes ───────────── */
 // eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
 export const RAIL = { def: 280, min: 220, max: 380 }
 // eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
-export { INSP, Separator, useResizable, useViewportW } from '../ui/panel-sizing'
+export { INSP, Separator, useResizable, useViewportW } from '../../../ui/panel-sizing'
 const moveChoice = (e: ReactKeyboardEvent<HTMLButtonElement>, role: 'tab' | 'radio') => {
   const verticalKeys = role === 'radio' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')
   if (!verticalKeys && !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
@@ -41,13 +40,13 @@ const seenN: Record<string, number> = {}
 export function LeftRail({ pid, selId, onNew, onPicked }: { pid: string; selId?: string; onNew: () => void; onPicked?: () => void }) {
   const me = useMe()
   const can = useCan()
-  const services = useServices()
+  const chat = useChatHandlers({ id: me.name, role: me.role }, 'all')
   const readOnly = useReadOnly()
   const aiMode = useUiStore((s) => s.aiMode)
   const rail = useAiRail(pid)
   /* Ticket 67 wave 7: the legacy A.togglePinConv entry, mirrored — the same
      per-call typed chat-handler bridge with the override-aware persona. */
-  const togglePinConv = (convId: string) => { createChatHandlers(services, { id: me.name, role: me.role }, 'all').setPinned(convId) }
+  const togglePinConv = (convId: string) => { chat.setPinned(convId) }
   const [tab, setTab] = useState<RailTab>('all')
   const ro = readOnly(pid)
   if (selId) { opened.add(selId); seenN[selId] = rail.conversations.find((c) => c.id === selId)?.messages.length ?? 0 }
