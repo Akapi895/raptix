@@ -19,7 +19,7 @@ import type { DemoRuntimeControls, DisplayClock } from '../../domain/console-ser
 import type { Evidence, Operation } from '../../domain/entities'
 import { recordAudit, type AuditInput } from '../audit'
 import { addOperationEvidence, type OperationEvidenceInput } from '../results'
-import { createOperationFromPlanTransaction, projectOfPlan, type PlanBridgeRead } from '../plans'
+import { projectOfPlan, type PlanBridgeRead } from '../plans'
 import type { PfCheck } from './checklist'
 import type { Check } from './preflight'
 import { readOperationMeta, readOperationPreflight, readOperationSpecChecks } from './views'
@@ -257,7 +257,7 @@ export interface OperationMockConsole {
   projectOf(opId: string): string | undefined
   checks(op: Operation, at: Instant): { spec: PfCheck[]; engine: Check[] }
   planProject(planId: string): string | undefined
-  createOperationFromPlan(projectId: string, planId: string): ServiceResult<PlanBridgeRead>
+  createOperationFromPlan(projectId: string, planId: string): Promise<ServiceResult<PlanBridgeRead>>
   pause(projectId: string, opId: string, reason: string): Promise<ServiceResult<OperationTransitionRead>>
   resume(projectId: string, opId: string): Promise<ServiceResult<OperationTransitionRead>>
   stop(projectId: string, opId: string, reason: string): Promise<ServiceResult<OperationTransitionRead>>
@@ -280,7 +280,7 @@ export function useOperationMockConsole(): OperationMockConsole {
     projectOf: (opId) => readOperationMeta(services, opId)?.projectId,
     checks: (op, at) => ({ spec: readOperationSpecChecks(services, op, at), engine: readOperationPreflight(services, op, at) }),
     planProject: (planId) => projectOfPlan(services.authority.snapshot().plans, planId),
-    createOperationFromPlan: (projectId, planId) => createOperationFromPlanTransaction(services.authority, services.clock, ctx(projectId), planId),
+    createOperationFromPlan: (projectId, planId) => services.plansBridge(actor, projectId).createOperation(ctx(projectId), planId),
     pause: (projectId, opId, reason) => ops(projectId).pause(ctx(projectId), opId, reason),
     resume: (projectId, opId) => ops(projectId).resume(ctx(projectId), opId),
     stop: (projectId, opId, reason) => ops(projectId).stop(ctx(projectId), opId, reason),

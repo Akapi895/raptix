@@ -577,8 +577,8 @@ function ReviewBody({ plan }: { plan: Plan }) {
     setErr(''); setDec(null); setReason(''); setAck(false)
     toast(`${plan.id} ${planVer(plan)} ${dec === 'approved' ? 'approved' : dec === 'returned' ? 'returned for changes' : 'rejected'}.`, dec === 'approved' ? 'ok' : 'warn')
   }
-  const create = () => {
-    const r = actions.execute(plan.id)
+  const create = async () => {
+    const r = await actions.execute(plan.id)
     if (!r.ok || !r.opId) { setErr(r.error || 'Could not create the operation.'); return }
     toast(`Operation ${r.opId} created. Complete preflight before starting.`, 'ok')
     go('preflight', { id: r.opId })
