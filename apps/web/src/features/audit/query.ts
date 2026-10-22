@@ -9,7 +9,7 @@ import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure } from '../../domain/service'
 import type { AuditQuery, AuditRead } from './service'
-import { fetchWorkspaceAudit, type AuditQueryInput } from './remote'
+import { fetchWorkspaceAudit, type AuditQueryInput } from './api'
 
 export class AuditError extends Error {
   constructor(readonly failure: ServiceFailure) {
