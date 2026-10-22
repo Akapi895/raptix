@@ -10,7 +10,7 @@ import { getThread } from '../../features/aichat/remote';
 import { INSTANCE_MESSAGE_MAX_CHARS, type InstanceAttemptState, type InstanceMailboxView, type InstanceMessageState, type RuntimeInstanceView } from '@raptix/web-contracts';
 import { go } from '../../router/navigate'
 import { ApiTransportError } from '../../platform/transport'
-import { utcMinute } from '../format'
+import { utcMinute } from '../../platform/format'
 import { Banner, Button, Input, Select, Skeleton, Textarea } from '../../ui/index'
 
 const STATE_TEXT: Record<InstanceMessageState, string> = {

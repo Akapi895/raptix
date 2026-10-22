@@ -2,7 +2,7 @@
 import type { ReactElement } from 'react'
 import type { CuratedFindingView } from '@raptix/web-contracts'
 import { go } from '../../router/navigate'
-import { utcMinute } from '../../real/format'
+import { utcMinute } from '../../platform/format'
 import { Banner, Button, Card, CardHeader, cx } from '../../ui/index'
 import { runStatusTone, type StatusTone } from './runtime-status'
 import { messageOf, useRuntimeFleet, useRuntimeRuns } from './runtime-query'

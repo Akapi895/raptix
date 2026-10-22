@@ -10,10 +10,10 @@ import { FolderPlus, RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
 import { useRealProjects } from '../query'
 import { go } from '../../../router/navigate'
-import { showCreateProject } from '../../../real/create-project-dialog'
+import { showCreateProject } from '../create-dialog-state'
 import { useProjectStore } from '../../../state/stores'
 import { Button, Empty, Input, PageHeader, Skeleton, Status, Table, type Col } from '../../../ui/index'
-import { utcMinute } from '../../../real/format'
+import { utcMinute } from '../../../platform/format'
 
 function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const message = error instanceof Error ? error.message : 'The projects request failed.'

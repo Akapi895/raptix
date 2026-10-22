@@ -12,7 +12,7 @@ import { CheckCircle2, Lock, ShieldCheck } from 'lucide-react'
 import { go } from '../../router/navigate'
 import { useMemberLabels } from '../../real/member-labels'
 import { DATA_MODE, isRealMode } from '../../state/mode'
-import { utcMinute, utcMinuteOr } from '../../real/format'
+import { utcMinute, utcMinuteOr } from '../../platform/format'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Input, Skeleton, Status } from '../../ui/index'
 import { ClosureError, useClosureRead, useClosureWrites } from './query'
 

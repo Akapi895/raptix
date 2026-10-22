@@ -13,10 +13,10 @@ import type { ReactElement, ReactNode } from 'react'
 import { fetchOverviewC2, fetchOverviewFindings, fetchTasks, type OverviewC2View, type OverviewFindingsView, type TasksView } from '../../features/overview/remote';
 import { listEngagements } from '../../features/projects/remote';
 import { go } from '../../router/navigate'
-import { showCreateProject } from '../create-project-dialog'
+import { showCreateProject } from '../../features/projects/create-dialog-state'
 import { parseHash } from '../../router/history'
 import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui/index'
-import { utcMinute } from '../format'
+import { utcMinute } from '../../platform/format'
 
 const KIND_LABEL: Record<string, string> = {
   'scope-revision': 'Scope review',

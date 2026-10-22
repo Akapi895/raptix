@@ -6,7 +6,7 @@ import type { FleetBranchView } from '../../features/operations/remote';
 import type { RuntimeInstanceView } from '@raptix/web-contracts';
 import { InstanceMessenger } from './instance-messenger'
 import { Banner, Button, DescList, Textarea, cx } from '../../ui/index'
-import { utcMinuteOr } from '../format'
+import { utcMinuteOr } from '../../platform/format'
 
 type AgentTone = 'running' | 'done' | 'failed' | 'stopped'
 

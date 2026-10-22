@@ -7,7 +7,7 @@ import type { ReactElement } from 'react'
 import type { AuditEntryView } from './remote';
 import { go } from '../../router/navigate'
 import { Status } from '../../ui/index'
-import { utcMinute } from '../../real/format'
+import { utcMinute } from '../../platform/format'
 
 /** `labelFor` resolves an actor id to a name where the caller can (engagement members); by default the id is shown as recorded. */
 export function AuditTable({ entries, labelFor = (actorId: string) => actorId }: { entries: readonly AuditEntryView[]; labelFor?: (actorId: string) => string }): ReactElement {

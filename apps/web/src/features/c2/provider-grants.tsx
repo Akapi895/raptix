@@ -8,7 +8,7 @@
 import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { KeyRound, Loader2 } from 'lucide-react'
-import { utcMinute } from '../../real/format'
+import { utcMinute } from '../../platform/format'
 import { Button, Card, CardHeader, Empty, Input, Skeleton, Status, Textarea } from '../../ui/index'
 import { messageOf, useProviderGrants, useProviderWrites } from './provider-query'
 
