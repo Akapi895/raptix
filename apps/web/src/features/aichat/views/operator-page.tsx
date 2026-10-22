@@ -12,23 +12,20 @@
  * The shared chat cards/rail (aichat/common, g-workspace, tickets 39–44) keep
  * their legacy seams until their owners migrate.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ListTree, PanelRight, Plus, Sparkles } from 'lucide-react'
-import { useServices } from '../state/services'
-import { actorRef } from '../demo/persona'
-import { useQueryScope } from '../state/keys'
-import { createChatHandlers } from '../features/aichat/handlers'
-import { ChatReadError, useConversationList } from '../features/aichat/query'
-import { useProjectEligibility } from '../features/operations/views'
-import { sendChat } from '../demo/runtime'
-import { go, useRoute } from '../router/navigate'
-import { useActiveProject, useReadOnly } from '../state/console'
-import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
-import { useSessionStore } from '../state/session'
-import { Banner, Button, Drawer, Empty, PageHeader } from '../ui/index'
-import { AiSubNav, Composer, DefaultAiModePicker, NoProject, Pill, STARTERS, Thread } from '../features/aichat'
-import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from '../features/aichat/views/mock-workspace'
-import type { AiMode } from '../domain/entities'
+import { actorRef } from '../../../demo/persona'
+import { useQueryScope } from '../../../state/keys'
+import { ChatReadError, useAiDemo, useChatHandlers, useConversationList } from '../query'
+import { useProjectEligibility } from '../../operations/views'
+import { go, useRoute } from '../../../router/navigate'
+import { useActiveProject, useReadOnly } from '../../../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../../../state/stores'
+import { useSessionStore } from '../../../state/session'
+import { Banner, Button, Drawer, Empty, PageHeader } from '../../../ui/index'
+import { AiSubNav, Composer, DefaultAiModePicker, NoProject, Pill, STARTERS, Thread } from '../index'
+import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from './mock-workspace'
+import type { AiMode } from '../../../domain/entities'
 
 const LS_OPEN = 'raptix.ai.inspectorOpen'
 const readOpen = () => { try { return window.localStorage.getItem(LS_OPEN) !== '0' } catch { return true } }
@@ -45,7 +42,6 @@ export function AiOperator() {
   const readOnly = useReadOnly()
   const guarded = useSessionStore((s) => s.guarded)
   const toast = useToastStore((s) => s.toast)
-  const services = useServices()
   const scope = useQueryScope()
   const el = useProjectEligibility(pid)
   const vw = useViewportW()
@@ -56,10 +52,8 @@ export function AiOperator() {
   const [sheet, setSheet] = useState<'rail' | 'ctx' | null>(null)
   /* Typed chat handlers for the active actor/project scope; context is built
      per call so a switch never retargets an in-flight request. */
-  const chat = useMemo(
-    () => createChatHandlers(services, actorRef(scope.actor), scope.project),
-    [services, scope.actor, scope.project],
-  )
+  const chat = useChatHandlers(actorRef(scope.actor), scope.project)
+  const demo = useAiDemo()
   const convsQ = useConversationList()
   const convs = convsQ.data?.conversations ?? []
   const conv = convs.find((c) => c.id === route.id) || convs[0]
@@ -122,14 +116,14 @@ export function AiOperator() {
               <ConvBanner conv={conv} />
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
                 {conv.messages.length === 0 ? (
-                  <Empty icon={Sparkles} title="Start a new conversation" action={<div className="flex flex-wrap justify-center gap-2">{STARTERS.map((s) => <Button key={s} size="sm" disabled={ro} onClick={() => sendChat(conv.id, s)}>{s}</Button>)}</div>}>
+                  <Empty icon={Sparkles} title="Start a new conversation" action={<div className="flex flex-wrap justify-center gap-2">{STARTERS.map((s) => <Button key={s} size="sm" disabled={ro} onClick={() => demo.sendChat(conv.id, s)}>{s}</Button>)}</div>}>
                     Ask about {project.id} scope, agents or results. Answers are based on available project data only.
                   </Empty>
                 ) : <Thread conv={conv} />}
               </div>
               <div className="shrink-0 px-4 pb-3">
                 <Composer key={conv.id} conv={conv} />
-                {locked && <div className="mt-2 flex flex-wrap items-center gap-2 text-xs"><Button size="sm" onClick={() => sendChat(conv.id, 'Draft a plan outline for scope review')}>Save a draft plan outline</Button><span className="text-muted">Saved as Draft only. <Pill tone="bad">Request approval locked</Pill></span></div>}
+                {locked && <div className="mt-2 flex flex-wrap items-center gap-2 text-xs"><Button size="sm" onClick={() => demo.sendChat(conv.id, 'Draft a plan outline for scope review')}>Save a draft plan outline</Button><span className="text-muted">Saved as Draft only. <Pill tone="bad">Request approval locked</Pill></span></div>}
               </div>
             </>
           ) : (

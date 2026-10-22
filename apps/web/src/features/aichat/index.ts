@@ -2,3 +2,4 @@
 export * from './common'
 export { RealConversation, RealWorkspace } from './views/workspace'
 export { useChatHandlers } from './query'
+export { useAiDemo } from './query'
