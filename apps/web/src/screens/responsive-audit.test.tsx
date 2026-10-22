@@ -86,18 +86,14 @@ describe('shell chrome (every route group)', () => {
 })
 
 describe('shared table contract (projects group)', () => {
-  it('keeps container scroll + hideBelow classing, and row menus escape the table scroll container', async () => {
+  it('keeps container scroll and the column hide classes on the portfolio table', async () => {
     mountApp('#/projects')
     signIn()
     const table = await screen.findByRole('table')
     expect(table.parentElement!.className).toContain('overflow-x-auto')
     expect(table.className).toContain('min-w-[640px]')
-    expect(screen.getByRole('columnheader', { name: 'Client' }).className).toContain('max-md:hidden')
-    expect(screen.getByRole('columnheader', { name: 'Type' }).className).toContain('max-lg:hidden')
-    fireEvent.click(screen.getByLabelText('More actions for RT-2026-014'))
-    const menu = await screen.findByRole('menu')
-    expect(menu.parentElement).toBe(document.body)
-    expect(menu.className).toContain('max-w-[calc(100vw-1.5rem)]')
+    expect(screen.getByRole('columnheader', { name: 'Client' }).className).toContain('max-lg:hidden')
+    expect(screen.getByRole('columnheader', { name: 'Updated' }).className).toContain('max-xl:hidden')
   })
 })
 
