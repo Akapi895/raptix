@@ -61,10 +61,10 @@ function Operations() {
   /* Ticket 67 wave 4: the legacy A.executePlan entry, mirrored — the plan's
      project binding resolves through the plans feature's narrow read at call
      time and the bridge transaction runs with the store's exact request context. */
-  const executePlan = (planId: string) => {
+  const executePlan = async (planId: string) => {
     const projectId = mock.planProject(planId)
     if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-    const res = mock.createOperationFromPlan(projectId, planId)
+    const res = await mock.createOperationFromPlan(projectId, planId)
     return res.ok ? { ok: true as const, opId: res.data.opId } : { ok: false as const, error: res.failure.message }
   }
   return (
@@ -79,7 +79,7 @@ function Operations() {
         const ready = allProjects ? [] : read?.readyPlans ?? []
         return ready.length > 0 && <Banner tone="info" icon={ClipboardCheck} title={`${ready.length} approved plan${ready.length === 1 ? '' : 's'} ready for an operation`}>
           <ul className="mt-1 space-y-1.5">{ready.map((pl) => <li key={pl.id} className="flex flex-wrap items-center gap-2 text-sm"><IdLink onClick={() => go('ai-plan-review', { id: pl.id })}>{pl.id} {pl.ver}</IdLink><span className="min-w-0 truncate">{pl.title}</span>
-            <Button size="sm" variant="primary" disabled={!canCreate} title={canCreate ? 'Creates a draft operation from this approved plan. Preflight still has to pass before it can start.' : createWhy} onClick={() => { const r = executePlan(pl.id); if (r.ok && r.opId) { toast(`Draft ${r.opId} created from ${pl.id}. Run preflight before starting.`); go('operation', { id: r.opId, tab: 'overview' }) } else toast(r.error || 'Cannot create the operation.', 'bad') }}>Create Operation from plan</Button></li>)}</ul>
+            <Button size="sm" variant="primary" disabled={!canCreate} title={canCreate ? 'Creates a draft operation from this approved plan. Preflight still has to pass before it can start.' : createWhy} onClick={async () => { const r = await executePlan(pl.id); if (r.ok && r.opId) { toast(`Draft ${r.opId} created from ${pl.id}. Run preflight before starting.`); go('operation', { id: r.opId, tab: 'overview' }) } else toast(r.error || 'Cannot create the operation.', 'bad') }}>Create Operation from plan</Button></li>)}</ul>
         </Banner>
       })()}
       {techF && <Banner tone="info" title={`Showing operations that test technique ${techF}`} action={<Button size="sm" onClick={() => setFilter('operations.technique', '')}>Clear technique filter</Button>}>Only operations with at least one step using this technique are listed.</Banner>}

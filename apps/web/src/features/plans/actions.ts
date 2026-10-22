@@ -7,7 +7,6 @@ import { readActor } from '../../auth/identity'
 import { useAuthStore } from '../../state/stores'
 import type { ConsoleServices } from '../../domain/console-services'
 import type { Plan } from '../../domain/entities'
-import { createOperationFromPlanTransaction } from './bridge'
 import { projectOfPlan } from './service'
 import { readPlanChecksNow } from './projection'
 import {
@@ -65,10 +64,11 @@ export function usePlanActions() {
       const res = discardPlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
-    execute: (planId: string): { ok: boolean; opId?: string; error?: string } => {
+    execute: async (planId: string): Promise<{ ok: boolean; opId?: string; error?: string }> => {
       const projectId = planProjectOf(planId)
       if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
-      const res = createOperationFromPlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
+      const ctx = actorCtxOf(services, projectId)
+      const res = await services.plansBridge(ctx.actor, projectId).createOperation(ctx, planId)
       return res.ok ? { ok: true, opId: res.data.opId } : { ok: false, error: res.failure.message }
     },
   }
