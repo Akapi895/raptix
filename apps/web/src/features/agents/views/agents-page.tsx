@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
-import { useServices } from '../state/services'
-import { USERS } from '../domain/catalog';
-import { type Agent, type Group } from '../domain/entities'
-import { replaceOperationAgent } from '../features/operations/service'
-import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui/index'
-import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from '../ui/d-shared'
-import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../features/agents/query'
-import type { AgentKpi } from '../features/agents/service'
-import { BRANCH_LABEL } from '../domain/catalog';
-import { go, selectProject, useRoute } from '../router/navigate'
-import { useAccessible, useCan, useMe, useScoped } from '../state/console'
-import { useGroupOptions, useAssignmentOptions, useAgentRecovery } from '../features/agents/projection'
-import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
-import { useSessionStore } from '../state/session'
-import { stamp } from '../demo/display-clock'
-import { recordAudit } from '../features/audit/service'
-import { loseAgent, restoreAgent } from '../demo/runtime'
-import { submitApprovalTransaction } from '../features/approvals/service'
-import { setAgentStatusTransaction } from '../features/agents/writes'
+import { useServices } from '../../../state/services'
+import { USERS } from '../../../domain/catalog';
+import { type Agent, type Group } from '../../../domain/entities'
+import { replaceOperationAgent } from '../../operations/service'
+import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../../../ui/index'
+import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from '../../../ui/d-shared'
+import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../query'
+import type { AgentKpi } from '../service'
+import { BRANCH_LABEL } from '../../../domain/catalog';
+import { go, selectProject, useRoute } from '../../../router/navigate'
+import { useAccessible, useCan, useMe, useScoped } from '../../../state/console'
+import { useGroupOptions, useAssignmentOptions, useAgentRecovery } from '../projection'
+import { useProjectStore, useToastStore, useUiStore } from '../../../state/stores'
+import { useSessionStore } from '../../../state/session'
+import { stamp } from '../../../demo/display-clock'
+import { recordAudit } from '../../audit/service'
+import { loseAgent, restoreAgent } from '../../../demo/runtime'
+import { submitApprovalTransaction } from '../../approvals/service'
+import { setAgentStatusTransaction } from '../writes'
 
 const POLICIES = ['Project use only', 'Shared with approval', 'Observe only (no execution)']
 const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle', lost: 'Disconnected', disabled: 'Disabled', unknown: 'Unknown', unhealthy: 'Unhealthy' }
