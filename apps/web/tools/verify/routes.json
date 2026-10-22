@@ -182,7 +182,10 @@
       "path": "assets?engagement={project}",
       "expect": {
         "mock": "Assets",
-        "real": "Assets"
+        "real": {
+          "text": "stack-host-01.verify.example.test",
+          "in": "main"
+        }
       }
     },
     {
@@ -205,7 +208,11 @@
       "key": "asset",
       "path": "asset/{asset}?engagement={project}",
       "expect": {
-        "mock": "web-01 AS-0141"
+        "mock": "web-01 AS-0141",
+        "real": {
+          "text": "stack-host-01.verify.example.test",
+          "in": "main"
+        }
       }
     },
     {
@@ -213,7 +220,10 @@
       "path": "playbooks",
       "expect": {
         "mock": "Skill library",
-        "real": "Skill library"
+        "real": {
+          "text": "in the corpus",
+          "in": "main"
+        }
       }
     },
     {
@@ -390,7 +400,7 @@
       "key": "ai-fanout",
       "path": "ai-fanout?engagement={project}",
       "expect": {
-        "mock": "Execution Graph",
+        "mock": "Execution Graph BG-014-01",
         "real": "Observed fanout"
       }
     },
