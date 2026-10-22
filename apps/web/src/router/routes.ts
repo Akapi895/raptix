@@ -39,7 +39,7 @@ const feature = (title: string, panels: readonly PanelGroup[]): RealSurface => (
 const component = (load: () => Promise<ComponentType>): RealSurface => ({ kind: 'component', load })
 
 const BASE_ROUTES: Record<string, RouteDeclaration> = {
-  login: { slice: 'a', real: component(() => import('../real/screens/login').then((m) => m.RealLogin)) },
+  login: { slice: 'a', real: component(() => import('../shell/real-login').then((m) => m.RealLogin)) },
   forbidden: { slice: 'a', real: system },
   notfound: { slice: 'a', real: system },
   error: { slice: 'a', real: system },
