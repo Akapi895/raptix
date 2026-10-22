@@ -15,7 +15,7 @@ vi.mock('../../state/keys', async (importOriginal) => ({
 const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query')
-const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
+const { RealFeatureServicesCtx } = await import('../../state/real-services-provider')
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { PlanningTab } = await import('./tab')
 

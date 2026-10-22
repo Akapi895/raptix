@@ -18,7 +18,7 @@ import { RealContext } from '../state/real-context'
 import { createConsoleQueryClient } from '../state/keys'
 import { Button } from '../ui/index'
 import { RealLoginGate } from './screens/login'
-import { RealFeatureServicesProvider } from './service-adapter/provider'
+import { RealFeatureServicesProvider } from '../state/real-services-provider'
 
 export { REAL_IDENTITY, REAL_PERSONA, type RealIdentity } from '../state/real-identity'
 
