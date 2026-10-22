@@ -97,11 +97,12 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
      ts format (hhmm + seconds). */
   const pushLog = (opId: string, line: Omit<LogLine, 'id' | 'ts'>) =>
     useSessionStore.getState().pushLog(opId, line, mock.display.hhmm() + ':' + pad(new Date().getSeconds()))
-  const pauseOp = async (opId: string, reason: string) => {
+  const pauseOp = async (opId: string, reason: string): Promise<string | undefined> => {
     const projectId = mock.projectOf(opId)
-    if (!projectId) return
+    if (!projectId) return 'Operation not found.'
     const res = await mock.pause(projectId, opId, reason)
-    if (res.ok) pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` })
+    if (!res.ok) return res.failure.message
+    pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` })
   }
   const resumeOp = async (opId: string) => {
     const projectId = mock.projectOf(opId)
@@ -111,10 +112,11 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: `Operation resumed by ${me.name}` })
     return { ok: true }
   }
-  const stopOp = async (opId: string, reason: string) => {
+  const stopOp = async (opId: string, reason: string): Promise<string | undefined> => {
     const projectId = mock.projectOf(opId)
-    if (!projectId) return
-    await mock.stop(projectId, opId, reason)
+    if (!projectId) return 'Operation not found.'
+    const res = await mock.stop(projectId, opId, reason)
+    return res.ok ? undefined : res.failure.message
   }
   const completeOp = async (opId: string) => {
     const projectId = mock.projectOf(opId)
@@ -129,7 +131,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     title: `Pause ${op.id}?`,
     body: <div className="space-y-2"><p>No new steps are dispatched until you resume. Steps already running finish or time out; progress does not advance while paused.</p><ul className="list-disc space-y-0.5 pl-5 text-muted"><li>{c.running} running step(s) finish first</li><li>{c.pending + c.review} queued or review step(s) wait</li><li>{sessions.length} linked session(s) stay connected, read-only</li></ul><p className="text-muted">The action is audited.</p></div>,
     confirmLabel: 'Pause operation', reasonLabel: 'Reason for pausing', reasonRequired: true,
-    onConfirm: async (r) => { await pauseOp(op.id, r); toast('Operation paused.', 'warn') },
+    onConfirm: async (r) => { const refusal = await pauseOp(op.id, r); if (refusal) return refusal; toast('Operation paused.', 'warn') },
   })
   const resume = async () => {
     const read = await mock.preflightChecks(op.projectId, op.id)
@@ -149,7 +151,8 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
       onConfirm: async () => {
         if (!okAll) { const msg = `Cannot resume: ${rows.filter((r) => !r[1]).map((r) => r[0]).concat(checks.filter((x) => x.state !== 'pass').map((x) => x.label)).join('; ') || 'preflight re-evaluation failed'}.`; onError(msg); toast('Resume blocked by recheck.', 'bad'); return }
         const r = await resumeOp(op.id)
-        if (r.ok) { onError(''); toast('Rechecks passed. Operation resumed.') } else { onError(r.error || 'Cannot resume.'); toast(r.error || 'Cannot resume.', 'bad') }
+        if (r.ok) { onError(''); toast('Rechecks passed. Operation resumed.'); return }
+        return r.error || 'Cannot resume.'
       },
     })
   }
@@ -158,7 +161,14 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     body: <div className="space-y-2"><p>A graceful stop. The operation moves to <b>Stopping</b>, then <b>Stopped</b>, and cannot be resumed.</p>
       <ul className="list-disc space-y-0.5 pl-5 text-muted"><li>{c.running} running step(s) become “Unknown”</li><li>{c.pending + c.review} queued step(s) become “Not run”</li><li>{sessions.length} linked session(s) are terminated</li></ul><p className="text-muted">Results so far are kept as partial results. Audited.</p></div>,
     confirmLabel: 'Stop operation', danger: true, reasonLabel: 'Reason for stopping', reasonRequired: true,
-    onConfirm: (r) => { setStopping(true); onError(''); toast('Stop requested. Stopping…', 'warn'); setTimeout(async () => { await stopOp(op.id, r); setStopping(false); toast('Operation stopped.', 'warn') }, 1400) },
+    onConfirm: async (r) => {
+      onError('')
+      const refusal = await stopOp(op.id, r)
+      if (refusal) return refusal
+      setStopping(true)
+      toast('Stop requested. Stopping…', 'warn')
+      setTimeout(() => { setStopping(false); toast('Operation stopped.', 'warn') }, 1400)
+    },
   })
   const complete = async () => { const r = await completeOp(op.id); if (r.ok) { onError(''); toast('Operation completed.'); go('operation', { id: op.id, tab: 'results' }) } else { onError(r.error || ''); toast(r.error || 'Cannot complete.', 'bad') } }
   const G = ({ ok, w, children }: { ok: boolean; w: string; children: React.ReactNode }) => <Gated allowed={allowed && ok} reason={!allowed ? why : w}>{children}</Gated>
