@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('./api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/scope/remote')>()
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     decideScopeRevision: vi.fn(),

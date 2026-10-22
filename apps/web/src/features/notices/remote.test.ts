@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('./api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/notices/remote')>()
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     fetchNotices: vi.fn(),
