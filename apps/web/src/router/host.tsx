@@ -24,7 +24,6 @@ import { RealPortfolio } from '../features/projects/views/portfolio-page'
 import { RealProjectNewRoute } from '../features/projects/views/create-page'
 import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
-import { RealOverview } from '../real/screens/overview'
 import { RealGlobalResource } from '../real/screens/global-resource'
 import { RealCommandCenter } from '../real/screens/command-center'
 import { RealLogin } from '../real/screens/login'
@@ -49,7 +48,6 @@ const AssetMapRoute = lazy(() => import('../features/asset-map/AssetMapPage').th
  * read) instead of a second hand-written array — see route-table.ts for why.
  */
 const REAL_PAGES: Record<string, ComponentType | undefined> = {
-  overview: RealOverview,
   projects: RealPortfolio,
   'project-new': RealProjectNewRoute,
   project: RealProjectDetail,

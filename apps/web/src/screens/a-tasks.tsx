@@ -9,13 +9,17 @@ import { decidePlanTransaction } from '../features/plans/service'
 import { readPlanProject } from '../features/plans/bridge'
 import { decideSessionRequestTransaction } from '../features/c2/grants'
 import { readSessionRequestMeta } from '../features/c2/projection'
-import { Button, Card, Empty, Gated, Mono, PageHeader, PageSkeleton, Segmented, Status, cx } from '../ui/index'
-import { ErrorNotice } from './a-dashboard'
+import { Banner, Button, Card, Empty, Gated, Mono, PageHeader, PageSkeleton, Segmented, Status, cx } from '../ui/index'
 import { useConsoleGo } from './dashboard/use-dashboard'
 import { formatCountdown } from '../domain/dashboard'
 import { useTasks } from './tasks/use-tasks'
 import { minutesLeft, TASK_KINDS } from './tasks/domain'
 import type { TaskItem, TaskKind } from './tasks/domain'
+
+/** The tasks inbox read failed: the message comes from the read, with a retry. */
+const ErrorNotice = ({ message, retry }: { message?: string; retry: () => void }) => (
+  <Banner tone="bad" title="The task inbox could not be loaded" action={<Button size="sm" onClick={retry}>Try again</Button>}>{message || "The task read failed."}</Banner>
+)
 
 const KIND_LABEL: Record<TaskKind, string> = { project: 'Projects', scope: 'Scope', closure: 'Closure', plan: 'Plans', access: 'Access', report: 'Reports', finding: 'Findings' }
 
