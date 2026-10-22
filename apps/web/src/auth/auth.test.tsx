@@ -13,7 +13,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { seed } from '../demo/seed';
 import { USERS } from '../domain/catalog';
 import { type Role } from '../domain/entities'
-import { Login } from '../screens/a-login'
+import { Login } from '../demo/login-page'
 import { mountServices } from '../test/helpers'
 import { ServicesProvider } from '../state/services'
 import { useAuthStore, useUiStore } from '../state/stores'
