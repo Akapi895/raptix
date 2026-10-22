@@ -9,12 +9,12 @@
  * authorization reasons come from the shared permission policy (ticket 06)
  * so UI hints and handler refusals state the same rule.
  */
-import { can, projectLocked } from '../domain/policy'
-import type { Project } from '../domain/entities'
+import { can, projectLocked } from '../../domain/policy'
+import type { Project } from '../../domain/entities'
 import type {
   ActorRef, ListResult, ReadResult, RequestContext, ServiceFailure, ServiceResult,
-} from '../domain/service'
-import type { ConsoleServices } from '../domain/console-services';
+} from '../../domain/service'
+import type { ConsoleServices } from '../../domain/console-services';
 
 /** Query-facing error carrying the typed service failure into the error state. */
 export class ServiceReadError extends Error {

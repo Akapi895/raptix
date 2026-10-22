@@ -17,20 +17,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { seed } from '../../demo/seed';
+import { seed } from '../seed';
 import { setActiveRouter } from '../../router/active'
 import type { ActorRef } from '../../domain/service'
-import { createConsoleServices } from '../../demo/services';
+import { createConsoleServices } from '../services';
 import type { ConsoleServices } from '../../domain/console-services';
 import { resetSharedStores, useProjectStore } from '../../state/stores'
 import { resetSessionStores, useSessionStore } from '../../state/session'
 import { resetNavStores, go, selectProject } from '../../router/navigate'
 import { Sidebar } from '../../shell/sidebar'
-import { stamp } from '../../demo/display-clock'
+import { stamp } from '../display-clock'
 import { mountServices } from '../../test/helpers'
-import { ProjectPage } from '../b-detail'
+import { ProjectPage } from './project-page'
 import { detailFor, projectDetailForScope } from './service'
-import { aggregateFor } from '../dashboard/service'
+import { aggregateFor } from '../../screens/dashboard/service'
 import { readiness, completion, eligibility } from '../../domain/dashboard'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setActiveRouter(null); window.location.hash = '' })
@@ -460,11 +460,11 @@ describe('secondary panels on the typed detail read (ticket 23)', () => {
 
   it('the detail shell files read the typed service, never the legacy database', () => {
     const DB_READ = /\bdb\.|[{,]\s*db\s*[,}]/
-    for (const f of ['src/screens/b-detail.tsx', 'src/screens/b-detail2.tsx']) {
+    for (const f of ['src/demo/project-detail/project-page.tsx', 'src/demo/project-detail/project-tabs.tsx']) {
       const src = readFileSync(join(process.cwd(), f), 'utf8')
       expect(src, f).not.toMatch(DB_READ)
     }
-    expect(readFileSync(join(process.cwd(), 'src/screens/b-detail.tsx'), 'utf8')).toMatch(/useProjectDetail\(/)
-    expect(readFileSync(join(process.cwd(), 'src/screens/b-detail2.tsx'), 'utf8')).toMatch(/ProjectDetail/)
+    expect(readFileSync(join(process.cwd(), 'src/demo/project-detail/project-page.tsx'), 'utf8')).toMatch(/useProjectDetail\(/)
+    expect(readFileSync(join(process.cwd(), 'src/demo/project-detail/project-tabs.tsx'), 'utf8')).toMatch(/ProjectDetail/)
   })
 })

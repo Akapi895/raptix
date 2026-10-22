@@ -7,8 +7,8 @@ vi.useFakeTimers()
 const { mountServices } = await import('../helpers')
 const { evaluateCloseChecklist: closureChecklist, confirmCloseTransaction, requestCloseTransaction } = await import('../../features/closure/service')
 const { useDb, useMe } = await import('../../state/console')
-const { CloseTab } = await import('../../screens/b-detail2')
-const { detailFor } = await import('../../screens/project-detail/service')
+const { CloseTab } = await import('../../demo/project-detail/project-tabs')
+const { detailFor } = await import('../../demo/project-detail/service')
 
 afterEach(() => {
   cleanup()
