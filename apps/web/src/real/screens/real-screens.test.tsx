@@ -12,7 +12,7 @@ const { RealModeProvider } = await import('../bootstrap')
 const { RealPortfolio } = await import('../../features/projects/views/portfolio-page')
 const { RealProjectCreateDialog, RealProjectNewRoute } = await import('../../features/projects/views/create-page')
 const { useCreateProjectDialog, showCreateProject } = await import('../create-project-dialog')
-const { RealProjectDetail } = await import('../../features/projects/views/detail-page')
+const { RealProjectDetail } = await import('./detail')
 const { go } = await import('../../router/navigate')
 
 const CAPS = {

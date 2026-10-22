@@ -7,7 +7,7 @@
 import { useMemo } from 'react'
 import { useMutation, useQuery, type useQueryClient } from '@tanstack/react-query'
 import { createEngagement, engagementToProject, listEngagements, type CreateEngagementInput } from './remote';
-import { fetchMembers } from '../team/remote';
+import { fetchMembers } from '../team';
 import { REAL_IDENTITY } from '../../real/identity'
 import { useCapabilityReady } from '../../real/bootstrap'
 import type { Project, Role } from '../../domain/entities'

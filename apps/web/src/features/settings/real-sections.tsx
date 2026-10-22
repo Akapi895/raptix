@@ -8,13 +8,12 @@
  */
 import { useState, type ReactElement } from 'react'
 import { Loader2, Save, Settings as SettingsIcon } from 'lucide-react'
-import { useWorkspaceAudit } from '../audit/query';
+import { AuditTable, useWorkspaceAudit } from '../audit';
 import { useRuntimeCapabilities, useWorkspaceSettingWrite, useWorkspaceSettings } from './query';
 import { REAL_IDENTITY } from '../../real/identity'
 import { utcMinuteOr } from '../../real/format'
 import { go } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Skeleton, Status } from '../../ui/index'
-import { AuditTable } from '../audit/table'
 
 const PROVIDER_LABEL: Record<string, string> = {
   projects: 'Engagements API',

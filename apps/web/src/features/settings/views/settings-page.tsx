@@ -3,7 +3,7 @@ import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRoun
 import { useServices } from '../../../state/services'
 import { useDirty } from '../../../state/session'
 import { ROLE_LABEL } from '../../../domain/policy'
-import { recordAudit } from '../../audit/service'
+import { recordAudit } from '../../audit'
 import { signOut } from '../../../demo/persona'
 import { USERS, TECHNIQUES } from '../../../domain/catalog';
 import { type Integration, type Policy, type Retention, type Role, type DetectState } from '../../../domain/entities'
