@@ -180,6 +180,14 @@ function runWorkspaceClick(env, manifestFile, appUrl) {
   return result.status;
 }
 
+function runLayoutCheck(env, manifestFile, appUrl) {
+  const clickOut = path.join(out, 'flows-layout-click.json');
+  const result = spawnSync(process.execPath, [path.join(here, 'flows', 'layout-click.mjs'), '--app', appUrl, '--fixtures', manifestFile, '--out', clickOut, '--shots', out], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  writeFileSync(path.join(out, 'flows-layout-click.log'), `${result.stdout}${result.stderr}`);
+  process.stdout.write(result.stdout);
+  return result.status;
+}
+
 function runAnalysisClick(env, manifestFile, mode, appUrl) {
   const clickOut = path.join(out, `flows-analysis-click-${mode}.json`);
   const result = spawnSync(process.execPath, [path.join(here, 'flows', 'analysis-click.mjs'), '--mode', mode, '--app', appUrl, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
@@ -298,6 +306,7 @@ try {
     statuses.push(runSettingsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
     statuses.push(runProjectsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
     statuses.push(runWorkspaceClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, app));
+    statuses.push(runLayoutCheck({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, app));
     statuses.push(runAnalysisClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
     statuses.push(runGateClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest));
     statuses.push(runFlows({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest));
