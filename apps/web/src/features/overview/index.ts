@@ -4,4 +4,5 @@
  */
 export { routes } from './routes'
 export { createRealOverviewService } from './remote'
+export { RealGlobalResource } from './views/global-resource'
 export type { OverviewC2, OverviewCommand, OverviewFindings, OverviewProject, OverviewService, OverviewTask, OverviewTaskKind } from './service'
