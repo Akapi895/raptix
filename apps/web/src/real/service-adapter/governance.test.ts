@@ -5,8 +5,8 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/governance/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/governance/remote')>()
+vi.mock('../../features/governance/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/governance/api')>()
   return {
     ...actual,
     fetchPlans: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('../../features/governance/remote', async (importOriginal) => {
   }
 })
 
-const api_governance = await import('../../features/governance/remote');
+const api_governance = await import('../../features/governance/api');
 const { ApiTransportError } = await import('../../platform/transport')
 const { createRealGovernanceService } = await import('./governance')
 

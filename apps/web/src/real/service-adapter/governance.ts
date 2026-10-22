@@ -1,6 +1,6 @@
 import type { RequestContext } from '../../domain/service'
 import type { EmergencyStop, GovernanceBinding, GovernancePlan, GovernanceSchedule, GovernanceService, PlanInput, StopOutcome } from '../../features/governance/service'
-import { bindPlan, cancelSchedule, comparePlans, createSchedule, decidePlan, fetchEmergencyStops, fetchPlans, fetchPreflight, fetchSchedules, proposePlan, requestEmergencyStop, rescheduleSchedule, resolveEmergencyStop, revisePlan, savePlan, type EmergencyStopView, type PlanView, type ScheduleView } from '../../features/governance/remote';
+import { bindPlan, cancelSchedule, comparePlans, createSchedule, decidePlan, fetchEmergencyStops, fetchPlans, fetchPreflight, fetchSchedules, proposePlan, requestEmergencyStop, rescheduleSchedule, resolveEmergencyStop, revisePlan, savePlan, type EmergencyStopView, type PlanView, type ScheduleView } from '../../features/governance/api';
 import { listThreads } from '../../features/aichat/remote';
 import { guarded } from '../../platform/adapter-shared'
 
