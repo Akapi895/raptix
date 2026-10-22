@@ -4,7 +4,7 @@
  * auth/system slice stays in the main bundle so the login screen renders without a chunk round-trip.
  */
 import { lazy, type ComponentType } from 'react'
-import { routes as systemRoutes } from '../screens/a'
+import { routes as systemRoutes } from './slice-a'
 import { ROUTES, type Slice } from './routes'
 import { setKnownPages } from './history'
 
