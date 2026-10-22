@@ -196,6 +196,14 @@ function runAnalysisClick(env, manifestFile, mode, appUrl) {
   return result.status;
 }
 
+function runMockFlowClick(env, manifestFile, script, name, appUrl) {
+  const clickOut = path.join(out, `flows-${name}-click-mock.json`);
+  const result = spawnSync(process.execPath, [path.join(here, 'flows', script), '--mode', 'mock', '--app', appUrl, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  writeFileSync(path.join(out, `flows-${name}-click-mock.log`), `${result.stdout}${result.stderr}`);
+  process.stdout.write(result.stdout);
+  return result.status;
+}
+
 function runGateClick(env, manifestFile) {
   const clickOut = path.join(out, 'flows-runtime-gate-click.json');
   const result = spawnSync(process.execPath, [path.join(here, 'flows', 'runtime-gate-click.mjs'), '--app', env.RAPTIX_VERIFY_APP, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
@@ -298,6 +306,8 @@ try {
     statuses.push(runSettingsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
     statuses.push(runProjectsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
     statuses.push(runAnalysisClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
+    statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'operations-click.mjs', 'operations', mockApp));
+    statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'agents-click.mjs', 'agents', mockApp));
   }
   if (modes.split(',').includes('real')) {
     statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
