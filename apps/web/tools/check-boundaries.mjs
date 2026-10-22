@@ -105,7 +105,8 @@ for (const abs of walk(SRC)) {
     if (target === null) continue;
     const targetNoExt = stripExt(target);
     if (isPresentation(rel) && /^real\//.test(targetNoExt)) report('presentation-imports-real', rel, sf, node, targetNoExt);
-    if (isPresentation(rel) && /^features\/[^/]+\/(remote|mock)$/.test(targetNoExt)) report('presentation-imports-adapter', rel, sf, node, targetNoExt);
+    // api.ts is the wire layer behind remote.ts (the real adapter): presentation must not reach either.
+    if (isPresentation(rel) && /^features\/[^/]+\/(remote|api|mock)$/.test(targetNoExt)) report('presentation-imports-adapter', rel, sf, node, targetNoExt);
     if (!demoSide && !composition && matches(DEMO_SIDE, targetNoExt)) {
       report(typeOnly ? 'production-type-imports-demo' : 'production-imports-demo', rel, sf, node, targetNoExt);
     }
