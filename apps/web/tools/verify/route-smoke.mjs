@@ -1,7 +1,9 @@
 // Route smoke for the web console. For each mode it signs in (mock: a persona from the demo quick picker; real: the login
 // form, then the session endpoint) and opens every route in tools/verify/routes.json. A route passes only when the screen
-// it declares is shown: a page heading (the h1 inside main) or a visible text. Errors, render-boundary fallbacks and
-// missing expectations always count. Failures listed in tools/verify/baseline.json are reported but do not fail the run.
+// it declares is shown: a page heading (the h1 inside main) or a visible text. Errors, render-boundary fallbacks and missing
+// expectations always count. Failed API responses are listed as information: shell components request runtime services the stack
+// may not run (fleet, threads, C2), and those requests fire unevenly across routes. Failures listed in tools/verify/baseline.json
+// are reported but do not fail the run.
 // Usage: node tools/verify/route-smoke.mjs [--modes mock,real] [--routes a,b] [--fixtures-mock f.json] [--fixtures-real f.json] [--out result.json] [--discover]
 //   --discover: records what each route shows in each mode and exits 0; use it to write expectations, not as a gate.
 // Env: RAPTIX_VERIFY_APP (default http://127.0.0.1:5273), RAPTIX_VERIFY_USER and RAPTIX_VERIFY_PASSWORD (real mode),
@@ -70,12 +72,21 @@ async function signIn(page, mode) {
 }
 
 // What the page shows: the heading of main, the visible text and whether the render boundary caught a crash.
-async function observe(page) {
+async function observe(page, expect) {
+  // The expected heading or text is awaited, so a screen that renders after its first paint is judged on its loaded content.
+  if (typeof expect === 'string') {
+    await page.locator('main h1').getByText(expect, { exact: true }).first().waitFor({ timeout: 10000 }).catch(() => {});
+  } else if (expect && typeof expect.text === 'string') {
+    const scope = expect.in === 'body' ? page.locator('body') : page.locator('main').first();
+    await scope.getByText(expect.text).first().waitFor({ timeout: 10000 }).catch(() => {});
+  }
   await Promise.race([
     page.locator('main h1').first().waitFor({ timeout: 8000 }),
     page.getByText(BOUNDARY_TEXT).first().waitFor({ timeout: 8000 }),
     page.locator('[role="status"]').first().waitFor({ timeout: 8000 }),
   ]).catch(() => {});
+  // Requests the screen starts after its first paint (a card, a follow-up read) count too, so the judgement waits for them.
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(300);
   const heading = normalize(await page.locator('main h1').first().innerText({ timeout: 1000 }).catch(() => ''));
   const body = normalize(await page.locator('body').innerText().catch(() => ''));
@@ -110,6 +121,8 @@ async function runMode(browser, mode) {
   page.on('pageerror', (error) => pageErrors.push(error.message));
   let consoleErrors = [];
   page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text().slice(0, 600)); });
+  let badResponses = [];
+  page.on('response', (response) => { if (response.status() >= 400) badResponses.push(`${response.status()} ${response.url().slice(0, 200)}`); });
   const rows = {};
   let signedIn;
   try {
@@ -132,8 +145,9 @@ async function runMode(browser, mode) {
     }
     pageErrors = [];
     consoleErrors = [];
+    badResponses = [];
     await page.goto(target, { waitUntil: 'domcontentloaded' });
-    const observed = await observe(page);
+    const observed = await observe(page, expect);
     const verdict = discover ? { ok: true } : judge(expect, observed, pageErrors);
     rows[entry.key] = {
       status: verdict.ok ? 'pass' : 'fail',
@@ -141,10 +155,11 @@ async function runMode(browser, mode) {
       detail: verdict.detail,
       expected: expect ?? null,
       heading: observed.heading,
-      sample: observed.main.slice(0, 200),
+      sample: observed.main.slice(0, 1500),
       boundary: observed.boundary,
       pageErrors: [...pageErrors],
       consoleErrors: [...consoleErrors],
+      badResponses: [...badResponses],
     };
   }
   await context.close();
@@ -183,5 +198,7 @@ console.log(`route-smoke: ${selected.length} routes x ${modes.length} mode(s); n
 for (const id of newFailures) console.log(`  FAIL ${id}`);
 for (const id of declared) console.log(`  declared ${id} (${baseline[id]})`);
 for (const id of resolved) console.log(`  resolved ${id}: remove it from tools/verify/baseline.json`);
+const apiNotes = Object.entries(report.modes).flatMap(([mode, result]) => Object.entries(result.rows).filter(([, row]) => row.badResponses?.length).map(([key, row]) => `${mode}:${key} ${row.badResponses[0]}`));
+for (const note of apiNotes) console.log(`  api response >= 400 (information, not judged): ${note}`);
 if (counts.length === 0) console.log('  no mode ran');
 if (!discover && newFailures.length > 0) process.exitCode = 1;

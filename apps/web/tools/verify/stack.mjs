@@ -101,7 +101,22 @@ async function seed(api, owner) {
   await request(api, owner, 'POST', `${prefix}/curated-findings/${finding.id}/transition`, { to: 'review', expectedVersion: finding.version ?? 1 });
   const reviewerSession = await login(api, 'reviewer', reviewerPassword);
   await request(api, reviewerSession, 'POST', `${prefix}/curated-findings/${finding.id}/transition`, { to: 'confirmed', expectedVersion: (finding.version ?? 1) + 1 });
-  return { project: project.id, finding: finding.id, evidence: capture.id, report: report.id, viewer: { username: 'viewer', password: viewerPassword }, reviewer: { username: 'reviewer', password: reviewerPassword } };
+  // The asset detail route needs an imported host.
+  await request(api, owner, 'POST', `${prefix}/assets/inventory/import`, { identifiers: ['stack-host-01.verify.example.test'], kind: 'host' });
+  const inventory = await request(api, owner, 'GET', `${prefix}/assets/inventory`);
+  // The library reads come from the knowledge graph (Neo4j), which this stack does not start: without it the library routes are not registered.
+  const probe = await fetch(`${api}/api/library`, { headers: { cookie: owner.cookie } });
+  const library = {};
+  if (probe.status === 200) {
+    const view = await request(api, owner, 'GET', '/api/library');
+    const skill = view.skills.find((candidate) => candidate.mitreIds.length > 0) ?? view.skills[0];
+    const skillDetail = await request(api, owner, 'GET', `/api/library/skills/${encodeURIComponent(skill.name)}`);
+    const proposal = await request(api, owner, 'POST', `${prefix}/library-proposals`, { skillName: skill.name, proposedBody: `${skillDetail.body}\n<!-- stack verification -->\n`, rationale: 'Generated proposal for the route smoke.' });
+    Object.assign(library, { playbook: skill.name, technique: skill.mitreIds[0], proposal: proposal.id });
+  } else {
+    log(`library fixtures not seeded: GET /api/library answers ${probe.status} because the stack runs without the knowledge graph`);
+  }
+  return { project: project.id, finding: finding.id, evidence: capture.id, report: report.id, asset: inventory.assets[0].id, knowledgeGraph: probe.status === 200, ...library, viewer: { username: 'viewer', password: viewerPassword }, reviewer: { username: 'reviewer', password: reviewerPassword } };
 }
 
 async function runSmoke(env, manifestFile, modesToRun, name) {
@@ -113,12 +128,17 @@ async function runSmoke(env, manifestFile, modesToRun, name) {
   return result.status;
 }
 
-function runFlows(env, manifestFile) {
-  const flowOut = path.join(out, 'flows-reports.json');
-  const result = spawnSync(process.execPath, [path.join(here, 'flows', 'reports.mjs'), '--app', env.RAPTIX_VERIFY_APP, '--fixtures', manifestFile, '--out', flowOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
-  writeFileSync(path.join(out, 'flows-reports.log'), `${result.stdout}${result.stderr}`);
+function runFlow(env, manifestFile, script, name) {
+  const flowOut = path.join(out, `${name}.json`);
+  const result = spawnSync(process.execPath, [path.join(here, 'flows', script), '--app', env.RAPTIX_VERIFY_APP, '--fixtures', manifestFile, '--out', flowOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  writeFileSync(path.join(out, `${name}.log`), `${result.stdout}${result.stderr}`);
   process.stdout.write(result.stdout);
   return result.status;
+}
+
+function runFlows(env, manifestFile) {
+  const statuses = [runFlow(env, manifestFile, 'reports.mjs', 'flows-reports'), runFlow(env, manifestFile, 'assets-library.mjs', 'flows-assets-library')];
+  return statuses.every((code) => code === 0) ? 0 : 1;
 }
 
 function stopChildren() {
@@ -177,7 +197,7 @@ try {
   const owner = await login(api, 'verifier', adminPassword);
   const fixtures = await seed(api, owner);
   const manifest = path.join(out, 'fixtures.real.json');
-  writeFileSync(manifest, JSON.stringify({ project: fixtures.project, finding: fixtures.finding, evidence: fixtures.evidence, report: fixtures.report }, null, 2));
+  writeFileSync(manifest, JSON.stringify({ project: fixtures.project, finding: fixtures.finding, evidence: fixtures.evidence, report: fixtures.report, asset: fixtures.asset, knowledgeGraph: fixtures.knowledgeGraph, playbook: fixtures.playbook, technique: fixtures.technique, proposal: fixtures.proposal }, null, 2));
   log(`fixtures written: ${manifest}`);
   const statuses = [];
   const viteBin = path.join(path.dirname(require.resolve('vite/package.json')), 'bin/vite.js');

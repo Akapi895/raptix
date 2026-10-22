@@ -3,15 +3,15 @@
   "real:operation-schedule": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:operation": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:agent": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:asset": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:playbook": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:technique": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:playbook-review": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:playbook": "fixture not seeded: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered.",
+  "real:technique": "fixture not seeded: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered.",
+  "real:playbook-review": "fixture not seeded: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered.",
   "real:ai-plan": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:ai-plan-review": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:ai-plan-compare": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:ai-branch": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:c2-channel": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
   "real:c2-session": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:c2-console": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  "real:c2-console": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
+  "real:playbooks": "the page shows Skill library unavailable: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered."
 }
