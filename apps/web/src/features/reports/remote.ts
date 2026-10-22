@@ -151,8 +151,11 @@ function parsePeriod(text: string): { start: string; end: string } | null {
  * version the caller last read, so a stale edit is refused rather than
  * overwriting a newer version.
  */
+const REAL_CAPABILITIES: ReportCapabilities = { noFindingsVariant: false, simulatedEditorHelpers: false, simulatedDraftRules: false, periodStyle: 'iso', artifactDownloads: true, revision: true, storedTemplates: true }
+
 export function createRealReportService(): ReportService {
   return {
+    capabilities: REAL_CAPABILITIES,
     list: (ctx, query: ReportListQuery = {}) => guarded(async () => {
       if (!ctx.projectId || ctx.projectId === 'all') return unavailable<ReportListRead>('Select an engagement to read its reports.')
       const rc = await readContext(ctx.projectId)
@@ -472,3 +475,4 @@ function toTemplate(template: ReportTemplateView): Template {
     sections: template.sections.map((section) => section.title),
   }
 }
+import type { ReportCapabilities } from './service'

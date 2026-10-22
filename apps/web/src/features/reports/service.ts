@@ -229,6 +229,7 @@ export interface DeliveryInput {
  * reaches it only through the feature's hooks.
  */
 export interface ReportService {
+  readonly capabilities: ReportCapabilities
   list(ctx: RequestContext, query?: ReportListQuery): Promise<ServiceResult<ReportListRead>>
   templates(ctx: RequestContext): Promise<ServiceResult<Template[]>>
   deliveries(ctx: RequestContext, query?: DeliveryListQuery): Promise<ServiceResult<DeliveryListRead>>
@@ -249,4 +250,22 @@ export interface ReportService {
   exportArtifact(ctx: RequestContext, id: string, format: 'json' | 'markdown' | 'pdf' | 'docx'): Promise<ServiceResult<ReportArtifactDownload>>
   deliver(ctx: RequestContext, id: string, input: DeliveryInput): Promise<ServiceResult<Report>>
   acknowledge(ctx: RequestContext, id: string, input: { deliveryId: string; receipt: string; requestId: string }): Promise<ServiceResult<ExportRec>>
+}
+
+/** What the active implementation supports (ADR-0096). Presentation branches on these flags, never on the data mode. */
+export interface ReportCapabilities {
+  /** The no-findings closure variant is offered when a report is created and edited. */
+  noFindingsVariant: boolean
+  /** Simulated editor helpers: scope insertion, filling empty sections and marked AI drafts. */
+  simulatedEditorHelpers: boolean
+  /** A draft needs a template and a reviewer on the client (the simulated rules). */
+  simulatedDraftRules: boolean
+  /** How a draft period is written: an ISO range from the server, or a display range in the simulated store. */
+  periodStyle: 'iso' | 'display'
+  /** Export artifacts (JSON, Markdown, PDF, DOCX) are downloaded from the server. */
+  artifactDownloads: boolean
+  /** A new version can be started from a delivered or returned report. */
+  revision: boolean
+  /** Templates are stored by the server and can be created here. */
+  storedTemplates: boolean
 }

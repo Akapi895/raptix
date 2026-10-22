@@ -664,12 +664,15 @@ export function acknowledgeDelivery(authority: DbAuthority, clock: Clock, ctx: R
 
 /** Builds the typed report service; `guard` is the factory's superseded-scope read guard.
  *  Reads observe scope cancellation; writes capture their context at call time and commit once. */
+const MOCK_CAPABILITIES: ReportCapabilities = { noFindingsVariant: true, simulatedEditorHelpers: true, simulatedDraftRules: true, periodStyle: 'display', artifactDownloads: false, revision: false, storedTemplates: false }
+
 export function createReportService(
   authority: DbAuthority,
   clock: Clock,
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ) {
   return {
+    capabilities: MOCK_CAPABILITIES,
     list: (ctx: RequestContext, query?: ReportListQuery) => guard(() => listReports(authority.snapshot(), ctx, query)),
     templates: (ctx: RequestContext) => guard(() => listTemplates(authority.snapshot(), ctx)),
     deliveries: (ctx: RequestContext, query?: DeliveryListQuery) => guard(() => listDeliveries(authority.snapshot(), ctx, query)),
@@ -697,3 +700,4 @@ export function createReportService(
     acknowledge: (ctx: RequestContext, id: string, input: { deliveryId: string; receipt: string; requestId: string }) => Promise.resolve(acknowledgeDelivery(authority, clock, ctx, id, input)),
   }
 }
+import type { ReportCapabilities } from './service'

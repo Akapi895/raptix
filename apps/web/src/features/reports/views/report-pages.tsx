@@ -6,9 +6,8 @@ import type { Report } from '../../../domain/entities'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../../../ui/index'
 import type { NoFind, RCheck, ReportEditorRead, ReportReviewRead } from '../service';
 import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../projection'
-import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../query'
+import { ReportReadError, useDraftOptions, useReportCapabilities, useReportEditor, useReportReview, useReportWrites } from '../query'
 import { useResourceScope } from '../../../state/resource-scope'
-import { isRealMode } from '../../../state/mode'
 import { saveArtifact } from '../../../real/artifact'
 import { fetchEffectiveScope } from '../../scope/remote';
 import type { ServiceResult } from '../../../domain/service'
@@ -105,6 +104,7 @@ function ReportHead({ r, sub, actions, tab }: { r: Report; sub?: ReactNode; acti
  * `go` (dirty cleared first — the unsaved guard must not hold the redirect).
  */
 export function ReportNew() {
+  const caps = useReportCapabilities()
   const counts = useReportSourceCounts()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
@@ -174,7 +174,7 @@ export function ReportNew() {
   const lockReason = o.createReason
   const fs = o.findings
   const tpl = o.templates.find((t) => t.name === effTpl)
-  const errs = { title: !effTitle.trim() ? 'Enter a report title.' : '', tpl: !tpl && !isRealMode() ? 'Choose a template.' : '', reviewer: !effReviewer && !isRealMode() ? 'Choose a reviewer.' : effReviewer === me.name ? 'The reviewer cannot be the author.' : '' }
+  const errs = { title: !effTitle.trim() ? 'Enter a report title.' : '', tpl: !tpl && caps.simulatedDraftRules ? 'Choose a template.' : '', reviewer: !effReviewer && caps.simulatedDraftRules ? 'Choose a reviewer.' : effReviewer === me.name ? 'The reviewer cannot be the author.' : '' }
   const bad = !!(errs.title || errs.tpl || errs.reviewer)
   const unapproved = fs.filter((f) => picked.includes(f.id) && !f.reportable)
   const create = async () => {
@@ -182,7 +182,7 @@ export function ReportNew() {
     setSaveErr(null)
     if (bad || locked || busy) return
     setBusy(true)
-    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: isRealMode() ? (from && to ? `${from}/${to}` : '') : `${from} – ${to}` })
+    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: caps.periodStyle === 'iso' ? (from && to ? `${from}/${to}` : '') : `${from} – ${to}` })
     setBusy(false)
     if (!res.ok) { setSaveErr(res.failure.message); return }
     const id = res.data.id
@@ -256,7 +256,7 @@ export function ReportNew() {
           </Card>
           <Card>
             <div className="flex flex-col gap-2">
-              <Check checked={nfc} onChange={setNfc} disabled={locked || isRealMode()} label="Start as No-findings closure report" />
+              <Check checked={nfc} onChange={setNfc} disabled={locked || !caps.noFindingsVariant} label="Start as No-findings closure report" />
               <p className="-mt-1 text-xs text-muted">For assessments that found nothing confirmed. Needs a justification and completion evidence before review; no finding is ever invented.</p>
               <Button variant="primary" size="lg" icon={Plus} onClick={create} disabled={locked || busy} title={locked ? lockReason : undefined}>{busy ? 'Creating…' : 'Create Draft'}</Button>
               <Button variant="ghost" onClick={() => go('reports')}>Cancel</Button>
@@ -315,6 +315,7 @@ const SUGGEST = (title: string, client: string, roe: string) => `AI draft sugges
  * unsaved-changes guard.
  */
 function EditorInner({ d }: { d: ReportEditorRead }) {
+  const caps = useReportCapabilities()
   useResourceScope(d.report.projectId)
   const validation = useReportValidation()
   const can = useCan()
@@ -415,7 +416,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const insert = (t: string) => { if (editable && sec) setDrafts({ ...drafts, [sec.id]: (drafts[sec.id] ?? sec.body ?? '') + t }) }
   // Real mode inserts the engagement's recorded testing windows and scope version from the effective scope.
   const insertProjectInfo = async () => {
-    if (!isRealMode()) { insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`); return }
+    if (caps.simulatedEditorHelpers) { insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`); return }
     try {
       const scope = await fetchEffectiveScope(project.id)
       const windows = scope.roe.windows.map((w) => `${w.start} to ${w.end} ${w.tz}`).join('; ') || 'no testing window recorded'
@@ -451,7 +452,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
       {returned && !perm && <PersonaHint need="Author" persona={r.author}>This report was returned. The author ({r.author}) must revise it and resubmit for review.</PersonaHint>}
       {state === 'error' && <Banner tone="bad" title="Could not save" action={<Button size="sm" onClick={() => saveAll()}>Retry</Button>}>{saveErr || 'The connection was lost during autosave. Your text is still on screen and has not been lost.'}</Banner>}
       <AiExclusion projectId={r.projectId} />
-      {!isRealMode() && r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
+      {caps.noFindingsVariant && r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr_340px]">
         <Card pad={false} className="h-fit overflow-hidden">
@@ -494,7 +495,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
                 <Button size="sm" icon={ListChecks} onClick={() => insert('\n• Item 1\n• Item 2\n• Item 3')}>List</Button>
                 <Button size="sm" icon={Table2} onClick={() => insert('\n| Column A | Column B |\n|----------|----------|\n| …        | …        |')}>Table</Button>
                 <Button size="sm" icon={Wand2} onClick={() => { void insertProjectInfo() }}>Insert project info</Button>
-                {!isRealMode() && <Button size="sm" icon={Wand2} onClick={fill}>Fill empty sections with simulated text</Button>}
+                {caps.simulatedEditorHelpers && <Button size="sm" icon={Wand2} onClick={fill}>Fill empty sections with simulated text</Button>}
                 {/Findings/i.test(sec?.title || '') && <Button size="sm" icon={Plus} disabled={!confirmedLinked.length} title={confirmedLinked.length ? undefined : 'Link at least one confirmed finding first. AI-suggested and unconfirmed findings cannot be inserted.'} onClick={insertFindings}>Insert confirmed findings</Button>}
               </div>
             )}
@@ -526,7 +527,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
           </Card>
           <Card>
             <CardHeader title="Report variant" sub="Standard reports list confirmed findings." />
-            {!isRealMode() && <Segmented value={nf?.on ? 'nf' : 'std'} onChange={(v) => editable && setNf({ on: v === 'nf', note: nf?.note || '' })} options={[{ id: 'std', label: 'Standard' }, { id: 'nf', label: 'No-findings closure' }]} />}
+            {caps.noFindingsVariant && <Segmented value={nf?.on ? 'nf' : 'std'} onChange={(v) => editable && setNf({ on: v === 'nf', note: nf?.note || '' })} options={[{ id: 'std', label: 'Standard' }, { id: 'nf', label: 'No-findings closure' }]} />}
             {!editable && <p className="mt-2 text-xs text-muted">The variant can only change while the report is a draft or returned.</p>}
             {nf?.on && (() => { const ce = validation.closure(r.projectId); return (
               <div className="mt-3 space-y-2 text-sm">
@@ -569,7 +570,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
             <CardHeader title="AI writing suggestion" sub="AI draft — verify before approval" />
             <p className="rounded-lg border border-dashed border-line bg-bg p-3 text-sm text-muted">{SUGGEST(sec?.title || 'section', project.client, project.roeVersion)}</p>
             <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><AlertTriangle size={13} className="mt-0.5 shrink-0 text-warn" />AI-written claims are not verified results unless they link to a source finding, event or evidence item.</p>
-            {!isRealMode() && <Button className="mt-2" size="sm" icon={Wand2} disabled={!editable} title={editable ? undefined : lockMsg} onClick={() => insert(`\n[AI draft — verify before approval] ${sec?.title}: summary pending source linkage. Source: cite a finding or evidence ID.`)}>Insert as marked draft</Button>}
+            {caps.simulatedEditorHelpers && <Button className="mt-2" size="sm" icon={Wand2} disabled={!editable} title={editable ? undefined : lockMsg} onClick={() => insert(`\n[AI draft — verify before approval] ${sec?.title}: summary pending source linkage. Source: cite a finding or evidence ID.`)}>Insert as marked draft</Button>}
           </Card>
           <Card>
             <CardHeader title="Reviewer comments" />
@@ -604,6 +605,7 @@ export function ReportPreview() {
 }
 
 function PreviewInner({ d }: { d: ReportEditorRead }) {
+  const caps = useReportCapabilities()
   useResourceScope(d.report.projectId)
   const validation = useReportValidation()
   const me = useMe()
@@ -692,7 +694,7 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
             <div className="flex flex-wrap gap-2">
               <Button icon={Download} variant="primary" disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'PDF').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { if (res.data.artifact) saveArtifact(res.data.artifact); toast('PDF exported. Not delivered yet; go to the review page to mark delivery.') } }) }}>Export PDF</Button>
               <Button icon={Download} disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'DOCX').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { if (res.data.artifact) saveArtifact(res.data.artifact); toast('DOCX exported. Not delivered yet.') } }) }}>Export DOCX</Button>
-              {isRealMode() && <ArtifactDownloads reportId={r.id} />}
+              {caps.artifactDownloads && <ArtifactDownloads reportId={r.id} />}
               <Button icon={Eye} disabled={me.role === 'viewer'} title={me.role === 'viewer' ? 'The Client / Viewer role cannot create trial exports' : 'Trial copy with watermark; not recorded in export history'} onClick={() => toast('Created a watermarked "DRAFT" trial copy (not saved to export history).', 'info')}>Trial export</Button>
             </div>
             {!canExport && <p className="mt-3 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
@@ -764,6 +766,7 @@ export function ReportReview() {
 }
 
 function ReviewInner({ d }: { d: ReportReviewRead }) {
+  const caps = useReportCapabilities()
   useResourceScope(d.report.projectId)
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
@@ -904,10 +907,10 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
           <Card>
             <CardHeader title="2. Export" sub="Creates a PDF or DOCX with a checksum. Export is not delivery." />
             <div className="flex flex-wrap gap-2">
-              <Button icon={Download} disabled={!!exportWhy || isRealMode()} title={exportWhy || undefined} onClick={() => doExport('PDF')}>Export PDF</Button>
-              <Button icon={Download} disabled={!!exportWhy || isRealMode()} title={exportWhy || undefined} onClick={() => doExport('DOCX')}>Export DOCX</Button>
-              {isRealMode() && <ArtifactDownloads reportId={r.id} />}
-              {isRealMode() && <StartRevision reportId={r.id} status={r.status} version={r.version} />}
+              <Button icon={Download} disabled={!!exportWhy || caps.artifactDownloads} title={exportWhy || undefined} onClick={() => doExport('PDF')}>Export PDF</Button>
+              <Button icon={Download} disabled={!!exportWhy || caps.artifactDownloads} title={exportWhy || undefined} onClick={() => doExport('DOCX')}>Export DOCX</Button>
+              {caps.artifactDownloads && <ArtifactDownloads reportId={r.id} />}
+              {caps.revision && <StartRevision reportId={r.id} status={r.status} version={r.version} />}
             </div>
             {exportWhy && <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
             {exps.length > 0 && (
