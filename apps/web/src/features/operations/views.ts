@@ -130,7 +130,7 @@ export interface ScheduleProbe { id?: string; agents: string[]; assets: string[]
 export function readScheduleConflicts(services: ConsoleServices, ctx: RequestContext, probe: ScheduleProbe): ScheduleConflict[] {
   return projectView(services, ctx, 'schedule.' + JSON.stringify(probe), (db) => {
     const inst = scheduleInstantOf(probe.at)
-    return inst == null ? [] : findScheduleConflicts(db, { id: probe.id, agents: probe.agents, assets: probe.assets, start: inst, mins: probe.mins }, probe.nowInst)
+    return inst == null ? [] : findScheduleConflicts(db.operations, db.assets, { id: probe.id, agents: probe.agents, assets: probe.assets, start: inst, mins: probe.mins }, probe.nowInst)
   })
 }
 

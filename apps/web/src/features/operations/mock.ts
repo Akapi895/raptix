@@ -168,7 +168,7 @@ export function scheduleOperation(authority: DbAuthority, clock: Clock, ctx: Req
     }
     const win = roeWindowIssue(project, instant)
     if (win) return { ok: false, failure: { kind: 'validation', message: `${win} Pick a time inside the window or request an ROE window change.`, entity: { kind: 'operation', id, projectId: project.id } } }
-    const blocking = findScheduleConflicts(db, { id, agents: op.agents, assets: op.assets, start: instant, mins: draftMinutes(op.steps.length) }, clock.now()).filter((c) => c.kind === 'agent')
+    const blocking = findScheduleConflicts(db.operations, db.assets, { id, agents: op.agents, assets: op.assets, start: instant, mins: draftMinutes(op.steps.length) }, clock.now()).filter((c) => c.kind === 'agent')
     if (blocking.length > 0) {
       return { ok: false, failure: { kind: 'validation', message: `${blocking[0]!.label} (policy: one agent, one operation). Choose a later time, other agents or other assets.`, entity: { kind: 'operation', id, projectId: project.id } } }
     }
