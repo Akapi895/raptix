@@ -1,6 +1,6 @@
 import { apiFetch } from '../../platform/transport';
 import { isInstanceCancelAck, isInstanceCommandAck, isInstanceMailboxView, isInstanceMessageAck, isRuntimeRosterView, type InstanceCommandAck, type InstanceCancelAck, type InstanceMailboxView, type InstanceMessageAck, type RuntimeRosterView } from '@raptix/web-contracts';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 export function fetchRuntimeInstances(engagementId: string): Promise<RuntimeRosterView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/instances`, owned(engagementId, isRuntimeRosterView))

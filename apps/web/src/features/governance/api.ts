@@ -1,5 +1,5 @@
 import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 /* ───────────── Governed plans/preflight/estop (integration ticket 09) ───────────── */
 export interface PlanView {
