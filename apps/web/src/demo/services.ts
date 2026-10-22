@@ -2,6 +2,8 @@ import type { Project } from '../domain/entities';
 import { projectAccessible } from '../domain/policy';
 import { createIdentityService } from '../auth/identity';
 import { MockClock, Scheduler, formatDemoInstant } from '../domain/clock';
+import { hhmm, stamp } from './display-clock';
+import { fastForward, loseAgent, restoreAgent } from './runtime';
 import { createDatabaseAuthority, type DbAuthority } from './authority';
 import type { OperationService } from '../features/operations/service';
 import type { FindingService } from '../features/findings/index';
@@ -209,6 +211,8 @@ export function createConsoleServices(): ConsoleServices {
     identity,
     authority,
     clock,
+    display: { stamp, hhmm },
+    demo: { loseAgent, restoreAgent, fastForward },
     schedule: (at, fn) => scheduler.schedule(at, fn),
     sweep(intervalMs, fn) {
       let cancelled = false

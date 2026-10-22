@@ -48,6 +48,19 @@ export interface ProjectService extends EntityReader<Project> {
   update(ctx: RequestContext, id: string, patch: ProjectPatch): Promise<ServiceResult<Project>>
 }
 
+/** Mock-only display labels anchored at the dataset's demo instant (the real console has no demo clock). */
+export interface DisplayClock {
+  stamp(): string
+  hhmm(): string
+}
+
+/** Mock-only demo runtime controls: agent loss and recovery, and fast-forwarding a running operation. */
+export interface DemoRuntimeControls {
+  loseAgent(agentId: string): void
+  restoreAgent(agentId: string): void
+  fastForward(opId: string): void
+}
+
 /**
  * Per-feature service surface that real-mode adapters implement
  * (ADR-0084). Grows one entry per migrated domain; mock-only plumbing such as
@@ -59,6 +72,9 @@ export interface ConsoleServices {
   identity: IdentityService
   authority: DbAuthority
   clock: MockClock
+  /** Mock-only display clock and demo runtime controls; the composition root supplies them, features reach them through hooks. */
+  display: DisplayClock
+  demo: DemoRuntimeControls
   /** Schedules a callback at an absolute clock instant; disposed on reset. */
   schedule(at: Instant, fn: () => void): () => void
   /** Recurring sweep every `intervalMs` of clock time; returns cancel. */
