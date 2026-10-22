@@ -21,7 +21,7 @@ import { resetDemo, sendChat, stopChat } from '../../demo/runtime'
 import { requestPlanReviewTransaction } from '../plans/service'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../demo/seed';
-import { AiOperator } from '../../screens/g-chat'
+import { AiOperator } from './views/operator-page'
 import { seed } from '../../demo/seed';
 import { getConversation, listConversations } from './service'
 

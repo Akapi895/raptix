@@ -2,7 +2,7 @@ import type { Project } from '../domain/entities';
 import { projectAccessible } from '../domain/policy';
 import { createIdentityService } from '../auth/identity';
 import { DEMO_TZ, MockClock, Scheduler, formatDemoInstant } from '../domain/clock';
-import { emergencyStop, fastForward, loseAgent, restoreAgent, terminateSession } from './runtime';
+import { emergencyStop, fastForward, loseAgent, restoreAgent, sendChat, terminateSession } from './runtime';
 import { createDatabaseAuthority, type DbAuthority } from './authority';
 import type { OperationService } from '../features/operations/service';
 import type { FindingService } from '../features/findings/index';
@@ -222,7 +222,7 @@ export function createConsoleServices(): ConsoleServices {
     authority,
     clock,
     display: displayAt(clock),
-    demo: { loseAgent, restoreAgent, fastForward, emergencyStop, terminateSession },
+    demo: { loseAgent, restoreAgent, fastForward, emergencyStop, terminateSession, sendChat },
     schedule: (at, fn) => scheduler.schedule(at, fn),
     sweep(intervalMs, fn) {
       let cancelled = false

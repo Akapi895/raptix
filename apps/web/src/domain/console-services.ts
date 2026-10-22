@@ -62,6 +62,7 @@ export interface DemoRuntimeControls {
   fastForward(opId: string): void
   emergencyStop(scope: 'operation' | 'project' | 'workspace', id: string, reason: string): void
   terminateSession(sessionId: string, reason: string): void
+  sendChat(convId: string, text: string): void
 }
 
 /**

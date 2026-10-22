@@ -130,3 +130,9 @@ export function useChatHandlers(actor: ActorRef, projectId: string) {
   const { id, role } = actor
   return useMemo(() => createChatHandlers(services, { id, role }, projectId), [services, id, role, projectId])
 }
+
+/* ── Mock AI demo controls: the demo runtime's chat action the operator screen mirrors. Mock mode only. ── */
+
+export function useAiDemo() {
+  return useServices().demo
+}
