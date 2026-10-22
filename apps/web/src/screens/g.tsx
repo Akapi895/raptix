@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import { AiOperator } from '../features/aichat/views/operator-page'
-import { AiPlan, AiPlanCompare, AiPlanReview } from './g-plan'
+import { AiPlan, AiPlanCompare, AiPlanReview } from '../features/plans/views/plan-pages'
 import { routes as fanout } from '../features/branches'
 import { AiHistory, AiTrace } from '../features/trace/views/ai-trace-pages'
 
