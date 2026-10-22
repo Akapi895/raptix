@@ -17,7 +17,7 @@ const PANEL_COMPONENTS: Record<PanelGroup, PanelComponent> = {
   scope: lazy(() => import('../features/scope/tab').then((m) => ({ default: m.ScopeTab }))),
   analysis: lazy(() => import('../features/analysis/views/observed-tab').then((m) => ({ default: m.ObservedAnalysisTab }))),
   c2: lazy(() => import('../features/c2/provider-tab').then((m) => ({ default: m.C2ProviderTab }))),
-  campaigns: lazy(() => import('../real/screens/campaigns-panel').then((m) => ({ default: m.RealCampaignsPanel }))),
+  campaigns: lazy(() => import('../features/c2').then((m) => ({ default: m.RealCampaignsPanel }))),
 }
 
 export function RealFeatureRoute(): ReactElement {

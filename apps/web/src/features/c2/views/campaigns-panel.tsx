@@ -4,18 +4,16 @@
  * provider configuration — an unconfigured provider is a truthful job error,
  * never a fabricated campaign or fake delivery state.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { Megaphone, Loader2 } from 'lucide-react'
-import { createCampaign, fetchCampaignCapabilities, fetchCampaigns, reconcileCampaignJob, runCampaignJob } from '../../features/c2/remote';
 import type { CampaignView } from '@raptix/web-contracts'
-import { useDirty } from '../../state/session'
-import { Banner, Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../ui/index'
+import { useCreateRealCampaign, useReconcileRealCampaignJob, useRealCampaignCapabilities, useRealCampaigns, useRunRealCampaignJob } from '../campaigns'
+import { useDirty } from '../../../state/session'
+import { Banner, Button, Card, CardHeader, Empty, Input, Select, Skeleton, Status, Textarea } from '../../../ui'
 
 export function RealCampaignsPanel({ engagementId }: { engagementId: string }): ReactElement {
-  const client = useQueryClient()
-  const capabilities = useQuery({ queryKey: ['real', 'campaign-capabilities', engagementId], queryFn: () => fetchCampaignCapabilities(engagementId), retry: false })
-  const campaigns = useQuery({ queryKey: ['real', 'campaigns', engagementId], queryFn: () => fetchCampaigns(engagementId), retry: false })
+  const capabilities = useRealCampaignCapabilities(engagementId)
+  const campaigns = useRealCampaigns(engagementId)
   const [name, setName] = useState('')
   const [vector, setVector] = useState<'phishing' | 'web' | 'mobile'>('phishing')
   const [scenario, setScenario] = useState('')
@@ -24,10 +22,6 @@ export function RealCampaignsPanel({ engagementId }: { engagementId: string }): 
   const [error, setError] = useState<string | null>(null)
   // W21: the campaign draft registers as dirty so navigation can guard it.
   useDirty(name.trim() !== '' || scenario.trim() !== '')
-
-  const invalidate = (): void => {
-    void client.invalidateQueries({ queryKey: ['real', 'campaigns', engagementId] })
-  }
 
   // W15: GoPhish assets and the Evilginx synthetic lab profile are mutually
   // exclusive by the server contract; partial GoPhish IDs are a local refusal.
@@ -40,28 +34,26 @@ export function RealCampaignsPanel({ engagementId }: { engagementId: string }): 
     return { templateId: parsed[0]!, pageId: parsed[1]!, groupId: parsed[2]!, smtpId: parsed[3]! }
   }
 
-  const create = useMutation({
-    mutationFn: () => {
+  const create = useCreateRealCampaign(engagementId, {
+    build: () => {
       const assets = parseGophish()
-      return createCampaign(engagementId, {
+      return {
         name: name.trim(),
         vector,
         ...(scenario.trim() === '' ? {} : { scenario: scenario.trim() }),
         ...(assets !== null ? { gophish: assets } : {}),
         ...(evilginxLab && assets === null ? { evilginxLab: true } : {}),
-      })
+      }
     },
-    onSuccess: () => { setName(''); setScenario(''); setGophish({ templateId: '', pageId: '', groupId: '', smtpId: '' }); setEvilginxLab(false); setError(null); invalidate() },
+    onSuccess: () => { setName(''); setScenario(''); setGophish({ templateId: '', pageId: '', groupId: '', smtpId: '' }); setEvilginxLab(false); setError(null) },
     onError: (err) => { if (err instanceof Error && err.message === 'partial') return; if (err instanceof Error && err.message === 'invalid') return; setError(err instanceof Error ? err.message : 'The campaign draft was refused.') },
   })
-  const runJob = useMutation({
-    mutationFn: (input: { campaignId: string; kind: 'generate' | 'deploy'; version: number }) => runCampaignJob(engagementId, input.campaignId, input.kind, { requestId: crypto.randomUUID(), version: input.version }),
-    onSuccess: () => { setError(null); invalidate() },
+  const runJob = useRunRealCampaignJob(engagementId, {
+    onSuccess: () => setError(null),
     onError: (err) => setError(err instanceof Error ? err.message : 'The provider job was refused or the provider is unavailable.'),
   })
-  const reconcile = useMutation({
-    mutationFn: (input: { campaignId: string; jobId: string }) => reconcileCampaignJob(engagementId, input.campaignId, input.jobId),
-    onSuccess: () => { setError(null); invalidate() },
+  const reconcile = useReconcileRealCampaignJob(engagementId, {
+    onSuccess: () => setError(null),
     onError: (err) => setError(err instanceof Error ? err.message : 'Reconciliation was refused.'),
   })
 
