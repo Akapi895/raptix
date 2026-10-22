@@ -1,17 +1,18 @@
 import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut, type LucideProps } from 'lucide-react'
-import { ROLE_LABEL } from '../domain/policy'
-import { TACTICS, TECHNIQUES } from '../domain/catalog';
-import { type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../domain/entities'
-import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../ui/index'
-import { AnalysisReadError, useAnalysisCoverage, useAttackPath } from '../features/analysis/query'
-import type { AnalysisCoverageRead, CoverageCell, CoverageCellState, CoveragePair } from '../features/analysis/service'
-import { go, useRoute } from '../router/navigate'
-import { useAccessible, useActiveProject, useCan, useMe, useReadOnly } from '../state/console'
-import { useAnalysisEvidence, useAnalysisAssets } from '../features/analysis/projection'
-import { useEligibility } from '../features/operations/eligibility-read'
-import { useProjectStore, useToastStore } from '../state/stores'
-import { useSessionStore } from '../state/session'
+import { ROLE_LABEL } from '../../../domain/policy'
+import { TACTICS, TECHNIQUES } from '../../../domain/catalog';
+import { type DetectState, type Operation, type Step, type StepStatus } from '../../../domain/entities'
+import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../../../ui/index'
+import { AnalysisReadError, useAnalysisCoverage, useAttackPath } from '../query'
+import type { AnalysisCoverageRead, CoverageCell, CoverageCellState, CoveragePair } from '../service'
+import { go, useRoute } from '../../../router/navigate'
+import { useAccessible, useActiveProject, useCan, useMe, useReadOnly } from '../../../state/console'
+import { useAnalysisEvidence, useAnalysisAssets } from '../projection'
+import { useEligibility } from '../../operations'
+import { recFor } from '../recommendations'
+import { useProjectStore, useToastStore } from '../../../state/stores'
+import { useSessionStore } from '../../../state/session'
 
 /* ───────────── Shared types (feature read model) ───────────── */
 type Ana = AnalysisCoverageRead
@@ -28,12 +29,6 @@ const CELL_META: Record<CellState, { label: string; long: string; cls: string; i
   untested: { label: 'Not Tested', long: 'Not Tested', cls: 'border-dashed border-line text-neutral', icon: CircleDashed },
 }
 
-const RECS: Record<string, string> = {
-  T1078: 'Add alert rules for unusual privileged-account sign-ins and review privileged groups on a regular schedule.',
-  T1110: 'Set an alert threshold for consecutive failed authentications on the authentication log source.',
-}
-const recFor = (t: Technique, st: DetectState) =>
-  st === 'undetected' ? RECS[t.id] || `Add or tune detection rules for ${t.id} (${t.name}) and retest after the update.` : `Unverified: reconcile ${t.id} logs with the Blue Team before concluding whether a signal exists.`
 
 function useCreateFinding() {
   const can = useCan()
