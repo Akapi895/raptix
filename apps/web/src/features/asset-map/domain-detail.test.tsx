@@ -7,13 +7,15 @@ const fetchMembers = vi.fn()
 const fetchNeighborhood = vi.fn()
 const fetchDetail = vi.fn()
 const fetchOverlay = vi.fn()
+const fetchSearch = vi.fn()
 
-vi.mock('../../real/asset-map-api', () => ({
+vi.mock('./api', () => ({
   fetchAssetMapOverview: (...args: unknown[]) => fetchOverview(...args),
   fetchAssetMapMembers: (...args: unknown[]) => fetchMembers(...args),
   fetchAssetMapNeighborhood: (...args: unknown[]) => fetchNeighborhood(...args),
   fetchAssetMapDetail: (...args: unknown[]) => fetchDetail(...args),
   fetchAssetMapOverlay: (...args: unknown[]) => fetchOverlay(...args),
+  fetchAssetMapSearch: (...args: unknown[]) => fetchSearch(...args),
 }))
 vi.mock('../../platform/session', () => ({ useSession: () => ({ session: { actor: { id: 'user-1' } } }) }))
 vi.mock('./AssetMapCanvas', () => ({ AssetMapCanvas: () => <div data-testid="asset-map-canvas" /> }))

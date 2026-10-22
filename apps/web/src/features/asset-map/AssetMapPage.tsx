@@ -12,14 +12,7 @@ import type {
 import { useProjectStore } from '../../state/stores'
 import { useSession } from '../../platform/session'
 import { ApiTransportError } from '../../platform/transport'
-import {
-  fetchAssetMapDetail,
-  fetchAssetMapMembers,
-  fetchAssetMapNeighborhood,
-  fetchAssetMapOverlay,
-  fetchAssetMapOverview,
-  fetchAssetMapSearch,
-} from '../../real/asset-map-api'
+import { assetMapReads } from './query'
 import { AssetMapCanvas, type CanvasFocus, type CanvasRestore } from './AssetMapCanvas'
 import { toCanvasElements, VISIBLE_EDGE_BUDGET, VISIBLE_NODE_BUDGET } from './canvas-model'
 import { rendererFor, rendererLabel } from './domain-renderers'
@@ -373,7 +366,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
     setHostList(EMPTY_LIST)
     setOriginList(EMPTY_LIST)
     seenRevision.current = null
-    Promise.all([fetchAssetMapOverview(engagementId), fetchAssetMapMembers(engagementId, 'host'), fetchAssetMapMembers(engagementId, 'web_origin')])
+    Promise.all([assetMapReads.overview(engagementId), assetMapReads.members(engagementId, 'host'), assetMapReads.members(engagementId, 'web_origin')])
       .then(([view, hostPage, originPage]) => {
         if (gen !== generation.current) return
         seenRevision.current = view.completeness.revision
@@ -403,7 +396,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
     const token = ++request.current
     const current = (): boolean => gen === generation.current && token === request.current
     setError(null)
-    Promise.all([fetchAssetMapNeighborhood(engagementId, asset), fetchAssetMapDetail(engagementId, asset, null, sitemapFilter)])
+    Promise.all([assetMapReads.neighborhood(engagementId, asset), assetMapReads.detail(engagementId, asset, null, sitemapFilter)])
       .then(([graph, inspector]) => {
         if (!current()) return
         setNeighborhood(graph)
@@ -413,7 +406,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
         if (current()) setError(describeFailure(reason))
       })
     // Findings load on their own: a failure here is shown in the inspector and does not hide the map.
-    fetchAssetMapOverlay(engagementId, asset)
+    assetMapReads.overlay(engagementId, asset)
       .then(view => {
         if (!current()) return
         setOverlay(view)
@@ -441,7 +434,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
   const refresh = (): void => {
     if (!engagementId || engagementId === 'all') return
     const gen = generation.current
-    Promise.all([fetchAssetMapOverview(engagementId), fetchAssetMapMembers(engagementId, 'host'), fetchAssetMapMembers(engagementId, 'web_origin')])
+    Promise.all([assetMapReads.overview(engagementId), assetMapReads.members(engagementId, 'host'), assetMapReads.members(engagementId, 'web_origin')])
       .then(([view, hostPage, originPage]) => {
         if (gen !== generation.current) return
         const moved = seenRevision.current !== null && seenRevision.current !== view.completeness.revision
@@ -464,14 +457,14 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
     const gen = generation.current
     const cursor = list.nextCursor
     const apply = (update: (state: ListState) => ListState): void => (kind === 'host' ? setHostList(update) : setOriginList(update))
-    fetchAssetMapMembers(engagementId, kind, cursor)
+    assetMapReads.members(engagementId, kind, cursor)
       .then(page => {
         if (gen === generation.current) apply(state => appendToList(state, page))
       })
       .catch(reason => {
         if (gen !== generation.current) return
         if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
-        fetchAssetMapMembers(engagementId, kind)
+        assetMapReads.members(engagementId, kind)
           .then(first => {
             if (gen === generation.current) apply(() => listFrom(first))
           })
@@ -497,7 +490,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
     }
     const gen = generation.current
     const token = ++searchRequest.current
-    fetchAssetMapSearch(engagementId, text)
+    assetMapReads.search(engagementId, text)
       .then(found => {
         if (gen === generation.current && token === searchRequest.current) setResults(found.items)
       })
@@ -526,7 +519,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
     const gen = generation.current
     const token = request.current
     const asset = selected
-    fetchAssetMapNeighborhood(engagementId, asset, neighborhood.nextCursor)
+    assetMapReads.neighborhood(engagementId, asset, neighborhood.nextCursor)
       .then(next => {
         if (gen !== generation.current || token !== request.current) return
         setNeighborhood(current => (current ? mergeNeighborhood(current, next) : next))
@@ -536,7 +529,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
         if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
         // The graph changed under the cursor: start the relations again from the first page.
         const restart = ++request.current
-        fetchAssetMapNeighborhood(engagementId, asset)
+        assetMapReads.neighborhood(engagementId, asset)
           .then(first => {
             if (gen === generation.current && restart === request.current) setNeighborhood(first)
           })
@@ -552,7 +545,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
     const token = request.current
     const asset = selected
     const sitemapFilter = filter
-    fetchAssetMapDetail(engagementId, asset, detail.nextCursor, sitemapFilter)
+    assetMapReads.detail(engagementId, asset, detail.nextCursor, sitemapFilter)
       .then(next => {
         if (gen !== generation.current || token !== request.current) return
         setDetail(current => (current ? { ...next, detail: appendItems(current.detail, next.detail) } : next))
@@ -561,7 +554,7 @@ function AssetMapScope({ engagementId, actorId }: { engagementId: string | null;
         if (gen !== generation.current || token !== request.current) return
         if (!isRevisionChanged(reason)) return setError(describeFailure(reason))
         const restart = ++request.current
-        fetchAssetMapDetail(engagementId, asset, null, sitemapFilter)
+        assetMapReads.detail(engagementId, asset, null, sitemapFilter)
           .then(first => {
             if (gen === generation.current && restart === request.current) setDetail(first)
           })

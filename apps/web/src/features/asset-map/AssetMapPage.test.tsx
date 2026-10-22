@@ -12,7 +12,7 @@ const fetchDetail = vi.fn()
 const fetchSearch = vi.fn()
 const fetchOverlay = vi.fn()
 
-vi.mock('../../real/asset-map-api', () => ({
+vi.mock('./api', () => ({
   fetchAssetMapOverview: (...args: unknown[]) => fetchOverview(...args),
   fetchAssetMapMembers: (...args: unknown[]) => fetchMembers(...args),
   fetchAssetMapNeighborhood: (...args: unknown[]) => fetchNeighborhood(...args),
