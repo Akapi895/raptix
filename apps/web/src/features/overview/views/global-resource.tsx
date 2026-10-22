@@ -1,10 +1,9 @@
 /** Global resource navigation without pretending scoped APIs are aggregate sources. */
 import type { ReactElement } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { fetchOverviewC2, fetchOverviewFindings } from '../../features/overview/remote';
-import { useRealProjects } from '../queries'
-import { go, useRoute } from '../../router/navigate'
-import { Banner, Button, Card, CardHeader, DescList, PageHeader, Skeleton, Tabs } from '../../ui/index'
+import { useRealC2Rollup, useRealFindingsRollup } from '../query'
+import { useRealProjects } from '../../projects'
+import { go, useRoute } from '../../../router/navigate'
+import { Banner, Button, Card, CardHeader, DescList, PageHeader, Skeleton, Tabs } from '../../../ui'
 
 const SURFACES: Record<string, { title: string; tab: string; gap: string }> = {
   findings: { title: 'Findings', tab: 'findings', gap: 'A cross-project finding list is not integrated. The overview rollup is a count, not a finding inventory.' },
@@ -18,7 +17,7 @@ const SURFACES: Record<string, { title: string; tab: string; gap: string }> = {
 
 /** Counts across the authorized projects, from the same overview reads the System Overview uses. */
 function FindingsRollup(): ReactElement {
-  const findings = useQuery({ queryKey: ['real', 'overview', 'findings'], queryFn: () => fetchOverviewFindings(), refetchInterval: 60_000 })
+  const findings = useRealFindingsRollup()
   return (
     <Card>
       <CardHeader title="Findings across your projects" sub="Counts only; open a project for its finding list." />
@@ -43,7 +42,7 @@ function FindingsRollup(): ReactElement {
 
 /** Durable C2 command audit and pending grants across the authorized projects. Live sessions stay per project. */
 function C2Rollup(): ReactElement {
-  const c2 = useQuery({ queryKey: ['real', 'overview', 'c2'], queryFn: () => fetchOverviewC2(), refetchInterval: 60_000 })
+  const c2 = useRealC2Rollup()
   return (
     <Card>
       <CardHeader title="C2 command audit across your projects" sub="Durable command records and pending grants; live sessions are read per project." />

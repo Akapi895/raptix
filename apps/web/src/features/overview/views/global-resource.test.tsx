@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
-import { ApiTransportError } from '../../platform/transport'
+import { ApiTransportError } from '../../../platform/transport'
 
 // The first import loads the module graph; keep that cold start out of the test timer.
 beforeAll(async () => {
@@ -16,11 +16,11 @@ beforeAll(async () => {
 const fetchOverviewFindings = vi.fn()
 const fetchOverviewC2 = vi.fn()
 
-vi.mock('../../features/overview/remote', () => ({
+vi.mock('../remote', () => ({
   fetchOverviewFindings: (...a: unknown[]) => fetchOverviewFindings(...a),
   fetchOverviewC2: (...a: unknown[]) => fetchOverviewC2(...a),
 }))
-vi.mock('../../features/projects/query', () => ({
+vi.mock('../../projects/query', () => ({
   useRealProjects: () => ({ list: { isPending: false, isError: false, data: [] } }),
 }))
 
@@ -29,7 +29,7 @@ const C2 = { commandsByStatus: { completed: 4 }, recentCommands: [], pendingGran
 
 async function renderAt(hash: string): Promise<void> {
   window.location.hash = hash
-  const { resetNavStores } = await import('../../router/navigate')
+  const { resetNavStores } = await import('../../../router/navigate')
   resetNavStores()
   const { RealGlobalResource } = await import('./global-resource')
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

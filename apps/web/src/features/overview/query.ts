@@ -7,6 +7,7 @@ import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
 import type { OverviewService } from './service'
+import { fetchOverviewC2, fetchOverviewFindings } from './remote'
 
 /** A failed overview section, carrying the typed failure the port returned. */
 export class OverviewReadError extends Error {
@@ -37,3 +38,12 @@ export const useOverviewProjects = () => useOverviewSection('projects', (port) =
 export const useOverviewFindings = () => useOverviewSection('findings', (port) => port.findings(), 60_000)
 export const useOverviewC2 = () => useOverviewSection('c2', (port) => port.c2(), 60_000)
 export const useOverviewTasks = () => useOverviewSection('tasks', (port) => port.tasks(), 30_000)
+
+/* Real-mode rollups for the global resource pages: the server's aggregate over the authorized projects, not the port sections. */
+export function useRealFindingsRollup() {
+  return useQuery({ queryKey: ['real', 'overview', 'findings'], queryFn: () => fetchOverviewFindings(), refetchInterval: 60_000 })
+}
+
+export function useRealC2Rollup() {
+  return useQuery({ queryKey: ['real', 'overview', 'c2'], queryFn: () => fetchOverviewC2(), refetchInterval: 60_000 })
+}
