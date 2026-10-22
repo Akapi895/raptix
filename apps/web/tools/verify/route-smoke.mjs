@@ -108,6 +108,8 @@ async function runMode(browser, mode) {
   page.setDefaultTimeout(20000);
   let pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
+  let consoleErrors = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text().slice(0, 600)); });
   const rows = {};
   let signedIn;
   try {
@@ -129,6 +131,7 @@ async function runMode(browser, mode) {
       continue;
     }
     pageErrors = [];
+    consoleErrors = [];
     await page.goto(target, { waitUntil: 'domcontentloaded' });
     const observed = await observe(page);
     const verdict = discover ? { ok: true } : judge(expect, observed, pageErrors);
@@ -141,6 +144,7 @@ async function runMode(browser, mode) {
       sample: observed.main.slice(0, 200),
       boundary: observed.boundary,
       pageErrors: [...pageErrors],
+      consoleErrors: [...consoleErrors],
     };
   }
   await context.close();
