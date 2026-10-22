@@ -3,7 +3,7 @@
  * offline/session-expired routes (`forbidden`, `notfound`, `error`, `offline`,
  * `session-expired`; route-inventory rows 2–6). Every page renders its
  * failure reason and a recovery path: navigation goes through the router seam
- * (`src/screens/system/nav.ts`), persona writes through the ticket-06 auth
+ * (`src/shell/system/nav.ts`), persona writes through the ticket-06 auth
  * actions, panels/toasts through the ticket-05 shared authorities. Retry and
  * reconnect timers are tracked and disposed on unmount so a stale callback
  * can never navigate after the page is gone.

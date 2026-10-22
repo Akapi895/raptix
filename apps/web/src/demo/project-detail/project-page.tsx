@@ -3,7 +3,7 @@
  * docs/adr/0067-web-console-service-domain-boundary.md).
  *
  * The migrated detail shell: one typed canonical read per detail URL through
- * Query (src/screens/project-detail). The factory's ProjectService owns the
+ * Query (src/demo/project-detail). The factory's ProjectService owns the
  * membership rule, so an unknown project and a project outside the actor's
  * scope collapse into the same `not-found` failure — the blocked state never
  * renders record content. Overview readiness/completion/eligibility come

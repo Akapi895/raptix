@@ -1,7 +1,7 @@
 /**
  * Ticket 44: AI worker dependency graph on the typed read model —
  * the worker/DAG migration at its new execution site
- * (src/features/workers/service.ts + src/screens/g-workers.tsx).
+ * (src/features/workers/service.ts + src/features/workers/views/worker-team.tsx).
  *
  * Covered here: worker nodes/status/dependencies reflect the recorded
  * canonical data (levels from the dependency graph, deps/parents/branch

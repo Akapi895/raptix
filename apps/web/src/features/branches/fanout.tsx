@@ -12,7 +12,7 @@
  * Navigation goes through the router (`go`) — there are no raw hash writers
  * left on this surface. FanOutCard/AllocationView keep their legacy seams for
  * their consumers (tickets 39–44 own the shared workspace); the AI-team view
- * itself lives in src/screens/g-workers.tsx (ticket 44), imported directly
+ * itself lives in src/features/workers/views/worker-team.tsx (ticket 44), imported directly
  * by the workspace Inspector.
  */
 import { useState } from 'react'
