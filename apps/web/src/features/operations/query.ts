@@ -12,8 +12,17 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
+import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
-import type { ServiceFailure, ServiceResult } from '../../domain/service'
+import type { Instant, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { DemoRuntimeControls, DisplayClock } from '../../domain/console-services'
+import type { Evidence, Operation } from '../../domain/entities'
+import { recordAudit, type AuditInput } from '../audit'
+import { addOperationEvidence, type OperationEvidenceInput } from '../results'
+import { createOperationFromPlanTransaction, readPlanProject, type PlanBridgeRead } from '../plans'
+import type { PfCheck } from './checklist'
+import type { Check } from './preflight'
+import { readOperationMeta, readOperationPreflight, readOperationSpecChecks } from './views'
 import type { OperationDetailRead, OperationDraftInput, OperationDraftOptions, OperationDraftPatch, OperationListQuery, OperationListRead, OperationTransitionRead, OperationWriteRead, PreflightRunRead, StepDecision } from './service'
 
 /** Feature-local key namespace: ['operation', scope, 'list', query]. */
@@ -237,4 +246,47 @@ export function useReviewStep() {
       return services.operations(actor, scope.project).reviewStep({ actor, projectId: scope.project, corr: corr('operation-review') }, v.id, v.stepId, v.decision, v.note)
     },
   })
+}
+
+/* ── Mock console adapter for the operation pages: the display clock, the demo runtime, and the legacy-correlated reads and writes the mirrored console always made. The pages reach the mock authority through this hook only. ── */
+
+export interface OperationMockConsole {
+  display: DisplayClock
+  demo: DemoRuntimeControls
+  now(): Instant
+  projectOf(opId: string): string | undefined
+  checks(op: Operation, at: Instant): { spec: PfCheck[]; engine: Check[] }
+  planProject(planId: string): string | undefined
+  createOperationFromPlan(projectId: string, planId: string): ServiceResult<PlanBridgeRead>
+  pause(projectId: string, opId: string, reason: string): Promise<ServiceResult<OperationTransitionRead>>
+  resume(projectId: string, opId: string): Promise<ServiceResult<OperationTransitionRead>>
+  stop(projectId: string, opId: string, reason: string): Promise<ServiceResult<OperationTransitionRead>>
+  complete(projectId: string, opId: string): Promise<ServiceResult<OperationTransitionRead>>
+  preflightChecks(projectId: string, opId: string): Promise<ServiceResult<Check[]>>
+  audit(projectId: string, input: AuditInput): void
+  addEvidence(projectId: string, input: OperationEvidenceInput): ServiceResult<Evidence>
+}
+
+export function useOperationMockConsole(): OperationMockConsole {
+  const services = useServices()
+  const me = useMe()
+  const actor = { id: me.name, role: me.role }
+  const ctx = (projectId: string) => ({ actor, projectId, corr: 'legacy' })
+  const ops = (projectId: string) => services.operations(actor, projectId)
+  return {
+    display: services.display,
+    demo: services.demo,
+    now: () => services.clock.now(),
+    projectOf: (opId) => readOperationMeta(services, opId)?.projectId,
+    checks: (op, at) => ({ spec: readOperationSpecChecks(services, op, at), engine: readOperationPreflight(services, op, at) }),
+    planProject: (planId) => readPlanProject(services.authority, planId),
+    createOperationFromPlan: (projectId, planId) => createOperationFromPlanTransaction(services.authority, services.clock, ctx(projectId), planId),
+    pause: (projectId, opId, reason) => ops(projectId).pause(ctx(projectId), opId, reason),
+    resume: (projectId, opId) => ops(projectId).resume(ctx(projectId), opId),
+    stop: (projectId, opId, reason) => ops(projectId).stop(ctx(projectId), opId, reason),
+    complete: (projectId, opId) => ops(projectId).complete(ctx(projectId), opId),
+    preflightChecks: (projectId, opId) => ops(projectId).preflightChecks(ctx(projectId), opId),
+    audit: (projectId, input) => recordAudit(services, ctx(projectId), input),
+    addEvidence: (projectId, input) => addOperationEvidence(services, ctx(projectId), input),
+  }
 }
