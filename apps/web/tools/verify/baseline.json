@@ -1,17 +1,92 @@
 {
-  "real:preflight": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:operation-schedule": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:operation": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:agent": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:playbook": "fixture not seeded: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered.",
-  "real:technique": "fixture not seeded: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered.",
-  "real:playbook-review": "fixture not seeded: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered.",
-  "real:ai-plan": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:ai-plan-review": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:ai-plan-compare": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:ai-branch": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:c2-channel": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:c2-session": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:c2-console": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create",
-  "real:playbooks": "the page shows Skill library unavailable: the library reads come from the knowledge graph (Neo4j), which the verification stack does not start, so the library routes are not registered."
+  "real:preflight": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:operation-schedule": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:operation": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:agent": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:ai-plan": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:ai-plan-review": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:ai-plan-compare": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:ai-branch": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:c2-channel": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:c2-session": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:c2-console": {
+    "categories": [
+      "fixture-missing"
+    ],
+    "reason": "fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create"
+  },
+  "real:project": {
+    "categories": [
+      "api-error"
+    ],
+    "reason": "the overview reads the fleet endpoint, which answers 404 because the agent runtime (LangGraph) is not started by the verification stack."
+  },
+  "real:operation-new": {
+    "categories": [
+      "api-error"
+    ],
+    "reason": "the thread read is served by the agent runtime (LangGraph), which the verification stack does not start; it answers 404."
+  },
+  "real:infrastructure": {
+    "categories": [
+      "api-error"
+    ],
+    "reason": "the thread read is served by the agent runtime (LangGraph), which the verification stack does not start; it answers 404 on some loads."
+  },
+  "real:c2": {
+    "categories": [
+      "api-error"
+    ],
+    "reason": "the C2 sessions read answers 503 because the verification stack has no C2 server (Sliver)."
+  }
 }

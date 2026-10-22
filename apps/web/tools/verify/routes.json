@@ -230,14 +230,16 @@
       "key": "playbook",
       "path": "playbook/{playbook}",
       "expect": {
-        "mock": "PB-001"
+        "mock": "PB-001",
+        "real": "aatmf-t01-prompt-injection"
       }
     },
     {
       "key": "technique",
       "path": "technique/{technique}",
       "expect": {
-        "mock": "T1046 · Network Service Discovery"
+        "mock": "T1046 · Network Service Discovery",
+        "real": "T1606 · Forge Web Credentials"
       }
     },
     {
@@ -246,6 +248,10 @@
       "expect": {
         "mock": {
           "text": "Library proposal AP-01 does not exist"
+        },
+        "real": {
+          "text": "Canonical body",
+          "in": "main"
         }
       }
     },
