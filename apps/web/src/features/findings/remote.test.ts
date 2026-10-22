@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/findings/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/findings/api')>()
+vi.mock('./api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     fetchCuratedFindings: vi.fn(),
@@ -21,8 +21,8 @@ vi.mock('../../features/findings/api', async (importOriginal) => {
     getEngagement: vi.fn(),
   }
 })
-vi.mock('../../features/projects/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/projects/remote')>()
+vi.mock('../projects/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../projects/remote')>()
   return {
     ...actual,
     fetchCuratedFindings: vi.fn(),
@@ -43,9 +43,9 @@ vi.mock('../../features/projects/remote', async (importOriginal) => {
   }
 })
 
-const api_findings = await import('../../features/findings/api');
-const api_projects = await import('../../features/projects/remote');
-const { createRealFindingService } = await import('./findings')
+const api_findings = await import('./api');
+const api_projects = await import('../projects/remote');
+const { createRealFindingService } = await import('./remote')
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { ApiTransportError } = await import('../../platform/transport')
 
