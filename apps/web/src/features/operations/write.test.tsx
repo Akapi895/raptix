@@ -9,14 +9,15 @@
  * refetches it via the change bridge; a refused write keeps the form; the
  * schedule page blocks invalid input and the deep link resolves.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
 import { currentRoute, go, selectProject } from '../../router/navigate'
 import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { routes } from './routes'
-import { createOperationDraft, scheduleOperation, updateOperationDraft, type OperationDraftInput } from './service'
+import { createOperationDraft, type OperationDraftInput } from './service'
+import { scheduleOperation, updateOperationDraft } from './mock'
 
 const Ops = routes.operations
 const NewOp = routes['operation-new']
@@ -189,6 +190,9 @@ describe('operation write handlers (ticket 25)', () => {
 function mountProbe(me = 'Alex Morgan') {
   return mountServices(null, me)
 }
+
+// The wizard and schedule screens load the mock module on first use; resolve it before the timed DOM assertions.
+beforeAll(async () => { await import('./mock') }, 30_000)
 
 describe('operation wizard (ticket 25 — screens)', () => {
   it('creates an operation with playbook/agents/assets selection; the ticket-24 list refetches it', async () => {
