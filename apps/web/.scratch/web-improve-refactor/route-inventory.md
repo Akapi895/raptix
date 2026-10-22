@@ -1,5 +1,7 @@
 # Route inventory (ticket 07 — migration contract for all later feature tickets)
 
+> Cập nhật 2026-10-22: `command-center` không còn là route key. Địa chỉ cũ được `router/aliases.ts` chuyển thành `overview` (URL được thay bằng route chuẩn). Nội dung dưới đây giữ nguyên như lịch sử ticket 07.
+
 Recorded before the router migration landed. **53 route keys** exist in the
 source (`src/screens/*/routes` records, aggregated by the old `App.tsx`
 spread). Every key resolves through the new React Router registry
