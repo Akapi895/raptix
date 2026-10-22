@@ -22,7 +22,7 @@ import type { Operation } from '../../domain/entities'
 import { reviseScopeTransaction, decideApprovalTransaction } from '../approvals/service'
 import { assignAgentTransaction } from '../agents/writes'
 import { selectProject, go } from '../../router/navigate'
-import { routes } from '../../screens/c'
+import { routes } from './views/operation-pages'
 import { seed } from '../../demo/seed';
 import { computePreflightChecks, eligibility, preflightPass, roeWindowIssue } from './preflight'
 import { createOperationDraft, listOperations, operationDetail, operationStartGate, runOperationPreflight, scheduleOperation, updateOperationDraft } from './service'
