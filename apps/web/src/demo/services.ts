@@ -163,7 +163,7 @@ export function createConsoleServices(): ConsoleServices {
   }
 
   const forOperations = (actor: ActorRef, projectId: string): OperationService =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/operations/service').then((m) => m.createOperationService(authority, clock, guard)))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/operations/mock').then((m) => m.createOperationService(authority, clock, guard)))
   const forFindings = (actor: ActorRef, projectId: string): FindingService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/findings/service').then((m) => m.createFindingService(authority, clock, guard)))
   const forChat = (actor: ActorRef, projectId: string): ChatService =>
