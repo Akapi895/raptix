@@ -1,6 +1,6 @@
 import type { EnvironmentCommandResult, EnvironmentStateView } from '@raptix/web-contracts'
 import { describe, expect, it } from 'vitest'
-import { nextAction, needsReconcile, outcomeOf, ownHolder, refreshIntervalFor } from './environment-logic'
+import { nextAction, needsReconcile, outcomeOf, ownHolder, refreshIntervalFor } from './environment'
 
 const view = (engagementId: string, overrides: { observed?: EnvironmentStateView['environment']['observedState']; phase?: EnvironmentStateView['slot']['phase']; own?: boolean; version?: number } = {}): EnvironmentStateView => {
   const phase = overrides.phase ?? 'idle'
