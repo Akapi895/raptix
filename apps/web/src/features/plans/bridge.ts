@@ -33,27 +33,16 @@ import { projectAccessible, readOnlyContext } from '../../domain/policy'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../demo/authority'
 import type { Operation } from '../../domain/entities'
-import type { Clock, Instant, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import { planVer } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
 import type { Plan } from '../../domain/entities'
-import { usableApproval } from './service'
+import { usableApproval, type PlanBridgeRead, type PlanBridgeService } from './service'
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */
 const ROLE_LABEL: Record<string, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
-
-/** The committed binding: the operation a plan admits (new or pre-existing). */
-export interface PlanBridgeRead {
-  planId: string
-  projectId: string
-  opId: string
-  /** false when the binding already existed — repeated requests never duplicate. */
-  created: boolean
-  /** Absolute approval deadline the operation stays bound under (when stamped). */
-  expiresAt?: Instant
-}
 
 /** Narrow existence/project lookup for the list screen's bridge click; the transaction re-derives every gate. */
 export function readPlanProject(authority: DbAuthority, planId: string): string | undefined {
@@ -111,17 +100,6 @@ export function createOperationFromPlanTransaction(authority: DbAuthority, clock
     d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Created operation from plan', obj: opId, projectId: x.projectId, result: 'Success', reason: `Draft from ${x.id} ${planVer(x)} — approval binding kept; nothing started` })
   })
   return { ok: true, data: { planId, projectId: project.id, opId, created: true, expiresAt: gate.expiresAt } }
-}
-
-/**
- * Typed bridge surface (ticket 40). Deliberately separate from the plan
- * lifecycle service: the plans surface stays proposal-shaped (invariant 5 —
- * chat never reaches execution), and this is the only typed execution-
- * adjacent path, human-driven through the workbench and console screens.
- */
-export interface PlanBridgeService {
-  /** Creates (or returns the existing) draft operation bound to an approved plan. */
-  createOperation(ctx: RequestContext, planId: string): Promise<ServiceResult<PlanBridgeRead>>
 }
 
 /** Builds the typed bridge service over the shared authority and clock. */

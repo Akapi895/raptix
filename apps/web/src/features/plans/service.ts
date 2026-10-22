@@ -378,3 +378,30 @@ export function createPlanService(
     discard: (ctx, id) => Promise.resolve(discardPlanTransaction(authority, clock, ctx, id)),
   }
 }
+
+/** The committed binding: the operation a plan admits (new or pre-existing). */
+export interface PlanBridgeRead {
+  planId: string
+  projectId: string
+  opId: string
+  /** false when the binding already existed — repeated requests never duplicate. */
+  created: boolean
+  /** Absolute approval deadline the operation stays bound under (when stamped). */
+  expiresAt?: Instant
+}
+
+/**
+ * Typed bridge surface (ticket 40). Deliberately separate from the plan
+ * lifecycle service: the plans surface stays proposal-shaped (invariant 5 —
+ * chat never reaches execution), and this is the only typed execution-
+ * adjacent path, human-driven through the workbench and console screens.
+ */
+export interface PlanBridgeService {
+  /** Creates (or returns the existing) draft operation bound to an approved plan. */
+  createOperation(ctx: RequestContext, planId: string): Promise<ServiceResult<PlanBridgeRead>>
+}
+
+/** The project a plan belongs to, read from the plans the caller holds; undefined when the plan is unknown. */
+export function planProjectOf(plans: readonly Plan[], planId: string): string | undefined {
+  return plans.find((x) => x.id === planId)?.projectId
+}
