@@ -1,6 +1,6 @@
 import type { Agent, AiWorker, Approval, Asset, Audit, Branch, BranchGroup, BranchState, C2Node, Channel, ChatMsg, Conversation, DetectState, Evidence, ExportRec, Finding, Group, Integration, Notice, Operation, OrgState, Plan, PlanStep, Playbook, Policy, Project, Report, Retention, Session, SessionRequest, StopState, Step, StepStatus, Template, ToolEvent, VaultSecret, WorkerState } from '../domain/entities';
 import { executionSeeds } from '../features/execution/seed';
-import type { LibraryProposal as LibraryProposalRecord } from '../features/library/service';
+import type { LibraryProposal as LibraryProposalRecord } from '../features/library';
 import { APR } from '../domain/catalog';
 
 /** "Oct 13, 2026, 10:42 AM (UTC+7)" */

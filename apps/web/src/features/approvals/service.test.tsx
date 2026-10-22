@@ -25,7 +25,7 @@ import { aggregateFor } from '../../screens/dashboard/service'
 import {
   decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, withdrawApprovalTransaction,
 } from './service'
-import { importAssetsTransaction } from '../assets/writes'
+import { importAssetsTransaction } from '../assets'
 import { assignAgentTransaction } from '../agents/writes'
 import { createOperationDraft, runOperationPreflight, startOperation } from '../operations/service'
 

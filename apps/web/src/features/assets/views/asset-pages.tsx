@@ -31,6 +31,7 @@ const SCOPE_WHY: Record<Asset['scope'], string> = {
   unclassified: 'Present in the inventory but not classified. It is not targetable until it is proposed and approved.',
 }
 export function ScopeBadge({ a }: { a: Asset }) {
+  const { simulated } = useAssetPort().capabilities
   const projects = usePolicyProjects()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
@@ -50,7 +51,7 @@ export function ScopeBadge({ a }: { a: Asset }) {
           <b className="block text-sm">{SCOPE_LABEL[a.scope]}</b>
           <span className="mt-1 block text-muted">{SCOPE_WHY[a.scope]}</span>
           <span className="mt-2 block">ROE: <Mono>{p?.roeVersion || '—'}</Mono> ({p ? (p.roeStatus === 'approved' ? 'approved' : p.roeStatus === 'none' ? 'missing' : p.roeStatus) : '—'})</span>
-          <span className="mt-1 block text-muted">Demo Data: scope is simulated and not enforced by a real backend.</span>
+          {simulated && <span className="mt-1 block text-muted">Demo Data: scope is simulated and not enforced by a real backend.</span>}
         </span>
       )}
     </span>
@@ -59,6 +60,7 @@ export function ScopeBadge({ a }: { a: Asset }) {
 
 /* ───────────── List (AS-01, ticket 50: typed service read + Query) ───────────── */
 function AssetList() {
+  const { simulated } = useAssetPort().capabilities
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
   const me = useMe()
@@ -164,7 +166,7 @@ function AssetList() {
               { key: 'i', header: 'Identifier', hideBelow: 'md', render: (r) => <div><span title={r.asset.ident} className="block max-w-[200px] truncate"><Mono className="text-muted">{r.asset.ident}</Mono></span><div><Mono className="text-xs text-muted">{r.asset.ip}</Mono></div></div> },
               { key: 't', header: 'Type', hideBelow: 'md', render: (r) => r.asset.type },
               { key: 'o', header: 'Owner', hideBelow: 'lg', render: (r) => <Trunc max="max-w-[140px]">{r.asset.owner}</Trunc> },
-              { key: 'env', header: 'Environment', hideBelow: 'lg', render: (r) => envOf(r.asset) },
+              ...(simulated ? [{ key: 'env', header: 'Environment', hideBelow: 'lg' as const, render: (r: AssetListItem) => envOf(r.asset) }] : []),
               { key: 'os', header: 'OS', hideBelow: 'lg', render: (r) => r.asset.os },
               ...(pid === 'all' ? [{ key: 'p', header: 'Project', render: (r: AssetListItem) => <span className="text-xs">{r.projectId}</span> }] : []),
               { key: 's', header: 'Scope', render: (r) => <ScopeBadge a={r.asset} /> },
@@ -432,7 +434,8 @@ function AssetNew() {
   const route = useRoute()
   const port = useAssetPort()
   const guard = useGuard(pid === 'all' ? undefined : pid)
-  const [tab, setTab] = useState<'manual' | 'bulk' | 'disc'>(route.tab === 'bulk' || route.tab === 'disc' ? route.tab : 'manual')
+  const { simulated } = port.capabilities
+  const [tab, setTab] = useState<'manual' | 'bulk' | 'disc'>(route.tab === 'bulk' || (route.tab === 'disc' && simulated) ? route.tab : 'manual')
   const blank = { type: 'Host', name: '', ident: '', ip: '', os: 'Linux', desc: '', owner: '', labels: '', scope: 'in' as 'in' | 'out', note: '' }
   const [f, setF] = useState(blank)
   const [tried, setTried] = useState(false)
@@ -496,13 +499,13 @@ function AssetNew() {
 
   return (
     <>
-      <PageHeader back={{ label: 'Assets', to: () => go('assets') }} title="Add Asset" sub={project ? `Project: ${project.id} — ${project.name}` : 'Add manually, import in bulk or run discovery (simulated).'} />
+      <PageHeader back={{ label: 'Assets', to: () => go('assets') }} title="Add Asset" sub={project ? `Project: ${project.id} — ${project.name}` : (simulated ? 'Add manually, import in bulk or run discovery (simulated).' : 'Add manually or import in bulk.')} />
       {pid === 'all' && <Banner tone="warn" title="Select a specific project" action={<Button size="sm" onClick={() => setSwitcherOpen(true)}>Select project</Button>}>Assets cannot be added in “All Projects” mode. Choose a project in the top bar to continue.</Banner>}
       {pid !== 'all' && why && <Banner tone="bad" title="You cannot add assets">{why}</Banner>}
       {done && (done.needs
         ? <Banner tone="warn" title="Approved scope changed. ROE re-approval required" action={<><Button size="sm" onClick={() => go('asset-scope')}>Review scope</Button> <Button size="sm" variant="primary" onClick={() => go('assets')}>Back to assets</Button></>}>{done.n} {done.n === 1 ? 'asset was' : 'assets were'} added as Pending Approval. The project has an approved ROE, so a new ROE version is submitted for review. Assets can be used as targets only after a reviewer approves them.</Banner>
         : <Banner tone="ok" title={`${done.n} ${done.n === 1 ? 'asset' : 'assets'} saved as Pending Review`} action={<><Button size="sm" variant="primary" onClick={() => go('asset-scope')}>Submit Scope Change</Button> <Button size="sm" onClick={() => go('assets')}>Back to assets</Button></>}>Records stay Pending and are not targetable. Submit a Scope Change for review under {project?.roeVersion || 'the current ROE'}. You can keep adding more assets.</Banner>)}
-      <Tabs value={tab} onChange={(t) => setTab(t as typeof tab)} tabs={[{ id: 'manual', label: 'Manual' }, { id: 'bulk', label: 'Bulk Import' }, { id: 'disc', label: 'Discovery Preview' }]} />
+      <Tabs value={tab} onChange={(t) => setTab(t as typeof tab)} tabs={[{ id: 'manual', label: 'Manual' }, { id: 'bulk', label: 'Bulk Import' }, ...(simulated ? [{ id: 'disc', label: 'Discovery Preview' }] : [])]} />
       {tab === 'manual' && (
         <Card className="max-w-3xl">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -535,11 +538,11 @@ function AssetNew() {
             <Button size="sm" icon={Upload} disabled={!!why} onClick={() => fileRef.current?.click()}>Choose file</Button>
           </div>
           <Field label="Or paste a list"><Textarea className="min-h-32 font-mono text-xs" disabled={!!why} value={paste} onChange={(e) => setPaste(e.target.value)} placeholder="name,ident,type,os,owner,scope" /></Field>
-          <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" disabled={!!why || !paste.trim()} title={why || (!paste.trim() ? 'Paste content or choose a file first.' : '')} onClick={() => parse(paste, 'CSV import')}>Preview</Button><Button disabled={!!why} onClick={() => { setPaste(sample); parse(sample, 'CSV import') }}>Use sample data</Button><Button variant="ghost" onClick={() => { setPaste(''); setRows([]) }}>Clear</Button></div>
+          <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" disabled={!!why || !paste.trim()} title={why || (!paste.trim() ? 'Paste content or choose a file first.' : '')} onClick={() => parse(paste, 'CSV import')}>Preview</Button>{simulated && <Button disabled={!!why} onClick={() => { setPaste(sample); parse(sample, 'CSV import') }}>Use sample data</Button>}<Button variant="ghost" onClick={() => { setPaste(''); setRows([]) }}>Clear</Button></div>
           {rows.length > 0 && <ImportPreview rows={rows} setRows={setRows} db={db} pid={pid} disabled={!!why} why={why} onConfirm={() => confirmImport('CSV import')} />}
         </Card>
       )}
-      {tab === 'disc' && (
+      {tab === 'disc' && simulated && (
         <Card>
           <CardHeader title={<span className="flex flex-wrap items-center gap-2">Asset discovery <span className="inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full border border-warn/30 bg-warn-soft px-2 text-xs font-medium text-warn"><Radar size={12} aria-hidden />Demo Preview</span></span>}
             sub={roeDraft ? 'The ROE is still a draft, so this only generates sample data. No network scan is run and no real asset is contacted.' : 'Simulated Preview: no real network access or scan happens. Records below are sample data and must be reviewed before import.'} />
@@ -578,6 +581,7 @@ function AssetDetail() {
       else toast(res.data.reviewRequested ? 'Scope change approval submitted.' : 'Asset proposed for scope.', 'info')
     },
   })
+  const { simulated } = useAssetPort().capabilities
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading asset"><Skeleton className="h-96" /></div>
   if (detail.isError || !read) {
     const failure = detail.isError ? (detail.error as AssetReadError).failure : undefined
@@ -599,7 +603,7 @@ function AssetDetail() {
   })
   return (
     <>
-      <PageHeader back={back} title={<span className="flex flex-wrap items-center gap-3">{a.name}<Mono className="text-sm text-muted">{a.id}</Mono></span>} meta={<ScopeBadge a={a} />} sub={`${a.ident} · ${a.ip} · ${envOf(a)} · ROE ${p.roeVersion}`}
+      <PageHeader back={back} title={<span className="flex flex-wrap items-center gap-3">{a.name}<Mono className="text-sm text-muted">{a.id}</Mono></span>} meta={<ScopeBadge a={a} />} sub={[a.ident, a.ip, simulated ? envOf(a) : '', `ROE ${p.roeVersion}`].filter(Boolean).join(' · ')}
         actions={<>
           <Button icon={CheckCircle2} disabled={!!why || a.scope === 'in' || a.scope === 'pending'} title={why || (a.scope === 'in' ? 'Asset is already in scope.' : a.scope === 'pending' ? 'Awaiting approval.' : 'Propose adding to project scope')} onClick={toIn}>Propose Scope Change</Button>
           <Button variant="danger" icon={Ban} disabled={!!why || a.scope === 'out'} title={why || (a.scope === 'out' ? 'Asset is already out of scope.' : 'Mark out of scope')} onClick={toOut}>Mark out of scope</Button>

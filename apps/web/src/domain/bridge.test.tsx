@@ -11,7 +11,7 @@ import { seed } from '../demo/seed';
 import { type Project, type Role } from './entities'
 import { mountServices } from '../test/helpers'
 import { resetDemo, terminateSession } from '../demo/runtime'
-import { changeAssetScopeTransaction } from '../features/assets/writes'
+import { changeAssetScopeTransaction } from '../features/assets'
 import { DEMO_ANCHOR, formatDemoInstant, parseDemoInstant } from './clock'
 import { createConsoleServices } from '../demo/services';
 import type { ActorRef, ChangeSet, RequestContext, ServiceResult } from './service'

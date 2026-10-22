@@ -11,10 +11,11 @@ import type { PlanService } from '../features/plans/service';
 import type { AgentService } from '../features/agents/service';
 import type { ReportService } from '../features/reports/service';
 import type { BranchService } from '../features/branches/service';
-import type { LibraryService } from '../features/library/service';
+import type { LibraryService } from '../features/library';
 import type { AnalysisService } from '../features/analysis/service';
 import type { SettingsService } from '../features/settings/service';
-import type { AssetService } from '../features/assets/service';
+import type { AssetService } from '../features/assets';
+import { MOCK_ASSET_CAPABILITIES } from '../features/assets/service';
 import type { ScopeService } from '../features/scope/service';
 import type { AuditService } from '../features/audit/service';
 import type { TeamService } from '../features/team/service';
@@ -63,12 +64,14 @@ export function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: Reque
  * proxy memoizes the loaded instance per binding; every method awaits the
  * load and delegates, which matches the already-async handler signatures.
  */
-export function lazyService<S extends object>(load: () => Promise<S>): S {
+// Properties in `sync` answer at once (constants of the service); every other property is a method that waits for the module.
+export function lazyService<S extends object>(load: () => Promise<S>, sync: Partial<S> = {}): S {
   let instance: Promise<S> | null = null
   const ensure = () => (instance ??= load())
   return new Proxy({} as S, {
     get(_target, prop) {
       if (typeof prop !== 'string') return undefined
+      if (prop in sync) return sync[prop as keyof S]
       return (...args: unknown[]) =>
         ensure().then((svc) => (svc as unknown as Record<string, (...a: unknown[]) => unknown>)[prop](...args))
     },
@@ -84,8 +87,9 @@ export function lazyService<S extends object>(load: () => Promise<S>): S {
 export function lazyGuarded<S extends object>(
   guard: ScopeGuard,
   load: (guard: ScopeGuard) => Promise<S>,
+  sync: Partial<S> = {},
 ): S {
-  return lazyService(() => load(guard))
+  return lazyService(() => load(guard), sync)
 }
 
 export function createConsoleServices(): ConsoleServices {
@@ -177,7 +181,7 @@ export function createConsoleServices(): ConsoleServices {
   const forRoeScope = (actor: ActorRef, projectId: string): ScopeService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/scope/mock').then((m) => m.createMockScopeService(authority, clock, guard)))
   const forAssets = (actor: ActorRef, projectId: string): AssetService =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/assets/mock').then((m) => m.createAssetService(authority, clock, guard)))
+    lazyGuarded<AssetService>(scopeGuard(actor, projectId), (guard) => import('../features/assets/mock').then((m) => m.createAssetService(authority, clock, guard)), { capabilities: MOCK_ASSET_CAPABILITIES })
   const forWorkers = (actor: ActorRef, projectId: string): WorkerService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/workers/service').then((m) => m.createWorkerService(authority, guard)))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>

@@ -5,7 +5,7 @@ import { ServicesProvider, useServices } from '../state/services'
 import { ConsoleProviders } from '../state/query'
 import { useQueryScope, type QueryScope } from '../state/keys'
 import type { ConsoleServices } from '../domain/console-services';
-import { useAssetList } from '../features/assets/query'
+import { useAssetList } from '../features/assets'
 import { useAuthStore } from '../state/stores'
 
 afterEach(cleanup)

@@ -17,6 +17,7 @@ import type { Asset } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import { submitApprovalTransaction } from '../approvals/service'
 import { changeAssetScopeTransaction, importAssetsTransaction } from './writes'
+import { MOCK_ASSET_CAPABILITIES } from './service'
 import type { AssetListQuery, AssetKpis, AssetListRead, AssetService, AssetHistoryItem, AssetDetailRead, AssetScopeRow, AssetScopeProject, AssetScopeRead } from './service'
 
 const PAGE_SIZE = 10
@@ -170,7 +171,7 @@ export function createAssetService(
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ): AssetService {
   return {
-    capabilities: { scopeApprovalRequests: true, observedGraph: false },
+    capabilities: MOCK_ASSET_CAPABILITIES,
     list: (ctx, query) => guard(() => listAssets(authority.snapshot(), ctx, query)),
     get: (ctx, id) => guard(() => getAsset(authority.snapshot(), ctx, id)),
     scope: (ctx) => guard(() => getAssetScope(authority.snapshot(), ctx)),
