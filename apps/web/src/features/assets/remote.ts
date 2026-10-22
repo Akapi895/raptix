@@ -70,7 +70,7 @@ export function createRealAssetService(): AssetService {
     return view.assets.map((row) => toAsset(row, engagementId))
   }
   return {
-    capabilities: { scopeApprovalRequests: false, observedGraph: true },
+    capabilities: { scopeApprovalRequests: false, observedGraph: true, simulated: false },
     list: (ctx: RequestContext, query: AssetListQuery = {}) => guarded(async (): Promise<ServiceResult<AssetListRead>> => {
       if (!ctx.projectId || ctx.projectId === 'all') return { ok: false, failure: { kind: 'unavailable', message: 'Select an engagement to read its assets.' } }
       const all = await inventory(ctx.projectId)

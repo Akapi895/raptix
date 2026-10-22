@@ -1,8 +1,8 @@
 import type { FeatureServices } from '../../domain/console-services';
 import type { FindingService } from '../../features/findings'
-import type { AssetService } from '../../features/assets/service';
+import type { AssetService } from '../../features/assets';
 import type { ReportService } from '../../features/reports/service';
-import type { LibraryService } from '../../features/library/service';
+import type { LibraryService } from '../../features/library';
 import type { SettingsService } from '../../features/settings/service'
 import type { ScopeService } from '../../features/scope/service'
 import type { AuditService } from '../../features/audit/service'

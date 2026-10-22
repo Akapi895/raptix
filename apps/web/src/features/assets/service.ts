@@ -61,7 +61,12 @@ export interface AssetCapabilities {
   readonly scopeApprovalRequests: boolean
   /** The observed attack-chain graph is read from the server; the simulated store has none. */
   readonly observedGraph: boolean
+  /** The mock store fills fields the real inventory does not hold (environment, sample discovery); the screens show them only when true. */
+  readonly simulated: boolean
 }
+
+/** The mock store's capabilities. A constant, so the lazily loaded mock service can answer them without waiting for its module. */
+export const MOCK_ASSET_CAPABILITIES: AssetCapabilities = { scopeApprovalRequests: true, observedGraph: false, simulated: true }
 
 export interface AssetService {
   readonly capabilities: AssetCapabilities
