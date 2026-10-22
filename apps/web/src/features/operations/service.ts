@@ -31,7 +31,7 @@ import { usableApproval } from '../plans/service'
 import { IN_FLIGHT, draftSteps, operationWriteGate } from './write-gates'
 import {
   PROJECT_TZ_OFFSET_MS, scheduleInstantOf, scheduleLabelOf, roeWindowIssue,
-  computePreflightChecks, preflightPass, eligibility, type Check, type EligKind,
+  computePreflightChecks, eligibility, type Check, type EligKind,
 } from './preflight'
 
 /* Ticket 26: the schedule/window helpers and the preflight policy live in
@@ -464,45 +464,6 @@ export function readPreflightChecks(db: Db, now: Instant, ctx: RequestContext, i
 
 /** The committed outcome of one preflight run: re-derived checks plus the op. */
 export interface PreflightRunRead { op: Operation; checks: Check[]; pass: boolean; at: Instant }
-
-/**
- * Runs preflight at the handler: the eight checks are RE-DERIVED from
- * canonical state at this instant — never read from a stored snapshot — and
- * the outcome (ready/draft, `preflightAt`, audit row) commits atomically. A
- * scope revision that invalidated the operation (ticket 21) is therefore
- * observed here: the re-run fails its check until the ROE is re-approved.
- */
-export function runOperationPreflight(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<PreflightRunRead> {
-  const db = authority.snapshot()
-  const op = db.operations.find((o) => o.id === id)
-  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
-  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
-    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
-  }
-  const project = db.projects.find((p) => p.id === op.projectId)
-  if (!project || !projectAccessible(project, ctx.actor)) {
-    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
-  }
-  if (readOnlyContext(project, ctx.actor)) {
-    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; preflight cannot be run.` } }
-  }
-  if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
-    return { ok: false, failure: { kind: 'forbidden', message: 'Only a Manager or Operator can run preflight.' } }
-  }
-  if (IN_FLIGHT.includes(op.status)) {
-    return { ok: false, failure: { kind: 'validation', message: `Operation ${op.id} is ${op.status === 'estop' ? 'emergency stopped' : op.status} — preflight applies to Draft or Ready operations.` } }
-  }
-  const checks = computePreflightChecks(db, op, clock.now())
-  const pass = preflightPass(checks)
-  authority.commit(ctx.corr, (d) => {
-    const o = d.operations.find((x) => x.id === id)!
-    o.preflightAt = formatDemoInstant(clock.now())
-    if (o.status === 'draft' || o.status === 'ready' || o.status === 'pending') o.status = pass ? 'ready' : 'draft'
-    o.updated = formatDemoInstant(clock.now())
-    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Ran preflight', obj: id, projectId: project.id, result: pass ? 'Passed' : 'Failed', reason: pass ? 'All eight checks passed' : checks.filter((c) => c.state !== 'pass').map((c) => c.code).join(', ') + ' failed' })
-  })
-  return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, checks, pass, at: clock.now() } }
-}
 
 /** The start gate outcome: the operation is eligible; the start transition itself stays with ticket 27. */
 export interface OperationStartRead { op: Operation; checks: Check[] }

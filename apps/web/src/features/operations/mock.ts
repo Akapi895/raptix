@@ -3,17 +3,20 @@
  * Port types and the pure read helpers stay in ./service; this file owns the authority-backed handlers the factory wires.
  */
 import type { Db } from '../../demo/seed'
+import { can, projectAccessible, projectLocked, readOnlyContext } from '../../domain/policy'
 import type { DbAuthority } from '../../demo/authority'
 import type { Operation, Project } from '../../domain/entities'
 import { formatDemoInstant } from '../../domain/clock'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
 import {
-  createOperationDraft, runOperationPreflight, operationStartGate,
+  createOperationDraft, operationStartGate,
   startOperation, pauseOperation, resumeOperation, stopOperation, completeOperation, reviewOperationStep, operationDraftOptions,
   operationDetail, readPreflightChecks, listOperations, draftMinutes, findScheduleConflicts, type OperationService,
+  type PreflightRunRead,
   ROLE_LABEL, memberOwnersOf, normalizeScheduleInput, scheduleInstantOf, scheduleLabelOf, roeWindowIssue, type OperationDraftPatch, type OperationWriteRead,
 } from './service'
 import { IN_FLIGHT, draftSteps, operationWriteGate } from './write-gates'
+import { computePreflightChecks, preflightPass } from './preflight'
 
 /** Builds the typed list service; `guard` is the factory's superseded-scope read guard. */
 export function createOperationService(
@@ -180,5 +183,44 @@ export function scheduleOperation(authority: DbAuthority, clock: Clock, ctx: Req
     d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: label ? 'Scheduled operation' : 'Cleared operation schedule', obj: id, projectId: project.id, result: 'Success', reason: label ? `Start ${label} (UTC+7)` : 'Manual start after preflight' })
   })
   return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, scheduleInstant: instant } }
+}
+
+/**
+ * Runs preflight at the handler: the eight checks are RE-DERIVED from
+ * canonical state at this instant — never read from a stored snapshot — and
+ * the outcome (ready/draft, `preflightAt`, audit row) commits atomically. A
+ * scope revision that invalidated the operation (ticket 21) is therefore
+ * observed here: the re-run fails its check until the ROE is re-approved.
+ */
+export function runOperationPreflight(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<PreflightRunRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
+  }
+  const project = db.projects.find((p) => p.id === op.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+  }
+  if (readOnlyContext(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; preflight cannot be run.` } }
+  }
+  if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: 'Only a Manager or Operator can run preflight.' } }
+  }
+  if (IN_FLIGHT.includes(op.status)) {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${op.id} is ${op.status === 'estop' ? 'emergency stopped' : op.status} — preflight applies to Draft or Ready operations.` } }
+  }
+  const checks = computePreflightChecks(db, op, clock.now())
+  const pass = preflightPass(checks)
+  authority.commit(ctx.corr, (d) => {
+    const o = d.operations.find((x) => x.id === id)!
+    o.preflightAt = formatDemoInstant(clock.now())
+    if (o.status === 'draft' || o.status === 'ready' || o.status === 'pending') o.status = pass ? 'ready' : 'draft'
+    o.updated = formatDemoInstant(clock.now())
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Ran preflight', obj: id, projectId: project.id, result: pass ? 'Passed' : 'Failed', reason: pass ? 'All eight checks passed' : checks.filter((c) => c.state !== 'pass').map((c) => c.code).join(', ') + ' failed' })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, checks, pass, at: clock.now() } }
 }
 
