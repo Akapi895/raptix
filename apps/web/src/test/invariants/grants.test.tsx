@@ -5,7 +5,7 @@ vi.useFakeTimers()
 const { mountServices } = await import('../helpers')
 const { hhmm } = await import('../../demo/display-clock')
 const { expireGrantTransaction } = await import('../../features/c2/grants')
-const { minutesUntil, useGrantWatch, Console } = await import('../../screens/h-session')
+const { minutesUntil, useGrantWatch, Console } = await import('../../features/c2/views/session-console')
 const { go, selectProject } = await import('../../router/navigate')
 const { useToastStore } = await import('../../state/stores')
 

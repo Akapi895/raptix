@@ -15,10 +15,13 @@
  * transactions (./grants, ticket 46) behind the legacy action bridge.
  */
 import { useQuery } from '@tanstack/react-query'
-import { readGrantWatch } from './projection'
+import { readGrantWatch, readSessionProject } from './projection'
+import type { GrantRequestInput, GrantRevokeInput, SessionCommandInput } from './grants'
 import { useServiceProjection } from '../../state/projection'
 import { actorRef } from '../../demo/persona'
 import { useServices } from '../../state/services'
+import { useMe } from '../../state/console'
+import { recordAudit, type AuditInput } from '../audit'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
 import type {
@@ -144,4 +147,25 @@ export function useC2Session(id?: string) {
 /** Expiry alerts observe typed snapshots synchronously, without a Query fetch gap. */
 export function useC2GrantWatch(): C2GrantWatchRead | undefined {
   return useServiceProjection(readGrantWatch)
+}
+
+/* ── Mock console adapter for the C2 screens: the display clock, the demo controls, and the legacy-correlated session commands and
+ * grant writes the mirrored console always made. Mock mode only; the seam is intermediate, not a merged mock/real surface. ── */
+
+export function useC2MockConsole() {
+  const services = useServices()
+  const me = useMe()
+  const actor = { id: me.name, role: me.role }
+  const ctx = (projectId: string) => ({ actor, projectId, corr: 'legacy' })
+  const c2 = (projectId: string) => services.c2(actor, projectId)
+  return {
+    display: services.display,
+    demo: services.demo,
+    projectOfSession: (sessionId: string) => readSessionProject(services, actor, sessionId),
+    requestAccess: (projectId: string, input: GrantRequestInput) => c2(projectId).requestAccess(ctx(projectId), input),
+    revokeGrant: (projectId: string, input: GrantRevokeInput) => c2(projectId).revokeGrant(ctx(projectId), input),
+    sendCommand: (projectId: string, input: SessionCommandInput) => c2(projectId).sendCommand(ctx(projectId), input),
+    expireGrant: (projectId: string, sessionId: string, user: string) => c2(projectId).expireGrant(ctx(projectId), sessionId, user),
+    audit: (projectId: string, input: AuditInput) => recordAudit(services, ctx(projectId), input),
+  }
 }

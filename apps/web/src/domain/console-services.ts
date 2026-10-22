@@ -60,6 +60,8 @@ export interface DemoRuntimeControls {
   loseAgent(agentId: string): void
   restoreAgent(agentId: string): void
   fastForward(opId: string): void
+  emergencyStop(scope: 'operation' | 'project' | 'workspace', id: string, reason: string): void
+  terminateSession(sessionId: string, reason: string): void
 }
 
 /**
