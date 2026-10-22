@@ -2,7 +2,7 @@ import type { ServiceResult } from '../../domain/service'
 import type { Audit } from '../../domain/entities'
 import type { AuditQuery, AuditRead, SettingsService } from '../../features/settings/service'
 import { fetchWorkspaceAudit, type AuditEntryView } from '../../features/audit/api';
-import { fetchWorkspaceSettings, saveWorkspaceSetting as writeWorkspaceSetting } from './settings-remote';
+import { fetchWorkspaceSettings, saveWorkspaceSetting as writeWorkspaceSetting } from '../../features/settings/api';
 import { guarded } from '../../platform/adapter-shared'
 import { unavailable } from '../../platform/adapter-stub'
 
