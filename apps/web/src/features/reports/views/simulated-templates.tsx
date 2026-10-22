@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Copy, Lock, Plus, Upload } from 'lucide-react'
 import { useServices } from '../../../state/services'
-import { recordAudit } from '../../audit/service'
+import { recordAudit } from '../../audit'
 import type { Template } from '../../../domain/entities'
 import { Banner, Button, Card, Drawer, Mono, Skeleton, cx } from '../../../ui/index'
 import { useReportCapabilities, useTemplates } from '../query'

@@ -22,7 +22,7 @@ import { REAL_INTEGRATED_ROUTES, RealNotIntegrated } from '../real/not-integrate
 import { FEATURE_ROUTE_SURFACES, MIGRATED_ROUTES } from './route-table'
 import { RealPortfolio } from '../features/projects/views/portfolio-page'
 import { RealProjectNewRoute } from '../features/projects/views/create-page'
-import { RealProjectDetail } from '../features/projects/views/detail-page'
+import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
 import { RealOverview } from '../real/screens/overview'
 import { RealGlobalResource } from '../real/screens/global-resource'
