@@ -8,7 +8,7 @@ import { useRef, useState, type ReactElement } from 'react'
 import type { EnvironmentCommandResult, EnvironmentStateView } from '@raptix/web-contracts'
 import { listEngagements } from '../remote';
 import { fetchEnvironment, submitEnvironmentCommand } from '../environment-api'
-import { needsReconcile, nextAction, outcomeOf, ownHolder, refreshIntervalFor } from '../../../real/environment-logic'
+import { needsReconcile, nextAction, outcomeOf, ownHolder, refreshIntervalFor } from '../environment'
 import { ApiTransportError } from '../../../platform/transport'
 import { Banner, Button, Card, CardHeader } from '../../../ui/index'
 
