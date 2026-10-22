@@ -12,6 +12,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { isDeclaredFailure } from './declared-failure.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const APP = process.env.RAPTIX_VERIFY_APP ?? 'http://127.0.0.1:5273';
@@ -38,7 +39,8 @@ for (const [id, entry] of Object.entries(baseline)) {
 }
 // Background requests that the shell makes on every route, each allowed only on the routes it names.
 const shellRequests = JSON.parse(readFileSync(path.join(here, 'shell-requests.json'), 'utf8'));
-const isShellRequest = (response, key) => shellRequests.some((entry) => response.includes(entry.path) && entry.routes.includes(key));
+const isShellRequest = (response, key) => shellRequests.some((entry) => response.url.includes(entry.path) && entry.routes.includes(key));
+const responseText = (response) => `${response.method} ${response.status} ${response.url}`;
 const realFixtures = arg('--fixtures-real', null);
 const fixtures = {
   mock: JSON.parse(readFileSync(arg('--fixtures-mock', path.join(here, 'fixtures.mock.json')), 'utf8')),
@@ -112,7 +114,7 @@ function judge(expect, observed, pageErrors, consoleErrors, apiFailures) {
   // Failed resource loads are judged through the API responses below; every other console error is a broken page.
   const scriptErrors = consoleErrors.filter((message) => !message.startsWith('Failed to load resource'));
   if (scriptErrors.length > 0) return { ok: false, category: 'console-error', detail: scriptErrors[0] };
-  if (apiFailures.length > 0) return { ok: false, category: 'api-error', detail: apiFailures[0] };
+  if (apiFailures.length > 0) return { ok: false, category: 'api-error', detail: responseText(apiFailures[0]) };
   if (expect === undefined) return { ok: false, category: 'no-expectation', detail: 'the route declares no expectation for this mode' };
   if (typeof expect === 'string') {
     return observed.heading === expect
@@ -137,7 +139,7 @@ async function runMode(browser, mode) {
   let consoleErrors = [];
   page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text().slice(0, 600)); });
   let badResponses = [];
-  page.on('response', (response) => { if (response.status() >= 400) badResponses.push(`${response.status()} ${response.url().slice(0, 200)}`); });
+  page.on('response', (response) => { if (response.status() >= 400) badResponses.push({ method: response.request().method(), status: response.status(), url: response.url() }); });
   const rows = {};
   let signedIn;
   try {
@@ -163,7 +165,7 @@ async function runMode(browser, mode) {
     badResponses = [];
     await page.goto(target, { waitUntil: 'domcontentloaded' });
     const observed = await observe(page, expect);
-    const apiFailures = badResponses.filter((response) => response.includes('/api/') && !isShellRequest(response, entry.key));
+    const apiFailures = badResponses.filter((response) => new URL(response.url).pathname.startsWith('/api/') && !isShellRequest(response, entry.key));
     const verdict = discover ? { ok: true } : judge(expect, observed, pageErrors, consoleErrors, apiFailures);
     rows[entry.key] = {
       status: verdict.ok ? 'pass' : 'fail',
@@ -175,8 +177,9 @@ async function runMode(browser, mode) {
       boundary: observed.boundary,
       pageErrors: [...pageErrors],
       consoleErrors: [...consoleErrors],
-      badResponses: [...badResponses],
-      shellRequests: badResponses.filter((response) => isShellRequest(response, entry.key)),
+      badResponses: badResponses.map(responseText),
+      apiFailures,
+      shellRequests: badResponses.filter((response) => isShellRequest(response, entry.key)).map(responseText),
     };
   }
   await context.close();
@@ -201,7 +204,7 @@ for (const [mode, result] of Object.entries(report.modes)) {
   for (const [key, row] of Object.entries(result.rows)) {
     const id = `${mode}:${key}`;
     if (row.status === 'fail') {
-      if (baseline[id]?.categories.includes(row.category)) declared.push(`${id} [${row.category}]`);
+      if (isDeclaredFailure(baseline[id], row)) declared.push(`${id} [${row.category}]`);
       else newFailures.push(`${id} [${row.category}]`);
     } else if (id in baseline) resolved.push(id);
   }
