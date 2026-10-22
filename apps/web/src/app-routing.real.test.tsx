@@ -5,10 +5,10 @@ import { StrictMode } from 'react'
 
 window.history.replaceState(null, '', '/?dataMode=real#/projects')
 vi.stubEnv('VITE_DATA_MODE', 'real')
-const { default: App } = await import('../App')
-const { getActiveRouter } = await import('../router/active')
-const { resetNavStores } = await import('../router/navigate')
-const { useProjectStore } = await import('../state/stores')
+const { default: App } = await import('./App')
+const { getActiveRouter } = await import('./router/active')
+const { resetNavStores } = await import('./router/navigate')
+const { useProjectStore } = await import('./state/stores')
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 
