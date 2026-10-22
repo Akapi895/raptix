@@ -9,33 +9,18 @@
  * never falls back automatically.
  */
 import { useQuery, QueryClientProvider } from '@tanstack/react-query'
-import { createContext, useContext, useEffect, useMemo, type ReactElement, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactElement, type ReactNode } from 'react'
 import { Loader2, PlugZap, RefreshCw, ServerCrash } from 'lucide-react'
-import { capabilityState, fetchCapabilities } from '../platform/capabilities';
-import type { CapabilitiesDocument } from '@raptix/web-contracts';
+import { fetchCapabilities } from '../platform/capabilities';
 import { switchDataMode } from '../state/mode'
-import { REAL_IDENTITY, type RealIdentity } from './identity'
+import { REAL_IDENTITY } from '../state/real-identity'
+import { RealContext } from '../state/real-context'
 import { createConsoleQueryClient } from '../state/keys'
 import { Button } from '../ui/index'
 import { RealLoginGate } from './screens/login'
 import { RealFeatureServicesProvider } from './service-adapter/provider'
 
-export { REAL_IDENTITY, REAL_PERSONA, type RealIdentity } from './identity'
-
-interface RealContextValue {
-  readonly document: CapabilitiesDocument
-  readonly identity: RealIdentity
-}
-
-const RealContext = createContext<RealContextValue | null>(null)
-
-/** Real-mode services; throws outside the real composition (fail-fast). */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useReal(): RealContextValue {
-  const ctx = useContext(RealContext)
-  if (!ctx) throw new Error('Real-mode context is not mounted (this surface cannot read real data).')
-  return ctx
-}
+export { REAL_IDENTITY, REAL_PERSONA, type RealIdentity } from '../state/real-identity'
 
 function useCapabilitiesQuery() {
   return useQuery({
@@ -91,16 +76,4 @@ function RealBoot({ children }: { children: ReactNode }): ReactElement {
     return <BootError message={boot.error instanceof Error ? boot.error.message : 'The bootstrap request failed.'} onRetry={() => void boot.refetch()} />
   }
   return <RealContext.Provider value={{ document: boot.data, identity: REAL_IDENTITY }}><RealFeatureServicesProvider document={boot.data}><RealLoginGate deploymentId={boot.data.deploymentId}>{children}</RealLoginGate></RealFeatureServicesProvider></RealContext.Provider>
-}
-
-/** Whether a capability is usable right now (supported AND available). */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useCapabilityReady(name: string): { ready: boolean; reason: string | null } {
-  const { document } = useReal()
-  const capability = capabilityState(document, name)
-  if (!capability || !capability.supported) return { ready: false, reason: 'This capability is not implemented on the connected server.' }
-  if (!capability.available) {
-    return { ready: false, reason: capability.reason ? `Unavailable: ${capability.reason.replace(/_/g, ' ')}.` : 'This capability is currently unavailable on the server.' }
-  }
-  return { ready: true, reason: null }
 }

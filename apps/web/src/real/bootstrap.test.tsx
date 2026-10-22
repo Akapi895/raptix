@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
-const { RealModeProvider, useCapabilityReady } = await import('./bootstrap')
+const { RealModeProvider } = await import('./bootstrap')
+const { useCapabilityReady } = await import('../state/real-context')
 const { RealNotIntegrated, REAL_INTEGRATED_ROUTES } = await import('./not-integrated')
 
 const CAPABILITIES = {

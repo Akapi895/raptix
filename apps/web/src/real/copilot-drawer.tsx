@@ -4,7 +4,7 @@ import { useProjectStore, useUiStore } from '../state/stores'
 import { useRoute } from '../router/navigate'
 import { Drawer } from '../ui/index'
 
-const Conversation = lazy(() => import('./screens/workspace').then((m) => ({ default: m.RealConversation })))
+const Conversation = lazy(() => import('../features/aichat').then((m) => ({ default: m.RealConversation })))
 
 export function RealCopilotDrawer(): ReactElement {
   const open = useUiStore((s) => s.copilotOpen)

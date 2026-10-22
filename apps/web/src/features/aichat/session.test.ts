@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
   clearPending, clearWorkspaceRecovery, readPending, readSelection,
   savePending, saveSelection, type PendingRequest, type SelectedThread,
-} from './workspace-session'
+} from './session'
 
 const PENDING = (requestId: string): PendingRequest => ({ requestId, threadId: null, kind: 'planning' })
 const SELECTED: SelectedThread = { threadId: 'thread-1', kind: 'execution' }

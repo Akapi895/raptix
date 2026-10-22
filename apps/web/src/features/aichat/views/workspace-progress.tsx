@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from 'react'
 import { CheckCircle2, ChevronDown, ChevronRight, CircleDashed, Loader2, MessagesSquare, XCircle } from 'lucide-react'
-import { cx } from '../../ui/index'
+import { cx } from '../../../ui/index'
 
 export interface ToolProgress {
   /** Tool calls made in the current thread's trace. */

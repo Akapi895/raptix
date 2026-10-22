@@ -10,7 +10,7 @@ import type { ReactElement, ReactNode } from 'react'
 
 const fetchRuntimeInstances = vi.fn()
 
-vi.mock('../../features/agents/remote', () => ({
+vi.mock('../remote', () => ({
   fetchRuntimeInstances: (...a: unknown[]) => fetchRuntimeInstances(...a),
 }))
 

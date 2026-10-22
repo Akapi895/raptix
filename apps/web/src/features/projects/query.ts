@@ -8,8 +8,8 @@ import { useMemo } from 'react'
 import { useMutation, useQuery, type useQueryClient } from '@tanstack/react-query'
 import { createEngagement, engagementToProject, listEngagements, type CreateEngagementInput } from './remote';
 import { fetchMembers } from '../team';
-import { REAL_IDENTITY } from '../../real/identity'
-import { useCapabilityReady } from '../../real/bootstrap'
+import { REAL_IDENTITY } from '../../state/real-identity'
+import { useCapabilityReady } from '../../state/real-context'
 import type { Project, Role } from '../../domain/entities'
 
 export const projectKeys = {

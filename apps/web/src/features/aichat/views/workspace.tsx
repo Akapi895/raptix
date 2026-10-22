@@ -10,38 +10,31 @@
  * tool HITL approvals as allow/deny decisions (never business approval).
  */
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, Brain, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock, Copy, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench, XCircle, type LucideIcon } from 'lucide-react'
-import { TONE, type Tone } from '../../ui/status-map'
+import { TONE, type Tone } from '../../../ui/status-map'
 import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, fetchFleet } from '../../features/operations/remote';
-import { createThread, getThreadPage, getRun, getThread, listRunsOfThread, listThreads, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from '../../features/aichat/remote';
-import { decideApproval, fetchApprovals } from '../../features/approvals/remote';
-import { fetchPlanning } from '../../features/planning/remote';
-import { fetchReports } from '../../features/reports/endpoints';
-import { fetchRuntimeContext } from '../../features/execution/remote';
-import { getEngagement } from '../../features/projects/remote';
-import { ApiTransportError } from '../../platform/transport'
-import { isEnvironmentPreparingError, withPreparedEnvironment } from '../environment-api'
-import { useCapabilityReady } from '../bootstrap'
-import { awaitRequest, newRequestId, type AckOutcome } from '../../platform/request-ledger'
-import { clearPending, isTerminalRun, readPending, readSelection, savePending, saveSelection, type PendingRequest } from '../workspace-session'
-import { useRunStream } from '../../platform/stream'
-import { projectKeys } from '../queries'
-import { go, useRoute } from '../../router/navigate'
-import { useProjectStore, useToastStore } from '../../state/stores'
-import { Banner, Button, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../ui/index'
-import { utcMinute, utcMinuteOr } from '../../platform/format'
-import { renderMarkdown } from '../markdown'
+import { cancelRun, createThread, decideApproval, getRun, getThreadPage, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun, useApprovalQueue, useConversationFleet, useConversationPlanning, useConversationReports, useConversationThreads, useEngagementDetail, usePlanningDocuments, useRuntimeContext, useThreadRuns, useThreadSnapshot } from '../conversation-query';
+import { ApiTransportError } from '../../../platform/transport'
+import { isEnvironmentPreparingError, withPreparedEnvironment } from '../../projects';
+import { useCapabilityReady } from '../../../state/real-context'
+import { awaitRequest, newRequestId, type AckOutcome } from '../../../platform/request-ledger'
+import { clearPending, isTerminalRun, readPending, readSelection, savePending, saveSelection, type PendingRequest } from '../session'
+import { useRunStream } from '../../../platform/stream'
+import { go, useRoute } from '../../../router/navigate'
+import { useProjectStore, useToastStore } from '../../../state/stores'
+import { Banner, Button, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../../ui/index'
+import { utcMinute, utcMinuteOr } from '../../../platform/format'
+import { renderMarkdown } from '../../../ui/markdown'
 import { ProgressCard, UpdatesGroup, type ToolProgress } from './workspace-progress'
-import { isFoldableUpdate } from './workspace-updates'
-import { RealExecutionAgents, ObservedInvocation } from './execution-agents'
-import { INSP, Separator, useResizable, useViewportW } from '../../ui/panel-sizing'
-import { readWorkspaceDraft, saveWorkspaceDraft } from '../workspace-session'
+import { isFoldableUpdate } from '../workspace-updates'
+import { RealExecutionAgents, ObservedInvocation } from '../../agents';
+import { INSP, Separator, useResizable, useViewportW } from '../../../ui/panel-sizing'
+import { readWorkspaceDraft, saveWorkspaceDraft } from '../session'
 import { type ConversationMode, HitlSwitch, ModeToggle } from './workspace-mode'
 import { clearPlanningSeed, hasPlanningSeed, planningSeedMessage } from '../planning-seed'
-import { RuntimeOperationsTab as RealOperationsHistory } from '../../features/operations/runtime-tab'
-import { useSession } from '../../platform/session'
+import { RuntimeOperationsTab as RealOperationsHistory } from '../../operations';
+import { useSession } from '../../../platform/session'
 
 interface LiveMessage { role: 'user' | 'assistant'; content: string; reasoning?: string; messageId: string | null }
 /** When a reply's reasoning started and when its answer began, measured in this browser; the runtime records no timing. */
@@ -141,17 +134,12 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const current = (captured: string): boolean => mounted.current && scopeRef.current === captured
 
-  const detail = useQuery({ queryKey: projectKeys.detail(engagementId), queryFn: () => getEngagement(engagementId) })
+  const detail = useEngagementDetail(engagementId)
   /* Planning readiness subscription (same projection/key as the planning
      panel): polled so a completed planning bundle is noticed from the
      workspace without the panel mounted. */
-  const planning = useQuery({
-    queryKey: ['real', 'planning', engagementId],
-    queryFn: () => fetchPlanning(engagementId),
-    enabled: agents.ready,
-    refetchInterval: 15_000,
-  })
-  const threads = useQuery({ queryKey: ['real', 'threads', engagementId], queryFn: () => listThreads(engagementId), enabled: agents.ready })
+  const planning = useConversationPlanning(engagementId, agents.ready)
+  const threads = useConversationThreads(engagementId, agents.ready)
   const allThreads = useMemo(() => [...(threads.data?.threads ?? [])].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [threads.data])
   const filteredThreads = useMemo(() => allThreads.filter((t) => t.kind === kindFilter), [allThreads, kindFilter])
   const selectedThread = allThreads.find((t) => t.threadId === selectedThreadId) ?? null
@@ -171,11 +159,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     }
   }, [actorId, engagementId, selectedThread, deploymentId])
 
-  const snapshot = useQuery({
-    queryKey: ['real', 'thread', engagementId, selectedThreadId],
-    queryFn: () => getThread(engagementId, selectedThreadId!),
-    enabled: !!selectedThreadId,
-  })
+  const snapshot = useThreadSnapshot(engagementId, selectedThreadId)
 
   /* Older pages load as the operator scrolls up. `cursor` undefined means "the newest page's cursor". */
   const [older, setOlder] = useState<{ thread: string | null; messages: ScopedThreadMessage[]; cursor: number | null | undefined }>({ thread: null, messages: [], cursor: undefined })
@@ -201,12 +185,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   }
 
   /* Server-verified runtime context (R06): gates execution runs. */
-  const runtimeCtx = useQuery({
-    queryKey: ['real', 'runtime-context', engagementId, selectedKind, selectedThreadId],
-    queryFn: () => fetchRuntimeContext(engagementId, selectedKind, selectedThreadId!),
-    enabled: !!selectedThreadId && !threads.isPending,
-    retry: false,
-  })
+  const runtimeCtx = useRuntimeContext(engagementId, selectedKind, selectedThreadId, !threads.isPending)
   /* Execute needs the confirmed handoff; once a thread exists its server context must verify too. A thread is created on send. */
   const handoffPending = detail.data?.handoffConfirmedAt == null
   const executionBlocked = selectedKind === 'execution' && (handoffPending ||
@@ -215,12 +194,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   /* Live buffers reset whenever the scope (engagement/thread/run) changes. */
   useEffect(() => { setLive([]); setTrace([]); setRecovery(null); setAnswers({}); setRunStatus(null); thinkingWindows.current.clear() }, [engagementId, selectedThreadId])
 
-  const runs = useQuery({
-    queryKey: ['real', 'runs', engagementId, selectedThreadId],
-    queryFn: () => listRunsOfThread(engagementId, selectedThreadId!),
-    enabled: !!selectedThreadId && agents.ready,
-    retry: false,
-  })
+  const runs = useThreadRuns(engagementId, selectedThreadId, agents.ready)
   useEffect(() => {
     const running = runs.data?.runs.find(r => !isTerminalRun(r.rawStatus) && !finishedRunIds.current.has(r.runId))
     if (running && !activeRunId) setObservedRun({ threadId: running.threadId, runId: running.runId })
@@ -251,12 +225,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   }, [activeRunId, engagementId, selectedThreadId, client])
 
   /* Workspace tool HITL approvals (execution scope only). */
-  const approvals = useQuery({
-    queryKey: ['real', 'approvals', engagementId],
-    queryFn: () => fetchApprovals(engagementId),
-    enabled: selectedKind === 'execution',
-    refetchInterval: 15_000,
-  })
+  const approvals = useApprovalQueue(engagementId, selectedKind === 'execution')
   const decide = useMutation({
     mutationFn: (input: { requestId: string; action: 'allow' | 'deny' }) => decideApproval(engagementId, { ...input, operatorNote: '' }),
     onSuccess: () => {
@@ -558,7 +527,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
     const el = chatScroll.current
     if (el && atBottom) el.scrollTop = el.scrollHeight
   }, [displayed.length, trace.length, atBottom, selectedThreadId])
-  const fleet = useQuery({ queryKey: ['real', 'fleet', engagementId], queryFn: () => fetchFleet(engagementId), enabled: agents.ready, refetchInterval: 8000 })
+  const fleet = useConversationFleet(engagementId, agents.ready)
   const observationKey = observation?.threadId === selectedThreadId ? observation.key : null
   const branches = fleet.data?.branches.filter((branch) => branch.threadId === selectedThreadId) ?? []
   const observedBranch = branches.find((branch) => branch.key === observationKey)
@@ -1280,8 +1249,8 @@ const PLANNING_STATE_TONE: Record<string, string> = {
 
 /** Artifacts: real planning document states from the server, plus shortcuts to the surfaces that own each artifact. */
 function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement {
-  const planning = useQuery({ queryKey: ['real', 'planning', engagementId], queryFn: () => fetchPlanning(engagementId) })
-  const reports = useQuery({ queryKey: ['real', 'reports', engagementId], queryFn: () => fetchReports(engagementId) })
+  const planning = usePlanningDocuments(engagementId)
+  const reports = useConversationReports(engagementId)
   const docs = planning.data ? Object.entries(planning.data.bundle) : []
   const links: { label: string; tab: string }[] = [
     { label: 'Scope & RoE', tab: 'scope' },

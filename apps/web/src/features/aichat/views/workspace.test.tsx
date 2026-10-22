@@ -8,12 +8,12 @@ import type { EnvironmentStateView, PublicStreamEvent } from '@raptix/web-contra
 
 const { act, cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const userEvent = (await import('@testing-library/user-event')).default
-const { RealModeProvider } = await import('../bootstrap')
+const { RealModeProvider } = await import('../../../real/bootstrap')
 const { RealWorkspace } = await import('./workspace')
-const { RealProjectDetail } = await import('./detail')
-const { go } = await import('../../router/navigate')
-const { useProjectStore, useToastStore } = await import('../../state/stores')
-const { readPending, readWorkspaceDraft, saveWorkspaceDraft } = await import('../workspace-session')
+const { RealProjectDetail } = await import('../../../real/screens/detail')
+const { go } = await import('../../../router/navigate')
+const { useProjectStore, useToastStore } = await import('../../../state/stores')
+const { readPending, readWorkspaceDraft, saveWorkspaceDraft } = await import('../session')
 
 const CAPS = {
   version: 1, mode: 'local-single-user',

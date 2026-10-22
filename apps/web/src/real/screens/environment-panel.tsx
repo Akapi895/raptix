@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState, type ReactElement } from 'react'
 import type { EnvironmentCommandResult, EnvironmentStateView } from '@raptix/web-contracts'
 import { listEngagements } from '../../features/projects/remote';
-import { fetchEnvironment, submitEnvironmentCommand } from '../environment-api'
+import { fetchEnvironment, submitEnvironmentCommand } from '../../features/projects/environment-api'
 import { needsReconcile, nextAction, outcomeOf, ownHolder, refreshIntervalFor } from '../environment-logic'
 import { ApiTransportError } from '../../platform/transport'
 import { Banner, Button, Card, CardHeader } from '../../ui/index'

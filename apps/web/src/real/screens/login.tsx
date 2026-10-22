@@ -10,7 +10,7 @@ import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
 import { KeyRound, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { login, logout } from '../../platform/auth-api';
-import { clearWorkspaceRecovery } from '../workspace-session'
+import { clearWorkspaceRecovery } from '../../features/aichat/session'
 import { Button, Input } from '../../ui/index'
 import { createConsoleQueryClient } from '../../state/keys'
 import { SESSION_KEY, SessionContext, useSession, type SessionState } from '../../platform/session'
