@@ -15,7 +15,7 @@ import type { ActorRef, RequestContext } from '../../domain/service'
 import { useToastStore } from '../../state/stores'
 import { createDatabaseAuthority, type DbAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
-import { routes } from '../../screens/d'
+import { routes } from '../../router/slice-d'
 import {
   assignAgentTransaction, removeFromGroupTransaction, saveGroupTransaction, unassignAgentTransaction,
   type GroupInput,
