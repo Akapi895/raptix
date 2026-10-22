@@ -12,7 +12,7 @@ import type { CapabilitiesDocument } from '@raptix/web-contracts';
 import { createRealAssetService } from '../features/assets/remote'
 import { createRealOverviewService } from '../features/overview'
 import { createRealProjectsService, projectsUnavailableReason } from '../features/projects'
-import { createRealFindingService } from '../real/service-adapter/findings'
+import { createRealFindingService } from '../features/findings/remote'
 import { createRealLibraryService } from '../features/library/remote'
 import { createRealReportService } from '../features/reports/remote';
 import { createRealAuditService } from '../features/audit/remote'

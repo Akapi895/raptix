@@ -3,9 +3,9 @@ import type {
   EvidenceListRead, EvidenceDetailRead, EvidenceView,
   FindingActivityPage, FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions, FindingSaveInput,
   FindingService, FindingSort, FindingSuggestionDisposition, FindingTransitionTarget, WorkspaceEvidenceImport,
-} from '../../features/findings'
-import { addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture } from '../../features/findings/api';
-import { getEngagement } from '../../features/projects/remote';
+} from './'
+import { addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture } from './api';
+import { getEngagement } from '../projects/remote';
 import type { CuratedFindingsView, CuratedFindingView } from '@raptix/web-contracts';
 import type { FindingView } from '@raptix/web-contracts'
 import { ApiTransportError } from '../../platform/transport'
