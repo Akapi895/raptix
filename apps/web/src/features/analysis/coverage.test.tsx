@@ -18,7 +18,7 @@ import { mountServices } from '../../test/helpers'
 import { currentRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { setIntegrationConnection } from '../settings/service'
-import { analysisRoutes } from '../../screens/e-analysis'
+import { analysisRoutes } from './views/analysis-page'
 import { seed } from '../../demo/seed';
 import { coverageOf } from './service'
 import { reviewOperationStep } from '../operations/service'
@@ -143,7 +143,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
   })
 
   it('keeps no raw location writes in the surface: the router is the single writer', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'screens', 'e-analysis.tsx'), 'utf8')
+    const src = readFileSync(join(process.cwd(), 'src', 'features', 'analysis', 'views', 'analysis-page.tsx'), 'utf8')
     expect(src).not.toMatch(/window\.location|history\.(replaceState|pushState)\(|location\.assign\(/)
     expect(src).toMatch(/useAnalysisCoverage\(/)
   })

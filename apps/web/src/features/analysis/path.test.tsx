@@ -16,7 +16,7 @@ import { join } from 'node:path'
 import { mountServices } from '../../test/helpers'
 import { currentRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
-import { analysisRoutes } from '../../screens/e-analysis'
+import { analysisRoutes } from './views/analysis-page'
 import { seed } from '../../demo/seed';
 import { pathOf } from './path'
 import { reviewOperationStep } from '../operations/service'
@@ -247,7 +247,7 @@ describe('attack-path graph (ticket 55)', () => {
   })
 
   it('keeps the graph on the typed path read, not a store-side derivation', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'screens', 'e-analysis.tsx'), 'utf8')
+    const src = readFileSync(join(process.cwd(), 'src', 'features', 'analysis', 'views', 'analysis-page.tsx'), 'utf8')
     expect(src).toMatch(/useAttackPath\(/)
     expect(src).not.toMatch(/ana\.entries\.filter\(\(e\) => e\.op\.id === op\.id\)/)
     expect(src).not.toMatch(/s\.status === 'ok' \| \| s\.status === 'fail'/)
