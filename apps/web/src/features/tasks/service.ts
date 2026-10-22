@@ -12,7 +12,7 @@
  */
 import type { ConsoleServices } from '../../domain/console-services';
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
-import { dashboardForScope } from '../../features/overview/dashboard'
+import { dashboardForScope } from '../overview/dashboard'
 import { taskItems } from './domain'
 import type { TasksSummary } from './domain'
 
