@@ -1,9 +1,9 @@
 /**
  * Real-mode trusted session seam (ADR-0068). Split out of
- * `screens/login.tsx` (structural hardening, 2026-10-16 — see
+ * `shell/real-login.tsx` (structural hardening, 2026-10-16 — see
  * docs/design/2026-10-16-web-screens-unification-implementation-plan.md)
  * so `state/console.ts`'s `useMe()` depends on a plain data hook instead of a
- * presentation module; `screens/login.tsx` keeps the sign-in/sign-out JSX and
+ * presentation module; `shell/real-login.tsx` keeps the sign-in/sign-out JSX and
  * imports this seam like any other consumer.
  */
 import { createContext, useContext } from 'react'

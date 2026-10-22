@@ -17,7 +17,7 @@ import { REAL_IDENTITY } from '../state/real-identity'
 import { RealContext } from '../state/real-context'
 import { createConsoleQueryClient } from '../state/keys'
 import { Button } from '../ui'
-import { RealLoginGate } from '../real/screens/login'
+import { RealLoginGate } from './real-login'
 import { RealFeatureServicesProvider } from '../state/real-services-provider'
 
 function useCapabilitiesQuery() {
