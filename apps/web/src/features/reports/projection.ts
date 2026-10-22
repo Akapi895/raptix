@@ -39,17 +39,17 @@ const NO_REAL_CHECKS: ReportValidationRead = {
   closure: () => ({ ops: [], run: [], ev: [] }),
 }
 
-/* Real mode: the readiness checks and source counts come from the mock database and are not available; the screens show the registered gap instead of these values. */
+/* Real mode reads no source counts and no AI exclusions; the hooks return null and the screens omit those values rather than show zeros or an empty list. */
 /* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
 export function useReportValidation(): ReportValidationRead {
   if (DATA_MODE === 'real') return NO_REAL_CHECKS
   return useServiceProjection(readReportValidation)
 }
-export function useReportSourceCounts(): { operations: number; evidence: number } {
-  if (DATA_MODE === 'real') return { operations: 0, evidence: 0 }
+export function useReportSourceCounts(): { operations: number; evidence: number } | null {
+  if (DATA_MODE === 'real') return null
   return useServiceProjection(readReportSources)
 }
-export function useReportExclusions(projectId?: string): { findings: { id: string; projectId: string }[] } {
-  if (DATA_MODE === 'real') return { findings: [] }
+export function useReportExclusions(projectId?: string): { findings: { id: string; projectId: string }[] } | null {
+  if (DATA_MODE === 'real') return null
   return useServiceProjection(readReportExclusions, projectId)
 }

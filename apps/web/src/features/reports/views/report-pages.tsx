@@ -8,8 +8,8 @@ import type { NoFind, RCheck, ReportEditorRead, ReportReviewRead } from '../serv
 import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../projection'
 import { ReportReadError, useDraftOptions, useReportCapabilities, useReportEditor, useReportReview, useReportWrites } from '../query'
 import { useResourceScope } from '../../../state/resource-scope'
-import { saveArtifact } from '../../../real/artifact'
-import { fetchEffectiveScope } from '../../scope/remote';
+import { saveArtifact } from '../../../platform/artifact'
+import { useScopeRead } from '../../scope';
 import type { ServiceResult } from '../../../domain/service'
 import { go, useRoute } from '../../../router/navigate'
 import { useActiveProject, useCan, useMe } from '../../../state/console'
@@ -26,9 +26,12 @@ function useNoFind(id: string): [NoFind | undefined, (v: NoFind) => void] {
   return [all[id], (v) => setFilter('repNoFind', { ...all, [id]: v })]
 }
 
+/** A count label, or the bare label when the count is not read (real mode). */
+const countLabel = (label: string, n?: number) => (n === undefined ? label : `${label} (${n})`)
+
 /** AI-suggested findings are never part of a formal report */
 export function AiExclusion({ projectId }: { projectId?: string }) {
-  const { findings: ai } = useReportExclusions(projectId)
+  const ai = useReportExclusions(projectId)?.findings ?? []
   if (!ai.length) return null
   return (
     <Banner tone="info" title={`Excluded from the formal report: ${ai.map((f) => f.id).join(', ')}`} action={<Button size="sm" onClick={() => go('finding', { id: ai[0].id })}>Open {ai[0].id}</Button>}>
@@ -248,8 +251,8 @@ export function ReportNew() {
             <CardHeader title="Source data" sub="Preview of the data that will be pulled into the draft." />
             <div className="space-y-3">
               {([
-                ['obj', `Objectives (${project.objectives.length})`], ['scope', `Scope & ROE ${project.roeVersion}`], ['ops', `Operations (${counts.operations})`],
-                ['find', `Verified findings (${fs.filter((f) => f.reportable).length})`], ['ev', `Redacted evidence (${counts.evidence})`], ['cov', 'Coverage charts'],
+                ['obj', `Objectives (${project.objectives.length})`], ['scope', `Scope & ROE ${project.roeVersion}`], ['ops', countLabel('Operations', counts?.operations)],
+                ['find', `Verified findings (${fs.filter((f) => f.reportable).length})`], ['ev', countLabel('Redacted evidence', counts?.evidence)], ['cov', 'Coverage charts'],
               ] as [keyof typeof src, string][]).map(([k, l]) => <div key={k}><Check checked={src[k]} onChange={(v) => setSrc({ ...src, [k]: v })} label={l} disabled={locked} /></div>)}
             </div>
             {fs.some((f) => !f.reportable) && <p className="mt-3 flex items-start gap-1.5 text-xs text-warn"><AlertTriangle size={13} className="mt-0.5 shrink-0" />{fs.filter((f) => !f.reportable).length} finding(s) are not verified and will not be imported automatically.</p>}
@@ -315,6 +318,7 @@ const SUGGEST = (title: string, client: string, roe: string) => `AI draft sugges
  * unsaved-changes guard.
  */
 function EditorInner({ d }: { d: ReportEditorRead }) {
+  const scopeRead = useScopeRead()
   const caps = useReportCapabilities()
   useResourceScope(d.report.projectId)
   const validation = useReportValidation()
@@ -415,15 +419,12 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const lastSnap = snaps[snaps.length - 1]
   const insert = (t: string) => { if (editable && sec) setDrafts({ ...drafts, [sec.id]: (drafts[sec.id] ?? sec.body ?? '') + t }) }
   // Real mode inserts the engagement's recorded testing windows and scope version from the effective scope.
-  const insertProjectInfo = async () => {
+  const insertProjectInfo = () => {
     if (caps.simulatedEditorHelpers) { insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`); return }
-    try {
-      const scope = await fetchEffectiveScope(project.id)
-      const windows = scope.roe.windows.map((w) => `${w.start} to ${w.end} ${w.tz}`).join('; ') || 'no testing window recorded'
-      insert(`\nScope: ${windows}. ROE ${scope.version ?? 'not recorded'}.`)
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'The effective scope could not be read.', 'warn')
-    }
+    const effective = scopeRead.data?.effective
+    if (!effective) { toast(scopeRead.isError ? 'The effective scope could not be read.' : 'The effective scope is still loading.', 'warn'); return }
+    const windows = effective.roe.windows.map((w) => `${w.start} to ${w.end} ${w.tz}`).join('; ') || 'no testing window recorded'
+    insert(`\nScope: ${windows}. ROE ${effective.versionLabel ?? 'not recorded'}.`)
   }
   const toggleF = (id: string, on: boolean) => {
     const next = on ? [...r.findings, id] : r.findings.filter((x) => x !== id)
