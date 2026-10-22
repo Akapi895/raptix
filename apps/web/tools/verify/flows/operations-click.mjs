@@ -76,6 +76,63 @@ try {
     return { ok: refused && detail === 0, detail: `${refused ? 'refusal with the reason shown' : 'no refusal'}; ${detail === 0 ? 'no operation detail shown' : 'operation detail shown'}` };
   });
 
+  // Write paths run as the operator of the project (Taylor Chen can control the operation; Dana Whitfield, the admin, cannot).
+  // The steps share one page: a route change reloads the mock dataset, so each step reads what the previous step left.
+  const operatorContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
+  try {
+    const operator = await operatorContext.newPage();
+    operator.setDefaultTimeout(30000);
+    await signInMock(operator, 'Taylor Chen');
+    await route(operator, `operation/${operation}?tab=overview&engagement=${encodeURIComponent(project)}`);
+
+    await step('pausing a running operation with a reason reports the pause and offers Resume', operator, async () => {
+      await operator.getByRole('button', { name: 'Pause', exact: true }).first().click();
+      await operator.getByLabel(/Reason for pausing/).fill('Flow pause check');
+      await operator.getByRole('button', { name: 'Pause operation', exact: true }).click();
+      const reported = await operator.getByText('Operation paused.', { exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+      const resume = await operator.getByRole('button', { name: 'Resume', exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+      return { ok: reported && resume, detail: `${reported ? 'pause reported' : 'no pause report'}; ${resume ? 'Resume offered' : 'Resume not offered'}` };
+    });
+
+    await step('resuming the paused operation rechecks it and reports it resumed', operator, async () => {
+      await operator.getByRole('button', { name: 'Resume', exact: true }).first().click();
+      await operator.getByRole('button', { name: 'Resume operation', exact: true }).click();
+      const reported = await operator.getByText('Rechecks passed. Operation resumed.', { exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+      const pause = await operator.getByRole('button', { name: 'Pause', exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+      return { ok: reported && pause, detail: `${reported ? 'resume reported' : 'no resume report'}; ${pause ? 'Pause offered again' : 'Pause not offered'}` };
+    });
+
+    await step('stopping the operation with a reason reports the stop and then that it stopped', operator, async () => {
+      await operator.getByRole('button', { name: 'Stop', exact: true }).first().click();
+      await operator.getByLabel(/Reason for stopping/).fill('Flow stop check');
+      await operator.getByRole('button', { name: 'Stop operation', exact: true }).click();
+      const requested = await operator.getByText('Stop requested. Stopping…', { exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+      const stopped = await operator.getByText('Operation stopped.', { exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+      return { ok: requested && stopped, detail: `${requested ? 'stop requested reported' : 'no stop request report'}; ${stopped ? 'operation stopped reported' : 'no stopped report'}` };
+    });
+  } finally {
+    await operatorContext.close();
+  }
+
+  await step('a viewer sees the pause control locked with its reason and gets no dialog or success report', page, async () => {
+    const viewerContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
+    try {
+      const viewer = await viewerContext.newPage();
+      viewer.setDefaultTimeout(30000);
+      await signInMock(viewer, 'Casey Nguyen');
+      await route(viewer, `operation/${operation}?tab=overview&engagement=${encodeURIComponent(project)}`);
+      const gate = viewer.locator('[aria-disabled="true"]').filter({ hasText: 'Pause' }).first();
+      const locked = await gate.waitFor({ timeout: 20000 }).then(() => true, () => false);
+      if (locked) await gate.hover();
+      const reason = locked && await viewer.getByText('Why is this disabled?').first().waitFor({ timeout: 5000 }).then(() => true, () => false);
+      const dialogs = await viewer.getByLabel(/Reason for pausing/).count();
+      const reports = await viewer.getByText('Operation paused.', { exact: true }).count();
+      return { ok: locked && reason && dialogs === 0 && reports === 0, detail: `${locked ? 'Pause locked' : 'no locked Pause control'}; ${reason ? 'reason shown' : 'no reason'}; ${dialogs === 0 ? 'no dialog' : 'dialog opened'}; ${reports === 0 ? 'no success report' : 'success reported'}` };
+    } finally {
+      await viewerContext.close();
+    }
+  });
+
   await context.close();
 } catch (error) {
   fatal = error.message.split('\n')[0];
