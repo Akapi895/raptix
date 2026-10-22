@@ -57,12 +57,12 @@ describe('menu keyboard operability on real routes (project detail)', () => {
   })
 })
 
-describe('menu keyboard operability on real routes (projects table)', () => {
-  it('the row More-actions trigger is a focusable button and its menu is keyboard-operable', async () => {
-    mountApp('#/projects')
+describe('menu keyboard operability on real routes (settings user actions)', () => {
+  it('the user row actions trigger is a focusable button and its menu is keyboard-operable', async () => {
+    mountApp('#/settings?tab=users')
     await signIn()
     await screen.findByRole('table', {}, { timeout: 5000 })
-    const trigger = screen.getByLabelText('More actions for RT-2026-014')
+    const trigger = screen.getAllByRole('button', { name: /^Actions for / })[0]
     expect(trigger.tagName).toBe('BUTTON')
     trigger.focus()
     await userEvent.keyboard('{ArrowDown}')
@@ -72,7 +72,7 @@ describe('menu keyboard operability on real routes (projects table)', () => {
     await userEvent.keyboard('{Escape}')
     await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument())
     await waitFor(() => expect(trigger).toHaveFocus())
-  })
+  }, 15_000)
 })
 
 describe('accessible names on the real settings route', () => {

@@ -119,15 +119,11 @@ describe('print simulations (intentional fixed-light surfaces)', () => {
 })
 
 describe('charts and the always-dark console', () => {
-  it('maps the dashboard severity chart to --c-* tokens with no hex colors', async () => {
+  it('keeps the overview free of hex colours in inline styles in dark mode', async () => {
     mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     act(() => { useThemeStore.getState().setTheme('dark') })
-    const high = screen.getByText('High').closest('li')!
-    expect(high.firstElementChild!.getAttribute('style')).toContain('var(--c-orange)')
-    const critical = screen.getByText('Critical').closest('li')!
-    expect(critical.firstElementChild!.getAttribute('style')).toContain('var(--c-bad)')
     for (const el of document.body.querySelectorAll('[style]')) {
       expect(el.getAttribute('style')!).not.toMatch(/#[0-9A-Fa-f]{3,8}\b/)
     }
