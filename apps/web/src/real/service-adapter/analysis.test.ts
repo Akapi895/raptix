@@ -5,12 +5,12 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../features/analysis/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/analysis/remote')>()
+vi.mock('../../features/analysis/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/analysis/api')>()
   return { ...actual, fetchAnalysis: vi.fn() }
 })
 
-const api_analysis = await import('../../features/analysis/remote');
+const api_analysis = await import('../../features/analysis/api');
 const { ApiTransportError } = await import('../../platform/transport')
 const { createRealObservedAnalysisService } = await import('./analysis')
 
