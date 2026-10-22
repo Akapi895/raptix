@@ -23,7 +23,7 @@ const createCampaign = vi.fn()
 const runCampaignJob = vi.fn()
 const reconcileCampaignJob = vi.fn()
 
-vi.mock('../remote', () => ({
+vi.mock('../api', () => ({
   fetchCampaignCapabilities: (...a: unknown[]) => fetchCampaignCapabilities(...a),
   fetchCampaigns: (...a: unknown[]) => fetchCampaigns(...a),
   createCampaign: (...a: unknown[]) => createCampaign(...a),

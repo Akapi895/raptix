@@ -16,8 +16,8 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
-vi.mock('./remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./remote')>()
+vi.mock('./api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     fetchC2Grants: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('./remote', async (importOriginal) => {
   }
 })
 
-const api_c2 = await import('./remote');
+const api_c2 = await import('./api');
 const { RealFeatureServicesCtx } = await import('../../state/real-services-provider')
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { resetNavStores } = await import('../../router/navigate')
