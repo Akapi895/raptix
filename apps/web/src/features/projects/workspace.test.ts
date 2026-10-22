@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nextProjectStep, projectStage, readinessChecks, type WorkspaceInput } from './workspace'
+import { nextProjectStep, projectStage, preparationChecks, type WorkspaceInput } from './workspace'
 
 const ready: WorkspaceInput = {
   metadataVerified: true,
@@ -20,29 +20,29 @@ describe('projectStage', () => {
   })
 })
 
-describe('readinessChecks', () => {
+describe('preparationChecks', () => {
   it('marks every check met when all sources confirm the project', () => {
-    expect(readinessChecks(ready).map((check) => check.state)).toEqual(['met', 'met', 'met', 'met'])
+    expect(preparationChecks(ready).map((check) => check.state)).toEqual(['met', 'met', 'met', 'met'])
   })
 
   it('reports an unread scope as unknown, not open', () => {
-    const scope = readinessChecks({ ...ready, scope: { state: 'pending' } }).find((check) => check.id === 'scope')
+    const scope = preparationChecks({ ...ready, scope: { state: 'pending' } }).find((check) => check.id === 'scope')
     expect(scope?.state).toBe('unknown')
     expect(scope?.detail).toBe('Reading Scope & ROE…')
   })
 
   it('reports a failed planning read as unknown with its own message', () => {
-    const planning = readinessChecks({ ...ready, handoffConfirmed: false, planning: { state: 'failed' } }).find((check) => check.id === 'planning')
+    const planning = preparationChecks({ ...ready, handoffConfirmed: false, planning: { state: 'failed' } }).find((check) => check.id === 'planning')
     expect(planning).toMatchObject({ state: 'unknown', detail: 'Planning status could not be read' })
   })
 
   it('counts the planning items that block the handoff', () => {
-    const planning = readinessChecks({ ...ready, handoffConfirmed: false, planning: { state: 'loaded', value: { ready: false, reasons: 3 } } }).find((check) => check.id === 'planning')
+    const planning = preparationChecks({ ...ready, handoffConfirmed: false, planning: { state: 'loaded', value: { ready: false, reasons: 3 } } }).find((check) => check.id === 'planning')
     expect(planning).toMatchObject({ state: 'open', detail: '3 planning item(s) to resolve' })
   })
 
   it('opens the target check when the metadata is not verified', () => {
-    const target = readinessChecks({ ...ready, metadataVerified: false }).find((check) => check.id === 'target')
+    const target = preparationChecks({ ...ready, metadataVerified: false }).find((check) => check.id === 'target')
     expect(target).toMatchObject({ state: 'open', tab: 'scope' })
   })
 })
@@ -66,6 +66,6 @@ describe('nextProjectStep', () => {
   it('follows the lifecycle once every check is met', () => {
     expect(nextProjectStep({ ...ready, lifecycle: 'completed' }).tab).toBe('reports')
     expect(nextProjectStep({ ...ready, lifecycle: 'running' }).tab).toBe('operations')
-    expect(nextProjectStep({ ...ready, lifecycle: 'draft' }).tab).toBe('ai-workspace')
+    expect(nextProjectStep({ ...ready, lifecycle: 'draft' }).tab).toBe('operations')
   })
 })
