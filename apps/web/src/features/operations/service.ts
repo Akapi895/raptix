@@ -223,19 +223,20 @@ export interface ScheduleConflict { kind: 'agent' | 'asset'; ref: string; label:
 
 /** Overlaps between a candidate slot and committed operations (agent conflicts block; asset conflicts warn). */
 export function findScheduleConflicts(
-  db: Db,
+  operations: readonly Operation[],
+  assets: readonly Asset[],
   cand: { id?: string; agents: string[]; assets: string[]; start: Instant; mins: number },
   now: Instant,
 ): ScheduleConflict[] {
   const end = cand.start + cand.mins * 60000
   const out: ScheduleConflict[] = []
-  db.operations.forEach((o) => {
+  operations.forEach((o) => {
     if (o.id === cand.id) return
     const w = occupancyOf(o, now)
     if (!w || w.start >= end || w.end <= cand.start) return
     const from = Math.max(w.start, cand.start), to = Math.min(w.end, end)
     o.agents.filter((a) => cand.agents.includes(a)).forEach((a) => out.push({ kind: 'agent', ref: a, label: `Agent ${a} is reserved by ${o.id}`, other: o, from, to }))
-    o.assets.filter((a) => cand.assets.includes(a)).forEach((a) => out.push({ kind: 'asset', ref: a, label: `Asset ${db.assets.find((x) => x.id === a)?.name || a} is targeted by ${o.id}`, other: o, from, to }))
+    o.assets.filter((a) => cand.assets.includes(a)).forEach((a) => out.push({ kind: 'asset', ref: a, label: `Asset ${assets.find((x) => x.id === a)?.name || a} is targeted by ${o.id}`, other: o, from, to }))
   })
   return out
 }
