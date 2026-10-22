@@ -16,7 +16,8 @@ import { currentRoute, go, selectProject } from '../../router/navigate'
 import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { routes } from './routes'
-import { createOperationDraft, type OperationDraftInput } from './service'
+import { type OperationDraftInput } from './service'
+import { createOperationDraft } from './mock'
 import { scheduleOperation, updateOperationDraft } from './mock'
 
 const Ops = routes.operations

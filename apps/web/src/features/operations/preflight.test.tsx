@@ -25,8 +25,8 @@ import { selectProject, go } from '../../router/navigate'
 import { routes } from './routes'
 import { seed } from '../../demo/seed';
 import { computePreflightChecks, eligibility, preflightPass, roeWindowIssue } from './preflight'
-import { createOperationDraft, listOperations, operationDetail } from './service'
-import { operationStartGate } from './mock'
+import { listOperations, operationDetail } from './service'
+import { createOperationDraft, operationStartGate } from './mock'
 import { runOperationPreflight } from './mock'
 import { scheduleOperation, updateOperationDraft } from './mock'
 
