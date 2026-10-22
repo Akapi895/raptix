@@ -7,10 +7,10 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
-import { patchEngagement } from '../../features/projects/remote';
+import { patchEngagement } from '../remote';
 import type { ProjectViewModel } from '@raptix/web-contracts';
-import { useDirty } from '../../state/session'
-import { Banner, Button, Card, CardHeader, Input } from '../../ui/index'
+import { useDirty } from '../../../state/session'
+import { Banner, Button, Card, CardHeader, Input } from '../../../ui/index'
 
 export function ProjectSettingsPanel({ project }: { project: ProjectViewModel }): ReactElement {
   const client = useQueryClient()

@@ -7,13 +7,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { beforeAll, describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 import type { ProjectViewModel } from '@raptix/web-contracts';
 
+// The first import loads the module graph; keep that cold start out of the test timer.
+beforeAll(async () => {
+  await import('./project-settings-panel')
+}, 30_000)
+
 const patchEngagement = vi.fn()
 
-vi.mock('../../features/projects/remote', () => ({
+vi.mock('../remote', () => ({
   patchEngagement: (...a: unknown[]) => patchEngagement(...a),
 }))
 

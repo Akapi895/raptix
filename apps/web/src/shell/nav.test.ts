@@ -1,7 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 // The flag is read when the navigation model is built, so each case loads a fresh copy of the module.
 // This file has its own module graph, so the reset cannot disturb the shell tests.
+
+// The first import loads the navigation graph; keep that cold start out of the test timer.
+beforeAll(async () => {
+  await import('./nav');
+}, 30_000);
 
 afterEach(() => {
   globalThis.localStorage.removeItem('raptix.assetMap');
