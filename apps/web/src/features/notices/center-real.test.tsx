@@ -28,7 +28,7 @@ vi.mock('./remote', async (importOriginal) => {
 
 const api_notices = await import('./remote');
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
-const { createRealFeatureServices } = await import('../../real/service-adapter/index')
+const { createRealFeatureServices } = await import('../../state/real-services')
 const { useToastStore, useUiStore } = await import('../../state/stores')
 const { HeaderNotices } = await import('./header-notices')
 const { useSessionStore } = await import('../../state/session')

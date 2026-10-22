@@ -1,42 +1,42 @@
-import type { FeatureServices } from '../../domain/console-services';
-import type { FindingService } from '../../features/findings'
-import type { AssetService } from '../../features/assets';
-import type { ReportService } from '../../features/reports/service';
-import type { LibraryService } from '../../features/library';
-import type { SettingsService } from '../../features/settings/service'
-import type { ScopeService } from '../../features/scope/service'
-import type { AuditService } from '../../features/audit/service'
-import type { TeamService } from '../../features/team/service'
-import { capabilityState } from '../../platform/capabilities';
+import type { FeatureServices } from '../domain/console-services';
+import type { FindingService } from '../features/findings'
+import type { AssetService } from '../features/assets';
+import type { ReportService } from '../features/reports/service';
+import type { LibraryService } from '../features/library';
+import type { SettingsService } from '../features/settings/service'
+import type { ScopeService } from '../features/scope/service'
+import type { AuditService } from '../features/audit/service'
+import type { TeamService } from '../features/team/service'
+import { capabilityState } from '../platform/capabilities';
 import type { CapabilitiesDocument } from '@raptix/web-contracts';
-import { createRealAssetService } from '../../features/assets/remote'
-import { createRealOverviewService } from '../../features/overview'
-import { createRealProjectsService, projectsUnavailableReason } from '../../features/projects'
-import { createRealFindingService } from './findings'
-import { createRealLibraryService } from '../../features/library/remote'
-import { createRealReportService } from '../../features/reports/remote';
-import { createRealAuditService } from './audit'
-import { createRealScopeService } from './scope'
-import { createRealTeamService } from './team'
-import { createRealSettingsService } from './settings'
-import { createRealVaultService } from './vault'
-import { createRealClosureService } from './closure'
-import { createRealObservedAnalysisService } from './analysis'
-import type { ObservedAnalysisService } from '../../features/analysis/observed'
-import type { ClosureService } from '../../features/closure/service'
-import type { VaultService } from '../../features/vault/service'
-import type { PlanningService } from '../../features/planning/service'
-import type { GovernanceService } from '../../features/governance/service'
-import { createRealPlanningService } from './planning'
-import { createRealGovernanceService } from './governance'
-import type { C2ProviderService } from '../../features/c2/provider'
-import { createRealC2ProviderService } from './c2-provider'
-import type { RuntimeOperationsService } from '../../features/operations/runtime'
-import { createRealRuntimeOperationsService } from './runtime-operations'
-import type { NoticeCenterService } from '../../features/notices/center'
-import { createRealNoticeCenterService } from './notices'
-import { notIntegratedService } from '../../platform/adapter-stub'
-import { unavailableService } from '../../domain/unavailable'
+import { createRealAssetService } from '../features/assets/remote'
+import { createRealOverviewService } from '../features/overview'
+import { createRealProjectsService, projectsUnavailableReason } from '../features/projects'
+import { createRealFindingService } from '../real/service-adapter/findings'
+import { createRealLibraryService } from '../features/library/remote'
+import { createRealReportService } from '../features/reports/remote';
+import { createRealAuditService } from '../real/service-adapter/audit'
+import { createRealScopeService } from '../real/service-adapter/scope'
+import { createRealTeamService } from '../real/service-adapter/team'
+import { createRealSettingsService } from '../real/service-adapter/settings'
+import { createRealVaultService } from '../real/service-adapter/vault'
+import { createRealClosureService } from '../real/service-adapter/closure'
+import { createRealObservedAnalysisService } from '../real/service-adapter/analysis'
+import type { ObservedAnalysisService } from '../features/analysis/observed'
+import type { ClosureService } from '../features/closure/service'
+import type { VaultService } from '../features/vault/service'
+import type { PlanningService } from '../features/planning/service'
+import type { GovernanceService } from '../features/governance/service'
+import { createRealPlanningService } from '../real/service-adapter/planning'
+import { createRealGovernanceService } from '../real/service-adapter/governance'
+import type { C2ProviderService } from '../features/c2/provider'
+import { createRealC2ProviderService } from '../real/service-adapter/c2-provider'
+import type { RuntimeOperationsService } from '../features/operations/runtime'
+import { createRealRuntimeOperationsService } from '../real/service-adapter/runtime-operations'
+import type { NoticeCenterService } from '../features/notices/center'
+import { createRealNoticeCenterService } from '../real/service-adapter/notices'
+import { notIntegratedService } from '../platform/adapter-stub'
+import { unavailableService } from '../domain/unavailable'
 
 /**
  * Composes real per-feature services from the server's capability document

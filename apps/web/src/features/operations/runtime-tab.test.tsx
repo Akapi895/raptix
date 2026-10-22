@@ -11,7 +11,7 @@ vi.mock('../../state/keys', async (importOriginal) => ({
 const { cleanup, fireEvent, render, screen, waitFor, within } = await import('@testing-library/react')
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query')
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
-const { createRealFeatureServices } = await import('../../real/service-adapter/index')
+const { createRealFeatureServices } = await import('../../state/real-services')
 const { RuntimeOperationsTab } = await import('./runtime-tab')
 
 const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { runs: { supported: true, available: true }, projects: { supported: true, available: true } } } as never

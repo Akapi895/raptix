@@ -295,7 +295,7 @@ describe('real report gates for capabilities the backend does not model', () => 
 
 describe('real report composition', () => {
   it('serves the report adapter only when the reports capability is supported', async () => {
-    const { createRealFeatureServices } = await import('../../real/service-adapter/index')
+    const { createRealFeatureServices } = await import('../../state/real-services')
     const unsupported = createRealFeatureServices({ version: 1, mode: 'multi-user', capabilities: {} } as never)
     const res = await unsupported.reports(ctx.actor, 'eng-1').list(ctx, {})
     expect(res.ok === false && res.failure.message).toBe('Reports is not integrated with the real backend yet.')

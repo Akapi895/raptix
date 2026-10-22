@@ -16,7 +16,7 @@ const { cleanup, render, screen, waitFor, within } = await import('@testing-libr
 const userEvent = (await import('@testing-library/user-event')).default
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query')
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
-const { createRealFeatureServices } = await import('../../real/service-adapter/index')
+const { createRealFeatureServices } = await import('../../state/real-services')
 const { PlanningTab } = await import('./tab')
 
 const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { planning: { supported: true, available: true } } } as never
