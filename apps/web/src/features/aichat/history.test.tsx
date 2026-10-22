@@ -24,7 +24,7 @@ import { revisePlanTransaction } from '../plans/service'
 import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { seed } from '../../demo/seed';
-import { AiHistory } from '../../screens/g-trace'
+import { AiHistory } from '../trace/views/ai-trace-pages'
 import { getAiHistoryRow, listAiHistory } from './history'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

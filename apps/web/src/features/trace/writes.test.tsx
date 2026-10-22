@@ -23,7 +23,7 @@ import { selectProject } from '../../router/navigate'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../demo/seed';
 import { toolFacets } from '../../domain/catalog';
-import { AiTrace } from '../../screens/g-trace'
+import { AiTrace } from './views/ai-trace-pages'
 import { decideToolEventTransaction } from './writes'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

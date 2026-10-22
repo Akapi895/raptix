@@ -1,7 +1,7 @@
 /**
  * Ticket 41: tool/analysis trace on the typed read model — the facet
  * invariant (execution.md requirement 4) at its new execution site
- * (src/features/trace/service.ts + src/screens/g-trace.tsx).
+ * (src/features/trace/service.ts + src/features/trace/views/ai-trace-pages.tsx).
  *
  * Covered here: the one stored tool-event state derives the three
  * independent Policy/Approval/Execution facets at the service boundary
@@ -28,7 +28,7 @@ import type { ActorRef, RequestContext } from '../../domain/service'
 import type { ToolEvent, ToolState } from '../../domain/entities'
 import { seed } from '../../demo/seed';
 import { toolFacets } from '../../domain/catalog';
-import { AiTrace } from '../../screens/g-trace'
+import { AiTrace } from './views/ai-trace-pages'
 import { ToolProposalCard } from '../aichat'
 import { listToolEvents, maskSensitive } from './service'
 
@@ -259,7 +259,7 @@ describe('trace screen on the typed read (ticket 41)', () => {
   })
 
   it('keeps the trace on the typed read: no raw location writes and no legacy database reads on the ai-trace route', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'screens', 'g-trace.tsx'), 'utf8')
+    const src = readFileSync(join(process.cwd(), 'src', 'features', 'trace', 'views', 'ai-trace-pages.tsx'), 'utf8')
     const traceSlice = src.slice(src.indexOf('export function AiTrace'), src.indexOf('/* ───────────── AI History'))
     expect(traceSlice).toContain('useTraceEvents(')
     expect(traceSlice).not.toMatch(/\bdb\./)
@@ -269,7 +269,7 @@ describe('trace screen on the typed read (ticket 41)', () => {
     expect(src).not.toMatch(/history\.replaceState/)
     expect(src).not.toMatch(/hashParam|setHash\b/)
     expect(src).not.toContain('?event=')
-    expect(src).toMatch(/from '\.\.\/features\/trace\/query'/)
+    expect(src).toMatch(/from '\.\.\/query'/)
   })
 })
 
