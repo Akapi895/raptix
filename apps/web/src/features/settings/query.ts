@@ -11,8 +11,9 @@
  * A persona/project switch cancels the superseded scope's reads.
  */
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useServices } from '../../state/services'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { fetchCapabilities } from '../../platform/capabilities'
+import { useFeatureServices as useServices } from '../../state/feature-services'
 import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
@@ -23,6 +24,7 @@ import type {
   AuditQuery, AuditRead, RetentionPatch, RetentionRead,
 } from './service'
 import type { Retention } from '../../domain/entities'
+import type { WorkspaceSetting, WorkspaceSettingWriteInput, WorkspaceSettingsRead } from './service'
 
 /** Feature-local key namespaces: ['org', scope, 'profile' | 'members']. */
 export const orgKeys = {
@@ -51,6 +53,45 @@ function useOrgActor() {
 }
 
 /** Query-backed organization profile for the current auth/project scope. */
+/** Workspace settings (real numeric configuration), read through the settings port. */
+export const workspaceSettingKeys = { list: ["settings", "workspace"] as const }
+
+export function useWorkspaceSettings() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useQuery({
+    queryKey: workspaceSettingKeys.list,
+    queryFn: async (): Promise<WorkspaceSettingsRead> => {
+      const res = await services.settings(actor, scope.project).getWorkspaceSettings({ actor, projectId: scope.project, corr: 'workspace-settings' })
+      if (!res.ok) throw new OrgReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/** A versioned workspace settings write; a committed write refetches the list. Refusals throw the handler reason. */
+export function useWorkspaceSettingWrite() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { key: string } & WorkspaceSettingWriteInput): Promise<WorkspaceSetting> => {
+      const res = await services.settings(actor, scope.project).saveWorkspaceSetting({ actor, projectId: scope.project, corr: 'workspace-setting-save' }, input.key, { value: input.value, expectedVersion: input.expectedVersion, reason: input.reason })
+      if (!res.ok) throw new OrgReadError(res.failure)
+      return res.data
+    },
+    onSuccess: () => { void client.invalidateQueries({ queryKey: workspaceSettingKeys.list }) },
+  })
+}
+
+/** The runtime capability document (what this deployment serves), read once per session. */
+export function useRuntimeCapabilities() {
+  return useQuery({ queryKey: ['platform', 'capabilities'], queryFn: () => fetchCapabilities() })
+}
+
 export function useOrgProfile() {
   const services = useServices()
   const scope = useQueryScope()

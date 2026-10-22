@@ -33,7 +33,7 @@ import { useSessionStore } from '../../state/session'
 import { mountServices } from '../../test/helpers'
 import { getOrgMembers, getOrgProfile, inviteMember, setMemberRole, setMemberStatus, updateOrgProfile, getIntegrations, getPolicies, setIntegrationConnection, setPolicyEnabled, updateIntegrationKey, getRetention, getAudit, updateRetention, setRetentionHold, deleteRetentionData, auditCorr, type OrgProfile } from './service'
 import { useIntegrations, useOrgMembers, useOrgProfile, usePolicies } from './query'
-import { routes } from '../../screens/f'
+import { routes } from './routes'
 import { analysisRoutes } from '../../screens/e-analysis'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })

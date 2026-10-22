@@ -9,6 +9,7 @@ import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure } from '../../domain/service'
 import type { AuditQuery, AuditRead } from './service'
+import { fetchWorkspaceAudit, type AuditQueryInput } from './remote'
 
 export class AuditError extends Error {
   constructor(readonly failure: ServiceFailure) {
@@ -18,6 +19,11 @@ export class AuditError extends Error {
 }
 
 const ctxOf = (scope: QueryScope, corr: string): RequestContext => ({ actor: actorRef(scope.actor, scope.role), projectId: scope.project, corr })
+
+/** The workspace audit (every consequential action this server recorded), filtered by action prefix and free text. */
+export function useWorkspaceAudit(query: AuditQueryInput) {
+  return useQuery({ queryKey: ['real', 'workspace-audit', query.action ?? '', query.q ?? ''], queryFn: () => fetchWorkspaceAudit(query) })
+}
 
 export function useAuditRead(query: AuditQuery) {
   const services = useServices()
