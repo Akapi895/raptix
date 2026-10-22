@@ -52,6 +52,7 @@ export interface ProjectService extends EntityReader<Project> {
 export interface DisplayClock {
   stamp(): string
   hhmm(): string
+  hhmmss(): string
 }
 
 /** Mock-only demo runtime controls: agent loss and recovery, and fast-forwarding a running operation. */
