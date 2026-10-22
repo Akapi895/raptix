@@ -2,7 +2,7 @@ import { useState, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Bot, ChevronDown, ChevronRight, Eye } from 'lucide-react'
 import { fetchRuntimeInstances } from '../remote';
-import type { FleetBranchView } from '../../operations/remote';
+import type { FleetBranchView } from '../../operations/api';
 import type { RuntimeInstanceView } from '@raptix/web-contracts';
 import { InstanceMessenger } from './instance-messenger'
 import { Banner, Button, DescList, Textarea, cx } from '../../../ui/index'
