@@ -76,7 +76,7 @@ describe('deep links and the auth guard', () => {
   })
 
   it('an unknown route key resolves to the not-found screen inside the shell', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await waitFor(() => expect(useAuthStore.getState().authed).toBe(true))
     act(() => { go('not-a-real-page') })
@@ -87,6 +87,13 @@ describe('deep links and the auth guard', () => {
   it('an unknown destination falls back to the system overview after sign-in', async () => {
     window.location.hash = '#/not-a-real-page'
     mountApp()
+    signIn()
+    await waitFor(() => expect(currentRoute().page).toBe('overview'))
+    expect(window.location.hash).toBe('#/overview')
+  })
+
+  it('a legacy command-center address opens the overview and replaces the URL', async () => {
+    mountApp('#/command-center')
     signIn()
     await waitFor(() => expect(currentRoute().page).toBe('overview'))
     expect(window.location.hash).toBe('#/overview')
@@ -112,16 +119,16 @@ describe('history traversal', () => {
 
 describe('dirty-navigation blocking', () => {
   it('an in-app navigation while dirty opens the unsaved-changes modal and can be discarded', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await waitFor(() => expect(useAuthStore.getState().authed).toBe(true))
     act(() => { useSessionStore.getState().setDirty(true) })
     act(() => { go('projects') })
     expect(await screen.findByText('Unsaved changes')).toBeInTheDocument()
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
     fireEvent.click(screen.getByRole('button', { name: 'Stay' }))
     await waitFor(() => expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument())
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
     act(() => { go('projects') })
     fireEvent.click(await screen.findByRole('button', { name: /Discard & Leave/ }))
     await waitFor(() => expect(window.location.hash).toBe('#/projects'))

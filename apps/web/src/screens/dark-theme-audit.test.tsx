@@ -59,7 +59,7 @@ function lightAssumingOutsidePaper() {
 
 /* One representative surface per route group (router manifest slices). */
 const SWEEP: { hash: string; see: () => Promise<unknown>; auth?: boolean }[] = [
-  { hash: '#/command-center', see: () => screen.findByRole('heading', { name: /system overview/i }) },
+  { hash: '#/overview', see: () => screen.findByRole('heading', { name: /system overview/i }) },
   { hash: '#/projects', see: () => screen.findByRole('table', {}, { timeout: 5000 }) },
   { hash: '#/project/RT-2026-014', see: () => screen.findByRole('button', { name: 'Overview' }) },
   { hash: '#/operation/OP-014?tab=live', see: () => screen.findByRole('list', { name: 'Operation steps' }, { timeout: 5000 }) },
@@ -120,7 +120,7 @@ describe('print simulations (intentional fixed-light surfaces)', () => {
 
 describe('charts and the always-dark console', () => {
   it('maps the dashboard severity chart to --c-* tokens with no hex colors', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     act(() => { useThemeStore.getState().setTheme('dark') })
@@ -134,7 +134,7 @@ describe('charts and the always-dark console', () => {
   })
 
   it('keeps the operation dock fixed-dark and registers its accent tokens', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     act(() => { go('operation', { id: 'OP-014', tab: 'live' }) })
@@ -157,7 +157,7 @@ describe('charts and the always-dark console', () => {
 
 describe('theme toggle, persistence and reset across consumers', () => {
   it('header and settings write the same store; provider remount restores light', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     // Header consumer (account menu segmented control).
@@ -182,7 +182,7 @@ describe('theme toggle, persistence and reset across consumers', () => {
     cleanup()
     setActiveRouter(null)
     window.location.hash = ''
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     expect(document.documentElement.classList.contains('dark')).toBe(false)

@@ -73,7 +73,7 @@ describe('sidebar navigation and active section', () => {
   })
 
   it('renders every nav group and item, highlighting the overview item as active', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     for (const label of NAV_LABELS) expect(screen.getAllByRole('button', { name: new RegExp(label.replace(/[&]/g, '\\$&'), 'i') }).length).toBeGreaterThan(0)
@@ -113,7 +113,7 @@ describe('sidebar navigation and active section', () => {
 
 describe('sidebar collapse and mobile drawer', () => {
   it('the collapse toggle narrows and re-expands the desktop rail', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     const aside = await screen.findByRole('complementary', { hidden: true })
     expect(aside.style.width).toBe('248px')
@@ -124,7 +124,7 @@ describe('sidebar collapse and mobile drawer', () => {
   })
 
   it('the mobile drawer opens from the header, closes on overlay click and on Escape', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
@@ -139,7 +139,7 @@ describe('sidebar collapse and mobile drawer', () => {
   })
 
   it('keyboard roving moves focus with ArrowDown/ArrowUp inside the nav', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     const nav = screen.getByRole('navigation', { name: 'Main navigation' })
@@ -159,7 +159,7 @@ describe('sidebar collapse and mobile drawer', () => {
 
 describe('project switcher', () => {
   it('switches the active project scope through the shared authority and keeps scoped reads consistent', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     fireEvent.click(screen.getByRole('button', { name: /^Project: All Projects$/ }))
@@ -174,7 +174,7 @@ describe('project switcher', () => {
   })
 
   it('marks inaccessible projects as disabled for a scoped persona so out-of-scope selection cannot happen', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     act(() => { useAuthStore.getState().setMe('Riley Brooks') })
@@ -242,7 +242,7 @@ describe('emergency stop and emergency contact controls', () => {
 
 describe('ticket 59/60 compatibility slots', () => {
   it('the legacy notifications surface mounts by default and copilot follows project scope', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     expect(screen.getByRole('button', { name: /Notifications/ })).toBeInTheDocument()

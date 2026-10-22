@@ -37,6 +37,7 @@ import { useProjectStore, useToastStore } from '../state/stores'
 import { useCan, useMe } from '../state/console'
 import { go, selectProject, useRoute } from '../router/navigate'
 import { MOCK_PROJECT_NAV, MOCK_PROJECT_TABS } from '../shell/nav'
+import { resolveProjectTab } from '../router/aliases'
 import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui/index'
 import type { DashboardAggregate, Eligibility } from '../domain/dashboard'
 import { TeamTab, CloseTab } from './b-detail2'
@@ -54,8 +55,6 @@ const ExecutionTrace = lazy(() => import('./g-trace').then((module) => ({ defaul
 
 /** Valid project tab IDs own the URLs; old aliases keep resolving. */
 const TAB_IDS = MOCK_PROJECT_TABS.map((t) => t.id)
-/** Old tab ids that may still appear in deep links */
-const TAB_ALIAS: Record<string, string> = { closure: 'close', closeout: 'close', members: 'team', approvals: 'team', 'ai-plans': 'plans', c2: 'sessions', 'audit-log': 'audit', roe: 'scope' }
 /** The page title is the section being opened (plan 2026-10-16 §3.1). */
 const sectionTitle = (tab: string) => MOCK_PROJECT_NAV.flatMap((g) => g.items).find((i) => i.match.includes(tab))?.label ?? 'Overview'
 
@@ -66,7 +65,7 @@ function Blocked({ id }: { id?: string }) {
       <Empty
         icon={SearchX}
         title="Project not found"
-        action={<div className="flex gap-2"><Button variant="primary" onClick={() => go('projects')}>Back to Projects</Button><Button onClick={() => go('command-center')}>Go to Command Center</Button></div>}
+        action={<div className="flex gap-2"><Button variant="primary" onClick={() => go('projects')}>Back to Projects</Button><Button onClick={() => go('overview')}>Go to Overview</Button></div>}
       >
         {`Project ${id ? `"${id}" ` : ''}does not exist or is not in the list you can view.`}
       </Empty>
@@ -125,7 +124,7 @@ function Detail({ d }: { d: ProjectDetail }) {
   const svc = useServices()
   const p = d.project
   const ds = d.aggregate
-  const rt = route.tab ? TAB_ALIAS[route.tab] || route.tab : ''
+  const rt = route.tab ? resolveProjectTab(route.tab) : ''
   const tab = TAB_IDS.includes(rt) ? rt : 'overview'
   const elig = d.eligibility
   const guard = useGuard(p.id)
@@ -253,7 +252,7 @@ function Overview({ d, via, setTab }: { d: ProjectDetail; via: Via; setTab: (t: 
   if (running[0]) next.push({ label: `Open running operation ${running[0].id}`, sub: running[0].name, onClick: () => go('operation', { id: running[0].id }) })
   if (openF.length) next.push({ label: `Review ${openF.length} findings`, sub: openF.map((f) => f.id).join(', '), onClick: () => setTab('findings') })
   next.push({ label: 'Manage assets', sub: `${assets.length} project assets`, onClick: () => via('assets') })
-  if (p.status === 'closed') next.push({ label: 'Back to Command Center', sub: 'Return to the workspace overview', onClick: () => go('command-center') })
+  if (p.status === 'closed') next.push({ label: 'Back to Overview', sub: 'Return to the workspace overview', onClick: () => go('overview') })
 
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">

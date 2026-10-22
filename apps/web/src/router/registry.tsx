@@ -31,7 +31,7 @@ type Slice = keyof typeof slices | 'a'
 
 /** 55 source route keys (see .scratch/web-improve-refactor/route-inventory.md). */
 const MANIFEST: Record<string, Slice> = {
-  login: 'a', forbidden: 'a', notfound: 'a', error: 'a', offline: 'a', 'session-expired': 'a', states: 'a', overview: 'a', 'command-center': 'a', tasks: 'a',
+  login: 'a', forbidden: 'a', notfound: 'a', error: 'a', offline: 'a', 'session-expired': 'a', states: 'a', overview: 'a', tasks: 'a',
   projects: 'b', 'project-new': 'b', project: 'b',
   operations: 'c', 'operation-new': 'c', preflight: 'c', 'operation-schedule': 'c', operation: 'c',
   infrastructure: 'i', agents: 'i', agent: 'd', assets: 'd', 'asset-new': 'd', 'asset-scope': 'd', asset: 'd', playbooks: 'd', playbook: 'd', technique: 'd', 'playbook-review': 'd',

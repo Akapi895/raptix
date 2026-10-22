@@ -33,7 +33,7 @@ export const GUIDES: Guide[] = [
     goal: 'Walk RT-2026-014 from project command center to a delivered report and a closed project in 25 clicks.',
     expected: 'ROE-014-v2, PL-021 v1.2, OP-014, SS-041, EV-014-01, FD-011, REP-014 stay linked end to end; the project closes read-only.',
     steps: [
-      s('Project Command Center', 'Click Open Project', 'Start from the project-scoped dashboard so every number belongs to RT-2026-014.', { page: 'command-center' }),
+      s('Project Command Center', 'Click Open Project', 'Start from the project-scoped dashboard so every number belongs to RT-2026-014.', { page: 'overview' }),
       s('Project Detail', 'Open the project', 'The project detail is the hub for scope, plans, operations, sessions and closure.', { page: 'project', id: P14, tab: 'overview' }),
       s('Scope & ROE', 'Click Scope & ROE', 'ROE-014-v2 is approved, so execution can become eligible. Check dates and emergency contact.', { page: 'project', id: P14, tab: 'scope' }),
       s('Approved assets and assigned agents', 'Open Approved Assets / Assigned Agents', 'Only 12 approved assets and agents assigned to this project can take part in an operation.', { page: 'assets' }),

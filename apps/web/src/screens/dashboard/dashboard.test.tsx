@@ -32,7 +32,7 @@ let corrSeq = 0
 const ctxOf = (actor: ActorRef, projectId: string): RequestContext => ({ actor, projectId, corr: `corr-${++corrSeq}` })
 
 function mountDashboard() {
-  window.location.hash = '#/command-center'
+  window.location.hash = '#/overview'
   const pendingStates: boolean[] = []
   function PendingProbe() { pendingStates.push(useDashboard().isPending); return null }
   const router = createHashRouter([

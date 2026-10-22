@@ -175,7 +175,7 @@ describe('states gallery (ticket 61b)', () => {
 /* Route-inventory rows 1–55 (.scratch/web-improve-refactor/route-inventory.md):
    the manifest must resolve every inventoried key; unknown keys resolve to
    nothing so the host falls back to the not-found screen. */const INVENTORY = [
-  'login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'overview', 'command-center', 'tasks',
+  'login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'overview', 'tasks',
   'projects', 'project-new', 'project',
   'operations', 'operation-new', 'preflight', 'operation-schedule', 'operation',
   'infrastructure', 'agents', 'agent', 'assets', 'asset-new', 'asset-scope', 'asset', 'playbooks', 'playbook', 'technique', 'playbook-review',
@@ -188,8 +188,15 @@ describe('states gallery (ticket 61b)', () => {
 
 describe('route-coverage closure', () => {
   it('every inventoried route key resolves to a screen component', () => {
-    expect(INVENTORY).toHaveLength(55)
+    expect(INVENTORY).toHaveLength(54)
     for (const key of INVENTORY) expect(routeComponent(key), `route key: ${key}`).toBeTruthy()
+  })
+
+  it('the retired command-center key is an alias of overview, not a route key', async () => {
+    const { PAGE_ALIASES } = await import('../../router/aliases')
+    expect(routeComponent('command-center')).toBeNull()
+    expect(PAGE_ALIASES['command-center']).toBe('overview')
+    expect(routeComponent('overview')).toBeTruthy()
   })
 
   it('unknown keys have no manifest entry (the host then resolves them to not-found)', () => {

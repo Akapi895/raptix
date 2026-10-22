@@ -209,7 +209,7 @@ function mountApp(hash: string, me?: string) {
 
 describe('header notifications popover through the shell slot (ticket 59)', () => {
   it('the migrated center replaces the legacy default at the mount site and lists scoped rows', async () => {
-    mountApp('#/command-center', 'Riley Brooks')
+    mountApp('#/overview', 'Riley Brooks')
     await screen.findByRole('heading', { name: /system overview/i })
     expect(screen.getByTestId('notice-center')).toBeInTheDocument()
     fireEvent.click(await screen.findByRole('button', { name: /Notifications \(\d+ unread\)/ }))
@@ -219,7 +219,7 @@ describe('header notifications popover through the shell slot (ticket 59)', () =
   })
 
   it('read toggle and mark-all update the badge; empty state renders when everything is read', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     await screen.findByRole('heading', { name: /system overview/i })
     fireEvent.click(await screen.findByRole('button', { name: /Notifications \(\d+ unread\)/ }))
     await screen.findByRole('dialog', { name: 'Notifications' })
@@ -238,7 +238,7 @@ describe('header notifications popover through the shell slot (ticket 59)', () =
   })
 
   it('an authority notice commit appears in the open popover without a reload (bridge on the real route)', async () => {
-    const app = mountApp('#/command-center')
+    const app = mountApp('#/overview')
     await screen.findByRole('heading', { name: /system overview/i })
     fireEvent.click(await screen.findByRole('button', { name: /Notifications \(\d+ unread\)/ }))
     const panel = await screen.findByRole('dialog', { name: 'Notifications' })
@@ -248,7 +248,7 @@ describe('header notifications popover through the shell slot (ticket 59)', () =
   })
 
   it('dismissal asks for confirmation, removes the row and records the audit entry', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     await screen.findByRole('heading', { name: /system overview/i })
     fireEvent.click(await screen.findByRole('button', { name: /Notifications \(\d+ unread\)/ }))
     const panel = await screen.findByRole('dialog', { name: 'Notifications' })
@@ -261,7 +261,7 @@ describe('header notifications popover through the shell slot (ticket 59)', () =
   })
 
   it('a viewer persona sees the list but the dismiss gate is disabled with the reason visible', async () => {
-    mountApp('#/command-center', 'Casey Nguyen (Client)')
+    mountApp('#/overview', 'Casey Nguyen (Client)')
     await screen.findByRole('heading', { name: /system overview/i })
     fireEvent.click(await screen.findByRole('button', { name: /Notifications \(\d+ unread\)/ }))
     const panel = await screen.findByRole('dialog', { name: 'Notifications' })

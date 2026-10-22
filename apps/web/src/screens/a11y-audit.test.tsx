@@ -77,7 +77,7 @@ describe('menu keyboard operability on real routes (projects table)', () => {
 
 describe('accessible names on the real settings route', () => {
   it('Theme and Table-density segmented options keep their own names inside the wrapping labels', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     await signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     act(() => { go('settings', { tab: 'notifications' }) })
@@ -94,7 +94,7 @@ describe('accessible names on the real settings route', () => {
 
 describe('announcements and state (shell)', () => {
   it('announces each route change once through a single polite region and stays silent on same-page tab changes', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     await signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     expect(screen.getAllByTestId('route-announcer')).toHaveLength(1)
@@ -112,7 +112,7 @@ describe('announcements and state (shell)', () => {
   })
 
   it('keeps the shared toast region as one polite live region next to the route announcer', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     await signIn()
     await screen.findByRole('heading', { name: /system overview/i })
     // One announcer; the toast container is a single fixed polite region.

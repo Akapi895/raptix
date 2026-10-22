@@ -90,7 +90,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   }
 
   it('launching a guide renders the panel with guide id, persona and step state', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
@@ -103,7 +103,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('launching a guide from a signed-out state enters the app and shows the panel', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     const seam = jumpSeam()
     expect(signedOut()).toBe(true)
     start(seam, 'E2E-03')
@@ -113,7 +113,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('Prev/Next move between steps and the last step offers Finish', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
@@ -130,7 +130,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('every control is a keyboard-operable named button (focus reaches the panel actions)', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
@@ -144,7 +144,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it("opening the next step's screen auto-advances the guide", async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
@@ -155,7 +155,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('collapse reduces the panel to a pill and expanding restores it', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
@@ -167,7 +167,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('the WF-F simulated actions drive the agent disconnect and restore through the kit', async () => {
-    const h = mountApp('#/command-center')
+    const h = mountApp('#/overview')
     const seam = jumpSeam()
     signIn()
     start(seam, 'WF-F')
@@ -185,7 +185,7 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('ending the walkthrough clears the guide state', async () => {
-    mountApp('#/command-center')
+    mountApp('#/overview')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
@@ -216,7 +216,7 @@ describe('scenario launcher and workspaces (ticket 61d)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Workspace' }))
     expect(useAuthStore.getState().authed).toBe(true)
     expect(useAuthStore.getState().org).toBe('Acme Security — Purple Team Lab')
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
   })
 
   it('scenario reset runs the one authority chain through the page confirm modal and re-arms the deadline workflows', async () => {
@@ -256,6 +256,6 @@ describe('scenario launcher and workspaces (ticket 61d)', () => {
     expect(useAuthStore.getState().meName).toBe('Taylor Chen')
     fireEvent.click(screen.getByRole('button', { name: 'Enter app' }))
     expect(useAuthStore.getState().authed).toBe(true)
-    expect(window.location.hash).toBe('#/command-center')
+    expect(window.location.hash).toBe('#/overview')
   })
 })
