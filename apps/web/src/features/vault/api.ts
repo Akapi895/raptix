@@ -1,6 +1,6 @@
 import { isVaultView, isVaultRevealView, type VaultView, type VaultSecretView, type VaultRevealView } from '@raptix/web-contracts';
 import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 export function fetchVault(engagementId: string): Promise<VaultView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets`, owned(engagementId, isVaultView))

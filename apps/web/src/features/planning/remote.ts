@@ -1,5 +1,6 @@
 import { isPlanningView, isDocumentSourceView, type PlanningView, type DocumentSourceView } from '@raptix/web-contracts';
 import { apiFetch } from '../../platform/transport';
+import { owned } from '../../platform/ownership';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Planning documents (ticket 04) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export function fetchPlanning(engagementId: string): Promise<PlanningView> {
@@ -31,8 +32,4 @@ export function discardDocumentDraft(engagementId: string, name: string): Promis
     (v): v is { discarded: boolean } => typeof v === 'object' && v !== null && typeof (v as Record<string, unknown>).discarded === 'boolean',
     { method: 'DELETE' },
   )
-}
-
-export function owned<T extends { engagementId: string }>(id: string, guard: (v: unknown) => v is T): (v: unknown) => v is T {
-  return (v): v is T => guard(v) && v.engagementId === id
 }

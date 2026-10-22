@@ -1,5 +1,5 @@
 import { apiFetch } from '../../platform/transport';
-import { owned } from '../planning/remote';
+import { owned } from '../../platform/ownership';
 
 /* ───────────── Scope/ROE governance (integration ticket 08) ───────────── */
 export interface ScopeRevisionView {
