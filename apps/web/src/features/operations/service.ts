@@ -373,7 +373,7 @@ export function createOperationDraft(authority: DbAuthority, clock: Clock, ctx: 
     return { ok: false, failure: { kind: 'validation', message: 'Select the project the operation belongs to — operations cannot be created in All Projects mode.' } }
   }
   const db = authority.snapshot()
-  const gated = operationWriteGate(db, ctx, ctx.projectId, 'create operations', 'created')
+  const gated = operationWriteGate(db.projects, ctx, ctx.projectId, 'create operations', 'created')
   if (!gated.ok) return gated
   const project = gated.data
   const selectionError = validateDraftSelections(db, project, input)

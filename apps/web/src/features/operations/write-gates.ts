@@ -3,7 +3,6 @@
  * the dataset it is given, so the port file and the mock implementation import these without importing each other.
  */
 import { can, projectAccessible, projectLocked, readOnlyContext } from '../../domain/policy'
-import type { Db } from '../../demo/seed'
 import type { Playbook, Plan, Project, Step } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
@@ -14,13 +13,13 @@ export const IN_FLIGHT: readonly string[] = ['running', 'paused', 'done', 'cance
 /** Membership + role gate shared by every operation write. `action` is the active verb phrase
  * ("create operations"); `passive` is its participle ("created") for refusal messages. */
 export function operationWriteGate(
-  db: Db,
+  projects: readonly Project[],
   ctx: RequestContext,
   projectId: string,
   action: string,
   passive: string,
 ): ServiceResult<Project> {
-  const project = db.projects.find((p) => p.id === projectId)
+  const project = projects.find((p) => p.id === projectId)
   if (!project || !projectAccessible(project, ctx.actor)) {
     return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
   }
