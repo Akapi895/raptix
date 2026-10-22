@@ -7,7 +7,7 @@ import { readActor } from '../../auth/identity'
 import { useAuthStore } from '../../state/stores'
 import { decideApprovalTransaction } from '../approvals/service'
 import { decidePlanTransaction } from '../plans/service'
-import { readPlanProject } from '../plans/bridge'
+import { projectOfPlan } from '../plans'
 import { decideSessionRequestTransaction } from '../c2/grants'
 import { readSessionRequestMeta } from '../c2/projection'
 
@@ -16,7 +16,7 @@ export function useTaskActions() {
   const actorCtx = (projectId: string) => ({ actor: readActor(services, useAuthStore.getState().meName), projectId, corr: 'legacy' })
   return {
     decidePlan: (planId: string, decision: 'approved' | 'rejected' | 'returned', note: string) => {
-      const projectId = readPlanProject(services.authority, planId)
+      const projectId = projectOfPlan(services.authority.snapshot().plans, planId)
       if (!projectId) return { ok: false as const, error: `Plan ${planId} does not exist.` }
       const res = decidePlanTransaction(services.authority, services.clock, actorCtx(projectId), planId, decision, note)
       return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }

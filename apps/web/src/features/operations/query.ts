@@ -19,7 +19,7 @@ import type { DemoRuntimeControls, DisplayClock } from '../../domain/console-ser
 import type { Evidence, Operation } from '../../domain/entities'
 import { recordAudit, type AuditInput } from '../audit'
 import { addOperationEvidence, type OperationEvidenceInput } from '../results'
-import { createOperationFromPlanTransaction, readPlanProject, type PlanBridgeRead } from '../plans'
+import { createOperationFromPlanTransaction, projectOfPlan, type PlanBridgeRead } from '../plans'
 import type { PfCheck } from './checklist'
 import type { Check } from './preflight'
 import { readOperationMeta, readOperationPreflight, readOperationSpecChecks } from './views'
@@ -279,7 +279,7 @@ export function useOperationMockConsole(): OperationMockConsole {
     now: () => services.clock.now(),
     projectOf: (opId) => readOperationMeta(services, opId)?.projectId,
     checks: (op, at) => ({ spec: readOperationSpecChecks(services, op, at), engine: readOperationPreflight(services, op, at) }),
-    planProject: (planId) => readPlanProject(services.authority, planId),
+    planProject: (planId) => projectOfPlan(services.authority.snapshot().plans, planId),
     createOperationFromPlan: (projectId, planId) => createOperationFromPlanTransaction(services.authority, services.clock, ctx(projectId), planId),
     pause: (projectId, opId, reason) => ops(projectId).pause(ctx(projectId), opId, reason),
     resume: (projectId, opId) => ops(projectId).resume(ctx(projectId), opId),

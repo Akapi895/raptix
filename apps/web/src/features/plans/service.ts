@@ -402,6 +402,6 @@ export interface PlanBridgeService {
 }
 
 /** The project a plan belongs to, read from the plans the caller holds; undefined when the plan is unknown. */
-export function planProjectOf(plans: readonly Plan[], planId: string): string | undefined {
+export function projectOfPlan(plans: readonly Plan[], planId: string): string | undefined {
   return plans.find((x) => x.id === planId)?.projectId
 }
