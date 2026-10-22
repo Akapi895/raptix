@@ -14,7 +14,7 @@ const fetchMembers = vi.fn()
 
 vi.mock('../../state/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
 
-vi.mock('../team/remote', () => ({
+vi.mock('../team/api', () => ({
   fetchMembers: (...a: unknown[]) => fetchMembers(...a),
 }))
 
