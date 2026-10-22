@@ -1,21 +1,15 @@
 /**
- * Route registry (ticket 07 — append-only manifest shared with the integrator).
- *
- * Adding a route key for a feature ticket is two append-only edits: export the
- * key from the feature's screen record, then add one `key: slice` line to
- * MANIFEST below. The router picks it up with no further shared edits; the
- * integrator serializes overlapping manifest writes (execution.md).
- *
- * Feature page slices load on demand (one chunk per screen module); the
- * auth/system slice stays in the main bundle so the login screen renders
- * without a chunk round-trip.
+ * Route registry (ticket 07). The mounted module of every route key comes from the one declaration in routes.ts; this file
+ * only maps each slice name to the module that holds its screens. Feature slices load on demand (one chunk per module); the
+ * auth/system slice stays in the main bundle so the login screen renders without a chunk round-trip.
  */
 import { lazy, type ComponentType } from 'react'
 import { routes as systemRoutes } from '../screens/a'
-import { isAssetMapEnabled } from '../features/asset-map/flag'
+import { ROUTES, type Slice } from './routes'
 import { setKnownPages } from './history'
 
-const slices = {
+/** The module each slice loads. Every route in routes.ts names one of these. */
+const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string, ComponentType> }>> = {
   b: () => import('../screens/b'),
   dp: () => import('../demo/project-detail/routes'),
   c: () => import('../screens/c'),
@@ -30,22 +24,9 @@ const slices = {
   i: () => import('../screens/infrastructure'),
   s: () => import('../demo/pages'),
 }
-type Slice = keyof typeof slices | 'a'
 
-/** 55 source route keys (see .scratch/web-improve-refactor/route-inventory.md). */
-const MANIFEST: Record<string, Slice> = {
-  login: 'a', forbidden: 'a', notfound: 'a', error: 'a', offline: 'a', 'session-expired': 'a', states: 'a', overview: 'ov', tasks: 'a',
-  projects: 'pj', 'project-new': 'b', project: 'dp',
-  operations: 'c', 'operation-new': 'c', preflight: 'c', 'operation-schedule': 'c', operation: 'c',
-  infrastructure: 'i', agents: 'i', agent: 'd', assets: 'd', 'asset-new': 'd', 'asset-scope': 'd', asset: 'd', playbooks: 'd', playbook: 'd', technique: 'd', 'playbook-review': 'd',
-  analysis: 'e', findings: 'e', 'finding-new': 'e', finding: 'e', evidence: 'e', 'evidence-inspector': 'e',
-  reports: 'f', 'report-new': 'f', report: 'f', 'report-preview': 'f', 'report-review': 'f', settings: 'st',
-  'ai-operator': 'g', 'ai-plan': 'g', 'ai-plan-review': 'g', 'ai-plan-compare': 'g', 'ai-trace': 'g', 'ai-history': 'g', 'ai-fanout': 'g', 'ai-branch': 'g',
-  c2: 'i', 'c2-channel': 'h', 'c2-session': 'h', 'c2-console': 'h',
-  scenarios: 's', workspaces: 's',
-  // Feature-flagged (off by default): when off the key is absent, so the route resolves as unknown.
-  ...(isAssetMapEnabled() ? { 'asset-map': 'a' as Slice } : {}),
-}
+/** The slice each key is mounted from, derived from routes.ts. */
+const MANIFEST: Record<string, Slice> = Object.fromEntries(Object.entries(ROUTES).map(([key, decl]) => [key, decl.slice]))
 setKnownPages(new Set(Object.keys(MANIFEST)))
 
 const lazyCache = new Map<string, ComponentType>()

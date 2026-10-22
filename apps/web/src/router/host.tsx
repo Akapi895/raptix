@@ -18,43 +18,29 @@ import { useSessionStore } from '../state/session'
 import { useAuthStore, useProjectStore } from '../state/stores'
 import { go, useRoute } from './navigate'
 import { DATA_MODE } from '../state/mode'
-import { REAL_INTEGRATED_ROUTES, RealNotIntegrated } from '../real/not-integrated'
-import { FEATURE_ROUTE_SURFACES, MIGRATED_ROUTES } from './route-table'
-import { RealProjectDetail, RealProjectNewRoute } from '../features/projects/routes'
-import { RealWorkspace } from '../features/aichat'
+import { RealNotIntegrated } from '../real/not-integrated'
+import { GLOBAL_RESOURCE_PAGES, ROUTES } from './routes'
 import { RealGlobalResource } from '../real/screens/global-resource'
-import { RealCommandCenter } from '../real/screens/command-center'
-import { RealLogin } from '../real/screens/login'
 import { Button } from '../ui/index'
 import { Shell } from '../shell/index'
 import { HeaderNotices } from '../features/notices/header-notices'
 import { LazyCopilotDrawer } from '../features/copilot/lazy'
-import { RealTrace } from '../features/operations/trace-panel'
-import { isAssetMapEnabled } from '../features/asset-map/flag'
 import { OUTSIDE_SHELL, toHref, type Route } from './history'
 import { canonicalRoute } from './aliases'
 import { routeComponent } from './registry'
 
 const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
 const RealFeatureRoute = lazy(() => import('../real/screens/feature-route').then((m) => ({ default: m.RealFeatureRoute })))
-const AssetMapRoute = lazy(() => import('../features/asset-map/AssetMapPage').then((m) => ({ default: m.AssetMapPage })))
 
-/**
- * Route keys with a real implementation mounted directly (integration tickets
- * 03-06). Keys routed through `RealFeatureRoute` come from `route-table.ts`
- * (the one list that file and `feature-route.tsx`'s panel composition both
- * read) instead of a second hand-written array — see route-table.ts for why.
- */
-const REAL_PAGES: Record<string, ComponentType | undefined> = {
-  'project-new': RealProjectNewRoute,
-  project: RealProjectDetail,
-  'ai-operator': RealWorkspace,
-  tasks: RealCommandCenter,
-  ...Object.fromEntries(Object.keys(FEATURE_ROUTE_SURFACES).map((key) => [key, RealFeatureRoute])),
-  'ai-history': RealWorkspace,
-  'ai-trace': RealTrace,
-  login: RealLogin,
-  ...(isAssetMapEnabled() ? { 'asset-map': AssetMapRoute } : {}),
+/** One lazy wrapper per real-only component, memoised by route key so a re-render never remounts it. */
+const realComponents = new Map<string, ComponentType>()
+function realComponent(key: string, load: () => Promise<ComponentType>): ComponentType {
+  let component = realComponents.get(key)
+  if (!component) {
+    component = lazy(async () => ({ default: await load() }))
+    realComponents.set(key, component)
+  }
+  return component
 }
 
 /** Holds popstate/URL-edit traversals while a form is dirty and routes the held navigation through the same unsaved-changes modal as in-app navigation. */
@@ -112,12 +98,20 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
   const key = pageKey(route)
   const pid = useProjectStore((s) => s.pid)
   if (DATA_MODE === 'real') {
-    // Real mode (integration ticket 03, ADR-0068): there is no sign-in and no
-    // demo identity — every route either has a real implementation, renders
-    // itself (system pages that read no console data), or renders the honest
-    // unavailable panel (D4). Mock screens are never reached.
-    const globalResource = !route.id && !route.engagementId && (route.page === 'infrastructure' || pid === 'all' && ['findings', 'reports', 'operations', 'analysis', 'agents', 'c2'].includes(route.page))
-    if (!globalResource && MIGRATED_ROUTES.has(route.page)) {
+    // Real mode (integration ticket 03, ADR-0068): every route renders the real presentation its declaration in routes.ts
+    // names, a system page that renders itself, or the honest unavailable panel (D4). Mock screens are never reached.
+    const globalResource = !route.id && !route.engagementId && (route.page === 'infrastructure' || pid === 'all' && GLOBAL_RESOURCE_PAGES.has(route.page))
+    if (globalResource) {
+      return (
+        <Shell slots={{ notifications: HeaderNotices }}>
+          <PageBoundary key={key}>
+            <Suspense fallback={<PageFallback />}><RealGlobalResource /></Suspense>
+          </PageBoundary>
+        </Shell>
+      )
+    }
+    const surface = ROUTES[route.page]?.real
+    if (surface?.kind === 'shared') {
       const Migrated = routeComponent(route.page)
       return (
         <Shell slots={{ notifications: HeaderNotices }}>
@@ -127,8 +121,17 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
         </Shell>
       )
     }
-    const Real = globalResource ? RealGlobalResource : REAL_PAGES[route.page]
-    if (Real) {
+    if (surface?.kind === 'feature') {
+      return (
+        <Shell slots={{ notifications: HeaderNotices }}>
+          <PageBoundary key={key}>
+            <Suspense fallback={<PageFallback />}><RealFeatureRoute /></Suspense>
+          </PageBoundary>
+        </Shell>
+      )
+    }
+    if (surface?.kind === 'component') {
+      const Real = realComponent(route.page, surface.load)
       return (
         <Shell slots={{ notifications: HeaderNotices }}>
           <PageBoundary key={key}>
@@ -137,7 +140,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
         </Shell>
       )
     }
-    if (REAL_INTEGRATED_ROUTES.has(route.page)) {
+    if (surface?.kind === 'system') {
       const Page = routeComponent(route.page)
       return (
         <Shell slots={{ notifications: HeaderNotices }}>

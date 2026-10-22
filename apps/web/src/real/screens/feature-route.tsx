@@ -5,7 +5,7 @@ import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { useRealProjects } from '../queries'
 import { Button, Empty, PageHeader, Select } from '../../ui/index'
-import { FEATURE_ROUTE_SURFACES, type PanelGroup } from '../../router/route-table'
+import { FEATURE_SURFACES, type PanelGroup } from '../../router/routes'
 
 type PanelComponent = ComponentType<{ engagementId: string }>
 
@@ -26,10 +26,10 @@ export function RealFeatureRoute(): ReactElement {
   const setPid = useProjectStore((s) => s.setPid)
   const projects = useRealProjects()
   const engagementId = route.engagementId ?? (pid === 'all' ? '' : pid)
-  const surface = FEATURE_ROUTE_SURFACES[route.page]
-  // Defensive: route-table.ts is the sole key list host.tsx uses to reach this
+  const surface = FEATURE_SURFACES[route.page]
+  // Defensive: routes.ts is the sole declaration host.tsx uses to reach this
   // component, so this should be unreachable; it only guards against a future
-  // route-table edit that adds a key without wiring it through host.tsx too.
+  // edit that declares a feature key without a surface.
   if (!surface) return <Empty icon={FolderOpen} title="Unknown surface" action={<Button onClick={() => go('overview')}>Back to Overview</Button>}>No route-table entry for &quot;{route.page}&quot;.</Empty>
   return <div className="space-y-4">
     <PageHeader title={surface.title} sub={route.id ? `Resource: ${route.id}` : 'Scoped to the selected engagement; all reads and writes use the real API.'} />
