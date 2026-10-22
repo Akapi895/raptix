@@ -5,12 +5,12 @@
  * switcher observe the engagement API through the same hooks as mock mode.
  */
 import { useMemo } from 'react'
-import { useQuery, type useQueryClient } from '@tanstack/react-query'
-import { engagementToProject, listEngagements } from '../features/projects/remote';
-import { fetchMembers } from '../features/team/remote';
-import { REAL_IDENTITY } from './identity'
-import { useCapabilityReady } from './bootstrap'
-import type { Project, Role } from '../domain/entities'
+import { useMutation, useQuery, type useQueryClient } from '@tanstack/react-query'
+import { createEngagement, engagementToProject, listEngagements, type CreateEngagementInput } from './remote';
+import { fetchMembers } from '../team/remote';
+import { REAL_IDENTITY } from '../../real/identity'
+import { useCapabilityReady } from '../../real/bootstrap'
+import type { Project, Role } from '../../domain/entities'
 
 export const projectKeys = {
   list: ['real', 'projects', REAL_IDENTITY.id] as const,
@@ -30,6 +30,11 @@ export function useRealProjects() {
     enabled: ready,
   })
   return { ready, reason, list }
+}
+
+/** Creates an engagement through the projects feature; the caller decides what follows a created project. */
+export function useCreateProject(options: { onSuccess: (created: Awaited<ReturnType<typeof createEngagement>>) => void; onError: (error: unknown) => void }) {
+  return useMutation({ mutationFn: (input: CreateEngagementInput) => createEngagement(input), ...options })
 }
 
 /** Console-seam view: engagement DTOs mapped onto the UI Project entity. */

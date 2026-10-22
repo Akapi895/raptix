@@ -3,7 +3,7 @@ import { lazy, Suspense, type ComponentType, type ReactElement } from 'react'
 import { FolderOpen } from 'lucide-react'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
-import { useRealProjects } from '../queries'
+import { useRealProjects } from '../../features/projects/query'
 import { Button, Empty, PageHeader, Select } from '../../ui/index'
 import { FEATURE_ROUTE_SURFACES, type PanelGroup } from '../../router/route-table'
 

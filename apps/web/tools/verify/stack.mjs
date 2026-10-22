@@ -164,6 +164,14 @@ function runSettingsClick(env, manifestFile, mode, appUrl) {
   return result.status;
 }
 
+function runProjectsClick(env, manifestFile, mode, appUrl) {
+  const clickOut = path.join(out, `flows-projects-click-${mode}.json`);
+  const result = spawnSync(process.execPath, [path.join(here, 'flows', 'projects-click.mjs'), '--mode', mode, '--app', appUrl, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  writeFileSync(path.join(out, `flows-projects-click-${mode}.log`), `${result.stdout}${result.stderr}`);
+  process.stdout.write(result.stdout);
+  return result.status;
+}
+
 function runFlows(env, manifestFile) {
   const statuses = [runFlow(env, manifestFile, 'reports.mjs', 'flows-reports'), runFlow(env, manifestFile, 'assets-library.mjs', 'flows-assets-library')];
   return statuses.every((code) => code === 0) ? 0 : 1;
@@ -256,12 +264,14 @@ try {
     statuses.push(runClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
     statuses.push(runReportsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
     statuses.push(runSettingsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
+    statuses.push(runProjectsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
   }
   if (modes.split(',').includes('real')) {
     statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
     statuses.push(runClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'real', app));
     statuses.push(runReportsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'real', app));
     statuses.push(runSettingsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
+    statuses.push(runProjectsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));
     statuses.push(runFlows({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest));
   }
   status = statuses.every((code) => code === 0) ? 0 : 1;

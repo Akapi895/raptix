@@ -5,41 +5,41 @@
  * unavailable panel instead of demo data (D4). Planning readiness arrives
  * with ticket 04.
  */
-import { AiRunControls } from '../../features/operations/ai-run-controls'
-import { isAssetMapEnabled } from '../../features/asset-map/flag'
+import { AiRunControls } from '../../operations/ai-run-controls'
+import { isAssetMapEnabled } from '../../asset-map/flag'
 import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { fetchAssetInventory } from '../../features/assets/endpoints';
-import { fetchFindings } from '../../features/findings/remote';
-import { fetchFleet } from '../../features/operations/remote';
-import { fetchPlanning } from '../../features/planning/remote';
-import { fetchScopeRevisions } from '../../features/scope/remote';
-import { getEngagement } from '../../features/projects/remote';
-import { utcMinuteOr } from '../format'
-import { projectKeys } from '../queries'
-import { RealConversation } from './workspace'
-import { RuntimeOperationsTab } from '../../features/operations/runtime-tab'
-import { PlanningTab } from '../../features/planning/tab'
-import { TeamMembers } from '../../features/team/members'
-import { ScopeTab } from '../../features/scope/tab'
-import { GovernanceTab } from '../../features/governance/tab'
-import { EvidenceList, FindingList } from '../../features/findings'
-import { ApprovalInbox } from '../../features/team/approval-inbox'
-import { routeComponent } from '../../router/registry'
-import { C2ProviderTab } from '../../features/c2/provider-tab'
-import { RuntimeFleetTab } from '../../features/operations/fleet-tab'
-import { ObservedAnalysisTab } from '../../features/analysis/observed-tab'
-import { VaultTab } from '../../features/vault/tab'
-import { AuditPanel } from '../../features/audit/panel'
-import { ClosureTab } from '../../features/closure/tab'
-import { ProjectSettingsPanel } from './project-settings-panel'
-import { EnvironmentPanel } from './environment-panel'
-import { go, useRoute } from '../../router/navigate'
-import { REAL_PROJECT_NAV } from '../../shell/nav'
-import { useProjectStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../ui/index'
+import { fetchAssetInventory } from '../../assets/endpoints';
+import { fetchFindings } from '../../findings/remote';
+import { fetchFleet } from '../../operations/remote';
+import { fetchPlanning } from '../../planning/remote';
+import { fetchScopeRevisions } from '../../scope/remote';
+import { getEngagement } from '../remote';
+import { utcMinuteOr } from '../../../real/format'
+import { projectKeys } from '../query'
+import { RealConversation } from '../../../real/screens/workspace'
+import { RuntimeOperationsTab } from '../../operations/runtime-tab'
+import { PlanningTab } from '../../planning/tab'
+import { TeamMembers } from '../../team/members'
+import { ScopeTab } from '../../scope/tab'
+import { GovernanceTab } from '../../governance/tab'
+import { EvidenceList, FindingList } from '../../findings/index'
+import { ApprovalInbox } from '../../team/approval-inbox'
+import { routeComponent } from '../../../router/registry'
+import { C2ProviderTab } from '../../c2/provider-tab'
+import { RuntimeFleetTab } from '../../operations/fleet-tab'
+import { ObservedAnalysisTab } from '../../analysis/observed-tab'
+import { VaultTab } from '../../vault/tab'
+import { AuditPanel } from '../../audit/panel'
+import { ClosureTab } from '../../closure/tab'
+import { ProjectSettingsPanel } from '../../../real/screens/project-settings-panel'
+import { EnvironmentPanel } from '../../../real/screens/environment-panel'
+import { go, useRoute } from '../../../router/navigate'
+import { REAL_PROJECT_NAV } from '../../../shell/nav'
+import { useProjectStore } from '../../../state/stores'
+import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
 
 /**
  * The sidebar's grouped model is the project nav (plan 2026-10-16 §3.1 — no
@@ -50,7 +50,7 @@ const sectionTitle = (tab: string) => TABS.find((t) => t.id === tab)?.label ?? '
 
 const ProjectReports = routeComponent('reports')
 /** The Asset Map inside the project it belongs to, so the project sidebar and its selection stay in place. */
-const ProjectAssetMap = lazy(() => import('../../features/asset-map/AssetMapPage').then((m) => ({ default: m.AssetMapPage })))
+const ProjectAssetMap = lazy(() => import('../../asset-map/AssetMapPage').then((m) => ({ default: m.AssetMapPage })))
 
 export function RealProjectDetail(): ReactElement {
   const route = useRoute()

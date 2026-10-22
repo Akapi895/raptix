@@ -17,7 +17,7 @@ import { HeaderNotices } from '../features/notices/header-notices'
 import { RealSearch } from './screens/search'
 import { switchDataMode } from '../state/mode'
 import { ProjectSwitcher } from '../shell/project-switcher'
-import { RealProjectCreateDialog } from './screens/create'
+import { RealProjectCreateDialog } from '../features/projects/views/create-page'
 import { Avatar, Button, IconButton, Segmented, cx } from '../ui/index'
 
 function RealProfileMenu(): ReactElement {

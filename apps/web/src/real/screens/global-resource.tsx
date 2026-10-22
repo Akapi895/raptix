@@ -2,7 +2,7 @@
 import type { ReactElement } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchOverviewC2, fetchOverviewFindings } from '../../features/overview/remote';
-import { useRealProjects } from '../queries'
+import { useRealProjects } from '../../features/projects/query'
 import { go, useRoute } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, DescList, PageHeader, Skeleton, Tabs } from '../../ui/index'
 
