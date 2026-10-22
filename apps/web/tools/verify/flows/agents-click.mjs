@@ -76,6 +76,19 @@ try {
     return { ok: refused && detail === 0, detail: `${refused ? 'refusal with the reason shown' : 'no refusal'}; ${detail === 0 ? 'no agent detail shown' : 'agent detail shown'}` };
   });
 
+  await step('the infrastructure page shows its three tabs at global scope', page, async () => {
+    await route(page, 'infrastructure?tab=agents');
+    const labels = ['Execution agents', 'C2 infrastructure', 'Sessions'];
+    const found = await Promise.all(labels.map((label) => page.getByText(label, { exact: true }).first().waitFor({ timeout: 30000 }).then(() => true, () => false)));
+    return { ok: found.every(Boolean), detail: `${found.filter(Boolean).length} of ${labels.length} tab labels shown` };
+  });
+
+  await step('selecting the C2 infrastructure tab opens that tab in the route', page, async () => {
+    await page.getByText('C2 infrastructure', { exact: true }).first().click();
+    await page.waitForURL(/tab=c2/, { timeout: 30000 }).catch(() => {});
+    const opened = page.url().includes('tab=c2');
+    return { ok: opened, detail: opened ? 'tab=c2 in the route' : 'tab not in the route' };
+  });
   await context.close();
 } catch (error) {
   fatal = error.message.split('\n')[0];
