@@ -14,7 +14,7 @@ export function RealSearch(): ReactElement {
   const needle = query.trim().toLowerCase()
   const projects = (list.data ?? []).filter((p) => `${p.id} ${p.displayName} ${p.targetValue}`.toLowerCase().includes(needle))
   const matches = (tasks.data?.tasks ?? []).filter((t) => `${t.title} ${t.kind} ${t.engagementName}`.toLowerCase().includes(needle))
-  return <div className="relative min-w-0 max-w-sm flex-1">
+  return <div className="relative order-last min-w-0 basis-full max-w-none flex-1 sm:order-none sm:basis-auto sm:max-w-sm">
     <Input aria-label="Search engagements and tasks" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search engagements and tasks" />
     {needle.length > 1 && <div className="absolute top-full z-50 mt-2 max-h-80 w-full overflow-auto rounded-xl border border-line bg-panel p-2 shadow-xl" aria-label="Search results">
       {list.isError || tasks.isError ? <p role="alert">Search source unavailable. Retry from Projects or Tasks.</p> : <>

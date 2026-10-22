@@ -66,11 +66,11 @@ export function RealTopbar({ openMobile }: { openMobile: () => void }): ReactEle
   const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
   const pid = useProjectStore((s) => s.pid)
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-side px-4 lg:px-6 xl:gap-3">
+    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 flex-wrap items-center gap-2 border-b border-line bg-side px-4 py-2 sm:h-16 sm:flex-nowrap sm:py-0 lg:px-6 xl:gap-3">
       <IconButton icon={MenuIcon} label="Open menu" onClick={openMobile} className="lg:hidden" />
       <ProjectSwitcher />
       <RealProjectCreateDialog />
-      <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>
+      <span className="hidden h-6 shrink-0 items-center rounded-full border border-cyan/30 sm:inline-flex bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>
       <RealSearch />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {pid !== 'all' && <Button onClick={() => setCopilotOpen(true)}>Ask AI</Button>}

@@ -48,10 +48,10 @@ export function ProjectSwitcher() {
   }, [projects, accessible, tab, q, st, cl])
   const sel = 'h-9 min-w-0 flex-1 rounded-[10px] border border-line bg-panel px-2 text-xs text-fg'
   return (
-    <div className="relative min-w-0">
-      <button onClick={() => setSwitcherOpen(!switcherOpen)} aria-haspopup="dialog" aria-expanded={switcherOpen} aria-label={`Project: ${isNew ? 'New project (draft)' : project ? project.id : 'All Projects'}`} title={isNew ? 'New project (draft)' : project ? `${project.id} · ${project.name}` : 'All Projects'} className="flex h-10 max-w-[340px] items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm hover:bg-hover">
+    <div className="relative min-w-0 flex-1 sm:flex-none">
+      <button onClick={() => setSwitcherOpen(!switcherOpen)} aria-haspopup="dialog" aria-expanded={switcherOpen} aria-label={`Project: ${isNew ? 'New project (draft)' : project ? project.id : 'All Projects'}`} title={isNew ? 'New project (draft)' : project ? `${project.id} · ${project.name}` : 'All Projects'} className="flex h-10 w-full min-w-0 max-w-[340px] items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm hover:bg-hover">
         {loading ? <Loader2 size={16} className="shrink-0 animate-spin text-cyan" aria-hidden /> : <FolderKanban size={16} className="shrink-0 text-accent" aria-hidden />}
-        <span className="truncate font-medium">{isNew ? 'New project (draft)' : project ? <><span className="font-mono text-[13px]">{project.id}</span><span className="max-xl:hidden"> · {project.name}</span></> : 'All Projects'}</span>
+        <span className="min-w-0 truncate font-medium">{isNew ? 'New project (draft)' : project ? <><span className="font-mono text-[13px]">{project.id}</span><span className="max-xl:hidden"> · {project.name}</span></> : 'All Projects'}</span>
         {project && !isNew && <span className="hidden 2xl:inline"><Status kind="project" value={project.status} size="sm" /></span>}
         <ChevronDown size={15} className="shrink-0 text-muted" aria-hidden />
       </button>
