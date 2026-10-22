@@ -56,9 +56,9 @@ ADR-0096: each feature owns its presentation, port, mock and real adapter.
 - `src/router/` — the 55 route keys (`registry.tsx`), hash parsing and the route host.
 - `src/platform/` — shared browser machinery: transport, session, streaming, request ledger. No domain logic.
 - `src/domain/` — shared contracts and pure logic: entities, catalog, ports (`service.ts`, `console-services.ts`), policy, projections.
-- `src/features/<domain>/` — one owner per domain: `index.ts` (public surface), `service.ts` (port), `mock.ts` (demo side), `remote.ts` (real adapter), `query.ts` (hooks), `views/` (presentation shared by both modes). Callers outside a feature import only `index.ts`.
+- `src/features/<domain>/` — one owner per domain: `index.ts` (public surface), `service.ts` (port), `mock.ts` (demo side), `remote.ts` (real adapter that implements the port), `api.ts` (wire calls behind `remote.ts`), `query.ts` (hooks and reads that presentation calls), `views/` (presentation shared by both modes). Callers outside a feature import only `index.ts`; presentation never imports `remote.ts`, `api.ts` or `mock.ts`.
 - `src/demo/` — demo-only code: seed, display clock, mock authority, mock service factory, demo runtime, personas. Real code never imports it.
-- `src/real/` and `src/screens/` — legacy trees that shrink as domains migrate. Do not add files there; new presentation goes into `src/features/<domain>/views/`.
+- `src/real/` and `src/screens/` were removed. Real presentation lives in the owning feature or `src/shell/`; the real composition is `src/state/real-services*.ts(x)` and `src/shell/real-bootstrap.tsx`.
 - `server/` — Fastify API + Prisma (separate package, own build/tests).
 - `tests/contracts/` — retained API capture regression.
 - `tools/` — gates and verification: `check-boundaries.mjs` (ratchet against `boundaries-baseline.json`), `verify/route-smoke.mjs` (route expectations; known failures in `verify/baseline.json`), `verify/stack.mjs` (isolated real-mode stack with its own PostgreSQL container).
