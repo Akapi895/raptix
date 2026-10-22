@@ -30,7 +30,7 @@ import { stamp } from '../display-clock'
 import { mountServices } from '../../test/helpers'
 import { ProjectPage } from './project-page'
 import { detailFor, projectDetailForScope } from './service'
-import { aggregateFor } from '../../screens/dashboard/service'
+import { aggregateFor } from '../../features/overview/dashboard'
 import { readiness, completion, eligibility } from '../../domain/dashboard'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setActiveRouter(null); window.location.hash = '' })
