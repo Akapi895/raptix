@@ -11,14 +11,14 @@ import { ChevronDown, FolderKanban, Layers, Menu as MenuIcon, PlugZap } from 'lu
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject } from '../state/console'
 import { useProjectStore, useThemeStore, useUiStore } from '../state/stores'
-import { REAL_IDENTITY } from './bootstrap'
+import { REAL_IDENTITY } from '../state/real-identity'
 import { useSession } from '../platform/session'
 import { HeaderNotices } from '../features/notices/header-notices'
-import { RealSearch } from './screens/search'
+import { RealSearch } from '../real/screens/search'
 import { switchDataMode } from '../state/mode'
-import { ProjectSwitcher } from '../shell/project-switcher'
+import { ProjectSwitcher } from './project-switcher'
 import { RealProjectCreateDialog } from '../features/projects/views/create-page'
-import { Avatar, Button, IconButton, Segmented, cx } from '../ui/index'
+import { Avatar, Button, IconButton, Segmented, cx } from '../ui'
 
 function RealProfileMenu(): ReactElement {
   const { session } = useSession()
@@ -105,10 +105,5 @@ export function RealContextRibbon({ openSwitcher }: { openSwitcher: () => void }
   }
   /* With an engagement selected there is no separate context bar: identity
      lives in the sidebar header (plan 2026-10-16 §3.1), the same as demo mode. */
-  return null
-}
-
-/** The copilot drawer has no real integration yet; the slot renders nothing. */
-export function RealCopilotStub(): null {
   return null
 }

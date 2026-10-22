@@ -1,10 +1,10 @@
 /** Copilot reuses the owned conversation surface and its durable request ledger. */
 import { lazy, Suspense, type ReactElement } from 'react'
-import { useProjectStore, useUiStore } from '../state/stores'
-import { useRoute } from '../router/navigate'
-import { Drawer } from '../ui/index'
+import { useProjectStore, useUiStore } from '../../state/stores'
+import { useRoute } from '../../router/navigate'
+import { Drawer } from '../../ui'
 
-const Conversation = lazy(() => import('../features/aichat').then((m) => ({ default: m.RealConversation })))
+const Conversation = lazy(() => import('../aichat').then((m) => ({ default: m.RealConversation })))
 
 export function RealCopilotDrawer(): ReactElement {
   const open = useUiStore((s) => s.copilotOpen)

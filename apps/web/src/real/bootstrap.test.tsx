@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const { RealModeProvider } = await import('./bootstrap')
 const { useCapabilityReady } = await import('../state/real-context')
-const { RealNotIntegrated } = await import('./not-integrated')
+const { RealNotIntegrated } = await import('../shell/not-integrated')
 const { ROUTES } = await import('../router/routes')
 /** A key is integrated when real mode renders it with its own presentation, not the unavailable panel. */
 const integrated = (page: string) => ROUTES[page]?.real.kind !== undefined && ROUTES[page].real.kind !== 'unavailable'

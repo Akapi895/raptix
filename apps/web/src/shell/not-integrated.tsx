@@ -10,7 +10,7 @@ import type { ReactElement } from 'react'
 import { ArrowLeft, PlugZap } from 'lucide-react'
 import { go } from '../router/navigate'
 import { switchDataMode } from '../state/mode'
-import { Button } from '../ui/index'
+import { Button } from '../ui'
 
 export function RealNotIntegrated({ page }: { page: string }): ReactElement {
   return (

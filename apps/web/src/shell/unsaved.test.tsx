@@ -10,9 +10,9 @@ import { useSessionStore, resetSessionStores } from '../state/session'
 import { useToastStore } from '../state/stores'
 import { GlobalModals } from './shell'
 
-vi.mock('../real/shell-parts', () => ({ RealContextRibbon: () => null, RealTopbar: () => null }))
+vi.mock('./real-chrome', () => ({ RealContextRibbon: () => null, RealTopbar: () => null }))
 vi.mock('../features/copilot/lazy', () => ({ LazyCopilotDrawer: () => null }))
-vi.mock('../real/copilot-drawer', () => ({ RealCopilotDrawer: () => null }))
+vi.mock('../features/copilot/real-drawer', () => ({ RealCopilotDrawer: () => null }))
 
 function openGuard(save: (() => Promise<unknown> | unknown) | undefined, navigate: () => void): void {
   act(() => {
