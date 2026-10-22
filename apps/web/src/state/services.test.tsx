@@ -8,7 +8,6 @@ const { useSessionStore } = await import('./session')
 const { createChatHandlers } = await import('../features/aichat/handlers')
 const { sendChat, resetDemo } = await import('../demo/runtime')
 const { useState } = await import('react')
-const { hhmm } = await import('../demo/display-clock')
 
 afterEach(() => { cleanup(); vi.clearAllTimers() })
 
@@ -59,9 +58,10 @@ it('resetting twice between clock ticks does not charge pre-reset elapsed time t
 })
 
 function ResetDisplay(): React.JSX.Element {
+  const services = useServices()
   const [label, setLabel] = useState('')
   return <>
-    <button onClick={() => { resetDemo(); resetDemo(); setLabel(hhmm()) }}>Reset display clock</button>
+    <button onClick={() => { resetDemo(); resetDemo(); setLabel(services.display.hhmm()) }}>Reset display clock</button>
     <span>{label}</span>
   </>
 }

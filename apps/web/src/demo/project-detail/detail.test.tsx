@@ -26,7 +26,6 @@ import { resetSharedStores, useProjectStore } from '../../state/stores'
 import { resetSessionStores, useSessionStore } from '../../state/session'
 import { resetNavStores, go, selectProject } from '../../router/navigate'
 import { Sidebar } from '../../shell/sidebar'
-import { stamp } from '../display-clock'
 import { mountServices } from '../../test/helpers'
 import { ProjectPage } from './project-page'
 import { detailFor, projectDetailForScope } from './service'
@@ -451,8 +450,8 @@ describe('secondary panels on the typed detail read (ticket 23)', () => {
     act(() => {
       h.svc().authority.commit('evidence-probe', (d) => {
         const id = 'EV-' + (400 + d.evidence.length + 1)
-        d.evidence.push({ id, name: 'bridge-probe.bin', kind: 'Binary', source: 'Probe', at: stamp(), by: 'Alex Morgan', projectId: 'RT-2026-014', sensitive: false })
-        d.audit.unshift({ corr: 'evidence-probe', id: 'AU-' + ++d.counters.audit, at: stamp(), actor: 'Alex Morgan', role: 'Manager', action: 'Uploaded evidence', obj: id, projectId: 'RT-2026-014', result: 'Success', reason: '' })
+        d.evidence.push({ id, name: 'bridge-probe.bin', kind: 'Binary', source: 'Probe', at: h.svc().display.stamp(), by: 'Alex Morgan', projectId: 'RT-2026-014', sensitive: false })
+        d.audit.unshift({ corr: 'evidence-probe', id: 'AU-' + ++d.counters.audit, at: h.svc().display.stamp(), actor: 'Alex Morgan', role: 'Manager', action: 'Uploaded evidence', obj: id, projectId: 'RT-2026-014', result: 'Success', reason: '' })
       })
     })
     expect(await screen.findByText('bridge-probe.bin')).toBeInTheDocument()

@@ -25,7 +25,6 @@ import { USERS } from '../domain/catalog';
 import type { SeedVariant } from './seed';
 import { useAuthStore, useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore, type LogLine } from '../state/session'
-import { hhmm, stamp } from './display-clock'
 import { ROLE_LABEL } from '../domain/policy'
 import { createChatHandlers } from '../features/aichat/handlers'
 import {
@@ -33,7 +32,7 @@ import {
   requestEmergencyStopTransaction, resolveStopTransaction, unknownEmergencyStopTransaction,
 } from '../features/estop/service'
 import type { ActorRef } from '../domain/service'
-import type { ConsoleServices } from '../domain/console-services';
+import type { ConsoleServices, DisplayClock } from '../domain/console-services';
 import type { Db } from './seed';
 
 /* ───────────── Runtime registration ───────────── */
@@ -101,17 +100,16 @@ function mutate(r: DemoRuntime, fn: (d: Db) => void) {
 function audit(r: DemoRuntime, action: string, obj: string, projectId: string, result = 'Success', reason = '') {
   const me = currentActor(r)
   mutate(r, (d) => {
-    d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.id, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason })
+    d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: r.services.display.stamp(), actor: me.id, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason })
   })
 }
 
 function notify(r: DemoRuntime, text: string, projectId: string, to: { name: string; id?: string }, group: 'todo' | 'update' | 'system' = 'update', category?: NonNullable<Db['notices'][number]['category']>) {
-  mutate(r, (d) => { d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + Date.now() % 10000, group, text, projectId, at: stamp(), read: false, to, category }) })
+  mutate(r, (d) => { d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + Date.now() % 10000, group, text, projectId, at: r.services.display.stamp(), read: false, to, category }) })
 }
 
-function pushLog(opId: string, line: Omit<LogLine, 'id' | 'ts'>) {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  useSessionStore.getState().pushLog(opId, line, hhmm() + ':' + pad(new Date().getSeconds()))
+function pushLog(display: DisplayClock, opId: string, line: Omit<LogLine, 'id' | 'ts'>) {
+  useSessionStore.getState().pushLog(opId, line, display.hhmmss())
 }
 
 /* ───────────── Emergency stop (the demo outcome switch) ───────────── */
@@ -127,7 +125,7 @@ export function emergencyStop(scope: 'operation' | 'project' | 'workspace', id: 
   const res = requestEmergencyStopTransaction(r.services.authority, r.services.clock, actorCtx(r, scope === 'project' ? id : ''), { scope, id, reason })
   if (!res.ok) return
   const affectedP = res.data.projectId
-  res.data.operations.forEach((opId) => pushLog(opId, { level: 'ERROR', agent: '—', stepId: '—', text: `EMERGENCY STOP requested by ${currentActor(r).id}: ${reason} — waiting for agent acknowledgement` }))
+  res.data.operations.forEach((opId) => pushLog(r.services.display, opId, { level: 'ERROR', agent: '—', stepId: '—', text: `EMERGENCY STOP requested by ${currentActor(r).id}: ${reason} — waiting for agent acknowledgement` }))
   const outcome = useSessionStore.getState().stopOutcome
   later(r, (rr) => {
     if (outcome === 'fail') { failEmergencyStopTransaction(rr.services.authority, rr.services.clock, actorCtx(rr, affectedP), { scope, id }); return }
@@ -185,25 +183,25 @@ export function stopChat(convId: string) {
 export function loseAgent(agentId: string) {
   const r = demand()
   const ag = r.services.authority.snapshot().agents.find((a) => a.id === agentId)!
-  mutate(r, (d) => { const a = d.agents.find((x) => x.id === agentId)!; a.status = 'lost'; a.lastSeen = stamp(); d.operations.forEach((o) => o.steps.forEach((s) => { if (s.agent === agentId && s.status === 'running') { s.status = 'unknown'; s.output = 'Result unknown because the agent lost connection.' } })); d.sessions.forEach((s) => { if (s.agentId === agentId && s.state === 'connected') s.state = 'disconnected' }) })
-  mutate(r, (d) => d.branches.forEach((b) => { if (b.agent === agentId && ['running', 'queued', 'waiting_approval', 'pending'].includes(b.state)) { b.state = b.state === 'running' ? 'unknown' : 'paused'; b.lastEvent = `${agentId} disconnected — branch ${b.state}`; b.timeline.push({ at: stamp(), text: `${agentId} lost heartbeat (simulated)` }) } }))
-  if (ag.op) pushLog(ag.op, { level: 'ERROR', agent: agentId, stepId: '—', text: `Lost connection to ${agentId} — running steps are now “Unknown”.` })
+  mutate(r, (d) => { const a = d.agents.find((x) => x.id === agentId)!; a.status = 'lost'; a.lastSeen = r.services.display.stamp(); d.operations.forEach((o) => o.steps.forEach((s) => { if (s.agent === agentId && s.status === 'running') { s.status = 'unknown'; s.output = 'Result unknown because the agent lost connection.' } })); d.sessions.forEach((s) => { if (s.agentId === agentId && s.state === 'connected') s.state = 'disconnected' }) })
+  mutate(r, (d) => d.branches.forEach((b) => { if (b.agent === agentId && ['running', 'queued', 'waiting_approval', 'pending'].includes(b.state)) { b.state = b.state === 'running' ? 'unknown' : 'paused'; b.lastEvent = `${agentId} disconnected — branch ${b.state}`; b.timeline.push({ at: r.services.display.stamp(), text: `${agentId} lost heartbeat (simulated)` }) } }))
+  if (ag.op) pushLog(r.services.display, ag.op, { level: 'ERROR', agent: agentId, stepId: '—', text: `Lost connection to ${agentId} — running steps are now “Unknown”.` })
   notify(r, `${agentId} disconnected while running ${ag.op || 'an operation'}`, ag.projectId, { name: 'agent', id: agentId }, 'update', 'agents')
   audit(r, 'Agent disconnected', agentId, ag.projectId, 'Warning')
 }
 
 export function restoreAgent(agentId: string) {
   const r = demand()
-  mutate(r, (d) => { const a = d.agents.find((x) => x.id === agentId)!; a.status = 'online'; a.lastSeen = stamp(); d.sessions.forEach((s) => { if (s.agentId === agentId && s.state === 'disconnected') s.state = 'connected' }) })
+  mutate(r, (d) => { const a = d.agents.find((x) => x.id === agentId)!; a.status = 'online'; a.lastSeen = r.services.display.stamp(); d.sessions.forEach((s) => { if (s.agentId === agentId && s.state === 'disconnected') s.state = 'connected' }) })
 }
 
 export function fastForward(opId: string) {
   const r = demand()
   mutate(r, (d) => {
     const o = d.operations.find((x) => x.id === opId)!
-    o.steps.forEach((s) => { if (['running', 'pending'].includes(s.status)) { s.status = 'ok'; s.ts = s.ts === '—' ? hhmm() : s.ts; s.dur = s.dur === '—' ? '01:00' : s.dur; s.output = s.output.startsWith('No output') || s.output.startsWith('Waiting') ? 'Sanitized output. No sensitive content.' : s.output } })
+    o.steps.forEach((s) => { if (['running', 'pending'].includes(s.status)) { s.status = 'ok'; s.ts = s.ts === '—' ? r.services.display.hhmm() : s.ts; s.dur = s.dur === '—' ? '01:00' : s.dur; s.output = s.output.startsWith('No output') || s.output.startsWith('Waiting') ? 'Sanitized output. No sensitive content.' : s.output } })
   })
-  pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Simulation fast-forward: remaining steps completed.' })
+  pushLog(r.services.display, opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Simulation fast-forward: remaining steps completed.' })
 }
 
 /* ───────────── C2 session termination ───────────── */
@@ -211,9 +209,9 @@ export function fastForward(opId: string) {
 export function terminateSession(sessionId: string, reason: string) {
   const r = demand()
   const s = r.services.authority.snapshot().sessions.find((x) => x.id === sessionId)!
-  mutate(r, (d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.state = 'revoking'; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: `Termination requested by ${currentActor(r).id}: ${reason}` }) })
+  mutate(r, (d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.state = 'revoking'; x.transcript.push({ ts: r.services.display.hhmm() + ':00', who: 'system', text: `Termination requested by ${currentActor(r).id}: ${reason}` }) })
   audit(r, 'Terminated session', sessionId, s.projectId, 'Success', reason)
-  later(r, (rr) => mutate(rr, (d) => { const x = d.sessions.find((y) => y.id === sessionId)!; if (x.state === 'revoking') { x.state = 'terminated'; x.grants = []; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated. All grants revoked.' }) } }), 2000)
+  later(r, (rr) => mutate(rr, (d) => { const x = d.sessions.find((y) => y.id === sessionId)!; if (x.state === 'revoking') { x.state = 'terminated'; x.grants = []; x.transcript.push({ ts: rr.services.display.hhmm() + ':00', who: 'system', text: 'Session terminated. All grants revoked.' }) } }), 2000)
 }
 
 /* ───────────── Demo reset (ticket 67 wave 2) ───────────── */
@@ -250,23 +248,23 @@ export function tickOperations(services: ConsoleServices): void {
         s.status = 'ok'; s.dur = '0' + (1 + (ri % 3)) + ':' + pad(10 + ((ri * 17) % 50)); if (s.output.startsWith('Waiting') || s.output.startsWith('Not run') || s.output.startsWith('No output')) s.output = 'Sanitized output. No sensitive content.'
         logsToPush.push([o.id, { level: 'INFO', agent: s.agent, stepId: s.id, text: `Completed step ${s.id} (${s.dur})` }])
       }
-      if (o.steps.some((s) => s.status === 'review')) { o.updated = stamp(); return }
+      if (o.steps.some((s) => s.status === 'review')) { o.updated = services.display.stamp(); return }
       const ni = o.steps.findIndex((s) => s.status === 'pending')
       if (ni >= 0) {
         const s = o.steps[ni]
         if (d.agents.find((a) => a.id === s.agent)?.status === 'lost') return
-        s.status = 'running'; s.ts = hhmm(); s.output = 'Waiting for agent result.'
+        s.status = 'running'; s.ts = services.display.hhmm(); s.output = 'Waiting for agent result.'
         logsToPush.push([o.id, { level: 'INFO', agent: s.agent, stepId: s.id, text: `Started step ${s.id} — ${s.name}` }])
       }
       if (o.steps.length && o.steps.every((s) => !['running', 'pending', 'review'].includes(s.status)) && o.steps.some((s) => s.status === 'ok')) {
         o.status = 'done'; logsToPush.push([o.id, { level: 'INFO', agent: '—', stepId: '—', text: 'All steps finished — operation completed (simulated)' }])
         o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null })
-        d.sessions.forEach((x) => { if (x.opId === o.id && ['connected', 'available', 'suspended'].includes(x.state)) { x.state = 'terminated'; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated at operation completion.' }) } })
+        d.sessions.forEach((x) => { if (x.opId === o.id && ['connected', 'available', 'suspended'].includes(x.state)) { x.state = 'terminated'; x.transcript.push({ ts: services.display.hhmm() + ':00', who: 'system', text: 'Session terminated at operation completion.' }) } })
       }
-      o.updated = stamp()
+      o.updated = services.display.stamp()
     })
   })
-  logsToPush.forEach(([id, line]) => pushLog(id, line))
+  logsToPush.forEach(([id, line]) => pushLog(services.display, id, line))
 }
 
 /**

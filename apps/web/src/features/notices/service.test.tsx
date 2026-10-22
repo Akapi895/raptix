@@ -19,7 +19,6 @@ import { setActiveRouter } from '../../router/active'
 import { RouteHost } from '../../router/host'
 import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
-import { stamp } from '../../demo/display-clock'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Notice } from '../../domain/entities'
 import { dismissNotice, listNotices, markAllNoticesRead, setNoticeRead } from './service'
@@ -136,7 +135,7 @@ function NoticeViews() {
 function pushNotice(h: ReturnType<typeof mountServices>, text: string, projectId: string, to: Notice['to'], group: Notice['group'] = 'update', category?: Notice['category']) {
   h.run(() => {
     h.svc().authority.commit('notify', (d) => {
-      d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + (Date.now() % 10000), group, text, projectId, at: stamp(), read: false, to, category })
+      d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + (Date.now() % 10000), group, text, projectId, at: h.svc().display.stamp(), read: false, to, category })
     })
   })
 }
@@ -201,7 +200,7 @@ function mountApp(hash: string, me?: string) {
     notify: (text: string, projectId: string, to: Notice['to'], group: Notice['group'] = 'update', category?: Notice['category']) =>
       act(() => {
         svc.authority.commit('notify', (d) => {
-          d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + (Date.now() % 10000), group, text, projectId, at: stamp(), read: false, to, category })
+          d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + (Date.now() % 10000), group, text, projectId, at: svc.display.stamp(), read: false, to, category })
         })
       }),
   }

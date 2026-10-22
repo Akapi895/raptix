@@ -25,7 +25,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { createDatabaseAuthority } from '../../demo/authority'
 import { MockClock } from '../../domain/clock'
-import { stamp } from '../../demo/display-clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import { ROLE_LABEL } from '../../domain/policy'
 import { useMe, type Persona } from '../../state/console'
@@ -190,7 +189,7 @@ function mountBridge(me = 'Alex Morgan') {
 /** Mirrors the store's audited action: one 'legacy' commit with the same row shape. */
 function legacyAudit(h: ReturnType<typeof mountServices>, action: string, obj: string, projectId: string, result = 'Success', reason = '') {
   h.svc().authority.commit('legacy', (d) => {
-    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at: stamp(), actor: 'Dana Whitfield', role: ROLE_LABEL.admin, action, obj, projectId, result, reason })
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at: h.svc().display.stamp(), actor: 'Dana Whitfield', role: ROLE_LABEL.admin, action, obj, projectId, result, reason })
   })
 }
 

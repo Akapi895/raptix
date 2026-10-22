@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 
 vi.useFakeTimers()
 const { mountServices } = await import('../helpers')
-const { hhmm } = await import('../../demo/display-clock')
+const { formatDemoInstant, DEMO_ANCHOR } = await import('../../domain/clock')
 const { expireGrantTransaction } = await import('../../features/c2/grants')
 const { minutesUntil, useGrantWatch, Console } = await import('../../features/c2/views/session-console')
 const { go, selectProject } = await import('../../router/navigate')
@@ -32,7 +32,7 @@ function GrantWatchProbe() {
 
 describe('grant countdown against the simulated clock (requirement 50)', () => {
   it('measures minutes between the ROE timestamp format and the module clock', () => {
-    expect(hhmm()).toBe('10:42')
+    expect(formatDemoInstant(DEMO_ANCHOR)).toContain('10:42 AM')
     expect(minutesUntil('Oct 13, 2026, 11:15 AM (UTC+7)', '10:42')).toBe(33)
     expect(minutesUntil('Oct 13, 2026, 10:42 AM (UTC+7)', '10:42')).toBe(0)
   })

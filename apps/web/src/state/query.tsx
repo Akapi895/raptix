@@ -25,7 +25,7 @@ import type { ActorRef, ChangeSet, EntityKind } from '../domain/service'
 import { createConsoleQueryClient, scopeOf } from './keys'
 import { useAuthStore, useProjectStore } from './stores'
 
-// Observer delivery must not require another display-clock tick after a commit.
+// Observer delivery must not require another display clock tick after a commit.
 notifyManager.setScheduler(queueMicrotask)
 
 function ChangeSetBridge({ client, services }: { client: QueryClient; services: ConsoleServices }) {
