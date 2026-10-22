@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as api_findings from '../../features/findings/remote';
+import * as api_findings from '../../features/findings/api';
 import { createRealFindingService } from './findings'
 
-vi.mock('../../features/findings/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../features/findings/remote')>()
+vi.mock('../../features/findings/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../features/findings/api')>()
   return { ...actual, downloadCapture: vi.fn() }
 })
 
