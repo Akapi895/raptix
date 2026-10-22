@@ -13,7 +13,7 @@ vi.useFakeTimers()
 const { act, cleanup, fireEvent, screen } = await import('@testing-library/react')
 const { mountServices } = await import('../../test/helpers')
 const { go, selectProject } = await import('../../router/navigate')
-const { routes } = await import('../../screens/h')
+const { routes } = await import('./views/c2-pages')
 const { sessionCommandTransaction } = await import('./grants')
 
 
