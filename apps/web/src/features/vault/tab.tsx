@@ -7,7 +7,7 @@
 import { useState, type ReactElement } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, Trash2 } from 'lucide-react'
 import { isRealMode } from '../../state/mode'
-import { utcMinute } from '../../real/format'
+import { utcMinute } from '../../platform/format'
 import { Banner, Button, Card, CardHeader, DemoTag, Empty, Input, Skeleton } from '../../ui/index'
 import { VaultError, useVaultRead, useVaultWrites } from './query'
 

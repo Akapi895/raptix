@@ -15,7 +15,7 @@ import { getEngagement } from '../../features/projects/remote';
 import { ProjectShortcuts, WorkspaceStatus } from '../../features/projects/views/workspace-status';
 import { ProjectCounts } from '../../features/projects/views/project-counts';
 import { projectStage, STAGE_LABEL } from '../../features/projects/workspace';
-import { utcMinuteOr } from '../format'
+import { utcMinuteOr } from '../../platform/format'
 import { projectKeys } from '../../features/projects/query'
 import { RealConversation } from './workspace'
 import { RuntimeOperationsTab } from '../../features/operations/runtime-tab'

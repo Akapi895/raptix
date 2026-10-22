@@ -9,7 +9,7 @@
 import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { ClipboardCheck, GitCompareArrows, Loader2, ShieldCheck } from 'lucide-react'
-import { utcMinuteOr } from '../../real/format'
+import { utcMinuteOr } from '../../platform/format'
 import { Button, Card, CardHeader, Empty, Select, Skeleton, Status, Textarea } from '../../ui/index'
 import { SchedulesCard } from './schedules'
 import { StopsCard } from './stops'

@@ -8,7 +8,7 @@
 import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Loader2, TerminalSquare } from 'lucide-react'
-import { utcMinute } from '../../real/format'
+import { utcMinute } from '../../platform/format'
 import { Banner, Button, Card, CardHeader, Input, Skeleton, Status } from '../../ui/index'
 import type { C2ProviderCommand } from './provider'
 import { messageOf, useProviderCommands, useProviderSurface, useProviderWrites } from './provider-query'

@@ -14,7 +14,7 @@ import { go } from '../../router/navigate'
 import { parseHash } from '../../router/history'
 import { useRoute } from '../../router/navigate'
 import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../ui/index'
-import { utcMinute } from '../format'
+import { utcMinute } from '../../platform/format'
 
 const KIND_LABEL: Record<string, string> = {
   'scope-revision': 'Scope review',

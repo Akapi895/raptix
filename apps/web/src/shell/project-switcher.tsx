@@ -15,7 +15,7 @@ import { useSessionStore } from '../state/session'
 import { useProjectStore, useUiStore } from '../state/stores'
 import { Button, cx, SearchBox, Status } from '../ui/index'
 import { DATA_MODE } from '../state/mode'
-import { showCreateProject } from '../real/create-project-dialog'
+import { showCreateProject } from '../features/projects/create-dialog-state'
 
 export function ProjectSwitcher() {
   const projects = usePolicyProjects()
