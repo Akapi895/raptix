@@ -16,7 +16,7 @@ vi.mock('../../state/keys', async (importOriginal) => ({
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'all' }),
 }))
 vi.mock('./api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./remote')>()
+  const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
     fetchNotices: vi.fn(),

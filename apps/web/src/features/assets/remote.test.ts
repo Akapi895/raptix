@@ -13,7 +13,7 @@ vi.mock('./endpoints', async (importOriginal) => {
   }
 })
 vi.mock('../scope/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../scope/remote')>()
+  const actual = await importOriginal<typeof import('../scope/api')>()
   return {
     ...actual,
     fetchAssetInventory: vi.fn(),
