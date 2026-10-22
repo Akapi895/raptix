@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { agentRoutes } from './d-agents'
+import { agentRoutes } from '../features/agents/views/agents-page'
 import { assetRoutes } from '../features/assets'
 import { libraryRoutes } from '../features/library'
 

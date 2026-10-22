@@ -18,7 +18,7 @@ import type { ComponentType } from 'react'
 import { go, useRoute } from '../router/navigate'
 import { useProjectStore } from '../state/stores'
 import { PageHeader, Tabs } from '../ui/index'
-import { agentRoutes, AgentsContent } from './d-agents'
+import { agentRoutes, AgentsContent } from '../features/agents/views/agents-page'
 import { C2InfraContent, routes as c2Routes, Sessions } from './h'
 
 export type InfraTab = 'agents' | 'c2' | 'sessions'
