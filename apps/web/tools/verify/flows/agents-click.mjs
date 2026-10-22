@@ -89,6 +89,43 @@ try {
     const opened = page.url().includes('tab=c2');
     return { ok: opened, detail: opened ? 'tab=c2 in the route' : 'tab not in the route' };
   });
+  // Write paths: the steps share one page, so each reads the state the previous step left (a route change reloads the mock dataset).
+  await step('disabling the agent with a reason reports it disabled and offers Enable', page, async () => {
+    await route(page, `agent/${agent}?engagement=${encodeURIComponent(project)}`);
+    await page.getByRole('button', { name: 'Disable Agent', exact: true }).first().click();
+    await page.getByLabel(/Reason for disabling/).fill('Flow disable check');
+    await page.getByRole('button', { name: 'Disable agent', exact: true }).click();
+    const reported = await page.getByText(`${agent} disabled.`, { exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+    const enable = await page.getByRole('button', { name: 'Enable Agent', exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+    return { ok: reported && enable, detail: `${reported ? 'disable reported' : 'no disable report'}; ${enable ? 'Enable offered' : 'Enable not offered'}` };
+  });
+
+  await step('enabling the agent again reports it enabled and offers Disable', page, async () => {
+    await page.getByRole('button', { name: 'Enable Agent', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Enable agent', exact: true }).click();
+    const reported = await page.getByText(`${agent} enabled.`, { exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+    const disable = await page.getByRole('button', { name: 'Disable Agent', exact: true }).first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+    return { ok: reported && disable, detail: `${reported ? 'enable reported' : 'no enable report'}; ${disable ? 'Disable offered' : 'Disable not offered'}` };
+  });
+
+  await step('a viewer sees the disable control disabled with its reason and gets no dialog or success report', page, async () => {
+    const viewerContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
+    try {
+      const viewer = await viewerContext.newPage();
+      viewer.setDefaultTimeout(30000);
+      await signInMock(viewer, 'Casey Nguyen');
+      await route(viewer, `agent/${agent}?engagement=${encodeURIComponent(project)}`);
+      const control = viewer.getByRole('button', { name: 'Disable Agent', exact: true }).first();
+      const disabled = await control.waitFor({ timeout: 20000 }).then(() => control.isDisabled(), () => false);
+      const reason = disabled ? ((await control.getAttribute('title')) || '').trim() : '';
+      const dialogs = await viewer.getByLabel(/Reason for disabling/).count();
+      const reports = await viewer.getByText(`${agent} disabled.`, { exact: true }).count();
+      return { ok: disabled && reason.length > 0 && dialogs === 0 && reports === 0, detail: `${disabled ? 'Disable disabled' : 'Disable enabled'}; ${reason ? `reason "${reason.slice(0, 80)}"` : 'no reason'}; ${dialogs === 0 ? 'no dialog' : 'dialog opened'}; ${reports === 0 ? 'no success report' : 'success reported'}` };
+    } finally {
+      await viewerContext.close();
+    }
+  });
+
   await context.close();
 } catch (error) {
   fatal = error.message.split('\n')[0];
