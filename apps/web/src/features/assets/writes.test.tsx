@@ -16,7 +16,7 @@ import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import { mountServices } from '../../test/helpers'
 import { computePreflightChecks } from '../operations/preflight'
 import { createConsoleServices } from '../../demo/services';
-import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
+import type { ActorRef, ChangeSet, RequestContext, ServiceResult } from '../../domain/service'
 import { selectProject } from '../../router/navigate'
 import { routes } from '../../screens/d'
 import { decideApprovalTransaction } from '../approvals/service'
@@ -24,6 +24,7 @@ import { assignAgentTransaction } from '../agents/writes'
 import { createOperationDraft, runOperationPreflight } from '../operations/service'
 import { changeAssetScopeTransaction, createAssetWriteHandlers, importAssetsTransaction, validateAssetRows } from './writes'
 import type { AssetImportRow } from './writes'
+import { createAssetService } from './service'
 
 afterEach(cleanup)
 
@@ -227,6 +228,26 @@ describe('scope changes (ticket 51)', () => {
     expect(res.ok).toBe(true)
     expect(svc.authority.snapshot().assets.find((a) => a.id === 'AS-0154')?.scope).toBe('in')
     expect(svc.authority.snapshot().audit[0]).toMatchObject({ action: 'Approved scope change', actor: 'Pat Kim', reason: 'Admitted into scope', projectId: P14 })
+    svc.dispose()
+  })
+})
+
+describe('scope approval request (asset port)', () => {
+  const guard = <T,>(produce: () => ServiceResult<T>) => Promise.resolve(produce())
+
+  it('raises the scope approval for the active project; a role without editScope is refused and commits nothing', async () => {
+    const svc = createConsoleServices()
+    const port = createAssetService(svc.authority, svc.clock, guard)
+    const before = JSON.stringify(svc.authority.snapshot())
+    const input = { note: 'Bring the web tier in scope', diff: 'web-01 → in scope' }
+    expect(port.capabilities).toEqual({ scopeApprovalRequests: true })
+    expect(await createAssetWriteHandlers(port, RILEY, P14).requestScopeApproval(input))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden' }) })
+    expect(JSON.stringify(svc.authority.snapshot())).toBe(before)
+    const raised = await createAssetWriteHandlers(port, ALEX, P14).requestScopeApproval(input)
+    expect(raised.ok).toBe(true)
+    if (raised.ok) expect(svc.authority.snapshot().approvals.find((a) => a.id === raised.data.id))
+      .toEqual(expect.objectContaining({ projectId: P14, type: 'Scope change', status: 'pending' }))
     svc.dispose()
   })
 })

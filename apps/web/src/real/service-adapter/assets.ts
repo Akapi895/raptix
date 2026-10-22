@@ -70,6 +70,7 @@ export function createRealAssetService(): AssetService {
     return view.assets.map((row) => toAsset(row, engagementId))
   }
   return {
+    capabilities: { scopeApprovalRequests: false },
     list: (ctx: RequestContext, query: AssetListQuery = {}) => guarded(async (): Promise<ServiceResult<AssetListRead>> => {
       if (!ctx.projectId || ctx.projectId === 'all') return { ok: false, failure: { kind: 'unavailable', message: 'Select an engagement to read its assets.' } }
       const all = await inventory(ctx.projectId)
@@ -177,5 +178,6 @@ export function createRealAssetService(): AssetService {
       await classifyAsset(ctx.projectId, assetId, classification, row.version)
       return { ok: true, data: { assetId, projectId: ctx.projectId, scope } }
     }),
+    requestScopeApproval: () => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: 'Scope change requests are raised from the Scope revisions panel in real mode.' } }),
   }
 }

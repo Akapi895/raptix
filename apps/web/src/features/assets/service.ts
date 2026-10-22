@@ -18,7 +18,8 @@ import type { Db } from '../../demo/seed';
 import type { DbAuthority } from '../../demo/authority'
 import type { Asset } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
-import { changeAssetScopeTransaction, importAssetsTransaction, type AssetImportOutcome, type AssetImportRow, type AssetScopeWriteInput, type AssetScopeWriteOutcome } from './writes'
+import { submitApprovalTransaction, type ApprovalRef } from '../approvals/service'
+import { changeAssetScopeTransaction, importAssetsTransaction, type AssetImportOutcome, type AssetImportRow, type AssetScopeApprovalInput, type AssetScopeWriteInput, type AssetScopeWriteOutcome } from './writes'
 
 /** Filter state for the catalog list (all optional; empty = unfiltered). */
 export interface AssetListQuery {
@@ -66,7 +67,14 @@ export interface AssetObservedGraph {
   truncated: boolean
 }
 
+/** What the active mode supports, so the screens branch on this rather than on the data mode. */
+export interface AssetCapabilities {
+  /** Scope change requests are raised from the scope screen; real mode raises them from the Scope revisions panel. */
+  readonly scopeApprovalRequests: boolean
+}
+
 export interface AssetService {
+  readonly capabilities: AssetCapabilities
   /** The observed graph source; the simulated store has none, so the screen says so instead of inventing one. */
   observedGraph(ctx: RequestContext): Promise<ServiceResult<AssetObservedGraph>>
   list(ctx: RequestContext, query?: AssetListQuery): Promise<ServiceResult<AssetListRead>>
@@ -76,6 +84,8 @@ export interface AssetService {
   importRows(ctx: RequestContext, rows: readonly AssetImportRow[]): Promise<ServiceResult<AssetImportOutcome>>
   /** Role-gated classification change with the audited reason. */
   changeScope(ctx: RequestContext, assetId: string, scope: Asset['scope'], input?: AssetScopeWriteInput): Promise<ServiceResult<AssetScopeWriteOutcome>>
+  /** Scope change request for the reviewer, raised for the project in the context. */
+  requestScopeApproval(ctx: RequestContext, input: AssetScopeApprovalInput): Promise<ServiceResult<ApprovalRef>>
 }
 
 const PAGE_SIZE = 10
@@ -299,11 +309,13 @@ export function createAssetService(
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ): AssetService {
   return {
+    capabilities: { scopeApprovalRequests: true },
     list: (ctx, query) => guard(() => listAssets(authority.snapshot(), ctx, query)),
     get: (ctx, id) => guard(() => getAsset(authority.snapshot(), ctx, id)),
     scope: (ctx) => guard(() => getAssetScope(authority.snapshot(), ctx)),
     observedGraph: (ctx) => Promise.resolve({ ok: false, failure: { kind: 'unavailable', message: `The simulated store has no observed graph for ${ctx.projectId}.` } }),
     importRows: (ctx, rows) => Promise.resolve(importAssetsTransaction(authority, clock, ctx, ctx.projectId, rows)),
     changeScope: (ctx, assetId, scope, input) => Promise.resolve(changeAssetScopeTransaction(authority, clock, ctx, assetId, scope, input)),
+    requestScopeApproval: (ctx, input) => Promise.resolve(submitApprovalTransaction(authority, clock, ctx, { projectId: ctx.projectId, type: 'Scope change', note: input.note, diff: input.diff })),
   }
 }
