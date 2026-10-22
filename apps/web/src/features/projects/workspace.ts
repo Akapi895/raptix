@@ -1,6 +1,6 @@
 /**
  * Project workspace state (page-details proposal §3.1, MVP 2026-10-22): the
- * stage, the readiness checks and the next step, derived from the project
+ * stage, the preparation checks and the next step, derived from the project
  * fields and the reads the overview already makes.
  *
  * A read that is still pending or failed is `unknown`, never "not done", so
@@ -38,13 +38,13 @@ export interface WorkspaceInput {
   lifecycle: Lifecycle
   /** Approved scope & ROE revision, read from the scope screen's source. */
   scope: Read<{ approvedVersion: number | null }>
-  /** Planning bundle readiness, read from the planning screen's source. */
+  /** Planning bundle readiness (preparation), read from the planning screen's source. */
   planning: Read<{ ready: boolean; reasons: number }>
 }
 
 export type CheckState = 'met' | 'open' | 'unknown'
 
-export interface ReadinessCheck {
+export interface PreparationCheck {
   id: 'target' | 'authorization' | 'scope' | 'planning'
   label: string
   state: CheckState
@@ -53,13 +53,13 @@ export interface ReadinessCheck {
   tab: 'scope' | 'planning'
 }
 
-export function readinessChecks(input: WorkspaceInput): ReadinessCheck[] {
-  const scope: Omit<ReadinessCheck, 'id' | 'label' | 'tab'> = input.scope.state === 'loaded'
+export function preparationChecks(input: WorkspaceInput): PreparationCheck[] {
+  const scope: Omit<PreparationCheck, 'id' | 'label' | 'tab'> = input.scope.state === 'loaded'
     ? input.scope.value.approvedVersion === null
       ? { state: 'open', detail: 'No approved Scope & ROE revision yet' }
       : { state: 'met', detail: `Approved Scope & ROE v${input.scope.value.approvedVersion}` }
     : { state: 'unknown', detail: input.scope.state === 'failed' ? 'Scope status could not be read' : 'Reading Scope & ROE…' }
-  const planning: Omit<ReadinessCheck, 'id' | 'label' | 'tab'> = input.handoffConfirmed
+  const planning: Omit<PreparationCheck, 'id' | 'label' | 'tab'> = input.handoffConfirmed
     ? { state: 'met', detail: 'Planning handoff confirmed' }
     : input.planning.state === 'loaded'
       ? input.planning.value.ready
@@ -81,9 +81,9 @@ export interface NextStep {
   why: string
 }
 
-/** The first readiness check that is not met, else the next lifecycle step. Unknown reads come first so the operator retries them. */
+/** The first preparation check that is not met, else the next lifecycle step. Unknown reads come first so the operator retries them. */
 export function nextProjectStep(input: WorkspaceInput): NextStep {
-  const open = readinessChecks(input).find((check) => check.state !== 'met')
+  const open = preparationChecks(input).find((check) => check.state !== 'met')
   if (open) {
     const title = open.state === 'unknown' ? `Check: ${open.label}` : `Resolve: ${open.label}`
     return { tab: open.tab, title, why: open.detail }
@@ -91,5 +91,5 @@ export function nextProjectStep(input: WorkspaceInput): NextStep {
   if (input.lifecycle === 'failed') return { tab: 'operations', title: 'Review the failed run', why: 'The project lifecycle is failed' }
   if (input.lifecycle === 'running') return { tab: 'operations', title: 'Follow the running operation', why: 'Runs are in progress for this project' }
   if (input.lifecycle === 'completed') return { tab: 'reports', title: 'Prepare the report', why: 'Execution is complete; findings feed the report' }
-  return { tab: 'ai-workspace', title: 'Start execution from AI Workspace', why: 'Readiness is met and the planning handoff is confirmed' }
+  return { tab: 'operations', title: 'Check execution in Operations', why: 'Preparation checks are met. Execution is not checked here: preflight decides it (confirmed handoff, ROE window, scope, emergency contact, no active stop), or the approved business plan binding for an engagement that has one' }
 }

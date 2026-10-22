@@ -1,16 +1,15 @@
 /**
  * The project overview's workspace status (page-details proposal §3.1): the
- * next step, the readiness checks and shortcuts to the sections that own the
+ * next step, the preparation checks and shortcuts to the sections that own the
  * work. Every state is derived in `../workspace.ts` from the reads made here;
  * a read still loading or failed shows as such, never as a zero or a default.
  */
-import { useQuery } from '@tanstack/react-query'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { fetchPlanning } from '../../planning'
-import { fetchScopeRevisions } from '../../scope'
+import { usePlanningRead } from '../../planning'
+import { useScopeRead } from '../../scope'
 import { go } from '../../../router/navigate'
 import { Button, Card, CardHeader, Status } from '../../../ui/index'
-import { nextProjectStep, projectStage, readinessChecks, STAGE_LABEL, type Read, type WorkspaceInput } from '../workspace'
+import { nextProjectStep, projectStage, preparationChecks, STAGE_LABEL, type Read, type WorkspaceInput } from '../workspace'
 
 const TAB_LABEL: Readonly<Record<string, string>> = {
   scope: 'Scope & ROE',
@@ -29,15 +28,15 @@ const SHORTCUTS: readonly { tab: string; label: string; sub: string }[] = [
   { tab: 'reports', label: 'Reports', sub: 'Draft, review and export' },
 ]
 
-/** The workspace inputs for one project, from the scope and planning reads the Scope and Planning sections share. */
+/** The workspace inputs for one project, from the scope and planning hooks the Scope and Planning sections share. */
 function useWorkspaceInput(d: ProjectViewModel): WorkspaceInput {
-  const scope = useQuery({ queryKey: ['real', 'scope-revisions', d.id], queryFn: () => fetchScopeRevisions(d.id) })
-  const planning = useQuery({ queryKey: ['real', 'planning', d.id], queryFn: () => fetchPlanning(d.id) })
+  const scope = useScopeRead()
+  const planning = usePlanningRead(d.id)
   const scopeRead: Read<{ approvedVersion: number | null }> = scope.data
     ? { state: 'loaded', value: { approvedVersion: scope.data.latestApprovedVersion } }
     : scope.isError ? { state: 'failed' } : { state: 'pending' }
   const planningRead: Read<{ ready: boolean; reasons: number }> = planning.data
-    ? { state: 'loaded', value: { ready: planning.data.readiness.state === 'ready', reasons: planning.data.readiness.reasons.length } }
+    ? { state: 'loaded', value: { ready: planning.data.ready, reasons: planning.data.reasons.length } }
     : planning.isError ? { state: 'failed' } : { state: 'pending' }
   return {
     metadataVerified: d.metadataState === 'verified',
@@ -52,18 +51,22 @@ function useWorkspaceInput(d: ProjectViewModel): WorkspaceInput {
 export function WorkspaceStatus({ d }: { d: ProjectViewModel }) {
   const input = useWorkspaceInput(d)
   const step = nextProjectStep(input)
-  const checks = readinessChecks(input)
+  const checks = preparationChecks(input)
   return (
-    <Card>
-      <CardHeader title="Next step" sub={`Stage: ${STAGE_LABEL[projectStage(d.lifecycleStatus)]}`} />
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-fg">{step.title}</p>
-          <p className="mt-1 text-sm text-muted">{step.why}</p>
+    <>
+      <Card>
+        <CardHeader title="Next step" sub={`Stage: ${STAGE_LABEL[projectStage(d.lifecycleStatus)]}`} />
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-fg">{step.title}</p>
+            <p className="mt-1 text-sm text-muted">{step.why}</p>
+          </div>
+          <Button variant="primary" onClick={() => go('project', { id: d.id, tab: step.tab })}>Open {TAB_LABEL[step.tab] ?? step.tab}</Button>
         </div>
-        <Button variant="primary" onClick={() => go('project', { id: d.id, tab: step.tab })}>Open {TAB_LABEL[step.tab] ?? step.tab}</Button>
-      </div>
-      <ul className="border-t border-line">
+      </Card>
+      <Card>
+        <CardHeader title="Preparation checks" sub="Scope, authorization and planning only. They do not decide whether execution can run; preflight does that in Operations." />
+        <ul>
         {checks.map((check) => (
           <li key={check.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 last:border-b-0">
             <span className="min-w-0">
@@ -81,8 +84,9 @@ export function WorkspaceStatus({ d }: { d: ProjectViewModel }) {
             </span>
           </li>
         ))}
-      </ul>
-    </Card>
+        </ul>
+      </Card>
+    </>
   )
 }
 
