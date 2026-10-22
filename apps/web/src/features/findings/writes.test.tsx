@@ -21,7 +21,7 @@ import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import type { Finding } from '../../domain/entities'
 import type { FindingDetailRead } from './service'
-import { routes } from '../../screens/e'
+import { routes } from '../../router/slice-e'
 import {
   addFindingComment, attachFindingEvidence, importFindingSuggestion, recordFindingRetest, saveFinding, transitionFinding, uploadFindingEvidence,
 } from './service'

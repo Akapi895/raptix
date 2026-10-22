@@ -14,7 +14,7 @@ import { mountServices } from '../../test/helpers'
 import { currentRoute, go, selectProject } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
-import { routes } from '../../screens/e'
+import { routes } from '../../router/slice-e'
 import { seed } from '../../demo/seed';
 import { getFinding, importFindingSuggestion, listFindings, saveFinding, setFindingSuggestionDisposition, transitionFinding, uploadFindingEvidence } from './service'
 import { createDatabaseAuthority } from '../../demo/authority'
