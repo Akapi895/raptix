@@ -120,6 +120,8 @@ export interface OperationService {
   complete(ctx: RequestContext, id: string): Promise<ServiceResult<OperationTransitionRead>>
   /** Records the human decision for one review-gated step (ticket 29); the AI never decides. */
   reviewStep(ctx: RequestContext, id: string, stepId: string, decision: StepDecision, note: string): Promise<ServiceResult<OperationTransitionRead>>
+  /** Swaps an assigned agent for a connected replacement in the same project, with a reason; atomic and audited. */
+  replaceAgent(ctx: RequestContext, id: string, from: string, to: string, reason: string): Promise<ServiceResult<Operation>>
 }
 
 /** Category → statuses the category pill covers ("needs" also takes review-pending drafts). */
@@ -222,6 +224,7 @@ export function createOperationService(
     stop: (ctx, id, reason) => Promise.resolve(stopOperation(authority, clock, ctx, id, reason)),
     complete: (ctx, id) => Promise.resolve(completeOperation(authority, clock, ctx, id)),
     reviewStep: (ctx, id, stepId, decision, note) => Promise.resolve(reviewOperationStep(authority, clock, ctx, id, stepId, decision, note)),
+    replaceAgent: (ctx, id, from, to, reason) => Promise.resolve(replaceOperationAgent(authority, clock, ctx, id, from, to, reason)),
   }
 }
 

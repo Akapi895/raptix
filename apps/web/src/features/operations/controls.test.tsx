@@ -94,4 +94,14 @@ describe('operation pause and stop report the handler decision', () => {
     expect(operationOf(h, opId).status).toBe('done')
     h.unmount()
   })
+
+  it('a refused agent replacement through the operations port reports the reason and leaves the operation unchanged', async () => {
+    const h = mountServices(null, 'Taylor Chen')
+    const opId = runningOperation(h)
+    const res = await h.svc().operations({ id: 'Taylor Chen', role: 'operator' }, P14).replaceAgent(ctxOf(TAYLOR, P14), opId, 'AG-012', 'AG-008', 'Swap for the probe')
+    expect(res).toMatchObject({ ok: false, failure: { kind: 'validation', message: expect.stringContaining('only Draft or Ready operations can be edited') } })
+    expect(operationOf(h, opId).agents).toContain('AG-012')
+    expect(operationOf(h, opId).agents).not.toContain('AG-008')
+    h.unmount()
+  })
 })
