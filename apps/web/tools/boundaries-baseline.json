@@ -1,7 +1,7 @@
 {
   "rules": {
     "production-imports-demo": 39,
-    "production-type-imports-demo": 69,
+    "production-type-imports-demo": 65,
     "production-imports-composition": 30,
     "presentation-imports-real": 0,
     "presentation-imports-adapter": 10,
@@ -9,6 +9,6 @@
     "real-imports-features": 0,
     "real-imports-screens": 0,
     "features-import-screens": 0,
-    "deep-feature-import": 220
+    "deep-feature-import": 218
   }
 }
