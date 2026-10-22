@@ -8,7 +8,7 @@ import type { FindingService } from '../features/findings/index';
 import type { ChatService } from '../features/aichat/service';
 import type { AiHistoryService } from '../features/aichat/history';
 import type { PlanService } from '../features/plans/service';
-import type { PlanBridgeService } from '../features/plans/bridge';
+import type { PlanBridgeService } from '../features/plans/service';
 import type { PlanCompareService } from '../features/plans/compare';
 import type { AgentService } from '../features/agents/service';
 import type { ReportService } from '../features/reports/service';
