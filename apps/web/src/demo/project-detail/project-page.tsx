@@ -51,7 +51,7 @@ import type { ServiceFailure } from '../../domain/service'
 
 const parseDate = (s: string) => { const d = new Date(s.replace(/,?\s*\d{1,2}:\d{2}.*$/, '')); return isNaN(d.getTime()) ? new Date(2026, 9, 13) : d }
 const NOW = new Date(2026, 9, 13)
-const ExecutionTrace = lazy(() => import('../../screens/g-trace').then((module) => ({ default: module.AiTrace })))
+const ExecutionTrace = lazy(() => import('../../features/trace/views/ai-trace-pages').then((module) => ({ default: module.AiTrace })))
 
 /** Valid project tab IDs own the URLs; old aliases keep resolving. */
 const TAB_IDS = MOCK_PROJECT_TABS.map((t) => t.id)

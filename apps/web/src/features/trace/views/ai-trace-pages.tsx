@@ -1,24 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Columns3, Download, ExternalLink, Filter, X } from 'lucide-react'
-import { useServices } from '../state/services'
-import { actorRef } from '../demo/persona'
-import { planVer } from '../domain/catalog';
-import type { Audit, Conversation, Facets, ToolEvent } from '../domain/entities'
-import { useQueryScope } from '../state/keys'
-import { createChatHandlers } from '../features/aichat/handlers'
-import { AiHistoryReadError, useAiAudit, useAiHistory } from '../features/aichat/query'
-import type { ActorType, HistoryConversation } from '../features/aichat/history'
-import { modeLabel } from '../features/aichat/history'
-import { TraceReadError, useTraceEvents, useTraceWrites } from '../features/trace/query'
-import type { TraceRow } from '../features/trace/service'
-import type { ToolDecisionOutcome } from '../features/trace/writes'
-import type { ServiceResult } from '../domain/service'
-import { go, useRoute } from '../router/navigate'
-import { useCan } from '../state/console'
-import { useProjectStore, useToastStore } from '../state/stores'
-import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui/index'
-import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from '../features/aichat'
+import { actorRef } from '../../../demo/persona'
+import { planVer } from '../../../domain/catalog';
+import type { Audit, Conversation, Facets, ToolEvent } from '../../../domain/entities'
+import { useQueryScope } from '../../../state/keys'
+import { useChatHandlers } from '../../aichat'
+import { AiHistoryReadError, useAiAudit, useAiHistory } from '../../aichat/query'
+import type { ActorType, HistoryConversation } from '../../aichat/history'
+import { modeLabel } from '../../aichat/history'
+import { TraceReadError, useTraceEvents, useTraceWrites } from '../query'
+import type { TraceRow } from '../service'
+import type { ToolDecisionOutcome } from '../writes'
+import type { ServiceResult } from '../../../domain/service'
+import { go, useRoute } from '../../../router/navigate'
+import { useCan } from '../../../state/console'
+import { useProjectStore, useToastStore } from '../../../state/stores'
+import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../../../ui/index'
+import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from '../../aichat/index'
 
 /* ───────────── helpers ───────────── */
 type Bucket = 'proposed' | 'pending' | 'blocked' | 'executed' | 'failed'
@@ -361,14 +360,10 @@ export function AiHistory() {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
-  const services = useServices()
   const qscope = useQueryScope()
   /* Pin/unpin goes through the typed ChatService write; the read's key embeds
      the scope, so the committed pin's ChangeSet refetches the archive. */
-  const chat = useMemo(
-    () => createChatHandlers(services, actorRef(qscope.actor), qscope.project),
-    [services, qscope.actor, qscope.project],
-  )
+  const chat = useChatHandlers(actorRef(qscope.actor), qscope.project)
   const [tab, setTab] = useState('plans')
   const [open, setOpen] = useState<string>()
   const [audId, setAudId] = useState<string>()
