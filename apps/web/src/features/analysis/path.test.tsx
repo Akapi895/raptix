@@ -19,7 +19,7 @@ import { useProjectStore } from '../../state/stores'
 import { analysisRoutes } from './views/analysis-page'
 import { seed } from '../../demo/seed';
 import { pathOf } from './path'
-import { reviewOperationStep } from '../operations/service'
+import { reviewOperationStep } from '../operations/mock'
 import type { ActorRef } from '../../domain/service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })

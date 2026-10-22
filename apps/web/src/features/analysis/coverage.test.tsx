@@ -21,7 +21,7 @@ import { setIntegrationConnection } from '../settings/service'
 import { analysisRoutes } from './views/analysis-page'
 import { seed } from '../../demo/seed';
 import { coverageOf } from './service'
-import { reviewOperationStep } from '../operations/service'
+import { reviewOperationStep } from '../operations/mock'
 import type { ActorRef } from '../../domain/service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
