@@ -63,7 +63,7 @@ function addressedOperationGate(
   if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
     return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.` } }
   }
-  const gated = operationWriteGate(db, ctx, op.projectId, action, passive)
+  const gated = operationWriteGate(db.projects, ctx, op.projectId, action, passive)
   if (!gated.ok) return gated
   if (IN_FLIGHT.includes(op.status)) {
     return { ok: false, failure: { kind: 'validation', message: `Operation ${op.id} is ${op.status === 'estop' ? 'emergency stopped' : op.status} — only Draft or Ready operations can be ${passive}.` } }
