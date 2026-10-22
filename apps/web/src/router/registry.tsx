@@ -17,6 +17,7 @@ import { setKnownPages } from './history'
 
 const slices = {
   b: () => import('../screens/b'),
+  dp: () => import('../demo/project-detail/routes'),
   c: () => import('../screens/c'),
   d: () => import('../screens/d'),
   e: () => import('../screens/e'),
@@ -34,7 +35,7 @@ type Slice = keyof typeof slices | 'a'
 /** 55 source route keys (see .scratch/web-improve-refactor/route-inventory.md). */
 const MANIFEST: Record<string, Slice> = {
   login: 'a', forbidden: 'a', notfound: 'a', error: 'a', offline: 'a', 'session-expired': 'a', states: 'a', overview: 'ov', tasks: 'a',
-  projects: 'pj', 'project-new': 'b', project: 'b',
+  projects: 'pj', 'project-new': 'b', project: 'dp',
   operations: 'c', 'operation-new': 'c', preflight: 'c', 'operation-schedule': 'c', operation: 'c',
   infrastructure: 'i', agents: 'i', agent: 'd', assets: 'd', 'asset-new': 'd', 'asset-scope': 'd', asset: 'd', playbooks: 'd', playbook: 'd', technique: 'd', 'playbook-review': 'd',
   analysis: 'e', findings: 'e', 'finding-new': 'e', finding: 'e', evidence: 'e', 'evidence-inspector': 'e',

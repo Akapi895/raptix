@@ -11,12 +11,12 @@
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
+import { actorRef } from '../persona'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { projectDetailForScope } from './service'
 import type { ProjectDetail } from './service'
-import { ServiceReadError } from '../portfolio-handlers'
+import { ServiceReadError } from './portfolio-handlers'
 
 export interface ProjectDetailView {
   data?: ProjectDetail

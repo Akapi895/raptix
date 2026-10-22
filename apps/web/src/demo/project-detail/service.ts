@@ -14,13 +14,13 @@
  * Scope-bound wrapper mirrors `dashboardForScope`: actor and project are
  * explicit per scope and never retargeted by a later request context.
  */
-import { aggregateFor } from '../dashboard/service'
+import { aggregateFor } from '../../screens/dashboard/service'
 import { completion, eligibility, readiness } from '../../domain/dashboard'
 import type { Completion, DashboardAggregate, Eligibility, Readiness } from '../../domain/dashboard'
 import { projectAccessible } from '../../domain/policy'
 import { closePanelItems, noConfirmedFindings } from '../../features/closure/service'
 import type { CloseCheck } from '../../features/closure/service'
-import type { Db } from '../../demo/seed';
+import type { Db } from '../seed';
 import type { Evidence, Project, VaultSecret } from '../../domain/entities'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
 import type { ConsoleServices } from '../../domain/console-services';

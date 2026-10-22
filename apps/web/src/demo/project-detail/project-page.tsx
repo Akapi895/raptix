@@ -27,31 +27,31 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed } from 'lucide-react'
-import { APR } from '../domain/catalog';
-import { type Project } from '../domain/entities'
-import { ExecutionWorkspace } from '../features/execution/workspace'
-import { VaultTab } from '../features/vault/tab'
-import { useServices } from '../state/services'
-import { ROLE_LABEL } from '../domain/policy'
-import { useProjectStore, useToastStore } from '../state/stores'
-import { useCan, useMe } from '../state/console'
-import { go, selectProject, useRoute } from '../router/navigate'
-import { MOCK_PROJECT_NAV, MOCK_PROJECT_TABS } from '../shell/nav'
-import { resolveProjectTab } from '../router/aliases'
-import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui/index'
-import type { DashboardAggregate, Eligibility } from '../domain/dashboard'
-import { TeamTab, CloseTab } from './b-detail2'
-import { ScopeTab } from '../features/scope/tab'
-import { DocumentWorkspace } from '../features/documents/workspace'
-import { useSubmitApproval, useReopen } from '../features/approvals/hooks'
-import { useProjectDetail } from './project-detail/use-project-detail'
+import { APR } from '../../domain/catalog';
+import { type Project } from '../../domain/entities'
+import { ExecutionWorkspace } from '../../features/execution/workspace'
+import { VaultTab } from '../../features/vault/tab'
+import { useServices } from '../../state/services'
+import { ROLE_LABEL } from '../../domain/policy'
+import { useProjectStore, useToastStore } from '../../state/stores'
+import { useCan, useMe } from '../../state/console'
+import { go, selectProject, useRoute } from '../../router/navigate'
+import { MOCK_PROJECT_NAV, MOCK_PROJECT_TABS } from '../../shell/nav'
+import { resolveProjectTab } from '../../router/aliases'
+import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../../ui/index'
+import type { DashboardAggregate, Eligibility } from '../../domain/dashboard'
+import { TeamTab, CloseTab } from './project-tabs'
+import { ScopeTab } from '../../features/scope/tab'
+import { DocumentWorkspace } from '../../features/documents/workspace'
+import { useSubmitApproval, useReopen } from '../../features/approvals/hooks'
+import { useProjectDetail } from './use-project-detail'
 import { createPortfolioHandlers, ServiceReadError } from './portfolio-handlers'
-import type { ProjectDetail } from './project-detail/service'
-import type { ServiceFailure } from '../domain/service'
+import type { ProjectDetail } from './service'
+import type { ServiceFailure } from '../../domain/service'
 
 const parseDate = (s: string) => { const d = new Date(s.replace(/,?\s*\d{1,2}:\d{2}.*$/, '')); return isNaN(d.getTime()) ? new Date(2026, 9, 13) : d }
 const NOW = new Date(2026, 9, 13)
-const ExecutionTrace = lazy(() => import('./g-trace').then((module) => ({ default: module.AiTrace })))
+const ExecutionTrace = lazy(() => import('../../screens/g-trace').then((module) => ({ default: module.AiTrace })))
 
 /** Valid project tab IDs own the URLs; old aliases keep resolving. */
 const TAB_IDS = MOCK_PROJECT_TABS.map((t) => t.id)

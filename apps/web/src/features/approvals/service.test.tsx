@@ -20,7 +20,7 @@ import { computePreflightChecks } from '../operations/preflight'
 import { createConsoleServices } from '../../demo/services';
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { parseDemoInstant } from '../../domain/clock'
-import { TeamTab } from '../../screens/b-detail2'
+import { TeamTab } from '../../demo/project-detail/project-tabs'
 import { aggregateFor } from '../../screens/dashboard/service'
 import {
   decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, withdrawApprovalTransaction,
