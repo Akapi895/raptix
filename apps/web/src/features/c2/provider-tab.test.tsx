@@ -31,7 +31,7 @@ vi.mock('./remote', async (importOriginal) => {
 
 const api_c2 = await import('./remote');
 const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
-const { createRealFeatureServices } = await import('../../real/service-adapter/index')
+const { createRealFeatureServices } = await import('../../state/real-services')
 const { resetNavStores } = await import('../../router/navigate')
 const { C2ProviderTab } = await import('./provider-tab')
 

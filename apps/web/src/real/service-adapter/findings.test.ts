@@ -46,7 +46,7 @@ vi.mock('../../features/projects/remote', async (importOriginal) => {
 const api_findings = await import('../../features/findings/remote');
 const api_projects = await import('../../features/projects/remote');
 const { createRealFindingService } = await import('./findings')
-const { createRealFeatureServices } = await import('./index')
+const { createRealFeatureServices } = await import('../../state/real-services')
 const { ApiTransportError } = await import('../../platform/transport')
 
 const ctx = { actor: { id: 'u', role: 'operator' as const }, projectId: 'RT-1', corr: 'test' }
