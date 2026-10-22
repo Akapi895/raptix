@@ -18,7 +18,7 @@ import { createRealReportService } from '../features/reports/remote';
 import { createRealAuditService } from '../features/audit/remote'
 import { createRealScopeService } from '../features/scope/remote'
 import { createRealTeamService } from '../features/team/remote'
-import { createRealSettingsService } from '../real/service-adapter/settings'
+import { createRealSettingsService } from '../features/settings/remote'
 import { createRealVaultService } from '../features/vault/remote'
 import { createRealClosureService } from '../features/closure/remote'
 import { createRealObservedAnalysisService } from '../features/analysis/remote'
