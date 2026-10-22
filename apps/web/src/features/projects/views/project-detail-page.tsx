@@ -5,50 +5,48 @@
  * unavailable panel instead of demo data (D4). Planning readiness arrives
  * with ticket 04.
  */
-import { AiRunControls } from '../../features/operations/ai-run-controls'
-import { isAssetMapEnabled } from '../../features/asset-map/flag'
+import { AiRunControls } from '../../operations';
+import { isAssetMapEnabled } from '../../asset-map';
 import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { getEngagement } from '../../features/projects';
-import { ProjectShortcuts, WorkspaceStatus } from '../../features/projects/views/workspace-status';
-import { ProjectCounts } from '../../features/projects/views/project-counts';
-import { projectStage, STAGE_LABEL } from '../../features/projects/workspace';
-import { utcMinuteOr } from '../../platform/format'
-import { projectKeys } from '../../features/projects/query'
-import { RealConversation } from '../../features/aichat'
-import { RuntimeOperationsTab } from '../../features/operations/runtime-tab'
-import { PlanningTab } from '../../features/planning/tab'
-import { TeamMembers } from '../../features/team/members'
-import { ScopeTab } from '../../features/scope/tab'
-import { GovernanceTab } from '../../features/governance/tab'
-import { EvidenceList, FindingList } from '../../features/findings/index'
-import { ApprovalInbox } from '../../features/team/approval-inbox'
-import { routeComponent } from '../../router/registry'
-import { C2ProviderTab } from '../../features/c2/provider-tab'
-import { RuntimeFleetTab } from '../../features/operations/fleet-tab'
-import { ObservedAnalysisTab } from '../../features/analysis/views/observed-tab'
-import { VaultTab } from '../../features/vault/tab'
-import { AuditPanel } from '../../features/audit/panel'
-import { ClosureTab } from '../../features/closure/tab'
+import { useEngagementDetail } from '../detail-query';
+import { ProjectShortcuts, WorkspaceStatus } from './workspace-status';
+import { ProjectCounts } from './project-counts';
+import { projectStage, STAGE_LABEL } from '../workspace';
+import { utcMinuteOr } from '../../../platform/format'
+import { RealConversation } from '../../aichat';
+import { RuntimeOperationsTab } from '../../operations';
+import { PlanningTab } from '../../planning';
+import { TeamMembers } from '../../team';
+import { ScopeTab } from '../../scope';
+import { GovernanceTab } from '../../governance';
+import { EvidenceList, FindingList } from '../../findings';
+import { ApprovalInbox } from '../../team';
+import { C2ProviderTab } from '../../c2';
+import { RuntimeFleetTab } from '../../operations';
+import { ObservedAnalysisTab } from '../../analysis';
+import { VaultTab } from '../../vault';
+import { AuditPanel } from '../../audit';
+import { ClosureTab } from '../../closure';
+import { ReportsPage } from '../../reports';
 import { ProjectSettingsPanel } from './project-settings-panel'
 import { EnvironmentPanel } from './environment-panel'
-import { go, useRoute } from '../../router/navigate'
-import { REAL_PROJECT_NAV } from '../../shell/nav'
-import { useProjectStore } from '../../state/stores'
-import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../ui/index'
+import { go, useRoute } from '../../../router/navigate'
+import { REAL_PROJECT_NAV } from '../../../shell/nav'
+import { useProjectStore } from '../../../state/stores'
+import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
 
 /**
  * The sidebar's grouped model is the project nav (plan 2026-10-16 §3.1 — no
  * in-page project tab strip). The engagement tab IDs stay the URL authority.
  */
-const TABS = REAL_PROJECT_NAV.flatMap((g) => g.items.map(({ to, label }) => ({ id: to, label })))
-const sectionTitle = (tab: string) => TABS.find((t) => t.id === tab)?.label ?? 'Overview'
+/* The nav is read when the page renders, not at import: the nav module can be mid-load when this module first evaluates. */
+const navTabs = () => REAL_PROJECT_NAV.flatMap((g) => g.items.map(({ to, label }) => ({ id: to, label })))
+const sectionTitle = (tab: string) => navTabs().find((t) => t.id === tab)?.label ?? 'Overview'
 
-const ProjectReports = routeComponent('reports')
 /** The Asset Map inside the project it belongs to, so the project sidebar and its selection stay in place. */
-const ProjectAssetMap = lazy(() => import('../../features/asset-map/AssetMapPage').then((m) => ({ default: m.AssetMapPage })))
+const ProjectAssetMap = lazy(() => import('../../asset-map').then((m) => ({ default: m.AssetMapPage })))
 
 export function RealProjectDetail(): ReactElement {
   const route = useRoute()
@@ -56,12 +54,8 @@ export function RealProjectDetail(): ReactElement {
   const setPid = useProjectStore((s) => s.setPid)
   useEffect(() => { if (id) setPid(id) }, [id, setPid])
 
-  const tab = TABS.some((t) => t.id === route.tab) ? route.tab! : 'overview'
-  const detail = useQuery({
-    queryKey: projectKeys.detail(id),
-    queryFn: () => getEngagement(id),
-    enabled: !!id,
-  })
+  const tab = navTabs().some((t) => t.id === route.tab) ? route.tab! : 'overview'
+  const detail = useEngagementDetail(id)
 
   const data = useMemo(() => detail.data, [detail.data])
 
@@ -100,7 +94,7 @@ export function RealProjectDetail(): ReactElement {
         meta={<span className="flex flex-wrap items-center gap-2"><Status kind="project" value={data.lifecycleStatus} size="sm" /><span className="text-xs text-muted">{STAGE_LABEL[projectStage(data.lifecycleStatus)]}</span></span>}
       />}
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}>{ProjectReports ? <ProjectReports /> : null}</Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}><ReportsPage /></Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
       </div>
     </>
   )

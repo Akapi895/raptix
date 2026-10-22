@@ -2,3 +2,4 @@
 export { useAuditRead, useWorkspaceAudit } from './query'
 export { AuditTable } from './table'
 export { recordAudit } from './service'
+export { AuditPanel } from './panel'

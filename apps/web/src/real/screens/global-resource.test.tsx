@@ -4,9 +4,14 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 import { ApiTransportError } from '../../platform/transport'
+
+// The first import loads the module graph; keep that cold start out of the test timer.
+beforeAll(async () => {
+  await import('./global-resource')
+}, 30_000)
 
 const fetchOverviewFindings = vi.fn()
 const fetchOverviewC2 = vi.fn()

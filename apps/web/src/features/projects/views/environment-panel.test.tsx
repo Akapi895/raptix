@@ -5,18 +5,18 @@ import userEvent from '@testing-library/user-event'
 import type { EnvironmentCommandResult, EnvironmentStateView } from '@raptix/web-contracts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement } from 'react'
-import { ApiTransportError } from '../../platform/transport'
+import { ApiTransportError } from '../../../platform/transport'
 
 const fetchEnvironment = vi.fn()
 const submitEnvironmentCommand = vi.fn()
 const listEngagements = vi.fn()
 
-vi.mock('../../features/projects/environment-api', () => ({
+vi.mock('../environment-api', () => ({
   fetchEnvironment: (...a: unknown[]) => fetchEnvironment(...a),
   submitEnvironmentCommand: (...a: unknown[]) => submitEnvironmentCommand(...a),
 }))
 
-vi.mock('../../features/projects/remote', () => ({
+vi.mock('../remote', () => ({
   listEngagements: (...a: unknown[]) => listEngagements(...a),
 }))
 

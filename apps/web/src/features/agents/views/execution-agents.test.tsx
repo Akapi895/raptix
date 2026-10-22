@@ -5,8 +5,13 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
+
+// The first import loads the module graph; keep that cold start out of the test timer.
+beforeAll(async () => {
+  await import('./execution-agents')
+}, 30_000)
 
 const fetchRuntimeInstances = vi.fn()
 

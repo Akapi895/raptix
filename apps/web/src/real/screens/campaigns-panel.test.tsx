@@ -8,9 +8,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { beforeAll, describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 import type { CampaignsView, CampaignProviderCapabilities } from '@raptix/web-contracts'
+
+// The first import loads the module graph; keep that cold start out of the test timer.
+beforeAll(async () => {
+  await import('./campaigns-panel')
+}, 30_000)
 
 const fetchCampaignCapabilities = vi.fn()
 const fetchCampaigns = vi.fn()
