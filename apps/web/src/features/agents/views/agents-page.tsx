@@ -156,7 +156,8 @@ function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose:
     setTried(true)
     if (reqWhy || !agent) return
     /* The legacy `A.submitApproval` entry's exact transaction + request context. */
-    mock.submitApproval(projectId, { projectId, type: 'Agent assignment', note: note || `Request to assign ${agent.id} for ${duration}`, diff })
+    const res = mock.submitApproval(projectId, { projectId, type: 'Agent assignment', note: note || `Request to assign ${agent.id} for ${duration}`, diff })
+    if (!res.ok) { toast(res.failure.message, 'bad'); return }
     toast(`Assignment of ${agent.id} requested. It takes effect only after ${reviewer} approves.`, 'info')
     setSent({ agentId: agent.id, projectId, reviewer, duration })
   }
@@ -275,12 +276,12 @@ function FailurePanel({ a }: { a: Agent }) {
   const swap = (o: typeof ops[number], c: Agent) => confirm({
     title: `Replace ${a.id} with ${c.id} in ${o.id}?`, confirmLabel: 'Replace agent', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o.id} is {o.status}. {a.id} ({a.host}) is replaced by {c.id} ({c.host}), same project and scope. Preflight must be re-run before the operation starts; nothing is marked complete.</>,
-    onConfirm: (r) => { const res = mock.replaceOperationAgent(o.projectId, o.id, a.id, c.id, r); if (!res.ok) { toast(res.failure.message, 'bad'); return }; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
+    onConfirm: (r) => { const res = mock.replaceOperationAgent(o.projectId, o.id, a.id, c.id, r); if (!res.ok) return res.failure.message; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
   })
   const requestRepl = (o: typeof ops[number] | null, c: Agent) => confirm({
     title: `Request ${c.id} as replacement for ${a.id}?`, confirmLabel: 'Submit request', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o ? `${o.id} keeps running; ` : ''}the replacement is only reserved after a reviewer approves{!c.projectId ? ` and ${c.id} is assigned from the shared pool to ${a.projectId}` : ''}. The operation is not marked successful and the interrupted steps stay Unknown until re-run.</>,
-    onConfirm: (r) => { mock.submitApproval(a.projectId, { projectId: a.projectId, type: 'Agent assignment (replacement)', note: r, diff: `${c.id} → ${a.projectId}; replaces ${a.id}${o ? ` in ${o.id}` : ''}` }); toast('Replacement request sent for review.', 'info') },
+    onConfirm: (r) => { const res = mock.submitApproval(a.projectId, { projectId: a.projectId, type: 'Agent assignment (replacement)', note: r, diff: `${c.id} → ${a.projectId}; replaces ${a.id}${o ? ` in ${o.id}` : ''}` }); if (!res.ok) return res.failure.message; toast('Replacement request sent for review.', 'info') },
   })
   return (
     <div className="mb-4 space-y-4">
@@ -707,11 +708,11 @@ function AgentDetail() {
   const doDisable = () => confirm({
     title: `Disable ${a.id}?`, danger: true, confirmLabel: 'Disable agent', reasonLabel: 'Reason for disabling', reasonRequired: true,
     body: a.op ? <>This agent is used by operation <b>{a.op}</b>. Disabling it may move running steps on this agent to “Unknown”. The operation is not stopped automatically, so check it afterwards.</> : <>The agent cannot be selected for new operations until it is enabled again.</>,
-    onConfirm: (r) => { mock.setAgentStatus(a.projectId, a.id, 'disabled'); audit('Reason for disabling agent', a.id, a.projectId, 'Success', r); toast(`${a.id} disabled.`, 'warn') },
+    onConfirm: (r) => { const res = mock.setAgentStatus(a.projectId, a.id, 'disabled'); if (!res.ok) return res.failure.message; audit('Reason for disabling agent', a.id, a.projectId, 'Success', r); toast(`${a.id} disabled.`, 'warn') },
   })
   const doEnable = () => confirm({
     title: `Enable ${a.id}?`, confirmLabel: 'Enable agent', body: 'The agent can be selected for operations in its assigned project again.',
-    onConfirm: () => { mock.setAgentStatus(a.projectId, a.id, 'online'); toast(`${a.id} enabled.`) },
+    onConfirm: () => { const res = mock.setAgentStatus(a.projectId, a.id, 'online'); if (!res.ok) return res.failure.message; toast(`${a.id} enabled.`) },
   })
   const hist = read.history
   const eligible = read.eligibleProjects

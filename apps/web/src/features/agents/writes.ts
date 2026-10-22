@@ -170,12 +170,15 @@ export function unassignAgentTransaction(authority: DbAuthority, clock: Clock, c
  * the role/read-only reasons, and the disable reason is audited separately
  * by the caller.
  */
-export function setAgentStatusTransaction(authority: DbAuthority, ctx: RequestContext, agentId: string, s: Agent['status']): void {
-  const projectId = authority.snapshot().agents.find((x) => x.id === agentId)?.projectId ?? ''
+export function setAgentStatusTransaction(authority: DbAuthority, ctx: RequestContext, agentId: string, s: Agent['status']): ServiceResult<void> {
+  const agent = authority.snapshot().agents.find((x) => x.id === agentId)
+  if (!agent) return { ok: false, failure: { kind: 'not-found', message: `Agent ${agentId} no longer exists, so its status cannot change.` } }
+  const projectId = agent.projectId ?? ''
   authority.commit(ctx.corr, (d) => { d.agents.find((x) => x.id === agentId)!.status = s })
   authority.commit(ctx.corr, (d) => {
     d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(agentId) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(authority.clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: s === 'disabled' ? 'Disabled agent' : 'Enabled agent', obj: agentId, projectId, result: 'Success', reason: '' })
   })
+  return { ok: true, data: undefined }
 }
 
 /* ───────────── Groups (create / rename / membership) ───────────── */
