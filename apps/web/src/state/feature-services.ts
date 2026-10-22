@@ -2,7 +2,7 @@
 import { useContext } from 'react'
 import type { FeatureServices } from '../domain/console-services';
 import { DATA_MODE } from './mode'
-import { RealFeatureServicesCtx } from '../real/service-adapter/provider'
+import { RealFeatureServicesCtx } from './real-services-provider'
 import { useServices } from './services'
 
 /**

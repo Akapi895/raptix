@@ -49,7 +49,7 @@ vi.mock('../aichat/remote', async (importOriginal) => {
 const api_governance = await import('./remote');
 const api_aichat = await import('../aichat/remote');
 const { ApiTransportError } = await import('../../platform/transport')
-const { RealFeatureServicesCtx } = await import('../../real/service-adapter/provider')
+const { RealFeatureServicesCtx } = await import('../../state/real-services-provider')
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { GovernanceTab } = await import('./tab')
 
