@@ -21,13 +21,9 @@
 import { can, projectAccessible, projectLocked, readOnlyContext } from '../../domain/policy'
 import { planVer } from '../../domain/catalog';
 import type { Db } from '../../demo/seed';
-import { DEMO_TZ, parseDemoInstant, formatDemoInstant } from '../../domain/clock'
-import type { DbAuthority } from '../../demo/authority'
+import { DEMO_TZ, parseDemoInstant } from '../../domain/clock'
 import type { Agent, Asset, Operation, Plan, Playbook, Project } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
-// Ticket 40: the resume re-check consults the plans feature's approval-validity
-// gate (execution.md row b — expiry integrated by 40).
-import { draftSteps, operationWriteGate } from './write-gates'
 import {
   PROJECT_TZ_OFFSET_MS, scheduleInstantOf, scheduleLabelOf, roeWindowIssue,
   computePreflightChecks, eligibility, type Check, type EligKind,
@@ -288,77 +284,11 @@ export interface OperationDraftOptions {
   assets: { asset: Asset; issue: string }[]
 }
 
-const agentIssueOf = (a: Agent, forOperation?: string): string => {
-  if (a.status === 'lost') return ''
-  if (a.status !== 'online' && a.status !== 'idle') return a.status === 'disabled' ? 'Agent is disabled.' : 'Agent status is unknown.'
-  if (a.op && a.op !== forOperation) return `Busy with ${a.op} (policy: one agent, one operation).`
-  return ''
-}
-
-const assetIssueOf = (a: Asset): string =>
-  a.scope === 'in' ? '' : a.scope === 'out' ? 'Out of scope per ROE — cannot be selected.' : a.scope === 'pending' ? 'Scope approval pending — cannot be selected yet.' : 'Scope not classified — cannot be selected.'
-
 export const memberOwnersOf = (p: Project): string[] =>
   [...new Set([p.owner, ...p.members.filter((m) => m.role === 'manager' || m.role === 'operator').map((m) => m.user)])]
 
-export function operationDraftOptions(db: Db, ctx: RequestContext, forOperation?: string): ServiceResult<OperationDraftOptions> {
-  /* Editing an existing draft addresses that operation's project (the legacy
-     wizard allowed this from the aggregate view); creating requires an
-     explicit specific-project scope. */
-  const editOp = forOperation ? db.operations.find((o) => o.id === forOperation) : undefined
-  if (forOperation && !editOp) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
-  const projectId = editOp ? editOp.projectId : ctx.projectId
-  if (!projectId || projectId === 'all') {
-    return { ok: false, failure: { kind: 'validation', message: 'Select a project to draft an operation — operations cannot be created in All Projects mode.' } }
-  }
-  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== projectId) {
-    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
-  }
-  const project = db.projects.find((p) => p.id === projectId)
-  if (!project || !projectAccessible(project, ctx.actor)) {
-    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
-  }
-  return {
-    ok: true,
-    data: {
-      project,
-      owners: memberOwnersOf(project),
-      playbooks: db.playbooks.filter((x) => x.kind === 'playbook' && x.status === 'approved'),
-      agents: db.agents.filter((a) => a.projectId === project.id || a.projectId === '').map((agent) => ({ agent, issue: agentIssueOf(agent, forOperation) })),
-      assets: db.assets.filter((a) => a.projectId === project.id).map((asset) => ({ asset, issue: assetIssueOf(asset) })),
-    },
-  }
-}
-
 /* ── Write gates: the creation-side rules the wizard UI enforced, now enforced
    at the service boundary (preflight/start gates stay with ticket 26). ── */
-
-/** Create-side selection rules (baseline wizard gates, enforced atomically here). */
-function validateDraftSelections(db: Db, project: Project, input: OperationDraftInput, editId?: string): string {
-  if (!memberOwnersOf(project).includes(input.owner)) {
-    return `${input.owner || 'The owner'} is not a Manager or Operator on project ${project.id}.`
-  }
-  if (input.playbookId) {
-    const pb = db.playbooks.find((x) => x.id === input.playbookId)
-    if (!pb || pb.kind !== 'playbook') return `Playbook ${input.playbookId} does not exist.`
-    if (pb.status !== 'approved') return `Playbook ${pb.id} is not approved — unapproved revisions cannot be selected.`
-  }
-  for (const id of input.assets) {
-    const a = db.assets.find((x) => x.id === id)
-    if (!a || a.projectId !== project.id) return `Asset ${id} does not belong to project ${project.id}.`
-    if (a.scope !== 'in') return `Asset ${a.name} is not approved in scope (${a.scope}) — it cannot be selected.`
-  }
-  for (const id of input.agents) {
-    const ag = db.agents.find((x) => x.id === id)
-    if (!ag || (ag.projectId !== project.id && ag.projectId !== '')) return `Agent ${id} is not available to project ${project.id}.`
-    if (ag.status === 'disabled') return `Agent ${id} is disabled.`
-    if (ag.status !== 'online' && ag.status !== 'idle' && ag.status !== 'lost') return `Agent ${id}'s status is unknown.`
-    if (ag.op && ag.op !== editId) return `Agent ${id} is busy with ${ag.op} (policy: one agent, one operation).`
-    const pb = input.playbookId ? db.playbooks.find((x) => x.id === input.playbookId) : undefined
-    if (pb && !pb.os.includes(ag.os)) return `Agent ${id} is incompatible: the playbook supports ${pb.os.join(', ')}, the agent runs ${ag.os}.`
-  }
-  return ''
-}
 
 /** Resolves a schedule input to its canonical pair (absolute instant + UTC+7 projection). */
 export function normalizeScheduleInput(at: string | undefined): ServiceResult<{ instant?: Instant; label?: string; iso?: string }> {
@@ -366,41 +296,6 @@ export function normalizeScheduleInput(at: string | undefined): ServiceResult<{ 
   const instant = scheduleInstantOf(at)
   if (instant === undefined) return { ok: false, failure: { kind: 'validation', message: 'The scheduled start is not a valid date and time (project time UTC+7).' } }
   return { ok: true, data: { instant, label: scheduleLabelOf(instant), iso: new Date(instant).toISOString() } }
-}
-
-/** Creates a draft operation in one atomic commit: selections, pool-agent assignment, plan linkage, audit. */
-export function createOperationDraft(authority: DbAuthority, clock: Clock, ctx: RequestContext, input: OperationDraftInput): ServiceResult<OperationWriteRead> {
-  if (!ctx.projectId || ctx.projectId === 'all') {
-    return { ok: false, failure: { kind: 'validation', message: 'Select the project the operation belongs to — operations cannot be created in All Projects mode.' } }
-  }
-  const db = authority.snapshot()
-  const gated = operationWriteGate(db.projects, ctx, ctx.projectId, 'create operations', 'created')
-  if (!gated.ok) return gated
-  const project = gated.data
-  const selectionError = validateDraftSelections(db, project, input)
-  if (selectionError) return { ok: false, failure: { kind: 'validation', message: selectionError, entity: { kind: 'operation', id: '', projectId: project.id } } }
-  const schedule = normalizeScheduleInput(input.schedule)
-  if (!schedule.ok) return schedule
-  const inst = schedule.data.instant
-  const plan = input.planId ? db.plans.find((x) => x.id === input.planId) : undefined
-  const pb = db.playbooks.find((x) => x.id === input.playbookId)
-  const assetNames = input.assets.map((a) => db.assets.find((x) => x.id === a)?.name).filter((x): x is string => !!x)
-  const name = input.name.trim() || 'Untitled draft operation'
-  let id = ''
-  authority.commit(ctx.corr, (d) => {
-    id = 'OP-' + String(++d.counters.op).padStart(3, '0')
-    d.operations.push({
-      id, projectId: project.id, name, status: 'draft', owner: input.owner, playbookId: input.playbookId,
-      agents: input.agents, assets: input.assets, mode: input.mode, startedAt: '—',
-      updated: formatDemoInstant(clock.now()), steps: draftSteps(plan?.steps, pb, input.agents, assetNames),
-      planId: input.planId, schedule: schedule.data.label, scheduleAt: schedule.data.iso,
-    })
-    if (input.planId) { const pl = d.plans.find((x) => x.id === input.planId); if (pl) pl.opId = id }
-    // Pool agents join the project with the same commit that reserves them.
-    input.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && !a.projectId) a.projectId = project.id })
-    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Created operation (draft)', obj: id, projectId: project.id, result: 'Success', reason: '' })
-  })
-  return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, scheduleInstant: inst } }
 }
 
 /* ═════════════ Ticket 26 — console detail read, preflight run and start gate ═════════════ */
