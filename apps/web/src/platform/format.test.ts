@@ -1,6 +1,6 @@
 /** W07: timezone-true window conversion — the API machine's clock must never shift an authorized window. */
 import { describe, expect, it } from 'vitest'
-import { zonedToIso } from '../platform/format'
+import { zonedToIso } from './format'
 
 describe('zonedToIso', () => {
   it('treats UTC selections as UTC instants', () => {

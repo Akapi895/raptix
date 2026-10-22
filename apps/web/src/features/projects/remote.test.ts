@@ -1,8 +1,8 @@
 /** Adapter + mapping tests for the engagement API slice (ticket 03). */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { createEngagement, engagementToProject, getEngagement, listEngagements } from '../features/projects/remote';
-import { ApiTransportError } from '../platform/transport'
+import { createEngagement, engagementToProject, getEngagement, listEngagements } from './remote';
+import { ApiTransportError } from '../../platform/transport'
 
 export function dto(overrides: Partial<ProjectViewModel> = {}): ProjectViewModel {
   return {

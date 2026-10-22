@@ -5,9 +5,9 @@ import type { CuratedFindingView } from '@raptix/web-contracts';
 
 window.history.replaceState(null, '', '/?dataMode=real#/findings')
 vi.stubEnv('VITE_DATA_MODE', 'real')
-const { default: App } = await import('../App')
-const { resetNavStores } = await import('../router/navigate')
-const { useProjectStore } = await import('../state/stores')
+const { default: App } = await import('../../App')
+const { resetNavStores } = await import('../../router/navigate')
+const { useProjectStore } = await import('../../state/stores')
 
 const engagement = {
   id: 'eng-1',
@@ -166,7 +166,7 @@ it('lists curated records and producer claims in the shared real-mode findings s
 })
 
 it('imports a producer claim as a draft and opens the server-issued curated finding ID', async () => {
-  const { useSessionStore } = await import('../state/session')
+  const { useSessionStore } = await import('../../state/session')
   render(<App />)
   await screen.findByText('Producer claim')
   fireEvent.click(screen.getByRole('tab', { name: /AI Suggestions/ }))
