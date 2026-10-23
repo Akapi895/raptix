@@ -45,3 +45,20 @@ Tiêu chí: thay đổi nhỏ, không đổi API, business logic, permission mod
 | L6 | Đưa phạm vi Settings (áp dụng cho mọi project) vào consumer kiểm chứng | UX-27 | M |
 | L7 | Làm rõ mục đích các feature chưa có mô tả (documents, navigation, trace, wizard, workers) | §3 feature inventory | S |
 | L8 | Real mode: kiểm trong trình duyệt với backend thật (xem 06) | Toàn bộ mục real | L |
+
+## Cập nhật sau nghiệm thu (2026-10-23)
+
+Trạng thái theo UX-ID: `07-acceptance-closure.md`. Kế hoạch Structural: `structural-plan/`.
+
+| Mục | Trạng thái | Ghi chú |
+|---|---|---|
+| S1 | Có kế hoạch | WS-1 (`structural-plan/01-ws-navigation.md`) và WS-3 (`03-ws-infrastructure-c2.md`) |
+| S2 | Có kế hoạch | WS-2 (`02-ws-decisions.md`); chờ D-02 |
+| S3 | Chưa lập kế hoạch | UX-10 |
+| S4 | Có kế hoạch | WS-4 (`04-ws-overview-kpi.md`); chờ D-04 |
+| S5 | Chưa lập kế hoạch | UX-09 |
+| S6 | Chưa lập kế hoạch | UX-13, phần cột lấy từ source thật |
+| S7 | Bỏ | UX-23 là phát hiện sai: đăng nhập mock hoạt động |
+| S8 | Chờ quyết định | D-05 |
+
+Giai đoạn 3 (L1 đến L8) chưa lập kế hoạch trong vòng này.

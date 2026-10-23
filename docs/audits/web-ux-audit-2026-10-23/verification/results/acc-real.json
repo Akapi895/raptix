@@ -1,0 +1,39 @@
+{
+  "owner": {
+    "headerAccount": "V verifier Multi-user deployment",
+    "settingsCard": "Trusted identity The actor of your sign-in session, resolved by the server Actor verifier Username verifier Actor id cmvl6rpw00000fofimwgb2jhv Deployment mode Multi-user (sign-in required) ",
+    "hasLocalOperator": false,
+    "hasSingleUser": false
+  },
+  "viewer": {
+    "headerAccount": "SV Stack Viewer Multi-user deployment",
+    "settingsCard": "Trusted identity The actor of your sign-in session, resolved by the server Actor Stack Viewer Username viewer Actor id cmvl6rrz50009fofiqopcwpgf Deployment mode Multi-user (sign-in required) ",
+    "hasLocalOperator": false
+  },
+  "realProjectSidebar": {
+    "dataNavButtons": 20,
+    "navItemsExcludingBackAndProject": 18,
+    "items": [
+      "All projects",
+      "Stack verification project",
+      "Overview",
+      "Scope & ROE",
+      "Assets",
+      "Planning",
+      "AI Workspace",
+      "Operations",
+      "Sessions",
+      "Findings",
+      "Evidence",
+      "Analysis",
+      "Reports",
+      "Team & Approvals",
+      "Fleet",
+      "Activity & Audit",
+      "Governance",
+      "Vault",
+      "Project Settings",
+      "Closeout"
+    ]
+  }
+}

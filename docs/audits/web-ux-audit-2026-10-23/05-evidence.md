@@ -67,3 +67,9 @@
 
 - `AGENTS.md` và `CLAUDE.md` của `apps/web` (quy ước, gate, ADR-0068 về real mode, ADR-0096 về cấu trúc feature).
 - WCAG 2.2 AA cho tỉ lệ tương phản 4.5:1 với chữ thường.
+
+## 6. Bằng chứng nghiệm thu cuối (2026-10-23)
+
+- Gate và route smoke tại HEAD `56a29e1a`: `verification/results/final-acceptance/` (exit code, log và JSON).
+- Kết quả đọc từ stack thật sau thay đổi identity Settings: `verification/results/acc-real.json`.
+- Ảnh: `evidence/A14-real-settings-identity-owner-after.png` (Settings real, owner); `evidence/P1-production-boot-outage-HEAD.png` và `P2-production-projects-outage-HEAD.png` (outage production, không backend). Hai ảnh giống hệt nhau (cùng md5): cả route khởi động và route Projects đều hiện cùng một màn hình outage, khớp với `prod-outage-HEAD.json`.

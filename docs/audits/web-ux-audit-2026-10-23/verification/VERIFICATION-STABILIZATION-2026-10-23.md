@@ -157,3 +157,19 @@ Chưa kiểm trong vòng này: số liệu KPI overview real; nội dung chi ti�
 - Màu nút primary dark: cần duyệt thiết kế.
 - Real mode: Emergency Stop không thực hiện; LangGraph và Sliver không chạy trên stack, nên các route tương ứng là khai báo sẵn.
 - Structural Improvements: không làm trong vòng này (theo yêu cầu).
+
+## 9. Nghiệm thu cuối tại HEAD `56a29e1a` (2026-10-23)
+
+Vòng này thêm thay đổi identity Settings (`56a29e1a`) và chạy lại gate. Chi tiết CLOSED, OPEN và NV theo UX-ID: `07-acceptance-closure.md`.
+
+| Hạng mục | Kết quả | Nguồn |
+|---|---|---|
+| Typecheck, lint, boundary, full test, build mặc định và bật cờ | Exit 0 (test: 183 file, 1616 test) | `results/final-acceptance/exit-codes.txt` |
+| Route smoke mock, cờ tắt và bật cờ | 56/56 pass, 0 lỗi mới | `smokes-exit.txt`, `smoke-mock-default.log`, `smoke-mock-optin.log` |
+| Route smoke real, stack có graph | 42 pass, 14 khai báo sẵn, 0 lỗi mới | `results/final-acceptance/smoke-real-stack.json` |
+| Thẻ identity Settings real | Owner hiện `verifier`; viewer hiện `Stack Viewer` | `results/acc-real.json`; `evidence/A14-real-settings-identity-owner-after.png` |
+| Outage production, không backend | Thông điệp người dùng; không lệnh dev; không nút demo | `results/final-acceptance/prod-outage-HEAD.json`; `evidence/P1-…`, `P2-…` |
+
+Dừng hạ tầng: stack do phiên này khởi động đã dừng bằng file STOP. Các container của stack đã xóa (kiểm bằng `docker ps -a`). Hai server tĩnh (cổng 5290, 5291) đã dừng sau khi xác minh dòng lệnh. Dev server của owner (cổng 5273) không bị dừng hay khởi động lại.
+
+Chưa kiểm: luồng ghi real, Emergency Stop thật (theo yêu cầu), LangGraph runtime và Sliver C2. Cache theo actor chưa kiểm trong trình duyệt (WS-0). Xem `07-acceptance-closure.md` mục 7.
