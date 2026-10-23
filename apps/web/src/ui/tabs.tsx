@@ -19,7 +19,7 @@ export function Tabs({ tabs, value, onChange }: { tabs: { id: string; label: str
       {tabs.map((t) => (
         <button
           key={t.id} role="tab" aria-selected={value === t.id} tabIndex={value === t.id ? 0 : -1} onKeyDown={onKeyDown} onClick={() => onChange(t.id)}
-          className={cx('-mb-px inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3.5 text-sm font-medium transition', value === t.id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg')}
+          className={cx('-mb-px inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3.5 text-sm font-medium transition', value === t.id ? 'border-primary text-fg' : 'border-transparent text-muted hover:text-fg')}
         >
           {t.icon && <t.icon size={15} aria-hidden />}
           {t.label}

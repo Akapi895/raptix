@@ -93,9 +93,9 @@ export function createRealProjectsService(): ProjectsService {
           target: p.targetValue,
           targetType: p.targetType,
           metadataVerified: p.metadataState === 'verified',
-          client: null,
           status: p.lifecycleStatus,
           updatedAt: utcMinute(p.updatedAt),
+          updatedAtIso: p.updatedAt,
         })),
       }
     }),

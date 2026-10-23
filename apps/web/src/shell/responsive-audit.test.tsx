@@ -92,8 +92,8 @@ describe('shared table contract (projects group)', () => {
     const table = await screen.findByRole('table')
     expect(table.parentElement!.className).toContain('overflow-x-auto')
     expect(table.className).toContain('min-w-[640px]')
-    expect(screen.getByRole('columnheader', { name: 'Client' }).className).toContain('max-lg:hidden')
-    expect(screen.getByRole('columnheader', { name: 'Updated' }).className).toContain('max-xl:hidden')
+    expect(screen.queryByRole('columnheader', { name: 'Client' })).toBeNull()
+    expect(screen.getByRole('columnheader', { name: 'Updated' }).className).toContain('max-md:hidden')
   })
 })
 
@@ -187,16 +187,15 @@ describe('AI operator workspace (AI group)', () => {
 })
 
 describe('findings, C2, reports and settings (their groups)', () => {
-  it('findings: collapses the severity strip, hides below-md/lg columns and right-anchors the filter popover', async () => {
+  it('findings: the all-projects stat cards step down by breakpoint and the filters stay in one panel', async () => {
     mountApp('#/findings')
     signIn()
-    await screen.findByRole('table')
-    expect(screen.getByText('Awaiting Review').closest('[class*="xl:grid-cols-8"]')!.className).toContain('grid-cols-2')
-    expect(screen.getByRole('columnheader', { name: 'Project' }).className).toContain('max-md:hidden')
-    expect(screen.getByRole('columnheader', { name: 'Affected asset' }).className).toContain('max-lg:hidden')
-    fireEvent.click(screen.getByRole('button', { name: 'More filters' }))
-    const pop = await screen.findByText('Done').then((b) => b.closest('[class*="w-72"]')!)
-    expect(pop.className).toContain('right-0')
+    await screen.findByRole('list', { name: 'Findings' })
+    const stats = screen.getByRole('button', { name: /^Total findings/ }).parentElement!
+    expect(stats.className).toContain('grid-cols-2')
+    expect(stats.className).toContain('xl:grid-cols-6')
+    expect(screen.getByLabelText('Project')).toBeTruthy()
+    expect(screen.getByRole('combobox', { name: 'Status' })).toBeTruthy()
   })
 
   it('c2: collapses the infrastructure KPI strip to two columns below lg', async () => {

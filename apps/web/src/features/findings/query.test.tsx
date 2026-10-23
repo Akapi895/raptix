@@ -33,36 +33,48 @@ function mountFindings(me = 'Alex Morgan') {
   } }
 }
 
+/** Text of the stat card whose label starts with this word; a card's text is its label, then its value, then its percentage. */
+const stat = (label: string) => screen.getByRole('button', { name: new RegExp(`^${label}\\b`) }).textContent ?? ''
+
 describe('findings inventory (ticket 31)', () => {
-  it('lists scoped accessible findings with severity counts; non-member projects are invisible', async () => {
+  it('lists the findings of accessible projects in the all-projects table; non-member projects stay out', async () => {
     window.location.hash = '#/findings'
     const h = mountFindings('Riley Brooks') // analyst — member of RT-2026-014 only
     h.show()
     await waitFor(() => expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument())
-    expect(screen.getByText('AI suggestion: possible detection gap on api-01 (unverified)')).toBeInTheDocument()
     expect(screen.queryByText('Cloud lab configuration drift')).not.toBeInTheDocument() // FD-015 — RT-2026-015, not a member
     expect(screen.queryByText('Incomplete network segmentation')).not.toBeInTheDocument() // FD-009 — RT-2026-009
-    // Severity KPIs count verified findings only: FD-011 (high) counts, FD-012 (medium, ai_suggested) does not.
-    expect(screen.getByRole('button', { name: 'High 1' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Medium 0' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /AI Suggestions 1/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Confirmed1' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'AI Suggestions1' })).toBeInTheDocument()
+    // The AI proposal sits in the list beside the curated finding, as it does in its project's list.
+    expect(screen.getByText('AI suggestion: possible detection gap on api-01 (unverified)')).toBeInTheDocument()
+    // The counts cover verified findings only: FD-011 (high) counts, the proposal does not.
+    expect(stat('Total findings')).toMatch(/1$/)
+    expect(stat('Critical')).toMatch(/^Critical0/)
+    expect(stat('High')).toMatch(/^High1/)
+    expect(screen.getByRole('option', { name: 'All statuses (2)' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'AI suggested (1)' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Confirmed (1)' })).toBeInTheDocument()
     h.unmount()
   })
 
-  it('search, severity and status filters apply to the scoped rows', async () => {
+  it('search, severity and status filters apply to the all-projects rows', async () => {
     window.location.hash = '#/findings'
     const h = mountFindings('Taylor Chen') // member of 014/015/016/017
     h.show()
-    await waitFor(() => expect(screen.getByRole('tab', { name: 'All3' })).toBeInTheDocument())
-    fireEvent.change(screen.getByPlaceholderText('Search by ID or title…'), { target: { value: 'privileges' } })
+    await waitFor(() => expect(screen.getByRole('option', { name: 'All statuses (3)' })).toBeInTheDocument())
+    fireEvent.change(screen.getByPlaceholderText('Search title, ID or description…'), { target: { value: 'privileges' } })
     await waitFor(() => expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument())
     expect(screen.queryByText('Cloud lab configuration drift')).not.toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'All1' })).toBeInTheDocument()
-    fireEvent.change(screen.getByPlaceholderText('Search by ID or title…'), { target: { value: '' } })
-    await waitFor(() => expect(screen.getByRole('tab', { name: 'All3' })).toBeInTheDocument())
-    fireEvent.click(screen.getByRole('tab', { name: /AI Suggestions/ }))
+    fireEvent.change(screen.getByPlaceholderText('Search title, ID or description…'), { target: { value: '' } })
+    await waitFor(() => expect(screen.getByText('Cloud lab configuration drift')).toBeInTheDocument())
+    // Clicking the High stat card filters by severity; FD-015 is medium and drops out.
+    fireEvent.click(screen.getByRole('button', { name: /^High/ }))
+    await waitFor(() => expect(screen.queryByText('Cloud lab configuration drift')).not.toBeInTheDocument())
+    expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^Total findings/ }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Status' }), { target: { value: 'confirmed' } })
+    await waitFor(() => expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument())
+    expect(screen.queryByText('AI suggestion: possible detection gap on api-01 (unverified)')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Status' }), { target: { value: 'ai' } })
     await waitFor(() => expect(screen.getByText('AI suggestion: possible detection gap on api-01 (unverified)')).toBeInTheDocument())
     expect(screen.queryByText('Excessive account privileges (simulated)')).not.toBeInTheDocument()
     h.unmount()
@@ -148,11 +160,12 @@ describe('findings inventory (ticket 31)', () => {
     window.location.hash = '#/findings'
     const h = mountFindings('Riley Brooks') // sees RT-2026-014 only: FD-011 verified + FD-012 suggested
     h.show()
+    h.run(() => selectProject('RT-2026-014')) // proposals are listed in their project, not in the all-projects table
     await waitFor(() => expect(screen.getByRole('tab', { name: 'All2' })).toBeInTheDocument())
-    // The severity KPI for medium stays 0 although the suggestion itself is medium.
-    expect(screen.getByRole('button', { name: 'Medium 0' })).toBeInTheDocument()
+    // The severity count for medium stays 0 although the suggestion itself is medium.
+    expect(screen.getByRole('button', { name: /^Medium 0\b/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /AI Suggestions 1/ })).toBeInTheDocument()
-    expect(screen.getByText('not curated — not in counts')).toBeInTheDocument()
+    expect(screen.getByText('Not counted until verified')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: 'AI Suggestions1' }))
     await waitFor(() => expect(screen.getByText('AI suggestions are not curated findings')).toBeInTheDocument())
     h.unmount()

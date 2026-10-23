@@ -27,6 +27,8 @@ export interface AssetListItem {
   asset: Asset
   /** Owning project id; present only in the aggregate all-projects view. */
   projectId?: string
+  /** Owning project's display name in the aggregate view; null where the source does not record one. */
+  projectName?: string | null
 }
 
 /** Whole-scope counts for the KPI pills (never filtered by the active query). */
@@ -40,6 +42,23 @@ export interface AssetListRead {
   total: number
   kpis: AssetKpis
   owners: string[]
+  /** Whole-scope counts by asset type and by provenance (managed or observed); never filtered. */
+  types: Record<string, number>
+  sources: Record<string, number>
+  /** OS values the source records; empty when none is recorded, so no OS filter or column is offered. */
+  oses: string[]
+  /** 'truncated' when the observed graph read was capped; 'unavailable' when it could not be read at all. */
+  observation: 'ok' | 'truncated' | 'unavailable'
+}
+
+/** Counts the items by a key, in the order the items arrive. */
+export function countBy<T>(items: T[], key: (item: T) => string): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const item of items) {
+    const value = key(item)
+    counts[value] = (counts[value] ?? 0) + 1
+  }
+  return counts
 }
 
 /**

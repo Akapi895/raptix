@@ -34,7 +34,7 @@ describe('status primitives', () => {
         const svg = pill.querySelector('svg')
         expect(svg, `${kind}/${value} icon`).not.toBeNull()
         if (kind === 'sev' && value === 'critical') {
-          expect(pill.className).toContain('border-bad bg-bad text-white')
+          expect(pill.className).toContain('border-danger-fill bg-danger-fill text-white')
         } else {
           expect(pill.className, `${kind}/${value} tone`).toContain(entry.tone === 'neutral' ? 'text-muted' : `text-${entry.tone}`)
         }
@@ -63,7 +63,7 @@ describe('status primitives', () => {
   it('Sev renders severity through the sev mapping with the critical solid style', () => {
     const critical = render(<Sev v="critical" />)
     expect(critical.container.firstElementChild!.textContent).toBe('Critical')
-    expect((critical.container.firstElementChild as HTMLElement).className).toContain('bg-bad')
+    expect((critical.container.firstElementChild as HTMLElement).className).toContain('bg-danger-fill')
     critical.unmount()
     expect((render(<Sev v="low" />).container.firstElementChild as HTMLElement).className).toContain('text-cyan')
     cleanup()
@@ -73,8 +73,8 @@ describe('status primitives', () => {
 describe('button primitives', () => {
   const VARIANTS = ['primary', 'secondary', 'ghost', 'danger', 'dangerSolid', 'destructive'] as const
   const TOKEN: Record<(typeof VARIANTS)[number], string> = {
-    primary: 'bg-accent text-white', secondary: 'bg-panel text-fg', ghost: 'bg-transparent text-muted',
-    danger: 'bg-transparent text-bad', dangerSolid: 'bg-bad text-white', destructive: 'bg-bad text-white',
+    primary: 'bg-primary text-primary-fg', secondary: 'bg-panel text-fg', ghost: 'bg-transparent text-muted',
+    danger: 'bg-transparent text-bad', dangerSolid: 'bg-danger-fill text-white', destructive: 'bg-danger-fill text-white',
   }
 
   it('renders every variant with its token classes and fires clicks', async () => {

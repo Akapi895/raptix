@@ -110,7 +110,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
                   {!compact && <span className="flex-1 truncate text-left">{it.label}</span>}
                   {n > 0 && (compact
                     ? <span className="absolute right-1 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-side bg-accent" aria-hidden />
-                    : <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold tnum text-white" aria-label={`${n} pending`}>{n}</span>)}
+                    : <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-fill px-1.5 text-xs font-semibold tnum text-white" aria-label={`${n} pending`}>{n}</span>)}
                 </button>
               )
             })}

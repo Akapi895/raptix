@@ -8,9 +8,16 @@ import type { DbAuthority } from '../../demo/authority'
 import { projectAccessible } from '../../domain/policy'
 import type { ActorRef, ServiceResult } from '../../domain/service'
 import { APR } from '../../domain/catalog'
-import type { OverviewC2, OverviewFindings, OverviewProject, OverviewService, OverviewTask, OverviewTaskKind } from './service'
+import type { OverviewC2, OverviewFindings, OverviewOperations, OverviewProject, OverviewService, OverviewTask, OverviewTaskKind } from './service'
 
 const TASK_KIND_BY_APPROVAL: Partial<Record<string, OverviewTaskKind>> = { [APR.scope]: 'scope-revision', [APR.plan]: 'business-plan', [APR.access]: 'c2-grant' }
+
+/** Unresolved curated findings by severity: every status except resolved. */
+function unresolvedOf(findings: { severity: string; status: string }[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const finding of findings) if (finding.status !== 'resolved') counts[finding.severity] = (counts[finding.severity] ?? 0) + 1
+  return counts
+}
 
 export function createOverviewService(authority: DbAuthority, actor: ActorRef): OverviewService {
   const accessible = () => {
@@ -39,6 +46,8 @@ export function createOverviewService(authority: DbAuthority, actor: ActorRef): 
         ok: true,
         data: {
           total: curated.length,
+          unresolvedBySeverity: unresolvedOf(curated),
+          latestCreatedAt: null,
           engagements: projects.length,
           engagementsWithFindings: new Set(curated.map((f) => f.projectId)).size,
           bySeverity,
@@ -51,6 +60,10 @@ export function createOverviewService(authority: DbAuthority, actor: ActorRef): 
       const { db, ids } = accessible()
       const pendingGrants = db.sessionRequests.filter((r) => ids.has(r.projectId) && r.status === 'pending').length
       return { ok: true, data: { pendingGrants, commandsByStatus: null, recentCommands: [] } }
+    },
+    async operations(): Promise<ServiceResult<OverviewOperations>> {
+      const { projects } = accessible()
+      return { ok: true, data: { counts: null, recent: [], engagements: projects.length, truncated: false } }
     },
     async tasks(): Promise<ServiceResult<OverviewTask[]>> {
       const { db, projects, ids } = accessible()

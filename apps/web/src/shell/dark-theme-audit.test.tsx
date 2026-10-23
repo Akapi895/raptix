@@ -64,7 +64,7 @@ const SWEEP: { hash: string; see: () => Promise<unknown>; auth?: boolean }[] = [
   { hash: '#/project/RT-2026-014', see: () => screen.findByRole('button', { name: 'Overview' }) },
   { hash: '#/operation/OP-014?tab=live', see: () => screen.findByRole('list', { name: 'Operation steps' }, { timeout: 5000 }) },
   { hash: '#/agents', see: () => screen.findByRole('table', {}, { timeout: 5000 }) },
-  { hash: '#/findings', see: () => screen.findByRole('table', {}, { timeout: 5000 }) },
+  { hash: '#/findings', see: () => screen.findByRole('list', { name: 'Findings' }, { timeout: 5000 }) },
   { hash: '#/report-preview/REP-014', see: () => screen.findByText('Table of contents') },
   { hash: '#/ai-operator', see: () => screen.findByRole('heading', { name: 'AI Operator' }) },
   { hash: '#/c2', see: () => screen.findByRole('tablist') },

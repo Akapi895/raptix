@@ -8,7 +8,7 @@ import type { ListResult } from '../../domain/service'
 import type { ProjectRow, ProjectsService } from './service'
 
 export function projectRow(p: Project): ProjectRow {
-  return { id: p.id, name: p.name, workspaceSlug: null, target: null, targetType: null, metadataVerified: null, client: p.client, status: p.status, updatedAt: p.updated }
+  return { id: p.id, name: p.name, workspaceSlug: null, target: null, targetType: null, metadataVerified: null, status: p.status, updatedAt: p.updated, updatedAtIso: null }
 }
 
 /** `readAccessible` is the demo project handler's accessible-list read for the actor. */

@@ -47,7 +47,7 @@ function Pop({ label, icon: I, badge, children, width = 260 }: { label: string; 
   }, [open])
   return (
     <div ref={ref} className="relative">
-      <Button icon={I} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog">{label}{!!badge && <span className="ml-1 rounded-full bg-accent px-1.5 text-xs text-white">{badge}</span>}</Button>
+      <Button icon={I} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog">{label}{!!badge && <span className="ml-1 rounded-full bg-danger-fill px-1.5 text-xs text-white">{badge}</span>}</Button>
       {open && <div role="dialog" aria-label={label} style={{ width }} className="absolute right-0 top-full z-40 mt-1.5 rounded-xl border border-line bg-panel p-3 shadow-xl">{children}</div>}
     </div>
   )

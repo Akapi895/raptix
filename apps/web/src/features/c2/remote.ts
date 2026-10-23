@@ -25,7 +25,9 @@ const commandOf = (view: C2CommandView): C2ProviderCommand => ({
   status: view.status,
   exitCode: view.exitCode,
   stdout: view.stdout,
+  stderr: view.stderr,
   stdoutTruncated: view.stdoutTruncated,
+  stderrTruncated: view.stderrTruncated,
   createdAt: view.createdAt,
 })
 

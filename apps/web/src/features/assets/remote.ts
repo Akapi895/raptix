@@ -1,8 +1,9 @@
-import type { Asset } from '../../domain/entities'
+import type { Asset, AssetObservation } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { AssetDetailRead, AssetListQuery, AssetListRead, AssetScopeRead, AssetService, AssetUnmodelled } from './service';
+import { countBy } from './service'
 import type { AssetImportOutcome, AssetImportRow, AssetScopeWriteOutcome } from './writes'
-import { classifyAsset, fetchAssetInventory, importAssets, type AssetInventoryView } from './endpoints';
+import { classifyAsset, fetchAccessibleAssets, fetchAssetInventory, fetchAssets, importAssets, type AssetInventoryView } from './endpoints';
 import { fetchEffectiveScope } from '../scope/api';
 import { fetchGraph } from '../analysis/api';
 import { getEngagement } from '../projects/remote';
@@ -24,20 +25,45 @@ const CLASSIFICATION_OF_SCOPE: Readonly<Partial<Record<Asset['scope'], Inventory
 const UNMODELLED_DETAIL: AssetUnmodelled[] = ['operations', 'findings', 'evidence', 'agents', 'approvals', 'techniques', 'history']
 const UNMODELLED_SCOPE: AssetUnmodelled[] = ['operations', 'approvals', 'governance']
 
-function toAsset(row: InventoryRow, engagementId: string): Asset {
+/** What the observed graph says about one inventory row: the OS it recorded and the services and findings seen on it. */
+interface ObservedMatch { os: string | null; observation: AssetObservation }
+interface ObservedIndex { state: 'ok' | 'truncated' | 'unavailable'; byIdentifier: Map<string, ObservedMatch> }
+
+/**
+ * Observed facts keyed by the identifiers an inventory row can carry: a hostname, an IP or a URL. The graph read is optional.
+ * When it fails the inventory still lists, and the services and findings columns say they were not read.
+ */
+async function observedIndex(engagementId: string): Promise<ObservedIndex> {
+  try {
+    const view = await fetchAssets(engagementId)
+    const byIdentifier = new Map<string, ObservedMatch>()
+    for (const node of view.assets) {
+      const match: ObservedMatch = { os: node.os ?? null, observation: { ports: node.ports, services: node.services, findingCount: node.relatedFindingIds.length } }
+      for (const key of [node.hostname, node.ip, node.url]) {
+        if (key) byIdentifier.set(key.trim().toLowerCase(), match)
+      }
+    }
+    return { state: view.truncated ? 'truncated' : 'ok', byIdentifier }
+  } catch {
+    return { state: 'unavailable', byIdentifier: new Map() }
+  }
+}
+
+function toAsset(row: InventoryRow, engagementId: string, observed?: ObservedMatch): Asset {
   return {
     id: row.id,
     name: row.identifier,
     ident: row.identifier,
     ip: row.kind === 'ip_range' ? row.identifier : '',
     type: TYPE_OF_KIND[row.kind] ?? row.kind,
-    os: '',
+    os: observed?.os ?? '',
     owner: '',
     projectId: engagementId,
     scope: SCOPE_OF_CLASSIFICATION[row.classification],
     // Managed rows were imported by an operator; observed rows were seen during a run. The screen keeps that provenance.
     source: row.observed ? 'observed' : 'managed',
     updated: displayTime(row.updatedAt),
+    observation: observed?.observation ?? null,
   }
 }
 
@@ -59,6 +85,60 @@ function matches(asset: Asset, query: AssetListQuery): boolean {
 }
 
 /**
+ * One page of the list read and the whole-scope facets. The filters narrow the page; the counts and facets read every asset
+ * in scope, so they do not change with the filters. In the all-projects view each item names its project.
+ */
+function readPage(all: Asset[], query: AssetListQuery, observation: AssetListRead['observation'], projectNames?: Map<string, string>): ServiceResult<AssetListRead> {
+  const rows = all.filter((asset) => matches(asset, query))
+  const pageSize = Math.min(Math.max(1, query.pageSize ?? PAGE_SIZE), MAX_PAGE_SIZE)
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+  const page = Math.min(Math.max(1, query.page ?? 1), pageCount)
+  const kpis: AssetListRead['kpis'] = {
+    in: all.filter((asset) => asset.scope === 'in').length,
+    out: all.filter((asset) => asset.scope === 'out').length,
+    pending: all.filter((asset) => asset.scope === 'pending').length,
+    unclassified: all.filter((asset) => asset.scope === 'unclassified').length,
+  }
+  const items = rows.slice((page - 1) * pageSize, page * pageSize).map((asset): AssetListRead['items'][number] => (
+    projectNames ? { asset, projectId: asset.projectId, projectName: projectNames.get(asset.projectId) ?? null } : { asset }
+  ))
+  return {
+    ok: true,
+    data: {
+      items,
+      page,
+      pageSize,
+      total: rows.length,
+      kpis,
+      owners: [],
+      types: countBy(all, (asset) => asset.type),
+      sources: countBy(all, (asset) => asset.source),
+      oses: [...new Set(all.map((asset) => asset.os).filter(Boolean))].sort(),
+      observation,
+    },
+  }
+}
+
+/**
+ * The all-projects list: the inventory of every project the account can read, with the observed facts of each project's own
+ * graph. The graph is read per project, so one project's graph cannot change another project's rows; a project whose graph
+ * cannot be read is reported through the observation state.
+ */
+async function listAccessible(query: AssetListQuery): Promise<ServiceResult<AssetListRead>> {
+  const view = await fetchAccessibleAssets()
+  const engagementIds = [...new Set(view.assets.map((row) => row.engagementId))]
+  const observedByProject = new Map<string, ObservedIndex>()
+  await Promise.all(engagementIds.map(async (engagementId) => {
+    observedByProject.set(engagementId, await observedIndex(engagementId))
+  }))
+  const all = view.assets.map((row) => toAsset(row, row.engagementId, observedByProject.get(row.engagementId)?.byIdentifier.get(row.identifier.trim().toLowerCase())))
+  const states = [...observedByProject.values()].map((index) => index.state)
+  const observation: AssetListRead['observation'] = states.includes('unavailable') ? 'unavailable' : view.truncated || states.includes('truncated') ? 'truncated' : 'ok'
+  const names = new Map(view.assets.map((row) => [row.engagementId, row.projectName]))
+  return readPage(all, query, observation, names)
+}
+
+/**
  * Real AssetService over the engagement's asset inventory (ADR-0084). Managed
  * inventory rows keep their observed/managed provenance. Operations, findings,
  * evidence, agents, approvals, techniques and history are not part of the real
@@ -72,29 +152,12 @@ export function createRealAssetService(): AssetService {
   return {
     capabilities: { scopeApprovalRequests: false, observedGraph: true, simulated: false },
     list: (ctx: RequestContext, query: AssetListQuery = {}) => guarded(async (): Promise<ServiceResult<AssetListRead>> => {
-      if (!ctx.projectId || ctx.projectId === 'all') return { ok: false, failure: { kind: 'unavailable', message: 'Select an engagement to read its assets.' } }
-      const all = await inventory(ctx.projectId)
-      const rows = all.filter((asset) => matches(asset, query))
-      const pageSize = Math.min(Math.max(1, query.pageSize ?? PAGE_SIZE), MAX_PAGE_SIZE)
-      const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
-      const page = Math.min(Math.max(1, query.page ?? 1), pageCount)
-      const kpis: AssetListRead['kpis'] = {
-        in: all.filter((asset) => asset.scope === 'in').length,
-        out: all.filter((asset) => asset.scope === 'out').length,
-        pending: all.filter((asset) => asset.scope === 'pending').length,
-        unclassified: all.filter((asset) => asset.scope === 'unclassified').length,
-      }
-      return {
-        ok: true,
-        data: {
-          items: rows.slice((page - 1) * pageSize, page * pageSize).map((asset) => ({ asset })),
-          page,
-          pageSize,
-          total: rows.length,
-          kpis,
-          owners: [],
-        },
-      }
+      if (!ctx.projectId) return { ok: false, failure: { kind: 'unavailable', message: 'Select an engagement to read its assets.' } }
+      if (ctx.projectId === 'all') return listAccessible(query)
+      const observed = await observedIndex(ctx.projectId)
+      const inventoryView = await fetchAssetInventory(ctx.projectId)
+      const all = inventoryView.assets.map((row) => toAsset(row, ctx.projectId, observed.byIdentifier.get(row.identifier.trim().toLowerCase())))
+      return readPage(all, query, observed.state)
     }),
 
     get: (ctx: RequestContext, id: string) => guarded(async (): Promise<ServiceResult<AssetDetailRead>> => {

@@ -56,7 +56,7 @@ export function HeaderNotices() {
       <span className="sr-only" role="status" aria-live="polite">{unread === 0 ? 'No unread notifications' : `${unread} unread notifications`}</span>
       <IconButton icon={Bell} label={`Notifications${unread ? ` (${unread} unread)` : ''}`} onClick={toggle} aria-expanded={noticesOpen} data-testid="notice-bell" />
       {unread > 0 && (
-        <span data-testid="notice-badge" className="pointer-events-none absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold leading-none tnum text-white">{unread}</span>
+        <span data-testid="notice-badge" className="pointer-events-none absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger-fill px-1 text-xs font-bold leading-none tnum text-white">{unread}</span>
       )}
       {noticesOpen && (
         <>

@@ -58,3 +58,17 @@ capture that the server authorizes for that actor.
 **Suggestion disposition**: An operator's decision to dismiss or restore a producer
 suggestion in their own review queue. It does not alter the producer's claim or
 another operator's queue.
+
+**Asset**: A thing in an engagement's attack surface that can be targeted, such as a
+host, a web origin, a DNS name or an address range. An asset is not a claim and not
+evidence; a finding may relate to an asset without the asset being proven vulnerable.
+
+**Managed asset**: An asset an operator recorded in the engagement's inventory. It
+exists in the inventory whether or not a run has observed it.
+
+**Observed asset**: An asset that a run's recorded observations show. An observation
+does not put the asset in scope, and an observed asset may be absent from the inventory.
+
+**Scope classification**: An asset's authorization for targeting: in scope, out of
+scope or pending review. It gates target selection and is independent of whether the
+asset was managed, observed or both.

@@ -26,6 +26,7 @@ vi.mock('./api', async (importOriginal) => {
     configureC2Listener: vi.fn(),
     configureC2Profile: vi.fn(),
     stopC2Listener: vi.fn(),
+    dispatchC2Command: vi.fn(),
   }
 })
 
@@ -34,6 +35,7 @@ const { RealFeatureServicesCtx } = await import('../../state/real-services-provi
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { resetNavStores } = await import('../../router/navigate')
 const { C2ProviderTab } = await import('./provider-tab')
+const { ConsoleCard } = await import('./provider-console')
 
 const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { c2: { supported: true, available: true } } } as never
 
@@ -46,7 +48,7 @@ const SESSIONS = {
   source: 'sliver',
 }
 
-function renderTab(): void {
+function renderTab(content: ReactElement = <C2ProviderTab engagementId="eng-1" />): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const services = createRealFeatureServices(CAPABILITIES)
   const wrapper = ({ children }: { children: ReactNode }): ReactElement => (
@@ -54,7 +56,7 @@ function renderTab(): void {
       <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
     </QueryClientProvider>
   )
-  render(<C2ProviderTab engagementId="eng-1" />, { wrapper })
+  render(content, { wrapper })
 }
 
 beforeEach(() => {
@@ -64,6 +66,7 @@ beforeEach(() => {
   vi.mocked(api_c2.configureC2Listener).mockReset().mockResolvedValue({ listener: SESSIONS.listeners[0] })
   vi.mocked(api_c2.configureC2Profile).mockReset().mockResolvedValue({ profile: { name: 'lab-prof', created: 1, userAgent: 'ua', headerCount: 0, cookieCount: 0, parameterCount: 0, pathSegmentCount: 0 } })
   vi.mocked(api_c2.stopC2Listener).mockReset().mockResolvedValue({})
+  vi.mocked(api_c2.dispatchC2Command).mockReset().mockResolvedValue(SESSION_COMMAND)
 })
 
 afterEach(() => {
@@ -105,6 +108,45 @@ function renderDetail(hash: string): void {
   resetNavStores()
   renderTab()
 }
+
+describe('C2 provider command input and output', () => {
+  beforeEach(() => {
+    window.location.hash = '#/c2?engagement=eng-1'
+    resetNavStores()
+    vi.mocked(api_c2.fetchC2Sessions).mockResolvedValue({ ...SESSIONS, sessions: [LIVE_SESSION] } as never)
+  })
+
+  it('preserves spaces, empty arguments and Windows paths as explicit argv values', async () => {
+    renderTab(<ConsoleCard engagementId="eng-1" />)
+    await userEvent.type(await screen.findByLabelText('Session id'), 'sess-1')
+    await userEvent.type(screen.getByLabelText('Absolute binary path'), '/usr/bin/printf')
+    const args = ['hello world', '', 'C:\\Program Files\\Lab']
+    await userEvent.clear(screen.getByLabelText(/Arguments/))
+    await userEvent.paste(JSON.stringify(args))
+    await userEvent.click(screen.getByRole('button', { name: 'Dispatch command' }))
+    await waitFor(() => expect(api_c2.dispatchC2Command).toHaveBeenCalledWith('eng-1', 'sess-1', expect.objectContaining({ args })), { timeout: 1000 })
+  })
+
+  it('refuses a non-string argv array without dispatching', async () => {
+    renderTab(<ConsoleCard engagementId="eng-1" />)
+    await userEvent.type(await screen.findByLabelText('Session id'), 'sess-1')
+    await userEvent.type(screen.getByLabelText('Absolute binary path'), '/usr/bin/printf')
+    await userEvent.clear(screen.getByLabelText(/Arguments/))
+    await userEvent.paste('[1]')
+    await userEvent.click(screen.getByRole('button', { name: 'Dispatch command' }))
+    expect(await screen.findByRole('alert', {}, { timeout: 1000 })).toHaveTextContent('Arguments must be a JSON array of strings')
+    expect(api_c2.dispatchC2Command).not.toHaveBeenCalled()
+  })
+
+  it('shows retained stdout beyond the preview and stderr with provider truncation flags', async () => {
+    const stdout = `${'x'.repeat(140)}END_OF_RETAINED_STDOUT`
+    vi.mocked(api_c2.fetchC2Commands).mockResolvedValue([{ ...SESSION_COMMAND, stdout, stderr: 'permission denied', stderrTruncated: true }])
+    renderTab(<ConsoleCard engagementId="eng-1" />)
+    expect(await screen.findByText(stdout, { exact: true }, { timeout: 1000 })).toBeInTheDocument()
+    expect(screen.getByText('permission denied', { exact: true })).toBeInTheDocument()
+    expect(screen.getByText('stderr truncated by provider')).toBeInTheDocument()
+  })
+})
 
 describe('C2ProviderTab detail routes (W22)', () => {
   beforeEach(() => {

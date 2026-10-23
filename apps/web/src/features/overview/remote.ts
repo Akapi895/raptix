@@ -46,6 +46,8 @@ export interface OverviewFindingsView {
   byStatus: Record<string, number>
   engagementsWithFindings: number
   engagements: number
+  unresolvedBySeverity: Record<string, number>
+  latestCreatedAt: string | null
   truncated: boolean
   source: 'db'
 }
@@ -85,6 +87,33 @@ export function fetchOverviewC2(): Promise<OverviewC2View> {
   return apiFetch('/overview/c2', isOverviewC2View)
 }
 
+export interface OverviewOperationView {
+  id: string
+  engagementId: string
+  engagementName: string | null
+  threadId: string | null
+  status: string
+  updatedAt: string
+}
+
+export interface OverviewOperationsView {
+  counts: Record<string, number>
+  recent: OverviewOperationView[]
+  engagements: number
+  truncated: boolean
+  source: 'db'
+}
+
+export function isOverviewOperationsView(v: unknown): v is OverviewOperationsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as OverviewOperationsView
+  return typeof doc.counts === 'object' && doc.counts !== null && Array.isArray(doc.recent) && typeof doc.engagements === 'number' && typeof doc.truncated === 'boolean' && doc.source === 'db'
+}
+
+export function fetchOverviewOperations(): Promise<OverviewOperationsView> {
+  return apiFetch('/overview/operations', isOverviewOperationsView)
+}
+
 /* ───────────── Real adapter for the overview port (Mốc 2) ───────────── */
 /** Each section reads its own endpoint, so one failing source leaves the others loaded (see service.ts). */
 export function createRealOverviewService(): OverviewService {
@@ -95,11 +124,15 @@ export function createRealOverviewService(): OverviewService {
     }),
     findings: () => guarded(async () => {
       const view = await fetchOverviewFindings()
-      return { ok: true, data: { total: view.total, engagements: view.engagements, engagementsWithFindings: view.engagementsWithFindings, bySeverity: view.bySeverity, byStatus: view.byStatus, truncated: view.truncated } }
+      return { ok: true, data: { total: view.total, engagements: view.engagements, engagementsWithFindings: view.engagementsWithFindings, bySeverity: view.bySeverity, byStatus: view.byStatus, unresolvedBySeverity: view.unresolvedBySeverity, latestCreatedAt: view.latestCreatedAt === null ? null : utcMinute(view.latestCreatedAt), truncated: view.truncated }}
     }),
     c2: () => guarded(async () => {
       const view = await fetchOverviewC2()
       return { ok: true, data: { pendingGrants: view.pendingGrants, commandsByStatus: view.commandsByStatus, recentCommands: view.recentCommands.map((c) => ({ ...c, createdAt: utcMinute(c.createdAt) })) } }
+    }),
+    operations: () => guarded(async () => {
+      const view = await fetchOverviewOperations()
+      return { ok: true, data: { counts: view.counts, recent: view.recent.map((o) => ({ ...o, updatedAt: utcMinute(o.updatedAt) })), engagements: view.engagements, truncated: view.truncated } }
     }),
     tasks: () => guarded(async () => {
       const view = await fetchTasks()

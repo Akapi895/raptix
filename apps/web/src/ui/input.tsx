@@ -3,7 +3,7 @@ import { AlertTriangle, HelpCircle, Search } from 'lucide-react'
 import { cx } from './cx'
 
 /* ───────────── Forms ───────────── */
-const fieldCls = 'w-full rounded-[10px] border border-line bg-panel px-3 text-sm text-fg placeholder:text-neutral outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50'
+const fieldCls = 'w-full rounded-[10px] border border-line bg-panel px-3 text-sm text-fg placeholder:text-neutral outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50'
 export function Field({ label, hint, error, required, children, className }: { label: ReactNode; hint?: ReactNode; error?: ReactNode; required?: boolean; children: ReactNode; className?: string }) {
   return (
     <label className={cx('block', className)}>

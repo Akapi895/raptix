@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
+import { Ban, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
 import { useDirty } from '../../../state/session'
 import type { Asset } from '../../../domain/entities'
 import { useAssetImportRead, type AssetImportRead } from '../import-read'
@@ -8,8 +8,8 @@ import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Filter
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from '../../../ui/d-shared'
 // Ticket 50: catalog list, asset detail and scope views read through the
 // typed asset service via Query (feature-local handlers).
-import { AssetReadError, useAssetDetail, useAssetList, useAssetPort, useAssetScope, useObservedGraph } from '../query'
-import type { AssetListItem, AssetScopeProject } from '../service';
+import { AssetReadError, useAssetDetail, useAssetList, useAssetPort, useAssetScope } from '../query'
+import type { AssetListItem, AssetListRead, AssetScopeProject } from '../service';
 // Ticket 51: imports and scope changes run through the feature-local write
 // transactions (validated, atomic, role-gated) via the screen handlers.
 import { ASSET_TYPES, createAssetWriteHandlers, okIp, validateIdent, type AssetImportRow } from '../writes'
@@ -30,6 +30,34 @@ const SCOPE_WHY: Record<Asset['scope'], string> = {
   pending: 'Proposed for scope but not yet approved. It is NOT in scope and is never auto-promoted; a reviewer must approve the scope change.',
   unclassified: 'Present in the inventory but not classified. It is not targetable until it is proposed and approved.',
 }
+/** A provenance value as the list names it: the two the real inventory records get their own words, anything else shows as recorded. */
+function sourceLabel(source: string): string {
+  if (source === 'observed') return 'Observed in a run'
+  if (source === 'managed') return 'Managed inventory'
+  return source
+}
+
+/** The counts behind the list, by type and by provenance. Both are read over the whole scope, so filters do not change them. */
+function AssetFacets({ read }: { read: AssetListRead }) {
+  const types = Object.entries(read.types).sort(([a], [b]) => a.localeCompare(b))
+  const sources = Object.entries(read.sources).sort(([a], [b]) => a.localeCompare(b))
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-panel px-4 py-3 text-sm">
+      <span className="text-xs font-medium text-muted">By type</span>
+      {types.length === 0 ? <span className="text-muted">No assets yet</span> : types.map(([type, count]) => <span key={type}>{type} <b className="tabular-nums">{count}</b></span>)}
+      <span className="text-xs font-medium text-muted">By provenance</span>
+      {sources.length === 0 ? <span className="text-muted">None</span> : sources.map(([source, count]) => <span key={source}>{sourceLabel(source)} <b className="tabular-nums">{count}</b></span>)}
+    </div>
+  )
+}
+
+/** The services seen on an asset, or why there are none: not observed, or the observed read did not finish. */
+function ObservedServices({ asset, state }: { asset: Asset; state: AssetListRead['observation'] }) {
+  if (!asset.observation) return <span className="text-muted">{state === 'ok' ? 'Not observed' : 'Not read'}</span>
+  const items = asset.observation.services.length > 0 ? asset.observation.services : asset.observation.ports
+  return items.length === 0 ? <span className="text-muted">None recorded</span> : <Trunc max="max-w-[180px]">{items.join(', ')}</Trunc>
+}
+
 export function ScopeBadge({ a }: { a: Asset }) {
   const { simulated } = useAssetPort().capabilities
   const projects = usePolicyProjects()
@@ -63,59 +91,28 @@ function AssetList() {
   const { simulated } = useAssetPort().capabilities
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
-  const me = useMe()
-  const confirm = useSessionStore((s) => s.confirm)
-  const toast = useToastStore((s) => s.toast)
   const setFilter = useSessionStore((s) => s.setFilter)
   const persistFilters = useSessionStore((s) => s.persistFilters)
-  const port = useAssetPort()
   const guard = useGuard(pid === 'all' ? undefined : pid)
   /* Filter convention: persistFilters['assets.scope'] = 'in' | 'out' | 'pending' | 'unclassified' ('in' = Approved In Scope) */
   const sc = (persistFilters['assets.scope'] as string) || ''
   const setSc = (v: string) => setFilter('assets.scope', v)
   const [q, setQ] = useState(''), [ty, setTy] = useState(''), [ow, setOw] = useState(''), [os, setOs] = useState('')
   const [page, setPage] = useState(1)
-  const [sel, setSel] = useState<string[]>([])
   /* The one catalog read: scope-checked typed service; rows, scope KPIs and
      filter options derive from the actor's accessible projects only. */
   const list = useAssetList({ q: q || undefined, type: ty || undefined, scope: sc || undefined, owner: ow || undefined, os: os || undefined, page: page > 1 ? page : undefined })
-  useEffect(() => { setPage(1); setSel([]) }, [q, ty, sc, ow, os])
+  useEffect(() => { setPage(1) }, [q, ty, sc, ow, os])
   const read = list.data
   const rows = read?.items ?? []
   const owners = read?.owners ?? []
   const filtered = !!(q || ty || sc || ow || os)
   const clear = () => { setQ(''); setTy(''); setSc(''); setOw(''); setOs('') }
-  /* Selection is page-scoped (server-side pagination): a page or filter change resets it. */
-  const selected = rows.filter((r) => sel.includes(r.asset.id))
-  const notIn = selected.filter((r) => r.asset.scope !== 'in')
   const addWhy = pid === 'all' ? 'Select a specific project to add assets.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can add assets to scope.' : ''
-  const toggle = (id: string, on: boolean) => setSel((s) => (on ? [...s, id] : s.filter((x) => x !== id)))
-  const allOnPage = rows.length > 0 && rows.every((r) => sel.includes(r.asset.id))
-  /* Ticket 51: bulk scope changes run through the role-gated transaction; the
-     handler's refusal (with its reason) surfaces instead of a silent flip. */
-  const write = useMemo(() => createAssetWriteHandlers(port, { id: me.name, role: me.role }, pid), [port, me.name, me.role, pid])
-  const bulkOutMut = useMutation({
-    mutationFn: async (input: { ids: string[]; reason: string }) => {
-      const results = await Promise.all(input.ids.map((id) => write.changeScope(id, 'out', { action: 'Marked out of scope (bulk)', reason: input.reason })))
-      return results.find((r) => !r.ok) ?? results[0]
-    },
-    onSuccess: (res) => {
-      if (!res) return
-      if (res.ok) { toast(`${sel.length} assets marked out of scope.`, 'warn'); setSel([]) }
-      else toast(res.failure.message, 'bad')
-    },
-  })
-  const bulkOut = () => confirm({
-    title: `Mark ${selected.length} assets out of scope?`, danger: true, confirmLabel: 'Mark out of scope', reasonLabel: 'Reason', reasonRequired: true,
-    body: <>Out-of-scope assets will not appear in the target list of new operations{selected.some((r) => r.asset.scope === 'in') ? '. Some are currently in approved scope; the change is recorded in the audit log.' : '.'}</>,
-    onConfirm: (r) => bulkOutMut.mutate({ ids: selected.map((x) => x.asset.id), reason: r }),
-  })
-  const pickPlaybook = () => { setFilter('operation-new.assets', selected.filter((r) => r.asset.scope === 'in').map((r) => r.asset.id)); go('playbooks') }
   return (
     <>
       <PageHeader title="Assets" sub="Asset inventory and scope status by project. Assets outside approved scope cannot be selected as targets."
         actions={<>
-          <Button icon={MapIcon} onClick={() => go('asset-scope')}>Scope map</Button>
           {/* Import/Add change project scope: only offered inside a project, never as disabled global CTAs (plan 2026-10-16 §5). */}
           {pid !== 'all' && <>
             <Button icon={Upload} disabled={!!addWhy} title={addWhy || 'Import assets from CSV'} onClick={() => go('asset-new', { tab: 'bulk' })}>Import</Button>
@@ -134,43 +131,40 @@ function AssetList() {
           <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
             {SCOPES.map((s) => <Kpi key={s} label={SCOPE_LABEL[s]} value={read.kpis[s]} tone={({ in: 'ok', out: 'bad', pending: 'warn', unclassified: 'neutral' } as const)[s]} onClick={() => setSc(sc === s ? '' : s)} sub={s === 'pending' ? 'Stays Pending until a reviewer approves, even if proposed in scope' : sc === s ? 'Filter active, click to clear' : 'Click to filter'} />)}
           </div>
+          <AssetFacets read={read} />
+          {read.observation !== 'ok' && (
+            <Banner tone="warn" title={read.observation === 'truncated' ? 'Observed facts are partial' : 'Observed facts could not be read'}>
+              {read.observation === 'truncated' ? 'The observed graph reached its row cap, so services and findings may be missing for some assets.' : 'Managed assets are still listed. Their services and related findings show as not read.'}
+            </Banner>
+          )}
           <FilterBar>
             <SearchBox className="w-64" value={q} onChange={setQ} placeholder="Search name, IP, hostname or URL" />
             <Select className="!w-44" aria-label="Scope" value={sc} onChange={(e) => setSc(e.target.value)}><option value="">All scope states</option>{SCOPES.map((s) => <option key={s} value={s}>{SCOPE_LABEL[s]}</option>)}</Select>
             <Select className="!w-36" aria-label="Type" value={ty} onChange={(e) => setTy(e.target.value)}><option value="">All types</option>{ASSET_TYPES.map((t) => <option key={t}>{t}</option>)}</Select>
-            <MoreFilters active={[ow, os].filter(Boolean).length}>
-              <Select aria-label="Owner" value={ow} onChange={(e) => setOw(e.target.value)}><option value="">All owners</option>{owners.map((o) => <option key={o}>{o}</option>)}</Select>
-              <Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option><option>Windows</option><option>Linux</option></Select>
-            </MoreFilters>
+            {(owners.length > 0 || read.oses.length > 0) && (
+              <MoreFilters active={[ow, os].filter(Boolean).length}>
+                {owners.length > 0 && <Select aria-label="Owner" value={ow} onChange={(e) => setOw(e.target.value)}><option value="">All owners</option>{owners.map((o) => <option key={o}>{o}</option>)}</Select>}
+                {read.oses.length > 0 && <Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option>{read.oses.map((o) => <option key={o}>{o}</option>)}</Select>}
+              </MoreFilters>
+            )}
             {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
           </FilterBar>
-          {sel.length > 0 && (
-            <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2.5 text-sm">
-              <b>{sel.length} {sel.length === 1 ? 'asset' : 'assets'} selected</b>
-              {notIn.length > 0 && <span className="text-xs text-warn">{notIn.length} not in scope, so they will not be used as targets.</span>}
-              <span className="ml-auto flex flex-wrap gap-2">
-                <Button size="sm" icon={BookOpen} onClick={pickPlaybook} disabled={selected.length === notIn.length} title={selected.length === notIn.length ? 'None of the selected assets are in scope. Request a scope change first.' : 'Choose a playbook for the in-scope assets'}>Choose playbook</Button>
-                <Button size="sm" variant="danger" icon={Ban} onClick={bulkOut} disabled={!can('editScope') || guard.ro || pid === 'all'} title={pid === 'all' ? 'Select a specific project.' : guard.ro ? guard.reason : !can('editScope') ? 'Requires scope management permission.' : 'Mark out of scope'}>Mark out of scope</Button>
-                <Button size="sm" variant="ghost" onClick={() => setSel([])}>Clear selection</Button>
-              </span>
-            </div>
-          )}
-          {sc && <div className="-mt-2 mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">Filtered by scope: <b className="text-fg">{SCOPE_LABEL[sc as Asset['scope']] || sc}</b><button className="text-accent hover:underline" onClick={() => setSc('')}>Clear scope filter</button></div>}
+          {sc &&<div className="-mt-2 mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">Filtered by scope: <b className="text-fg">{SCOPE_LABEL[sc as Asset['scope']] || sc}</b><button className="text-accent hover:underline" onClick={() => setSc('')}>Clear scope filter</button></div>}
           <DTable
-            rows={rows} rowKey={(r) => r.asset.id} onRow={(r) => go('asset', { id: r.asset.id })}
+            rows={rows} rowKey={(r) => r.asset.id} onRow={(r) => go('asset', { id: r.asset.id, engagementId: r.projectId })}
             empty={filtered ? <Empty icon={Server} title="No assets match the filters" action={<Button onClick={clear}>Clear filters</Button>}>Try relaxing the filters.</Empty> : <Empty icon={Server} title="0 assets in this project" action={<Button variant="primary" icon={Plus} disabled={!!addWhy} title={addWhy} onClick={() => go('asset-new')}>Add Asset</Button>}>No approved or pending assets yet, so no operation can pick a target. Add assets manually, import a CSV, or use Simulated Preview discovery; imports start as Pending Approval.</Empty>}
             cols={[
               { key: 'id', header: 'Asset ID', width: '110px', render: (r) => <Id className="text-accent">{r.asset.id}</Id> },
-              { key: 'sel', header: <Check checked={allOnPage} onChange={(v) => setSel(v ? rows.map((r) => r.asset.id) : [])} label={<span className="sr-only">Select all on this page</span>} />, width: '44px', render: (r) => <span onClick={(e) => e.stopPropagation()}><Check checked={sel.includes(r.asset.id)} onChange={(v) => toggle(r.asset.id, v)} label={<span className="sr-only">Select {r.asset.name}</span>} /></span> },
               { key: 'n', header: 'Name', render: (r) => <Trunc max="max-w-[180px]">{r.asset.name}</Trunc> },
               { key: 'i', header: 'Identifier', hideBelow: 'md', render: (r) => <div><span title={r.asset.ident} className="block max-w-[200px] truncate"><Mono className="text-muted">{r.asset.ident}</Mono></span><div><Mono className="text-xs text-muted">{r.asset.ip}</Mono></div></div> },
               { key: 't', header: 'Type', hideBelow: 'md', render: (r) => r.asset.type },
-              { key: 'o', header: 'Owner', hideBelow: 'lg', render: (r) => <Trunc max="max-w-[140px]">{r.asset.owner}</Trunc> },
+              ...(owners.length > 0 ? [{ key: 'o', header: 'Owner', hideBelow: 'lg' as const, render: (r: AssetListItem) => <Trunc max="max-w-[140px]">{r.asset.owner}</Trunc> }] : []),
               ...(simulated ? [{ key: 'env', header: 'Environment', hideBelow: 'lg' as const, render: (r: AssetListItem) => envOf(r.asset) }] : []),
-              { key: 'os', header: 'OS', hideBelow: 'lg', render: (r) => r.asset.os },
-              ...(pid === 'all' ? [{ key: 'p', header: 'Project', render: (r: AssetListItem) => <span className="text-xs">{r.projectId}</span> }] : []),
+              ...(read.oses.length > 0 ? [{ key: 'os', header: 'OS', hideBelow: 'lg' as const, render: (r: AssetListItem) => r.asset.os }] : []),
+              ...(pid === 'all' ? [{ key: 'p', header: 'Project', render: (r: AssetListItem) => <span className="text-xs">{r.projectName ?? r.projectId}</span> }] : []),
               { key: 's', header: 'Scope', render: (r) => <ScopeBadge a={r.asset} /> },
-              { key: 'src', header: 'Data source', hideBelow: 'lg', render: (r) => r.asset.source },
+              { key: 'svc', header: 'Services', hideBelow: 'lg', render: (r) => <ObservedServices asset={r.asset} state={read.observation} /> },
+              { key: 'fnd', header: 'Related findings', hideBelow: 'lg', render: (r) => (r.asset.observation ? <span className="tabular-nums">{r.asset.observation.findingCount}</span> : <span className="text-muted">—</span>) },
               { key: 'u', header: 'Last updated (UTC+7)', hideBelow: 'lg', render: (r) => <span className="whitespace-nowrap text-xs text-muted">{shortDate(r.asset.updated)}</span> },
             ]}
           />
@@ -222,6 +216,8 @@ function AssetScope() {
   const toast = useToastStore((s) => s.toast)
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const scope = useAssetScope()
+  const { simulated } = useAssetPort().capabilities
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const read = scope.data
   const all = read?.rows.map((r) => r.asset) ?? []
   const impactedOf = (id: string) => read?.rows.find((r) => r.asset.id === id)?.impactedOps ?? []
@@ -286,6 +282,8 @@ function AssetScope() {
       {reqWhy && pid !== 'all' && <div className="-mt-2 mb-3"><Locked reason={`Request Scope Approval: ${reqWhy}`} /></div>}
       {scope.isPending ? (
         <div aria-busy="true" aria-label="Loading scope map"><Skeleton className="h-96" /></div>
+      ) : pid === 'all' && !simulated ? (
+        <Empty icon={MapIcon} title="Choose a project to see its scope map" action={<Button variant="primary" onClick={() => setSwitcherOpen(true)}>Select project</Button>}>The scope map and its approved ROE are kept per project. Select a project to read its scope.</Empty>
       ) : scope.isError || !read ? (
         <Empty icon={MapIcon} title="Scope map could not be loaded" action={<Button onClick={() => scope.refetch()}>Retry</Button>}>
           {scope.isError ? (scope.error as AssetReadError).failure.message : 'No scope data available.'}
@@ -637,29 +635,9 @@ function AssetDetail() {
   )
 }
 
-/** Real mode: the observed attack-chain graph (server-redacted), listed verbatim beside the managed inventory. */
-function ObservedGraphCard() {
-  const graph = useObservedGraph()
-  return (
-    <Card className="mt-4">
-      <CardHeader title="Observed graph" sub="Server-redacted nodes and edges observed during runs, listed verbatim. No attack path is reconstructed." />
-      {graph.isPending ? <Skeleton className="h-16" /> : graph.isError ? (
-        <Banner tone="warn" title="Graph source unavailable">{graph.error instanceof Error ? graph.error.message : 'The graph projection is not available right now.'} No substitute graph is shown.</Banner>
-      ) : graph.data.nodes.length === 0 ? (
-        <p className="text-sm text-muted">The graph is empty - no relationships have been observed yet.</p>
-      ) : (
-        <div className="space-y-3">
-          <p className="text-sm text-muted">{graph.data.nodes.length} nodes, {graph.data.edges.length} edges observed{graph.data.truncated ? ' (truncated)' : ''}.</p>
-          <ul className="space-y-1">{graph.data.edges.slice(0, 50).map((e) => <li key={e.id} className="font-mono text-xs text-muted">({e.source}) -[{e.type}]-&gt; ({e.target})</li>)}</ul>
-        </div>
-      )}
-    </Card>
-  )
-}
-
 // eslint-disable-next-line react-refresh/only-export-components -- assets screen module: helper co-exported with screens
 export const assetRoutes = {
-  assets: withLoading(function Assets() { const route = useRoute(); const port = useAssetPort(); return route.tab === 'scope-map' ? <AssetScope /> : <>{<AssetList />}{port.capabilities.observedGraph && <ObservedGraphCard />}</> }),
+  assets: withLoading(function Assets() { return <AssetList /> }),
   'asset-new': withLoading(AssetNew),
   'asset-scope': withLoading(AssetScope),
   asset: withLoading(AssetDetail),

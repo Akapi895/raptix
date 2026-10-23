@@ -14,6 +14,17 @@
   --c-accent-hover: #A61F1F;
   --c-accent-press: #8E1B1B;
   --c-accent-fg: #FFFFFF;
+  /* Primary actions and links are blue; the red accent stays for the brand, severity and destructive
+     states. Filled primary and destructive buttons carry their own fill tokens so the white label
+     meets 4.5:1 in both themes. */
+  --c-primary: #0066FF;
+  --c-primary-hover: #0052CC;
+  --c-primary-press: #0047B3;
+  --c-primary-fg: #FFFFFF;
+  --c-link: #0066FF;
+  --c-danger-fill: #C62828;
+  --c-danger-fill-hover: #A61F1F;
+  --c-danger-fill-press: #8E1B1B;
   --c-cyan: #1D4ED8;
   /* Chart category color (dashboard "high" severity). Legible on both the
      light page and the dark panels, so it is defined once like the console
@@ -40,21 +51,30 @@
   --c-console-info: #6EA0FF;
   --c-console-warn: #FBBF24;
   --c-console-bad: #F87171;
-  --c-focus: #7F1D1D;
+  --c-focus: #0066FF;
   color-scheme: light;
 }
 :root.dark {
-  --c-bg: #0F1115;
-  --c-side: #171A20;
-  --c-panel: #171A20;
-  --c-hover: #20242C;
-  --c-line: #2A2F39;
-  --c-fg: #F3F4F6;
+  --c-bg: #0B1120;
+  --c-side: #111827;
+  --c-panel: #111827;
+  --c-hover: #1F2937;
+  --c-line: #263244;
+  --c-fg: #E5E7EB;
   --c-muted: #D1D5DB;
-  --c-neutral: #9CA3AF;
-  --c-accent: #E5484D;
-  --c-accent-hover: #F26166;
+  --c-neutral: #A7B0C0;
+  /* Red text and accents on the slate panels; the value keeps 4.5:1 on the panel and on the accent-soft fill. */
+  --c-accent: #F26166;
+  --c-accent-hover: #F5787C;
   --c-accent-press: #CF3A3F;
+  --c-primary: #2563EB;
+  --c-primary-hover: #1D4ED8;
+  --c-primary-press: #1E40AF;
+  --c-primary-fg: #FFFFFF;
+  --c-link: #60A5FA;
+  --c-danger-fill: #B91C1C;
+  --c-danger-fill-hover: #991B1B;
+  --c-danger-fill-press: #7F1D1D;
   --c-cyan: #6EA0FF;
   --c-ok: #4ADE80;
   --c-warn: #FBBF24;
@@ -66,7 +86,7 @@
   --c-bad-soft: #3B1719;
   --c-info-soft: #14284D;
   --c-subtle: #13161B;
-  --c-focus: #F87171;
+  --c-focus: #60A5FA;
   color-scheme: dark;
 }
 
@@ -82,6 +102,14 @@
   --color-accent-hover: var(--c-accent-hover);
   --color-accent-press: var(--c-accent-press);
   --color-cyan: var(--c-cyan);
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-press: var(--c-primary-press);
+  --color-primary-fg: var(--c-primary-fg);
+  --color-link: var(--c-link);
+  --color-danger-fill: var(--c-danger-fill);
+  --color-danger-fill-hover: var(--c-danger-fill-hover);
+  --color-danger-fill-press: var(--c-danger-fill-press);
   --color-orange: var(--c-orange);
   --color-ok: var(--c-ok);
   --color-warn: var(--c-warn);

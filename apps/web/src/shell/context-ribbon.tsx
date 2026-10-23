@@ -18,6 +18,7 @@ import { useProjectActivity } from '../features/projects/activity-read'
 import { useProjectStore } from '../state/stores'
 import { emergencyStop, resolveStop, retryStop } from '../demo/runtime'
 import { Banner, Button, Check, Field, Modal, Textarea, cx } from '../ui/index'
+import { organizationLabel } from './organization'
 
 function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }) {
   const db = useStopRead('all')
@@ -131,7 +132,7 @@ export function ContextRibbon({ openSwitcher }: { openSwitcher: () => void }) {
     return (
       <div className={cx(ribbon, 'bg-subtle')}>
         <Settings size={14} className="shrink-0 text-neutral" aria-hidden />
-        <span className="min-w-0 flex-1"><span className="font-semibold text-fg">Organization-wide settings</span> · Acme Security (Demo) · changes affect every project in the workspace</span>
+        <span className="min-w-0 flex-1"><span className="font-semibold text-fg">Organization-wide settings</span> · {organizationLabel()} · changes affect every project in the workspace</span>
         {project && <button className="shrink-0 whitespace-nowrap text-accent hover:underline max-md:hidden" onClick={() => go('project', { id: project.id })}>Back to {project.id}</button>}
       </div>
     )

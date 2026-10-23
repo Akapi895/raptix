@@ -66,14 +66,15 @@ afterEach(() => {
 })
 
 describe('ProjectPortfolio', () => {
-  it('renders the real engagements, raw statuses and the unavailable marker for API-absent columns', async () => {
+  it('renders the real engagements with their target, metadata verification and raw status filter chips', async () => {
     stubApi()
     ui(<ProjectPortfolio />)
     await screen.findByText('Q1 External Assessment')
     expect(screen.getByText(/eng-8f3c92a1/)).toBeTruthy()
     expect(screen.getByText(/q1-external-assessment/)).toBeTruthy()
-    expect(screen.getAllByText('—').length).toBeGreaterThan(0)
-    expect(screen.getByText('Planning')).toBeTruthy()
+    expect(screen.getByText('https://target.example.test')).toBeTruthy()
+    expect(screen.getAllByText('Verified').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /planning/ })).toBeTruthy()
   })
 
   it('shows the honest empty state when the server has no engagements', async () => {

@@ -41,7 +41,10 @@ export interface Operation {
   stopReason?: string; stopBy?: string; stopAt?: string; preflightAt?: string
 }
 export interface Agent { id: string; host: string; os: string; version: string; projectId: string; status: AgentStatus; lastSeen: string; op: string | null; group: string; conn: string; ip: string }
-export interface Asset { id: string; name: string; ident: string; ip: string; type: string; os: string; owner: string; projectId: string; scope: 'in' | 'out' | 'pending' | 'unclassified'; source: string; updated: string }
+/** What the observed graph shows for an asset: the services seen on it and the findings that relate to it. */
+export interface AssetObservation { ports: string[]; services: string[]; findingCount: number }
+/** `observation` is null when no observed fact matches the asset; it is absent in demo data, which has no graph. */
+export interface Asset { id: string; name: string; ident: string; ip: string; type: string; os: string; owner: string; projectId: string; scope: 'in' | 'out' | 'pending' | 'unclassified'; source: string; updated: string; observation?: AssetObservation | null }
 export interface Evidence { id: string; name: string; kind: string; source: string; at: string; by: string; projectId: string; findingId?: string; opId?: string; sensitive: boolean; captureId?: string; digest?: string; sizeBytes?: number; classification?: 'unclassified' | 'standard' | 'sensitive'; classificationVersion?: number; mediaType?: string; canClassify?: boolean; canViewOriginal?: boolean }
 /** Mock credentials-vault record (parity with the real engagement vault, ticket 16): the list view carries metadata only — `demoPlaintext` is seeded demo material that only an explicit, audited reveal surfaces in-session. */
 export interface VaultSecret { id: string; projectId: string; kind: string; label: string; demoPlaintext: string; revealCount: number; lastRevealedAt?: string; createdAt: string; createdBy: string }

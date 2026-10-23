@@ -141,7 +141,7 @@ export function ProjectNew() {
                 disabled={i > maxStep} onClick={() => jump(i)} aria-current={i === step ? 'step' : undefined}
                 className={cx('flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-xs transition', i === step ? 'border-accent bg-accent/10 text-fg' : invalid ? 'border-bad/50 text-fg' : complete ? 'border-ok/40 text-fg hover:bg-hover' : 'border-line text-muted')}
               >
-                <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold', i === step ? 'bg-accent text-white' : invalid ? 'bg-bad text-white' : complete ? 'bg-ok text-white' : 'bg-hover')}>
+                <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold', i === step ? 'bg-primary text-primary-fg' : invalid ? 'bg-danger-fill text-white' : complete ? 'bg-ok text-white' : 'bg-hover')}>
                   {invalid ? '!' : complete ? <CheckIcon size={12} /> : i + 1}
                 </span>
                 <span className="font-medium">{s.name.slice(3)}</span>

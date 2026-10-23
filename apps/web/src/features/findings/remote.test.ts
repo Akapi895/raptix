@@ -240,12 +240,13 @@ describe('real finding writes', () => {
     expect(res.ok && res.data.retests).toMatchObject([{ result: 'Persists', note: 'Still reproducible.' }])
   })
 
-  it('imports a workspace producer finding as a curated draft with its workspace path', async () => {
+  it('imports a workspace producer finding as a draft without dropping its remediation', async () => {
     vi.mocked(api_findings.fetchFindings).mockResolvedValue({
       engagementId: 'RT-1',
       findings: [{
         engagementId: 'RT-1', id: 'FIND-001', title: 'Producer claim', severity: 'medium',
         description: 'Observed by runtime.', evidence: 'See retained output.', attackVector: 'Unknown',
+        remediation: 'Restrict access to the administrative endpoint.',
         affectedAssets: ['10.129.227.140'], quality: { defaultSeverity: true, placeholderDescription: false, placeholderEvidence: false, unreadable: false },
         rawSource: '# FIND-001', sizeBytes: 12, source: 'workspace',
       }],
@@ -255,6 +256,7 @@ describe('real finding writes', () => {
     const res = await createRealFindingService().importSuggestion(ctx, 'FIND-001')
     expect(api_findings.importCuratedFinding).toHaveBeenCalledWith('RT-1', {
       title: 'Producer claim', severity: 'medium', detail: 'Observed by runtime.', producerRef: 'findings/FIND-001.md',
+      recommendation: 'Restrict access to the administrative endpoint.',
     })
     expect(res.ok).toBe(true)
     if (res.ok) expect(res.data).toMatchObject({ id: 'CF-imported', status: 'draft' })

@@ -1,5 +1,6 @@
 /** Findings presentation and contracts consumed outside the owning feature. */
 export { FindingList } from './list'
+export { FindingsPage } from './findings-page'
 export { FindingDetail } from './detail'
 export { FindingForm } from './form'
 export { EvidenceInspector, EvidenceList } from './evidence'

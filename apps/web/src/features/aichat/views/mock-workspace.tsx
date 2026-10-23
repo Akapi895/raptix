@@ -218,7 +218,7 @@ export function ConversationHeader({ conv, onMode }: { conv: Conversation; onMod
         <div role="radiogroup" aria-label="Conversation mode" className="inline-flex rounded-lg border border-line bg-panel p-0.5">
           {MODES.map((m) => (
             <button key={m.id} role="radio" aria-checked={conv.mode === m.id} tabIndex={conv.mode === m.id ? 0 : -1} disabled={ro} title={ro ? 'Project is read-only.' : `${m.hint} Applies to this conversation only.`} onKeyDown={(e) => moveChoice(e, 'radio')} onClick={() => onMode(m.id)}
-              className={cx('rounded-md px-2.5 py-1 text-xs font-medium disabled:opacity-50', conv.mode === m.id ? 'bg-accent text-white' : 'text-muted hover:bg-hover hover:text-fg')}>{m.label}</button>
+              className={cx('rounded-md px-2.5 py-1 text-xs font-medium disabled:opacity-50', conv.mode === m.id ? 'bg-primary text-primary-fg' : 'text-muted hover:bg-hover hover:text-fg')}>{m.label}</button>
           ))}
         </div>
       </div>
