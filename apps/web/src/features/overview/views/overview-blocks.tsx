@@ -91,13 +91,13 @@ export function OverviewKpi({ label, display, note, icon: Icon, tint, onOpen }: 
   )
 }
 
-/** The attention banner: emergency stops first, then decisions waiting for the actor. */
+/** The attention banner: emergency stops first, then the workflow decisions pending in the visible projects. */
 export function AttentionBanner({ stops, decisions }: { stops: number; decisions: number }): ReactElement | null {
   if (stops === 0 && decisions === 0) return null
   return (
     <div role="status" className={cx('flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm', stops > 0 ? 'border-bad/40 bg-bad-soft' : 'border-primary/30 bg-info-soft')}>
       <span className="font-medium text-fg">
-        {stops > 0 ? `${stops} active emergency stop${stops === 1 ? '' : 's'} need attention.` : `${decisions} decision${decisions === 1 ? '' : 's'} ${decisions === 1 ? 'awaits' : 'await'} your review.`}
+        {stops > 0 ? `${stops} active emergency stop${stops === 1 ? '' : 's'} need attention.` : `${decisions} workflow decision${decisions === 1 ? '' : 's'} pending in your projects.`}
       </span>
       <Button size="sm" variant="secondary" onClick={() => go('tasks')}>Open decision queue</Button>
     </div>

@@ -5,22 +5,22 @@
  * execution, recent events, capabilities, sources). A section that cannot be read shows as unavailable, and a figure the
  * source does not record shows as not recorded; neither is shown as zero.
  */
-import type { ReactElement } from 'react'
-import { Activity, FolderKanban, RefreshCw, ShieldAlert, ClipboardList } from 'lucide-react'
+import type { ComponentProps, ReactElement } from 'react'
+import { Activity, FolderKanban, RefreshCw, ShieldAlert, ClipboardList, type LucideIcon } from 'lucide-react'
 import { go } from '../../../router/navigate'
 import { Button, PageHeader } from '../../../ui/index'
 import { useOverviewFindings, useOverviewOperations, useOverviewProjects, useOverviewTasks } from '../query'
-import { openCuratedCount, type OverviewProject } from '../service'
+import { measureText, overviewMeasures, type MeasureId } from '../measures'
 import { AttentionBanner, DecisionBlock, OperationsBlock, OverviewKpi, Panel, SeverityBlock, SourceState } from './overview-blocks'
 
-/** Project states that count as active: the real lifecycle values and the demo vocabulary. */
-const ACTIVE_PROJECT_STATUSES = new Set(['active', 'approved', 'planning', 'running'])
+type KpiTint = ComponentProps<typeof OverviewKpi>['tint']
 
-/** A read's display for a KPI: pending shows a placeholder, an unreadable source shows unavailable, a missing count says so. */
-function kpiDisplay<T>(read: { isPending: boolean; error: unknown; data?: T }, pick: (data: T) => string): string {
-  if (read.isPending) return '…'
-  if (read.error || read.data === undefined) return 'Unavailable'
-  return pick(read.data)
+/** Icon and tint of each measure card; the label, caption, figure and target come from the measure itself. */
+const KPI_STYLE: Readonly<Record<MeasureId, { icon: LucideIcon; tint: KpiTint }>> = {
+  'active-projects': { icon: FolderKanban, tint: 'primary' },
+  'active-operations': { icon: Activity, tint: 'ok' },
+  'awaiting-decisions': { icon: ClipboardList, tint: 'warn' },
+  'open-curated-findings': { icon: ShieldAlert, tint: 'danger' },
 }
 
 /** The newest time any read in this view returned, in the browser's clock: a freshness marker, not a business time. */
@@ -43,6 +43,8 @@ export function OverviewPage(): ReactElement {
   }
   const readAt = readAtLabel([projects, findings, operations, tasks])
   const stopCount = (tasks.data ?? []).filter((t) => t.kind === 'active-stop').length
+  const measures = overviewMeasures({ projects, operations, tasks, findings })
+  const decisions = measures.find((measure) => measure.id === 'awaiting-decisions')?.value ?? 0
 
   return (
     <div className="space-y-4">
@@ -53,25 +55,20 @@ export function OverviewPage(): ReactElement {
         actions={<Button variant="secondary" icon={RefreshCw} onClick={refreshAll}>Refresh</Button>}
       />
 
-      <AttentionBanner stops={stopCount} decisions={tasks.data?.length ?? 0} />
+      <AttentionBanner stops={stopCount} decisions={decisions} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <OverviewKpi
-          label="Active projects" icon={FolderKanban} tint="primary" note="Planning or running" onOpen={() => go('projects')}
-          display={kpiDisplay(projects, (list: OverviewProject[]) => String(list.filter((p) => ACTIVE_PROJECT_STATUSES.has(p.status.toLowerCase())).length))}
-        />
-        <OverviewKpi
-          label="Active operations" icon={Activity} tint="ok" note="Operations running now" onOpen={() => go('operations')}
-          display={kpiDisplay(operations, (view) => (view.counts === null ? 'Not recorded' : String(view.counts.running ?? 0)))}
-        />
-        <OverviewKpi
-          label="Awaiting decisions" icon={ClipboardList} tint="warn" note="Approvals, reviews and stops" onOpen={() => go('tasks')}
-          display={kpiDisplay(tasks, (list) => String(list.length))}
-        />
-        <OverviewKpi
-          label="Open curated findings" icon={ShieldAlert} tint="danger" note="Confirmed, remediation or retest" onOpen={() => go('findings')}
-          display={kpiDisplay(findings, (view) => String(openCuratedCount(view)))}
-        />
+        {measures.map((measure) => (
+          <OverviewKpi
+            key={measure.id}
+            label={measure.label}
+            icon={KPI_STYLE[measure.id].icon}
+            tint={KPI_STYLE[measure.id].tint}
+            note={measure.definition}
+            display={measureText(measure)}
+            onOpen={() => go(measure.target)}
+          />
+        ))}
       </div>
 
       <div className="space-y-4">
