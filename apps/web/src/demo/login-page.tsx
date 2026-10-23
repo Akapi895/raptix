@@ -44,7 +44,7 @@ export function Login() {
     after(() => {
       if (/^locked@/i.test(email.trim())) { setErr('This account is locked after 5 failed attempts. Contact your organization admin to unlock it.'); return }
       const u = USERS.find((x) => x.email.toLowerCase() === email.trim().toLowerCase())
-      if (!u || pw !== DEMO_PASSWORD) { setErr(`Incorrect email or password. Check your details; in this demo the password is ${DEMO_PASSWORD}.`); return }
+      if (!u || pw !== DEMO_PASSWORD) { setErr('Incorrect email or password. Check your details and try again.'); return }
       switchPersona(u.name)
       setStage(u.role === 'admin' ? 'mfa' : 'org')
     })
