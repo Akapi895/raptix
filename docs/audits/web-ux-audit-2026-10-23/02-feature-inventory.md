@@ -11,7 +11,8 @@ Nhãn: `[C]` đọc source; `[B]` quan sát trong trình duyệt (mock, build pr
 | Sidebar dự án mock | 14 | `nav.ts:87–127` `[C]`; đếm DOM `[B]` | PROJECT 1, PREPARATION 3, OPERATIONS 3, RESULTS 3, MANAGEMENT 4 |
 | Sidebar dự án real | 18 | `nav.ts:134–177` `[C]` (chưa đếm DOM) | PROJECT 1, PREPARATION 3, OPERATIONS 3, RESULTS 4, MANAGEMENT 7 |
 | Mục theo cờ `asset-map` | +1 | `nav.ts:106, 152` `[C]` | Mặc định tắt; khi tắt, `#/asset-map` → "Page not found" `[B]` |
-| Header | — | `shell/header.tsx` `[C]` | Workspace switcher, project switcher, search, Emergency Stop (khi có project), Ask AI (khi có project), chuông, profile |
+| Header (mock) | — | `shell/header.tsx` `[C]`; mount khi không ở real (`shell/shell.tsx:168`) | Workspace switcher, project switcher, search, Emergency Stop (khi có project), Ask AI (khi có project), chuông, profile |
+| Header (real) | — | `shell/real-chrome.tsx` `[C]` (`RealTopbar`) | Project switcher, "Real mode", tìm kiếm thật, Ask AI (khi có project), chuông, menu tài khoản |
 | Menu profile | — | `shell/header.tsx:137–202` `[C]` | Theme, Settings, Sign out, khối Demo Tools |
 | Menu tài khoản real | — | `shell/real-chrome.tsx` `[C]` | Account/sign out, Switch to demo mode |
 

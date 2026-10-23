@@ -3,6 +3,15 @@
 Ngày: 2026-10-23 · Nhánh: `frontend` · Snapshot source trước mọi thay đổi Quick Win.
 Ghi chú đọc: xem [README](README.md) để biết nhãn `[B]`, `[C]`, `[NV]`, cách ưu tiên P0–P3 và độ phức tạp S/M/L.
 
+## Đính chính (giai đoạn 2, cùng ngày)
+
+Khi triển khai Quick Win, kiểm tra lại source phát hiện hai điểm sai trong bản audit gốc. Các mục bên dưới đã được sửa theo đính chính này.
+
+1. **Header demo không xuất hiện trong real mode.** `shell/shell.tsx:168` chỉ mount `Topbar` (`shell/header.tsx`) khi không ở real mode. Real mode dùng `RealTopbar` trong `shell/real-chrome.tsx`, và comment đầu file ghi rõ không render "demo surfaces, persona switcher, global search…". Vì vậy workspace switcher giả và khối Demo Tools chỉ là **mock-only**. UX-01 và UX-03 được điều chỉnh tương ứng; chỉ phần Settings (trang dùng chung) là rò demo sang real.
+2. **Lối thoát "Switch to demo mode" trong menu tài khoản real** (`shell/real-chrome.tsx:55`) là một mục có chủ đích, khác với nút trong màn hình lỗi. Vẫn giữ là quyết định mở (UX-04).
+
+Các phát hiện khác không đổi. Chi tiết việc đã làm và việc còn lại: `QUICK-WINS-IMPLEMENTATION-REPORT.md` cùng thư mục.
+
 ## Tóm tắt điều hành
 
 - Không có P0 đã xác minh.
@@ -14,9 +23,9 @@ Ghi chú đọc: xem [README](README.md) để biết nhãn `[B]`, `[C]`, `[NV]`
 
 | ID | Tiêu đề ngắn | Ưu tiên | Độ phức tạp | Nhãn | Quick Win? |
 |---|---|---|---|---|---|
-| UX-01 | Demo chrome không gắn theo mode (switcher, Settings header, note) | P1 | S–M | C + B (mock) | Có |
+| UX-01 | Settings (trang dùng chung) hiển thị chuỗi demo ở real; switcher và Demo Tools chỉ ở mock (đính chính) | P1 | S–M | C + B | Có |
 | UX-02 | Copy "hidden in production" không có cơ chế | P1 | S | B (build) + C | Có |
-| UX-03 | Demo controls vô hiệu hoặc lỗi trong real (persona, Reset demo, outcome) | P1 | S | C | Có |
+| UX-03 | Demo controls (persona, Reset demo, outcome) chỉ tồn tại ở mock; không phải lỗi real (đính chính) | P3 | — | C | Không |
 | UX-04 | Outage real lộ lệnh dev và lối thoát sang demo | P1 | S | B (build, không backend) | Có |
 | UX-05 | Trang prototype/QA có trong bản build | P2 | S–M | B | Có (phần an toàn) |
 | UX-06 | Hai mô hình sidebar dự án, số mục và ID khác nhau | P2 | M | C + B | Không (structural) |
@@ -44,7 +53,9 @@ Ghi chú đọc: xem [README](README.md) để biết nhãn `[B]`, `[C]`, `[NV]`
 
 ---
 
-## UX-01 · Demo chrome không gắn theo mode · P1 · S–M · [C] + [B] (mock)
+## UX-01 · Demo chrome không gắn theo mode · P1 · S–M · [C] + [B] (mock) — đính chính: phạm vi thu hẹp
+
+**Đính chính:** bản gốc ghi header "rendered in both modes". Sai: `Topbar` chỉ mount ở mock (`shell/shell.tsx:168`). Phần dưới mô tả header ở mock; phần rò sang real là Settings (mục "Hiện trạng", dòng về `settings-page.tsx`).
 
 **Vị trí**
 - `apps/web/src/shell/header.tsx:37–54` — `WorkspaceSwitcher`: tên cứng "Raptix Workspace — Test Lab", mục disabled "Production Workspace — No access", ghi chú "Simulated: only one workspace is available in this prototype".
@@ -84,7 +95,9 @@ Ghi chú đọc: xem [README](README.md) để biết nhãn `[B]`, `[C]`, `[NV]`
 
 ---
 
-## UX-03 · Demo controls vô hiệu hoặc lỗi trong real · P1 · S · [C]
+## UX-03 · (Đính chính) Demo controls chỉ ở mock · P3 · — · [C]
+
+**Đính chính:** các điều khiển dưới đây không được render ở real mode (xem đính chính đầu tài liệu). Mục giữ lại như ghi nhận về hành vi mock; không còn là P1 real.
 
 - **Persona switch vô hiệu**: `useMe()` (`state/console.ts:74–81`) đọc session khi real, nên `setMe` (`authStore`) không đổi người dùng. Dấu check luôn ở người thật.
 - **Reset demo lỗi**: `resetDemo` (`demo/runtime.ts:278`) gọi `demand()` (`:68`) và ném "The demo runtime is not initialized". `state/services.tsx` chỉ khởi tạo demo runtime ngoài real mode (`:15, :24, :42`).
