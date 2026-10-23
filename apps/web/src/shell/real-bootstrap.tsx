@@ -39,7 +39,7 @@ function BootError({ message, onRetry }: { message: string; onRetry: () => void 
         <p className="mt-1 text-xs text-neutral">
           {import.meta.env.DEV
             ? 'Real mode shows no demo data. Start the API (npm run dev:api) or switch to demo mode.'
-            : 'Real mode shows no demo data. Retry, or contact your administrator if this continues.'}
+            : 'Real mode shows no demo data.'}
         </p>
         <div className="mt-5 flex justify-center gap-2">
           <Button variant="primary" icon={RefreshCw} onClick={onRetry}>Retry</Button>
