@@ -152,6 +152,11 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
         </Shell>
       )
     }
+    if (!surface) {
+      // Not a route of this build (an unknown address, or a flagged page whose flag is off): the same unknown-route page mock mode shows.
+      const NotFound = routeComponent('notfound')
+      return <Shell slots={{}}>{NotFound ? <NotFound /> : null}</Shell>
+    }
     return (
       <Shell slots={{}}>
         <RealNotIntegrated page={route.page} />
