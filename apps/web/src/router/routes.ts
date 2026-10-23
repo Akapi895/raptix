@@ -14,6 +14,7 @@
  */
 import type { ComponentType } from 'react'
 import { isAssetMapEnabled } from '../features/asset-map/flag'
+import { PROTOTYPE_PAGES_ENABLED } from './prototype-pages'
 
 export type Slice = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 's' | 'st' | 'pj' | 'ov' | 'dp'
 
@@ -45,7 +46,6 @@ const BASE_ROUTES: Record<string, RouteDeclaration> = {
   error: { slice: 'a', real: system },
   offline: { slice: 'a', real: system },
   'session-expired': { slice: 'a', real: system },
-  states: { slice: 'a', real: unavailable },
   overview: { slice: 'ov', real: shared },
   tasks: { slice: 'a', real: component(() => import('../features/tasks').then((m) => m.RealCommandCenter)) },
 
@@ -98,10 +98,16 @@ const BASE_ROUTES: Record<string, RouteDeclaration> = {
   'c2-channel': { slice: 'h', real: feature('C2 channel', ['c2', 'campaigns']) },
   'c2-session': { slice: 'h', real: feature('C2 session', ['c2', 'campaigns']) },
   'c2-console': { slice: 'h', real: feature('C2 console', ['c2']) },
-
-  scenarios: { slice: 's', real: unavailable },
-  workspaces: { slice: 's', real: unavailable },
 }
+
+/** Prototype and QA pages (build-gated, see prototype-pages.ts): when off the keys are absent, so the routes resolve as unknown. */
+const PROTOTYPE_ROUTES: Record<string, RouteDeclaration> = PROTOTYPE_PAGES_ENABLED
+  ? {
+      states: { slice: 'a', real: unavailable },
+      scenarios: { slice: 's', real: unavailable },
+      workspaces: { slice: 's', real: unavailable },
+    }
+  : {}
 
 /** Feature-flagged (off by default): when off the key is absent, so the route resolves as unknown. */
 const FLAGGED_ROUTES: Record<string, RouteDeclaration> = isAssetMapEnabled()
@@ -109,7 +115,7 @@ const FLAGGED_ROUTES: Record<string, RouteDeclaration> = isAssetMapEnabled()
   : {}
 
 /** Every route key the console knows, once. */
-export const ROUTES: Record<string, RouteDeclaration> = { ...BASE_ROUTES, ...FLAGGED_ROUTES }
+export const ROUTES: Record<string, RouteDeclaration> = { ...BASE_ROUTES, ...PROTOTYPE_ROUTES, ...FLAGGED_ROUTES }
 
 /** Real-feature surfaces: the keys whose real rendering is RealFeatureRoute's composed panels. */
 export const FEATURE_SURFACES: Record<string, { title: string; panels: readonly PanelGroup[] }> = Object.fromEntries(

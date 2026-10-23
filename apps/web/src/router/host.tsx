@@ -158,10 +158,10 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
       </Shell>
     )
   }
-  if (OUTSIDE_SHELL.has(route.page)) {
-    const Outside = routeComponent(route.page)
-    return <Suspense fallback={null}>{Outside ? <Outside /> : null}</Suspense>
-  }
+  // An unregistered key (for example a build-gated prototype page) falls through to the normal unknown-route handling.
+  const Outside = OUTSIDE_SHELL.has(route.page) ? routeComponent(route.page) : null
+  if (Outside) return <Suspense fallback={null}><Outside /></Suspense>
+
   if (!authed || route.page === 'login') {
     const Login = routeComponent('login')
     return <Suspense fallback={null}>{Login ? <Login /> : null}</Suspense>
