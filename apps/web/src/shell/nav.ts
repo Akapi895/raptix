@@ -5,14 +5,15 @@
  * route inventory (.scratch/web-improve-refactor/route-inventory.md) is the
  * route authority. All screens are legacy until tickets 14+ migrate them, so
  * highlight matching stays `route.page` membership, exactly as before.
+ * The project menus are generated from features/navigation, one table for both modes.
  */
 import {
-  Activity, Archive, Bot, Boxes, ClipboardList, Crosshair, FileText, FolderKanban, Gauge, KeyRound, LayoutDashboard, Lock, Network, RadioTower, Scale, ScrollText, Server, Settings, ShieldAlert, Monitor, Users, type LucideIcon,
+  Activity, Bot, Boxes, ClipboardList, Crosshair, FileText, FolderKanban, Gauge, KeyRound, LayoutDashboard, Lock, RadioTower, ScrollText, Server, Settings, ShieldAlert, Users, type LucideIcon,
 } from 'lucide-react'
 import { useServiceProjection } from '../state/projection'
 import { DATA_MODE } from '../state/mode'
 import { readNavigationBadges } from '../features/navigation/service'
-import { isAssetMapEnabled } from '../features/asset-map/flag'
+import { projectMenu, projectSection, type ProjectNavGroup, type ProjectNavItem } from '../features/navigation'
 
 /**
  * Global sidebar: 3 groups / 7 items, the order of page-details proposal §2
@@ -50,7 +51,8 @@ export const isWide = (r: { page: string; tab?: string }) => WIDE_PAGES.includes
 /**
  * Mock project tab IDs, kept as the validation authority for the project
  * screens' own `?tab=` deep links (the sidebar's grouped model below is the
- * navigation surface; these IDs own the URLs).
+ * navigation surface; these IDs own the URLs). The demo project page owns
+ * `objectives` and `activity`, which are tabs without a menu item of their own.
  */
 export const MOCK_PROJECT_TABS = [
   { id: 'overview', label: 'Overview', icon: Gauge },
@@ -73,121 +75,18 @@ export const MOCK_PROJECT_TABS = [
 
 /* ───────────── Project workspace sidebar (plan 2026-10-16 §3.2) ───────────── */
 /**
- * The grouped project navigation. The sidebar replaces the project tab strip
- * as the nav between a project's sections; the tab IDs (`to`) stay the IDs
- * the project screens own (`plans` mock / `planning` real, `sessions` mock /
- * `c2` real — §3.3 keeps both). `match` holds the tab IDs and the resource
- * detail pages whose owning section the item is (§3.3): an operation detail
- * highlights Execution, a finding detail highlights Findings — the project
- * shell must survive drill-down instead of snapping back to global nav.
+ * The project menus come from features/navigation/project-sections.ts. They are built once per load, so the
+ * Asset Map flag is read when the app starts, as before.
  */
-export interface ProjectNavItem { to: string; label: string; icon: LucideIcon; match: string[] }
-export interface ProjectNavGroup { group: string; items: ProjectNavItem[] }
+export type { ProjectNavGroup, ProjectNavItem }
 
-export const MOCK_PROJECT_NAV: ProjectNavGroup[] = [
-  {
-    group: 'PROJECT',
-    items: [{ to: 'overview', label: 'Overview', icon: Gauge, match: ['overview', 'objectives'] }],
-  },
-  {
-    group: 'PREPARATION',
-    items: [
-      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope', 'document'] },
-      { to: 'assets', label: 'Assets', icon: Server, match: ['assets', 'asset', 'asset-new', 'asset-scope'] },
-      { to: 'plans', label: 'Planning', icon: ClipboardList, match: ['plans', 'ai-plan', 'ai-plan-review', 'ai-plan-compare'] },
-    ],
-  },
-  {
-    group: 'OPERATIONS',
-    items: [
-      { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
-      { to: 'operations', label: 'Operations', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
-      // Flagged: the map sits beside Execution until the phase 8 gate, so run controls stay reachable.
-      ...(isAssetMapEnabled() ? [{ to: 'asset-map', label: 'Asset Map', icon: Network, match: ['asset-map'] }] : []),
-      { to: 'sessions', label: 'Sessions', icon: RadioTower, match: ['sessions', 'c2-session', 'c2-console', 'c2-channel'] },
-    ],
-  },
-  {
-    group: 'RESULTS',
-    items: [
-      { to: 'findings', label: 'Findings', icon: ShieldAlert, match: ['findings', 'finding', 'finding-new'] },
-      { to: 'evidence', label: 'Evidence', icon: Archive, match: ['evidence'] },
-      { to: 'reports', label: 'Reports', icon: FileText, match: ['reports', 'report', 'report-new', 'report-preview', 'report-review'] },
-    ],
-  },
-  {
-    group: 'MANAGEMENT',
-    items: [
-      { to: 'team', label: 'Team & Approvals', icon: Users, match: ['team', 'members', 'approvals'] },
-      { to: 'audit', label: 'Activity & Audit', icon: ScrollText, match: ['audit', 'activity'] },
-      { to: 'vault', label: 'Vault', icon: KeyRound, match: ['vault'] },
-      { to: 'close', label: 'Closeout', icon: Lock, match: ['close', 'closure', 'closeout'] },
-    ],
-  },
-]
+export const MOCK_PROJECT_NAV: ProjectNavGroup[] = projectMenu('mock')
 
-/**
- * Real-mode groups keep every existing engagement surface reachable
- * (§3.2: Governance/Vault/Settings stay in Management; Fleet/Analysis keep
- * their sections). IDs are the real engagement tab IDs.
- */
-export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
-  {
-    group: 'PROJECT',
-    items: [{ to: 'overview', label: 'Overview', icon: Gauge, match: ['overview'] }],
-  },
-  {
-    group: 'PREPARATION',
-    items: [
-      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope'] },
-      { to: 'assets', label: 'Assets', icon: Server, match: ['assets', 'asset', 'asset-new', 'asset-scope'] },
-      { to: 'planning', label: 'Planning', icon: ClipboardList, match: ['planning', 'ai-plan', 'ai-plan-review', 'ai-plan-compare'] },
-    ],
-  },
-  {
-    group: 'OPERATIONS',
-    items: [
-      { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
-      { to: 'operations', label: 'Operations', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
-      ...(isAssetMapEnabled() ? [{ to: 'asset-map', label: 'Asset Map', icon: Network, match: ['asset-map'] }] : []),
-      { to: 'c2', label: 'Sessions', icon: RadioTower, match: ['c2', 'c2-channel', 'c2-session', 'c2-console'] },
-    ],
-  },
-  {
-    group: 'RESULTS',
-    items: [
-      { to: 'findings', label: 'Findings', icon: ShieldAlert, match: ['findings', 'finding', 'finding-new'] },
-      { to: 'evidence', label: 'Evidence', icon: Archive, match: ['evidence', 'evidence-inspector'] },
-      { to: 'analysis', label: 'Analysis', icon: Network, match: ['analysis'] },
-      { to: 'reports', label: 'Reports', icon: FileText, match: ['reports', 'report', 'report-new', 'report-preview', 'report-review'] },
-    ],
-  },
-  {
-    group: 'MANAGEMENT',
-    items: [
-      { to: 'team', label: 'Team & Approvals', icon: Users, match: ['team'] },
-      { to: 'fleet', label: 'Fleet', icon: Monitor, match: ['fleet', 'agents', 'agent'] },
-      { to: 'audit', label: 'Activity & Audit', icon: ScrollText, match: ['audit'] },
-      { to: 'governance', label: 'Governance', icon: Scale, match: ['governance'] },
-      { to: 'vault', label: 'Vault', icon: KeyRound, match: ['vault'] },
-      { to: 'settings', label: 'Project Settings', icon: Settings, match: ['settings'] },
-      { to: 'close', label: 'Closeout', icon: Lock, match: ['close'] },
-    ],
-  },
-]
+export const REAL_PROJECT_NAV: ProjectNavGroup[] = projectMenu('real')
 
 export const projectNavGroups = (): ProjectNavGroup[] => (DATA_MODE === 'real' ? REAL_PROJECT_NAV : MOCK_PROJECT_NAV)
 
-/** The owning project section of a route: the project page matches by tab, resource pages by page (§3.3). */
-export function projectSection(route: { page: string; tab?: string }, groups: ProjectNavGroup[]): ProjectNavItem | undefined {
-  for (const g of groups) {
-    for (const it of g.items) {
-      const hit = route.page === 'project' ? it.match.includes(route.tab ?? 'overview') : it.match.includes(route.page)
-      if (hit) return it
-    }
-  }
-  return undefined
-}
+export { projectSection }
 
 /**
  * Pending-work badges shown on the sidebar items, derived from the shared

@@ -27,7 +27,7 @@ import { ROLE_LABEL } from '../domain/policy'
 import { PROTOTYPE_PAGES_ENABLED } from '../router/prototype-pages'
 import { USERS } from '../domain/catalog';
 import { Button, IconButton, Segmented, Avatar, cx } from '../ui/index'
-import { MOCK_PROJECT_NAV, NAV } from './nav'
+import { NAV, projectNavGroups } from './nav'
 import { Pop } from './pop'
 import { ProjectStopControl } from './context-ribbon'
 import { organizationLabel } from './organization'
@@ -208,7 +208,7 @@ function AskAiButton() {
   const setNoticesOpen = useUiStore((s) => s.setNoticesOpen)
   const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
   // The project nav owns project pages; the global nav's Overview also matches some of them.
-  const nav = MOCK_PROJECT_NAV.flatMap((g) => g.items).find((i) => i.match.includes(route.page)) ?? NAV.flatMap((g) => g.items).find((i) => i.match.includes(route.page))
+  const nav = projectNavGroups().flatMap((g) => g.items).find((i) => i.match.includes(route.page)) ?? NAV.flatMap((g) => g.items).find((i) => i.match.includes(route.page))
   const ctx: CopilotCtx = { kind: route.page, id: route.id, label: `${nav?.label || route.page}${route.id ? ' ' + route.id : ''}` }
   const askAi = () => {
     setNoticesOpen(false)
