@@ -11,7 +11,7 @@ import type { Playbook } from '../../domain/entities'
 import { formatDemoInstant } from '../../domain/clock'
 import { projectAccessible, projectLocked } from '../../domain/policy'
 import type { ActorRef, Clock, RequestContext, ServiceResult } from '../../domain/service'
-import { fingerprint, type LibrarySkill, type LibraryCorpusQuery, type LibraryCorpusRead, type LibrarySkillDetail, type LibraryTechniqueRead, type LibraryProposal, type LibraryProposalsRead, type LibraryProposalExport, type LibraryService } from './service'
+import { fingerprint, summarizeCorpus, type LibrarySkill, type LibraryCorpusQuery, type LibraryCorpusRead, type LibrarySkillDetail, type LibraryTechniqueRead, type LibraryProposal, type LibraryProposalsRead, type LibraryProposalExport, type LibraryService } from './service'
 
 /** Roles that may submit, amend and propose a library proposal (server: operator and above). */
 const SUBMIT_ROLES: readonly string[] = ['admin', 'manager', 'operator']
@@ -71,7 +71,7 @@ export function listCorpus(db: Db, query: LibraryCorpusQuery = {}): ServiceResul
       pageSize,
       total: rows.length,
       counts: { skills: all.length, techniques: TECHNIQUES.length },
-      subdomains: [...new Set(all.map((skill) => skill.subdomain).filter((s): s is string => s !== null))].sort(),
+      ...summarizeCorpus(all),
       excludedActions: [],
     },
   }
@@ -253,8 +253,14 @@ export function exportProposal(db: Db, ctx: RequestContext, id: string): Service
   }
 }
 
+/** The simulated store holds no generated console data, so these reads say so rather than inventing entries. */
+const CONSOLE_DATA_UNAVAILABLE: ServiceResult<never> = { ok: false, failure: { kind: 'unavailable', message: 'Knowledge and the capability catalog are read from the server in real mode only.' } }
+
 export function createLibraryService(authority: DbAuthority, clock: Clock, guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>): LibraryService {
   return {
+    knowledge: () => Promise.resolve(CONSOLE_DATA_UNAVAILABLE),
+    knowledgeItem: () => Promise.resolve(CONSOLE_DATA_UNAVAILABLE),
+    catalog: () => Promise.resolve(CONSOLE_DATA_UNAVAILABLE),
     corpus: (ctx, query) => guard(() => listCorpus(authority.snapshot(), query)),
     skill: (ctx, name) => guard(() => skillDetail(authority.snapshot(), name)),
     technique: (ctx, id) => guard(() => techniqueDetail(authority.snapshot(), id)),

@@ -2,7 +2,7 @@ import type { FeatureServices } from '../domain/console-services';
 import type { FindingService } from '../features/findings'
 import type { AssetService } from '../features/assets';
 import type { ReportService } from '../features/reports/service';
-import type { LibraryService } from '../features/library';
+import type { LibraryService } from '../features/capabilities';
 import type { SettingsService } from '../features/settings/service'
 import type { ScopeService } from '../features/scope/service'
 import type { AuditService } from '../features/audit/service'
@@ -13,7 +13,7 @@ import { createRealAssetService } from '../features/assets/remote'
 import { createRealOverviewService } from '../features/overview'
 import { createRealProjectsService, projectsUnavailableReason } from '../features/projects'
 import { createRealFindingService } from '../features/findings/remote'
-import { createRealLibraryService } from '../features/library/remote'
+import { createRealLibraryService } from '../features/capabilities/remote'
 import { createRealReportService } from '../features/reports/remote';
 import { createRealAuditService } from '../features/audit/remote'
 import { createRealScopeService } from '../features/scope/remote'

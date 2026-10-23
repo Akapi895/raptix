@@ -5,12 +5,12 @@
  * cancels superseded reads.
  */
 import { useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
 import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
-import type { LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalsRead, LibrarySkillDetail, LibraryTechniqueRead, LibraryService } from './service';
+import type { CapabilityCatalogRead, KnowledgeItemRead, KnowledgeListRead, KnowledgeQuery,LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalsRead, LibrarySkillDetail, LibraryTechniqueRead, LibraryService } from './service';
 
 export const libraryKeys = {
   corpus: (scope: QueryScope, query: LibraryCorpusQuery) => consoleKeys.view('playbook', scope, 'corpus', query),
@@ -35,7 +35,7 @@ function useLibraryPort(): { port: () => LibraryService; scope: QueryScope } {
   return { port, scope }
 }
 
-/** The canonical corpus (organization-wide reference data). */
+/** The canonical corpus (organization-wide reference data). The previous page stays while a filter loads, so the facets do not flicker. */
 export function useLibraryCorpus(query: LibraryCorpusQuery) {
   const { port, scope } = useLibraryPort()
   return useQuery({
@@ -43,6 +43,51 @@ export function useLibraryCorpus(query: LibraryCorpusQuery) {
     queryFn: async (): Promise<LibraryCorpusRead> => {
       const ctx = { actor: actorRef(scope.actor, scope.role), projectId: scope.project, corr: 'library-corpus' }
       const res = await port().corpus(ctx, query)
+      if (!res.ok) throw new LibraryReadError(res.failure)
+      return res.data
+    },
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** The knowledge index: one filtered page, the previous page held while a filter loads. */
+export function useKnowledge(query: KnowledgeQuery) {
+  const { port, scope } = useLibraryPort()
+  return useQuery({
+    queryKey: consoleKeys.view('knowledge', scope, 'list', query),
+    queryFn: async (): Promise<KnowledgeListRead> => {
+      const ctx = { actor: actorRef(scope.actor, scope.role), projectId: scope.project, corr: 'knowledge-list' }
+      const res = await port().knowledge(ctx, query)
+      if (!res.ok) throw new LibraryReadError(res.failure)
+      return res.data
+    },
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** One knowledge record's file; read only while a row is open (`id` undefined keeps it idle). */
+export function useKnowledgeItem(id: string | undefined) {
+  const { port, scope } = useLibraryPort()
+  return useQuery({
+    queryKey: consoleKeys.view('knowledge-item', scope, id ?? ''),
+    queryFn: async (): Promise<KnowledgeItemRead> => {
+      const ctx = { actor: actorRef(scope.actor, scope.role), projectId: scope.project, corr: 'knowledge-item' }
+      const res = await port().knowledgeItem(ctx, id ?? '')
+      if (!res.ok) throw new LibraryReadError(res.failure)
+      return res.data
+    },
+    enabled: !!id,
+  })
+}
+
+/** The generated capability catalog: agents, plugin subagents, tool definitions and MCP state. */
+export function useCapabilityCatalog() {
+  const { port, scope } = useLibraryPort()
+  return useQuery({
+    queryKey: consoleKeys.view('capability-catalog', scope, 'catalog'),
+    queryFn: async (): Promise<CapabilityCatalogRead> => {
+      const ctx = { actor: actorRef(scope.actor, scope.role), projectId: scope.project, corr: 'capability-catalog' }
+      const res = await port().catalog(ctx)
       if (!res.ok) throw new LibraryReadError(res.failure)
       return res.data
     },
@@ -78,8 +123,8 @@ export function useTechniqueDetail(id?: string) {
   })
 }
 
-/** Proposals for the active engagement. */
-export function useLibraryProposals() {
+/** Proposals for the active engagement; `enabled` is false while no engagement is selected. */
+export function useLibraryProposals(enabled = true) {
   const { port, scope } = useLibraryPort()
   return useQuery({
     queryKey: libraryKeys.proposals(scope),
@@ -89,6 +134,7 @@ export function useLibraryProposals() {
       if (!res.ok) throw new LibraryReadError(res.failure)
       return res.data
     },
+    enabled,
   })
 }
 

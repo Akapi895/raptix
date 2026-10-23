@@ -38,7 +38,7 @@ describe('global navigation', () => {
   it('lists the seven global pages in proposal order and keeps Reports in the project menus only', async () => {
     const nav = await import('./nav');
     const globalLabels = nav.NAV.flatMap(group => group.items.map(item => item.label));
-    expect(globalLabels).toEqual(['Overview', 'Projects', 'Findings', 'Assets', 'Library', 'Infrastructure', 'Settings']);
+    expect(globalLabels).toEqual(['Overview', 'Projects', 'Findings', 'Assets', 'Capabilities', 'Infrastructure', 'Settings']);
     for (const groups of [nav.MOCK_PROJECT_NAV, nav.REAL_PROJECT_NAV]) {
       expect(groups.flatMap(group => group.items.map(item => item.label))).toContain('Reports');
     }

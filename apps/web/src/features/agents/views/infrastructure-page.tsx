@@ -23,7 +23,7 @@ import { agentRoutes, AgentsContent } from './agents-page'
 export type InfraTab = 'agents' | 'c2' | 'sessions'
 
 const INFRA_TABS: { id: InfraTab; label: string }[] = [
-  { id: 'agents', label: 'Execution agents' },
+  { id: 'agents', label: 'Runtime agents' },
   { id: 'c2', label: 'C2 infrastructure' },
   { id: 'sessions', label: 'Sessions' },
 ]
@@ -35,7 +35,7 @@ export function InfrastructurePage({ tab }: { tab: InfraTab }) {
   const route = useRoute()
   return (
     <>
-      <PageHeader title="Infrastructure" sub="Execution agents, C2 infrastructure and session monitoring across the projects you can access. Agent here means an executor on managed hosts — not an AI specialist." />
+      <PageHeader title="Infrastructure" sub="Runtime agents, C2 infrastructure and session monitoring across the projects you can access. Runtime agents are bound runtime threads; C2 sessions are the managed hosts." />
       <Tabs tabs={INFRA_TABS} value={tab} onChange={(t) => go('infrastructure', { tab: t })} />
       <div className="mt-4">
         {tab === 'agents' && <AgentsContent initialTab={route.page === 'agents' ? route.tab : undefined} />}
@@ -53,7 +53,7 @@ export function InfrastructureRoute() {
   return <InfrastructurePage tab={tab} />
 }
 
-/** Legacy `#/agents`: global scope opens Infrastructure/Execution agents; project scope keeps the project agents page. */
+/** Legacy `#/agents`: global scope opens Infrastructure/Runtime agents; project scope keeps the project agents page. */
 export function AgentsCompat() {
   const pid = useProjectStore((s) => s.pid)
   if (pid === 'all') return <InfrastructurePage tab="agents" />

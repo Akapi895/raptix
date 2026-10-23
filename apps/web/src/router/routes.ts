@@ -59,14 +59,14 @@ const BASE_ROUTES: Record<string, RouteDeclaration> = {
   'operation-schedule': { slice: 'c', real: feature('Operation scheduling', ['governance', 'operations']) },
   operation: { slice: 'c', real: feature('Operation', ['operations']) },
 
-  infrastructure: { slice: 'i', real: unavailable },
+  infrastructure: { slice: 'i', real: component(() => import('../features/infrastructure').then((m) => m.RealInfrastructureRoute)) },
   agents: { slice: 'i', real: feature('Agent fleet', ['fleet']) },
   agent: { slice: 'd', real: feature('Agent detail', ['fleet']) },
   assets: { slice: 'd', real: shared },
   'asset-new': { slice: 'd', real: shared },
   'asset-scope': { slice: 'd', real: shared },
   asset: { slice: 'd', real: shared },
-  playbooks: { slice: 'd', real: shared },
+  capabilities: { slice: 'd', real: shared },
   playbook: { slice: 'd', real: shared },
   technique: { slice: 'd', real: shared },
   'playbook-review': { slice: 'd', real: shared },
@@ -122,4 +122,4 @@ export const SHARED_ROUTES: ReadonlySet<string> = new Set(
 )
 
 /** Keys that show the global resource in real mode when no project is scoped (host.tsx applies the scope rule). */
-export const GLOBAL_RESOURCE_PAGES: ReadonlySet<string> = new Set(['findings', 'reports', 'operations', 'analysis', 'agents', 'c2'])
+export const GLOBAL_RESOURCE_PAGES: ReadonlySet<string> = new Set(['reports', 'operations', 'analysis', 'agents', 'c2'])

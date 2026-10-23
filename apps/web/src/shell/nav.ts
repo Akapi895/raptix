@@ -7,7 +7,7 @@
  * highlight matching stays `route.page` membership, exactly as before.
  */
 import {
-  Activity, Archive, BookOpen, Bot, ClipboardList, Crosshair, FileText, FolderKanban, Gauge, KeyRound, LayoutDashboard, Lock, Network, RadioTower, Scale, ScrollText, Server, Settings, ShieldAlert, Monitor, Users, type LucideIcon,
+  Activity, Archive, Bot, Boxes, ClipboardList, Crosshair, FileText, FolderKanban, Gauge, KeyRound, LayoutDashboard, Lock, Network, RadioTower, Scale, ScrollText, Server, Settings, ShieldAlert, Monitor, Users, type LucideIcon,
 } from 'lucide-react'
 import { useServiceProjection } from '../state/projection'
 import { DATA_MODE } from '../state/mode'
@@ -37,7 +37,7 @@ export const NAV: { group: string; items: { page: string; label: string; icon: L
     group: 'RESOURCES',
     items: [
       { page: 'assets', label: 'Assets', icon: Server, match: ['assets', 'asset', 'asset-new', 'asset-scope'] },
-      { page: 'playbooks', label: 'Library', icon: BookOpen, match: ['playbooks', 'playbook', 'technique', 'playbook-review'] },
+      { page: 'capabilities', label: 'Capabilities', icon: Boxes, match: ['capabilities', 'playbook', 'technique', 'playbook-review'] },
       { page: 'infrastructure', label: 'Infrastructure', icon: RadioTower, match: ['infrastructure', 'agents', 'agent', 'c2', 'c2-channel', 'c2-session', 'c2-console'] },
     ],
   },

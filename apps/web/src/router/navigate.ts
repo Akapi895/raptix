@@ -91,7 +91,7 @@ export function go(page: string, opts?: { id?: string; tab?: string; engagementI
    project route for the portfolio). */
 const DETAIL_MAP: Record<string, string> = {
   operation: 'operations', preflight: 'operations', 'operation-schedule': 'operations', finding: 'findings', report: 'reports', 'report-preview': 'reports', 'report-review': 'reports',
-  agent: 'agents', asset: 'assets', 'asset-scope': 'assets', playbook: 'playbooks', 'playbook-review': 'playbooks', technique: 'playbooks',
+  agent: 'agents', asset: 'assets', 'asset-scope': 'assets', playbook: 'capabilities', 'playbook-review': 'capabilities', technique: 'capabilities',
   'ai-plan': 'ai-operator', 'ai-plan-review': 'ai-operator', 'ai-plan-compare': 'ai-operator', 'ai-trace': 'ai-operator', 'ai-history': 'ai-operator',
   'c2-session': 'c2', 'c2-console': 'c2', 'c2-channel': 'c2',
 }

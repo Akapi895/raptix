@@ -1,6 +1,7 @@
 import type { RequestContext, ServiceResult } from '../../domain/service'
-import type { LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalExport, LibraryProposalsRead, LibraryProposalStatus, LibraryService, LibrarySkill, LibrarySkillDetail, LibraryTechniqueRead } from './service';
-import { amendLibraryProposal, decideLibraryProposal, exportLibraryProposal, fetchLibrary, fetchLibraryProposal, fetchLibraryProposals, fetchLibrarySkill, fetchLibraryTechnique, proposeLibraryProposal, submitLibraryProposal, type LibraryProposalView } from './endpoints';
+import type { CapabilityCatalogRead, KnowledgeItemRead, KnowledgeListRead, KnowledgeQuery, LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalExport, LibraryProposalsRead, LibraryProposalStatus, LibraryService, LibrarySkill, LibrarySkillDetail, LibraryTechniqueRead } from './service';
+import { summarizeCorpus } from './service';
+import { fetchCapabilityCatalog, fetchKnowledge, fetchKnowledgeItem, amendLibraryProposal, decideLibraryProposal, exportLibraryProposal, fetchLibrary, fetchLibraryProposal, fetchLibraryProposals, fetchLibrarySkill, fetchLibraryTechnique, proposeLibraryProposal, submitLibraryProposal, type LibraryProposalView } from './endpoints';
 import { guarded } from '../../platform/adapter-shared'
 
 const PAGE_SIZE = 10
@@ -53,6 +54,24 @@ function specificProject(ctx: RequestContext): ServiceResult<string> {
  */
 export function createRealLibraryService(): LibraryService {
   return {
+    knowledge: (ctx, query: KnowledgeQuery = {}) => guarded(async (): Promise<ServiceResult<KnowledgeListRead>> => {
+      const denied = signedIn<KnowledgeListRead>(ctx)
+      if (denied) return denied
+      return { ok: true, data: await fetchKnowledge(query) }
+    }),
+
+    knowledgeItem: (ctx, id: string) => guarded(async (): Promise<ServiceResult<KnowledgeItemRead>> => {
+      const denied = signedIn<KnowledgeItemRead>(ctx)
+      if (denied) return denied
+      return { ok: true, data: await fetchKnowledgeItem(id) }
+    }),
+
+    catalog: (ctx) => guarded(async (): Promise<ServiceResult<CapabilityCatalogRead>> => {
+      const denied = signedIn<CapabilityCatalogRead>(ctx)
+      if (denied) return denied
+      return { ok: true, data: await fetchCapabilityCatalog() }
+    }),
+
     corpus: (ctx, query: LibraryCorpusQuery = {}) => guarded(async (): Promise<ServiceResult<LibraryCorpusRead>> => {
       const denied = signedIn<LibraryCorpusRead>(ctx)
       if (denied) return denied
@@ -73,7 +92,7 @@ export function createRealLibraryService(): LibraryService {
           pageSize,
           total: rows.length,
           counts: view.counts,
-          subdomains: [...new Set(view.skills.map((skill) => skill.subdomain).filter((s): s is string => s !== null))].sort(),
+          ...summarizeCorpus(view.skills),
           excludedActions: view.excludedActions,
         },
       }

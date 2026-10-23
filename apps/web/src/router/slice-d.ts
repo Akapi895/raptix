@@ -4,6 +4,6 @@
 import type { ComponentType } from 'react'
 import { agentRoutes } from '../features/agents/views/agents-page'
 import { assetRoutes } from '../features/assets/index'
-import { libraryRoutes } from '../features/library/index'
+import { capabilityRoutes } from '../features/capabilities/index'
 
-export const routes: Record<string, ComponentType> = { ...agentRoutes, ...assetRoutes, ...libraryRoutes }
+export const routes: Record<string, ComponentType> = { ...agentRoutes, ...assetRoutes, ...capabilityRoutes }

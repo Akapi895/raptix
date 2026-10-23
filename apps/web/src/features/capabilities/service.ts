@@ -44,7 +44,10 @@ export interface LibraryCorpusRead {
   pageSize: number
   total: number
   counts: { skills: number; techniques: number | null }
-  subdomains: string[]
+  /** Skills per subdomain over the whole corpus; filters do not change them. */
+  subdomains: Record<string, number>
+  /** Distinct technique ids that at least one corpus skill references, over the whole corpus. */
+  techniquesCovered: number
   /** Corpus actions the runtime excludes from the library, with their reasons. */
   excludedActions: string[]
 }
@@ -114,7 +117,105 @@ export interface LibraryProposalExport {
   publicationContract: string[]
 }
 
+/* Generated console data (knowledge index and capability catalog). Read from the server's data folder in real mode only. */
+
+export interface KnowledgeItem {
+  id: string
+  source: string
+  type: string
+  name: string
+  description: string | null
+  status: string | null
+}
+
+export interface KnowledgeQuery {
+  q?: string
+  source?: string
+  type?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface KnowledgeListRead {
+  items: KnowledgeItem[]
+  page: number
+  pageSize: number
+  total: number
+  /** Counts over the whole index; the filters never change them. */
+  sources: Record<string, number>
+  types: Record<string, number>
+  generatedOn: string | null
+}
+
+export interface CapabilityAgent {
+  id: string
+  description: string | null
+  module: string
+  toolDomains: string[]
+  /** The standard prompt markdown; null when the agent has no standard prompt file. */
+  prompt: string | null
+  /** The module source that defines the agent. */
+  source: string | null
+}
+
+export interface CapabilitySubagent {
+  id: string
+  package: string
+  target: string
+  /** The repo module the entry point resolves to; null when it cannot be found. */
+  module: string | null
+  source: string | null
+}
+
+/** One knowledge record, with the record file as the ingestion wrote it. */
+export interface KnowledgeItemRead {
+  item: KnowledgeItem
+  content: string
+}
+
+/** A tool written in the repo: a @tool function, with its signature, docstring and source. */
+export interface CapabilityTool {
+  name: string
+  domain: string
+  description: string | null
+  docstring: string | null
+  signature: string
+  source: string
+  file: string
+}
+
+/** An external executable behind a binary-backed capability, and the adapter that runs it. */
+export interface CapabilityBinary {
+  executable: string
+  /** `base` is the sandbox base image; any other profile is optional. */
+  profile: string | null
+  adapterId: string
+  capabilityId: string
+  capabilityDescription: string | null
+  riskClass: string
+  /** Empty means every role. */
+  allowedRoles: string[]
+  sourceModule: string | null
+  sourceClass: string | null
+  source: string | null
+}
+
+export interface CapabilityCatalogRead {
+  generatedOn: string | null
+  agents: CapabilityAgent[]
+  subagents: CapabilitySubagent[]
+  tools: CapabilityTool[]
+  binaries: CapabilityBinary[]
+  mcp: { envVar: string; configured: boolean; servers: { name: string; transport: string }[] }
+}
+
 export interface LibraryService {
+  /** The knowledge index: reference entries from the console data folder, filtered and paged by the server. */
+  knowledge(ctx: RequestContext, query?: KnowledgeQuery): Promise<ServiceResult<KnowledgeListRead>>
+  /** One record's file, read on demand when a row is opened. */
+  knowledgeItem(ctx: RequestContext, id: string): Promise<ServiceResult<KnowledgeItemRead>>
+  /** Agents, plugin subagents, tool definitions and MCP state from the generated capability catalog. */
+  catalog(ctx: RequestContext): Promise<ServiceResult<CapabilityCatalogRead>>
   corpus(ctx: RequestContext, query?: LibraryCorpusQuery): Promise<ServiceResult<LibraryCorpusRead>>
   skill(ctx: RequestContext, name: string): Promise<ServiceResult<LibrarySkillDetail>>
   technique(ctx: RequestContext, id: string): Promise<ServiceResult<LibraryTechniqueRead>>
@@ -125,6 +226,17 @@ export interface LibraryService {
   propose(ctx: RequestContext, id: string): Promise<ServiceResult<LibraryProposal>>
   decide(ctx: RequestContext, id: string, input: { decision: 'approved' | 'rejected'; expectedVersion: number; comment?: string }): Promise<ServiceResult<LibraryProposal>>
   exportProposal(ctx: RequestContext, id: string): Promise<ServiceResult<LibraryProposalExport>>
+}
+
+/** Whole-corpus facets shared by both adapters, so the simulated and real counts follow the same rule. */
+export function summarizeCorpus(skills: readonly LibrarySkill[]): Pick<LibraryCorpusRead, 'subdomains' | 'techniquesCovered'> {
+  const subdomains: Record<string, number> = {}
+  const techniques = new Set<string>()
+  for (const skill of skills) {
+    if (skill.subdomain !== null) subdomains[skill.subdomain] = (subdomains[skill.subdomain] ?? 0) + 1
+    for (const id of skill.mitreIds) techniques.add(id)
+  }
+  return { subdomains, techniquesCovered: techniques.size }
 }
 
 /** Simulated content fingerprint in the server's `sha256:<hex>` form: stable for a body, not a cryptographic digest. */

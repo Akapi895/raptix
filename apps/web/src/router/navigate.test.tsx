@@ -70,10 +70,10 @@ describe('route projection (useRoute)', () => {
     setActiveRouter(router)
     render(<RouterProvider router={router} />)
     expect(latest).toEqual({ page: 'projects' })
-    act(() => { go('playbooks', { id: 'PB-1', tab: 'steps' }) })
-    expect(window.location.hash).toBe('#/playbooks/PB-1?tab=steps')
-    expect(latest).toEqual({ page: 'playbooks', id: 'PB-1', tab: 'steps' })
-    expect(currentRoute()).toEqual({ page: 'playbooks', id: 'PB-1', tab: 'steps' })
+    act(() => { go('capabilities', { id: 'PB-1', tab: 'steps' }) })
+    expect(window.location.hash).toBe('#/capabilities/PB-1?tab=steps')
+    expect(latest).toEqual({ page: 'capabilities', id: 'PB-1', tab: 'steps' })
+    expect(currentRoute()).toEqual({ page: 'capabilities', id: 'PB-1', tab: 'steps' })
   })
 
   it('the router-less fallback writes the projected route and the legacy hash', () => {
@@ -179,10 +179,10 @@ describe('goGlobal (global-scope sidebar navigation)', () => {
   })
 
   it('is a plain guarded go when the scope is already global', () => {
-    act(() => { goGlobal('playbooks', { id: 'PB-1' }) })
+    act(() => { goGlobal('capabilities', { id: 'PB-1' }) })
     expect(useSessionStore.getState().unsaved).toBeNull()
-    expect(currentRoute()).toEqual({ page: 'playbooks', id: 'PB-1' })
-    expect(window.location.hash).toBe('#/playbooks/PB-1')
+    expect(currentRoute()).toEqual({ page: 'capabilities', id: 'PB-1' })
+    expect(window.location.hash).toBe('#/capabilities/PB-1')
   })
 })
 
@@ -195,9 +195,9 @@ describe('mounted navigation integration', () => {
     setActiveRouter(router)
     mountServices(<RouterProvider router={router} />)
     expect(latest).toEqual({ page: 'projects' })
-    act(() => { go('playbooks') })
-    expect(latest.page).toBe('playbooks')
-    expect(window.location.hash).toBe('#/playbooks')
+    act(() => { go('capabilities') })
+    expect(latest.page).toBe('capabilities')
+    expect(window.location.hash).toBe('#/capabilities')
     act(() => { navRawRoute({ page: 'settings' }) })
     expect(currentRoute().page).toBe('settings')
     expect(latest.page).toBe('settings')

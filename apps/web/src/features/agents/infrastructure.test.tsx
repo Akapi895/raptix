@@ -43,11 +43,11 @@ afterEach(() => {
 })
 
 describe('global infrastructure route', () => {
-  it('opens the Execution agents tab by default and follows URL tab changes', async () => {
+  it('opens the Runtime agents tab by default and follows URL tab changes', async () => {
     mountApp('#/infrastructure')
     signIn()
     expect(await screen.findByRole('heading', { name: 'Infrastructure' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Execution agents' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Runtime agents' })).toHaveAttribute('aria-selected', 'true')
     act(() => { go('infrastructure', { tab: 'sessions' }) })
     await waitFor(() => expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true'))
   })
@@ -56,14 +56,14 @@ describe('global infrastructure route', () => {
     mountApp('#/infrastructure?tab=unknown')
     signIn()
     expect(await screen.findByRole('heading', { name: 'Infrastructure' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Execution agents' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Runtime agents' })).toHaveAttribute('aria-selected', 'true')
   })
 
-  it('legacy #/agents?tab=health lands on Infrastructure/Execution agents at global scope', async () => {
+  it('legacy #/agents?tab=health lands on Infrastructure/Runtime agents at global scope', async () => {
     mountApp('#/agents?tab=health')
     signIn()
     expect(await screen.findByRole('heading', { name: 'Infrastructure' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Execution agents' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Runtime agents' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('legacy #/c2?tab=sessions opens the Sessions monitoring tab without interactive-access CTAs', async () => {
