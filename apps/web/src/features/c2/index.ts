@@ -2,3 +2,8 @@
 export { C2ProviderTab } from './provider-tab'
 export { C2InfraContent, C2Overview, Sessions } from './views/c2-pages'
 export { RealCampaignsPanel } from './views/campaigns-panel'
+export { ConsoleCard } from './provider-console'
+export { GrantsCard } from './provider-grants'
+export { InfrastructureCard } from './provider-tab'
+export { useProviderGrants, useProviderSurface } from './provider-query'
+export { useRealCampaigns } from './campaigns'

@@ -1,4 +1,5 @@
 import { apiFetch } from '../../platform/transport';
+import type { CapabilityCatalogRead, KnowledgeItemRead, KnowledgeListRead, KnowledgeQuery } from './service';
 
 /* ───────────── Tradecraft library and observed analysis (integration ticket 14) ───────────── */
 export interface LibrarySkillView {
@@ -142,4 +143,43 @@ export interface LibraryProposalExportView {
 export function exportLibraryProposal(engagementId: string, proposalId: string): Promise<LibraryProposalExportView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/library-proposals/${encodeURIComponent(proposalId)}/export`, (v): v is LibraryProposalExportView =>
     typeof v === 'object' && v !== null && (v as LibraryProposalExportView).kind === 'library-body-replacement-proposal' && Array.isArray((v as LibraryProposalExportView).publicationContract))
+}
+
+/* ───────────── Generated console data (knowledge index, capability catalog) ───────────── */
+
+export function fetchKnowledge(query: KnowledgeQuery): Promise<KnowledgeListRead> {
+  const params = new URLSearchParams()
+  if (query.q) params.set('q', query.q)
+  if (query.source) params.set('source', query.source)
+  if (query.type) params.set('type', query.type)
+  if (query.page) params.set('page', String(query.page))
+  if (query.pageSize) params.set('pageSize', String(query.pageSize))
+  const qs = params.toString()
+  return apiFetch(`/knowledge${qs ? `?${qs}` : ''}`, isKnowledgeListRead)
+}
+
+export function fetchCapabilityCatalog(): Promise<CapabilityCatalogRead> {
+  return apiFetch('/capabilities/catalog', isCapabilityCatalogRead)
+}
+
+export function fetchKnowledgeItem(id: string): Promise<KnowledgeItemRead> {
+  return apiFetch(`/knowledge/item?id=${encodeURIComponent(id)}`, isKnowledgeItemRead)
+}
+
+function isKnowledgeItemRead(v: unknown): v is KnowledgeItemRead {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as KnowledgeItemRead
+  return typeof doc.item === 'object' && doc.item !== null && typeof doc.content === 'string'
+}
+
+function isKnowledgeListRead(v: unknown): v is KnowledgeListRead {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as KnowledgeListRead
+  return Array.isArray(doc.items) && typeof doc.total === 'number' && typeof doc.sources === 'object' && doc.sources !== null && typeof doc.types === 'object' && doc.types !== null
+}
+
+function isCapabilityCatalogRead(v: unknown): v is CapabilityCatalogRead {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as CapabilityCatalogRead
+  return Array.isArray(doc.agents) && Array.isArray(doc.subagents) && Array.isArray(doc.tools) && typeof doc.mcp === 'object' && doc.mcp !== null && Array.isArray(doc.mcp.servers)
 }

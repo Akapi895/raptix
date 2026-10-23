@@ -13,7 +13,7 @@ import type { PlanCompareService } from '../features/plans/compare';
 import type { AgentService } from '../features/agents/service';
 import type { ReportService } from '../features/reports/service';
 import type { BranchService } from '../features/branches/service';
-import type { LibraryService } from '../features/library';
+import type { LibraryService } from '../features/capabilities';
 import type { OverviewService } from '../features/overview';
 import type { ProjectsService } from '../features/projects';
 import type { AnalysisService } from '../features/analysis/service';

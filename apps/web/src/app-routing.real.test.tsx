@@ -74,7 +74,7 @@ it('replaces global navigation after opening a project from the portfolio and re
   for (const label of ['Overview', 'Planning', 'AI Workspace', 'Execution', 'Fleet', 'C2 Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Scope & ROE', 'Governance', 'Vault', 'Activity & Audit', 'Project Settings', 'Closeout']) {
     expect(screen.getAllByRole('button', { name: label }).length).toBeGreaterThan(0)
   }
-  expect(screen.queryByRole('button', { name: 'Library' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Capabilities' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Findings' }))
   await waitFor(() => expect(window.location.hash).toBe('#/project/eng-1?tab=findings'))
   expect(screen.getByRole('button', { name: 'Findings' })).toHaveAttribute('aria-current', 'page')
@@ -83,11 +83,11 @@ it('replaces global navigation after opening a project from the portfolio and re
   expect(screen.getByRole('button', { name: 'Evidence' })).toHaveAttribute('aria-current', 'page')
   fireEvent.click(screen.getByRole('button', { name: 'All projects' }))
   await screen.findByRole('heading', { name: 'Projects' })
-  expect(screen.getByRole('button', { name: 'Library' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Capabilities' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'All projects' })).toBeNull()
 })
 
-it.each(['infrastructure', 'findings', 'reports'])('keeps real global %s honest about missing aggregate sources', async (page) => {
+it.each(['infrastructure', 'reports'])('keeps real global %s honest about missing aggregate sources', async (page) => {
   useProjectStore.getState().setPid('all')
   window.history.replaceState(null, '', `/?dataMode=real#/${page}`)
   resetNavStores()
@@ -104,3 +104,27 @@ it.each(['infrastructure', 'findings', 'reports'])('keeps real global %s honest 
   fireEvent.click(await screen.findByRole('button', { name: 'Open project' }))
   await waitFor(() => expect(window.location.hash).toContain('#/project/eng-1?tab='))
 })
+
+it('lists the real all-projects findings from the server read and opens a row in its finding detail', async () => {
+  useProjectStore.getState().setPid('all')
+  window.history.replaceState(null, '', '/?dataMode=real#/findings')
+  resetNavStores()
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.endsWith('/capabilities')) return new Response(JSON.stringify({ version: 1, mode: 'local-single-user', capabilities: { projects: { supported: true, available: true }, findings: { supported: true, available: true } } }))
+    if (url.endsWith('/auth/session')) return new Response('{}', { status: 404 })
+    if (url.endsWith('/api/engagements')) return new Response(JSON.stringify([engagementDto]))
+    if (url.endsWith('/api/engagements/eng-1')) return new Response(JSON.stringify(engagementDto))
+    if (url.endsWith('/api/findings')) return new Response(JSON.stringify({
+      findings: [{ id: 'fd-1', engagementId: 'eng-1', projectName: 'Northwind', targetValue: 'https://northwind.example.test', title: 'Exposed admin panel', severity: 'high', status: 'confirmed', sourceType: 'authored', description: 'Admin panel reachable without authentication.', techniqueId: 'T1190', createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T09:00:00.000Z' }],
+      truncated: false,
+      source: 'db',
+    }))
+    return new Response('{}', { status: 404 })
+  }))
+  render(<App />)
+  expect(await screen.findByText('Exposed admin panel', undefined, { timeout: 15000 })).toBeInTheDocument()
+  expect(screen.queryByText('Global source unavailable')).toBeNull()
+  expect(screen.getByText('Project: Northwind')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('Exposed admin panel'))
+  await waitFor(() => expect(window.location.hash).toContain('#/finding/fd-1'))
+}, 20_000)

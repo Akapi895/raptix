@@ -107,7 +107,7 @@ describe('sidebar navigation and active section', () => {
     await waitFor(() => expect(currentRoute().tab).toBe('plans'))
     fireEvent.click(screen.getByRole('button', { name: 'All projects' }))
     await screen.findByRole('heading', { name: 'Projects' })
-    expect(screen.getByRole('button', { name: 'Library' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Capabilities' })).toBeInTheDocument()
   })
 })
 
@@ -194,7 +194,7 @@ describe('emergency stop and emergency contact controls', () => {
        768/1024/1280/1440 alike. Pixel checks remain with tickets 62/63. */
     const stop = screen.getByRole('button', { name: /Emergency Stop/ })
     expect(stop).toBeEnabled()
-    expect(stop.className).toContain('bg-bad')
+    expect(stop.className).toContain('bg-danger-fill')
     expect(stop.className).not.toMatch(/(^|\s)(hidden|[\w.]+:hidden)/)
   }
 

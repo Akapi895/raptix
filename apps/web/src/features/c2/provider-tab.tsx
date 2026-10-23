@@ -121,7 +121,7 @@ function ChannelDetail({ engagementId, transport }: { engagementId: string; tran
 }
 
 /** Listeners and lab profiles in the provider's registry (isolated lab): start, stop by job id, create a profile. */
-function InfrastructureCard({ engagementId }: { engagementId: string }): ReactElement {
+export function InfrastructureCard({ engagementId }: { engagementId: string }): ReactElement {
   const surface = useProviderSurface(engagementId)
   const writes = useProviderWrites(engagementId)
   const [profileName, setProfileName] = useState('')

@@ -41,6 +41,21 @@ describe('library corpus reads', () => {
     expect(detail.data.publication).toBe('canonical')
   })
 
+  it('counts subdomains and covered techniques over the whole corpus, so a filter matches its facet count', async () => {
+    const svc = createConsoleServices()
+    const library = svc.library(ALEX, P14)
+    const all = await library.corpus(ctx(ALEX))
+    if (!all.ok) throw new Error('corpus refused')
+    const covered = new Set(svc.authority.snapshot().playbooks.flatMap((p) => p.techniques))
+    expect(all.data.techniquesCovered).toBe(covered.size)
+    const [subdomain, count] = Object.entries(all.data.subdomains)[0]!
+    const bySubdomain = await library.corpus(ctx(ALEX), { subdomain })
+    expect(bySubdomain.ok && bySubdomain.data.total).toBe(count)
+    const byTechnique = await library.corpus(ctx(ALEX), { mitre: firstSkill(svc).techniques[0] })
+    expect(byTechnique.ok && byTechnique.data.subdomains).toEqual(all.data.subdomains)
+    expect(byTechnique.ok && byTechnique.data.techniquesCovered).toBe(covered.size)
+  })
+
   it('refuses an unknown skill and an unknown technique as not found', async () => {
     const library = createConsoleServices().library(ALEX, P14)
     expect((await library.skill(ctx(ALEX), 'PB-NOPE')).ok).toBe(false)

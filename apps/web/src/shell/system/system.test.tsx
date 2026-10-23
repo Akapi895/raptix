@@ -178,7 +178,7 @@ describe('states gallery (ticket 61b)', () => {
   'login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'overview', 'tasks',
   'projects', 'project-new', 'project',
   'operations', 'operation-new', 'preflight', 'operation-schedule', 'operation',
-  'infrastructure', 'agents', 'agent', 'assets', 'asset-new', 'asset-scope', 'asset', 'playbooks', 'playbook', 'technique', 'playbook-review',
+  'infrastructure', 'agents', 'agent', 'assets', 'asset-new', 'asset-scope', 'asset', 'capabilities', 'playbook', 'technique', 'playbook-review',
   'analysis', 'findings', 'finding-new', 'finding', 'evidence', 'evidence-inspector',
   'reports', 'report-new', 'report', 'report-preview', 'report-review', 'settings',
   'ai-operator', 'ai-plan', 'ai-plan-review', 'ai-plan-compare', 'ai-trace', 'ai-history', 'ai-fanout', 'ai-branch',

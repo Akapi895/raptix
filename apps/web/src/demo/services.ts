@@ -12,7 +12,7 @@ import type { PlanService } from '../features/plans/service';
 import type { AgentService } from '../features/agents/service';
 import type { ReportService } from '../features/reports/service';
 import type { BranchService } from '../features/branches/service';
-import type { LibraryService } from '../features/library';
+import type { LibraryService } from '../features/capabilities';
 import type { OverviewService } from '../features/overview/service';
 import type { ProjectsService } from '../features/projects/service';
 import type { AnalysisService } from '../features/analysis/service';
@@ -183,7 +183,7 @@ export function createConsoleServices(): ConsoleServices {
   const forOverview = (actor: ActorRef): OverviewService =>
     lazyService(() => import('../features/overview/mock').then((m) => m.createOverviewService(authority, actor)))
   const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>
-    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/library/mock').then((m) => m.createLibraryService(authority, clock, guard)))
+    lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/capabilities/mock').then((m) => m.createLibraryService(authority, clock, guard)))
   const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService =>
     lazyGuarded(scopeGuard(actor, projectId), (guard) => import('../features/analysis/service').then((m) => m.createAnalysisService(authority, guard)))
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>

@@ -253,7 +253,7 @@ function OperationNew() {
     if (!p.emergency) blockers.push({ text: 'No emergency contact on the ROE.', to: { page: 'project', id: p.id, tab: 'scope' } })
     if (d.assets.length === 0) blockers.push({ text: assetRows.some((r) => r.asset.scope === 'in') ? 'No target assets selected.' : 'This project has 0 approved assets in scope.', to: assetRows.some((r) => r.asset.scope === 'in') ? undefined : { page: 'assets' } })
     if (d.agents.length === 0) blockers.push({ text: 'No agents assigned.', to: { page: 'agents' } })
-    if (!pb && !edit?.planId) blockers.push({ text: 'No approved playbook or AI plan chosen.', to: { page: 'playbooks' } })
+    if (!pb && !edit?.planId) blockers.push({ text: 'No approved playbook or AI plan chosen.', to: { page: 'capabilities' } })
   }
   const preflightWhy = !allowed ? (ro ? reason : 'Only a Manager or Operator can run preflight.') : blockers.length ? `Run Preflight is unavailable: ${blockers[0].text}${blockers.length > 1 ? ` (+${blockers.length - 1} more)` : ''}` : ''
 
