@@ -5,7 +5,7 @@
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
-import { projectKeys } from '../projects'
+import { projectKeys, useProjectCacheActor } from '../projects'
 import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure } from '../../domain/service'
@@ -54,6 +54,7 @@ export function usePlanningWrites(engagementId: string) {
   const services = useServices()
   const scope = useQueryScope()
   const client = useQueryClient()
+  const cacheActor = useProjectCacheActor()
   const svc = () => services.planning(actorRef(scope.actor, scope.role), engagementId)
   const refresh = async (): Promise<void> => {
     await client.invalidateQueries({ queryKey: ['planning'] })
@@ -63,7 +64,7 @@ export function usePlanningWrites(engagementId: string) {
       const res = await svc().confirmHandoff(ctxOf(scope, engagementId, 'planning-confirm'))
       if (!res.ok) throw new PlanningError(res.failure)
       await refresh()
-      await client.invalidateQueries({ queryKey: projectKeys.detail(engagementId) })
+      await client.invalidateQueries({ queryKey: projectKeys.detail(cacheActor, engagementId) })
       await client.invalidateQueries({ queryKey: ['real', 'projects'] })
     },
     save: async (name: string, input: PlanningDraftInput): Promise<PlanningDocumentSource> => {

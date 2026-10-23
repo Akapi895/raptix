@@ -396,17 +396,17 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const seedMessage = useRef<string | null>(null)
   useEffect(() => {
     if (embedded) return
-    seedPending.current = hasPlanningSeed(engagementId)
-  }, [engagementId, embedded])
+    seedPending.current = hasPlanningSeed(engagementId, actorId)
+  }, [actorId, engagementId, embedded])
   useEffect(() => {
     if (!seedPending.current || embedded || threads.isPending || !detail.data || createThreadByKind.isPending) return
     seedPending.current = false
-    clearPlanningSeed(engagementId)
+    clearPlanningSeed(engagementId, actorId)
     if (allThreads.some((t) => t.kind === 'planning')) return
     seedMessage.current = planningSeedMessage(detail.data)
     setDispatchError(null)
     createThreadByKind.mutate('planning')
-  }, [allThreads, createThreadByKind, detail.data, embedded, engagementId, threads.isPending])
+  }, [actorId, allThreads, createThreadByKind, detail.data, embedded, engagementId, threads.isPending])
   useEffect(() => {
     const message = seedMessage.current
     if (message === null || selectedKind !== 'planning' || selectedThreadId === null || send.isPending) return

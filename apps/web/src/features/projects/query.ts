@@ -1,8 +1,9 @@
 /**
  * Real-mode React Query reads for the bootstrap/project slice (integration
- * ticket 03). The keys embed the trusted local identity; the console read
- * seam (src/state/console.ts) consumes the mapped list so the header and
- * switcher observe the engagement API through the same hooks as mock mode.
+ * ticket 03). The keys embed the signed-in actor (the local identity on a
+ * single-user server); the console read seam (src/state/console.ts) consumes
+ * the mapped list so the header and switcher observe the engagement API
+ * through the same hooks as mock mode.
  */
 import { useMemo } from 'react'
 import { useMutation, useQuery, type useQueryClient } from '@tanstack/react-query'
@@ -10,11 +11,17 @@ import { createEngagement, engagementToProject, listEngagements, type CreateEnga
 import { fetchMembers } from '../team';
 import { REAL_IDENTITY } from '../../state/real-identity'
 import { useCapabilityReady } from '../../state/real-context'
+import { useSession } from '../../platform/session'
 import type { Project, Role } from '../../domain/entities'
 
+/** The actor that namespaces real project caches: the trusted session actor, or the local identity when no session exists. */
+export function useProjectCacheActor(): string {
+  return useSession().session?.actor?.id ?? REAL_IDENTITY.id
+}
+
 export const projectKeys = {
-  list: ['real', 'projects', REAL_IDENTITY.id] as const,
-  detail: (id: string) => ['real', 'project', REAL_IDENTITY.id, id] as const,
+  list: (actor: string) => ['real', 'projects', actor] as const,
+  detail: (actor: string, id: string) => ['real', 'project', actor, id] as const,
 }
 
 export function invalidateProjects(client: ReturnType<typeof useQueryClient> | null): void {
@@ -24,8 +31,9 @@ export function invalidateProjects(client: ReturnType<typeof useQueryClient> | n
 
 export function useRealProjects() {
   const { ready, reason } = useCapabilityReady('projects')
+  const actor = useProjectCacheActor()
   const list = useQuery({
-    queryKey: projectKeys.list,
+    queryKey: projectKeys.list(actor),
     queryFn: () => listEngagements(),
     enabled: ready,
   })
@@ -52,8 +60,9 @@ const MEMBERSHIP_ROLE: Readonly<Record<string, Role>> = { owner: 'manager', oper
  */
 export function useRealMembershipRole(engagementId: string, actorId: string | undefined): Role | null {
   const { ready } = useCapabilityReady('members')
+  const cacheActor = useProjectCacheActor()
   const members = useQuery({
-    queryKey: ['real', 'members', REAL_IDENTITY.id, engagementId],
+    queryKey: ['real', 'members', cacheActor, engagementId],
     queryFn: () => fetchMembers(engagementId),
     enabled: ready && engagementId !== '' && !!actorId,
     staleTime: 30_000,

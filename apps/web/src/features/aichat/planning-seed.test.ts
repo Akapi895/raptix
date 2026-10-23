@@ -5,17 +5,23 @@ beforeEach(() => { window.sessionStorage.clear() })
 
 describe('planning seed flag', () => {
   it('stays set until the first message is dispatched, so a runtime that is not ready yet keeps it', () => {
-    markPlanningSeed('eng-1')
-    expect(hasPlanningSeed('eng-1')).toBe(true)
-    expect(hasPlanningSeed('eng-1')).toBe(true)
-    clearPlanningSeed('eng-1')
-    expect(hasPlanningSeed('eng-1')).toBe(false)
+    markPlanningSeed('eng-1', 'actor-a')
+    expect(hasPlanningSeed('eng-1', 'actor-a')).toBe(true)
+    expect(hasPlanningSeed('eng-1', 'actor-a')).toBe(true)
+    clearPlanningSeed('eng-1', 'actor-a')
+    expect(hasPlanningSeed('eng-1', 'actor-a')).toBe(false)
   })
 
   it('is scoped to the engagement it was set for', () => {
-    markPlanningSeed('eng-1')
-    expect(hasPlanningSeed('eng-2')).toBe(false)
-    expect(hasPlanningSeed('eng-1')).toBe(true)
+    markPlanningSeed('eng-1', 'actor-a')
+    expect(hasPlanningSeed('eng-2', 'actor-a')).toBe(false)
+    expect(hasPlanningSeed('eng-1', 'actor-a')).toBe(true)
+  })
+
+  it('is scoped to the signed-in actor, so another account in the same tab never sends the brief', () => {
+    markPlanningSeed('eng-1', 'actor-a')
+    expect(hasPlanningSeed('eng-1', 'actor-b')).toBe(false)
+    expect(hasPlanningSeed('eng-1', 'actor-a')).toBe(true)
   })
 })
 
