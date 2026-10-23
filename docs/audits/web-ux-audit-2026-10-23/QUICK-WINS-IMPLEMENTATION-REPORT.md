@@ -152,3 +152,46 @@ Ghi chú: ảnh "after" của Settings real không có vì không đăng nhập 
 - Loại code demo khỏi bundle production (mục 7.2).
 - Chuỗi kỹ thuật outage ở tầng platform (mục 7.1).
 - Đăng nhập mock (UX-23) và đường đóng mobile drawer (UX-25).
+
+## 10. Ổn định và xác minh (vòng 2, 2026-10-23)
+
+Kết quả chi tiết, lệnh và số liệu: `verification/VERIFICATION-STABILIZATION-2026-10-23.md`. Tóm tắt:
+
+- **Gate tại HEAD `0c25420f`:** typecheck và lint exit 0; boundary 411 (bằng baseline); full test 182 file / 1614 test pass; build production mặc định và build bật cờ đều exit 0 (vào scratchpad, không ghi đè `dist/`).
+- **Route smoke theo cờ:** production mặc định 56/56; production bật cờ 56/56; stack real có graph 42 pass, 14 khai báo sẵn do môi trường, 0 lỗi mới. Lỗi baseline `playbooks` là inventory lệch router, đã thay bằng `capabilities`.
+- **Thông báo kỹ thuật:** người dùng thấy thông điệp không kỹ thuật (non-JSON, mất kết nối, lỗi 500, hết thời gian); chi tiết kỹ thuật chuyển sang trường `reason` không hiển thị.
+- **Dark mode, sidebar mobile, đăng nhập mock:** chụp trước và sau; drawer mobile đóng bằng Escape và overlay; đăng nhập mock hoạt động (đính chính UX-23).
+- **Real mode trên stack có backend** (PostgreSQL 17, graph, API từ source): đăng nhập owner, menu tài khoản, Settings, phân tách mock/real, viewer, và các trạng thái lỗi đều đạt. Emergency Stop không thực hiện.
+
+### Commit inventory đầy đủ (từ kiểm toán đến HEAD)
+
+| Commit | Loại | Nội dung |
+|---|---|---|
+| `4a354b8e` | docs | Tài liệu kiểm toán UX (giai đoạn 1) |
+| `2b28c3b0` | fix | Settings real không còn chuỗi demo; copy "hidden in production" đúng sự thật; test real-mode |
+| `6740efbf` | fix | Outage real: thông báo người dùng; không lệnh dev và nút demo ở production |
+| `6cd13bb8` | refactor | Chuỗi Settings theo mode tách ra helper (giữ ratchet boundary) |
+| `1efe7bc4` | fix | Gate trang prototype/QA bằng cờ build; host xử lý key không đăng ký |
+| `61c4b7c5` | fix | Dải mờ sidebar dự án |
+| `7ea92aad` | fix | Đo lại dải mờ sau khi chuyển route |
+| `b7e253bf` | fix | Copy: số ít/số nhiều, Library → Capabilities, bỏ "binding state" |
+| `9c91cb37` | fix | Projects: "Not recorded" thay "—"; KPI Metadata không còn 0 giả |
+| `2a841c85` | fix | Contrast: dark primary và light neutral; test validation |
+| `a893e6e0` | docs | Báo cáo Quick Win; đính chính audit |
+| `b5b7f188` | fix | Thông điệp kỹ thuật không hiện cho người dùng (transport) |
+| `bd0f47a6` | fix | Real mode: trang không tìm thấy cho địa chỉ không đăng ký |
+| `3bc6cf84` | test | Route smoke theo cờ; sửa inventory `playbooks` → `capabilities`; baseline |
+| `828cd7bc` | fix | Asset Map có slice riêng (lỗi S-01 phát hiện bởi smoke) |
+| `0c25420f` | fix | Bỏ lặp lời khuyên trên màn hình khởi động |
+| (vòng 2, docs) | docs | Xác minh ổn định, đính chính matrix và audit, snapshot checklist |
+
+Các commit này chỉ thêm và sửa file của thay đổi, không đụng vào thay đổi chưa commit của owner.
+
+### Mục còn mở (ngoài phạm vi, chuyển sang Structural hoặc quyết định)
+
+- S-03: thông báo sai mật khẩu ở mock in mật khẩu demo.
+- S-06: code trang QA còn trong bundle dù route bị gate.
+- Thông điệp 4xx do Fastify tạo vẫn đi nguyên văn.
+- Nút đóng drawer có nhãn: chưa xác nhận.
+- Quyết định thiết kế: màu nút primary dark.
+- Quyết định sản phẩm: nút "Switch to demo mode" trong menu tài khoản real.

@@ -19,8 +19,8 @@ Mỗi dòng ghi lý do, bằng chứng (UX-ID) và ảnh hưởng. "Quick Win" n
 | Operations | KEEP | Có CTA "Create Operation" rõ; luồng chính có | `B02` | — | — |
 | Emergency Stop (header) | KEEP | Control an toàn nên luôn nhìn thấy; dialog có xác nhận | UX-24 | Giữ nguyên hành vi | Không đổi |
 | Chuông thông báo | MERGE | Trùng decision queue | UX-08 | Một model "cần chú ý" | Structural |
-| Workspace switcher (header) | IMPROVE ở real; REMOVE mục giả | Tên cứng, mục disabled giả, ghi chú "Simulated" | UX-01 | Bỏ chuỗi demo khỏi real | Quick Win |
-| Demo Tools (menu profile) | REMOVE khỏi real; KEEP ở mock | Persona vô hiệu, Reset demo lỗi, outcome không tác dụng | UX-01, UX-03 | Real không còn control giả | Quick Win |
+| Workspace switcher (header) | KEEP ở mock; không áp dụng ở real (đính chính) | Chỉ mount ở mock (`shell/shell.tsx:168`); real dùng `RealTopbar`, không có switcher giả | UX-01 (đính chính) | Không đổi real | Không cần việc |
+| Demo Tools (menu profile) | KEEP ở mock; không áp dụng ở real (đính chính) | Chỉ mount ở mock; real không có persona, Reset demo hay outcome giả. Copy đã đổi thành "Demo mode only" | UX-01, UX-02, UX-03 (đính chính) | Copy đúng sự thật ở mock | Quick Win (đã làm, `2b28c3b0`) |
 | Prototype Home / Scenarios | REMOVE khỏi bản build mặc định | Nội dung prototype | UX-05 | Giảm bề mặt | Quick Win (gate bằng cờ) |
 | States (gallery QA) | REMOVE khỏi bản build mặc định | Nội dung QA "Not click-tested" | UX-05 | Giảm bề mặt | Quick Win (gate bằng cờ) |
 | Workspaces (route chỉ gõ URL) | REMOVE khỏi bản build mặc định | Trùng với switcher giả; không có backing multi-workspace | UX-01, checklist D-04 | Giảm bề mặt | Quick Win (gate bằng cờ) |
@@ -30,7 +30,7 @@ Mỗi dòng ghi lý do, bằng chứng (UX-ID) và ảnh hưởng. "Quick Win" n
 | Closeout | KEEP | Có vai trò rõ | — | — | — |
 | Asset Map (cờ) | KEEP (giữ cờ) | Chưa đủ bằng chứng để mở | `nav.ts:105` | — | — |
 | Attack Analysis (real) | DECIDE | Có thể gộp vào Results | UX-06 | Cần contract | Structural |
-| Đăng nhập mock | IMPROVE | "Continue" không phản hồi | UX-23 | Demo mở được | Structural (nguyên nhân chưa rõ) |
+| Đăng nhập mock | KEEP (đính chính) | Luồng hoạt động: Continue → "Verifying…" → chọn tổ chức → vào workspace. Chỉ cần ghi chú: thông báo sai mật khẩu in mật khẩu demo | UX-23 (đính chính), S-03 | Demo mở được | Follow-up S-03 (cần quyết định) |
 | Mục "Switch to demo mode" (menu tài khoản real) | DECIDE | Chủ đích sản phẩm; có copy cảnh báo | UX-04 | Cần chủ sản phẩm | Không tự gỡ |
 | **ADD** Aggregate read-only "Running operations" trên Overview | ADD (có lý do) | Project đã có dữ liệu; Overview ghi "Not recorded" | UX-12 | Overview đúng với project | Structural |
 | **ADD** Trạng thái "Not recorded" cho KPI thiếu nguồn | ADD (nhỏ) | Không gán 0 khi không có nguồn | UX-26 | Số liệu trung thực | Quick Win |
