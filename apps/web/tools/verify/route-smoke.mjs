@@ -7,7 +7,10 @@
 // Usage: node tools/verify/route-smoke.mjs [--modes mock,real] [--routes a,b] [--fixtures-mock f.json] [--fixtures-real f.json] [--out result.json] [--discover]
 //   --discover: records what each route shows in each mode and exits 0; use it to write expectations, not as a gate.
 // Env: RAPTIX_VERIFY_APP (default http://127.0.0.1:5273), RAPTIX_VERIFY_USER and RAPTIX_VERIFY_PASSWORD (real mode),
-//      RAPTIX_VERIFY_PERSONA (mock mode, default Dana Whitfield), RAPTIX_VERIFY_CHROMIUM (optional browser executable).
+//      RAPTIX_VERIFY_PERSONA (mock mode, default Dana Whitfield), RAPTIX_VERIFY_CHROMIUM (optional browser executable),
+//      RAPTIX_VERIFY_FLAGS (feature flags the build under test enables: "prototype" and/or "assetMap"; default "prototype",
+//      the development server's set; an empty value is a production build with no flags). A route whose flag is off must
+//      resolve as an unknown route, so its expectation is "Page not found" rather than its screen.
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +27,9 @@ const arg = (name, fallback) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 const discover = process.argv.includes('--discover');
+// Feature flags of the build under test. A flagged route with its flag off is judged as an unknown route in both modes.
+const FLAGS = new Set((process.env.RAPTIX_VERIFY_FLAGS ?? 'prototype').split(',').map((flag) => flag.trim()).filter(Boolean));
+const UNKNOWN_ROUTE = 'Page not found';
 const modes = arg('--modes', 'mock,real').split(',');
 const only = arg('--routes', null)?.split(',') ?? null;
 const outFile = arg('--out', null);
@@ -152,12 +158,14 @@ async function runMode(browser, mode) {
     return { signIn: { ok: false, detail: error.message }, rows };
   }
   for (const entry of selected) {
-    const expect = entry.expect?.[mode];
+    const flagOn = entry.flag === undefined || FLAGS.has(entry.flag);
+    const expect = flagOn ? entry.expect?.[mode] : UNKNOWN_ROUTE;
     let target;
     try {
-      target = `${APP}/?dataMode=${mode}#/${resolvePath(entry, mode)}`;
+      // A route that is not registered in this build is addressed by its bare path: its placeholders need no fixture.
+      target = `${APP}/?dataMode=${mode}#/${flagOn ? resolvePath(entry, mode) : entry.path.split('?')[0]}`;
     } catch (error) {
-      rows[entry.key] = { status: 'fail', category: 'fixture-missing', detail: error.message, expected: expect ?? null };
+      rows[entry.key] = { status: 'fail', category: 'fixture-missing', detail: error.message, expected: expect ?? null, flag: entry.flag ?? null, flagOn };
       continue;
     }
     pageErrors = [];
@@ -168,6 +176,8 @@ async function runMode(browser, mode) {
     const apiFailures = badResponses.filter((response) => new URL(response.url).pathname.startsWith('/api/') && !isShellRequest(response, entry.key));
     const verdict = discover ? { ok: true } : judge(expect, observed, pageErrors, consoleErrors, apiFailures);
     rows[entry.key] = {
+      flag: entry.flag ?? null,
+      flagOn,
       status: verdict.ok ? 'pass' : 'fail',
       category: verdict.category,
       detail: verdict.detail,

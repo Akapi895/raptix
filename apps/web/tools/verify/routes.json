@@ -1,5 +1,5 @@
 {
-  "description": "Shared route inventory of the web console (54 route keys, see src/router/registry.tsx; the legacy command-center row checks that its address redirects to overview). path is the hash route; {name} placeholders come from the fixtures of the mode. expect.mock and expect.real are the screen each route must show: a string is the page heading (the h1 inside main); { \"text\": \"...\" } is visible text inside main; { \"text\": \"...\", \"in\": \"body\" } is visible text anywhere on the page. A route without an expectation for a mode fails. Expectations were recorded from discovery runs and reviewed against the route's purpose.",
+  "description": "Shared route inventory of the web console. It covers the 55 route keys of src/router/routes.ts (54 by default, plus asset-map behind its flag) and the legacy command-center alias, whose address must redirect. An entry with a \"flag\" is registered only when the build enables that flag (RAPTIX_VERIFY_FLAGS, default \"prototype\"); when the flag is off it must resolve as \"Page not found\".",
   "routes": [
     {
       "key": "login",
@@ -56,6 +56,7 @@
     {
       "key": "states",
       "path": "states",
+      "flag": "prototype",
       "expect": {
         "mock": "Universal state set",
         "real": {
@@ -216,14 +217,11 @@
       }
     },
     {
-      "key": "playbooks",
-      "path": "playbooks",
+      "key": "capabilities",
+      "path": "capabilities",
       "expect": {
-        "mock": "Skill library",
-        "real": {
-          "text": "in the corpus",
-          "in": "main"
-        }
+        "mock": "Capabilities",
+        "real": "Capabilities"
       }
     },
     {
@@ -449,8 +447,24 @@
       }
     },
     {
+      "key": "asset-map",
+      "path": "asset-map?engagement={project}",
+      "flag": "assetMap",
+      "expect": {
+        "mock": {
+          "text": "Asset Map",
+          "in": "main"
+        },
+        "real": {
+          "text": "Asset Map",
+          "in": "main"
+        }
+      }
+    },
+    {
       "key": "scenarios",
       "path": "scenarios",
+      "flag": "prototype",
       "expect": {
         "mock": "Prototype Home",
         "real": {
@@ -461,6 +475,7 @@
     {
       "key": "workspaces",
       "path": "workspaces",
+      "flag": "prototype",
       "expect": {
         "mock": {
           "text": "Select a workspace",
