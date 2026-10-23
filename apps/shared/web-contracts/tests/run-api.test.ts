@@ -102,7 +102,7 @@ it('validates merged operations-timeline entries with distinct source labels add
   expect(isTimelineEntryView({ ...runEntry, agent: 5 })).toBe(false);
   const artifact = { id: 'ws:recon/nmap.txt', at: '2026-10-02T00:10:00.000Z', source: 'workspace', kind: 'artifact', label: 'Artifact updated' };
   expect(isTimelineEntryView(artifact)).toBe(true);
-  expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, unavailableThreads: 0, source: 'mixed' })).toBe(true);
+  expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, hasMore: false, untimedCheckpoints: 0, unavailableThreads: 0, source: 'mixed' })).toBe(true);
   expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, source: 'mixed' })).toBe(false);
   expect(isTimelineView({ engagementId: 'eng', entries: [runEntry], truncated: false, source: 'runtime' })).toBe(false);
 });
@@ -144,7 +144,7 @@ it('validates redacted vault metadata and the dedicated reveal response additive
 });
 it('validates the truthful local single-user members view additively', () => {
   const member = { id: 'local', label: 'Local Operator', role: 'operator', source: 'local' };
-  const members = { engagementId: 'eng-1', mode: 'local-single-user', members: [member], inviteSupported: false, reason: 'No authentication strategy yet', source: 'db' };
+  const members = { engagementId: 'eng-1', mode: 'local-single-user', members: [member], inviteSupported: false, canManage: false, reason: 'No authentication strategy yet', source: 'db' };
   expect(isMemberView(member)).toBe(true);
   expect(isMembersView(members)).toBe(true);
   expect(isMemberView({ ...member, source: 'fixture' })).toBe(false);

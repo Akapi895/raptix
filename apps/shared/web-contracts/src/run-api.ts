@@ -234,7 +234,12 @@ export interface TimelineEntryView {
  */
 export interface TimelineView {
   engagementId: string; entries: TimelineEntryView[]
+  /** The source window hit its bound, so older activity beyond it is not projected. */
   truncated: boolean
+  /** More entries exist in the window than this page returned; a larger limit returns them. */
+  hasMore: boolean
+  /** Checkpoint events with no recorded time. They cannot be ordered, so they are left out of the timeline. */
+  untimedCheckpoints: number
   /** Threads left out because their runtime binding conflicts with persisted state. */
   unavailableThreads: number; source: 'mixed'
 }
@@ -247,7 +252,7 @@ export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
   return true
 }
 export function isTimelineView(v: unknown): v is TimelineView {
-  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && typeof v.unavailableThreads === 'number' && v.source === 'mixed'
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && typeof v.hasMore === 'boolean' && typeof v.untimedCheckpoints === 'number' && typeof v.unavailableThreads === 'number' && v.source === 'mixed'
 }
 /**
  * W15 engagement settings: only the fields the new server actually persists

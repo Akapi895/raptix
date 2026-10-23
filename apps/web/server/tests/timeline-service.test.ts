@@ -64,3 +64,50 @@ describe('TimelineService contract', () => {
     expect(timeline).toMatchObject({ engagementId: 'eng-1', truncated: false, source: 'mixed', unavailableThreads: 0 });
   });
 });
+
+describe('TimelineService pages', () => {
+  const FOUR_RUNS = {
+    runs: [1, 2, 3, 4].map((hour) => ({ runId: `run-${hour}`, createdAt: `2026-10-17T0${hour}:00:00.000Z`, rawStatus: 'success' })),
+    offset: 0,
+    nextOffset: null,
+  };
+  const onlyGood = (thread: string) => (thread === 'good' ? FOUR_RUNS : { runs: [], offset: 0, nextOffset: null });
+
+  it('returns the newest page of the window and says whether older entries remain', async () => {
+    const page = await service({ listRuns: async (thread) => onlyGood(thread), snapshot: async () => EMPTY_SNAPSHOT }).timeline('local', 'eng-1', { limit: 2 });
+    expect(page.entries.map((entry) => entry.runId)).toEqual(['run-4', 'run-3']);
+    expect(page.hasMore).toBe(true);
+  });
+
+  it('leaves out a checkpoint with no recorded time and counts it, instead of dating it to the moment it was read', async () => {
+    const snapshot = {
+      transcripts: [
+        { key: 'no-time-here', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'tool_call', name: 'ls' } },
+        { key: 'step@2026-10-17T02:00:00Z', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'tool_call', name: 'load_skill' } },
+      ],
+      transcriptsTruncated: false,
+    };
+    const page = await service({ listRuns: async (thread) => onlyGood(thread), snapshot: async () => snapshot }).timeline('local', 'eng-1', { limit: 50 });
+    // One untimed event per bound thread that the snapshot was read for; the dated ones stay, at their recorded time.
+    expect(page.untimedCheckpoints).toBe(THREADS.threads.length);
+    const checkpoints = page.entries.filter((entry) => entry.source === 'checkpoint');
+    expect(checkpoints.every((entry) => entry.at === '2026-10-17T02:00:00.000Z')).toBe(true);
+  });
+
+  it('reads the runtime once for a page and the poll after it, and answers both from the same window', async () => {
+    let listed = 0;
+    const timeline = service({ listRuns: async (thread) => { listed += 1; return onlyGood(thread) }, snapshot: async () => EMPTY_SNAPSHOT });
+    const first = await timeline.timeline('local', 'eng-1', { limit: 2 });
+    const second = await timeline.timeline('local', 'eng-1', { limit: 4 });
+    expect(first.entries).toHaveLength(2);
+    expect(second.entries).toHaveLength(4);
+    // One gather lists each bound thread once; the second request is answered from the window it left.
+    expect(listed).toBe(THREADS.threads.length);
+  });
+
+  it('answers the whole window when the limit reaches it, with nothing more to load', async () => {
+    const page = await service({ listRuns: async (thread) => onlyGood(thread), snapshot: async () => EMPTY_SNAPSHOT }).timeline('local', 'eng-1', { limit: 4 });
+    expect(page.entries).toHaveLength(4);
+    expect(page.hasMore).toBe(false);
+  });
+});
