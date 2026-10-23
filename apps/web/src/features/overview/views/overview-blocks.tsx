@@ -8,6 +8,7 @@ import type { ReactElement, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { go } from '../../../router/navigate'
 import { parseHash } from '../../../router/history'
+import { countText } from '../../decisions'
 import { Button, Card, CardHeader, Progress, Skeleton, Status, cx } from '../../../ui/index'
 import { riskAssessment, type OverviewFindings, type OverviewOperation, type OverviewOperations, type OverviewTask, type OverviewTaskKind, type RiskLevel } from '../service'
 
@@ -91,16 +92,24 @@ export function OverviewKpi({ label, display, note, icon: Icon, tint, onOpen }: 
   )
 }
 
-/** The attention banner: emergency stops first, then the workflow decisions pending in the visible projects. */
-export function AttentionBanner({ stops, decisions }: { stops: number; decisions: number }): ReactElement | null {
-  if (stops === 0 && decisions === 0) return null
+/**
+ * The attention region, first on the page: active emergency stops, the workflow decisions pending in the visible projects
+ * and any figure that could not be read. A figure still loading is said to be checked, never shown as zero.
+ */
+export function AttentionRegion({ stops, decisions, limited, unavailable, pending }: { stops: number; decisions: number | null; limited: boolean; unavailable: string[]; pending: boolean }): ReactElement {
+  const rows: string[] = []
+  if (stops > 0) rows.push(`${stops} active emergency stop${stops === 1 ? '' : 's'} ${stops === 1 ? 'needs' : 'need'} attention.`)
+  if (decisions !== null && decisions > 0) rows.push(`${countText(decisions, limited)} workflow decision${decisions === 1 ? '' : 's'} pending in your projects.`)
+  if (unavailable.length > 0) rows.push(`${unavailable.join(', ')} ${unavailable.length === 1 ? 'is' : 'are'} unavailable. Those figures are not zero.`)
+  const message = rows.length > 0 ? rows : [pending ? 'Checking attention items…' : 'Nothing needs your attention right now.']
+  const urgent = stops > 0
   return (
-    <div role="status" className={cx('flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm', stops > 0 ? 'border-bad/40 bg-bad-soft' : 'border-primary/30 bg-info-soft')}>
-      <span className="font-medium text-fg">
-        {stops > 0 ? `${stops} active emergency stop${stops === 1 ? '' : 's'} need attention.` : `${decisions} workflow decision${decisions === 1 ? '' : 's'} pending in your projects.`}
-      </span>
-      <Button size="sm" variant="secondary" onClick={() => go('tasks')}>Open decision queue</Button>
-    </div>
+    <section aria-label="Needs attention" className={cx('flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm', urgent ? 'border-bad/40 bg-bad-soft' : 'border-line bg-panel')}>
+      <div className="min-w-0 flex-1 space-y-1">
+        {message.map((text) => <p key={text} className="font-medium text-fg">{text}</p>)}
+      </div>
+      {(stops > 0 || (decisions ?? 0) > 0) && <Button size="sm" variant="secondary" onClick={() => go('tasks')}>Open decision queue</Button>}
+    </section>
   )
 }
 
