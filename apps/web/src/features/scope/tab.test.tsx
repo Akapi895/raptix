@@ -77,7 +77,7 @@ function readWith(revisions: unknown[], unmodelled: string[] = []) {
   }
 }
 
-async function renderTab(): Promise<void> {
+async function renderTab(tab = 'Changes & approvals'): Promise<void> {
   const { ScopeTab } = await import('./tab')
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const session = { session: { actor: { id: 'u-reviewer' } }, pending: false, error: null, retry: () => undefined } as unknown as SessionState
@@ -87,7 +87,7 @@ async function renderTab(): Promise<void> {
     </SessionContext.Provider>
   )
   render(<ScopeTab engagementId="eng-1" />, { wrapper })
-  fireEvent.click(await screen.findByRole('button', { name: 'ROE' }))
+  fireEvent.click(await screen.findByRole('button', { name: tab }))
 }
 
 beforeEach(() => {
@@ -129,7 +129,7 @@ describe('ScopeTab independent decisions', () => {
 describe('ScopeTab unmodelled sections', () => {
   it('names the operations and plans this backend does not model', async () => {
     useScopeRead.mockReturnValue(readWith([revision({})], ['operations', 'plans', 'documents']))
-    await renderTab()
+    await renderTab('Changes & approvals')
     expect(await screen.findByText(/Operations and plans affected by a scope change are not modelled/)).toBeInTheDocument()
   })
 })

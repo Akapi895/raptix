@@ -4,6 +4,9 @@
  * success. Cancel appears for a run the runtime still reports in flight; pause
  * for a running run of an operation that can pause; resume and complete follow
  * the operation state the runtime reports.
+ *
+ * The parts are exported separately so the operation detail can place each one on its own tab;
+ * ThreadRuns keeps the stacked view the AI workspace uses.
  */
 import { useRef, useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
@@ -14,6 +17,7 @@ import { Banner, Button, Skeleton, Status, cx } from '../../ui/index'
 import { messageOf, useRuntimeCancel, useRuntimeOperation, useRuntimeOperationControls, useRuntimeRuns, useRuntimeSnapshot } from './runtime-query'
 import type { RuntimeRun, RuntimeThread } from './runtime'
 import { runStatusTone } from './runtime-status'
+import { OPERATION_TEXT } from './operation-state'
 
 /** Runs a user may cancel: the ones the runtime still reports as in flight. */
 const CANCELLABLE = ['pending', 'running', 'submitting']
@@ -21,21 +25,11 @@ const CANCELLABLE = ['pending', 'running', 'submitting']
 const PAUSABLE = ['pending', 'running']
 /** The run statuses the server accepts as terminal before an operation can be marked complete. */
 const TERMINAL_RUN = ['success', 'error', 'timeout', 'interrupted']
-/** Operation states the runtime reports; an unknown one is shown as written. */
-const OPERATION_TEXT: Record<string, string> = {
-  bound: 'bound, not started',
-  running: 'running',
-  pause_requested: 'pause requested, not yet paused',
-  paused: 'paused at a checkpoint',
-  completed: 'completed',
-}
 
-export function ThreadRuns({ engagementId, thread }: { engagementId: string; thread: RuntimeThread }): ReactElement {
-  const snapshot = useRuntimeSnapshot(engagementId, thread.threadId)
-  const runs = useRuntimeRuns(engagementId, thread.threadId)
+/** The operation's state as the runtime reports it, with the resume and complete controls it allows. */
+export function OperationControls({ engagementId, thread }: { engagementId: string; thread: RuntimeThread }): ReactElement {
   const operation = useRuntimeOperation(engagementId, thread.threadId)
   const controls = useRuntimeOperationControls(engagementId)
-  const list = runs.data ?? []
   const state = operation.data?.state ?? null
   const finished = operation.data?.latestRunStatus != null && TERMINAL_RUN.includes(operation.data.latestRunStatus)
 
@@ -51,50 +45,66 @@ export function ThreadRuns({ engagementId, thread }: { engagementId: string; thr
   const complete = useMutation({ mutationFn: () => controls.complete(thread.threadId) })
 
   return (
+    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-neutral">Operation</span>
+      {operation.isError ? <span role="alert" className="text-bad">{messageOf(operation.error, 'The operation state could not be read.')}</span>
+        : <span className="text-fg">{state === null ? 'reading…' : (OPERATION_TEXT[state] ?? state)}</span>}
+      {state === 'paused' && (
+        <Button size="sm" variant="primary" icon={Play} disabled={resume.isPending} onClick={() => resume.mutate()}>
+          {resume.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
+          Resume operation
+        </Button>
+      )}
+      {state !== null && state !== 'completed' && finished && (
+        <Button size="sm" variant="secondary" icon={CheckCheck} disabled={complete.isPending} onClick={() => complete.mutate()}>
+          Mark operation complete
+        </Button>
+      )}
+      {resume.isError && <span role="alert" className="text-bad">{messageOf(resume.error, 'The resume was refused.')}</span>}
+      {complete.isError && <span role="alert" className="text-bad">{messageOf(complete.error, 'The completion was refused.')}</span>}
+    </div>
+  )
+}
+
+/** The runs of one execution thread, each with its status as the runtime reports it and the control that applies to it. */
+export function RunTable({ engagementId, thread }: { engagementId: string; thread: RuntimeThread }): ReactElement {
+  const operation = useRuntimeOperation(engagementId, thread.threadId)
+  const runs = useRuntimeRuns(engagementId, thread.threadId)
+  const state = operation.data?.state ?? null
+  const list = runs.data ?? []
+  if (runs.isPending) return <div className="mt-2" aria-busy="true" role="status"><Skeleton className="h-8" /></div>
+  if (runs.isError) return <p className="mt-2 text-sm text-bad" role="alert">{messageOf(runs.error, 'Runs could not be loaded.')}</p>
+  if (list.length === 0) return <p className="mt-2 text-sm text-muted">No runs on this thread yet.</p>
+  return (
+    <table className="mt-2 w-full text-left text-xs">
+      <thead>
+        <tr className="text-neutral">
+          <th className="py-1 pr-3 font-medium">Run</th>
+          <th className="py-1 pr-3 font-medium">Request</th>
+          <th className="py-1 pr-3 font-medium">Status</th>
+          <th className="py-1 pr-3 font-medium">Created</th>
+          <th className="py-1 pr-3 font-medium">Updated</th>
+          <th className="py-1 font-medium">Control</th>
+        </tr>
+      </thead>
+      <tbody>
+        {list.map((r) => <RunRow key={r.runId} engagementId={engagementId} run={r} canPause={state === 'bound' || state === 'running'} />)}
+      </tbody>
+    </table>
+  )
+}
+
+export function ThreadRuns({ engagementId, thread }: { engagementId: string; thread: RuntimeThread }): ReactElement {
+  const snapshot = useRuntimeSnapshot(engagementId, thread.threadId)
+  return (
     <li className="rounded-xl border border-line bg-subtle p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-xs font-medium text-fg">{thread.threadId}</span>
         <span className="text-xs text-muted">assistant {thread.assistantId}</span>
         <span className="text-xs text-neutral">bound {utcMinute(thread.createdAt)}</span>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-neutral">Operation</span>
-        {operation.isError ? <span role="alert" className="text-bad">{messageOf(operation.error, 'The operation state could not be read.')}</span>
-          : <span className="text-fg">{state === null ? 'reading…' : (OPERATION_TEXT[state] ?? state)}</span>}
-        {state === 'paused' && (
-          <Button size="sm" variant="primary" icon={Play} disabled={resume.isPending} onClick={() => resume.mutate()}>
-            {resume.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
-            Resume operation
-          </Button>
-        )}
-        {state !== null && state !== 'completed' && finished && (
-          <Button size="sm" variant="secondary" icon={CheckCheck} disabled={complete.isPending} onClick={() => complete.mutate()}>
-            Mark operation complete
-          </Button>
-        )}
-        {resume.isError && <span role="alert" className="text-bad">{messageOf(resume.error, 'The resume was refused.')}</span>}
-        {complete.isError && <span role="alert" className="text-bad">{messageOf(complete.error, 'The completion was refused.')}</span>}
-      </div>
-      {runs.isPending ? <div className="mt-2" aria-busy="true" role="status"><Skeleton className="h-8" /></div>
-        : runs.isError ? <p className="mt-2 text-sm text-bad" role="alert">{messageOf(runs.error, 'Runs could not be loaded.')}</p>
-        : list.length === 0 ? <p className="mt-2 text-sm text-muted">No runs on this thread yet.</p>
-        : (
-          <table className="mt-2 w-full text-left text-xs">
-            <thead>
-              <tr className="text-neutral">
-                <th className="py-1 pr-3 font-medium">Run</th>
-                <th className="py-1 pr-3 font-medium">Request</th>
-                <th className="py-1 pr-3 font-medium">Status</th>
-                <th className="py-1 pr-3 font-medium">Created</th>
-                <th className="py-1 pr-3 font-medium">Updated</th>
-                <th className="py-1 font-medium">Control</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((r) => <RunRow key={r.runId} engagementId={engagementId} run={r} canPause={state === 'bound' || state === 'running'} />)}
-            </tbody>
-          </table>
-        )}
+      <OperationControls engagementId={engagementId} thread={thread} />
+      <RunTable engagementId={engagementId} thread={thread} />
       <section aria-label={`Tool activity ${thread.threadId}`} className="mt-4 space-y-2">
         <h3 className="text-sm font-semibold">Tool calls & execution logs</h3>
         <p className="text-xs text-muted">Checkpoint history across this thread; events without run attribution are not assigned to the latest run.</p>

@@ -21,6 +21,7 @@ export interface PlanningDocumentCard {
   body: string | null
 }
 
+/** One OPPLAN objective with the fields the runtime records for it. A field the document does not carry is null or empty. */
 export interface PlanningObjective {
   id: string
   title: string
@@ -28,6 +29,16 @@ export interface PlanningObjective {
   phase: string
   status: string
   blockedBy: string[]
+  acceptanceCriteria: string[]
+  priority: number | null
+  owner: string | null
+  notes: string | null
+  parentId: string | null
+  effects: string | null
+  resources: string[]
+  mitre: string[]
+  opsec: string | null
+  c2Tier: string | null
 }
 
 export interface PlanningOpplan extends PlanningDocumentCard {
@@ -41,6 +52,8 @@ export interface PlanningRead {
   reasons: string[]
   /** The runtime readiness signal. It never grants execution permission. */
   runtimeSignal: string
+  /** The CONOPS success criteria, read from the CONOPS document when it is ready; empty otherwise. */
+  successCriteria: string[]
   /** Every PREPARE document except the OPPLAN, in bundle order. */
   documents: PlanningDocumentCard[]
   opplan: PlanningOpplan

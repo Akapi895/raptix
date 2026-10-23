@@ -203,7 +203,7 @@ describe('tab state, aliases and guards', () => {
     mountProject('#/project/RT-2026-014', { withSidebar: true })
     await screen.findByText('Internal Red Team Q4')
     act(() => { useSessionStore.getState().setDirty(true) })
-    fireEvent.click(screen.getByRole('button', { name: 'Execution' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Operations' }))
     expect(useSessionStore.getState().unsaved).not.toBeNull()
     expect(window.location.hash).not.toContain('tab=')
     act(() => { useSessionStore.getState().unsaved!.next() })
@@ -244,21 +244,23 @@ describe('scope and team panels on the typed read', () => {
 })
 
 describe('preparation workspace readers', () => {
-  it('opens an asset in a centered dialog and closes without leaving Scope & ROE', async () => {
-    mountProject('#/project/RT-2026-014?tab=scope')
+  it('opens an asset in a centered dialog and closes without leaving Assets', async () => {
+    mountProject('#/project/RT-2026-014?tab=assets')
+    fireEvent.click(await screen.findByRole('button', { name: 'Inventory' }))
     fireEvent.click(await screen.findByText('win-dc-01'))
     const dialog = await screen.findByRole('dialog', { name: 'Asset details' })
     expect(await within(dialog).findByText('AS-0143')).toBeInTheDocument()
     expect(within(dialog).getByText('ROE-014-v2')).toBeInTheDocument()
     expect(within(dialog).getByText('OP-014')).toBeInTheDocument()
-    expect(window.location.hash).toBe('#/project/RT-2026-014?tab=scope')
+    expect(window.location.hash).toBe('#/project/RT-2026-014?tab=assets')
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByText('Effective version')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Inventory' })).toBeInTheDocument()
   })
 
   it('keeps sensitive evidence redacted inside the asset popup', async () => {
-    mountProject('#/project/RT-2026-014?tab=scope', { me: 'Casey Nguyen (Client)' })
+    mountProject('#/project/RT-2026-014?tab=assets', { me: 'Casey Nguyen (Client)' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Inventory' }))
     fireEvent.click(await screen.findByText('win-dc-01'))
     const dialog = await screen.findByRole('dialog', { name: 'Asset details' })
     expect(await within(dialog).findByText('Redacted (sensitive)')).toBeInTheDocument()

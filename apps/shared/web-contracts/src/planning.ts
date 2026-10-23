@@ -19,9 +19,16 @@ export interface DeconflictionView {
   engagement_name: string; notification_procedure?: string; soc_contact?: string
   identifiers?: { type: string; value: string; description?: string }[]
 }
+/** One OPPLAN objective as the runtime writes it (schema $defs/Objective). Only the fields the console reads are typed. */
+export interface OpplanObjectiveView {
+  id: string; title: string; description: string; phase: string
+  status?: string; blocked_by?: string[]
+  acceptance_criteria?: string[]; priority?: number; owner?: string; notes?: string; parent_id?: string
+  effects?: string; resources?: string[]; mitre?: string[]; opsec?: string; c2_tier?: string
+}
 export interface OpplanView {
   engagement_name: string; threat_profile: string
-  objectives?: { id: string; title: string; description: string; phase: string; status?: string; blocked_by?: string[] }[]
+  objectives?: OpplanObjectiveView[]
 }
 export type PlanningDocument<T> = { state: 'ready'; content: T } | { state: Exclude<PlanningState, 'ready'> }
 export interface PlanningView {

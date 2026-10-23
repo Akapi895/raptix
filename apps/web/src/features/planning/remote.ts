@@ -62,19 +62,47 @@ function deconflictionFacts(c: DeconflictionView): Pick<PlanningDocumentCard, 'f
   }
 }
 
+/** A list the document records as strings; anything else is an empty list, never a guessed value. */
+function textList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+/** A text field the document records; an absent or empty value is null. */
+function optionalText(value: unknown): string | null {
+  return typeof value === 'string' && value !== '' ? value : null
+}
+
 function readOf(view: PlanningView): PlanningRead {
   const opplanDoc = view.documents.opplan
   const opplan: PlanningOpplan = {
     ...typedCard('opplan', view.bundle.opplan, opplanDoc, () => ({ facts: [], body: null })),
     threatProfile: opplanDoc.state === 'ready' ? opplanDoc.content.threat_profile : null,
     objectives: opplanDoc.state === 'ready'
-      ? (opplanDoc.content.objectives ?? []).map((o) => ({ id: o.id, title: o.title, description: o.description, phase: o.phase, status: o.status ?? 'pending', blockedBy: o.blocked_by ?? [] }))
+      ? (opplanDoc.content.objectives ?? []).map((o) => ({
+        id: o.id,
+        title: o.title,
+        description: o.description,
+        phase: o.phase,
+        status: o.status ?? 'pending',
+        blockedBy: o.blocked_by ?? [],
+        acceptanceCriteria: textList(o.acceptance_criteria),
+        priority: typeof o.priority === 'number' ? o.priority : null,
+        owner: optionalText(o.owner),
+        notes: optionalText(o.notes),
+        parentId: optionalText(o.parent_id),
+        effects: optionalText(o.effects),
+        resources: textList(o.resources),
+        mitre: textList(o.mitre),
+        opsec: optionalText(o.opsec),
+        c2Tier: optionalText(o.c2_tier),
+      }))
       : [],
   }
   return {
     ready: view.readiness.state === 'ready',
     reasons: view.readiness.reasons.map(describeReadinessReason),
     runtimeSignal: view.readiness.runtimeSignal,
+    successCriteria: view.documents.conops.state === 'ready' ? textList(view.documents.conops.content.success_criteria) : [],
     documents: [
       typedCard('roe', view.bundle.roe, view.documents.roe, roeFacts),
       typedCard('conops', view.bundle.conops, view.documents.conops, conopsFacts),

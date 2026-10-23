@@ -2,8 +2,9 @@ import { isTimelineView, isGraphView, type TimelineView, type GraphView } from '
 import { apiFetch } from '../../platform/transport';
 import { owned } from '../../platform/ownership';
 
-export function fetchTimeline(engagementId: string): Promise<TimelineView> {
-  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/timeline`, owned(engagementId, isTimelineView))
+export function fetchTimeline(engagementId: string, limit?: number): Promise<TimelineView> {
+  const query = limit === undefined ? '' : `?limit=${limit}`
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/timeline${query}`, owned(engagementId, isTimelineView))
 }
 
 export function fetchGraph(engagementId: string): Promise<GraphView> {

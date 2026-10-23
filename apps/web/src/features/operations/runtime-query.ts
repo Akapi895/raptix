@@ -4,12 +4,12 @@
  * only while a run is still in flight, and a committed cancel refreshes that
  * thread's runs and the timeline.
  */
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
 import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import type { RuntimeOperationsService, RuntimeRun } from './runtime'
+import { TIMELINE_PAGE_LIMIT, type RuntimeOperationsService, type RuntimeRun } from './runtime'
 
 export class RuntimeOperationsError extends Error {
   constructor(readonly failure: ServiceFailure) {
@@ -71,14 +71,17 @@ export function useRuntimeSnapshot(engagementId: string, threadId: string) {
   })
 }
 
-export function useRuntimeTimeline(engagementId: string) {
+/** One page of the timeline, newest first; a larger limit reads a longer prefix of the same window. */
+export function useRuntimeTimeline(engagementId: string, limit: number = TIMELINE_PAGE_LIMIT) {
   const { services, scope, service } = useRuntimeClient(engagementId)
   return useQuery({
-    queryKey: consoleKeys.view('runtime-operations', scope, engagementId, 'timeline'),
-    queryFn: () => unwrap(service().timeline(ctxOf(scope, engagementId, 'runtime-timeline'))),
+    queryKey: consoleKeys.view('runtime-operations', scope, engagementId, 'timeline', limit),
+    queryFn: () => unwrap(service().timeline(ctxOf(scope, engagementId, 'runtime-timeline'), limit)),
     enabled: !!services,
     refetchInterval: 5_000,
     retry: false,
+    // Load more keeps the entries on screen until the longer page arrives; the list is not replaced by a loading state.
+    placeholderData: keepPreviousData,
   })
 }
 

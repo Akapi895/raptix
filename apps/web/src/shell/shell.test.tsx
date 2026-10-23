@@ -52,9 +52,9 @@ const NAV_LABELS = NAV.flatMap((g) => g.items.map((i) => i.label))
 describe('sidebar navigation and active section', () => {
   it('separates AI conversation, execution logs and C2 in both project menus', () => {
     for (const groups of [MOCK_PROJECT_NAV, REAL_PROJECT_NAV]) {
-      expect(groups.find((group) => group.group === 'EXECUTION')?.items.map((item) => item.label)).toEqual(['AI Workspace', 'Execution', 'C2 Sessions'])
+      expect(groups.find((group) => group.group === 'OPERATIONS')?.items.map((item) => item.label)).toEqual(['AI Workspace', 'Operations', 'Sessions'])
       expect(projectSection({ page: 'ai-operator' }, groups)?.label).toBe('AI Workspace')
-      expect(projectSection({ page: 'ai-trace' }, groups)?.label).toBe('Execution')
+      expect(projectSection({ page: 'ai-trace' }, groups)?.label).toBe('Operations')
     }
   })
 
@@ -65,11 +65,11 @@ describe('sidebar navigation and active section', () => {
     fireEvent.click(await within(nav).findByRole('button', { name: 'AI Workspace' }))
     await screen.findByRole('region', { name: 'Conversation with Raptix' })
     expect(currentRoute().tab).toBe('ai-workspace')
-    fireEvent.click(within(nav).getByRole('button', { name: 'Execution' }))
+    fireEvent.click(within(nav).getByRole('button', { name: 'Operations' }))
     await screen.findByPlaceholderText('Search event, tool, target, agent, branch')
     expect(currentRoute().tab).toBe('operations')
     expect(screen.queryByRole('region', { name: 'Conversation with Raptix' })).toBeNull()
-    expect(within(nav).getByRole('button', { name: 'Execution' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('button', { name: 'Operations' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('renders every nav group and item, highlighting the overview item as active', async () => {
