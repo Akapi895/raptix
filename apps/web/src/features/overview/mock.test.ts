@@ -43,7 +43,7 @@ describe('demo overview port', () => {
     expect(res.ok).toBe(true)
     if (!res.ok) return
     const kinds = new Set(['scope-revision', 'business-plan', 'c2-grant', 'report-review', 'finding-review', 'active-stop'])
-    for (const task of res.data) {
+    for (const task of res.data.items) {
       expect(kinds.has(task.kind)).toBe(true)
       expect(task.href).toMatch(/^(project\/[^?]+\?tab=|finding\/)/)
     }

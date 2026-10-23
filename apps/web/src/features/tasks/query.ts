@@ -3,7 +3,7 @@
  * made by either one answers the other; each caller sets its own polling or enablement.
  */
 import { useQuery } from '@tanstack/react-query'
-import { fetchTasks } from '../overview/remote'
+import { fetchTasks } from '../decisions'
 
 export function useRealTaskInbox(options: { enabled?: boolean; refetchInterval?: number } = {}) {
   return useQuery({ queryKey: ['real', 'tasks'], queryFn: () => fetchTasks(), ...options })

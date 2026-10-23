@@ -8,7 +8,7 @@ import type { DbAuthority } from '../../demo/authority'
 import { projectAccessible } from '../../domain/policy'
 import type { ActorRef, ServiceResult } from '../../domain/service'
 import { APR } from '../../domain/catalog'
-import type { OverviewC2, OverviewFindings, OverviewOperations, OverviewProject, OverviewService, OverviewTask, OverviewTaskKind } from './service'
+import type { OverviewC2, OverviewFindings, OverviewOperations, OverviewProject, OverviewService, OverviewTask, OverviewTaskKind, OverviewTaskList } from './service'
 
 const TASK_KIND_BY_APPROVAL: Partial<Record<string, OverviewTaskKind>> = { [APR.scope]: 'scope-revision', [APR.plan]: 'business-plan', [APR.access]: 'c2-grant' }
 
@@ -65,7 +65,7 @@ export function createOverviewService(authority: DbAuthority, actor: ActorRef): 
       const { projects } = accessible()
       return { ok: true, data: { counts: null, recent: [], engagements: projects.length, truncated: false } }
     },
-    async tasks(): Promise<ServiceResult<OverviewTask[]>> {
+    async tasks(): Promise<ServiceResult<OverviewTaskList>> {
       const { db, projects, ids } = accessible()
       const approvals = db.approvals
         .filter((a) => ids.has(a.projectId) && a.status === 'pending' && TASK_KIND_BY_APPROVAL[a.type] !== undefined)
@@ -107,7 +107,7 @@ export function createOverviewService(authority: DbAuthority, actor: ActorRef): 
           href: `finding/${f.id}?engagement=${f.projectId}`,
           awaitingActor: true,
         }))
-      return { ok: true, data: [...approvals, ...requests, ...reviews] }
+      return { ok: true, data: { items: [...approvals, ...requests, ...reviews], limited: false } }
     },
   }
 }

@@ -10,6 +10,7 @@ import { Activity, FolderKanban, RefreshCw, ShieldAlert, ClipboardList, type Luc
 import { go } from '../../../router/navigate'
 import { Button, PageHeader } from '../../../ui/index'
 import { useOverviewFindings, useOverviewOperations, useOverviewProjects, useOverviewTasks } from '../query'
+import { countText, splitTasks } from '../../decisions'
 import { measureText, overviewMeasures, type MeasureId } from '../measures'
 import { AttentionBanner, DecisionBlock, OperationsBlock, OverviewKpi, Panel, SeverityBlock, SourceState } from './overview-blocks'
 
@@ -42,7 +43,8 @@ export function OverviewPage(): ReactElement {
     void tasks.refetch()
   }
   const readAt = readAtLabel([projects, findings, operations, tasks])
-  const stopCount = (tasks.data ?? []).filter((t) => t.kind === 'active-stop').length
+  const { decisions: decisionList, stops } = splitTasks(tasks.data?.items ?? [])
+  const stopCount = stops.length
   const measures = overviewMeasures({ projects, operations, tasks, findings })
   const decisions = measures.find((measure) => measure.id === 'awaiting-decisions')?.value ?? 0
 
@@ -86,9 +88,9 @@ export function OverviewPage(): ReactElement {
             </SourceState>
           </Panel>
 
-          <Panel title={tasks.data ? `Decision queue (${tasks.data.length})` : 'Decision queue'} sub="Pending approvals, reviews and stops across your accessible projects">
+          <Panel title={tasks.data ? `Decision queue (${countText(decisionList.length, tasks.data.limited)})` : 'Decision queue'} sub="Pending approvals, reviews and requests across your accessible projects. Emergency stops are listed under attention.">
             <SourceState label="The task inbox" pending={tasks.isPending} error={error(tasks)} onRetry={() => void tasks.refetch()}>
-              {tasks.data && <DecisionBlock tasks={tasks.data} />}
+              {tasks.data && <DecisionBlock tasks={decisionList} />}
             </SourceState>
           </Panel>
         </div>
