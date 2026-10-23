@@ -22,11 +22,28 @@ type RunPage = Awaited<ReturnType<RunService['listRuns']>>;
 type ThreadSnapshot = Awaited<ReturnType<RunService['snapshot']>>;
 
 const MAX_ENTRIES = 250;
+/** The page a caller gets when it names no limit; the source window never exceeds MAX_ENTRIES. */
+export const TIMELINE_DEFAULT_LIMIT = 50;
+export const TIMELINE_MAX_LIMIT = MAX_ENTRIES;
 const MAX_RUNS_PER_THREAD = 25;
 const MAX_TRANSCRIPTS_PER_THREAD = 50;
 const MAX_ARTIFACTS = 100;
+/**
+ * The gathered window is reused this long, so a page request and the poll that follows it share one read of the runtime
+ * and the workspace. Access is still checked on every request before the window is used.
+ */
+const WINDOW_TTL_MS = 10_000;
+
+interface TimelineWindow {
+  entries: TimelineEntryView[];
+  truncated: boolean;
+  unavailableThreads: number;
+  untimedCheckpoints: number;
+}
 
 export class TimelineService {
+  private readonly windows = new Map<string, { expiresAt: number; window: Promise<TimelineWindow> }>();
+
   public constructor(
     private readonly db: PrismaClient,
     private readonly runs: RunService,
@@ -34,18 +51,48 @@ export class TimelineService {
     private readonly workspaceRoot: string,
   ) {}
 
-  public async timeline(userId: string, engagementId: string): Promise<TimelineView> {
+  public async timeline(userId: string, engagementId: string, options: { limit?: number } = {}): Promise<TimelineView> {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
     if (!project) throw new ProjectNotFoundError();
+    const window = await this.windowFor(userId, engagementId, project.workspaceSlug);
+    // A page is a prefix of the window, so a larger limit returns the same entries first.
+    const limit = Math.min(Math.max(options.limit ?? TIMELINE_DEFAULT_LIMIT, 1), TIMELINE_MAX_LIMIT);
+    return {
+      engagementId,
+      entries: window.entries.slice(0, limit),
+      truncated: window.truncated,
+      hasMore: window.entries.length > limit,
+      unavailableThreads: window.unavailableThreads,
+      untimedCheckpoints: window.untimedCheckpoints,
+      source: 'mixed',
+    };
+  }
+
+  /** The gathered window for an engagement, reused for WINDOW_TTL_MS; concurrent callers share one gather. */
+  private windowFor(userId: string, engagementId: string, slug: string): Promise<TimelineWindow> {
+    const now = Date.now();
+    const cached = this.windows.get(engagementId);
+    if (cached !== undefined && cached.expiresAt > now) return cached.window;
+    const window = this.gather(userId, engagementId, slug);
+    this.windows.set(engagementId, { expiresAt: now + WINDOW_TTL_MS, window });
+    // A failed gather is not reused: the next request reads the sources again.
+    window.catch(() => {
+      if (this.windows.get(engagementId)?.window === window) this.windows.delete(engagementId);
+    });
+    return window;
+  }
+
+  private async gather(userId: string, engagementId: string, slug: string): Promise<TimelineWindow> {
     const entries: TimelineEntryView[] = [];
     let truncated = false;
 
-    // Runtime: one merged entry per owned run per bound thread.
+    // Runtime: one merged entry per owned run per bound thread. The threads are read together, not one after another.
     const threads = await this.runs.listThreads(userId, engagementId);
     if (threads.threads.length > 5) truncated = true;
+    const reads = await Promise.all(threads.threads.slice(0, 5).map(async (thread) => ({ thread, read: await this.readThread(userId, engagementId, thread.threadId) })));
     let unavailableThreads = 0;
-    for (const thread of threads.threads.slice(0, 5)) {
-      const read = await this.readThread(userId, engagementId, thread.threadId);
+    let untimedCheckpoints = 0;
+    for (const { thread, read } of reads) {
       if (read === null) { unavailableThreads += 1; continue; }
       const { page, snapshot } = read;
       if (page.nextOffset !== null || snapshot.transcriptsTruncated === true) truncated = true;
@@ -55,7 +102,8 @@ export class TimelineService {
           at: run.createdAt,
           source: 'runtime',
           kind: 'run',
-          label: `Planning run ${run.rawStatus}`,
+          label: `Run ${run.rawStatus}`,
+          agent: thread.assistantId,
           runId: run.runId,
           status: run.rawStatus,
         });
@@ -63,9 +111,12 @@ export class TimelineService {
       // Checkpoint transcripts: thread-level durable history, runId null by contract.
       const transcripts = snapshot.transcripts ?? [];
       for (const transcript of transcripts.slice(0, MAX_TRANSCRIPTS_PER_THREAD)) {
+        const at = extractTranscriptTime(transcript.key);
+        // A checkpoint with no recorded time cannot be ordered. It is counted, never given the time it was read.
+        if (at === null) { untimedCheckpoints += 1; continue; }
         entries.push({
           id: `checkpoint:${transcript.key ?? entries.length}`,
-          at: extractTranscriptTime(transcript.key) ?? new Date().toISOString(),
+          at,
           source: 'checkpoint',
           kind: transcript.payload.type,
           label: transcript.payload.type.replace(/_/g, ' '),
@@ -75,30 +126,34 @@ export class TimelineService {
       }
     }
 
-    // Workspace artifact mtimes: presence markers across allowlisted folders.
+    // Workspace artifact mtimes: presence markers across allowlisted folders. The workspace is resolved once for all of them.
     const artifacts = await this.artifacts.list(userId, engagementId);
-    let artifactCount = 0;
+    const files: { folder: string; path: string }[] = [];
     for (const folder of artifacts.folders) {
       for (const file of folder.files) {
-        if (artifactCount >= MAX_ARTIFACTS) { truncated = true; break; }
-        const at = await this.artifactMtime(project.workspaceSlug, file.path);
-        if (at === null) continue;
-        artifactCount += 1;
-        entries.push({
-          id: `workspace:${file.path}`,
-          at,
-          source: 'workspace',
-          kind: 'artifact',
-          label: `Artifact updated: ${file.path}`,
-          tool: folder.folder,
-        });
+        if (files.length >= MAX_ARTIFACTS) { truncated = true; break; }
+        files.push({ folder: folder.folder, path: file.path });
       }
-      if (artifactCount >= MAX_ARTIFACTS) break;
+      if (files.length >= MAX_ARTIFACTS) break;
     }
+    const dir = await this.workspaceDir(slug);
+    const stamps = await Promise.all(files.map((file) => this.artifactMtime(dir, file.path)));
+    stamps.forEach((at, index) => {
+      if (at === null) return;
+      const file = files[index]!;
+      entries.push({
+        id: `workspace:${file.path}`,
+        at,
+        source: 'workspace',
+        kind: 'artifact',
+        label: `Artifact present: ${file.path}`,
+        tool: file.folder,
+      });
+    });
 
     entries.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
     if (entries.length > MAX_ENTRIES) { entries.length = MAX_ENTRIES; truncated = true; }
-    return { engagementId, entries, truncated, unavailableThreads, source: 'mixed' };
+    return { entries, truncated, unavailableThreads, untimedCheckpoints };
   }
 
   /**
@@ -117,11 +172,18 @@ export class TimelineService {
     }
   }
 
-  private async artifactMtime(slug: string, relativePath: string): Promise<string | null> {
-    const segments = relativePath.split('/');
-    if (segments.length !== 2 || !(ARTIFACT_FOLDERS as readonly string[]).includes(segments[0]!)) return null;
+  private async workspaceDir(slug: string): Promise<string | null> {
     try {
-      const dir = await resolveEngagementWorkspaceDir(this.workspaceRoot, slug);
+      return await resolveEngagementWorkspaceDir(this.workspaceRoot, slug);
+    } catch {
+      return null;
+    }
+  }
+
+  private async artifactMtime(dir: string | null, relativePath: string): Promise<string | null> {
+    const segments = relativePath.split('/');
+    if (dir === null || segments.length !== 2 || !(ARTIFACT_FOLDERS as readonly string[]).includes(segments[0]!)) return null;
+    try {
       const info = await stat(path.join(dir, segments[0]!, segments[1]!));
       return info.mtime.toISOString();
     } catch {

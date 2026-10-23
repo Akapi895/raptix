@@ -89,7 +89,7 @@ describe('W14 operations timeline', () => {
       const artifact = view.entries.find((e: { id: string }) => e.id === 'workspace:recon/nmap.txt');
       expect(artifact).toBeDefined();
       expect(artifact).toMatchObject({ source: 'workspace', kind: 'artifact', tool: 'recon' });
-      expect(artifact.label).toBe('Artifact updated: recon/nmap.txt');
+      expect(artifact.label).toBe('Artifact present: recon/nmap.txt');
       const times = view.entries.map((e: { at: string }) => Date.parse(e.at));
       expect([...times].sort((a, b) => b - a)).toEqual(times);
     });
