@@ -64,7 +64,7 @@ describe('OverviewPage', () => {
     hooks.tasks = read({ items: [stop, grant], limited: true })
     await renderOverview()
     expect(screen.getByText('Decision queue (1+)')).toBeTruthy()
-    expect(screen.getByText('1 active emergency stop need attention.')).toBeTruthy()
+    expect(screen.getByText('1 active emergency stop needs attention.')).toBeTruthy()
   })
 
   it('shows a failed findings section as unavailable while the other sections still render', async () => {

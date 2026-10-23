@@ -12,7 +12,8 @@ import { Button, PageHeader } from '../../../ui/index'
 import { useOverviewFindings, useOverviewOperations, useOverviewProjects, useOverviewTasks } from '../query'
 import { countText, splitTasks } from '../../decisions'
 import { measureText, overviewMeasures, type MeasureId } from '../measures'
-import { AttentionBanner, DecisionBlock, OperationsBlock, OverviewKpi, Panel, SeverityBlock, SourceState } from './overview-blocks'
+import type { OverviewProject } from '../service'
+import { AttentionRegion, DecisionBlock, OperationsBlock, OverviewKpi, Panel, SeverityBlock, SourceState } from './overview-blocks'
 
 type KpiTint = ComponentProps<typeof OverviewKpi>['tint']
 
@@ -28,6 +29,24 @@ const KPI_STYLE: Readonly<Record<MeasureId, { icon: LucideIcon; tint: KpiTint }>
 function readAtLabel(reads: { dataUpdatedAt?: number }[]): string | null {
   const newest = Math.max(0, ...reads.map((r) => r.dataUpdatedAt ?? 0))
   return newest === 0 ? null : new Date(newest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+/** The first project rows the source returns; the list is not sorted here, so the panel does not claim an order. */
+function ProjectRows({ projects, total }: { projects: OverviewProject[]; total: number }): ReactElement {
+  if (total === 0) return <p className="text-sm text-muted">No projects are visible to your account yet.</p>
+  return (
+    <ul className="divide-y divide-line">
+      {projects.map((project) => (
+        <li key={project.id}>
+          <button type="button" onClick={() => go('project', { id: project.id })} className="flex w-full items-center gap-3 py-2 text-left text-sm hover:text-primary">
+            <span className="min-w-0 flex-1 truncate font-medium">{project.name}</span>
+            <span className="hidden min-w-0 truncate text-xs text-muted sm:block">{project.detail}</span>
+            <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-xs capitalize">{project.status}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 export function OverviewPage(): ReactElement {
@@ -46,7 +65,9 @@ export function OverviewPage(): ReactElement {
   const { decisions: decisionList, stops } = splitTasks(tasks.data?.items ?? [])
   const stopCount = stops.length
   const measures = overviewMeasures({ projects, operations, tasks, findings })
-  const decisions = measures.find((measure) => measure.id === 'awaiting-decisions')?.value ?? 0
+  const awaiting = measures.find((measure) => measure.id === 'awaiting-decisions')
+  const unavailable = measures.filter((measure) => measure.state === 'unavailable').map((measure) => measure.label)
+  const checking = measures.some((measure) => measure.state === 'pending')
 
   return (
     <div className="space-y-4">
@@ -57,7 +78,7 @@ export function OverviewPage(): ReactElement {
         actions={<Button variant="secondary" icon={RefreshCw} onClick={refreshAll}>Refresh</Button>}
       />
 
-      <AttentionBanner stops={stopCount} decisions={decisions} />
+      <AttentionRegion stops={stopCount} decisions={awaiting?.value ?? null} limited={awaiting?.limited ?? false} unavailable={unavailable} pending={checking} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {measures.map((measure) => (
@@ -73,28 +94,33 @@ export function OverviewPage(): ReactElement {
         ))}
       </div>
 
-      <div className="space-y-4">
-        <Panel title="Severity distribution" sub="Curated findings across your accessible projects, by severity"
-            action={<button type="button" onClick={() => go('findings')} className="text-sm font-medium text-primary hover:underline">View all →</button>}>
-            <SourceState label="The findings rollup" pending={findings.isPending} error={error(findings)} onRetry={() => void findings.refetch()}>
-              {findings.data && <SeverityBlock view={findings.data} />}
-            </SourceState>
-          </Panel>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <Panel title={tasks.data ? `Decision queue (${countText(decisionList.length, tasks.data.limited)})` : 'Decision queue'} sub="Pending approvals, reviews and requests across your accessible projects. Emergency stops are listed under attention.">
+          <SourceState label="The task inbox" pending={tasks.isPending} error={error(tasks)} onRetry={() => void tasks.refetch()}>
+            {tasks.data && <DecisionBlock tasks={decisionList} />}
+          </SourceState>
+        </Panel>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <Panel title="Operations queue" sub="Operation bindings by governance state">
-            <SourceState label="The operations rollup" pending={operations.isPending} error={error(operations)} onRetry={() => void operations.refetch()}>
-              {operations.data && <OperationsBlock view={operations.data} />}
-            </SourceState>
-          </Panel>
-
-          <Panel title={tasks.data ? `Decision queue (${countText(decisionList.length, tasks.data.limited)})` : 'Decision queue'} sub="Pending approvals, reviews and requests across your accessible projects. Emergency stops are listed under attention.">
-            <SourceState label="The task inbox" pending={tasks.isPending} error={error(tasks)} onRetry={() => void tasks.refetch()}>
-              {tasks.data && <DecisionBlock tasks={decisionList} />}
-            </SourceState>
-          </Panel>
-        </div>
+        <Panel title="Operations queue" sub="Operation bindings by governance state">
+          <SourceState label="The operations rollup" pending={operations.isPending} error={error(operations)} onRetry={() => void operations.refetch()}>
+            {operations.data && <OperationsBlock view={operations.data} />}
+          </SourceState>
+        </Panel>
       </div>
+
+      <Panel title="Projects" sub="The first projects your account can see"
+          action={<button type="button" onClick={() => go('projects')} className="text-sm font-medium text-primary hover:underline">View all →</button>}>
+        <SourceState label="The project list" pending={projects.isPending} error={error(projects)} onRetry={() => void projects.refetch()}>
+          {projects.data && <ProjectRows projects={projects.data.slice(0, 5)} total={projects.data.length} />}
+        </SourceState>
+      </Panel>
+
+      <Panel title="Severity distribution" sub="Curated findings across your accessible projects, by severity. The findings page holds the full list."
+          action={<button type="button" onClick={() => go('findings')} className="text-sm font-medium text-primary hover:underline">View all →</button>}>
+        <SourceState label="The findings rollup" pending={findings.isPending} error={error(findings)} onRetry={() => void findings.refetch()}>
+          {findings.data && <SeverityBlock view={findings.data} />}
+        </SourceState>
+      </Panel>
 
       <p className="text-xs text-muted">Reads cover only the projects your account owns or holds a membership on. A source that is unavailable says so instead of showing zeros.</p>
     </div>
