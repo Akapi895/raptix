@@ -10,6 +10,9 @@ Bộ tài liệu audit để một reviewer độc lập đọc và đánh giá 
 4. `04-implementation-roadmap.md` — Quick Wins, Structural, Long-term.
 5. `05-evidence.md` — ảnh chụp (thư mục `evidence/`), môi trường quan sát, đường dẫn source.
 6. `06-verification-gaps.md` — chưa kiểm được gì, vì sao, và cách đóng khoảng trống.
+7. `07-acceptance-closure.md` — đối chiếu UX-01 đến UX-27 và S-01 đến S-08 với nhãn CLOSED, PARTIAL, OPEN, NV.
+
+Kế hoạch Structural (chỉ tài liệu, chưa có code) nằm ở `structural-plan/` (00 đến 06).
 
 ## Nhãn bằng chứng
 
@@ -56,3 +59,10 @@ Bộ tài liệu audit để một reviewer độc lập đọc và đánh giá 
 - `verification/results/` — JSON và log của các lần chạy (smoke, real-mode, mobile và đăng nhập, thông điệp lỗi, typecheck, lint, boundary, build, test).
 - `checklist-snapshot/` — bản snapshot của checklist owner (file gốc là untracked trong git).
 - `evidence/A09`–`A13`, `R01`–`R05`, `R-E1`/`R-E3` — ảnh sau vòng này; `A09`–`A11` có cặp trước/sau.
+
+## Vòng nghiệm thu cuối (2026-10-23, vòng 3)
+
+- `verification/VERIFICATION-STABILIZATION-2026-10-23.md` mục 9: gate tại HEAD `56a29e1a`, route smoke, real mode và outage production.
+- `verification/results/final-acceptance/`: exit code, log và JSON của lần chạy cuối.
+- `structural-plan/`: kế hoạch Structural WS-0 đến WS-4 và quyết định D-01 đến D-06 chờ reviewer. Không có code.
+- `evidence/A14`, `P1`, `P2`: ảnh sau thay đổi identity Settings và outage production.
