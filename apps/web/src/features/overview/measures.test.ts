@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { measureText, overviewMeasures, type Read } from './measures'
-import type { OverviewFindings, OverviewOperations, OverviewProject, OverviewTask } from './service'
+import type { OverviewFindings, OverviewOperations, OverviewProject, OverviewTask, OverviewTaskList } from './service'
 
 const READY = <T,>(data: T): Read<T> => ({ isPending: false, error: null, data })
 const PENDING: Read<never> = { isPending: true, error: null, data: undefined }
@@ -8,10 +8,11 @@ const FAILED: Read<never> = { isPending: false, error: new Error('down'), data: 
 
 const project = (status: string): OverviewProject => ({ id: `p-${status}`, name: status, status } as unknown as OverviewProject)
 const task = (kind: OverviewTask['kind']): OverviewTask => ({ kind, refId: `r-${kind}`, engagementId: 'eng-1', engagementName: null, title: kind, createdAt: '2026-10-24T00:00:00Z', href: 'project/eng-1', awaitingActor: true })
-const findings = (byStatus: Record<string, number>): OverviewFindings => ({ total: 0, engagements: 0, engagementsWithFindings: 0, bySeverity: {}, byStatus, unresolvedBySeverity: {}, latestCreatedAt: null, truncated: false })
-const operations = (counts: Record<string, number> | null): OverviewOperations => ({ counts, recent: [], engagements: 0, truncated: false })
+const tasks = (items: OverviewTask[], limited = false): OverviewTaskList => ({ items, limited })
+const findings = (byStatus: Record<string, number>, truncated = false): OverviewFindings => ({ total: 0, engagements: 0, engagementsWithFindings: 0, bySeverity: {}, byStatus, unresolvedBySeverity: {}, latestCreatedAt: null, truncated })
+const operations = (counts: Record<string, number> | null, truncated = false): OverviewOperations => ({ counts, recent: [], engagements: 0, truncated })
 
-const idle = { projects: READY<OverviewProject[]>([]), operations: READY(operations({})), tasks: READY<OverviewTask[]>([]), findings: READY(findings({})) }
+const idle = { projects: READY<OverviewProject[]>([]), operations: READY(operations({})), tasks: READY(tasks([])), findings: READY(findings({})) }
 const byId = (reads: Partial<typeof idle>) => Object.fromEntries(overviewMeasures({ ...idle, ...reads }).map((m) => [m.id, m]))
 
 describe('overview measure states', () => {
@@ -25,7 +26,7 @@ describe('overview measure states', () => {
   })
 
   it('shows zero only when the source confirms zero', () => {
-    const confirmed = byId({ tasks: READY<OverviewTask[]>([]) })['awaiting-decisions']
+    const confirmed = byId({ tasks: READY(tasks([])) })['awaiting-decisions']
     expect(confirmed.state).toBe('zero')
     expect(measureText(confirmed)).toBe('0')
   })
@@ -50,7 +51,7 @@ describe('overview measure definitions', () => {
   })
 
   it('leaves emergency stops and tool approvals out of awaiting decisions', () => {
-    const decisions = byId({ tasks: READY([task('active-stop'), task('c2-grant'), task('finding-review')]) })['awaiting-decisions']
+    const decisions = byId({ tasks: READY(tasks([task('active-stop'), task('c2-grant'), task('finding-review')])) })['awaiting-decisions']
     expect(decisions.value).toBe(2)
   })
 
@@ -64,5 +65,22 @@ describe('overview measure definitions', () => {
       expect(measure.definition.length).toBeGreaterThan(10)
       expect(measure.label.length).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('overview measures from a limited read', () => {
+  it('shows a decision count from a capped task inbox as a lower bound', () => {
+    const capped = byId({ tasks: READY(tasks([task('c2-grant')], true)) })['awaiting-decisions']
+    expect(capped.limited).toBe(true)
+    expect(measureText(capped)).toBe('1+')
+  })
+
+  it('shows a count as a lower bound when the operations or findings scan was truncated', () => {
+    expect(measureText(byId({ operations: READY(operations({ running: 2 }, true)) })['active-operations'])).toBe('2+')
+    expect(measureText(byId({ findings: READY(findings({ confirmed: 3 }, true)) })['open-curated-findings'])).toBe('3+')
+  })
+
+  it('shows an exact count when nothing was capped', () => {
+    expect(measureText(byId({ tasks: READY(tasks([task('c2-grant')])) })['awaiting-decisions'])).toBe('1')
   })
 })

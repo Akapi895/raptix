@@ -77,11 +77,11 @@ function useReads(overrides: { overview?: Record<string, unknown> } = {}): void 
   hooks.surface.mockReturnValue(failed('C2 provider not configured'))
   hooks.findings.mockReturnValue(ok({ items: [], total: 0, counts: { all: 5, drafts: 1, review: 2, confirmed: 1, remediation: 0, ai: 1 }, summary: { total: 5, severity: { critical: 1, high: 1, medium: 2, low: 0, info: 1 } } }))
   hooks.assets.mockReturnValue(ok({ items: [], total: 5, kpis: { in: 3, out: 1, pending: 1, unclassified: 0 } }))
-  hooks.tasks.mockReturnValue(ok([
+  hooks.tasks.mockReturnValue(ok({ items: [
     task({ refId: 'T-1', awaitingActor: true, title: 'Review of scope v3' }),
     task({ refId: 'T-2', kind: 'report-review', title: 'Quarterly report' }),
     task({ refId: 'T-3', engagementId: 'RT-2026-009', title: 'Other project finding' }),
-  ]))
+  ], limited: false }))
   hooks.fetchOverview.mockResolvedValue({ ...overviewRead, ...overrides.overview })
   hooks.fetchEnvironment.mockResolvedValue({
     engagementId: 'RT-2026-014',

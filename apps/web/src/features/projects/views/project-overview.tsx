@@ -11,6 +11,7 @@ import { useAssetList } from '../../assets'
 import { useFindingList } from '../../findings'
 import { useProviderSurface } from '../../c2'
 import { useOverviewTasks } from '../../overview'
+import { countText, splitTasks } from '../../decisions'
 import { useRuntimeFleet } from '../../operations'
 import { usePlanningRead } from '../../planning'
 import { useScopeRead } from '../../scope'
@@ -210,7 +211,8 @@ export function ProjectOverview({ d }: { d: ProjectViewModel }): ReactElement {
   // While the overview is still loading, the next step follows the preparation checks alone; the stops are not known yet.
   const next = nextStepFor(input, activeStops ?? 0)
   const preflightFailed = overview.data?.readiness.ok === false ? overview.data.readiness.failed.length : 0
-  const decisions = tasks.data ? decisionsFor(tasks.data, d.id) : []
+  // Emergency stops are attention items: the activeStops figure above counts them, so they are not decisions here.
+  const decisions = tasks.data ? splitTasks(decisionsFor(tasks.data.items, d.id)).decisions : []
   const yours = decisions.filter((task) => task.awaitingActor).length
   const threads = fleet.data?.threads ?? []
   const activeRuns = fleet.data?.counts.activeRuns ?? null
@@ -248,7 +250,7 @@ export function ProjectOverview({ d }: { d: ProjectViewModel }): ReactElement {
       case 'checks':
         return { label: 'Checks met', value: `${metCount} / ${checks.length}`, sub: prepared ? 'All preparation checks met' : 'Preparation checks still open', tone: prepared ? 'ok' : 'warn', icon: ClipboardCheck }
       case 'decisions':
-        return { label: 'Decisions', value: tasks.data ? decisions.length : '—', sub: tasks.data ? (yours > 0 ? `${yours} waiting for you` : 'None waiting for you') : failureText(tasks.error, 'Decisions unavailable'), tone: yours > 0 ? 'warn' : 'neutral', icon: Users }
+        return { label: 'Decisions', value: tasks.data ? countText(decisions.length, tasks.data.limited) : '—', sub: tasks.data ? (yours > 0 ? `${yours} waiting for you` : 'None waiting for you') : failureText(tasks.error, 'Decisions unavailable'), tone: yours > 0 ? 'warn' : 'neutral', icon: Users }
       case 'findings':
         return { label: 'Findings', value: severityTotal ?? '—', sub: findings.data ? 'Curated, across this engagement' : failureText(findings.error, 'Findings unavailable'), tone: 'primary', icon: Bug }
       case 'critical':

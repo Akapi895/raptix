@@ -2,42 +2,9 @@ import { apiFetch } from '../../platform/transport';
 import { guarded } from '../../platform/adapter-shared';
 import { utcMinute } from '../../platform/format';
 import { listEngagements } from '../projects';
+import { fetchTasks } from '../decisions';
 import type { OverviewService } from './service';
 
-/* ───────────── Command center, tasks and notices (integration ticket 15) ───────────── */
-export interface TaskItemView {
-  kind: 'scope-revision' | 'business-plan' | 'c2-grant' | 'report-review' | 'finding-review' | 'active-stop'
-  engagementId: string
-  engagementName: string | null
-  refId: string
-  title: string
-  createdAt: string
-  href: string
-  awaitingActor: boolean
-}
-
-export interface TaskEngagementView {
-  engagementId: string
-  name: string | null
-  readiness: { state: 'available' | 'unavailable'; ok: boolean | null; failedChecks: number; reason: string | null }
-}
-
-export interface TasksView {
-  tasks: TaskItemView[]
-  engagements: TaskEngagementView[]
-  counts: Record<string, number>
-  source: 'db'
-}
-
-export function isTasksView(v: unknown): v is TasksView {
-  if (typeof v !== 'object' || v === null) return false
-  const doc = v as TasksView
-  return Array.isArray(doc.tasks) && Array.isArray(doc.engagements) && typeof doc.counts === 'object' && doc.source === 'db'
-}
-
-export function fetchTasks(): Promise<TasksView> {
-  return apiFetch('/tasks', isTasksView)
-}
 
 /* ───────────── System Overview (cross-project dashboard, per-domain reads) ───────────── */
 export interface OverviewFindingsView {
@@ -136,7 +103,7 @@ export function createRealOverviewService(): OverviewService {
     }),
     tasks: () => guarded(async () => {
       const view = await fetchTasks()
-      return { ok: true, data: view.tasks.map((t) => ({ kind: t.kind, refId: t.refId, engagementId: t.engagementId, engagementName: t.engagementName, title: t.title, createdAt: utcMinute(t.createdAt), href: t.href, awaitingActor: t.awaitingActor })) }
+      return { ok: true, data: { items: view.tasks.map((t) => ({ kind: t.kind, refId: t.refId, engagementId: t.engagementId, engagementName: t.engagementName, title: t.title, createdAt: utcMinute(t.createdAt), href: t.href, awaitingActor: t.awaitingActor })), limited: view.limited === true } }
     }),
   }
 }

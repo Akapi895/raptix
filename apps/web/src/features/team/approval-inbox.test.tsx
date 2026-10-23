@@ -4,14 +4,14 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 
-vi.mock('../overview/remote', () => ({ fetchTasks: vi.fn() }))
+vi.mock('../decisions/remote', async (importOriginal) => ({ ...(await importOriginal<typeof import('../decisions/remote')>()), fetchTasks: vi.fn() }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
 }))
 
 const { ApprovalInbox } = await import('./approval-inbox')
-const api_overview = await import('../overview/remote');
+const api_decisions = await import('../decisions/remote');
 
 const TASK = (over: Record<string, unknown>) => ({
   kind: 'scope-revision', engagementId: 'eng-1', engagementName: 'Lab', refId: 'SR-1', title: 'Widen the in-scope range',
@@ -27,7 +27,7 @@ beforeEach(() => { cleanup(); vi.clearAllMocks() })
 
 describe('ApprovalInbox', () => {
   it('lists only the decisions pending on this engagement and flags the ones waiting on the signed-in actor', async () => {
-    vi.mocked(api_overview.fetchTasks).mockResolvedValue({
+    vi.mocked(api_decisions.fetchTasks).mockResolvedValue({
       tasks: [
         TASK({ refId: 'SR-1', title: 'Widen the in-scope range', awaitingActor: true }),
         TASK({ kind: 'report-review', refId: 'RPT-9', title: 'Q3 report', engagementId: 'eng-2' }),
@@ -45,13 +45,35 @@ describe('ApprovalInbox', () => {
   })
 
   it('states when nothing is waiting instead of showing an empty list', async () => {
-    vi.mocked(api_overview.fetchTasks).mockResolvedValue({ tasks: [], engagements: [], counts: {}, source: 'db' } as never)
+    vi.mocked(api_decisions.fetchTasks).mockResolvedValue({ tasks: [], engagements: [], counts: {}, source: 'db' } as never)
     render(withClient(<ApprovalInbox engagementId="eng-1" />))
     expect(await screen.findByText('Nothing is waiting')).toBeInTheDocument()
   })
 
+  it('lists an active emergency stop as attention, not as a decision waiting for approval', async () => {
+    vi.mocked(api_decisions.fetchTasks).mockResolvedValue({
+      tasks: [TASK({ kind: 'active-stop', refId: 'ES-1', title: 'Emergency stop (all) is active', href: '#/project/eng-1?tab=operations' }), TASK({ refId: 'SR-1', title: 'Widen the in-scope range' })],
+      engagements: [], counts: {}, source: 'db',
+    } as never)
+    render(withClient(<ApprovalInbox engagementId="eng-1" />))
+    const attention = await screen.findByRole('region', { name: 'Attention' })
+    expect(within(attention).getByText('Emergency stop (all) is active')).toBeInTheDocument()
+    const decisions = screen.getByRole('region', { name: 'Decisions' })
+    expect(within(decisions).queryByText('Emergency stop (all) is active')).toBeNull()
+    expect(within(decisions).getByText('Widen the in-scope range')).toBeInTheDocument()
+  })
+
+  it('says when the inbox read is limited and marks the counts as lower bounds', async () => {
+    vi.mocked(api_decisions.fetchTasks).mockResolvedValue({
+      tasks: [TASK({ refId: 'SR-1', title: 'Widen the in-scope range' })], engagements: [], counts: {}, limited: true, source: 'db',
+    } as never)
+    render(withClient(<ApprovalInbox engagementId="eng-1" />))
+    expect(await screen.findByText('The list is limited')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Decisions' })).toHaveTextContent('Decisions · 1+')
+  })
+
   it('shows an explicit unavailable state rather than a substitute list when the source fails', async () => {
-    vi.mocked(api_overview.fetchTasks).mockRejectedValue(new Error('inbox down'))
+    vi.mocked(api_decisions.fetchTasks).mockRejectedValue(new Error('inbox down'))
     render(withClient(<ApprovalInbox engagementId="eng-1" />))
     expect(await screen.findByText('Approvals unavailable')).toBeInTheDocument()
     expect(screen.getByText(/inbox down/)).toBeInTheDocument()

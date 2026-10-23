@@ -104,11 +104,17 @@ export interface OverviewTask {
   awaitingActor: boolean
 }
 
+/** The task inbox for the visible projects; `limited` means a kind reached its row cap, so the items are a lower bound. */
+export interface OverviewTaskList {
+  items: OverviewTask[]
+  limited: boolean
+}
+
 /** Actor-bound overview reads; the overview is global, so no project is named. */
 export interface OverviewService {
   projects(): Promise<ServiceResult<OverviewProject[]>>
   findings(): Promise<ServiceResult<OverviewFindings>>
   c2(): Promise<ServiceResult<OverviewC2>>
   operations(): Promise<ServiceResult<OverviewOperations>>
-  tasks(): Promise<ServiceResult<OverviewTask[]>>
+  tasks(): Promise<ServiceResult<OverviewTaskList>>
 }

@@ -4,11 +4,11 @@
     "production-type-imports-demo": 65,
     "production-imports-composition": 30,
     "presentation-imports-real": 0,
-    "presentation-imports-adapter": 10,
+    "presentation-imports-adapter": 9,
     "presentation-mock-plumbing": 49,
     "real-imports-features": 0,
     "real-imports-screens": 0,
     "features-import-screens": 0,
-    "deep-feature-import": 218
+    "deep-feature-import": 216
   }
 }
