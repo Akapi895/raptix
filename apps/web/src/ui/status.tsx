@@ -8,7 +8,7 @@ export function Status({ kind, value, size = 'md', label }: { kind: StatusKind; 
   const I = x.icon
   const solid = kind === 'sev' && value === 'critical'
   return (
-    <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-medium', solid ? 'border-bad bg-bad text-white' : TONE[x.tone], size === 'sm' ? 'h-5 px-2 text-xs' : 'h-6 px-2.5 text-xs')}>
+    <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-medium', solid ? 'border-danger-fill bg-danger-fill text-white' : TONE[x.tone], size === 'sm' ? 'h-5 px-2 text-xs' : 'h-6 px-2.5 text-xs')}>
       <I size={size === 'sm' ? 12 : 13} className={I === Loader2 ? 'motion-safe:animate-spin' : ''} aria-hidden />
       {label || x.label}
     </span>

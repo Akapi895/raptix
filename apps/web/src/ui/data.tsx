@@ -54,7 +54,7 @@ export function Stepper({ steps, current, onJump }: { steps: string[]; current: 
       {steps.map((s, i) => (
         <li key={s} className="flex-1" style={{ minWidth: 130 }}>
           <button disabled={!onJump || i > current} onClick={() => onJump?.(i)} className={cx('flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition', i === current ? 'border-accent bg-accent-soft text-fg' : i < current ? 'border-ok/40 text-fg hover:bg-hover' : 'border-line text-muted')}>
-            <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold', i < current ? 'bg-ok text-white' : i === current ? 'bg-accent text-white' : 'bg-hover')}>{i < current ? '✓' : i + 1}</span>
+            <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold', i < current ? 'bg-ok text-white' : i === current ? 'bg-primary text-primary-fg' : 'bg-hover')}>{i < current ? '✓' : i + 1}</span>
             <span className="font-medium">{s}</span>
           </button>
         </li>

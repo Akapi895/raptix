@@ -10,6 +10,8 @@ vi.mock('./endpoints', async (importOriginal) => {
     getEngagement: vi.fn(),
     importAssets: vi.fn(),
     classifyAsset: vi.fn(),
+    fetchAssets: vi.fn(),
+    fetchAccessibleAssets: vi.fn(),
   }
 })
 vi.mock('../scope/api', async (importOriginal) => {
@@ -76,6 +78,9 @@ beforeEach(() => {
   vi.mocked(api_projects.getEngagement).mockReset()
   vi.mocked(api_assets.importAssets).mockReset()
   vi.mocked(api_assets.classifyAsset).mockReset()
+  vi.mocked(api_assets.fetchAssets).mockReset()
+  vi.mocked(api_assets.fetchAssets).mockRejectedValue(new Error('no graph in this test'))
+  vi.mocked(api_assets.fetchAccessibleAssets).mockReset()
 })
 
 describe('real asset reads', () => {
@@ -89,6 +94,60 @@ describe('real asset reads', () => {
     expect(res.data.items.map((item) => item.asset.source)).toEqual(['managed', 'observed', 'managed'])
     expect(res.data.kpis).toEqual({ in: 1, out: 1, pending: 1, unclassified: 0 })
     expect(res.data.total).toBe(3)
+  })
+
+  it('joins the observed graph to inventory rows by hostname, IP or URL, and says when the graph could not be read', async () => {
+    vi.mocked(api_assets.fetchAssetInventory).mockResolvedValue(inventory([
+      { id: 'as-1', identifier: 'app.lab.example.test', kind: 'host', observed: true },
+      { id: 'as-2', identifier: 'https://portal.lab.example.test', kind: 'web_url' },
+      { id: 'as-3', identifier: '10.20.0.0/24', kind: 'ip_range' },
+    ]))
+    vi.mocked(api_assets.fetchAssets).mockResolvedValue({
+      engagementId: 'eng-1', truncated: false, source: 'graph',
+      assets: [{ id: 'g-1', type: 'Host', label: 'app', hostname: 'APP.lab.example.test', os: 'Linux', ports: ['443/tcp'], services: ['https'], relatedFindingIds: ['FD-1', 'FD-2'] }],
+    } as never)
+    const res = await createRealAssetService().list(ctx, {})
+    expect(res.ok).toBe(true)
+    if (!res.ok) return
+    const byId = new Map(res.data.items.map((item) => [item.asset.id, item.asset]))
+    expect(byId.get('as-1')).toMatchObject({ os: 'Linux', observation: { ports: ['443/tcp'], services: ['https'], findingCount: 2 } })
+    expect(byId.get('as-2')?.observation).toBeNull()
+    expect(byId.get('as-3')?.observation).toBeNull()
+    expect(res.data.observation).toBe('ok')
+    expect(res.data.oses).toEqual(['Linux'])
+    expect(res.data.types).toEqual({ Host: 1, URL: 1, Subnet: 1 })
+    expect(res.data.sources).toEqual({ observed: 1, managed: 2 })
+
+    vi.mocked(api_assets.fetchAssets).mockRejectedValue(new Error('graph unreachable'))
+    const degraded = await createRealAssetService().list(ctx, {})
+    expect(degraded.ok).toBe(true)
+    if (!degraded.ok) return
+    expect(degraded.data.observation).toBe('unavailable')
+    expect(degraded.data.items.every((item) => item.asset.observation === null)).toBe(true)
+    expect(degraded.data.items).toHaveLength(3)
+  })
+
+  it('lists the assets of every readable project, each with its project and the graph facts of its own project', async () => {
+    vi.mocked(api_assets.fetchAccessibleAssets).mockResolvedValue({
+      truncated: false,
+      source: 'db',
+      assets: [
+        { id: 'as-1', engagementId: 'eng-1', projectName: 'Reddish', identifier: 'app.lab.example.test', kind: 'host', classification: 'in_scope', observed: true, version: 2, updatedAt: '2026-10-14T09:00:00.000Z' },
+        { id: 'as-2', engagementId: 'eng-2', projectName: 'Viettel', identifier: 'https://portal.example.test', kind: 'web_url', classification: 'pending', observed: false, version: 1, updatedAt: '2026-10-14T09:00:00.000Z' },
+      ],
+    } as never)
+    vi.mocked(api_assets.fetchAssets).mockImplementation(async (engagementId: string) => (engagementId === 'eng-1'
+      ? { engagementId, truncated: false, source: 'graph', assets: [{ id: 'g-1', type: 'Host', label: 'app', hostname: 'app.lab.example.test', os: 'Linux', ports: ['443/tcp'], services: ['https'], relatedFindingIds: ['FD-1'] }] } as never
+      : { engagementId, truncated: false, source: 'graph', assets: [] } as never))
+    const res = await createRealAssetService().list({ ...ctx, projectId: 'all' }, {})
+    expect(res.ok).toBe(true)
+    if (!res.ok) return
+    expect(res.data.items.map((item) => [item.asset.id, item.projectId, item.projectName])).toEqual([['as-1', 'eng-1', 'Reddish'], ['as-2', 'eng-2', 'Viettel']])
+    expect(res.data.items[0].asset).toMatchObject({ os: 'Linux', observation: { ports: ['443/tcp'], services: ['https'], findingCount: 1 } })
+    expect(res.data.items[1].asset.observation).toBeNull()
+    expect(res.data.total).toBe(2)
+    expect(res.data.kpis).toEqual({ in: 1, out: 0, pending: 1, unclassified: 0 })
+    expect(res.data.observation).toBe('ok')
   })
 
   it('pages and filters the inventory without reading the mock store', async () => {

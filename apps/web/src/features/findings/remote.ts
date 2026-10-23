@@ -4,10 +4,12 @@ import type {
   FindingActivityPage, FindingCategory, FindingDetailRead, FindingListQuery, FindingListRead, FindingReferenceOptions, FindingSaveInput,
   FindingService, FindingSort, FindingSuggestionDisposition, FindingTransitionTarget, WorkspaceEvidenceImport,
 } from './'
-import { addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture } from './api';
+import { addCuratedFindingComment, attachEvidence as attachEvidenceApi, classifyCapture as classifyCaptureApi, createCuratedFinding, downloadCapture, fetchAccessibleFindings, fetchCuratedFindings, fetchFindings, fetchFindingActivity, fetchFindingReferenceOptions, fetchFindingSuggestionDispositions, fetchRetainedCaptures, importCuratedFinding, importWorkspaceEvidence, recordCuratedFindingRetest, setFindingSuggestionDisposition as setSuggestionDispositionApi, transitionCuratedFinding, updateCuratedFinding, uploadCapture } from './api';
 import { getEngagement } from '../projects/remote';
-import type { CuratedFindingsView, CuratedFindingView } from '@raptix/web-contracts';
+import type { AccessibleFindingRow, CuratedFindingsView, CuratedFindingView } from '@raptix/web-contracts';
 import type { FindingView } from '@raptix/web-contracts'
+import type { ServiceResult } from '../../domain/service'
+import { summarizeFindings } from './service'
 import { ApiTransportError } from '../../platform/transport'
 import { displayTime, guarded, instant } from '../../platform/adapter-shared'
 import { unavailable, unsupportedControl } from '../../platform/adapter-stub'
@@ -148,7 +150,38 @@ function buildList(findings: Finding[], query: FindingListQuery, dismissedCount 
     owners: [...new Set(base.map((f) => f.owner).filter(Boolean))].sort(),
     assets: [...new Set(findings.map((finding) => finding.asset).filter(Boolean))],
     ops: [...new Set(findings.map((finding) => finding.op).filter(Boolean))],
-    projects: [],
+    projects: [...new Set(findings.map((finding) => finding.projectId))],
+    projectLabels: {},
+    summary: summarizeFindings(findings),
+  }
+}
+
+/** A curated finding in the cross-project list: the row fields only; the detail is read when the finding is opened. */
+function toAccessibleFinding(row: AccessibleFindingRow): Finding {
+  return {
+    id: row.id, projectId: row.engagementId, title: row.title, severity: SEVERITY_FROM_API[row.severity] ?? 'info', status: row.status,
+    asset: '', op: '', technique: row.techniqueId ?? '', owner: row.sourceType === 'producer' ? 'Runtime producer' : '',
+    date: row.createdAt === null ? '' : displayTime(row.createdAt), updated: row.updatedAt === null ? '' : displayTime(row.updatedAt),
+    desc: row.description ?? '', impact: '', rec: '', evidence: [], comments: [], history: [], retests: [],
+  }
+}
+
+/** The all-projects list: curated findings of every project the actor can read, filtered and paged like a project list. */
+async function listAccessible(query: FindingListQuery): Promise<ServiceResult<FindingListRead>> {
+  const view = await fetchAccessibleFindings()
+  const projects = new Map(view.findings.map((row) => [row.engagementId, row]))
+  const read = buildList(view.findings.map(toAccessibleFinding), query)
+  return {
+    ok: true,
+    data: {
+      ...read,
+      truncated: view.truncated,
+      items: read.items.map((item) => {
+        const row = view.findings.find((candidate) => candidate.id === item.finding.id)
+        return { finding: item.finding, projectName: row?.projectName, target: row?.targetValue ?? null }
+      }),
+      projectLabels: Object.fromEntries([...projects.values()].map((row) => [row.engagementId, row.projectName])),
+    },
   }
 }
 
@@ -305,7 +338,8 @@ export function createRealFindingService(): FindingService {
   const versions = versionTracker()
   return {
     list: (ctx, query = {}) => guarded(async () => {
-      if (!ctx.projectId || ctx.projectId === 'all') return unavailable<FindingListRead>('Select an engagement to read its curated findings.')
+      if (ctx.projectId === 'all') return listAccessible(query)
+      if (!ctx.projectId) return unavailable<FindingListRead>('Select an engagement to read its curated findings.')
       const [curated, producer, dispositions] = await Promise.all([fetchCuratedFindings(ctx.projectId), fetchFindings(ctx.projectId), fetchFindingSuggestionDispositions(ctx.projectId)])
       versions.observe(curated.findings)
       const imported = new Set(curated.findings.filter((finding) => finding.sourceType === 'imported' && finding.producerRef).map((finding) => finding.producerRef!))
@@ -421,6 +455,7 @@ export function createRealFindingService(): FindingService {
         severity: producer.severity,
         detail: producer.description,
         producerRef: `findings/${producer.id}.md`,
+        ...(producer.remediation ? { recommendation: producer.remediation } : {}),
       })
       versions.observe(imported)
       return { ok: true, data: toFinding(imported, ctx.projectId) }

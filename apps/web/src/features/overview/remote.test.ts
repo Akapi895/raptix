@@ -18,10 +18,10 @@ afterEach(() => {
 describe('real overview adapter', () => {
   it('maps the findings rollup as the source records it, verified counts only', async () => {
     stubEndpoints({
-      '/api/overview/findings': () => json({ total: 3, bySeverity: { high: 2, low: 1 }, byStatus: { confirmed: 3 }, engagementsWithFindings: 1, engagements: 2, truncated: false, source: 'db' }),
+      '/api/overview/findings': () => json({ total: 3, bySeverity: { high: 2, low: 1 }, byStatus: { confirmed: 3 }, unresolvedBySeverity: { high: 2, low: 1 }, latestCreatedAt: '2026-10-14T09:05:00.000Z', engagementsWithFindings: 1, engagements: 2, truncated: false, source: 'db' }),
     })
     const res = await createRealOverviewService().findings()
-    expect(res).toEqual({ ok: true, data: { total: 3, engagements: 2, engagementsWithFindings: 1, bySeverity: { high: 2, low: 1 }, byStatus: { confirmed: 3 }, truncated: false } })
+    expect(res).toEqual({ ok: true, data: { total: 3, engagements: 2, engagementsWithFindings: 1, bySeverity: { high: 2, low: 1 }, byStatus: { confirmed: 3 }, unresolvedBySeverity: { high: 2, low: 1 }, latestCreatedAt: '2026-10-14 09:05Z', truncated: false } })
   })
 
   it('formats the C2 command instants and keeps the recorded counts', async () => {

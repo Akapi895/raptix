@@ -1,202 +1,101 @@
 /**
- * The global System Overview (migration Mốc 2): one presentation for both modes. Each section reads its own port
- * hook and keeps its own loading, error and not-recorded states. A section never shows zero for a source it could
- * not read, and never shows demo data in real mode.
+ * The global System Overview (plan §5.1, reference R01): one presentation for both modes. The page reads each section
+ * through its own port hook and lays the blocks out in the reference's order: the KPI row, the main column (severity,
+ * recent findings, C2, recommended actions, projects) and the side column (operations queue, decision queue, tool
+ * execution, recent events, capabilities, sources). A section that cannot be read shows as unavailable, and a figure the
+ * source does not record shows as not recorded; neither is shown as zero.
  */
-import type { ReactElement, ReactNode } from 'react'
-import { FolderKanban } from 'lucide-react'
+import type { ReactElement } from 'react'
+import { Activity, FolderKanban, RefreshCw, ShieldAlert, ClipboardList } from 'lucide-react'
 import { go } from '../../../router/navigate'
-import { parseHash } from '../../../router/history'
-import { Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
-import { showCreateProject } from '../../projects'
-import { useOverviewC2, useOverviewFindings, useOverviewProjects, useOverviewTasks } from '../query'
-import type { OverviewC2, OverviewFindings, OverviewTask, OverviewTaskKind } from '../service'
+import { Button, PageHeader } from '../../../ui/index'
+import { useOverviewFindings, useOverviewOperations, useOverviewProjects, useOverviewTasks } from '../query'
+import { openCuratedCount, type OverviewProject } from '../service'
+import { AttentionBanner, DecisionBlock, OperationsBlock, OverviewKpi, Panel, SeverityBlock, SourceState } from './overview-blocks'
 
-const KIND_LABEL: Record<OverviewTaskKind, string> = {
-  'scope-revision': 'Scope review',
-  'business-plan': 'Plan decision',
-  'c2-grant': 'C2 grant review',
-  'report-review': 'Report review',
-  'finding-review': 'Finding confirmation',
-  'active-stop': 'Active emergency stop',
+/** Project states that count as active: the real lifecycle values and the demo vocabulary. */
+const ACTIVE_PROJECT_STATUSES = new Set(['active', 'approved', 'planning', 'running'])
+
+/** A read's display for a KPI: pending shows a placeholder, an unreadable source shows unavailable, a missing count says so. */
+function kpiDisplay<T>(read: { isPending: boolean; error: unknown; data?: T }, pick: (data: T) => string): string {
+  if (read.isPending) return '…'
+  if (read.error || read.data === undefined) return 'Unavailable'
+  return pick(read.data)
 }
 
-const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info']
-const COMMAND_ORDER = ['creating', 'succeeded', 'failed', 'uncertain']
-
-/** One section's loading and error states stay inside the section. */
-function SourceState({ label, pending, error, onRetry, children }: { label: string; pending: boolean; error: Error | null; onRetry: () => void; children: ReactNode }): ReactElement {
-  if (pending) return <div className="p-4"><Skeleton className="h-24" /></div>
-  if (error) {
-    return (
-      <div className="flex flex-wrap items-center gap-3 p-4 text-sm text-muted" role="status">
-        <span>{label} is unavailable: {error.message}</span>
-        <Button size="sm" onClick={onRetry}>Retry</Button>
-      </div>
-    )
-  }
-  return <>{children}</>
-}
-
-function FindingsSection({ view }: { view: OverviewFindings }): ReactElement {
-  const severities = [...SEVERITY_ORDER.filter((s) => (view.bySeverity[s] ?? 0) > 0), ...Object.keys(view.bySeverity).filter((s) => !SEVERITY_ORDER.includes(s))]
-  return (
-    <div className="p-4">
-      {view.total === 0 ? (
-        <p className="text-sm text-muted">No curated findings recorded yet across your {view.engagements} accessible project(s). AI suggestions are not counted here.</p>
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-2">
-            {severities.map((s) => (
-              <Status key={s} kind="gate" value={s === 'critical' || s === 'high' ? 'failed' : s === 'medium' ? 'pending' : 'passed'} size="sm" label={`${s}: ${view.bySeverity[s] ?? 0}`} />
-            ))}
-            <span className="text-xs text-muted">{view.total} curated · in {view.engagementsWithFindings} of {view.engagements} project(s){view.truncated ? ' · scan truncated (counts are a lower bound)' : ''}</span>
-          </div>
-          <p className="mt-2 text-xs text-muted">{Object.entries(view.byStatus).map(([status, count]) => `${status}: ${count}`).join(' · ') || '—'}</p>
-        </>
-      )}
-    </div>
-  )
-}
-
-function C2Section({ view }: { view: OverviewC2 }): ReactElement {
-  return (
-    <div className="p-4">
-      {view.commandsByStatus === null ? (
-        <p className="text-sm text-muted">The command audit is not recorded for this source.</p>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          {COMMAND_ORDER.map((s) => (
-            <Status key={s} kind="gate" value={s === 'failed' ? 'failed' : s === 'succeeded' ? 'passed' : 'pending'} size="sm" label={`${s}: ${view.commandsByStatus?.[s] ?? 0}`} />
-          ))}
-        </div>
-      )}
-      <p className="mt-2 text-xs text-muted">Pending session grants: {view.pendingGrants}. Live sessions are read per project.</p>
-      {view.recentCommands.length > 0 && (
-        <ul className="mt-3 space-y-1.5">
-          {view.recentCommands.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-center gap-2 text-sm">
-              <button className="font-mono text-xs text-fg hover:text-accent hover:underline" onClick={() => go('project', { id: c.engagementId, tab: 'c2' })}>{c.engagementId}</button>
-              <span className="truncate font-mono text-xs text-muted">{c.sessionId}</span>
-              <Status kind="gate" value={c.status === 'failed' ? 'failed' : c.status === 'succeeded' ? 'passed' : 'pending'} size="sm" label={c.status} />
-              <span className="ml-auto text-xs text-muted">{c.createdAt}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
-function TasksSection({ tasks }: { tasks: OverviewTask[] }): ReactElement {
-  const top = tasks.slice(0, 8)
-  return (
-    <div className="p-4">
-      {top.length === 0 ? (
-        <p className="text-sm text-muted">No pending work. Approvals, reviews and stops appear here when lifecycle workflows create them.</p>
-      ) : (
-        <ul className="space-y-2">
-          {top.map((t) => (
-            <li key={`${t.kind}-${t.refId}`} className="flex flex-wrap items-center gap-2 rounded-lg border border-line px-3 py-2">
-              <Status kind="gate" value={t.kind === 'active-stop' ? 'failed' : 'pending'} size="sm" label={KIND_LABEL[t.kind]} />
-              <span className="min-w-0 flex-1 truncate text-sm">
-                {t.title}
-                <span className="text-xs text-muted"> · {t.engagementName ?? t.engagementId}{t.awaitingActor ? ' · awaiting your follow-up' : ''}</span>
-              </span>
-              <span className="text-xs text-muted">{t.createdAt}</span>
-              <Button variant="secondary" onClick={() => { const r = parseHash(t.href); go(r.page, r) }}>Open</Button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className="mt-3">
-        <Button variant="secondary" onClick={() => go('tasks')}>Open full task inbox</Button>
-      </div>
-    </div>
-  )
+/** The newest time any read in this view returned, in the browser's clock: a freshness marker, not a business time. */
+function readAtLabel(reads: { dataUpdatedAt?: number }[]): string | null {
+  const newest = Math.max(0, ...reads.map((r) => r.dataUpdatedAt ?? 0))
+  return newest === 0 ? null : new Date(newest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 export function OverviewPage(): ReactElement {
   const projects = useOverviewProjects()
   const findings = useOverviewFindings()
-  const c2 = useOverviewC2()
+  const operations = useOverviewOperations()
   const tasks = useOverviewTasks()
   const error = (read: { error: unknown }): Error | null => (read.error instanceof Error ? read.error : null)
+  const refreshAll = () => {
+    void projects.refetch()
+    void findings.refetch()
+    void operations.refetch()
+    void tasks.refetch()
+  }
+  const readAt = readAtLabel([projects, findings, operations, tasks])
+  const stopCount = (tasks.data ?? []).filter((t) => t.kind === 'active-stop').length
 
   return (
     <div className="space-y-4">
-      <PageHeader title="System Overview" sub="Every project, finding, C2 activity and pending task your account is authorized to see. Each section reads its own source and reports its real state." />
+      <PageHeader
+        title="System Overview"
+        sub="Projects, findings, operations and decisions your account is authorized to see."
+        meta={readAt === null ? undefined : <span className="text-xs text-muted">Read at {readAt}</span>}
+        actions={<Button variant="secondary" icon={RefreshCw} onClick={refreshAll}>Refresh</Button>}
+      />
 
-      <Card>
-        <CardHeader title="Quick actions" />
-        <div className="flex flex-wrap gap-2 p-4">
-          <Button onClick={() => showCreateProject()}>Create Project</Button>
-          <Button onClick={() => go('operations')}>View all operations</Button>
-          <Button onClick={() => go('tasks')}>Review pending decisions</Button>
-          <Button onClick={() => go('analysis')}>View coverage</Button>
-          <Button onClick={() => go('findings')}>Open Findings</Button>
-        </div>
-      </Card>
+      <AttentionBanner stops={stopCount} decisions={tasks.data?.length ?? 0} />
 
-      <Card>
-        <CardHeader title="Projects" sub="Open a project to work its planning, execution and governance sections" />
-        <SourceState label="The project list" pending={projects.isPending} error={error(projects)} onRetry={() => void projects.refetch()}>
-          <div className="p-4">
-            {(projects.data ?? []).length === 0 ? (
-              <Empty icon={FolderKanban} title="No projects yet" action={<Button variant="primary" onClick={() => showCreateProject()}>Create the first project</Button>}>
-                Projects created from the console or the CLI appear here with their live status.
-              </Empty>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-muted">
-                    <th className="pb-2">Project</th>
-                    <th className="pb-2">Status</th>
-                    <th className="pb-2">Detail</th>
-                    <th className="pb-2">Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(projects.data ?? []).slice(0, 5).map((p) => (
-                    <tr key={p.id} className="border-t border-line">
-                      <td className="py-2 pr-3">
-                        <button className="text-left font-medium text-fg hover:text-accent hover:underline" onClick={() => go('project', { id: p.id })}>{p.name}</button>
-                        <div className="font-mono text-xs text-muted">{p.id}</div>
-                      </td>
-                      <td className="py-2 pr-3"><Status kind="project" value={p.status} size="sm" /></td>
-                      <td className="py-2 pr-3 font-mono text-xs text-muted">{p.detail}</td>
-                      <td className="py-2 text-xs text-muted">{p.updatedAt}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            <Button variant="ghost" onClick={() => go('projects')}>View all projects</Button>
-          </div>
-        </SourceState>
-      </Card>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader title="Findings" sub="Curated findings across your accessible projects, by severity and workflow status" />
-          <SourceState label="The findings rollup" pending={findings.isPending} error={error(findings)} onRetry={() => void findings.refetch()}>
-            {findings.data && <FindingsSection view={findings.data} />}
-          </SourceState>
-        </Card>
-        <Card>
-          <CardHeader title="C2 activity" sub="Recorded command audit and pending session grants; live provider sessions stay per project" />
-          <SourceState label="The C2 rollup" pending={c2.isPending} error={error(c2)} onRetry={() => void c2.refetch()}>
-            {c2.data && <C2Section view={c2.data} />}
-          </SourceState>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <OverviewKpi
+          label="Active projects" icon={FolderKanban} tint="primary" note="Planning or running" onOpen={() => go('projects')}
+          display={kpiDisplay(projects, (list: OverviewProject[]) => String(list.filter((p) => ACTIVE_PROJECT_STATUSES.has(p.status.toLowerCase())).length))}
+        />
+        <OverviewKpi
+          label="Active operations" icon={Activity} tint="ok" note="Running binding state" onOpen={() => go('operations')}
+          display={kpiDisplay(operations, (view) => (view.counts === null ? 'Not recorded' : String(view.counts.running ?? 0)))}
+        />
+        <OverviewKpi
+          label="Awaiting decisions" icon={ClipboardList} tint="warn" note="Approvals, reviews and stops" onOpen={() => go('tasks')}
+          display={kpiDisplay(tasks, (list) => String(list.length))}
+        />
+        <OverviewKpi
+          label="Open curated findings" icon={ShieldAlert} tint="danger" note="Confirmed, remediation or retest" onOpen={() => go('findings')}
+          display={kpiDisplay(findings, (view) => String(openCuratedCount(view)))}
+        />
       </div>
 
-      <Card>
-        <CardHeader title={tasks.data ? `Task inbox (${tasks.data.length})` : 'Task inbox'} sub="Pending approvals, reviews and stops across your accessible projects" />
-        <SourceState label="The task inbox" pending={tasks.isPending} error={error(tasks)} onRetry={() => void tasks.refetch()}>
-          {tasks.data && <TasksSection tasks={tasks.data} />}
-        </SourceState>
-      </Card>
+      <div className="space-y-4">
+        <Panel title="Severity distribution" sub="Curated findings across your accessible projects, by severity"
+            action={<button type="button" onClick={() => go('findings')} className="text-sm font-medium text-primary hover:underline">View all →</button>}>
+            <SourceState label="The findings rollup" pending={findings.isPending} error={error(findings)} onRetry={() => void findings.refetch()}>
+              {findings.data && <SeverityBlock view={findings.data} />}
+            </SourceState>
+          </Panel>
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <Panel title="Operations queue" sub="Operation bindings by governance state">
+            <SourceState label="The operations rollup" pending={operations.isPending} error={error(operations)} onRetry={() => void operations.refetch()}>
+              {operations.data && <OperationsBlock view={operations.data} />}
+            </SourceState>
+          </Panel>
+
+          <Panel title={tasks.data ? `Decision queue (${tasks.data.length})` : 'Decision queue'} sub="Pending approvals, reviews and stops across your accessible projects">
+            <SourceState label="The task inbox" pending={tasks.isPending} error={error(tasks)} onRetry={() => void tasks.refetch()}>
+              {tasks.data && <DecisionBlock tasks={tasks.data} />}
+            </SourceState>
+          </Panel>
+        </div>
+      </div>
 
       <p className="text-xs text-muted">Reads cover only the projects your account owns or holds a membership on. A source that is unavailable says so instead of showing zeros.</p>
     </div>

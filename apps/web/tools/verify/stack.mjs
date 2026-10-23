@@ -3,7 +3,7 @@
 // the API environment, creates a viewer and fixtures through the API, then runs the route smoke for the requested modes.
 // Everything it starts is stopped and removed on exit. Credentials are generated per run, given to child processes through
 // the environment and never written to the repository; the fixture manifest holds identifiers only.
-// Usage: node tools/verify/stack.mjs [--modes mock,real] [--out <dir>] [--routes a,b]
+// Usage: node tools/verify/stack.mjs [--modes mock,real] [--out <dir>] [--routes a,b] [--prelab-only] [--smoke-only]
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -88,9 +88,12 @@ async function request(api, session, method, endpoint, body) {
   return result;
 }
 
-async function seed(api, owner) {
+async function seed(api, owner, workspace) {
   const project = await request(api, owner, 'POST', '/api/engagements', { name: 'stack-verify', displayName: 'Stack verification project', targetType: 'web_url', targetValue: 'https://verification.invalid', authorizationConfirmed: true, brief: 'Isolated UI verification only. No target scanning, model calls or offensive execution. All captures are generated fixture bytes.' });
   const prefix = `/api/engagements/${project.id}`;
+  const findingsFolder = path.join(workspace, project.workspaceSlug, 'findings');
+  mkdirSync(findingsFolder, { recursive: true });
+  writeFileSync(path.join(findingsFolder, 'FIND-PRELAB.md'), '# Prelab producer fixture\nSeverity: informational\n## Description\nSynthetic pipeline check, not a vulnerability.\n## Evidence\nGenerated fixture only.\n## Remediation\nPreserve the remediation during curation.\n');
   const bytes = Buffer.from('﻿print("retained fixture")\r\n', 'utf8');
   const digest = createHash('sha256').update(bytes).digest('hex');
   const capture = await request(api, owner, 'POST', `${prefix}/artifacts/captures`, { requestId: randomUUID(), filename: 'stack-fixture.txt', mediaType: 'text/plain', base64: bytes.toString('base64') });
@@ -213,7 +216,7 @@ function runGateClick(env, manifestFile) {
 }
 
 function runFlows(env, manifestFile) {
-  const statuses = [runFlow(env, manifestFile, 'reports.mjs', 'flows-reports'), runFlow(env, manifestFile, 'assets-library.mjs', 'flows-assets-library')];
+  const statuses = [runFlow(env, manifestFile, 'reports.mjs', 'flows-reports'), runFlow(env, manifestFile, 'assets-library.mjs', 'flows-assets-library'), runFlow(env, manifestFile, 'prelab.mjs', 'flows-prelab')];
   return statuses.every((code) => code === 0) ? 0 : 1;
 }
 
@@ -287,13 +290,16 @@ try {
   await ready(app, 'web');
 
   const owner = await login(api, 'verifier', adminPassword);
-  const fixtures = await seed(api, owner);
+  const fixtures = await seed(api, owner, env.WORKSPACE_PATH);
   const manifest = path.join(out, 'fixtures.real.json');
   writeFileSync(manifest, JSON.stringify({ project: fixtures.project, finding: fixtures.finding, evidence: fixtures.evidence, report: fixtures.report, asset: fixtures.asset, viewer: fixtures.viewer, knowledgeGraph: fixtures.knowledgeGraph, playbook: fixtures.playbook, technique: fixtures.technique, proposal: fixtures.proposal }, null, 2));
   log(`fixtures written: ${manifest}`);
   const statuses = [];
+  if (process.argv.includes('--prelab-only')) {
+    statuses.push(runFlow({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'prelab.mjs', 'flows-prelab'));
+  }
   const viteBin = path.join(path.dirname(require.resolve('vite/package.json')), 'bin/vite.js');
-  if (modes.split(',').includes('mock')) {
+  if (!process.argv.includes('--prelab-only') && modes.split(',').includes('mock')) {
     // Mock mode runs on its own dev server whose backend is unreachable: a persona session must not depend on the stack API.
     const mockPort = await freePort();
     const deadBackend = `http://127.0.0.1:${await freePort()}`;
@@ -310,7 +316,10 @@ try {
     statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'agents-click.mjs', 'agents', mockApp));
     statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'integration-path-click.mjs', 'integration path', mockApp));
   }
-  if (modes.split(',').includes('real')) {
+  if (process.argv.includes('--smoke-only') && modes.split(',').includes('real')) {
+    // Route smoke against the real API only: the targeted check for a change to rendered real routes.
+    statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
+  } else if (!process.argv.includes('--prelab-only') && modes.split(',').includes('real')) {
     statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
     statuses.push(runClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'real', app));
     statuses.push(runReportsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'real', app));

@@ -24,7 +24,6 @@ vi.mock('../../projects/query', () => ({
   useRealProjects: () => ({ list: { isPending: false, isError: false, data: [] } }),
 }))
 
-const FINDINGS = { total: 7, bySeverity: { high: 3, low: 4 }, byStatus: { draft: 5, confirmed: 2 }, engagementsWithFindings: 2, engagements: 3, truncated: false, source: 'db' }
 const C2 = { commandsByStatus: { completed: 4 }, recentCommands: [], pendingGrants: 2, source: 'db' }
 
 async function renderAt(hash: string): Promise<void> {
@@ -44,14 +43,6 @@ beforeEach(() => {
 afterEach(() => { cleanup() })
 
 describe('RealGlobalResource rollups', () => {
-  it('shows the cross-project finding counts from the overview rollup', async () => {
-    fetchOverviewFindings.mockResolvedValue(FINDINGS)
-    await renderAt('#/findings')
-    expect(await screen.findByText('7')).toBeInTheDocument()
-    expect(screen.getByText('2 of 3')).toBeInTheDocument()
-    expect(screen.getByText('high 3 · low 4')).toBeInTheDocument()
-  })
-
   it('reports a failed C2 rollup explicitly rather than showing zero counts', async () => {
     fetchOverviewC2.mockRejectedValue(new ApiTransportError(503, 'unavailable', 'C2 audit unavailable'))
     await renderAt('#/infrastructure')

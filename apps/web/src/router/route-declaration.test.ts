@@ -37,6 +37,6 @@ describe('route declaration', () => {
   })
 
   it('shows the global resource only for the pages the scope rule names', () => {
-    expect([...GLOBAL_RESOURCE_PAGES].sort()).toEqual(['agents', 'analysis', 'c2', 'findings', 'operations', 'reports'])
+    expect([...GLOBAL_RESOURCE_PAGES].sort()).toEqual(['agents', 'analysis', 'c2', 'operations', 'reports'])
   })
 })

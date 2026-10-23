@@ -50,7 +50,7 @@ export function ProjectSwitcher() {
   return (
     <div className="relative min-w-0 flex-1 sm:flex-none">
       <button onClick={() => setSwitcherOpen(!switcherOpen)} aria-haspopup="dialog" aria-expanded={switcherOpen} aria-label={`Project: ${isNew ? 'New project (draft)' : project ? project.id : 'All Projects'}`} title={isNew ? 'New project (draft)' : project ? `${project.id} · ${project.name}` : 'All Projects'} className="flex h-10 w-full min-w-0 max-w-[340px] items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm hover:bg-hover">
-        {loading ? <Loader2 size={16} className="shrink-0 animate-spin text-cyan" aria-hidden /> : <FolderKanban size={16} className="shrink-0 text-accent" aria-hidden />}
+        {loading ? <Loader2 size={16} className="shrink-0 animate-spin text-cyan" aria-hidden /> : <FolderKanban size={16} className={cx('shrink-0', project && !isNew ? 'text-accent' : 'text-neutral')} aria-hidden />}
         <span className="min-w-0 truncate font-medium">{isNew ? 'New project (draft)' : project ? <><span className="font-mono text-[13px]">{project.id}</span><span className="max-xl:hidden"> · {project.name}</span></> : 'All Projects'}</span>
         {project && !isNew && <span className="hidden 2xl:inline"><Status kind="project" value={project.status} size="sm" /></span>}
         <ChevronDown size={15} className="shrink-0 text-muted" aria-hidden />
@@ -75,7 +75,7 @@ export function ProjectSwitcher() {
             </div>
             <div className="no-scrollbar max-h-[320px] overflow-y-auto">
               <button onClick={() => selectProject('all')} className={cx('mb-1 flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-left hover:bg-hover', pid === 'all' && 'bg-hover')}>
-                <Layers size={16} className="text-cyan" aria-hidden />
+                <Layers size={16} className="text-neutral" aria-hidden />
                 <div className="flex-1"><div className="text-sm font-medium">All Projects</div><div className="text-xs text-muted">Aggregate view — read-only, cannot start operations</div></div>
                 {pid === 'all' && <CheckIcon size={16} className="text-accent" aria-label="Current" />}
               </button>

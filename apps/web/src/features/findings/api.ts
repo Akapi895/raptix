@@ -1,4 +1,4 @@
-import { isCuratedFindingView, isCuratedFindingsView, isFindingActivityPage, isFindingReferenceOptions, isFindingSuggestionDispositionsView, isFindingSuggestionDispositionResult, type CuratedFindingView, type CuratedFindingsView, type FindingActivityPage, type FindingReferenceOptions, type FindingSuggestionDispositionsView, type FindingSuggestionDispositionResult, isFindingsView, isArtifactsView, isArtifactContentView, isRetainedCaptureView, isRetainedCapturesView, isWorkspaceEvidenceImportView, type FindingsView, type ArtifactsView, type ArtifactContentView, type ClassifyCaptureInput, type RetainCaptureInput, type RetainedCaptureView, type WorkspaceEvidenceImportView, type RetainedCapturesView, type FindingReproductionInput } from '@raptix/web-contracts';
+import { isAccessibleFindingsView, type AccessibleFindingsView, isCuratedFindingView, isCuratedFindingsView,isFindingActivityPage, isFindingReferenceOptions, isFindingSuggestionDispositionsView, isFindingSuggestionDispositionResult, type CuratedFindingView, type CuratedFindingsView, type FindingActivityPage, type FindingReferenceOptions, type FindingSuggestionDispositionsView, type FindingSuggestionDispositionResult, isFindingsView, isArtifactsView, isArtifactContentView, isRetainedCaptureView, isRetainedCapturesView, isWorkspaceEvidenceImportView, type FindingsView, type ArtifactsView, type ArtifactContentView, type ClassifyCaptureInput, type RetainCaptureInput, type RetainedCaptureView, type WorkspaceEvidenceImportView, type RetainedCapturesView, type FindingReproductionInput } from '@raptix/web-contracts';
 import { apiFetch, apiFetchBytes, type BinaryApiResponse } from '../../platform/transport';
 import { owned } from '../../platform/ownership';
 
@@ -43,6 +43,11 @@ export function fetchCuratedFindings(engagementId: string): Promise<CuratedFindi
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings`, owned(engagementId, isCuratedFindingsView))
 }
 
+/** Curated findings of every project the actor can read as a viewer; the server applies the same access rule per project. */
+export function fetchAccessibleFindings(): Promise<AccessibleFindingsView> {
+  return apiFetch('/findings', isAccessibleFindingsView)
+}
+
 export function fetchFindingReferenceOptions(engagementId: string): Promise<FindingReferenceOptions> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/options`, owned(engagementId, isFindingReferenceOptions))
 }
@@ -70,7 +75,7 @@ export function createCuratedFinding(engagementId: string, input: { title: strin
   { method: 'POST', body: input })
 }
 
-export function importCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string; producerRef: string }): Promise<CuratedFindingView> {
+export function importCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string; producerRef: string; recommendation?: string }): Promise<CuratedFindingView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/import`, owned(engagementId, (v): v is CuratedFindingView =>
     isCuratedFindingView(v) && v.sourceType === 'imported' && v.producerRef === input.producerRef),
   { method: 'POST', body: input })

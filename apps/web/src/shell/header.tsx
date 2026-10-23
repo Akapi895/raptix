@@ -29,6 +29,7 @@ import { Button, IconButton, Segmented, Avatar, cx } from '../ui/index'
 import { MOCK_PROJECT_NAV, NAV } from './nav'
 import { Pop } from './pop'
 import { ProjectStopControl } from './context-ribbon'
+import { organizationLabel } from './organization'
 import { ProjectSwitcher } from './project-switcher'
 import { GlobalSearch } from './search'
 
@@ -43,7 +44,7 @@ function WorkspaceSwitcher() {
         <ChevronDown size={14} className="shrink-0 text-muted" aria-hidden />
       </button>
       <Pop open={open} onClose={() => setOpen(false)} label="Select workspace" width={320}>
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral">Organization · Acme Security (Demo)</div>
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral">Organization · {organizationLabel()}</div>
         <button onClick={() => setOpen(false)} className="flex min-h-12 w-full items-center gap-3 rounded-[10px] bg-hover px-3 text-left"><Building2 size={16} className="text-accent" aria-hidden /><div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">Raptix Workspace — Test Lab</div><div className="text-xs text-muted">Current workspace</div></div><CheckIcon size={16} className="text-accent" aria-label="Current" /></button>
         <button disabled title="Your account has no other workspaces in this demo." className="mt-1 flex min-h-12 w-full cursor-not-allowed items-center gap-3 rounded-[10px] px-3 text-left opacity-60"><Lock size={16} className="text-neutral" aria-hidden /><div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">Production Workspace</div><div className="text-xs text-muted">No access</div></div></button>
         <p className="mt-2 text-xs text-muted">Simulated: only one workspace is available in this prototype.</p>
@@ -92,7 +93,7 @@ function Notices() {
   return (
     <div className="relative">
       <IconButton icon={Bell} label={`Notifications${unread ? ` (${unread} unread)` : ''}`} onClick={toggle} aria-expanded={noticesOpen} />
-      {unread > 0 && <span className="pointer-events-none absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold leading-none tnum text-white">{unread}</span>}
+      {unread > 0 && <span className="pointer-events-none absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger-fill px-1 text-xs font-bold leading-none tnum text-white">{unread}</span>}
       {noticesOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setNoticesOpen(false)} aria-hidden />
@@ -159,7 +160,7 @@ function ProfileMenu() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div role="menu" className="no-scrollbar absolute right-0 top-full z-50 mt-2 max-h-[calc(100vh-90px)] w-[340px] max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl border border-line bg-panel p-2 shadow-xl">
-            <div className="px-3 pb-1 pt-2"><div className="text-sm font-semibold">{me.name}</div><div className="text-xs text-muted">{ROLE_LABEL[me.role]} · Acme Security (Demo)</div></div>
+            <div className="px-3 pb-1 pt-2"><div className="text-sm font-semibold">{me.name}</div><div className="text-xs text-muted">{ROLE_LABEL[me.role]} · {organizationLabel()}</div></div>
             <div className="flex items-center justify-between px-3 py-1">
               <span className="text-sm">Theme</span>
               <Segmented value={theme} onChange={(v) => setTheme(v)} options={[{ id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }]} />

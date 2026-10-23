@@ -276,7 +276,7 @@ function FindingDetailBody() {
                   const cur = FLOW_IDX[f.status]
                   return (
                     <li key={s} className={cx('flex items-center gap-2 rounded-lg border px-3 py-2 text-xs', i === cur ? 'border-accent bg-accent/10 text-fg' : i < cur ? 'border-ok/40 text-fg' : 'border-line text-muted')}>
-                      <span className={cx('flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold', i < cur ? 'bg-ok text-white' : i === cur ? 'bg-accent text-white' : 'bg-hover')}>{i < cur ? '✓' : i + 1}</span>
+                      <span className={cx('flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold', i < cur ? 'bg-ok text-white' : i === cur ? 'bg-primary text-primary-fg' : 'bg-hover')}>{i < cur ? '✓' : i + 1}</span>
                       {s}{i === cur && f.status === 'returned' && <span className="ml-auto text-bad">Returned for changes</span>}{i === cur && f.status !== 'returned' && <span className="ml-auto text-accent">Current</span>}
                     </li>
                   )

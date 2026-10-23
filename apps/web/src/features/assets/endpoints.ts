@@ -23,6 +23,23 @@ export function fetchAssetInventory(engagementId: string): Promise<AssetInventor
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/assets/inventory`, owned(engagementId, isAssetInventoryView))
 }
 
+/** Inventory rows across every project the account can read, each with the project it belongs to. */
+export interface AccessibleAssetsView {
+  assets: (AssetInventoryView['assets'][number] & { projectName: string })[]
+  truncated: boolean
+  source: 'db'
+}
+
+export function isAccessibleAssetsView(v: unknown): v is AccessibleAssetsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as AccessibleAssetsView
+  return Array.isArray(doc.assets) && typeof doc.truncated === 'boolean' && doc.source === 'db'
+}
+
+export function fetchAccessibleAssets(): Promise<AccessibleAssetsView> {
+  return apiFetch('/assets', isAccessibleAssetsView)
+}
+
 export function importAssets(engagementId: string, identifiers: string[], kind: 'host' | 'web_url' | 'ip_range'): Promise<{ imported: number; skipped: number }> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/assets/inventory/import`, (v): v is { imported: number; skipped: number } =>
     typeof v === 'object' && v !== null && typeof (v as { imported?: unknown }).imported === 'number',

@@ -37,6 +37,7 @@ function useOverviewSection<T>(section: string, read: (port: OverviewService) =>
 export const useOverviewProjects = () => useOverviewSection('projects', (port) => port.projects(), 60_000)
 export const useOverviewFindings = () => useOverviewSection('findings', (port) => port.findings(), 60_000)
 export const useOverviewC2 = () => useOverviewSection('c2', (port) => port.c2(), 60_000)
+export const useOverviewOperations = () => useOverviewSection('operations', (port) => port.operations(), 60_000)
 export const useOverviewTasks = () => useOverviewSection('tasks', (port) => port.tasks(), 30_000)
 
 /* Real-mode rollups for the global resource pages: the server's aggregate over the authorized projects, not the port sections. */

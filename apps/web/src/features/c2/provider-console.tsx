@@ -15,22 +15,37 @@ import { messageOf, useProviderCommands, useProviderSurface, useProviderWrites }
 
 const COMMAND_TONE: Record<string, 'ok' | 'bad' | 'warn' | 'neutral'> = { succeeded: 'ok', failed: 'bad', uncertain: 'warn', creating: 'warn' }
 
+function CommandOutput({ command }: { command: C2ProviderCommand }): ReactElement {
+  return <details className="max-w-xl">
+    <summary className="cursor-pointer">View output · {command.id}</summary>
+    <div className="mt-2 space-y-2">
+      <div>stdout</div>
+      {command.stdoutTruncated && <p role="note">stdout truncated by provider</p>}
+      <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words">{command.stdout || '(empty)'}</pre>
+      <div>stderr</div>
+      {command.stderrTruncated && <p role="note">stderr truncated by provider</p>}
+      <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words">{command.stderr || '(empty)'}</pre>
+    </div>
+  </details>
+}
+
 /** The bounded command-audit rows: status, exit code, output with its truncation flag. */
 export function CommandTable({ commands }: { commands: C2ProviderCommand[] }): ReactElement {
   return (
     <table className="w-full text-sm">
       <thead>
         <tr className="text-left text-xs text-muted">
-          <th className="pb-2">Command</th><th className="pb-2">Status</th><th className="pb-2">Exit</th><th className="pb-2">Created</th>
+          <th className="pb-2">Command</th><th className="pb-2">Status</th><th className="pb-2">Exit</th><th className="pb-2">Created</th><th className="pb-2">Output</th>
         </tr>
       </thead>
       <tbody>
         {commands.map((c) => (
           <tr key={c.id} className="border-t border-line">
-            <td className="py-2 pr-3 font-mono text-xs">{c.path} {c.args.join(' ')}</td>
+            <td className="py-2 pr-3 font-mono text-xs">{c.path} {JSON.stringify(c.args)}</td>
             <td className="py-2 pr-3"><Status kind="gate" value={c.status === 'succeeded' ? 'passed' : c.status === 'failed' ? 'failed' : 'pending'} size="sm" label={c.status} /></td>
             <td className="py-2 pr-3 text-xs">{c.exitCode ?? '—'}</td>
             <td className="py-2 text-xs">{utcMinute(c.createdAt)}</td>
+            <td className="py-2 text-xs"><CommandOutput command={c} /></td>
           </tr>
         ))}
       </tbody>
@@ -44,16 +59,17 @@ export function ConsoleCard({ engagementId }: { engagementId: string }): ReactEl
   const writes = useProviderWrites(engagementId)
   const [sessionId, setSessionId] = useState('')
   const [path, setPath] = useState('')
-  const [args, setArgs] = useState('')
+  const [args, setArgs] = useState('[]')
   const [error, setError] = useState<string | null>(null)
 
   const dispatch = useMutation({
-    mutationFn: () => writes.dispatch({
-      sessionId: sessionId.trim(),
-      requestId: crypto.randomUUID(),
-      path: path.trim(),
-      args: args.split(' ').map((a) => a.trim()).filter((a) => a.length > 0),
-    }),
+    mutationFn: () => {
+      let argv: unknown
+      try { argv = JSON.parse(args) }
+      catch { throw new TypeError('Arguments must be a JSON array of strings.') }
+      if (!Array.isArray(argv) || !argv.every((arg): arg is string => typeof arg === 'string')) throw new TypeError('Arguments must be a JSON array of strings.')
+      return writes.dispatch({ sessionId: sessionId.trim(), requestId: crypto.randomUUID(), path: path.trim(), args: argv })
+    },
     onSuccess: () => setError(null),
     onError: (err) => setError(messageOf(err, 'The command was refused by the server (grant, session state or input bounds).')),
   })
@@ -105,8 +121,8 @@ export function ConsoleCard({ engagementId }: { engagementId: string }): ReactEl
               <Input id="c2-console-session" required value={sessionId} onChange={(e) => setSessionId(e.target.value)} placeholder={surface.data.sessions[0]?.id ?? 'session id'} />
               <label className="text-sm text-muted" htmlFor="c2-console-path">Absolute binary path</label>
               <Input id="c2-console-path" required value={path} onChange={(e) => setPath(e.target.value)} placeholder="/usr/bin/printf" />
-              <label className="text-sm text-muted" htmlFor="c2-console-args">Arguments (space separated)</label>
-              <Input id="c2-console-args" value={args} onChange={(e) => setArgs(e.target.value)} placeholder="native-output" />
+              <label className="text-sm text-muted" htmlFor="c2-console-args">Arguments (JSON array)</label>
+              <Input id="c2-console-args" value={args} onChange={(e) => setArgs(e.target.value)} placeholder={'["hello world", ""]'} />
               <div className="sm:col-span-2">
                 <Button type="submit" variant="primary" icon={TerminalSquare} disabled={dispatch.isPending}>
                   {dispatch.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
@@ -149,10 +165,10 @@ function CommandRow({ command, onReconcile, pending }: { command: C2ProviderComm
     <tr className="border-t border-line align-top">
       <td className="py-2 pr-3 font-mono text-xs">{command.requestId}</td>
       <td className="py-2 pr-3 font-mono text-xs">{command.sessionId}</td>
-      <td className="py-2 pr-3 font-mono text-xs">{command.path}{command.args.length > 0 ? ` ${command.args.join(' ')}` : ''}</td>
+      <td className="py-2 pr-3 font-mono text-xs">{command.path} {JSON.stringify(command.args)}</td>
       <td className="py-2 pr-3"><Status kind="gate" value={tone === 'ok' ? 'passed' : tone === 'bad' ? 'failed' : 'pending'} size="sm" label={command.status} /></td>
       <td className="py-2 pr-3 text-xs">{command.exitCode === null ? '—' : command.exitCode}</td>
-      <td className="py-2 pr-3 font-mono text-xs text-muted">{command.stdout === '' ? '—' : command.stdout.slice(0, 120)}{command.stdoutTruncated ? '…' : ''}</td>
+      <td className="py-2 pr-3 font-mono text-xs text-muted"><CommandOutput command={command} /></td>
       <td className="py-2 text-xs">
         {command.status === 'uncertain' || command.status === 'creating'
           ? <Button variant="secondary" disabled={pending} onClick={onReconcile}>Reconcile</Button>

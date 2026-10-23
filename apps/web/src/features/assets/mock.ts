@@ -17,7 +17,7 @@ import type { Asset } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
 import { submitApprovalTransaction } from '../approvals/service'
 import { changeAssetScopeTransaction, importAssetsTransaction } from './writes'
-import { MOCK_ASSET_CAPABILITIES } from './service'
+import { MOCK_ASSET_CAPABILITIES, countBy } from './service'
 import type { AssetListQuery, AssetKpis, AssetListRead, AssetService, AssetHistoryItem, AssetDetailRead, AssetScopeRow, AssetScopeProject, AssetScopeRead } from './service'
 
 const PAGE_SIZE = 10
@@ -74,9 +74,13 @@ export function listAssets(db: Db, ctx: RequestContext, query: AssetListQuery = 
   return {
     ok: true,
     data: {
-      items: rows.slice((page - 1) * pageSize, page * pageSize).map((asset) => ({ asset, projectId: aggregate ? asset.projectId : undefined })),
+      items: rows.slice((page - 1) * pageSize, page * pageSize).map((asset) => ({ asset, projectId: aggregate ? asset.projectId : undefined, projectName: aggregate ? (db.projects.find((p) => p.id === asset.projectId)?.name ?? null) : undefined })),
       page, pageSize, total: rows.length, kpis,
       owners: [...new Set(base.map((a) => a.owner))],
+      types: countBy(base, (a) => a.type),
+      sources: countBy(base, (a) => a.source),
+      oses: [...new Set(base.map((a) => a.os).filter(Boolean))].sort(),
+      observation: 'ok',
     },
   }
 }

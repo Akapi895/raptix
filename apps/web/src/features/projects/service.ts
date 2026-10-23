@@ -1,6 +1,6 @@
 /**
  * The project list's read port (ADR-0096, migration Mốc 2). Each field is the value its source records, or null when
- * the source does not record it: the real engagement API has no client, and the demo data has no per-project target.
+ * the source does not record it: the demo data has no per-project target and no update instant.
  * The shared portfolio shows null as unavailable, never as a demo value.
  */
 import type { ServiceResult } from '../../domain/service'
@@ -14,11 +14,12 @@ export interface ProjectRow {
   targetType: string | null
   /** Metadata policy result in real mode; null where the source does not verify metadata. */
   metadataVerified: boolean | null
-  client: string | null
   /** The project status in its source's vocabulary. */
   status: string
   /** Display instant, already formatted by the adapter for its source. */
   updatedAt: string
+  /** The same instant as an ISO string for filtering; null where the source records no instant (demo data). */
+  updatedAtIso: string | null
 }
 
 export interface ProjectsService {

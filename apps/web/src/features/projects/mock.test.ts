@@ -6,7 +6,7 @@ const demo = { id: 'RT-2026-014', name: 'Internal Red Team Q4', client: 'Northwi
 
 describe('demo project list port', () => {
   it('maps a demo project to the port row, leaving what the demo does not record null', () => {
-    expect(projectRow(demo)).toEqual({ id: 'RT-2026-014', name: 'Internal Red Team Q4', workspaceSlug: null, target: null, targetType: null, metadataVerified: null, client: 'Northwind Bank (Demo)', status: 'active', updatedAt: 'Oct 12, 2026' })
+    expect(projectRow(demo)).toEqual({ id: 'RT-2026-014', name: 'Internal Red Team Q4', workspaceSlug: null, target: null, targetType: null, metadataVerified: null, status: 'active', updatedAt: 'Oct 12, 2026', updatedAtIso: null })
   })
 
   it('passes a failed accessible-list read through as the failure, never as an empty list', async () => {

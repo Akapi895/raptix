@@ -65,6 +65,23 @@ export interface FindingListItem {
   finding: Finding
   /** Client label of the owning project. */
   projectClient?: string
+  /** Display name of the owning project; null where the source does not record one. */
+  projectName?: string
+  /** Target the owning project tests; null where the source does not record one. */
+  target?: string | null
+}
+
+/** Unfiltered totals across every project in scope; the all-projects stat cards read these, never the filtered page. */
+export interface FindingSummary {
+  total: number
+  severity: Record<Severity, number>
+}
+
+/** Totals over every curated finding in scope; AI suggestions are proposals and stay out of every total. */
+export function summarizeFindings(findings: Finding[]): FindingSummary {
+  const verified = findings.filter((f) => f.status !== 'ai_suggested')
+  const severity = Object.fromEntries(SEVS.map((s) => [s, verified.filter((f) => f.severity === s).length])) as Record<Severity, number>
+  return { total: verified.length, severity }
 }
 
 /** The whole list read: page + tab/severity counts + filter options. */
@@ -87,6 +104,9 @@ export interface FindingListRead {
   assets: string[]
   ops: string[]
   projects: string[]
+  /** Project id → display name for the project filter. */
+  projectLabels: Record<string, string>
+  summary: FindingSummary
 }
 
 /**
@@ -281,9 +301,11 @@ export function listFindings(db: Db, ctx: RequestContext, query: FindingListQuer
     .sort((a, b) => compareFindings(a, b, sort))
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
   const page = Math.min(Math.max(1, query.page ?? 1), pages)
+  const projectOf = (id: string) => db.projects.find((p) => p.id === id)
   const items: FindingListItem[] = rows
     .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-    .map((row) => ({ finding: presentFinding(row, ctx.actor), projectClient: db.projects.find((p) => p.id === row.projectId)?.client }))
+    .map((row) => ({ finding: presentFinding(row, ctx.actor), projectClient: projectOf(row.projectId)?.client, projectName: projectOf(row.projectId)?.name, target: null }))
+  // The demo records no target per project, so the rows report it as unrecorded.
   return {
     ok: true,
     data: {
@@ -295,6 +317,8 @@ export function listFindings(db: Db, ctx: RequestContext, query: FindingListQuer
       assets: [...new Set(base.map((f) => f.asset))],
       ops: [...new Set(base.map((f) => f.op).filter(Boolean))],
       projects: [...accessible],
+      projectLabels: Object.fromEntries([...accessible].map((id) => [id, projectOf(id)?.name ?? id])),
+      summary: summarizeFindings(base),
     },
   }
 }

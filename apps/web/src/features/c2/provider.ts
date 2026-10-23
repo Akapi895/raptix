@@ -62,7 +62,9 @@ export interface C2ProviderCommand {
   status: C2CommandStatus
   exitCode: number | null
   stdout: string
+  stderr: string
   stdoutTruncated: boolean
+  stderrTruncated: boolean
   createdAt: string
 }
 
