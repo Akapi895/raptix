@@ -11,6 +11,7 @@ import { Loader2, Save, Settings as SettingsIcon } from 'lucide-react'
 import { AuditTable, useWorkspaceAudit } from '../audit';
 import { useRuntimeCapabilities, useWorkspaceSettingWrite, useWorkspaceSettings } from './query';
 import { REAL_IDENTITY } from '../../state/real-identity'
+import { useSession } from '../../platform/session'
 import { utcMinuteOr } from '../../platform/format'
 import { go } from '../../router/navigate'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Skeleton, Status } from '../../ui/index'
@@ -31,16 +32,28 @@ const PROVIDER_LABEL: Record<string, string> = {
 }
 
 export function RealOrganizationSection(): ReactElement {
+  const { session } = useSession()
+  // A sign-in session is the trusted actor of a multi-user deployment; without one the deployment is single-user and the local
+  // operator applies. This card shows which layer applies. The server decides every permission.
+  const actor = session?.actor
+  const identity = actor
+    ? [
+        { k: 'Actor', v: actor.displayName },
+        { k: 'Username', v: <span className="font-mono">{actor.username}</span> },
+        { k: 'Actor id', v: <span className="font-mono">{actor.id}</span> },
+        { k: 'Deployment mode', v: 'Multi-user (sign-in required)' },
+      ]
+    : [
+        { k: 'Actor', v: REAL_IDENTITY.name },
+        { k: 'Actor id', v: <span className="font-mono">{REAL_IDENTITY.id}</span> },
+        { k: 'Deployment mode', v: REAL_IDENTITY.deploymentMode },
+      ]
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader title="Trusted identity" sub="Resolved by the deployment's identity boundary, not by the browser" />
+        <CardHeader title="Trusted identity" sub={actor ? 'The actor of your sign-in session, resolved by the server' : 'Single-user deployment: no sign-in, so the local operator applies'} />
         <div className="p-4">
-          <DescList items={[
-            { k: 'Actor', v: REAL_IDENTITY.name },
-            { k: 'Actor id', v: <span className="font-mono">{REAL_IDENTITY.id}</span> },
-            { k: 'Deployment mode', v: REAL_IDENTITY.deploymentMode },
-          ]} />
+          <DescList items={identity} />
         </div>
       </Card>
       <Banner tone="info" title="UI-only preferences stay in this browser">
