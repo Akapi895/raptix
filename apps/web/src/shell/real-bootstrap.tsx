@@ -33,7 +33,7 @@ function BootError({ message, onRetry }: { message: string; onRetry: () => void 
     <div className="flex min-h-screen items-center justify-center bg-bg p-6 text-fg" role="alert">
       <div className="max-w-md text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-panel text-bad"><ServerCrash size={26} aria-hidden /></div>
-        <h1 className="text-xl font-semibold tracking-tight">Cannot reach the Raptix API</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Raptix is unavailable right now</h1>
         <p className="mt-2 break-words text-sm text-muted">{message}</p>
         {/* Developer hints and the demo escape hatch exist only in the dev server; a deployed build shows the user message. */}
         <p className="mt-1 text-xs text-neutral">
