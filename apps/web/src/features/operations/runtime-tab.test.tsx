@@ -1,4 +1,4 @@
-/** Operations tab over the runtime (real mode): execution threads, run identities, truthful statuses, cancel, stops, timeline. */
+/** Operations tab over the runtime (real mode): the operation list, the operation detail tabs, truthful statuses, cancel, stops, timeline. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 
@@ -37,7 +37,7 @@ function stubApi(over: { threads?: unknown[]; runs?: unknown[]; stops?: unknown[
     if (url.endsWith('/operation')) return new Response(JSON.stringify(over.operation ?? OP_RUNNING), { status: 200 })
     if (url.endsWith('/resume-run') || url.endsWith('/complete') || url.endsWith('/pause')) return new Response(JSON.stringify(OP_RUNNING), { status: 202 })
     if (url.endsWith('/cancel') && init?.method === 'POST') return new Response(JSON.stringify({ ...RUN, rawStatus: 'cancelled' }), { status: 200 })
-    if (url.endsWith('/timeline')) return new Response(JSON.stringify(over.timeline ?? { engagementId: 'eng-1', entries: [], truncated: false, unavailableThreads: 0, source: 'mixed' }), { status: 200 })
+    if (url.includes('/timeline')) return new Response(JSON.stringify(over.timeline ?? { engagementId: 'eng-1', entries: [], truncated: false, hasMore: false, untimedCheckpoints: 0, unavailableThreads: 0, source: 'mixed' }), { status: 200 })
     if (url.endsWith('/threads/th-exec')) return new Response(JSON.stringify({ binding: EXEC, rawStatus: 'running', messages: [], messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime', transcriptsTruncated: false, transcripts: [{ key: 'tool-1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_tool_call', agent: 'recon', tool: 'service-mapper', truncated: false } }] }))
     return new Response('unexpected', { status: 404 })
   }))
@@ -55,18 +55,29 @@ function renderPanel() {
   return render(<RuntimeOperationsTab engagementId="eng-1" />, { wrapper })
 }
 
+/** Opens the operation detail for a thread by its URL, the way the list's Open action does. */
+async function openDetail(threadId = 'th-exec'): Promise<void> {
+  window.location.hash = `#/operation/${threadId}?engagement=eng-1`
+  const { resetNavStores } = await import('../../router/navigate')
+  resetNavStores()
+}
+
+async function openTab(name: string): Promise<void> {
+  fireEvent.click(await screen.findByRole('button', { name }))
+}
+
 beforeEach(() => { window.localStorage.clear() })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 describe('RuntimeOperationsTab', () => {
-  it('lists execution threads with their runs, request ids and raw statuses', async () => {
+  it('lists each execution thread as an operation row with its latest run and status', async () => {
     stubApi()
     renderPanel()
     expect(await screen.findByText('th-exec')).toBeTruthy()
     expect(await screen.findByText('run-9')).toBeTruthy()
-    expect(screen.getByText('req-abc12345')).toBeTruthy()
     expect(screen.getAllByText('running').length).toBeGreaterThan(0)
     expect(screen.queryByText('th-plan')).toBeNull()
+    expect(screen.queryByText('req-abc12345')).toBeNull()
   })
 
   it('renders an honest empty state without execution threads', async () => {
@@ -82,8 +93,10 @@ describe('RuntimeOperationsTab', () => {
   })
 
   it('shows persisted tool calls as checkpoint history without claiming run attribution', async () => {
+    await openDetail()
     const calls = stubApi()
     renderPanel()
+    await openTab('Trace')
     fireEvent.click(await screen.findByRole('button', { name: /subagent_tool_call · checkpoint/ }))
     const dialog = await screen.findByRole('dialog', { name: /Tool Event Inspector/ })
     expect(dialog.tagName).toBe('DIV')
@@ -94,8 +107,10 @@ describe('RuntimeOperationsTab', () => {
   })
 
   it('W24: maps raw runtime statuses truthfully (success is ok, error is failed)', async () => {
+    await openDetail()
     stubApi({ runs: [{ ...RUN, runId: 'run-ok', rawStatus: 'success' }, { ...RUN, runId: 'run-err', rawStatus: 'error' }] })
     renderPanel()
+    await openTab('Live')
     const okLabel = await screen.findByText('success')
     const errLabel = await screen.findByText('error')
     expect(okLabel.className).toContain('text-ok')
@@ -105,22 +120,18 @@ describe('RuntimeOperationsTab', () => {
 
 describe('RuntimeOperationsTab (W22 operation detail route)', () => {
   it('renders only the URL-selected thread as the operation detail', async () => {
+    await openDetail()
     stubApi()
-    window.location.hash = '#/operation/th-exec?engagement=eng-1'
-    const { resetNavStores } = await import('../../router/navigate')
-    resetNavStores()
     renderPanel()
-    expect(await screen.findByText(/Operation thread th-exec/)).toBeTruthy()
-    expect(await screen.findByText('run-9')).toBeTruthy()
+    expect(await screen.findByText('Operation th-exec')).toBeTruthy()
+    expect(await screen.findByText(/run-9/)).toBeTruthy()
     expect(screen.queryByText(/Execution threads/)).toBeNull()
     expect(screen.queryByText('th-plan')).toBeNull()
   })
 
   it('renders an explicit not-found for a foreign or unknown operation id', async () => {
+    await openDetail('th-foreign')
     stubApi()
-    window.location.hash = '#/operation/th-foreign?engagement=eng-1'
-    const { resetNavStores } = await import('../../router/navigate')
-    resetNavStores()
     renderPanel()
     expect(await screen.findByText('Operation thread not found')).toBeTruthy()
     expect(screen.getByText(/th-foreign/)).toBeTruthy()
@@ -128,11 +139,10 @@ describe('RuntimeOperationsTab (W22 operation detail route)', () => {
   })
 
   it('offers Cancel only for runs still in flight, and cancels through the run endpoint', async () => {
-    window.location.hash = '#/operations?engagement=eng-1'
-    const { resetNavStores } = await import('../../router/navigate')
-    resetNavStores()
+    await openDetail()
     const calls = stubApi({ runs: [RUN, { ...RUN, runId: 'run-done', rawStatus: 'success' }] })
     renderPanel()
+    await openTab('Live')
     const cancelButtons = await screen.findAllByRole('button', { name: 'Cancel run' })
     expect(cancelButtons).toHaveLength(1)
     fireEvent.click(cancelButtons[0]!)
@@ -150,12 +160,27 @@ describe('RuntimeOperationsTab (W22 operation detail route)', () => {
     cleanup()
     stubApi({ stops: [{ id: 'stop-2', engagementId: 'eng-1', scope: 'project', targetId: null, requestedBy: 'u-owner', outcome: 'resolved', reason: 'ok', concurrencyVersion: 2, createdAt: '2026-10-14T09:00:00.000Z', updatedAt: '2026-10-14T09:10:00.000Z' }] })
     renderPanel()
-    await screen.findByText('Execution threads')
+    await screen.findByText('Operations')
     expect(screen.queryByText(/emergency stop/)).not.toBeInTheDocument()
   })
 
+  it('says how many checkpoint events have no recorded time, instead of placing them on the timeline', async () => {
+    stubApi({ timeline: { engagementId: 'eng-1', entries: [{ id: 'run:run-9', at: '2026-10-14T09:01:00.000Z', source: 'runtime', kind: 'run', label: 'Run success', runId: 'run-9', status: 'success', agent: 'executor' }], truncated: false, hasMore: false, untimedCheckpoints: 2, unavailableThreads: 0, source: 'mixed' } })
+    renderPanel()
+    expect(await screen.findByText(/2 checkpoint events have no recorded time/)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Time (UTC)' })).toBeInTheDocument()
+    expect(screen.getByText('Run success')).toBeInTheDocument()
+  })
+
+  it('loads the timeline one page at a time, and asks for a longer page on Load more', async () => {
+    const calls = stubApi({ timeline: { engagementId: 'eng-1', entries: [{ id: 'run:run-9', at: '2026-10-14T09:01:00.000Z', source: 'runtime', kind: 'run', label: 'Planning run success', runId: 'run-9', status: 'success' }], truncated: false, hasMore: true, untimedCheckpoints: 0, unavailableThreads: 0, source: 'mixed' } })
+    renderPanel()
+    fireEvent.click(await screen.findByRole('button', { name: 'Load more' }))
+    await vi.waitFor(() => expect(calls.some((call) => call.endsWith('/timeline?limit=100'))).toBe(true))
+  })
+
   it('names the threads a stale binding left out of the timeline instead of blanking it', async () => {
-    stubApi({ timeline: { engagementId: 'eng-1', entries: [{ id: 'run:run-9', at: '2026-10-14T09:01:00.000Z', source: 'runtime', kind: 'run', label: 'Planning run success', runId: 'run-9', status: 'success' }], truncated: false, unavailableThreads: 1, source: 'mixed' } })
+    stubApi({ timeline: { engagementId: 'eng-1', entries: [{ id: 'run:run-9', at: '2026-10-14T09:01:00.000Z', source: 'runtime', kind: 'run', label: 'Planning run success', runId: 'run-9', status: 'success' }], truncated: false, hasMore: false, untimedCheckpoints: 0, unavailableThreads: 1, source: 'mixed' } })
     renderPanel()
     expect(await screen.findByText('Some runtime threads are not shown')).toBeInTheDocument()
     expect(screen.getByText('1 thread has a runtime binding that no longer matches persisted state, so its runs and checkpoints are left out.')).toBeInTheDocument()
@@ -166,6 +191,7 @@ describe('RuntimeOperationsTab (W22 operation detail route)', () => {
 
 describe('RuntimeOperationsTab (P11 lifecycle)', () => {
   it('resumes a paused operation, and a retry after a lost answer reuses the same request id', async () => {
+    await openDetail()
     stubApi({ operation: OP_PAUSED })
     renderPanel()
     fireEvent.click(await screen.findByRole('button', { name: /Resume operation/ }))
@@ -177,9 +203,10 @@ describe('RuntimeOperationsTab (P11 lifecycle)', () => {
   })
 
   it('offers complete only after the operation last run reached a terminal status', async () => {
+    await openDetail()
     stubApi({ operation: OP_RUNNING })
     renderPanel()
-    expect(await screen.findByRole('button', { name: 'Cancel run' })).toBeTruthy()
+    await screen.findByText('running')
     expect(screen.queryByRole('button', { name: 'Mark operation complete' })).toBeNull()
     cleanup()
     stubApi({ operation: OP_FINISHED })
@@ -188,13 +215,17 @@ describe('RuntimeOperationsTab (P11 lifecycle)', () => {
   })
 
   it('offers Pause only for a running run of an operation that is bound or running', async () => {
+    await openDetail()
     stubApi({ operation: OP_RUNNING })
     renderPanel()
+    await openTab('Live')
     expect(await screen.findByRole('button', { name: 'Pause run' })).toBeTruthy()
     cleanup()
+    await openDetail()
     stubApi({ operation: OP_PAUSED })
     renderPanel()
     await screen.findByRole('button', { name: /Resume operation/ })
+    await openTab('Live')
     expect(screen.queryByRole('button', { name: 'Pause run' })).toBeNull()
   })
 })

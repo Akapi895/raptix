@@ -19,6 +19,10 @@ const { RealFeatureServicesCtx } = await import('../../state/real-services-provi
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { PlanningTab } = await import('./tab')
 
+async function openSub(name: string): Promise<void> {
+  await userEvent.setup().click(await screen.findByRole('button', { name }))
+}
+
 const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { planning: { supported: true, available: true } } } as never
 
 const ROE = { state: 'ready', content: { engagement_name: 'E', client: 'Acme', start_date: '2026-10-01', end_date: '2026-10-31', engagement_type: 'external', testing_window: '09:00-17:00', authorization_reference: 'AUTH-7', in_scope: [{ target: '10.0.0.0/24', type: 'cidr' }], out_of_scope: [], prohibited_actions: ['DoS'] } }
@@ -55,7 +59,7 @@ function renderTab(props: { handoffConfirmedAt: string | null }) {
       <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
     </QueryClientProvider>
   )
-  return render(<PlanningTab engagementId="eng-1" handoffConfirmedAt={props.handoffConfirmedAt} />, { wrapper })
+  return render(<PlanningTab engagementId="eng-1" handoffConfirmedAt={props.handoffConfirmedAt} brief="Internal attack-surface review." updatedAt="2026-10-20T09:00:00.000Z" />, { wrapper })
 }
 
 beforeEach(() => { window.localStorage.clear() })
@@ -65,16 +69,18 @@ describe('PlanningTab (real)', () => {
   it('shows blocked readiness with the server reasons in plain words and honest document states', async () => {
     stubApi(VIEW())
     renderTab({ handoffConfirmedAt: null })
-    expect(await screen.findByText('Planning is blocked')).toBeTruthy()
-    expect(screen.getByText('Deconfliction is not drafted yet.')).toBeTruthy()
-    expect(screen.getByText('Operation Plan (OPPLAN) fails schema validation.')).toBeTruthy()
+    expect(await screen.findByText('Next action')).toBeTruthy()
+    expect(screen.getByText(/Deconfliction is not drafted yet\./)).toBeTruthy()
+    expect(screen.getByText(/Operation Plan \(OPPLAN\) fails schema validation\./)).toBeTruthy()
+    await openSub('Documents')
     expect((await screen.findByTestId('plan-doc-roe')).textContent).toContain('external')
     expect(screen.getByTestId('plan-doc-deconfliction').textContent).toContain('not been generated yet')
+    await openSub('Objectives & steps')
     expect(screen.getByTestId('plan-doc-opplan').textContent).toContain('failed validation')
     expect(screen.queryByText('opplan: Invalid')).toBeNull()
   })
 
-  it('shows OPPLAN in full beside the plan documents and keeps it out of the handoff bundle', async () => {
+  it('shows OPPLAN in full on its own tab and keeps it out of the planning documents', async () => {
     const opplan = { state: 'ready', content: { engagement_name: 'E', threat_profile: 'external-web-app-pentester', objectives: [
       { id: 'OBJ-001', title: 'Enumerate the attack surface', description: 'Map pages and APIs.', phase: 'recon', status: 'completed' },
       { id: 'OBJ-002', title: 'Exploit the admin endpoint', description: 'Verify the authz flaw.', phase: 'initial-access', status: 'pending', blocked_by: ['OBJ-001'] },
@@ -84,12 +90,14 @@ describe('PlanningTab (real)', () => {
       bundle: { roe: 'ready', conops: 'ready', deconfliction: 'missing', opplan: 'ready', 'threat-profile': 'missing', contact: 'missing', 'data-handling': 'missing', abort: 'missing', cleanup: 'missing' },
     }))
     renderTab({ handoffConfirmedAt: null })
+    await openSub('Objectives & steps')
     const card = await screen.findByTestId('plan-doc-opplan')
     expect(within(card).getByText('Exploit the admin endpoint')).toBeTruthy()
-    expect(within(card).getByText('Enumerate the attack surface').closest('tr')?.textContent).toContain('completed')
+    expect(within(card).getByText('Enumerate the attack surface').closest('tr')?.textContent).toContain('Done')
     expect(within(card).getByText('Exploit the admin endpoint').closest('tr')?.textContent).toContain('OBJ-001')
-    const planDocumentGrid = screen.getByTestId('plan-doc-roe').parentElement as HTMLElement
-    expect(planDocumentGrid.contains(card)).toBe(false)
+    await openSub('Documents')
+    expect(screen.queryByTestId('plan-doc-opplan')).toBeNull()
+    expect(screen.getByTestId('plan-doc-roe')).toBeTruthy()
     expect(screen.queryByText('opplan: ready')).toBeNull()
   })
 
@@ -98,6 +106,7 @@ describe('PlanningTab (real)', () => {
       bundle: { roe: 'ready', conops: 'ready', deconfliction: 'missing', opplan: 'invalid', 'threat-profile': 'ready', contact: 'ready', 'data-handling': 'ready', abort: 'ready', cleanup: 'missing' },
     }))
     renderTab({ handoffConfirmedAt: null })
+    await openSub('Documents')
     const threat = await screen.findByTestId('plan-doc-threat-profile')
     expect(within(threat).getByRole('button', { name: 'View source & draft' })).toBeTruthy()
     expect(within(screen.getByTestId('plan-doc-contact')).getByRole('button', { name: 'View source & draft' })).toBeTruthy()
@@ -113,6 +122,7 @@ describe('PlanningTab (real)', () => {
       return undefined
     })
     renderTab({ handoffConfirmedAt: null })
+    await openSub('Objectives & steps')
     const card = await screen.findByTestId('plan-doc-opplan')
     expect(await within(card).findByText(error)).toBeTruthy()
   })
@@ -124,6 +134,7 @@ describe('PlanningTab (real)', () => {
       readiness: { state: 'ready', reasons: [], runtimeSignal: 'not_observed' },
     }))
     renderTab({ handoffConfirmedAt: null })
+    await openSub('Reviews & versions')
     const confirm = await screen.findByRole('button', { name: /Confirm planning handoff/ })
     await userEvent.setup().click(confirm)
     await waitFor(() => expect(calls.some((c) => c.url === '/api/engagements/eng-1' && c.init?.method === 'PATCH')).toBe(true))
@@ -134,12 +145,14 @@ describe('PlanningTab (real)', () => {
   it('keeps the handoff disabled while required documents are missing', async () => {
     stubApi(VIEW())
     renderTab({ handoffConfirmedAt: null })
+    await openSub('Reviews & versions')
     expect(await screen.findByRole('button', { name: 'Confirm planning handoff' })).toBeDisabled()
   })
 
   it('shows a confirmed handoff without offering the button again', async () => {
     stubApi(VIEW())
     renderTab({ handoffConfirmedAt: '2026-10-14T09:00:00.000Z' })
+    await openSub('Reviews & versions')
     await screen.findByText(/Confirmed at 2026-10-14 09:00/)
     expect(screen.queryByRole('button', { name: /Confirm planning handoff/ })).toBeNull()
   })
@@ -172,6 +185,7 @@ describe('PlanningTab document editor (O06)', () => {
 
   async function openConopsEditor() {
     renderTab({ handoffConfirmedAt: null })
+    await openSub('Documents')
     const card = await screen.findByTestId('plan-doc-conops')
     await userEvent.setup().click(within(card).getByRole('button', { name: 'View source & draft' }))
     return await screen.findByTestId('document-editor-conops')
@@ -214,6 +228,7 @@ describe('PlanningTab document editor (O06)', () => {
       return undefined
     })
     renderTab({ handoffConfirmedAt: null })
+    await openSub('Documents')
     const card = await screen.findByTestId('plan-doc-roe')
     await userEvent.setup().click(within(card).getByRole('button', { name: 'View source & draft' }))
     const editor = await screen.findByTestId('document-editor-roe')

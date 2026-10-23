@@ -10,7 +10,7 @@
  * restore old visibility.
  */
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../demo/persona'
 import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
@@ -55,6 +55,8 @@ export function useAssetList(query: AssetListQuery) {
       return res.data
     },
     enabled: !!services,
+    // A filter, search or page change keeps the rows on screen until the next read arrives, so the table is not replaced.
+    placeholderData: keepPreviousData,
   })
 }
 

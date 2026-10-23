@@ -61,9 +61,9 @@ export function createRealRuntimeOperationsService(): RuntimeOperationsService {
     pauseRun: (ctx, threadId, runId) => scoped(ctx, async (engagementId): Promise<ServiceResult<OperationView>> => ({ ok: true, data: await pauseOperationRun(engagementId, threadId, runId) })),
     resumeOperation: (ctx, threadId, requestId) => scoped(ctx, async (engagementId): Promise<ServiceResult<RequestRecoveryView>> => ({ ok: true, data: await resumeOperation(engagementId, threadId, requestId) })),
     completeOperation: (ctx, threadId) => scoped(ctx, async (engagementId): Promise<ServiceResult<OperationView>> => ({ ok: true, data: await completeOperation(engagementId, threadId) })),
-    timeline: (ctx) => scoped(ctx, async (engagementId): Promise<ServiceResult<RuntimeTimeline>> => {
-      const view = await fetchTimeline(engagementId)
-      return { ok: true, data: { entries: view.entries, truncated: view.truncated, unavailableThreads: view.unavailableThreads } }
+    timeline: (ctx, limit) => scoped(ctx, async (engagementId): Promise<ServiceResult<RuntimeTimeline>> => {
+      const view = await fetchTimeline(engagementId, limit)
+      return { ok: true, data: { entries: view.entries, truncated: view.truncated, hasMore: view.hasMore, untimedCheckpoints: view.untimedCheckpoints, unavailableThreads: view.unavailableThreads } }
     }),
   }
 }

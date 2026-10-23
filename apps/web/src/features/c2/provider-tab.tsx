@@ -12,8 +12,8 @@ import { TerminalSquare } from 'lucide-react'
 import { go, useRoute } from '../../router/navigate'
 import { utcMinute } from '../../platform/format'
 import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status } from '../../ui/index'
-import { GrantsCard } from './provider-grants'
-import { CommandTable, ConsoleCard } from './provider-console'
+import { CommandTable } from './provider-console'
+import { C2SessionsWorkspace } from './session-workspace'
 import { messageOf, useProviderCommands, useProviderSurface, useProviderWrites } from './provider-query'
 
 export function C2ProviderTab({ engagementId }: { engagementId: string }): ReactElement {
@@ -23,9 +23,8 @@ export function C2ProviderTab({ engagementId }: { engagementId: string }): React
   if (route.page === 'c2-channel' && route.id) return <ChannelDetail engagementId={engagementId} transport={route.id} />
   return (
     <div className="space-y-4">
-      <GrantsCard engagementId={engagementId} />
+      <C2SessionsWorkspace engagementId={engagementId} />
       <InfrastructureCard engagementId={engagementId} />
-      <ConsoleCard engagementId={engagementId} />
     </div>
   )
 }

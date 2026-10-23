@@ -30,9 +30,18 @@ export interface RuntimeThreadSnapshot {
   transcriptsTruncated: boolean
 }
 
+/** The entries the timeline shows first, and the most one page can ask for (the server's window bound). */
+export const TIMELINE_PAGE_LIMIT = 50
+export const TIMELINE_MAX_LIMIT = 250
+
 export interface RuntimeTimeline {
   entries: TimelineEntryView[]
+  /** The source window hit its bound; older activity beyond it is not projected. */
   truncated: boolean
+  /** More entries exist in the window than this page returned; a larger limit returns them. */
+  hasMore: boolean
+  /** Checkpoint events with no recorded time; they are left out of the ordered timeline. */
+  untimedCheckpoints: number
   /** Threads whose runtime binding no longer matches persisted state; their runs are left out. */
   unavailableThreads: number
 }
@@ -84,6 +93,7 @@ export interface RuntimeOperationsService {
   /** P11: continues a paused operation as a new run; the request id makes a retry replay the same run. */
   resumeOperation(ctx: RequestContext, threadId: string, requestId: string): Promise<ServiceResult<RequestRecoveryView>>
   completeOperation(ctx: RequestContext, threadId: string): Promise<ServiceResult<OperationView>>
-  timeline(ctx: RequestContext): Promise<ServiceResult<RuntimeTimeline>>
+  /** One page of the merged timeline, newest first; the limit is clamped to the window bound. */
+  timeline(ctx: RequestContext, limit?: number): Promise<ServiceResult<RuntimeTimeline>>
 }
 

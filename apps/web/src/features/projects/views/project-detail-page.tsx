@@ -9,17 +9,14 @@ import { AiRunControls } from '../../operations';
 import { isAssetMapEnabled } from '../../asset-map';
 import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
 import { RefreshCw, ServerCrash } from 'lucide-react'
-import type { ProjectViewModel } from '@raptix/web-contracts'
 import { useEngagementDetail } from '../detail-query';
-import { ProjectShortcuts, WorkspaceStatus } from './workspace-status';
-import { ProjectCounts } from './project-counts';
 import { projectStage, STAGE_LABEL } from '../workspace';
-import { utcMinuteOr } from '../../../platform/format'
 import { RealConversation } from '../../aichat';
 import { RuntimeOperationsTab } from '../../operations';
 import { PlanningTab } from '../../planning';
 import { TeamMembers } from '../../team';
 import { ScopeTab } from '../../scope';
+import { ProjectAssets } from '../../assets';
 import { GovernanceTab } from '../../governance';
 import { EvidenceList, FindingList } from '../../findings';
 import { ApprovalInbox } from '../../team';
@@ -31,11 +28,11 @@ import { AuditPanel } from '../../audit';
 import { ClosureTab } from '../../closure';
 import { ReportsPage } from '../../reports';
 import { ProjectSettingsPanel } from './project-settings-panel'
-import { EnvironmentPanel } from './environment-panel'
+import { ProjectOverview } from './project-overview'
 import { go, useRoute } from '../../../router/navigate'
 import { REAL_PROJECT_NAV } from '../../../shell/nav'
 import { useProjectStore } from '../../../state/stores'
-import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
+import { Button, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
 
 /**
  * The sidebar's grouped model is the project nav (plan 2026-10-16 §3.1 — no
@@ -94,56 +91,10 @@ export function RealProjectDetail(): ReactElement {
         meta={<span className="flex flex-wrap items-center gap-2"><Status kind="project" value={data.lifecycleStatus} size="sm" /><span className="text-xs text-muted">{STAGE_LABEL[projectStage(data.lifecycleStatus)]}</span></span>}
       />}
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}><ReportsPage /></Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
+        {tab === 'overview' ? <ProjectOverview d={data} /> : tab === 'assets' ? <ProjectAssets engagementId={data.id} mapEnabled={isAssetMapEnabled()} />
+        : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} brief={data.brief} updatedAt={data.updatedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}><ReportsPage /></Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
       </div>
     </>
-  )
-}
-
-function Overview({ d }: { d: ProjectViewModel }): ReactElement {
-  const ready = d.metadataState === 'verified'
-  return (
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="min-w-0 space-y-4">
-        {!ready && (
-          <Banner tone="warn" title="Engagement metadata needs review">
-            The stored target is not policy-verified yet. Fix the target or confirm authorization before planning starts.
-          </Banner>
-        )}
-        <WorkspaceStatus d={d} />
-        <EnvironmentPanel engagementId={d.id} projectName={d.displayName} />
-        {d.brief && (
-          <Card>
-            <CardHeader title="Operator brief" />
-            <p className="whitespace-pre-wrap text-sm">{d.brief}</p>
-          </Card>
-        )}
-        <Card>
-          <CardHeader title="Engagement identity" sub="Server id, display name and workspace slug are distinct fields; the slug names the engagement workspace." />
-          <DescList
-            items={[
-              { k: 'Server id', v: <span className="font-mono">{d.id}</span> },
-              { k: 'Display name', v: d.displayName },
-              { k: 'Workspace slug', v: <span className="font-mono">{d.workspaceSlug}</span> },
-              { k: 'Target', v: <span className="font-mono">{d.targetValue}</span> },
-              { k: 'Target type', v: d.targetType },
-              { k: 'Metadata', v: <Status kind="check" value={ready ? 'pass' : 'review'} size="sm" label={ready ? 'Verified' : 'Needs review'} /> },
-              { k: 'Lifecycle', v: <Status kind="project" value={d.lifecycleStatus} size="sm" /> },
-              { k: 'Authorization confirmed', v: d.authorizationConfirmed ? 'Yes' : 'No' },
-              { k: 'Created', v: utcMinuteOr(d.createdAt) },
-              { k: 'Updated', v: utcMinuteOr(d.updatedAt) },
-            ]}
-          />
-        </Card>
-      </div>
-      <div className="min-w-0 space-y-4">
-        <ProjectShortcuts projectId={d.id} />
-        <Card>
-          <CardHeader title="Counts" sub="Counters exist only when a projection source confirms them." />
-          <ProjectCounts engagementId={d.id} />
-        </Card>
-      </div>
-    </div>
   )
 }
 

@@ -15,22 +15,22 @@ afterEach(() => {
 
 async function executionLabels(): Promise<{ mock: string[]; real: string[] }> {
   const nav = await import('./nav');
-  const labels = (groups: typeof nav.MOCK_PROJECT_NAV) => groups.find(group => group.group === 'EXECUTION')?.items.map(item => item.label) ?? [];
+  const labels = (groups: typeof nav.MOCK_PROJECT_NAV) => groups.find(group => group.group === 'OPERATIONS')?.items.map(item => item.label) ?? [];
   return { mock: labels(nav.MOCK_PROJECT_NAV), real: labels(nav.REAL_PROJECT_NAV) };
 }
 
 describe('navigation model and the asset map flag', () => {
   it('keeps the Execution group unchanged while the flag is off', async () => {
     const labels = await executionLabels();
-    expect(labels.mock).toEqual(['AI Workspace', 'Execution', 'C2 Sessions']);
-    expect(labels.real).toEqual(['AI Workspace', 'Execution', 'C2 Sessions']);
+    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'Sessions']);
+    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'Sessions']);
   });
 
   it('lists the asset map beside Execution in both project menus while the flag is on', async () => {
     globalThis.localStorage.setItem('raptix.assetMap', '1');
     const labels = await executionLabels();
-    expect(labels.mock).toEqual(['AI Workspace', 'Execution', 'Asset Map', 'C2 Sessions']);
-    expect(labels.real).toEqual(['AI Workspace', 'Execution', 'Asset Map', 'C2 Sessions']);
+    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'Sessions']);
+    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'Sessions']);
   });
 });
 
@@ -52,7 +52,8 @@ describe('project section ownership', () => {
     expect(owner('report')).toBe('reports');
     expect(owner('report-review')).toBe('reports');
     expect(owner('finding')).toBe('findings');
-    expect(owner('asset-scope')).toBe('scope');
+    expect(owner('asset-scope')).toBe('assets');
+    expect(owner('asset-new')).toBe('assets');
     expect(owner('ai-plan-review')).toBe('planning');
     expect(owner('no-such-page')).toBeUndefined();
   });

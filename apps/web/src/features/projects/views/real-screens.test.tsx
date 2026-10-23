@@ -46,7 +46,7 @@ function stubApi(list: ProjectViewModel[] = [dto()]) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     if (url.endsWith('/api/capabilities')) return new Response(JSON.stringify(CAPS), { status: 200 })
-    if (url.includes('/api/engagements/')) return new Response(JSON.stringify(list[0]), { status: 200 })
+    if (/\/api\/engagements\/[^/?]+(\?|$)/.test(url)) return new Response(JSON.stringify(list[0]), { status: 200 })
     if (url.endsWith('/api/engagements') && init?.method === 'POST') return new Response(JSON.stringify(dto({ lifecycleStatus: 'draft' })), { status: 201 })
     if (url.endsWith('/api/engagements')) return new Response(JSON.stringify(list), { status: 200 })
     return new Response('unexpected', { status: 404 })
@@ -180,16 +180,15 @@ describe('RealProjectDetail', () => {
   })
 
   it('shows the next step and the readiness checks, with an unread source shown as unavailable', async () => {
-    // The stub answers every engagement sub-path with the project record, which the scope and planning guards reject: both reads fail.
+    // The stub answers only the project record: the scope, planning, findings, assets and overview sub-paths fail, so those reads are unavailable.
     stubApi()
     go('project', { id: 'eng-8f3c92a1' })
     ui(<RealProjectDetail />)
-    expect(await screen.findByText('Next step')).toBeTruthy()
-    // "Authorization confirmed" also labels the identity card, so the readiness rows are checked as present, not unique.
-    for (const label of ['Target verified', 'Authorization confirmed', 'Scope & ROE approved', 'Planning handed off']) expect(screen.getAllByText(label).length).toBeGreaterThan(0)
-    // The next step and the readiness row both carry the reason, so each is checked as present.
+    expect(await screen.findByText('Check: Scope & ROE approved')).toBeTruthy()
+    // Target and authorization are met by the fixture; scope and planning reads fail, so only those two are met.
+    expect(screen.getByText('2 / 4')).toBeTruthy()
+    // The Preparation figure names the first check that is still open; the scope read is the first one here.
     expect((await screen.findAllByText('Scope status could not be read', undefined, { timeout: 5000 })).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Planning status could not be read').length).toBeGreaterThan(0)
     expect(screen.queryByText('Planning handoff confirmed')).toBeNull()
     await userEvent.click(screen.getAllByRole('button', { name: /Open Scope & ROE/ })[0])
     expect(globalThis.location.hash).toContain('tab=scope')
@@ -199,7 +198,6 @@ describe('RealProjectDetail', () => {
     stubApi([dto({ handoffConfirmedAt: '2026-10-14T09:00:00.000Z' })])
     go('project', { id: 'eng-8f3c92a1' })
     ui(<RealProjectDetail />)
-    expect(await screen.findByText('Planning handoff confirmed', undefined, { timeout: 5000 })).toBeTruthy()
-    expect(screen.getAllByText('Met').length).toBeGreaterThan(0)
+    expect(await screen.findByText('3 / 4', undefined, { timeout: 5000 })).toBeTruthy()
   })
 })

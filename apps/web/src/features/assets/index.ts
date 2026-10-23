@@ -3,6 +3,7 @@
  * The mock store and the real adapter are wired by the composition roots, so they are not exported here.
  */
 export { assetRoutes } from './views/asset-pages'
+export { ProjectAssets } from './views/project-assets'
 export { AssetPreviewModal } from './preview-modal'
 export { AssetReadError, useAssetDetail, useAssetList, useAssetPort, useAssetScope, useObservedGraph } from './query'
 export type { AssetCapabilities, AssetListItem, AssetListQuery, AssetListRead, AssetDetailRead, AssetObservedGraph, AssetScopeRead, AssetService } from './service'

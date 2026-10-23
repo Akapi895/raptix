@@ -4,27 +4,48 @@
  * project detail. It reads and writes through the scope port and the assets
  * port. A scope revision supersedes the approved one only when an independent
  * reviewer approves it. Anything a source cannot model is named as unmodelled,
- * never shown as an empty list.
+ * never shown as an empty list, and an enforcement state the console does not
+ * receive is shown as not reported, never as enforced.
  */
 import { useContext, useState, type ReactElement, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { FileDiff, Loader2 } from 'lucide-react'
+import { FileDiff, Loader2, RefreshCw } from 'lucide-react'
 import { DATA_MODE, isRealMode } from '../../state/mode'
-import { zonedToIso } from '../../platform/format'
+import { utcMinuteOr, zonedToIso } from '../../platform/format'
 import { SessionContext } from '../../platform/session'
 import { useMemberLabels } from '../team'
 import { useMe } from '../../state/console'
-import { Banner, Button, Card, CardHeader, Empty, Input, Segmented, Select, Skeleton, Status, Textarea } from '../../ui/index'
+import { go } from '../../router/navigate'
+import { Button, Card, CardHeader, Empty, Input, Segmented, Select, Skeleton, Status, Textarea } from '../../ui/index'
 import { useAssetList } from '../assets'
-import { AssetPreviewModal } from '../assets'
 import { useScopeRead, useScopeWrites } from './query'
 import type { ScopeRead, ScopeRevision, ScopeRoe } from './service'
+import { effectiveRows, NOT_MODELLED, policyRows, type Decision } from './effective'
 
-type Sub = 'assets' | 'roe' | 'docs' | 'hist'
+type Sub = 'effective' | 'roe' | 'changes' | 'docs'
+type DecisionFilter = 'all' | Decision
 
 const TIME_ZONES = ['UTC', 'Asia/Ho_Chi_Minh', 'Asia/Bangkok', 'Asia/Singapore', 'Asia/Tokyo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles']
 
 const STATUS_LABEL: Record<ScopeRevision['status'], string> = { pending: 'pending', approved: 'approved', rejected: 'rejected', superseded: 'superseded' }
+
+const SUB_OPTIONS: { id: Sub; label: string }[] = [
+  { id: 'effective', label: 'Effective scope' },
+  { id: 'roe', label: 'ROE & policies' },
+  { id: 'changes', label: 'Changes & approvals' },
+  { id: 'docs', label: 'Documents' },
+]
+
+const DECISION_OPTIONS: { id: DecisionFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'in', label: 'In scope' },
+  { id: 'excluded', label: 'Excluded' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'undetermined', label: 'Not determined' },
+]
+
+const DECISION_LABEL: Record<Decision, string> = { in: 'In scope', excluded: 'Excluded', pending: 'Pending', undetermined: 'Not determined' }
+const DECISION_TEXT: Record<Decision, string> = { in: 'text-ok', excluded: 'text-bad', pending: 'text-warn', undetermined: 'text-muted' }
 
 /** Mock mode shows member ids, which are the names the mock records; real mode resolves member labels from the API. */
 function useLabelFor(engagementId: string): (id: string) => string {
@@ -45,8 +66,9 @@ export function ScopeTab({ engagementId, documents }: { engagementId: string; do
   const assets = useAssetList({})
   const actorId = useActorId()
   const memberLabel = useLabelFor(engagementId)
-  const [sub, setSub] = useState<Sub>('assets')
-  const [assetPreview, setAssetPreview] = useState<string | null>(null)
+  const [sub, setSub] = useState<Sub>('effective')
+  const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('all')
+  const [search, setSearch] = useState('')
   const [added, setAdded] = useState('')
   const [removed, setRemoved] = useState('')
   const [rationale, setRationale] = useState('')
@@ -111,56 +133,171 @@ export function ScopeTab({ engagementId, documents }: { engagementId: string; do
   const latestRejected = view.revisions[0]?.status === 'rejected' ? view.revisions[0] : null
   const approvedNames = view.revisions.find((r) => r.status === 'approved')
   const kpis = assets.data?.kpis
-  const assetItems = assets.data?.items ?? []
   const unmodelledOps = view.unmodelled.includes('operations') || view.unmodelled.includes('plans')
+  const checkedAt = read.dataUpdatedAt ? utcMinuteOr(new Date(read.dataUpdatedAt).toISOString()) : null
+  const rows = effectiveRows(view, assets.data?.items ?? [])
+  const excluded = rows.filter((row) => row.decision === 'excluded')
+  const visibleRows = rows.filter((row) => (decisionFilter === 'all' || row.decision === decisionFilter)
+    && (search.trim() === '' || row.target.toLowerCase().includes(search.trim().toLowerCase()) || row.type.toLowerCase().includes(search.trim().toLowerCase())))
+  const expiry = effective.roe.windows.reduce<string | null>((latest, w) => (latest === null || w.end > latest ? w.end : latest), null)
+  const reValidation = (view.impact?.plans.length ?? 0) + (view.impact?.draftOps.length ?? 0)
+
+  // What stops a run from being authorised against this scope. Planning handoff and governance preflight are read on their own tabs.
+  const blockers: { key: string; title: string; detail: string; tab: Sub; action: string }[] = []
+  if (effective.version === null) blockers.push({ key: 'none', title: 'No approved scope revision yet', detail: 'A run cannot be authorised against an approved scope until a revision is approved.', tab: 'changes', action: 'Open changes' })
+  if (pending) blockers.push({ key: 'pending', title: `v${pending.version} awaits an independent reviewer`, detail: `Submitted by ${memberLabel(pending.requestedBy)}. Its targets stay pending until it is approved.`, tab: 'changes', action: 'Review change' })
+  if (latestRejected && !pending) blockers.push({ key: 'returned', title: `v${latestRejected.version} was returned for changes`, detail: `Reason: ${latestRejected.decisionComment ?? 'no reason was recorded'}.`, tab: 'changes', action: 'Open changes' })
+  if (effective.roe.emergencyContacts.length === 0) blockers.push({ key: 'contact', title: 'Emergency contact is missing', detail: 'Without an emergency contact the ROE cannot be approved and preflight stays blocked.', tab: 'roe', action: 'Open ROE & policies' })
+  if (reValidation > 0) blockers.push({ key: 'revalidate', title: `${reValidation} plan or operation needs re-validation`, detail: 'The pending scope change moves them to re-validation before they can start.', tab: 'changes', action: 'Open impact preview' })
+  if ((kpis?.pending ?? 0) > 0) blockers.push({ key: 'pending-assets', title: `${kpis?.pending} asset(s) pending approval`, detail: 'Pending assets are not approved targets until a reviewer approves a revision that includes them.', tab: 'effective', action: 'Open effective scope' })
 
   return (
     <div className="space-y-4">
-      {latestRejected && !pending && <Banner tone="bad" title="Scope / ROE returned for changes">Reason: {latestRejected.decisionComment ?? 'no reason was recorded'}. Submit a revision that addresses it.</Banner>}
-      {pending && <Banner tone="warn" title="Awaiting approval of a new scope">v{pending.version} submitted by {memberLabel(pending.requestedBy)}. A reviewer other than the requester decides it.</Banner>}
-      {effective.roe.emergencyContacts.length === 0 && <Banner tone="warn" title="Emergency contact is missing">Without an emergency contact the ROE cannot be approved and preflight stays blocked.</Banner>}
-      {view.impact && (
-        <Banner tone="bad" title={`Scope change: v${pending?.version ?? '—'} needs approval. Re-validation required`}>
-          <ul className="list-disc pl-4">
-            {view.impact.plans.length > 0 && <li>Plans moved to Re-validation Required: {view.impact.plans.join(', ')}.</li>}
-            {view.impact.draftOps.length > 0 && <li>Operations that cannot start until re-validated: {view.impact.draftOps.join(', ')}.</li>}
-            {view.impact.running.length > 0 && <li>Running now: {view.impact.running.join(', ')} continues under the last approved version.</li>}
-            {view.impact.plans.length + view.impact.draftOps.length + view.impact.running.length === 0 && <li>No existing plans or operations are affected.</li>}
-          </ul>
-        </Banner>
-      )}
-
       <Card>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
           <span className="inline-flex items-center gap-1.5"><span className="text-muted">Effective version</span><span className="font-mono font-semibold text-fg">{effective.versionLabel ?? 'none yet'}</span>{effective.versionLabel !== null && <Status kind="roe" value="approved" size="sm" label="approved" />}</span>
           {pending && <span className="inline-flex items-center gap-1.5"><span className="text-muted">Proposed</span><span className="font-mono font-semibold text-fg">v{pending.version}</span><Status kind="roe" value="pending" size="sm" label="pending" /></span>}
+          <span className="inline-flex items-center gap-1.5"><span className="text-muted">Testing window</span><span className="text-fg">{effective.windowText ?? (effective.roe.windows.length === 0 ? 'none (always allowed)' : 'set')}</span>{expiry !== null && <span className="text-muted">· latest window ends {utcMinuteOr(expiry)}</span>}</span>
           <span className="inline-flex items-center gap-1.5"><span className="text-muted">Emergency contact</span>{effective.roe.emergencyContacts.length > 0 ? <span className="text-fg">{effective.roe.emergencyContacts.join(', ')}</span> : <span className="font-medium text-bad">Missing — blocks approval</span>}</span>
-          <span className="inline-flex flex-wrap items-center gap-1.5"><span className="text-muted">Assets</span>{kpis ? <span>{kpis.in ?? 0} approved in scope · {kpis.pending ?? 0} pending · {kpis.out ?? 0} out · {kpis.unclassified ?? 0} unclassified</span> : <span className="text-muted">loading</span>}</span>
+          <span className="inline-flex flex-wrap items-center gap-1.5"><span className="text-muted">Assets</span>{kpis ? <span>{kpis.in ?? 0} in scope · {kpis.pending ?? 0} pending · {kpis.out ?? 0} out · {kpis.unclassified ?? 0} unclassified</span> : <span className="text-muted">loading</span>}</span>
         </div>
       </Card>
 
-      <Segmented<Sub> value={sub} onChange={setSub} options={[{ id: 'assets', label: `Assets (${assetItems.length})` }, { id: 'roe', label: 'ROE' }, { id: 'docs', label: 'Documents' }, { id: 'hist', label: 'History' }]} />
+      <Card>
+        <CardHeader
+          title="What blocks execution"
+          sub={checkedAt === null ? 'Read from the scope source' : `Last checked ${checkedAt}. Read from the scope revisions, the effective scope and the asset records.`}
+          actions={<Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => void read.refetch()}>Recheck</Button>}
+        />
+        {blockers.length === 0 ? (
+          <p className="p-4 text-sm text-muted">No blocker in the scope source. Planning handoff and governance preflight are checked on their own tabs and in the project overview.</p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {blockers.map((b) => (
+              <li key={b.key} className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-warn px-4 py-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{b.title}</div>
+                  <div className="text-xs text-muted">{b.detail}</div>
+                </div>
+                <Button size="sm" variant="secondary" onClick={() => setSub(b.tab)}>{b.action}</Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
-      {sub === 'assets' && (
-        <Card>
-          <CardHeader title="Assets" sub="Pending assets are not approved in scope until a reviewer approves a revision that includes them" />
-          {assets.isPending ? <Skeleton className="h-24" /> : assetItems.length === 0 ? <p className="p-4 text-sm text-muted">No assets in this engagement yet.</p> : (
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs text-muted"><th className="p-3">Name</th><th className="p-3">Identifier</th><th className="p-3">Scope</th></tr></thead>
-              <tbody>{assetItems.map(({ asset }) => <tr key={asset.id} className="border-t border-line"><td className="p-3"><button type="button" className="font-medium text-accent hover:underline" onClick={() => setAssetPreview(asset.id)}>{asset.name}</button></td><td className="p-3 font-mono text-xs">{asset.ident}</td><td className="p-3"><Status kind="scope" value={asset.scope} /></td></tr>)}</tbody>
-            </table>
-          )}
-        </Card>
+      {error !== null && <p className="text-sm text-bad" role="alert">{error}</p>}
+
+      <Segmented<Sub> value={sub} onChange={setSub} options={SUB_OPTIONS} />
+
+      {sub === 'effective' && (
+        <>
+          <Card>
+            <CardHeader title="Exclusions" sub={excluded.length === 0 ? 'No target is excluded from the scope.' : `${excluded.length} excluded. An excluded target is never a target, whatever else the scope says.`} />
+            {excluded.length > 0 && (
+              <ul className="divide-y divide-line">
+                {excluded.map((row) => (
+                  <li key={row.key} className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-bad px-4 py-2.5 text-sm">
+                    <span className="font-mono">{row.target}</span>
+                    <span className="text-xs text-muted">{row.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader title="Effective scope" sub={`What the runtime reads as approved: version ${effective.versionLabel ?? 'none yet'}. A target is allowed only when its decision is In scope.`} />
+            <div className="flex flex-wrap items-center gap-3 px-4 pb-3">
+              <Segmented<DecisionFilter> value={decisionFilter} onChange={setDecisionFilter} options={DECISION_OPTIONS} />
+              <Input aria-label="Search targets" placeholder="Search by target or type" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+            </div>
+            {assets.isPending ? <Skeleton className="mx-4 mb-4 h-24" /> : visibleRows.length === 0 ? (
+              <Empty title={rows.length === 0 ? 'No target in the effective scope' : 'No target matches these filters'}>
+                {rows.length === 0 ? 'Approve a scope revision to name targets here.' : 'Clear the search or the decision filter.'}
+              </Empty>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-y border-line text-left text-xs text-muted">
+                      <th className="p-3 font-medium">Target</th>
+                      <th className="p-3 font-medium">Type</th>
+                      <th className="p-3 font-medium">Decision</th>
+                      <th className="p-3 font-medium">Source</th>
+                      <th className="p-3 font-medium">Reason</th>
+                      <th className="p-3 font-medium"><span className="sr-only">Asset</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleRows.map((row) => {
+                      const assetId = row.assetId
+                      return (
+                        <tr key={row.key} className="border-b border-line last:border-0">
+                          <td className="p-3 font-mono text-xs">{row.target}</td>
+                          <td className="p-3 text-xs">{row.type}</td>
+                          <td className={`p-3 text-xs font-medium ${DECISION_TEXT[row.decision]}`}>{DECISION_LABEL[row.decision]}</td>
+                          <td className="p-3 text-xs text-muted">{row.source}</td>
+                          <td className="p-3 text-xs text-muted">{row.reason}</td>
+                          <td className="p-3">
+                            {assetId !== null && <Button size="sm" variant="ghost" onClick={() => go('asset', { id: assetId })}>Open asset</Button>}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="px-4 pb-4 pt-3 text-xs text-muted">
+              Constraints by port, protocol or method are not modelled on this backend, so none are shown. Check target needs the runtime&apos;s own evaluator and is not available from this console yet.
+            </p>
+          </Card>
+        </>
       )}
 
       {sub === 'roe' && (
+        <Card>
+          <CardHeader title="ROE & policies" sub={`Approved ROE: ${view.latestApprovedVersion === null ? 'none yet' : `v${view.latestApprovedVersion}`}. Approved means the revision records the value; enforcement is what the runtime reports.`} />
+          <div className="overflow-x-auto p-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-line text-left text-xs text-muted">
+                  <th className="pb-2 pr-3 font-medium">Policy</th>
+                  <th className="pb-2 pr-3 font-medium">Value</th>
+                  <th className="pb-2 font-medium">Enforcement</th>
+                </tr>
+              </thead>
+              <tbody>
+                {policyRows(view).map((row) => (
+                  <tr key={row.policy} className="border-b border-line last:border-0 align-top">
+                    <td className="py-2.5 pr-3 font-medium">{row.policy}</td>
+                    <td className={`py-2.5 pr-3 ${row.value === NOT_MODELLED ? 'text-muted' : ''}`}>{row.value}</td>
+                    <td className="py-2.5 text-xs text-muted">{row.enforcement}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="px-4 pb-4 text-xs text-muted">This console does not receive a runtime enforcement report, so a policy shows not reported rather than enforced. A checkbox here does not prove the runtime applies it.</p>
+        </Card>
+      )}
+
+      {sub === 'changes' && (
         <>
           <Card>
-            <CardHeader title="Effective scope (runtime bridge)" sub={`Authoritative approved version: ${effective.version === null ? 'none yet' : `v${effective.version}`} — what the runtime consumes through the read bridge (ADR-0072)`} />
+            <CardHeader title="Impact preview" sub="What the pending scope change does to plans and operations, as the server reports it." />
             <div className="p-4 text-sm">
-              <p className="text-muted">Root target (always in scope): <span className="font-mono">{effective.rootTarget ?? '—'}</span> · Approved in-scope targets: <span className="font-mono">{effective.inScope.length === 0 ? 'none yet' : effective.inScope.join(', ')}</span></p>
-              <p className="mt-2 text-muted">Testing window: {effective.windowText ?? (effective.roe.windows.length === 0 ? 'none (always allowed)' : 'set')}</p>
-              {effective.roe.restrictions.length > 0 && <p className="mt-2 text-muted">Restrictions: {effective.roe.restrictions.join(' · ')}</p>}
+              {view.impact === null ? (
+                <p className="text-muted">No impact is reported for this change.</p>
+              ) : (
+                <ul className="list-disc space-y-1 pl-4">
+                  {view.impact.plans.length > 0 && <li>Plans moved to Re-validation Required: {view.impact.plans.join(', ')}.</li>}
+                  {view.impact.draftOps.length > 0 && <li>Operations that cannot start until re-validated: {view.impact.draftOps.join(', ')}.</li>}
+                  {view.impact.running.length > 0 && <li>Running now: {view.impact.running.join(', ')} continues under the last approved version.</li>}
+                  {view.impact.plans.length + view.impact.draftOps.length + view.impact.running.length === 0 && <li>No existing plans or operations are affected.</li>}
+                </ul>
+              )}
               {unmodelledOps && <p className="mt-2 text-xs text-muted">Operations and plans affected by a scope change are not modelled on this backend, so none are listed here.</p>}
             </div>
           </Card>
@@ -264,27 +401,6 @@ export function ScopeTab({ engagementId, documents }: { engagementId: string; do
       {sub === 'docs' && (
         documents ?? <Card><CardHeader title="Documents" /><p className="p-4 text-sm text-muted">Documents are not modelled on this backend, so none are listed here.</p></Card>
       )}
-
-      {sub === 'hist' && (
-        <Card>
-          <CardHeader title="ROE version history" sub={`Latest approved: ${view.latestApprovedVersion === null ? 'none yet' : `v${view.latestApprovedVersion}`}`} />
-          {view.revisions.length === 0 ? <p className="p-4 text-sm text-muted">No changes recorded yet.</p> : (
-            <ul className="divide-y divide-line/60 px-4 text-sm">
-              {view.revisions.map((r) => (
-                <li key={r.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                  <span className="font-mono text-xs">v{r.version}</span>
-                  <Status kind="gate" value={r.status === 'approved' ? 'passed' : r.status === 'pending' ? 'pending' : 'failed'} size="sm" label={STATUS_LABEL[r.status]} />
-                  <span className="text-muted">requested by {memberLabel(r.requestedBy)}{r.decidedBy ? `, decided by ${memberLabel(r.decidedBy)}` : ''}</span>
-                  <span className="text-muted">{r.diff.rationale}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      )}
-
-      {error !== null && <p className="text-sm text-bad" role="alert">{error}</p>}
-      {assetPreview && <AssetPreviewModal key={assetPreview} id={assetPreview} onClose={() => setAssetPreview(null)} />}
     </div>
   )
 }

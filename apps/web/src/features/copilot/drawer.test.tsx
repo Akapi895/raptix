@@ -58,7 +58,7 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
     mountDrawer('Sam Patel', 'RT-2026-015')
     const drawer = await openDrawer()
     expect(drawer).toHaveAttribute('data-testid', 'copilot-drawer')
-    expect(within(drawer).getByText('Context: Execution')).toBeInTheDocument()
+    expect(within(drawer).getByText('Context: Operations')).toBeInTheDocument()
     expect(within(drawer).getByText('RT-2026-015')).toBeInTheDocument()
     // The migrated drawer's context header, not a duplicated store state.
     expect(within(drawer).getByText(/Context follows the page you opened it from/)).toBeInTheDocument()
@@ -133,7 +133,7 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
   it('auto-creates the project conversation through the typed handler when none exists', async () => {
     const h = mountDrawer('Sam Patel', 'PT-2026-006')
     const drawer = await openDrawer()
-    expect(await within(drawer).findByText(/Ask about Execution/)).toBeInTheDocument()
+    expect(await within(drawer).findByText(/Ask about Operations/)).toBeInTheDocument()
     expect(h.db().conversations.find((c) => c.projectId === 'PT-2026-006')).toBeDefined()
   })
 

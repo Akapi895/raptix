@@ -3,18 +3,20 @@
  * handoff documents, the OPPLAN, the readiness and the one-way handoff come
  * from the planning port. A draft is edited on the server and published with a
  * digest precondition. Readiness is a runtime signal and never grants execution,
- * and an OPPLAN is never presented as business plan approval.
+ * and an OPPLAN is never presented as business plan approval: a business plan is
+ * a separate record, and none is recorded for this project here.
  */
 import { useEffect, useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Bot, CheckCircle2, CircleAlert, FileText, Lock, PenLine, RefreshCw } from 'lucide-react'
+import { Bot, Lock, PenLine, RefreshCw } from 'lucide-react'
 import { go } from '../../router/navigate'
 import { utcMinuteOr } from '../../platform/format'
-import { Banner, Button, Card, CardHeader, DescList, Drawer, Skeleton, Status, cx } from '../../ui/index'
+import { Banner, Button, Card, CardHeader, DescList, Drawer, Segmented, Skeleton, Status, cx } from '../../ui/index'
+import { useScopeRead } from '../scope'
 import { PlanningError, usePlanningRead, usePlanningSource, usePlanningWrites } from './query'
-import type { PlanningDocumentCard, PlanningDocumentState, PlanningOpplan } from './service'
+import { agentRoleFor, planSummary, stepStates, type StepState } from './objectives'
+import type { PlanningDocumentCard, PlanningDocumentState, PlanningObjective, PlanningOpplan } from './service'
 
-const STATE_TONE: Record<PlanningDocumentState, 'ok' | 'bad' | 'warn' | 'neutral'> = { ready: 'ok', missing: 'neutral', invalid: 'bad', unavailable: 'warn' }
 const STATE_LABEL: Record<PlanningDocumentState, string> = { ready: 'Ready', missing: 'Missing', invalid: 'Invalid', unavailable: 'Unavailable' }
 const NOT_READY_TEXT: Record<Exclude<PlanningDocumentState, 'ready'>, string> = {
   missing: 'This document has not been generated yet.',
@@ -22,13 +24,38 @@ const NOT_READY_TEXT: Record<Exclude<PlanningDocumentState, 'ready'>, string> = 
   unavailable: 'The document source is unavailable right now.',
 }
 
+const STEP_LABEL: Record<StepState, string> = { done: 'Done', running: 'Running', ready: 'Ready', blocked: 'Blocked', cancelled: 'Cancelled' }
+const STEP_TEXT: Record<StepState, string> = { done: 'text-ok', running: 'text-primary', ready: 'text-fg', blocked: 'text-warn', cancelled: 'text-muted' }
+
+type PlanSub = 'overview' | 'objectives' | 'documents' | 'reviews'
+
+const SUB_OPTIONS: { id: PlanSub; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'objectives', label: 'Objectives & steps' },
+  { id: 'documents', label: 'Documents' },
+  { id: 'reviews', label: 'Reviews & versions' },
+]
+
 const messageOf = (error: unknown, fallback: string): string => (error instanceof PlanningError || error instanceof Error ? error.message : fallback)
 
-export function PlanningTab({ engagementId, handoffConfirmedAt }: { engagementId: string; handoffConfirmedAt: string | null }): ReactElement {
+/** A labelled value on the overview, with the text shown in place of a value the source does not record. */
+function orNotRecorded(value: string | null): string {
+  return value === null || value === '' ? 'Not recorded' : value
+}
+
+export function PlanningTab({ engagementId, handoffConfirmedAt, brief, updatedAt }: {
+  engagementId: string
+  handoffConfirmedAt: string | null
+  brief: string | null
+  updatedAt: string
+}): ReactElement {
   const read = usePlanningRead(engagementId)
   const writes = usePlanningWrites(engagementId)
+  const scope = useScopeRead()
+  const [sub, setSub] = useState<PlanSub>('overview')
   const [actionError, setActionError] = useState<string | null>(null)
   const [editorName, setEditorName] = useState<string | null>(null)
+  const [stepId, setStepId] = useState<string | null>(null)
   const confirm = useMutation({
     mutationFn: () => writes.confirm(),
     onSuccess: () => setActionError(null),
@@ -49,79 +76,206 @@ export function PlanningTab({ engagementId, handoffConfirmedAt }: { engagementId
   }
   const view = read.data
   const editorCard = editorName === null ? null : [...view.documents, view.opplan].find((c) => c.name === editorName) ?? null
+  const objectives = view.opplan.objectives
+  const states = stepStates(objectives)
+  const summary = planSummary(objectives)
+  const readyCount = view.documents.filter((card) => card.state === 'ready').length
+  const handoffOpen = handoffConfirmedAt === null
+  const approvedVersion = scope.data?.latestApprovedVersion ?? null
+  const selected = stepId === null ? null : objectives.find((o) => o.id === stepId) ?? null
+
+  const next = !view.ready
+    ? { title: 'Complete the planning documents', why: view.reasons.join(' '), label: 'Review documents', tab: 'documents' as const }
+    : handoffOpen
+      ? { title: 'Complete the planning handoff', why: 'The documents are ready; confirm the handoff after you review them', label: 'Confirm handoff', tab: 'reviews' as const }
+      : { title: 'Prepare execution', why: 'The handoff is confirmed. Preflight decides each run on its own thread.', label: 'Open Operations', tab: 'execution' as const }
 
   return (
     <div className="space-y-4">
-      {view.ready ? (
-        <Banner tone="ok" icon={CheckCircle2} title="Planning documents ready">
-          All required documents are present and valid. Review each document, then confirm the planning handoff. Readiness is a runtime signal — execution still requires the approved lifecycle steps and never follows from this banner alone.
-        </Banner>
-      ) : (
-        <Banner tone="warn" icon={CircleAlert} title="Planning is blocked">
-          <ul className="list-inside list-disc">
-            {view.reasons.map((reason) => <li key={reason}>{reason}</li>)}
-          </ul>
-        </Banner>
-      )}
       {actionError !== null && <Banner tone="bad" title="Handoff confirmation failed" action={<Button size="sm" variant="ghost" onClick={() => setActionError(null)}>Dismiss</Button>}>{actionError}</Banner>}
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0 space-y-4">
+      <Card>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 p-4 text-xs">
+          <span className="inline-flex items-center gap-1.5"><span className="text-muted">Current plan</span><span className="font-medium text-fg">OPPLAN · {STATE_LABEL[view.opplan.state]}</span></span>
+          <span className="inline-flex items-center gap-1.5"><span className="text-muted">Scope &amp; ROE reference</span><span className="font-mono font-medium text-fg">{scope.isError ? 'unavailable' : scope.data ? (approvedVersion === null ? 'none approved' : `approved v${approvedVersion}`) : 'reading'}</span></span>
+          <span className="inline-flex items-center gap-1.5"><span className="text-muted">Project updated</span><span className="text-fg">{utcMinuteOr(updatedAt)}</span></span>
+        </div>
+        <div className="flex flex-wrap gap-2 border-t border-line px-4 py-3">
+          <Button variant="secondary" icon={Bot} onClick={() => go('project', { id: engagementId, tab: 'ai-workspace' })}>Continue planning with AI</Button>
+          <Button variant="secondary" onClick={() => setSub('reviews')}>Review changes</Button>
+          <Button variant="primary" title="Opens Execution. Preflight decides whether a run can start." onClick={() => go('project', { id: engagementId, tab: 'operations' })}>Prepare execution</Button>
+        </div>
+      </Card>
+
+      <Segmented<PlanSub> value={sub} onChange={setSub} options={SUB_OPTIONS} />
+
+      {sub === 'overview' && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader title="Plan documents" sub="Generated in the AI workspace and stored in the engagement workspace. These are the documents the handoff depends on; the OPPLAN is shown separately below." />
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {view.documents.map((card) => <DocumentCard key={card.name} engagementId={engagementId} card={card} onEdit={setEditorName} />)}
+            <CardHeader title="Mission brief" sub="The engagement's purpose, as briefed and as the CONOPS records it." />
+            <div className="space-y-3 p-4 text-sm">
+              <p className="whitespace-pre-wrap">{orNotRecorded(brief)}</p>
+              <div>
+                <div className="text-xs font-medium text-muted">Success criteria</div>
+                {view.successCriteria.length === 0 ? <p className="text-muted">None recorded in the CONOPS.</p> : (
+                  <ul className="mt-1 list-inside list-disc">{view.successCriteria.map((c) => <li key={c}>{c}</li>)}</ul>
+                )}
+              </div>
+              {view.opplan.threatProfile !== null && <p><span className="font-medium text-fg">Threat profile:</span> {view.opplan.threatProfile}</p>}
             </div>
           </Card>
-          <OpplanCard engagementId={engagementId} opplan={view.opplan} />
+
           <Card>
-            <CardHeader title="Document bundle" sub="Every required planning document and its current state." />
-            <ul className="flex flex-wrap gap-2">
-              {view.documents.map((card) => (
-                <li key={card.name} className={cx('inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium', {
-                  ok: 'border-ok/30 bg-ok-soft text-ok', bad: 'border-bad/30 bg-bad-soft text-bad', warn: 'border-warn/30 bg-warn-soft text-warn', neutral: 'border-line bg-subtle text-muted',
-                }[STATE_TONE[card.state]])}>
-                  <FileText size={12} aria-hidden />{card.name}: {STATE_LABEL[card.state]}
+            <CardHeader title="Plan summary" sub="Each objective counted once, by the step state it is in." />
+            <div className="p-4">
+              <DescList
+                items={[
+                  { k: 'Objectives', v: String(summary.total) },
+                  { k: 'Done (results)', v: String(summary.done) },
+                  { k: 'Running', v: String(summary.running) },
+                  { k: 'Ready to start', v: String(summary.ready) },
+                  { k: 'Blocked', v: String(summary.blocked) },
+                  { k: 'Cancelled', v: String(summary.cancelled) },
+                ]}
+              />
+              <p className="mt-3 text-xs text-muted">Expected outputs are not recorded in the OPPLAN schema, so none is counted as present or missing.</p>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Next action" />
+            <div className="space-y-3 p-4 text-sm">
+              <div>
+                <div className="font-medium">{next.title}</div>
+                <div className="text-xs text-muted">{next.why}</div>
+              </div>
+              <p className="text-xs text-muted">Documents: {readyCount} of {view.documents.length} ready · Scope: {approvedVersion === null ? 'no approved revision' : `approved v${approvedVersion}`} · Handoff: {handoffOpen ? 'not confirmed' : 'confirmed'}</p>
+              <div>
+                <Button variant="primary" onClick={() => next.tab === 'execution' ? go('project', { id: engagementId, tab: 'operations' }) : setSub(next.tab)}>{next.label}</Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Business plan" sub="A separate record with its own review and approval." />
+            <p className="p-4 text-sm text-muted">No business plan is recorded for this project. The OPPLAN is the operational plan and is not a reviewer-approved business plan.</p>
+          </Card>
+        </div>
+      )}
+
+      {sub === 'objectives' && (
+        <Card>
+          <CardHeader title="Objectives & steps" sub="Each OPPLAN objective as a step: its state, the agent role its phase is routed to, and what it must show to be verified." />
+          <div className="p-4 text-sm" data-testid="plan-doc-opplan">
+            {view.opplan.state !== 'ready' ? (
+              <OpplanState engagementId={engagementId} opplan={view.opplan} />
+            ) : objectives.length === 0 ? (
+              <p className="text-muted">No objectives yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-line text-left text-xs text-muted">
+                      <th className="pb-2 pr-3 font-medium">Objective</th>
+                      <th className="pb-2 pr-3 font-medium">Agent role</th>
+                      <th className="pb-2 pr-3 font-medium">Step state</th>
+                      <th className="pb-2 pr-3 font-medium">Blocked by</th>
+                      <th className="pb-2 pr-3 font-medium">Success criteria</th>
+                      <th className="pb-2 font-medium"><span className="sr-only">Details</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objectives.map((o) => {
+                      const state = states.get(o.id) ?? 'ready'
+                      const role = agentRoleFor(o.phase)
+                      return (
+                        <tr key={o.id} className="border-b border-line align-top last:border-0">
+                          <td className="py-2.5 pr-3">
+                            <div className="font-mono text-xs text-muted">{o.id} · {o.phase}</div>
+                            <div className="font-medium">{o.title}</div>
+                          </td>
+                          <td className="py-2.5 pr-3 text-xs">{role ?? 'Not defined for this phase'}</td>
+                          <td className={cx('py-2.5 pr-3 text-xs font-medium', STEP_TEXT[state])}>{STEP_LABEL[state]}</td>
+                          <td className="py-2.5 pr-3 font-mono text-xs">{o.blockedBy.join(', ') || '—'}</td>
+                          <td className="py-2.5 pr-3 text-xs text-muted">{o.acceptanceCriteria.length === 0 ? 'None recorded' : `${o.acceptanceCriteria.length} criteria`}</td>
+                          <td className="py-2.5"><Button size="sm" variant="ghost" onClick={() => setStepId(o.id)}>Details</Button></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {objectives.length > 0 && (
+              <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
+                Execution links: this console does not link an objective to its runtime thread, so no step shows a run here. Results and verification come from the run, not from the plan.
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {sub === 'documents' && (
+        <Card>
+          <CardHeader title="Planning documents" sub="Generated in the AI workspace and stored in the engagement workspace. These are the documents the handoff depends on. The OPPLAN has its own tab." actions={<Button size="sm" variant="secondary" icon={Bot} onClick={() => go('project', { id: engagementId, tab: 'ai-workspace' })}>Open AI workspace</Button>} />
+          <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-2">
+            {view.documents.map((card) => <DocumentCard key={card.name} engagementId={engagementId} card={card} onEdit={setEditorName} />)}
+          </div>
+        </Card>
+      )}
+
+      {sub === 'reviews' && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="min-w-0 space-y-4">
+            <Card>
+              <CardHeader title="Planning handoff" sub="One-way confirmation after you review the planning documents. On a single-operator engagement it also approves the scope planned in roe.json. It can be set once and is never unset by the UI." />
+              <p className="px-4 text-sm">
+                {handoffConfirmedAt ? <span className="text-ok">Confirmed at {utcMinuteOr(handoffConfirmedAt)}</span> : <span className="text-muted">Not confirmed yet.</span>}
+              </p>
+              {!handoffConfirmedAt && (
+                <div className="mt-3 px-4 pb-4">
+                  <Button variant="primary" icon={Lock} disabled={confirm.isPending || !view.ready} title={view.ready ? 'Confirms planning handoff on the server (one-way)' : 'Required planning documents must be ready before handoff'}
+                    onClick={() => { setActionError(null); confirm.mutate() }}>
+                    {confirm.isPending ? 'Confirming…' : 'Confirm planning handoff'}
+                  </Button>
+                </div>
+              )}
+            </Card>
+            <Card>
+              <CardHeader title="Readiness" />
+              <div className="p-4">
+                <DescList
+                  items={[
+                    { k: 'State', v: <Status kind="gate" value={view.ready ? 'passed' : 'pending'} size="sm" label={view.ready ? 'Ready' : 'Blocked'} /> },
+                    { k: 'Runtime signal', v: view.runtimeSignal },
+                    { k: 'Reasons', v: view.reasons.length === 0 ? 'None' : view.reasons.join(' ') },
+                  ]}
+                />
+              </div>
+            </Card>
+          </div>
+          <Card>
+            <CardHeader title="Document review" sub="The state of each planning document, read from its source." />
+            <ul className="divide-y divide-line px-4">
+              {[...view.documents, view.opplan].map((card) => (
+                <li key={card.name} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
+                  <span className="font-medium">{card.title}</span>
+                  <span className="flex items-center gap-3">
+                    <Status kind="gate" value={card.state === 'ready' ? 'passed' : card.state === 'invalid' ? 'failed' : 'pending'} size="sm" label={STATE_LABEL[card.state]} />
+                    {card.name !== 'opplan' && <Button size="sm" variant="ghost" onClick={() => setEditorName(card.name)}>Source</Button>}
+                  </span>
                 </li>
               ))}
             </ul>
+            <p className="px-4 pb-4 pt-3 text-xs text-muted">The planning read carries no version history. Each document&apos;s published digest is shown in its source view. {readyCount} of {view.documents.length} documents are ready.</p>
           </Card>
         </div>
+      )}
 
-        <div className="min-w-0 space-y-4">
-          <Card>
-            <CardHeader title="Planning handoff" sub="One-way confirmation after you review the planning documents. On a single-operator engagement it also approves the scope planned in roe.json. It can be set once and is never unset by the UI." />
-            <p className="text-sm">
-              {handoffConfirmedAt ? <span className="text-ok">Confirmed at {utcMinuteOr(handoffConfirmedAt)}</span> : <span className="text-muted">Not confirmed yet.</span>}
-            </p>
-            {!handoffConfirmedAt && (
-              <div className="mt-3">
-                <Button variant="primary" icon={Lock} disabled={confirm.isPending || !view.ready} title={view.ready ? 'Confirms planning handoff on the server (one-way)' : 'Required planning documents must be ready before handoff'}
-                  onClick={() => { setActionError(null); confirm.mutate() }}>
-                  {confirm.isPending ? 'Confirming…' : 'Confirm planning handoff'}
-                </Button>
-              </div>
-            )}
-          </Card>
-          <Card>
-            <CardHeader title="AI workspace" />
-            <p className="text-sm text-muted">Plan documents are drafted with the assistant in the engagement's planning conversations.</p>
-            <div className="mt-3">
-              <Button variant="secondary" icon={Bot} onClick={() => go('project', { id: engagementId, tab: 'ai-workspace' })}>Open AI workspace</Button>
-            </div>
-          </Card>
-          <Card>
-            <CardHeader title="Readiness" />
-            <DescList
-              items={[
-                { k: 'State', v: <Status kind="gate" value={view.ready ? 'passed' : 'pending'} size="sm" label={view.ready ? 'Ready' : 'Blocked'} /> },
-                { k: 'Runtime signal', v: view.runtimeSignal },
-                { k: 'Reasons', v: view.reasons.length === 0 ? 'None' : view.reasons.join(' ') },
-              ]}
-            />
-          </Card>
-        </div>
-      </div>
+      <Drawer open={selected !== null} onClose={() => setStepId(null)} title={selected ? `${selected.id} · ${selected.title}` : ''} width={640}>
+        {selected !== null && <StepDetail objective={selected} state={states.get(selected.id) ?? 'ready'} />}
+      </Drawer>
+
       <Drawer open={editorCard !== null} onClose={() => setEditorName(null)} title={editorCard ? `${editorCard.title} — source & draft` : ''} width={760}>
         {editorCard !== null && editorName !== null && (
           <DocumentEditor engagementId={engagementId} name={editorName} title={editorCard.title} onClose={() => setEditorName(null)} writes={writes} />
@@ -129,6 +283,62 @@ export function PlanningTab({ engagementId, handoffConfirmedAt }: { engagementId
       </Drawer>
     </div>
   )
+}
+
+/** One step's full record. A field the runtime did not write is shown as not recorded, never as an empty value. */
+function StepDetail({ objective, state }: { objective: PlanningObjective; state: StepState }): ReactElement {
+  return (
+    <div className="space-y-4 text-sm">
+      <DescList
+        items={[
+          { k: 'Phase', v: objective.phase },
+          { k: 'Agent role', v: agentRoleFor(objective.phase) ?? 'Not defined for this phase' },
+          { k: 'Plan status', v: objective.status },
+          { k: 'Step state', v: STEP_LABEL[state] },
+          { k: 'Blocked by', v: objective.blockedBy.join(', ') || 'Nothing' },
+          { k: 'Priority', v: objective.priority === null ? 'Not recorded' : String(objective.priority) },
+          { k: 'Owner', v: orNotRecorded(objective.owner) },
+          { k: 'Parent objective', v: orNotRecorded(objective.parentId) },
+          { k: 'Effects', v: orNotRecorded(objective.effects) },
+          { k: 'OPSEC', v: orNotRecorded(objective.opsec) },
+          { k: 'C2 tier', v: orNotRecorded(objective.c2Tier) },
+          { k: 'Resources', v: objective.resources.join(', ') || 'Not recorded' },
+          { k: 'MITRE', v: objective.mitre.join(', ') || 'Not recorded' },
+        ]}
+      />
+      <div>
+        <div className="text-xs font-medium text-muted">Description</div>
+        <p className="mt-1 whitespace-pre-wrap">{orNotRecorded(objective.description)}</p>
+      </div>
+      <div>
+        <div className="text-xs font-medium text-muted">Success criteria</div>
+        {objective.acceptanceCriteria.length === 0 ? <p className="mt-1 text-muted">None recorded.</p> : (
+          <ul className="mt-1 list-inside list-disc">{objective.acceptanceCriteria.map((c) => <li key={c}>{c}</li>)}</ul>
+        )}
+      </div>
+      <div>
+        <div className="text-xs font-medium text-muted">Notes</div>
+        <p className="mt-1 whitespace-pre-wrap">{orNotRecorded(objective.notes)}</p>
+      </div>
+      <p className="border-t border-line pt-3 text-xs text-muted">Expected outputs and the run that produced them are not recorded on the plan, so this step shows no run and no evidence.</p>
+    </div>
+  )
+}
+
+/** The OPPLAN's own state when it has no objectives to show: not created yet, invalid, or unavailable. */
+function OpplanState({ engagementId, opplan }: { engagementId: string; opplan: PlanningOpplan }): ReactElement {
+  if (opplan.state === 'missing') {
+    return <p className="text-muted">Not created yet. The operations agent creates OPPLAN after the planning handoff, so there is nothing to review here before then.</p>
+  }
+  if (opplan.state === 'invalid') {
+    return (
+      <div className="space-y-2">
+        <p className="text-muted">The stored OPPLAN failed validation. The operations agent owns this document; the errors below show what is wrong with it.</p>
+        <InvalidDocumentErrors engagementId={engagementId} name="opplan" />
+      </div>
+    )
+  }
+  return <p className="text-muted">The OPPLAN source is unavailable right now.</p>
 }
 
 /** The schema errors of a stored document that fails validation, read from the same source query the editor uses. */
@@ -174,59 +384,6 @@ function DocumentCard({ engagementId, card, onEdit }: { engagementId: string; ca
         {ready ? 'View source & draft' : card.state === 'missing' ? 'Draft this document' : 'Open draft editor'}
       </Button>
     </div>
-  )
-}
-
-/**
- * The living operational plan (OPPLAN), in full. The operations agent creates it
- * after the planning handoff and updates it on every objective change during
- * execution, so it sits beside the planning documents and never gates the handoff.
- */
-function OpplanCard({ engagementId, opplan }: { engagementId: string; opplan: PlanningOpplan }): ReactElement {
-  return (
-    <Card>
-      <CardHeader title="Operation Plan (OPPLAN)" sub="The living operational plan: the operations agent creates it after the planning handoff and updates it on every objective change during execution." />
-      <div className="p-4 text-sm" data-testid="plan-doc-opplan">
-        {opplan.state === 'ready' ? (
-          <div className="space-y-3">
-            <p><span className="font-medium text-fg">Threat profile:</span> {opplan.threatProfile}</p>
-            {opplan.objectives.length === 0 ? (
-              <p className="text-muted">No objectives yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-muted">
-                      <th className="pb-2 pr-3">ID</th><th className="pb-2 pr-3">Objective</th><th className="pb-2 pr-3">Phase</th><th className="pb-2 pr-3">Status</th><th className="pb-2 pr-3">Blocked by</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {opplan.objectives.map((o) => (
-                      <tr key={o.id} className="border-t border-line align-top">
-                        <td className="py-2 pr-3 font-mono text-xs">{o.id}</td>
-                        <td className="py-2 pr-3"><div className="font-medium">{o.title}</div><p className="mt-1 text-xs text-muted">{o.description}</p></td>
-                        <td className="py-2 pr-3 text-xs">{o.phase}</td>
-                        <td className="py-2 pr-3 text-xs">{o.status}</td>
-                        <td className="py-2 pr-3 font-mono text-xs">{o.blockedBy.join(', ') || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        ) : opplan.state === 'missing' ? (
-          <p className="text-muted">Not created yet. The operations agent creates OPPLAN after the planning handoff, so there is nothing to review here before then.</p>
-        ) : opplan.state === 'invalid' ? (
-          <div className="space-y-2">
-            <p className="text-muted">The stored OPPLAN failed validation. The operations agent owns this document; the errors below show what is wrong with it.</p>
-            <InvalidDocumentErrors engagementId={engagementId} name="opplan" />
-          </div>
-        ) : (
-          <p className="text-muted">The OPPLAN source is unavailable right now.</p>
-        )}
-      </div>
-    </Card>
   )
 }
 

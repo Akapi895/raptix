@@ -42,6 +42,8 @@ import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink,
 import type { DashboardAggregate, Eligibility } from '../../domain/dashboard'
 import { TeamTab, CloseTab } from './project-tabs'
 import { ScopeTab } from '../../features/scope/tab'
+import { ProjectAssets } from '../../features/assets'
+import { isAssetMapEnabled } from '../../features/asset-map'
 import { DocumentWorkspace } from '../../features/documents/workspace'
 import { useSubmitApproval, useReopen } from '../../features/approvals/hooks'
 import { useProjectDetail } from './use-project-detail'
@@ -195,6 +197,7 @@ function Detail({ d }: { d: ProjectDetail }) {
 
       {tab === 'overview' && <Overview d={d} via={via} setTab={setTab} />}
       {tab === 'scope' && <ScopeTab engagementId={p.id} documents={<DocumentWorkspace key={p.id} p={p} />} />}
+      {tab === 'assets' && <ProjectAssets engagementId={p.id} mapEnabled={isAssetMapEnabled()} />}
       {tab === 'objectives' && <Objectives p={p} ds={ds} />}
       {tab === 'activity' && <Activity p={p} ds={ds} />}
       {tab === 'team' && <TeamTab p={p} ds={ds} />}

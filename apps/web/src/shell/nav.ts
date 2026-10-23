@@ -55,6 +55,7 @@ export const isWide = (r: { page: string; tab?: string }) => WIDE_PAGES.includes
 export const MOCK_PROJECT_TABS = [
   { id: 'overview', label: 'Overview', icon: Gauge },
   { id: 'scope', label: 'Scope & ROE', icon: Crosshair },
+  { id: 'assets', label: 'Assets', icon: Server },
   { id: 'operations', label: 'Operations', icon: Activity },
   { id: 'ai-workspace', label: 'AI Workspace', icon: Bot },
   { id: 'plans', label: 'Planning', icon: ClipboardList },
@@ -91,18 +92,19 @@ export const MOCK_PROJECT_NAV: ProjectNavGroup[] = [
   {
     group: 'PREPARATION',
     items: [
-      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope', 'asset', 'asset-new', 'asset-scope', 'document'] },
+      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope', 'document'] },
+      { to: 'assets', label: 'Assets', icon: Server, match: ['assets', 'asset', 'asset-new', 'asset-scope'] },
       { to: 'plans', label: 'Planning', icon: ClipboardList, match: ['plans', 'ai-plan', 'ai-plan-review', 'ai-plan-compare'] },
     ],
   },
   {
-    group: 'EXECUTION',
+    group: 'OPERATIONS',
     items: [
       { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
-      { to: 'operations', label: 'Execution', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
+      { to: 'operations', label: 'Operations', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
       // Flagged: the map sits beside Execution until the phase 8 gate, so run controls stay reachable.
       ...(isAssetMapEnabled() ? [{ to: 'asset-map', label: 'Asset Map', icon: Network, match: ['asset-map'] }] : []),
-      { to: 'sessions', label: 'C2 Sessions', icon: RadioTower, match: ['sessions', 'c2-session', 'c2-console', 'c2-channel'] },
+      { to: 'sessions', label: 'Sessions', icon: RadioTower, match: ['sessions', 'c2-session', 'c2-console', 'c2-channel'] },
     ],
   },
   {
@@ -137,17 +139,18 @@ export const REAL_PROJECT_NAV: ProjectNavGroup[] = [
   {
     group: 'PREPARATION',
     items: [
-      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope', 'asset', 'asset-new', 'asset-scope'] },
+      { to: 'scope', label: 'Scope & ROE', icon: Crosshair, match: ['scope'] },
+      { to: 'assets', label: 'Assets', icon: Server, match: ['assets', 'asset', 'asset-new', 'asset-scope'] },
       { to: 'planning', label: 'Planning', icon: ClipboardList, match: ['planning', 'ai-plan', 'ai-plan-review', 'ai-plan-compare'] },
     ],
   },
   {
-    group: 'EXECUTION',
+    group: 'OPERATIONS',
     items: [
       { to: 'ai-workspace', label: 'AI Workspace', icon: Bot, match: ['ai-workspace', 'ai-operator', 'ai-history'] },
-      { to: 'operations', label: 'Execution', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
+      { to: 'operations', label: 'Operations', icon: Activity, match: ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch'] },
       ...(isAssetMapEnabled() ? [{ to: 'asset-map', label: 'Asset Map', icon: Network, match: ['asset-map'] }] : []),
-      { to: 'c2', label: 'C2 Sessions', icon: RadioTower, match: ['c2', 'c2-channel', 'c2-session', 'c2-console'] },
+      { to: 'c2', label: 'Sessions', icon: RadioTower, match: ['c2', 'c2-channel', 'c2-session', 'c2-console'] },
     ],
   },
   {
