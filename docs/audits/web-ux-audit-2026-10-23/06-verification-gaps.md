@@ -7,10 +7,10 @@ Nguyên tắc: không đưa kết luận chưa xác minh thành sự thật. M�
 | Hạng mục | Trạng thái | Lý do | Cách đóng |
 |---|---|---|---|
 | Đăng nhập real | NV | Không có API tại `127.0.0.1:5280` | Chạy stack thật (`make infra` hoặc `tools/verify/stack.mjs`), rồi kiểm login và redirect |
-| Header và Settings trong real (UX-01) | C (code) | Không đăng nhập được real, nên không chụp được chrome real | Kiểm bằng unit test với mode mock đã stub; kiểm trình duyệt khi có backend |
-| Demo Tools ẩn trong real (UX-03) | C (code) | Như trên | Như trên |
-| Persona switch vô hiệu trong real | C (code) | Như trên | Như trên |
-| Reset demo ném lỗi trong real | C (code) | Như trên | Như trên |
+| Settings trong real (UX-01) | C + test | Không đăng nhập được real, nên không chụp được trang real | Đã có test `shell/real-chrome.demo-free.test.tsx` với mode real được stub; kiểm trình duyệt khi có backend |
+| Demo Tools trong real (UX-03, đính chính) | Không áp dụng | Khối này chỉ mount qua `Topbar`, và `Topbar` không mount ở real (`shell/shell.tsx:168`) | Không cần kiểm thêm ở real |
+| Persona switch trong real (đính chính) | Không áp dụng | Chỉ có ở mock | — |
+| Reset demo trong real (đính chính) | Không áp dụng | Chỉ có ở mock | — |
 | Emergency Stop thật (xác nhận, kết quả, trạng thái) | NV | Luồng ghi và điều phối runtime; không chạy vì an toàn | Chạy trên canary có runtime; không dùng trên dự án thật |
 | Overview real (KPI thật, aggregate) | NV | Cần API `overview` | Như trên |
 | Findings global real (có phải chỉ là đếm không) | NV | Checklist G-03 nói là đếm; chưa xác minh | Như trên |

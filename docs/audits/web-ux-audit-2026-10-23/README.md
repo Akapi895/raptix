@@ -39,6 +39,12 @@ Bộ tài liệu audit để một reviewer độc lập đọc và đánh giá 
 - Phục vụ tĩnh và chụp bằng Playwright từ `node_modules` của repo.
 - Dev server của owner trên cổng 5273 có thể trả 504 "Outdated Optimize Dep" cho route lazy; đây là trạng thái cache của dev server, không phải lỗi sản phẩm. Khởi động lại với `--force` nếu gặp.
 
+## Sau audit: triển khai Quick Win
+
+- `QUICK-WINS-IMPLEMENTATION-REPORT.md` — UX-ID đã xử lý, file thay đổi, commit, kết quả test/build/Playwright, ảnh before/after, vấn đề còn lại, đề xuất structural.
+- `evidence/A*.png` — ảnh sau khi sửa; cặp với `evidence/B*.png` (trước).
+- Đính chính: `01-full-audit-report.md` (đầu tài liệu) sửa hai điểm: header demo chỉ ở mock; UX-03 không phải lỗi real.
+
 ## Gói chia sẻ
 
-`docs/audits/web-ux-audit-2026-10-23.zip` chứa đúng thư mục này (chưa gồm báo cáo quick win, bản zip cuối nằm cạnh bản này).
+`docs/audits/web-ux-audit-2026-10-23.zip` chứa toàn bộ thư mục này, gồm báo cáo Quick Win và ảnh sau khi sửa. Zip không được commit vào git.
