@@ -6,7 +6,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import type { ThreadKind } from '@raptix/web-contracts'
-import { getEngagement, projectKeys } from '../projects'
+import { getEngagement, projectKeys, useProjectCacheActor } from '../projects'
 import { fetchPlanning } from '../planning'
 import { cancelRun, fetchFleet } from '../operations'
 import { decideApproval, fetchApprovals } from '../approvals'
@@ -18,8 +18,10 @@ import { getThread, listRunsOfThread, listThreads } from './remote'
 export { createThread, getRun, getThreadPage, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun } from './remote'
 export { cancelRun, decideApproval }
 
-export const useEngagementDetail = (engagementId: string) =>
-  useQuery({ queryKey: projectKeys.detail(engagementId), queryFn: () => getEngagement(engagementId) })
+export const useEngagementDetail = (engagementId: string) => {
+  const cacheActor = useProjectCacheActor()
+  return useQuery({ queryKey: projectKeys.detail(cacheActor, engagementId), queryFn: () => getEngagement(engagementId) })
+}
 
 /** Planning readiness the conversation subscribes to; polled so a completed bundle is noticed without the planning tab mounted. */
 export const useConversationPlanning = (engagementId: string, enabled: boolean) =>

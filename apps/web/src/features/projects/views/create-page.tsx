@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { FolderPlus, Info } from 'lucide-react'
-import { invalidateProjects, projectKeys, useCreateProject } from '../query'
+import { invalidateProjects, projectKeys, useCreateProject, useProjectCacheActor } from '../query'
 import type { CreateEngagementInput } from '../remote'
 import { markPlanningSeed } from '../../aichat/planning-seed'
 import { showCreateProject, useCreateProjectDialog } from '../create-dialog-state'
@@ -47,6 +47,7 @@ const INITIAL: FormState = { displayName: '', name: '', nameTouched: false, targ
 /** The creation form; it is hosted by the "New project" popup and reset whenever the popup closes. */
 function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactElement {
   const client = useQueryClient()
+  const cacheActor = useProjectCacheActor()
   const toast = useToastStore((s) => s.toast)
   const guarded = useSessionStore((s) => s.guarded)
   const clearDirty = useSessionStore((s) => s.clearDirty)
@@ -75,11 +76,11 @@ function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactEle
       clearDirty()
       toast(`Created engagement ${created.id}`)
       invalidateProjects(client)
-      void client.invalidateQueries({ queryKey: projectKeys.detail(created.id) })
+      void client.invalidateQueries({ queryKey: projectKeys.detail(cacheActor, created.id) })
       setForm(INITIAL)
       useCreateProjectDialog.getState().hide()
       /* The brief starts the planner's interview: the workspace sends it once. */
-      markPlanningSeed(created.id)
+      markPlanningSeed(created.id, cacheActor)
       go('project', { id: created.id, tab: 'ai-workspace' })
     },
     onError: (error) => {

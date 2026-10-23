@@ -188,7 +188,7 @@ describe('RealWorkspace', () => {
       await ready
       return { engagementId: 'eng-1', environment: { observedState: 'ready', desiredState: 'ready', generation: 1, observedAt: null, archived: false, lastError: null }, slot: { phase: 'ready', version: 2, held: true, ownedByThisProject: true, activeEngagementId: 'eng-1' } }
     } })
-    markPlanningSeed('eng-1')
+    markPlanningSeed('eng-1', 'local')
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     await screen.findByText('Preparing project environment…')
@@ -205,7 +205,7 @@ describe('RealWorkspace', () => {
     const calls = stubApi({ threads: [], engagement: ENGAGEMENT(null), environment: async () => ({
       engagementId: 'eng-1', environment: { observedState: 'stopped', desiredState: 'stopped', generation: 1, observedAt: null, archived: false, lastError: 'legacy_not_quiescent' }, slot: { phase: 'idle', version: 2, held: false, ownedByThisProject: false, activeEngagementId: null },
     }) })
-    markPlanningSeed('eng-1')
+    markPlanningSeed('eng-1', 'local')
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     await screen.findByText('Another project still has unfinished work. Reconcile it before starting this project.')
@@ -222,7 +222,7 @@ describe('RealWorkspace', () => {
       await ready
       return { engagementId: 'eng-1', environment: { observedState: 'ready', desiredState: 'ready', generation: 1, observedAt: null, archived: false, lastError: null }, slot: { phase: 'ready', version: 2, held: true, ownedByThisProject: true, activeEngagementId: 'eng-1' } }
     } })
-    markPlanningSeed('eng-1')
+    markPlanningSeed('eng-1', 'local')
     go('ai-operator', { id: 'eng-1' })
     const view = ui(<RealWorkspace />)
     await screen.findByText('Preparing project environment…')
@@ -244,7 +244,7 @@ describe('RealWorkspace', () => {
     const { markPlanningSeed } = await import('../planning-seed')
     const project = { ...ENGAGEMENT(null), displayName: 'Lab', targetType: 'ip_range', targetValue: '10.129.227.140', brief: 'Assess the lab host for the authorized exercise.' }
     const calls = stubApi({ threads: [], engagement: project, planning: PLANNING_BLOCKED })
-    markPlanningSeed('eng-1')
+    markPlanningSeed('eng-1', 'local')
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     await waitFor(() => expect(calls.some((call) => call.url.endsWith('/runs') && call.init?.method === 'POST')).toBe(true))
@@ -260,7 +260,7 @@ describe('RealWorkspace', () => {
     const { markPlanningSeed } = await import('../planning-seed')
     const project = { ...ENGAGEMENT(null), displayName: 'Lab', targetType: 'ip_range', targetValue: '10.129.227.140', brief: 'Brief.' }
     const calls = stubApi({ threads: [PLANNING_THREAD], engagement: project, planning: PLANNING_BLOCKED })
-    markPlanningSeed('eng-1')
+    markPlanningSeed('eng-1', 'local')
     go('ai-operator', { id: 'eng-1' })
     ui(<RealWorkspace />)
     await screen.findByLabelText('Workspace message')

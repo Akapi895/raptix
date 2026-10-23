@@ -4,8 +4,9 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { getEngagement } from './remote'
-import { projectKeys } from './query'
+import { projectKeys, useProjectCacheActor } from './query'
 
 export function useEngagementDetail(engagementId: string) {
-  return useQuery({ queryKey: projectKeys.detail(engagementId), queryFn: () => getEngagement(engagementId), enabled: !!engagementId })
+  const cacheActor = useProjectCacheActor()
+  return useQuery({ queryKey: projectKeys.detail(cacheActor, engagementId), queryFn: () => getEngagement(engagementId), enabled: !!engagementId })
 }
