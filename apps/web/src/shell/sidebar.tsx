@@ -4,13 +4,39 @@
  * keyboard navigation over the nav buttons. State stays composed with the
  * shared store context — nothing is duplicated here.
  */
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, Crosshair, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { go, goGlobal, useRoute } from '../router/navigate'
 import { useActiveProject } from '../state/console'
 import { useProjectStore } from '../state/stores'
 import { Status, cx } from '../ui/index'
 import { NAV, projectNavGroups, projectSection, useBadges } from './nav'
+
+/* The navigation scroller keeps its scrollbar hidden, so a fade at the bottom signals items below the fold. */
+function ScrollableNav({ onKeyDown, children }: { onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => void; children: ReactNode }) {
+  const ref = useRef<HTMLElement>(null)
+  const [more, setMore] = useState(false)
+  const measure = useCallback(() => {
+    const el = ref.current
+    if (el) setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 4)
+  }, [])
+  useEffect(() => {
+    measure()
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [measure])
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <nav ref={ref} aria-label="Main navigation" onKeyDown={onKeyDown} onScroll={measure} className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4">
+        {children}
+      </nav>
+      {more && <div data-scroll-fade aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10" style={{ background: 'linear-gradient(to top, var(--c-side), transparent)' }} />}
+    </div>
+  )
+}
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { collapsed: boolean; setCollapsed: (b: boolean) => void; mobileOpen: boolean; closeMobile: () => void }) {
   const route = useRoute()
@@ -47,7 +73,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-white"><Crosshair size={19} aria-hidden /></div>
         {!compact && <div className="leading-tight"><div className="text-[15px] font-semibold tracking-tight text-fg">Raptix</div><div className="text-xs text-muted">AI Red Team Platform</div></div>}
       </div>
-      <nav aria-label="Main navigation" onKeyDown={navKey} className="no-scrollbar flex-1 overflow-y-auto px-3 py-4">
+      <ScrollableNav onKeyDown={navKey}>
         {inProject ? (
           <div className="mb-4">
             <button
@@ -116,7 +142,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
             })}
           </div>
         ))}
-      </nav>
+      </ScrollableNav>
       <div className="hidden shrink-0 border-t border-line p-3 lg:block">
         <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} className={cx('flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-sm text-muted hover:bg-hover hover:text-fg', compact && 'justify-center px-0')}>
           {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}{!compact && 'Collapse'}
