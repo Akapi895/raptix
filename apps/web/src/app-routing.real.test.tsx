@@ -71,7 +71,7 @@ it('replaces global navigation after opening a project from the portfolio and re
   fireEvent.click(await screen.findByText('Q1 External Assessment'))
   await screen.findByRole('heading', { name: 'Overview' })
   expect(screen.getByRole('button', { name: 'All projects' })).toBeInTheDocument()
-  for (const label of ['Overview', 'Planning', 'AI Workspace', 'Operations', 'Fleet', 'Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Scope & ROE', 'Governance', 'Vault', 'Activity & Audit', 'Project Settings', 'Closeout']) {
+  for (const label of ['Overview', 'Planning', 'AI Workspace', 'Operations', 'Fleet', 'C2 Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Scope & ROE', 'Governance', 'Vault', 'Activity & Audit', 'Project Settings', 'Closeout']) {
     expect(screen.getAllByRole('button', { name: label }).length).toBeGreaterThan(0)
   }
   expect(screen.queryByRole('button', { name: 'Capabilities' })).toBeNull()

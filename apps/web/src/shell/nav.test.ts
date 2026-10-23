@@ -22,15 +22,15 @@ async function executionLabels(): Promise<{ mock: string[]; real: string[] }> {
 describe('navigation model and the asset map flag', () => {
   it('keeps the Execution group unchanged while the flag is off', async () => {
     const labels = await executionLabels();
-    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'Sessions']);
-    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'Sessions']);
+    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'C2 Sessions']);
+    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'C2 Sessions']);
   });
 
   it('lists the asset map beside Execution in both project menus while the flag is on', async () => {
     globalThis.localStorage.setItem('raptix.assetMap', '1');
     const labels = await executionLabels();
-    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'Sessions']);
-    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'Sessions']);
+    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'C2 Sessions']);
+    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'C2 Sessions']);
   });
 });
 

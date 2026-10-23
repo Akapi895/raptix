@@ -52,7 +52,7 @@ const NAV_LABELS = NAV.flatMap((g) => g.items.map((i) => i.label))
 describe('sidebar navigation and active section', () => {
   it('separates AI conversation, execution logs and C2 in both project menus', () => {
     for (const groups of [MOCK_PROJECT_NAV, REAL_PROJECT_NAV]) {
-      expect(groups.find((group) => group.group === 'OPERATIONS')?.items.map((item) => item.label)).toEqual(['AI Workspace', 'Operations', 'Sessions'])
+      expect(groups.find((group) => group.group === 'OPERATIONS')?.items.map((item) => item.label)).toEqual(['AI Workspace', 'Operations', 'C2 Sessions'])
       expect(projectSection({ page: 'ai-operator' }, groups)?.label).toBe('AI Workspace')
       expect(projectSection({ page: 'ai-trace' }, groups)?.label).toBe('Operations')
     }
