@@ -16,7 +16,7 @@ import type { ComponentType } from 'react'
 import { isAssetMapEnabled } from '../features/asset-map/flag'
 import { PROTOTYPE_PAGES_ENABLED } from './prototype-pages'
 
-export type Slice = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 's' | 'st' | 'pj' | 'ov' | 'dp'
+export type Slice = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 's' | 'st' | 'pj' | 'ov' | 'dp' | 'am'
 
 /** Real panel groups `RealFeatureRoute` can compose; each maps to one lazy-loaded panel component. */
 export type PanelGroup = 'operations' | 'governance' | 'fleet' | 'scope' | 'analysis' | 'c2' | 'campaigns'
@@ -111,7 +111,7 @@ const PROTOTYPE_ROUTES: Record<string, RouteDeclaration> = PROTOTYPE_PAGES_ENABL
 
 /** Feature-flagged (off by default): when off the key is absent, so the route resolves as unknown. */
 const FLAGGED_ROUTES: Record<string, RouteDeclaration> = isAssetMapEnabled()
-  ? { 'asset-map': { slice: 'a', real: component(() => import('../features/asset-map').then((m) => m.AssetMapPage)) } }
+  ? { 'asset-map': { slice: 'am', real: component(() => import('../features/asset-map').then((m) => m.AssetMapPage)) } }
   : {}
 
 /** Every route key the console knows, once. */
