@@ -65,6 +65,8 @@ import type { ReportsService } from './services/reports-service.js';
 import type { C2GrantsService } from './services/c2-grants-service.js';
 import type { FleetService } from './services/fleet-service.js';
 import type { LibraryService } from './services/library-service.js';
+import type { ConsoleDataService } from './services/console-data-service.js';
+import { registerConsoleDataRoutes } from './http/routes/console-data.routes.js';
 import type { LibraryReviewService } from './services/library-review-service.js';
 import type { InboxService } from './services/inbox-service.js';
 import type { WorkspaceSettingsService } from './services/workspace-settings-service.js';
@@ -107,6 +109,7 @@ export interface AppOptions {
   readonly c2Grants?: C2GrantsService;
   readonly fleetService?: FleetService;
   readonly libraryService?: LibraryService;
+  readonly consoleData?: ConsoleDataService;
   readonly libraryReviewService?: LibraryReviewService;
   readonly inboxService?: InboxService;
   readonly workspaceSettings?: WorkspaceSettingsService;
@@ -211,6 +214,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.c2Grants) registerC2GrantRoutes(app, options.c2Grants, identity);
   if (options.fleetService) registerFleetRoutes(app, options.fleetService, identity);
   if (options.libraryService) registerLibraryRoutes(app, options.libraryService, identity);
+  if (options.consoleData) registerConsoleDataRoutes(app, options.consoleData);
   if (options.libraryReviewService) registerLibraryReviewRoutes(app, options.libraryReviewService, identity);
   if (options.inboxService) registerInboxRoutes(app, options.inboxService, identity);
   if (options.workspaceSettings) registerWorkspaceSettingsRoutes(app, options.workspaceSettings, identity);

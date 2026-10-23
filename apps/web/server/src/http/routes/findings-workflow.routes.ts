@@ -25,7 +25,11 @@ export function registerFindingsWorkflowRoutes(app: FastifyInstance, findings: F
     const { id } = request.params as { id: string };
     return findings.list(identity.id, id);
   }));
-  app.post('/api/engagements/:id/curated-findings', (request, reply) => runProjectsHandler(request, reply, async () => {
+  app.get('/api/findings', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    return findings.listAccessible(identity.id);
+  }));
+  app.post('/api/engagements/:id/curated-findings',(request, reply) => runProjectsHandler(request, reply, async () => {
     const { id } = request.params as { id: string };
     return findings.create(identity.id, id, request.body);
   }));

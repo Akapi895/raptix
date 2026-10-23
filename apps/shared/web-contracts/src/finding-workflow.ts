@@ -75,6 +75,20 @@ export interface CuratedFindingView {
   comments: FindingCommentRecord[]; history: FindingHistoryRecord[]; retests: FindingRetestRecord[];
 }
 export interface CuratedFindingsView { engagementId: string; findings: CuratedFindingView[]; transitions: Readonly<Record<string, readonly string[]>>; source: 'db' }
+/**
+ * One finding in the cross-project list: the row fields and the project it belongs to, no activity or evidence. A
+ * `producer` row is an unverified runtime claim (status `ai_suggested`) that no curated record imports; it has no
+ * timestamps because the workspace file records none.
+ */
+export interface AccessibleFindingRow {
+  id: string; engagementId: string; projectName: string; targetValue: string | null; title: string;
+  severity: CuratedFindingView['severity']; status: CuratedFindingView['status'] | 'ai_suggested'; sourceType: 'authored' | 'imported' | 'producer';
+  /** The finding's detail text, or null where the record has none. */
+  description: string | null;
+  techniqueId: string | null; createdAt: string | null; updatedAt: string | null;
+}
+/** Curated findings across every project the actor can read as a viewer; `truncated` means the row cap cut the list. */
+export interface AccessibleFindingsView { findings: AccessibleFindingRow[]; truncated: boolean; source: 'db' }
 
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 const identity = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 256
@@ -157,4 +171,13 @@ export function isCuratedFindingsView(value: unknown): value is CuratedFindingsV
   return record(value) && identity(value.engagementId) && value.source === 'db' && record(value.transitions)
     && Array.isArray(value.findings) && value.findings.every((finding) => isCuratedFindingView(finding) && finding.engagementId === value.engagementId)
     && Object.entries(value.transitions).every(([status, targets]) => ['draft', 'review', 'returned', 'confirmed', 'remediation', 'retest', 'resolved'].includes(status) && Array.isArray(targets) && targets.every((target) => typeof target === 'string'))
+}
+export function isAccessibleFindingsView(value: unknown): value is AccessibleFindingsView {
+  return record(value) && value.source === 'db' && typeof value.truncated === 'boolean' && Array.isArray(value.findings)
+    && value.findings.every((row) => record(row) && identity(row.id) && identity(row.engagementId) && text(row.projectName)
+      && nullableText(row.targetValue) && text(row.title)
+      && ['critical', 'high', 'medium', 'low', 'informational'].includes(String(row.severity))
+      && ['draft', 'review', 'returned', 'confirmed', 'remediation', 'retest', 'resolved', 'ai_suggested'].includes(String(row.status))
+      && (row.sourceType === 'authored' || row.sourceType === 'imported' || row.sourceType === 'producer')
+      && nullableText(row.description) && nullableText(row.techniqueId) && nullableText(row.createdAt) && nullableText(row.updatedAt))
 }

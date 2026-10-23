@@ -34,6 +34,10 @@ export function registerScopeRoutes(app: FastifyInstance, scope: ScopeService, i
     const { id } = request.params as { id: string };
     return scope.assets(identity.id, id);
   }));
+  app.get('/api/assets', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    return scope.accessibleAssets(identity.id);
+  }));
   app.post('/api/engagements/:id/assets/inventory', (request, reply) => runProjectsHandler(request, reply, async () => {
     const { id } = request.params as { id: string };
     return scope.addAsset(identity.id, id, request.body);

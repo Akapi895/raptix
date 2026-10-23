@@ -47,6 +47,7 @@ import { ReportsService } from './services/reports-service.js';
 import { C2GrantsService } from './services/c2-grants-service.js';
 import { FleetService } from './services/fleet-service.js';
 import { LibraryService } from './services/library-service.js';
+import { ConsoleDataService } from './services/console-data-service.js';
 import { LibraryReviewService } from './services/library-review-service.js';
 import { InboxService } from './services/inbox-service.js';
 import { WorkspaceSettingsService } from './services/workspace-settings-service.js';
@@ -283,7 +284,7 @@ async function main(): Promise<void> {
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const inboxService = dbClient && governanceService ? new InboxService(dbClient, governanceService) : undefined;
-  const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient, artifactsService, libraryService) : undefined;
+  const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient, artifactsService, libraryService, findingsService) : undefined;
   const reportsService = dbClient ? new ReportsService(dbClient) : undefined;
   const app = await buildApp({
     deploymentId: env.deploymentId,
@@ -308,6 +309,7 @@ async function main(): Promise<void> {
   c2Grants,
   fleetService,
   libraryService,
+  consoleData: new ConsoleDataService(env.consoleDataDir),
   libraryReviewService,
   inboxService,
   workspaceSettings,

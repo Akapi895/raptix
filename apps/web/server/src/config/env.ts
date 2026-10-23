@@ -35,6 +35,8 @@ export interface ServerEnv {
    * well-known password refuses to serve graph data at all.
    */
   readonly graph?: { readonly httpUri: string; readonly user: string; readonly password: string };
+  /** Read-only folder of generated console data: knowledge/index.json and capabilities/catalog.json (RAPTIX_CONSOLE_DATA_DIR). */
+  readonly consoleDataDir?: string;
   /**
    * Base64-encoded 32-byte AES-256 vault key (VAULT_ENCRYPTION_KEY).
    * Optional: without it the vault capability reports unavailable and every
@@ -295,6 +297,7 @@ export function loadServerEnv(
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
     ...(workspacePath === undefined ? {} : { workspacePath }),
     ...(graph === undefined ? {} : { graph }),
+    ...(source.RAPTIX_CONSOLE_DATA_DIR ? { consoleDataDir: source.RAPTIX_CONSOLE_DATA_DIR } : {}),
     ...(vaultKey === undefined ? {} : { vaultKey }),
     ...(gophish === undefined ? {} : { gophish }),
     ...(evilginx === undefined ? {} : { evilginx }),

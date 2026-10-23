@@ -103,6 +103,7 @@ function memoryDb() {
     businessPlan: listModel('businessPlan'),
     c2Grant: listModel('c2Grant'),
     c2Command: listModel('c2Command'),
+    operationBinding: listModel('operationBinding'),
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
   return db;
@@ -274,6 +275,9 @@ describe('ticket 15 command center, tasks and notices', () => {
     expect(findings).toMatchObject({ total: 3, engagementsWithFindings: 2, engagements: 2, truncated: false, source: 'db' });
     expect(findings.bySeverity).toEqual({ high: 2, critical: 1 });
     expect(findings.byStatus).toEqual({ confirmed: 2, review: 1 });
+    // Every visible finding is unresolved; the newest visible one is f3 (seven minutes ago).
+    expect(findings.unresolvedBySeverity).toEqual({ high: 2, critical: 1 });
+    expect(new Date(findings.latestCreatedAt).getTime()).toBeGreaterThan(at(8).getTime());
 
     const c2 = (await app.inject({ method: 'GET', url: '/api/overview/c2', headers: { cookie: owner.cookie } })).json();
     expect(c2.commandsByStatus).toEqual({ creating: 0, succeeded: 1, failed: 0, uncertain: 0 });
@@ -281,5 +285,30 @@ describe('ticket 15 command center, tasks and notices', () => {
     expect(c2.recentCommands[0]).toMatchObject({ id: 'c1', engagementId: ENG, sessionId: 'sess-1', status: 'succeeded' });
     expect(c2.pendingGrants).toBe(1);
     expect(c2.source).toBe('db');
+  });
+
+  it('summarizes operation bindings of authorized engagements only, newest first, with names and threads', async () => {
+    const db = memoryDb();
+    const inbox = new InboxService(db as never, preflightStub(true, []));
+    const { app, owner } = await setup(db, inbox);
+    db.tables.set('operationBinding', new Map([
+      ['b1', { id: 'b1', engagementId: ENG, planId: 'p1', threadId: 'thread-1', status: 'running', createdAt: at(1), updatedAt: at(1) }],
+      ['b2', { id: 'b2', engagementId: ENG, planId: 'p2', threadId: null, status: 'bound', createdAt: at(2), updatedAt: at(2) }],
+      ['b3', { id: 'b3', engagementId: 'eng-2', planId: 'p3', threadId: 'thread-3', status: 'stopped', createdAt: at(3), updatedAt: at(3) }],
+      ['b4', { id: 'b4', engagementId: 'eng-3', planId: 'p4', threadId: 'thread-4', status: 'running', createdAt: at(4), updatedAt: at(4) }],
+    ]));
+
+    const unauthorized = await app.inject({ method: 'GET', url: '/api/overview/operations' });
+    expect(unauthorized.statusCode).toBe(401);
+
+    // eng-3 belongs to nobody the owner can see, so its running binding must not count.
+    const view = (await app.inject({ method: 'GET', url: '/api/overview/operations', headers: { cookie: owner.cookie } })).json();
+    expect(view.counts).toEqual({ bound: 1, running: 1, stopped: 1, completed: 0 });
+    expect(view.recent.map((item: { id: string }) => item.id)).toEqual(['b1', 'b2', 'b3']);
+    expect(view.recent[0]).toMatchObject({ id: 'b1', engagementId: ENG, threadId: 'thread-1', status: 'running' });
+    expect(view.recent[1].threadId).toBeNull();
+    expect(view.engagements).toBe(2);
+    expect(view.truncated).toBe(false);
+    expect(view.source).toBe('db');
   });
 });
