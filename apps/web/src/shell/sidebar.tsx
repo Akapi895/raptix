@@ -20,8 +20,9 @@ function ScrollableNav({ onKeyDown, children }: { onKeyDown: (e: React.KeyboardE
     const el = ref.current
     if (el) setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 4)
   }, [])
+  /* Measured after every render: a route change swaps the items without resizing the scroller. */
+  useEffect(() => { measure() })
   useEffect(() => {
-    measure()
     const el = ref.current
     if (!el || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(measure)
