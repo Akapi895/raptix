@@ -63,8 +63,11 @@ services:
       - LANGGRAPH_API_URL=http://langgraph:2024
       - NEO4J_HTTP_URI=http://neo4j:7474
       - NEO4J_USER=neo4j
+      - RAPTIX_CONSOLE_DATA_DIR=/console-data
     volumes:
       - ${RAPTIX_WEB_WORKSPACE_PATH:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
+      # Generated, read-only console data (knowledge index, capability catalog); never copied into the image.
+      - ./data:/console-data:ro
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8081/api/health', r => { r.resume(); process.exit(r.statusCode < 500 ? 0 : 1); }).on('error', () => process.exit(1))"]
       interval: 5s

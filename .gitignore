@@ -139,3 +139,6 @@ apps/web/.figma/
 /tests/local/artifacts/
 /workspace-w14live-*/
 /workspace-w15core-*/
+
+# Local console data generated from the knowledge ingestion and the runtime source (never committed or pushed)
+/data/

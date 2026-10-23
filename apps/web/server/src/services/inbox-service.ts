@@ -76,6 +76,10 @@ export interface FindingsSummaryView {
   readonly byStatus: Readonly<Record<string, number>>;
   readonly engagementsWithFindings: number;
   readonly engagements: number;
+  /** Curated findings not yet resolved, by severity: the basis of the overview's risk level. */
+  readonly unresolvedBySeverity: Readonly<Record<string, number>>;
+  /** Creation time of the newest curated finding in the scan; null when the scan found none. */
+  readonly latestCreatedAt: string | null;
   /** True when the scan hit the row cap; counts are a lower bound. */
   readonly truncated: boolean;
   readonly source: 'db';
@@ -96,12 +100,34 @@ export interface C2SummaryView {
   readonly source: 'db';
 }
 
+export interface OperationSummaryItemView {
+  readonly id: string;
+  readonly engagementId: string;
+  readonly engagementName: string | null;
+  readonly threadId: string | null;
+  readonly status: string;
+  readonly updatedAt: string;
+}
+
+export interface OperationsSummaryView {
+  /** Operation bindings per governance status across the authorized engagements; zero is a counted zero only inside the scan. */
+  readonly counts: Readonly<Record<string, number>>;
+  readonly recent: readonly OperationSummaryItemView[];
+  readonly engagements: number;
+  /** True when the scan hit the row cap; counts are a lower bound. */
+  readonly truncated: boolean;
+  readonly source: 'db';
+}
+
 const MAX_TASKS_PER_KIND = 25;
 const MAX_ACTIVITY = 10;
 const MAX_NOTICES = 50;
 const MAX_FINDINGS_SCAN = 5000;
 const MAX_RECENT_C2_COMMANDS = 20;
 const C2_COMMAND_STATUSES = ['creating', 'succeeded', 'failed', 'uncertain'] as const;
+const OPERATION_STATUSES = ['bound', 'running', 'stopped', 'completed'] as const;
+const MAX_OPERATIONS_SCAN = 5000;
+const MAX_RECENT_OPERATIONS = 10;
 
 export function toNoticeView(row: { id: string; engagementId: string | null; kind: string; title: string; detail: unknown; readAt: Date | null; dismissedAt: Date | null; createdAt: Date }): NoticeView {
   return {
@@ -232,12 +258,16 @@ export class InboxService {
       : await this.db.findingRecord.findMany({ where: { engagementId: { in: ids } }, take: MAX_FINDINGS_SCAN }).catch(() => []);
     const bySeverity: Record<string, number> = {};
     const byStatus: Record<string, number> = {};
+    const unresolvedBySeverity: Record<string, number> = {};
     const perEngagement = new Set<string>();
+    let latest: Date | null = null;
     for (const row of rows) {
       const severity = String(row.severity);
       const status = String(row.status);
       bySeverity[severity] = (bySeverity[severity] ?? 0) + 1;
       byStatus[status] = (byStatus[status] ?? 0) + 1;
+      if (status !== 'resolved') unresolvedBySeverity[severity] = (unresolvedBySeverity[severity] ?? 0) + 1;
+      if (latest === null || row.createdAt.getTime() > latest.getTime()) latest = row.createdAt;
       perEngagement.add(String(row.engagementId));
     }
     return {
@@ -246,7 +276,41 @@ export class InboxService {
       byStatus,
       engagementsWithFindings: perEngagement.size,
       engagements: engagements.length,
+      unresolvedBySeverity,
+      latestCreatedAt: latest === null ? null : latest.toISOString(),
       truncated: rows.length >= MAX_FINDINGS_SCAN,
+      source: 'db',
+    };
+  }
+
+  /**
+   * Operation bindings of the authorized engagements, read from the durable rows that governance transitions keep
+   * current. `recent` is the bounded newest slice; the counts scan at most MAX_OPERATIONS_SCAN rows.
+   */
+  public async operationsSummary(actorId: string): Promise<OperationsSummaryView> {
+    const engagements = await this.authorizedEngagements(actorId);
+    const names = new Map(engagements.map((e) => [e.id, typeof e.name === 'string' ? e.name : null]));
+    const ids = engagements.map((e) => e.id);
+    const rows = ids.length === 0
+      ? []
+      : await this.db.operationBinding.findMany({ where: { engagementId: { in: ids } }, orderBy: { createdAt: 'desc' }, take: MAX_OPERATIONS_SCAN }).catch(() => []);
+    const counts: Record<string, number> = Object.fromEntries(OPERATION_STATUSES.map((status) => [status, 0]));
+    for (const row of rows) {
+      const status = String(row.status);
+      counts[status] = (counts[status] ?? 0) + 1;
+    }
+    return {
+      counts,
+      recent: rows.slice(0, MAX_RECENT_OPERATIONS).map((row) => ({
+        id: String(row.id),
+        engagementId: String(row.engagementId),
+        engagementName: names.get(String(row.engagementId)) ?? null,
+        threadId: row.threadId === null ? null : String(row.threadId),
+        status: String(row.status),
+        updatedAt: row.updatedAt.toISOString(),
+      })),
+      engagements: ids.length,
+      truncated: rows.length >= MAX_OPERATIONS_SCAN,
       source: 'db',
     };
   }

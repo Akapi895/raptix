@@ -5,10 +5,11 @@ import { requireEngagementAccess, requireIndependentActor, type ActorContext, ty
 import { assertEngagementOpen } from './closure-service.js';
 import { captureFilenameVisible, captureOriginalReadable, type ArtifactsService } from './artifacts-service.js';
 import type { LibraryService } from './library-service.js';
+import type { FindingsService } from './findings-service.js';
 import { readFindingActivity, type FindingActivityKind, type FindingActivityPage } from './finding-activity.js';
 import { findingReferenceOptions, resolveFindingReferences } from './finding-references.js';
 import { writeSuggestionDisposition } from './finding-suggestions.js';
-import type { CuratedFindingView, CuratedFindingsView, FindingEvidenceLink, FindingReferenceOptions, FindingReproduction, FindingRetestRecord, FindingReviewDecision, FindingSuggestionDispositionsView, FindingSuggestionDispositionResult } from '@raptix/web-contracts';
+import type { AccessibleFindingRow, AccessibleFindingsView, CuratedFindingView, CuratedFindingsView, FindingEvidenceLink, FindingReferenceOptions, FindingReproduction, FindingRetestRecord, FindingReviewDecision, FindingSuggestionDispositionsView, FindingSuggestionDispositionResult } from '@raptix/web-contracts';
 
 /**
  * Ticket 10: curated finding records with the review/remediation lifecycle and
@@ -20,6 +21,8 @@ import type { CuratedFindingView, CuratedFindingsView, FindingEvidenceLink, Find
  */
 
 const MIN_CURATE: MemberRole = 'operator';
+/** Row cap for the cross-project list; the response says `truncated` when more rows exist. */
+const MAX_ACCESSIBLE_FINDINGS = 1000;
 
 function isUniqueConstraintError(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
@@ -40,6 +43,12 @@ type StoredFindingBody = Record<string, unknown>;
 
 function bodyRecord(value: unknown): StoredFindingBody {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as StoredFindingBody : {}
+}
+
+/** The stored detail text of a finding body, or null when the body records none. */
+function detailText(body: unknown): string | null {
+  const detail = bodyRecord(body).detail;
+  return typeof detail === 'string' ? detail : null;
 }
 
 function payloadHash(value: object): string {
@@ -115,7 +124,7 @@ export class FindingsWorkflowService {
     return { ...draft, artifact: { captureId: capture.id, filename: capture.filename, mediaType: capture.mediaType, digest: capture.digest, sizeBytes: capture.sizeBytes } };
   }
 
-  public constructor(private readonly db: PrismaClient, private readonly artifacts?: Pick<ArtifactsService, 'capture'> & Partial<Pick<ArtifactsService, 'captureById' | 'importWorkspaceEvidence'>>, private readonly library?: Pick<LibraryService, 'techniqueDetail'>) {}
+  public constructor(private readonly db: PrismaClient, private readonly artifacts?: Pick<ArtifactsService, 'capture'> & Partial<Pick<ArtifactsService, 'captureById' | 'importWorkspaceEvidence'>>, private readonly library?: Pick<LibraryService, 'techniqueDetail'>, private readonly producers?: Pick<FindingsService, 'list'>) {}
 
   public async options(actorId: string, engagementId: string): Promise<FindingReferenceOptions> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
@@ -168,6 +177,75 @@ export class FindingsWorkflowService {
       return this.toView(access, row, evidence);
     }));
     return { engagementId, findings, transitions: TRANSITIONS, source: 'db' };
+  }
+
+  /**
+   * Findings across every project the actor can read as a viewer: the curated records newest update first, then the
+   * runtime claims no curated record imports and the actor has not dismissed. Each project is checked with the same
+   * access rule as the per-project list, so a project the actor cannot read contributes no rows.
+   */
+  public async listAccessible(actorId: string): Promise<AccessibleFindingsView> {
+    const owned = await this.db.engagement.findMany({ where: { userId: actorId }, select: { id: true } });
+    const memberships = await this.db.webMembership.findMany({ where: { userId: actorId }, select: { engagementId: true } });
+    const candidates = [...new Set([...owned.map((row) => row.id), ...memberships.map((row) => row.engagementId)])];
+    const readable: string[] = [];
+    for (const engagementId of candidates) {
+      try {
+        await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
+        readable.push(engagementId);
+      } catch (error) {
+        if (!(error instanceof ProjectApiError)) throw error;
+      }
+    }
+    if (readable.length === 0) return { findings: [], truncated: false, source: 'db' };
+    const producers = this.producers;
+    const [rows, engagements, dismissed, claims] = await Promise.all([
+      this.db.findingRecord.findMany({ where: { engagementId: { in: readable } }, orderBy: { updatedAt: 'desc' }, take: MAX_ACCESSIBLE_FINDINGS + 1 }),
+      this.db.engagement.findMany({ where: { id: { in: readable } }, select: { id: true, name: true, displayName: true, targetValue: true } }),
+      this.db.findingSuggestionDisposition.findMany({ where: { actorId, engagementId: { in: readable }, dismissed: true }, select: { engagementId: true, producerRef: true } }),
+      producers === undefined ? Promise.resolve([]) : Promise.all(readable.map((engagementId) => producers.list(actorId, engagementId))),
+    ]);
+    const projects = new Map(engagements.map((row) => [row.id, { name: row.displayName ?? row.name, target: row.targetValue }]));
+    const label = (engagementId: string) => ({ projectName: projects.get(engagementId)?.name ?? engagementId, targetValue: projects.get(engagementId)?.target ?? null });
+    const curated: AccessibleFindingRow[] = rows.map((row) => ({
+      id: row.id,
+      engagementId: row.engagementId,
+      ...label(row.engagementId),
+      title: row.title,
+      severity: row.severity as AccessibleFindingRow['severity'],
+      status: row.status as AccessibleFindingRow['status'],
+      sourceType: row.sourceType as AccessibleFindingRow['sourceType'],
+      description: detailText(row.body),
+      techniqueId: row.techniqueId,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    }));
+    // A claim is hidden once a curated record imports it or the actor dismisses it, as on the project's own list.
+    const imported = new Set(rows.filter((row) => row.sourceType === 'imported' && row.producerRef !== null).map((row) => `${row.engagementId}|${row.producerRef}`));
+    const hidden = new Set([...imported, ...dismissed.map((row) => `${row.engagementId}|${row.producerRef}`)]);
+    const runtime: AccessibleFindingRow[] = [];
+    let claimsTruncated = false;
+    for (const view of claims) {
+      claimsTruncated ||= view.truncated;
+      for (const claim of view.findings) {
+        if (hidden.has(`${claim.engagementId}|findings/${claim.id}.md`)) continue;
+        runtime.push({
+          id: claim.id,
+          engagementId: claim.engagementId,
+          ...label(claim.engagementId),
+          title: claim.title,
+          severity: claim.severity,
+          status: 'ai_suggested',
+          sourceType: 'producer',
+          description: claim.description || null,
+          techniqueId: claim.mitre?.[0] ?? null,
+          createdAt: null,
+          updatedAt: null,
+        });
+      }
+    }
+    const all = [...curated, ...runtime];
+    return { findings: all.slice(0, MAX_ACCESSIBLE_FINDINGS), truncated: all.length > MAX_ACCESSIBLE_FINDINGS || claimsTruncated, source: 'db' };
   }
 
   public async create(actorId: string, engagementId: string, input: unknown): Promise<CuratedFindingView> {

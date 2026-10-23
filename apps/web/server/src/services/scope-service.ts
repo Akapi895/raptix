@@ -117,6 +117,9 @@ function toAssetView(row: WebAsset): AssetView {
   };
 }
 
+/** Row cap for the all-projects inventory; the response says `truncated` when more rows exist. */
+const MAX_ACCESSIBLE_ASSETS = 1000;
+
 export class ScopeService {
   public constructor(private readonly db: PrismaClient) {}
 
@@ -269,6 +272,37 @@ export class ScopeService {
     const rows = await this.db.webAsset.findMany({ where: { engagementId }, orderBy: { identifier: 'asc' } });
     const approved = await this.latestApproved(engagementId);
     return { engagementId, assets: rows.map(toAssetView), latestApprovedVersion: approved?.version ?? null, source: 'db' };
+  }
+
+  /**
+   * Inventory rows across every project the actor can read as a viewer, each with its project name, so the all-projects list
+   * can say where an asset belongs. Access is checked per project with the same rule as the per-project inventory, so a project
+   * the actor cannot read contributes no rows.
+   */
+  public async accessibleAssets(actorId: string): Promise<{ assets: Array<AssetView & { projectName: string }>; truncated: boolean; source: 'db' }> {
+    const owned = await this.db.engagement.findMany({ where: { userId: actorId }, select: { id: true } });
+    const memberships = await this.db.webMembership.findMany({ where: { userId: actorId }, select: { engagementId: true } });
+    const candidates = [...new Set([...owned.map((row) => row.id), ...memberships.map((row) => row.engagementId)])];
+    const readable: string[] = [];
+    for (const engagementId of candidates) {
+      try {
+        await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
+        readable.push(engagementId);
+      } catch (error) {
+        if (!(error instanceof ProjectApiError)) throw error;
+      }
+    }
+    if (readable.length === 0) return { assets: [], truncated: false, source: 'db' };
+    const [rows, engagements] = await Promise.all([
+      this.db.webAsset.findMany({ where: { engagementId: { in: readable } }, orderBy: [{ engagementId: 'asc' }, { identifier: 'asc' }], take: MAX_ACCESSIBLE_ASSETS + 1 }),
+      this.db.engagement.findMany({ where: { id: { in: readable } }, select: { id: true, name: true, displayName: true } }),
+    ]);
+    const names = new Map(engagements.map((row) => [row.id, row.displayName ?? row.name]));
+    return {
+      assets: rows.slice(0, MAX_ACCESSIBLE_ASSETS).map((row) => ({ ...toAssetView(row), projectName: names.get(row.engagementId) ?? row.engagementId })),
+      truncated: rows.length > MAX_ACCESSIBLE_ASSETS,
+      source: 'db',
+    };
   }
 
   public async addAsset(actorId: string, engagementId: string, input: unknown): Promise<AssetView> {
