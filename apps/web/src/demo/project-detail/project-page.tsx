@@ -269,7 +269,7 @@ function Overview({ d, via, setTab }: { d: ProjectDetail; via: Via; setTab: (t: 
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <Card>
-            <CardHeader title="Execution Readiness" sub={`${rd.done}/${rd.total} ready. Can reach 100% before anything runs.`} />
+            <CardHeader title="Execution Readiness" sub={`${rd.done}/${rd.total} ready. ${rd.done === rd.total ? 'Every check passes before an operation runs.' : 'Finish the remaining checks before an operation runs.'}`} />
             <div className="mb-3"><Progress value={rd.pct} tone={rd.pct === 100 ? 'ok' : 'accent'} label="Execution readiness" /></div>
             <ul className="divide-y divide-line/60">
               {rd.items.map((i) => (

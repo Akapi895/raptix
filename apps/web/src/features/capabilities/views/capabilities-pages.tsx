@@ -22,7 +22,7 @@ function ProposalStatus({ s }: { s: LibraryProposalStatus }) {
 }
 
 function readMessage(error: unknown): string {
-  return error instanceof LibraryReadError ? error.failure.message : error instanceof Error ? error.message : 'The library could not be read.'
+  return error instanceof LibraryReadError ? error.failure.message : error instanceof Error ? error.message : 'Capabilities could not be read.'
 }
 
 /* ───────────── Skill corpus (read-only) ───────────── */
@@ -274,7 +274,7 @@ function ProposalsPage({ newSkill }: { newSkill?: string }) {
   const counts = proposals.data?.counts
   return (
     <>
-      <PageHeader title="Library proposals" sub="Replacement SKILL.md bodies for this engagement. Approval records a decision; it never edits the canonical corpus." back={{ label: 'Skills', to: () => go('capabilities', { tab: 'skills' }) }}
+      <PageHeader title="Skill proposals" sub="Replacement SKILL.md bodies for this engagement. Approval records a decision; it never edits the canonical corpus." back={{ label: 'Skills', to: () => go('capabilities', { tab: 'skills' }) }}
         actions={<Button variant="primary" icon={Send} onClick={() => go('playbook-review', { tab: 'new' })}>New proposal</Button>} />
       {proposals.isError && <Banner tone="bad" title="Proposals unavailable">{readMessage(proposals.error)}</Banner>}
       {counts && <div className="mb-4"><QueueCounts counts={counts} /></div>}

@@ -97,7 +97,7 @@ export function AttentionBanner({ stops, decisions }: { stops: number; decisions
   return (
     <div role="status" className={cx('flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm', stops > 0 ? 'border-bad/40 bg-bad-soft' : 'border-primary/30 bg-info-soft')}>
       <span className="font-medium text-fg">
-        {stops > 0 ? `${stops} active emergency stop${stops === 1 ? '' : 's'} need attention.` : `${decisions} decision${decisions === 1 ? '' : 's'} await your review.`}
+        {stops > 0 ? `${stops} active emergency stop${stops === 1 ? '' : 's'} need attention.` : `${decisions} decision${decisions === 1 ? '' : 's'} ${decisions === 1 ? 'awaits' : 'await'} your review.`}
       </span>
       <Button size="sm" variant="secondary" onClick={() => go('tasks')}>Open decision queue</Button>
     </div>
@@ -296,7 +296,7 @@ export function SeverityBlock({ view }: { view: OverviewFindings }): ReactElemen
 
 /** The batch queue: operation bindings by governance state, with the share that has completed. */
 export function OperationsBlock({ view }: { view: OverviewOperations }): ReactElement {
-  if (view.counts === null) return <p className="text-sm text-muted">The operation binding state is not recorded for this source.</p>
+  if (view.counts === null) return <p className="text-sm text-muted">Operation status is not recorded for this source.</p>
   const counts = view.counts
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0)
   const completed = counts.completed ?? 0
