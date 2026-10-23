@@ -33,13 +33,22 @@ async function renderPortfolio(): Promise<void> {
 }
 
 describe('ProjectPortfolio', () => {
-  it('shows the unrecorded target and metadata as unavailable rather than as values, and has no client or status column', async () => {
+  it('shows the unrecorded target and metadata as Not recorded rather than as values, and has no client or status column', async () => {
     hooks.rows = read([row()])
     await renderPortfolio()
     expect(screen.getByText('Alpha')).toBeTruthy()
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText('Not recorded').length).toBeGreaterThanOrEqual(2)
+    expect(screen.queryByText('—')).toBeNull()
     expect(screen.queryByRole('columnheader', { name: 'Client' })).toBeNull()
     expect(screen.queryByRole('columnheader', { name: 'Status' })).toBeNull()
+  })
+
+  it('does not show a zero review count when no project records metadata', async () => {
+    hooks.rows = read([row()])
+    await renderPortfolio()
+    const tile = screen.getByText('Metadata to review').parentElement!
+    expect(tile).toHaveTextContent('Not recorded')
+    expect(tile).not.toHaveTextContent(/\b0\b/)
   })
 
   it('reports a failed read instead of an empty portfolio', async () => {

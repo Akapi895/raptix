@@ -37,9 +37,9 @@ function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) 
   )
 }
 
-/** A value the source does not record reads as unavailable, with its reason in the tooltip. */
+/** A value the source does not record reads as "Not recorded", with its reason in the tooltip. */
 function Unrecorded({ value, reason }: { value: string | null; reason: string }) {
-  return value === null ? <span className="text-neutral" title={reason}>—</span> : <>{value}</>
+  return value === null ? <span className="text-neutral" title={reason}>Not recorded</span> : <>{value}</>
 }
 
 /** The update instant falls inside the chosen range, measured from the browser clock (a filter, not a displayed instant). */
@@ -60,12 +60,16 @@ const TONE: Record<'ok' | 'warn' | 'neutral', { edge: string; figure: string }> 
 }
 
 /** A stat card in the findings page's shape: centred label, large figure, and the note on what it counts. */
-function StatTile({ label, value, note, tone }: { label: string; value: number; note: string; tone?: keyof typeof TONE }): ReactElement {
+function StatTile({ label, value, note, tone }: { label: string; value: number | string; note: string; tone?: keyof typeof TONE }): ReactElement {
   const style = tone ? TONE[tone] : undefined
+  /* A text value (for example "Not recorded") is not a count, so it never takes the zero or tone styling. */
+  const figure = typeof value === 'number'
+    ? cx('text-[2rem]', value === 0 ? 'text-muted opacity-50' : style?.figure ?? 'text-fg')
+    : 'text-base text-muted'
   return (
     <div className={cx('rounded-lg border border-line bg-panel p-4 text-center shadow-sm', style && cx('border-l-4', style.edge))}>
       <div className="text-sm text-muted">{label}</div>
-      <div className={cx('mt-2 text-[2rem] font-bold leading-none tabular-nums', value === 0 ? 'text-muted opacity-50' : style?.figure ?? 'text-fg')}>{value}</div>
+      <div className={cx('mt-2 font-bold leading-none tabular-nums', figure)}>{value}</div>
       <div className="mt-1.5 text-[13px] font-medium tracking-wide text-muted">{note}</div>
     </div>
   )
@@ -145,7 +149,7 @@ export function ProjectPortfolio(): ReactElement {
       </div>
     ) },
     { key: 'metadata', header: 'Metadata', render: (p) => (p.metadataVerified === null
-      ? <span className="text-neutral" title="The source does not verify metadata">—</span>
+      ? <span className="text-neutral" title="The source does not verify metadata">Not recorded</span>
       : <Status kind="check" value={p.metadataVerified ? 'pass' : 'review'} size="sm" label={p.metadataVerified ? 'Verified' : 'Needs review'} />) },
     { key: 'updated', header: 'Updated', className: 'max-md:hidden', render: (p) => <span className="whitespace-nowrap text-xs text-muted">{p.updatedAt}</span> },
   ]
@@ -158,7 +162,7 @@ export function ProjectPortfolio(): ReactElement {
     <>
       <PageHeader
         title="Projects"
-        sub="Projects your account can access. A column the connected source does not record shows as unavailable rather than a placeholder value."
+        sub="Projects your account can access. A value the connected source does not record shows as Not recorded, with the reason on hover."
         actions={<Button variant="primary" icon={FolderPlus} onClick={() => go('project-new')}>New Project</Button>}
       />
       {list.isPending ? (
@@ -171,9 +175,9 @@ export function ProjectPortfolio(): ReactElement {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatTile label="Projects" value={items.length} note="Accessible to your account" />
-            <StatTile label="Active" value={activeCount} note="Planning or running" tone="ok" />
+            <StatTile label="Active" value={activeCount} note="Active, approved, planning or running" tone="ok" />
             <StatTile label="Draft" value={draftCount} note="Not yet planned" tone="neutral" />
-            <StatTile label="Metadata to review" value={reviewCount} note="Policy check needs review" tone="warn" />
+            <StatTile label="Metadata to review" value={hasMetadata ? reviewCount : 'Not recorded'} note="Policy check needs review" tone="warn" />
           </div>
 
           <section aria-label="Project filters" className={cx('rounded-xl border bg-panel p-2 shadow-sm', filtersActive ? 'border-primary/40' : 'border-line')}>
