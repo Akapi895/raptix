@@ -242,4 +242,17 @@ describe('login screen stays wired through the auth actions', () => {
     expect(useAuthStore.getState().meName).toBe('Pat Kim')
     expect(window.location.hash).toBe('#/overview')
   })
+
+  it('a wrong password is refused without revealing the demo password', async () => {
+    render(
+      <ServicesProvider>
+        <Login />
+      </ServicesProvider>,
+    )
+    fireEvent.change(screen.getByPlaceholderText('name@company.example'), { target: { value: 'nobody@raptix.example' } })
+    fireEvent.change(screen.getByPlaceholderText('Enter password'), { target: { value: 'not-the-password' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(await screen.findByText('Incorrect email or password. Check your details and try again.')).toBeInTheDocument()
+    expect(document.body.textContent).not.toContain('Raptix@2026')
+  })
 })
