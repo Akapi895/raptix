@@ -106,7 +106,7 @@ export function Login() {
           <div className="text-lg font-semibold">Raptix</div>
         </div>
         <div className="w-full max-w-[420px]">
-          <div className="mb-5 flex items-start gap-2 rounded-lg border border-warn/30 bg-warn-soft px-3 py-2 text-xs text-fg"><FlaskConical size={14} className="mt-0.5 shrink-0 text-warn" aria-hidden /><span><b>Demo mode — synthetic accounts.</b> Sign-in, SSO and MFA are simulated. Demo accounts and the role picker are hidden in production.</span></div>
+          <div className="mb-5 flex items-start gap-2 rounded-lg border border-warn/30 bg-warn-soft px-3 py-2 text-xs text-fg"><FlaskConical size={14} className="mt-0.5 shrink-0 text-warn" aria-hidden /><span><b>Demo mode — synthetic accounts.</b> Sign-in, SSO and MFA are simulated. Demo accounts and the role picker are available only in demo mode.</span></div>
           {stage === 'form' && (
             <form onSubmit={submit} noValidate aria-busy={busy}>
               <h2 className="text-2xl font-semibold tracking-tight">Sign in</h2>

@@ -77,10 +77,10 @@ export function SettingsPage() {
   const personal = tab === 'notifications' || tab === 'security'
   return (
     <>
-      <PageHeader title="Organization Settings" meta={<span className="inline-flex items-center gap-1.5 rounded-full border border-accent-line bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent"><ShieldCheck size={12} aria-hidden />Organization-wide</span>} sub="Acme Security (Demo) · Raptix Workspace — Test Lab. This is a simulation: the backend enforces every control." />
+      <PageHeader title="Organization Settings" meta={<span className="inline-flex items-center gap-1.5 rounded-full border border-accent-line bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent"><ShieldCheck size={12} aria-hidden />Organization-wide</span>} sub={isRealMode() ? 'Settings that apply across this workspace.' : 'Acme Security (Demo) · Raptix Workspace — Test Lab. This is a simulation: the backend enforces every control.'} />
       <div role="note" className="mb-4 flex flex-wrap items-start gap-x-3 gap-y-1 rounded-lg border border-accent-line bg-accent-soft px-4 py-2.5 text-sm">
         <span className="font-semibold text-accent">Organization-wide</span>
-        <span className="min-w-0 flex-1 text-fg">{personal ? 'You are in your personal preferences. They apply to you across all projects and never change organization policy. Emergency and expired-access alerts cannot be muted by quiet hours.' : 'Changes here apply to every project in this workspace, including RT-2026-014 and RT-2026-017, and to running operations and sessions. Project-specific settings (ROE, scope, members) live inside each project. Every change is audited.'}</span>
+        <span className="min-w-0 flex-1 text-fg">{personal ? 'You are in your personal preferences. They apply to you across all projects and never change organization policy. Emergency and expired-access alerts cannot be muted by quiet hours.' : `Changes here apply to every project in this workspace${isRealMode() ? '' : ', including RT-2026-014 and RT-2026-017'}, and to running operations and sessions. Project-specific settings (ROE, scope, members) live inside each project. Every change is audited.`}</span>
       </div>
       <Tabs value={tab} onChange={(t) => go('settings', { tab: t })} tabs={labels.filter(([id]) => !isRealMode() || REAL_TABS.includes(id)).map(([id, label]) => ({ id, label, icon: isRealMode() || acc[id].ok ? undefined : Lock }))} />
       {body()}
