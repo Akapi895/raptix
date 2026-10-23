@@ -1,0 +1,86 @@
+{
+  "login": {
+    "signedIn": true,
+    "realPill": true,
+    "overviewH1": [
+      "System Overview"
+    ],
+    "demoNamesOnOverview": [],
+    "pageErrors": 0
+  },
+  "accountMenu": {
+    "items": [
+      "Light",
+      "Dark",
+      "Account / sign out",
+      "Switch to demo mode"
+    ],
+    "hasDemoTools": false,
+    "hasResetDemo": false,
+    "hasPrototypeHome": false,
+    "hasPersonaList": false,
+    "hasSwitchToDemo": true
+  },
+  "settings": {
+    "h1": [
+      "Organization Settings"
+    ],
+    "subRealCopy": true,
+    "demoOrg": false,
+    "simulation": false,
+    "demoProjectIds": [],
+    "tabs": "Organization Integrations Policies Retention Audit log"
+  },
+  "projects": {
+    "h1": [
+      "Projects"
+    ],
+    "demoNames": [],
+    "dashes": 0,
+    "notRecorded": 1,
+    "snippet": "Skip to main content Raptix AI Red Team Platform WORKSPACE Overview Projects Findings RESOURCES Assets Capabilities Infrastructure ADMINISTRATION Settings Collapse All Projects Real mode No unread notifications V verifier Multi-user deployment All engagements · aggregate view. Select an engagement t"
+  },
+  "ownerPageErrors": 0,
+  "viewer": {
+    "signedIn": true,
+    "h1": [
+      "Organization Settings"
+    ],
+    "snippet": "Skip to main content Raptix AI Red Team Platform WORKSPACE Overview Projects Findings RESOURCES Assets Capabilities Infrastructure ADMINISTRATION Settings Collapse All Projects Real mode No unread notifications SV Stack Viewer Multi-user deployment All engagem",
+    "pageErrors": 0
+  },
+  "E1-api-non-json-projects": {
+    "h1": [
+      "Projects"
+    ],
+    "main": "Skip to main content Raptix AI Red Team Platform WORKSPACE Overview Projects Findings RESOURCES Assets Capabilities Infrastructure ADMINISTRATION Settings Collapse All Projects Real mode No unread notifications V verifier Multi-user deployment All engagements · aggregate view. Select an engagement to open its real detail. Select Project Projects Projects your account can access",
+    "pageErrors": 0
+  },
+  "E2-api-500-projects": {
+    "h1": [
+      "Projects"
+    ],
+    "main": "Skip to main content Raptix AI Red Team Platform WORKSPACE Overview Projects Findings RESOURCES Assets Capabilities Infrastructure ADMINISTRATION Settings Collapse All Projects Real mode No unread notifications V verifier Multi-user deployment All engagements · aggregate view. Select an engagement to open its real detail. Select Project Projects Projects your account can access",
+    "pageErrors": 0
+  },
+  "E3-api-network-projects": {
+    "h1": [
+      "Projects"
+    ],
+    "main": "Skip to main content Raptix AI Red Team Platform WORKSPACE Overview Projects Findings RESOURCES Assets Capabilities Infrastructure ADMINISTRATION Settings Collapse All Projects Real mode No unread notifications V verifier Multi-user deployment All engagements · aggregate view. Select an engagement to open its real detail. Select Project Projects Projects your account can access",
+    "pageErrors": 0
+  },
+  "E0_bootOutage": {
+    "h1": [
+      "Raptix is unavailable right now"
+    ],
+    "main": "Raptix is unavailable right now Raptix returned a response it could not read. Try again; if it continues, contact your administrator. Real mode shows no demo data. Start the API (npm run dev:api) or switch to demo mode. Retry Switch to demo mode",
+    "pageErrors": 0,
+    "switchButtons": 1
+  },
+  "E4_findingNotFound": {
+    "h1": [],
+    "main": "Skip to main content Raptix AI Red Team Platform WORKSPACE Overview Projects Findings RESOURCES Assets Capabilities Infrastructure ADMINISTRATION Settings Collapse All Projects Real mode No unread notifications V verifier Multi-user deployment All engagements · aggregate view. Select an engagement t",
+    "pageErrors": 0
+  }
+}

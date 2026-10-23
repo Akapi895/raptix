@@ -1,0 +1,5 @@
+E2 500 projects        ["Could not load projects Raptix returned a response it could not read.","Try again; if it continues, contact your administrator.","Try again"]
+E3 network projects    ["Could not load projects Raptix could not be reached.","Try again"]
+E1 non-json projects   ["Could not load projects Raptix returned a response it could not read.","Try again; if it continues, contact your administrator.","Try again"]
+E4 finding missing     ["not found ID FD-DOES-NOT-EXIST does not exist or is not available for your account."]
+E5 project missing     ["Could not load engagement PRJ-NOPE Project not found Try again"]

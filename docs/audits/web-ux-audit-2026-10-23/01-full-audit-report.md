@@ -26,7 +26,7 @@ Các phát hiện khác không đổi. Chi tiết việc đã làm và việc c�
 | UX-01 | Settings (trang dùng chung) hiển thị chuỗi demo ở real; switcher và Demo Tools chỉ ở mock (đính chính) | P1 | S–M | C + B | Có |
 | UX-02 | Copy "hidden in production" không có cơ chế | P1 | S | B (build) + C | Có |
 | UX-03 | Demo controls (persona, Reset demo, outcome) chỉ tồn tại ở mock; không phải lỗi real (đính chính) | P3 | — | C | Không |
-| UX-04 | Outage real lộ lệnh dev và lối thoát sang demo | P1 | S | B (build, không backend) | Có |
+| UX-04 | Outage real lộ lệnh dev, lối thoát sang demo và thông điệp kỹ thuật (đã sửa; xác minh ở ổn định) | P1 | S | B (build, không backend) | Có |
 | UX-05 | Trang prototype/QA có trong bản build | P2 | S–M | B | Có (phần an toàn) |
 | UX-06 | Hai mô hình sidebar dự án, số mục và ID khác nhau | P2 | M | C + B | Không (structural) |
 | UX-07 | Sidebar dự án cuộn nhưng không có dấu hiệu | P2 | S | B | Có |
@@ -45,9 +45,9 @@ Các phát hiện khác không đổi. Chi tiết việc đã làm và việc c�
 | UX-20 | Hai hệ accent không có quy tắc được ghi trong design | P3 | S | C | Không |
 | UX-21 | Năm file tự định nghĩa primitive KPI/Chip/Pill | P3 | M | C | Không |
 | UX-22 | Build: chunk > 500 kB; import tĩnh/động trùng; demo code trong bundle | P3 | S | B (build output) | Một phần (cùng UX-05) |
-| UX-23 | Đăng nhập mock: Continue không phản hồi | P2 | S | B (một cấu hình) | Không (chưa xác định nguyên nhân) |
+| UX-23 | (Đính chính) Đăng nhập mock hoạt động; không phải lỗi | — | — | B | Không |
 | UX-24 | Emergency Stop: giữ nguyên; luồng xác nhận thật chưa kiểm | — (giữ) | — | B + NV | Không |
-| UX-25 | Mobile drawer: đường đóng chưa rõ; hit target nhỏ | P3 | S | B + NV | Không |
+| UX-25 | Mobile drawer: đã xác minh đóng bằng Escape và overlay; nút đóng có nhãn chưa rõ; hit target nhỏ | P3 | S | B | Không |
 | UX-26 | **Mới:** KPI "Metadata to review" hiển thị 0 khi nguồn không ghi nhận metadata | P2 | S | B + C | Có |
 | UX-27 | **Mới:** Settings cam kết "áp dụng cho mọi project" cần đối chiếu consumer | P3 | — | C + checklist 3.2 | Không (ghi nhận) |
 
@@ -316,10 +316,9 @@ Tỉ lệ WCAG tính từ `apps/web/src/index.css`:
 
 ---
 
-## UX-23 · Đăng nhập mock: "Continue" không phản hồi · P2 · S · [B] (một cấu hình, hai lần thử)
+## UX-23 · (Đính chính) Đăng nhập mock hoạt động · không phải lỗi · [B]
 
-- Trên `#/` mock, điền sẵn email và mật khẩu rồi bấm "Continue": không chuyển trang, không thông báo lỗi (`login-probe2`). Chỉ các chip persona đăng nhập được.
-- Nguyên nhân chưa xác định. Real mode `[NV]`.
+**Đính chính (ổn định, 2026-10-23):** phát hiện ban đầu sai. Bản probe chỉ kiểm tra chuyển trang ngay sau khi bấm "Continue" nên bỏ qua bước giữa. Luồng thực tế: bấm "Continue" → nút hiện "Verifying…" khoảng 700 ms → chuyển sang bước chọn tổ chức → "Enter workspace" vào System Overview. Đã xác minh trên build production (`mobile-login`, `mockSignIn`). Ghi chú còn lại: thông báo sai mật khẩu in ra mật khẩu demo; xem S-03.
 
 ---
 
@@ -336,8 +335,8 @@ Tỉ lệ WCAG tính từ `apps/web/src/index.css`:
 
 ## UX-25 · Mobile drawer và hit target · P3 · S · [B] + [NV]
 
-- Mobile 390 px: drawer hiển thị đủ 7 mục global (`B08`).
-- Ảnh không cho thấy nút đóng rõ ràng. Đường đóng bằng overlay chưa kiểm.
+- **Đã xác minh (ổn định, 2026-10-23, `mobile-login`):** ở 390 px, drawer mở từ "Open menu" (dialog "Navigation", rộng 280 px), có 16 mục trong project, có dải mờ cuối danh sách (`data-scroll-fade`). Đóng được bằng Escape và bằng chạm ra ngoài overlay. Chọn một mục điều hướng đúng và drawer tự đóng. Không tràn ngang sau khi điều hướng.
+- Chưa thấy nút đóng có nhãn trong ảnh drawer. DOM có một phần tử khớp từ khóa "close" nhưng chưa xác định được là nút nào. Đường đóng rõ ràng duy nhất đã kiểm là overlay và Escape. Ghi nhận cho lần sau.
 - Mỗi trang mobile đo có 1–5 nút dưới 32 px. Không có nút dưới 24 px trong các trang đã đo.
 
 ---
@@ -365,3 +364,20 @@ Tỉ lệ WCAG tính từ `apps/web/src/index.css`:
 - Tự động kiểm tên truy cập được: không có button không tên và input không nhãn trên 12 trang mobile (chỉ là kiểm tự động).
 - Dark mode đọc được (`B06`).
 - Real Settings đã giới hạn tab về 5 (`REAL_TABS`, `settings-page.tsx:57`).
+
+---
+
+## Phát hiện bổ sung trong giai đoạn ổn định (2026-10-23)
+
+Các phát hiện dưới đây xuất hiện khi kiểm tra ổn định sau Quick Win. Chi tiết và số liệu: `verification/VERIFICATION-STABILIZATION-2026-10-23.md`.
+
+| ID | Phát hiện | Trạng thái | Bằng chứng |
+|---|---|---|---|
+| S-01 | Asset Map bật cờ vẫn "Page not found" trong mock: khai báo gắn vào slice hệ thống tĩnh, không có mục cho nó | Đã sửa (`828cd7bc`) | Smoke mock bản bật cờ: `FAIL mock:asset-map` trước sửa; 0 lỗi sau sửa |
+| S-02 | Real mode: địa chỉ không đăng ký hiện panel "Not connected in real mode" thay vì trang không tìm thấy | Đã sửa (`bd0f47a6`) | Discover real `asset-map`: "Not connected" trước; "Page not found" sau |
+| S-03 | Thông báo sai mật khẩu ở mock in ra mật khẩu demo | Chưa sửa; follow-up P3, cần quyết định sản phẩm | `mobile-login.mockWrongPassword` |
+| S-04 | Inventory của route smoke lệch router: `playbooks` không tồn tại, `capabilities` không được kiểm | Đã sửa (`3bc6cf84`) | `tools/verify/routes.json` |
+| S-05 | Thông báo kỹ thuật (non-JSON, không kết nối được, lỗi 500) hiện nguyên văn cho người dùng real | Đã sửa (`b5b7f188`, `0c25420f`) | `real-messages`: trước và sau; `prod-outage` |
+| S-06 | Mã của trang "Universal state set" vẫn nằm trong bundle dù route đã bị gate | Chưa sửa; follow-up, cần đổi kiến trúc route | Grep bundle mặc định |
+| S-07 | Test responsive audit quá thời gian 5 s khi tải cao (flaky) | Ghi nhận; đạt khi chạy riêng | Full suite; chạy riêng: 11/11 |
+| S-08 | Emergency Stop thật không được thực hiện ở real mode (theo yêu cầu) | NV | — |

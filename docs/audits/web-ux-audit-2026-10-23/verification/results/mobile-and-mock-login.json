@@ -1,0 +1,34 @@
+{
+  "mockSignIn": {
+    "prefilled": {
+      "email": "alex.morgan@acme-security.example.test",
+      "password": 11
+    },
+    "sawVerifying": true,
+    "organizationStep": true,
+    "afterContinueSnippet": "Raptix Red Team Orchestration Platform Orchestrate adversary simulation within approved scope. Manage projects, ROE, operations, findings and reports in a singl",
+    "landed": [
+      "System Overview"
+    ]
+  },
+  "mockWrongPassword": {
+    "alert": [
+      "Sign-in failed Incorrect email or password. Check your details; in this demo the password is Raptix@2026."
+    ]
+  },
+  "mobile": {
+    "openMenuButtons": 1,
+    "drawerOpen": 1,
+    "drawerItems": 16,
+    "drawerFade": 1,
+    "closeControls": 1,
+    "drawerWidth": 280,
+    "closedByEscape": true,
+    "closedByOverlay": true,
+    "navigatedAndClosed": {
+      "hash": "#/project/RT-2026-014?tab=findings",
+      "drawerStillOpen": false
+    },
+    "overflowAfterNav": 0
+  }
+}

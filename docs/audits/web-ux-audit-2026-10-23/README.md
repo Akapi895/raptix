@@ -38,6 +38,7 @@ Bộ tài liệu audit để một reviewer độc lập đọc và đánh giá 
 - Build: `apps/web`, `vite build --outDir <thư mục ngoài repo>`.
 - Phục vụ tĩnh và chụp bằng Playwright từ `node_modules` của repo.
 - Dev server của owner trên cổng 5273 có thể trả 504 "Outdated Optimize Dep" cho route lazy; đây là trạng thái cache của dev server, không phải lỗi sản phẩm. Khởi động lại với `--force` nếu gặp.
+- Route smoke theo cờ: `RAPTIX_VERIFY_APP=<url> RAPTIX_VERIFY_FLAGS=<prototype,assetMap | rỗng> node tools/verify/route-smoke.mjs --modes mock`. Real mode cần stack: `tools/verify/stack.mjs`.
 
 ## Sau audit: triển khai Quick Win
 
@@ -48,3 +49,10 @@ Bộ tài liệu audit để một reviewer độc lập đọc và đánh giá 
 ## Gói chia sẻ
 
 `docs/audits/web-ux-audit-2026-10-23.zip` chứa toàn bộ thư mục này, gồm báo cáo Quick Win và ảnh sau khi sửa. Zip không được commit vào git.
+
+## Vòng ổn định và xác minh (2026-10-23, vòng 2)
+
+- `verification/VERIFICATION-STABILIZATION-2026-10-23.md` — gate tại HEAD `0c25420f`, route smoke theo cờ, thông báo kỹ thuật, dark mode, sidebar mobile, đăng nhập mock, real mode trên stack có backend.
+- `verification/results/` — JSON và log của các lần chạy (smoke, real-mode, mobile và đăng nhập, thông điệp lỗi, typecheck, lint, boundary, build, test).
+- `checklist-snapshot/` — bản snapshot của checklist owner (file gốc là untracked trong git).
+- `evidence/A09`–`A13`, `R01`–`R05`, `R-E1`/`R-E3` — ảnh sau vòng này; `A09`–`A11` có cặp trước/sau.

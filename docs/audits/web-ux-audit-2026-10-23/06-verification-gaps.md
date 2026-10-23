@@ -6,8 +6,12 @@ Nguyên tắc: không đưa kết luận chưa xác minh thành sự thật. M�
 
 | Hạng mục | Trạng thái | Lý do | Cách đóng |
 |---|---|---|---|
-| Đăng nhập real | NV | Không có API tại `127.0.0.1:5280` | Chạy stack thật (`make infra` hoặc `tools/verify/stack.mjs`), rồi kiểm login và redirect |
-| Settings trong real (UX-01) | C + test | Không đăng nhập được real, nên không chụp được trang real | Đã có test `shell/real-chrome.demo-free.test.tsx` với mode real được stub; kiểm trình duyệt khi có backend |
+| Đăng nhập real | B (ổn định, stack có graph) | Đã kiểm trên stack thật: PostgreSQL 17, API từ source, graph seed, Vite dev. Xem `verification/VERIFICATION-STABILIZATION-2026-10-23.md` | Đóng |
+| Settings trong real (UX-01) | B (ổn định) | Đã kiểm trên stack thật: tiêu đề và ghi chú dùng chữ thực, không có tổ chức demo hay ID demo; 5 tab | Đóng |
+| Menu tài khoản real | B (ổn định) | Không có Demo Tools, persona, Reset demo, Prototype Home; có "Switch to demo mode" (quyết định mở) | Đóng |
+| Phân tách mock/real | B (ổn định) | Danh sách Projects real không có tên demo; viewer đăng nhập được với vai trò riêng | Đóng |
+| Trạng thái lỗi real | B (ổn định) | Trả lời không phải JSON, HTTP 500 và mất kết nối được chặn bằng route, hiển thị thông điệp người dùng | Đóng (khi API bị làm giả; API thật bị ngắt không được thử) |
+| Live AI runtime (LangGraph) | NV | Stack không khởi động runtime; các route dùng runtime báo "declared" trong baseline | Chạy runtime khi cần |
 | Demo Tools trong real (UX-03, đính chính) | Không áp dụng | Khối này chỉ mount qua `Topbar`, và `Topbar` không mount ở real (`shell/shell.tsx:168`) | Không cần kiểm thêm ở real |
 | Persona switch trong real (đính chính) | Không áp dụng | Chỉ có ở mock | — |
 | Reset demo trong real (đính chính) | Không áp dụng | Chỉ có ở mock | — |
