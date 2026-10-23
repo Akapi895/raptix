@@ -18,5 +18,5 @@ it('uses the restored session CSRF token on the next mutation', async () => {
 
 it('does not treat a session endpoint outage as a local single-user deployment', async () => {
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network unavailable')))
-  await expect(fetchAuthSession()).rejects.toThrow(/unreachable/)
+  await expect(fetchAuthSession()).rejects.toThrow(/could not be reached/)
 })

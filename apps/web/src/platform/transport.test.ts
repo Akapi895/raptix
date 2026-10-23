@@ -1,6 +1,6 @@
 /** Boundary tests for the same-origin real-mode transport (ticket 03). */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiTransportError, apiFetch, apiFetchBytes } from './transport'
+import { ApiTransportError, UNEXPECTED_RESPONSE_MESSAGE, apiFetch, apiFetchBytes } from './transport'
 
 type Payload = { ok: true }
 const isPayload = (v: unknown): v is Payload =>
@@ -58,6 +58,26 @@ describe('apiFetch', () => {
     await expect(apiFetch('/x', isPayload)).rejects.toMatchObject({ code: 'internal_error' })
   })
 
+  it('shows users the unreadable-response copy and keeps the technical cause out of the message', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('<html></html>', { status: 200, headers: { 'Content-Type': 'text/html' } })))
+    const error = await apiFetch('/x', isPayload).catch((e: unknown) => e) as ApiTransportError
+    expect(error.message).toBe(UNEXPECTED_RESPONSE_MESSAGE)
+    expect(error.message).not.toMatch(/JSON|API/)
+    expect(error.reason).toBe('the response body is not JSON')
+  })
+
+  it('replaces a generic server fault with the same user copy and keeps the server text as the reason', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(500, { statusCode: 500, error: { code: 'internal_error', message: 'Internal server error' } })))
+    const error = await apiFetch('/x', isPayload).catch((e: unknown) => e) as ApiTransportError
+    expect(error.message).toBe(UNEXPECTED_RESPONSE_MESSAGE)
+    expect(error.reason).toBe('Internal server error')
+  })
+
+  it('keeps a server-authored client error message as written', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(409, { statusCode: 409, error: { code: 'conflict', message: 'Duplicate slug' } })))
+    await expect(apiFetch('/x', isPayload)).rejects.toMatchObject({ message: 'Duplicate slug' })
+  })
+
   it('rejects a validation-shape violation as internal_error', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { ok: false })))
     await expect(apiFetch('/x', isPayload)).rejects.toMatchObject({ code: 'internal_error', status: 200 })
@@ -69,12 +89,13 @@ describe('apiFetch', () => {
     expect(error).toBeInstanceOf(ApiTransportError)
     expect((error as ApiTransportError).status).toBe(0)
     expect((error as ApiTransportError).code).toBe('unavailable')
-    expect((error as ApiTransportError).message).toContain('unreachable')
+    expect((error as ApiTransportError).message).toBe('Raptix could not be reached. Check your connection and try again.')
+    expect((error as ApiTransportError).reason).toBe('the server did not answer')
   })
 
   it('distinguishes a timeout from an unreachable server', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new DOMException('timed out', 'TimeoutError') }))
-    await expect(apiFetch('/x', isPayload)).rejects.toThrow(/timed out/)
+    await expect(apiFetch('/x', isPayload)).rejects.toThrow(/did not respond in time/)
   })
 
   it('rethrows caller aborts untouched', async () => {
@@ -112,7 +133,7 @@ describe('apiFetchBytes', () => {
 
   it('rejects a byte count that differs from the retained descriptor headers', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(new Uint8Array([1, 2]), { status: 200, headers: { 'X-Content-SHA256': 'a'.repeat(64), 'X-Content-Length': '3' } })))
-    await expect(apiFetchBytes('/captures/cap-1/content')).rejects.toMatchObject({ code: 'internal_error', message: 'The downloaded capture size does not match its recorded length.' })
+    await expect(apiFetchBytes('/captures/cap-1/content')).rejects.toMatchObject({ code: 'internal_error', message: 'The download was incomplete. Try again.', reason: 'the downloaded size does not match the declared length' })
   })
 
   it('keeps server refusal envelopes intact for binary requests', async () => {

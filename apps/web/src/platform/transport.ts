@@ -13,18 +13,28 @@ import { isApiError, type ApiError } from '@raptix/web-contracts'
 
 export type ApiErrorCode = ApiError['code']
 
-/** Transport-level failure carrying the parsed API envelope (or a fallback). */
+/** What a user reads when the service answers in a shape the console cannot use. The technical cause goes to `reason`. */
+export const UNEXPECTED_RESPONSE_MESSAGE = 'Raptix returned a response it could not read. Try again; if it continues, contact your administrator.'
+const UNREACHABLE_MESSAGE = 'Raptix could not be reached. Check your connection and try again.'
+const TIMEOUT_MESSAGE = 'Raptix did not respond in time. Try again.'
+
+/**
+ * Transport-level failure carrying the parsed API envelope (or a fallback). `message` is safe to show a user; `reason` is the
+ * technical cause for diagnostics and is never rendered.
+ */
 export class ApiTransportError extends Error {
   readonly status: number
   readonly code: ApiErrorCode
   readonly details?: unknown
+  readonly reason?: string
 
-  constructor(status: number, code: ApiErrorCode, message: string, details?: unknown) {
+  constructor(status: number, code: ApiErrorCode, message: string, details?: unknown, reason?: string) {
     super(message)
     this.name = 'ApiTransportError'
     this.status = status
     this.code = code
     this.details = details
+    this.reason = reason
   }
 }
 
@@ -67,7 +77,7 @@ async function parseBody(response: Response): Promise<unknown> {
   } catch {
     // An API that answers HTML (SPA fallback or proxy error page) is a
     // transport failure, never a parseable payload.
-    throw new ApiTransportError(response.status, 'internal_error', 'The API returned a non-JSON response.')
+    throw new ApiTransportError(response.status, 'internal_error', UNEXPECTED_RESPONSE_MESSAGE, undefined, 'the response body is not JSON')
   }
 }
 
@@ -88,6 +98,10 @@ function isRecordValue(value: unknown): value is Record<string, unknown> {
 
 function failureFrom(response: Response, body: unknown): ApiTransportError {
   const envelope = unwrapEnvelope(body)
+  // A server fault carries a generic text ("Internal server error"); the user gets the unreadable-response copy instead.
+  if (envelope && envelope.code === 'internal_error' && response.status >= 500) {
+    return new ApiTransportError(response.status, 'internal_error', UNEXPECTED_RESPONSE_MESSAGE, envelope.details, envelope.message)
+  }
   if (envelope) {
     return new ApiTransportError(response.status, envelope.code, envelope.message, envelope.details)
   }
@@ -100,6 +114,9 @@ function failureFrom(response: Response, body: unknown): ApiTransportError {
     503: ['unavailable', 'The requested capability is unavailable on the server.'],
   }
   const [code, message] = fallback[response.status] ?? ['internal_error', 'The server reported an unexpected error.']
+  if (code === 'internal_error' && response.status >= 500) {
+    return new ApiTransportError(response.status, code, UNEXPECTED_RESPONSE_MESSAGE, undefined, message)
+  }
   return new ApiTransportError(response.status, code, message)
 }
 
@@ -137,7 +154,7 @@ export async function apiFetch<T>(
       throw failureFrom(response, parsed)
     }
     if (!validate(parsed)) {
-      throw new ApiTransportError(response.status, 'internal_error', 'The API returned a response with an unexpected shape.')
+      throw new ApiTransportError(response.status, 'internal_error', UNEXPECTED_RESPONSE_MESSAGE, undefined, 'the response shape does not match the contract')
     }
     return parsed
   } catch (error) {
@@ -146,8 +163,8 @@ export async function apiFetch<T>(
     // DOMException is not an Error subclass in every environment — read the
     // name defensively so a fetch timeout is never misreported.
     const name = (error as { name?: string } | null)?.name
-    const reason = name === 'TimeoutError' ? 'timed out' : 'is unreachable'
-    throw new ApiTransportError(0, 'unavailable', `The Raptix API ${reason}. Verify the server is running and reachable.`)
+    const timedOut = name === 'TimeoutError'
+    throw new ApiTransportError(0, 'unavailable', timedOut ? TIMEOUT_MESSAGE : UNREACHABLE_MESSAGE, undefined, timedOut ? 'the request timed out' : 'the server did not answer')
   }
 }
 
@@ -170,22 +187,22 @@ export async function apiFetchBytes(path: string, options: Pick<RequestOptions, 
     const digest = response.headers.get('x-content-sha256') ?? ''
     const declaredSize = Number(response.headers.get('x-content-length'))
     if (!/^[a-f0-9]{64}$/.test(digest) || !Number.isSafeInteger(declaredSize) || declaredSize < 1) {
-      throw new ApiTransportError(response.status, 'internal_error', 'The capture response omitted valid integrity metadata.')
+      throw new ApiTransportError(response.status, 'internal_error', UNEXPECTED_RESPONSE_MESSAGE, undefined, 'the capture response omitted integrity metadata')
     }
     const bytes = new Uint8Array(await response.arrayBuffer())
-    if (bytes.length !== declaredSize) throw new ApiTransportError(response.status, 'internal_error', 'The downloaded capture size does not match its recorded length.')
+    if (bytes.length !== declaredSize) throw new ApiTransportError(response.status, 'internal_error', 'The download was incomplete. Try again.', undefined, 'the downloaded size does not match the declared length')
     const disposition = response.headers.get('content-disposition') ?? ''
     const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
     let filename = 'capture'
     if (encodedName) {
-      try { filename = decodeURIComponent(encodedName) } catch { throw new ApiTransportError(response.status, 'internal_error', 'The capture filename is malformed.') }
+      try { filename = decodeURIComponent(encodedName) } catch { throw new ApiTransportError(response.status, 'internal_error', UNEXPECTED_RESPONSE_MESSAGE, undefined, 'the capture filename is malformed') }
     }
     return { bytes, digest, filename, mediaType: (response.headers.get('content-type') ?? 'application/octet-stream').split(';', 1)[0]!.trim() }
   } catch (error) {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     if (error instanceof ApiTransportError) throw error
     const name = (error as { name?: string } | null)?.name
-    const reason = name === 'TimeoutError' ? 'timed out' : 'is unreachable'
-    throw new ApiTransportError(0, 'unavailable', `The Raptix API ${reason}. Verify the server is running and reachable.`)
+    const timedOut = name === 'TimeoutError'
+    throw new ApiTransportError(0, 'unavailable', timedOut ? TIMEOUT_MESSAGE : UNREACHABLE_MESSAGE, undefined, timedOut ? 'the request timed out' : 'the server did not answer')
   }
 }

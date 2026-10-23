@@ -45,7 +45,7 @@ describe('RealModeProvider', () => {
   it('renders an actionable boot error without any fallback to mock data', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
     render(<RealModeProvider><Probe name="projects" /></RealModeProvider>)
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Cannot reach the Raptix API'))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Raptix is unavailable right now'))
     expect(screen.getByText('Switch to demo mode')).toBeTruthy()
     expect(screen.queryByTestId('probe')).toBeNull()
   })
