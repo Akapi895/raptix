@@ -66,3 +66,10 @@ Kế hoạch Structural (chỉ tài liệu, chưa có code) nằm ở `structura
 - `verification/results/final-acceptance/`: exit code, log và JSON của lần chạy cuối.
 - `structural-plan/`: kế hoạch Structural WS-0 đến WS-4 và quyết định D-01 đến D-06 chờ reviewer. Không có code.
 - `evidence/A14`, `P1`, `P2`: ảnh sau thay đổi identity Settings và outage production.
+
+## Vòng Structural (2026-10-24, vòng 4)
+
+- `structural-execution/`: kế hoạch thực thi, tiến độ, nhật ký quyết định, blocker, xác minh, báo cáo WS-0 đến WS-4, hồi quy, vấn đề mở, báo cáo cuối và `RESUME.md`.
+- Mã sản phẩm đã kiểm: `ffe85384` (nhánh `frontend`). Gate đầy đủ và kết quả ở `structural-execution/VERIFICATION-LOG.md`.
+- Ảnh sau thay đổi: `structural-execution/evidence/WS1-*.png`, `WS4B-*.png`.
+- Chưa kiểm: canary hai tài khoản và route smoke real (cần stack). Xem `structural-execution/OPEN-ISSUES.md`.
