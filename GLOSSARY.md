@@ -72,3 +72,21 @@ does not put the asset in scope, and an observed asset may be absent from the in
 **Scope classification**: An asset's authorization for targeting: in scope, out of
 scope or pending review. It gates target selection and is independent of whether the
 asset was managed, observed or both.
+
+**Access**: An actor's time-limited grant to act on one C2 session. It is separate from the session's connection: a session
+can stay connected while the actor's access has expired, and losing access does not disconnect the session.
+
+**Single-shot command**: One execution on a C2 session. It keeps no shell state, so the working directory and environment do
+not carry over to the next command.
+
+**Interactive console**: An operator-driven shell on a C2 session that keeps shell state (working directory, environment,
+running programs) between inputs. It is distinct from a single-shot command, which is an independent execution.
+
+**Controller**: The one party allowed to send input to an interactive console at a time: an operator or an agent. A console
+with no controller accepts no input.
+
+**Controller lease**: A time-limited record that names the controller of an interactive console. It ends when the holder
+releases it, its time runs out without renewal, or the access or the console that it depends on ends.
+
+**Dispatching run**: The runtime run that issued a C2 command. A command that an agent dispatches names its dispatching run;
+a command an operator dispatches from the console names none.
