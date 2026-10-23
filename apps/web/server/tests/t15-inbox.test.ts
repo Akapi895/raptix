@@ -215,6 +215,21 @@ describe('ticket 15 command center, tasks and notices', () => {
     expect(view.source).toBe('db');
   });
 
+  it('marks the task inbox limited only when a kind reaches its row cap, so its counts read as lower bounds', async () => {
+    const db = memoryDb();
+    const inbox = new InboxService(db as never, preflightStub(true, []));
+    const { app, owner } = await setup(db, inbox);
+    const revisions = Array.from({ length: 25 }, (_, i) => [`r${i}`, { id: `r${i}`, engagementId: ENG, status: 'pending', version: i + 1, requestedBy: 'u-1', createdAt: at(i + 1) }] as const);
+    db.tables.set('scopeRevision', new Map(revisions));
+    const full = (await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie: owner.cookie } })).json();
+    expect(full.tasks).toHaveLength(25);
+    expect(full.limited).toBe(true);
+    db.tables.set('scopeRevision', new Map(revisions.slice(0, 24)));
+    const under = (await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie: owner.cookie } })).json();
+    expect(under.tasks).toHaveLength(24);
+    expect(under.limited).toBe(false);
+  });
+
   it('persists per-actor notice read/dismiss state; foreign notices 404; best-effort creation never breaks decisions', async () => {
     const db = memoryDb();
     const inbox = new InboxService(db as never, preflightStub(true, []));
