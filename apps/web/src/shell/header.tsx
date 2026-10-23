@@ -170,7 +170,7 @@ function ProfileMenu() {
             <div className="my-2 border-t border-line" />
             <section aria-label="Demo Tools" className="rounded-xl border border-dashed border-line bg-subtle p-2">
               <div className="flex items-center gap-1.5 px-1 pb-1 text-xs font-semibold uppercase tracking-wider text-neutral"><FlaskConical size={13} aria-hidden />Demo Tools</div>
-              <p className="px-1 pb-2 text-xs text-muted">Prototype only, hidden in production. Switching persona changes the permissions you see, not real access.</p>
+              <p className="px-1 pb-2 text-xs text-muted">Demo mode only. Switching persona changes the permissions you see, not real access.</p>
               <div className="px-1 pb-1 text-xs font-medium text-muted">Persona / role</div>
               <div className="no-scrollbar max-h-[200px] overflow-y-auto">
                 {USERS.map((u) => (
