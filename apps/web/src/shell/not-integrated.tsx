@@ -20,13 +20,13 @@ export function RealNotIntegrated({ page }: { page: string }): ReactElement {
         <h1 className="text-lg font-semibold tracking-tight">Not connected in real mode</h1>
         <p className="mt-2 text-sm text-muted">
           The <span className="font-mono text-[13px]">{page}</span> surface is not integrated with the real backend yet.
-          Its demo data and simulated actions are intentionally unavailable here — real mode never falls back to
-          mock content (integration ticket 03, decision D4).
+          Its demo data and simulated actions are intentionally unavailable here; real mode never falls back to
+          demo content.
         </p>
-        <p className="mt-2 text-xs text-neutral">Projects are the first integrated surface; planning, execution and results follow in the approved integration tickets.</p>
+        <p className="mt-2 text-xs text-neutral">Projects are connected first; planning, execution and results follow.</p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button variant="primary" icon={ArrowLeft} onClick={() => go('projects')}>Go to Projects</Button>
-          <Button variant="secondary" icon={PlugZap} onClick={() => switchDataMode('mock')}>Switch to demo mode</Button>
+          {import.meta.env.DEV && <Button variant="secondary" icon={PlugZap} onClick={() => switchDataMode('mock')}>Switch to demo mode</Button>}
         </div>
       </div>
     </div>
