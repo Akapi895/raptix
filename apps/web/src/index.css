@@ -9,7 +9,7 @@
   --c-line: #E5E7EB;
   --c-fg: #111827;
   --c-muted: #374151;
-  --c-neutral: #6B7280;
+  --c-neutral: #666E7B;
   --c-accent: #C62828;
   --c-accent-hover: #A61F1F;
   --c-accent-press: #8E1B1B;
@@ -67,10 +67,12 @@
   --c-accent: #F26166;
   --c-accent-hover: #F5787C;
   --c-accent-press: #CF3A3F;
-  --c-primary: #2563EB;
-  --c-primary-hover: #1D4ED8;
-  --c-primary-press: #1E40AF;
-  --c-primary-fg: #FFFFFF;
+  /* A light blue, the same as --c-link: it reads as text on the slate panels (6.98:1), and primary fills carry dark ink
+     (7.41:1), because white on a fill of this lightness cannot also pass as text on the panel. */
+  --c-primary: #60A5FA;
+  --c-primary-hover: #93C5FD;
+  --c-primary-press: #3B82F6;
+  --c-primary-fg: #0B1120;
   --c-link: #60A5FA;
   --c-danger-fill: #B91C1C;
   --c-danger-fill-hover: #991B1B;
