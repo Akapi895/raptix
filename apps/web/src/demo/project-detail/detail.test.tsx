@@ -80,7 +80,7 @@ describe('overview readiness/completion reuse the dashboard domain functions', (
     mountProject('#/project/RT-2026-014')
     expect(await screen.findByText('Internal Red Team Q4')).toBeInTheDocument()
     // Readiness: 5/6 gates met — agents 2/3 is the failing gate (dashboard baseline).
-    expect(screen.getByText('5/6 ready. Can reach 100% before anything runs.')).toBeInTheDocument()
+    expect(screen.getByText('5/6 ready. Finish the remaining checks before an operation runs.')).toBeInTheDocument()
     expect(screen.getByText('ROE-014-v2 · approved')).toBeInTheDocument()
     expect(screen.getByText('2/3 connected')).toBeInTheDocument()
     // Completion rows: the pinned RT-2026-014 baseline.
@@ -155,7 +155,7 @@ describe('deep links and blocked states', () => {
       },
     })
     expect(await screen.findByText('Internal Red Team Q4')).toBeInTheDocument()
-    expect(screen.getByText('5/6 ready. Can reach 100% before anything runs.')).toBeInTheDocument()
+    expect(screen.getByText('5/6 ready. Finish the remaining checks before an operation runs.')).toBeInTheDocument()
     // The guarded setPid flash used to unmount this page mid-read (the shell
     // swaps children while loading), dropping the fetched detail (gcTime 0)
     // and refetching after the 450ms loading timer — twice the reads and a

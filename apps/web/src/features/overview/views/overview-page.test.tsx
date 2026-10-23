@@ -84,7 +84,7 @@ describe('OverviewPage', () => {
     hooks.c2 = read(emptyC2)
     hooks.tasks = read([])
     await renderOverview()
-    expect(screen.getByText('The operation binding state is not recorded for this source.')).toBeTruthy()
+    expect(screen.getByText('Operation status is not recorded for this source.')).toBeTruthy()
     expect(screen.getAllByText('Not recorded').length).toBeGreaterThan(0)
     expect(screen.queryByText('Per project')).toBeNull()
   })

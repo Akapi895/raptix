@@ -61,7 +61,7 @@ export function OverviewPage(): ReactElement {
           display={kpiDisplay(projects, (list: OverviewProject[]) => String(list.filter((p) => ACTIVE_PROJECT_STATUSES.has(p.status.toLowerCase())).length))}
         />
         <OverviewKpi
-          label="Active operations" icon={Activity} tint="ok" note="Running binding state" onOpen={() => go('operations')}
+          label="Active operations" icon={Activity} tint="ok" note="Operations running now" onOpen={() => go('operations')}
           display={kpiDisplay(operations, (view) => (view.counts === null ? 'Not recorded' : String(view.counts.running ?? 0)))}
         />
         <OverviewKpi
