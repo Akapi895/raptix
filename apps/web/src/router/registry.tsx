@@ -24,6 +24,7 @@ const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string,
   h: () => import('../features/c2/views/c2-pages'),
   i: () => import('../features/agents/routes'),
   s: () => (PROTOTYPE_PAGES_ENABLED ? import('../demo/pages') : Promise.resolve({ routes: {} })),
+  am: () => import('../features/asset-map').then((m) => ({ routes: m.routes })),
 }
 
 /** The slice each key is mounted from, derived from routes.ts. */
