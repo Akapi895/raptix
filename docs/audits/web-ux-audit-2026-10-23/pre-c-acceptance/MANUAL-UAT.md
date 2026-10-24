@@ -4,13 +4,27 @@ Who: a person who knows the console. Time: about 60 minutes. Environment: an iso
 
 ## 1. Start the stack
 
-From `apps/web` in the repository, in a terminal you keep open:
+Step by step, in Windows PowerShell:
 
-```
-node tools/verify/stack.mjs --modes real --hold --hold-dir "<folder outside the repo>" --out "<another folder outside the repo>"
-```
+1. Make sure Docker Desktop is running (wait until it has fully started).
+2. Create two empty folders outside the repository:
 
-Wait for the line `holding stack; the connection file is …\hold.json`. Use two empty folders outside the repository, for example under your own temp folder. The command refuses folders inside the repository.
+   ```
+   New-Item -ItemType Directory -Force -Path C:\raptix-uat\hold
+   New-Item -ItemType Directory -Force -Path C:\raptix-uat\out
+   ```
+
+3. Go to the web app folder: `cd D:\.VTNet\redteam\raptix\apps\web`
+4. Run the start command, and keep this window open for the whole session:
+
+   ```
+   node tools/verify/stack.mjs --modes real --hold --hold-dir "C:\raptix-uat\hold" --out "C:\raptix-uat\out"
+   ```
+
+5. Wait. The first start can take a few minutes, and the window may stay quiet. The stack is ready when this line appears: `holding stack; the connection file is C:\raptix-uat\hold\hold.json; ...`
+6. Open `C:\raptix-uat\hold\hold.json` in Notepad. Use `"app"` as the address in the browser, `verifier` as the owner account, and `"adminPassword"` as its password. The `viewer`, `reviewer` and `operator` entries each have a `username` and `password`.
+
+If the command refuses with `must be outside the repository`, choose folders outside `D:\.VTNet\redteam\raptix`. If the hold folder still holds a `STOP` file from an earlier run, the stack stops right after it starts: delete that `STOP` file first, or use new folders. Do not press Ctrl+C during the session; stop as described in section 4.
 
 ## 2. Get the test credentials safely
 
@@ -25,7 +39,7 @@ Stop and start again (section 4, then section 1). Each start has a new database.
 
 ## 4. Stop the stack
 
-Create an empty file named `STOP` in the `--hold-dir` folder. The terminal prints the stop lines and returns. Then delete `hold.json` by hand; the stack does not delete it. Confirm nothing is running:
+Create an empty file named `STOP` in the `--hold-dir` folder (in PowerShell: `New-Item C:\raptix-uat\hold\STOP`). The terminal prints the stop lines and returns. Then delete `hold.json` by hand; the stack does not delete it. Confirm nothing is running:
 
 ```
 docker ps --filter label=raptix.verification=stack
