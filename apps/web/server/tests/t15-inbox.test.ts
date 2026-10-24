@@ -230,6 +230,19 @@ describe('ticket 15 command center, tasks and notices', () => {
     expect(under.limited).toBe(false);
   });
 
+  it('names the kinds that reached the cap, so a full stop list does not limit the decision counts', async () => {
+    const db = memoryDb();
+    const inbox = new InboxService(db as never, preflightStub(true, []));
+    const { app, owner } = await setup(db, inbox);
+    const stops = Array.from({ length: 25 }, (_, i) => [`s${i}`, { id: `s${i}`, engagementId: ENG, outcome: 'requested', scope: 'all', createdAt: at(i + 1) }] as const);
+    db.tables.set('emergencyStop', new Map(stops));
+    db.tables.set('c2Grant', new Map([['g1', { id: 'g1', engagementId: ENG, status: 'requested', sessionId: 'sess-1', actorId: 'u-2', createdAt: at(40) }]]));
+    const view = (await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie: owner.cookie } })).json();
+    expect(view.limitedKinds).toEqual(['active-stop']);
+    expect(view.limited).toBe(true);
+    expect(view.tasks.filter((task: { kind: string }) => task.kind !== 'active-stop')).toHaveLength(1);
+  });
+
   it('persists per-actor notice read/dismiss state; foreign notices 404; best-effort creation never breaks decisions', async () => {
     const db = memoryDb();
     const inbox = new InboxService(db as never, preflightStub(true, []));
