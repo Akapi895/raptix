@@ -4,15 +4,49 @@
 
 *(Bản tiếng Anh gốc: `MANUAL-UAT.md`. Nếu hai bản khác nhau, bản tiếng Anh là bản chuẩn.)*
 
-## 1. Khởi động stack
+## 1. Khởi động stack (từng bước)
 
-Từ thư mục `apps/web` trong repository, mở một terminal và giữ nó mở suốt quá trình kiểm thử:
+**Bước 1. Kiểm tra Docker Desktop.** Mở Docker Desktop và chờ đến khi nó chạy hẳn (biểu tượng ở khay hệ thống không còn báo "starting").
+
+**Bước 2. Tạo hai thư mục trống nằm ngoài repository.** Mở **PowerShell** và chạy từng dòng:
 
 ```
-node tools/verify/stack.mjs --modes real --hold --hold-dir "<thư mục ngoài repo>" --out "<thư mục khác, ngoài repo>"
+New-Item -ItemType Directory -Force -Path C:\raptix-uat\hold
+New-Item -ItemType Directory -Force -Path C:\raptix-uat\out
 ```
 
-Chờ dòng `holding stack; the connection file is …\hold.json` xuất hiện. Dùng hai thư mục trống nằm ngoài repository, ví dụ trong thư mục tạm của chính bạn. Lệnh sẽ từ chối nếu thư mục nằm trong repository.
+**Bước 3. Chuyển tới thư mục `apps/web`** trong cùng cửa sổ PowerShell:
+
+```
+cd D:\.VTNet\redteam\raptix\apps\web
+```
+
+**Bước 4. Chạy lệnh khởi động.** Dán nguyên dòng này rồi nhấn Enter. Giữ cửa sổ này mở suốt quá trình kiểm thử:
+
+```
+node tools/verify/stack.mjs --modes real --hold --hold-dir "C:\raptix-uat\hold" --out "C:\raptix-uat\out"
+```
+
+**Bước 5. Chờ.** Lần đầu có thể mất vài phút. Cửa sổ có thể im lặng lâu; đó là bình thường. Khi thấy dòng sau thì stack đã sẵn sàng:
+
+```
+holding stack; the connection file is C:\raptix-uat\hold\hold.json; create ...\STOP to stop
+```
+
+**Bước 6. Lấy địa chỉ và tài khoản.** Mở file `C:\raptix-uat\hold\hold.json` bằng Notepad:
+
+- Địa chỉ web: giá trị của `"app"` (dạng `http://127.0.0.1:<cổng>`). Dán vào thanh địa chỉ trình duyệt.
+- Tài khoản owner: `verifier`. Mật khẩu: giá trị của `"adminPassword"`.
+- Tài khoản khác: `viewer`, `reviewer`, `operator` đều có `username` và `password` trong file.
+
+**Lưu ý:**
+
+- Không đóng cửa sổ PowerShell đang chạy stack, và không nhấn Ctrl+C trong lúc kiểm thử. Khi xong, dừng theo mục 4.
+- Nếu lệnh báo `must be outside the repository`: đổi sang thư mục khác, không nằm trong `D:\.VTNet\redteam\raptix`.
+- Nếu báo lỗi liên quan đến docker: kiểm tra Docker Desktop đã chạy (bước 1), rồi chạy lại lệnh bước 4.
+- Nếu lệnh thoát với lỗi: sao chép 10 dòng cuối trong cửa sổ PowerShell và gửi lại.
+- Nếu thư mục `hold` còn file `STOP` từ lần trước, stack sẽ dừng ngay khi vừa khởi động. Khi đó xóa file `STOP` đó, hoặc dùng hai thư mục mới (ví dụ `C:\uat-lan2\hold` và `C:\uat-lan2\out`).
+- Nếu `node` không được nhận diện: chạy `node -v`. Phải hiện số phiên bản; nếu không, cài Node.js rồi mở lại PowerShell.
 
 ## 2. Lấy thông tin đăng nhập kiểm thử an toàn
 
@@ -27,7 +61,7 @@ Dừng rồi khởi động lại (mục 4, sau đó mục 1). Mỗi lần khở
 
 ## 4. Dừng stack
 
-Tạo một file rỗng tên `STOP` trong thư mục `--hold-dir`. Terminal sẽ in các dòng dừng và trả lại dấu nhắc. Sau đó xóa `hold.json` bằng tay; stack không tự xóa file này. Kiểm tra không còn gì đang chạy:
+Tạo một file rỗng tên `STOP` trong thư mục `--hold-dir`. Trong PowerShell, chạy `New-Item C:\raptix-uat\hold\STOP`. Terminal sẽ in các dòng dừng và trả lại dấu nhắc. Sau đó xóa `hold.json` bằng tay; stack không tự xóa file này. Kiểm tra không còn gì đang chạy:
 
 ```
 docker ps --filter label=raptix.verification=stack
