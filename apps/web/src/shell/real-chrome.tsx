@@ -7,7 +7,7 @@
  * search, AI-mode preference or demo Emergency Stop are rendered.
  */
 import { useState, type ReactElement } from 'react'
-import { ChevronDown, FolderKanban, Layers, Menu as MenuIcon, PlugZap } from 'lucide-react'
+import { ChevronDown, FolderKanban, Layers, Menu as MenuIcon } from 'lucide-react'
 import { go, useRoute } from '../router/navigate'
 import { useActiveProject } from '../state/console'
 import { useProjectStore, useThemeStore, useUiStore } from '../state/stores'
@@ -15,7 +15,6 @@ import { REAL_IDENTITY } from '../state/real-identity'
 import { useSession } from '../platform/session'
 import { HeaderNotices } from '../features/notices/header-notices'
 import { RealSearch } from './real-search'
-import { switchDataMode } from '../state/mode'
 import { ProjectSwitcher } from './project-switcher'
 import { RealProjectCreateDialog } from '../features/projects/views/create-page'
 import { Avatar, Button, IconButton, Segmented, cx } from '../ui'
@@ -51,10 +50,6 @@ function RealProfileMenu(): ReactElement {
             </div>
             <div className="my-2 border-t border-line" />
             {session && <button role="menuitem" className={item} onClick={() => { setOpen(false); go('login') }}>Account / sign out</button>}
-            <button role="menuitem" className={item} onClick={() => { setOpen(false); switchDataMode('mock') }}>
-              <PlugZap size={15} aria-hidden />Switch to demo mode
-            </button>
-            <p className="px-3 pb-2 pt-1 text-xs text-neutral">Demo mode shows simulated data. Switching modes reloads the console.</p>
           </div>
         </>
       )}
