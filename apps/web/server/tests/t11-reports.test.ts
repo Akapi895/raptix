@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
+import { configureSingleOperator } from '../src/auth/membership-policy.js';
 import { ReportsService } from '../src/services/reports-service.js';
 
 /**
@@ -320,6 +321,28 @@ describe('ticket 11 report lifecycle and delivery', () => {
     const oldRow = original.reports.find((r: { id: string }) => r.id === id);
     expect(oldRow.status).toBe('delivered');
     expect(oldRow.approvedVersion).toBe(v);
+  });
+
+  it('keeps the author out of the named reviewer seat by default, and seats them on a single-operator deployment (ADR-0100)', async () => {
+    const { db, app, author } = await setup();
+    const authorId = String([...db.tables.get('webUser')!.values()].find((row) => row.username === 'author')!.id);
+    const headers = { cookie: author.cookie, 'x-csrf-token': author.csrf };
+    const created = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records`, headers, payload: { title: 'Solo report' } });
+    const id = created.json().id as string;
+    const refused = await app.inject({ method: 'PATCH', url: `/api/engagements/${ENG}/report-records/${id}/setup`, headers, payload: { expectedVersion: 1, reviewerId: authorId } });
+    expect(refused.statusCode).toBe(400);
+    expect(refused.json().error.message).toContain('must differ from the report author');
+    configureSingleOperator(true);
+    try {
+      const v = await makeReady(app, author, authorId, id);
+      const submitted = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers, payload: { action: 'submit' } });
+      expect(submitted.statusCode).toBe(200);
+      const approved = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/review`, headers, payload: { decision: 'approved', comment: 'Single-operator review.', expectedVersion: v } });
+      expect(approved.statusCode).toBe(200);
+      expect(approved.json().status).toBe('approved');
+    } finally {
+      configureSingleOperator(false);
+    }
   });
 
   it('answers 404 for foreign reports and engagements', async () => {

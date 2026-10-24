@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { renderReportDocx, renderReportPdf } from './report-render.js';
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
-import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import { isSingleOperator, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 import { assertEngagementOpen } from './closure-service.js';
 
 /**
@@ -326,9 +326,8 @@ export class ReportsService {
         data.reviewerId = null;
       } else {
         if (typeof body.reviewerId !== 'string' || body.reviewerId.length === 0) throw new ProjectApiError(400, 'reviewerId must be a member identity or null.');
-        if (body.reviewerId === row.createdBy) throw new ProjectApiError(400, 'The named reviewer must differ from the report author.');
-        const membership = await this.db.webMembership.findUnique({ where: { engagementId_userId: { engagementId, userId: body.reviewerId } } });
-        if (membership === null || (membership.role !== 'owner' && membership.role !== 'reviewer')) {
+        if (!isSingleOperator() && body.reviewerId === row.createdBy) throw new ProjectApiError(400, 'The named reviewer must differ from the report author.');
+        if (!(await this.eligibleReviewer(engagementId, body.reviewerId))) {
           throw new ProjectApiError(400, 'The named reviewer must be an engagement member with the owner or reviewer role.');
         }
         data.reviewerId = body.reviewerId;
@@ -726,11 +725,20 @@ export class ReportsService {
   private async reviewerCheck(row: ReportRecord): Promise<ReportReadinessCheck> {
     const label = 'Named reviewer';
     if (!row.reviewerId) return { id: 'reviewer', label, state: 'fail', detail: 'Assign a named reviewer.' };
-    if (row.reviewerId === row.createdBy) return { id: 'reviewer', label, state: 'fail', detail: 'The named reviewer must differ from the report author.' };
-    const membership = await this.db.webMembership.findUnique({ where: { engagementId_userId: { engagementId: row.engagementId, userId: row.reviewerId } } });
-    if (membership === null) return { id: 'reviewer', label, state: 'fail', detail: 'The named reviewer is no longer a member of this engagement.' };
-    if (membership.role !== 'owner' && membership.role !== 'reviewer') return { id: 'reviewer', label, state: 'fail', detail: 'The named reviewer no longer has a reviewer role.' };
-    return { id: 'reviewer', label, state: 'pass', detail: 'The named reviewer is an eligible member other than the author.' };
+    if (!isSingleOperator() && row.reviewerId === row.createdBy) return { id: 'reviewer', label, state: 'fail', detail: 'The named reviewer must differ from the report author.' };
+    if (!(await this.eligibleReviewer(row.engagementId, row.reviewerId))) return { id: 'reviewer', label, state: 'fail', detail: 'The named reviewer no longer has a reviewer role in this engagement.' };
+    return { id: 'reviewer', label, state: 'pass', detail: 'The named reviewer is an eligible member of this engagement.' };
+  }
+
+  /**
+   * The engagement owner holds the owner role by ownership and has no membership row, so the owner is eligible as well as
+   * members with the owner or reviewer role.
+   */
+  private async eligibleReviewer(engagementId: string, userId: string): Promise<boolean> {
+    const engagement = await this.db.engagement.findFirst({ where: { id: engagementId }, select: { userId: true } });
+    if (engagement?.userId === userId) return true;
+    const membership = await this.db.webMembership.findUnique({ where: { engagementId_userId: { engagementId, userId } } });
+    return membership !== null && (membership.role === 'owner' || membership.role === 'reviewer');
   }
 
   private async toBase(row: ReportRecord): Promise<Omit<ReportView, 'selectedFindings' | 'readiness' | 'deliveries'>> {
