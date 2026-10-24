@@ -9,9 +9,9 @@ import { go } from '../../router/navigate'
 const SEV_STYLE: Record<string, { edge: string; stat: string; text: string; soft: string; fill: string }> = {
   critical: { edge: 'border-l-[#dc3545]', stat: 'text-[#dc2626]', text: 'text-[#dc3545]', soft: 'bg-[rgba(220,53,69,0.1)]', fill: 'bg-[#f87171]' },
   high: { edge: 'border-l-[#fd7e14]', stat: 'text-[#ea580c]', text: 'text-[#fd7e14]', soft: 'bg-[rgba(253,126,20,0.1)]', fill: 'bg-[#fb923c]' },
-  medium: { edge: 'border-l-[#ffc107]', stat: 'text-[#ca8a04]', text: 'text-[#b45309]', soft: 'bg-[rgba(255,193,7,0.12)]', fill: 'bg-[#facc15]' },
+  medium: { edge: 'border-l-[#ffc107]', stat: 'text-warn', text: 'text-warn-text', soft: 'bg-[rgba(255,193,7,0.12)]', fill: 'bg-[#facc15]' },
   low: { edge: 'border-l-[#20c997]', stat: 'text-[#0f766e]', text: 'text-[#0f766e]', soft: 'bg-[rgba(32,201,151,0.1)]', fill: 'bg-[#2dd4bf]' },
-  info: { edge: 'border-l-[#6c757d]', stat: 'text-[#2563eb]', text: 'text-[#475569]', soft: 'bg-[rgba(108,117,125,0.12)]', fill: 'bg-[#60a5fa]' },
+  info: { edge: 'border-l-[#6c757d]', stat: 'text-[#2563eb]', text: 'text-muted', soft: 'bg-[rgba(108,117,125,0.12)]', fill: 'bg-[#60a5fa]' },
 }
 
 const STATUS_OPTIONS: { id: string; label: string }[] = [
