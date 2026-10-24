@@ -53,7 +53,7 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
     : () => notIntegratedService<FindingService>('Findings')
   const reports: FeatureServices['reports'] = supported('reports')
     ? (() => {
-        const service = createRealReportService()
+        const service = createRealReportService(capabilities.independentReview !== 'single-operator')
         return () => service
       })()
     : () => notIntegratedService<ReportService>('Reports')

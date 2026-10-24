@@ -57,6 +57,7 @@ const api_aichat = await import('../aichat/remote');
 const { ApiTransportError } = await import('../../platform/transport')
 const { RealFeatureServicesCtx } = await import('../../state/real-services-provider')
 const { SessionContext } = await import('../../platform/session')
+const { RealContext } = await import('../../state/real-context')
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { GovernanceTab } = await import('./tab')
 
@@ -87,15 +88,18 @@ function plan(overrides: Record<string, unknown>) {
   }
 }
 
-function renderTab() {
+function renderTab(independentReview: 'required' | 'single-operator' = 'required') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const services = createRealFeatureServices(CAPABILITIES)
   const session = { session: { actor: { id: 'u-reviewer', username: 'reviewer', displayName: 'Reviewer' } } as never, pending: false, error: null, retry: () => {} }
+  const real = { document: { version: 1, mode: 'multi-user', capabilities: {}, independentReview } as never, identity: {} as never }
   const wrapper = ({ children }: { children: ReactNode }): ReactElement => (
     <QueryClientProvider client={client}>
-      <SessionContext.Provider value={session}>
-        <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
-      </SessionContext.Provider>
+      <RealContext.Provider value={real}>
+        <SessionContext.Provider value={session}>
+          <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
+        </SessionContext.Provider>
+      </RealContext.Provider>
     </QueryClientProvider>
   )
   return render(<GovernanceTab engagementId="eng-1" />, { wrapper })
@@ -205,5 +209,17 @@ describe('GovernanceTab plan decisions (W09 independent, version-pinned)', () =>
     renderTab()
     expect(await screen.findByText('You wrote this plan; an independent reviewer decides it.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull()
+  })
+
+  it('lets the author approve their own proposed plan on a single-operator deployment (ADR-0100)', async () => {
+    membership.role = 'reviewer'
+    vi.mocked(api_governance.fetchPlans).mockResolvedValue({
+      engagementId: 'eng-1', source: 'db', deadlineHours: 24, latestApprovedScopeVersion: 2,
+      plans: [plan({ id: 'plan-9', version: 3, status: 'proposed', requestedBy: 'u-reviewer', expiresAt: null })],
+    } as never)
+    vi.mocked(api_governance.decidePlan).mockResolvedValue(plan({ id: 'plan-9', version: 3, status: 'approved', decidedBy: 'u-reviewer' }) as never)
+    renderTab('single-operator')
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve' }))
+    await waitFor(() => expect(api_governance.decidePlan).toHaveBeenCalledWith('eng-1', 'plan-9', 'approved', 3))
   })
 })

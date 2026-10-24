@@ -153,7 +153,7 @@ function parsePeriod(text: string): { start: string; end: string } | null {
  */
 const REAL_CAPABILITIES: ReportCapabilities = { noFindingsVariant: false, simulatedEditorHelpers: false, simulatedDraftRules: false, periodStyle: 'iso', artifactDownloads: true, revision: true, storedTemplates: true }
 
-export function createRealReportService(): ReportService {
+export function createRealReportService(independentReviewRequired = true): ReportService {
   return {
     capabilities: REAL_CAPABILITIES,
     list: (ctx, query: ReportListQuery = {}) => guarded(async () => {
@@ -277,7 +277,8 @@ export function createRealReportService(): ReportService {
       if (!view) return notFound<ReportReviewRead>(id)
       // The stored ids are the account ids the server issued; the console name is not one, so the signed-in account is read from the session.
       const actorId = (await fetchAuthSession())?.actor?.id ?? ctx.actor.id
-      const isAuthor = view.createdBy === actorId
+      // On a single-operator deployment the author may decide the review (ADR-0100); the server applies the same rule.
+      const isAuthor = independentReviewRequired && view.createdBy === actorId
       const reviewerRole = REVIEW_ROLES.includes(ctx.actor.role)
       const namedOk = view.reviewerId === null || view.reviewerId === actorId
       const data: ReportReviewRead = {

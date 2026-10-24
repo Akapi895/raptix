@@ -82,8 +82,9 @@ function FindingDetailBody() {
   const ro = readOnly(f.projectId)
   const reviewer = can('reviewFinding', f.projectId)
   const author = can('createFinding', f.projectId)
-  // Four-eyes: the author cannot decide its own review. The server enforces it; the control says so before the click.
-  const selfReview = persistentFindings && identity.trustedActorId !== null && f.owner === identity.trustedActorId
+  // Four-eyes: the author cannot decide its own review unless the deployment is single-operator (ADR-0100). The server
+  // enforces the rule; the control says so before the click.
+  const selfReview = persistentFindings && identity.independentReviewRequired && identity.trustedActorId !== null && f.owner === identity.trustedActorId
   const proj = data.project
   const op = data.operation
   const step = data.step

@@ -12,6 +12,7 @@ import { ClipboardCheck, GitCompareArrows, Loader2, ShieldCheck } from 'lucide-r
 import { utcMinuteOr } from '../../platform/format'
 import { useSession } from '../../platform/session'
 import { useMe } from '../../state/console'
+import { useIndependentReviewRequired } from '../../state/real-context'
 import { Button, Card, CardHeader, Empty, Select, Skeleton, Status, Textarea } from '../../ui/index'
 import { SchedulesCard } from './schedules'
 import { StopsCard } from './stops'
@@ -100,8 +101,9 @@ function PlansCard({ engagementId, plans, deadlineHours, onRevise }: { engagemen
 
   const me = useMe()
   const actorId = useSession().session?.actor?.id
+  const independentReview = useIndependentReviewRequired()
   const canWrite = WRITE_ROLES.includes(me.role)
-  const canDecide = (plan: GovernancePlan): boolean => DECIDE_ROLES.includes(me.role) && plan.requestedBy !== actorId
+  const canDecide = (plan: GovernancePlan): boolean => DECIDE_ROLES.includes(me.role) && (!independentReview || plan.requestedBy !== actorId)
 
   return (
     <Card>
