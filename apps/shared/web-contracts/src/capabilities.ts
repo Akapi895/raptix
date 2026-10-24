@@ -29,6 +29,11 @@ export interface CapabilitiesDocument {
   mode: string
   /** Stable, non-secret installation identity; absent on older servers. */
   deploymentId?: string
+  /**
+   * Who may decide a workflow item. `required` keeps the four-eyes rule (the author never decides their own item);
+   * `single-operator` lets the same person decide it (ADR-0100). Absent on older servers, which mean `required`.
+   */
+  independentReview?: 'required' | 'single-operator'
   capabilities: Record<string, Capability>
 }
 
@@ -39,6 +44,7 @@ export function isCapabilitiesDocument(value: unknown): value is CapabilitiesDoc
   }
   if (!isNonEmptyString(value.mode)) return false
   if (value.deploymentId !== undefined && (typeof value.deploymentId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value.deploymentId))) return false
+  if (value.independentReview !== undefined && value.independentReview !== 'required' && value.independentReview !== 'single-operator') return false
   if (!isRecord(value.capabilities)) return false
   return Object.values(value.capabilities).every(isCapability)
 }
