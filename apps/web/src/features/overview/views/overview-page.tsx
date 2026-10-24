@@ -115,12 +115,20 @@ export function OverviewPage(): ReactElement {
         </SourceState>
       </Panel>
 
-      <Panel title="Severity distribution" sub="Curated findings across your accessible projects, by severity. The findings page holds the full list."
-          action={<button type="button" onClick={() => go('findings')} className="text-sm font-medium text-primary hover:underline">View all →</button>}>
-        <SourceState label="The findings rollup" pending={findings.isPending} error={error(findings)} onRetry={() => void findings.refetch()}>
-          {findings.data && <SeverityBlock view={findings.data} />}
-        </SourceState>
-      </Panel>
+      {/* Progressive disclosure: the findings page owns the full severity analysis, so this detail stays one click away. */}
+      <details className="group rounded-xl border border-line bg-panel">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-semibold">
+          <span>Severity distribution and risk</span>
+          <span className="text-xs font-normal text-muted group-open:hidden">Show the breakdown</span>
+          <span className="hidden text-xs font-normal text-muted group-open:inline">Hide the breakdown</span>
+        </summary>
+        <div className="space-y-3 border-t border-line p-4">
+          <SourceState label="The findings rollup" pending={findings.isPending} error={error(findings)} onRetry={() => void findings.refetch()}>
+            {findings.data && <SeverityBlock view={findings.data} />}
+          </SourceState>
+          <button type="button" onClick={() => go('findings')} className="text-sm font-medium text-primary hover:underline">Open the findings list →</button>
+        </div>
+      </details>
 
       <p className="text-xs text-muted">Reads cover only the projects your account owns or holds a membership on. A source that is unavailable says so instead of showing zeros.</p>
     </div>

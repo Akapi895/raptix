@@ -15,14 +15,16 @@ import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status } from
 import { CommandTable } from './provider-console'
 import { C2SessionsWorkspace } from './session-workspace'
 import { messageOf, useProviderCommands, useProviderSurface, useProviderWrites } from './provider-query'
+import { c2WorkspaceView } from './workspace/view'
 
 export function C2ProviderTab({ engagementId }: { engagementId: string }): ReactElement {
-  const route = useRoute()
   // A detail route consumes the resource id from the URL; unknown or foreign ids never render the full console.
-  if (route.page === 'c2-session' && route.id) return <SessionDetail engagementId={engagementId} sessionId={route.id} />
-  if (route.page === 'c2-channel' && route.id) return <ChannelDetail engagementId={engagementId} transport={route.id} />
+  const view = c2WorkspaceView(useRoute())
+  if (view.kind === 'session') return <SessionDetail engagementId={engagementId} sessionId={view.sessionId} />
+  if (view.kind === 'channel') return <ChannelDetail engagementId={engagementId} transport={view.transport} />
   return (
     <div className="space-y-4">
+      {view.kind === 'console' && <Banner tone="info" title="No interactive console in this build">Session commands run only under an approved grant. The sessions below show what is connected and which access you hold.</Banner>}
       <C2SessionsWorkspace engagementId={engagementId} />
       <InfrastructureCard engagementId={engagementId} />
     </div>
