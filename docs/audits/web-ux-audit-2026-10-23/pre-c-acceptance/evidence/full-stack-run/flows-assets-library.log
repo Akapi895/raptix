@@ -1,0 +1,27 @@
+PASS capabilities [expect ok, got ok] :: {"scopeApprovalRequests":false,"observedGraph":true,"simulated":false}
+PASS list (first page) [expect ok, got ok] :: {items,page,pageSize,total,kpis,owners,types,sources,oses,observation} | total 2, 2 on the page
+PASS get (the seeded host) [expect ok, got ok] :: {asset,project,operations,findings,evidence,agents,approvals,techniques,history,canViewSensitive,unmodelled} | scope in
+PASS scope (map rows) [expect ok, got ok] :: {unmodelled,rows,projects,accessibleCount} | 2 rows for 2 assets
+PASS observedGraph [expect ok, got ok] :: {nodes,edges,truncated} | 0 nodes, 0 edges
+PASS importRows (new host) [expect ok, got ok] :: {added} | added 1, total 2 -> 3
+PASS imported host is listed as pending [expect ok, got ok] :: scope pending
+PASS importRows (same host again, nothing added) [expect ok, got ok] :: {added} | added 0, total 3
+PASS importRows (unknown type refused, nothing stored) [expect refused, got refused] :: validation: Row 1: the Mobile type is not stored by the real asset inventory. | total 3 -> 3
+PASS importRows (empty batch refused, nothing stored) [expect refused, got refused] :: validation: Add at least one asset to import. | total 3 -> 3
+PASS changeScope (to in, no approved revision): refused, scope stays pending [expect refused, got refused] :: conflict: Marking stack-host-mvltzfsf.verify.example.test in scope requires an approved scope revision that adds it; newly added targets stay pending. | scope pending
+PASS changeScope (unclassified): refused, scope stays pending [expect refused, got refused] :: validation: An asset can only be set to in scope, out of scope or pending. | scope pending
+PASS requestScopeApproval (real mode refuses, nothing raised) [expect refused, got refused] :: unavailable: Scope change requests are raised from the Scope revisions panel in real mode.
+PASS corpus [expect ok, got ok] :: {items,page,pageSize,total,counts,subdomains,techniquesCovered,excludedActions}
+PASS skill [expect ok, got ok] :: {name,description,subdomain,mitreIds,whenToUse,path,body,contentSha256,commitSha,allowedTools,publication}
+PASS technique [expect ok, got ok] :: {id,name,description,url,skills}
+PASS proposals [expect ok, got ok] :: {items,counts}
+PASS proposal [expect ok, got ok] :: {id,projectId,skillName,skillPath,baseRevision,status,version,proposedBody,baseBody,rationale,createdBy,createdAt}
+PASS amend (author, draft) [expect ok, got ok] :: {id,projectId,skillName,skillPath,baseRevision,status,version,proposedBody,baseBody,rationale,createdBy,createdAt}
+PASS propose (draft to proposed) [expect ok, got ok] :: {id,projectId,skillName,skillPath,baseRevision,status,version,proposedBody,baseBody,rationale,createdBy,createdAt}
+PASS decide (author refused) [expect refused, got refused] :: forbidden: The library proposal decision requires an independent actor: cmvlttfud00005gfi2koyxwr2 submitted this item and cannot decide it.
+PASS decide (reviewer approves) [expect ok, got ok] :: status approved
+PASS export (approved proposal) [expect ok, got ok] :: status undefined
+PASS export (author reads the approved proposal) [expect ok, got ok] :: status exported
+PASS amend (approved proposal refused) [expect refused, got refused] :: conflict: Concurrent edit: the proposal moved to version 2 while you edited version 99.
+PASS submit (new draft for the same skill) [expect ok, got ok] :: status draft
+assets and library checklist: 26 of 26 operations matched their expectation

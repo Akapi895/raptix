@@ -1,0 +1,44 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:18:15.681Z",
+  "steps": [
+    {
+      "step": "the operations list shows the project operations",
+      "matches": true,
+      "detail": "heading shown; OP-014 listed"
+    },
+    {
+      "step": "a row opens the operation detail with its own name",
+      "matches": true,
+      "detail": "operation name shown; operation id shown"
+    },
+    {
+      "step": "the same operation under another project is refused with the reason and no detail",
+      "matches": true,
+      "detail": "refusal with the reason shown; no operation detail shown"
+    },
+    {
+      "step": "pausing a running operation with a reason reports the pause and offers Resume",
+      "matches": true,
+      "detail": "pause reported; Resume offered"
+    },
+    {
+      "step": "resuming the paused operation rechecks it and reports it resumed",
+      "matches": true,
+      "detail": "resume reported; Pause offered again"
+    },
+    {
+      "step": "stopping the operation with a reason reports the stop and then that it stopped",
+      "matches": true,
+      "detail": "stop requested reported; operation stopped reported"
+    },
+    {
+      "step": "a viewer sees the pause control locked with its reason and gets no dialog or success report",
+      "matches": true,
+      "detail": "Pause locked; reason shown; no dialog; no success report"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

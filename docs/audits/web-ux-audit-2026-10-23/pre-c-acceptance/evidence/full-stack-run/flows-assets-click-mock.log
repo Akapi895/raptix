@@ -1,0 +1,6 @@
+PASS add asset through the form shows the saved banner :: banner shown
+PASS the added asset is listed with its identifier :: click-host-mvltwadg.verify.example.test in the list
+PASS the request control is enabled for the manager with a pending asset :: enabled once the scope loaded
+PASS the mock request reports the existing pending scope request instead of success :: toast "✓ Asset click-host-mvltwadg saved as pending review. ! RT-2026-014 already has a pending “Scope change” request. Wait for its decision or withdraw it first."
+PASS a role without editScope finds the request control disabled, with its reason on the screen :: disabled; reason shown
+assets click-through (mock): 5 of 5 steps matched

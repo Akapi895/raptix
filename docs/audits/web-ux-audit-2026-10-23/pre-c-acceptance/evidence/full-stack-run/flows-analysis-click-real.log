@@ -1,0 +1,3 @@
+PASS the analysis of the project shows its observed coverage or an explicit missing-source state :: explicit missing-source state shown; source named
+PASS an unknown project is refused: the analysis is unavailable and nothing is inferred :: unavailable state with the reason; no coverage shown
+analysis click-through (real): 2 of 2 steps matched

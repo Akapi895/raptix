@@ -1,0 +1,6 @@
+PASS add asset through the form shows the saved banner :: banner shown
+PASS the added asset is listed with its identifier :: click-host-mvltyby1.verify.example.test in the list
+PASS the request control is enabled for the manager with a pending asset :: enabled once the scope loaded
+PASS the real request is redirected to the Scope revisions panel, with no dialog :: redirect message shown, 0 dialogs
+PASS a role without editScope finds the request control disabled, with its reason on the screen :: disabled; reason shown
+assets click-through (real): 5 of 5 steps matched

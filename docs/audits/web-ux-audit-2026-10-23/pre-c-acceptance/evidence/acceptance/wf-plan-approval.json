@@ -1,0 +1,46 @@
+{
+ "workflow": "WF-04 business plan approval",
+ "generatedAt": "2026-10-24T03:22:49.924Z",
+ "counts": {
+  "PASS": 5
+ },
+ "results": [
+  {
+   "id": "operator drafts a plan through the form and sees it as draft",
+   "workflow": "WF-04 business plan approval",
+   "status": "PASS",
+   "detail": "row shows draft: true; database status draft",
+   "evidence": null
+  },
+  {
+   "id": "operator proposes the plan; the row and the database show proposed",
+   "workflow": "WF-04 business plan approval",
+   "status": "PASS",
+   "detail": "database status proposed after reload",
+   "evidence": null
+  },
+  {
+   "id": "the author cannot approve their own proposal (the control is absent or refused, and nothing changes)",
+   "workflow": "WF-04 business plan approval",
+   "status": "PASS",
+   "detail": "no approve control for the author; database proposed",
+   "evidence": null
+  },
+  {
+   "id": "an independent reviewer approves the plan and the database records approved",
+   "workflow": "WF-04 business plan approval",
+   "status": "PASS",
+   "detail": "database status approved; decidedBy recorded: true",
+   "evidence": null
+  },
+  {
+   "id": "a viewer reads the approved plan and has no approve, reject or propose control",
+   "workflow": "WF-04 business plan approval",
+   "status": "PASS",
+   "detail": "shows approved: true; decision controls: 0; Revise control visible: false",
+   "evidence": {
+    "reviseVisibleToViewer": false
+   }
+  }
+ ]
+}

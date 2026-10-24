@@ -1,0 +1,8 @@
+PASS the operations list shows the project operations :: heading shown; OP-014 listed
+PASS a row opens the operation detail with its own name :: operation name shown; operation id shown
+PASS the same operation under another project is refused with the reason and no detail :: refusal with the reason shown; no operation detail shown
+PASS pausing a running operation with a reason reports the pause and offers Resume :: pause reported; Resume offered
+PASS resuming the paused operation rechecks it and reports it resumed :: resume reported; Pause offered again
+PASS stopping the operation with a reason reports the stop and then that it stopped :: stop requested reported; operation stopped reported
+PASS a viewer sees the pause control locked with its reason and gets no dialog or success report :: Pause locked; reason shown; no dialog; no success report
+operations click-through (mock): 7 of 7 steps matched

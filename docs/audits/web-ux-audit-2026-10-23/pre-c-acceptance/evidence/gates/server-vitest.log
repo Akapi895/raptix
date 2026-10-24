@@ -1,0 +1,172 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mD:/.VTNet/redteam/raptix/apps/web/server[39m
+
+ [32m✓[39m tests/asset-domain-mapping.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 446[2mms[22m[39m
+ [32m✓[39m tests/w17-campaigns.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 490[2mms[22m[39m
+   [33m[2m✓[22m[39m W17 campaign drafts[2m > [22mcreates and lists persisted drafts with valid DTOs [33m 418[2mms[22m[39m
+ [32m✓[39m tests/asset-domain-details.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 707[2mms[22m[39m
+ [32m✓[39m tests/w14-logs-reports.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 571[2mms[22m[39m
+   [33m[2m✓[22m[39m W14 operations timeline[2m > [22mmerges runtime, checkpoint and workspace entries with distinct labels, newest first [33m 426[2mms[22m[39m
+ [32m✓[39m tests/t14-library-review.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 580[2mms[22m[39m
+   [33m[2m✓[22m[39m library detail HTTP[2m > [22mreturns exact canonical body and technique description rather than a filtered list [33m 419[2mms[22m[39m
+ [32m✓[39m tests/iw09-c2.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 831[2mms[22m[39m
+   [33m[2m✓[22m[39m IW-09 C2 ownership and durable command audit[2m > [22mrefuses a grant revoked during reservation before invoking the provider [33m 468[2mms[22m[39m
+ [32m✓[39m tests/graph-service.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 870[2mms[22m[39m
+   [33m[2m✓[22m[39m W13 scoped graph projection[2m > [22mserves graph and assets routes with 503 unavailable vs 404 foreign scoping [33m 630[2mms[22m[39m
+ [32m✓[39m tests/runtime-read-client.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 941[2mms[22m[39m
+   [33m[2m✓[22m[39m discovers reachable graphs with deduplication and validates scoped thread/state identities [33m 611[2mms[22m[39m
+ [32m✓[39m tests/asset-map-projection.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 818[2mms[22m[39m
+ [32m✓[39m tests/iw08-gophish-deployment.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1084[2mms[22m[39m
+   [33m[2m✓[22m[39m IW-08 GoPhish lab dispatch and reconciliation[2m > [22mrecords accepted submission and retries without posting another campaign [33m 656[2mms[22m[39m
+ [32m✓[39m tests/projects.test.ts [2m([22m[2m62 tests[22m[2m)[22m[33m 1073[2mms[22m[39m
+   [33m[2m✓[22m[39m GET /api/engagements[2m > [22mlists projects as public view models with null projections and no field leaks [33m 443[2mms[22m[39m
+ [32m✓[39m tests/approvals-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 674[2mms[22m[39m
+   [33m[2m✓[22m[39m W11 file-backed approvals API[2m > [22mlists pending approval requests newest-first as public views without producer metadata [33m 443[2mms[22m[39m
+ [32m✓[39m tests/findings-artifacts.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1128[2mms[22m[39m
+   [33m[2m✓[22m[39m W12 findings projection[2m > [22mW01: resolves workspace contents by the global workspace slug, not the owner name [33m 435[2mms[22m[39m
+ [32m✓[39m tests/iw08-evilginx-client.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 517[2mms[22m[39m
+   [33m[2m✓[22m[39m IW-08 typed evilginx bridge client[2m > [22maccepts native lure ID zero and its scoped lab metadata [33m 413[2mms[22m[39m
+ [32m✓[39m tests/project-policy.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 246[2mms[22m[39m
+ [32m✓[39m tests/runtime-context.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 313[2mms[22m[39m
+ [32m✓[39m tests/w18-vault.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 578[2mms[22m[39m
+   [33m[2m✓[22m[39m W18 vault storage[2m > [22mstores secrets encrypted and returns redacted metadata only [33m 462[2mms[22m[39m
+ [32m✓[39m tests/bootstrap.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 627[2mms[22m[39m
+   [33m[2m✓[22m[39m publishes the configured non-secret deployment identity for browser recovery [33m 414[2mms[22m[39m
+ [32m✓[39m tests/asset-catalog.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 248[2mms[22m[39m
+ [32m✓[39m tests/console-data.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 278[2mms[22m[39m
+ [32m✓[39m tests/runtime-environment-routing.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 376[2mms[22m[39m
+ [32m✓[39m tests/execution-client.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 628[2mms[22m[39m
+   [33m[2m✓[22m[39m sends one native background create with reject policy and trusted config outside message input [33m 589[2mms[22m[39m
+ [32m✓[39m tests/adr0085-planning-handoff.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 599[2mms[22m[39m
+   [33m[2m✓[22m[39m ADR-0085 planning handoff[2m > [22mapproves the scope roe.json plans when the handoff is confirmed on a ready bundle [33m 363[2mms[22m[39m
+ [32m✓[39m tests/w19-members.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 651[2mms[22m[39m
+   [33m[2m✓[22m[39m W19 members[2m > [22mreturns the truthful local single-user view with the stated invite reason [33m 608[2mms[22m[39m
+ [32m✓[39m tests/t09-governed-lifecycle.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 673[2mms[22m[39m
+   [33m[2m✓[22m[39m revises an approved plan without changing the reviewed version and compares the persisted bodies [33m 635[2mms[22m[39m
+ [32m✓[39m tests/t13-fleet.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 1106[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 13 fleet projection[2m > [22mseparates catalog identity, thread status and checkpoint branches; counts stay observed [33m 896[2mms[22m[39m
+ [32m✓[39m tests/t14-library-analysis.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 1299[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 14 library and observed analysis[2m > [22mreads the corpus through the knowledge-graph contract and records revision-write exclusions [33m 835[2mms[22m[39m
+ [32m✓[39m tests/w15-settings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 643[2mms[22m[39m
+   [33m[2m✓[22m[39m W15 engagement settings[2m > [22mreturns the persisted view with an up-front target-change policy [33m 611[2mms[22m[39m
+ [32m✓[39m tests/thread-hitl.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 688[2mms[22m[39m
+   [33m[2m✓[22m[39m PATCH /api/engagements/:id/threads/:thread/hitl[2m > [22mreturns the thread id and the stored switch on a valid body [33m 607[2mms[22m[39m
+ [32m✓[39m tests/stream-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1139[2mms[22m[39m
+   [33m[2m✓[22m[39m authorizes each join/reconnect, forwards only upstream cursors and observes through GET without runtime cancellation [33m 992[2mms[22m[39m
+ [32m✓[39m tests/t13-c2-recovery.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 1397[2mms[22m[39m
+   [33m[2m✓[22m[39m W13 C2 recovery and audit read policy[2m > [22mhistory reads the durable ledger without a mounted provider [33m 895[2mms[22m[39m
+ [32m✓[39m tests/planning.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 1715[2mms[22m[39m
+   [33m[2m✓[22m[39m serves all missing planning states through the owned new API and hides other owners [33m 569[2mms[22m[39m
+   [33m[2m✓[22m[39m matches the eight-document handoff policy without requiring OPPLAN and blocks wrong target, name or authorization [33m 745[2mms[22m[39m
+ [32m✓[39m tests/controller-client.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+ [32m✓[39m tests/findings-artifacts-fs.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m tests/t12-accessible-assets.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+ [32m✓[39m tests/t10-accessible-findings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m tests/timeline-service.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 53[2mms[22m[39m
+ [32m✓[39m tests/instance-mailbox.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+ [32m✓[39m tests/history-projection.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m tests/runtime-instances.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m tests/w11-controls.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+ [32m✓[39m tests/stream-projection.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m tests/request-fingerprint.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/run-operations.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m tests/thread-rebind.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m tests/iw08-campaign-job-ledger.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m tests/run-policy.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/iw08-evilginx-service.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m tests/w02-run-authorization.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/t18-scheduler.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 2903[2mms[22m[39m
+   [33m[2m✓[22m[39m W11 operation schedules (durable execution intents)[2m > [22mpersists a durable intent bound to an owned execution thread and approved plan; requestId is idempotent [33m 969[2mms[22m[39m
+ [32m✓[39m tests/thread-title.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/t07-auth-members.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 3161[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 07 password/session primitives[2m > [22mverifies scrypt passwords in constant time and rejects tampered hashes [33m 328[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 07 auth boundary[2m > [22missues sessions on login and answers whoami with the trusted actor [33m 867[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 07 auth boundary[2m > [22mrefuses wrong passwords uniformly and expires/invalidates sessions [33m 339[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 07 auth boundary[2m > [22mgates every scoped API: 401 without a session, CSRF 403 on mutations, health stays public [33m 329[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 07 membership RBAC[2m > [22mlists owner plus memberships; viewer cannot invite; owner-only mutations are enforced [33m 639[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 07 membership RBAC[2m > [22mremoval deletes the membership (never the user) and every mutation is audited [33m 345[2mms[22m[39m
+ [32m✓[39m tests/c2-session-verification.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/asset-origin-identity.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/t16-settings-audit.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 3330[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 16 workspace settings, audit and C2 policy propagation[2m > [22mrefuses grant requests while the policy store cannot be read [33m 1166[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 16 workspace settings, audit and C2 policy propagation[2m > [22mW14: a readable but oversized persisted policy lowers to the enforced ceiling instead of 503 [33m 433[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 16 workspace settings, audit and C2 policy propagation[2m > [22mpersists versioned workspace settings with owner authorization, conflicts and audit [33m 481[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 16 workspace settings, audit and C2 policy propagation[2m > [22mkeeps the C2 grant policy registry inside the enforced 1-24h window [33m 415[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 16 workspace settings, audit and C2 policy propagation[2m > [22mpropagates the C2 grant policy to its consumer and survives re-reads [33m 441[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 16 workspace settings, audit and C2 policy propagation[2m > [22mprojects the authoritative audit with truthful sources and no foreign leakage [33m 389[2mms[22m[39m
+ [32m✓[39m tests/t15-inbox.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 3899[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22mconsumes the governance preflight for readiness and reports observed completion counts [33m 1036[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22mrenders readiness as explicitly unavailable without a governance service or for viewers [33m 505[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22maggregates tasks only from authorized engagements with distinct kinds and deep links [33m 430[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22mmarks the task inbox limited only when a kind reaches its row cap, so its counts read as lower bounds [33m 411[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22mnames the kinds that reached the cap, so a full stop list does not limit the decision counts [33m 440[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22mpersists per-actor notice read/dismiss state; foreign notices 404; best-effort creation never breaks decisions [33m 447[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22msummarizes findings and durable C2 activity per authorized engagements only [33m 320[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 15 command center, tasks and notices[2m > [22msummarizes operation bindings of authorized engagements only, newest first, with names and threads [33m 306[2mms[22m[39m
+ [32m✓[39m tests/t17-closure.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 3161[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 17 engagement closure[2m > [22mrefuses the request while the authoritative checklist is blocked, naming the failing sources [33m 2042[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 17 engagement closure[2m > [22mW06: pending library reviews, scheduled intents and a stopped latch block closure [33m 448[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 17 engagement closure[2m > [22mpersists request -> independent confirm with an atomic recheck, and retains state across refresh [33m 334[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 17 engagement closure[2m > [22menforces closed read-only semantics at the mutation/execution entrypoints; cancel reopens the request cycle [33m 332[2mms[22m[39m
+ [32m✓[39m tests/iw08-gophish-preparation.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 5808[2mms[22m[39m
+   [33m[2m✓[22m[39m IW-08 GoPhish asset preparation[2m > [22mreads native assets without returning recipients or SMTP credentials [33m 445[2mms[22m[39m
+   [33m[2m✓[22m[39m IW-08 GoPhish asset preparation[2m > [22mrecords a native response timeout without mutating the campaign [33m 5018[2mms[22m[39m
+ [32m✓[39m tests/document-drafts.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 4389[2mms[22m[39m
+   [33m[2m✓[22m[39m O06 document drafts[2m > [22mserves source with digest, projection and no unknown keys; missing stays digest-null [33m 1415[2mms[22m[39m
+   [33m[2m✓[22m[39m O06 document drafts[2m > [22msaves and discards drafts server-side; stale or vanished base digests answer 409 [33m 855[2mms[22m[39m
+   [33m[2m✓[22m[39m O06 document drafts[2m > [22mrefuses schema-invalid draft bodies without persisting them [33m 719[2mms[22m[39m
+   [33m[2m✓[22m[39m O06 document drafts[2m > [22mpublishes atomically, deletes the draft and refuses ROE [33m 572[2mms[22m[39m
+   [33m[2m✓[22m[39m O06 document drafts[2m > [22mgates reads to members and writes to operator+, scoped per engagement [33m 451[2mms[22m[39m
+   [33m[2m✓[22m[39m O06 document drafts[2m > [22mrecords audit entries for draft saves and publishes [33m 372[2mms[22m[39m
+ [32m✓[39m tests/t12-c2-grants.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 4718[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 12 c2 grants and authorized dispatch[2m > [22mpersists actor, session, reason and deadline; enforces roles and independent review [33m 1473[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 12 c2 grants and authorized dispatch[2m > [22mgates dispatch on a live approved grant, locks input at expiry and replays request ids [33m 858[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 12 c2 grants and authorized dispatch[2m > [22msweeps expired grants on read without a mounted console and answers 404 for foreign engagements [33m 812[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 12 c2 grants and authorized dispatch[2m > [22mW12: the grant gate consumes the live scope, ROE window and stop state before dispatch [33m 637[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 12 c2 grants and authorized dispatch[2m > [22mW12: commandPrefix is an exact binary path or a directory boundary, never a raw string prefix [33m 529[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 12 c2 grants and authorized dispatch[2m > [22mW14: exposes effective TTL bounds and safely lowers a legacy oversized policy without a 503 [33m 405[2mms[22m[39m
+ [32m✓[39m tests/t11-reports.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 4309[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 11 report lifecycle and delivery[2m > [22mexports the exact report content with a capture digest instead of an engagement export [33m 1154[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 11 report lifecycle and delivery[2m > [22mexports the reviewed report as PDF and DOCX bytes whose digest matches the content [33m 872[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 11 report lifecycle and delivery[2m > [22mcreates a draft, refuses stale edits with a conflict and preserves the stored body [33m 443[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 11 report lifecycle and delivery[2m > [22mseeds the template sections into an empty draft once and never overwrites them on a later template change [33m 350[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 11 report lifecycle and delivery[2m > [22menforces independent review with a mandatory comment and pins the version [33m 316[2mms[22m[39m
+ [32m✓[39m tests/t08-scope.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 5232[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 08 scope governance[2m > [22mW12: maps a provider session target into the approved effective scope [33m 1046[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 08 scope governance[2m > [22msubmits a pending revision with a persisted version and supersedes the previous approval at submission [33m 523[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 08 scope governance[2m > [22mrefuses self-review and requires the reviewer role for decisions [33m 417[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 08 scope governance[2m > [22mkeeps imported assets pending and requires the approved governance path to make them in scope [33m 426[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 08 scope governance[2m > [22mmakes a target named by an approved revision in scope and shows it in the effective scope [33m 441[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 08 scope governance[2m > [22mADR-0085: a single operator confirms the planner scope into an approved revision, while a second member keeps the independent review [33m 404[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 08 scope governance[2m > [22manswers 404 for foreign engagements and rejects malformed ROE windows [33m 308[2mms[22m[39m
+ [32m✓[39m tests/t09-governance.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 6700[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mrechecks a bound approval at dispatch after its absolute deadline [33m 1133[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mallows execution after a confirmed planning handoff without a business plan, and refuses it before the handoff [33m 423[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mruns the four-eyes plan lifecycle: draft -> propose (pins scope) -> independent approve with 24h deadline [33m 408[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mbinds an approved plan after preflight passes, and refuses an expired approval (-1s) [33m 430[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22minvalidates the scope pin: a superseded ROE version refuses the bind until re-review [33m 473[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mrecords truthful emergency-stop outcomes and refuses work while a stop is active [33m 389[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mW08: the playbook check ties the OPPLAN objective to the selected thread binding [33m 348[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mW08: the assistant readiness check reports the catalog execution role separately from the runtime [33m 314[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 09 governed plans and operation controls[2m > [22mpreflight fails honestly while no approved ROE exists and passes after governance [33m 327[2mms[22m[39m
+ [32m✓[39m tests/t10-findings-workflow.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 9951[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mcreates an authored draft, imports with producer lineage and refuses viewer writes [33m 1255[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22menforces the transition map, version-pinned transitions and independent confirmation [33m 660[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mP05: editing a confirmed finding invalidates confirmation and resolution requires classified retest evidence [33m 638[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mimporting a producer finding imports the workspace evidence the agent wrote and attaches it [33m 575[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mW19: import resolves the producer reference through the retained authority and flags unverified claims [33m 503[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mreplaying a draft import attaches workspace evidence written after the first import [33m 407[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mreplays an import for the same producer path and digest, but refuses changed bytes [33m 319[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mconcurrent retries for one producer path return the single committed draft [33m 319[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mrejects stale expectedVersion writes with a conflict and preserves the row [33m 326[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mP05: a Partial retest returns to remediation, and Resolved is refused without the retest stage or evidence [33m 322[2mms[22m[39m
+   [33m[2m✓[22m[39m ticket 10 finding lifecycle and evidence[2m > [22mbinds only managed in-engagement assets and owned execution identities [33m 307[2mms[22m[39m
+   [33m[2m✓[22m[39m reproduction package contract[2m > [22mrefuses a capture of another engagement, a digest that moved, and malformed steps [33m 382[2mms[22m[39m
+   [33m[2m✓[22m[39m reproduction package contract[2m > [22mshows a sensitive capture by name only to owners and reviewers, and follows its current classification [33m 563[2mms[22m[39m
+   [33m[2m✓[22m[39m reproduction package contract[2m > [22mclears the stored package when an update sends an explicit null, and keeps it when the key is absent [33m 544[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m64 passed[39m[22m[90m (64)[39m
+[2m      Tests [22m [1m[32m623 passed[39m[22m[90m (623)[39m
+[2m   Start at [22m 10:27:57
+[2m   Duration [22m 14.97s[2m (transform 10.89s, setup 0ms, collect 112.07s, tests 82.20s, environment 28ms, prepare 19.03s)[22m
+

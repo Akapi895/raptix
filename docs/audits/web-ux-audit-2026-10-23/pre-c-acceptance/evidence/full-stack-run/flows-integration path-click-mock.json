@@ -1,0 +1,129 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:18:39.294Z",
+  "steps": [
+    {
+      "step": "the projects portfolio lists the fixture project",
+      "matches": true,
+      "detail": "heading shown; project listed"
+    },
+    {
+      "step": "opening the project shows its overview with the same identity",
+      "matches": true,
+      "detail": "project route; project identity shown; no other project id in main"
+    },
+    {
+      "step": "the AI Operator keeps the project identity",
+      "matches": true,
+      "detail": "AI Operator shown; project identity shown; no other project id in main"
+    },
+    {
+      "step": "the operations of the project keep the identity and list its operation",
+      "matches": true,
+      "detail": "heading shown; OP-014 listed; no other project id in main"
+    },
+    {
+      "step": "a finding opens with its project and its evidence tab",
+      "matches": true,
+      "detail": "summary tab shown; evidence tab shown; project identity shown"
+    },
+    {
+      "step": "the evidence tab of the finding opens the evidence of the project",
+      "matches": true,
+      "detail": "evidence rows shown; project identity shown; no other project id in main"
+    },
+    {
+      "step": "the reports of the project keep the identity",
+      "matches": true,
+      "detail": "heading shown; project identity shown; no other project id in main"
+    },
+    {
+      "step": "browser back returns to the evidence screen with the same project",
+      "matches": true,
+      "detail": "back on the evidence screen; project identity shown; no other project id in main"
+    },
+    {
+      "step": "operations list at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "9 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "operation console at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "53 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "agents list at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "18 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "agent detail at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "16 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "infrastructure agents tab at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "26 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "tasks inbox at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "27 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "finding detail at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "11 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "reports at phone width: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "9 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "operations list at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "9 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "operation console at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "53 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "agents list at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "20 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "agent detail at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "16 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "infrastructure agents tab at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "29 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "tasks inbox at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "27 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "finding detail at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "11 controls checked; overflow 0px; no problems"
+    },
+    {
+      "step": "reports at dark theme: no horizontal overflow, controls inside and uncovered, control text readable",
+      "matches": true,
+      "detail": "9 controls checked; overflow 0px; no problems"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

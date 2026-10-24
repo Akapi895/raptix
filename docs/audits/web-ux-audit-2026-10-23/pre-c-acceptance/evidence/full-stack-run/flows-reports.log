@@ -1,0 +1,28 @@
+PASS capabilities :: {"noFindingsVariant":false,"simulatedEditorHelpers":false,"simulatedDraftRules":false,"periodStyle":"iso","artifactDownloads":true,"revision":true,"storedTemplates":true}
+PASS list :: {items,page,pageSize,total,counts,projects,templates,authors}
+PASS templates :: array(1)
+PASS deliveries :: {items,page,pageSize,total}
+PASS draftOptions :: {projectId,templates,findings,reviewers,canCreate,createReason,confirmedCount}
+PASS editor (fixture report) :: {report,project,canEdit,editReason,findings,linked}
+PASS review (fixture report) :: {report,project,checks,linked,exports,gates}
+PASS createTemplate :: {id,name,kind,version,owner,status,lang,updated,sections}
+PASS templates (after createTemplate) :: array(2)
+PASS createDraft :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS editor (new draft) :: {report,project,canEdit,editReason,findings,linked}
+PASS saveSection (Summary) :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS saveSection (Scope and method) :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS saveSection (Findings) :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS addSection :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS removeSection :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS reorderSections :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS setFindings (confirmed finding) :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS submit :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}
+PASS review (in review) :: {report,project,checks,linked,exports,gates}
+PASS decide (approve, reviewer) :: approved
+PASS exportVersion (PDF) :: {report,rec,artifact}
+PASS exportArtifact (markdown) :: {filename,mediaType,content,encoding,digest}
+PASS deliver :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt}
+PASS deliveries (after deliver) :: {items,page,pageSize,total}
+PASS acknowledge :: {id,reportId,version,format,by,at,recipient,status,checksum,ackAt}
+PASS revise :: {id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt}
+reports checklist: 27 of 27 operations succeeded

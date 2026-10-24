@@ -1,0 +1,25 @@
+PASS the projects portfolio lists the fixture project :: heading shown; project listed
+PASS opening the project shows its overview with the same identity :: project route; project identity shown; no other project id in main
+PASS the AI Operator keeps the project identity :: AI Operator shown; project identity shown; no other project id in main
+PASS the operations of the project keep the identity and list its operation :: heading shown; OP-014 listed; no other project id in main
+PASS a finding opens with its project and its evidence tab :: summary tab shown; evidence tab shown; project identity shown
+PASS the evidence tab of the finding opens the evidence of the project :: evidence rows shown; project identity shown; no other project id in main
+PASS the reports of the project keep the identity :: heading shown; project identity shown; no other project id in main
+PASS browser back returns to the evidence screen with the same project :: back on the evidence screen; project identity shown; no other project id in main
+PASS operations list at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 9 controls checked; overflow 0px; no problems
+PASS operation console at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 53 controls checked; overflow 0px; no problems
+PASS agents list at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 18 controls checked; overflow 0px; no problems
+PASS agent detail at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 16 controls checked; overflow 0px; no problems
+PASS infrastructure agents tab at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 26 controls checked; overflow 0px; no problems
+PASS tasks inbox at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 27 controls checked; overflow 0px; no problems
+PASS finding detail at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 11 controls checked; overflow 0px; no problems
+PASS reports at phone width: no horizontal overflow, controls inside and uncovered, control text readable :: 9 controls checked; overflow 0px; no problems
+PASS operations list at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 9 controls checked; overflow 0px; no problems
+PASS operation console at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 53 controls checked; overflow 0px; no problems
+PASS agents list at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 20 controls checked; overflow 0px; no problems
+PASS agent detail at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 16 controls checked; overflow 0px; no problems
+PASS infrastructure agents tab at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 29 controls checked; overflow 0px; no problems
+PASS tasks inbox at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 27 controls checked; overflow 0px; no problems
+PASS finding detail at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 11 controls checked; overflow 0px; no problems
+PASS reports at dark theme: no horizontal overflow, controls inside and uncovered, control text readable :: 9 controls checked; overflow 0px; no problems
+integration path (mock): 24 of 24 steps matched

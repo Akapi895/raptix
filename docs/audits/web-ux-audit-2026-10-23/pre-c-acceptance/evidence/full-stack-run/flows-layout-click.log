@@ -1,0 +1,12 @@
+PASS light: sidebar inactive item text is readable (4.5:1) — 10.31:1 on "All projects"
+PASS light: sidebar section label is readable (4.5:1) — 5.15:1 on "PROJECT"
+PASS light: breadcrumb link is readable (4.5:1) — 9.62:1 on "Projects"
+PASS dark: sidebar inactive item text is readable (4.5:1) — 12.04:1 on "All projects"
+PASS dark: sidebar section label is readable (4.5:1) — 8.12:1 on "PROJECT"
+PASS dark: breadcrumb link is readable (4.5:1) — 12.78:1 on "Projects"
+PASS 390px top bar: controls do not overlap — 6 controls; overlaps: []
+PASS 390px top bar: controls stay on screen — offscreen: []
+PASS 390px top bar: controls are at least 36px tall — small: []
+PASS 390px page has no horizontal scroll — overflow 0px
+PASS 390px: the project switcher opens inside the viewport and lists the project — dialog 12,68 366x391; project listed: true
+layout check: 11/11 checks matched

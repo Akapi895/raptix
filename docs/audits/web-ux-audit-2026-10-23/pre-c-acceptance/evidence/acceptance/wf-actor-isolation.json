@@ -1,0 +1,79 @@
+{
+ "workflow": "WF-01 authentication and actor isolation",
+ "generatedAt": "2026-10-24T03:23:10.638Z",
+ "counts": {
+  "PASS": 10
+ },
+ "results": [
+  {
+   "id": "owner.sees-owner-only",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "owner project list contains the owner-only project",
+   "evidence": null
+  },
+  {
+   "id": "owner.logout-clears-project-data",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "storage keys naming the owner-only project after logout: 0",
+   "evidence": null
+  },
+  {
+   "id": "viewer.no-owner-only-flash",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "samples showing the owner-only name in 4 s after viewer sign-in: 0",
+   "evidence": null
+  },
+  {
+   "id": "viewer.sees-shared",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "viewer project list contains the shared project",
+   "evidence": null
+  },
+  {
+   "id": "viewer.list-excludes-owner-only",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "viewer project list has no owner-only project",
+   "evidence": null
+  },
+  {
+   "id": "viewer.server-scope",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "GET /api/engagements as the viewer does not name the owner-only project",
+   "evidence": null
+  },
+  {
+   "id": "viewer.storage-clean",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "viewer storage keys naming the owner or the owner-only project: 0",
+   "evidence": null
+  },
+  {
+   "id": "owner.re-login-sees-owner-only",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "owner project list after re-login",
+   "evidence": null
+  },
+  {
+   "id": "replacement.first-tab-drops-owner-data",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "owner-only name gone from the first tab after the viewer signed in on the second tab",
+   "evidence": null
+  },
+  {
+   "id": "page-errors",
+   "workflow": "WF-01 authentication and actor isolation",
+   "status": "PASS",
+   "detail": "uncaught page errors during the run: 0",
+   "evidence": null
+  }
+ ]
+}

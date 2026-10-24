@@ -1,0 +1,10 @@
+PASS operations list shows its execution threads section :: shows Execution threads
+PASS fleet states that its runtime is not available, with the server reason :: shows Fleet data is unavailable / Runtime operations are not available on this server
+PASS AI workspace states that the assistant runtime is not available :: shows Assistant runtime is not available on this server
+PASS AI trace states the threads source is unavailable and shows no substitute trace :: shows Threads source unavailable / No substitute trace is shown
+PASS Infrastructure grants tab lists its session grants and states that dispatch needs a live grant :: shows C2 session grants / Command dispatch requires a live approved grant
+NOT VERIFIED (config-gated: no runtime or C2 server in the stack): execute / submit / pause / resume / cancel of operations
+NOT VERIFIED (config-gated: no runtime or C2 server in the stack): AI conversation send and stream
+NOT VERIFIED (config-gated: no runtime or C2 server in the stack): C2 command dispatch and session console
+NOT VERIFIED (config-gated: no runtime or C2 server in the stack): agent detail and branches
+runtime gate click-through (real): 5 of 5 surfaces state their gate

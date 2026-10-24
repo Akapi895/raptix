@@ -1,0 +1,13 @@
+PASS Projects opens the project overview with a next step and the project scope — overview route; overview: sidebar names Stack verification project
+PASS the project sidebar keeps every section the proposal names — all 14 sections listed
+PASS the sidebar opens AI Workspace inside the same project — AI Workspace: sidebar names Stack verification project
+PASS Operations opens the operations tab of the same project — Operations: sidebar names Stack verification project
+PASS Findings lists the project finding and opens it with the project attached — finding: sidebar names Stack verification project; engagement carried in the URL
+PASS the finding keeps Reproduce and Evidence inside the project — Evidence tab: sidebar names Stack verification project
+PASS the finding back link returns to the project findings — back to Findings: sidebar names Stack verification project
+PASS Reports opens the report list of the project — Reports: sidebar names Stack verification project
+PASS a report opens with the project attached and its back link returns to Reports — report: sidebar names Stack verification project; back to Reports: sidebar names Stack verification project
+PASS the browser back button returns to the report of the project — browser back: sidebar names Stack verification project
+PASS a phone-width overview has no horizontal page scroll — horizontal overflow 0px at 390px
+PASS the overview renders in dark mode with the sidebar and the next step — dark overview: sidebar names Stack verification project; body background rgb(11, 17, 32) is dark
+workspace click-through: 12/12 steps matched

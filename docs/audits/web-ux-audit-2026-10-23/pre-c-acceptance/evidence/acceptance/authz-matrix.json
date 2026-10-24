@@ -1,0 +1,468 @@
+{
+ "workflow": "authz-matrix",
+ "generatedAt": "2026-10-24T03:22:37.744Z",
+ "counts": {
+  "PASS": 51
+ },
+ "results": [
+  {
+   "id": "plan.create.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "plan.create.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "plan.create.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "plan.create.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "plan.create.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "plan.decide.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 409)",
+   "evidence": {
+    "status": 409
+   }
+  },
+  {
+   "id": "plan.decide.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 409)",
+   "evidence": {
+    "status": 409
+   }
+  },
+  {
+   "id": "plan.decide.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 409)",
+   "evidence": {
+    "status": 409
+   }
+  },
+  {
+   "id": "plan.decide.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "plan.decide.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "scope.revision.create.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "scope.revision.create.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "scope.revision.create.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "scope.revision.create.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "scope.revision.create.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "finding.create.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "finding.create.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "finding.create.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "finding.create.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "finding.create.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "report.create.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "report.create.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "report.create.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "report.create.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "report.create.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "library.proposal.create.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "library.proposal.create.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "library.proposal.create.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "library.proposal.create.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "library.proposal.create.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "c2.grant.request.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "c2.grant.request.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "c2.grant.request.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "c2.grant.request.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "c2.grant.request.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "member.manage.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 400)",
+   "evidence": {
+    "status": 400
+   }
+  },
+  {
+   "id": "member.manage.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "member.manage.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "member.manage.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 403, observed 403 (HTTP 403)",
+   "evidence": {
+    "status": 403
+   }
+  },
+  {
+   "id": "member.manage.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "plans.read.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "plans.read.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "plans.read.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "plans.read.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "plans.read.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "members.read.owner",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "members.read.operator",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "members.read.reviewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "members.read.viewer",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected pass, observed pass (HTTP 200)",
+   "evidence": {
+    "status": 200
+   }
+  },
+  {
+   "id": "members.read.outsider",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "expected 404, observed 404 (HTTP 404)",
+   "evidence": {
+    "status": 404
+   }
+  },
+  {
+   "id": "plan.decide.independence",
+   "workflow": "authz-matrix",
+   "status": "PASS",
+   "detail": "author decision HTTP 403; independence message true; database proposed",
+   "evidence": {
+    "status": 403
+   }
+  }
+ ]
+}

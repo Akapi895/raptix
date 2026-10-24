@@ -1,0 +1,6 @@
+PASS the policies read shows the workspace values with their versions :: policy.c2_grant_max_hours = 24
+PASS an admin saves a changed policy value with its reason, and sees the save confirmed :: policy.c2_grant_max_hours saved as 23
+PASS after a reload the saved value reads back :: reads 23, expected 23
+PASS the workspace audit records the change :: a workspace.setting_updated entry with the reason "settings click-through mvltymwq"
+PASS a viewer saves a policy change and the server refuses it, with the refusal shown :: refusal shown: "Workspace settings changes require a deployment operator (an engagement owner); your memberships do not grant it."; nothing saved
+settings click-through (real): 5 of 5 steps matched

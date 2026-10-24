@@ -1,0 +1,79 @@
+{
+ "workflow": "WF-05 decisions and notifications",
+ "generatedAt": "2026-10-24T03:26:24.244Z",
+ "counts": {
+  "PASS": 10
+ },
+ "results": [
+  {
+   "id": "the operator submits a scope revision and the database holds it as pending",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "HTTP 200; database status pending",
+   "evidence": null
+  },
+  {
+   "id": "every role that sees the project counts the new decision, and the counts move by one",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "before {\"reviewer\":1,\"viewer\":2,\"operator\":1}, after {\"reviewer\":2,\"viewer\":3,\"operator\":2}",
+   "evidence": null
+  },
+  {
+   "id": "the Overview \"Awaiting decisions\" figure matches the task endpoint for the reviewer",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "Overview shows \"26+\", the endpoint counts 26",
+   "evidence": null
+  },
+  {
+   "id": "the team tab lists the decision, and its Open link points to the project",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "lists the revision: true; Open link #/project/cmvlu2cty0001iwfitdn2ymez?tab=scope",
+   "evidence": null
+  },
+  {
+   "id": "dismissing a notice does not resolve a decision",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "operator decisions before the dismiss 2, after 2; revision still pending: true",
+   "evidence": null
+  },
+  {
+   "id": "the reviewer approves the revision; the database and the count return to the baseline",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "HTTP 200; database approved; reviewer count 1 (baseline 1)",
+   "evidence": null
+  },
+  {
+   "id": "the Overview figure follows the approval",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "Overview shows \"26+\"; the endpoint counts 26 after the approval",
+   "evidence": null
+  },
+  {
+   "id": "the author cannot approve their own revision (refused by the server, nothing changes)",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "author decision HTTP 403; database pending",
+   "evidence": null
+  },
+  {
+   "id": "tool approvals are not a kind of this inbox",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "kinds present: scope-revision, business-plan",
+   "evidence": null
+  },
+  {
+   "id": "a capped inbox is shown with a plus rather than as an exact number",
+   "workflow": "WF-05 decisions and notifications",
+   "status": "PASS",
+   "detail": "endpoint returns 25 scope rows; limitedKinds [\"scope-revision\"]; Overview shows \"26+\"",
+   "evidence": null
+  }
+ ]
+}

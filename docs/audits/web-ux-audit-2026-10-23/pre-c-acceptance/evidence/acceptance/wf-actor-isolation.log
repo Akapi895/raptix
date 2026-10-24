@@ -1,0 +1,11 @@
+PASS owner.sees-owner-only owner project list contains the owner-only project
+PASS owner.logout-clears-project-data storage keys naming the owner-only project after logout: 0
+PASS viewer.no-owner-only-flash samples showing the owner-only name in 4 s after viewer sign-in: 0
+PASS viewer.sees-shared viewer project list contains the shared project
+PASS viewer.list-excludes-owner-only viewer project list has no owner-only project
+PASS viewer.server-scope GET /api/engagements as the viewer does not name the owner-only project
+PASS viewer.storage-clean viewer storage keys naming the owner or the owner-only project: 0
+PASS owner.re-login-sees-owner-only owner project list after re-login
+PASS replacement.first-tab-drops-owner-data owner-only name gone from the first tab after the viewer signed in on the second tab
+PASS page-errors uncaught page errors during the run: 0
+{"PASS":10}

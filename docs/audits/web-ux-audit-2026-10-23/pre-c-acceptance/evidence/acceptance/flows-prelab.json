@@ -1,0 +1,18 @@
+{
+  "checks": [
+    "real producer import preserves remediation and stays a draft",
+    "real capture upload, classification, linking and self-review refusal",
+    "independent reviewer confirms the evidence-backed finding",
+    "refresh retains confirmed finding and verified original bytes",
+    "the real finding detail renders after curation",
+    "C2 browser rejects malformed argv before HTTP dispatch (fixture)",
+    "C2 browser preserves argv and displays full retained stdout/stderr (fixture)",
+    "C2 reload reads the command audit without dispatching (fixture)"
+  ],
+  "failure": null,
+  "notVerified": [
+    "model inference",
+    "live C2 provider",
+    "target lab execution"
+  ]
+}

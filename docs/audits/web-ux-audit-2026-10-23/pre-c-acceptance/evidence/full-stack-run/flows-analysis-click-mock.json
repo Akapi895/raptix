@@ -1,0 +1,14 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:18:05.152Z",
+  "steps": [
+    {
+      "step": "the demo analysis renders for the project",
+      "matches": true,
+      "detail": "Attack Analysis shown"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

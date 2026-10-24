@@ -1,0 +1,29 @@
+{
+  "mode": "real",
+  "app": "http://127.0.0.1:7624",
+  "generatedAt": "2026-10-24T03:19:50.758Z",
+  "steps": [
+    {
+      "step": "the project list shows the engagements and opens one with its overview",
+      "matches": true,
+      "detail": "Stack verification project overview open"
+    },
+    {
+      "step": "an admin creates a project through the form and the new project opens",
+      "matches": true,
+      "detail": "Click project mvltyshz opened"
+    },
+    {
+      "step": "the created project opens again from the list",
+      "matches": true,
+      "detail": "Click project mvltyshz reopened from the list"
+    },
+    {
+      "step": "a viewer is refused the create route, and no project is created",
+      "matches": true,
+      "detail": "form shown; route left; no project created"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

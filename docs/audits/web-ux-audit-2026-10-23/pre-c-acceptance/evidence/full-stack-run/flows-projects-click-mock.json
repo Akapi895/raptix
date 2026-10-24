@@ -1,0 +1,14 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:18:02.795Z",
+  "steps": [
+    {
+      "step": "the project list shows the engagements and opens one with its overview",
+      "matches": true,
+      "detail": "Internal Red Team Q4 overview open"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}
