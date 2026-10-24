@@ -22,7 +22,7 @@ const SURFACES = [
   { name: 'fleet states that its runtime is not available, with the server reason', route: `agents?engagement=${encodeURIComponent(fixtures.project)}`, need: ['Fleet data is unavailable', 'Runtime operations are not available on this server'] },
   { name: 'AI workspace states that the assistant runtime is not available', route: `ai-operator?engagement=${encodeURIComponent(fixtures.project)}`, need: ['Assistant runtime is not available on this server'] },
   { name: 'AI trace states the threads source is unavailable and shows no substitute trace', route: `ai-trace?engagement=${encodeURIComponent(fixtures.project)}`, need: ['Threads source unavailable', 'No substitute trace is shown'] },
-  { name: 'C2 lists its session grants and states that dispatch needs a live grant', route: `c2?engagement=${encodeURIComponent(fixtures.project)}`, need: ['C2 session grants', 'Command dispatch requires a live approved grant'] },
+  { name: 'Infrastructure grants tab lists its session grants and states that dispatch needs a live grant', route: `infrastructure?engagement=${encodeURIComponent(fixtures.project)}&tab=grants`, need: ['C2 session grants', 'Command dispatch requires a live approved grant'] },
 ];
 
 async function signInReal(page, username, password) {

@@ -1,5 +1,5 @@
 // Assets and library capability checklist against the live stack. It runs the operations of the asset and library ports through
-// the real adapters (features/assets/remote.ts, features/library/remote.ts) inside the running app, so each call uses the same
+// the real adapters (features/assets/remote.ts, features/capabilities/remote.ts) inside the running app, so each call uses the same
 // transport, session and CSRF handling as the screens. The author signs in as the owner of the fixtures; the reviewer signs in
 // for the proposal decision (the adapter refuses a reviewer who is the author). Each operation states the outcome it expects:
 // an operation the port declares refused (for example a scope approval in real mode) is recorded as a match when it is refused.
@@ -75,7 +75,8 @@ async function runAssets({ projectId, assetId, ident, knowledgeGraph }) {
   rows.push({ op: 'capabilities', expect: 'ok', expectKind: null, outcome: 'ok', failureKind: null, matches: svc.capabilities.scopeApprovalRequests === false && svc.capabilities.observedGraph === true && svc.capabilities.simulated === false, detail: JSON.stringify(svc.capabilities) });
   const before = await total();
   await step('list (first page)', { expect: 'ok', run: () => svc.list(ctx, { page: 1, pageSize: 10 }), check: (res) => ({ ok: res.data.total === before && res.data.items.length === Math.min(10, before), detail: `total ${res.data.total}, ${res.data.items.length} on the page` }) });
-  await step('get (the seeded host)', { expect: 'ok', run: () => svc.get(ctx, assetId), check: (res) => ({ ok: res.data.asset.id === assetId && res.data.asset.scope === 'pending', detail: `scope ${res.data.asset.scope}` }) });
+  // The stack's approved scope revision names this host, so its scope is in (it was pending before the ROE fixture existed).
+  await step('get (the seeded host)', { expect: 'ok', run: () => svc.get(ctx, assetId), check: (res) => ({ ok: res.data.asset.id === assetId && res.data.asset.scope === 'in', detail: `scope ${res.data.asset.scope}` }) });
   await step('scope (map rows)', { expect: 'ok', run: () => svc.scope(ctx), check: (res) => ({ ok: res.data.rows.length === before, detail: `${res.data.rows.length} rows for ${before} assets` }) });
   await step(knowledgeGraph ? 'observedGraph' : 'observedGraph (no knowledge graph: refused)', {
     expect: knowledgeGraph ? 'ok' : 'refused',
@@ -107,7 +108,7 @@ async function runAssets({ projectId, assetId, ident, knowledgeGraph }) {
 }
 
 async function runLibrary({ projectId, skillName, techniqueId, proposalId }) {
-  const remote = await import('/src/features/library/remote.ts');
+  const remote = await import('/src/features/capabilities/remote.ts');
   const auth = await import('/src/platform/auth-api.ts');
   const session = await auth.fetchAuthSession();
   if (!session?.actor) return { fatal: 'no authenticated actor for the author context', rows: [] };
@@ -146,7 +147,7 @@ async function runLibrary({ projectId, skillName, techniqueId, proposalId }) {
 }
 
 async function runReview({ projectId, proposalId, expectedVersion }) {
-  const remote = await import('/src/features/library/remote.ts');
+  const remote = await import('/src/features/capabilities/remote.ts');
   const auth = await import('/src/platform/auth-api.ts');
   const session = await auth.fetchAuthSession();
   if (!session?.actor) return { fatal: 'no authenticated actor for the reviewer context', rows: [] };
@@ -171,7 +172,7 @@ async function runReview({ projectId, proposalId, expectedVersion }) {
 }
 
 async function runLibraryLate({ projectId, proposalId, skillName }) {
-  const remote = await import('/src/features/library/remote.ts');
+  const remote = await import('/src/features/capabilities/remote.ts');
   const auth = await import('/src/platform/auth-api.ts');
   const session = await auth.fetchAuthSession();
   if (!session?.actor) return { fatal: 'no authenticated actor for the author context', rows: [] };
