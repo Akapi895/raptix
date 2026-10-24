@@ -46,6 +46,8 @@ export interface TasksView {
   readonly counts: Readonly<Record<string, number>>;
   /** True when a kind reached its row cap, so `tasks` and `counts` are lower bounds. */
   readonly limited: boolean;
+  /** The kinds that reached the cap; a clean kind's count is exact even when another kind is limited. */
+  readonly limitedKinds: readonly string[];
   readonly source: 'db';
 }
 
@@ -222,7 +224,7 @@ export class InboxService {
     const counts: Record<string, number> = {};
     for (const task of tasks) counts[task.kind] = (counts[task.kind] ?? 0) + 1;
     tasks.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-    const limited = Object.values(counts).some((count) => count >= MAX_TASKS_PER_KIND);
+    const limitedKinds = Object.keys(counts).filter((kind) => (counts[kind] ?? 0) >= MAX_TASKS_PER_KIND).sort();
     // Readiness consumes the authoritative preflight per engagement; a
     // refusal (e.g. viewer role) degrades to an explicit unavailable state.
     const engagementViews: TaskEngagementView[] = [];
@@ -240,7 +242,7 @@ export class InboxService {
         engagementViews.push({ engagementId: engagement.id, name, readiness: { state: 'unavailable', ok: null, failedChecks: 0, reason: error.message } });
       }
     }
-    return { tasks, engagements: engagementViews, counts, limited, source: 'db' };
+    return { tasks, engagements: engagementViews, counts, limited: limitedKinds.length > 0, limitedKinds, source: 'db' };
   }
 
   public async notices(actorId: string): Promise<NoticesView> {
