@@ -145,7 +145,14 @@ async function runMode(browser, mode) {
   let consoleErrors = [];
   page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text().slice(0, 600)); });
   let badResponses = [];
-  page.on('response', (response) => { if (response.status() >= 400) badResponses.push({ method: response.request().method(), status: response.status(), url: response.url() }); });
+  // One page serves every route, so a request a previous route started can answer during the next one. Each response is
+  // attributed to the route that issued its request; a late answer to an earlier route is not a failure of this one.
+  let routeSeq = 0;
+  const issuedBy = new WeakMap();
+  page.on('request', (request) => issuedBy.set(request, routeSeq));
+  page.on('response', (response) => {
+    if (response.status() >= 400 && issuedBy.get(response.request()) === routeSeq) badResponses.push({ method: response.request().method(), status: response.status(), url: response.url() });
+  });
   const rows = {};
   let signedIn;
   try {
@@ -171,6 +178,7 @@ async function runMode(browser, mode) {
     pageErrors = [];
     consoleErrors = [];
     badResponses = [];
+    routeSeq += 1;
     await page.goto(target, { waitUntil: 'domcontentloaded' });
     const observed = await observe(page, expect);
     const apiFailures = badResponses.filter((response) => new URL(response.url).pathname.startsWith('/api/') && !isShellRequest(response, entry.key));
