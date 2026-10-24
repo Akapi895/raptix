@@ -127,7 +127,7 @@ function PlansCard({ engagementId, plans, deadlineHours, onRevise }: { engagemen
               {plans.map((p) => (
                 <tr key={p.id} className="border-t border-line">
                   <td className="py-2 pr-3 font-mono">v{p.version}</td>
-                  <td className="py-2 pr-3"><Status kind="gate" value={p.status === 'approved' ? 'passed' : p.status === 'proposed' || p.status === 'draft' ? 'pending' : 'failed'} size="sm" label={p.status} /></td>
+                  <td className="py-2 pr-3"><Status kind="plan" value={p.status} size="sm" /></td>
                   <td className="py-2 pr-3">{p.objective}</td>
                   <td className="py-2 pr-3 font-mono text-xs">{p.roeVersion === null ? '—' : `v${p.roeVersion}`}</td>
                   <td className="py-2 pr-3 font-mono text-xs text-muted">{p.expiresAt === null ? '—' : utcMinuteOr(p.expiresAt)}</td>
@@ -148,12 +148,16 @@ function PlansCard({ engagementId, plans, deadlineHours, onRevise }: { engagemen
           </table>
         )}
         {canWrite && (
-          <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); draft.mutate() }}>
-            <label className="text-sm text-muted" htmlFor="plan-objective">Objective</label>
-            <Textarea id="plan-objective" required value={objective} onChange={(e) => setObjective(e.target.value)} />
-            <label className="text-sm text-muted" htmlFor="plan-methods">Methods (one per line)</label>
-            <Textarea id="plan-methods" value={methods} onChange={(e) => setMethods(e.target.value)} placeholder={'web\ninternal'} />
-            <div className="sm:col-span-2">
+          <form className="mt-5 flex max-w-2xl flex-col gap-4 border-t border-line pt-5" onSubmit={(e) => { e.preventDefault(); draft.mutate() }}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-fg" htmlFor="plan-objective">Objective</label>
+              <Textarea id="plan-objective" required value={objective} onChange={(e) => setObjective(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-fg" htmlFor="plan-methods">Methods <span className="font-normal text-muted">(one per line)</span></label>
+              <Textarea id="plan-methods" value={methods} onChange={(e) => setMethods(e.target.value)} placeholder={'web\ninternal'} />
+            </div>
+            <div>
               <Button type="submit" variant="primary" disabled={draft.isPending}>
                 {draft.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
                 Draft plan
