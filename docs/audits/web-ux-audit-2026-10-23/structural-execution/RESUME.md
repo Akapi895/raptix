@@ -1,38 +1,40 @@
-# RESUME · Structural (vòng 4)
+# RESUME · Structural (vòng 5, đã đóng)
 
 Đọc file này trước khi làm tiếp. Không cần phân tích lại dự án.
 
 ## Mốc
 
-- Base commit (tài liệu audit): `d3225f63`.
-- Mã sản phẩm cuối đã kiểm: `ffe85384` (gate đầy đủ đã chạy trên đây).
-- Commit mới của vòng này (theo thứ tự): `d67d2665` (WS-0), `b9d28f3c` (WS-1), `349bcbc5` (WS-4A), `76826809` (WS-2 server), `b3195015` (WS-2 client), `837e1d9d` (WS-4B), `304df2e8` (ảnh WS-4B), `ffe85384` (S-03).
+- Vòng 4 (đóng trước): `d67d2665` → `ffe85384`; tài liệu `692577a5`.
+- Vòng 5: mã sản phẩm cuối đã kiểm: `67ddf571`. Commit mới sau đó: `bfa26841` (harness route smoke) và commit tài liệu cuối của vòng (xem `git log`).
+- Gate cuối đã chạy trên `67ddf571`: xem `VERIFICATION-LOG.md` (mục "Vòng 5"). Báo cáo đóng: `FINAL-STRUCTURAL-CLOSURE.md`.
 
-## Trạng thái workstream
+## Trạng thái
 
-| WS | Trạng thái | Ghi chú |
-|---|---|---|
-| WS-0 | IMPLEMENTED | Canary trình duyệt BLOCKED (BL-01) |
-| WS-1 | VERIFIED (mock) | Real smoke NV |
-| WS-4A | VERIFIED (mock) | Provenance asOf chưa có nguồn (PROV-1) |
-| WS-2 | PARTIAL | Team tab (TEAM-1), closure/library (BL-03) |
-| WS-4B | VERIFIED (mock) | Ảnh trong evidence |
-| WS-3 | PARTIAL (BLOCKED một phần) | ADR chờ (BL-02) |
+| Việc | Trạng thái |
+|---|---|
+| P0.1 Dark mode (bằng chứng) | VERIFIED |
+| P0.2 Canary actor | VERIFIED 10/10 trên stack cô lập; draft/thread NV |
+| P0.3 Real regression | VERIFIED một phần (smoke real 0 mới; Team real); Overview/drawer/tablet real NV |
+| P1 WS-2 | PARTIAL: team tab và giới hạn theo loại đã làm; closure/library trong aggregate BL-03 |
+| P2 WS-4B | VERIFIED (mock); severity thành disclosure |
+| P3 WS-3 | PARTIAL: resolver C2, thông báo console, ownership doc; thực thi BLOCKED (BL-02) |
+| P4 follow-up | GLOBAL-1, UX-15 (một phần), UX-18, UX-20, UX-25, FLAKY-1 đã làm; MOCK-1 giữ có chủ đích |
 
 ## Trạng thái worktree
 
-- Working tree của owner còn nguyên. Không stage, không commit, không đụng: `GLOSSARY.md`, `docs/adr/0095`, `0098`, `0099`, `docs/design/2026-10-23-c2-pty-console-proposal.md`, và các untracked gồm `apps/web/.scratch/web-real-ui/`, `docs/adr/0097-…`, `docs/web-real-ui-*.md`, `docs/web-ui-completion-checklist-2026-10-22.md`, `docs/runtime-prelab-readiness-2026-10-22.md`, `infra-test.log`, `now.txt`, `report-do-an/`, `report-vdt/`, `web-sandboxes/`, `docs/audits/web-ux-audit-2026-10-23.zip`.
-- Thuộc phiên trước (do tôi tạo, chưa commit, cần quyết định): `docs/audits/web-ux-audit-2026-10-23/evidence/R03-real-settings-after.png` (sửa lại), `evidence/R03-real-settings-before-identity-fix.png` (mới), và `docs/audits/web-ux-audit-2026-10-23.zip` (gói cũ, sẽ tạo lại).
-- Thư mục `structural-execution/` của vòng này: đã commit ở commit tài liệu cuối (xem git log).
-- Ngoài repo: `scratchpad/ws1/` (build, smoke, ảnh tạm). Không chứa credential.
+- Thay đổi của owner còn nguyên, không stage, không commit: `GLOSSARY.md`, `docs/adr/0095`, `0098`, `0099`, `docs/design/2026-10-23-c2-pty-console-proposal.md`, các untracked `apps/web/.scratch/web-real-ui/`, `docs/adr/0097-…`, `docs/web-real-ui-*.md`, `docs/web-ui-completion-checklist-2026-10-22.md`, `docs/runtime-prelab-readiness-2026-10-22.md`, `infra-test.log`, `now.txt`, `report-do-an/`, `report-vdt/`, `web-sandboxes/`.
+- Thuộc phiên trước (do tôi tạo, chưa commit, cần quyết định): `evidence/R03-real-settings-after.png` (đã sửa), `evidence/R03-real-settings-before-identity-fix.png`, `docs/audits/web-ux-audit-2026-10-23.zip` (gói, không commit).
+- Không do phiên này tạo, giữ nguyên: `docs/audits/web-ux-audit-2026-10-23/structural-execution.zip`.
+- Ngoài repo: `scratchpad/` (build, smoke, ảnh tạm). Các file `hold.json` chứa credential đã được xóa.
 
-## Việc tiếp theo (theo thứ tự ưu tiên)
+## Việc còn lại
 
-1. Người dùng: chốt DEP-1 (redeploy 3001 hay không) và xóa CLEAN-1 (hai file tạm trong `D:\Program Files\Git\`).
-2. Chạy real route smoke và canary khi có stack (NV-1, BL-01).
-3. WS-2: làm rõ tab Team & Approvals (TEAM-1), sau khi chủ sản phẩm xác nhận nội dung.
-4. WS-3: chờ D-03 và quyết định ADR-0095/0098/0099 (BL-02). Sau đó làm `features/c2/workspace/`.
-5. Follow-up nhỏ mục 11 (UX-15, 18, 20, 25) kèm kiểm trình duyệt từng mục.
+1. Người dùng: quyết định redeploy 3001 (DEP-1). Container đang chạy `d3225f63`.
+2. Người dùng: xóa hai file tạm `D:\Program Files\Git\final-smoke-optin.log` và `final-optin-exit.txt` (CLEAN-1).
+3. Owner: duyệt hoặc từ chối ADR-0095, 0098, 0099 và chốt D-03 (BL-02).
+4. Server: aggregate `/api/tasks` bổ sung closure và library, có đánh giá phân quyền (BL-03).
+5. Server: thời điểm nguồn theo từng số đếm (PROV-1).
+6. NV: smoke Overview real, drawer mobile real, tablet real, draft chat với runtime.
 
 ## Lệnh an toàn để tiếp tục
 
@@ -52,24 +54,23 @@ npx vite build --outDir <scratchpad>/build-default --emptyOutDir
 VITE_PROTOTYPE_PAGES=true VITE_ASSET_MAP=1 npx vite build --outDir <scratchpad>/build-optin --emptyOutDir
 ```
 
-Route smoke mock (server tĩnh trong scratchpad, cổng riêng, không dùng 5273):
+Smoke mock (server tĩnh trong scratchpad, cổng riêng, không dùng 3001 hay 5273):
 
 ```
+cd D:/.VTNet/redteam/raptix
 RAPTIX_VERIFY_APP=http://127.0.0.1:<port> RAPTIX_VERIFY_FLAGS= node apps/web/tools/verify/route-smoke.mjs --modes mock --out <file>
 ```
 
-Chạy từ thư mục gốc repo, đường dẫn tới `apps/web/tools/verify/route-smoke.mjs`.
+Stack cô lập cho canary và smoke real: `apps/web/tools/verify/stack.mjs` (tự dọn container và tiến trình con). Để giữ stack sống, dùng bản sinh từ `verify-scripts/` theo cách đã ghi trong `WS-0-CANARY-REPORT.md`. Không ghi credential vào repo.
 
 ## Quyết định đã áp dụng
 
-D-01 (thuật ngữ: "C2 Sessions"; tab id giữ nguyên), D-02 (A: tool approval ngoài số đếm; stop là Attention), D-04 (4 measure + Attention), D-06 (mật khẩu demo không trong lỗi). D-03 và D-05 chưa đổi code (D-05: quick win trước đã gate theo mode). Chi tiết: `DECISION-LOG.md`.
+D-01 (nhãn "C2 Sessions"; tab id giữ), D-02 (tool approval ngoài số đếm; stop là Attention), D-04 (4 measure + Attention), D-05 (không đổi production), D-06 (mật khẩu demo không trong lỗi). Chi tiết: `DECISION-LOG.md` (DL-01 đến DL-21).
 
 ## Không làm (ràng buộc)
 
-- Không đổi authentication, authorization, hay contract ngoài trường `limited` (tương thích).
-- Không chạy lệnh C2 thật, không listener, không Emergency Stop, không payload.
-- Không đụng dev server 5273 của owner; không `npm run build` ghi vào `apps/web/dist`.
-- Không deploy, không đổi container hay image trong vòng này.
-- Không sửa `GLOSSARY.md`; không nâng ADR Proposed.
+- Không đổi authentication, authorization, runtime; không endpoint ghi mới.
+- Không chạy lệnh C2 thật, listener, Emergency Stop, payload.
+- Không deploy 3001; không dùng 5273 hay 3001 để test; không sửa container của owner.
+- Không stage thay đổi của owner; không sửa `GLOSSARY.md`; không nâng ADR Proposed.
 - Không thêm `Co-Authored-By` (CLAUDE.md của repo cấm).
-- Không tạo tài khoản trên 3001; không ghi credential vào repo.
