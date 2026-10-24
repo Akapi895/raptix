@@ -28,7 +28,7 @@ export function ExecutionLogs({ entries, assistantId }: { entries: ThreadHistory
       <table className="w-full text-left text-xs">
         <thead className="sticky top-0 bg-panel text-muted"><tr><th className="p-3">Event</th><th className="p-3">Agent</th><th className="p-3">Tool</th><th className="p-3">Attribution</th></tr></thead>
         <tbody>{visible.map(row => <tr key={row.id} className="border-t border-line hover:bg-hover">
-          <td className="p-3"><button className="font-mono text-accent hover:underline" onClick={() => setSelected(row.id)}>{row.entry.payload.type} · checkpoint{row.entry.truncated ? ' · truncated' : ''}</button></td>
+          <td className="p-3"><button className="font-mono text-link hover:underline" onClick={() => setSelected(row.id)}>{row.entry.payload.type} · checkpoint{row.entry.truncated ? ' · truncated' : ''}</button></td>
           <td className="p-3">{row.agent}</td><td className="p-3 font-mono">{row.tool}</td><td className="p-3 text-muted">Thread history · run unknown</td>
         </tr>)}</tbody>
       </table>

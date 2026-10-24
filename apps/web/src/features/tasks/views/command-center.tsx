@@ -62,7 +62,7 @@ export function RealCommandCenter(): ReactElement {
                 {view.engagements.map((e) => (
                   <tr key={e.engagementId} className="border-t border-line">
                     <td className="py-2 pr-3">
-                      <button className="text-left font-mono text-xs text-fg hover:text-accent hover:underline" onClick={() => go('project', { id: e.engagementId })}>
+                      <button className="text-left font-mono text-xs text-fg hover:text-link hover:underline" onClick={() => go('project', { id: e.engagementId })}>
                         {e.name ?? e.engagementId}
                       </button>
                     </td>

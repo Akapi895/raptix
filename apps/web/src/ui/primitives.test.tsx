@@ -71,10 +71,10 @@ describe('status primitives', () => {
 })
 
 describe('button primitives', () => {
-  const VARIANTS = ['primary', 'secondary', 'ghost', 'danger', 'dangerSolid', 'destructive'] as const
+  const VARIANTS = ['primary', 'secondary', 'ghost', 'danger', 'destructive'] as const
   const TOKEN: Record<(typeof VARIANTS)[number], string> = {
     primary: 'bg-primary text-primary-fg', secondary: 'bg-panel text-fg', ghost: 'bg-transparent text-muted',
-    danger: 'bg-transparent text-bad', dangerSolid: 'bg-danger-fill text-white', destructive: 'bg-danger-fill text-white',
+    danger: 'bg-transparent text-bad', destructive: 'bg-danger-fill text-white',
   }
 
   it('renders every variant with its token classes and fires clicks', async () => {

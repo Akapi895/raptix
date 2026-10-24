@@ -180,7 +180,7 @@ export function ExecBanner({ conv }: { conv: Conversation }) {
         <li className="flex items-center gap-1.5"><X size={12} className="text-bad" aria-hidden />Request plan approval — {first ? first.text : el.label}</li>
         <li className="flex items-center gap-1.5"><X size={12} className="text-bad" aria-hidden />Execute or start an operation — {el.label}</li>
       </ul>
-      {el.reasons.length > 0 && <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5">{el.reasons.map((r) => (r.to ? <button key={r.text} className="text-accent hover:underline" onClick={() => go(r.to!.page, { id: r.to!.id, tab: r.to!.tab })}>{r.text} →</button> : <span key={r.text}>{r.text}</span>))}</div>}
+      {el.reasons.length > 0 && <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5">{el.reasons.map((r) => (r.to ? <button key={r.text} className="text-link hover:underline" onClick={() => go(r.to!.page, { id: r.to!.id, tab: r.to!.tab })}>{r.text} →</button> : <span key={r.text}>{r.text}</span>))}</div>}
     </div>
   )
 }
@@ -279,9 +279,9 @@ export function ToolProposalCard({ tool, compact }: { tool: ToolEvent; compact?:
         </div>
       ) : <div className="mt-2 text-xs text-warn">Pending — awaiting approval from {approver}. Only a reviewer can allow or deny tool calls.</div>)}
       <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-        <button className="text-accent hover:underline" onClick={() => trace(tool.id)}>View in Trace</button>
-        {asset ? <button className="text-accent hover:underline" onClick={() => go('asset', { id: asset.id })}>View Target</button> : <span className="text-muted" title="Target is not in this project's asset inventory.">View Target (unavailable)</span>}
-        {tool.opId ? <button className="text-accent hover:underline" onClick={() => go('operation', { id: tool.opId })}>View Operation</button> : <span className="text-muted" title="This call is not linked to an operation.">View Operation (unavailable)</span>}
+        <button className="text-link hover:underline" onClick={() => trace(tool.id)}>View in Trace</button>
+        {asset ? <button className="text-link hover:underline" onClick={() => go('asset', { id: asset.id })}>View Target</button> : <span className="text-muted" title="Target is not in this project's asset inventory.">View Target (unavailable)</span>}
+        {tool.opId ? <button className="text-link hover:underline" onClick={() => go('operation', { id: tool.opId })}>View Operation</button> : <span className="text-muted" title="This call is not linked to an operation.">View Operation (unavailable)</span>}
       </div>
       <Modal
         open={decision !== null}
@@ -291,7 +291,7 @@ export function ToolProposalCard({ tool, compact }: { tool: ToolEvent; compact?:
         footer={<>
           <Button onClick={() => setDecision(null)}>Cancel</Button>
           <Button
-            variant={decision === 'allowed' ? 'primary' : 'dangerSolid'}
+            variant={decision === 'allowed' ? 'primary' : 'destructive'}
             disabled={!reason.trim()}
             title={reason.trim() ? undefined : 'A decision reason is required.'}
             onClick={() => {

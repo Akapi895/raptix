@@ -113,7 +113,7 @@ function FindingCard({ item, expanded, onToggle }: { item: FindingListItem; expa
               className="shrink-0 rounded p-0.5 text-muted transition hover:text-accent">
               <ChevronRight size={16} aria-hidden className={cx('transition-transform', expanded && 'rotate-90')} />
             </button>
-            <button type="button" onClick={open} className="min-w-0 break-words rounded text-left text-[17px] font-semibold hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
+            <button type="button" onClick={open} className="min-w-0 break-words rounded text-left text-[17px] font-semibold hover:text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
               {f.title}
             </button>
           </div>
@@ -121,7 +121,7 @@ function FindingCard({ item, expanded, onToggle }: { item: FindingListItem; expa
             <SeverityBadge severity={f.severity} />
             <Status kind="finding" value={f.status} size="sm" />
             <span className="rounded-full bg-subtle px-2.5 py-0.5 text-xs text-muted">Project: {item.projectName ?? f.projectId}</span>
-            <Mono className="text-xs text-accent">{f.id}</Mono>
+            <Mono className="text-xs text-muted">{f.id}</Mono>
             <span className="whitespace-nowrap text-xs text-muted">Updated {f.updated}</span>
           </div>
         </div>

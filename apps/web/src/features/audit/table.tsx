@@ -32,7 +32,7 @@ export function AuditTable({ entries, labelFor = (actorId: string) => actorId }:
             <td className="py-2 pr-3 text-xs" title={e.actorId ?? undefined}>{e.actorId === null ? <span className="text-muted">not recorded</span> : labelFor(e.actorId)}</td>
             <td className="py-2 pr-3 text-xs">
               {e.engagementId === null ? <span className="text-muted">workspace</span> : (
-                <button className="font-mono text-xs text-fg hover:text-accent hover:underline" onClick={() => go('project', { id: e.engagementId as string })}>{e.engagementId}</button>
+                <button className="font-mono text-xs text-fg hover:text-link hover:underline" onClick={() => go('project', { id: e.engagementId as string })}>{e.engagementId}</button>
               )}
               {e.targetType !== null && <span className="text-muted"> · {e.targetType}</span>}
             </td>

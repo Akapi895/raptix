@@ -164,7 +164,7 @@ function InventoryPanel({ read, filters, onFilters, onPreview, busy }: {
                 {read.items.map(({ asset }) => (
                   <tr key={asset.id} className="border-b border-line last:border-0">
                     <td className="p-3">
-                      <button type="button" className="font-medium text-accent hover:underline" onClick={() => onPreview(asset.id)}>{asset.name}</button>
+                      <button type="button" className="font-medium text-link hover:underline" onClick={() => onPreview(asset.id)}>{asset.name}</button>
                     </td>
                     <td className="p-3 font-mono text-xs">{asset.ident}</td>
                     <td className="p-3 text-xs">{asset.type}</td>

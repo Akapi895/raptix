@@ -175,7 +175,7 @@ export function AiTrace({ embedded = false }: { embedded?: boolean } = {}) {
           </button>
         ))}
         <span className="ml-1 text-xs text-muted">Showing {events.length} of {all.length} event{all.length === 1 ? '' : 's'}</span>
-        {(st !== 'all' || nq || facetCount > 0) && <button className="text-xs text-accent hover:underline" onClick={clear}>Clear filters</button>}
+        {(st !== 'all' || nq || facetCount > 0) && <button className="text-xs text-link hover:underline" onClick={clear}>Clear filters</button>}
       </div>
 
       {!events.length ? (
@@ -196,7 +196,7 @@ export function AiTrace({ embedded = false }: { embedded?: boolean } = {}) {
                 <tr key={r.event.id} id={'trace-' + r.event.id} tabIndex={0} onClick={() => open(r.event.id)} onKeyDown={(k) => k.key === 'Enter' && open(r.event.id)}
                   className={cx('h-12 cursor-pointer border-b border-line/60 transition last:border-0 hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent', sel === r.event.id && 'bg-accent-soft')}>
                   {shown.map((c) => <td key={c.id} className={cx('px-4 align-middle', c.id === 'id' && cx('sticky left-0 z-10 border-r border-line', sel === r.event.id ? 'bg-accent-soft' : 'bg-panel'))}>{cell(c.id, r)}</td>)}
-                  <td className="px-4 align-middle"><button className="whitespace-nowrap text-xs text-accent hover:underline" onClick={(x) => { x.stopPropagation(); open(r.event.id) }}>{r.event.state === 'awaiting' ? 'Review' : 'Inspect'}</button></td>
+                  <td className="px-4 align-middle"><button className="whitespace-nowrap text-xs text-link hover:underline" onClick={(x) => { x.stopPropagation(); open(r.event.id) }}>{r.event.state === 'awaiting' ? 'Review' : 'Inspect'}</button></td>
                 </tr>
               ))}
             </tbody>
@@ -334,7 +334,7 @@ function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; ca
           { k: 'Correlation ID', v: <Mono>{ev.corr || '—'}</Mono> },
           { k: 'Decision record', v: ev.decision ? <span className="whitespace-pre-wrap">{`${ev.decision.outcome} by ${ev.decision.by}, ${tz(ev.decision.at)} — ${ev.decision.note}`}</span> : <span className="text-muted">No human decision recorded{ev.state === 'awaiting' ? ' — pending a reviewer' : ''}</span> },
           { k: 'Evidence', v: ev.evidence?.length ? <span className="inline-flex gap-2">{ev.evidence.map((x) => <IdLink key={x} onClick={() => go('project', { id: ev.projectId, tab: 'evidence' })}>{x}</IdLink>)}</span> : 'None captured' },
-          { k: 'Audit', v: <button className="text-accent hover:underline" onClick={() => go('ai-history')}>View in AI Audit →</button> },
+          { k: 'Audit', v: <button className="text-link hover:underline" onClick={() => go('ai-history')}>View in AI Audit →</button> },
         ]} />
       </Card>
       {ev.state === 'failed' && <ReplanPanel pid={ev.projectId} compact />}

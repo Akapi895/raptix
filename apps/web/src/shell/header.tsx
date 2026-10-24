@@ -99,7 +99,7 @@ function Notices() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setNoticesOpen(false)} aria-hidden />
           <div role="dialog" aria-label="Notifications" className="fixed left-3 right-3 top-[68px] z-50 rounded-2xl border border-line bg-panel p-3 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[420px]">
-            <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Notifications</h2><button onClick={markAllRead} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"><CheckCheck size={13} aria-hidden />Mark all read</button></div>
+            <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Notifications</h2><button onClick={markAllRead} className="inline-flex items-center gap-1 text-xs font-medium text-link hover:underline"><CheckCheck size={13} aria-hidden />Mark all read</button></div>
             <div role="tablist" className="mb-2 flex gap-1 border-b border-line">
               {([['unread', `Unread (${unread})`], ['all', 'All']] as const).map(([id, l]) => (
                 <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cx('h-9 border-b-2 px-3 text-xs font-medium', tab === id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg')}>{l}</button>

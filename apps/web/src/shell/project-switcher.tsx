@@ -51,7 +51,7 @@ export function ProjectSwitcher() {
     <div className="relative min-w-0 flex-1 sm:flex-none">
       <button onClick={() => setSwitcherOpen(!switcherOpen)} aria-haspopup="dialog" aria-expanded={switcherOpen} aria-label={`Project: ${isNew ? 'New project (draft)' : project ? project.id : 'All Projects'}`} title={isNew ? 'New project (draft)' : project ? `${project.id} · ${project.name}` : 'All Projects'} className="flex h-10 w-full min-w-0 max-w-[340px] items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm hover:bg-hover">
         {loading ? <Loader2 size={16} className="shrink-0 animate-spin text-cyan" aria-hidden /> : <FolderKanban size={16} className={cx('shrink-0', project && !isNew ? 'text-accent' : 'text-neutral')} aria-hidden />}
-        <span className="min-w-0 truncate font-medium">{isNew ? 'New project (draft)' : project ? <><span className="font-mono text-[13px]">{project.id}</span><span className="max-xl:hidden"> · {project.name}</span></> : 'All Projects'}</span>
+        <span className="min-w-0 truncate font-medium">{isNew ? 'New project (draft)' : project ? <>{project.name}<span className="ml-2 font-mono text-[12px] font-normal text-muted max-xl:hidden">{project.id}</span></> : 'All Projects'}</span>
         {project && !isNew && <span className="hidden 2xl:inline"><Status kind="project" value={project.status} size="sm" /></span>}
         <ChevronDown size={15} className="shrink-0 text-muted" aria-hidden />
       </button>
@@ -80,14 +80,14 @@ export function ProjectSwitcher() {
                 {pid === 'all' && <CheckIcon size={16} className="text-accent" aria-label="Current" />}
               </button>
               {list.length === 0 ? (
-                <div className="px-3 py-8 text-center text-sm text-muted">No matching projects. <button className="text-accent hover:underline" onClick={() => { setQ(''); setSt(''); setCl(''); setTab('all') }}>Clear filters</button></div>
+                <div className="px-3 py-8 text-center text-sm text-muted">No matching projects. <button className="text-link hover:underline" onClick={() => { setQ(''); setSt(''); setCl(''); setTab('all') }}>Clear filters</button></div>
               ) : list.map((p) => {
                 const ok = accessIds.has(p.id)
                 return (
                   <button key={p.id} disabled={!ok} title={ok ? `${p.id} · ${p.name} · ${p.client} · ${p.type}` : 'No access'} onClick={() => selectProject(p.id)} className={cx('flex min-h-14 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left', ok ? 'hover:bg-hover' : 'cursor-not-allowed opacity-60', pid === p.id && 'bg-hover')}>
                     {p.pinned ? <Pin size={14} className="shrink-0 text-warn" aria-label="Pinned" /> : <span className="w-3.5" />}
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium"><span className="font-mono text-[13px]">{p.id}</span> · {p.name}</div>
+                      <div className="truncate text-sm font-medium">{p.name} <span className="font-mono text-[12px] font-normal text-muted">{p.id}</span></div>
                       <div className="truncate text-xs text-muted">{p.client} · {p.type}{!ok && ' · '}{!ok && <span className="inline-flex items-center gap-1 text-neutral"><Lock size={11} aria-hidden />No access</span>}</div>
                     </div>
                     <Status kind="project" value={p.status} size="sm" />

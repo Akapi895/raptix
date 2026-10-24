@@ -229,7 +229,7 @@ function PlaybookDetail() {
               <ul className="divide-y divide-line">
                 {related.map((p) => (
                   <li key={p.id} className="flex items-center justify-between gap-2 p-3 text-sm">
-                    <button className="text-accent underline-offset-2 hover:underline" onClick={() => go('playbook-review', { id: p.id })}>{p.id} · v{p.version}</button>
+                    <button className="text-link underline-offset-2 hover:underline" onClick={() => go('playbook-review', { id: p.id })}>{p.id} · v{p.version}</button>
                     <ProposalStatus s={p.status} />
                   </li>
                 ))}
@@ -256,7 +256,7 @@ function TechniqueDetail() {
         {t.skills.length === 0 ? <p className="p-4 text-sm text-muted">No corpus skill references this technique.</p> : (
           <ul className="divide-y divide-line">
             {t.skills.map((skill) => (
-              <li key={skill.name} className="p-3"><button className="text-accent underline-offset-2 hover:underline" onClick={() => go('playbook', { id: skill.name })}>{skill.name}</button></li>
+              <li key={skill.name} className="p-3"><button className="text-link underline-offset-2 hover:underline" onClick={() => go('playbook', { id: skill.name })}>{skill.name}</button></li>
             ))}
           </ul>
         )}
@@ -286,7 +286,7 @@ function ProposalsPage({ newSkill }: { newSkill?: string }) {
             {proposals.data.items.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div>
-                  <button className="font-medium text-accent underline-offset-2 hover:underline" onClick={() => go('playbook-review', { id: p.id })}>{p.skillName}</button>
+                  <button className="font-medium text-link underline-offset-2 hover:underline" onClick={() => go('playbook-review', { id: p.id })}>{p.skillName}</button>
                   <p className="text-xs text-neutral">{p.id} · v{p.version} · by {p.createdBy}</p>
                 </div>
                 <ProposalStatus s={p.status} />

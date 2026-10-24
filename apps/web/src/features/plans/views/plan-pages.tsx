@@ -401,7 +401,7 @@ function PlanDetail({ plan }: { plan: Plan }) {
         {tab === 'branches' && (
           groups.length ? <div className="space-y-4">
             <Banner tone="info" title="Preview of the parallel branch groups defined for this plan version">Branches run only after the plan is approved and an operation passes preflight. Retry and reassign always require approval.</Banner>
-            {groups.map((g) => <div key={g.id} className="space-y-1"><div className="flex items-center gap-2 text-xs text-muted"><Mono>{g.id}</Mono> parent step <button className="text-accent hover:underline" onClick={() => setStepId(g.parentStep)}>{g.parentStep}</button> · aggregation step <button className="text-accent hover:underline" onClick={() => setStepId(g.aggStep)}>{g.aggStep}</button><button className="ml-auto text-accent hover:underline" onClick={() => go('ai-fanout', { id: g.id })}>Open full fan-out view →</button></div><FanOutCard groupId={g.id} /></div>)}
+            {groups.map((g) => <div key={g.id} className="space-y-1"><div className="flex items-center gap-2 text-xs text-muted"><Mono>{g.id}</Mono> parent step <button className="text-link hover:underline" onClick={() => setStepId(g.parentStep)}>{g.parentStep}</button> · aggregation step <button className="text-link hover:underline" onClick={() => setStepId(g.aggStep)}>{g.aggStep}</button><button className="ml-auto text-link hover:underline" onClick={() => go('ai-fanout', { id: g.id })}>Open full fan-out view →</button></div><FanOutCard groupId={g.id} /></div>)}
           </div> : <Empty title="No branch group in this plan version" action={sibling ? <Button onClick={() => go('ai-plan', { id: sibling.planId, tab: 'branches' })}>Open {sibling.planId} {sibling.planVer}</Button> : undefined}>{sibling ? `Branch group ${sibling.id} belongs to ${sibling.planId} ${sibling.planVer}. This version has no group of its own until it is approved and a group is defined.` : 'This plan has no parallel fan-out. All steps run sequentially.'}</Empty>
         )}
         {tab === 'assets' && (
@@ -468,7 +468,7 @@ function PolicyChecks({ plan }: { plan: Plan }) {
           <li key={c.id} className="flex items-start gap-2">
             <span className="mt-0.5">{CHK_ICON[c.state]}</span>
             <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="font-medium">{c.label}</span><span className={cx('text-[11px] font-semibold', c.state === 'pass' ? 'text-ok' : c.state === 'warn' ? 'text-warn' : 'text-bad')}>{CHK_LABEL[c.state]}</span></div>
-              <div className="text-xs text-muted">{c.detail}{c.to && c.state !== 'pass' && <> <button className="text-accent hover:underline" onClick={() => go(c.to!.page, { id: c.to!.id, tab: c.to!.tab })}>Open evidence →</button></>}</div></div>
+              <div className="text-xs text-muted">{c.detail}{c.to && c.state !== 'pass' && <> <button className="text-link hover:underline" onClick={() => go(c.to!.page, { id: c.to!.id, tab: c.to!.tab })}>Open evidence →</button></>}</div></div>
           </li>
         ))}
       </ul>
@@ -652,7 +652,7 @@ function ReviewBody({ plan }: { plan: Plan }) {
             <span className="text-sm">Approval is a precondition only — the operation still needs preflight.</span>
             {op && <Button onClick={() => go('operation', { id: op.id })}>Open {op.id}</Button>}
             {!op && <Gated allowed={can('run') && !expiredApproval} reason={expiredApproval ? createWhyBridge : 'Your role cannot create operations.'}><Button variant="primary" icon={Rocket} onClick={create}>Create operation &amp; run preflight</Button></Gated>}
-          </> : <span className="text-sm text-muted">No decision is pending for a plan in status “{plan.status.replace('_', ' ')}”.{(plan.status === 'draft' || plan.status === 'proposed') && <> <button className="text-accent hover:underline" onClick={() => go('ai-plan', { id: plan.id })}>Open the plan to request review →</button></>}</span>}
+          </> : <span className="text-sm text-muted">No decision is pending for a plan in status “{plan.status.replace('_', ' ')}”.{(plan.status === 'draft' || plan.status === 'proposed') && <> <button className="text-link hover:underline" onClick={() => go('ai-plan', { id: plan.id })}>Open the plan to request review →</button></>}</span>}
         </div>
       </div>
       <Modal open={!!dec} onClose={() => setDec(null)} title={dec ? `${DEC[dec].title}: ${plan.id} ${planVer(plan)}` : ''}

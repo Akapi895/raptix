@@ -236,7 +236,7 @@ function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose:
         {agent && reqBlockers.length > 0 && !agent.projectId && (
           <div className="rounded-lg border border-line p-3 text-sm">
             <div className="mb-1 font-medium">Permitted alternatives ({agent.os}, connected, unreserved)</div>
-            {alt.length ? <ul className="space-y-1">{alt.map((a) => <li key={a.id} className="flex items-center gap-2"><button className="whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => setAgentId(a.id)}>{a.id}</button><span className="text-muted">{a.host} · {a.ip}</span></li>)}</ul> : <p className="text-xs text-muted">No other {agent.os} agents are available in the shared pool.</p>}
+            {alt.length ? <ul className="space-y-1">{alt.map((a) => <li key={a.id} className="flex items-center gap-2"><button className="whitespace-nowrap font-mono text-[13px] text-link hover:underline" onClick={() => setAgentId(a.id)}>{a.id}</button><span className="text-muted">{a.host} · {a.ip}</span></li>)}</ul> : <p className="text-xs text-muted">No other {agent.os} agents are available in the shared pool.</p>}
           </div>
         )}
         {!can('editScope') && <Locked reason="Only Red Team Managers and Admins can assign immediately. Anyone with access can submit a request." />}
@@ -748,7 +748,7 @@ function AgentDetail() {
               { k: 'Last verified', v: <span className={a.status === 'lost' ? 'text-bad' : ''}>{a.lastSeen}</span> },
               { k: 'Health confidence', v: confidence },
             ]} />
-            <div className="mt-3 flex flex-wrap gap-3 text-xs">{a.op && <IdL onClick={() => go('operation', { id: a.op! })}>{a.op}</IdL>}{activeSess[0] && <IdL onClick={() => go('c2-session', { id: activeSess[0].id })}>{activeSess[0].id}</IdL>}<button className="text-accent hover:underline" onClick={() => go('agent', { id: a.id, tab: 'log' })}>Event history</button></div>
+            <div className="mt-3 flex flex-wrap gap-3 text-xs">{a.op && <IdL onClick={() => go('operation', { id: a.op! })}>{a.op}</IdL>}{activeSess[0] && <IdL onClick={() => go('c2-session', { id: activeSess[0].id })}>{activeSess[0].id}</IdL>}<button className="text-link hover:underline" onClick={() => go('agent', { id: a.id, tab: 'log' })}>Event history</button></div>
           </Card>
           <Card><CardHeader title="Identity & platform" />
             <DescList cols={3} items={[
@@ -798,7 +798,7 @@ function AgentDetail() {
             { k: 'Allowed project', v: isPool ? POOL_LABEL : projectLabel }, { k: 'Group', v: a.group || '—' },
             { k: 'Group policy', v: read.group?.policy || 'No group policy applied' },
             { k: 'Concurrent use', v: 'One operation at a time' },
-            { k: 'Agent identifier (masked)', v: <span className="flex items-center gap-2"><Mono>{read.canViewSensitive && reveal ? `agt_${hashNum(a.id)}x9f${a.id.slice(-3)}` : '••••••••••••••'}</Mono>{read.canViewSensitive ? <button className="text-xs text-accent hover:underline" onClick={() => setReveal(!reveal)}>{reveal ? 'Hide' : 'Show'}</button> : <Locked reason={`The ${me.role} role cannot view this value`} />}</span> },
+            { k: 'Agent identifier (masked)', v: <span className="flex items-center gap-2"><Mono>{read.canViewSensitive && reveal ? `agt_${hashNum(a.id)}x9f${a.id.slice(-3)}` : '••••••••••••••'}</Mono>{read.canViewSensitive ? <button className="text-xs text-link hover:underline" onClick={() => setReveal(!reveal)}>{reveal ? 'Hide' : 'Show'}</button> : <Locked reason={`The ${me.role} role cannot view this value`} />}</span> },
           ]} />
         </Card>
       )}
