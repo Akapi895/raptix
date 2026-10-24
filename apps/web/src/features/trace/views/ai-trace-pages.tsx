@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Columns3, Download, ExternalLink, Filter, X } from 'lucide-react'
-import { actorRef } from '../../../demo/persona'
+import { actorRef } from '../../../domain/actor'
 import { planVer } from '../../../domain/catalog';
 import type { Audit, Conversation, Facets, ToolEvent } from '../../../domain/entities'
 import { useQueryScope } from '../../../state/keys'

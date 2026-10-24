@@ -17,7 +17,8 @@
  * detail views refetch without a reload.
  */
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { actorRef, OWNER_PERSONAS, REVIEWER_PERSONAS } from '../../demo/persona'
+import { OWNER_PERSONAS, REVIEWER_PERSONAS } from '../../demo/persona'
+import { actorRef } from '../../domain/actor'
 import { useServices } from '../../state/services'
 import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'

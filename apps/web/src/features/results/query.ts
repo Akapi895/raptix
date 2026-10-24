@@ -13,7 +13,7 @@
  * bridge's project predicate.
  */
 import { useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
+import { actorRef } from '../../domain/actor'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'

@@ -14,7 +14,7 @@
  */
 import { useEffect, useState } from 'react'
 import { ListTree, PanelRight, Plus, Sparkles } from 'lucide-react'
-import { actorRef } from '../../../demo/persona'
+import { actorRef } from '../../../domain/actor'
 import { useQueryScope } from '../../../state/keys'
 import { ChatReadError, useAiDemo, useChatHandlers, useConversationList } from '../query'
 import { useProjectEligibility } from '../../operations/views'

@@ -10,7 +10,7 @@
  * delayed response can restore old visibility.
  */
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
+import { actorRef } from '../../domain/actor'
 import { useServices } from '../../state/services'
 import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
