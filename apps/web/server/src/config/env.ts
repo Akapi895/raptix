@@ -57,6 +57,11 @@ export interface ServerEnv {
   readonly adminBootstrap?: { readonly username: string; readonly password: string; readonly displayName: string };
   /** Issue session cookies with the Secure flag (RAPTIX_WEB_SECURE_COOKIES=1). */
   readonly secureCookies?: boolean;
+  /**
+   * One person runs this deployment and may decide items they submitted (RAPTIX_WEB_SINGLE_OPERATOR=1, ADR-0100).
+   * Off by default; the four-eyes refusals are skipped only when it is on.
+   */
+  readonly singleOperator?: boolean;
   /** Stable non-secret namespace for browser recovery across image upgrades. */
   readonly deploymentId?: string;
 }
@@ -282,6 +287,7 @@ export function loadServerEnv(
   const authMode = readAuthMode(source, issues);
   const adminBootstrap = readAdminBootstrap(source, issues, authMode);
   const secureCookies = source.RAPTIX_WEB_SECURE_COOKIES === '1';
+  const singleOperator = readSingleOperator(source, issues);
   const deploymentId = source.RAPTIX_WEB_DEPLOYMENT_ID;
   if (deploymentId !== undefined && !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deploymentId)) issues.push('RAPTIX_WEB_DEPLOYMENT_ID must be a non-secret installation identifier (1-128 characters).');
   if (issues.length > 0) {
@@ -293,6 +299,7 @@ export function loadServerEnv(
     nodeEnv,
     logLevel,
     ...(secureCookies ? { secureCookies: true } : {}),
+    ...(singleOperator ? { singleOperator: true } : {}),
     ...(deploymentId === undefined ? {} : { deploymentId }),
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
     ...(workspacePath === undefined ? {} : { workspacePath }),
@@ -305,6 +312,14 @@ export function loadServerEnv(
     ...(authMode === undefined ? {} : { authMode }),
     ...(adminBootstrap === undefined ? {} : { adminBootstrap }),
   } satisfies ServerEnv;
+}
+
+function readSingleOperator(source: NodeJS.ProcessEnv, issues: string[]): boolean {
+  const raw = source.RAPTIX_WEB_SINGLE_OPERATOR;
+  if (raw === undefined || raw === '' || raw === '0') return false;
+  if (raw === '1') return true;
+  issues.push('RAPTIX_WEB_SINGLE_OPERATOR must be "1" or "0"');
+  return false;
 }
 
 function readAuthMode(source: NodeJS.ProcessEnv, issues: string[]): 'local' | 'multi' | undefined {

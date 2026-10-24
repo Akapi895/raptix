@@ -49,8 +49,24 @@ export async function requireEngagementAccess(ctx: ActorContext, engagementId: s
   return { engagementId, role: membership.role, isOwner: false };
 }
 
-/** Four-eyes: a decision actor must differ from the requesting actor. */
+/**
+ * Single-operator mode (ADR-0100): one person runs the deployment and may decide the items they submitted. Off by default
+ * and set once at startup from RAPTIX_WEB_SINGLE_OPERATOR=1. Decisions are still recorded with their actor; only the
+ * same-actor refusal is skipped. The author-only and named-reviewer rules are not affected.
+ */
+let singleOperator = false;
+
+export function configureSingleOperator(enabled: boolean): void {
+  singleOperator = enabled;
+}
+
+export function isSingleOperator(): boolean {
+  return singleOperator;
+}
+
+/** Four-eyes: a decision actor must differ from the requesting actor, unless the deployment is single-operator. */
 export function requireIndependentActor(requestedBy: string, actorId: string, what: string): void {
+  if (singleOperator) return;
   if (requestedBy === actorId) {
     throw new ProjectApiError(403, `${what} requires an independent actor: ${actorId} submitted this item and cannot decide it.`);
   }
