@@ -1,0 +1,65 @@
+{
+ "workflow": "WF-solo one person, owner account (ADR-0100)",
+ "generatedAt": "2026-10-24T08:31:24.562Z",
+ "counts": {
+  "PASS": 8
+ },
+ "results": [
+  {
+   "id": "the capabilities document advertises single-operator review",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "independentReview \"single-operator\"",
+   "evidence": null
+  },
+  {
+   "id": "the owner proposes their own plan",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "propose HTTP 200; database proposed",
+   "evidence": null
+  },
+  {
+   "id": "the Governance page offers the owner an Approve control on their own plan",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "Approve controls on the owner's proposed plan: 1",
+   "evidence": null
+  },
+  {
+   "id": "the owner approves the plan from the page; the database records approved and the decider",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "database status approved; decidedBy is the author: true",
+   "evidence": null
+  },
+  {
+   "id": "the owner approves their own scope revision",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "submit HTTP 200; approve HTTP 200; database approved",
+   "evidence": null
+  },
+  {
+   "id": "the owner captures, creates, reviews and confirms a finding",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "capture HTTP 200; create HTTP 200; review HTTP 200; confirm HTTP 200; database confirmed",
+   "evidence": null
+  },
+  {
+   "id": "the owner sets up, selects the finding, submits the report and approves it",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "template HTTP 200; setup HTTP 200; select HTTP 200; submit HTTP 200; approve HTTP 200; database approved",
+   "evidence": null
+  },
+  {
+   "id": "the approved report exports as DOCX, with its title and the finding title",
+   "workflow": "WF-solo one person, owner account (ADR-0100)",
+   "status": "PASS",
+   "detail": "HTTP 200; title true; finding true",
+   "evidence": null
+  }
+ ]
+}
