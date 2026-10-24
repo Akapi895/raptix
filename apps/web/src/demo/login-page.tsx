@@ -7,7 +7,7 @@ import { useMe } from '../state/console'
 import { useAuthStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { currentRoute, navRawRoute } from '../router/navigate'
-import { isKnownPage, OUTSIDE_SHELL } from '../router/history'
+import { isKnownPage } from '../router/history'
 import { Banner, Button, Field, Input, Avatar, cx } from '../ui/index'
 
 const ORGS = [
@@ -68,7 +68,7 @@ export function Login() {
   const login = (o?: string) => {
     signIn(useAuthStore.getState().meName, o)
     const r = currentRoute()
-    if (isKnownPage(r.page) && r.page !== 'login' && !OUTSIDE_SHELL.has(r.page)) {
+    if (isKnownPage(r.page) && r.page !== 'login') {
       clearDirty()
       return
     }

@@ -17,9 +17,6 @@ export interface Route { page: string; id?: string; tab?: string; engagementId?:
 /** Landing page for an empty location ('' hash or '/' pathname). */
 const landingPage = (): string => (DATA_MODE === 'real' ? 'overview' : 'login')
 
-/** Pages that render outside the console shell (public, own full-page layout). */
-export const OUTSIDE_SHELL: ReadonlySet<string> = new Set(['scenarios', 'workspaces'])
-
 let knownPages: ReadonlySet<string> | null = null
 /** Registers the manifest keys; called once by the router registry module. */
 export function setKnownPages(pages: ReadonlySet<string>) { knownPages = pages }

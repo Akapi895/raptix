@@ -15,13 +15,13 @@ afterEach(() => {
 describe('RealNotIntegrated', () => {
   it('offers the demo switch in the development server', () => {
     vi.stubEnv('DEV', true)
-    render(<RealNotIntegrated page="scenarios" />)
+    render(<RealNotIntegrated page="operations" />)
     expect(screen.getByRole('button', { name: 'Switch to demo mode' })).toBeInTheDocument()
   })
 
   it('hides the demo switch and internal ticket wording in a deployed build', () => {
     vi.stubEnv('DEV', false)
-    render(<RealNotIntegrated page="scenarios" />)
+    render(<RealNotIntegrated page="operations" />)
     expect(screen.queryByRole('button', { name: 'Switch to demo mode' })).toBeNull()
     expect(screen.queryByText(/integration ticket/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Go to Projects' })).toBeInTheDocument()

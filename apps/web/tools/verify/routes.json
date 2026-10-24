@@ -1,5 +1,5 @@
 {
-  "description": "Shared route inventory of the web console. It covers the 55 route keys of src/router/routes.ts (54 by default, plus asset-map behind its flag) and the legacy command-center alias, whose address must redirect. An entry with a \"flag\" is registered only when the build enables that flag (RAPTIX_VERIFY_FLAGS, default \"prototype\"); when the flag is off it must resolve as \"Page not found\".",
+  "description": "Shared route inventory of the web console. It covers the 52 route keys of src/router/routes.ts (51 by default, plus asset-map behind its flag) and the legacy command-center alias, whose address must redirect. An entry with a \"flag\" is registered only when the build enables that flag (RAPTIX_VERIFY_FLAGS, default \"prototype\"); when the flag is off it must resolve as \"Page not found\".",
   "routes": [
     {
       "key": "login",
@@ -51,17 +51,6 @@
       "expect": {
         "mock": "Your session has expired",
         "real": "Your session has expired"
-      }
-    },
-    {
-      "key": "states",
-      "path": "states",
-      "flag": "prototype",
-      "expect": {
-        "mock": "Universal state set",
-        "real": {
-          "text": "Not connected in real mode"
-        }
       }
     },
     {
@@ -458,31 +447,6 @@
         "real": {
           "text": "Asset Map",
           "in": "main"
-        }
-      }
-    },
-    {
-      "key": "scenarios",
-      "path": "scenarios",
-      "flag": "prototype",
-      "expect": {
-        "mock": "Prototype Home",
-        "real": {
-          "text": "Not connected in real mode"
-        }
-      }
-    },
-    {
-      "key": "workspaces",
-      "path": "workspaces",
-      "flag": "prototype",
-      "expect": {
-        "mock": {
-          "text": "Select a workspace",
-          "in": "body"
-        },
-        "real": {
-          "text": "Not connected in real mode"
         }
       }
     }

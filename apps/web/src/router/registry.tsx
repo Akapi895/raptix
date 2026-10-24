@@ -7,12 +7,10 @@ import { lazy, type ComponentType } from 'react'
 import { routes as systemRoutes } from './slice-a'
 import { ROUTES, type Slice } from './routes'
 import { setKnownPages } from './history'
-import { PROTOTYPE_PAGES_ENABLED } from './prototype-pages'
 
 /** The module each slice loads. Every route in routes.ts names one of these. */
 const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string, ComponentType> }>> = {
   b: () => import('../features/wizard/routes'),
-  dp: () => import('../demo/project-detail/routes'),
   c: () => import('../features/operations/routes'),
   d: () => import('./slice-d'),
   e: () => import('./slice-e'),
@@ -23,7 +21,6 @@ const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string,
   g: () => import('./slice-g'),
   h: () => import('../features/c2/views/c2-pages'),
   i: () => import('../features/agents/routes'),
-  s: () => (PROTOTYPE_PAGES_ENABLED ? import('../demo/pages') : Promise.resolve({ routes: {} })),
   am: () => import('../features/asset-map').then((m) => ({ routes: m.routes })),
 }
 

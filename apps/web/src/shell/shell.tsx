@@ -9,7 +9,7 @@
  * slots keep the legacy implementations, so this composition is not edited by
  * later feature owners — the integrator wires replacements at the mount site.
  */
-import { useEffect, lazy, Suspense, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { Activity, Lock, ShieldAlert } from 'lucide-react'
 import { go, useRoute } from '../router/navigate'
 import type { Route } from '../router/history'
@@ -141,9 +141,6 @@ function RouteAnnouncer() {
 }
 
 /* ───────────── Shell ───────────── */
-/* Ticket 70: the walkthrough panel (and the guide corpus it renders) loads on
-   demand; the walkthrough state authority (demo/launch) is untouched. */
-const DemoGuide = lazy(() => import('../demo/guide').then((m) => ({ default: m.DemoGuide })))
 
 export function Shell({ children, slots = {} }: { children: ReactNode; slots?: ShellSlots }) {
   const project = useActiveProject()
@@ -183,7 +180,6 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
       <GlobalModals />
       <Toasts />
       <RouteAnnouncer />
-      {!real && <Suspense fallback={null}><DemoGuide /></Suspense>}
     </div>
   )
 }
