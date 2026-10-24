@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, Clock, FileSearch, FolderKanban, Home, LifeBuoy, Loader2, Lock, LogIn, RefreshCw, ShieldOff, ServerCrash, WifiOff } from 'lucide-react'
-import { USERS } from '../../domain/catalog';
 import type { Role } from '../../domain/entities'
-import { personaRole } from '../../domain/actor'
-import { useAuthStore, useToastStore, useUiStore } from '../../state/stores'
+import { useMe } from '../../state/console'
+import { useToastStore, useUiStore } from '../../state/stores'
 import { Button, Mono } from '../../ui/index'
 import { useSystemGo, useSystemRoute } from './nav'
 /** Role display labels (kept local to avoid a store cycle, like the feature services). */
@@ -25,10 +24,9 @@ function ErrorFrame({ code, icon: I, tone, title, desc, reason, children, action
 const REQUIRED: Record<string, string[]> = { default: ['manager', 'admin'] }
 export function Forbidden() {
   const go = useSystemGo()
-  const meName = useAuthStore((s) => s.meName)
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const route = useSystemRoute()
-  const me = { name: meName, role: personaRole(meName) }
+  const me = useMe()
   const need = (REQUIRED[route.id || ''] || REQUIRED.default) as Role[]
   return (
     <ErrorFrame
@@ -119,8 +117,7 @@ export function Offline() {
 }
 export function SessionExpired() {
   const go = useSystemGo()
-  const meName = useAuthStore((s) => s.meName)
-  const me = USERS.find((u) => u.name === meName)!
+  const me = useMe()
   return (
     <ErrorFrame
       icon={Clock} tone="text-warn" title="Your session has expired"

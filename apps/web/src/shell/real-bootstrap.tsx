@@ -5,8 +5,7 @@
  * BEFORE any data read happens, then exposes the transport + identity to the
  * app through context. The mock authority, demo timers and seed data are
  * never created in this mode (R02): a bootstrap failure renders an
- * actionable error with an explicit opt-in switch back to demo mode — it
- * never falls back automatically.
+ * actionable error; it never falls back automatically.
  */
 import { useQuery, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect, useMemo, type ReactElement, type ReactNode } from 'react'

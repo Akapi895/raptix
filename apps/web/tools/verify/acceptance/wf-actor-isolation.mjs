@@ -27,7 +27,7 @@ const pageErrors = [];
 page.on('pageerror', (error) => pageErrors.push(String(error.message)));
 
 async function signIn(target, who) {
-  await target.goto(`${conn.app}/?dataMode=real#/login`, { waitUntil: 'domcontentloaded' });
+  await target.goto(`${conn.app}/#/login`, { waitUntil: 'domcontentloaded' });
   await target.locator('#login-username').waitFor({ timeout: 60000 });
   await target.locator('#login-username').fill(who.username);
   await target.locator('#login-password').fill(who.password);
@@ -44,7 +44,7 @@ async function signOut(target) {
 }
 
 async function openProjects(target) {
-  await target.goto(`${conn.app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded' });
+  await target.goto(`${conn.app}/#/projects`, { waitUntil: 'domcontentloaded' });
   await target.getByText(SHARED_NAME).first().waitFor({ timeout: 60000 });
 }
 
@@ -112,7 +112,7 @@ try {
   await openProjects(page);
   const second = await context.newPage();
   second.on('pageerror', (error) => pageErrors.push(String(error.message)));
-  await second.goto(`${conn.app}/?dataMode=real#/login`, { waitUntil: 'domcontentloaded' });
+  await second.goto(`${conn.app}/#/login`, { waitUntil: 'domcontentloaded' });
   await second.getByRole('button', { name: 'Sign out', exact: true }).click();
   await second.locator('#login-username').waitFor({ timeout: 60000 });
   await signIn(second, conn.viewer);

@@ -52,7 +52,7 @@ async function scopeKept(page, label) {
 }
 
 async function signInReal(page, username, password) {
-  await page.goto(`${app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${app}/#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', username);
   await page.fill('#login-password', password);
@@ -60,7 +60,7 @@ async function signInReal(page, username, password) {
   await page.locator('#login-username').waitFor({ state: 'detached', timeout: 30000 });
 }
 
-const route = (page, target) => page.goto(`${app}/?dataMode=real#/${target}`, { waitUntil: 'domcontentloaded' });
+const route = (page, target) => page.goto(`${app}/#/${target}`, { waitUntil: 'domcontentloaded' });
 const navItem = (page, label) => page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: label, exact: true }).first();
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.RAPTIX_VERIFY_CHROMIUM || undefined });

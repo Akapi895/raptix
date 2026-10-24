@@ -1,8 +1,8 @@
 // Projects click-through against the running app. Real mode: an admin opens a project from the list and reads its overview; creates a new
 // project through the form, and after the create the project opens from the list again. A viewer attempts the same create and the server
-// refuses it; the refusal is shown and no project is created. Mock mode: the portfolio lists the demo projects and opens one. Each step checks
+// refuses it; the refusal is shown and no project is created. Each step checks
 // what the screen shows after the action; a step that cannot run is recorded as failed and the rest run.
-// Usage: node tools/verify/flows/projects-click.mjs --mode mock|real --app <url> --fixtures <manifest.json> --out <result.json>
+// Usage: node tools/verify/flows/projects-click.mjs --mode real --app <url> --fixtures <manifest.json> --out <result.json>
 // Env (real): RAPTIX_VERIFY_USER and RAPTIX_VERIFY_PASSWORD (an admin); the viewer comes from the fixture manifest.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
@@ -35,16 +35,8 @@ async function step(name, page, run) {
   }
 }
 
-async function signInMock(page, persona) {
-  await page.goto(`${app}/?dataMode=mock#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
-  const button = page.getByRole('button', { name: new RegExp(`^${persona}`) }).first();
-  await button.waitFor({ timeout: 60000 });
-  await button.click();
-  await page.locator('[aria-label="Quick role picker (demo)"]').waitFor({ state: 'detached', timeout: 30000 });
-}
-
 async function signInReal(page, username, password) {
-  await page.goto(`${app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${app}/#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', username);
   await page.fill('#login-password', password);
@@ -52,7 +44,7 @@ async function signInReal(page, username, password) {
   await page.locator('#login-username').waitFor({ state: 'detached', timeout: 30000 });
 }
 
-const route = (page, hash) => page.goto(`${app}/?dataMode=${mode}#/${hash}`, { waitUntil: 'domcontentloaded' });
+const route = (page, hash) => page.goto(`${app}/#/${hash}`, { waitUntil: 'domcontentloaded' });
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.RAPTIX_VERIFY_CHROMIUM || undefined });
 let fatal = null;
@@ -60,10 +52,9 @@ try {
   const adminContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
   const admin = await adminContext.newPage();
   admin.setDefaultTimeout(30000);
-  if (mode === 'mock') await signInMock(admin, 'Dana Whitfield');
-  else await signInReal(admin, process.env.RAPTIX_VERIFY_USER, process.env.RAPTIX_VERIFY_PASSWORD);
+  await signInReal(admin, process.env.RAPTIX_VERIFY_USER, process.env.RAPTIX_VERIFY_PASSWORD);
 
-  const seedName = mode === 'mock' ? 'Internal Red Team Q4' : 'Stack verification project';
+  const seedName = 'Stack verification project';
   await step('the project list shows the engagements and opens one with its overview', admin, async () => {
     await route(admin, 'projects');
     const row = admin.getByText(seedName, { exact: false }).first();
@@ -73,51 +64,47 @@ try {
     return { ok: overview, detail: overview ? `${seedName} overview open` : 'overview not shown' };
   });
 
-  if (mode === 'real') {
-    await step('an admin creates a project through the form and the new project opens', admin, async () => {
-      await route(admin, 'project-new');
-      await admin.getByLabel('Display name').fill(projectName);
-      await admin.getByLabel('Workspace slug').fill(slug);
-      await admin.getByLabel('Target value').fill(`https://${slug}.verify.invalid`);
-      await admin.getByLabel('Operator brief').fill('Click-through project created by the projects checklist.');
-      await admin.getByLabel('I confirm this engagement is authorized against the target above.').check();
-      await admin.getByRole('button', { name: /^Create/ }).first().click();
-      const opened = await admin.getByText(projectName, { exact: false }).first().waitFor({ timeout: 30000 }).then(() => true, () => false);
-      return { ok: opened, detail: opened ? `${projectName} opened` : 'the new project did not open' };
-    });
+  await step('an admin creates a project through the form and the new project opens', admin, async () => {
+    await route(admin, 'project-new');
+    await admin.getByLabel('Display name').fill(projectName);
+    await admin.getByLabel('Workspace slug').fill(slug);
+    await admin.getByLabel('Target value').fill(`https://${slug}.verify.invalid`);
+    await admin.getByLabel('Operator brief').fill('Click-through project created by the projects checklist.');
+    await admin.getByLabel('I confirm this engagement is authorized against the target above.').check();
+    await admin.getByRole('button', { name: /^Create/ }).first().click();
+    const opened = await admin.getByText(projectName, { exact: false }).first().waitFor({ timeout: 30000 }).then(() => true, () => false);
+    return { ok: opened, detail: opened ? `${projectName} opened` : 'the new project did not open' };
+  });
 
-    await step('the created project opens again from the list', admin, async () => {
-      await route(admin, 'projects');
-      const row = admin.getByText(projectName, { exact: false }).first();
-      await row.waitFor({ timeout: 30000 });
-      await row.click();
-      const reopened = await admin.getByText(projectName, { exact: false }).first().waitFor({ timeout: 30000 }).then(() => true, () => false);
-      return { ok: reopened, detail: reopened ? `${projectName} reopened from the list` : 'not reopened' };
-    });
-  }
+  await step('the created project opens again from the list', admin, async () => {
+    await route(admin, 'projects');
+    const row = admin.getByText(projectName, { exact: false }).first();
+    await row.waitFor({ timeout: 30000 });
+    await row.click();
+    const reopened = await admin.getByText(projectName, { exact: false }).first().waitFor({ timeout: 30000 }).then(() => true, () => false);
+    return { ok: reopened, detail: reopened ? `${projectName} reopened from the list` : 'not reopened' };
+  });
   await adminContext.close();
 
-  if (mode === 'real') {
-    const viewerContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
-    const viewer = await viewerContext.newPage();
-    viewer.setDefaultTimeout(30000);
-    const refusedName = `Refused project ${stamp}`;
-    await step('a viewer is refused the create route, and no project is created', viewer, async () => {
-      await signInReal(viewer, fixtures.viewer.username, fixtures.viewer.password);
-      await route(viewer, 'project-new');
-      await viewer.waitForTimeout(1500);
-      // The create route is closed to the viewer: the page leaves it (the form may render for an instant before the gate moves the page).
-      const formShown = await viewer.getByLabel('Display name').count();
-      const stillOnRoute = viewer.url().includes('#/project-new');
-      await route(viewer, 'projects');
-      const created = await viewer.getByText(refusedName, { exact: false }).count();
-      return {
-        ok: !stillOnRoute && created === 0,
-        detail: `${formShown ? 'form shown' : 'form not shown'}; ${stillOnRoute ? 'route kept' : 'route left'}; ${created === 0 ? 'no project created' : 'a project was created'}`,
-      };
-    });
-    await viewerContext.close();
-  }
+  const viewerContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
+  const viewer = await viewerContext.newPage();
+  viewer.setDefaultTimeout(30000);
+  const refusedName = `Refused project ${stamp}`;
+  await step('a viewer is refused the create route, and no project is created', viewer, async () => {
+    await signInReal(viewer, fixtures.viewer.username, fixtures.viewer.password);
+    await route(viewer, 'project-new');
+    await viewer.waitForTimeout(1500);
+    // The create route is closed to the viewer: the page leaves it (the form may render for an instant before the gate moves the page).
+    const formShown = await viewer.getByLabel('Display name').count();
+    const stillOnRoute = viewer.url().includes('#/project-new');
+    await route(viewer, 'projects');
+    const created = await viewer.getByText(refusedName, { exact: false }).count();
+    return {
+      ok: !stillOnRoute && created === 0,
+      detail: `${formShown ? 'form shown' : 'form not shown'}; ${stillOnRoute ? 'route kept' : 'route left'}; ${created === 0 ? 'no project created' : 'a project was created'}`,
+    };
+  });
+  await viewerContext.close();
 } catch (error) {
   fatal = error.message.split('\n')[0];
 } finally {

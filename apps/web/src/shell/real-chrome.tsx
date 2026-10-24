@@ -97,6 +97,6 @@ export function RealContextRibbon({ openSwitcher }: { openSwitcher: () => void }
     )
   }
   /* With an engagement selected there is no separate context bar: identity
-     lives in the sidebar header (plan 2026-10-16 §3.1), the same as demo mode. */
+     lives in the sidebar header (plan 2026-10-16 §3.1), */
   return null
 }

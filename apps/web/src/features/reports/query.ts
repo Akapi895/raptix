@@ -18,7 +18,7 @@ import type { ActorRef, RequestContext, ServiceFailure, ServiceResult } from '..
 import type { Report, Template } from '../../domain/entities'
 import type { DeliveryListQuery, ReportCapabilities, DraftOptionsRead, DeliveryInput, NoFind, ReportDecision, ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead, ReportReviewRead, ReportSubmitInput } from './service';
 
-/** The acting identity of a scope: the persona in mock mode, the session user in real mode. */
+/** The acting identity of a scope: the session user. */
 const actorOf = (actor: string, role: ActorRef['role']): ActorRef => ({ id: actor, role })
 
 /** Feature-local key namespaces, each aligned with its owning entity kind.

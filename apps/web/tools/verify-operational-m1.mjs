@@ -28,7 +28,7 @@ async function signIn(browser, actor) {
   const context = await browser.newContext({ viewport: { width: 1600, height: 1050 } })
   const page = await context.newPage()
   page.setDefaultTimeout(20000)
-  await page.goto(`${base}/?dataMode=real#/projects`)
+  await page.goto(`${base}/#/projects`)
   await page.getByLabel('Username', { exact: true }).fill(actor.username)
   await page.getByLabel('Password', { exact: true }).fill(actor.password)
   const pending = page.waitForResponse(response => response.url().endsWith('/api/auth/login') && response.request().method() === 'POST')
@@ -55,7 +55,7 @@ try {
   owner = await signIn(browser, credentials.owner)
   if (process.argv[2] === '--prepare') {
     if (!state.engagementId) {
-      await owner.page.goto(`${base}/?dataMode=real#/project-new`)
+      await owner.page.goto(`${base}/#/project-new`)
       await owner.page.getByPlaceholder('e.g. Q1 External Assessment').fill('M1 Operational Acceptance')
       await owner.page.getByPlaceholder('q1-external-assessment').fill(state.slug)
       await owner.page.getByPlaceholder('https://target.example.test or 10.20.0.0/24').fill('https://authorized.invalid')
@@ -80,7 +80,7 @@ try {
     await owner.page.screenshot({ path: resolve(output, 'created-project.png'), fullPage: true })
   } else if (process.argv[2] === '--planning') {
     const path = `/engagements/${state.engagementId}`
-    await owner.page.goto(`${base}/?dataMode=real#/ai-operator/${state.engagementId}`)
+    await owner.page.goto(`${base}/#/ai-operator/${state.engagementId}`)
     if (!state.planningThread) {
       const pending = owner.page.waitForResponse(response => response.url().endsWith('/threads') && response.request().method() === 'POST')
       await owner.page.getByRole('button', { name: 'New planning thread', exact: true }).click()
@@ -136,7 +136,7 @@ try {
       state.hitlAttempts.push({ runId: state.hitlRun, requestId: state.hitlDispatch, marker: state.hitlMarker, status: previous.rawStatus }); save()
     }
     state.hitlMarker = `M1_HITL_${state.id}_${randomUUID().slice(0, 8)}`; save()
-    await owner.page.goto(`${base}/?dataMode=real#/project/${state.engagementId}?tab=ai-workspace`)
+    await owner.page.goto(`${base}/#/project/${state.engagementId}?tab=ai-workspace`)
     await owner.page.getByLabel('Workspace message').fill(`This is a NEW explicit operator intent with a NEW output marker: ${state.hitlMarker}. Use a NEW dispatch_id for this new intent; do not reuse a completed dispatch. Submit the ACTUAL bash tool invocation printf ${state.hitlMarker} now. Do not say approval is pending in prose: only runtime HITL creates the request and pauses BEFORE execution. You are authorized to submit this benign local-only call FOR approval; never bypass the middleware or approve it yourself. If bash is not exposed to you, use task to delegate ONLY this exact local printf invocation to recon, with no target/network access or other work. Then report the actual result. The marker file is already verified; do not rewrite it.`)
     const pending = owner.page.waitForResponse(response => response.url().endsWith(`/threads/${state.executionThread}/runs`) && response.request().method() === 'POST')
     state.hitlRequestedAt = Date.now() / 1000; save()
@@ -156,7 +156,7 @@ try {
       return ['success', 'interrupted'].includes(run.rawStatus)
     })
     if (!(await api(owner, path)).handoffConfirmedAt) {
-      await owner.page.goto(`${base}/?dataMode=real#/project/${state.engagementId}?tab=planning`)
+      await owner.page.goto(`${base}/#/project/${state.engagementId}?tab=planning`)
       const pending = owner.page.waitForResponse(response => response.url().endsWith(path) && response.request().method() === 'PATCH')
       await owner.page.getByRole('button', { name: 'Confirm planning handoff', exact: true }).click()
       assert.equal((await pending).status(), 200)
@@ -183,7 +183,7 @@ try {
       state.planId = plan.id; save()
       check('Unbound execution is refused; an independently approved plan binds the owned thread', true)
     }
-    await owner.page.goto(`${base}/?dataMode=real#/project/${state.engagementId}?tab=ai-workspace`)
+    await owner.page.goto(`${base}/#/project/${state.engagementId}?tab=ai-workspace`)
     if (!state.executionRun) {
       const instruction = `Execute only the approved LOCAL workspace acceptance objective. Do not contact targets or delegate network work. First use write_file to produce /workspace/findings/FIND-M1-ACCEPTANCE.md with title Local M1 pipeline marker, Severity: informational, a Description saying this is a pipeline check NOT a vulnerability, and Evidence containing M1_ACCEPTANCE_${state.id}. Read it back using read_file. Then exactly once invoke bash with this exact harmless local command: printf M1_HITL_${state.id}. It only prints a marker, no filesystem or network effects. Wait for real operator HITL approval; never bypass or auto-approve. Finish after the operator decision and summarize the actual output.`
       await owner.page.getByLabel('Workspace message').fill(instruction)
@@ -242,7 +242,7 @@ try {
     await owner.page.reload()
     const runs = await api(owner, `${path}/threads/${state.executionThread}/runs`)
     check('Browser refresh retains exactly one run for the dispatch identity', runs.runs.filter(run => run.requestId === state.executionRequest).length === 1)
-    await owner.page.goto(`${base}/?dataMode=real#/project/${state.engagementId}?tab=operations`)
+    await owner.page.goto(`${base}/#/project/${state.engagementId}?tab=operations`)
     await owner.page.getByRole('button', { name: /^tool_call · checkpoint/ }).first().click()
     const dialog = owner.page.getByRole('dialog', { name: /Tool Event Inspector/ })
     await dialog.waitFor()
@@ -255,7 +255,7 @@ try {
     const path = `/engagements/${state.engagementId}`
     const label = `M1 vault token ${state.id}`
     const plaintext = `m1-vault-${randomUUID()}`
-    await owner.page.goto(`${base}/?dataMode=real#/project/${state.engagementId}?tab=vault`)
+    await owner.page.goto(`${base}/#/project/${state.engagementId}?tab=vault`)
     if (!state.vaultStored) {
       await owner.page.getByLabel('Kind', { exact: true }).fill('api-key')
       await owner.page.getByLabel('Label', { exact: true }).fill(label)
@@ -273,10 +273,10 @@ try {
     await owner.page.getByRole('button', { name: `Hide ${label}` }).click()
     await owner.page.getByText(plaintext, { exact: true }).waitFor({ state: 'detached' })
     check('Real vault stores metadata-only, reveals, and hides plaintext in-session', !(await listBody()).includes(plaintext))
-    await owner.page.goto(`${base}/?dataMode=real#/project/${state.engagementId}?tab=audit`)
+    await owner.page.goto(`${base}/#/project/${state.engagementId}?tab=audit`)
     await poll(async () => (await owner.page.locator('body').innerText()).includes('vault.secret_created'))
     check('Vault lifecycle is recorded in the real audit surface', (await listBody()).includes('vault.secret_revealed'))
-    await owner.page.goto(`${base}/?dataMode=real#/project/${state.engagementId}?tab=vault`)
+    await owner.page.goto(`${base}/#/project/${state.engagementId}?tab=vault`)
     const revoked = owner.page.waitForResponse(response => response.url().includes(`${path}/vault/secrets/`) && response.request().method() === 'DELETE')
     await owner.page.getByRole('button', { name: `Revoke ${label}` }).click()
     assert.equal((await revoked).status(), 200)

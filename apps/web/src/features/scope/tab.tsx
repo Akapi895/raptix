@@ -337,7 +337,7 @@ export function ScopeTab({ engagementId, documents }: { engagementId: string; do
                 </table>
               )}
               {view.revisions.some((r) => r.status === 'pending' && r.requestedBy !== actorId) && (
-                <div className="mt-3"><Input aria-label="Decision reason" placeholder="Reason (required to reject in mock mode)" value={reason} onChange={(e) => setReason(e.target.value)} className="max-w-md" /></div>
+                <div className="mt-3"><Input aria-label="Decision reason" placeholder="Reason (required to reject)" value={reason} onChange={(e) => setReason(e.target.value)} className="max-w-md" /></div>
               )}
             </div>
           </Card>

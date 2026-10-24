@@ -1,9 +1,9 @@
 // Isolated real-mode verification stack for the web console. It starts a dedicated PostgreSQL container (tmpfs data, random
 // password, unique name), applies the server migrations, starts the API from source and Vite, bootstraps one owner from
-// the API environment, creates a viewer and fixtures through the API, then runs the route smoke for the requested modes.
+// the API environment, creates a viewer and fixtures through the API, then runs the route smoke and the flows against it.
 // Everything it starts is stopped and removed on exit. Credentials are generated per run, given to child processes through
 // the environment and never written to the repository; the fixture manifest holds identifiers only.
-// Usage: node tools/verify/stack.mjs [--modes mock,real] [--out <dir>] [--routes a,b] [--prelab-only] [--smoke-only]
+// Usage: node tools/verify/stack.mjs [--out <dir>] [--routes a,b] [--prelab-only] [--smoke-only]
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -22,7 +22,7 @@ const arg = (name, fallback) => {
   const i = process.argv.indexOf(name);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
-const modes = arg('--modes', 'mock,real');
+const modes = 'real';
 const routes = arg('--routes', null);
 // The knowledge graph (Neo4j) backs the library and the observed graph. It runs by default; --no-graph leaves it out.
 const withGraph = !process.argv.includes('--no-graph');
@@ -145,10 +145,10 @@ async function seed(api, owner, workspace) {
   return { project: project.id, finding: finding.id, evidence: capture.id, report: report.id, asset: inventory.assets[0].id, knowledgeGraph: probe.status === 200, ...library, viewer: { username: 'viewer', password: viewerPassword }, reviewer: { username: 'reviewer', password: reviewerPassword }, operator: { username: 'operator', password: operatorPassword } };
 }
 
-async function runSmoke(env, manifestFile, modesToRun, name) {
+async function runSmoke(env, manifestFile, name) {
   const smokeOut = path.join(out, `${name}.json`);
   const extra = [...(routes ? ['--routes', routes] : []), ...(process.argv.includes('--discover') ? ['--discover'] : [])];
-  const result = spawnSync(process.execPath, [path.join(here, 'route-smoke.mjs'), '--modes', modesToRun, '--fixtures-real', manifestFile, '--out', smokeOut, ...extra], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
+  const result = spawnSync(process.execPath, [path.join(here, 'route-smoke.mjs'), '--fixtures-real', manifestFile, '--out', smokeOut, ...extra], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
   writeFileSync(path.join(out, `${name}.log`), `${result.stdout}${result.stderr}`);
   process.stdout.write(result.stdout);
   return result.status;
@@ -214,14 +214,6 @@ function runAnalysisClick(env, manifestFile, mode, appUrl) {
   const clickOut = path.join(out, `flows-analysis-click-${mode}.json`);
   const result = spawnSync(process.execPath, [path.join(here, 'flows', 'analysis-click.mjs'), '--mode', mode, '--app', appUrl, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
   writeFileSync(path.join(out, `flows-analysis-click-${mode}.log`), `${result.stdout}${result.stderr}`);
-  process.stdout.write(result.stdout);
-  return result.status;
-}
-
-function runMockFlowClick(env, manifestFile, script, name, appUrl) {
-  const clickOut = path.join(out, `flows-${name}-click-mock.json`);
-  const result = spawnSync(process.execPath, [path.join(here, 'flows', script), '--mode', 'mock', '--app', appUrl, '--fixtures', manifestFile, '--out', clickOut], { cwd: web, env, encoding: 'utf8', timeout: 900000 });
-  writeFileSync(path.join(out, `flows-${name}-click-mock.log`), `${result.stdout}${result.stderr}`);
   process.stdout.write(result.stdout);
   return result.status;
 }
@@ -363,28 +355,11 @@ try {
     statuses.push(runFlow({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'prelab.mjs', 'flows-prelab'));
   }
   const viteBin = path.join(path.dirname(require.resolve('vite/package.json')), 'bin/vite.js');
-  if (!process.argv.includes('--prelab-only') && modes.split(',').includes('mock')) {
-    // Mock mode runs on its own dev server whose backend is unreachable: a persona session must not depend on the stack API.
-    const mockPort = await freePort();
-    const deadBackend = `http://127.0.0.1:${await freePort()}`;
-    start('web-mock', [viteBin, '--host', '127.0.0.1', '--port', String(mockPort), '--strictPort'], web, { ...env, RAPTIX_WEB_BACKEND_URL: deadBackend });
-    const mockApp = `http://127.0.0.1:${mockPort}`;
-    await ready(mockApp, 'mock web');
-    statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: mockApp, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'mock', 'smoke-mock'));
-    statuses.push(runClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
-    statuses.push(runReportsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
-    statuses.push(runSettingsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
-    statuses.push(runProjectsClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
-    statuses.push(runAnalysisClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'mock', mockApp));
-    statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'operations-click.mjs', 'operations', mockApp));
-    statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'agents-click.mjs', 'agents', mockApp));
-    statuses.push(runMockFlowClick({ ...env, RAPTIX_VERIFY_APP: mockApp }, manifest, 'integration-path-click.mjs', 'integration path', mockApp));
-  }
   if (process.argv.includes('--smoke-only') && modes.split(',').includes('real')) {
     // Route smoke against the real API only: the targeted check for a change to rendered real routes.
-    statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
+    statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'smoke-real'));
   } else if (!process.argv.includes('--prelab-only') && modes.split(',').includes('real')) {
-    statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', 'smoke-real'));
+    statuses.push(await runSmoke({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'smoke-real'));
     statuses.push(runClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'real', app));
     statuses.push(runReportsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'real', app));
     statuses.push(runSettingsClick({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword }, manifest, 'real', app));

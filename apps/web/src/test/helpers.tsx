@@ -5,7 +5,7 @@ import { RealContext } from '../state/real-context'
 import { REAL_IDENTITY } from '../state/real-identity'
 import { RealFeatureServicesCtx } from '../state/real-services-provider'
 import { createRealFeatureServices } from '../state/real-services'
-import { resetSharedStores, useAuthStore } from '../state/stores'
+import { resetSharedStores } from '../state/stores'
 import { resetSessionStores } from '../state/session'
 import { resetNavStores } from '../router/navigate'
 
@@ -13,13 +13,12 @@ const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { projects:
 
 /**
  * Mounts a screen with the real console context the app provides: the capability document, the trusted identity and the
- * feature adapters. Tests that need data stub `fetch` themselves. `me` sets the persona the auth store reports.
+ * feature adapters. Tests that need data stub `fetch` themselves.
  */
-export function mountConsole(ui: ComponentType | ReactNode = null, me?: string) {
+export function mountConsole(ui: ComponentType | ReactNode = null) {
   resetSharedStores()
   resetSessionStores()
   resetNavStores()
-  if (me !== undefined) useAuthStore.getState().setMe(me)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const services = createRealFeatureServices(CAPABILITIES)
   return render(

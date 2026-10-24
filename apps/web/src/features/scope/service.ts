@@ -21,7 +21,7 @@ export interface ScopeRevision {
 
 export interface EffectiveScope {
   version: number | null
-  /** The label the source shows for the approved version: `v3` from the backend, the project's own ROE label in mock mode. */
+  /** The label the source shows for the approved version: `v3` from the backend, the project's own ROE label. */
   versionLabel: string | null
   rootTarget: string | null
   inScope: string[]

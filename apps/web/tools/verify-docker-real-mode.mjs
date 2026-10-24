@@ -7,7 +7,7 @@ import { chromium } from 'playwright'
 
 // CI bootstrap smoke, not the DB/LLM-backed deployed gate. No .env, credentials,
 // host data volumes or API interception. The Dockerfile's default mode is
-// tested (VITE_DATA_MODE=real): the API starts degraded without DATABASE_URL,
+// tested: the API starts degraded without DATABASE_URL,
 // the console boots on the real capabilities document, refuses unavailable
 // data sources and never falls back to demo data (ADR-0068).
 const uiImage = process.env.IW05_UI_IMAGE ?? 'raptix-web-raptix-ui:ci'

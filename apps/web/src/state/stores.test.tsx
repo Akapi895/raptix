@@ -2,31 +2,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { mountConsole } from '../test/helpers'
-import { useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore } from './stores'
+import { useProjectStore, useThemeStore, useToastStore, useUiStore } from './stores'
 import { selectProject } from '../router/navigate'
 
 afterEach(() => { cleanup(); vi.useRealTimers() })
-
-describe('auth/persona authority', () => {
-  it('a persona change reaches mounted selector subscribers', () => {
-    const h = mountConsole()
-    const { result } = renderHook(() => useAuthStore((s) => s.meName))
-    expect(result.current).toBe('Alex Morgan')
-    act(() => { useAuthStore.getState().setMe('Pat Kim') })
-    expect(result.current).toBe('Pat Kim')
-    h.unmount()
-  })
-
-  it('independent consumers share persona selection without duplicate state', () => {
-    const h = mountConsole()
-    const first = renderHook(() => useAuthStore((s) => s.meName))
-    const second = renderHook(() => useAuthStore((s) => s.meName))
-    act(() => { useAuthStore.getState().setMe('Taylor Chen') })
-    expect(first.result.current).toBe('Taylor Chen')
-    expect(second.result.current).toBe('Taylor Chen')
-    h.unmount()
-  })
-})
 
 describe('active-project authority', () => {
   it('router project selection reaches mounted selectors', () => {
@@ -88,7 +67,6 @@ describe('provider mount lifecycle', () => {
   it('every mount restores shared authorities without cross-mount leakage', () => {
     const a = mountConsole()
     act(() => {
-      useAuthStore.getState().setMe('Pat Kim')
       selectProject('RT-2026-014')
       useThemeStore.getState().setTheme('dark')
       useToastStore.getState().toast('stale toast')
@@ -97,7 +75,6 @@ describe('provider mount lifecycle', () => {
     })
     a.unmount()
     const b = mountConsole()
-    expect(useAuthStore.getState().meName).toBe('Alex Morgan')
     expect(useProjectStore.getState().pid).toBe('all')
     expect(useThemeStore.getState().theme).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)

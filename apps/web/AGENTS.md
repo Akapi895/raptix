@@ -12,8 +12,8 @@ npm run dev --workspace=@raptix/web-raptix
 ```
 
 - Dev server `127.0.0.1:5273` (override with `VITE_DEV_PORT`; add
-  `-- --port <port>` if the default is taken). Standalone mock mode needs no
-  backend/database/Docker.
+  `-- --port <port>` if the default is taken). The console runs against the real API
+  only (ADR-0101): start the API or the verification stack first; there is no standalone mode.
 - Dev `/api` proxy targets `RAPTIX_WEB_BACKEND_URL` or `http://127.0.0.1:5280`
   (the Fastify server in `apps/web/server`, workspace
   `@raptix/web-raptix-server`).
@@ -36,12 +36,11 @@ do not default to the full suite.
 - Node >= 22.12; **npm only** — the root `package-lock.json` is the only lock.
 - Alias `@` → `src/` (ESM-compatible in `vite.config.ts`).
 - Never import Prisma/`fs`/server modules into browser code.
-- Time comes from the dataset clock (`DbAuthority.clock`, formatted with `formatDemoInstant`). Presentation and the real interface never receive `MockClock`.
+- Timestamps come from the server; the console does not keep a local dataset clock.
 - No new `eslint-disable`. Fix the cause in the file you touch; no repo-wide suppression cleanup.
 - Production build does not read `.figma/` (Figma tooling removed at cutover).
-- 55-route inventory: `src/router/registry.tsx` (MANIFEST) — hash-based routes; the route smoke expectations are in `tools/verify/routes.json`.
-- Mock data lives behind the explicit mock authority (`src/demo/`); real-mode
-  integration lands ticket by ticket and must never fall back to demo data (ADR-0068).
+- Route inventory: `src/router/routes.ts` (one declaration per key); the route smoke expectations are in `tools/verify/routes.json`.
+- There is no demo data path: the console reads the real API only (ADR-0068, ADR-0101).
 - `tests/contracts/w00-captures.test.ts` + `tests/fixtures/` are retained
   real-API capture regressions from the previous app; `tools/` holds the
   deployment verification harnesses (`verify-docker-real-mode.mjs` is a CI
@@ -49,28 +48,24 @@ do not default to the full suite.
 
 ## Project structure
 
-ADR-0096: each feature owns its presentation, port, mock and real adapter.
+ADR-0096: each feature owns its presentation, its port and its real adapter; the demo side is removed (ADR-0101).
 
 - `src/main.tsx`, `src/App.tsx` — entrypoint and shell composition.
-- `src/state/` — composition root. `services.tsx` is the only module that chooses the mock or the real service set; `mode.ts` holds the data mode.
-- `src/router/` — the 55 route keys (`registry.tsx`), hash parsing and the route host.
+- `src/state/` — composition root: `feature-services.ts` (the real feature adapter set), `console.ts` (identity and project reads), `query.tsx` (the Query provider).
+- `src/router/` — the route keys (`routes.ts`), their slices (`registry.tsx`), hash parsing and the route host.
 - `src/platform/` — shared browser machinery: transport, session, streaming, request ledger. No domain logic.
-- `src/domain/` — shared contracts and pure logic: entities, catalog, ports (`service.ts`, `console-services.ts`), policy, projections.
-- `src/features/<domain>/` — one owner per domain: `index.ts` (public surface), `service.ts` (port), `mock.ts` (demo side), `remote.ts` (real adapter that implements the port), `api.ts` (wire calls behind `remote.ts`), `query.ts` (hooks and reads that presentation calls), `views/` (presentation shared by both modes). Callers outside a feature import only `index.ts`; presentation never imports `remote.ts`, `api.ts` or `mock.ts`.
-- `src/demo/` — demo-only code: seed, display clock, mock authority, mock service factory, demo runtime, personas. Real code never imports it.
+- `src/domain/` — shared contracts and pure logic: entities, catalog, ports (`feature-services.ts`), policy and the actor helper.
+- `src/features/<domain>/` — one owner per domain: `index.ts` (public surface), `service.ts` (port), `remote.ts` (real adapter that implements the port), `api.ts` (wire calls behind `remote.ts`), `query.ts` (hooks and reads that presentation calls), `views/` (presentation shared by both modes). Callers outside a feature import only `index.ts`; presentation never imports `remote.ts`, `api.ts` or `mock.ts`.
 - `src/real/` and `src/screens/` were removed. Real presentation lives in the owning feature or `src/shell/`; the real composition is `src/state/real-services*.ts(x)` and `src/shell/real-bootstrap.tsx`.
 - `server/` — Fastify API + Prisma (separate package, own build/tests).
 - `tests/contracts/` — retained API capture regression.
 - `tools/` — gates and verification: `check-boundaries.mjs` (ratchet against `boundaries-baseline.json`), `verify/route-smoke.mjs` (route expectations; known failures in `verify/baseline.json`), `verify/stack.mjs` (isolated real-mode stack with its own PostgreSQL container).
 
 Import exceptions (ADR-0096; `check:boundaries` enforces them):
-- The composition root (`state/services.tsx`, `App.tsx`, `main.tsx`) may import `demo/` at runtime.
-- Demo side (`demo/**`, `features/<x>/mock.ts`) may import demo and mock modules.
-- `features/<x>/remote.ts` and `platform/` import neither `demo/` nor mock modules.
-- Presentation imports a feature through `index.ts` or its `service.ts` port; never `remote.ts`, `mock.ts`, `real/` or `demo/`.
-- Type-only imports of demo from production code are counted apart (`production-type-imports-demo`) and move to `domain/` over time.
+- `features/<x>/remote.ts` and `platform/` import no mock or demo code (there is none).
+- Presentation imports a feature through `index.ts` or its `service.ts` port; never `remote.ts`.
 
-Gates before a change lands: `npm run typecheck`, `npm run lint` (the five existing errors, no new ones), `npm run test`, `npm run build`, `npm run check:boundaries` (fails above the baseline), and `npm run verify:routes` for the modes the change touches. `npm run check:boundaries:write` records a reviewed reduction.
+Gates before a change lands: `npm run typecheck`, `npm run lint` (clean), `npm run test`, `npm run build`, `npm run check:boundaries` (fails above the baseline), and `npm run verify:routes` for the modes the change touches. `npm run check:boundaries:write` records a reviewed reduction.
 
 ## Windows Temporary Process Safety
 

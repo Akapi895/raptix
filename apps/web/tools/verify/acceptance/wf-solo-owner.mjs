@@ -45,13 +45,13 @@ try {
     detail: `propose HTTP ${proposed.status}; database ${dbScalar(conn.db, `select status from "BusinessPlan" where id='${planId}'`)}`,
   }));
 
-  await page.goto(`${conn.app}/?dataMode=real#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${conn.app}/#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', conn.owner.username);
   await page.fill('#login-password', conn.owner.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.locator('#login-username').waitFor({ state: 'detached', timeout: 60000 });
-  await page.goto(`${conn.app}/?dataMode=real#/project/${project}?tab=governance`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${conn.app}/#/project/${project}?tab=governance`, { waitUntil: 'domcontentloaded' });
   await page.getByText('Business plans').first().waitFor({ timeout: 60000 });
   const row = page.locator('tr', { hasText: `Solo plan ${stamp}` }).first();
   await recorder.check('the Governance page offers the owner an Approve control on their own plan', async () => {

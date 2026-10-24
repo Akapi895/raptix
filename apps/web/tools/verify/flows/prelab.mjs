@@ -15,7 +15,7 @@ const check = (name, verdict) => {
 };
 
 async function signIn(page, username, password) {
-  await page.goto(`${app}/?dataMode=real#/projects`);
+  await page.goto(`${app}/#/projects`);
   await page.locator('#login-username').fill(username);
   await page.locator('#login-password').fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -72,7 +72,7 @@ try {
     return { confirmed: detail.ok && detail.data.finding.status === 'confirmed', text: bytes.ok ? new TextDecoder().decode(bytes.data.bytes) : null };
   }, { projectId: fixtures.project, id: finding.id, capture: finding.capture });
   check('refresh retains confirmed finding and verified original bytes', retained.confirmed && retained.text === 'PRELAB_RETAINED_BYTES\r\n');
-  await owner.goto(`${app}/?dataMode=real#/finding/${finding.id}?engagement=${fixtures.project}`);
+  await owner.goto(`${app}/#/finding/${finding.id}?engagement=${fixtures.project}`);
   await owner.getByRole('heading', { name: 'Prelab retained evidence', exact: true }).waitFor();
   check('the real finding detail renders after curation', true);
 
@@ -93,7 +93,7 @@ try {
     await route.fulfill({ json: body });
   });
   // The command form lives in the Infrastructure sessions tab; the c2-console address shows the no-console notice only.
-  await owner.goto(`${app}/?dataMode=real#/infrastructure?engagement=${fixtures.project}&tab=sessions`);
+  await owner.goto(`${app}/#/infrastructure?engagement=${fixtures.project}&tab=sessions`);
   await owner.locator('#c2-console-session').fill('prelab-session');
   await owner.getByLabel('Absolute binary path').fill('/usr/bin/printf');
   await owner.getByLabel('Arguments (JSON array)').fill('[1]');

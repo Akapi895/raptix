@@ -39,7 +39,7 @@ reviewerPage.setDefaultTimeout(30000);
 async function awaitingValue() {
   // A hash-only change keeps the app's query cache (30 s stale time), so the page is left first and loaded again.
   await reviewerPage.goto('about:blank');
-  await reviewerPage.goto(`${conn.app}/?dataMode=real#/overview`, { waitUntil: 'domcontentloaded' });
+  await reviewerPage.goto(`${conn.app}/#/overview`, { waitUntil: 'domcontentloaded' });
   const card = reviewerPage.getByRole('button', { name: /Awaiting decisions/ }).first();
   await card.waitFor({ timeout: 60000 });
   await reviewerPage.waitForTimeout(600);
@@ -48,7 +48,7 @@ async function awaitingValue() {
 }
 
 try {
-  await reviewerPage.goto(`${conn.app}/?dataMode=real#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await reviewerPage.goto(`${conn.app}/#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await reviewerPage.locator('#login-username').waitFor({ timeout: 60000 });
   await reviewerPage.fill('#login-username', conn.reviewer.username);
   await reviewerPage.fill('#login-password', conn.reviewer.password);
@@ -81,7 +81,7 @@ try {
   });
 
   await recorder.check('the team tab lists the decision, and its Open link points to the project', async () => {
-    await reviewerPage.goto(`${conn.app}/?dataMode=real#/project/${project}?tab=team`, { waitUntil: 'domcontentloaded' });
+    await reviewerPage.goto(`${conn.app}/#/project/${project}?tab=team`, { waitUntil: 'domcontentloaded' });
     const region = reviewerPage.getByRole('region', { name: 'Decisions' });
     await region.waitFor({ timeout: 60000 });
     const text = await region.innerText();

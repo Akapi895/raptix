@@ -12,7 +12,7 @@ const objective = `Acceptance plan ${stamp}`;
 const project = conn.project;
 
 async function signIn(page, who) {
-  await page.goto(`${conn.app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${conn.app}/#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', who.username);
   await page.fill('#login-password', who.password);
@@ -21,7 +21,7 @@ async function signIn(page, who) {
 }
 
 async function openGovernance(page) {
-  await page.goto(`${conn.app}/?dataMode=real#/project/${project}?tab=governance`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${conn.app}/#/project/${project}?tab=governance`, { waitUntil: 'domcontentloaded' });
   await page.getByText('Business plans').first().waitFor({ timeout: 60000 });
 }
 

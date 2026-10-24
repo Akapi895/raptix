@@ -1,8 +1,8 @@
 /**
  * Close engagement tab (plan P09, Closure slice), shared by the mock and the
  * real project detail. The checklist, the closure record, the request and the
- * decision come from the closure port. Mock mode adds its summary cards and its
- * reopen action through slots. An engagement that is closed is read-only, and a
+ * decision come from the closure port. The reopen action and the summary cards come
+ * through slots. An engagement that is closed is read-only, and a
  * condition the source cannot read blocks closure rather than passing.
  */
 import { useState, type ReactElement, type ReactNode } from 'react'

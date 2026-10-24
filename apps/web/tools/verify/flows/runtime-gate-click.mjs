@@ -26,7 +26,7 @@ const SURFACES = [
 ];
 
 async function signInReal(page, username, password) {
-  await page.goto(`${app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${app}/#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', username);
   await page.fill('#login-password', password);
@@ -43,7 +43,7 @@ try {
   await signInReal(page, process.env.RAPTIX_VERIFY_USER, process.env.RAPTIX_VERIFY_PASSWORD);
   for (const surface of SURFACES) {
     try {
-      await page.goto(`${app}/?dataMode=real#/${surface.route}`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${app}/#/${surface.route}`, { waitUntil: 'domcontentloaded' });
       await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
       // A gate can render after the network is idle: wait for each stated gate text, up to a bound, before reading the screen.
       for (const needle of surface.need) await page.getByText(needle, { exact: false }).first().waitFor({ timeout: 20000 }).catch(() => {});

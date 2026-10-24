@@ -211,7 +211,7 @@ export function ReportNew() {
               <Field label="Report type" required>
                 <Select value={kind} onChange={(e) => setKind(e.target.value)} disabled={locked}>{['Red Team', 'Purple Team', 'Assessment'].map((k) => <option key={k}>{k}</option>)}</Select>
               </Field>
-              <Field label="Title" required error={touched ? errs.title : ''} className="md:col-span-2"><Input value={effTitle} onChange={(e) => setTitle(e.target.value)} disabled={locked} placeholder="Example: Red Team Q4 Report — Northwind Bank (Demo)" /></Field>
+              <Field label="Title" required error={touched ? errs.title : ''} className="md:col-span-2"><Input value={effTitle} onChange={(e) => setTitle(e.target.value)} disabled={locked} placeholder="Example: Red Team Q4 Report" /></Field>
               <Field label="Template" required error={touched ? errs.tpl : ''}>
                 <Select value={effTpl} onChange={(e) => setTplName(e.target.value)} disabled={locked}>
                   {o.templates.map((t) => <option key={t.id} value={t.name}>{t.name}{t.status !== 'published' ? ' (draft)' : ''}</option>)}

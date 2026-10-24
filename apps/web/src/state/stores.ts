@@ -18,23 +18,6 @@ import type { AiMode } from '../domain/entities'
 export interface Toast { id: number; kind: 'ok' | 'warn' | 'bad' | 'info'; text: string }
 export interface CopilotCtx { kind: string; id?: string; label: string }
 
-/* ── auth/persona authority ── */
-export interface AuthState {
-  meName: string
-  authed: boolean
-  org: string
-  setMe(name: string): void
-  setAuthed(authed: boolean): void
-  setOrg(org: string): void
-}
-const initialAuth = { meName: 'Alex Morgan', authed: false, org: 'Acme Security (Demo)' }
-export const useAuthStore = create<AuthState>()((set) => ({
-  ...initialAuth,
-  setMe: (meName) => set({ meName }),
-  setAuthed: (authed) => set({ authed }),
-  setOrg: (org) => set({ org }),
-}))
-
 /* ── active-project authority ── */
 export interface ProjectState {
   pid: string
@@ -119,7 +102,6 @@ export const useUiStore = create<UiState>()((set) => ({
 
 /** Restores every authority's initial values and disposes pending toast timers. */
 export function resetSharedStores() {
-  useAuthStore.setState({ ...initialAuth })
   useProjectStore.setState({ ...initialProject })
   useThemeStore.setState({ ...initialTheme })
   document.documentElement.classList.toggle('dark', initialTheme.theme === 'dark')
