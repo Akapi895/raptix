@@ -154,6 +154,12 @@ describe('C2ProviderTab detail routes (W22)', () => {
     vi.mocked(api_c2.fetchC2Commands).mockResolvedValue([SESSION_COMMAND] as never)
   })
 
+  it('says there is no interactive console in this build, and keeps the session list under the address', async () => {
+    renderDetail('#/c2-console/sess-1?engagement=eng-1')
+    expect(await screen.findByText('No interactive console in this build')).toBeInTheDocument()
+    expect(await screen.findByText(/Session commands run only under an approved grant/)).toBeInTheDocument()
+  })
+
   it('renders a single owned session with its own command audit', async () => {
     renderDetail('#/c2-session/sess-1?engagement=eng-1')
     expect(await screen.findByText(/C2 session sess-1/)).toBeInTheDocument()
