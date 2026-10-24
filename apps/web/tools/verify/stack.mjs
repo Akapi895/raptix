@@ -299,6 +299,9 @@ try {
     // The database container of this run, so a flow can read persisted rows with psql. Only this run's container.
     RAPTIX_VERIFY_DB_CONTAINER: container,
   };
+  // ADR-0100: one person runs this stack and decides their own items. Off unless --single-operator is passed, because the
+  // four-eyes suites expect the rule to hold.
+  if (process.argv.includes('--single-operator')) env.RAPTIX_WEB_SINGLE_OPERATOR = '1';
   mkdirSync(env.WORKSPACE_PATH, { recursive: true });
   for (const key of Object.keys(env)) if (/^(LANGGRAPH_|NEO4J_|SLIVER_|RAPTIX_RUNTIME_|RAPTIX_ENVIRONMENT_)/.test(key)) delete env[key];
   if (graphAccess) Object.assign(env, { NEO4J_PASSWORD: graphAccess.password, NEO4J_HTTP_PORT: String(graphAccess.httpPort), NEO4J_HTTP_URI: `http://127.0.0.1:${graphAccess.httpPort}` });
