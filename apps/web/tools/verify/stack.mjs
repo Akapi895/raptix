@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, mkdtempSync, openSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import net from 'node:net';
@@ -28,9 +28,18 @@ const routes = arg('--routes', null);
 const withGraph = !process.argv.includes('--no-graph');
 const graphSeed = path.join(root, 'packages/raptix/raptix/skills/.graph/skills.cypher');
 const out = arg('--out', mkdtempSync(path.join(tmpdir(), 'raptix-stack-')));
+// The run writes fixture manifests with test credentials, so those folders must never sit inside the repository.
+function assertOutsideRepo(dir, flag) {
+  const resolved = path.resolve(dir).toLowerCase();
+  const repo = root.toLowerCase();
+  if (resolved === repo || resolved.startsWith(repo + path.sep)) throw new Error(`${flag} must be outside the repository`);
+}
+assertOutsideRepo(out, '--out');
 mkdirSync(out, { recursive: true });
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+/** Ends a --hold run after the stack is stopped through the stop file; the cleanup in finally still runs. */
+class HoldComplete extends Error {}
 const children = [];
 let container = null;
 let graphContainer = null;
@@ -104,10 +113,18 @@ async function seed(api, owner, workspace) {
   await request(api, owner, 'POST', `${prefix}/members`, { username: 'viewer', displayName: 'Stack Viewer', password: viewerPassword, role: 'viewer' });
   const reviewerPassword = randomUUID();
   await request(api, owner, 'POST', `${prefix}/members`, { username: 'reviewer', displayName: 'Stack Reviewer', password: reviewerPassword, role: 'reviewer' });
+  // The author of plans and scope revisions: an operator, separate from the reviewer who decides them.
+  const operatorPassword = randomUUID();
+  await request(api, owner, 'POST', `${prefix}/members`, { username: 'operator', displayName: 'Stack Operator', password: operatorPassword, role: 'operator' });
   // A confirmed finding is the reporting readiness precondition: the author sends it to review, an independent reviewer confirms it.
   await request(api, owner, 'POST', `${prefix}/curated-findings/${finding.id}/transition`, { to: 'review', expectedVersion: finding.version ?? 1 });
   const reviewerSession = await login(api, 'reviewer', reviewerPassword);
   await request(api, reviewerSession, 'POST', `${prefix}/curated-findings/${finding.id}/transition`, { to: 'confirmed', expectedVersion: (finding.version ?? 1) + 1 });
+  // An approved scope revision is the ROE that a plan proposal pins: the operator authors it, the independent reviewer approves it.
+  const operatorSession = await login(api, 'operator', operatorPassword);
+  const roe = { windows: [{ start: '2026-01-01T00:00:00Z', end: '2027-12-31T23:59:59Z', tz: 'UTC' }], emergencyContacts: ['stack-verification-contact'], restrictions: [] };
+  const scopeRevision = await request(api, operatorSession, 'POST', `${prefix}/scope/revisions`, { diff: { added: ['stack-host-01.verify.example.test'], removed: [], rationale: 'Generated verification ROE for the plan proposals.' }, roe });
+  await request(api, reviewerSession, 'POST', `${prefix}/scope/revisions/${scopeRevision.id}/decision`, { decision: 'approved', comment: 'Generated verification ROE.' });
   // The asset detail route needs an imported host.
   await request(api, owner, 'POST', `${prefix}/assets/inventory/import`, { identifiers: ['stack-host-01.verify.example.test'], kind: 'host' });
   const inventory = await request(api, owner, 'GET', `${prefix}/assets/inventory`);
@@ -123,7 +140,7 @@ async function seed(api, owner, workspace) {
   } else {
     log(`library fixtures not seeded: GET /api/library answers ${probe.status} because the stack runs without the knowledge graph`);
   }
-  return { project: project.id, finding: finding.id, evidence: capture.id, report: report.id, asset: inventory.assets[0].id, knowledgeGraph: probe.status === 200, ...library, viewer: { username: 'viewer', password: viewerPassword }, reviewer: { username: 'reviewer', password: reviewerPassword } };
+  return { project: project.id, finding: finding.id, evidence: capture.id, report: report.id, asset: inventory.assets[0].id, knowledgeGraph: probe.status === 200, ...library, viewer: { username: 'viewer', password: viewerPassword }, reviewer: { username: 'reviewer', password: reviewerPassword }, operator: { username: 'operator', password: operatorPassword } };
 }
 
 async function runSmoke(env, manifestFile, modesToRun, name) {
@@ -279,6 +296,8 @@ try {
     RAPTIX_WEB_ADMIN_PASSWORD: adminPassword,
     RAPTIX_WEB_BACKEND_URL: api,
     RAPTIX_WEB_SECURE_COOKIES: '0',
+    // The database container of this run, so a flow can read persisted rows with psql. Only this run's container.
+    RAPTIX_VERIFY_DB_CONTAINER: container,
   };
   mkdirSync(env.WORKSPACE_PATH, { recursive: true });
   for (const key of Object.keys(env)) if (/^(LANGGRAPH_|NEO4J_|SLIVER_|RAPTIX_RUNTIME_|RAPTIX_ENVIRONMENT_)/.test(key)) delete env[key];
@@ -292,8 +311,23 @@ try {
   const owner = await login(api, 'verifier', adminPassword);
   const fixtures = await seed(api, owner, env.WORKSPACE_PATH);
   const manifest = path.join(out, 'fixtures.real.json');
-  writeFileSync(manifest, JSON.stringify({ project: fixtures.project, finding: fixtures.finding, evidence: fixtures.evidence, report: fixtures.report, asset: fixtures.asset, viewer: fixtures.viewer, knowledgeGraph: fixtures.knowledgeGraph, playbook: fixtures.playbook, technique: fixtures.technique, proposal: fixtures.proposal }, null, 2));
+  writeFileSync(manifest, JSON.stringify({ project: fixtures.project, finding: fixtures.finding, evidence: fixtures.evidence, report: fixtures.report, asset: fixtures.asset, viewer: fixtures.viewer, reviewer: fixtures.reviewer, operator: fixtures.operator, knowledgeGraph: fixtures.knowledgeGraph, playbook: fixtures.playbook, technique: fixtures.technique, proposal: fixtures.proposal }, null, 2));
   log(`fixtures written: ${manifest}`);
+  if (process.argv.includes('--hold')) {
+    // Manual acceptance: keep the stack running until a stop file appears. Credentials go only to --hold-dir, which must be
+    // outside the repository, and the file is written for the owner of this run; nothing is printed here.
+    const holdDir = arg('--hold-dir', null);
+    if (holdDir === null) throw new Error('--hold needs --hold-dir, a folder outside the repository');
+    assertOutsideRepo(holdDir, '--hold-dir');
+    mkdirSync(holdDir, { recursive: true });
+    const stopFile = path.join(holdDir, 'STOP');
+    const holdFile = path.join(holdDir, 'hold.json');
+    writeFileSync(holdFile, JSON.stringify({ app, api, db: container, owner: 'verifier', adminPassword, viewer: fixtures.viewer, reviewer: fixtures.reviewer, operator: fixtures.operator, fixtures: manifest, out, startedAt: new Date().toISOString() }, null, 1));
+    log(`holding stack; the connection file is ${holdFile}; create ${stopFile} to stop`);
+    const deadline = Date.now() + 12 * 60 * 60 * 1000;
+    while (!existsSync(stopFile) && Date.now() < deadline) await pause(2000);
+    throw new HoldComplete();
+  }
   const statuses = [];
   if (process.argv.includes('--prelab-only')) {
     statuses.push(runFlow({ ...env, RAPTIX_VERIFY_APP: app, RAPTIX_VERIFY_USER: 'verifier', RAPTIX_VERIFY_PASSWORD: adminPassword, RAPTIX_VERIFY_REVIEWER: 'reviewer', RAPTIX_VERIFY_REVIEWER_PASSWORD: fixtures.reviewer.password }, manifest, 'prelab.mjs', 'flows-prelab'));
@@ -333,8 +367,12 @@ try {
   }
   status = statuses.every((code) => code === 0) ? 0 : 1;
 } catch (error) {
-  console.error(`[stack] ${error.message}`);
-  status = 1;
+  if (error instanceof HoldComplete) {
+    status = 0;
+  } else {
+    console.error(`[stack] ${error.message}`);
+    status = 1;
+  }
 } finally {
   stopChildren();
   removeContainer();
