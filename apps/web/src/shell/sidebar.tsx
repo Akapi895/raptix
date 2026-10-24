@@ -5,11 +5,11 @@
  * shared store context — nothing is duplicated here.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Crosshair, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { ArrowLeft, Crosshair, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
 import { go, goGlobal, useRoute } from '../router/navigate'
 import { useActiveProject } from '../state/console'
 import { useProjectStore } from '../state/stores'
-import { Status, cx } from '../ui/index'
+import { IconButton, Status, cx } from '../ui/index'
 import { NAV, projectNavGroups, projectSection, useBadges } from './nav'
 
 /* The navigation scroller keeps its scrollbar hidden, so a fade at the bottom signals items below the fold. */
@@ -37,6 +37,12 @@ function ScrollableNav({ onKeyDown, children }: { onKeyDown: (e: React.KeyboardE
       {more && <div data-scroll-fade aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10" style={{ background: 'linear-gradient(to top, var(--c-side), transparent)' }} />}
     </div>
   )
+}
+
+/** What the pending count on a global item counts, so the number is never read without its meaning (UX-15). */
+const BADGE_MEANING: Readonly<Record<string, string>> = {
+  projects: 'approvals waiting for you',
+  infrastructure: 'execution agents lost or unhealthy',
 }
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { collapsed: boolean; setCollapsed: (b: boolean) => void; mobileOpen: boolean; closeMobile: () => void }) {
@@ -68,6 +74,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [mobileOpen, closeMobile])
+  // The drawer takes focus when it opens, and focus returns to the control that opened it when it closes.
+  const drawerClose = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!mobileOpen) return
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    drawerClose.current?.querySelector('button')?.focus()
+    return () => opener?.focus()
+  }, [mobileOpen])
   const body = (compact: boolean) => (
     <>
       <div className={cx('flex h-16 shrink-0 items-center gap-3 border-b border-line px-4', compact && 'justify-center px-0')}>
@@ -129,7 +143,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
               const n = badges[it.page] || 0
               return (
                 <button
-                  key={it.page} data-nav onClick={() => { goGlobal(it.page); closeMobile() }} aria-current={active ? 'page' : undefined} aria-label={compact ? (n ? `${it.label}, ${n} pending` : it.label) : undefined} title={compact ? (n ? `${it.label} (${n} pending)` : it.label) : undefined}
+                  key={it.page} data-nav onClick={() => { goGlobal(it.page); closeMobile() }} aria-current={active ? 'page' : undefined} aria-label={compact ? (n ? `${it.label}, ${n} ${BADGE_MEANING[it.page] ?? 'pending'}` : it.label) : undefined} title={compact ? (n ? `${it.label} (${n} pending)` : it.label) : undefined}
                   className={cx('relative mb-0.5 flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition', compact && 'justify-center px-0', 'focus-visible:outline-2 focus-visible:-outline-offset-2', active ? 'bg-accent-soft font-semibold text-fg' : 'text-muted hover:bg-hover hover:text-fg')}
                 >
                   {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-accent" aria-hidden />}
@@ -137,7 +151,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
                   {!compact && <span className="flex-1 truncate text-left">{it.label}</span>}
                   {n > 0 && (compact
                     ? <span className="absolute right-1 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-side bg-accent" aria-hidden />
-                    : <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-fill px-1.5 text-xs font-semibold tnum text-white" aria-label={`${n} pending`}>{n}</span>)}
+                    : <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-fill px-1.5 text-xs font-semibold tnum text-white" title={BADGE_MEANING[it.page]} aria-label={BADGE_MEANING[it.page] ? `${n} ${BADGE_MEANING[it.page]}` : `${n} pending`}>{n}</span>)}
                 </button>
               )
             })}
@@ -157,7 +171,10 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
       {mobileOpen && (
         <div className="fixed inset-0 z-[60] lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={closeMobile} aria-hidden />
-          <aside role="dialog" aria-label="Navigation" className="absolute left-0 top-0 flex h-full w-[280px] flex-col border-r border-line bg-side shadow-xl">{body(false)}</aside>
+          <aside role="dialog" aria-label="Navigation" className="absolute left-0 top-0 flex h-full w-[280px] flex-col border-r border-line bg-side shadow-xl">
+            <div ref={drawerClose} className="flex justify-end px-2 pt-2"><IconButton icon={X} label="Close navigation" onClick={closeMobile} /></div>
+            {body(false)}
+          </aside>
         </div>
       )}
     </>
