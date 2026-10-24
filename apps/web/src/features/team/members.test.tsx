@@ -66,6 +66,16 @@ describe('TeamMembers (single-user deployment)', () => {
     expect(screen.getByRole('note')).toHaveTextContent('Memberships require an authentication strategy')
     expect(screen.queryByRole('button', { name: /invite member/i })).not.toBeInTheDocument()
   })
+
+  it('keeps the reason on the disabled controls of a member who cannot manage, so the control explains itself', async () => {
+    const viewer = { ...OWNER_VIEW, canManage: false, manageReason: 'Only the engagement owner can manage members.' }
+    useTeamRead.mockReturnValue({ isPending: false, isError: false, data: viewer, refetch: vi.fn(), error: null })
+    await renderMembers()
+    const remove = await screen.findByRole('button', { name: 'Remove Viewer Vera' })
+    expect(remove).toBeDisabled()
+    expect(remove).toHaveAttribute('title', 'Only the engagement owner can manage members.')
+    expect(screen.getByRole('button', { name: 'Invite member' })).toHaveAttribute('title', 'Only the engagement owner can manage members.')
+  })
 })
 
 describe('TeamMembers (owner)', () => {
