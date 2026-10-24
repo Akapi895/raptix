@@ -177,7 +177,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
       {paused && <G ok={!busy} w={busyWhy}><Button size={size} icon={Play} variant="primary" onClick={resume}>Resume</Button></G>}
       <G ok={!busy} w={busyWhy}><Button size={size} icon={Square} variant="danger" onClick={stop}>{stopping ? 'Stopping…' : 'Stop'}</Button></G>
       <Gated allowed={can('estop', op.projectId) && !ro && !busy} reason={ro ? reason : !can('estop', op.projectId) ? 'Your role cannot trigger an emergency stop.' : busyWhy}>
-        <Button size={size} icon={OctagonX} variant="dangerSolid" onClick={() => setEs(true)}>Emergency Stop</Button>
+        <Button size={size} icon={OctagonX} variant="destructive" onClick={() => setEs(true)}>Emergency Stop</Button>
       </Gated>
       {live && <G ok={!busy} w={busyWhy}><Button size={size} icon={Flag} onClick={complete}>Complete</Button></G>}
       <EmergencyStopDialog op={op} open={es} onClose={() => setEs(false)} />

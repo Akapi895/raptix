@@ -80,7 +80,7 @@ function FindingCard({ item, showProject, action }: { item: FindingListItem; sho
     <article onClick={() => go('finding', { id: f.id })}
       className={cx('cursor-pointer rounded-xl border border-l-4 border-line bg-panel p-4 transition hover:bg-hover', SEV_EDGE[f.severity])}>
       <div className="flex flex-wrap items-center gap-2">
-        <Mono className="text-accent">{f.id}</Mono>
+        <Mono className="text-muted">{f.id}</Mono>
         <Sev v={f.severity} />
         <Status kind="finding" value={f.status} size="sm" />
         {f.suggestionDisposition?.dismissed && <span className="text-xs text-muted">dismissed</span>}
@@ -88,7 +88,7 @@ function FindingCard({ item, showProject, action }: { item: FindingListItem; sho
         <span className="ml-auto whitespace-nowrap text-xs text-muted">Updated {f.updated}</span>
       </div>
       <h3 className="mt-2 text-[15px] font-semibold leading-snug">
-        <button type="button" className="rounded text-left hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">{f.title}</button>
+        <button type="button" className="rounded text-left hover:text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">{f.title}</button>
       </h3>
       {f.desc && <p className="mt-1 line-clamp-2 text-sm text-muted">{f.desc}</p>}
       <dl className={cx('mt-3 grid gap-x-6 gap-y-3 text-sm', showProject ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4')}>

@@ -100,7 +100,7 @@ export function MyTasks() {
                     <button onClick={open(t)} className="text-left text-sm font-semibold hover:underline">{t.title}</button>
                     <p className="mt-0.5 text-sm text-muted">{t.sub}</p>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted"><span>Project <Mono>{t.project}</Mono></span><span>From {t.by}</span><span>{t.at}</span></div>
-                    {!t.allowed && <p className="mt-2 text-xs text-muted"><AlertTriangle size={12} className="mr-1 inline text-warn" aria-hidden />{t.why} <button onClick={open(t)} className="text-accent hover:underline">View details</button></p>}
+                    {!t.allowed && <p className="mt-2 text-xs text-muted"><AlertTriangle size={12} className="mr-1 inline text-warn" aria-hidden />{t.why} <button onClick={open(t)} className="text-link hover:underline">View details</button></p>}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">{actions(t)}<Button size="sm" variant="ghost" onClick={open(t)}>Details</Button></div>
                 </div>

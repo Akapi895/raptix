@@ -231,16 +231,16 @@ function FindingDetailBody() {
             <Card>
               <CardHeader title="Links" />
               <DescList cols={2} items={[
-                { k: 'Affected asset', v: real ? <Mono>{f.references?.assetId ?? 'Not linked'}</Mono> : data.assetId ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
-                { k: 'Evidence', v: f.evidence.length ? f.evidence.map((id) => <button key={id} className="mr-2 whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('evidence', { id })}>{id}</button>) : <span className="text-muted">None linked</span> },
-                { k: 'Operation step', v: op && step ? <button className="whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id, tab: 'console' })}>{op.id} / {step.id} — {step.name}</button> : '—' },
+                { k: 'Affected asset', v: real ? <Mono>{f.references?.assetId ?? 'Not linked'}</Mono> : data.assetId ? <button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
+                { k: 'Evidence', v: f.evidence.length ? f.evidence.map((id) => <button key={id} className="mr-2 whitespace-nowrap font-mono text-[13px] text-link hover:underline" onClick={() => go('evidence', { id })}>{id}</button>) : <span className="text-muted">None linked</span> },
+                { k: 'Operation step', v: op && step ? <button className="whitespace-nowrap font-mono text-[13px] text-link hover:underline" onClick={() => go('operation', { id: op.id, tab: 'console' })}>{op.id} / {step.id} — {step.name}</button> : '—' },
                 { k: 'Confidence', v: f.status === 'ai_suggested' ? 'Low — AI inference, needs verification' : f.evidence.length ? 'Supported by linked evidence — a recorded claim, not proven exploitability' : 'Low — no evidence linked' },
                 { k: 'Reviewer decision', v: f.status === 'ai_suggested' ? 'Not submitted' : lastDecision ? `${lastDecision.text} by ${lastDecision.by}` : 'Pending' },
-                { k: 'Execution', v: real ? <span className="break-all text-xs">Thread: {f.references?.threadId ?? '—'}<br />Run: {f.references?.runId ?? '—'}<br />Binding: {f.references?.bindingId ?? '—'}</span> : op ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id} — {op.name}</button> : f.op || '—' },
-                { k: 'ATT&CK technique', v: f.technique ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono>{data.techniqueName ? ` — ${data.techniqueName}` : ''}</button> : 'Not linked' },
+                { k: 'Execution', v: real ? <span className="break-all text-xs">Thread: {f.references?.threadId ?? '—'}<br />Run: {f.references?.runId ?? '—'}<br />Binding: {f.references?.bindingId ?? '—'}</span> : op ? <button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id} — {op.name}</button> : f.op || '—' },
+                { k: 'ATT&CK technique', v: f.technique ? <button className="text-left text-link hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono>{data.techniqueName ? ` — ${data.techniqueName}` : ''}</button> : 'Not linked' },
                 { k: 'Client', v: proj?.client },
                 { k: 'Recorded', v: f.date },
-                { k: 'Included in reports', v: inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-accent hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
+                { k: 'Included in reports', v: inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-link hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
               ]} />
             </Card>
             <Card>

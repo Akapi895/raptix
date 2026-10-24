@@ -96,7 +96,7 @@ export function EmergencyStopDialog({ op, open, onClose }: { op: Operation; open
   return (
     <Modal open={open} onClose={close} danger title="Emergency Stop" footer={<>
       <Button onClick={close}>Cancel</Button>
-      <Button variant="dangerSolid" icon={OctagonX} disabled={!ready} title={ready ? undefined : why} onClick={submit}>Request Emergency Stop</Button>
+      <Button variant="destructive" icon={OctagonX} disabled={!ready} title={ready ? undefined : why} onClick={submit}>Request Emergency Stop</Button>
     </>}>
       <div className="space-y-4 text-sm">
         <fieldset>

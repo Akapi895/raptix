@@ -296,7 +296,7 @@ function OpTimeline({ ana }: { ana: Ana }) {
           { key: 'a', header: 'Agent', hideBelow: 'md', render: (e) => <Mono>{e.step.agent}</Mono> },
           { key: 'ts', header: 'Time', hideBelow: 'md', render: (e) => <span className="whitespace-nowrap text-xs text-muted">{e.step.ts === '—' ? '—' : `${e.step.ts} (UTC+7)`}</span> },
           { key: 'st', header: 'Status', render: (e) => <Status kind="step" value={e.step.status} size="sm" /> },
-          { key: 'ev', header: 'Evidence', hideBelow: 'lg', render: (e) => e.step.evidence?.startsWith('EV-') ? <button className="whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={(ev) => { ev.stopPropagation(); go('evidence', { id: e.step.evidence }) }}>{e.step.evidence}</button> : '—' },
+          { key: 'ev', header: 'Evidence', hideBelow: 'lg', render: (e) => e.step.evidence?.startsWith('EV-') ? <button className="whitespace-nowrap font-mono text-[13px] text-link hover:underline" onClick={(ev) => { ev.stopPropagation(); go('evidence', { id: e.step.evidence }) }}>{e.step.evidence}</button> : '—' },
         ]}
       />
     </Card>
@@ -638,7 +638,7 @@ function Chain({ opId }: { opId?: string }) {
             <div className="text-xs text-muted">Steps using this technique: <span className="font-mono text-fg">{selTech.stepIds.join(', ')}</span></div>
             <div>
               <div className="mb-1 text-xs text-muted">Related findings</div>
-              {selTech.findings.length ? <ul className="space-y-1">{selTech.findings.map((f) => <li key={f.id}><button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('finding', { id: f.id })}>{f.id}</button> — {f.title}</li>)}</ul> : <div className="text-sm text-neutral">No related findings.</div>}
+              {selTech.findings.length ? <ul className="space-y-1">{selTech.findings.map((f) => <li key={f.id}><button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('finding', { id: f.id })}>{f.id}</button> — {f.title}</li>)}</ul> : <div className="text-sm text-neutral">No related findings.</div>}
             </div>
             <Button size="sm" variant="ghost" icon={Grid3x3} onClick={() => go('analysis', { id: opId, tab: 'matrix' })}>View in MITRE ATT&CK matrix</Button>
           </div>
@@ -894,7 +894,7 @@ function Detection({ ana, canAdmin }: { ana: Ana; canAdmin: boolean }) {
               <EvidenceList ids={sel.runs.map((r) => r.step.evidence).filter((x): x is string => !!x && x.startsWith('EV-'))} />
             </div>
             <div><div className="mb-2 text-xs text-muted">Related findings</div>
-              {findingsOf(sel).length ? <ul className="space-y-1">{findingsOf(sel).map((f) => <li key={f.id}><button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('finding', { id: f.id })}>{f.id}</button> — {f.title}</li>)}</ul> : <div className="text-sm text-neutral">No related findings.</div>}
+              {findingsOf(sel).length ? <ul className="space-y-1">{findingsOf(sel).map((f) => <li key={f.id}><button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('finding', { id: f.id })}>{f.id}</button> — {f.title}</li>)}</ul> : <div className="text-sm text-neutral">No related findings.</div>}
             </div>
             <div className="rounded-lg bg-bg p-3 text-xs text-muted">{recFor(sel.tech, sel.state)}</div>
           </div>

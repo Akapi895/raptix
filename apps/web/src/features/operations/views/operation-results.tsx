@@ -195,7 +195,7 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
   const exportAllowed = finals && read.viewSensitive
   return (
     <div className="space-y-5">
-      {fbr.length > 0 && <Banner tone="bad" title={`${fbr.length} failed branch${fbr.length === 1 ? '' : 'es'} — outcome is not success`}>{fbr.map((b, i) => <span key={b.id}>{i > 0 && ', '}<IdLink onClick={() => go('ai-branch', { id: b.id })}>{b.id}</IdLink> (step <button className="text-accent underline" onClick={() => setStepSel(b.stepId)}>{b.stepId}</button>)</span>)}. {fbr[0].error || ''} Failed branches have no usable result or evidence.</Banner>}
+      {fbr.length > 0 && <Banner tone="bad" title={`${fbr.length} failed branch${fbr.length === 1 ? '' : 'es'} — outcome is not success`}>{fbr.map((b, i) => <span key={b.id}>{i > 0 && ', '}<IdLink onClick={() => go('ai-branch', { id: b.id })}>{b.id}</IdLink> (step <button className="text-link underline" onClick={() => setStepSel(b.stepId)}>{b.stepId}</button>)</span>)}. {fbr[0].error || ''} Failed branches have no usable result or evidence.</Banner>}
       {partial && <Banner tone="warn" title={op.status === 'estop' ? 'Emergency stopped — results are partial' : 'Operation stopped — results are partial'}>{c.unknown} step(s) are Unknown and {c.notrun + c.pending} were not run. Do not treat missing results as success.</Banner>}
       <Banner tone="info" icon={ShieldAlert} title="A failed step is not automatically a finding">An analyst must confirm the impact before creating a finding from a failed or unknown step.</Banner>
       <Card>

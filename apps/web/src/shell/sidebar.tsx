@@ -124,10 +124,10 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
                       key={it.to} data-nav onClick={() => { go('project', { id: projectId, tab: it.to }); closeMobile() }}
                       aria-current={active ? 'page' : undefined}
                       aria-label={compact ? it.label : undefined} title={compact ? it.label : undefined}
-                      className={cx('relative mb-0.5 flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition', compact && 'justify-center px-0', 'focus-visible:outline-2 focus-visible:-outline-offset-2', active ? 'bg-accent-soft font-semibold text-fg' : 'text-muted hover:bg-hover hover:text-fg')}
+                      className={cx('relative mb-0.5 flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition', compact && 'justify-center px-0', 'focus-visible:outline-2 focus-visible:-outline-offset-2', active ? 'bg-info-soft font-semibold text-fg' : 'text-muted hover:bg-hover hover:text-fg')}
                     >
-                      {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-accent" aria-hidden />}
-                      <it.icon size={18} className={cx('shrink-0', active && 'text-accent')} aria-hidden />
+                      {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary" aria-hidden />}
+                      <it.icon size={18} className={cx('shrink-0', active && 'text-primary')} aria-hidden />
                       {!compact && <span className="flex-1 truncate text-left">{it.label}</span>}
                     </button>
                   )
@@ -144,10 +144,10 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
               return (
                 <button
                   key={it.page} data-nav onClick={() => { goGlobal(it.page); closeMobile() }} aria-current={active ? 'page' : undefined} aria-label={compact ? (n ? `${it.label}, ${n} ${BADGE_MEANING[it.page] ?? 'pending'}` : it.label) : undefined} title={compact ? (n ? `${it.label} (${n} pending)` : it.label) : undefined}
-                  className={cx('relative mb-0.5 flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition', compact && 'justify-center px-0', 'focus-visible:outline-2 focus-visible:-outline-offset-2', active ? 'bg-accent-soft font-semibold text-fg' : 'text-muted hover:bg-hover hover:text-fg')}
+                  className={cx('relative mb-0.5 flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition', compact && 'justify-center px-0', 'focus-visible:outline-2 focus-visible:-outline-offset-2', active ? 'bg-info-soft font-semibold text-fg' : 'text-muted hover:bg-hover hover:text-fg')}
                 >
-                  {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-accent" aria-hidden />}
-                  <it.icon size={18} className={cx('shrink-0', active && 'text-accent')} aria-hidden />
+                  {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary" aria-hidden />}
+                  <it.icon size={18} className={cx('shrink-0', active && 'text-primary')} aria-hidden />
                   {!compact && <span className="flex-1 truncate text-left">{it.label}</span>}
                   {n > 0 && (compact
                     ? <span className="absolute right-1 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-side bg-accent" aria-hidden />

@@ -95,7 +95,7 @@ function ResultsBody({ thread, runs, branches, findings, engagementId }: {
           <ul className="space-y-1 text-sm">
             {results.findings.map((finding) => (
               <li key={finding.id} className="flex flex-wrap items-center gap-2">
-                <button type="button" className="text-left text-accent hover:underline" onClick={() => go('finding', { id: finding.id, engagementId })}>{finding.title}</button>
+                <button type="button" className="text-left text-link hover:underline" onClick={() => go('finding', { id: finding.id, engagementId })}>{finding.title}</button>
                 <span className="text-xs text-muted">{finding.severity} · {finding.status}</span>
               </li>
             ))}

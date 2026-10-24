@@ -149,7 +149,7 @@ function AssetList() {
             )}
             {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
           </FilterBar>
-          {sc &&<div className="-mt-2 mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">Filtered by scope: <b className="text-fg">{SCOPE_LABEL[sc as Asset['scope']] || sc}</b><button className="text-accent hover:underline" onClick={() => setSc('')}>Clear scope filter</button></div>}
+          {sc &&<div className="-mt-2 mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">Filtered by scope: <b className="text-fg">{SCOPE_LABEL[sc as Asset['scope']] || sc}</b><button className="text-link hover:underline" onClick={() => setSc('')}>Clear scope filter</button></div>}
           <DTable
             rows={rows} rowKey={(r) => r.asset.id} onRow={(r) => go('asset', { id: r.asset.id, engagementId: r.projectId })}
             empty={filtered ? <Empty icon={Server} title="No assets match the filters" action={<Button onClick={clear}>Clear filters</Button>}>Try relaxing the filters.</Empty> : <Empty icon={Server} title="0 assets in this project" action={<Button variant="primary" icon={Plus} disabled={!!addWhy} title={addWhy} onClick={() => go('asset-new')}>Add Asset</Button>}>No approved or pending assets yet, so no operation can pick a target. Add assets manually, import a CSV, or use Simulated Preview discovery; imports start as Pending Approval.</Empty>}

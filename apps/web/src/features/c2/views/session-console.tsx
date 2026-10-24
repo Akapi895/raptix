@@ -417,7 +417,7 @@ export function Console(): ReactElement {
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-line bg-panel px-4 py-3">
-        <button className="text-sm text-accent hover:underline" onClick={() => go('c2-session', { id: s.id })}>← Session detail</button>
+        <button className="text-sm text-link hover:underline" onClick={() => go('c2-session', { id: s.id })}>← Session detail</button>
         <span className="flex items-center gap-2 font-semibold"><TerminalSquare size={16} aria-hidden />Interactive Session</span>
         <Mono>{s.id}</Mono><span className="rounded-md border border-line bg-subtle px-2 py-0.5 text-xs font-medium">{kindLabel(s.kind)}</span>
         <span className="text-sm text-muted"><Mono>{s.projectId}</Mono> / <Mono>{s.opId}</Mono> / <Mono>{s.agentId}</Mono> / {s.asset}</span>

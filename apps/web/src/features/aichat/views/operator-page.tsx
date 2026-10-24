@@ -137,7 +137,7 @@ export function AiOperator() {
           </>
         )}
       </div>
-      <div className="mt-2 text-xs"><button className="text-accent hover:underline" onClick={() => go('ai-history')}>Conversation history & provenance</button></div>
+      <div className="mt-2 text-xs"><button className="text-link hover:underline" onClick={() => go('ai-history')}>Conversation history & provenance</button></div>
       <Drawer open={!wide && sheet === 'rail'} onClose={() => setSheet(null)} title="Conversations & plans" width={380}><div className="-mx-6 -my-5 h-[calc(100vh-80px)]"><LeftRail pid={pid} selId={conv?.id} onNew={() => { setSheet(null); newConv() }} onPicked={() => setSheet(null)} /></div></Drawer>
       <Drawer open={!wide && sheet === 'ctx'} onClose={() => setSheet(null)} title="Context inspector" width={460}><div className="-mx-6 -my-5 h-[calc(100vh-80px)]"><Inspector pid={pid} conv={conv} /></div></Drawer>
     </>

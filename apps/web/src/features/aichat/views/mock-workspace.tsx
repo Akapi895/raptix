@@ -140,7 +140,7 @@ export function Inspector({ pid, conv }: { pid: string; conv?: Conversation }) {
   const agents = db.agents
   const linked = ops.filter((o) => o.id === conv?.messages.map((m) => plans.find((x) => x.id === m.planId)?.opId).find(Boolean))
   const orderedOps = [...linked, ...ops.filter((o) => !linked.includes(o))].slice(0, 6)
-  const link = (label: string, fn: () => void) => <button className="text-accent hover:underline" onClick={fn}>{label}</button>
+  const link = (label: string, fn: () => void) => <button className="text-link hover:underline" onClick={fn}>{label}</button>
   return (
     <aside aria-label="Context inspector" className="flex h-full min-h-0 min-w-0 flex-col text-sm">
       <div role="tablist" aria-label="Inspector sections" className="no-scrollbar flex shrink-0 gap-0.5 overflow-x-auto border-b border-line px-1.5">

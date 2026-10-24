@@ -303,7 +303,7 @@ function EvidencePreview({ ev, f, onOp }: { ev: EvidenceView; f: Finding; onOp: 
         { k: 'Type', v: ev.kind }, { k: 'Source', v: <Mono>{ev.source}</Mono> }, { k: 'Captured at', v: ev.at }, { k: 'Uploaded by', v: ev.by },
         { k: 'Project', v: <Mono>{ev.projectId}</Mono> }, { k: 'Sensitive label', v: ev.sensitive ? 'Yes' : 'No' },
         { k: 'Related finding', v: <Mono>{ev.findingId || f.id}</Mono> },
-        { k: 'Operation', v: ev.opId ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={onOp}>{ev.opId}</button> : '—' },
+        { k: 'Operation', v: ev.opId ? <button className="font-mono text-[13px] text-link hover:underline" onClick={onOp}>{ev.opId}</button> : '—' },
       ]} />
       <div>
         <div className="mb-2 text-xs text-muted">Link / change history</div>
@@ -499,8 +499,8 @@ export function EvidenceInspector() {
             <DescList cols={1} items={[
               { k: 'Evidence ID', v: <Mono>{ev.ref}</Mono> },
               { k: 'Source event', v: <Mono>{ev.source}</Mono> },
-              { k: 'Operation', v: producer?.operation ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: producer.operation!.id })}>{producer.operation.id}</button> : '—' },
-              { k: 'Agent / Session', v: <span className="whitespace-nowrap">{producer?.agent ? <Mono>{producer.agent.id} · {producer.agent.host}</Mono> : '—'}{producer?.session && <> · <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('c2-session', { id: producer.session!.id })}>{producer.session.id}</button></>}</span> },
+              { k: 'Operation', v: producer?.operation ? <button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('operation', { id: producer.operation!.id })}>{producer.operation.id}</button> : '—' },
+              { k: 'Agent / Session', v: <span className="whitespace-nowrap">{producer?.agent ? <Mono>{producer.agent.id} · {producer.agent.host}</Mono> : '—'}{producer?.session && <> · <button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('c2-session', { id: producer.session!.id })}>{producer.session.id}</button></>}</span> },
               { k: 'Captured time', v: ev.at },
               { k: 'Collector', v: ev.by },
               { k: 'Content type', v: ev.kind },

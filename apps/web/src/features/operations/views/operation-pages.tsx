@@ -73,7 +73,7 @@ function Operations() {
         actions={!allProjects && <Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : createWhy} onClick={() => go('operation-new')}>Create Operation</Button>} />
       {project && ro && <Banner tone="info" icon={Lock}>{reason} You can view operations and results only.</Banner>}
       {elig && elig.kind === 'locked' && <Banner tone="warn" icon={Lock} title={`${elig.label} — operations can be drafted but not run`}>
-        <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">{elig.reasons.map((r) => <li key={r.text} className="text-sm">{r.text}{r.to && <> · <button className="text-accent underline" onClick={() => go(r.to!.page, { id: r.to!.id, tab: r.to!.tab })}>Fix</button></>}</li>)}</ul>
+        <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">{elig.reasons.map((r) => <li key={r.text} className="text-sm">{r.text}{r.to && <> · <button className="text-link underline" onClick={() => go(r.to!.page, { id: r.to!.id, tab: r.to!.tab })}>Fix</button></>}</li>)}</ul>
       </Banner>}
       {(() => {
         const ready = allProjects ? [] : read?.readyPlans ?? []

@@ -3,13 +3,12 @@ import type { LucideIcon } from 'lucide-react'
 import { cx } from './cx'
 
 /* ───────────── Button ───────────── */
-type BtnV = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dangerSolid' | 'destructive'
+type BtnV = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive'
 const BV: Record<BtnV, string> = {
   primary: 'bg-primary text-primary-fg hover:bg-primary-hover active:bg-primary-press border border-transparent shadow-sm',
   secondary: 'bg-panel text-fg border border-line hover:bg-hover',
   ghost: 'bg-transparent text-muted hover:bg-hover hover:text-fg border border-transparent',
   danger: 'bg-transparent text-bad border border-bad/50 hover:bg-bad-soft',
-  dangerSolid: 'bg-danger-fill text-white hover:bg-danger-fill-hover active:bg-danger-fill-press border border-transparent',
   destructive: 'bg-danger-fill text-white hover:bg-danger-fill-hover active:bg-danger-fill-press border border-transparent',
 }
 export function Button({ variant = 'secondary', size = 'md', icon: I, children, className, disabled, title, ...r }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnV; size?: 'sm' | 'md' | 'lg'; icon?: LucideIcon }) {

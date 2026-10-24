@@ -34,7 +34,7 @@ const SEVERITY_LIGHT: Record<string, string> = { critical: '#ef4444', high: '#fb
 
 /** Pastel card of each status group, mapped from the workflow states: Open is draft, review and returned. */
 const STATUS_CARDS: { label: string; statuses: string[]; wash: string; text: string }[] = [
-  { label: 'Open', statuses: ['draft', 'review', 'returned'], wash: 'border-warn/30 bg-warn-soft', text: 'text-warn' },
+  { label: 'Open', statuses: ['draft', 'review', 'returned'], wash: 'border-warn/30 bg-warn-soft', text: 'text-warn-text' },
   { label: 'Confirmed', statuses: ['confirmed'], wash: 'border-primary/30 bg-info-soft', text: 'text-primary' },
   { label: 'Remediation', statuses: ['remediation'], wash: 'border-cyan/30 bg-info-soft', text: 'text-cyan' },
   { label: 'Retest', statuses: ['retest'], wash: 'border-line bg-hover', text: 'text-muted' },
@@ -45,7 +45,7 @@ const STATUS_CARDS: { label: string; statuses: string[]; wash: string; text: str
 const RISK_STYLE: Record<RiskLevel | 'unassessed', { label: string; badge: string; bar: string }> = {
   safe: { label: 'Safe', badge: 'bg-ok-soft text-ok', bar: 'bg-ok' },
   low: { label: 'Low', badge: 'bg-info-soft text-cyan', bar: 'bg-cyan' },
-  medium: { label: 'Medium', badge: 'bg-warn-soft text-warn', bar: 'bg-warn' },
+  medium: { label: 'Medium', badge: 'bg-warn-soft text-warn-text', bar: 'bg-warn' },
   high: { label: 'High', badge: 'bg-orange/15 text-fg', bar: 'bg-orange' },
   severe: { label: 'Severe', badge: 'bg-bad-soft text-bad', bar: 'bg-bad' },
   unassessed: { label: 'Not assessed', badge: 'bg-hover text-muted', bar: 'bg-line' },
@@ -80,11 +80,13 @@ export function SourceState({ label, pending, error, onRetry, children }: { labe
 /** A KPI card in the reference's shape: label, tinted icon tile, large figure, and the source line under it. */
 export function OverviewKpi({ label, display, note, icon: Icon, tint, onOpen }: { label: string; display: string; note: string; icon: LucideIcon; tint: keyof typeof TINT; onOpen: () => void }): ReactElement {
   const numeric = /^\d+$/.test(display)
+  // A zero count is not a status: it keeps the neutral tint instead of the green or amber of its measure.
+  const colour = TINT[numeric && display === '0' ? 'neutral' : tint]
   return (
-    <button type="button" onClick={onOpen} className={cx('flex min-h-[118px] flex-col justify-between rounded-xl border border-line p-4 text-left transition hover:border-primary', TINT[tint].wash)}>
+    <button type="button" onClick={onOpen} className={cx('flex min-h-[118px] flex-col justify-between rounded-xl border border-line p-4 text-left transition hover:border-primary', colour.wash)}>
       <span className="flex items-start justify-between gap-2">
         <span className="text-xs font-medium text-muted">{label}</span>
-        <span className={cx('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg', TINT[tint].tile)}><Icon size={16} aria-hidden /></span>
+        <span className={cx('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg', colour.tile)}><Icon size={16} aria-hidden /></span>
       </span>
       <span className={cx('mt-2 font-semibold tabular-nums text-fg', numeric ? 'text-[30px] leading-none' : 'text-sm text-muted')}>{display}</span>
       <span className="mt-2 text-xs text-muted">{note}</span>
