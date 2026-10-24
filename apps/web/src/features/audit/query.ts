@@ -4,7 +4,7 @@
  * switch reads its own entries.
  */
 import { useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
+import { actorRef } from '../../domain/actor'
 import { useFeatureServices as useServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure } from '../../domain/service'

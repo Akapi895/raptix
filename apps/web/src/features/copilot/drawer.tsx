@@ -22,7 +22,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ExternalLink, Sparkles, X } from 'lucide-react'
 import { useServices } from '../../state/services'
-import { actorRef } from '../../demo/persona'
+import { actorRef } from '../../domain/actor'
 import { useQueryScope } from '../../state/keys'
 import { useActiveProject, useCan, useReadOnly } from '../../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../../state/stores'

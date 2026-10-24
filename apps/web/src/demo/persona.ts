@@ -9,19 +9,7 @@
  * legacy shell until the router migration (ticket 07).
  */
 import { USERS } from '../domain/catalog';
-import type { Role } from '../domain/entities'
-import type { ActorRef } from '../domain/service'
 import { useAuthStore } from '../state/stores'
-
-/** Resolves the role for a persona name; unknown names are treated as viewer. */
-export function personaRole(name: string): Role {
-  return USERS.find((u) => u.name === name)?.role ?? 'viewer'
-}
-
-/** Actor reference for a persona name — the identity every authorization check uses. */
-export function actorRef(name: string, role: Role = personaRole(name)): ActorRef {
-  return { id: name, role }
-}
 
 /** Simulated personas the agent screens offer as group owners (everyone but viewers). */
 export const OWNER_PERSONAS = USERS.filter((u) => u.role !== 'viewer')

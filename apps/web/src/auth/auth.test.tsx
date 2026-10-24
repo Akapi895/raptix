@@ -22,7 +22,8 @@ import { selectProject } from '../router/navigate'
 import { createConsoleServices } from '../demo/services';
 import type { CanAction } from '../domain/permissions'
 import { accessibleProjectIds, listProjectMemberships } from './membership'
-import { actorRef, signIn, signOut, switchPersona } from '../demo/persona'
+import { actorRef } from '../domain/actor'
+import { signIn, signOut, switchPersona } from '../demo/persona'
 import { can, canAccessProject, projectAccessible, readOnlyContext, ROLE_ACTIONS } from '../domain/policy'
 
 afterEach(() => { cleanup(); window.location.hash = '' })

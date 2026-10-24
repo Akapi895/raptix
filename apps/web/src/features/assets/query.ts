@@ -11,7 +11,7 @@
  */
 import { useMemo } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { actorRef } from '../../demo/persona'
+import { actorRef } from '../../domain/actor'
 import { useFeatureServices } from '../../state/feature-services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'

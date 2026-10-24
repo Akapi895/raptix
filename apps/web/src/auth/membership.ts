@@ -16,7 +16,7 @@ import type { ConsoleServices } from '../domain/console-services';
 import type { ActorRef, ListResult, PageRequest, RequestContext } from '../domain/service'
 import { consoleKeys, useQueryScope } from '../state/keys'
 import { useServices } from '../state/services'
-import { actorRef } from '../demo/persona'
+import { actorRef } from '../domain/actor'
 
 /** Lists the actor's accessible projects in a scope via the typed service read. */
 export function listProjectMemberships(
