@@ -11,6 +11,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 import type { EmergencyStopView } from './api';
 
+// The signed-in member's project role (the membership view the console reads for every write control).
+const membership = vi.hoisted(() => ({ role: 'manager' }))
+vi.mock('../projects/query', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../projects/query')>()),
+  useRealMembershipRole: () => membership.role,
+}))
 vi.mock('../../state/mode', () => ({ DATA_MODE: 'real', isRealMode: () => true, resolveDataMode: () => 'real' }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
@@ -50,6 +56,7 @@ const api_governance = await import('./api');
 const api_aichat = await import('../aichat/remote');
 const { ApiTransportError } = await import('../../platform/transport')
 const { RealFeatureServicesCtx } = await import('../../state/real-services-provider')
+const { SessionContext } = await import('../../platform/session')
 const { createRealFeatureServices } = await import('../../state/real-services')
 const { GovernanceTab } = await import('./tab')
 
@@ -83,15 +90,19 @@ function plan(overrides: Record<string, unknown>) {
 function renderTab() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const services = createRealFeatureServices(CAPABILITIES)
+  const session = { session: { actor: { id: 'u-reviewer', username: 'reviewer', displayName: 'Reviewer' } } as never, pending: false, error: null, retry: () => {} }
   const wrapper = ({ children }: { children: ReactNode }): ReactElement => (
     <QueryClientProvider client={client}>
-      <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
+      <SessionContext.Provider value={session}>
+        <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
+      </SessionContext.Provider>
     </QueryClientProvider>
   )
   return render(<GovernanceTab engagementId="eng-1" />, { wrapper })
 }
 
 beforeEach(() => {
+  membership.role = 'manager'
   vi.mocked(api_governance.fetchPlans).mockResolvedValue({ engagementId: 'eng-1', source: 'db', deadlineHours: 24, latestApprovedScopeVersion: 2, plans: [] } as never)
   vi.mocked(api_governance.fetchPreflight).mockResolvedValue({ engagementId: 'eng-1', ok: true, checks: [], source: 'db' } as never)
   vi.mocked(api_aichat.listThreads).mockResolvedValue({ engagementId: 'eng-1', threads: [], source: 'db' } as never)
@@ -170,5 +181,29 @@ describe('GovernanceTab plan decisions (W09 independent, version-pinned)', () =>
     renderTab()
     await userEvent.click(await screen.findByRole('button', { name: 'Reject' }))
     expect(await screen.findByText('Plan version changed since it was read; reload before deciding.')).toBeInTheDocument()
+  })
+
+  it('shows a viewer the proposed plan without decision, propose or draft controls', async () => {
+    membership.role = 'viewer'
+    vi.mocked(api_governance.fetchPlans).mockResolvedValue({
+      engagementId: 'eng-1', source: 'db', deadlineHours: 24, latestApprovedScopeVersion: 2,
+      plans: [plan({ id: 'plan-9', version: 3, status: 'proposed', expiresAt: null })],
+    } as never)
+    renderTab()
+    expect(await screen.findByText('Only a reviewer or owner decides this plan.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Draft plan' })).toBeNull()
+  })
+
+  it('keeps the approve control from the author of the proposed plan, with the reason shown', async () => {
+    membership.role = 'reviewer'
+    vi.mocked(api_governance.fetchPlans).mockResolvedValue({
+      engagementId: 'eng-1', source: 'db', deadlineHours: 24, latestApprovedScopeVersion: 2,
+      plans: [plan({ id: 'plan-9', version: 3, status: 'proposed', requestedBy: 'u-reviewer', expiresAt: null })],
+    } as never)
+    renderTab()
+    expect(await screen.findByText('You wrote this plan; an independent reviewer decides it.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull()
   })
 })

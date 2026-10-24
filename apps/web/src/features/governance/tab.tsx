@@ -10,6 +10,8 @@ import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { ClipboardCheck, GitCompareArrows, Loader2, ShieldCheck } from 'lucide-react'
 import { utcMinuteOr } from '../../platform/format'
+import { useSession } from '../../platform/session'
+import { useMe } from '../../state/console'
 import { Button, Card, CardHeader, Empty, Select, Skeleton, Status, Textarea } from '../../ui/index'
 import { SchedulesCard } from './schedules'
 import { StopsCard } from './stops'
@@ -17,6 +19,11 @@ import { messageOf, useExecutionThreads, useGovernancePlans, useGovernancePrefli
 import type { ExecutionThread, GovernancePlan, PreflightCheck } from './service'
 
 const parseMethods = (value: string): string[] => value.split('\n').map((s) => s.trim()).filter(Boolean)
+
+// The server's floor for each plan action: operators and above draft, propose and revise; reviewers and above decide, and no
+// one decides a plan they wrote. The console shows the controls the signed-in member can use; the server refuses the rest.
+const WRITE_ROLES: readonly string[] = ['admin', 'manager', 'operator']
+const DECIDE_ROLES: readonly string[] = ['admin', 'manager', 'reviewer']
 
 export function GovernanceTab({ engagementId }: { engagementId: string }): ReactElement {
   const plans = useGovernancePlans(engagementId)
@@ -91,12 +98,17 @@ function PlansCard({ engagementId, plans, deadlineHours, onRevise }: { engagemen
     onError: (err) => setError(messageOf(err, 'The decision was refused.')),
   })
 
+  const me = useMe()
+  const actorId = useSession().session?.actor?.id
+  const canWrite = WRITE_ROLES.includes(me.role)
+  const canDecide = (plan: GovernancePlan): boolean => DECIDE_ROLES.includes(me.role) && plan.requestedBy !== actorId
+
   return (
     <Card>
       <CardHeader title="Business plans" sub={`One authoritative plan; approvals pin the scope version and expire in ${deadlineHours}h`} />
       <div className="p-4">
         {plans.length === 0 ? (
-          <p className="text-sm text-muted">No business plan yet. Draft one below, propose it against the approved scope, then an independent reviewer decides.</p>
+          <p className="text-sm text-muted">{canWrite ? 'No business plan yet. Draft one below, propose it against the approved scope, then an independent reviewer decides.' : 'No business plan yet. An operator drafts one, and an independent reviewer decides it.'}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -118,33 +130,35 @@ function PlansCard({ engagementId, plans, deadlineHours, onRevise }: { engagemen
                   <td className="py-2 pr-3 font-mono text-xs">{p.roeVersion === null ? '—' : `v${p.roeVersion}`}</td>
                   <td className="py-2 pr-3 font-mono text-xs text-muted">{p.expiresAt === null ? '—' : utcMinuteOr(p.expiresAt)}</td>
                   <td className="py-2">
-                    {p.status === 'draft' ? <Button onClick={() => propose.mutate(p.id)}>Propose</Button>
-                      : p.status === 'proposed' ? (
+                    {p.status === 'draft' ? (canWrite && <Button onClick={() => propose.mutate(p.id)}>Propose</Button>)
+                      : p.status === 'proposed' ? (canDecide(p) ? (
                         <span className="flex gap-2">
                           <Button variant="primary" onClick={() => decide.mutate({ planId: p.id, decision: 'approved', expectedVersion: p.version })}>Approve</Button>
                           <Button variant="secondary" onClick={() => decide.mutate({ planId: p.id, decision: 'rejected', expectedVersion: p.version })}>Reject</Button>
                         </span>
-                      ) : p.status === 'approved' ? (
-                        <Button variant="secondary" icon={GitCompareArrows} onClick={() => onRevise(p)}>Revise</Button>
-                      ) : null}
+                      ) : <span className="text-sm text-muted">{p.requestedBy === actorId ? 'You wrote this plan; an independent reviewer decides it.' : 'Only a reviewer or owner decides this plan.'}</span>
+                      ) : p.status === 'approved' ? (canWrite && <Button variant="secondary" icon={GitCompareArrows} onClick={() => onRevise(p)}>Revise</Button>)
+                      : null}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-        <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); draft.mutate() }}>
-          <label className="text-sm text-muted" htmlFor="plan-objective">Objective</label>
-          <Textarea id="plan-objective" required value={objective} onChange={(e) => setObjective(e.target.value)} />
-          <label className="text-sm text-muted" htmlFor="plan-methods">Methods (one per line)</label>
-          <Textarea id="plan-methods" value={methods} onChange={(e) => setMethods(e.target.value)} placeholder={'web\ninternal'} />
-          <div className="sm:col-span-2">
-            <Button type="submit" variant="primary" disabled={draft.isPending}>
-              {draft.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
-              Draft plan
-            </Button>
-          </div>
-        </form>
+        {canWrite && (
+          <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); draft.mutate() }}>
+            <label className="text-sm text-muted" htmlFor="plan-objective">Objective</label>
+            <Textarea id="plan-objective" required value={objective} onChange={(e) => setObjective(e.target.value)} />
+            <label className="text-sm text-muted" htmlFor="plan-methods">Methods (one per line)</label>
+            <Textarea id="plan-methods" value={methods} onChange={(e) => setMethods(e.target.value)} placeholder={'web\ninternal'} />
+            <div className="sm:col-span-2">
+              <Button type="submit" variant="primary" disabled={draft.isPending}>
+                {draft.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
+                Draft plan
+              </Button>
+            </div>
+          </form>
+        )}
         {error !== null && <p className="mt-3 text-sm text-bad" role="alert">{error}</p>}
       </div>
     </Card>
