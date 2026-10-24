@@ -1,0 +1,34 @@
+{
+  "mode": "real",
+  "app": "http://127.0.0.1:7624",
+  "generatedAt": "2026-10-24T03:19:43.801Z",
+  "steps": [
+    {
+      "step": "the policies read shows the workspace values with their versions",
+      "matches": true,
+      "detail": "policy.c2_grant_max_hours = 24"
+    },
+    {
+      "step": "an admin saves a changed policy value with its reason, and sees the save confirmed",
+      "matches": true,
+      "detail": "policy.c2_grant_max_hours saved as 23"
+    },
+    {
+      "step": "after a reload the saved value reads back",
+      "matches": true,
+      "detail": "reads 23, expected 23"
+    },
+    {
+      "step": "the workspace audit records the change",
+      "matches": true,
+      "detail": "a workspace.setting_updated entry with the reason \"settings click-through mvltymwq\""
+    },
+    {
+      "step": "a viewer saves a policy change and the server refuses it, with the refusal shown",
+      "matches": true,
+      "detail": "refusal shown: \"Workspace settings changes require a deployment operator (an engagement owner); your memberships do not grant it.\"; nothing saved"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

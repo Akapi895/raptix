@@ -1,0 +1,205 @@
+{
+ "workflow": "UI/UX matrix (real routes, four widths)",
+ "generatedAt": "2026-10-24T03:23:50.969Z",
+ "counts": {
+  "PASS": 28
+ },
+ "results": [
+  {
+   "id": "overview at 1440px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"System Overview\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "projects at 1440px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Projects\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "team at 1440px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Team & Approvals\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "governance at 1440px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Governance\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "findings at 1440px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Findings\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "reports at 1440px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Reports\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "infrastructure at 1440px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Infrastructure\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "overview at 1024px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"System Overview\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "projects at 1024px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Projects\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "team at 1024px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Team & Approvals\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "governance at 1024px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Governance\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "findings at 1024px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Findings\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "reports at 1024px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Reports\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "infrastructure at 1024px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Infrastructure\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "overview at 834px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"System Overview\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "projects at 834px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Projects\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "team at 834px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Team & Approvals\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "governance at 834px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Governance\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "findings at 834px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Findings\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "reports at 834px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Reports\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "infrastructure at 834px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Infrastructure\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "overview at 390px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"System Overview\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "projects at 390px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Projects\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "team at 390px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Team & Approvals\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "governance at 390px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Governance\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "findings at 390px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Findings\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "reports at 390px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Reports\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  },
+  {
+   "id": "infrastructure at 390px",
+   "workflow": "UI/UX matrix (real routes, four widths)",
+   "status": "PASS",
+   "detail": "heading \"Infrastructure\"; horizontal overflow 0px; uncaught errors 0",
+   "evidence": null
+  }
+ ]
+}

@@ -1,0 +1,34 @@
+{
+  "mode": "real",
+  "app": "http://127.0.0.1:7624",
+  "generatedAt": "2026-10-24T03:19:29.214Z",
+  "steps": [
+    {
+      "step": "add asset through the form shows the saved banner",
+      "matches": true,
+      "detail": "banner shown"
+    },
+    {
+      "step": "the added asset is listed with its identifier",
+      "matches": true,
+      "detail": "click-host-mvltyby1.verify.example.test in the list"
+    },
+    {
+      "step": "the request control is enabled for the manager with a pending asset",
+      "matches": true,
+      "detail": "enabled once the scope loaded"
+    },
+    {
+      "step": "the real request is redirected to the Scope revisions panel, with no dialog",
+      "matches": true,
+      "detail": "redirect message shown, 0 dialogs"
+    },
+    {
+      "step": "a role without editScope finds the request control disabled, with its reason on the screen",
+      "matches": true,
+      "detail": "disabled; reason shown"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

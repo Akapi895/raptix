@@ -1,0 +1,5 @@
+PASS the stored template list shows the create control enabled for an admin :: enabled
+PASS an admin creates a stored template through the form and sees it listed :: Click template mvltyh82 listed
+PASS an admin inserts the effective scope into a report section :: the section now contains the Scope line
+PASS a reviewer finds the create control locked, with its reason on the screen :: disabled; reason shown
+reports click-through (real): 4 of 4 steps matched

@@ -1,0 +1,19 @@
+{
+  "mode": "real",
+  "app": "http://127.0.0.1:7624",
+  "generatedAt": "2026-10-24T03:20:03.888Z",
+  "steps": [
+    {
+      "step": "the analysis of the project shows its observed coverage or an explicit missing-source state",
+      "matches": true,
+      "detail": "explicit missing-source state shown; source named"
+    },
+    {
+      "step": "an unknown project is refused: the analysis is unavailable and nothing is inferred",
+      "matches": true,
+      "detail": "unavailable state with the reason; no coverage shown"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

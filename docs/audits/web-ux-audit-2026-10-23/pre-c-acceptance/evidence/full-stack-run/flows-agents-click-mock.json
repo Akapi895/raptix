@@ -1,0 +1,49 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:18:21.161Z",
+  "steps": [
+    {
+      "step": "the project agents list shows the agent assigned to the project",
+      "matches": true,
+      "detail": "heading shown; AG-007 listed"
+    },
+    {
+      "step": "the agent opens its detail under its own id",
+      "matches": true,
+      "detail": "route opened; detail content shown"
+    },
+    {
+      "step": "the same agent under another project is refused with the reason and no detail",
+      "matches": true,
+      "detail": "refusal with the reason shown; no agent detail shown"
+    },
+    {
+      "step": "the infrastructure page shows its three tabs at global scope",
+      "matches": true,
+      "detail": "3 of 3 tab labels shown"
+    },
+    {
+      "step": "selecting the C2 infrastructure tab opens that tab in the route",
+      "matches": true,
+      "detail": "tab=c2 in the route"
+    },
+    {
+      "step": "disabling the agent with a reason reports it disabled and offers Enable",
+      "matches": true,
+      "detail": "disable reported; Enable offered"
+    },
+    {
+      "step": "enabling the agent again reports it enabled and offers Disable",
+      "matches": true,
+      "detail": "enable reported; Disable offered"
+    },
+    {
+      "step": "a viewer sees the disable control disabled with its reason and gets no dialog or success report",
+      "matches": true,
+      "detail": "Disable disabled; reason \"The Viewer role has read-only access.\"; no dialog; no success report"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

@@ -1,0 +1,34 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:17:52.607Z",
+  "steps": [
+    {
+      "step": "add asset through the form shows the saved banner",
+      "matches": true,
+      "detail": "banner shown"
+    },
+    {
+      "step": "the added asset is listed with its identifier",
+      "matches": true,
+      "detail": "click-host-mvltwadg.verify.example.test in the list"
+    },
+    {
+      "step": "the request control is enabled for the manager with a pending asset",
+      "matches": true,
+      "detail": "enabled once the scope loaded"
+    },
+    {
+      "step": "the mock request reports the existing pending scope request instead of success",
+      "matches": true,
+      "detail": "toast \"✓ Asset click-host-mvltwadg saved as pending review. ! RT-2026-014 already has a pending “Scope change” request. Wait for its decision or withdraw it first.\""
+    },
+    {
+      "step": "a role without editScope finds the request control disabled, with its reason on the screen",
+      "matches": true,
+      "detail": "disabled; reason shown"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}
