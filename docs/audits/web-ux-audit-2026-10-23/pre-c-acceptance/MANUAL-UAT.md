@@ -17,6 +17,7 @@ Wait for the line `holding stack; the connection file is …\hold.json`. Use two
 - Open `hold.json` in the `--hold-dir` folder in a text editor. It holds `app` (the URL), `owner` (`verifier`) and `adminPassword`; `viewer`, `reviewer` and `operator` each have a `username` and a `password`.
 - Do not paste these values into chat, tickets, screenshots or the repository. They are random for each start.
 - Sign in with the owner account at the `app` URL. Use the other accounts for the checks that need them.
+- To switch accounts: open the account menu (the round avatar at the top right, `Account menu`), choose `Account / sign out`, then click `Sign out`.
 
 ## 3. Reset
 
@@ -41,7 +42,7 @@ Mark each row PASS, FAIL, or NOT RUN with the reason. Add a note for FAIL.
 | 1 | Sign in as owner | Sign in with the owner account | Project list shows "Stack verification project" | |
 | 2 | Overview figure | Open Overview | "Awaiting decisions" shows a number, or "26+" if a capped inbox exists; never blank | |
 | 3 | Viewer scope | Sign out, sign in as `viewer` | The shared project is listed; no other project's name appears | |
-| 4 | Viewer controls | Governance tab as viewer, with a proposed plan | No Approve, Reject, Propose or Revise button, and no draft form | |
+| 4 | Viewer controls | After row 6 (a proposed plan must exist), sign in as `viewer`; Governance tab | No Approve, Reject, Propose or Revise button, and no draft form | |
 | 5 | Operator drafts a plan | Sign in as `operator`; Governance → Draft plan | Row shows `draft` | |
 | 6 | Operator proposes | Propose the draft | Row shows `proposed` after reload | |
 | 7 | Author cannot approve | As operator, look at the proposed row | No Approve or Reject button; the row says "You wrote this plan; an independent reviewer decides it." | |
@@ -50,11 +51,15 @@ Mark each row PASS, FAIL, or NOT RUN with the reason. Add a note for FAIL.
 | 10 | Reviewer decides the revision | As reviewer, approve it from the Team tab | Count falls back; the revision is approved | |
 | 11 | Findings | Open Findings | "Stack verification finding" is listed as confirmed | |
 | 12 | Assets | Open Assets | `stack-host-01.verify.example.test` is listed | |
-| 13 | Report export | Open the report; export markdown | File contains the report title and the finding title | |
+| 13 | Report export | Open the report on the Reports page. The export buttons (`Export PDF`, `Export DOCX`) appear only after the report is approved (see note 2) | The DOCX opens and contains the report title and the finding title | |
 | 14 | Phone width | Browser at 390 px: Overview and Governance | No horizontal scrolling | |
 | 15 | C2 form, no dispatch | Infrastructure → Sessions | Form and labels show; **do not press Dispatch** | |
 
-Expected notes that are not failures: items 2 and 10 depend on earlier steps in the same run; after step 9, the Governance preflight may say that no approved ROE exists until the revision is decided (OI-02).
+Notes:
+
+1. Items 2, 4 and 10 depend on earlier steps in the same run. Item 4 needs the proposed plan from items 5 and 6. Item 10 needs the pending revision from item 9.
+2. Item 13 is not fully specified. The report page offers `Export PDF` and `Export DOCX` only for an approved report, and approval is a separate step (submit for review, then the reviewer's `Approve Report`). The approval path was not walked through in this pass, so it is marked NOT RUN unless you do it yourself. The markdown export is an API format, not a button in the UI.
+3. After step 9, the Governance preflight may say that no approved ROE exists until the revision is decided (OI-02). This is expected, not a failure.
 
 ## 6. Defect record
 

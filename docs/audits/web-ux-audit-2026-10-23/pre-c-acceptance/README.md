@@ -13,7 +13,7 @@ Acceptance passes on the isolated stack for the authorization matrix, the plan a
 1. [FINAL-ACCEPTANCE-REPORT.md](FINAL-ACCEPTANCE-REPORT.md): answers to the ten questions.
 2. [REAL-WORKFLOW-MATRIX.md](REAL-WORKFLOW-MATRIX.md): WF-01 to WF-10 with a status for each.
 3. [OPEN-ISSUES.md](OPEN-ISSUES.md): what is still open, and which items need an owner decision.
-4. [MANUAL-UAT.md](MANUAL-UAT.md): how a person starts the stack and checks the main journeys.
+4. [MANUAL-UAT.md](MANUAL-UAT.md) (Vietnamese: [MANUAL-UAT.vi.md](MANUAL-UAT.vi.md)): how a person starts the stack and checks the main journeys.
 5. [RESUME.md](RESUME.md): state of the environment and the next steps.
 
 Other files:
