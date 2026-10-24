@@ -54,7 +54,7 @@ import { WorkspaceSettingsService } from './services/workspace-settings-service.
 import { AuditService } from './services/audit-service.js';
 import { ClosureService } from './services/closure-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
-import { requireEngagementAccess } from './auth/membership-policy.js';
+import { configureSingleOperator, requireEngagementAccess } from './auth/membership-policy.js';
 
 let closing = false;
 
@@ -77,6 +77,8 @@ function createDatabaseHealth(client: PrismaClient): DatabaseHealth {
 
 async function main(): Promise<void> {
   const env = readServerEnv();
+  configureSingleOperator(env.singleOperator === true);
+  if (env.singleOperator === true) console.warn('single-operator mode is on: a submitter may decide their own workflow items (ADR-0100)');
   const runtimeConfig = loadRuntimeConfig(process.env);
   // The host controller is optional. Without it, new projects stay on the legacy runtime and activate/stop answer 503.
   const environmentController = loadEnvironmentControllerConfig(process.env, path => readFileSync(path, 'utf8'));

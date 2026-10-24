@@ -8,6 +8,7 @@ import { registerAuthRoutes } from './http/routes/auth.routes.js';
 import { registerEngagementMutationFence } from './security/engagement-mutation-fence.js';
 import { registerErrorHandler } from './http/error-handler.js';
 import { registerCapabilitiesRoutes } from './http/routes/capabilities.routes.js';
+import { isSingleOperator } from './auth/membership-policy.js';
 import { registerHealthRoutes } from './http/routes/health.routes.js';
 import type { DatabaseHealth } from './http/routes/health.routes.js';
 import { registerProjectRoutes } from './http/routes/projects.routes.js';
@@ -163,6 +164,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   registerHealthRoutes(app, { databaseHealth: options.databaseHealth, runtimeContext: options.runtimeContext });
   registerCapabilitiesRoutes(app, {
     deploymentId: options.deploymentId,
+    independentReview: isSingleOperator() ? 'single-operator' : 'required',
     mode: multiAuth ? 'multi-user' : 'local-single-user',
     projectsSupported: options.projectsService !== undefined,
     databaseHealth: options.databaseHealth,

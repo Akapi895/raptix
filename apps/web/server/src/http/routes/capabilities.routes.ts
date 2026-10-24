@@ -163,6 +163,8 @@ export async function buildCapabilitiesResponse(
 export interface CapabilitiesRouteOptions {
   readonly deploymentId?: string;
   readonly mode?: CapabilityMode;
+  /** `single-operator` when the deployment lets a submitter decide their own items (ADR-0100). */
+  readonly independentReview?: 'required' | 'single-operator';
   readonly projectsSupported?: boolean;
   readonly databaseHealth?: DatabaseHealth;
   readonly runtimeContext?: RuntimeContextService;
@@ -187,6 +189,7 @@ export function registerCapabilitiesRoutes(
 ): void {
   app.get('/api/capabilities', async () => ({
     ...(options.deploymentId === undefined ? {} : { deploymentId: options.deploymentId }),
+    independentReview: options.independentReview ?? 'required',
     ...await buildCapabilitiesResponse(
       options.projectsSupported === true,
       options.databaseHealth,
