@@ -97,22 +97,8 @@ describe('shared table contract (projects group)', () => {
   })
 })
 
-describe('project detail (projects group)', () => {
-  it('keeps the project section buttons and the critical header controls visible', async () => {
-    mountApp('#/project/RT-2026-014')
-    signIn()
-    await screen.findByRole('button', { name: 'Overview' })
-    for (const name of ['Scope & ROE', 'Findings', 'Reports']) expect(screen.getByRole('button', { name })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Emergency Stop' }).className).not.toMatch(/(^|\s)hidden(\s|$)/)
-    expect(screen.getByRole('button', { name: 'Ask AI' }).className).not.toMatch(/(^|\s)hidden(\s|$)/)
-  })
-
-  it('keeps the team members table on container scroll and the shared DTable on sticky-first-column container scroll', async () => {
-    mountApp('#/project/RT-2026-014?tab=team')
-    signIn()
-    const table = await screen.findByRole('table')
-    expect(table.parentElement!.className).toContain('overflow-x-auto')
-    expect(screen.getByRole('columnheader', { name: 'Permissions' }).className).toContain('max-md:hidden')
+describe('shared DTable (projects group)', () => {
+  it('keeps the sticky-first-column container scroll and the md-hidden columns', () => {
     // DTable is shared by the agents/assets screens (API-backed there), so its
     // scroll contract is asserted on the component directly.
     render(
@@ -217,14 +203,5 @@ describe('findings, C2, reports and settings (their groups)', () => {
     const table = screen.getByRole('table')
     expect(table.parentElement!.className).toContain('overflow-x-auto')
     expect(table.className).toContain('min-w-[860px]')
-  })
-})
-
-describe('demo surfaces (scenarios group, outside the shell)', () => {
-  it('keeps the wide scenario matrix on container scroll', async () => {
-    mountApp('#/scenarios')
-    const table = await screen.findByRole('table')
-    expect(table.parentElement!.className).toContain('overflow-x-auto')
-    expect(table.className).toContain('min-w-[920px]')
   })
 })

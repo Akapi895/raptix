@@ -69,7 +69,6 @@ const SWEEP: { hash: string; see: () => Promise<unknown>; auth?: boolean }[] = [
   { hash: '#/ai-operator', see: () => screen.findByRole('heading', { name: 'AI Operator' }) },
   { hash: '#/c2', see: () => screen.findByRole('tablist') },
   { hash: '#/settings', see: () => screen.findByRole('tablist') },
-  { hash: '#/scenarios', see: () => screen.findByRole('table', {}, { timeout: 5000 }), auth: false },
 ]
 
 afterEach(() => {

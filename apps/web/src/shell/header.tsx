@@ -12,7 +12,7 @@
  */
 import { useState, type ComponentType } from 'react'
 import {
-  Bell, Building2, Check as CheckIcon, CheckCheck, ChevronDown, FlaskConical, Home, Lock, LogOut, Menu as MenuIcon, RotateCcw, Settings, Sparkles,
+  Bell, Building2, Check as CheckIcon, CheckCheck, ChevronDown, FlaskConical, Lock, LogOut, Menu as MenuIcon, RotateCcw, Settings, Sparkles,
 } from 'lucide-react'
 import { useServices } from '../state/services'
 import { go, navRawRoute, useRoute } from '../router/navigate'
@@ -24,7 +24,6 @@ import { useAuthStore, useProjectStore, useThemeStore, useUiStore, type CopilotC
 import { signOut } from '../demo/persona'
 import { resetDemo } from '../demo/runtime'
 import { ROLE_LABEL } from '../domain/policy'
-import { PROTOTYPE_PAGES_ENABLED } from '../router/prototype-pages'
 import { USERS } from '../domain/catalog';
 import { Button, IconButton, Segmented, Avatar, cx } from '../ui/index'
 import { NAV, projectNavGroups } from './nav'
@@ -193,7 +192,6 @@ function ProfileMenu() {
               <div className="px-1"><Segmented value={stopOutcome} onChange={setStopOutcome} options={[{ id: 'ack', label: 'Acknowledged' }, { id: 'fail', label: 'Failed' }, { id: 'unknown', label: 'Unknown' }]} /></div>
               <p className="px-1 pt-1 text-xs text-neutral">Simulates agent acknowledgement. Operations stop only after an acknowledgement.</p>
               <button role="menuitem" className={cx(item, 'mt-2')} onClick={() => confirm({ title: 'Reset demo data?', body: 'All simulated changes are discarded and the seed data is restored. You stay signed in.', confirmLabel: 'Reset demo', danger: true, onConfirm: () => { setOpen(false); resetDemo() } })}><RotateCcw size={15} aria-hidden />Reset demo</button>
-              {PROTOTYPE_PAGES_ENABLED && <button role="menuitem" className={item} onClick={() => { setOpen(false); go('scenarios') }}><Home size={15} aria-hidden />Prototype Home</button>}
             </section>
           </div>
         </>

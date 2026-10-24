@@ -14,9 +14,8 @@
  */
 import type { ComponentType } from 'react'
 import { isAssetMapEnabled } from '../features/asset-map/flag'
-import { PROTOTYPE_PAGES_ENABLED } from './prototype-pages'
 
-export type Slice = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 's' | 'st' | 'pj' | 'ov' | 'dp' | 'am'
+export type Slice = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'st' | 'pj' | 'ov' | 'am'
 
 /** Real panel groups `RealFeatureRoute` can compose; each maps to one lazy-loaded panel component. */
 export type PanelGroup = 'operations' | 'governance' | 'fleet' | 'scope' | 'analysis' | 'c2' | 'campaigns'
@@ -35,7 +34,6 @@ export interface RouteDeclaration {
 
 const shared: RealSurface = { kind: 'shared' }
 const system: RealSurface = { kind: 'system' }
-const unavailable: RealSurface = { kind: 'unavailable' }
 const feature = (title: string, panels: readonly PanelGroup[]): RealSurface => ({ kind: 'feature', title, panels })
 const component = (load: () => Promise<ComponentType>): RealSurface => ({ kind: 'component', load })
 
@@ -51,7 +49,7 @@ const BASE_ROUTES: Record<string, RouteDeclaration> = {
 
   projects: { slice: 'pj', real: shared },
   'project-new': { slice: 'b', real: component(() => import('../features/projects/routes').then((m) => m.RealProjectNewRoute)) },
-  project: { slice: 'dp', real: component(() => import('../features/projects/routes').then((m) => m.RealProjectDetail)) },
+  project: { slice: 'pj', real: component(() => import('../features/projects/routes').then((m) => m.RealProjectDetail)) },
 
   operations: { slice: 'c', real: feature('Operations', ['operations']) },
   'operation-new': { slice: 'c', real: feature('New operation', ['governance', 'operations']) },
@@ -100,22 +98,13 @@ const BASE_ROUTES: Record<string, RouteDeclaration> = {
   'c2-console': { slice: 'h', real: feature('C2 console', ['c2']) },
 }
 
-/** Prototype and QA pages (build-gated, see prototype-pages.ts): when off the keys are absent, so the routes resolve as unknown. */
-const PROTOTYPE_ROUTES: Record<string, RouteDeclaration> = PROTOTYPE_PAGES_ENABLED
-  ? {
-      states: { slice: 'a', real: unavailable },
-      scenarios: { slice: 's', real: unavailable },
-      workspaces: { slice: 's', real: unavailable },
-    }
-  : {}
-
 /** Feature-flagged (off by default): when off the key is absent, so the route resolves as unknown. */
 const FLAGGED_ROUTES: Record<string, RouteDeclaration> = isAssetMapEnabled()
   ? { 'asset-map': { slice: 'am', real: component(() => import('../features/asset-map').then((m) => m.AssetMapPage)) } }
   : {}
 
 /** Every route key the console knows, once. */
-export const ROUTES: Record<string, RouteDeclaration> = { ...BASE_ROUTES, ...PROTOTYPE_ROUTES, ...FLAGGED_ROUTES }
+export const ROUTES: Record<string, RouteDeclaration> = { ...BASE_ROUTES, ...FLAGGED_ROUTES }
 
 /** Real-feature surfaces: the keys whose real rendering is RealFeatureRoute's composed panels. */
 export const FEATURE_SURFACES: Record<string, { title: string; panels: readonly PanelGroup[] }> = Object.fromEntries(

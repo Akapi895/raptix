@@ -58,12 +58,6 @@ describe('real route gating', () => {
     }
   })
 
-  it('leaves the unavailable surfaces out of the integrated set', () => {
-    for (const page of ['states', 'scenarios', 'workspaces']) {
-      expect(integrated(page), page).toBe(false)
-    }
-  })
-
   it('integrates Infrastructure: its real route reads the engagement-scoped runtime, C2 and grant panels', () => {
     expect(integrated('infrastructure')).toBe(true)
   })

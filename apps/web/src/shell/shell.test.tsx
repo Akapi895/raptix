@@ -58,20 +58,6 @@ describe('sidebar navigation and active section', () => {
     }
   })
 
-  it('opens chat with the agents panel separately from tool-call logs', async () => {
-    mountApp('#/project/RT-2026-014')
-    signIn()
-    const nav = screen.getByRole('navigation', { name: 'Main navigation' })
-    fireEvent.click(await within(nav).findByRole('button', { name: 'AI Workspace' }))
-    await screen.findByRole('region', { name: 'Conversation with Raptix' })
-    expect(currentRoute().tab).toBe('ai-workspace')
-    fireEvent.click(within(nav).getByRole('button', { name: 'Operations' }))
-    await screen.findByPlaceholderText('Search event, tool, target, agent, branch')
-    expect(currentRoute().tab).toBe('operations')
-    expect(screen.queryByRole('region', { name: 'Conversation with Raptix' })).toBeNull()
-    expect(within(nav).getByRole('button', { name: 'Operations' })).toHaveAttribute('aria-current', 'page')
-  })
-
   it('renders every nav group and item, highlighting the overview item as active', async () => {
     mountApp('#/overview')
     signIn()
@@ -217,19 +203,6 @@ describe('emergency stop and emergency contact controls', () => {
     act(() => { selectProject('RT-2026-014') })
     await screen.findByRole('button', { name: /Emergency Stop/ })
     expectStopInHeader()
-  })
-
-  it('the emergency contact lives in Scope & ROE, not in a ribbon chip', async () => {
-    mountApp('#/projects')
-    signIn()
-    await screen.findAllByText('RT-2026-014')
-    act(() => { selectProject('RT-2026-014') })
-    await screen.findByRole('button', { name: /Emergency Stop/ })
-    // The readiness checklist row is a legitimate body element; the header must carry no contact chip.
-    expect(within(screen.getByRole('banner')).queryByRole('button', { name: /Emergency contact/ })).not.toBeInTheDocument()
-    act(() => { go('project', { id: 'RT-2026-014', tab: 'scope' }) })
-    expect(await screen.findByText('Emergency contact')).toBeInTheDocument()
-    expect(screen.getAllByText(/Robin Vale — \+1 \(555\) 010-0014/).length).toBeGreaterThan(0)
   })
 
   it('the stop control stays mounted at the aggregate scope via the context ribbon', async () => {

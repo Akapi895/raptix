@@ -25,7 +25,7 @@ import { Button } from '../ui/index'
 import { Shell } from '../shell/index'
 import { HeaderNotices } from '../features/notices/header-notices'
 import { LazyCopilotDrawer } from '../features/copilot'
-import { OUTSIDE_SHELL, toHref, type Route } from './history'
+import { toHref, type Route } from './history'
 import { canonicalRoute } from './aliases'
 import { routeComponent } from './registry'
 
@@ -163,10 +163,6 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
       </Shell>
     )
   }
-  // An unregistered key (for example a build-gated prototype page) falls through to the normal unknown-route handling.
-  const Outside = OUTSIDE_SHELL.has(route.page) ? routeComponent(route.page) : null
-  if (Outside) return <Suspense fallback={null}><Outside /></Suspense>
-
   if (!authed || route.page === 'login') {
     const Login = routeComponent('login')
     return <Suspense fallback={null}>{Login ? <Login /> : null}</Suspense>
