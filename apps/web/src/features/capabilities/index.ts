@@ -5,3 +5,5 @@
 export { capabilityRoutes } from './views/capabilities-pages'
 export { LibraryReadError, useLibraryCorpus, useLibraryProposal, useLibraryProposals, useLibraryWrites, useSkillDetail, useTechniqueDetail } from './query'
 export type { LibraryCorpusQuery, LibraryCorpusRead, LibraryProposal, LibraryProposalExport, LibraryProposalReview, LibraryProposalStatus, LibraryProposalsRead, LibrarySkill, LibrarySkillDetail, LibraryService, LibraryTechniqueRead } from './service'
+export { fetchLibraryProposals } from './endpoints'
+export type { LibraryProposalView } from './endpoints'

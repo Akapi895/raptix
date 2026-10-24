@@ -2,7 +2,7 @@ import { apiFetch } from '../../platform/transport';
 import { guarded } from '../../platform/adapter-shared';
 import { utcMinute } from '../../platform/format';
 import { listEngagements } from '../projects';
-import { fetchTasks } from '../decisions';
+import { fetchTasks, inboxLimits } from '../decisions';
 import type { OverviewService } from './service';
 
 
@@ -103,7 +103,8 @@ export function createRealOverviewService(): OverviewService {
     }),
     tasks: () => guarded(async () => {
       const view = await fetchTasks()
-      return { ok: true, data: { items: view.tasks.map((t) => ({ kind: t.kind, refId: t.refId, engagementId: t.engagementId, engagementName: t.engagementName, title: t.title, createdAt: utcMinute(t.createdAt), href: t.href, awaitingActor: t.awaitingActor })), limited: view.limited === true } }
+      const limits = inboxLimits(view)
+      return { ok: true, data: { items: view.tasks.map((t) => ({ kind: t.kind, refId: t.refId, engagementId: t.engagementId, engagementName: t.engagementName, title: t.title, createdAt: utcMinute(t.createdAt), href: t.href, awaitingActor: t.awaitingActor })), limited: limits.decisions, stopsLimited: limits.stops } }
     }),
   }
 }

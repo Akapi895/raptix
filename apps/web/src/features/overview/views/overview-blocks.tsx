@@ -96,9 +96,9 @@ export function OverviewKpi({ label, display, note, icon: Icon, tint, onOpen }: 
  * The attention region, first on the page: active emergency stops, the workflow decisions pending in the visible projects
  * and any figure that could not be read. A figure still loading is said to be checked, never shown as zero.
  */
-export function AttentionRegion({ stops, decisions, limited, unavailable, pending }: { stops: number; decisions: number | null; limited: boolean; unavailable: string[]; pending: boolean }): ReactElement {
+export function AttentionRegion({ stops, stopsLimited, decisions, limited, unavailable, pending }: { stops: number; stopsLimited: boolean; decisions: number | null; limited: boolean; unavailable: string[]; pending: boolean }): ReactElement {
   const rows: string[] = []
-  if (stops > 0) rows.push(`${stops} active emergency stop${stops === 1 ? '' : 's'} ${stops === 1 ? 'needs' : 'need'} attention.`)
+  if (stops > 0) rows.push(`${countText(stops, stopsLimited)} active emergency stop${stops === 1 ? '' : 's'} ${stops === 1 ? 'needs' : 'need'} attention.`)
   if (decisions !== null && decisions > 0) rows.push(`${countText(decisions, limited)} workflow decision${decisions === 1 ? '' : 's'} pending in your projects.`)
   if (unavailable.length > 0) rows.push(`${unavailable.join(', ')} ${unavailable.length === 1 ? 'is' : 'are'} unavailable. Those figures are not zero.`)
   const message = rows.length > 0 ? rows : [pending ? 'Checking attention items…' : 'Nothing needs your attention right now.']

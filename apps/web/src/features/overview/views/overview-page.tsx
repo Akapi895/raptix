@@ -78,7 +78,7 @@ export function OverviewPage(): ReactElement {
         actions={<Button variant="secondary" icon={RefreshCw} onClick={refreshAll}>Refresh</Button>}
       />
 
-      <AttentionRegion stops={stopCount} decisions={awaiting?.value ?? null} limited={awaiting?.limited ?? false} unavailable={unavailable} pending={checking} />
+      <AttentionRegion stops={stopCount} stopsLimited={tasks.data?.stopsLimited ?? false} decisions={awaiting?.value ?? null} limited={awaiting?.limited ?? false} unavailable={unavailable} pending={checking} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {measures.map((measure) => (

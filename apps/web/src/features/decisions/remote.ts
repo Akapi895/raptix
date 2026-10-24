@@ -28,6 +28,8 @@ export interface TasksView {
   counts: Record<string, number>
   /** True when a kind reached the server's row cap. Absent on a server that predates the flag: read as false. */
   limited?: boolean
+  /** The kinds that reached the cap. Absent on a server that predates it: `limited` then covers every kind. */
+  limitedKinds?: string[]
   source: 'db'
 }
 

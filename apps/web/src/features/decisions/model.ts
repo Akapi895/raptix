@@ -16,6 +16,18 @@ export function splitTasks<T extends { kind: string }>(tasks: readonly T[]): Spl
   return split
 }
 
+/** Which counts a read limited. A kind that did not reach the cap is exact, so a full stop list leaves the decisions exact. */
+export interface InboxLimits {
+  decisions: boolean
+  stops: boolean
+}
+
+export function inboxLimits(view: { limited?: boolean; limitedKinds?: readonly string[] }): InboxLimits {
+  if (view.limitedKinds !== undefined) return { decisions: view.limitedKinds.some((kind) => kind !== 'active-stop'), stops: view.limitedKinds.includes('active-stop') }
+  const any = view.limited === true
+  return { decisions: any, stops: any }
+}
+
 /** A count as the user reads it: a count from a limited read carries a plus, because more rows may exist. */
 export function countText(count: number, limited: boolean): string {
   return limited ? `${count}+` : String(count)

@@ -104,10 +104,11 @@ export interface OverviewTask {
   awaitingActor: boolean
 }
 
-/** The task inbox for the visible projects; `limited` means a kind reached its row cap, so the items are a lower bound. */
+/** The task inbox for the visible projects. `limited` and `stopsLimited` say which count reached its row cap, so that count is a lower bound. */
 export interface OverviewTaskList {
   items: OverviewTask[]
   limited: boolean
+  stopsLimited: boolean
 }
 
 /** Actor-bound overview reads; the overview is global, so no project is named. */

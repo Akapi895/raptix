@@ -67,6 +67,18 @@ describe('OverviewPage', () => {
     expect(screen.getByText('1 active emergency stop needs attention.')).toBeTruthy()
   })
 
+  it('marks the emergency-stop count as a lower bound only when the stop list itself was capped', async () => {
+    hooks.projects = read([])
+    hooks.findings = read(emptyFindings)
+    hooks.operations = read(emptyOperations)
+    hooks.c2 = read(emptyC2)
+    const stop = { kind: 'active-stop', refId: 'ES-1', engagementId: 'RT-1', engagementName: 'Alpha', title: 'Emergency stop (all) is active', createdAt: 'Oct 1', href: '#/project/RT-1?tab=operations', awaitingActor: true }
+    hooks.tasks = read({ items: [stop], limited: false, stopsLimited: true })
+    await renderOverview()
+    expect(screen.getByText('1+ active emergency stop needs attention.')).toBeTruthy()
+    expect(screen.getByText('Decision queue (0)')).toBeTruthy()
+  })
+
   it('shows a failed findings section as unavailable while the other sections still render', async () => {
     hooks.projects = read([{ id: 'RT-1', name: 'Alpha', detail: 'client', status: 'active', updatedAt: 'Oct 1' }])
     hooks.findings = read(undefined, { isError: true, error: new Error('findings endpoint down') })
