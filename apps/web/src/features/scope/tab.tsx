@@ -199,7 +199,7 @@ export function ScopeTab({ engagementId, documents }: { engagementId: string; do
           <Card>
             <CardHeader title="Effective scope" sub={`What the runtime reads as approved: version ${effective.versionLabel ?? 'none yet'}. A target is allowed only when its decision is In scope.`} />
             <div className="flex flex-wrap items-center gap-3 px-4 pb-3">
-              <Segmented<DecisionFilter> value={decisionFilter} onChange={setDecisionFilter} options={DECISION_OPTIONS} />
+              <div className="max-w-full overflow-x-auto"><Segmented<DecisionFilter> value={decisionFilter} onChange={setDecisionFilter} options={DECISION_OPTIONS} /></div>
               <Input aria-label="Search targets" placeholder="Search by target or type" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
             </div>
             {assets.isPending ? <Skeleton className="mx-4 mb-4 h-24" /> : visibleRows.length === 0 ? (
@@ -207,7 +207,7 @@ export function ScopeTab({ engagementId, documents }: { engagementId: string; do
                 {rows.length === 0 ? 'Approve a scope revision to name targets here.' : 'Clear the search or the decision filter.'}
               </Empty>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-y border-line text-left text-xs text-muted">
