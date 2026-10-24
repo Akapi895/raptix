@@ -35,7 +35,7 @@ holding stack; the connection file is C:\raptix-uat\hold\hold.json; create ...\S
 
 **Bước 6. Lấy địa chỉ và tài khoản.** Mở file `C:\raptix-uat\hold\hold.json` bằng Notepad:
 
-- Địa chỉ web: giá trị của `"app"` (dạng `http://127.0.0.1:<cổng>`). Dán vào thanh địa chỉ trình duyệt.
+- Địa chỉ web: lấy giá trị `"app"` (dạng `http://127.0.0.1:<cổng>`), rồi **thêm `/?dataMode=real#/login` vào cuối**. Ví dụ: `http://127.0.0.1:3015/?dataMode=real#/login`. Không dán chỉ `"app"`: nếu thiếu phần này, trình duyệt mở trang đăng nhập demo (có ô "Work email" và nút "Continue"), trang đó không dùng được cho kiểm thử.
 - Tài khoản owner: `verifier`. Mật khẩu: giá trị của `"adminPassword"`.
 - Tài khoản khác: `viewer`, `reviewer`, `operator` đều có `username` và `password` trong file.
 
@@ -52,7 +52,7 @@ holding stack; the connection file is C:\raptix-uat\hold\hold.json; create ...\S
 
 - Mở file `hold.json` trong thư mục `--hold-dir` bằng trình soạn thảo văn bản. File này có `app` (địa chỉ web), `owner` (`verifier`) và `adminPassword`; `viewer`, `reviewer` và `operator` mỗi tài khoản có `username` và `password`.
 - Không dán các giá trị này vào chat, ticket, ảnh chụp màn hình hay repository. Mỗi lần khởi động, các giá trị này được sinh ngẫu nhiên.
-- Đăng nhập bằng tài khoản owner tại địa chỉ `app`. Dùng các tài khoản khác cho những bước cần đến chúng.
+- Đăng nhập bằng tài khoản owner tại địa chỉ `app` có thêm `/?dataMode=real#/login` (xem bước 6 mục 1). Dùng các tài khoản khác cho những bước cần đến chúng.
 - Để đổi tài khoản: mở menu tài khoản (avatar tròn ở góc trên bên phải, `Account menu`), chọn `Account / sign out`, rồi nhấn `Sign out`.
 
 ## 3. Đặt lại (reset)

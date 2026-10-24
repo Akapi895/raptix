@@ -22,7 +22,7 @@ Step by step, in Windows PowerShell:
    ```
 
 5. Wait. The first start can take a few minutes, and the window may stay quiet. The stack is ready when this line appears: `holding stack; the connection file is C:\raptix-uat\hold\hold.json; ...`
-6. Open `C:\raptix-uat\hold\hold.json` in Notepad. Use `"app"` as the address in the browser, `verifier` as the owner account, and `"adminPassword"` as its password. The `viewer`, `reviewer` and `operator` entries each have a `username` and `password`.
+6. Open `C:\raptix-uat\hold\hold.json` in Notepad. Take the `"app"` value and add `/?dataMode=real#/login` to the end, for example `http://127.0.0.1:3015/?dataMode=real#/login`. Without this suffix the browser opens the demo sign-in page ("Work email", "Continue"), which is not the test page. Sign in with the Username `verifier` and the Password `"adminPassword"`. The `viewer`, `reviewer` and `operator` entries each have a `username` and `password`.
 
 If the command refuses with `must be outside the repository`, choose folders outside `D:\.VTNet\redteam\raptix`. If the hold folder still holds a `STOP` file from an earlier run, the stack stops right after it starts: delete that `STOP` file first, or use new folders. Do not press Ctrl+C during the session; stop as described in section 4.
 
@@ -30,7 +30,7 @@ If the command refuses with `must be outside the repository`, choose folders out
 
 - Open `hold.json` in the `--hold-dir` folder in a text editor. It holds `app` (the URL), `owner` (`verifier`) and `adminPassword`; `viewer`, `reviewer` and `operator` each have a `username` and a `password`.
 - Do not paste these values into chat, tickets, screenshots or the repository. They are random for each start.
-- Sign in with the owner account at the `app` URL. Use the other accounts for the checks that need them.
+- Sign in with the owner account at the `app` URL plus `/?dataMode=real#/login` (see step 6 of section 1). Use the other accounts for the checks that need them.
 - To switch accounts: open the account menu (the round avatar at the top right, `Account menu`), choose `Account / sign out`, then click `Sign out`.
 
 ## 3. Reset
