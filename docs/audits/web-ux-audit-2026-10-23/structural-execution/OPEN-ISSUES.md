@@ -19,3 +19,22 @@ Mỗi mục có mã, mức, nguyên nhân, và điều kiện đóng.
 | MFA-1 | Thấp (copy demo) | Thông báo mã xác thực demo có ghi "any code other than 000000". Không phải mật khẩu; để nguyên. | Chủ sản phẩm quyết định. |
 | CA-1 | Thấp | Asset-map lưu vị trí xem theo actor, không xóa khi đăng xuất. Chủ ý, nhưng cần ghi cho người dùng dùng chung trình duyệt. | Quyết định sản phẩm. |
 | UX-15/18/20/25 | Thấp | Các follow-up nhỏ trong mục 11 của prompt (badge, overlap chữ, primary accent, nút đóng drawer) chưa làm. | Cần kiểm trình duyệt từng mục; làm trong vòng sau. |
+
+## Cập nhật vòng 5
+
+| Mã | Trạng thái | Ghi chú |
+|---|---|---|
+| BL-01 canary | Đóng một phần: VERIFIED 10/10 trên stack cô lập | Draft/thread vẫn NV (runtime) |
+| NV-1 real smoke | Đóng: 42 đạt, 14 khai báo, 0 mới | — |
+| TEAM-1 | Đóng | Membership, decisions, AI Workspace, quyền |
+| BL-03 | Mở, có điều kiện | Closure và library trong aggregate Overview cần server |
+| FLAKY-1 | Đóng | Dán thay gõ; không nới ngưỡng |
+| UX-15 | Một phần | Lặp tên project giữ (lựa chọn bố cục) |
+| UX-18, UX-20, UX-25 | Đóng | Commit tương ứng trong `VERIFICATION-LOG.md` |
+| GLOBAL-1 | Đóng | — |
+| MOCK-1 | Giữ có chủ đích | Danh sách tab demo |
+| DEP-1 | Mở (cần người dùng) | Redeploy 3001 chưa được quyết định |
+| CLEAN-1 | Mở (cần người dùng) | Hai file tạm trong `D:\Program Files\Git\` |
+| PROV-1 | Mở, có điều kiện | Cần thời điểm nguồn từ server |
+| Mới: harness route smoke | Đóng | Gắn lỗi theo route đã phát request (`bfa26841`) |
+| Mới: `structural-execution.zip` | Ghi nhận | File này không do phiên tạo; giữ nguyên, người dùng quyết định |

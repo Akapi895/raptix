@@ -47,3 +47,62 @@ Mỗi quyết định ghi: phân loại (AUTO, DEFAULT-APPROVED, CONDITIONAL, BL
 ### DL-07 · "Awaiting decisions" là toàn bộ decision trong phạm vi, không chỉ của người dùng
 
 - `OverviewTask.awaitingActor` đánh dấu việc của người dùng. Số đếm vẫn là mọi decision trong phạm vi (đã là vậy trước khi sửa). Banner đổi chữ để không gọi đó là "your review". Phân tách "việc của bạn" sẽ là phần của WS-2 (read model).
+
+## Quyết định của phiên tiếp theo (vòng 5)
+
+### DL-09 · Commit `000dea15` vượt 10 file
+
+- Lý do: giới hạn `inboxLimits`, consumer của nó và phần Team tab (closure, library, liên kết tool approval) đổi cùng lúc; phần Team dùng export mới của closure và capabilities. Tách commit sẽ để lại commit không biên dịch.
+
+### DL-10 · Closure và library được đọc theo từng project, chưa vào số đếm Overview
+
+- Bằng chứng: `GET /api/engagements/:id/closure` và `GET /api/engagements/:id/library-proposals` đã có và đã có consumer. Aggregate `/api/tasks` không có hai loại này (BL-03).
+- Quyết định: Team tab của project hiển thị hai loại đang chờ, ghi rõ "chưa tính trên Overview". Không thay đổi server aggregate, vì cần đánh giá phân quyền từng miền và consumer (điều kiện trong plan 02, mục 8.6).
+
+### DL-11 · `limitedKinds` bổ sung cho cờ giới hạn
+
+- Lý do: cờ `limited` chung làm số decision bị đánh dấu là cận dưới khi chỉ danh sách stop đạt trần. Trường mới chỉ cho biết loại nào đạt trần; `limited` giữ nguyên nghĩa cũ.
+
+### DL-12 · `GLOBAL_RESOURCE_PAGES` thuộc module navigation
+
+- Lý do: đây là một quy tắc khả dụng thứ hai bên cạnh bảng menu (GLOBAL-1). `routes.ts` re-export để import của host không đổi.
+
+### DL-13 · Ngoại lệ `.gitignore` cho thư mục nguồn `features/c2/workspace`
+
+- Lý do: quy tắc `workspace/` dành cho dữ liệu runtime, và không neo gốc vì kết quả benchmark dựa vào nó. Một ngoại lệ hẹp mở lại đúng thư mục nguồn. Không tracked file nào bị ảnh hưởng.
+
+### DL-14 · Địa chỉ `c2-console` nói rõ không có console tương tác
+
+- Bằng chứng: không có nhánh riêng cho `c2-console` trong tab C2 real; trước đây hiển thị danh sách session như thể có console.
+- Quyết định: thông báo trung thực, giữ danh sách session. ADR-0095 vẫn Proposed, không triển khai PTY.
+
+### DL-15 · Khối Severity trên Overview đưa vào disclosure đóng mặc định
+
+- Bằng chứng: trang Findings toàn cục đã có thẻ mức độ và thanh phân bố (`all-findings.tsx`). Dữ liệu và đánh giá rủi ro giữ nguyên.
+
+### DL-16 · Sửa harness route smoke: gắn response theo route đã phát request
+
+- Bằng chứng: route `asset-map` báo `api-error` do request treo của route `project` (đã khai báo) hoàn tất trong lúc route `asset-map` đang chạy. Mở trực tiếp `asset-map` không gọi C2 (đo bằng probe).
+- Quyết định: chỉ tính lỗi cho route đã phát request. Không nới tiêu chí; route của chính nó vẫn bị kiểm đầy đủ.
+
+### DL-17 · Canary không bắt được mutation bỏ `key={actor}`; test đơn vị bắt được
+
+- Bằng chứng: canary đăng xuất trước khi đổi actor, nên `ActorQueries` unmount và xóa client. Mutation chỉ lộ khi actor đổi mà không unmount. `real-login.test.tsx` (test in-flight history) đỏ với mutation. Đã khôi phục file.
+- Quyết định: giữ cả hai; ghi giới hạn của canary trong báo cáo.
+
+### DL-18 · FLAKY-1: dán thay vì gõ từng ký tự ở hai ô dài của form tạo dự án
+
+- Bằng chứng: phần test chiếm ~2.5 s của ~4 s khi chạy riêng. Sau khi dán: ~1 s.
+- Quyết định: không nới ngưỡng timeout. Khẳng định về payload giữ nguyên.
+
+### DL-19 · Drawer điều hướng mobile có nút đóng và quy tắc focus
+
+- Bằng chứng: drawer chỉ đóng bằng nền hoặc Escape (UX-25). Quyết định: thêm nút "Close navigation", focus vào drawer khi mở, trả focus khi đóng.
+
+### DL-20 · Huy hiệu số trên sidebar nêu rõ nó đếm gì
+
+- Bằng chứng: huy hiệu chỉ có "N pending" (UX-15). Quyết định: ghi nghĩa cụ thể cho mục Projects và Infrastructure. Không sửa lặp tên project (lựa chọn bố cục).
+
+### DL-21 · Quy tắc màu primary và accent ghi vào `AGENTS.md`
+
+- Bằng chứng: quy tắc chỉ nằm trong comment token (UX-20). Quyết định: ghi lại đúng nội dung comment; không đổi giá trị token.

@@ -53,3 +53,27 @@ Trạng thái: TODO, IN_PROGRESS, IMPLEMENTED, VERIFIED, PARTIAL, BLOCKED, FAILE
 | Tài liệu vòng: WS-0..WS-4, hồi quy, vấn đề mở, báo cáo cuối, RESUME | Tài liệu | VERIFIED | commit tài liệu cuối | — | — |
 
 HEAD mã sản phẩm: `ffe85384`. Gate cuối: xem `VERIFICATION-LOG.md`.
+
+## Cập nhật vòng 5 (HEAD `67ddf571`, tài liệu sau commit cuối)
+
+| Task | Workstream | Status | Commit | Tests | Remaining |
+|---|---|---|---|---|---|
+| Dark mode: sửa bằng chứng (script sai) | P0.1 | VERIFIED | `65eb3b14` | Đo class và nền | — |
+| Canary actor trên stack cô lập | P0.2 | VERIFIED (10/10); draft/thread NV | — | `WS-0-CANARY-REPORT.md` | Draft cần runtime |
+| Smoke real trên stack; sửa harness | P0.3 | VERIFIED một phần | `bfa26841` | 42 đạt, 14 khai báo, 0 mới | Overview/drawer/tablet real NV |
+| Team & Approvals (membership, decisions, AI Workspace, quyền) | P1.1 | VERIFIED (real trên stack) | `000dea15`, `67ddf571` | Test team, team-check | — |
+| Giới hạn theo từng loại (server + client) | P1.2 | PARTIAL | `52f587aa`, `000dea15` | t15 8 test; client | "Resolved" không có nguồn |
+| Closure và library theo project | P1.3 | PARTIAL | `000dea15` | Test team | BL-03 (aggregate server) |
+| Severity thành disclosure | P2.1 | VERIFIED (mock) | `990c4a4b` | Overview 32 test | — |
+| Resolver C2 và thông báo console | P3.2/P3.3 | VERIFIED (unit) | `9efa9f11` | `view.test.ts`, provider-tab | Provider thật NV |
+| Ngoại lệ .gitignore cho thư mục C2 | P3 (hạ tầng) | VERIFIED | `01b9d0e9` | `git check-ignore` | — |
+| GLOBAL-1 (resource pages) | P4 | VERIFIED | `17dfff1a` | router, shell | — |
+| Drawer mobile: nút đóng và focus; huy hiệu có nghĩa | P4 (UX-25, UX-15) | VERIFIED (unit + mock) | `b9d2b8a7` | `sidebar-drawer.test` | Real mobile NV |
+| FLAKY-1: dán thay gõ | P4 | VERIFIED | `c5714006` | `real-screens` 11/11 | — |
+| UX-18: nhãn và chú thích | P4 | VERIFIED | `bf3863e0` | demo 43 test | — |
+| UX-20: quy tắc màu trong AGENTS.md | P4 | VERIFIED (tài liệu) | `d9e7daf7` | — | — |
+| Lý do của control disabled | Phụ | VERIFIED | `67ddf571` | members test; probe real | — |
+| Harness route smoke: gắn response theo route | Phụ | VERIFIED | `bfa26841` | smoke lại | — |
+| Gate cuối | Tất cả | VERIFIED | — | web 190/1664; server 64/623; mock 56/56 hai cờ; real 0 mới | — |
+
+Nhật ký chi tiết: `VERIFICATION-LOG.md` (mục "Vòng 5"). Quyết định: `DECISION-LOG.md` (DL-09 đến DL-21).

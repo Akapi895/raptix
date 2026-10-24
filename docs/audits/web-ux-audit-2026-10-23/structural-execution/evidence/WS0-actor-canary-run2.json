@@ -1,0 +1,59 @@
+{
+ "app": "http://127.0.0.1:7554",
+ "generatedAt": "2026-10-24T01:49:03.034Z",
+ "checks": [
+  {
+   "id": "fixture.owner-only-created",
+   "ok": true,
+   "detail": "cmvlqpyng000nbwfi73nl9hcn"
+  },
+  {
+   "id": "owner.sees-owner-only",
+   "ok": true,
+   "detail": "owner list contains the owner-only project"
+  },
+  {
+   "id": "owner.logout-clears-project-data",
+   "ok": true,
+   "detail": "keys naming owner-only project after logout: none"
+  },
+  {
+   "id": "viewer.no-owner-only-flash",
+   "ok": true,
+   "detail": "samples showing owner-only name in 4 s after viewer sign-in: 0"
+  },
+  {
+   "id": "viewer.sees-shared",
+   "ok": true,
+   "detail": "viewer list contains the shared project"
+  },
+  {
+   "id": "viewer.list-excludes-owner-only",
+   "ok": true,
+   "detail": "viewer list has no owner-only project"
+  },
+  {
+   "id": "viewer.server-scope",
+   "ok": true,
+   "detail": "GET /api/engagements as viewer does not name the owner-only project"
+  },
+  {
+   "id": "viewer.storage-clean",
+   "ok": true,
+   "detail": "keys naming owner or owner-only project for viewer: none"
+  },
+  {
+   "id": "owner.re-login-sees-owner-only",
+   "ok": true,
+   "detail": "owner list after re-login"
+  },
+  {
+   "id": "replacement.first-tab-drops-owner-data",
+   "ok": true,
+   "detail": "owner-only name gone from the first tab after the viewer signed in on the second tab"
+  }
+ ],
+ "failed": 0,
+ "pageErrors": [],
+ "ownerOnlyProjectId": "cmvlqpyng000nbwfi73nl9hcn"
+}

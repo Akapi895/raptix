@@ -63,3 +63,9 @@ Năm khối top-level (trong giới hạn sáu của plan).
 ## Đính chính dark mode
 
 Ảnh dark trước đó là ảnh sáng (script sai, không phải lỗi ứng dụng). Ảnh dark thật đã thay bằng theme chọn qua menu tài khoản; xem `VERIFICATION-LOG.md`, mục "Đính chính".
+
+## Cập nhật vòng 5
+
+- Severity trên Overview thành disclosure đóng (`990c4a4b`); Findings giữ phân tích đầy đủ.
+- Attention và các trạng thái nguồn: loaded, pending, unavailable, limited (dấu +), empty (đã đọc, không có).
+- Kiểm chứng UX: `WS-4-UX-VERIFICATION.md`.

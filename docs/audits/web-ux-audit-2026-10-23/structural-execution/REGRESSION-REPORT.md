@@ -44,3 +44,7 @@ Trạng thái tại HEAD `ffe85384`. Mọi kết luận dựa trên lệnh đã 
 ## Không làm (ngoài phạm vi, không phải hồi quy)
 
 - Không redeploy 3001 trong vòng này. Container đang chạy vẫn là `d3225f63` (xem OPEN-ISSUES).
+
+## Cập nhật vòng 5
+
+Xem `FINAL-REGRESSION-REPORT.md`. Không có hồi quy đã xác định trong gate cuối. Các thay đổi hành vi có chủ đích được liệt kê ở đó.

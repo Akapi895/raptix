@@ -94,3 +94,21 @@ Kết quả JSON và log ở `scratchpad/ws1/final-smoke-*.json|log` (ngoài rep
   - Theme tối thật: `<html>` có class `dark`, `color-scheme: dark`, nền body `rgb(11,17,32)` (sáng: `rgb(246,247,249)`).
   - Ảnh thay thế: `evidence/WS4B-overview-after-desktop-dark.png`, `evidence/WS4B-overview-after-mobile-dark.png`. Script: `structural-execution/verify-scripts/theme-shots.mjs`.
   - Kết quả: 4 khung nhìn (desktop/mobile × sáng/tối), không tràn ngang, không lỗi trang, menu đã đóng trước khi chụp.
+
+## Vòng 5 · gate cuối trên HEAD `67ddf571`
+
+| Kiểm | Kết quả |
+|---|---|
+| Typecheck web, server | exit 0, exit 0 |
+| Lint web (toàn bộ) | exit 0 |
+| Boundary (strict) | 408 vi phạm, khớp baseline |
+| Test web | 190 file, 1664 test, xanh |
+| Test server | 64 file, 623 test, xanh |
+| Build mặc định và bật cờ | exit 0, exit 0 (scratchpad) |
+| Smoke mock không cờ / bật cờ | 56/56; 56/56 (0 lỗi mới) |
+| Smoke real (stack cô lập) | 42 đạt; 14 khai báo; 0 mới (`evidence/WS-real-route-smoke-final.json`) |
+| Canary actor (stack cô lập) | 10/10 (`evidence/WS0-actor-canary-run2.json`) |
+| Tab Team real (owner sáng, tối; viewer sáng) | Không tràn; không lỗi trang; nút disabled có lý do |
+| `/api/tasks` (server mới) | Có `limited` và `limitedKinds` |
+
+Ghi chú: hai lần đầu của smoke song song lỗi do đường dẫn tương đối (không liên quan mã). Lần chạy lại đúng đường dẫn.
