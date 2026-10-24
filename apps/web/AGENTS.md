@@ -108,3 +108,12 @@ installs, lint, or other ordinary commands.
   configuration to work around an agent process-management failure.
 - When a verification server is optional, prefer SKIPPING it and recording the
   verification gap over running an unbounded server lifecycle.
+
+## Color roles
+
+Two accent families exist in `src/index.css`. The rule below is the one the token comment states, and it applies to new code.
+
+- Primary (blue, `--c-primary`): primary actions and links. A filled primary button carries its own fill token, so its white label meets 4.5:1 in both themes.
+- Accent (red, `--c-accent`): the brand mark, severity states and destructive actions. Destructive buttons carry their own fill token.
+- Do not use the accent for an ordinary action or link, and do not use primary for a severity state.
+- Text links use `--c-link`, the lighter blue; the token comment in `src/index.css` gives its contrast on the slate panels. `--c-primary` is for fills and buttons.
