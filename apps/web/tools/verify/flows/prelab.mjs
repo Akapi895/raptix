@@ -92,7 +92,8 @@ try {
     else throw Error(`Unexpected C2 fixture path: ${pathname}`);
     await route.fulfill({ json: body });
   });
-  await owner.goto(`${app}/?dataMode=real#/c2-console?engagement=${fixtures.project}`);
+  // The command form lives in the Infrastructure sessions tab; the c2-console address shows the no-console notice only.
+  await owner.goto(`${app}/?dataMode=real#/infrastructure?engagement=${fixtures.project}&tab=sessions`);
   await owner.locator('#c2-console-session').fill('prelab-session');
   await owner.getByLabel('Absolute binary path').fill('/usr/bin/printf');
   await owner.getByLabel('Arguments (JSON array)').fill('[1]');

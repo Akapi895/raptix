@@ -78,7 +78,7 @@ try {
 
   await step('the infrastructure page shows its three tabs at global scope', page, async () => {
     await route(page, 'infrastructure?tab=agents');
-    const labels = ['Execution agents', 'C2 infrastructure', 'Sessions'];
+    const labels = ['Runtime agents', 'C2 infrastructure', 'Sessions'];
     const found = await Promise.all(labels.map((label) => page.getByText(label, { exact: true }).first().waitFor({ timeout: 30000 }).then(() => true, () => false)));
     return { ok: found.every(Boolean), detail: `${found.filter(Boolean).length} of ${labels.length} tab labels shown` };
   });

@@ -1,5 +1,5 @@
 // Project workspace click-through against the running real app (page-details proposal, MVP 2026-10-22). An admin walks
-// Projects → project overview → AI Workspace → Execution → Findings → a finding (Reproduce, Evidence) → back → Reports → report → back.
+// Projects → project overview → AI Workspace → Operations → Findings → a finding (Reproduce, Evidence) → back → Reports → report → back.
 // Each step checks the URL, the project identity in the sidebar (the project scope must survive every step) and the back link.
 // A final pass checks the overview on a phone-width viewport (no horizontal page scroll) and in dark mode (screenshot kept as evidence).
 // Usage: node tools/verify/flows/workspace-click.mjs --app <url> --fixtures <manifest.json> --out <result.json> [--shots <dir>]
@@ -81,7 +81,7 @@ try {
 
   await step('the project sidebar keeps every section the proposal names', page, async () => {
     const side = await sidebar(page);
-    const sections = ['Scope & ROE', 'Planning', 'AI Workspace', 'Execution', 'C2 Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Fleet', 'Activity & Audit', 'Vault', 'Closeout'];
+    const sections = ['Scope & ROE', 'Planning', 'AI Workspace', 'Operations', 'C2 Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Fleet', 'Activity & Audit', 'Vault', 'Closeout'];
     const missing = sections.filter((label) => !side.includes(label));
     return { ok: missing.length === 0, detail: missing.length === 0 ? `all ${sections.length} sections listed` : `missing: ${missing.join(', ')}` };
   });
@@ -93,10 +93,10 @@ try {
     return { ok: scope.ok && hash(page).includes(fixtures.project), detail: scope.detail };
   });
 
-  await step('Execution opens the operations tab of the same project', page, async () => {
-    await navItem(page, 'Execution').click();
+  await step('Operations opens the operations tab of the same project', page, async () => {
+    await navItem(page, 'Operations').click();
     await page.waitForURL(/tab=operations/);
-    const scope = await scopeKept(page, 'Execution');
+    const scope = await scopeKept(page, 'Operations');
     return { ok: scope.ok, detail: scope.detail };
   });
 
