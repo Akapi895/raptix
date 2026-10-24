@@ -41,7 +41,12 @@ function fromBuild(): DataMode | null {
   return parseMode(import.meta.env.VITE_DATA_MODE)
 }
 
+/**
+ * A production build is always real: the demo data is not reachable from the console (phase 1 of removing the mock path).
+ * Development and tests keep the precedence above, so the developer's demo workflow still works until the demo is removed.
+ */
 export function resolveDataMode(): DataMode {
+  if (import.meta.env.PROD) return 'real'
   return fromQuery() ?? fromStorage() ?? fromBuild() ?? 'mock'
 }
 
