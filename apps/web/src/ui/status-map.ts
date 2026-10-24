@@ -3,7 +3,7 @@ import { AlertTriangle, Archive, Ban, CheckCircle2, Circle, CircleDashed, Circle
 /* ───────────── Status (never colour alone: always icon + label) ───────────── */
 export type Tone = 'ok' | 'warn' | 'bad' | 'accent' | 'cyan' | 'neutral'
 export const TONE: Record<Tone, string> = {
-  ok: 'text-ok bg-ok-soft border-ok/30', warn: 'text-warn bg-warn-soft border-warn/30', bad: 'text-bad bg-bad-soft border-bad/30',
+  ok: 'text-ok bg-ok-soft border-ok/30', warn: 'text-warn-text bg-warn-soft border-warn/30', bad: 'text-bad bg-bad-soft border-bad/30',
   accent: 'text-accent bg-accent-soft border-accent-line', cyan: 'text-cyan bg-info-soft border-cyan/30', neutral: 'text-muted bg-subtle border-line',
 }
 export const S = (label: string, tone: Tone, icon: LucideIcon) => ({ label, tone, icon })

@@ -17,11 +17,13 @@
   /* Primary actions and links are blue; the red accent stays for the brand, severity and destructive
      states. Filled primary and destructive buttons carry their own fill tokens so the white label
      meets 4.5:1 in both themes. */
-  --c-primary: #0066FF;
-  --c-primary-hover: #0052CC;
-  --c-primary-press: #0047B3;
+  /* The light blue is darker than the first draft so primary text meets 4.5:1 on the info tint (#DBEAFE), not only on
+     white; the white label on the fill is 6.8:1. */
+  --c-primary: #0052CC;
+  --c-primary-hover: #0047B3;
+  --c-primary-press: #003D99;
   --c-primary-fg: #FFFFFF;
-  --c-link: #0066FF;
+  --c-link: #0052CC;
   --c-danger-fill: #C62828;
   --c-danger-fill-hover: #A61F1F;
   --c-danger-fill-press: #8E1B1B;
@@ -32,6 +34,8 @@
   --c-orange: #F2894F;
   --c-ok: #15803D;
   --c-warn: #A16207;
+  /* Warning text on the warning tint (#FEF3C7): the fill colour is 4.4:1, so text uses this darker amber. */
+  --c-warn-text: #92400E;
   --c-bad: #B91C1C;
   --c-accent-soft: #FDECEC;
   --c-accent-line: #F4C7C7;
@@ -51,7 +55,7 @@
   --c-console-info: #6EA0FF;
   --c-console-warn: #FBBF24;
   --c-console-bad: #F87171;
-  --c-focus: #0066FF;
+  --c-focus: #0052CC;
   color-scheme: light;
 }
 :root.dark {
@@ -80,6 +84,7 @@
   --c-cyan: #6EA0FF;
   --c-ok: #4ADE80;
   --c-warn: #FBBF24;
+  --c-warn-text: #FBBF24;
   --c-bad: #F87171;
   --c-accent-soft: #3A1B1E;
   --c-accent-line: #6B2A2E;
@@ -115,6 +120,7 @@
   --color-orange: var(--c-orange);
   --color-ok: var(--c-ok);
   --color-warn: var(--c-warn);
+  --color-warn-text: var(--c-warn-text);
   --color-bad: var(--c-bad);
   --color-neutral: var(--c-neutral);
   --color-accent-soft: var(--c-accent-soft);
