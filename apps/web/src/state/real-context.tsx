@@ -22,6 +22,15 @@ export function useReal(): RealContextValue {
   return ctx
 }
 
+/**
+ * Whether the same person may not decide their own workflow item (the four-eyes rule). Outside the real composition, and
+ * on servers that do not advertise the rule, the rule applies: the control stays strict until the server says otherwise.
+ */
+export function useIndependentReviewRequired(): boolean {
+  const ctx = useContext(RealContext)
+  return ctx?.document.independentReview !== 'single-operator'
+}
+
 /** Whether a capability is usable right now (supported AND available). */
 export function useCapabilityReady(name: string): { ready: boolean; reason: string | null } {
   const { document } = useReal()
