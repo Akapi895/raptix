@@ -1,0 +1,444 @@
+{
+ "label": "after4",
+ "generatedAt": "2026-10-24T09:10:48.842Z",
+ "pageErrors": 0,
+ "byPage": {
+  "light:overview": {
+   "textsChecked": 108,
+   "failing": 0,
+   "worst": []
+  },
+  "light:projects": {
+   "textsChecked": 55,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-overview": {
+   "textsChecked": 211,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-scope": {
+   "textsChecked": 110,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-planning": {
+   "textsChecked": 88,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-governance": {
+   "textsChecked": 117,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-team": {
+   "textsChecked": 73,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-findings": {
+   "textsChecked": 147,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-reports": {
+   "textsChecked": 131,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-operations": {
+   "textsChecked": 55,
+   "failing": 0,
+   "worst": []
+  },
+  "light:p-settings": {
+   "textsChecked": 52,
+   "failing": 0,
+   "worst": []
+  },
+  "light:infrastructure": {
+   "textsChecked": 48,
+   "failing": 0,
+   "worst": []
+  },
+  "light:assets": {
+   "textsChecked": 104,
+   "failing": 0,
+   "worst": []
+  },
+  "light:settings": {
+   "textsChecked": 71,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:overview": {
+   "textsChecked": 107,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:projects": {
+   "textsChecked": 55,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-overview": {
+   "textsChecked": 211,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-scope": {
+   "textsChecked": 110,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-planning": {
+   "textsChecked": 88,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-governance": {
+   "textsChecked": 117,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-team": {
+   "textsChecked": 73,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-findings": {
+   "textsChecked": 147,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-reports": {
+   "textsChecked": 131,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-operations": {
+   "textsChecked": 55,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:p-settings": {
+   "textsChecked": 52,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:infrastructure": {
+   "textsChecked": 48,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:assets": {
+   "textsChecked": 104,
+   "failing": 0,
+   "worst": []
+  },
+  "dark:settings": {
+   "textsChecked": 71,
+   "failing": 0,
+   "worst": []
+  }
+ },
+ "buttonStyleClusters": [
+  {
+   "style": "h44 r10px f14px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 216,
+   "examples": [
+    "Projects",
+    "Findings",
+    "Assets",
+    "Capabilities"
+   ]
+  },
+  {
+   "style": "h40 r10px f14px bgrgb(255, 255, 255) fgrgb(17, 24, 39)",
+   "count": 38,
+   "examples": [
+    "Project: All Projects",
+    "Refresh",
+    "Open full task inbox",
+    "View all operations"
+   ]
+  },
+  {
+   "style": "h40 r8px f14px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 17,
+   "examples": [
+    "Notifications (7 unread)",
+    "Remove Stack Viewer",
+    "Remove Stack Reviewer",
+    "Remove Stack Operator"
+   ]
+  },
+  {
+   "style": "h44 r0px f14px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 16,
+   "examples": [
+    "Confirmed\n4",
+    "In Review\n0",
+    "AI Suggestions\n1",
+    "Drafts\n0"
+   ]
+  },
+  {
+   "style": "h44 r10px f14px bgrgb(219, 234, 254) fgrgb(17, 24, 39)",
+   "count": 14,
+   "examples": [
+    "Overview",
+    "Projects",
+    "Scope & ROE",
+    "Planning"
+   ]
+  },
+  {
+   "style": "h40 r10px f14px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 14,
+   "examples": [
+    "Collapse sidebar"
+   ]
+  },
+  {
+   "style": "h40 r10px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 14,
+   "examples": [
+    "Account menu"
+   ]
+  },
+  {
+   "style": "h32 r10px f12px bgrgb(255, 255, 255) fgrgb(17, 24, 39)",
+   "count": 11,
+   "examples": [
+    "Select Project",
+    "Open Scope & ROE",
+    "Manage environment",
+    "Open AI Workspace"
+   ]
+  },
+  {
+   "style": "h40 r10px f14px bgrgb(0, 82, 204) fgrgb(255, 255, 255)",
+   "count": 11,
+   "examples": [
+    "New Project",
+    "Prepare execution",
+    "Review documents",
+    "Draft plan"
+   ]
+  },
+  {
+   "style": "h60 r10px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 11,
+   "examples": [
+    "Stack verification project\nDraft\ncmvm51k"
+   ]
+  },
+  {
+   "style": "h32 r10px f12px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 10,
+   "examples": [
+    "Open Planning",
+    "Open Operations",
+    "Open Findings",
+    "View all"
+   ]
+  },
+  {
+   "style": "h32 r6px f12px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 10,
+   "examples": [
+    "ROE & policies",
+    "Changes & approvals",
+    "Documents",
+    "In scope"
+   ]
+  },
+  {
+   "style": "h20 r4px f12px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 9,
+   "examples": [
+    "Projects"
+   ]
+  },
+  {
+   "style": "h66 r8px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 5,
+   "examples": [
+    "Critical\n0\n0%",
+    "High\n0\n0%",
+    "Medium\n4\n100%",
+    "Low\n0\n0%"
+   ]
+  },
+  {
+   "style": "h21 r4px f15px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 5,
+   "examples": [
+    "Solo finding mvm53fwe",
+    "Solo finding mvm52rjg",
+    "Solo finding mvm51sr2",
+    "Stack verification finding"
+   ]
+  },
+  {
+   "style": "h19 r0px f13px bgrgba(0, 0, 0, 0) fgrgb(198, 40, 40)",
+   "count": 5,
+   "examples": [
+    "cmvm51kfq0001jsfimsklfmnp"
+   ]
+  },
+  {
+   "style": "h126 r12px f14px bgrgb(255, 255, 255) fgrgb(17, 24, 39)",
+   "count": 4,
+   "examples": [
+    "Approved In Scope\n4\nClick to filter",
+    "Approved Out of Scope\n0\nClick to filter",
+    "Pending Approval\n0\nStays Pending until a",
+    "Unclassified\n0\nClick to filter"
+   ]
+  },
+  {
+   "style": "h24 r3.35544e+07px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 4,
+   "examples": [
+    "Approved In Scope: explain scope status"
+   ]
+  },
+  {
+   "style": "h140 r12px f14px bgrgb(255, 255, 255) fgrgb(17, 24, 39)",
+   "count": 3,
+   "examples": [
+    "Active projects\n0\nApproved, planning, ac",
+    "Active operations\n0\nOperations running n",
+    "Awaiting decisions\n0\nWorkflow decisions,"
+   ]
+  },
+  {
+   "style": "h32 r6px f12px bgrgb(255, 255, 255) fgrgb(17, 24, 39)",
+   "count": 3,
+   "examples": [
+    "Effective scope",
+    "All",
+    "Overview"
+   ]
+  },
+  {
+   "style": "h154 r12px f14px bgrgb(255, 255, 255) fgrgb(17, 24, 39)",
+   "count": 3,
+   "examples": [
+    "Awaiting Review\n0",
+    "Resolved\n0",
+    "AI Suggestions\n1\nNot counted until verif"
+   ]
+  },
+  {
+   "style": "h44 r0px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 3,
+   "examples": [
+    "All\n5",
+    "Sessions",
+    "Organization"
+   ]
+  },
+  {
+   "style": "h20 r0px f14px bgrgba(0, 0, 0, 0) fgrgb(0, 82, 204)",
+   "count": 2,
+   "examples": [
+    "View all →",
+    ""
+   ]
+  },
+  {
+   "style": "h78 r12px f14px bgrgb(219, 234, 254) fgrgb(17, 24, 39)",
+   "count": 2,
+   "examples": [
+    ""
+   ]
+  },
+  {
+   "style": "h140 r12px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 1,
+   "examples": [
+    "Open curated findings\n4\nConfirmed, remed"
+   ]
+  },
+  {
+   "style": "h38 r0px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 1,
+   "examples": [
+    "Stack verification project\nhttps://verif"
+   ]
+  },
+  {
+   "style": "h78 r12px f14px bgrgb(254, 243, 199) fgrgb(17, 24, 39)",
+   "count": 1,
+   "examples": [
+    ""
+   ]
+  },
+  {
+   "style": "h78 r12px f14px bgrgb(243, 244, 246) fgrgb(17, 24, 39)",
+   "count": 1,
+   "examples": [
+    ""
+   ]
+  },
+  {
+   "style": "h78 r12px f14px bgrgb(220, 252, 231) fgrgb(17, 24, 39)",
+   "count": 1,
+   "examples": [
+    ""
+   ]
+  },
+  {
+   "style": "h32 r3.35544e+07px f12px bgoklab(0.480154 -0.033261 -0.198372 / 0.05) fgrgb(0, 82, 204)",
+   "count": 1,
+   "examples": [
+    "All\n1"
+   ]
+  },
+  {
+   "style": "h32 r3.35544e+07px f12px bgrgb(255, 255, 255) fgrgb(55, 65, 81)",
+   "count": 1,
+   "examples": [
+    "draft\n1"
+   ]
+  },
+  {
+   "style": "h14 r0px f12px bgrgba(0, 0, 0, 0) fgrgb(55, 65, 81)",
+   "count": 1,
+   "examples": [
+    "Copy project ID"
+   ]
+  },
+  {
+   "style": "h32 r10px f12px bgrgb(0, 82, 204) fgrgb(255, 255, 255)",
+   "count": 1,
+   "examples": [
+    "Open Planning"
+   ]
+  },
+  {
+   "style": "h36 r0px f14px bgrgba(0, 0, 0, 0) fgrgb(17, 24, 39)",
+   "count": 1,
+   "examples": [
+    "3 preflight checks are failing"
+   ]
+  },
+  {
+   "style": "h40 r10px f14px bgrgba(0, 0, 0, 0) fgrgb(185, 28, 28)",
+   "count": 1,
+   "examples": [
+    "Emergency stop (project)"
+   ]
+  }
+ ],
+ "mobileScrollX": {
+  "overview": 0,
+  "p-governance": 0,
+  "p-findings": 0
+ }
+}
