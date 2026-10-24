@@ -1,30 +1,24 @@
 /**
  * Route host (ticket 07): resolves the store route to a page inside the React
- * Router data router. Owns the auth guard (login rendered in place so the
- * requested protected URL survives sign-in as the safe return destination),
- * not-found resolution, the per-page error boundary, the loading fallback for
- * lazy slices, and the dirty-navigation blocker for popstate/URL-edit
- * traversals (in-app navigation is pre-guarded by the store's `go`).
+ * Router data router. Owns not-found resolution, the per-page error boundary,
+ * the loading fallback for lazy slices, and the dirty-navigation blocker for
+ * popstate/URL-edit traversals (in-app navigation is pre-guarded by the
+ * store's `go`).
  *
- * Ticket 59 (append): the header `notifications` slot is filled with the
- * migrated notice center through the ticket-08 typed `ShellSlots` contract.
- * Ticket 60 (append): the `copilotDrawer` slot is filled with the migrated
- * copilot drawer the same way; the `askAi` trigger keeps the legacy default.
+ * The console runs against the real API only (ADR-0068, ADR-0101): there is no
+ * sign-in gate here, because the connected API document is the trust boundary
+ * (D1). Each route renders the surface its declaration in routes.ts names.
  */
 import { Component, lazy, Suspense, useEffect, useRef, type ComponentType, type ReactNode } from 'react'
 import { Navigate, useBlocker, useRouteError } from 'react-router'
 import { Loader2, RefreshCw, ServerCrash } from 'lucide-react'
 import { useSessionStore } from '../state/session'
-import { useAuthStore, useProjectStore } from '../state/stores'
+import { useProjectStore } from '../state/stores'
 import { go, useRoute } from './navigate'
-import { DATA_MODE } from '../state/mode'
-import { RealNotIntegrated } from '../shell/not-integrated'
 import { GLOBAL_RESOURCE_PAGES, ROUTES } from './routes'
 import { RealGlobalResource } from '../features/overview'
 import { Button } from '../ui/index'
 import { Shell } from '../shell/index'
-import { HeaderNotices } from '../features/notices/header-notices'
-import { LazyCopilotDrawer } from '../features/copilot'
 import { toHref, type Route } from './history'
 import { canonicalRoute } from './aliases'
 import { routeComponent } from './registry'
@@ -32,7 +26,7 @@ import { routeComponent } from './registry'
 const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
 const RealFeatureRoute = lazy(() => import('./feature-route').then((m) => ({ default: m.RealFeatureRoute })))
 
-/** One lazy wrapper per real-only component, memoised by route key so a re-render never remounts it. */
+/** One lazy wrapper per real component, memoised by route key so a re-render never remounts it. */
 const realComponents = new Map<string, ComponentType>()
 function realComponent(key: string, load: () => Promise<ComponentType>): ComponentType {
   let component = realComponents.get(key)
@@ -93,105 +87,76 @@ function PageFallback() {
   )
 }
 
-/** Resolves the current store route to a page element (legacy App Router order preserved). */
-function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
+/** Resolves the current store route to a page element. */
+function ResolvedRoute({ route }: { route: Route }) {
   const key = pageKey(route)
   const pid = useProjectStore((s) => s.pid)
-  if (DATA_MODE === 'real') {
-    // Real mode (integration ticket 03, ADR-0068): every route renders the real presentation its declaration in routes.ts
-    // names, a system page that renders itself, or the honest unavailable panel (D4). Mock screens are never reached.
-    const globalResource = !route.id && !route.engagementId && (route.page === 'infrastructure' || pid === 'all' && GLOBAL_RESOURCE_PAGES.has(route.page))
-    if (globalResource) {
-      return (
-        <Shell slots={{ notifications: HeaderNotices }}>
-          <PageBoundary key={key}>
-            <Suspense fallback={<PageFallback />}><RealGlobalResource /></Suspense>
-          </PageBoundary>
-        </Shell>
-      )
-    }
-    const surface = ROUTES[route.page]?.real
-    if (surface?.kind === 'shared') {
-      const Migrated = routeComponent(route.page)
-      return (
-        <Shell slots={{ notifications: HeaderNotices }}>
-          <PageBoundary key={key}>
-            <Suspense fallback={<PageFallback />}>{Migrated ? <Migrated /> : null}</Suspense>
-          </PageBoundary>
-        </Shell>
-      )
-    }
-    if (surface?.kind === 'feature') {
-      return (
-        <Shell slots={{ notifications: HeaderNotices }}>
-          <PageBoundary key={key}>
-            <Suspense fallback={<PageFallback />}><RealFeatureRoute /></Suspense>
-          </PageBoundary>
-        </Shell>
-      )
-    }
-    if (surface?.kind === 'component') {
-      const Real = realComponent(route.page, surface.load)
-      return (
-        <Shell slots={{ notifications: HeaderNotices }}>
-          <PageBoundary key={key}>
-            <Suspense fallback={<PageFallback />}><Real /></Suspense>
-          </PageBoundary>
-        </Shell>
-      )
-    }
-    if (surface?.kind === 'system') {
-      const Page = routeComponent(route.page)
-      return (
-        <Shell slots={{ notifications: HeaderNotices }}>
-          <Suspense fallback={<PageFallback />}>
-            <PageBoundary key={key}>
-              {Page ? <Page /> : null}
-            </PageBoundary>
-          </Suspense>
-        </Shell>
-      )
-    }
-    if (!surface) {
-      // Not a route of this build (an unknown address, or a flagged page whose flag is off): the same unknown-route page mock mode shows.
-      const NotFound = routeComponent('notfound')
-      return <Shell slots={{}}>{NotFound ? <NotFound /> : null}</Shell>
-    }
+  const globalResource = !route.id && !route.engagementId && (route.page === 'infrastructure' || pid === 'all' && GLOBAL_RESOURCE_PAGES.has(route.page))
+  if (globalResource) {
     return (
-      <Shell slots={{}}>
-        <RealNotIntegrated page={route.page} />
+      <Shell>
+        <PageBoundary key={key}>
+          <Suspense fallback={<PageFallback />}><RealGlobalResource /></Suspense>
+        </PageBoundary>
       </Shell>
     )
   }
-  if (!authed || route.page === 'login') {
-    const Login = routeComponent('login')
-    return <Suspense fallback={null}>{Login ? <Login /> : null}</Suspense>
-  }
-  const Page = routeComponent(route.page) ?? routeComponent('notfound')
-  return (
-    <Shell slots={{ notifications: HeaderNotices, copilotDrawer: LazyCopilotDrawer }}>
-      <Suspense fallback={<PageFallback />}>
+  const surface = ROUTES[route.page]?.real
+  if (surface?.kind === 'shared') {
+    const Migrated = routeComponent(route.page)
+    return (
+      <Shell>
         <PageBoundary key={key}>
-          {Page ? <Page /> : null}
+          <Suspense fallback={<PageFallback />}>{Migrated ? <Migrated /> : null}</Suspense>
         </PageBoundary>
-      </Suspense>
-    </Shell>
-  )
+      </Shell>
+    )
+  }
+  if (surface?.kind === 'feature') {
+    return (
+      <Shell>
+        <PageBoundary key={key}>
+          <Suspense fallback={<PageFallback />}><RealFeatureRoute /></Suspense>
+        </PageBoundary>
+      </Shell>
+    )
+  }
+  if (surface?.kind === 'component') {
+    const Real = realComponent(route.page, surface.load)
+    return (
+      <Shell>
+        <PageBoundary key={key}>
+          <Suspense fallback={<PageFallback />}><Real /></Suspense>
+        </PageBoundary>
+      </Shell>
+    )
+  }
+  if (surface?.kind === 'system') {
+    const Page = routeComponent(route.page)
+    return (
+      <Shell>
+        <Suspense fallback={<PageFallback />}>
+          <PageBoundary key={key}>
+            {Page ? <Page /> : null}
+          </PageBoundary>
+        </Suspense>
+      </Shell>
+    )
+  }
+  // Not a route of this build (an unknown address, or a flagged page whose flag is off): the unknown-route page.
+  const NotFound = routeComponent('notfound')
+  return <Shell>{NotFound ? <NotFound /> : null}</Shell>
 }
 
 export function RouteHost() {
   const route = useRoute()
-  const storeAuthed = useAuthStore((s) => s.authed)
-  // Real mode has no sign-in gate: the connected API document is the trust
-  // boundary (D1), and the auth store stays untouched by real mode.
-  const authed = DATA_MODE === 'real' ? true : storeAuthed
   const canonical = canonicalRoute(route)
   // Legacy addresses (aliases.ts) are replaced once with the canonical route, so old links keep working.
   if (canonical !== route) return <Navigate to={toHref(canonical)} replace />
   return (
     <>
       <DirtyNavBlocker />
-      <ResolvedRoute route={route} authed={authed} />
+      <ResolvedRoute route={route} />
     </>
   )
 }

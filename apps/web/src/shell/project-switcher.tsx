@@ -1,12 +1,3 @@
-/**
- * Project switcher (ticket 08b, extracted from the shell monolith verbatim).
- *
- * Scope selection flows through the shared active-project authority (the
- * ticket-05 project store's `pid` read here; selection goes through the
- * navigate module's guarded `selectProject`) — this component owns no
- * project state. Access gating, search/filter tabs and the isolation
- * invariants are unchanged.
- */
 import { useMemo, useState } from 'react'
 import { Check as CheckIcon, ChevronDown, FolderKanban, Layers, Loader2, Lock, Pin } from 'lucide-react'
 import { go, selectProject, useRoute } from '../router/navigate'
@@ -14,9 +5,7 @@ import { useAccessible, useActiveProject, useCan, usePolicyProjects, useMe } fro
 import { useSessionStore } from '../state/session'
 import { useProjectStore, useUiStore } from '../state/stores'
 import { Button, cx, SearchBox, Status } from '../ui/index'
-import { DATA_MODE } from '../state/mode'
 import { showCreateProject } from '../features/projects/create-dialog-state'
-
 export function ProjectSwitcher() {
   const projects = usePolicyProjects()
   const accessible = useAccessible()
@@ -98,7 +87,7 @@ export function ProjectSwitcher() {
             </div>
             <div className="mt-3 flex gap-2">
               <Button variant="secondary" className="flex-1" onClick={() => { setSwitcherOpen(false); go('projects') }}>View all projects</Button>
-              {can('createProject') && <Button variant="primary" className="flex-1" onClick={() => { setSwitcherOpen(false); if (DATA_MODE === 'real') showCreateProject(); else go('project-new') }}>New project</Button>}
+              {can('createProject') && <Button variant="primary" className="flex-1" onClick={() => { setSwitcherOpen(false); showCreateProject(); }}>New project</Button>}
             </div>
             {me.role === 'viewer' && <p className="mt-3 text-xs text-muted">Only projects you have been granted access to are available.</p>}
           </div>

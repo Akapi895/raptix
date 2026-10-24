@@ -6,9 +6,8 @@
  */
 import { useState, type ReactElement } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, Trash2 } from 'lucide-react'
-import { isRealMode } from '../../state/mode'
 import { utcMinute } from '../../platform/format'
-import { Banner, Button, Card, CardHeader, DemoTag, Empty, Input, Skeleton } from '../../ui/index'
+import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton } from '../../ui/index'
 import { VaultError, useVaultRead, useVaultWrites } from './query'
 
 export function VaultTab({ engagementId }: { engagementId: string }): ReactElement {
@@ -19,7 +18,6 @@ export function VaultTab({ engagementId }: { engagementId: string }): ReactEleme
   const [notice, setNotice] = useState<string | null>(null)
   const [revealed, setRevealed] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
-  const real = isRealMode()
 
   if (vault.isPending) return <Card><CardHeader title="Credentials vault" /><div className="p-4"><Skeleton className="h-24" /></div></Card>
   if (vault.isError || !vault.data) {
@@ -68,7 +66,7 @@ export function VaultTab({ engagementId }: { engagementId: string }): ReactEleme
       await writes.store({ kind: form.kind.trim(), label: form.label.trim(), plaintext: form.plaintext })
       setForm({ kind: '', label: '', plaintext: '' })
       setError(null)
-      setNotice(real ? 'Secret stored encrypted server-side; the plaintext was never part of the list view.' : 'Secret stored.')
+      setNotice('Secret stored encrypted server-side; the plaintext was never part of the list view.')
     } catch (err) {
       refused(err, 'The secret was refused.')
     } finally {
@@ -78,14 +76,14 @@ export function VaultTab({ engagementId }: { engagementId: string }): ReactEleme
 
   return (
     <div className="space-y-4">
-      <Banner tone="info" title={real ? 'Redacted by construction' : <span className="inline-flex items-center gap-2">Redacted by construction — <DemoTag /></span>}>
+      <Banner tone="info" title="Redacted by construction">
         The list never carries a plaintext secret. Reveal is an explicit, audited action and the decrypted value exists only in this browser session until you hide it.
       </Banner>
       {error !== null && <p className="text-sm text-bad" role="alert">{error}</p>}
       {notice !== null && <p className="text-sm text-good" role="status">{notice}</p>}
 
       <Card>
-        <CardHeader title={`Secrets (${view.secrets.length}${view.truncated ? '+, truncated' : ''})`} sub={real ? 'Encrypted metadata with server-tracked reveal counts' : 'Encrypted metadata with tracked reveal counts — Demo Data'} />
+        <CardHeader title={`Secrets (${view.secrets.length}${view.truncated ? '+, truncated' : ''})`} sub="Encrypted metadata with server-tracked reveal counts" />
         <div className="p-4">
           {view.secrets.length === 0 ? (
             <Empty icon={KeyRound} title="No secrets stored for this engagement yet">Store a lab credential below; every reveal and revocation is audited.</Empty>
@@ -109,7 +107,6 @@ export function VaultTab({ engagementId }: { engagementId: string }): ReactEleme
                   {revealed[s.id] !== undefined && (
                     <>
                       <p className="mt-2 break-all rounded bg-subtle px-2 py-1 font-mono text-xs text-fg" aria-live="polite">{revealed[s.id]}</p>
-                      {!real && <p className="mt-1 text-xs text-muted">Reveal recorded in Activity & Audit.</p>}
                     </>
                   )}
                 </li>
@@ -120,7 +117,7 @@ export function VaultTab({ engagementId }: { engagementId: string }): ReactEleme
       </Card>
 
       <Card>
-        <CardHeader title="Store a secret" sub={real ? "Encrypted with the deployment's server-side key (AES-256-GCM); an unconfigured key refuses writes with the server's reason" : 'Demo storage with the same rules as the real vault: metadata-only list, audited store action'} />
+        <CardHeader title="Store a secret" sub="Encrypted with the deployment's server-side key (AES-256-GCM); an unconfigured key refuses writes with the server's reason" />
         <form className="grid gap-3 p-4 sm:grid-cols-3" onSubmit={(e) => { e.preventDefault(); if (form.kind.trim() && form.label.trim() && form.plaintext) void store() }}>
           <label className="grid gap-1 text-xs text-muted" htmlFor="vault-kind">
             Kind
@@ -137,7 +134,7 @@ export function VaultTab({ engagementId }: { engagementId: string }): ReactEleme
           <div className="sm:col-span-3">
             <Button type="submit" variant="primary" icon={KeyRound} disabled={busy || !view.canManage} title={view.canManage ? undefined : view.manageReason ?? undefined}>
               {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
-              Store encrypted{real ? null : <> <DemoTag /></>}
+              Store encrypted
             </Button>
           </div>
         </form>

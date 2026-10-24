@@ -1,5 +1,2 @@
-/** Shared AI chat cards used outside the feature (copilot, execution and the AI screens). */
-export * from './common'
+/** Public surface of the AI chat feature: the workspace screens. */
 export { RealConversation, RealWorkspace } from './views/workspace'
-export { useChatHandlers } from './query'
-export { useAiDemo } from './query'

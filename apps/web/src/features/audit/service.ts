@@ -1,7 +1,3 @@
-/** Owns audit records for simulated UI actions and exports. */
-import { ROLE_LABEL } from '../../domain/policy'
-import { formatDemoInstant } from '../../domain/clock'
-import type { ConsoleServices } from '../../domain/console-services';
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export interface AuditInput { action: string; obj: string; result: string; reason: string }
@@ -29,14 +25,4 @@ export interface AuditRead { entries: AuditRecord[]; total: number; truncated: b
 
 export interface AuditService {
   read(ctx: RequestContext, query: AuditQuery): Promise<ServiceResult<AuditRead>>
-}
-
-export function recordAudit(services: ConsoleServices, ctx: RequestContext, input: AuditInput): void {
-  services.authority.commit(ctx.corr, (db) => {
-    db.audit.unshift({
-      corr: ctx.projectId === 'RT-2026-014' && /^(SS|AR)-/.test(input.obj) ? 'COR-014-01' : undefined,
-      id: 'AU-' + ++db.counters.audit, at: formatDemoInstant(services.authority.clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role],
-      projectId: ctx.projectId, ...input,
-    })
-  })
 }

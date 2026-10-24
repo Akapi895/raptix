@@ -1,7 +1,5 @@
 /**
- * Real-mode shell parts (integration ticket 03, ADR-0068). The demo header
- * and context ribbon keep their implementations untouched; the shell mounts
- * these replacements when DATA_MODE is 'real'. Every control here is either
+ * The shell's header and context ribbon (integration ticket 03, ADR-0068). Every control here is either
  * backed by the engagement API (project switcher, active engagement) or
  * honestly marked unavailable — no demo surfaces, persona switcher, global
  * search, AI-mode preference or demo Emergency Stop are rendered.

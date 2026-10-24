@@ -1,7 +1,7 @@
 /** Shared state subscriptions, DOM effects and provider isolation on the final interfaces. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook } from '@testing-library/react'
-import { mountServices } from '../test/helpers'
+import { mountConsole } from '../test/helpers'
 import { useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore } from './stores'
 import { selectProject } from '../router/navigate'
 
@@ -9,19 +9,19 @@ afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe('auth/persona authority', () => {
   it('a persona change reaches mounted selector subscribers', () => {
-    const h = mountServices()
+    const h = mountConsole()
     const { result } = renderHook(() => useAuthStore((s) => s.meName))
     expect(result.current).toBe('Alex Morgan')
-    h.as('Pat Kim')
+    act(() => { useAuthStore.getState().setMe('Pat Kim') })
     expect(result.current).toBe('Pat Kim')
     h.unmount()
   })
 
   it('independent consumers share persona selection without duplicate state', () => {
-    const h = mountServices()
+    const h = mountConsole()
     const first = renderHook(() => useAuthStore((s) => s.meName))
     const second = renderHook(() => useAuthStore((s) => s.meName))
-    h.as('Taylor Chen')
+    act(() => { useAuthStore.getState().setMe('Taylor Chen') })
     expect(first.result.current).toBe('Taylor Chen')
     expect(second.result.current).toBe('Taylor Chen')
     h.unmount()
@@ -30,11 +30,10 @@ describe('auth/persona authority', () => {
 
 describe('active-project authority', () => {
   it('router project selection reaches mounted selectors', () => {
-    const h = mountServices()
+    const h = mountConsole()
     const { result } = renderHook(() => useProjectStore((s) => s.pid))
     act(() => { useProjectStore.getState().setPid('RT-2026-014') })
     expect(result.current).toBe('RT-2026-014')
-    expect(h.db().projects.find((p) => p.id === result.current)?.id).toBe('RT-2026-014')
     act(() => { selectProject('RT-2026-015') })
     expect(useProjectStore.getState().pid).toBe('RT-2026-015')
     expect(result.current).toBe('RT-2026-015')
@@ -44,7 +43,7 @@ describe('active-project authority', () => {
 
 describe('theme authority', () => {
   it('theme changes update subscribers and the document class', () => {
-    const h = mountServices()
+    const h = mountConsole()
     const { result } = renderHook(() => useThemeStore((s) => s.theme))
     act(() => { useThemeStore.getState().setTheme('dark') })
     expect(result.current).toBe('dark')
@@ -58,7 +57,7 @@ describe('theme authority', () => {
 
 describe('toast authority', () => {
   it('ordered notifications reach independent subscribers', () => {
-    const h = mountServices()
+    const h = mountConsole()
     const first = renderHook(() => useToastStore((s) => s.toasts))
     const second = renderHook(() => useToastStore((s) => s.toasts))
     act(() => { useToastStore.getState().toast('from service', 'info') })
@@ -71,7 +70,7 @@ describe('toast authority', () => {
 
 describe('transient UI authority', () => {
   it('opening notices closes the copilot and mode changes reach subscribers', () => {
-    const h = mountServices()
+    const h = mountConsole()
     const { result } = renderHook(() => useUiStore((s) => s))
     act(() => { useUiStore.getState().setCopilotOpen(true, { kind: 'findings', label: 'Findings' }) })
     expect(result.current.copilotOpen).toBe(true)
@@ -87,7 +86,7 @@ describe('transient UI authority', () => {
 
 describe('provider mount lifecycle', () => {
   it('every mount restores shared authorities without cross-mount leakage', () => {
-    const a = mountServices()
+    const a = mountConsole()
     act(() => {
       useAuthStore.getState().setMe('Pat Kim')
       selectProject('RT-2026-014')
@@ -97,7 +96,7 @@ describe('provider mount lifecycle', () => {
       useUiStore.getState().setAiMode('execution')
     })
     a.unmount()
-    const b = mountServices()
+    const b = mountConsole()
     expect(useAuthStore.getState().meName).toBe('Alex Morgan')
     expect(useProjectStore.getState().pid).toBe('all')
     expect(useThemeStore.getState().theme).toBe('light')
@@ -111,10 +110,10 @@ describe('provider mount lifecycle', () => {
 
   it('toast timers never restore notifications from a previous mount', () => {
     vi.useFakeTimers()
-    const a = mountServices()
+    const a = mountConsole()
     act(() => { useToastStore.getState().toast('ephemeral') })
     a.unmount()
-    const b = mountServices()
+    const b = mountConsole()
     act(() => { vi.advanceTimersByTime(5_000) })
     expect(useToastStore.getState().toasts.some((t) => t.text === 'ephemeral')).toBe(false)
     b.unmount()

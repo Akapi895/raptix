@@ -4,7 +4,7 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { mountServices } from '../test/helpers'
+import { mountConsole } from '../test/helpers'
 import { resetSessionStores, useSessionStore } from '../state/session'
 import { resetSharedStores, useProjectStore, useUiStore } from '../state/stores'
 import { setActiveRouter } from './active'
@@ -38,7 +38,7 @@ describe('guarded go (session dirty guard)', () => {
     const save = () => { saved += 1 }
     act(() => { useSessionStore.getState().setDirty(true, save) })
     act(() => { go('projects') })
-    expect(currentRoute().page).toBe('login')
+    expect(currentRoute().page).toBe('overview')
     expect(window.location.hash).toBe('')
     const unsaved = useSessionStore.getState().unsaved
     expect(unsaved).not.toBeNull()
@@ -78,7 +78,7 @@ describe('route projection (useRoute)', () => {
 
   it('the router-less fallback writes the projected route and the legacy hash', () => {
     render(<RouteProbe />)
-    expect(latest).toEqual({ page: 'login' })
+    expect(latest).toEqual({ page: 'overview' })
     act(() => { navRawRoute({ page: 'settings', tab: 'policies' }) })
     expect(window.location.hash).toBe('#/settings?tab=policies')
     expect(latest).toEqual({ page: 'settings', tab: 'policies' })
@@ -193,7 +193,7 @@ describe('mounted navigation integration', () => {
       { path: '*', element: <><RouteProbe /><RouteHost /></>, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
     ])
     setActiveRouter(router)
-    mountServices(<RouterProvider router={router} />)
+    mountConsole(<RouterProvider router={router} />)
     expect(latest).toEqual({ page: 'projects' })
     act(() => { go('capabilities') })
     expect(latest.page).toBe('capabilities')
@@ -207,7 +207,7 @@ describe('mounted navigation integration', () => {
   it("a captured go from an unmounted provider does not move a later mount's route", () => {
     const mount = (hash: string) => {
       window.location.hash = hash
-      const view = mountServices(<RouteProbe />)
+      const view = mountConsole(<RouteProbe />)
       const epoch = navigationEpoch()
       return { go: (page: string, opts?: { id?: string }) => go(page, opts, epoch), unmount: view.unmount }
     }

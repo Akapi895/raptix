@@ -30,7 +30,7 @@ import { ReportsPage } from '../../reports';
 import { ProjectSettingsPanel } from './project-settings-panel'
 import { ProjectOverview } from './project-overview'
 import { go, useRoute } from '../../../router/navigate'
-import { REAL_PROJECT_NAV } from '../../../shell/nav'
+import { PROJECT_NAV } from '../../../shell/nav'
 import { useProjectStore } from '../../../state/stores'
 import { Button, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
 
@@ -39,7 +39,7 @@ import { Button, Empty, PageHeader, Skeleton, Status } from '../../../ui/index'
  * in-page project tab strip). The engagement tab IDs stay the URL authority.
  */
 /* The nav is read when the page renders, not at import: the nav module can be mid-load when this module first evaluates. */
-const navTabs = () => REAL_PROJECT_NAV.flatMap((g) => g.items.map(({ to, label }) => ({ id: to, label })))
+const navTabs = () => PROJECT_NAV.flatMap((g) => g.items.map(({ to, label }) => ({ id: to, label })))
 const sectionTitle = (tab: string) => navTabs().find((t) => t.id === tab)?.label ?? 'Overview'
 
 /** The Asset Map inside the project it belongs to, so the project sidebar and its selection stay in place. */

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks -- the member-label source is keyed on the module-constant DATA_MODE */
 /**
  * Close engagement tab (plan P09, Closure slice), shared by the mock and the
  * real project detail. The checklist, the closure record, the request and the
@@ -11,26 +10,18 @@ import { useMutation } from '@tanstack/react-query'
 import { CheckCircle2, Lock, ShieldCheck } from 'lucide-react'
 import { go } from '../../router/navigate'
 import { useMemberLabels } from '../team'
-import { DATA_MODE, isRealMode } from '../../state/mode'
 import { utcMinute, utcMinuteOr } from '../../platform/format'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Input, Skeleton, Status } from '../../ui/index'
 import { ClosureError, useClosureRead, useClosureWrites } from './query'
 
-/** Mock mode labels its own decisions by member id; the real console resolves labels from the members API. */
-function useLabel(engagementId: string): (id: string) => string {
-  if (DATA_MODE === 'real') return useMemberLabels(engagementId)
-  return (id: string) => id
-}
-
 export function ClosureTab({ engagementId, summary, extraActions }: { engagementId: string; summary?: ReactNode; extraActions?: ReactNode }): ReactElement {
   const closure = useClosureRead(engagementId)
   const writes = useClosureWrites(engagementId)
-  const label = useLabel(engagementId)
+  const label = useMemberLabels(engagementId)
   const [reason, setReason] = useState('')
   const [waive, setWaive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const real = isRealMode()
 
   const request = useMutation({
     mutationFn: () => writes.request({ reason: reason.trim(), waiverNoFindings: waive }),
@@ -72,7 +63,7 @@ export function ClosureTab({ engagementId, summary, extraActions }: { engagement
       {summary}
 
       <Card>
-        <CardHeader title="Closure checklist" sub={real ? 'Read live from the authoritative sources at request time — unavailable sources block closure instead of passing silently' : `${items.filter((i) => i.ok).length}/${items.length} conditions met`} />
+        <CardHeader title="Closure checklist" sub='Read live from the authoritative sources at request time — unavailable sources block closure instead of passing silently' />
         <div className="p-4">
           {row === null && <p className="mb-3 text-sm text-muted">No closure has been requested for this engagement.</p>}
           <ul className="space-y-2">

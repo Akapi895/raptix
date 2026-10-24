@@ -1,16 +1,12 @@
-import { lazy, type ComponentType } from 'react'
-import { Login } from '../demo/login-page'
-/* Ticket 61a/61b: the auth/system slice's semantic module (src/shell/system)
-   owns the error pages; route keys are unchanged. */
+import type { ComponentType } from 'react'
+/* Ticket 61a: the auth/system slice's semantic module (src/shell/system) owns the error pages; route keys are unchanged. */
 import { Forbidden, NotFound, Offline, ServerError, SessionExpired } from '../shell/system/pages'
 
-/* Ticket 70: the tasks inbox loads on demand — the eager auth/system slice keeps only the login and crash pages. */
+/** The system pages that render themselves in real mode; they stay in the main bundle so a crash page renders without a chunk. */
 export const routes: Record<string, ComponentType> = {
-  login: Login,
   forbidden: Forbidden,
   notfound: NotFound,
   error: ServerError,
   offline: Offline,
   'session-expired': SessionExpired,
-  tasks: lazy(() => import('../features/tasks/views/my-tasks').then((m) => ({ default: m.MyTasks }))),
 }

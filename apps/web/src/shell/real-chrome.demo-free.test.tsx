@@ -2,18 +2,11 @@
  * Real-mode shell and Settings carry no demo facts (quick win UX-01). The real
  * top bar is the only header mounted in real mode, and the shared Settings page
  * must not name the demo organization, the simulation or demo project IDs.
- * Only the mode flags are replaced; the rest of the mode module stays real.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import type { ReactElement } from 'react'
-
-vi.mock('../state/mode', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../state/mode')>()),
-  DATA_MODE: 'real',
-  isRealMode: () => true,
-}))
 
 const { RealTopbar } = await import('./real-chrome')
 const { SettingsPage } = await import('../features/settings/views/settings-page')

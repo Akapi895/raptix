@@ -1,11 +1,3 @@
-/**
- * Planning documents port (plan P09, Planning slice). It serves the planning
- * handoff: the PREPARE documents and their states, the OPPLAN the operations
- * agent maintains, the bundle readiness, the one-way handoff confirmation and
- * the server-side draft editor. Readiness is a runtime signal and never grants
- * execution. Only the real backend keeps these documents; the mock console has
- * its own document workspace, so this port has no mock adapter.
- */
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export type PlanningDocumentState = 'ready' | 'missing' | 'invalid' | 'unavailable'
@@ -85,4 +77,3 @@ export interface PlanningService {
   publish(ctx: RequestContext, name: string, input: PlanningDraftInput): Promise<ServiceResult<{ digest: string }>>
   discardDraft(ctx: RequestContext, name: string): Promise<ServiceResult<{ discarded: boolean }>>
 }
-

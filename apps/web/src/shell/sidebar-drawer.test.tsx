@@ -4,21 +4,21 @@
  */
 import { cleanup, fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mountServices } from '../test/helpers'
+import { mountConsole } from '../test/helpers'
 import { Sidebar } from './sidebar'
 
 afterEach(() => cleanup())
 
 describe('mobile navigation drawer', () => {
   it('moves focus to a labelled close control when it opens', () => {
-    mountServices(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={true} closeMobile={() => {}} />)
+    mountConsole(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={true} closeMobile={() => {}} />)
     const close = screen.getByRole('button', { name: 'Close navigation' })
     expect(document.activeElement).toBe(close)
   })
 
   it('closes through the close control, the overlay and Escape', () => {
     const closeMobile = vi.fn()
-    mountServices(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={true} closeMobile={closeMobile} />)
+    mountConsole(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={true} closeMobile={closeMobile} />)
     fireEvent.click(screen.getByRole('button', { name: 'Close navigation' }))
     expect(closeMobile).toHaveBeenCalledTimes(1)
     fireEvent.keyDown(window, { key: 'Escape' })
@@ -26,7 +26,7 @@ describe('mobile navigation drawer', () => {
   })
 
   it('does not render the drawer while it is closed', () => {
-    mountServices(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={false} closeMobile={() => {}} />)
+    mountConsole(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={false} closeMobile={() => {}} />)
     expect(screen.queryByRole('button', { name: 'Close navigation' })).toBeNull()
   })
 })

@@ -30,8 +30,8 @@ function useNoFind(id: string): [NoFind | undefined, (v: NoFind) => void] {
 const countLabel = (label: string, n?: number) => (n === undefined ? label : `${label} (${n})`)
 
 /** AI-suggested findings are never part of a formal report */
-export function AiExclusion({ projectId }: { projectId?: string }) {
-  const ai = useReportExclusions(projectId)?.findings ?? []
+export function AiExclusion() {
+  const ai = useReportExclusions()?.findings ?? []
   if (!ai.length) return null
   return (
     <Banner tone="info" title={`Excluded from the formal report: ${ai.map((f) => f.id).join(', ')}`} action={<Button size="sm" onClick={() => go('finding', { id: ai[0].id })}>Open {ai[0].id}</Button>}>
@@ -198,7 +198,7 @@ export function ReportNew() {
     <>
       <PageHeader title="Create Report" sub="Step 1 of 2. Choose project, template, report type, title and author, then open the editor." back={{ label: 'Reports', to: () => go('reports') }} />
       {locked && <Banner tone="warn" title="Cannot create report">{lockReason}</Banner>}
-      <AiExclusion projectId={project.id} />
+      <AiExclusion />
       {!locked && fs.filter((f) => f.reportable).length === 0 && <Banner tone="info" title="No confirmed findings yet. You can still create a draft.">Saving a draft is always allowed. Submit for Review will need either a confirmed finding or a no-findings closure with a justification and completion evidence.</Banner>}
       {tpl && tpl.status !== 'published' && <Banner tone="warn" title="Template not approved">{tpl.name} is a draft template: you can try it, but formal delivery is blocked.</Banner>}
       {saveErr && <Banner tone="bad" title="Could not create the draft">{saveErr} Nothing was saved; the form keeps everything you entered.</Banner>}
@@ -450,9 +450,9 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
           {lastReturn.note || 'No comment was left.'} Address the comments, then use Resubmit for Review to create the next version.
         </Banner>
       )}
-      {returned && !perm && <PersonaHint need="Author" persona={r.author}>This report was returned. The author ({r.author}) must revise it and resubmit for review.</PersonaHint>}
+      {returned && !perm && <PersonaHint need="Author">This report was returned. The author ({r.author}) must revise it and resubmit for review.</PersonaHint>}
       {state === 'error' && <Banner tone="bad" title="Could not save" action={<Button size="sm" onClick={() => saveAll()}>Retry</Button>}>{saveErr || 'The connection was lost during autosave. Your text is still on screen and has not been lost.'}</Banner>}
-      <AiExclusion projectId={r.projectId} />
+      <AiExclusion />
       {caps.noFindingsVariant && r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr_340px]">
@@ -663,7 +663,7 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
           <Button icon={ArrowLeft} onClick={() => go('report', { id: r.id })}>Back to editor</Button>
           {(r.status === 'draft' || r.status === 'returned') && <Button icon={Send} variant="primary" disabled={!!submitWhy} title={submitWhy || undefined} onClick={() => { writes.submit(r.id, { bodies: Object.fromEntries(r.sections.map((x) => [x.id, x.body])) }).then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { toast(`Submitted ${r.id} for review`); go('report-review', { id: r.id }) } }) }}>{r.status === 'returned' ? 'Resubmit for Review' : 'Submit for Review'}</Button>}
         </>} />
-      <AiExclusion projectId={r.projectId} />
+      <AiExclusion />
       {missing > 0 && <Banner tone="warn" title={`${missing} section(s) are missing content`}>Missing fields are highlighted in the pages below.</Banner>}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]">
         <div className="min-w-0">
@@ -819,11 +819,11 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
         <Stepper steps={['In Review', 'Approved', 'Exported', 'Delivered']} current={({ review: 0, approved: 1, exported: 2, delivered: 4 } as Record<string, number>)[r.status] ?? -1} />
         <p className="-mt-3 text-xs text-muted">{['draft', 'returned'].includes(r.status) ? `Not in the review chain yet: this report is ${r.status === 'draft' ? 'a draft' : 'returned to its author'}.` : 'Four separate stages: a decision on content, a file export, a delivery record, then recipient acknowledgement. Each step is audited.'}</p>
       </div>
-      <AiExclusion projectId={r.projectId} />
+      <AiExclusion />
       {nf?.on && <Banner tone="info" title="No-findings closure variant">This report closes the assessment without findings. Justification: {nf.note || 'not provided'}. The reviewer approves the closure based on the completion evidence.</Banner>}
       {r.status === 'draft' && <Banner tone="info" title="This report has not been submitted for review" action={<Button size="sm" onClick={() => go('report', { id: r.id })}>Open editor</Button>}>The author must finish the draft and select Submit for Review.</Banner>}
       {r.status === 'returned' && <Banner tone="warn" title="Returned with comments" action={<Button size="sm" variant="primary" onClick={() => go('report', { id: r.id })}>Revise and resubmit</Button>}>{[...r.reviews].reverse().find((x) => x.action === 'Changes requested')?.note || ''} The author ({r.author}) revises and resubmits as a new version. This round stays in the history.</Banner>}
-      {r.status === 'review' && !d.gates.decide.allowed && <PersonaHint need="Reviewer" persona={r.reviewer}>{d.gates.decide.reason}</PersonaHint>}
+      {r.status === 'review' && !d.gates.decide.allowed && <PersonaHint need="Reviewer">{d.gates.decide.reason}</PersonaHint>}
       {r.status === 'delivered' && <Banner tone="ok" title="Report delivered">Delivered on {r.deliveredAt}. Version {r.version} is locked and read-only; edits create a new version and earlier exports are kept.</Banner>}
       {['approved', 'exported'].includes(r.status) && <Banner tone="info" title={`Version ${r.version} is locked`}>Approved content cannot be edited. {r.reviews.some((x) => x.action === 'Changes requested') ? 'Earlier returned rounds remain in the history.' : ''}</Banner>}
       {err && <Banner tone="bad" title="The action was refused" action={<Button size="sm" onClick={() => setErr('')}>Dismiss</Button>}>{err}</Banner>}

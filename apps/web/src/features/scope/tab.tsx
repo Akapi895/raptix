@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks -- the member-label source is keyed on the module-constant DATA_MODE */
 /**
  * Scope & ROE tab (plan P09, Scope slice), shared by the mock and the real
  * project detail. It reads and writes through the scope port and the assets
@@ -10,11 +9,9 @@
 import { useContext, useState, type ReactElement, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { FileDiff, Loader2, RefreshCw } from 'lucide-react'
-import { DATA_MODE, isRealMode } from '../../state/mode'
 import { utcMinuteOr, zonedToIso } from '../../platform/format'
 import { SessionContext } from '../../platform/session'
 import { useMemberLabels } from '../team'
-import { useMe } from '../../state/console'
 import { go } from '../../router/navigate'
 import { Button, Card, CardHeader, Empty, Input, Segmented, Select, Skeleton, Status, Textarea } from '../../ui/index'
 import { useAssetList } from '../assets'
@@ -47,17 +44,10 @@ const DECISION_OPTIONS: { id: DecisionFilter; label: string }[] = [
 const DECISION_LABEL: Record<Decision, string> = { in: 'In scope', excluded: 'Excluded', pending: 'Pending', undetermined: 'Not determined' }
 const DECISION_TEXT: Record<Decision, string> = { in: 'text-ok', excluded: 'text-bad', pending: 'text-warn', undetermined: 'text-muted' }
 
-/** Mock mode shows member ids, which are the names the mock records; real mode resolves member labels from the API. */
-function useLabelFor(engagementId: string): (id: string) => string {
-  if (DATA_MODE === 'real') return useMemberLabels(engagementId)
-  return (id: string) => id
-}
-
-/** The actor's id as the approval records carry it: the session's member id in real mode, the persona name in mock mode. */
+/** The actor's member id, as the approval records carry it. */
 function useActorId(): string | null {
   const session = useContext(SessionContext)
-  const me = useMe()
-  return isRealMode() ? session?.session?.actor?.id ?? null : me.name
+  return session?.session?.actor?.id ?? null
 }
 
 export function ScopeTab({ engagementId, documents }: { engagementId: string; documents?: ReactNode }): ReactElement {
@@ -65,7 +55,7 @@ export function ScopeTab({ engagementId, documents }: { engagementId: string; do
   const writes = useScopeWrites()
   const assets = useAssetList({})
   const actorId = useActorId()
-  const memberLabel = useLabelFor(engagementId)
+  const memberLabel = useMemberLabels(engagementId)
   const [sub, setSub] = useState<Sub>('effective')
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('all')
   const [search, setSearch] = useState('')

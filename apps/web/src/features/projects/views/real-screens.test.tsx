@@ -94,7 +94,7 @@ describe('RealProjectCreateDialog', { timeout: 15000 }, () => {
     const user = userEvent.setup()
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1 External Assessment')
     expect(screen.getByPlaceholderText('q1-external-assessment')).toHaveValue('q1-external-assessment')
-    await user.type(screen.getByPlaceholderText('https://target.example.test or 10.20.0.0/24'), 'https://target.example.test')
+    await user.type(await screen.findByPlaceholderText('https://target.example.test or 10.20.0.0/24', undefined, { timeout: 5000 }), 'https://target.example.test')
     await user.type(screen.getByPlaceholderText(/Business context, known constraints/), 'Authorized external assessment of the public surface with a documented scope.')
     expect(screen.getByRole('button', { name: /Create Engagement/ })).toBeDisabled()
     await user.click(screen.getByRole('checkbox'))

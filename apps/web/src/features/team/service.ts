@@ -1,10 +1,3 @@
-/**
- * Project membership port (plan P09, Team slice). It serves the owner and the
- * members of one engagement, the roles a manager may assign, and whether the
- * backend supports invites. The two sources differ on purpose and the port
- * says so: the real backend creates an account on invite (username and
- * password), while the mock console adds one of its demo users by name.
- */
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export interface TeamMember {
@@ -41,4 +34,3 @@ export interface TeamService {
   changeRole(ctx: RequestContext, memberId: string, role: string): Promise<ServiceResult<TeamMember>>
   remove(ctx: RequestContext, memberId: string): Promise<ServiceResult<null>>
 }
-

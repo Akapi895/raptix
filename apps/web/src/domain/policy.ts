@@ -5,13 +5,9 @@
  * The documented 6-role × 19-action matrix, project membership and
  * read-only context live here as the one authorization authority. Every
  * decision takes the actor and the addressed project explicitly — UI modes,
- * panels or screens never grant authorization. Consumers:
- * - `src/store.tsx` forwards the legacy `can`/`canAccessProject`/`readOnly`
- *   helpers here so baseline screens keep their exact semantics;
- * - `src/demo/services.ts` scope-checks typed reads/writes with the
- *   same membership rule (replacing its interim copy);
- * - `src/auth/membership.ts` is the service-backed membership view the
- *   interface is checked against.
+ * panels or screens never grant authorization. `src/state/console.ts` derives
+ * the UI hints (what a control offers) from these helpers; the server enforces
+ * the same rule on every request.
  */
 import type { Project, Role } from './entities'
 import type { CanAction } from './permissions'

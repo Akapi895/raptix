@@ -1,8 +1,3 @@
-/**
- * The global overview's read port (ADR-0096, migration Mốc 2). One read per section, so each section fails, loads
- * and degrades on its own. Every section answers with what its source records; a source the mode does not
- * record returns `unavailable` (or a null field) and is shown as such, never as zero or demo data.
- */
 import type { ServiceResult } from '../../domain/service'
 
 export type OverviewTaskKind = 'scope-revision' | 'business-plan' | 'c2-grant' | 'report-review' | 'finding-review' | 'active-stop'
@@ -30,7 +25,6 @@ export interface OverviewFindings {
   latestCreatedAt: string | null
   truncated: boolean
 }
-
 
 export interface OverviewCommand {
   id: string

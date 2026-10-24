@@ -1,8 +1,6 @@
 import { useLayoutEffect, useRef, type ReactElement } from 'react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { ServicesProvider } from './state/services'
 import { ConsoleProviders } from './state/query'
-import { DATA_MODE } from './state/mode'
 import { RealModeProvider } from './shell/real-bootstrap'
 import { getActiveRouter, setActiveRouter } from './router/active'
 import { RouteErrorBoundary, RouteHost } from './router/host'
@@ -12,10 +10,9 @@ import { RouteErrorBoundary, RouteHost } from './router/host'
  * The instance is published for the canonical navigation adapter so the
  * React Router history stays the single location writer (ticket 07, ADR-0067).
  *
- * The data mode selects the composition root BEFORE anything mounts
- * (integration ticket 03, ADR-0068): mock keeps the demo authority and its
- * demo lifecycle; real mounts the API bootstrap and never creates the mock
- * authority, demo timers or seed data.
+ * The console runs against the real API only (ADR-0068, ADR-0101): the
+ * bootstrap resolves the session and the capability document before any
+ * surface mounts.
  */
 export default function App(): ReactElement {
   const routerRef = useRef<ReturnType<typeof createHashRouter> | null>(null)
@@ -32,22 +29,11 @@ export default function App(): ReactElement {
     setActiveRouter(router)
     return () => { if (getActiveRouter() === router) setActiveRouter(null) }
   }, [router])
-  const shell = (
-    <>
-      <RouterProvider router={router} />
-    </>
-  )
-  return DATA_MODE === 'real' ? (
+  return (
     <RealModeProvider>
       <ConsoleProviders>
-        {shell}
+        <RouterProvider router={router} />
       </ConsoleProviders>
     </RealModeProvider>
-  ) : (
-    <ServicesProvider>
-      <ConsoleProviders>
-        {shell}
-      </ConsoleProviders>
-    </ServicesProvider>
   )
 }

@@ -4,8 +4,7 @@ import { Banner, Button, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager,
 import type { NoFind } from '../service';
 import { useReportValidation } from '../projection'
 import { ReadError } from './read-error'
-import { SimulatedTemplates } from './simulated-templates'
-import { useDeliveryHistory, useReportCapabilities, useReportList, useTemplates } from '../query'
+import { useDeliveryHistory, useReportList, useTemplates } from '../query'
 import { TemplateCreateForm } from './template-create-form';
 import { AiExclusion } from './report-pages'
 import { go, useRoute } from '../../../router/navigate'
@@ -25,7 +24,6 @@ const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileTe
 /** Shared read states for the migrated catalog tabs (ticket 34). */
 
 export function ReportsPage() {
-  const caps = useReportCapabilities()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
@@ -42,12 +40,11 @@ export function ReportsPage() {
     <>
       <PageHeader title="Reports" sub="Draft, review, approve, export and deliver assessment reports. Creating a draft is always allowed; Submit for Review is gated by policy."
         actions={<>
-          {!caps.storedTemplates && <Button icon={FileText} onClick={() => go('reports', { tab: 'templates' })}>Templates</Button>}
           <Button icon={History} onClick={() => go('reports', { tab: 'exports' })}>Export History</Button>
           {pid !== 'all' && <Button variant="primary" icon={Plus} disabled={!canCreate} title={canCreate ? undefined : whyNot} onClick={() => go('report-new')}>Create Draft</Button>}
         </>} />
       {pid !== 'all' && !canCreate && <p className="-mt-3 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{whyNot}</p>}
-      {tab === 'list' && <AiExclusion projectId={pid === 'all' ? undefined : pid} />}
+      {tab === 'list' && <AiExclusion />}
       <Tabs tabs={[
         { id: 'list', label: 'Reports', count: list.data?.total },
         { id: 'templates', label: 'Templates', count: tpls.data?.length },
@@ -158,10 +155,8 @@ function RealTemplates() {
   )
 }
 
-/** Simulated template gallery: mock-only authority; real mode never reaches it. */
 function Templates() {
-  const caps = useReportCapabilities()
-  return caps.storedTemplates ? <RealTemplates /> : <SimulatedTemplates />
+  return <RealTemplates />
 }
 
 

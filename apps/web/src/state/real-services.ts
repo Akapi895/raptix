@@ -1,4 +1,4 @@
-import type { FeatureServices } from '../domain/console-services';
+import type { FeatureServices } from '../domain/feature-services';
 import type { FindingService } from '../features/findings'
 import type { AssetService } from '../features/assets';
 import type { ReportService } from '../features/reports/service';

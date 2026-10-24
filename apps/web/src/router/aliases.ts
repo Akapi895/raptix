@@ -7,7 +7,6 @@
  * Only deep links are rewritten here; screens never branch on alias names.
  * Project tab aliases live with the project sections (features/navigation).
  */
-import { DATA_MODE, type DataMode } from '../state/mode'
 import { resolveProjectTab } from '../features/navigation'
 import type { Route } from './history'
 
@@ -17,11 +16,11 @@ export { resolveProjectTab }
 export const PAGE_ALIASES: Readonly<Record<string, string>> = { 'command-center': 'overview' }
 
 /** The route a URL should resolve to: the same object when it is already canonical, a new one when an alias applies. */
-export function canonicalRoute(route: Route, mode: DataMode = DATA_MODE): Route {
+export function canonicalRoute(route: Route): Route {
   const page = PAGE_ALIASES[route.page]
   if (page) return { ...route, page }
   if (route.page === 'project' && route.tab) {
-    const tab = resolveProjectTab(route.tab, mode)
+    const tab = resolveProjectTab(route.tab)
     if (tab !== route.tab) return { ...route, tab }
   }
   return route

@@ -1,27 +1,13 @@
-/**
- * System error pages (ticket 61a) — the semantic owners of the 403/404/500/
- * offline/session-expired routes (`forbidden`, `notfound`, `error`, `offline`,
- * `session-expired`; route-inventory rows 2–6). Every page renders its
- * failure reason and a recovery path: navigation goes through the router seam
- * (`src/shell/system/nav.ts`), persona writes through the ticket-06 auth
- * actions, panels/toasts through the ticket-05 shared authorities. Retry and
- * reconnect timers are tracked and disposed on unmount so a stale callback
- * can never navigate after the page is gone.
- */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Clock, FileSearch, FolderKanban, Home, LifeBuoy, Loader2, Lock, LogIn, RefreshCw, ShieldOff, ServerCrash, UserCog, WifiOff } from 'lucide-react'
+import { ArrowLeft, Clock, FileSearch, FolderKanban, Home, LifeBuoy, Loader2, Lock, LogIn, RefreshCw, ShieldOff, ServerCrash, WifiOff } from 'lucide-react'
 import { USERS } from '../../domain/catalog';
 import type { Role } from '../../domain/entities'
-import { signOut, switchPersona } from '../../demo/persona'
 import { personaRole } from '../../domain/actor'
 import { useAuthStore, useToastStore, useUiStore } from '../../state/stores'
 import { Button, Mono } from '../../ui/index'
 import { useSystemGo, useSystemRoute } from './nav'
-
 /** Role display labels (kept local to avoid a store cycle, like the feature services). */
 const ROLE_LABEL: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
-
-/* ───────── Shared error page frame ───────── */
 function ErrorFrame({ code, icon: I, tone, title, desc, reason, children, actions }: { code?: string; icon: typeof Lock; tone: string; title: string; desc: string; reason?: ReactNode; children?: ReactNode; actions: ReactNode }) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center py-10 text-center sm:py-16">
@@ -36,18 +22,14 @@ function ErrorFrame({ code, icon: I, tone, title, desc, reason, children, action
     </div>
   )
 }
-
 const REQUIRED: Record<string, string[]> = { default: ['manager', 'admin'] }
-
 export function Forbidden() {
   const go = useSystemGo()
   const meName = useAuthStore((s) => s.meName)
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
-  const toast = useToastStore((s) => s.toast)
   const route = useSystemRoute()
   const me = { name: meName, role: personaRole(meName) }
   const need = (REQUIRED[route.id || ''] || REQUIRED.default) as Role[]
-  const suggest = USERS.find((u) => need.includes(u.role))
   return (
     <ErrorFrame
       code="403" icon={ShieldOff} tone="text-bad" title="Access denied"
@@ -61,13 +43,10 @@ export function Forbidden() {
       actions={<>
         <Button variant="primary" icon={Home} onClick={() => go('overview')}>Back to System Overview</Button>
         <Button icon={FolderKanban} onClick={() => setSwitcherOpen(true)}>Switch project</Button>
-        {suggest && <Button icon={UserCog} onClick={() => { switchPersona(suggest.name); toast(`Switched to ${suggest.name} (${ROLE_LABEL[suggest.role]}) — demo only.`, 'info'); go('overview') }}>Switch to {suggest.name}</Button>}
-        <Button variant="ghost" onClick={() => toast('Access request sent to the organization admin (simulated).', 'info')}>Request access</Button>
       </>}
     />
   )
 }
-
 export function NotFound() {
   const go = useSystemGo()
   const route = useSystemRoute()
@@ -84,9 +63,7 @@ export function NotFound() {
     />
   )
 }
-
 const INCIDENT_ID = 'INC-20261013-0427'
-
 export function ServerError() {
   const go = useSystemGo()
   const toast = useToastStore((s) => s.toast)
@@ -114,7 +91,6 @@ export function ServerError() {
     />
   )
 }
-
 export function Offline() {
   const go = useSystemGo()
   const toast = useToastStore((s) => s.toast)
@@ -141,7 +117,6 @@ export function Offline() {
     />
   )
 }
-
 export function SessionExpired() {
   const go = useSystemGo()
   const meName = useAuthStore((s) => s.meName)
@@ -151,7 +126,7 @@ export function SessionExpired() {
       icon={Clock} tone="text-warn" title="Your session has expired"
       desc="For safety, sessions end automatically after a period of inactivity. Sign in again to continue; your saved drafts are kept."
       reason={<div className="text-xs text-muted">Account: <span className="text-fg">{me.email}</span> · Unsaved changes in open forms may be lost.</div>}
-      actions={<Button variant="primary" icon={LogIn} onClick={() => { signOut(); go('login') }}>Sign in again</Button>}
+      actions={<Button variant="primary" icon={LogIn} onClick={() => go('login')}>Sign in again</Button>}
     />
   )
 }

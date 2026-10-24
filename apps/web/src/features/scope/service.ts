@@ -1,14 +1,3 @@
-/**
- * Scope and ROE governance port (plan P09, Scope slice).
- *
- * A revision is the authoritative record: an operator submits it, an
- * independent reviewer approves or rejects it, and an approval supersedes the
- * previously approved revision. Both modes serve this one model. The mock
- * adapter maps its approval records onto it and says so where its data is
- * coarser (`supports.roeFields` is false: the mock keeps no per-revision ROE
- * fields). The real adapter names what the backend does not yet model
- * (`unmodelled`) instead of rendering an empty list that reads as "none".
- */
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export interface ScopeWindow { start: string; end: string; tz: string }
@@ -69,4 +58,3 @@ export interface ScopeService {
   /** `comment` is the reason a rejection needs; the mock's approval records require one, the real API takes none. */
   decide(ctx: RequestContext, revisionId: string, decision: 'approved' | 'rejected', comment?: string): Promise<ServiceResult<ScopeRevision>>
 }
-

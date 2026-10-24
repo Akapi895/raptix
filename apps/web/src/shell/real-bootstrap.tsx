@@ -10,9 +10,8 @@
  */
 import { useQuery, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect, useMemo, type ReactElement, type ReactNode } from 'react'
-import { Loader2, PlugZap, RefreshCw, ServerCrash } from 'lucide-react'
+import { Loader2, RefreshCw, ServerCrash } from 'lucide-react'
 import { fetchCapabilities } from '../platform/capabilities';
-import { switchDataMode } from '../state/mode'
 import { REAL_IDENTITY } from '../state/real-identity'
 import { RealContext } from '../state/real-context'
 import { createConsoleQueryClient } from '../state/keys'
@@ -35,15 +34,10 @@ function BootError({ message, onRetry }: { message: string; onRetry: () => void 
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-panel text-bad"><ServerCrash size={26} aria-hidden /></div>
         <h1 className="text-xl font-semibold tracking-tight">Raptix is unavailable right now</h1>
         <p className="mt-2 break-words text-sm text-muted">{message}</p>
-        {/* Developer hints and the demo escape hatch exist only in the dev server; a deployed build shows the user message. */}
-        <p className="mt-1 text-xs text-neutral">
-          {import.meta.env.DEV
-            ? 'Real mode shows no demo data. Start the API (npm run dev:api) or switch to demo mode.'
-            : 'Real mode shows no demo data.'}
-        </p>
+        {/* The developer hint exists only in the dev server; a deployed build shows the user message. */}
+        {import.meta.env.DEV && <p className="mt-1 text-xs text-neutral">Start the API (npm run dev:api), then retry.</p>}
         <div className="mt-5 flex justify-center gap-2">
           <Button variant="primary" icon={RefreshCw} onClick={onRetry}>Retry</Button>
-          {import.meta.env.DEV && <Button variant="secondary" icon={PlugZap} onClick={() => switchDataMode('mock')}>Switch to demo mode</Button>}
         </div>
       </div>
     </div>
