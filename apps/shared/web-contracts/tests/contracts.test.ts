@@ -169,6 +169,12 @@ describe('capability contracts', () => {
       isCapabilitiesDocument({ version: 1, mode: 'local-single-user', capabilities: [] }),
     ).toBe(false)
     expect(
+      isCapabilitiesDocument({ version: 1, mode: 'multi-user', independentReview: 'single-operator', capabilities: {} }),
+    ).toBe(true)
+    expect(
+      isCapabilitiesDocument({ version: 1, mode: 'multi-user', independentReview: 'sometimes', capabilities: {} }),
+    ).toBe(false)
+    expect(
       isCapabilitiesDocument({
         version: 0,
         mode: 'local-single-user',
