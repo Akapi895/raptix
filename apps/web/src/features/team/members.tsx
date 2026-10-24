@@ -136,7 +136,7 @@ export function TeamMembers({ engagementId }: { engagementId: string }): ReactEl
             <Field label="Display name"><Input aria-label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} disabled={!canManage} /></Field>
             <Field label="Initial password"><Input aria-label="Initial password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} disabled={!canManage} /></Field>
             <Field label="Role"><Select aria-label="Invited role" value={role || defaultRole} onChange={(e) => setRole(e.target.value)} disabled={!canManage}>{assignable.map((r) => <option key={r} value={r}>{r}</option>)}</Select></Field>
-            <div className="sm:col-span-2"><Button type="submit" variant="primary" disabled={!canManage}>Invite member</Button></div>
+            <div className="sm:col-span-2"><Button type="submit" variant="primary" disabled={!canManage} title={canManage ? undefined : why}>Invite member</Button></div>
           </form>
         </Card>
       )}
