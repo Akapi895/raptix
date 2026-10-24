@@ -43,6 +43,8 @@ class HoldComplete extends Error {}
 const children = [];
 let container = null;
 let graphContainer = null;
+let runtimeContainers = [];
+let runtimeNetwork = null;
 const log = (message) => console.log(`[stack] ${message}`);
 
 async function freePort() {
@@ -251,6 +253,30 @@ function removeContainer() {
   log(`container ${container}: ${removed.status === 0 ? 'removed' : 'removal not confirmed'}`);
 }
 
+// The agent runtime (LangGraph) and its sandbox, started with --runtime on a network of this run only. No LLM provider key is
+// passed in: a chat message fails until one is configured, and nothing from a deployment environment is copied.
+const SANDBOX_IMAGE = "ghcr.io/akapi895/raptix-sandbox:stable";
+const RUNTIME_IMAGE = "ghcr.io/akapi895/raptix-langgraph:stable";
+async function startRuntime(graphAccess) {
+  const sandboxPort = await freePort();
+  const runtimePort = await freePort();
+  const id = randomUUID().slice(0, 8);
+  runtimeNetwork = `raptix-stack-${id}-net`;
+  command("docker", ["network", "create", "--label", "raptix.verification=stack", runtimeNetwork]);
+  const sandbox = `raptix-stack-${id}-sandbox`;
+  runtimeContainers.push(sandbox);
+  command("docker", ["run", "-d", "--name", sandbox, "--label", "raptix.verification=stack", "--network", runtimeNetwork, "-p", `127.0.0.1:${sandboxPort}:9999`, SANDBOX_IMAGE]);
+  const runtime = `raptix-stack-${id}-runtime`;
+  runtimeContainers.push(runtime);
+  const graphEnv = graphAccess ? ["-e", `RAPTIX_NEO4J_URI=bolt://host.docker.internal:${graphAccess.boltPort}`, "-e", "RAPTIX_NEO4J_USER=neo4j", "-e", `RAPTIX_NEO4J_PASSWORD=${graphAccess.password}`] : [];
+  command("docker", ["run", "-d", "--name", runtime, "--label", "raptix.verification=stack", "--network", runtimeNetwork, "--add-host", "host.docker.internal:host-gateway", "-p", `127.0.0.1:${runtimePort}:2024`,
+    "-e", `SANDBOX_URL=http://${sandbox}:9999`, "-e", "RAPTIX_HITL__ENABLED=1", "-e", "RAPTIX_HITL__REQUIRE_BASH_APPROVAL=1", "-e", "RAPTIX_USE_SKILLOGY=0", "-e", "RAPTIX_TRANSCRIPT_SIDECAR_PATH=/app/.langgraph_api/transcripts.sqlite", ...graphEnv,
+    RUNTIME_IMAGE, "langgraph", "dev", "--host", "0.0.0.0", "--port", "2024", "--no-browser", "--no-reload", "--n-jobs-per-worker", "10", "--allow-blocking"]);
+  await ready(`http://127.0.0.1:${runtimePort}/ok`, "agent runtime", 240);
+  log(`agent runtime ${runtime} on 127.0.0.1:${runtimePort}, sandbox ${sandbox} on 127.0.0.1:${sandboxPort}`);
+  return { LANGGRAPH_API_URL: `http://127.0.0.1:${runtimePort}`, RAPTIX_RUNTIME_WORKSPACE_ROOT: "/workspace", RAPTIX_RUNTIME_SANDBOX_URL: `http://127.0.0.1:${sandboxPort}` };
+}
+
 let status = 1;
 try {
   const dbPort = await freePort();
@@ -279,7 +305,7 @@ try {
     const seeded = spawnSync('docker', ['exec', '-i', graphContainer, 'cypher-shell', '-u', 'neo4j', '-p', graphPassword], { input: readFileSync(graphSeed), encoding: 'utf8', timeout: 900000, maxBuffer: 256 * 1024 * 1024 });
     writeFileSync(path.join(out, 'graph-seed.log'), `${seeded.stdout}${seeded.stderr}`);
     assert.equal(seeded.status, 0, `the skill graph seed failed: ${seeded.stderr.slice(0, 300)}`);
-    graphAccess = { httpPort: graphHttpPort, password: graphPassword };
+    graphAccess = { httpPort: graphHttpPort, boltPort: graphBoltPort, password: graphPassword };
     log(`knowledge graph ${graphContainer} on 127.0.0.1:${graphHttpPort}, seeded from the checked-in skill graph`);
   }
 
@@ -306,6 +332,7 @@ try {
   for (const key of Object.keys(env)) if (/^(LANGGRAPH_|NEO4J_|SLIVER_|RAPTIX_RUNTIME_|RAPTIX_ENVIRONMENT_)/.test(key)) delete env[key];
   if (graphAccess) Object.assign(env, { NEO4J_PASSWORD: graphAccess.password, NEO4J_HTTP_PORT: String(graphAccess.httpPort), NEO4J_HTTP_URI: `http://127.0.0.1:${graphAccess.httpPort}` });
   writeFileSync(path.join(out, 'migrations.log'), command(process.execPath, [path.join(root, 'node_modules/prisma/build/index.js'), 'migrate', 'deploy'], { cwd: path.join(root, 'apps/web/server'), env }));
+  if (process.argv.includes('--runtime')) Object.assign(env, await startRuntime(graphAccess));
   start('api', ['--import', 'tsx', 'src/main.ts'], path.join(root, 'apps/web/server'), env);
   await ready(`${api}/api/health`, 'API');
   start('web', [path.join(path.dirname(require.resolve('vite/package.json')), 'bin/vite.js'), '--host', '127.0.0.1', '--port', String(webPort), '--strictPort'], web, env);
@@ -380,6 +407,8 @@ try {
   stopChildren();
   removeContainer();
   if (graphContainer) spawnSync('docker', ['rm', '-f', '-v', graphContainer], { timeout: 5000, encoding: 'utf8' });
+  for (const name of runtimeContainers.reverse()) spawnSync('docker', ['rm', '-f', '-v', name], { timeout: 5000, encoding: 'utf8' });
+  if (runtimeNetwork) spawnSync('docker', ['network', 'rm', runtimeNetwork], { timeout: 5000, encoding: 'utf8' });
   log(`output: ${out}`);
 }
 process.exitCode = status;
