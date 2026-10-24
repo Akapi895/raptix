@@ -51,6 +51,12 @@ const SECTIONS: readonly SectionDef[] = [
   { key: 'close', group: 'MANAGEMENT', label: 'Closeout', icon: Lock, mock: entry('close', ['close', 'closure', 'closeout'], ['closure', 'closeout']), real: entry('close', ['close'], ['closure', 'closeout']) },
 ]
 
+/**
+ * Pages that show a global resource (not one project) when no project is scoped. The host applies the scope rule with
+ * this set; it lives here, next to the menus, so the navigation rules are read from one module.
+ */
+export const GLOBAL_RESOURCE_PAGES: ReadonlySet<string> = new Set(['reports', 'operations', 'analysis', 'agents', 'c2'])
+
 /** Menu for one mode, grouped in table order. Asset Map is read through its flag when this is called. */
 export function projectMenu(mode: ProjectMode): ProjectNavGroup[] {
   const groups: ProjectNavGroup[] = []

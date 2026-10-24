@@ -127,5 +127,5 @@ export const SHARED_ROUTES: ReadonlySet<string> = new Set(
   Object.entries(ROUTES).flatMap(([key, decl]) => (decl.real.kind === 'shared' ? [key] : [])),
 )
 
-/** Keys that show the global resource in real mode when no project is scoped (host.tsx applies the scope rule). */
-export const GLOBAL_RESOURCE_PAGES: ReadonlySet<string> = new Set(['reports', 'operations', 'analysis', 'agents', 'c2'])
+/** Keys that show the global resource in real mode when no project is scoped; the set is owned by the navigation feature. */
+export { GLOBAL_RESOURCE_PAGES } from '../features/navigation'
