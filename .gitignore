@@ -80,6 +80,8 @@ demo.tape
 .raptix/
 .dogfood/
 workspace/
+# Source folder of the C2 workspace view; the rule above is for runtime data only.
+!apps/web/src/features/c2/workspace/
 .bg-shell/
 # Root-level runtime outputs (W1: never source-of-truth, never committed)
 /run/
