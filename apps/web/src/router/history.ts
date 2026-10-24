@@ -11,11 +11,10 @@
  * Overview (the cross-project dashboard); the mock demo still lands on its
  * sign-in screen.
  */
-import { DATA_MODE } from '../state/mode'
 export interface Route { page: string; id?: string; tab?: string; engagementId?: string }
 
 /** Landing page for an empty location ('' hash or '/' pathname). */
-const landingPage = (): string => (DATA_MODE === 'real' ? 'overview' : 'login')
+const landingPage = (): string => 'overview'
 
 let knownPages: ReadonlySet<string> | null = null
 /** Registers the manifest keys; called once by the router registry module. */

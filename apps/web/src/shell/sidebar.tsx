@@ -10,7 +10,7 @@ import { go, goGlobal, useRoute } from '../router/navigate'
 import { useActiveProject } from '../state/console'
 import { useProjectStore } from '../state/stores'
 import { IconButton, Status, cx } from '../ui/index'
-import { NAV, projectNavGroups, projectSection, useBadges } from './nav'
+import { NAV, PROJECT_NAV, projectSection } from './nav'
 
 /* The navigation scroller keeps its scrollbar hidden, so a fade at the bottom signals items below the fold. */
 function ScrollableNav({ onKeyDown, children }: { onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => void; children: ReactNode }) {
@@ -39,22 +39,15 @@ function ScrollableNav({ onKeyDown, children }: { onKeyDown: (e: React.KeyboardE
   )
 }
 
-/** What the pending count on a global item counts, so the number is never read without its meaning (UX-15). */
-const BADGE_MEANING: Readonly<Record<string, string>> = {
-  projects: 'approvals waiting for you',
-  infrastructure: 'execution agents lost or unhealthy',
-}
-
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { collapsed: boolean; setCollapsed: (b: boolean) => void; mobileOpen: boolean; closeMobile: () => void }) {
   const route = useRoute()
-  const badges = useBadges()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
   /* Project shell ownership (plan §3.3): the project page itself, or any page
      whose owning section resolves while a project is selected — drill-down to
      operation/session/finding/report keeps the project sidebar. Global pages
      (and any route at the All-Projects scope) keep the global groups. */
-  const groups = projectNavGroups()
+  const groups = PROJECT_NAV
   const section = projectSection(route, groups)
   const onProjectPage = route.page === 'project' && route.id !== undefined
   const inProject = onProjectPage || (pid !== 'all' && section !== undefined)
@@ -140,18 +133,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { 
             {!compact ? <div className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-neutral">{g.group}</div> : <div className="mx-3 mb-2 border-t border-line" />}
             {g.items.map((it) => {
               const active = it.match.includes(route.page)
-              const n = badges[it.page] || 0
               return (
                 <button
-                  key={it.page} data-nav onClick={() => { goGlobal(it.page); closeMobile() }} aria-current={active ? 'page' : undefined} aria-label={compact ? (n ? `${it.label}, ${n} ${BADGE_MEANING[it.page] ?? 'pending'}` : it.label) : undefined} title={compact ? (n ? `${it.label} (${n} pending)` : it.label) : undefined}
+                  key={it.page} data-nav onClick={() => { goGlobal(it.page); closeMobile() }} aria-current={active ? 'page' : undefined} aria-label={compact ? it.label : undefined} title={compact ? it.label : undefined}
                   className={cx('relative mb-0.5 flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition', compact && 'justify-center px-0', 'focus-visible:outline-2 focus-visible:-outline-offset-2', active ? 'bg-info-soft font-semibold text-fg' : 'text-muted hover:bg-hover hover:text-fg')}
                 >
                   {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary" aria-hidden />}
                   <it.icon size={18} className={cx('shrink-0', active && 'text-primary')} aria-hidden />
                   {!compact && <span className="flex-1 truncate text-left">{it.label}</span>}
-                  {n > 0 && (compact
-                    ? <span className="absolute right-1 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-side bg-accent" aria-hidden />
-                    : <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-fill px-1.5 text-xs font-semibold tnum text-white" title={BADGE_MEANING[it.page]} aria-label={BADGE_MEANING[it.page] ? `${n} ${BADGE_MEANING[it.page]}` : `${n} pending`}>{n}</span>)}
                 </button>
               )
             })}

@@ -1,14 +1,14 @@
 {
   "rules": {
-    "production-imports-demo": 36,
-    "production-type-imports-demo": 65,
-    "production-imports-composition": 30,
+    "production-imports-demo": 0,
+    "production-type-imports-demo": 0,
+    "production-imports-composition": 0,
     "presentation-imports-real": 0,
     "presentation-imports-adapter": 9,
-    "presentation-mock-plumbing": 49,
+    "presentation-mock-plumbing": 0,
     "real-imports-features": 0,
     "real-imports-screens": 0,
     "features-import-screens": 0,
-    "deep-feature-import": 210
+    "deep-feature-import": 83
   }
 }

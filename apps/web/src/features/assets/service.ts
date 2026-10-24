@@ -1,9 +1,3 @@
-/**
- * Asset inventory port (ticket 50, ADR-0067 — docs/adr/0067-web-console-service-domain-boundary.md).
- *
- * The read models, write operations and capabilities the asset screens use. The mock
- * implementation is `mock.ts`; the real adapter is `remote.ts`.
- */
 import type { Asset } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 import type { ApprovalRef } from '../approvals/service'
@@ -83,9 +77,6 @@ export interface AssetCapabilities {
   /** The mock store fills fields the real inventory does not hold (environment, sample discovery); the screens show them only when true. */
   readonly simulated: boolean
 }
-
-/** The mock store's capabilities. A constant, so the lazily loaded mock service can answer them without waiting for its module. */
-export const MOCK_ASSET_CAPABILITIES: AssetCapabilities = { scopeApprovalRequests: true, observedGraph: false, simulated: true }
 
 export interface AssetService {
   readonly capabilities: AssetCapabilities

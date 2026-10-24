@@ -1,14 +1,3 @@
-/**
- * Governance port (plan P09, Governance slice): the business plan lifecycle with
- * independent decisions and the absolute approval deadline, the live preflight,
- * the binding of an approved plan to an execution thread, emergency stops and
- * durable scheduled starts. An OPPLAN (planning artifact) and a tool HITL
- * decision are separate records; this port only manages the business plan.
- *
- * Only the real backend keeps this model. The mock console runs its own plan
- * review and operation lifecycle, which has different states, so this port has
- * no mock adapter.
- */
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export type GovernancePlanStatus = 'draft' | 'proposed' | 'approved' | 'rejected' | 'superseded'
@@ -104,4 +93,3 @@ export interface GovernanceService {
   cancelSchedule(ctx: RequestContext, scheduleId: string, expectedVersion: number): Promise<ServiceResult<GovernanceSchedule>>
   rescheduleSchedule(ctx: RequestContext, scheduleId: string, input: { executeAt: string; timezone: string; expectedVersion: number }): Promise<ServiceResult<GovernanceSchedule>>
 }
-

@@ -1,18 +1,7 @@
-
-
-import type { Db } from '../../demo/seed';
-
-
-
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
-import type { ExportRec, Finding, FindingStatus, Project, Report, Severity, Template } from '../../domain/entities'
+import type { ExportRec, FindingStatus, Project, Report, Severity, Template } from '../../domain/entities'
 
-
-/** Finding statuses a formal report may include: confirmed or later. AI suggestions never qualify. */
-export const CONFIRMED_OR_LATER: FindingStatus[] = ['confirmed', 'remediation', 'retest', 'resolved']
-
-/* ───────────── Report list ───────────── */
 export interface ReportListQuery {
   status?: string
   /** Case-insensitive substring over id + title. */
@@ -55,8 +44,6 @@ export interface DeliveryListRead {
   statuses: string[]
 }
 
-/* ───────────── Draft creation options ───────────── */
-
 /** One selectable finding row for the draft form; `reportable` gates the checkbox. */
 export interface DraftOptionFinding {
   id: string
@@ -78,7 +65,6 @@ export interface DraftOptionsRead {
   confirmedCount: number
 }
 
-/* ───────────── Draft creation (write) ───────────── */
 export interface ReportDraftInput {
   title: string
   /** Template NAME — `Report.template` stores the display name. */
@@ -89,8 +75,6 @@ export interface ReportDraftInput {
   findings: string[]
   period: string
 }
-
-/* ───────────── Editor + preview read (ticket 35) ───────────── */
 
 /** One finding row in the editor's selection panel; `reportable` gates adding. */
 export interface EditorFindingRow {
@@ -133,46 +117,11 @@ export interface ReportEditorRead {
   linked: LinkedFindingRow[]
 }
 
-/* ───────────── Review checklist (moved from the screen — one implementation) ───────────── */
-
 /** One review checklist row; `fail` blocks submit, `warn` is advisory. */
 export interface RCheck { id: string; label: string; state: 'pass' | 'fail' | 'warn'; detail: string }
 
 /** The report's no-findings closure variant (screen-owned UI state, passed explicitly to reads/writes). */
 export interface NoFind { on: boolean; note: string }
-
-/** Completion evidence used by the no-findings closure variant. */
-export function closureEvidence(db: Db, projectId: string) {
-  const ops = db.operations.filter((o) => o.projectId === projectId)
-  const run = ops.filter((o) => ['done', 'running', 'paused', 'estop'].includes(o.status) && o.steps.some((s) => s.status === 'ok' || s.status === 'fail'))
-  const ev = db.evidence.filter((e) => e.projectId === projectId)
-  return { ops, run, ev }
-}
-
-/** The submit/review checklist over the one database (catalog, editor, preview and review screens share it). */
-export function reportChecks(db: Db, r: Report, nf?: NoFind): RCheck[] {
-  const exec = r.sections.find((s) => /executive summary/i.test(s.title))
-  const linked = r.findings.map((id) => db.findings.find((f) => f.id === id)).filter(Boolean) as Finding[]
-  const unconf = linked.filter((f) => !CONFIRMED_OR_LATER.includes(f.status))
-  const empty = r.sections.filter((s) => !s.body.trim())
-  const tpl = db.templates.find((t) => t.name === r.template)
-  const ce = closureEvidence(db, r.projectId)
-  const nfMissing = [!(nf?.note || '').trim() || (nf?.note || '').trim().length < 20 ? 'a closure justification (at least 20 characters)' : '', ce.run.length === 0 ? 'at least one operation with recorded execution results' : '', ce.ev.length === 0 ? 'at least one evidence item or coverage observation' : '', linked.length ? 'unlinking the findings (a no-findings closure cannot list findings)' : ''].filter(Boolean)
-  const findChecks: RCheck[] = nf?.on
-    ? [{ id: 'find', label: 'No-findings closure is supported', state: nfMissing.length ? 'fail' : 'pass', detail: nfMissing.length ? `Needs ${nfMissing.join('; ')}.` : `Justification recorded, ${ce.run.length} operation(s) and ${ce.ev.length} evidence item(s) support the closure.` }]
-    : [
-      { id: 'find', label: 'At least one confirmed finding linked', state: r.findings.length ? 'pass' : 'fail', detail: r.findings.length ? `${r.findings.length} finding(s) linked.` : 'No confirmed findings are linked. Link one, or switch to the No-findings closure variant if the assessment found nothing.' },
-      { id: 'conf', label: 'Linked findings are confirmed', state: unconf.length ? 'fail' : 'pass', detail: unconf.length ? `Not confirmed: ${unconf.map((f) => f.id).join(', ')}` : linked.length ? 'All are confirmed or later.' : 'No findings to check.' },
-    ]
-  return [
-    { id: 'exec', label: 'Executive Summary present', state: exec && exec.body.trim() ? 'pass' : 'fail', detail: exec && exec.body.trim() ? 'Content is present.' : 'The Executive Summary section is empty.' },
-    ...findChecks,
-    { id: 'empty', label: 'Empty sections', state: empty.length ? 'warn' : 'pass', detail: empty.length ? `${empty.length} empty section(s): ${empty.map((s) => s.title).join(', ')}` : 'Every section has content.' },
-    { id: 'tpl', label: 'Template is published', state: tpl && tpl.status !== 'published' ? 'warn' : 'pass', detail: tpl && tpl.status !== 'published' ? `${tpl.name} is not approved, so formal delivery is blocked.` : 'Template is published.' },
-  ]
-}
-
-/* ───────────── Review read + transitions (ticket 36) ───────────── */
 
 /** One handler-computed action gate; empty reason = allowed. */
 export interface ReviewGate { allowed: boolean; reason: string }

@@ -1,47 +1,44 @@
 /**
- * Route registry (ticket 07). The mounted module of every route key comes from the one declaration in routes.ts; this file
- * only maps each slice name to the module that holds its screens. Feature slices load on demand (one chunk per module); the
- * auth/system slice stays in the main bundle so the login screen renders without a chunk round-trip.
+ * Route registry (ticket 07). A key's real rendering comes from the one declaration in routes.ts. This file maps the slice
+ * names of the shared presentations to the modules that hold them; feature and component surfaces render from routes.ts
+ * directly. Slice modules load on demand (one chunk per module); the system pages stay in the main bundle so the crash and
+ * sign-in-expired screens render without a chunk round-trip.
  */
 import { lazy, type ComponentType } from 'react'
 import { routes as systemRoutes } from './slice-a'
-import { ROUTES, type Slice } from './routes'
+import { ROUTES, type SharedSlice } from './routes'
 import { setKnownPages } from './history'
 
-/** The module each slice loads. Every route in routes.ts names one of these. */
-const slices: Record<Exclude<Slice, 'a'>, () => Promise<{ routes: Record<string, ComponentType> }>> = {
-  b: () => import('../features/wizard/routes'),
-  c: () => import('../features/operations/routes'),
+/** The module each shared slice loads. */
+const sharedSlices: Record<SharedSlice, () => Promise<{ routes: Record<string, ComponentType> }>> = {
+  ov: () => import('../features/overview'),
+  pj: () => import('../features/projects/routes'),
   d: () => import('./slice-d'),
   e: () => import('./slice-e'),
   f: () => import('../features/reports/routes'),
   st: () => import('../features/settings/routes'),
-  ov: () => import('../features/overview'),
-  pj: () => import('../features/projects/routes'),
-  g: () => import('./slice-g'),
-  h: () => import('../features/c2/views/c2-pages'),
-  i: () => import('../features/agents/routes'),
-  am: () => import('../features/asset-map').then((m) => ({ routes: m.routes })),
 }
 
-/** The slice each key is mounted from, derived from routes.ts. */
-const MANIFEST: Record<string, Slice> = Object.fromEntries(Object.entries(ROUTES).map(([key, decl]) => [key, decl.slice]))
-setKnownPages(new Set(Object.keys(MANIFEST)))
+setKnownPages(new Set(Object.keys(ROUTES)))
 
 const lazyCache = new Map<string, ComponentType>()
 
-/** Resolves the component for a route key: static for the auth/system slice, a memoized React.lazy wrapper per key for feature slices. */
+/**
+ * The screen a key mounts in real mode: a shared presentation (a memoized React.lazy wrapper per key) or a system page
+ * (static). Null for every other key, which renders from routes.ts.
+ */
 export function routeComponent(key: string): ComponentType | null {
-  const slice = MANIFEST[key]
-  if (!slice) return null
-  if (slice === 'a') return systemRoutes[key] ?? null
+  const surface = ROUTES[key]?.real
+  if (surface?.kind === 'system') return systemRoutes[key] ?? null
+  if (surface?.kind !== 'shared') return null
   let component = lazyCache.get(key)
   if (!component) {
-    component = lazy(async () => ({ default: (await slices[slice]()).routes[key] }))
+    const slice = surface.slice
+    component = lazy(async () => ({ default: (await sharedSlices[slice]()).routes[key] }))
     lazyCache.set(key, component)
   }
   return component
 }
 
-/** Whether a manifest entry exists for the key (unknown keys resolve to not-found). */
-export const hasRoute = (key: string) => key in MANIFEST
+/** Whether a route key exists (unknown keys resolve to not-found). */
+export const hasRoute = (key: string) => key in ROUTES

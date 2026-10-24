@@ -1,16 +1,4 @@
-/**
- * Asset Map read port (plan phases 4–5): the page's engagement-scoped reads. The real adapter answers each one through the
- * server's contract guards, so a failed check reaches the page as a transport error and never as an empty map.
- */
-import type {
-  AssetMapDetail,
-  AssetMapKind,
-  AssetMapMembersPage,
-  AssetMapNeighborhood,
-  AssetMapOverlay,
-  AssetMapOverview,
-  AssetMapSearchResult,
-} from '@raptix/web-contracts'
+import type { AssetMapDetail, AssetMapKind, AssetMapMembersPage, AssetMapNeighborhood, AssetMapOverlay, AssetMapOverview, AssetMapSearchResult } from '@raptix/web-contracts'
 
 export interface AssetMapReads {
   overview(engagementId: string): Promise<AssetMapOverview>

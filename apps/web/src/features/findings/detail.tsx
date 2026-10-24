@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ExternalLink, FilePlus2, Lock, Sparkles, Pencil, RotateCcw, Send, ShieldCheck } from 'lucide-react'
+import { FilePlus2, Lock, Sparkles, Pencil, RotateCcw, Send, ShieldCheck } from 'lucide-react'
 import { useSessionStore } from '../../state/session'
 import { clearFindingRequest, findingRequestId, type FindingRequestScope } from './finding-session'
-import { persistentFindings, useFindingIdentity } from './presentation-context'
+import { useFindingIdentity } from './presentation-context'
 import { ROLE_LABEL } from '../../domain/policy'
 import { type Finding } from '../../domain/entities'
 import { FindingReadError, useEvidenceList, useFindingDetail, useFindingWrites } from './query'
@@ -13,21 +13,15 @@ import { AddToReport } from './add-to-report'
 import { useAiActions } from './ai-actions'
 import { EvidenceTab } from './evidence'
 import { FindingDenied } from './access'
-import {
-  Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Locked, Mono, PageHeader, Person, PersonaHint, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx,
-} from '../../ui/index'
+import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Locked, Mono, PageHeader, Person, PersonaHint, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx } from '../../ui/index'
 import { go, useRoute } from '../../router/navigate'
 import { realControlGap, useCan, useMe, useReadOnly } from '../../state/console'
 import { useFindingReportChoices } from './projection'
 import { useResourceScope } from '../../state/resource-scope'
 import { useProjectStore, useToastStore } from '../../state/stores'
-
 const activityTime = (value: string) => new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
-
-/* ───────────── FI-02/FI-04/FI-05: detail ───────────── */
 const FLOW = ['Draft', 'In Review', 'Confirmed', 'Remediation', 'Retest', 'Resolved']
 const FLOW_IDX: Record<string, number> = { ai_suggested: -1, draft: 0, returned: 0, review: 1, confirmed: 2, remediation: 3, retest: 4, resolved: 5 }
-
 /**
  * Finding detail (ticket 31/32): the record, history/metadata and linked
  * evidence come from the typed detail read through Query — role-sensitive
@@ -43,7 +37,6 @@ export function FindingDetail() {
   const pid = useProjectStore((state) => state.pid)
   return <FindingDetailBody key={`${identity.trustedActorId ?? me.email}:${pid}:${route.id}`} />
 }
-
 function FindingDetailBody() {
   const route = useRoute()
   const identity = useFindingIdentity()
@@ -84,17 +77,16 @@ function FindingDetailBody() {
   const author = can('createFinding', f.projectId)
   // Four-eyes: the author cannot decide its own review unless the deployment is single-operator (ADR-0100). The server
   // enforces the rule; the control says so before the click.
-  const selfReview = persistentFindings && identity.independentReviewRequired && identity.trustedActorId !== null && f.owner === identity.trustedActorId
+  const selfReview = identity.independentReviewRequired && identity.trustedActorId !== null && f.owner === identity.trustedActorId
   const proj = data.project
   const op = data.operation
   const step = data.step
-  const real = persistentFindings
-  const noEv = f.evidence.length === 0
+    const noEv = f.evidence.length === 0
   const roReason = me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.'
   const reviewDecision = f.lastReviewDecision
   const returnedNote = f.status === 'returned' ? reviewDecision?.action === 'returned' ? { by: reviewDecision.actorId, at: activityTime(reviewDecision.createdAt), text: reviewDecision.reason ?? '' } : [...olderHistory, ...f.history].reverse().find((event) => event.text.startsWith('Returned for changes')) : undefined
   const reports = db.reports.filter((r) => r.projectId === f.projectId && ['draft', 'returned'].includes(r.status))
-  const inReport = real ? db.reports.filter((r) => r.findings.includes(f.id)).map((r) => ({ id: r.id, title: r.title })) : data.inReports
+  const inReport = db.reports.filter((r) => r.findings.includes(f.id)).map((r) => ({ id: r.id, title: r.title }))
   const reportReason = realControlGap('finding.reportLink') ?? (f.status === 'ai_suggested' ? 'AI suggestions are unverified and cannot be included in a report. Verify the finding first.' : ro ? roReason : !can('editReport', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot edit reports.` : ['draft', 'review', 'returned'].includes(f.status) ? 'Only confirmed findings can be added to a report.' : '')
 
   const lastDecision = reviewDecision ? { text: `${reviewDecision.action === 'confirmed' ? 'Confirmed' : 'Returned for changes'} @ v${reviewDecision.version}`, by: reviewDecision.actorId } : [...olderHistory, ...f.history].reverse().find((h) => /Confirmed|Returned/.test(h.text))
@@ -113,7 +105,7 @@ function FindingDetailBody() {
   const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: 'Reason for returning', reasonRequired: true, onConfirm: (r) => { void runTransition('returned', `${f.id} returned to the author.`, { note: r, warn: true }) } })
 
   const actions: ReactNode[] = []
-  if (real && ['review', 'confirmed', 'remediation', 'retest'].includes(f.status)) actions.push(<Button key="edit-content" icon={Pencil} disabled={ro || !author} title="Editing confirmed content returns the finding to review." onClick={() => go('finding-new', { id: f.id })}>Edit Finding</Button>)
+  if (['review', 'confirmed', 'remediation', 'retest'].includes(f.status)) actions.push(<Button key="edit-content" icon={Pencil} disabled={ro || !author} title="Editing confirmed content returns the finding to review." onClick={() => go('finding-new', { id: f.id })}>Edit Finding</Button>)
   if (['draft', 'returned'].includes(f.status)) {
     actions.push(
       <Button key="e" icon={Pencil} disabled={ro || !author} title={ro ? roReason : !author ? `The ${ROLE_LABEL[me.role]} role cannot edit.` : ''} onClick={() => go('finding-new', { id: f.id })}>Edit Draft</Button>,
@@ -195,8 +187,8 @@ function FindingDetailBody() {
           {data.producer ? `Produced from ${data.producer.path}. ` : 'Proposed by the AI Operator. '}Not a finding yet: excluded from confirmed counts, severity charts and reports. {f.suggestionDisposition?.dismissed ? `Dismissed: ${f.suggestionDisposition.reason}` : 'Verify it against the source output before importing it as a draft.'}
         </Banner>
       )}
-      {f.status === 'review' && !reviewer && !ro && <PersonaHint need="Reviewer" persona={real ? undefined : 'Pat Kim'}>{real ? 'This finding is awaiting review by a Reviewer or Manager.' : 'This finding is awaiting review. Switch to the Reviewer role to Confirm or Return it.'}</PersonaHint>}
-      {['draft', 'returned'].includes(f.status) && !author && !ro && me.role !== 'viewer' && <PersonaHint need="Operator" persona={real ? undefined : 'Taylor Chen'}>Editing and submitting for review require the Operator or Manager role.</PersonaHint>}
+      {f.status === 'review' && !reviewer && !ro && <PersonaHint need="Reviewer">{'This finding is awaiting review by a Reviewer or Manager.'}</PersonaHint>}
+      {['draft', 'returned'].includes(f.status) && !author && !ro && me.role !== 'viewer' && <PersonaHint need="Operator">Editing and submitting for review require the Operator or Manager role.</PersonaHint>}
       <Tabs
         value={tab} onChange={(t) => go('finding', { id: f.id, tab: t })}
         tabs={[{ id: 'overview', label: 'Summary & workflow' }, { id: 'evidence', label: 'Evidence', count: f.evidence.length }, { id: 'retest', label: 'Retest', count: f.retests.length }, { id: 'reproduce', label: 'Reproduce' }]}
@@ -231,12 +223,12 @@ function FindingDetailBody() {
             <Card>
               <CardHeader title="Links" />
               <DescList cols={2} items={[
-                { k: 'Affected asset', v: real ? <Mono>{f.references?.assetId ?? 'Not linked'}</Mono> : data.assetId ? <button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
+                { k: 'Affected asset', v: <Mono>{f.references?.assetId ?? 'Not linked'}</Mono> },
                 { k: 'Evidence', v: f.evidence.length ? f.evidence.map((id) => <button key={id} className="mr-2 whitespace-nowrap font-mono text-[13px] text-link hover:underline" onClick={() => go('evidence', { id })}>{id}</button>) : <span className="text-muted">None linked</span> },
                 { k: 'Operation step', v: op && step ? <button className="whitespace-nowrap font-mono text-[13px] text-link hover:underline" onClick={() => go('operation', { id: op.id, tab: 'console' })}>{op.id} / {step.id} — {step.name}</button> : '—' },
                 { k: 'Confidence', v: f.status === 'ai_suggested' ? 'Low — AI inference, needs verification' : f.evidence.length ? 'Supported by linked evidence — a recorded claim, not proven exploitability' : 'Low — no evidence linked' },
                 { k: 'Reviewer decision', v: f.status === 'ai_suggested' ? 'Not submitted' : lastDecision ? `${lastDecision.text} by ${lastDecision.by}` : 'Pending' },
-                { k: 'Execution', v: real ? <span className="break-all text-xs">Thread: {f.references?.threadId ?? '—'}<br />Run: {f.references?.runId ?? '—'}<br />Binding: {f.references?.bindingId ?? '—'}</span> : op ? <button className="font-mono text-[13px] text-link hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id} — {op.name}</button> : f.op || '—' },
+                { k: 'Execution', v: <span className="break-all text-xs">Thread: {f.references?.threadId ?? '—'}<br />Run: {f.references?.runId ?? '—'}<br />Binding: {f.references?.bindingId ?? '—'}</span> },
                 { k: 'ATT&CK technique', v: f.technique ? <button className="text-left text-link hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono>{data.techniqueName ? ` — ${data.techniqueName}` : ''}</button> : 'Not linked' },
                 { k: 'Client', v: proj?.client },
                 { k: 'Recorded', v: f.date },
@@ -296,8 +288,6 @@ function FindingDetailBody() {
     </div>
   )
 }
-
-/* ───────────── Retest tab (ticket 32: record + outcome in one typed commit) ───────────── */
 const RETEST_STATE: Record<string, { label: string; tone: 'ok' | 'bad' | 'warn' | 'neutral' }> = {
   'Resolved': { label: 'Resolved', tone: 'ok' }, 'Persists': { label: 'Still present', tone: 'bad' }, 'Partial': { label: 'Partially resolved', tone: 'warn' },
 }

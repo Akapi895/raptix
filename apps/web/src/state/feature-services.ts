@@ -1,20 +1,13 @@
-/* eslint-disable react-hooks/rules-of-hooks -- mode branches are keyed on the module-constant DATA_MODE */
 import { useContext } from 'react'
-import type { FeatureServices } from '../domain/console-services';
-import { DATA_MODE } from './mode'
+import type { FeatureServices } from '../domain/feature-services'
 import { RealFeatureServicesCtx } from './real-services-provider'
-import { useServices } from './services'
 
 /**
- * Per-feature service facade for both modes (ADR-0084). Mock mode returns the
- * authority-backed services unchanged; real mode returns the adapter composed
- * from the server's capability document.
+ * Per-feature service facade (ADR-0084): the adapter composed from the server's capability document, mounted by the real
+ * composition root. A surface that renders outside that root fails fast instead of falling back to any other data.
  */
 export function useFeatureServices(): FeatureServices {
-  if (DATA_MODE === 'real') {
-    const services = useContext(RealFeatureServicesCtx)
-    if (!services) throw new Error('Real feature services are not mounted for this surface.')
-    return services
-  }
-  return useServices()
+  const services = useContext(RealFeatureServicesCtx)
+  if (!services) throw new Error('Real feature services are not mounted for this surface.')
+  return services
 }

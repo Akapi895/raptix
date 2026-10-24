@@ -13,42 +13,35 @@ afterEach(() => {
   vi.resetModules();
 });
 
-async function executionLabels(): Promise<{ mock: string[]; real: string[] }> {
+async function executionLabels(): Promise<string[]> {
   const nav = await import('./nav');
-  const labels = (groups: typeof nav.MOCK_PROJECT_NAV) => groups.find(group => group.group === 'OPERATIONS')?.items.map(item => item.label) ?? [];
-  return { mock: labels(nav.MOCK_PROJECT_NAV), real: labels(nav.REAL_PROJECT_NAV) };
+  return nav.PROJECT_NAV.find(group => group.group === 'OPERATIONS')?.items.map(item => item.label) ?? [];
 }
 
 describe('navigation model and the asset map flag', () => {
   it('keeps the Execution group unchanged while the flag is off', async () => {
-    const labels = await executionLabels();
-    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'C2 Sessions']);
-    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'C2 Sessions']);
+    expect(await executionLabels()).toEqual(['AI Workspace', 'Operations', 'C2 Sessions']);
   });
 
-  it('lists the asset map beside Execution in both project menus while the flag is on', async () => {
+  it('lists the asset map beside Execution in the project menu while the flag is on', async () => {
     globalThis.localStorage.setItem('raptix.assetMap', '1');
-    const labels = await executionLabels();
-    expect(labels.mock).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'C2 Sessions']);
-    expect(labels.real).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'C2 Sessions']);
+    expect(await executionLabels()).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'C2 Sessions']);
   });
 });
 
 describe('global navigation', () => {
-  it('lists the seven global pages in proposal order and keeps Reports in the project menus only', async () => {
+  it('lists the seven global pages in proposal order and keeps Reports in the project menu only', async () => {
     const nav = await import('./nav');
     const globalLabels = nav.NAV.flatMap(group => group.items.map(item => item.label));
     expect(globalLabels).toEqual(['Overview', 'Projects', 'Findings', 'Assets', 'Capabilities', 'Infrastructure', 'Settings']);
-    for (const groups of [nav.MOCK_PROJECT_NAV, nav.REAL_PROJECT_NAV]) {
-      expect(groups.flatMap(group => group.items.map(item => item.label))).toContain('Reports');
-    }
+    expect(nav.PROJECT_NAV.flatMap(group => group.items.map(item => item.label))).toContain('Reports');
   });
 });
 
 describe('project section ownership', () => {
-  it('keeps resource pages inside the real project menu under their owning section', async () => {
+  it('keeps resource pages inside the project menu under their owning section', async () => {
     const nav = await import('./nav');
-    const owner = (page: string) => nav.projectSection({ page }, nav.REAL_PROJECT_NAV)?.to;
+    const owner = (page: string) => nav.projectSection({ page }, nav.PROJECT_NAV)?.to;
     expect(owner('report')).toBe('reports');
     expect(owner('report-review')).toBe('reports');
     expect(owner('finding')).toBe('findings');

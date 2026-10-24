@@ -1,18 +1,3 @@
-/**
- * Tradecraft library port (ADR-0067, ADR-0084). The library has two parts with
- * different authority:
- *
- *  - the canonical skill corpus: read-only here; the runtime's git-based
- *    publication gates are the only way its content changes;
- *  - library proposals: engagement-scoped review of a replacement SKILL.md body.
- *    A proposal is never a corpus mutation. Its lifecycle mirrors the server:
- *    submit (draft) → amend (draft, author only) → propose (proposed) →
- *    decide (approved or rejected, by a reviewer who is not the author) →
- *    export (approved only, for the git publication workflow).
- *
- * The mock implementation is `mock.ts`; the real adapter reports SHA-256 values
- * from the server.
- */
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
 export type LibraryProposalStatus = 'draft' | 'proposed' | 'approved' | 'rejected'
@@ -116,8 +101,6 @@ export interface LibraryProposalExport {
   reviews: LibraryProposalReview[]
   publicationContract: string[]
 }
-
-/* Generated console data (knowledge index and capability catalog). Read from the server's data folder in real mode only. */
 
 export interface KnowledgeItem {
   id: string
@@ -237,14 +220,4 @@ export function summarizeCorpus(skills: readonly LibrarySkill[]): Pick<LibraryCo
     for (const id of skill.mitreIds) techniques.add(id)
   }
   return { subdomains, techniquesCovered: techniques.size }
-}
-
-/** Simulated content fingerprint in the server's `sha256:<hex>` form: stable for a body, not a cryptographic digest. */
-export function fingerprint(text: string): string {
-  let hash = 0x811c9dc5
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i)
-    hash = Math.imul(hash, 0x01000193) >>> 0
-  }
-  return `sha256:${hash.toString(16).padStart(8, '0').repeat(8)}`
 }

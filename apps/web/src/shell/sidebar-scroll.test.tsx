@@ -5,7 +5,7 @@
  */
 import { cleanup, fireEvent, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { mountServices } from '../test/helpers'
+import { mountConsole } from '../test/helpers'
 import { Sidebar } from './sidebar'
 
 let scrollTop = 0
@@ -30,7 +30,7 @@ afterEach(() => {
 
 describe('sidebar scroll cue', () => {
   it('fades the bottom while navigation sits below the fold, and clears it at the end', () => {
-    mountServices(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={false} closeMobile={() => {}} />)
+    mountConsole(<Sidebar collapsed={false} setCollapsed={() => {}} mobileOpen={false} closeMobile={() => {}} />)
     const nav = screen.getByRole('navigation', { name: 'Main navigation' })
     expect(nav.parentElement?.querySelector('[data-scroll-fade]')).not.toBeNull()
     scrollTop = 500

@@ -1,11 +1,17 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import App from './App'
 
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
 describe('App', () => {
-  it('renders the sign-in screen for an unauthenticated visitor', () => {
+  it('shows the real bootstrap, never a demo sign-in, when the API is unreachable', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
     render(<App />)
-    expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Raptix is unavailable right now'), { timeout: 5000 })
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull()
   })
 })

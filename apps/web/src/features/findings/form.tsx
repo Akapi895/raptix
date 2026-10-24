@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, FileText, Lock, RotateCcw, Send } from 'lucide-react'
 import { useDirty, useSessionStore } from '../../state/session'
-import { persistentFindings } from './presentation-context'
 import { sevLabel, SEVS } from './service'
-import { TECHNIQUES } from '../../domain/catalog';
 import { type Finding, type Severity } from '../../domain/entities'
 import { FindingReadError, useFindingDetail, useFindingReferenceOptions, useFindingWrites, useReproductionCaptures } from './query'
 import { ReproductionFields, type CaptureListState } from './reproduction-form'
@@ -12,19 +10,13 @@ import { draftFromReproduction, draftReproductionPayload } from './reproduction-
 import { useDelayedNav } from './delayed-nav'
 import { useCreateReason } from './create-reason'
 import { FindingDenied } from './access'
-import {
-  Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Input, Modal, Mono, PageHeader, Select, Sev, Skeleton, Status, Textarea, cx, useGuard,
-} from '../../ui/index'
+import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Input, Modal, Mono, PageHeader, Select, Sev, Skeleton, Status, Textarea, cx, useGuard } from '../../ui/index'
 import { go, useRoute } from '../../router/navigate'
 import { realControlGap, useCan, useMe } from '../../state/console'
 import { useFindingFormRead, type FindingFormRead } from './projection'
 import { useProjectStore, useToastStore, useUiStore } from '../../state/stores'
-
 const STATUS_LABEL: Record<string, string> = { ai_suggested: 'AI Suggested — unverified', draft: 'Draft', review: 'In Review', returned: 'Returned', confirmed: 'Confirmed', remediation: 'In Remediation', retest: 'Retest', resolved: 'Resolved' }
-
-/* ───────────── FI-03: create / edit ───────────── */
 interface Draft { title: string; severity: Severity; severityReason: string; asset: string; op: string; technique: string; desc: string; scopeNote: string; impact: string; rec: string; evidence: string[]; owner: string; kind: string; references: NonNullable<Finding['references']>; stepId?: string; reproduction: import('@raptix/web-contracts').FindingReproductionInput | null | undefined }
-
 /**
  * Finding create/edit form (ticket 32): validation, dirty tracking and the
  * save/submit write run on the typed findings service — one atomic commit
@@ -34,23 +26,19 @@ interface Draft { title: string; severity: Severity; severityReason: string; ass
  */
 export function FindingForm() {
   const route = useRoute()
-  const real = persistentFindings
-  const db = useFindingFormRead(route.id)
-  const detail = useFindingDetail(real ? route.id : undefined)
-  if (!real) return <FindingFormBody key={route.id ?? 'new'} editing={route.id ? db.findings.find((f) => f.id === route.id) : undefined} db={db} />
-  if (route.id && detail.isPending) return <div aria-busy="true" aria-label="Loading finding"><Skeleton className="h-72" /></div>
+    const db = useFindingFormRead()
+  const detail = useFindingDetail(route.id)
+    if (route.id && detail.isPending) return <div aria-busy="true" aria-label="Loading finding"><Skeleton className="h-72" /></div>
   if (route.id && detail.isError) return <FindingDenied id={route.id} error={detail.error as FindingReadError} />
   return <FindingFormBody key={route.id ?? 'new'} editing={detail.data?.finding} db={db} />
 }
-
 function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: FindingFormRead }) {
   const route = useRoute()
   const captures = useReproductionCaptures()
   const captureList: CaptureListState = captures.isError
     ? { status: 'error', message: captures.error instanceof Error ? captures.error.message : 'The captures could not be read.' }
     : captures.isPending ? { status: 'loading' } : { status: 'ready' }
-  const real = persistentFindings
-  const me = useMe()
+    const me = useMe()
   const pid = useProjectStore((s) => s.pid)
   const toast = useToastStore((s) => s.toast)
   const persistFilters = useSessionStore((s) => s.persistFilters)
@@ -83,10 +71,8 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }))
   const dirty = !saved && JSON.stringify(d) !== JSON.stringify(init)
 
-  const assets = db.assets.filter((a) => a.projectId === projectId)
-  const managedAssets = real ? referencesQuery.data?.assets ?? [] : assets.map((asset) => ({ id: asset.id, label: asset.name }))
+  const managedAssets = (referencesQuery.data?.assets ?? [])
   const executions = referencesQuery.data?.executions ?? []
-  const ops = db.operations.filter((o) => o.projectId === projectId)
   const evs = db.evidence.filter((e) => e.projectId === projectId)
   const assetGap = undefined
   const techniqueGap = referencesQuery.data?.techniqueAvailable === false ? 'Canonical technique references are unavailable.' : undefined
@@ -95,7 +81,7 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
   const scopeGap = realControlGap('finding.scopeNote')
   const severityGap = realControlGap('finding.severityRationale')
   const evidenceGap = realControlGap('finding.evidenceLink')
-  const editableStatuses = real ? ['draft', 'returned', 'review', 'confirmed', 'remediation', 'retest'] : ['draft', 'returned']
+  const editableStatuses = ['draft', 'returned', 'review', 'confirmed', 'remediation', 'retest']
   const locked = !!createReason || (!!editing && !editableStatuses.includes(editing.status))
   const err: Record<string, string> = {}
   if (d.title.trim().length < 5) err.title = 'Enter a finding title (at least 5 characters).'
@@ -207,15 +193,13 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
           <CardHeader title="Analysis" />
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Affected asset" required error={E('asset')} hint={referencesQuery.isPending ? 'Loading managed assets…' : `${managedAssets.length} managed assets in ${projectId}`}>
-              <Select value={real ? d.references.assetId ?? '' : d.asset} onChange={(e) => { const asset = managedAssets.find((item) => real ? item.id === e.target.value : item.label === e.target.value); set('references', { ...d.references, assetId: real ? e.target.value || null : null }); set('asset', asset?.label ?? '') }}><option value="">— Select an asset —</option>{managedAssets.map((asset) => <option key={asset.id} value={real ? asset.id : asset.label}>{asset.label} ({asset.id})</option>)}</Select>
+              <Select value={(d.references.assetId ?? '')} onChange={(e) => { const asset = managedAssets.find((item) => (item.id === e.target.value)); set('references', { ...d.references, assetId: (e.target.value || null) }); set('asset', asset?.label ?? '') }}><option value="">— Select an asset —</option>{managedAssets.map((asset) => <option key={asset.id} value={asset.id}>{asset.label} ({asset.id})</option>)}</Select>
             </Field>
             <Field label="Related execution" hint={referencesQuery.data?.truncated ? 'Execution options are bounded. Refine before linking.' : 'Links only owned execution threads and runs in this engagement.'}>
-              {real ? <Select value={JSON.stringify(d.references)} onChange={(e) => { const selected = executions.find((item) => JSON.stringify({ ...d.references, threadId: item.threadId, runId: item.runId, bindingId: item.bindingId }) === e.target.value); const refs = selected ? { ...d.references, threadId: selected.threadId, runId: selected.runId, bindingId: selected.bindingId } : { ...d.references, threadId: null, runId: null, bindingId: null }; set('references', refs); set('op', refs.runId ?? refs.bindingId ?? refs.threadId ?? '') }}><option value={JSON.stringify({ ...d.references, threadId: null, runId: null, bindingId: null })}>— No linked execution —</option>{executions.map((execution) => { const refs = { ...d.references, threadId: execution.threadId, runId: execution.runId, bindingId: execution.bindingId }; return <option key={JSON.stringify(refs)} value={JSON.stringify(refs)}>{execution.runId ?? execution.bindingId ?? execution.threadId}</option> })}</Select>
-                : <Select value={d.op} onChange={(e) => set('op', e.target.value)}><option value="">— No linked operation —</option>{ops.map((operation) => <option key={operation.id} value={operation.id}>{operation.id} — {operation.name}</option>)}</Select>}
+              {<Select value={JSON.stringify(d.references)} onChange={(e) => { const selected = executions.find((item) => JSON.stringify({ ...d.references, threadId: item.threadId, runId: item.runId, bindingId: item.bindingId }) === e.target.value); const refs = selected ? { ...d.references, threadId: selected.threadId, runId: selected.runId, bindingId: selected.bindingId } : { ...d.references, threadId: null, runId: null, bindingId: null }; set('references', refs); set('op', refs.runId ?? refs.bindingId ?? refs.threadId ?? '') }}><option value={JSON.stringify({ ...d.references, threadId: null, runId: null, bindingId: null })}>— No linked execution —</option>{executions.map((execution) => { const refs = { ...d.references, threadId: execution.threadId, runId: execution.runId, bindingId: execution.bindingId }; return <option key={JSON.stringify(refs)} value={JSON.stringify(refs)}>{execution.runId ?? execution.bindingId ?? execution.threadId}</option> })}</Select>}
             </Field>
             <Field label="ATT&CK technique (if applicable)" hint={techniqueGap ?? (referencesQuery.data?.techniqueAvailable ? 'Validated against the canonical technique corpus on save.' : 'Select a project to check the canonical corpus.')}>
-              {real ? <Input value={d.references.techniqueId ?? ''} onChange={(e) => { set('references', { ...d.references, techniqueId: e.target.value.trim() || null }); set('technique', e.target.value.trim()) }} placeholder="T1059.001" disabled={!!techniqueGap} />
-                : <Select value={d.technique} onChange={(e) => set('technique', e.target.value)}><option value="">— Not applicable —</option>{TECHNIQUES.map((technique) => <option key={technique.id} value={technique.id}>{technique.id} — {technique.name}</option>)}</Select>}
+              {<Input value={d.references.techniqueId ?? ''} onChange={(e) => { set('references', { ...d.references, techniqueId: e.target.value.trim() || null }); set('technique', e.target.value.trim()) }} placeholder="T1059.001" disabled={!!techniqueGap} />}
             </Field>
             <Field label="Conditions / scope of impact" hint={scopeGap ?? undefined}><Input disabled={!!scopeGap} value={d.scopeNote} onChange={(e) => set('scopeNote', e.target.value)} placeholder="Example: applies only to demo accounts in the lab" /></Field>
             <Field label="Description" required error={E('desc')} className="md:col-span-2"><Textarea value={d.desc} onChange={(e) => set('desc', e.target.value)} /></Field>

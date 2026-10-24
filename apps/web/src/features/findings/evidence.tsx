@@ -1,23 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Bug, Download, ExternalLink, FileImage, Link2, Lock, Eye, EyeOff, Fingerprint, Paperclip, ShieldCheck, Upload } from 'lucide-react'
+import { AlertTriangle, Bug, Download, ExternalLink, Link2, Lock, Eye, EyeOff, Paperclip, ShieldCheck, Upload } from 'lucide-react'
 import { useSessionStore } from '../../state/session'
 import { captureRequestId, clearCaptureRequest } from './capture-session'
-import { persistentFindings, useFindingIdentity } from './presentation-context'
+import { useFindingIdentity } from './presentation-context'
 import { ROLE_LABEL } from '../../domain/policy'
 import { type Finding } from '../../domain/entities'
 import { EvidenceReadError, useEvidenceDetail, useEvidenceList, useFindingWrites } from './query'
 import type { EvidenceDownload, EvidenceView } from './service'
 import { useDelayedNav } from './delayed-nav'
-import {
-  Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Locked, Modal, Mono, PageHeader, SearchBox, Select, Skeleton, Table, Textarea, Timeline,
-} from '../../ui/index'
+import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Locked, Modal, Mono, PageHeader, SearchBox, Select, Skeleton, Table, Textarea, Timeline } from '../../ui/index'
 import { go, useRoute } from '../../router/navigate'
 import { realControlGap, useCan, useMe, useReadOnly } from '../../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../../state/stores'
-
-/* ───────────── Evidence tab (ticket 31: masked read; ticket 32: typed link/upload) ───────────── */
-const OK_EXT = ['png', 'jpg', 'jpeg', 'txt', 'log', 'json', 'csv', 'pdf']
 function saveEvidenceFile(file: EvidenceDownload): void {
   const blob = new Blob([file.bytes.slice().buffer], { type: file.mediaType })
   const url = URL.createObjectURL(blob)
@@ -27,7 +22,6 @@ function saveEvidenceFile(file: EvidenceDownload): void {
   anchor.click()
   window.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
-
 export function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: boolean }) {
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
@@ -58,8 +52,7 @@ export function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; r
     else toast(res.failure.message, 'warn')
   }
   const download = async (evidence: EvidenceView) => {
-    if (!persistentFindings) { toast(`Download of ${evidence.name} started (simulated).`, 'info'); return }
-    const result = await writes.downloadEvidence(evidence.captureId ?? evidence.ref)
+        const result = await writes.downloadEvidence(evidence.captureId ?? evidence.ref)
     if (!result.ok) { toast(result.failure.message, 'warn'); return }
     saveEvidenceFile(result.data)
   }
@@ -84,8 +77,8 @@ export function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; r
         ]}
       />
       <Drawer open={!!view} onClose={() => setView(null)} title={view ? <span><Mono className="text-accent">{view.ref}</Mono> · <MaskedName ev={view} /></span> : ''}
-        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.captureId ?? view.ref })}>Open in Evidence Inspector</Button>{classifyTarget(view) && <Button icon={ShieldCheck} onClick={() => { setClassifying(classifyTarget(view)); setView(null) }}>Classify capture</Button>}<Button icon={Download} disabled={view.masked || persistentFindings && !view.canViewOriginal} title={view.masked ? 'Classification has not made this filename visible to your role.' : persistentFindings && !view.canViewOriginal ? 'The current classification does not permit reading the original bytes.' : undefined} onClick={() => void download(view)}>Download original</Button></>}>
-        {view && <EvidencePreview ev={view} f={f} onOp={() => view.opId && go('operation', { id: view.opId })} />}
+        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.captureId ?? view.ref })}>Open in Evidence Inspector</Button>{classifyTarget(view) && <Button icon={ShieldCheck} onClick={() => { setClassifying(classifyTarget(view)); setView(null) }}>Classify capture</Button>}<Button icon={Download} disabled={view.masked || !view.canViewOriginal} title={view.masked ? 'Classification has not made this filename visible to your role.' : !view.canViewOriginal ? 'The current classification does not permit reading the original bytes.' : undefined} onClick={() => void download(view)}>Download original</Button></>}>
+        {view && <EvidencePreview ev={view} />}
       </Drawer>
       <Modal open={attach} onClose={() => setAttach(false)} title="Link existing evidence" footer={<Button onClick={() => setAttach(false)}>Done</Button>}>
         {evidenceList.isError && <Banner tone="bad" title="Could not load retained captures">{evidenceList.error instanceof Error ? evidenceList.error.message : 'Capture inventory is unavailable.'}</Banner>}
@@ -111,51 +104,13 @@ export function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; r
     </div>
   )
 }
-
 function UploadModal({ open, onClose, f, onUploaded }: { open: boolean; onClose: () => void; f: Finding; onUploaded: () => void }) {
-  return persistentFindings
-    ? <RealCaptureUploadModal open={open} onClose={onClose} f={f} onUploaded={onUploaded} />
-    : <MockEvidenceUploadModal open={open} onClose={onClose} f={f} onUploaded={onUploaded} />
+  return <RealCaptureUploadModal open={open} onClose={onClose} f={f} onUploaded={onUploaded} />
 }
-
-function MockEvidenceUploadModal({ open, onClose, f, onUploaded }: { open: boolean; onClose: () => void; f: Finding; onUploaded: () => void }) {
-  const toast = useToastStore((s) => s.toast)
-  const writes = useFindingWrites()
-  const [name, setName] = useState('')
-  const [kind, setKind] = useState('Image')
-  const [sens, setSens] = useState(false)
-  const [source, setSource] = useState(f.op ? `${f.op} / manual` : 'Manual upload')
-  const [tried, setTried] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-  const ext = name.split('.').pop()?.toLowerCase() || ''
-  const e = !name.trim() ? 'Enter a file name.' : !name.includes('.') || !OK_EXT.includes(ext) ? `Unsupported file type. Accepted: ${OK_EXT.join(', ')}.` : ''
-  const save = async () => {
-    setTried(true)
-    if (e) return
-    const res = await writes.uploadEvidence({ findingId: f.id, name: name.trim(), kind, source, sensitive: sens, opId: f.op || undefined })
-    if (!res.ok) { setErr(res.failure.message); return }
-    toast(`Uploaded ${name.trim()} and linked it to ${f.id}.`)
-    setName(''); setTried(false); setSens(false); setErr(null); onUploaded(); onClose()
-  }
-  return (
-    <Modal open={open} onClose={onClose} title="Upload evidence (simulated)" footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" icon={Upload} onClick={() => void save()}>Upload & link</Button></>}>
-      <div className="space-y-4">
-        {err && <Banner tone="bad" title="The evidence was not uploaded">{err}</Banner>}
-        <Field label="File name" required error={tried ? e : undefined} hint="No real file is uploaded — only a simulated record is created."><Input value={name} onChange={(x) => setName(x.target.value)} placeholder="e.g. evidence-028.png" /></Field>
-        <Field label="Type"><Select value={kind} onChange={(x) => setKind(x.target.value)}>{['Image', 'Image (redacted)', 'Text', 'JSON', 'Log'].map((k) => <option key={k}>{k}</option>)}</Select></Field>
-        <Field label="Source"><Input value={source} onChange={(x) => setSource(x.target.value)} /></Field>
-        <Check checked={sens} onChange={setSens} label="Mark as sensitive (redacted for users without permission)" />
-        <div className="text-xs text-muted">This evidence will belong to project <Mono>{f.projectId}</Mono>.</div>
-      </div>
-    </Modal>
-  )
-}
-
 const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
   bin: 'application/octet-stream', csv: 'text/plain', gif: 'image/gif', jpeg: 'image/jpeg', jpg: 'image/jpeg',
   json: 'application/json', log: 'text/plain', pdf: 'application/pdf', png: 'image/png', txt: 'text/plain',
 }
-
 function RealCaptureUploadModal({ open, onClose, f, onUploaded }: { open: boolean; onClose: () => void; f: Finding; onUploaded: () => void }): ReactNode {
   const identity = useFindingIdentity()
   const writes = useFindingWrites()
@@ -204,7 +159,6 @@ function RealCaptureUploadModal({ open, onClose, f, onUploaded }: { open: boolea
     </div>
   </Modal>
 }
-
 function CaptureClassificationModal({ evidence, onClose, onClassified }: { evidence: EvidenceView | null; onClose: () => void; onClassified: () => void }) {
   const writes = useFindingWrites()
   const toast = useToastStore((s) => s.toast)
@@ -228,7 +182,6 @@ function CaptureClassificationModal({ evidence, onClose, onClassified }: { evide
     </div>}
   </Modal>
 }
-
 function useEvidenceBytes(evidenceId: string, enabled: boolean) {
   const writes = useFindingWrites()
   const [data, setData] = useState<EvidenceDownload | null>(null)
@@ -253,9 +206,7 @@ function useEvidenceBytes(evidenceId: string, enabled: boolean) {
   useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl) }, [imageUrl])
   return { data, error, imageUrl, pending }
 }
-
 type OriginalReadState = ReturnType<typeof useEvidenceBytes>
-
 function CaptureOriginalContent({ evidence, open, original }: { evidence: EvidenceView; open: boolean; original: OriginalReadState }): ReactNode {
   if (!evidence.captureId) return <p className="text-sm text-muted">{realControlGap('evidence.original')}</p>
   if (!evidence.canViewOriginal) return <Banner tone="warn" title="Original bytes are locked">This capture is unclassified or its sensitivity classification does not permit your role to read it.</Banner>
@@ -277,44 +228,16 @@ function CaptureOriginalContent({ evidence, open, original }: { evidence: Eviden
         : <p className="text-sm text-muted">Inline preview is unavailable for this media type. The verified original can be downloaded.</p>}
   </div>
 }
-
-function EvidencePreview({ ev, f, onOp }: { ev: EvidenceView; f: Finding; onOp: () => void }) {
+function EvidencePreview({ ev }: { ev: EvidenceView }) {
   const [previewOpen, setPreviewOpen] = useState(false)
   const original = useEvidenceBytes(ev.captureId ?? '', previewOpen && ev.canViewOriginal === true)
-  if (persistentFindings) return <div className="space-y-4">
+  return <div className="space-y-4">
     <p className="text-sm text-muted">Capture integrity is checked against the original bytes before display. A matching digest does not validate the recorded claim.</p>
     <Button variant="secondary" disabled={!ev.canViewOriginal} title={!ev.canViewOriginal ? 'Classification or role does not permit original-byte access.' : undefined} onClick={() => setPreviewOpen(true)}>Preview original</Button>
     <CaptureOriginalContent evidence={ev} open={previewOpen} original={original} />
     <DescList cols={2} items={[{ k: 'Classification', v: ev.classification ?? 'Legacy / unclassified' }, { k: 'Digest', v: ev.digest ?? 'Not recorded' }, { k: 'Size', v: ev.sizeBytes === undefined ? 'Unknown' : `${ev.sizeBytes} bytes` }]} />
   </div>
-  const hide = ev.masked
-  const isImg = ev.kind.startsWith('Image')
-  const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list", "write (exceeds policy)"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[sanitized — contains no sensitive data]'
-  return (
-    <div className="space-y-4">
-      {hide ? (
-        <Banner tone="warn" icon={Lock} title="Sensitive content redacted">Your role is not permitted to view files with a sensitive label.</Banner>
-      ) : isImg ? (
-        <div className="flex h-48 items-center justify-center rounded-lg border border-line bg-bg text-muted" role="img" aria-label="Image preview (simulated)"><div className="text-center"><FileImage size={32} className="mx-auto mb-2" aria-hidden /><div className="text-xs">Image with data redacted — {ev.name}</div></div></div>
-      ) : (
-        <pre className="max-h-56 overflow-auto rounded-lg border border-line bg-bg p-3 font-mono text-xs leading-relaxed">{sample}</pre>
-      )}
-      <DescList cols={2} items={[
-        { k: 'Type', v: ev.kind }, { k: 'Source', v: <Mono>{ev.source}</Mono> }, { k: 'Captured at', v: ev.at }, { k: 'Uploaded by', v: ev.by },
-        { k: 'Project', v: <Mono>{ev.projectId}</Mono> }, { k: 'Sensitive label', v: ev.sensitive ? 'Yes' : 'No' },
-        { k: 'Related finding', v: <Mono>{ev.findingId || f.id}</Mono> },
-        { k: 'Operation', v: ev.opId ? <button className="font-mono text-[13px] text-link hover:underline" onClick={onOp}>{ev.opId}</button> : '—' },
-      ]} />
-      <div>
-        <div className="mb-2 text-xs text-muted">Link / change history</div>
-        <Timeline items={[{ at: ev.at, title: `Uploaded by ${ev.by}`, sub: ev.source }, { at: ev.at, title: `Linked to ${ev.findingId || f.id}`, sub: 'Cannot be removed from history', tone: 'cyan' }]} />
-      </div>
-    </div>
-  )
 }
-
-/* ───────────── FI-V3-03: Evidence list + Inspector (ticket 33: typed reads) ───────────── */
-
 /**
  * Standalone evidence list (ticket 33): the scoped rows, type options and
  * role-sensitive masking come from the typed findings service through Query
@@ -373,7 +296,6 @@ export function EvidenceList() {
     </div>
   )
 }
-
 /**
  * Standalone evidence inspector (ticket 33): both route aliases render this
  * typed read — metadata, producer links (resolved by the handler from real
@@ -421,28 +343,19 @@ export function EvidenceInspector() {
   const data = detail.data
   const ev = data.evidence
   const producer = data.producer
-  const real = persistentFindings
-  const origWhy = real ? !ev.captureId ? (realControlGap('evidence.original') ?? 'Original bytes are unavailable for this legacy reference.') : !data.canViewOriginal ? (me.role === 'viewer' ? 'The viewer role cannot read original bytes.' : 'The capture is unclassified or its classification does not permit your role.') : '' : !ev.sensitive ? 'This item has no sensitive content — nothing is masked.' : !data.canViewSensitive ? `The ${ROLE_LABEL[me.role]} role cannot view sensitive content.` : !data.canViewOriginal ? `The ${ROLE_LABEL[me.role]} role can only view masked content. Ask a Reviewer, Operator or Manager.` : ''
-  const masked = real ? !orig : ev.sensitive && !orig
-  const isImg = real ? ev.mediaType?.startsWith('image/') === true : ev.kind.startsWith('Image')
+    const origWhy = (!ev.captureId ? (realControlGap('evidence.original') ?? 'Original bytes are unavailable for this legacy reference.') : !data.canViewOriginal ? (me.role === 'viewer' ? 'The viewer role cannot read original bytes.' : 'The capture is unclassified or its classification does not permit your role.') : '')
+  const masked = !orig
   const ro = readOnly(ev.projectId)
   const createWhy = realControlGap('finding.evidenceLink') ?? (ro ? 'Project is read-only.' : !can('createFinding', ev.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot create findings.` : '')
-  const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[synthetic content — no real data]'
   const toggle = () => {
     if (!orig) {
-      confirm({ title: 'View original content?', confirmLabel: 'View original', body: real ? 'The server re-checks capture classification and role before returning original bytes. The browser verifies SHA-256 before display.' : 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: async () => {
-        if (!real) {
-          const result = await writes.recordOriginalView({ ref: ev.ref, projectId: ev.projectId })
-          if (!result.ok) { toast(result.failure.message, 'warn'); return }
-          setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l])
-        }
-        setOrig(true)
+      confirm({ title: 'View original content?', confirmLabel: 'View original', body: 'The server re-checks capture classification and role before returning original bytes. The browser verifies SHA-256 before display.', onConfirm: async () => {
+                setOrig(true)
       } })
     } else { setOrig(false); toast('Masked view restored.', 'info') }
   }
   const download = async () => {
-    if (!real) { toast(`Download of ${ev.name} started (simulated).`, 'info'); return }
-    const result = await writes.downloadEvidence(ev.captureId ?? ev.ref)
+        const result = await writes.downloadEvidence(ev.captureId ?? ev.ref)
     if (!result.ok) { toast(result.failure.message, 'warn'); return }
     saveEvidenceFile(result.data)
   }
@@ -451,8 +364,8 @@ export function EvidenceInspector() {
     go('finding-new')
   }
   const chain = [
-    { at: ev.at, title: `Captured by agent ${producer?.step?.agent || producer?.invocation?.producer || '—'}`, sub: `${ev.source} · collector ${producer?.agent ? producer.agent.host : (real ? '—' : 'operator upload')}`, tone: 'cyan' as const },
-    ...(real ? [] : [{ at: ev.at, title: 'Hash computed and stored (simulated SHA-256)', sub: 'Integrity baseline — describes the retained capture, not the truth of any finding', tone: 'accent' as const }]),
+    { at: ev.at, title: `Captured by agent ${producer?.step?.agent || producer?.invocation?.producer || '—'}`, sub: `${ev.source} · collector ${producer?.agent ? producer.agent.host : ('—')}`, tone: 'cyan' as const },
+    ...([]),
     { at: ev.at, title: `Collected by ${ev.by}`, sub: 'Attached to the operation record', tone: 'accent' as const },
     ...data.findings.map((f) => ({ at: f.updated, title: `Linked to ${f.id}`, sub: 'Link cannot be removed from history', tone: 'ok' as const })),
   ]
@@ -469,19 +382,17 @@ export function EvidenceInspector() {
       <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
         <div className="space-y-6">
           <Card>
-            <CardHeader title="Content" sub={real ? undefined : 'Simulated preview — no real files or payloads.'} actions={
+            <CardHeader title="Content" sub={undefined} actions={
               <Button size="sm" icon={orig ? EyeOff : Eye} disabled={!!origWhy} title={origWhy || (orig ? 'Return to masked view' : 'Show original content')} onClick={toggle}>{orig ? 'Mask content' : 'View Original'}</Button>
             } />
             {origWhy && ev.sensitive && <div className="mb-3"><Locked reason={origWhy} /></div>}
             {masked ? (
               <div className="flex h-44 items-center justify-center rounded-lg border border-line bg-bg text-center text-muted" role="img" aria-label="Masked content"><div><Lock size={28} className="mx-auto mb-2 text-warn" aria-hidden /><div className="text-sm">Content masked by default</div><div className="text-xs">Redaction status: Redacted</div></div></div>
-            ) : isImg && !real ? (
-              <div className="flex h-44 items-center justify-center rounded-lg border border-line bg-bg text-muted" role="img" aria-label="Image preview (simulated)"><div className="text-center"><FileImage size={30} className="mx-auto mb-2" aria-hidden /><div className="text-xs">Synthetic image — {ev.name}</div></div></div>
             ) : (
-              real ? <CaptureOriginalContent evidence={ev} open={orig} original={original} /> : <pre className="max-h-56 overflow-auto rounded-lg border border-line bg-bg p-3 font-mono text-xs leading-relaxed">{sample}</pre>
+              <CaptureOriginalContent evidence={ev} open={orig} original={original} />
             )}
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" icon={Download} disabled={real ? !data.canViewOriginal : !data.canViewSensitive || masked} title={real ? (origWhy || undefined) : !data.canViewSensitive ? 'Your role cannot download evidence.' : masked ? 'Download is available only for content you are permitted to view unmasked.' : undefined} onClick={() => void download()}>Download original</Button>
+              <Button size="sm" icon={Download} disabled={!data.canViewOriginal} title={(origWhy || undefined)} onClick={() => void download()}>Download original</Button>
             </div>
           </Card>
           <Card>
@@ -504,7 +415,7 @@ export function EvidenceInspector() {
               { k: 'Captured time', v: ev.at },
               { k: 'Collector', v: ev.by },
               { k: 'Content type', v: ev.kind },
-              { k: 'Hash / integrity', v: real ? ev.captureId ? <span><Mono className="break-all text-xs">sha256:{original.data?.digest ?? ev.digest ?? '—'}</Mono><div className={`mt-1 text-xs ${original.data ? 'text-ok' : 'text-muted'}`}>{original.data ? 'Capture integrity verified' : 'Not checked until original bytes are read'}</div><div className="mt-1 text-xs text-muted">Integrity describes bytes, not the truth of a finding.</div></span> : <span className="text-muted">{realControlGap('evidence.integrity')}</span> : <span><Mono className="break-all text-xs">sha256:{data.integrity.digest?.slice(0, 24)}…</Mono><div className="mt-1 inline-flex items-center gap-1 text-xs text-ok"><Fingerprint size={12} aria-hidden />Integrity verified (simulated)</div><div className="mt-1 text-xs text-muted">Describes the retained capture — not proof that any finding is true.</div></span> },
+              { k: 'Hash / integrity', v: (ev.captureId ? <span><Mono className="break-all text-xs">sha256:{original.data?.digest ?? ev.digest ?? '—'}</Mono><div className={`mt-1 text-xs ${original.data ? 'text-ok' : 'text-muted'}`}>{original.data ? 'Capture integrity verified' : 'Not checked until original bytes are read'}</div><div className="mt-1 text-xs text-muted">Integrity describes bytes, not the truth of a finding.</div></span> : <span className="text-muted">{realControlGap('evidence.integrity')}</span>) },
               { k: 'Redaction status', v: !ev.sensitive ? 'None needed' : orig ? 'Redacted by default — original shown (logged)' : 'Redacted (masked)' },
             ]} />
           </Card>
@@ -521,6 +432,5 @@ export function EvidenceInspector() {
     </div>
   )
 }
-
 const MaskedName = ({ ev }: { ev: EvidenceView }) =>
   ev.masked ? <span className="inline-flex items-center gap-1.5 text-warn"><Lock size={13} aria-hidden />Sensitive file — redacted</span> : <span>{ev.name ?? ev.ref}</span>

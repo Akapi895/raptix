@@ -4,10 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react')
 const { RealModeProvider } = await import('./real-bootstrap')
 const { useCapabilityReady } = await import('../state/real-context')
-const { RealNotIntegrated } = await import('./not-integrated')
 const { ROUTES } = await import('../router/routes')
 /** A key is integrated when real mode renders it with its own presentation, not the unavailable panel. */
-const integrated = (page: string) => ROUTES[page]?.real.kind !== undefined && ROUTES[page].real.kind !== 'unavailable'
+const integrated = (page: string) => ROUTES[page]?.real.kind !== undefined
 
 const CAPABILITIES = {
   version: 1,
@@ -46,7 +45,6 @@ describe('RealModeProvider', () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
     render(<RealModeProvider><Probe name="projects" /></RealModeProvider>)
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Raptix is unavailable right now'))
-    expect(screen.getByText('Switch to demo mode')).toBeTruthy()
     expect(screen.queryByTestId('probe')).toBeNull()
   })
 })
@@ -60,12 +58,5 @@ describe('real route gating', () => {
 
   it('integrates Infrastructure: its real route reads the engagement-scoped runtime, C2 and grant panels', () => {
     expect(integrated('infrastructure')).toBe(true)
-  })
-
-  it('names the unintegrated surface honestly and never offers demo data', () => {
-    render(<RealNotIntegrated page="operations" />)
-    expect(screen.getByRole('status')).toHaveTextContent('operations')
-    expect(screen.getByText('Go to Projects')).toBeTruthy()
-    expect(screen.getByText(/not integrated with the real backend yet/)).toBeTruthy()
   })
 })

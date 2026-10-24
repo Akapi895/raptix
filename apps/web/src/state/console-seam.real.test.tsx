@@ -1,23 +1,15 @@
 /**
- * The console read seam in real mode (integration ticket 03): the identity is
- * the trusted local operator, project lists come from the engagement API and
- * the demo database projection is unreachable.
- *
- * The mode must be seeded BEFORE the dynamic imports below — module
- * evaluation resolves DATA_MODE exactly once (ADR-0068).
+ * The console read seam in real mode (integration ticket 03): the identity is the trusted local operator and project lists
+ * come from the engagement API.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 
 window.localStorage.clear()
-window.localStorage.setItem('raptix.dataMode', 'real')
-vi.stubEnv('VITE_DATA_MODE', 'real')
 
 const { cleanup, renderHook, waitFor } = await import('@testing-library/react')
-const { Component } = await import('react')
-const { DATA_MODE } = await import('./mode')
 const { RealModeProvider } = await import('../shell/real-bootstrap')
-const { useDb, useMe, usePolicyProjects } = await import('./console')
+const { useMe, usePolicyProjects } = await import('./console')
 
 beforeEach(() => {
   const capabilities = { version: 1, mode: 'local-single-user', capabilities: { projects: { supported: true, available: true } } }
@@ -40,29 +32,11 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-/** Captures a child's render-time throw so failing-fast hooks can be asserted. */
-class RenderErrorBoundary extends Component<{ children: ReactNode; onError: (error: unknown) => void }, { hasError: boolean }> {
-  state = { hasError: false }
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-  componentDidCatch(error: unknown) {
-    this.props.onError(error)
-  }
-  render() {
-    return this.state.hasError ? null : this.props.children
-  }
-}
-
 function Wrapper({ children }: { children: ReactNode }) {
   return <RealModeProvider>{children}</RealModeProvider>
 }
 
 describe('console seam in real mode', () => {
-  it('resolves to real mode', () => {
-    expect(DATA_MODE).toBe('real')
-  })
-
   it('exposes the trusted local operator instead of a demo persona', async () => {
     const { result } = renderHook(() => useMe(), { wrapper: Wrapper })
     await waitFor(() => expect(result.current).toBeTruthy())
@@ -79,18 +53,5 @@ describe('console seam in real mode', () => {
     expect(project.status).toBe('planning')
     expect(project.client).toBe('')
     expect(project.roeStatus).toBe('none')
-  })
-
-  it('keeps the demo database projection unreachable', async () => {
-    let caught: unknown = null
-    renderHook(() => useDb(), {
-      wrapper: ({ children }: { children: ReactNode }) => (
-        <RealModeProvider>
-          <RenderErrorBoundary onError={(error) => { caught = error }}>{children}</RenderErrorBoundary>
-        </RealModeProvider>
-      ),
-    })
-    await waitFor(() => expect(caught).not.toBeNull())
-    expect(String(caught)).toMatch(/demo database projection is unavailable/)
   })
 })

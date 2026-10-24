@@ -9,7 +9,7 @@
  * slots keep the legacy implementations, so this composition is not edited by
  * later feature owners — the integrator wires replacements at the mount site.
  */
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Activity, Lock, ShieldAlert } from 'lucide-react'
 import { go, useRoute } from '../router/navigate'
 import type { Route } from '../router/history'
@@ -17,19 +17,10 @@ import { useActiveProject, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
 import { useToastStore, useUiStore } from '../state/stores'
 import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../ui/index'
-import { LazyCopilotDrawer, RealCopilotDrawer } from '../features/copilot'
-import { DATA_MODE } from '../state/mode'
+import { RealCopilotDrawer } from '../features/copilot'
 import { RealContextRibbon, RealTopbar } from './real-chrome'
 import { isWide, NAV } from './nav'
 import { Sidebar } from './sidebar'
-import { Topbar, type HeaderSlots } from './header'
-import { ContextRibbon, StopBanner } from './context-ribbon'
-
-/** Shell mount points for the later feature owners (tickets 59/60). */
-export interface ShellSlots extends HeaderSlots {
-  /** Copilot drawer root (ticket 60 replaces the legacy default). */
-  copilotDrawer?: ComponentType
-}
 
 /* ───────────── Global modals ───────────── */
 /** Exported for the W21 save-contract tests; the Shell renders it once. */
@@ -142,7 +133,7 @@ function RouteAnnouncer() {
 
 /* ───────────── Shell ───────────── */
 
-export function Shell({ children, slots = {} }: { children: ReactNode; slots?: ShellSlots }) {
+export function Shell({ children }: { children: ReactNode }) {
   const project = useActiveProject()
   const loading = useSessionStore((s) => s.loading)
   const me = useMe()
@@ -155,16 +146,13 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
   useEffect(() => { document.title = 'Raptix — AI Red Team Platform' }, [])
   useEffect(() => { if (copilotOpen) setNoticesOpen(false) }, [copilotOpen, setNoticesOpen])
   const wide = isWide(route)
-  const real = DATA_MODE === 'real'
-  const CopilotDrawerSlot = real ? RealCopilotDrawer : (slots.copilotDrawer ?? LazyCopilotDrawer)
   return (
     <div className="flex h-full bg-bg text-fg">
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }} className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[200] focus:rounded-[10px] focus:bg-accent focus:px-4 focus:py-2 focus:text-white">Skip to main content</a>
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobile} closeMobile={() => setMobile(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        {real ? <RealTopbar openMobile={() => setMobile(true)} /> : <Topbar openMobile={() => setMobile(true)} slots={slots} />}
-        {real ? <RealContextRibbon openSwitcher={() => setSwitcherOpen(true)} /> : <ContextRibbon openSwitcher={() => setSwitcherOpen(true)} />}
-        {!real && <StopBanner />}
+        <RealTopbar openMobile={() => setMobile(true)} />
+        <RealContextRibbon openSwitcher={() => setSwitcherOpen(true)} />
         {project && (project.status === 'closed' || project.status === 'cancelled') && (
           <div className="px-4 pt-4 lg:px-8">
             <Banner tone="warn" icon={Lock} title={`Project ${project.id} is ${project.status === 'closed' ? 'closed' : 'cancelled'} — read-only`} action={me.role === 'admin' ? <Button size="sm" onClick={() => go('project', { id: project.id, tab: 'overview' })}>Reopen project</Button> : undefined}>
@@ -176,7 +164,7 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
           <div className={wide ? 'mx-auto h-full max-w-6xl' : 'mx-auto max-w-[1360px]'}>{loading ? <LoadingState /> : children}</div>
         </main>
       </div>
-      <CopilotDrawerSlot />
+      <RealCopilotDrawer />
       <GlobalModals />
       <Toasts />
       <RouteAnnouncer />
