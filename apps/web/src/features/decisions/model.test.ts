@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countText, splitTasks } from './model'
+import { countText, inboxLimits, splitTasks } from './model'
 
 describe('splitTasks', () => {
   it('keeps active emergency stops out of the decisions and keeps the read order', () => {
@@ -11,6 +11,19 @@ describe('splitTasks', () => {
 
   it('returns no decisions when the only pending item is a stop', () => {
     expect(splitTasks([{ kind: 'active-stop', refId: 's1' }]).decisions).toEqual([])
+  })
+})
+
+describe('inboxLimits', () => {
+  it('limits only the counts of a kind that reached the cap', () => {
+    expect(inboxLimits({ limited: true, limitedKinds: ['active-stop'] })).toEqual({ decisions: false, stops: true })
+    expect(inboxLimits({ limited: true, limitedKinds: ['c2-grant'] })).toEqual({ decisions: true, stops: false })
+    expect(inboxLimits({ limited: false, limitedKinds: [] })).toEqual({ decisions: false, stops: false })
+  })
+
+  it('treats an older server, which sends only the flag, as limited for both counts', () => {
+    expect(inboxLimits({ limited: true })).toEqual({ decisions: true, stops: true })
+    expect(inboxLimits({})).toEqual({ decisions: false, stops: false })
   })
 })
 

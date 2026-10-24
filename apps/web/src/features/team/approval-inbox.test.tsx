@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 
 vi.mock('../decisions/remote', async (importOriginal) => ({ ...(await importOriginal<typeof import('../decisions/remote')>()), fetchTasks: vi.fn() }))
+vi.mock('../closure/api', async (importOriginal) => ({ ...(await importOriginal<typeof import('../closure/api')>()), fetchClosure: vi.fn(async () => ({ engagementId: 'eng-1', closure: null, readOnly: false, checklist: { entries: [], ok: true } })) }))
+vi.mock('../capabilities/endpoints', async (importOriginal) => ({ ...(await importOriginal<typeof import('../capabilities/endpoints')>()), fetchLibraryProposals: vi.fn(async () => ({ engagementId: 'eng-1', proposals: [], source: 'db' })) }))
 vi.mock('../../state/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../state/keys')>()),
   useQueryScope: () => ({ actor: 'u-owner', role: 'manager', project: 'eng-1' }),
@@ -70,6 +72,30 @@ describe('ApprovalInbox', () => {
     render(withClient(<ApprovalInbox engagementId="eng-1" />))
     expect(await screen.findByText('The list is limited')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Decisions' })).toHaveTextContent('Decisions · 1+')
+  })
+
+  it('lists the closure request and the library proposal waiting on this project, and says they are not in the Overview count yet', async () => {
+    const api_closure = await import('../closure/api');
+    const api_library = await import('../capabilities/endpoints');
+    vi.mocked(api_decisions.fetchTasks).mockResolvedValue({ tasks: [], engagements: [], counts: {}, source: 'db' } as never)
+    vi.mocked(api_closure.fetchClosure).mockResolvedValue({ engagementId: 'eng-1', closure: { id: 'cl-1', status: 'requested' }, readOnly: false, checklist: { entries: [], ok: true } } as never)
+    vi.mocked(api_library.fetchLibraryProposals).mockResolvedValue({ engagementId: 'eng-1', proposals: [{ id: 'lp-1', skillName: 'kerberoasting', status: 'proposed' }], source: 'db' } as never)
+    render(withClient(<ApprovalInbox engagementId="eng-1" />))
+    const also = await screen.findByRole('region', { name: 'Also waiting on this project' })
+    expect(within(also).getByText('Engagement closure awaiting decision')).toBeInTheDocument()
+    expect(within(also).getByText('Library proposal for kerberoasting awaiting review')).toBeInTheDocument()
+    expect(within(also).getByText(/not counted on the Overview yet/)).toBeInTheDocument()
+    expect(screen.getByText(/Runtime tool approvals wait in the AI Workspace/)).toBeInTheDocument()
+  })
+
+  it('keeps the decision count exact when only the emergency-stop list reached its cap', async () => {
+    vi.mocked(api_decisions.fetchTasks).mockResolvedValue({
+      tasks: [TASK({ refId: 'SR-1', title: 'Widen the in-scope range' }), TASK({ kind: 'active-stop', refId: 'ES-1', title: 'Emergency stop (all) is active', href: '#/project/eng-1?tab=operations' })],
+      engagements: [], counts: {}, limited: true, limitedKinds: ['active-stop'], source: 'db',
+    } as never)
+    render(withClient(<ApprovalInbox engagementId="eng-1" />))
+    expect(await screen.findByRole('region', { name: 'Decisions' })).toHaveTextContent('Decisions · 1')
+    expect(screen.getByRole('region', { name: 'Attention' })).toHaveTextContent('Attention · 1+ active emergency stop')
   })
 
   it('shows an explicit unavailable state rather than a substitute list when the source fails', async () => {

@@ -107,7 +107,7 @@ export function createOverviewService(authority: DbAuthority, actor: ActorRef): 
           href: `finding/${f.id}?engagement=${f.projectId}`,
           awaitingActor: true,
         }))
-      return { ok: true, data: { items: [...approvals, ...requests, ...reviews], limited: false } }
+      return { ok: true, data: { items: [...approvals, ...requests, ...reviews], limited: false, stopsLimited: false } }
     },
   }
 }

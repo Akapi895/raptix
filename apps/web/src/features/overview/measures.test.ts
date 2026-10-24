@@ -8,7 +8,7 @@ const FAILED: Read<never> = { isPending: false, error: new Error('down'), data: 
 
 const project = (status: string): OverviewProject => ({ id: `p-${status}`, name: status, status } as unknown as OverviewProject)
 const task = (kind: OverviewTask['kind']): OverviewTask => ({ kind, refId: `r-${kind}`, engagementId: 'eng-1', engagementName: null, title: kind, createdAt: '2026-10-24T00:00:00Z', href: 'project/eng-1', awaitingActor: true })
-const tasks = (items: OverviewTask[], limited = false): OverviewTaskList => ({ items, limited })
+const tasks = (items: OverviewTask[], limited = false): OverviewTaskList => ({ items, limited, stopsLimited: false })
 const findings = (byStatus: Record<string, number>, truncated = false): OverviewFindings => ({ total: 0, engagements: 0, engagementsWithFindings: 0, bySeverity: {}, byStatus, unresolvedBySeverity: {}, latestCreatedAt: null, truncated })
 const operations = (counts: Record<string, number> | null, truncated = false): OverviewOperations => ({ counts, recent: [], engagements: 0, truncated })
 
