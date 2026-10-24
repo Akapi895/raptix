@@ -143,3 +143,7 @@ Các mục nằm ngoài Structural, không tự triển khai ở vòng này:
 ## Gói chia sẻ
 
 `docs/audits/web-ux-audit-2026-10-23.zip` đã được tạo lại từ thư mục audit. Gói không được commit (quy ước của dự án). Gói có version và HEAD ghi trong `README.md`; bằng chứng trước vòng này không được coi là bằng chứng của HEAD mới.
+
+## Đính chính
+
+Mục D ghi Playwright Overview "4 khung nhìn, không tràn, không lỗi trang" là đúng về bố cục. Ảnh "dark" trước đó thực ra là ảnh sáng; đã sửa và kiểm lại theme tối thật (xem `VERIFICATION-LOG.md`, "Đính chính").

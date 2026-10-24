@@ -86,3 +86,11 @@ Kết quả JSON và log ở `scratchpad/ws1/final-smoke-*.json|log` (ngoài rep
 
 - Lần smoke song song đầu tiên lỗi vì đường dẫn tương đối; chạy lại đúng đường dẫn cho 56/56. Lỗi này không liên quan mã.
 - Hai file tạm do lỗi đường dẫn nằm ở `D:\Program Files\Git\` (`final-smoke-optin.log`, `final-optin-exit.txt`). Yêu cầu xóa đã bị bộ kiểm tra an toàn chặn; cần người dùng xóa tay. Xem OPEN-ISSUES.
+
+## Đính chính (phiên tiếp theo, P0.1)
+
+- Ảnh `WS4B-overview-after-desktop-dark.png` trước đó là ảnh **sáng**. Nguyên nhân: script đặt `colorScheme: 'dark'` của Playwright, nhưng ứng dụng không đọc `prefers-color-scheme`. Theme mặc định là `light`, chỉ lưu trong bộ nhớ, và đổi qua menu tài khoản (`Account menu` → `Dark`).
+- Mục WS-4B ở trên ghi "1440×900 sáng và tối" và commit `304df2e8` ghi "light and dark": **sai với ảnh dark**. Đã kiểm lại như sau:
+  - Theme tối thật: `<html>` có class `dark`, `color-scheme: dark`, nền body `rgb(11,17,32)` (sáng: `rgb(246,247,249)`).
+  - Ảnh thay thế: `evidence/WS4B-overview-after-desktop-dark.png`, `evidence/WS4B-overview-after-mobile-dark.png`. Script: `structural-execution/verify-scripts/theme-shots.mjs`.
+  - Kết quả: 4 khung nhìn (desktop/mobile × sáng/tối), không tràn ngang, không lỗi trang, menu đã đóng trước khi chụp.

@@ -59,3 +59,7 @@ Năm khối top-level (trong giới hạn sáu của plan).
 
 - Số đếm "Awaiting decisions" có thể thấp hơn trước (stop bị loại). Đã nêu trong caption.
 - Thứ tự khối đổi: người dùng quen vị trí cũ sẽ thấy khác. Có ảnh trước/sau trong báo cáo WS-4B.
+
+## Đính chính dark mode
+
+Ảnh dark trước đó là ảnh sáng (script sai, không phải lỗi ứng dụng). Ảnh dark thật đã thay bằng theme chọn qua menu tài khoản; xem `VERIFICATION-LOG.md`, mục "Đính chính".
