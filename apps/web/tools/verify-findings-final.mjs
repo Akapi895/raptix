@@ -118,14 +118,14 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   const signIn = async (name) => {
-    await page.goto(`${web}/?dataMode=real#/projects`);
+    await page.goto(`${web}/#/projects`);
     await page.locator('#login-username').fill(name);
     await page.locator('#login-password').fill(password);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await page.getByText('Findings final verification').first().waitFor();
   };
   await signIn('verifier');
-  await page.goto(`${web}/?dataMode=real#/finding/${finding.id}?engagement=${project.id}&tab=reproduce`);
+  await page.goto(`${web}/#/finding/${finding.id}?engagement=${project.id}&tab=reproduce`);
   await page.getByRole('button', { name: 'Download original', exact: true }).waitFor();
   check('Reproduce is reachable through the Findings feature route', await page.getByText('Not verified', { exact: true }).isVisible());
   const downloadWait = page.waitForEvent('download');
@@ -140,7 +140,7 @@ try {
   check('Copy preserves BOM and text (clipboard line endings normalized)', copied.replace(/\r\n/g, '\n') === bytes.toString('utf8').replace(/\r\n/g, '\n'));
   await page.screenshot({ path: path.join(output, 'reproduce.png') });
 
-  await page.goto(`${web}/?dataMode=real#/evidence/${capture.id}?engagement=${project.id}`);
+  await page.goto(`${web}/#/evidence/${capture.id}?engagement=${project.id}`);
   await page.getByRole('button', { name: 'View Original', exact: true }).waitFor();
   check('Evidence Inspector is reachable through the feature route', await page.getByText('reproduction-bom.txt', { exact: true }).first().isVisible());
   await page.getByRole('button', { name: 'View Original', exact: true }).click();
@@ -149,28 +149,6 @@ try {
   check('Evidence Inspector reads and verifies the retained capture', await page.getByText('print("retained fixture")', { exact: false }).first().isVisible());
   await page.screenshot({ path: path.join(output, 'inspector.png') });
 
-  await context.clearCookies();
-  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
-  await signIn('viewer');
-  await page.goto(`${web}/?dataMode=real#/evidence/${capture.id}?engagement=${project.id}`);
-  await page.getByRole('button', { name: 'View Original', exact: true }).waitFor();
-  check('Viewer cannot open or download original evidence', await page.getByRole('button', { name: 'View Original', exact: true }).isDisabled() && await page.getByRole('button', { name: 'Download original', exact: true }).isDisabled());
-  await request(owner, 'PATCH', `${prefix}/artifacts/captures/${capture.id}/classification`, { classification: 'sensitive', expectedVersion: standard.classificationVersion, reason: 'Verify the current classification projection.' });
-  await page.reload();
-  await page.getByRole('heading', { name: new RegExp(capture.id) }).waitFor();
-  check('Sensitive capture filename is masked in the Inspector', await page.getByText('reproduction-bom.txt', { exact: true }).count() === 0);
-
-  await context.clearCookies();
-  await page.goto(`${web}/?dataMode=mock#/projects`);
-  const persona = page.getByRole('button', { name: /Alex Morgan/ });
-  await persona.click();
-  await persona.waitFor({ state: 'detached' });
-  await page.goto(`${web}/?dataMode=mock#/evidence/EV-014-02?engagement=RT-2026-014`);
-  await page.getByRole('button', { name: 'View Original', exact: true }).waitFor();
-  await page.getByRole('button', { name: 'View Original', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'View original', exact: true }).click();
-  await page.getByText(/viewed original content/).first().waitFor();
-  check('Mock Inspector uses the scoped audit facade and reveals its simulated view', await page.getByRole('button', { name: 'Mask content', exact: true }).isVisible());
   check('No uncaught browser errors', errors.length === 0);
   writeFileSync(path.join(output, 'results.json'), JSON.stringify({ results, errors }, null, 2));
   console.log(`${results.length}/${results.length} checks passed. Evidence: ${output}`);

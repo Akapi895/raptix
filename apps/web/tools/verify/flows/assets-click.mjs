@@ -2,7 +2,7 @@
 // scope approval; a role without editScope finds the request control locked with its reason. Each step checks what the screen shows
 // after the action. A step that fails records what the page showed at that moment, so a failure can be read without a rerun. A step that
 // cannot run is recorded as failed and the next steps still run. Runs in one mode per invocation.
-// Usage: node tools/verify/flows/assets-click.mjs --mode mock|real --app <url> --fixtures <manifest.json> --out <result.json>
+// Usage: node tools/verify/flows/assets-click.mjs --mode real --app <url> --fixtures <manifest.json> --out <result.json>
 // Env (real): RAPTIX_VERIFY_USER and RAPTIX_VERIFY_PASSWORD (an admin), RAPTIX_VERIFY_REVIEWER and RAPTIX_VERIFY_REVIEWER_PASSWORD.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
@@ -15,7 +15,7 @@ const mode = arg('--mode');
 const app = arg('--app');
 const fixtures = JSON.parse(readFileSync(arg('--fixtures'), 'utf8'));
 const outFile = arg('--out');
-const project = mode === 'mock' ? 'RT-2026-014' : fixtures.project;
+const project = fixtures.project;
 const stamp = Date.now().toString(36);
 const assetName = `click-host-${stamp}`;
 const assetIdent = `${assetName}.verify.example.test`;
@@ -47,16 +47,8 @@ async function waitForRequestControl(page) {
   }, null, { timeout: 30000 });
 }
 
-async function signInMock(page, persona) {
-  await page.goto(`${app}/?dataMode=mock#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
-  const button = page.getByRole('button', { name: new RegExp(`^${persona}`) }).first();
-  await button.waitFor({ timeout: 60000 });
-  await button.click();
-  await page.locator('[aria-label="Quick role picker (demo)"]').waitFor({ state: 'detached', timeout: 30000 });
-}
-
 async function signInReal(page, username, password) {
-  await page.goto(`${app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${app}/#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', username);
   await page.fill('#login-password', password);
@@ -64,7 +56,7 @@ async function signInReal(page, username, password) {
   await page.locator('#login-username').waitFor({ state: 'detached', timeout: 30000 });
 }
 
-const route = (page, hash) => page.goto(`${app}/?dataMode=${mode}#/${hash}`, { waitUntil: 'domcontentloaded' });
+const route = (page, hash) => page.goto(`${app}/#/${hash}`, { waitUntil: 'domcontentloaded' });
 const mainText = async (page) => (await page.locator('main').first().innerText({ timeout: 10000 })).replace(/\s+/g, ' ');
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.RAPTIX_VERIFY_CHROMIUM || undefined });
@@ -73,8 +65,7 @@ try {
   const managerContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
   const manager = await managerContext.newPage();
   manager.setDefaultTimeout(30000);
-  if (mode === 'mock') await signInMock(manager, 'Alex Morgan');
-  else await signInReal(manager, process.env.RAPTIX_VERIFY_USER, process.env.RAPTIX_VERIFY_PASSWORD);
+  await signInReal(manager, process.env.RAPTIX_VERIFY_USER, process.env.RAPTIX_VERIFY_PASSWORD);
 
   await step('add asset through the form shows the saved banner', manager, async () => {
     await route(manager, `asset-new?engagement=${encodeURIComponent(project)}`);
@@ -103,35 +94,19 @@ try {
     return { ok: true, detail: 'enabled once the scope loaded' };
   });
 
-  if (mode === 'mock') {
-    await step('the mock request reports the existing pending scope request instead of success', manager, async () => {
-      await manager.getByRole('button', { name: 'Request Scope Approval' }).click();
-      await manager.getByText('Request scope approval?').first().waitFor({ timeout: 15000 });
-      await manager.locator('textarea').last().fill(`Bring ${assetName} into scope`);
-      await manager.getByRole('button', { name: 'Submit request' }).click();
-      // Adding an asset under this fixture's approved ROE already creates the pending scope request.
-      const expected = `${project} already has a pending “Scope change” request. Wait for its decision or withdraw it first.`;
-      const toast = manager.locator('div[aria-atomic="true"][aria-live="polite"]').first();
-      await manager.waitForFunction((message) => [...document.querySelectorAll('[aria-atomic="true"][aria-live="polite"]')].some((node) => node.textContent?.includes(message)), expected, { timeout: 15000 });
-      const text = await toast.innerText({ timeout: 15000 }).catch(() => '');
-      return { ok: text.includes(expected) && !text.includes('Scope approval requested.'), detail: `toast "${text.replace(/\s+/g, ' ')}"` };
-    });
-  } else {
-    await step('the real request is redirected to the Scope revisions panel, with no dialog', manager, async () => {
-      await manager.getByRole('button', { name: 'Request Scope Approval' }).click();
-      const redirected = await manager.getByText('Scope change requests are raised from the Scope revisions panel in real mode.').first().waitFor({ timeout: 15000 }).then(() => true, () => false);
-      const dialogs = await manager.getByText('Request scope approval?').count();
-      return { ok: redirected && dialogs === 0, detail: redirected ? `redirect message shown, ${dialogs} dialogs` : 'no redirect message' };
-    });
-  }
+  await step('the real request is redirected to the Scope revisions panel, with no dialog', manager, async () => {
+    await manager.getByRole('button', { name: 'Request Scope Approval' }).click();
+    const redirected = await manager.getByText('Scope change requests are raised from the Scope revisions panel in real mode.').first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+    const dialogs = await manager.getByText('Request scope approval?').count();
+    return { ok: redirected && dialogs === 0, detail: redirected ? `redirect message shown, ${dialogs} dialogs` : 'no redirect message' };
+  });
   await managerContext.close();
 
   const refusalContext = await browser.newContext({ viewport: { width: 1360, height: 960 } });
   const refusal = await refusalContext.newPage();
   refusal.setDefaultTimeout(30000);
   await step('a role without editScope finds the request control disabled, with its reason on the screen', refusal, async () => {
-    if (mode === 'mock') await signInMock(refusal, 'Riley Brooks');
-    else await signInReal(refusal, process.env.RAPTIX_VERIFY_REVIEWER, process.env.RAPTIX_VERIFY_REVIEWER_PASSWORD);
+    await signInReal(refusal, process.env.RAPTIX_VERIFY_REVIEWER, process.env.RAPTIX_VERIFY_REVIEWER_PASSWORD);
     await route(refusal, `asset-scope?engagement=${encodeURIComponent(project)}`);
     const control = refusal.getByRole('button', { name: 'Request Scope Approval' });
     await control.waitFor({ timeout: 30000 });

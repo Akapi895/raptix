@@ -3,7 +3,7 @@
  * ticket 03). The keys embed the signed-in actor (the local identity on a
  * single-user server); the console read seam (src/state/console.ts) consumes
  * the mapped list so the header and switcher observe the engagement API
- * through the same hooks as mock mode.
+ * through the same hooks.
  */
 import { useMemo } from 'react'
 import { useMutation, useQuery, type useQueryClient } from '@tanstack/react-query'

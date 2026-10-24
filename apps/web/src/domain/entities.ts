@@ -139,7 +139,7 @@ export type StopPhase = 'requested' | 'acknowledged' | 'failed' | 'unknown' | 's
 export interface StopState { scope: 'operation' | 'project' | 'workspace'; id: string; phase: StopPhase; reason: string; at: string; by: string }
 
 /* ───────────── Organization settings (ticket 56) ───────────── */
-/** Per-member overrides authored in settings; the seeded roles stay in USERS. */
+/** Per-member overrides authored in settings; the roles themselves come from the server. */
 export interface OrgMemberOverride { role?: Role; locked?: boolean; revoked?: boolean }
 export interface OrgInvite { id: string; email: string; role: Role; project: string; days: string; note: string; at: string }
 export interface OrgProfile {

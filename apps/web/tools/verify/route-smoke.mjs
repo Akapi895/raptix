@@ -1,15 +1,15 @@
-// Route smoke for the web console. For each mode it signs in (mock: a persona from the demo quick picker; real: the login
-// form, then the session endpoint) and opens every route in tools/verify/routes.json. A route passes only when the screen
+// Route smoke for the web console. It signs in through the login form, then the session endpoint, and opens every route in
+// tools/verify/routes.json. A route passes only when the screen
 // it declares is shown: a page heading (the h1 inside main) or a visible text. Script errors, render-boundary fallbacks, console
 // errors and missing expectations always fail. A failed API response (4xx/5xx under /api/) fails the route unless it is a shell
 // request listed in tools/verify/shell-requests.json for that route. A failure may be declared in tools/verify/baseline.json only
 // with the category it declares; a declared failure is reported and does not fail the run.
-// Usage: node tools/verify/route-smoke.mjs [--modes mock,real] [--routes a,b] [--fixtures-mock f.json] [--fixtures-real f.json] [--out result.json] [--discover]
+// Usage: node tools/verify/route-smoke.mjs [--routes a,b] [--fixtures-real f.json] [--out result.json] [--discover]
 //   --discover: records what each route shows in each mode and exits 0; use it to write expectations, not as a gate.
 // Env: RAPTIX_VERIFY_APP (default http://127.0.0.1:5273), RAPTIX_VERIFY_USER and RAPTIX_VERIFY_PASSWORD (real mode),
-//      RAPTIX_VERIFY_PERSONA (mock mode, default Dana Whitfield), RAPTIX_VERIFY_CHROMIUM (optional browser executable),
-//      RAPTIX_VERIFY_FLAGS (feature flags the build under test enables: "prototype" and/or "assetMap"; default "prototype",
-//      the development server's set; an empty value is a production build with no flags). A route whose flag is off must
+//      RAPTIX_VERIFY_CHROMIUM (optional browser executable),
+//      RAPTIX_VERIFY_FLAGS (feature flags the build under test enables: "assetMap"; default none,
+//      an empty value is a production build with no flags). A route whose flag is off must
 //      resolve as an unknown route, so its expectation is "Page not found" rather than its screen.
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -19,7 +19,6 @@ import { isDeclaredFailure } from './declared-failure.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const APP = process.env.RAPTIX_VERIFY_APP ?? 'http://127.0.0.1:5273';
-const PERSONA = process.env.RAPTIX_VERIFY_PERSONA ?? 'Dana Whitfield';
 const BOUNDARY_TEXT = 'This screen failed to render';
 
 const arg = (name, fallback) => {
@@ -27,10 +26,10 @@ const arg = (name, fallback) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 const discover = process.argv.includes('--discover');
-// Feature flags of the build under test. A flagged route with its flag off is judged as an unknown route in both modes.
-const FLAGS = new Set((process.env.RAPTIX_VERIFY_FLAGS ?? 'prototype').split(',').map((flag) => flag.trim()).filter(Boolean));
+// Feature flags of the build under test. A flagged route with its flag off is judged as an unknown route.
+const FLAGS = new Set((process.env.RAPTIX_VERIFY_FLAGS ?? '').split(',').map((flag) => flag.trim()).filter(Boolean));
 const UNKNOWN_ROUTE = 'Page not found';
-const modes = arg('--modes', 'mock,real').split(',');
+const modes = ['real'];
 const only = arg('--routes', null)?.split(',') ?? null;
 const outFile = arg('--out', null);
 
@@ -49,7 +48,6 @@ const isShellRequest = (response, key) => shellRequests.some((entry) => response
 const responseText = (response) => `${response.method} ${response.status} ${response.url}`;
 const realFixtures = arg('--fixtures-real', null);
 const fixtures = {
-  mock: JSON.parse(readFileSync(arg('--fixtures-mock', path.join(here, 'fixtures.mock.json')), 'utf8')),
   real: realFixtures ? JSON.parse(readFileSync(realFixtures, 'utf8')) : {},
 };
 const selected = inventory.routes.filter((entry) => !only || only.includes(entry.key));
@@ -65,20 +63,11 @@ function resolvePath(entry, mode) {
 
 const normalize = (text) => text.replace(/\s+/g, ' ').trim();
 
-async function signIn(page, mode) {
-  if (mode === 'mock') {
-    await page.goto(`${APP}/?dataMode=mock#/login`, { waitUntil: 'domcontentloaded' });
-    const picker = page.getByRole('button', { name: new RegExp(`^${PERSONA.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) }).first();
-    await picker.waitFor({ timeout: 30000 });
-    await picker.click();
-    await page.locator('[aria-label="Quick role picker (demo)"]').waitFor({ state: 'detached', timeout: 15000 });
-    await page.locator('header').getByText(PERSONA).first().waitFor({ timeout: 15000 });
-    return { persona: PERSONA };
-  }
+async function signIn(page) {
   const user = process.env.RAPTIX_VERIFY_USER;
   const password = process.env.RAPTIX_VERIFY_PASSWORD;
   if (!user || !password) throw new Error('real mode needs RAPTIX_VERIFY_USER and RAPTIX_VERIFY_PASSWORD');
-  await page.goto(`${APP}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${APP}/#/projects`, { waitUntil: 'domcontentloaded' });
   await page.locator('#login-username').waitFor({ timeout: 30000 });
   await page.fill('#login-username', user);
   await page.fill('#login-password', password);
@@ -158,7 +147,7 @@ async function runMode(browser, mode) {
   try {
     // The first load of a cold dev server compiles the modules; allow it before the sign-in steps.
     await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded', timeout: 180000 });
-    signedIn = await signIn(page, mode);
+    signedIn = await signIn(page);
   } catch (error) {
     await context.close();
     for (const entry of selected) rows[entry.key] = { status: 'fail', category: 'sign-in', detail: error.message };
@@ -166,11 +155,11 @@ async function runMode(browser, mode) {
   }
   for (const entry of selected) {
     const flagOn = entry.flag === undefined || FLAGS.has(entry.flag);
-    const expect = flagOn ? entry.expect?.[mode] : UNKNOWN_ROUTE;
+    const expect = flagOn ? entry.expect?.real : UNKNOWN_ROUTE;
     let target;
     try {
       // A route that is not registered in this build is addressed by its bare path: its placeholders need no fixture.
-      target = `${APP}/?dataMode=${mode}#/${flagOn ? resolvePath(entry, mode) : entry.path.split('?')[0]}`;
+      target = `${APP}/#/${flagOn ? resolvePath(entry, mode) : entry.path.split('?')[0]}`;
     } catch (error) {
       rows[entry.key] = { status: 'fail', category: 'fixture-missing', detail: error.message, expected: expect ?? null, flag: entry.flag ?? null, flagOn };
       continue;

@@ -1,8 +1,7 @@
 /**
  * Credentials vault tab (plan P09, Vault slice), shared by the mock and the
  * real project detail. The list carries metadata only; a reveal is an explicit
- * audited action and its value stays in this session until hidden. Mock mode
- * labels the seeded values as demo data.
+ * audited action and its value stays in this session until hidden.
  */
 import { useState, type ReactElement } from 'react'
 import { Eye, EyeOff, KeyRound, Loader2, Trash2 } from 'lucide-react'

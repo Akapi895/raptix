@@ -39,3 +39,19 @@ Scope measured on 2026-10-24: `features/*/service.ts` 7,106 lines in 33 files; `
 
 - **Keep the demo for development only:** Rejected for now. The owner's development server on port 5273 runs the demo; removing the demo means that workflow moves to the verification stack. The operator chose the full removal.
 - **Hide the demo, keep the code:** This was phase 1. It leaves the maintenance cost and the bundle size in place, so it is not the end state.
+
+## Implementation status
+
+Work is on branch `frontend` and is not pushed. The status line above stays Proposed until the owner accepts the record.
+
+- Phase 1: `8c000c9f`.
+- Step 1: `0cbcd54b`, the QA galleries, the prototype gate and the demo presentation.
+- Step 2: `84dfae6a`, `actorRef` moved to `domain/actor.ts`. The finding row and seed types were not moved: nothing live needed them, so they left with the mock findings service in step 4.
+- Steps 3 to 5: `e2203e50`, the composition root, the feature services, the mock modules and their tests. Reachability from the app entry finds no dead production module and no production import of `demo/` or mock code. These steps land as one commit because each one only typechecks with the others.
+- Step 6: the verification flows and the route smoke are real-only, the route inventory keeps only real expectations, and the flows that ran only against the mock (agents, operations, integration path) are removed. `VITE_DATA_MODE`, the `dataMode` query and the prototype gate are gone from the tools and the web guides.
+
+Open items:
+
+- Eleven feature routes (preflight, operation-schedule, operation, agent, ai-plan, ai-plan-review, ai-plan-compare, ai-branch, c2-channel, c2-session, c2-console) take their real expectation from the declared title. A stack run in discover mode has not confirmed them yet.
+- The responsive, dark-theme and a11y screen audits and the global infrastructure route suite were deleted: their assertions used demo fixtures. Rebuilding them on real fixtures is not done.
+- Verified: tsc, eslint, the boundary ratchet, the web suite (110 files) and the production build. The bundle has no demo strings.

@@ -31,7 +31,7 @@ async function step(name, run) {
 }
 
 async function signInReal(page, username, password) {
-  await page.goto(`${app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${app}/#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', username);
   await page.fill('#login-password', password);
@@ -75,7 +75,7 @@ try {
   page.setDefaultTimeout(30000);
   await signInReal(page, process.env.RAPTIX_VERIFY_USER, process.env.RAPTIX_VERIFY_PASSWORD);
 
-  await page.goto(`${app}/?dataMode=real#/project/${fixtures.project}?tab=overview`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${app}/#/project/${fixtures.project}?tab=overview`, { waitUntil: 'domcontentloaded' });
   await page.getByText('Next step', { exact: true }).waitFor();
 
   // Sidebar: the inactive project item, the section label and the breadcrumb, in both themes.
@@ -104,7 +104,7 @@ try {
   // Phone width: the top bar's direct controls must stay on screen, must not overlap, and must be large enough to press.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => document.documentElement.classList.remove('dark'));
-  await page.goto(`${app}/?dataMode=real#/project/${fixtures.project}?tab=overview`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${app}/#/project/${fixtures.project}?tab=overview`, { waitUntil: 'domcontentloaded' });
   await page.getByText('Next step', { exact: true }).waitFor();
   const topbar = await page.evaluate(() => {
     const header = document.querySelector('header');

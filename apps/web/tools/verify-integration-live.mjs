@@ -85,7 +85,7 @@ async function flow() {
   }
   const appRequire = createRequire(resolve(root, 'apps/web/package.json'))
   const viteCli = resolve(dirname(appRequire.resolve('vite/package.json')), 'bin/vite.js')
-  const vite = spawn(process.execPath, [viteCli, '--host', '127.0.0.1', '--port', '5297', '--strictPort'], { cwd: resolve(root, 'apps/web'), env: { ...process.env, RAPTIX_WEB_BACKEND_URL: state.api, VITE_DATA_MODE: 'real' }, stdio: ['ignore', 'pipe', 'pipe'] })
+  const vite = spawn(process.execPath, [viteCli, '--host', '127.0.0.1', '--port', '5297', '--strictPort'], { cwd: resolve(root, 'apps/web'), env: { ...process.env, RAPTIX_WEB_BACKEND_URL: state.api }, stdio: ['ignore', 'pipe', 'pipe'] })
   let viteLog = ''
   vite.stdout.on('data', chunk => { viteLog += chunk })
   vite.stderr.on('data', chunk => { viteLog += chunk })
@@ -106,11 +106,11 @@ async function flow() {
       state.lastCommand = { url: reply.url(), status: reply.status(), requestId: body.requestId, runId: body.runId, error: body.error }
       save()
     })
-    await page.goto('http://127.0.0.1:5297/?dataMode=real#/projects')
+    await page.goto('http://127.0.0.1:5297/#/projects')
     const project = state.engagementId ? await api(`/engagements/${state.engagementId}`) : await api('/engagements', 'POST', { name: state.slug, displayName: 'Real runtime acceptance', targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, brief: 'Authorized local workspace-only acceptance. No remote target access. Informational pipeline output only.' }, 201)
     state.engagementId = project.id; save()
     const base = `/engagements/${project.id}`
-    await page.goto(`http://127.0.0.1:5297/?dataMode=real#/ai-operator/${project.id}`)
+    await page.goto(`http://127.0.0.1:5297/#/ai-operator/${project.id}`)
     let ack = state.planningThread ? { state: 'accepted', threadId: state.planningThread } : null
     if (!ack) {
     const [threadResponse] = await Promise.all([
@@ -147,11 +147,11 @@ async function flow() {
     }, 480)
     check('Real planner filesystem output makes server readiness ready', true)
     }
-    await page.goto(`http://127.0.0.1:5297/?dataMode=real#/project/${project.id}`)
+    await page.goto(`http://127.0.0.1:5297/#/project/${project.id}`)
     await page.getByRole('tab', { name: 'Planning', exact: true }).click()
     if (!(await api(base)).handoffConfirmedAt) await Promise.all([page.waitForResponse(r => r.url().endsWith(`/engagements/${project.id}`) && r.request().method() === 'PATCH'), page.getByRole('button', { name: 'Confirm planning handoff', exact: true }).click()])
     check('Browser confirms ready handoff on actual server', !!(await api(base)).handoffConfirmedAt)
-    await page.goto(`http://127.0.0.1:5297/?dataMode=real#/ai-operator/${project.id}`)
+    await page.goto(`http://127.0.0.1:5297/#/ai-operator/${project.id}`)
     let execution = state.executionThread ? { threadId: state.executionThread } : null
     if (!execution) {
       const [execCreate] = await Promise.all([page.waitForResponse(r => r.url().endsWith('/threads') && r.request().method() === 'POST'), page.getByRole('button', { name: 'New execution thread', exact: true }).click()])
@@ -195,7 +195,7 @@ async function flow() {
     const events = frames.filter(frame => frame.event === 'run-event').map(frame => JSON.parse(frame.data))
     check('Actual native SSE replay preserves validated run/thread/engagement scope', events.length > 0 && events.every(e => isPublicStreamEvent(e) && e.engagementId === project.id && e.threadId === execution.threadId && e.streamRunId === execAck.runId))
     check('Actual native SSE replay ends with a recovery control frame', frames.some(frame => frame.event === 'control' && JSON.parse(frame.data).recoveryRequired === true))
-    await page.goto(`http://127.0.0.1:5297/?dataMode=real#/project/${project.id}`)
+    await page.goto(`http://127.0.0.1:5297/#/project/${project.id}`)
     await page.getByRole('tab', { name: 'Findings', exact: true }).click()
     await page.getByText(produced.title, { exact: true }).waitFor()
     await page.getByRole('button', { name: new RegExp('findings/FIND-WEB-ACCEPTANCE.md') }).click()

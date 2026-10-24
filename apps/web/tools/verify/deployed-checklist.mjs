@@ -88,7 +88,7 @@ try {
   });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
-  await page.goto(`${app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${app}/#/projects`, { waitUntil: 'domcontentloaded' });
   if (capabilities.mode === 'multi-user') {
     if (!process.env.RAPTIX_VERIFY_USER || !process.env.RAPTIX_VERIFY_PASSWORD) throw Error('Set RAPTIX_VERIFY_USER and RAPTIX_VERIFY_PASSWORD for this deployment');
     await page.locator('#login-username').fill(process.env.RAPTIX_VERIFY_USER);
@@ -113,7 +113,7 @@ try {
     const onError = (error) => errors.push(error.name);
     page.on('pageerror', onError);
     try {
-      await page.goto(`${app}/?dataMode=real#/${route}`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${app}/#/${route}`, { waitUntil: 'domcontentloaded' });
       await page.locator('main').first().waitFor();
       await page.locator('main h1').first().waitFor();
       await page.waitForLoadState('networkidle', { timeout: 2500 }).catch(() => {});

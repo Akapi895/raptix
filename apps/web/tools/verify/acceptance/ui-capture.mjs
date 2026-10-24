@@ -108,7 +108,7 @@ page.setDefaultTimeout(60000);
 let uncaught = [];
 page.on('pageerror', (error) => uncaught.push(String(error.message)));
 
-await page.goto(`${conn.app}/?dataMode=real#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+await page.goto(`${conn.app}/#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
 await page.locator('#login-username').waitFor();
 await page.fill('#login-username', conn.owner.username);
 await page.fill('#login-password', conn.owner.password);
@@ -126,7 +126,7 @@ async function closeMenu() {
 
 // The theme is kept in memory by the app: a same-document hash change keeps it.
 async function setTheme(theme) {
-  await page.goto(`${conn.app}/?dataMode=real#/overview`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${conn.app}/#/overview`, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Account menu' }).waitFor({ timeout: 60000 });
   await closeMenu();
   const account = page.getByRole('button', { name: 'Account menu' });
@@ -143,7 +143,7 @@ async function capture(name, hash, theme, width, height) {
   const entry = { page: name, theme, width, file, heading: '', overflowPx: 0, uncaughtErrors: 0, contrast: null, error: null };
   try {
     await page.setViewportSize({ width, height });
-    await page.goto(`${conn.app}/?dataMode=real#/${hash}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${conn.app}/#/${hash}`, { waitUntil: 'domcontentloaded' });
     await page.locator('main').first().waitFor({ timeout: 60000 }).catch(() => {});
     await page.waitForTimeout(2000);
     await closeMenu();

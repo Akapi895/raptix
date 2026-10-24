@@ -20,7 +20,7 @@ const outFile = arg('--out');
 const importIdent = `stack-host-${Date.now().toString(36)}.verify.example.test`;
 
 async function signIn(page, username, password) {
-  await page.goto(`${app}/?dataMode=real#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${app}/#/projects`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.locator('#login-username').waitFor({ timeout: 60000 });
   await page.fill('#login-username', username);
   await page.fill('#login-password', password);

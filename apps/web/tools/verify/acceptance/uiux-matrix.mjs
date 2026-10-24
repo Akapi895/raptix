@@ -38,7 +38,7 @@ try {
     const errors = [];
     page.setDefaultTimeout(60000);
     page.on('pageerror', (error) => errors.push(String(error.message)));
-    await page.goto(`${conn.app}/?dataMode=real#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+    await page.goto(`${conn.app}/#/login`, { waitUntil: 'domcontentloaded', timeout: 180000 });
     await page.locator('#login-username').waitFor({ timeout: 60000 });
     await page.fill('#login-username', conn.owner.username);
     await page.fill('#login-password', conn.owner.password);
@@ -50,7 +50,7 @@ try {
       const label = `${target.id} at ${size.id}px`;
       await recorder.check(label, async () => {
         const before = errors.length;
-        await page.goto(`${conn.app}/?dataMode=real#/${target.hash}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`${conn.app}/#/${target.hash}`, { waitUntil: 'domcontentloaded' });
         await page.locator('main h1, main [role="heading"][aria-level="1"], h1').first().waitFor({ timeout: 60000 }).catch(() => {});
         await page.waitForTimeout(800);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
