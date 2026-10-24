@@ -115,8 +115,13 @@ describe('RealProjectCreateDialog', { timeout: 15000 }, () => {
     const user = userEvent.setup()
     await user.type(await screen.findByPlaceholderText('e.g. Q1 External Assessment'), 'Q1 External Assessment')
     // The form renders as the popup opens; each field is awaited so a slow render under a parallel run is not read as missing.
-    await user.type(await screen.findByPlaceholderText('https://target.example.test or 10.20.0.0/24', undefined, { timeout: 5000 }), 'https://target.example.test')
-    await user.type(await screen.findByPlaceholderText(/Business context, known constraints/, undefined, { timeout: 5000 }), 'Authorized external assessment of the public surface with a documented scope.')
+    // The two long values are pasted in one step: typing them key by key made this test the slowest in the suite (FLAKY-1).
+    const target = await screen.findByPlaceholderText('https://target.example.test or 10.20.0.0/24', undefined, { timeout: 5000 })
+    await user.click(target)
+    await user.paste('https://target.example.test')
+    const brief = await screen.findByPlaceholderText(/Business context, known constraints/, undefined, { timeout: 5000 })
+    await user.click(brief)
+    await user.paste('Authorized external assessment of the public surface with a documented scope.')
     await user.click(await screen.findByRole('checkbox', undefined, { timeout: 5000 }))
     await user.click(await screen.findByRole('button', { name: /Create Engagement/ }, { timeout: 5000 }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/engagements', expect.objectContaining({ method: 'POST' })), { timeout: 5000 })
