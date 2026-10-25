@@ -1,5 +1,5 @@
 import { afterEach, expect, it } from 'vitest';
-import { mkdtemp, mkdir, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -9,10 +9,12 @@ import { RuntimeContextService } from '../src/services/runtime/runtime-context.j
 import { loadRuntimeConfig } from '../src/config/runtime.js';
 import { requestFingerprint } from '../src/security/request-fingerprint.js';
 import { ProjectNotFoundError } from '../src/services/projects-service.js';
+import { sandboxTokenFor } from '../src/services/runtime/sandbox-routing.js';
 
+const TEST_SANDBOX_KEY = '0123456789abcdef0123456789abcdef';
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });
-async function setup(opts: { pinnedSlug?: string; perProjectSandbox?: boolean; managed?: boolean } = {}) {
+async function setup(opts: { pinnedSlug?: string; perProjectSandbox?: boolean; managed?: boolean; sandboxKey?: string | null } = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'raptix-w06-')); roots.push(root);
   await mkdir(path.join(root, 'parity-project'));
   const project: ProjectViewModel = { id: 'owned', workspaceSlug: 'parity-project', displayName: 'Untrusted display name', targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, brief: null, handoffConfirmedAt: null, metadataState: 'verified', lifecycleStatus: 'draft', source: 'api', findingCount: null, assetCount: null, activeAgentCount: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
@@ -21,7 +23,8 @@ async function setup(opts: { pinnedSlug?: string; perProjectSandbox?: boolean; m
   const config = loadRuntimeConfig({ LANGGRAPH_API_URL: 'http://127.0.0.1:2400', RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace', ...(opts.pinnedSlug === undefined ? {} : { RAPTIX_RUNTIME_WORKSPACE_SLUG: opts.pinnedSlug }), ...(opts.perProjectSandbox ? { RAPTIX_SANDBOX_PER_PROJECT: '1' } : {}) })!;
   const planning = { version: 1, engagementId: 'owned', documents: Object.fromEntries(['roe', 'conops', 'deconfliction', 'opplan'].map(n => [n, { state: 'missing' }])), bundle: Object.fromEntries(PLANNING_DOCUMENTS.map(n => [n, 'missing'])), readiness: { state: 'blocked', reasons: ['roe:missing'], runtimeSignal: 'not_observed' } } as PlanningView;
   const runtime = { async threadExists() { return true; }, async transcripts() { return { events: [], oldestSeq: null }; }, async instanceExchange() { throw new Error('not used in this test'); }, async catalog() { control.calls++; return control.graphs; }, async thread() { return { thread_id: 'thread', metadata: control.metadata }; }, async state() { return { values: control.values, graphId: control.stateGraph ?? bound.assistantId }; } };
-  const service = new RuntimeContextService({ config, workspaceRoot: root,
+  const sandboxKey = opts.sandboxKey === undefined ? TEST_SANDBOX_KEY : opts.sandboxKey ?? undefined;
+  const service = new RuntimeContextService({ config, ...(sandboxKey === undefined ? {} : { sandboxKey }),
     projects: { async getProject(user, id) { if (user !== 'local' || id !== project.id) throw new ProjectNotFoundError(); return project; }, async getPlanning() { return planning; } },
     ownership: { async getBinding(user, id, thread, expected) { if (user !== 'local' || id !== 'owned' || thread !== 'thread') throw new ProjectNotFoundError(); if (expected?.runtimeConfigHash && expected.runtimeConfigHash !== control.proof) throw Object.assign(new Error('Persisted proof mismatch'), { statusCode: 409 }); return bound; }, async prepareBinding() { return requestFingerprint({ engagementId: project.id, workspaceSlug: project.workspaceSlug, targetType: project.targetType, targetValue: project.targetValue, authorizationConfirmed: project.authorizationConfirmed, assistantId: bound.assistantId, kind: bound.kind }); } },
     runtime,
@@ -48,7 +51,22 @@ it('routes a project run to its own sandbox host when per-project sandboxes are 
   const { service } = await setup({ perProjectSandbox: true });
   const context = await service.resolve('local', 'owned', { kind: 'planning' });
   expect(context.configurable.sandbox_url).toBe('http://sbx-parity-project:9999');
-  expect(context.configurable.workspace_path).toBe('/workspace/parity-project');
+  expect(context.configurable.workspace_path).toBe('/workspace');
+  // The run authenticates to its own project's sandbox with that project's token and no other.
+  expect(context.configurable.sandbox_token).toBe(sandboxTokenFor(TEST_SANDBOX_KEY, 'parity-project'));
+  expect(JSON.stringify(context.publicView)).not.toContain(sandboxTokenFor(TEST_SANDBOX_KEY, 'parity-project'));
+});
+it('keeps the sandbox token out of the runtime identity, so rotating the key does not rebind existing threads', async () => {
+  const { service } = await setup({ perProjectSandbox: true });
+  const rotated = await setup({ perProjectSandbox: true, sandboxKey: 'fedcba9876543210fedcba9876543210' });
+  const first = await service.resolve('local', 'owned', { kind: 'planning' });
+  const second = await rotated.service.resolve('local', 'owned', { kind: 'planning' });
+  expect(second.runtimeConfigHash).toBe(first.runtimeConfigHash);
+  expect(second.configurable.sandbox_token).not.toBe(first.configurable.sandbox_token);
+});
+it('refuses a per-project run when the sandbox key is not configured instead of sending it unauthenticated', async () => {
+  const { service } = await setup({ perProjectSandbox: true, sandboxKey: null });
+  await expect(service.resolve('local', 'owned', { kind: 'planning' })).rejects.toMatchObject({ statusCode: 503 });
 });
 it('uses the managed sandbox endpoint instead of deployment-wide slug routing and pinning', async () => {
   const { service, control } = await setup({ managed: true, perProjectSandbox: true, pinnedSlug: 'legacy-project' });
@@ -118,7 +136,7 @@ it('requires a new owned thread when topology/language proof changes and refuses
   config.pinnedSlug = 'other-project';
   await expect(service.resolve('local', 'owned', { kind: 'planning' })).rejects.toMatchObject({ code: 'conflict' });
   config.pinnedSlug = 'parity-project';
-  expect((await service.resolve('local', 'owned', { kind: 'planning' })).configurable.workspace_path).toBe('/workspace/parity-project');
+  expect((await service.resolve('local', 'owned', { kind: 'planning' })).configurable.workspace_path).toBe('/workspace');
 });
 it('accepts observed runtime reserved-key filtering and empty optional checkpoint defaults', async () => {
   const { service, control } = await setup();
@@ -128,12 +146,6 @@ it('accepts observed runtime reserved-key filtering and empty optional checkpoin
   delete control.metadata.assistant_id;
   control.values = { ...context.configurable, kg_engagement: '', language: '' };
   expect((await service.resolve('local', 'owned', { kind: 'planning', threadId: 'thread' })).publicView.threadVerified).toBe(true);
-});
-it('rejects same-root cross-project workspace junctions before emitting runtime configuration', async () => {
-  const { service, root } = await setup();
-  await rm(path.join(root, 'parity-project'), { recursive: true });
-  await mkdir(path.join(root, 'other-project')); await symlink(path.join(root, 'other-project'), path.join(root, 'parity-project'), 'junction');
-  await expect(service.resolve('local', 'owned', { kind: 'planning' })).rejects.toMatchObject({ code: 'conflict' });
 });
 it('validates explicit runtime configuration and never infers runtime paths from Windows paths', () => {
   expect(loadRuntimeConfig({})).toBeUndefined();

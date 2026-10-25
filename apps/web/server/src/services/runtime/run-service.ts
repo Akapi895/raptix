@@ -327,7 +327,7 @@ export class RunService {
     const { values, graphId } = await reads.state(thread);
     const messages = Array.isArray(values.messages) ? values.messages.length : -1;
     if (Object.keys(values).length === 0 || messages < 1 || messages !== expectedMessageCount) throw conflict();
-    const fields = Object.entries(trusted.configurable).filter(([k]) => k !== 'sandbox_url' && k !== 'hitl_enabled');
+    const fields = Object.entries(trusted.configurable).filter(([k]) => k !== 'sandbox_url' && k !== 'sandbox_token' && k !== 'hitl_enabled');
     if (graphId !== binding.assistantId || fields.some(([k, v]) => values[k] !== v)) throw conflict();
     await ownership.rebindThreadConfig(user, engagement, { threadId: thread, expectedRuntimeConfigHash: previousRuntimeConfigHash, contextHash: trusted.bindingHash, runtimeConfigHash: trusted.runtimeConfigHash });
     // Best-effort: the binding has already moved, so a logging failure here must not be reported as a failed rebind.

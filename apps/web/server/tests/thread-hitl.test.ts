@@ -99,7 +99,7 @@ async function runtimeSetup(initialHitl: boolean | undefined) {
   const control = { metadata: {} as Record<string, unknown> };
   const config = loadRuntimeConfig({ LANGGRAPH_API_URL: 'http://127.0.0.1:2400', RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace' })!;
   const planning = { version: 1, engagementId: 'owned', documents: Object.fromEntries(['roe', 'conops', 'deconfliction', 'opplan'].map(n => [n, { state: 'missing' }])), bundle: Object.fromEntries(PLANNING_DOCUMENTS.map(n => [n, 'missing'])), readiness: { state: 'blocked', reasons: ['roe:missing'], runtimeSignal: 'not_observed' } } as PlanningView;
-  const service = new RuntimeContextService({ config, workspaceRoot: root,
+  const service = new RuntimeContextService({ config,
     projects: { async getProject(user: string, id: string) { if (user !== 'local' || id !== project.id) throw new ProjectNotFoundError(); return project; }, async getPlanning() { return planning; } },
     ownership: { async getBinding(user: string, id: string, thread: string) { if (user !== 'local' || id !== 'owned' || thread !== 'thread') throw new ProjectNotFoundError(); return bound.current; }, async prepareBinding() { return requestFingerprint({ engagementId: project.id, workspaceSlug: project.workspaceSlug, targetType: project.targetType, targetValue: project.targetValue, authorizationConfirmed: project.authorizationConfirmed, assistantId: 'soundwave', kind: 'planning' }); } },
     runtime: { async instanceExchange() { throw new Error('not used in this test'); }, async catalog() { return ['soundwave', 'decepticon', 'raptix']; }, async thread() { return { thread_id: 'thread', metadata: control.metadata }; }, async state() { return { values: {}, graphId: 'soundwave' }; } },
