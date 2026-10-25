@@ -31,6 +31,7 @@ from raptix.core.subagent_streaming import (
     MAX_SUBAGENT_CONSECUTIVE_FAILURES,
     PRIVATE_CHILD_STATE_KEYS,
 )
+from raptix.execution.backends.project_files import project_files_for_runtime
 from raptix.execution.session.event_log import EventLog, EventType
 from raptix.execution.session.instance_mailbox import default_mailbox
 from raptix.middleware.fanout_admission import (
@@ -221,7 +222,8 @@ class DispatchMiddleware(SubAgentMiddleware):
         cancelled = [
             source
             for source, row in ledger.items()
-            if row.get("fingerprint") == fingerprint and row.get("outcome", {}).get("status") == "cancelled"
+            if row.get("fingerprint") == fingerprint
+            and row.get("outcome", {}).get("status") == "cancelled"
         ]
         granted = grant.source_dispatch_id if grant else None
         if any(source != granted for source in cancelled):
@@ -466,18 +468,16 @@ class DispatchMiddleware(SubAgentMiddleware):
         try:
             state = getattr(runtime, "state", None) or {}
             get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
-            workspace = str(
-                get("workspace_path") or os.environ.get("RAPTIX_WORKSPACE_PATH", "") or "/workspace"
-            )
             engagement = str(
                 get("engagement_name")
                 or os.environ.get("RAPTIX_ENGAGEMENT_ID", "")
                 or "default-engagement"
             )
-            key = (workspace, engagement)
+            files = project_files_for_runtime(runtime)
+            key = (files.key, engagement)
             event_log = self._event_logs.get(key)
             if event_log is None:
-                event_log = EventLog.for_workspace(workspace, engagement)
+                event_log = EventLog.for_project(files, engagement)
                 self._event_logs[key] = event_log
             event_log.append(
                 EventType.DISPATCH_ADMISSION,
@@ -505,7 +505,9 @@ class DispatchMiddleware(SubAgentMiddleware):
     ) -> Command:
         # The operator's cancel decides the observed outcome even when the attempt also failed at the same boundary,
         # so the ledger and the mailbox agree on what ended the attempt.
-        cancelled = isinstance(error, InstanceCancellationRequested) or self._cancel_requested(context)
+        cancelled = isinstance(error, InstanceCancellationRequested) or self._cancel_requested(
+            context
+        )
         if error is not None and not cancelled:
             context.failures.append(
                 DispatchFailureOutcome(
@@ -524,10 +526,12 @@ class DispatchMiddleware(SubAgentMiddleware):
             updates = {k: v for k, v in updates.items() if k not in _PARENT_PRIVATE_STATE_KEYS}
         if cancelled:
             outcome = {"status": "cancelled", "terminal_for_this_dispatch": False}
-            updates["messages"] = [ToolMessage(
-                content="This dispatch attempt was cancelled cooperatively by the operator.",
-                tool_call_id=runtime.tool_call_id or context.dispatch_id,
-            )]
+            updates["messages"] = [
+                ToolMessage(
+                    content="This dispatch attempt was cancelled cooperatively by the operator.",
+                    tool_call_id=runtime.tool_call_id or context.dispatch_id,
+                )
+            ]
         elif context.failures:
             outcome = context.failures[-1].model_dump(mode="json")
             updates["messages"] = [
@@ -608,7 +612,9 @@ class DispatchMiddleware(SubAgentMiddleware):
             finally:
                 self._end_instance(context, interrupted=isinstance(error, asyncio.CancelledError))
                 active_dispatch.reset(token)
-                self._record_outcome(key, ok=error is None or isinstance(error, InstanceCancellationRequested))
+                self._record_outcome(
+                    key, ok=error is None or isinstance(error, InstanceCancellationRequested)
+                )
                 self._release(key)
 
         async def atask(
@@ -645,7 +651,9 @@ class DispatchMiddleware(SubAgentMiddleware):
             finally:
                 self._end_instance(context, interrupted=isinstance(error, asyncio.CancelledError))
                 active_dispatch.reset(token)
-                self._record_outcome(key, ok=error is None or isinstance(error, InstanceCancellationRequested))
+                self._record_outcome(
+                    key, ok=error is None or isinstance(error, InstanceCancellationRequested)
+                )
                 self._release(key)
 
         return StructuredTool.from_function(

@@ -14,6 +14,8 @@ from langchain.tools.tool_node import ToolCallRequest
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import StructuredTool
 
+from raptix.execution.backends.project_files import ProjectFileUnavailable
+from raptix.middleware import hitl as hitl_mod
 from raptix.middleware.hitl import (
     ApprovalDecision,
     ApprovalPolicyRule,
@@ -21,6 +23,7 @@ from raptix.middleware.hitl import (
     FileBackedApprovalTransport,
     HITLApprovalMiddleware,
     InProcessApprovalTransport,
+    ProjectApprovalTransport,
     _redact,
 )
 
@@ -443,40 +446,102 @@ def test_resolve_transport_uses_static_when_set():
     assert mw._resolve_transport(_Req("x", {})) is t
 
 
-def test_resolve_transport_from_request_workspace(tmp_path: Path):
-    """With no static transport, the workspace is resolved PER REQUEST from
-    ``request.state['workspace_path']`` — not from build-time env."""
-    mw = HITLApprovalMiddleware(policy=[], transport=None)
-    req = _Req("x", {}, state={"workspace_path": str(tmp_path)})
-    transport = mw._resolve_transport(req)
-    approvals = tmp_path / "approvals"
-    assert approvals.is_dir()
-    assert transport._requests_path == approvals / "requests.jsonl"
-    assert transport._decisions_path == approvals / "decisions.jsonl"
-    # Cached by workspace: same request workspace -> same transport object.
-    assert mw._resolve_transport(req) is transport
+@pytest.fixture
+def project_on_disk(monkeypatch, project_files_at):
+    """The approval transport reaches the project through its sandbox. A folder on disk stands in; tests choose it."""
+    root = {"path": None}
+
+    def files_for_runtime(_runtime):
+        return project_files_at(root["path"])
+
+    monkeypatch.setattr(hitl_mod, "project_files_for_runtime", files_for_runtime)
+    return root
 
 
-def test_resolve_transport_distinct_per_workspace(tmp_path: Path):
-    """A long-lived server serving many engagements gets a distinct transport
-    per workspace, so approvals land in the correct workspace."""
-    mw = HITLApprovalMiddleware(policy=[], transport=None)
-    ws_a = tmp_path / "eng-a"
-    ws_b = tmp_path / "eng-b"
-    ta = mw._resolve_transport(_Req("x", {}, state={"workspace_path": str(ws_a)}))
-    tb = mw._resolve_transport(_Req("x", {}, state={"workspace_path": str(ws_b)}))
-    assert ta is not tb
-    assert ta._requests_path == ws_a / "approvals" / "requests.jsonl"
-    assert tb._requests_path == ws_b / "approvals" / "requests.jsonl"
-
-
-def test_resolve_transport_falls_back_to_env(tmp_path: Path, monkeypatch):
-    """When the request carries no ``workspace_path``, fall back to
-    ``RAPTIX_WORKSPACE_PATH``."""
-    monkeypatch.setenv("RAPTIX_WORKSPACE_PATH", str(tmp_path))
+def test_resolve_transport_writes_approvals_into_the_project(
+    tmp_path: Path, project_on_disk
+) -> None:
+    """With no static transport, approvals go to the project's own approvals folder, reached per request."""
+    project_on_disk["path"] = tmp_path
     mw = HITLApprovalMiddleware(policy=[], transport=None)
     transport = mw._resolve_transport(_Req("x", {}))
-    assert transport._requests_path == tmp_path / "approvals" / "requests.jsonl"
+    assert isinstance(transport, ProjectApprovalTransport)
+    transport.submit(_approval_request("r-project"))
+    assert "r-project" in (tmp_path / "approvals" / "requests.jsonl").read_text(encoding="utf-8")
+    # Cached by project: the same project resolves to the same transport object.
+    assert mw._resolve_transport(_Req("x", {})) is transport
+
+
+def test_resolve_transport_distinct_per_project(tmp_path: Path, project_on_disk) -> None:
+    """A long-lived server serving many projects gets a distinct transport per project."""
+    mw = HITLApprovalMiddleware(policy=[], transport=None)
+    project_on_disk["path"] = tmp_path / "eng-a"
+    ta = mw._resolve_transport(_Req("x", {}))
+    project_on_disk["path"] = tmp_path / "eng-b"
+    tb = mw._resolve_transport(_Req("x", {}))
+    assert ta is not tb
+    ta.submit(_approval_request("r-a"))
+    tb.submit(_approval_request("r-b"))
+    assert "r-a" in (tmp_path / "eng-a" / "approvals" / "requests.jsonl").read_text(
+        encoding="utf-8"
+    )
+    assert "r-b" in (tmp_path / "eng-b" / "approvals" / "requests.jsonl").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_resolve_transport_without_a_sandbox_endpoint_is_unavailable(monkeypatch) -> None:
+    """No environment fallback: a run without its project sandbox cannot request an approval."""
+    monkeypatch.setenv("RAPTIX_WORKSPACE_PATH", "/tmp/should-not-be-used")
+    mw = HITLApprovalMiddleware(policy=[], transport=None)
+    with pytest.raises(ProjectFileUnavailable):
+        mw._resolve_transport(_Req("x", {}))
+
+
+def test_project_transport_returns_the_decision_written_by_the_console(
+    tmp_path: Path, project_files_at
+) -> None:
+    files = project_files_at(tmp_path)
+    transport = ProjectApprovalTransport(files, poll_interval=0.01)
+    transport.submit(_approval_request("r-decided"))
+    (tmp_path / "approvals").mkdir(exist_ok=True)
+    (tmp_path / "approvals" / "decisions.jsonl").write_text(
+        json.dumps(
+            {
+                "kind": "approval_decision",
+                "request_id": "r-decided",
+                "action": "allow",
+                "decided_at": 1.0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    decision = transport.wait_for_decision("r-decided", timeout=2.0)
+    assert decision is not None and decision.action == "allow"
+
+
+def test_project_transport_refuses_when_the_sandbox_is_unreachable(
+    tmp_path: Path, project_files_at
+) -> None:
+    files = project_files_at(tmp_path)
+    files.unavailable = True
+    transport = ProjectApprovalTransport(files, poll_interval=0.01)
+    with pytest.raises(ProjectFileUnavailable):
+        transport.submit(_approval_request("r-down"))
+
+
+def _approval_request(request_id: str) -> ApprovalRequest:
+    return ApprovalRequest(
+        request_id=request_id,
+        engagement_name="eng",
+        agent_name="recon",
+        tool_name="bash",
+        tool_args_redacted={"cmd": "id"},
+        matched_rule=ApprovalPolicyRule(tool_pattern="bash"),
+        reason="audit",
+        created_at=time.time(),
+    )
 
 
 class _RunRequest(_Req):

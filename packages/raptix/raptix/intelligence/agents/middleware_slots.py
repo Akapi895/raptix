@@ -174,17 +174,12 @@ def _make_tried_edges(*, role: str, **_: Any):
 
 
 def _make_roe_guardrail(*, role: str, **_: Any):
-    """Build the RoE guardrail middleware with a per-engagement sink.
+    """Build the RoE guardrail middleware.
 
-    The sink path defaults to ``<workspace>/audit/roe-decisions.jsonl``
-    and is resolved lazily on first tool call (workspace_path is not
-    yet hydrated at slot-build time). Operators can pin a path with
-    ``RAPTIX_ROE_AUDIT_PATH``.
+    Each project's audit ledger lives in that project's sandbox and is resolved per
+    tool call (ADR-0102). Operators can pin a local ledger with ``RAPTIX_ROE_AUDIT_PATH``.
     """
-    import os
-
-    sink = build_default_sink(os.environ.get("RAPTIX_WORKSPACE_PATH"))
-    return RoEGuardrailMiddleware(sink=sink)
+    return RoEGuardrailMiddleware(sink=build_default_sink())
 
 
 def _make_untrusted_output(*, role: str, **_: Any):
