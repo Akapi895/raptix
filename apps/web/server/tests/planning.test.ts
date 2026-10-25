@@ -1,9 +1,11 @@
 import { afterEach, expect, it } from 'vitest';
-import { mkdtemp, mkdir, writeFile, rm, symlink, readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { buildApp } from '../src/app.js';
 import { ProjectsService, type ProjectRepositoryPort, type ProjectRecord } from '../src/services/projects-service.js';
+import { recordingSandboxes } from './support/project-sandboxes.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import { isPlanningView } from '@raptix/web-contracts';
 
 let root: string;
@@ -11,14 +13,14 @@ afterEach(async () => { if (root) await rm(root, { recursive: true, force: true 
 async function setup() {
   root = await mkdtemp(path.join(tmpdir(), 'raptix-w04-'));
   await mkdir(path.join(root, 'test-project', 'plan'), { recursive: true });
-  const record: ProjectRecord = { id: 'owned', name: 'test-project', workspaceSlug: 'test-project', displayName: null, targetType: 'web_url', targetValue: 'http://authorized.invalid', authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, workspacePath: '/ignored', createdAt: new Date(), updatedAt: new Date() };
+  const record: ProjectRecord = { id: 'owned', name: 'test-project', workspaceSlug: 'test-project', displayName: null, targetType: 'web_url', targetValue: 'http://authorized.invalid', authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, createdAt: new Date(), updatedAt: new Date() };
   const repository: ProjectRepositoryPort = {
     async list() { return [record]; },
     async findById(owner, id) { return owner === record.userId && id === record.id ? record : null; },
     async allocateWorkspaceSlug() { throw new Error('Read-only test'); },
     async create() { throw new Error('Read-only test'); }, async update() { throw new Error('Read-only test'); },
   };
-  const app = await buildApp({ projectsService: new ProjectsService({ repository, workspaceRoot: root, identity: { id: 'local', mode: 'local-single-user' } }) });
+  const app = await buildApp({ projectsService: new ProjectsService({ repository, files: new LocalProjectFiles(root), identity: { id: 'local', mode: 'local-single-user' }, sandboxes: recordingSandboxes() }) });
   return { app, record, plan: path.join(root, 'test-project', 'plan') };
 }
 
@@ -83,20 +85,14 @@ it('matches the eight-document handoff policy without requiring OPPLAN and block
   } finally { await app.close(); }
 });
 
-it('rejects cross-project junctions and bounded non-regular documents without modifying them', async () => {
+it('bounds oversized and non-regular documents without modifying them', async () => {
   const { app, plan } = await setup();
-  const elsewhere = path.join(root, 'other-project');
-  await mkdir(elsewhere); await writeFile(path.join(elsewhere, 'roe.json'), 'sensitive');
-  await rm(plan, { recursive: true }); await symlink(elsewhere, plan, 'junction');
   try {
-    const response = await app.inject('/api/engagements/owned/plan-docs');
-    expect(response.statusCode).toBe(200); expect(response.json().bundle.roe).toBe('unavailable');
-    expect(response.body).not.toContain('sensitive');
-    await rm(plan); await mkdir(plan);
+    await rm(plan, { recursive: true }); await mkdir(plan);
     await writeFile(path.join(plan, 'roe.json'), ' '.repeat(1024 * 1024 + 1));
     await mkdir(path.join(plan, 'conops.json'));
     const bounded = (await app.inject('/api/engagements/owned/plan-docs')).json();
     expect(bounded.bundle.roe).toBe('invalid'); expect(bounded.bundle.conops).toBe('unavailable');
-    expect(await readFile(path.join(elsewhere, 'roe.json'), 'utf8')).toBe('sensitive');
+    expect(await readFile(path.join(plan, 'roe.json'), 'utf8')).toHaveLength(1024 * 1024 + 1);
   } finally { await app.close(); }
 });

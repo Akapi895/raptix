@@ -1,10 +1,9 @@
-import { realpath, readFile, readdir, stat, open, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import * as path from 'node:path';
 import type { ArtifactContentView, ArtifactsView, CaptureClassification, ClassifyCaptureInput, RetainCaptureInput, RetainedCaptureView, RetainedCapturesView, WorkspaceEvidenceImportView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectPolicyError } from '../security/project-policy.js';
-import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
+import type { ProjectFiles } from './project-files.js';
 import { ProjectNotFoundError } from './projects-service.js';
 import { ProjectApiError } from './projects-service.js';
 import { requireEngagementAccess, type MemberRole } from '../auth/membership-policy.js';
@@ -12,11 +11,12 @@ import { assertEngagementOpen } from './closure-service.js';
 
 /**
  * W12 artifact browser: engagement-scoped, allowlisted, non-recursive file
- * listing and UTF-8 text/JSON content with a tightened boundary the legacy API
- * lacked — realpath/symlink containment on every folder and file, a read size
- * cap, and strict UTF-8 decoding (binary content is rejected, never guessed).
- * Paths are addressed as `<folder>/<file>` relative to the engagement
- * workspace; the engagement is identified by its owned API id, not by name.
+ * listing and UTF-8 text/JSON content with a read size cap and strict UTF-8
+ * decoding (binary content is rejected, never guessed). Files are read and
+ * written through the project's own sandbox (ADR-0102), so they never sit on a
+ * volume the API mounts.
+ * Paths are addressed as `<folder>/<file>` relative to the project's /workspace;
+ * the engagement is identified by its owned API id, not by name.
  * ``plan`` is included so operators can inspect the planning documents
  * (roe/conops/…) the planning panel validates.
  */
@@ -86,23 +86,21 @@ export function captureOriginalReadable(classification: string, role: MemberRole
   return (classification === 'standard' && role !== 'viewer') || (classification === 'sensitive' && privilegedCaptureRole(role))
 }
 
-export class ArtifactsService {
-  public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
+const CLEANUP_FAILED = 'Capture metadata was not committed and temporary-file cleanup failed; reconcile the project sandbox before retrying.';
 
-  private async workspaceDir(userId: string, engagementId: string): Promise<string> {
+export class ArtifactsService {
+  public constructor(private readonly db: PrismaClient, private readonly files: ProjectFiles) {}
+
+  private async workspaceSlug(userId: string, engagementId: string): Promise<string> {
     // Ownership-scoped first; a non-owner member resolves through the persisted
-    // membership gate before the workspace path is disclosed at all.
+    // membership gate before the workspace is touched at all.
     let project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
     if (project === null) {
       await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
       project = await this.db.engagement.findFirst({ where: { id: engagementId } });
       if (project === null) throw new ProjectNotFoundError();
     }
-    return resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
-  }
-
-  private async safeRealPath(target: string): Promise<string | null> {
-    try { return await realpath(target); } catch { return null; }
+    return project.workspaceSlug;
   }
 
   private toCaptureView(row: RetainedCaptureRow, role: MemberRole): RetainedCaptureView {
@@ -141,32 +139,17 @@ export class ArtifactsService {
   }
 
   public async list(userId: string, engagementId: string): Promise<ArtifactsView> {
-    const dir = await this.workspaceDir(userId, engagementId);
-    const realDir = (await this.safeRealPath(dir)) ?? dir;
+    const slug = await this.workspaceSlug(userId, engagementId);
     const folders: ArtifactsView['folders'] = [];
     for (const folder of ARTIFACT_FOLDERS) {
-      const folderDir = path.join(dir, folder);
-      const realFolder = await this.safeRealPath(folderDir);
-      if (realFolder === null || realFolder !== realDir && !realFolder.startsWith(realDir + path.sep)) continue;
-      let entries;
-      try {
-        entries = await readdir(realFolder, { withFileTypes: true });
-      } catch (error) {
-        // W19: a missing folder is an allowed empty outcome; any other
-        // filesystem failure must surface instead of faking an empty list.
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
-        throw new ProjectApiError(503, 'The workspace artifact listing is unavailable.');
-      }
+      const entries = await this.files.list(slug, folder);
+      if (entries === null) continue;
       const files: ArtifactsView['folders'][number]['files'] = [];
       for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-        if (!entry.isFile()) continue;
+        if (entry.isDirectory) continue;
         if (folder === 'findings' && entry.name.startsWith('capture-')) continue;
-        if (folder === 'findings' && entry.name.startsWith('capture-')) continue;
-        const info = await stat(path.join(realFolder, entry.name)).catch((statError) => {
-          if ((statError as NodeJS.ErrnoException).code === 'ENOENT') return null;
-          throw new ProjectApiError(503, 'The workspace artifact listing is unavailable.');
-        });
-        if (!info || !info.isFile()) continue;
+        const info = await this.files.stat(slug, `${folder}/${entry.name}`);
+        if (info === null || !info.isFile) continue;
         files.push({ name: entry.name.slice(0, 200), path: `${folder}/${entry.name}`, sizeBytes: info.size });
         if (files.length >= MAX_FILES_PER_FOLDER) break;
       }
@@ -175,25 +158,19 @@ export class ArtifactsService {
     return { engagementId, folders, source: 'workspace' };
   }
 
-  private async artifactFile(userId: string, engagementId: string, rawPath: string): Promise<string> {
-    const rawSegments = rawPath.split('/');
-    if (rawSegments.some(segment => segment.length === 0 || segment === '.' || segment === '..')) {
+  /** The validated `<folder>/<file>` path of a regular file in the project, or a not-found error. */
+  private async artifactFile(userId: string, engagementId: string, rawPath: string): Promise<{ slug: string; rel: string }> {
+    const segments = rawPath.split('/');
+    if (segments.some(segment => segment.length === 0 || segment === '.' || segment === '..')) {
       throw new ProjectPolicyError('bad_request', 'Invalid artifact path');
     }
-    const segments = rawSegments;
     if (segments.length !== 2 || !(ARTIFACT_FOLDERS as readonly string[]).includes(segments[0]!)) {
       throw new ProjectPolicyError('bad_request', 'Invalid artifact path');
     }
-    const dir = await this.workspaceDir(userId, engagementId);
-    const realDir = (await this.safeRealPath(dir)) ?? dir;
-    const target = path.resolve(dir, ...segments);
-    if (target !== dir && !target.startsWith(dir + path.sep)) throw new ProjectPolicyError('bad_request', 'Invalid artifact path');
-    const realTarget = await this.safeRealPath(target);
-    if (realTarget === null) throw new ProjectPolicyError('not_found', 'Artifact not found');
-    if (!realTarget.startsWith(realDir + path.sep)) throw new ProjectPolicyError('bad_request', 'Invalid artifact path');
-    const info = await stat(realTarget).catch(() => null);
-    if (!info || !info.isFile()) throw new ProjectPolicyError('not_found', 'Artifact not found');
-    return realTarget;
+    const slug = await this.workspaceSlug(userId, engagementId);
+    const info = await this.files.stat(slug, rawPath);
+    if (info === null || !info.isFile) throw new ProjectPolicyError('not_found', 'Artifact not found');
+    return { slug, rel: rawPath };
   }
 
   public async content(userId: string, engagementId: string, rawPath: string): Promise<ArtifactContentView> {
@@ -205,17 +182,14 @@ export class ArtifactsService {
       const content = decodeRetainedText(bytes.subarray(0, MAX_CONTENT_BYTES), truncated);
       return { engagementId, path: rawPath, content, mediaType: row.mediaType === 'application/json' ? 'json' : 'text', sizeBytes: row.sizeBytes, truncated, source: 'workspace' };
     }
-    const realTarget = await this.artifactFile(userId, engagementId, rawPath);
-    const info = await stat(realTarget);
+    const { slug, rel } = await this.artifactFile(userId, engagementId, rawPath);
+    const info = await this.files.stat(slug, rel);
+    if (info === null) throw new ProjectPolicyError('not_found', 'Artifact not found');
+    const data = await this.files.read(slug, rel);
+    if (data === null) throw new ProjectPolicyError('not_found', 'Artifact not found');
     const truncated = info.size > MAX_CONTENT_BYTES;
-    const file = await open(realTarget, 'r');
-    let content: string;
-    try {
-      const buffer = Buffer.alloc(Math.min(info.size, MAX_CONTENT_BYTES));
-      const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
-      content = decodeRetainedText(buffer.subarray(0, bytesRead), truncated);
-    } finally { await file.close(); }
-    const isJson = realTarget.toLowerCase().endsWith('.json');
+    const content = decodeRetainedText(data.subarray(0, MAX_CONTENT_BYTES), truncated);
+    const isJson = rel.toLowerCase().endsWith('.json');
     return {
       engagementId,
       path: rawPath,
@@ -234,17 +208,11 @@ export class ArtifactsService {
   public async workspaceEvidenceFiles(userId: string, engagementId: string, producerId?: string): Promise<string[]> {
     if (producerId !== undefined && !/^FIND-[A-Za-z0-9_-]{1,64}$/.test(producerId)) return [];
     await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
-    const dir = await this.workspaceDir(userId, engagementId);
-    const folder = path.join(dir, 'findings', 'evidence');
-    let entries;
-    try {
-      entries = await readdir(folder, { withFileTypes: true });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
-      throw new ProjectApiError(503, 'The workspace evidence listing is unavailable.');
-    }
+    const slug = await this.workspaceSlug(userId, engagementId);
+    const entries = await this.files.list(slug, 'findings/evidence');
+    if (entries === null) return [];
     return entries
-      .filter((entry) => entry.isFile() && (producerId === undefined || entry.name.startsWith(`${producerId}_`)))
+      .filter((entry) => !entry.isDirectory && (producerId === undefined || entry.name.startsWith(`${producerId}_`)))
       .map((entry) => `findings/evidence/${entry.name}`)
       .sort()
       .slice(0, 50);
@@ -263,11 +231,7 @@ export class ArtifactsService {
     const skipped: { path: string; reason: string }[] = [];
     const paths = await this.workspaceEvidenceFiles(userId, engagementId, producerId);
     if (paths.length === 0) return { engagementId, captures, skipped };
-    const workspace = await this.workspaceDir(userId, engagementId);
-    const root = await realpath(workspace);
-    const realFindings = await realpath(path.join(workspace, 'findings'));
-    if (!realFindings.startsWith(root + path.sep)) throw new ProjectPolicyError('bad_request', 'Invalid capture folder');
-    const realEvidence = await realpath(path.join(realFindings, 'evidence'));
+    const slug = await this.workspaceSlug(userId, engagementId);
     for (const artifactPath of paths) {
       const filename = path.basename(artifactPath);
       const extension = path.extname(filename).slice(1).toLowerCase();
@@ -276,17 +240,20 @@ export class ArtifactsService {
         skipped.push({ path: artifactPath, reason: 'unsupported file type' });
         continue;
       }
-      const source = await realpath(path.join(realEvidence, filename)).catch(() => null);
-      if (source === null || !source.startsWith(realEvidence + path.sep)) {
+      const info = await this.files.stat(slug, artifactPath);
+      if (info === null || !info.isFile) {
         skipped.push({ path: artifactPath, reason: 'not a readable workspace file' });
         continue;
       }
-      const info = await stat(source);
       if (info.size > MAX_CONTENT_BYTES) {
         skipped.push({ path: artifactPath, reason: 'exceeds the 256 KiB bound' });
         continue;
       }
-      const bytes = await readFile(source);
+      const bytes = await this.files.read(slug, artifactPath);
+      if (bytes === null) {
+        skipped.push({ path: artifactPath, reason: 'not a readable workspace file' });
+        continue;
+      }
       if (!bytes.length) {
         skipped.push({ path: artifactPath, reason: 'empty file' });
         continue;
@@ -302,8 +269,7 @@ export class ArtifactsService {
       }
       const id = randomUUID();
       const relativePath = `findings/capture-${id}.${extension}`;
-      const storedPath = path.join(realFindings, path.basename(relativePath));
-      await writeFile(storedPath, bytes, { flag: 'wx' });
+      await this.files.writeNew(slug, relativePath, bytes);
       try {
         const row = await this.db.$transaction(async (tx) => {
           const created = await tx.retainedCapture.create({ data: {
@@ -316,9 +282,7 @@ export class ArtifactsService {
         });
         captures.push(this.toCaptureView(row as RetainedCaptureRow, access.role));
       } catch (error) {
-        await unlink(storedPath).catch((cleanupError: NodeJS.ErrnoException) => {
-          if (cleanupError.code !== 'ENOENT') throw new ProjectApiError(503, 'Capture metadata was not committed and temporary-file cleanup failed; reconcile the engagement workspace before retrying.');
-        });
+        await this.files.remove(slug, relativePath).catch(() => { throw new ProjectApiError(503, CLEANUP_FAILED); });
         if (!isUniqueConstraintError(error)) throw error;
         // A concurrent import of the same file won the race; keep its row and report the same outcome.
         const raced = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
@@ -348,10 +312,12 @@ export class ArtifactsService {
       if (row === null) throw new ProjectApiError(404, 'Artifact not found');
       await this.assertCaptureReadable(row as RetainedCaptureRow, access.role);
     }
-    const file = await this.artifactFile(userId, engagementId, artifactPath);
-    const info = await stat(file);
+    const { slug, rel } = await this.artifactFile(userId, engagementId, artifactPath);
+    const info = await this.files.stat(slug, rel);
+    if (info === null) throw new ProjectApiError(404, 'Artifact not found');
     if (info.size > MAX_CONTENT_BYTES) throw new ProjectApiError(400, 'Evidence capture exceeds the 256 KiB bound.');
-    const bytes = await readFile(file);
+    const bytes = await this.files.read(slug, rel);
+    if (bytes === null) throw new ProjectApiError(404, 'Artifact not found');
     if (bytes.length > MAX_CONTENT_BYTES) throw new ProjectApiError(400, 'Evidence capture exceeds the 256 KiB bound.');
     return { engagementId, path: artifactPath, digest: createHash('sha256').update(bytes).digest('hex'), sizeBytes: bytes.length, producer: null };
   }
@@ -365,9 +331,9 @@ export class ArtifactsService {
     const access = await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
     const row = await this.retainedCapture(engagementId, captureId);
     if (options.requireReadable !== false) await this.assertCaptureReadable(row, access.role);
-    const file = await this.artifactFile(userId, engagementId, row.path);
-    const bytes = await readFile(file);
-    if (bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) throw new ProjectApiError(409, 'The retained capture failed its recorded integrity check.');
+    const { slug, rel } = await this.artifactFile(userId, engagementId, row.path);
+    const bytes = await this.files.read(slug, rel);
+    if (bytes === null || bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) throw new ProjectApiError(409, 'The retained capture failed its recorded integrity check.');
     return { captureId, classification: row.classification as CaptureClassification, engagementId, path: row.path, digest: row.digest, sizeBytes: row.sizeBytes, producer: row.producer };
   }
 
@@ -400,16 +366,10 @@ export class ArtifactsService {
       return this.toCaptureView(existing as RetainedCaptureRow, access.role);
     }
 
-    const workspace = await this.workspaceDir(userId, engagementId);
-    const folder = path.join(workspace, 'findings');
-    await mkdir(folder, { recursive: true });
-    const root = await realpath(workspace);
-    const realFolder = await realpath(folder);
-    if (!realFolder.startsWith(root + path.sep)) throw new ProjectPolicyError('bad_request', 'Invalid capture folder');
+    const slug = await this.workspaceSlug(userId, engagementId);
     const id = randomUUID();
     const relativePath = `findings/capture-${id}.${extension}`;
-    const storedPath = path.join(realFolder, path.basename(relativePath));
-    await writeFile(storedPath, bytes, { flag: 'wx' });
+    await this.files.writeNew(slug, relativePath, bytes);
     try {
       const row = await this.db.$transaction(async (tx) => {
         const created = await tx.retainedCapture.create({ data: {
@@ -422,9 +382,7 @@ export class ArtifactsService {
       });
       return this.toCaptureView(row as RetainedCaptureRow, access.role);
     } catch (error) {
-      await unlink(storedPath).catch((cleanupError: NodeJS.ErrnoException) => {
-        if (cleanupError.code !== 'ENOENT') throw new ProjectApiError(503, 'Capture metadata was not committed and temporary-file cleanup failed; reconcile the engagement workspace before retrying.');
-      });
+      await this.files.remove(slug, relativePath).catch(() => { throw new ProjectApiError(503, CLEANUP_FAILED); });
       if (!isUniqueConstraintError(error)) throw error;
       const raced = await this.db.retainedCapture.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
       if (raced === null) throw error;
@@ -464,11 +422,12 @@ export class ArtifactsService {
     await this.assertCaptureReadable(row, access.role);
     const missing = (): never => { throw new ProjectApiError(409, 'The retained capture file is missing from storage, so its integrity cannot be verified.'); };
     // A recorded capture whose bytes were removed from storage is an explicit conflict, not a generic artifact 404 or a 500.
-    const file = await this.artifactFile(userId, engagementId, row.path).catch((error: unknown) => (error instanceof ProjectPolicyError && error.code === 'not_found' ? missing() : Promise.reject(error)));
-    const bytes = await readFile(file).catch((error: unknown) => ((error as NodeJS.ErrnoException).code === 'ENOENT' ? missing() : Promise.reject(error)));
-    if (bytes.length !== row.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== row.digest) {
+    const { slug, rel } = await this.artifactFile(userId, engagementId, row.path).catch((error: unknown) => (error instanceof ProjectPolicyError && error.code === 'not_found' ? missing() : Promise.reject(error)));
+    const bytes = await this.files.read(slug, rel);
+    if (bytes === null) missing();
+    if (bytes!.length !== row.sizeBytes || createHash('sha256').update(bytes!).digest('hex') !== row.digest) {
       throw new ProjectApiError(409, 'The retained capture failed its recorded integrity check.');
     }
-    return { capture: this.toCaptureView(row, access.role), bytes };
+    return { capture: this.toCaptureView(row, access.role), bytes: bytes! };
   }
 }

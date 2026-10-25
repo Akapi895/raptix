@@ -4,6 +4,8 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
+import { recordingSandboxes } from './support/project-sandboxes.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import { getLocalIdentity } from '../src/auth/identity-provider.js';
 import { EnvValidationError, loadServerEnv } from '../src/config/env.js';
 import type { DatabaseHealth } from '../src/http/routes/health.routes.js';
@@ -44,7 +46,6 @@ function makeInMemoryRepository(): ProjectRepositoryPort {
         status: 'draft',
         userId,
         threadId: null,
-        workspacePath: data.workspacePath ?? null,
         createdAt: now,
         updatedAt: now,
       };
@@ -90,8 +91,9 @@ function makeProjectsService(): ProjectsService {
   tempRoots.push(workspaceRoot);
   return new ProjectsService({
     repository: makeInMemoryRepository(),
-    workspaceRoot,
+    files: new LocalProjectFiles(workspaceRoot),
     identity: getLocalIdentity(),
+    sandboxes: recordingSandboxes(),
   });
 }
 
@@ -404,14 +406,12 @@ describe('server environment', () => {
     });
   });
 
-  it('parses explicit DATABASE_URL and WORKSPACE_PATH without extra keys', () => {
+  it('parses explicit DATABASE_URL without extra keys', () => {
     const secretUrl = 'postgres://tester:pw@127.0.0.1:5432/w02test';
     const env = loadServerEnv({
       DATABASE_URL: secretUrl,
-      WORKSPACE_PATH: 'D:/tmp/w02-workspace',
     });
     expect(env.databaseUrl).toBe(secretUrl);
-    expect(env.workspacePath).toBe('D:/tmp/w02-workspace');
     expect(env.graph).toBeUndefined();
     expect(Object.keys(env).sort()).toEqual([
       'databaseUrl',
@@ -419,7 +419,6 @@ describe('server environment', () => {
       'logLevel',
       'nodeEnv',
       'port',
-      'workspacePath',
     ]);
   });
 
@@ -446,12 +445,6 @@ describe('server environment', () => {
       expect(error).toBeInstanceOf(EnvValidationError);
       expect(JSON.stringify(error)).not.toContain('DATABASE_URL=');
     }
-  });
-
-  it('rejects an empty WORKSPACE_PATH without echoing the value', () => {
-    expect(() => loadServerEnv({ WORKSPACE_PATH: ' ' })).toThrow(
-      EnvValidationError,
-    );
   });
 
   it('rejects an invalid port without echoing the raw value', () => {

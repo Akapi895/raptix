@@ -7,6 +7,7 @@ import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
 import { MembersService } from '../src/services/members-service.js';
 import { DocumentDraftService } from '../src/services/document-draft-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 
 /**
  * O06 acceptance (ADR-0083): the document editor reads source + server draft,
@@ -115,7 +116,7 @@ async function setup(): Promise<{ db: Db; app: FastifyInstance; plan: string; ow
     authMode: 'multi',
     authDb: db as never,
     membersService: new MembersService(db as never, true),
-    documentDrafts: new DocumentDraftService(db as never, root),
+    documentDrafts: new DocumentDraftService(db as never, new LocalProjectFiles(root)),
   }) as unknown as Promise<FastifyInstance>);
   const login = async (username: string, password: string): Promise<{ cookie: string; csrf: string }> => {
     const res = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { username, password } });

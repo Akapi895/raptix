@@ -1,18 +1,17 @@
-import { readFile, readdir, stat, realpath } from 'node:fs/promises';
-import * as path from 'node:path';
 import type { FindingsView, FindingView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
-import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
-import { ProjectNotFoundError } from './projects-service.js';
 import { requireEngagementAccess } from '../auth/membership-policy.js';
+import type { ProjectFiles } from './project-files.js';
+import { ProjectNotFoundError } from './projects-service.js';
 
 /**
- * W12 findings projection: parse `FIND-*.md` files from the engagement
- * workspace's `findings/` directory (legacy parser semantics preserved) and
- * project them as public views with explicit parser-quality flags. Defaults
- * (medium severity, placeholder description/evidence) are flagged, never
- * presented as analyst-confirmed. Malformed findings stay viewable through
- * their bounded raw source; nothing is fabricated.
+ * W12 findings projection: parse `FIND-*.md` files from the project sandbox's
+ * `findings/` directory (legacy parser semantics preserved) and project them as
+ * public views with explicit parser-quality flags (ADR-0102: read through the
+ * project's own sandbox). Defaults (medium severity, placeholder
+ * description/evidence) are flagged, never presented as analyst-confirmed.
+ * Malformed findings stay viewable through their bounded raw source; nothing is
+ * fabricated.
  */
 
 const MAX_FILES = 100;
@@ -23,36 +22,34 @@ type Severity = (typeof SEVERITIES)[number];
 const isSeverity = (value: string): value is Severity => (SEVERITIES as readonly string[]).includes(value);
 
 export class FindingsService {
-  public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
+  public constructor(private readonly db: PrismaClient, private readonly files: ProjectFiles) {}
 
-  private async workspaceDir(userId: string, engagementId: string): Promise<string> {
+  private async workspaceSlug(userId: string, engagementId: string): Promise<string> {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId } });
     if (!project) throw new ProjectNotFoundError();
     if (project.userId !== userId) await requireEngagementAccess({ db: this.db, actorId: userId, multiUser: true }, engagementId, 'viewer');
-    return resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
+    return project.workspaceSlug;
   }
 
   public async list(userId: string, engagementId: string): Promise<FindingsView> {
-    const dir = await this.workspaceDir(userId, engagementId);
-    const findingsDir = path.join(dir, 'findings');
+    const slug = await this.workspaceSlug(userId, engagementId);
     const findings: FindingView[] = [];
     let truncated = false;
-    let names: string[] = [];
-    const realDir = await realpath(dir).catch(() => null);
-    if (realDir === null) return { engagementId, findings, truncated: false, source: 'workspace' };
-    try {
-      names = (await readdir(findingsDir)).filter(name => name.startsWith('FIND-') && name.endsWith('.md')).sort();
-    } catch { return { engagementId, findings, truncated: false, source: 'workspace' }; }
+    const entries = await this.files.list(slug, 'findings').catch(() => null);
+    if (entries === null) return { engagementId, findings, truncated: false, source: 'workspace' };
+    let names = entries
+      .filter(entry => !entry.isDirectory && entry.name.startsWith('FIND-') && entry.name.endsWith('.md'))
+      .map(entry => entry.name)
+      .sort();
     if (names.length > MAX_FILES) { names = names.slice(0, MAX_FILES); truncated = true; }
     for (const name of names) {
-      const file = path.join(findingsDir, name);
+      const rel = `findings/${name}`;
       try {
-        const realFile = await realpath(file);
-        if (!realFile.startsWith(realDir + path.sep)) { truncated = true; continue; }
-        const info = await stat(file);
-        if (!info.isFile() || info.size > MAX_FILE_BYTES) { truncated = true; continue; }
-        const content = await readFile(file, 'utf8');
-        findings.push(parseFindingMarkdown(content, name, engagementId, info.size));
+        const info = await this.files.stat(slug, rel);
+        if (info === null || !info.isFile || info.size > MAX_FILE_BYTES) { truncated = true; continue; }
+        const data = await this.files.read(slug, rel);
+        if (data === null) { truncated = true; continue; }
+        findings.push(parseFindingMarkdown(data.toString('utf8'), name, engagementId, info.size));
       } catch { truncated = true; }
     }
     return { engagementId, findings, truncated, source: 'workspace' };

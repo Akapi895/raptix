@@ -8,7 +8,7 @@ import { buildCapabilitiesResponse } from '../src/http/routes/capabilities.route
 import { MembersService } from '../src/services/members-service.js';
 
 const IDENTITY = { id: 'local', mode: 'local-single-user' } as const;
-const ENGAGEMENT = { id: 'eng-1', userId: 'local', name: 'w19-slug', displayName: null, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, status: 'planning', threadId: 'th-1', workspacePath: null, runtimeContextLockedAt: new Date('2026-10-02T00:00:00Z'), createdAt: new Date('2026-10-01T00:00:00Z'), updatedAt: new Date('2026-10-01T00:00:00Z') } as const;
+const ENGAGEMENT = { id: 'eng-1', userId: 'local', name: 'w19-slug', displayName: null, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, status: 'planning', threadId: 'th-1', runtimeContextLockedAt: new Date('2026-10-02T00:00:00Z'), createdAt: new Date('2026-10-01T00:00:00Z'), updatedAt: new Date('2026-10-01T00:00:00Z') } as const;
 
 function buildDb() {
   return {

@@ -6,6 +6,8 @@ import { Client } from 'pg';
 import { createDbClient } from '../src/db/client.js';
 import { EngagementsRepository } from '../src/repositories/engagements-repository.js';
 import { ProjectsService } from '../src/services/projects-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
+import { recordingSandboxes } from './support/project-sandboxes.js';
 import { GovernanceService } from '../src/services/governance-service.js';
 import { ScopeService } from '../src/services/scope-service.js';
 import { ClosureService } from '../src/services/closure-service.js';
@@ -72,7 +74,7 @@ try {
 
   const db = createDbClient({ connectionString: database });
   const identity = { id: 'local', mode: 'local-single-user' } as const;
-  const projects = new ProjectsService({ repository: new EngagementsRepository(db.engagement), workspaceRoot: workspace, identity });
+  const projects = new ProjectsService({ repository: new EngagementsRepository(db.engagement), files: new LocalProjectFiles(workspace), identity, sandboxes: recordingSandboxes() });
   const project = await projects.createProject('local', {
     name: 'w05-fence-lab',
     targetType: 'web_url',

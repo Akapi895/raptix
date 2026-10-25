@@ -10,6 +10,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { createDbClient, disconnectDb } from '../src/db/client.js';
 import { ArtifactsService } from '../src/services/artifacts-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import { FindingsWorkflowService } from '../src/services/findings-workflow-service.js';
 import { writeSuggestionDisposition } from '../src/services/finding-suggestions.js';
 import { ProjectApiError } from '../src/services/projects-service.js';
@@ -48,7 +49,7 @@ async function main(): Promise<void> {
   const producerFile = path.join(findingsDir, 'FIND-1.md');
   await writeFile(producerFile, '# Exposed admin\n\nThe admin panel answers without authentication.\n', 'utf8');
 
-  const artifacts = new ArtifactsService(db, workspaceRoot);
+  const artifacts = new ArtifactsService(db, new LocalProjectFiles(workspaceRoot));
   const workflow = new FindingsWorkflowService(db, artifacts);
 
   // P02: one producer path yields one curated draft, even when retries race.
@@ -121,7 +122,7 @@ async function main(): Promise<void> {
   assert.equal(otherQueue.dispositions.find((d) => d.producerRef === 'findings/FIND-1.md'), undefined, 'another actor still sees the suggestion');
 
   // Restart persistence: fresh service instances read the same records.
-  const restarted = new FindingsWorkflowService(db, new ArtifactsService(db, workspaceRoot));
+  const restarted = new FindingsWorkflowService(db, new ArtifactsService(db, new LocalProjectFiles(workspaceRoot)));
   const reread = await restarted.list(OWNER, eid);
   const persisted = reread.findings.find((f) => f.id === findingId)!;
   assert.equal(persisted.status, 'resolved');

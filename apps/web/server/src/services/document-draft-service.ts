@@ -1,12 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { rename, unlink, writeFile } from 'node:fs/promises';
-import * as path from 'node:path';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { PLANNING_DOCUMENTS, type PlanningDocumentName, type DocumentSourceView } from '@raptix/web-contracts';
 import { requireEngagementAccess, type ActorContext } from '../auth/membership-policy.js';
 import { assertEngagementOpen } from './closure-service.js';
 import { validateDocument, readDocumentSource, projectContentFor } from './planning-service.js';
-import { prepareEngagementPlanDir } from '../security/workspace-policy.js';
+import type { ProjectFiles } from './project-files.js';
 import { ProjectApiError } from './projects-service.js';
 
 /**
@@ -16,13 +14,14 @@ import { ProjectApiError } from './projects-service.js';
  * concurrent browser edit or a model rewrite answers 409 instead of clobbering
  * work. ROE is never publishable here — ScopeService is the governance
  * authority for ROE and the runtime file is its machine authority.
+ * Published files are written through the project's sandbox (ADR-0102).
  */
 
 const MIN_WRITE = 'operator' as const;
 const MAX_BODY_BYTES = 1024 * 1024;
 
 export class DocumentDraftService {
-  public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
+  public constructor(private readonly db: PrismaClient, private readonly files: ProjectFiles) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
@@ -81,7 +80,7 @@ export class DocumentDraftService {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
     const name = DocumentDraftService.name(rawName);
     const slug = await this.slug(engagementId);
-    const raw = await readDocumentSource(this.workspaceRoot, slug, name);
+    const raw = await readDocumentSource(this.files, slug, name);
     const draft = await this.db.planDocumentDraft.findUnique({ where: { engagementId_name: { engagementId, name } } });
     if (raw.state !== 'present') {
       return {
@@ -111,7 +110,7 @@ export class DocumentDraftService {
     const name = DocumentDraftService.name(rawName);
     const { body, baseDigest } = DocumentDraftService.parseInput(input);
     const slug = await this.slug(engagementId);
-    const raw = await readDocumentSource(this.workspaceRoot, slug, name);
+    const raw = await readDocumentSource(this.files, slug, name);
     if (raw.state === 'unavailable') throw new ProjectApiError(409, 'The document source is unavailable; the edit precondition cannot be proven.');
     const currentDigest = raw.state === 'present' ? DocumentDraftService.digest(raw.text) : null;
     DocumentDraftService.assertPrecondition(currentDigest, baseDigest);
@@ -145,24 +144,23 @@ export class DocumentDraftService {
     }
     const { body, baseDigest } = DocumentDraftService.parseInput(input);
     const slug = await this.slug(engagementId);
-    const raw = await readDocumentSource(this.workspaceRoot, slug, name);
+    const raw = await readDocumentSource(this.files, slug, name);
     if (raw.state === 'unavailable') throw new ProjectApiError(409, 'The document source is unavailable; the publish precondition cannot be proven.');
     const currentDigest = raw.state === 'present' ? DocumentDraftService.digest(raw.text) : null;
     DocumentDraftService.assertPrecondition(currentDigest, baseDigest);
     const parsed = DocumentDraftService.validation(name, body);
     if (!parsed.valid) throw new ProjectApiError(400, `The document does not satisfy the ${name} schema: ${parsed.errors.join('; ')}`);
-    const planDir = await prepareEngagementPlanDir(this.workspaceRoot, slug);
-    const target = path.join(planDir, `${name}.json`);
-    const temp = path.join(planDir, `.${name}.json.${randomBytes(6).toString('hex')}.tmp`);
-    await writeFile(temp, body, { encoding: 'utf8', flag: 'wx' });
+    const target = `plan/${name}.json`;
+    const temp = `plan/${name}.json.${randomBytes(6).toString('hex')}.tmp`;
+    await this.files.write(slug, temp, Buffer.from(body, 'utf8'));
     try {
-      await rename(temp, target);
+      await this.files.rename(slug, temp, target);
     } catch (error) {
-      await unlink(temp).catch(() => {});
+      await this.files.remove(slug, temp).catch(() => {});
       throw error;
     }
-    const written = await readDocumentSource(this.workspaceRoot, slug, name);
-    if (written.state !== 'present') throw new ProjectApiError(500, 'The published document could not be read back; inspect the workspace before retrying.');
+    const written = await readDocumentSource(this.files, slug, name);
+    if (written.state !== 'present') throw new ProjectApiError(500, 'The published document could not be read back; inspect the project sandbox before retrying.');
     await this.db.planDocumentDraft.deleteMany({ where: { engagementId, name } });
     await this.audit(engagementId, actorId, 'document.published', name, `base ${baseDigest === null ? 'missing' : baseDigest.slice(0, 12)}`);
     return { name, digest: DocumentDraftService.digest(written.text), updatedAt: written.updatedAt };

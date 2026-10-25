@@ -1,4 +1,4 @@
-import { mkdtemp, rm, mkdir, readdir, readFile, writeFile, symlink } from 'node:fs/promises';
+import { mkdtemp, rm, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
@@ -9,6 +9,7 @@ import { isFindingsView, isArtifactsView, isArtifactContentView, isRetainedCaptu
 import { registerErrorHandler } from '../src/http/error-handler.js';
 import { registerFindingsRoutes } from '../src/http/routes/findings.routes.js';
 import { ArtifactsService } from '../src/services/artifacts-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import { FindingsService, parseFindingMarkdown } from '../src/services/findings-service.js';
 import { ProjectNotFoundError } from '../src/services/projects-service.js';
 
@@ -77,8 +78,8 @@ async function buildHarness(): Promise<Harness> {
   };
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
-  const artifacts = new ArtifactsService(db as never, workspaceRoot);
-  registerFindingsRoutes(app, new FindingsService(db as never, workspaceRoot), artifacts, { id: 'local', mode: 'local-single-user' });
+  const artifacts = new ArtifactsService(db as never, new LocalProjectFiles(workspaceRoot));
+  registerFindingsRoutes(app, new FindingsService(db as never, new LocalProjectFiles(workspaceRoot)), artifacts, { id: 'local', mode: 'local-single-user' });
   await app.ready();
   return { app, artifacts, workspaceRoot, slug };
 }
@@ -97,7 +98,7 @@ afterEach(async () => {
 describe('W12 findings projection', () => {
   it('W01: resolves workspace contents by the global workspace slug, not the owner name', async () => {
     const workspaceRoot = await mkdtemp(path.join(tmpdir(), 'w12-slug-'));
-    harnesses.push({ app: { close: async () => undefined } as unknown as FastifyInstance, artifacts: new ArtifactsService({} as never, workspaceRoot), workspaceRoot, slug: 'dup-name' });
+    harnesses.push({ app: { close: async () => undefined } as unknown as FastifyInstance, artifacts: new ArtifactsService({} as never, new LocalProjectFiles(workspaceRoot)), workspaceRoot, slug: 'dup-name' });
     const slugDir = `dup-name-${Date.now().toString(36)}`;
     const db = {
       engagement: {
@@ -107,7 +108,7 @@ describe('W12 findings projection', () => {
     };
     const app = Fastify({ logger: false });
     registerErrorHandler(app);
-    registerFindingsRoutes(app, new FindingsService(db as never, workspaceRoot), new ArtifactsService(db as never, workspaceRoot), { id: 'local', mode: 'local-single-user' });
+    registerFindingsRoutes(app, new FindingsService(db as never, new LocalProjectFiles(workspaceRoot)), new ArtifactsService(db as never, new LocalProjectFiles(workspaceRoot)), { id: 'local', mode: 'local-single-user' });
     await app.ready();
     try {
       await mkdir(path.join(workspaceRoot, slugDir, 'findings'), { recursive: true });
@@ -161,7 +162,7 @@ describe('W12 findings projection', () => {
     await withHarness(async (h) => {
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/findings' })).json().findings).toEqual([]);
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-other/findings' })).statusCode).toBe(404);
-      const service = new FindingsService({ engagement: { findFirst: async () => null } } as never, h.workspaceRoot);
+      const service = new FindingsService({ engagement: { findFirst: async () => null } } as never, new LocalProjectFiles(h.workspaceRoot));
       await expect(service.list('local', 'eng-1')).rejects.toBeInstanceOf(ProjectNotFoundError);
     });
   });
@@ -322,7 +323,7 @@ describe('W12 artifact browser', () => {
       expect(planContent).toMatchObject({ path: 'plan/roe.json', mediaType: 'json', truncated: false });
     });
   });
-  it('serves text/JSON content with media type and rejects traversal, symlinks and binary', async () => {
+  it('serves text/JSON content with media type and rejects traversal and binary', async () => {
     await withHarness(async (h) => {
       const root = path.join(h.workspaceRoot, h.slug);
       await mkdir(path.join(root, 'exploit'), { recursive: true });
@@ -339,9 +340,6 @@ describe('W12 artifact browser', () => {
       // W19: binary stays explicit — an unavailable text view, never a fake decode or a 500.
       expect(binary.statusCode).toBe(503);
       expect(binary.json().error.message).toMatch(/utf-8/i);
-      await writeFile(path.join(h.workspaceRoot, 'outside.txt'), 'outside', 'utf8');
-      const linked = await symlink(path.join(h.workspaceRoot, 'outside.txt'), path.join(root, 'recon', 'leak.txt'), 'file').then(() => true, () => false);
-      if (linked) expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/artifacts/content', query: { path: 'recon/leak.txt' } })).statusCode).toBe(400);
     });
   });
   it('truncates oversized content truthfully and scopes content by engagement', async () => {

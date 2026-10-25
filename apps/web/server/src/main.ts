@@ -1,9 +1,8 @@
-﻿import { mkdir } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+﻿import { randomUUID } from 'node:crypto';
 import type { ScopedRunView } from '@raptix/web-contracts';
 import { getLocalIdentity } from './auth/identity-provider.js';
 import { buildApp } from './app.js';
-import { EnvValidationError, readServerEnv } from './config/env.js';
+import { readServerEnv } from './config/env.js';
 import { createDbClient, disconnectDb } from './db/client.js';
 import type { PrismaClient } from './generated/prisma/client.js';
 import type { DatabaseHealth } from './http/routes/health.routes.js';
@@ -15,6 +14,11 @@ import { EnvironmentFacade } from './services/environments/environment-facade.js
 import { EnvironmentLifecycle } from './services/environments/environment-lifecycle.js';
 import { HostControllerClient } from './integrations/environments/controller-client.js';
 import { loadEnvironmentControllerConfig } from './config/environment-controller.js';
+import { loadSandboxControllerConfig } from './config/sandbox-controller.js';
+import { loadRuntimeApiToken } from './config/runtime-api-token.js';
+import { SandboxController } from './integrations/sandboxes/sandbox-controller-client.js';
+import { SandboxProjectFiles } from './integrations/sandboxes/sandbox-project-files.js';
+import type { ProjectFiles } from './services/project-files.js';
 import { readFileSync } from 'node:fs';
 import { loadRuntimeConfig } from './config/runtime.js';
 import { RuntimeExecutionClient } from './integrations/runtime/execution-client.js';
@@ -80,6 +84,8 @@ async function main(): Promise<void> {
   configureSingleOperator(env.singleOperator === true);
   if (env.singleOperator === true) console.warn('single-operator mode is on: a submitter may decide their own workflow items (ADR-0100)');
   const runtimeConfig = loadRuntimeConfig(process.env);
+  // The LangGraph API is authenticated: only the web API and the runtime hold this token, never a sandbox.
+  const runtimeApiToken = runtimeConfig ? loadRuntimeApiToken(process.env, path => readFileSync(path, 'utf8')) : undefined;
   // The host controller is optional. Without it, new projects stay on the legacy runtime and activate/stop answer 503.
   const environmentController = loadEnvironmentControllerConfig(process.env, path => readFileSync(path, 'utf8'));
 
@@ -87,34 +93,26 @@ async function main(): Promise<void> {
   // ADR-0085: the scope service is built below, after the projects service; the handoff reaches it through this holder.
   const plannerScope: { confirm?: ScopeService['confirmPlannerScope'] } = {};
   let projectsService: ProjectsService | undefined;
+  let sandboxKey: string | undefined;
+  let projectFiles: ProjectFiles | undefined;
   let databaseHealth: DatabaseHealth | undefined;
 
-  // The workspace root is validated/created ONLY at the explicitly passed
-  // location â€” never a default, never derived from request input.
-  if (env.workspacePath !== undefined) {
-    try {
-      await mkdir(env.workspacePath, { recursive: true });
-    } catch (error) {
-      throw new Error(
-        `failed to prepare WORKSPACE_PATH: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
 
   // Lazy owned integration stack: constructed only when DATABASE_URL is
   // explicitly configured. No auto-migrate, no auto-generate, no fallbacks.
   if (env.databaseUrl !== undefined) {
-    if (env.workspacePath === undefined) {
-      throw new EnvValidationError([
-        'WORKSPACE_PATH is required when DATABASE_URL is configured',
-      ]);
-    }
+    // ADR-0086 A: creating a project starts its sandbox, so the controller is required with the database. A server
+    // without it refuses to start rather than creating projects that cannot run.
+    const sandboxController = loadSandboxControllerConfig(process.env, path => readFileSync(path, 'utf8'));
+    sandboxKey = sandboxController.sandboxKey;
+    projectFiles = new SandboxProjectFiles(sandboxController.sandboxKey);
     dbClient = createDbClient({ connectionString: env.databaseUrl });
     databaseHealth = createDatabaseHealth(dbClient);
     projectsService = new ProjectsService({
       repository: new EngagementsRepository(dbClient.engagement, env.authMode === 'multi' ? dbClient.webMembership : undefined, environmentController ? env.deploymentId ?? 'default' : undefined),
-      workspaceRoot: env.workspacePath,
+      files: projectFiles,
       identity: getLocalIdentity(),
+      sandboxes: new SandboxController(sandboxController.controllerUrl, sandboxController.controllerToken),
       confirmPlannerScope: (actorId, engagementId, plan) => {
         if (plannerScope.confirm === undefined) throw new ProjectApiError(409, 'The planning scope cannot be approved without the database.');
         return plannerScope.confirm(actorId, engagementId, plan);
@@ -129,10 +127,10 @@ async function main(): Promise<void> {
     onLifecycleError: error => console.error('environment lifecycle failed', error),
   }) : undefined;
   const ownership = dbClient ? new RuntimeOwnershipService(dbClient, environments) : undefined;
-  const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
+  const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl, undefined, undefined, runtimeApiToken) : undefined;
   // ADR-0092: a managed project routes to its own ready environment; a project without a record stays on the legacy runtime.
-  const runtimeRouter = runtimeConfig && dbClient ? new RuntimeRouter(runtimeConfig.apiUrl, prismaRouteSource(dbClient, env.deploymentId ?? 'default')) : undefined;
-  const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
+  const runtimeRouter = runtimeConfig && dbClient ? new RuntimeRouter(runtimeConfig.apiUrl, prismaRouteSource(dbClient, env.deploymentId ?? 'default'), runtimeApiToken) : undefined;
+  const approvalsService = dbClient && projectsService && projectFiles ? new ApprovalsService(dbClient, projectFiles) : undefined;
    const closureService = dbClient ? new ClosureService(dbClient, approvalsService ? async (_userId, engagementId) => {
      const engagement = await dbClient.engagement.findUniqueOrThrow({ where: { id: engagementId } });
      return (await approvalsService.list(engagement.userId, engagementId)).approvals.length;
@@ -162,15 +160,15 @@ async function main(): Promise<void> {
     plannerScope.confirm = scopeService?.confirmPlannerScope.bind(scopeService);
     // O06 (ADR-0083): persistent plan document drafts over the allowlisted
     // planning documents; requires both the DB (draft rows, audit) and the
-    // workspace root (preconditioned reads/publish).
-    const documentDrafts = dbClient && env.workspacePath ? new DocumentDraftService(dbClient, env.workspacePath) : undefined;
-   const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
+    // project sandboxes (preconditioned reads/publish, ADR-0102).
+    const documentDrafts = dbClient && projectFiles ? new DocumentDraftService(dbClient, projectFiles) : undefined;
+   const runtimeContext = runtimeConfig && runtime && projectsService && ownership
      ? new RuntimeContextService({
          config: runtimeConfig,
          deploymentId: env.deploymentId ?? 'default',
          projects: projectsService,
+         sandboxKey,
          ownership,
-         workspaceRoot: env.workspacePath,
          runtime,
          router: runtimeRouter,
        }) : undefined;
@@ -252,13 +250,13 @@ async function main(): Promise<void> {
      throw new TypeError('Runtime run inventory exceeds the bounded reconciliation limit.');
    }
   const fleetService = dbClient && runtimeContext && runsService ? new FleetService(dbClient, runtimeContext, runsService) : undefined;
-  const findingsService = dbClient && env.workspacePath ? new FindingsService(dbClient, env.workspacePath) : undefined;
-  const artifactsService = dbClient && env.workspacePath ? new ArtifactsService(dbClient, env.workspacePath) : undefined;
+  const findingsService = dbClient && projectFiles ? new FindingsService(dbClient, projectFiles) : undefined;
+  const artifactsService = dbClient && projectFiles ? new ArtifactsService(dbClient, projectFiles) : undefined;
   const graphService = dbClient && env.graph ? new GraphService(dbClient, env.graph) : undefined;
   const libraryService = graphService && env.graph ? new LibraryService(graphService, env.graph) : undefined;
   const libraryReviewService = libraryService && dbClient ? new LibraryReviewService(dbClient, libraryService) : undefined;
-  const timelineService = runsService && artifactsService && dbClient && env.workspacePath ? new TimelineService(dbClient, runsService, artifactsService, env.workspacePath) : undefined;
-  const exportService = dbClient && env.workspacePath ? new ExportService(dbClient, env.workspacePath) : undefined;
+  const timelineService = runsService && artifactsService && dbClient && projectFiles ? new TimelineService(dbClient, runsService, artifactsService, projectFiles) : undefined;
+  const exportService = dbClient && projectFiles ? new ExportService(dbClient, projectFiles) : undefined;
   const settingsService = dbClient ? new SettingsService(dbClient, getLocalIdentity()) : undefined;
   const campaignsService = dbClient ? new CampaignService(dbClient, env.gophish ? new GoPhishClient(env.gophish) : undefined, env.evilginx ? new EvilginxClient(env.evilginx) : undefined) : undefined;
   const workspaceSettings = dbClient ? new WorkspaceSettingsService(dbClient, env.authMode === 'multi') : undefined;
@@ -297,7 +295,7 @@ async function main(): Promise<void> {
     environments: environmentFacade,
     runtimeContext,
     runsService,
-    streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl), undefined, runtimeRouter) : undefined,
+    streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl, undefined, runtimeApiToken), undefined, runtimeRouter) : undefined,
     approvalsService,
     findingsService,
     artifactsService,

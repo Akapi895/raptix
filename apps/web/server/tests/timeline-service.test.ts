@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TimelineService } from '../src/services/timeline-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import type { PrismaClient } from '../src/generated/prisma/client.js';
 import { ProjectPolicyError } from '../src/security/project-policy.js';
 
@@ -17,7 +18,7 @@ function service(opts: { listRuns: (thread: string) => Promise<unknown>; snapsho
     snapshot: async (_user: string, _eng: string, thread: string) => opts.snapshot(thread),
   };
   const artifacts = { list: async () => ({ folders: [] }) };
-  return new TimelineService(db, runs as never, artifacts as never, '/nonexistent-workspace-root');
+  return new TimelineService(db, runs as never, artifacts as never, new LocalProjectFiles('/nonexistent-workspace-root'));
 }
 
 const GOOD_RUNS = { runs: [{ runId: 'run-good', createdAt: '2026-10-17T01:00:00.000Z', rawStatus: 'success' }], offset: 0, nextOffset: null };

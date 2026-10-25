@@ -1,7 +1,5 @@
-import * as path from 'node:path';
-import { readFile, readdir, stat } from 'node:fs/promises';
 import type { PrismaClient } from '../generated/prisma/client.js';
-import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
+import type { ProjectFiles } from './project-files.js';
 import { ProjectNotFoundError } from './projects-service.js';
 
 /**
@@ -38,7 +36,7 @@ const MAX_FILE_BYTES = 256 * 1024;
 const PLAN_DOC_NAMES = ['roe.json', 'conops.json', 'deconfliction.json', 'opplan.json'] as const;
 
 export class ExportService {
-  public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
+  public constructor(private readonly db: PrismaClient, private readonly files: ProjectFiles) {}
 
   public async export(userId: string, engagementId: string, format: ExportFormat): Promise<ExportResult> {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
@@ -61,26 +59,31 @@ export class ExportService {
   }
 
   private async collect(project: { workspaceSlug: string; name: string }, engagementId: string): Promise<ExportPayload> {
-    const dir = await resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
     const planDocs: Record<string, unknown> = {};
     for (const docName of PLAN_DOC_NAMES) {
       try {
-        const content = await readFile(path.join(dir, 'plan', docName), 'utf8');
-        planDocs[docName.replace('.json', '')] = JSON.parse(content) as unknown;
+        const content = await this.files.read(project.workspaceSlug, `plan/${docName}`);
+        if (content !== null) planDocs[docName.replace('.json', '')] = JSON.parse(content.toString('utf8')) as unknown;
       } catch { /* absent plan document stays absent */ }
     }
     const findings: ExportPayload['findings'] = [];
     let findingsUnreadable = 0;
     let names: string[] = [];
     try {
-      names = (await readdir(path.join(dir, 'findings'))).filter(name => name.startsWith('FIND-') && name.endsWith('.md')).sort();
+      const entries = (await this.files.list(project.workspaceSlug, 'findings')) ?? [];
+      names = entries
+        .filter(entry => !entry.isDirectory && entry.name.startsWith('FIND-') && entry.name.endsWith('.md'))
+        .map(entry => entry.name)
+        .sort();
     } catch { /* no findings directory yet */ }
     for (const name of names.slice(0, MAX_FINDINGS)) {
       try {
-        const file = path.join(dir, 'findings', name);
-        const info = await stat(file);
-        if (!info.isFile() || info.size > MAX_FILE_BYTES) { findingsUnreadable += 1; continue; }
-        findings.push({ id: name.replace(/\.md$/, ''), content: await readFile(file, 'utf8') });
+        const rel = `findings/${name}`;
+        const info = await this.files.stat(project.workspaceSlug, rel);
+        if (info === null || !info.isFile || info.size > MAX_FILE_BYTES) { findingsUnreadable += 1; continue; }
+        const data = await this.files.read(project.workspaceSlug, rel);
+        if (data === null) { findingsUnreadable += 1; continue; }
+        findings.push({ id: name.replace(/\.md$/, ''), content: data.toString('utf8') });
       } catch {
         findingsUnreadable += 1;
       }

@@ -3,6 +3,8 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { ProjectsService, type ProjectRepositoryPort, type ProjectRecord } from '../src/services/projects-service.js';
+import { recordingSandboxes } from './support/project-sandboxes.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 
 /**
  * ADR-0085: the planning handoff is refused until the required documents are
@@ -18,7 +20,7 @@ async function setup(docs: Record<string, unknown> | null) {
   const plan = path.join(root, 'lab', 'plan');
   await mkdir(plan, { recursive: true });
   for (const [name, doc] of Object.entries(docs ?? {})) await writeFile(path.join(plan, `${name}.json`), JSON.stringify(doc));
-  const record: ProjectRecord = { id: 'lab', name: 'lab', workspaceSlug: 'lab', displayName: null, targetType: 'ip_range', targetValue: TARGET, authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, workspacePath: '/ignored', createdAt: new Date(), updatedAt: new Date() };
+  const record: ProjectRecord = { id: 'lab', name: 'lab', workspaceSlug: 'lab', displayName: null, targetType: 'ip_range', targetValue: TARGET, authorizationConfirmed: true, status: 'draft', userId: 'local', threadId: null, createdAt: new Date(), updatedAt: new Date() };
   const repository: ProjectRepositoryPort = {
     async list() { return [record]; },
     async findById(owner, id) { return owner === record.userId && id === record.id ? record : null; },
@@ -27,7 +29,7 @@ async function setup(docs: Record<string, unknown> | null) {
     async update() { return { ...record, handoffConfirmedAt: new Date('2026-10-17T02:00:00.000Z') }; },
   };
   const confirmPlannerScope = vi.fn(async () => null);
-  const service = new ProjectsService({ repository, workspaceRoot: root, identity: { id: 'local', mode: 'local-single-user' }, confirmPlannerScope });
+  const service = new ProjectsService({ repository, files: new LocalProjectFiles(root), identity: { id: 'local', mode: 'local-single-user' }, sandboxes: recordingSandboxes(), confirmPlannerScope });
   return { service, confirmPlannerScope };
 }
 
@@ -65,7 +67,7 @@ describe('ADR-0085 planning handoff', () => {
 
   it('refuses the handoff when the database-backed scope approval is not wired', async () => {
     const { service } = await setup(READY_DOCS);
-    const unwired = new ProjectsService({ repository: (service as unknown as { repository: ProjectRepositoryPort }).repository, workspaceRoot: root, identity: { id: 'local', mode: 'local-single-user' } });
+    const unwired = new ProjectsService({ repository: (service as unknown as { repository: ProjectRepositoryPort }).repository, files: new LocalProjectFiles(root), identity: { id: 'local', mode: 'local-single-user' }, sandboxes: recordingSandboxes() });
     await expect(unwired.patchProject(undefined, 'lab', { handoffConfirmed: true })).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('without the database') });
   });
 });
