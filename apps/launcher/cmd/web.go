@@ -1,16 +1,64 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/Akapi895/raptix/apps/launcher/internal/compose"
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
+	"github.com/Akapi895/raptix/apps/launcher/internal/environments"
 	"github.com/Akapi895/raptix/apps/launcher/internal/sandboxes"
 	"github.com/spf13/cobra"
 )
+
+// sandboxFlags are the deployment values the sandbox controller needs. They are flags, not discovered from the
+// environment, so the controller always starts the same containers.
+type sandboxFlags struct {
+	runtime    string
+	home       string
+	secretsDir string
+	network    string
+	image      string
+}
+
+func addSandboxFlags(cmd *cobra.Command, f *sandboxFlags) {
+	fl := cmd.Flags()
+	fl.StringVar(&f.runtime, "runtime", "docker", "container runtime binary")
+	fl.StringVar(&f.home, "home", "", "Raptix home; compose files are written under <home>/web-sandboxes")
+	fl.StringVar(&f.secretsDir, "secrets-dir", "", "directory holding the sandbox key and the controller token")
+	fl.StringVar(&f.network, "network", "", "existing sandbox network")
+	fl.StringVar(&f.image, "image", "", "sandbox image reference")
+	for _, name := range []string{"home", "secrets-dir", "network", "image"} {
+		if err := cmd.MarkFlagRequired(name); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (f sandboxFlags) config() (sandboxes.Config, error) {
+	key, err := sandboxes.ReadSecret(filepath.Join(f.secretsDir, sandboxes.KeyFile))
+	if err != nil {
+		return sandboxes.Config{}, err
+	}
+	return sandboxes.Config{
+		Bin:    f.runtime,
+		Home:   f.home,
+		Key:    key,
+		Runner: sandboxes.ExecRunner{},
+		Settings: sandboxes.Settings{
+			Image:   f.image,
+			Network: f.network,
+		},
+	}, nil
+}
 
 func init() {
 	web := &cobra.Command{Use: "web", Short: "Manage the independent web-raptix UI/API stack"}
@@ -62,71 +110,32 @@ func init() {
 	}}
 	start.Flags().Bool("pull", true, "Pull version-selected images before starting (disable for local built images)")
 	start.Flags().Bool("start-infra", true, "Start base infrastructure first (disable when an existing shared stack is already running)")
+
 	sandboxCmd := &cobra.Command{Use: "sandboxes", Short: "Provision one sandbox container per web project (ADR-0086 A)"}
-	sandboxConfig := func(missing bool) (sandboxes.Config, error) {
-		base := compose.New()
-		env, err := config.LoadEnv(base.EnvFile)
-		if err != nil {
-			return sandboxes.Config{}, err
-		}
-		version := env["RAPTIX_VERSION"]
-		if version == "" {
-			version = "stable"
-		}
-		network := env["RAPTIX_SANDBOX_NETWORK"]
-		if network == "" {
-			network = "raptix"
-			if stack := env["RAPTIX_STACK_NAME"]; stack != "" {
-				network += "-" + stack
-			}
-			network += "_sandbox-net"
-		}
-		return sandboxes.Config{
-			Bin:     base.Runtime.Bin,
-			Home:    base.Home,
-			Runner:  sandboxes.ExecRunner{},
-			Missing: missing,
-			Settings: sandboxes.Settings{
-				Image:   "ghcr.io/akapi895/raptix-sandbox:" + version,
-				Network: network,
-				Volume:  workspaceVolume(env, base.Web().Project),
-				EnvFile: base.EnvFile,
-			},
-		}, nil
-	}
-	sandboxCmd.AddCommand(&cobra.Command{Use: "sync", Short: "Start a sandbox for every project directory and remove orphaned ones", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
-		cfg, err := sandboxConfig(false)
-		if err != nil {
-			return err
-		}
-		started, err := sandboxes.Sync(cfg)
-		for _, slug := range started {
-			fmt.Fprintln(cmd.OutOrStdout(), "sandbox ready for project "+slug)
-		}
-		return err
-	}})
-	watch := &cobra.Command{Use: "watch", Short: "Keep a sandbox running for every project directory (starts missing ones, never removes)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
-		cfg, err := sandboxConfig(true)
-		if err != nil {
-			return err
-		}
-		interval, err := cmd.Flags().GetDuration("interval")
-		if err != nil {
-			return err
-		}
-		for {
-			started, err := sandboxes.Sync(cfg)
-			for _, slug := range started {
-				fmt.Fprintln(cmd.OutOrStdout(), "sandbox ready for project "+slug)
-			}
-			if err != nil {
-				fmt.Fprintln(cmd.ErrOrStderr(), "sandbox watch: "+err.Error())
-			}
-			time.Sleep(interval)
-		}
+
+	var serveFlags sandboxFlags
+	var listen string
+	serveCmd := &cobra.Command{Use: "serve", Short: "Serve the host controller that starts a sandbox when a project is created", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		return runSandboxController(cmd, serveFlags, listen)
 	}}
-	watch.Flags().Duration("interval", 15*time.Second, "How often to look for project directories without a sandbox")
-	sandboxCmd.AddCommand(watch)
+	addSandboxFlags(serveCmd, &serveFlags)
+	serveCmd.Flags().StringVar(&listen, "listen", "127.0.0.1:9200", "loopback address to serve on")
+	sandboxCmd.AddCommand(serveCmd)
+
+	var secretsDir string
+	initSecretsCmd := &cobra.Command{Use: "init-secrets", Short: "Create the sandbox key and controller token once, owner-only", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		if err := sandboxes.InitSecrets(secretsDir); err != nil {
+			return err
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), "sandbox secrets ready in "+secretsDir)
+		return nil
+	}}
+	initSecretsCmd.Flags().StringVar(&secretsDir, "secrets-dir", "", "directory to create the sandbox key and controller token in")
+	if err := initSecretsCmd.MarkFlagRequired("secrets-dir"); err != nil {
+		panic(err)
+	}
+	sandboxCmd.AddCommand(initSecretsCmd)
+
 	web.AddCommand(sandboxCmd)
 	web.AddCommand(start,
 		&cobra.Command{Use: "stop", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Web().Down() }},
@@ -135,14 +144,52 @@ func init() {
 	rootCmd.AddCommand(web)
 }
 
-// workspaceVolume is the named volume that holds every project directory. The compose project name the
-// stack actually ran under can differ from the launcher's stack name, so the operator can name it in .env.
-func workspaceVolume(env map[string]string, stack string) string {
-	if v := os.Getenv("RAPTIX_WEB_WORKSPACE_VOLUME"); v != "" {
-		return v
+// runSandboxController serves ensure requests from the web API on a loopback address. It runs on the host, because
+// only the host has the container runtime; the API reaches it through host.docker.internal with a bearer token.
+func runSandboxController(cmd *cobra.Command, f sandboxFlags, listen string) error {
+	cfg, err := f.config()
+	if err != nil {
+		return err
 	}
-	if v := env["RAPTIX_WEB_WORKSPACE_VOLUME"]; v != "" {
-		return v
+	token, err := sandboxes.ReadSecret(filepath.Join(f.secretsDir, sandboxes.ControllerTokenFile))
+	if err != nil {
+		return err
 	}
-	return stack + "_web_runtime_workspace"
+	handler, err := sandboxes.NewHandler(func(slug string) error {
+		err := sandboxes.Ensure(cfg, slug)
+		if err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "sandbox for project %s: %v\n", slug, err)
+		}
+		return err
+	}, token)
+	if err != nil {
+		return err
+	}
+	srv, err := environments.NewServer(listen, handler)
+	if err != nil {
+		return err
+	}
+	// Starting a sandbox waits for its container to become healthy, so the response can take longer than the default.
+	srv.WriteTimeout = 3 * time.Minute
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		<-ctx.Done()
+		shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(shutdown); err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "sandbox controller shutdown: %v\n", err)
+		}
+	}()
+
+	listener, err := net.Listen("tcp", srv.Addr)
+	if err != nil {
+		return fmt.Errorf("sandbox controller cannot listen on %s: %w", srv.Addr, err)
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "sandbox controller listening on %s\n", listen)
+	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
 }
