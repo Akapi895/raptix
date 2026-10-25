@@ -140,7 +140,7 @@ export interface ReportReviewRead {
   gates: {
     /** Approve/return decisions (four-eyes + reviewer role + state). */
     decide: ReviewGate
-    /** Simulated PDF/DOCX export of the approved version. */
+    /** PDF/DOCX export of the approved version. */
     export: ReviewGate
     /** Marking the locked version delivered. */
     deliver: ReviewGate
@@ -156,7 +156,7 @@ export interface ReportSubmitInput { bodies: Record<string, string> }
 export type ReportDecision = 'approve' | 'return'
 
 /**
- * Simulated PDF/DOCX export: requires an eligible approved version and an
+ * PDF/DOCX export: requires an eligible approved version and an
  * export-capable role, and records the export with its checksum on the
  * export record (never on preview content). An approved report advances to
  * exported; the export alone is not a delivery.
@@ -174,7 +174,7 @@ export interface DeliveryInput {
 }
 
 /**
- * The reports port (ADR-0096). The mock (`mock.ts`) and the real adapter (`remote.ts`) both implement it; presentation
+ * The reports port (ADR-0096). The real adapter (`remote.ts`) implements it; presentation
  * reaches it only through the feature's hooks.
  */
 export interface ReportService {
@@ -205,12 +205,6 @@ export interface ReportService {
 export interface ReportCapabilities {
   /** The no-findings closure variant is offered when a report is created and edited. */
   noFindingsVariant: boolean
-  /** Simulated editor helpers: scope insertion, filling empty sections and marked AI drafts. */
-  simulatedEditorHelpers: boolean
-  /** A draft needs a template and a reviewer on the client (the simulated rules). */
-  simulatedDraftRules: boolean
-  /** How a draft period is written: an ISO range from the server, or a display range in the simulated store. */
-  periodStyle: 'iso' | 'display'
   /** Export artifacts (JSON, Markdown, PDF, DOCX) are downloaded from the server. */
   artifactDownloads: boolean
   /** A new version can be started from a delivered or returned report. */

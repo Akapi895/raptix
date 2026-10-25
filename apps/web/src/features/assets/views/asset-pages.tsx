@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Ban, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
+import { Ban, CheckCircle2, FileUp, Map as MapIcon, Plus, Server, Upload, X } from 'lucide-react'
 import { useDirty } from '../../../state/session'
 import type { Asset } from '../../../domain/entities'
 import { useAssetImportRead, type AssetImportRead } from '../import-read'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../../../ui/index'
-import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from '../../../ui/d-shared'
+import { Blocked, DTable, Id, IdL, MoreFilters, shortDate, Trunc, withLoading } from '../../../ui/d-shared'
 // Ticket 50: catalog list, asset detail and scope views read through the
 // typed asset service via Query (feature-local handlers).
 import { AssetReadError, useAssetDetail, useAssetList, useAssetPort, useAssetScope } from '../query'
 import type { AssetListItem, AssetListRead, AssetScopeProject } from '../service';
 // Ticket 51: imports and scope changes run through the feature-local write
 // transactions (validated, atomic, role-gated) via the screen handlers.
-import { ASSET_TYPES, createAssetWriteHandlers, okIp, validateIdent, type AssetImportRow } from '../writes'
+import { ASSET_TYPES, createAssetWriteHandlers, validateIdent, type AssetImportRow } from '../writes'
 import { go, selectProject, useRoute } from '../../../router/navigate'
 import { useActiveProject, useCan, usePolicyProjects, useMe } from '../../../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../../../state/stores'
@@ -21,7 +21,6 @@ import { useSessionStore } from '../../../state/session'
 const SCOPES: Asset['scope'][] = ['in', 'out', 'pending', 'unclassified']
 const SCOPE_LABEL: Record<Asset['scope'], string> = { in: 'Approved In Scope', out: 'Approved Out of Scope', pending: 'Pending Approval', unclassified: 'Unclassified' }
 const SCOPE_COLOR: Record<Asset['scope'], string> = { in: 'var(--c-ok)', out: 'var(--c-bad)', pending: 'var(--c-warn)', unclassified: 'var(--c-neutral)' }
-const envOf = (a: Asset) => (['Lab', 'Staging', 'Lab', 'Isolated range'] as const)[hashNum(a.id) % 4]
 
 /* ───────────── Scope badge with explanation popover ───────────── */
 const SCOPE_WHY: Record<Asset['scope'], string> = {
@@ -59,7 +58,6 @@ function ObservedServices({ asset, state }: { asset: Asset; state: AssetListRead
 }
 
 export function ScopeBadge({ a }: { a: Asset }) {
-  const { simulated } = useAssetPort().capabilities
   const projects = usePolicyProjects()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
@@ -79,7 +77,6 @@ export function ScopeBadge({ a }: { a: Asset }) {
           <b className="block text-sm">{SCOPE_LABEL[a.scope]}</b>
           <span className="mt-1 block text-muted">{SCOPE_WHY[a.scope]}</span>
           <span className="mt-2 block">ROE: <Mono>{p?.roeVersion || '—'}</Mono> ({p ? (p.roeStatus === 'approved' ? 'approved' : p.roeStatus === 'none' ? 'missing' : p.roeStatus) : '—'})</span>
-          {simulated && <span className="mt-1 block text-muted">Demo Data: scope is simulated and not enforced by a real backend.</span>}
         </span>
       )}
     </span>
@@ -88,7 +85,6 @@ export function ScopeBadge({ a }: { a: Asset }) {
 
 /* ───────────── List (AS-01, ticket 50: typed service read + Query) ───────────── */
 function AssetList() {
-  const { simulated } = useAssetPort().capabilities
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
   const setFilter = useSessionStore((s) => s.setFilter)
@@ -159,7 +155,6 @@ function AssetList() {
               { key: 'i', header: 'Identifier', hideBelow: 'md', render: (r) => <div><span title={r.asset.ident} className="block max-w-[200px] truncate"><Mono className="text-muted">{r.asset.ident}</Mono></span><div><Mono className="text-xs text-muted">{r.asset.ip}</Mono></div></div> },
               { key: 't', header: 'Type', hideBelow: 'md', render: (r) => r.asset.type },
               ...(owners.length > 0 ? [{ key: 'o', header: 'Owner', hideBelow: 'lg' as const, render: (r: AssetListItem) => <Trunc max="max-w-[140px]">{r.asset.owner}</Trunc> }] : []),
-              ...(simulated ? [{ key: 'env', header: 'Environment', hideBelow: 'lg' as const, render: (r: AssetListItem) => envOf(r.asset) }] : []),
               ...(read.oses.length > 0 ? [{ key: 'os', header: 'OS', hideBelow: 'lg' as const, render: (r: AssetListItem) => r.asset.os }] : []),
               ...(pid === 'all' ? [{ key: 'p', header: 'Project', render: (r: AssetListItem) => <span className="text-xs">{r.projectName ?? r.projectId}</span> }] : []),
               { key: 's', header: 'Scope', render: (r) => <ScopeBadge a={r.asset} /> },
@@ -216,7 +211,6 @@ function AssetScope() {
   const toast = useToastStore((s) => s.toast)
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const scope = useAssetScope()
-  const { simulated } = useAssetPort().capabilities
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const read = scope.data
   const all = read?.rows.map((r) => r.asset) ?? []
@@ -282,7 +276,7 @@ function AssetScope() {
       {reqWhy && pid !== 'all' && <div className="-mt-2 mb-3"><Locked reason={`Request Scope Approval: ${reqWhy}`} /></div>}
       {scope.isPending ? (
         <div aria-busy="true" aria-label="Loading scope map"><Skeleton className="h-96" /></div>
-      ) : pid === 'all' && !simulated ? (
+      ) : pid === 'all' ? (
         <Empty icon={MapIcon} title="Choose a project to see its scope map" action={<Button variant="primary" onClick={() => setSwitcherOpen(true)}>Select project</Button>}>The scope map and its approved ROE are kept per project. Select a project to read its scope.</Empty>
       ) : scope.isError || !read ? (
         <Empty icon={MapIcon} title="Scope map could not be loaded" action={<Button onClick={() => scope.refetch()}>Retry</Button>}>
@@ -395,6 +389,9 @@ const applyIssues = (db: AssetImportRead, pid: string, rows: Row[], onlyK?: numb
   })
 }
 
+/** The real inventory names every asset by its identifier and stores only the type and identifier. */
+const toImportRow = (type: string, ident: string, source: string): AssetImportRow => ({ name: ident, ident, type, source })
+
 function ImportPreview({ rows, setRows, onConfirm, disabled, why, db, pid }: { rows: Row[]; setRows: (r: Row[]) => void; onConfirm: () => void; disabled: boolean; why: string; db: AssetImportRead; pid: string }) {
   const fix = (r: Row, ident: string) => setRows(applyIssues(db, pid, rows.map((x) => (x.k === r.k ? { ...x, ident } : x)), r.k))
   const kept = rows.filter((r) => r.keep && !r.err)
@@ -409,10 +406,8 @@ function ImportPreview({ rows, setRows, onConfirm, disabled, why, db, pid }: { r
       <Table dense rows={rows} rowKey={(r) => r.name + r.k}
         cols={[
           { key: 'k', header: 'Keep', width: '56px', render: (r) => <Check checked={r.keep && !r.err} disabled={!!r.err} onChange={(v) => setRows(rows.map((x) => x === r ? { ...x, keep: v } : x))} label={<span className="sr-only">Keep {r.name}</span>} /> },
-          { key: 'n', header: 'Name', render: (r) => <span className="font-medium">{r.name}</span> },
-          { key: 'i', header: 'Identifier', render: (r) => r.err || r.dup ? <Input aria-label={`Fix identifier for ${r.name}`} className="!h-8 font-mono text-xs" value={r.ident} onChange={(e) => fix(r, e.target.value)} /> : <Mono>{r.ident}</Mono> },
+          { key: 'i', header: 'Identifier', render: (r) => r.err || r.dup ? <Input aria-label={`Fix identifier for ${r.ident}`} className="!h-8 font-mono text-xs" value={r.ident} onChange={(e) => fix(r, e.target.value)} /> : <Mono>{r.ident}</Mono> },
           { key: 't', header: 'Type', hideBelow: 'md', render: (r) => r.type },
-          { key: 'sc', header: 'Proposed scope', hideBelow: 'md', render: (r) => r.scope === 'in' ? 'Pending Approval' : 'Out of Scope' },
           { key: 'e', header: 'Validation', render: (r) => r.err ? <span className="text-xs text-bad">{r.err}</span> : r.dup ? <span className="text-xs text-warn">Duplicate identifier</span> : <span className="inline-flex items-center gap-1 text-xs text-ok"><CheckCircle2 size={12} />Valid</span> },
         ]} />
       <div className="mt-3 flex flex-wrap items-center gap-3"><Button variant="primary" disabled={disabled || !kept.length} title={why || (!kept.length ? 'No records are selected to import.' : 'Creates records as Pending Review')} onClick={onConfirm}>Import {kept.length} {kept.length === 1 ? 'record' : 'records'} as Pending</Button>{why && <Locked reason={why} />}</div>
@@ -432,22 +427,19 @@ function AssetNew() {
   const route = useRoute()
   const port = useAssetPort()
   const guard = useGuard(pid === 'all' ? undefined : pid)
-  const { simulated } = port.capabilities
-  const [tab, setTab] = useState<'manual' | 'bulk' | 'disc'>(route.tab === 'bulk' || (route.tab === 'disc' && simulated) ? route.tab : 'manual')
-  const blank = { type: 'Host', name: '', ident: '', ip: '', os: 'Linux', desc: '', owner: '', labels: '', scope: 'in' as 'in' | 'out', note: '' }
+  const [tab, setTab] = useState<'manual' | 'bulk'>(route.tab === 'bulk' ? 'bulk' : 'manual')
+  const blank = { type: 'Host', ident: '' }
   const [f, setF] = useState(blank)
   const [tried, setTried] = useState(false)
-  const [done, setDone] = useState<{ needs: boolean; n: number; stay?: boolean } | null>(null)
+  const [done, setDone] = useState<{ n: number; stay?: boolean } | null>(null)
   const [paste, setPaste] = useState('')
   const [rows, setRows] = useState<Row[]>([])
-  const [scanning, setScanning] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const existing = db.assets.filter((a) => a.projectId === pid)
-  const roeDraft = !project || ['none', 'draft'].includes(project.roeStatus)
   const why = pid === 'all' ? 'Select a specific project before adding assets.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can add assets.' : ''
-  const isDirty = (!!(f.name || f.ident || f.desc || f.owner || f.labels || f.note) || !!paste || rows.length > 0)
-  useDirty(isDirty, () => toast('Asset form draft saved.', 'info'))
-  useEffect(() => { if (done && !done.needs && !done.stay && !dirty) go('assets') }, [done, dirty])
+  // There is no draft store: the guard protects only input the server has not received, and offers no save.
+  useDirty(!!f.ident || !!paste || rows.length > 0)
+  useEffect(() => { if (done && !done.stay && !dirty) go('assets') }, [done, dirty])
 
   /* Ticket 51: manual and bulk saves run through the atomic import
      transaction — the handler re-validates every row, so a refusal (with its
@@ -457,69 +449,54 @@ function AssetNew() {
     mutationFn: (input: { rows: readonly AssetImportRow[]; stay?: boolean; single?: string }) => write.importRows(input.rows),
     onSuccess: (res, input) => {
       if (!res.ok) { toast(res.failure.message, 'bad'); return }
-      toast(input.single ? `Asset ${input.single} saved as pending review.` : `${res.data.added} ${res.data.added === 1 ? 'asset' : 'assets'} imported as pending review.`)
-      setRows([]); setPaste(''); setTried(false)
-      setDone({ needs: !!res.data.needsApproval, n: res.data.added, stay: input.stay })
+      const skipped = input.rows.length - res.data.added
+      if (res.data.added === 0) {
+        toast(input.single ? `${input.single} was not saved: the identifier already exists in this project.` : 'Nothing was imported: every identifier already exists in this project.', 'warn')
+        return
+      }
+      toast(input.single ? `Asset ${input.single} saved as pending review.` : `${res.data.added} ${res.data.added === 1 ? 'asset' : 'assets'} imported as pending review${skipped > 0 ? `; ${skipped} skipped because the identifier already exists` : ''}.`)
+      // Input is cleared only after the server accepted it, so a refused or failed save keeps what was typed.
+      if (input.single !== undefined) setF((cur) => (cur.ident.trim() === input.single ? { ...blank, type: cur.type } : cur))
+      else { setRows([]); setPaste('') }
+      setTried(false)
+      setDone({ n: res.data.added, stay: input.stay })
     },
   })
 
-  const identErr = validateIdent(f.type, f.ident)
-  const ipErr = f.ip && !okIp(f.ip.trim()) ? 'Invalid IP address (example: 192.0.2.15).' : ''
-  const dupManual = existing.some((a) => a.ident.toLowerCase() === f.ident.trim().toLowerCase())
-  const err = { name: f.name.trim() ? '' : 'Enter an asset name.', ident: identErr || (dupManual ? 'This identifier already exists in the project. Open that asset to update it instead of creating a duplicate.' : ''), owner: f.owner.trim() ? '' : 'Enter an owner so we know who to contact during an incident.' }
+  const identErr = validateIdent(f.type, f.ident) || (existing.some((a) => a.ident.toLowerCase() === f.ident.trim().toLowerCase()) ? 'This identifier already exists in the project. Open that asset to update it instead of creating a duplicate.' : '')
   const submit = (again: boolean) => {
     setTried(true)
-    if (why || err.name || err.ident || err.owner || ipErr) return
-    importMut.mutate({ rows: [{ name: f.name.trim(), ident: f.ident.trim(), ip: f.ip.trim() || undefined, type: f.type, os: f.os, owner: f.owner.trim(), scope: f.scope, source: 'Manual' }], stay: again, single: f.name.trim() })
-    setF({ ...blank, type: f.type, owner: f.owner })
+    if (why || identErr) return
+    const ident = f.ident.trim()
+    importMut.mutate({ rows: [toImportRow(f.type, ident, 'Manual')], stay: again, single: ident })
   }
   const parse = (text: string, source: string) => {
+    // Columns are name,ident,type,os,owner,scope. The server stores only ident and type; the other columns are read and dropped.
     const parsed = text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !/^name\s*,/i.test(l)).map((l) => {
-      const [name = '', ident = '', type = 'Host', os = 'Linux', owner = '', scope = 'in'] = l.split(',').map((x) => x.trim())
-      return { name, ident, type, os, owner: owner || 'Unknown', scope: scope === 'out' ? 'out' : 'in', source }
+      const [, ident = '', type = 'Host'] = l.split(',').map((x) => x.trim())
+      return toImportRow(type, ident, source)
     })
     setRows(applyIssues(db, pid, parsed.map((r, i) => ({ ...r, err: '', dup: false, keep: true, k: i + 1 } as Row))))
   }
-  const sample = 'name,ident,type,os,owner,scope\nfile-lab-01,file-lab-01.example.test,Host,Windows,Infrastructure Team A,in\nintranet-lab,https://intranet.example.test,URL,Linux,Development Team A,in\nweb-lab-01,web-lab-01.example.test,Host,Linux,Infrastructure Team A,in\nlab-dmz,198.51.100.0/24,Subnet,—,Security Team A,out\nbad-entry,300.1.1.1,IP,—,Security Team A,in'
-  const confirmImport = (src: string) => {
-    importMut.mutate({ rows: rows.filter((r) => r.keep && !r.err).map(({ name, ident, type, os, owner, scope }) => ({ name, ident, type, os, owner, scope, source: src })) })
-  }
-  const scan = () => {
-    setScanning(true)
-    setTimeout(() => {
-      setScanning(false)
-      const found = [['disc-lab-01', 'disc-lab-01.example.test', 'Host', 'Linux'], ['disc-lab-02', 'disc-lab-02.example.test', 'Host', 'Windows'], ['web-lab-01', 'web-lab-01.example.test', 'Host', 'Linux']]
-      setRows(applyIssues(db, pid, found.map(([name, ident, type, os], k) => ({ k: k + 1, name, ident, type, os, owner: 'Unknown', scope: 'in' as const, source: 'Discovery', err: '', dup: false, keep: true } as Row))))
-    }, 1200)
-  }
+  const confirmImport = () => importMut.mutate({ rows: rows.filter((r) => r.keep && !r.err) })
   const onFile = (file?: File) => { if (!file) return; const rd = new FileReader(); rd.onload = () => { const t = String(rd.result || ''); setPaste(t); parse(t, 'CSV import') }; rd.readAsText(file) }
   const cancel = () => go('assets')
 
   return (
     <>
-      <PageHeader back={{ label: 'Assets', to: () => go('assets') }} title="Add Asset" sub={project ? `Project: ${project.id} — ${project.name}` : (simulated ? 'Add manually, import in bulk or run discovery (simulated).' : 'Add manually or import in bulk.')} />
+      <PageHeader back={{ label: 'Assets', to: () => go('assets') }} title="Add Asset" sub={project ? `Project: ${project.id} — ${project.name}` : 'Add manually or import in bulk.'} />
       {pid === 'all' && <Banner tone="warn" title="Select a specific project" action={<Button size="sm" onClick={() => setSwitcherOpen(true)}>Select project</Button>}>Assets cannot be added in “All Projects” mode. Choose a project in the top bar to continue.</Banner>}
       {pid !== 'all' && why && <Banner tone="bad" title="You cannot add assets">{why}</Banner>}
-      {done && (done.needs
-        ? <Banner tone="warn" title="Approved scope changed. ROE re-approval required" action={<><Button size="sm" onClick={() => go('asset-scope')}>Review scope</Button> <Button size="sm" variant="primary" onClick={() => go('assets')}>Back to assets</Button></>}>{done.n} {done.n === 1 ? 'asset was' : 'assets were'} added as Pending Approval. The project has an approved ROE, so a new ROE version is submitted for review. Assets can be used as targets only after a reviewer approves them.</Banner>
-        : <Banner tone="ok" title={`${done.n} ${done.n === 1 ? 'asset' : 'assets'} saved as Pending Review`} action={<><Button size="sm" variant="primary" onClick={() => go('asset-scope')}>Submit Scope Change</Button> <Button size="sm" onClick={() => go('assets')}>Back to assets</Button></>}>Records stay Pending and are not targetable. Submit a Scope Change for review under {project?.roeVersion || 'the current ROE'}. You can keep adding more assets.</Banner>)}
-      <Tabs value={tab} onChange={(t) => setTab(t as typeof tab)} tabs={[{ id: 'manual', label: 'Manual' }, { id: 'bulk', label: 'Bulk Import' }, ...(simulated ? [{ id: 'disc', label: 'Discovery Preview' }] : [])]} />
+      {done && <Banner tone="ok" title={`${done.n} ${done.n === 1 ? 'asset' : 'assets'} saved as Pending Review`} action={<><Button size="sm" variant="primary" onClick={() => go('asset-scope')}>Submit Scope Change</Button> <Button size="sm" onClick={() => go('assets')}>Back to assets</Button></>}>Records stay Pending and are not targetable. Submit a Scope Change for review under {project?.roeVersion || 'the current ROE'}. You can keep adding more assets.</Banner>}
+      <Tabs value={tab} onChange={(t) => setTab(t as typeof tab)} tabs={[{ id: 'manual', label: 'Manual' }, { id: 'bulk', label: 'Bulk Import' }]} />
       {tab === 'manual' && (
         <Card className="max-w-3xl">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <Banner tone="info">Only the asset type and identifier are stored. The asset starts as Pending Review and is not a target until a reviewer approves it. Owner, operating system, IP address, labels, description and approval notes are not stored yet, so this form does not take them.</Banner>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Asset type" required><Select value={f.type} disabled={!!why} onChange={(e) => setF({ ...f, type: e.target.value })}>{ASSET_TYPES.map((t) => <option key={t}>{t}</option>)}</Select></Field>
-            <Field label="Operating system"><Select value={f.os} disabled={!!why} onChange={(e) => setF({ ...f, os: e.target.value })}><option>Linux</option><option>Windows</option><option>—</option></Select></Field>
-            <Field label="Asset name" required error={tried && err.name}><Input disabled={!!why} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="e.g. file-lab-01" /></Field>
-            <Field label={f.type === 'IP' ? 'IP address' : f.type === 'URL' ? 'URL' : f.type === 'Subnet' ? 'Subnet (CIDR)' : 'Hostname'} required error={(tried || f.ident) && err.ident} hint="Original data is kept as entered and is not normalized."><Input disabled={!!why} value={f.ident} onChange={(e) => setF({ ...f, ident: e.target.value })} placeholder={f.type === 'IP' ? '192.0.2.15' : f.type === 'URL' ? 'https://app.example.test' : f.type === 'Subnet' ? '198.51.100.0/24' : 'file-lab-01.example.test'} className="font-mono" /></Field>
-            <Field label="IP address" error={tried && ipErr} hint="Optional. Use documentation ranges only (192.0.2.x, 198.51.100.x, 203.0.113.x)."><Input disabled={!!why} value={f.ip} onChange={(e) => setF({ ...f, ip: e.target.value })} placeholder="203.0.113.20" className="font-mono" /></Field>
-            <Field label="Owner" required error={tried && err.owner}><Input disabled={!!why} value={f.owner} onChange={(e) => setF({ ...f, owner: e.target.value })} placeholder="e.g. Infrastructure Team A" /></Field>
-            <Field label="Labels" hint="Separate with commas."><Input disabled={!!why} value={f.labels} onChange={(e) => setF({ ...f, labels: e.target.value })} placeholder="lab, windows" /></Field>
             <Field label="Project"><Input value={project ? `${project.id} — ${project.name}` : 'No project selected'} disabled readOnly /></Field>
-            <Field label="Description" className="sm:col-span-2"><Textarea className="min-h-16" disabled={!!why} value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} /></Field>
-            <Field label="Proposed scope status" hint="An asset enters scope only after approval."><Select value={f.scope} disabled={!!why} onChange={(e) => setF({ ...f, scope: e.target.value as 'in' | 'out' })}><option value="in">Propose Scope Change (in scope)</option><option value="out">Out of Scope</option></Select></Field>
-            <Field label="Approval note" className="sm:col-span-2"><Textarea className="min-h-16" disabled={!!why} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder="Why this asset should be added to scope (optional)." /></Field>
+            <Field label={f.type === 'IP' ? 'IP address' : f.type === 'URL' ? 'URL' : f.type === 'Subnet' ? 'Subnet (CIDR)' : 'Hostname'} required className="sm:col-span-2" error={(tried || f.ident) && identErr} hint="Original data is kept as entered and is not normalized."><Input disabled={!!why} value={f.ident} onChange={(e) => setF({ ...f, ident: e.target.value })} placeholder={f.type === 'IP' ? '192.0.2.15' : f.type === 'URL' ? 'https://app.example.test' : f.type === 'Subnet' ? '198.51.100.0/24' : 'file-lab-01.example.test'} className="font-mono" /></Field>
           </div>
-          {project && ['active', 'approved'].includes(project.status) && project.roeStatus === 'approved' && <p className="mt-4 text-xs text-warn">ROE {project.roeVersion} is approved. Proposing an asset as in scope requires re-approval once operations exist.</p>}
           <div className="sticky bottom-0 -mx-5 mt-5 flex flex-wrap justify-end gap-2 border-t border-line bg-panel px-5 pt-4">
             <Button onClick={cancel}>Cancel</Button>
             <Button disabled={!!why} title={why} onClick={() => submit(true)}>Save and add another</Button>
@@ -529,24 +506,15 @@ function AssetNew() {
       )}
       {tab === 'bulk' && (
         <Card>
-          <CardHeader title="Import multiple assets" sub="One line per asset: name,ident,type,os,owner,scope (scope: in | out). Types: Host, IP, URL, Application, Subnet." />
+          <CardHeader title="Import multiple assets" sub="One line per asset: name,ident,type,os,owner,scope. Only the identifier and the type are stored; the other columns are not stored yet. Types: Host, IP, URL, Subnet." />
           <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFile(e.dataTransfer.files[0]) }} className="mb-3 flex flex-col items-center gap-2 rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">
             <FileUp size={22} aria-hidden />Drag and drop a .csv file here, or
             <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
             <Button size="sm" icon={Upload} disabled={!!why} onClick={() => fileRef.current?.click()}>Choose file</Button>
           </div>
           <Field label="Or paste a list"><Textarea className="min-h-32 font-mono text-xs" disabled={!!why} value={paste} onChange={(e) => setPaste(e.target.value)} placeholder="name,ident,type,os,owner,scope" /></Field>
-          <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" disabled={!!why || !paste.trim()} title={why || (!paste.trim() ? 'Paste content or choose a file first.' : '')} onClick={() => parse(paste, 'CSV import')}>Preview</Button>{simulated && <Button disabled={!!why} onClick={() => { setPaste(sample); parse(sample, 'CSV import') }}>Use sample data</Button>}<Button variant="ghost" onClick={() => { setPaste(''); setRows([]) }}>Clear</Button></div>
-          {rows.length > 0 && <ImportPreview rows={rows} setRows={setRows} db={db} pid={pid} disabled={!!why} why={why} onConfirm={() => confirmImport('CSV import')} />}
-        </Card>
-      )}
-      {tab === 'disc' && simulated && (
-        <Card>
-          <CardHeader title={<span className="flex flex-wrap items-center gap-2">Asset discovery <span className="inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full border border-warn/30 bg-warn-soft px-2 text-xs font-medium text-warn"><Radar size={12} aria-hidden />Demo Preview</span></span>}
-            sub={roeDraft ? 'The ROE is still a draft, so this only generates sample data. No network scan is run and no real asset is contacted.' : 'Simulated Preview: no real network access or scan happens. Records below are sample data and must be reviewed before import.'} />
-          <Button icon={Radar} disabled={!!why || scanning} title={why} onClick={scan}>{scanning ? 'Generating…' : roeDraft ? 'Generate sample data' : 'Run simulated discovery'}</Button>
-          {rows.length > 0 && !scanning && <ImportPreview rows={rows} setRows={setRows} db={db} pid={pid} disabled={!!why} why={why} onConfirm={() => confirmImport('Simulated discovery')} />}
-          {!rows.length && !scanning && <p className="mt-3 text-xs text-muted">No sample results yet. Nothing has been scanned. Imported records start as Pending Review.</p>}
+          <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" disabled={!!why || !paste.trim()} title={why || (!paste.trim() ? 'Paste content or choose a file first.' : '')} onClick={() => parse(paste, 'CSV import')}>Preview</Button><Button variant="ghost" onClick={() => { setPaste(''); setRows([]) }}>Clear</Button></div>
+          {rows.length > 0 && <ImportPreview rows={rows} setRows={setRows} db={db} pid={pid} disabled={!!why} why={why} onConfirm={confirmImport} />}
         </Card>
       )}
     </>
@@ -579,7 +547,6 @@ function AssetDetail() {
       else toast(res.data.reviewRequested ? 'Scope change approval submitted.' : 'Asset proposed for scope.', 'info')
     },
   })
-  const { simulated } = useAssetPort().capabilities
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading asset"><Skeleton className="h-96" /></div>
   if (detail.isError || !read) {
     const failure = detail.isError ? (detail.error as AssetReadError).failure : undefined
@@ -601,7 +568,7 @@ function AssetDetail() {
   })
   return (
     <>
-      <PageHeader back={back} title={<span className="flex flex-wrap items-center gap-3">{a.name}<Mono className="text-sm text-muted">{a.id}</Mono></span>} meta={<ScopeBadge a={a} />} sub={[a.ident, a.ip, simulated ? envOf(a) : '', `ROE ${p.roeVersion}`].filter(Boolean).join(' · ')}
+      <PageHeader back={back} title={<span className="flex flex-wrap items-center gap-3">{a.name}<Mono className="text-sm text-muted">{a.id}</Mono></span>} meta={<ScopeBadge a={a} />} sub={[a.ident, a.ip, `ROE ${p.roeVersion}`].filter(Boolean).join(' · ')}
         actions={<>
           <Button icon={CheckCircle2} disabled={!!why || a.scope === 'in' || a.scope === 'pending'} title={why || (a.scope === 'in' ? 'Asset is already in scope.' : a.scope === 'pending' ? 'Awaiting approval.' : 'Propose adding to project scope')} onClick={toIn}>Propose Scope Change</Button>
           <Button variant="danger" icon={Ban} disabled={!!why || a.scope === 'out'} title={why || (a.scope === 'out' ? 'Asset is already out of scope.' : 'Mark out of scope')} onClick={toOut}>Mark out of scope</Button>
@@ -610,7 +577,7 @@ function AssetDetail() {
       {a.scope !== 'in' && <Banner tone="warn" title="Asset is not in approved scope" action={<Button size="sm" onClick={() => go('asset-scope')}>Open scope review</Button>}>This asset cannot be selected as an execution target until it is approved in the ROE.</Banner>}
       <Tabs value={tab} onChange={(t) => go('asset', { id: a.id, tab: t })} tabs={[{ id: 'overview', label: 'Overview' }, { id: 'scope', label: 'Scope' }, { id: 'ops', label: 'Related operations', count: ops.length }, { id: 'agents', label: 'Agents', count: agents.length }, { id: 'findings', label: 'Findings & Evidence', count: fs.length + ev.length }, { id: 'approvals', label: 'Approval history', count: apprs.length }, { id: 'history', label: 'History' }]} />
       {tab === 'overview' && <Card><CardHeader title="Attributes" /><DescList cols={3} items={[
-        { k: 'Identifier', v: <Mono>{a.ident}</Mono> }, { k: 'IP address', v: <Mono>{a.ip}</Mono> }, { k: 'Type', v: a.type }, { k: 'Operating system', v: a.os }, { k: 'Owner', v: a.owner }, { k: 'Environment', v: envOf(a) },
+        { k: 'Identifier', v: <Mono>{a.ident}</Mono> }, { k: 'IP address', v: <Mono>{a.ip}</Mono> }, { k: 'Type', v: a.type }, { k: 'Operating system', v: a.os }, { k: 'Owner', v: a.owner },
         { k: 'Data source', v: a.source }, { k: 'Last updated', v: a.updated },
         { k: 'Project', v: <IdLink onClick={() => go('project', { id: a.projectId })}>{a.projectId}</IdLink> }, { k: 'Scope', v: <ScopeBadge a={a} /> }, { k: 'ROE version', v: <span className="flex items-center gap-2"><Mono>{p.roeVersion}</Mono><Status kind="roe" value={p.roeStatus} size="sm" /></span> }, { k: 'Operations / agents / findings / evidence', v: `${ops.length} / ${agents.length} / ${fs.length} / ${ev.length}` },
       ]} /></Card>}

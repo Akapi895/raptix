@@ -9,7 +9,7 @@ import { TemplateCreateForm } from './template-create-form';
 import { AiExclusion } from './report-pages'
 import { go, useRoute } from '../../../router/navigate'
 import { useCan, useMe } from '../../../state/console'
-import { useProjectStore, useToastStore } from '../../../state/stores'
+import { useProjectStore } from '../../../state/stores'
 import { useSessionStore } from '../../../state/session'
 
 const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileText }> = {
@@ -162,19 +162,16 @@ function Templates() {
 
 function Exports() {
   const me = useMe()
-  const can = useCan()
-  const toast = useToastStore((s) => s.toast)
   const [st, setSt] = useState('')
   const [page, setPage] = useState(1)
   const q = useDeliveryHistory({ status: st || undefined, page: page > 1 ? page : undefined })
   const data = q.data
-  const dl = can('viewSensitive')
   return (
     <>
       <FilterBar>
         <Select aria-label="Export status" className="w-48" value={st} onChange={(e) => { setPage(1); setSt(e.target.value) }}><option value="">All statuses</option>{(data?.statuses ?? []).map((s) => <option key={s}>{s}</option>)}</Select>
       </FilterBar>
-      <Banner tone="info" title="Exports are never replaced">Earlier exports are kept when a report is edited; a new export gets a new version and checksum.</Banner>
+      <Banner tone="info" title="Earlier export files cannot be downloaded here">The server records each export, but it returns only a report's current version when a file is requested. Download the current version from the report page.</Banner>
       {q.isPending ? (
         <div aria-busy="true" aria-label="Loading delivery history"><Skeleton className="h-64" /></div>
       ) : q.isError ? (
@@ -185,17 +182,17 @@ function Exports() {
             cols={[
               { key: 'id', header: 'Job ID', render: (it) => <Mono className="whitespace-nowrap">{it.rec.id}</Mono> },
               { key: 'r', header: 'Report Name', render: (it) => <IdLink onClick={() => go('report-review', { id: it.rec.reportId })}>{it.rec.reportId}</IdLink> },
-              { key: 'v', header: 'Version', render: (it) => <Mono className="whitespace-nowrap">{it.rec.version}</Mono> },
+              { key: 'v', header: 'Version', render: (it) => <Mono className="whitespace-nowrap">{it.rec.version || '—'}</Mono> },
               { key: 'f', header: 'Format', render: (it) => it.rec.format },
               { key: 'by', header: 'Requested By', hideBelow: 'md', render: (it) => it.rec.by },
               { key: 'at', header: 'Timestamp', hideBelow: 'md', render: (it) => <span className="whitespace-nowrap text-muted">{it.rec.at}</span> },
               { key: 'rc', header: 'Recipient', hideBelow: 'lg', render: (it) => it.rec.recipient },
               { key: 's', header: 'Status', render: (it) => <Status kind="generic" value={it.rec.status === 'Delivered' ? 'ok' : it.rec.status === 'Completed' ? 'warn' : 'bad'} label={it.rec.status} /> },
-              { key: 'c', header: 'Checksum', hideBelow: 'lg', render: (it) => <Mono className="whitespace-nowrap text-muted">{it.rec.checksum}</Mono> },
+              { key: 'c', header: 'Checksum', hideBelow: 'lg', render: (it) => <Mono className="whitespace-nowrap text-muted">{it.rec.checksum || '—'}</Mono> },
               { key: 'x', header: '', render: (it) => (
                 <div className="flex gap-1.5">
                   <Button size="sm" icon={Eye} onClick={() => go('report-preview', { id: it.rec.reportId })}>View</Button>
-                  <Button size="sm" icon={Download} disabled={!dl} title={dl ? undefined : 'Your role cannot download exports. Ask a Manager or Reviewer.'} onClick={() => toast(`Downloading ${it.rec.id}.${it.rec.format.toLowerCase()} (simulated, checksum ${it.rec.checksum})`, 'info')}>Download</Button>
+                  <Button size="sm" icon={Download} disabled title="The server does not return an earlier export file. See the note above.">Download</Button>
                   <Button size="sm" icon={History} onClick={() => go('report-review', { id: it.rec.reportId })}>History</Button>
                 </div>) },
             ]} />

@@ -1,6 +1,6 @@
 /**
  * Public surface of the asset feature (ADR-0096). Callers import from here; the feature's files stay private.
- * The mock store and the real adapter are wired by the composition roots, so they are not exported here.
+ * The real adapter is wired by the composition root, so it is not exported here.
  */
 export { assetRoutes } from './views/asset-pages'
 export { ProjectAssets } from './views/project-assets'

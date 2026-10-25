@@ -72,15 +72,13 @@ export interface AssetObservedGraph {
 export interface AssetCapabilities {
   /** Scope change requests are raised from the scope screen; real mode raises them from the Scope revisions panel. */
   readonly scopeApprovalRequests: boolean
-  /** The observed attack-chain graph is read from the server; the simulated store has none. */
+  /** The observed attack-chain graph is read from the server. */
   readonly observedGraph: boolean
-  /** The mock store fills fields the real inventory does not hold (environment, sample discovery); the screens show them only when true. */
-  readonly simulated: boolean
 }
 
 export interface AssetService {
   readonly capabilities: AssetCapabilities
-  /** The observed graph source; the simulated store has none, so the screen says so instead of inventing one. */
+  /** The observed attack-chain graph for the active project. */
   observedGraph(ctx: RequestContext): Promise<ServiceResult<AssetObservedGraph>>
   list(ctx: RequestContext, query?: AssetListQuery): Promise<ServiceResult<AssetListRead>>
   get(ctx: RequestContext, id: string): Promise<ServiceResult<AssetDetailRead>>

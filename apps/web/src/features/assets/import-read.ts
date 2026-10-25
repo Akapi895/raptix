@@ -9,8 +9,7 @@ export interface AssetImportRead {
 }
 
 /**
- * The checks read the asset list the page shows, so they hold in both modes: the identifiers come from the port, never from the
- * mock database. The server still refuses duplicates on commit.
+ * The checks read the asset list the page shows: the identifiers come from the port. The server still refuses duplicates on commit.
  */
 export function useAssetImportRead(): AssetImportRead {
   const scope = useQueryScope()

@@ -92,7 +92,8 @@ function toExportRec(view: ReportView, ctx: ReportContext): ExportRec[] {
   return view.deliveries.map((d) => ({
     id: d.id,
     reportId: view.id,
-    version: `v${view.version}`,
+    // The delivery record does not carry the report version it was made from; the current version is not a substitute.
+    version: '',
     format: d.format,
     by: label(ctx.labels, view.createdBy),
     at: displayTime(d.createdAt),
@@ -151,7 +152,7 @@ function parsePeriod(text: string): { start: string; end: string } | null {
  * version the caller last read, so a stale edit is refused rather than
  * overwriting a newer version.
  */
-const REAL_CAPABILITIES: ReportCapabilities = { noFindingsVariant: false, simulatedEditorHelpers: false, simulatedDraftRules: false, periodStyle: 'iso', artifactDownloads: true, revision: true, storedTemplates: true }
+const REAL_CAPABILITIES: ReportCapabilities = { noFindingsVariant: false, artifactDownloads: true, revision: true, storedTemplates: true }
 
 export function createRealReportService(independentReviewRequired = true): ReportService {
   return {
