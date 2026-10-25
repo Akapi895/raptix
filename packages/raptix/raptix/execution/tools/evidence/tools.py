@@ -17,11 +17,11 @@ stays a plain function since it IS reachable today, via
 
 from __future__ import annotations
 
-import hashlib
 import hmac
 import json
 import os
 import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Any
@@ -30,10 +30,15 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 
+from raptix.execution.backends.project_files import (
+    WORKSPACE_ROOT,
+    ProjectFiles,
+    ProjectFileUnavailable,
+    ambient_project_files,
+)
 from raptix.execution.tools.evidence.asciicast import (
     AsciicastExportError,
     export_asciicast,
-    list_recordings,
 )
 from raptix.middleware._audit_sink import (
     _GENESIS_PREV_HASH,
@@ -43,23 +48,31 @@ from raptix.middleware._audit_sink import (
 
 _MANIFEST_NAME = "chain-of-custody.jsonl"
 _SEAL_FIELDS = ("path", "sha256", "size", "sealed_at")
+# The evidence folder, relative to the project's /workspace (ADR-0102). Files are read and written in the project's
+# sandbox, never on the runtime's own disk.
+_RECORDINGS = "evidence/recordings"
 
 
 def _json(data: Any) -> str:
     return json.dumps(data, indent=2, default=str, ensure_ascii=False)
 
 
-def _workspace() -> Path:
-    return Path(os.environ.get("RAPTIX_ENGAGEMENT_WORKSPACE") or "/workspace")
+def _evidence_rel(workspace_path: str) -> str:
+    """The evidence folder relative to /workspace. A workspace path must be /workspace or a folder inside it."""
+    base = (workspace_path or WORKSPACE_ROOT).rstrip("/")
+    if base != WORKSPACE_ROOT and not base.startswith(f"{WORKSPACE_ROOT}/"):
+        raise ValueError(f"workspace_path must be {WORKSPACE_ROOT} or a folder inside it")
+    inner = base[len(WORKSPACE_ROOT) + 1 :]
+    return f"{inner}/evidence" if inner else "evidence"
 
 
-def _evidence_dir() -> Path:
-    return _workspace() / "evidence" / "recordings"
-
-
-def _evidence_root(workspace_path: str) -> Path:
-    base = Path(workspace_path) if workspace_path else _workspace()
-    return base / "evidence"
+def _project_file_rel(path: str) -> str:
+    """A file path the agent gave, as a path relative to /workspace. Absolute paths outside it are refused."""
+    if path.startswith(f"{WORKSPACE_ROOT}/"):
+        return path[len(WORKSPACE_ROOT) + 1 :]
+    if path.startswith("/"):
+        raise ValueError(f"{path} is outside {WORKSPACE_ROOT}")
+    return path
 
 
 def _hmac_key() -> bytes | None:
@@ -71,22 +84,20 @@ def _hmac_equal(expected: str, stored: Any) -> bool:
     return hmac.compare_digest(expected, str(stored or ""))
 
 
-def _hash_file(file_path: Path) -> tuple[str, int]:
-    digest = hashlib.sha256()
-    size = 0
-    with file_path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(65536), b""):
-            digest.update(chunk)
-            size += len(chunk)
-    return digest.hexdigest(), size
-
-
-def _evidence_files(evidence_root: Path, manifest_path: Path) -> list[Path]:
-    found: list[Path] = []
-    for candidate in sorted(evidence_root.rglob("*")):
-        if candidate.is_file() and candidate != manifest_path:
-            found.append(candidate)
-    return found
+def _list_recordings(files: ProjectFiles, rel: str) -> list[dict[str, Any]]:
+    """Every ``.cast.manifest.json`` under the recordings folder, as parsed manifests."""
+    manifests: list[dict[str, Any]] = []
+    for name in files.list_files(rel) or []:
+        if not name.endswith(".cast.manifest.json"):
+            continue
+        raw = files.read_bytes(f"{rel}/{name}")
+        if raw is None:
+            continue
+        try:
+            manifests.append(json.loads(raw))
+        except ValueError:
+            continue
+    return manifests
 
 
 @tool
@@ -102,21 +113,40 @@ def export_session_asciicast(
     in any browser with asciinema-player and bundled into the engagement
     out-brief for client visibility into agent actions.
     """
-    log_path = (
-        Path(pipe_pane_log_path)
-        if pipe_pane_log_path
-        else _workspace() / ".tmux-logs" / f"{session_name}.log"
-    )
-    out_dir = _evidence_dir()
-    out_path = out_dir / f"{session_name}.cast"
+    files = ambient_project_files()
     try:
-        manifest = export_asciicast(
-            log_path=log_path,
-            output_path=out_path,
-            session_name=session_name,
-            title=title,
+        log_rel = (
+            _project_file_rel(pipe_pane_log_path)
+            if pipe_pane_log_path
+            else f".tmux-logs/{session_name}.log"
         )
-    except AsciicastExportError as exc:
+        out_rel = f"{_RECORDINGS}/{session_name}.cast"
+        log_data = files.read_bytes(log_rel)
+        if log_data is None:
+            return _json({"error": f"pipe-pane log not found: {WORKSPACE_ROOT}/{log_rel}"})
+        sidecar = files.read_bytes(f"{log_rel}.events")
+        # The conversion reads and writes local files, so it runs in a scratch folder: the log comes in from the
+        # project's sandbox, and the recording and its manifest go back to it.
+        with tempfile.TemporaryDirectory() as staging:
+            staged = Path(staging)
+            (staged / "pipe-pane.log").write_bytes(log_data)
+            if sidecar is not None:
+                (staged / "pipe-pane.log.events").write_bytes(sidecar)
+            cast_path = staged / f"{session_name}.cast"
+            manifest = export_asciicast(
+                log_path=staged / "pipe-pane.log",
+                output_path=cast_path,
+                session_name=session_name,
+                title=title,
+            )
+            manifest = {
+                **manifest,
+                "source_log": f"{WORKSPACE_ROOT}/{log_rel}",
+                "asciicast_path": f"{WORKSPACE_ROOT}/{out_rel}",
+            }
+            files.write_bytes(out_rel, cast_path.read_bytes())
+            files.write_bytes(f"{out_rel}.manifest.json", _json(manifest).encode("utf-8"))
+    except (AsciicastExportError, ProjectFileUnavailable, ValueError) as exc:
         return _json({"error": str(exc)})
     return _json({"status": "exported", **manifest})
 
@@ -124,7 +154,7 @@ def export_session_asciicast(
 @tool
 def list_session_recordings() -> str:
     """List all asciicast recordings captured for the current engagement."""
-    manifests = list_recordings(_evidence_dir())
+    manifests = _list_recordings(ambient_project_files(), _RECORDINGS)
     return _json({"count": len(manifests), "recordings": manifests})
 
 
@@ -133,31 +163,35 @@ def seal_evidence(workspace_path: str = "") -> str:
     """Seal every file under ``<workspace>/evidence/`` into the
     append-only chain-of-custody manifest (SHA-256 + size per file,
     one HMAC-chained record each)."""
-    evidence_root = _evidence_root(workspace_path)
-    if not evidence_root.is_dir():
-        return _json({"error": f"evidence directory not found: {evidence_root}"})
-    manifest_path = evidence_root / _MANIFEST_NAME
-    files = _evidence_files(evidence_root, manifest_path)
-    key = _hmac_key()
-    sealed_at = datetime.now(timezone.utc).isoformat()
-    prev_hash = _GENESIS_PREV_HASH
-    if manifest_path.exists():
-        with manifest_path.open("r", encoding="utf-8") as fh:
-            for raw in fh:
-                line = raw.strip()
-                if not line:
-                    continue
-                try:
-                    prev_hash = str(json.loads(line).get("hash", prev_hash))
-                except json.JSONDecodeError:
-                    continue
-    records: list[dict[str, Any]] = []
-    with manifest_path.open("a", encoding="utf-8") as fh:
-        for file_path in files:
-            sha256, size = _hash_file(file_path)
-            rel = file_path.relative_to(evidence_root).as_posix()
+    files = ambient_project_files()
+    try:
+        evidence = _evidence_rel(workspace_path)
+        names = files.list_files(evidence)
+        if names is None:
+            return _json({"error": f"evidence directory not found: {WORKSPACE_ROOT}/{evidence}"})
+        manifest = f"{evidence}/{_MANIFEST_NAME}"
+        key = _hmac_key()
+        sealed_at = datetime.now(timezone.utc).isoformat()
+        prev_hash = _GENESIS_PREV_HASH
+        for raw in (files.read_bytes(manifest) or b"").splitlines():
+            line = raw.decode("utf-8", errors="replace").strip()
+            if not line:
+                continue
+            try:
+                prev_hash = str(json.loads(line).get("hash", prev_hash))
+            except ValueError:
+                continue
+        lines: list[str] = []
+        sealed: list[str] = []
+        for name in names:
+            if name == _MANIFEST_NAME:
+                continue
+            digest = files.file_digest(f"{evidence}/{name}")
+            if digest is None:
+                continue
+            sha256, size = digest
             record: dict[str, Any] = {
-                "path": rel,
+                "path": name,
                 "sha256": sha256,
                 "size": size,
                 "sealed_at": sealed_at,
@@ -166,71 +200,78 @@ def seal_evidence(workspace_path: str = "") -> str:
             record["prev_hash"] = prev_hash
             record["hash"] = this_hash
             record["hmac"] = _record_hmac(this_hash, key)
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-            records.append(record)
+            lines.append(json.dumps(record, ensure_ascii=False))
+            sealed.append(name)
             prev_hash = this_hash
+        if lines:
+            files.append_bytes(manifest, ("\n".join(lines) + "\n").encode("utf-8"))
+    except (ProjectFileUnavailable, ValueError) as exc:
+        return _json({"error": str(exc)})
     return _json(
         {
             "status": "sealed",
-            "manifest": str(manifest_path),
-            "sealed": len(records),
-            "files": [r["path"] for r in records],
+            "manifest": f"{WORKSPACE_ROOT}/{manifest}",
+            "sealed": len(sealed),
+            "files": sealed,
         }
     )
 
 
-def _verify_manifest(evidence_root: Path) -> dict[str, Any]:
+def _verify_manifest(files: ProjectFiles, evidence: str) -> dict[str, Any]:
     """Re-hash + re-chain every record in the custody manifest.
 
     Shared by ``verify_evidence`` (internal service) and
-    ``inspect_evidence`` (agent-facing projection).
+    ``inspect_evidence`` (agent-facing projection). ``evidence`` is the folder
+    relative to /workspace. Hashing runs in the project's sandbox.
     """
-    manifest_path = evidence_root / _MANIFEST_NAME
-    if not manifest_path.exists():
-        return {"error": f"manifest not found: {manifest_path}"}
+    manifest = f"{evidence}/{_MANIFEST_NAME}"
+    raw_manifest = files.read_bytes(manifest)
+    if raw_manifest is None:
+        return {"error": f"manifest not found: {WORKSPACE_ROOT}/{manifest}"}
     key = _hmac_key()
     prev_hash = _GENESIS_PREV_HASH
     checked = 0
     drift: list[dict[str, Any]] = []
     missing: list[str] = []
     chain_errors: list[dict[str, Any]] = []
-    with manifest_path.open("r", encoding="utf-8") as fh:
-        for raw in fh:
-            line = raw.strip()
-            if not line:
-                continue
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                chain_errors.append({"reason": "undecodable record", "line": checked + 1})
-                continue
-            checked += 1
-            core = {k: rec.get(k) for k in _SEAL_FIELDS}
-            recomputed = _record_hash(core, prev_hash)
-            if rec.get("prev_hash") != prev_hash or rec.get("hash") != recomputed:
-                chain_errors.append({"path": rec.get("path"), "reason": "broken chain link"})
-            elif key is not None and not _hmac_equal(
-                _record_hmac(recomputed, key), rec.get("hmac")
-            ):
-                chain_errors.append({"path": rec.get("path"), "reason": "hmac mismatch"})
-            prev_hash = str(rec.get("hash", prev_hash))
-            file_path = evidence_root / str(rec.get("path", ""))
-            if not file_path.is_file():
-                missing.append(str(rec.get("path")))
-                continue
-            sha256, size = _hash_file(file_path)
-            if sha256 != rec.get("sha256") or size != rec.get("size"):
-                drift.append(
-                    {
-                        "path": rec.get("path"),
-                        "expected_sha256": rec.get("sha256"),
-                        "actual_sha256": sha256,
-                        "expected_size": rec.get("size"),
-                        "actual_size": size,
-                    }
-                )
+    for raw in raw_manifest.decode("utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            chain_errors.append({"reason": "undecodable record", "line": checked + 1})
+            continue
+        checked += 1
+        core = {k: rec.get(k) for k in _SEAL_FIELDS}
+        recomputed = _record_hash(core, prev_hash)
+        if rec.get("prev_hash") != prev_hash or rec.get("hash") != recomputed:
+            chain_errors.append({"path": rec.get("path"), "reason": "broken chain link"})
+        elif key is not None and not _hmac_equal(_record_hmac(recomputed, key), rec.get("hmac")):
+            chain_errors.append({"path": rec.get("path"), "reason": "hmac mismatch"})
+        prev_hash = str(rec.get("hash", prev_hash))
+        name = str(rec.get("path", ""))
+        try:
+            digest = files.file_digest(f"{evidence}/{name}")
+        except ValueError:
+            digest = None
+        if digest is None:
+            missing.append(name)
+            continue
+        sha256, size = digest
+        if sha256 != rec.get("sha256") or size != rec.get("size"):
+            drift.append(
+                {
+                    "path": rec.get("path"),
+                    "expected_sha256": rec.get("sha256"),
+                    "actual_sha256": sha256,
+                    "expected_size": rec.get("size"),
+                    "actual_size": size,
+                }
+            )
     return {
-        "manifest": str(manifest_path),
+        "manifest": f"{WORKSPACE_ROOT}/{manifest}",
         "ok": not drift and not missing and not chain_errors,
         "records_checked": checked,
         "drift": drift,
@@ -242,7 +283,10 @@ def _verify_manifest(evidence_root: Path) -> dict[str, Any]:
 def verify_evidence(workspace_path: str = "") -> str:
     """Verify the evidence chain-of-custody manifest (drift, missing
     files, broken chain links)."""
-    return _json(_verify_manifest(_evidence_root(workspace_path)))
+    try:
+        return _json(_verify_manifest(ambient_project_files(), _evidence_rel(workspace_path)))
+    except (ProjectFileUnavailable, ValueError) as exc:
+        return _json({"error": str(exc)})
 
 
 @tool
@@ -306,9 +350,13 @@ def inspect_evidence(
             }
         )
 
-    evidence_root = _evidence_root("")
-    custody = _verify_manifest(evidence_root)
-    recordings = list_recordings(_evidence_dir())
+    try:
+        files = ambient_project_files()
+        custody = _verify_manifest(files, "evidence")
+        recordings = _list_recordings(files, _RECORDINGS)
+    except ProjectFileUnavailable as exc:
+        custody = {"error": f"the project sandbox could not be read: {exc}"}
+        recordings = []
     result: dict[str, Any] = {
         "finding": {
             "id": node.id,

@@ -20,8 +20,8 @@ Brief.
 from __future__ import annotations
 
 import hashlib
-import os
 import statistics
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -30,7 +30,12 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
 from raptix.blue_cell.rule_match import RuleMatcher, load_rules
-from raptix.blue_cell.tap import BlueCellTap
+from raptix.blue_cell.tap import BlueCellTap, TapEvent
+from raptix.execution.backends.project_files import (
+    WORKSPACE_ROOT,
+    ProjectFileUnavailable,
+    ambient_project_files,
+)
 from raptix.execution.tools.research._state import _json, graph_transaction
 from raptix_core.types.kg import Edge, EdgeKind, KnowledgeGraph, Node, NodeKind
 
@@ -43,14 +48,44 @@ _ATTRIBUTABLE: tuple[NodeKind, ...] = (NodeKind.FINDING, NodeKind.TECHNIQUE)
 
 
 def _resolve_workspace(workspace_path: str, config: RunnableConfig | None) -> str:
-    """Explicit arg → runnable config → env → ``/workspace`` (bash-tool order)."""
+    """Explicit arg → runnable config → ``/workspace``. Only the project's own /workspace or a folder in it is valid."""
     if workspace_path:
         return workspace_path
     configurable = (config or {}).get("configurable", {}) if config else {}
     from_config = configurable.get("workspace_path") if isinstance(configurable, dict) else None
     if from_config:
         return str(from_config)
-    return os.environ.get("RAPTIX_WORKSPACE_PATH", "/workspace")
+    return WORKSPACE_ROOT
+
+
+def _workspace_rel(workspace: str) -> str:
+    """The workspace folder relative to the project's /workspace ('' for the root itself)."""
+    base = workspace.rstrip("/") or WORKSPACE_ROOT
+    if base != WORKSPACE_ROOT and not base.startswith(f"{WORKSPACE_ROOT}/"):
+        raise ValueError(f"workspace_path must be {WORKSPACE_ROOT} or a folder inside it")
+    return base[len(WORKSPACE_ROOT) + 1 :]
+
+
+def _read_session_events(workspace_rel: str) -> list[TapEvent]:
+    """The sandbox's session and target logs, replayed through the tap from a scratch copy (ADR-0102).
+
+    The tap reads local files, so the logs come in from the project's sandbox into a scratch folder with the same
+    ``.sessions/`` layout, and the source names it derives stay the same.
+    """
+    files = ambient_project_files()
+    sessions = f"{workspace_rel}/.sessions" if workspace_rel else ".sessions"
+    with tempfile.TemporaryDirectory() as staging:
+        root = Path(staging)
+        for name in files.list_files(sessions) or []:
+            if Path(name).suffix not in {".log", ".jsonl"}:
+                continue
+            data = files.read_bytes(f"{sessions}/{name}")
+            if data is None:
+                continue
+            target = root / ".sessions" / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        return BlueCellTap(root).read_batch()
 
 
 def node_techniques(node: Node) -> set[str]:
@@ -139,13 +174,13 @@ def _record_hit(graph: KnowledgeGraph, source: str, detection: Any, *, key: str)
 
 
 def _scan_and_record(
-    graph: KnowledgeGraph, *, workspace_path: str, rules_path: str, now_ts: float
+    graph: KnowledgeGraph, *, workspace_rel: str, rules_path: str, now_ts: float
 ) -> dict[str, Any]:
     """Replay the tap, evaluate rules, record detections, return coverage."""
     rules_path = rules_path or str(_BUNDLED_RULES)
     rules = load_rules(rules_path)
     matcher = RuleMatcher(rules)
-    events = BlueCellTap(workspace_path).read_batch()
+    events = _read_session_events(workspace_rel)
 
     detections = 0
     techniques: set[str] = set()
@@ -202,7 +237,7 @@ def blue_cell_scan(
 
     Args:
         workspace_path: Engagement workspace root holding ``.sessions/``.
-            Defaults to the runnable config / ``RAPTIX_WORKSPACE_PATH`` /
+            Defaults to the runnable config /
             ``/workspace``.
         rules_path: JSONL file or directory of detection rules. Defaults to
             the bundled baseline ruleset; point this at the Detector's output
@@ -212,16 +247,22 @@ def blue_cell_scan(
         JSON coverage summary: rules loaded, events scanned, detections,
         techniques detected, median MTTD, and the detection-gap Finding list.
     """
-    resolved_workspace = _resolve_workspace(workspace_path, config)
-    with graph_transaction() as graph:
-        return _json(
-            _scan_and_record(
-                graph,
-                workspace_path=resolved_workspace,
-                rules_path=rules_path,
-                now_ts=time.time(),
+    try:
+        workspace_rel = _workspace_rel(_resolve_workspace(workspace_path, config))
+    except ValueError as exc:
+        return _json({"error": str(exc)})
+    try:
+        with graph_transaction() as graph:
+            return _json(
+                _scan_and_record(
+                    graph,
+                    workspace_rel=workspace_rel,
+                    rules_path=rules_path,
+                    now_ts=time.time(),
+                )
             )
-        )
+    except ProjectFileUnavailable as exc:
+        return _json({"error": f"the project sandbox could not be read: {exc}"})
 
 
 BLUE_CELL_TOOLS = [blue_cell_scan]
