@@ -25,7 +25,8 @@ function run(value: unknown, threadId: string): RuntimeRun {
 }
 export class RuntimeExecutionClient extends RuntimeReadClient implements RuntimeExecutionPort {
   public async createThread(id: string, metadata: Record<string, string>, initial: TrustedRuntimeContext['configurable']): Promise<{ threadId: string; metadata: Record<string, unknown> }> {
-    const values = Object.fromEntries(Object.entries(initial).filter(([key]) => key !== 'sandbox_url'));
+    // Routing and credentials are sent per run, never persisted into thread state.
+    const values = Object.fromEntries(Object.entries(initial).filter(([key]) => key !== 'sandbox_url' && key !== 'sandbox_token'));
     const v = await this.read('/threads', { thread_id: id, if_exists: 'raise', metadata, supersteps: [{ updates: [{ values, as_node: '__start__' }] }] }, true);
     if (!record(v) || v.thread_id !== id || !record(v.metadata)) throw new RuntimeUnavailableError();
     return { threadId: id, metadata: v.metadata };

@@ -44,7 +44,7 @@ export class EnvironmentNotReadyError extends ProjectApiError {
  * environment recorded. There is no cache, so a generation change or a stop is seen on the next call.
  */
 export class RuntimeRouter {
-  public constructor(private readonly legacyApiUrl: string, private readonly source: EnvironmentRouteSource) {}
+  public constructor(private readonly legacyApiUrl: string, private readonly source: EnvironmentRouteSource, private readonly apiToken?: string) {}
 
   public async endpoint(engagementId: string): Promise<RuntimeEndpoint> {
     const route = await this.source.route(engagementId);
@@ -54,15 +54,15 @@ export class RuntimeRouter {
   }
 
   public async execution(engagementId: string): Promise<RuntimeExecutionPort> {
-    return new RuntimeExecutionClient((await this.endpoint(engagementId)).apiUrl);
+    return new RuntimeExecutionClient((await this.endpoint(engagementId)).apiUrl, undefined, undefined, this.apiToken);
   }
 
   public async reads(engagementId: string): Promise<RuntimeReadPort> {
-    return new RuntimeReadClient((await this.endpoint(engagementId)).apiUrl);
+    return new RuntimeReadClient((await this.endpoint(engagementId)).apiUrl, undefined, undefined, this.apiToken);
   }
 
   public async join(engagementId: string): Promise<RuntimeJoinPort> {
-    return new RuntimeJoinClient((await this.endpoint(engagementId)).apiUrl);
+    return new RuntimeJoinClient((await this.endpoint(engagementId)).apiUrl, undefined, this.apiToken);
   }
 }
 
