@@ -48,10 +48,11 @@ import logging
 from typing import Annotated
 from uuid import uuid5
 
-from fastapi import FastAPI, HTTPException, Path, Query
+from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from raptix.graph_registry import _BUNDLE_TO_GRAPHS  # private, but stable: bundle->graphs map
+from raptix.interfaces.api.auth import require_runtime_token
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +135,9 @@ def _registered_graph_ids() -> set[str]:
 app = FastAPI(
     title="Raptix plugin bundle API",
     summary="Runtime activation/deactivation of agent bundles on the LangGraph platform.",
+    # Every route here (bundle switches, instance grants, transcripts) needs the runtime API token, the same one the
+    # LangGraph API checks. Routes added to this app are not covered by the LangGraph auth handler, so each one checks it.
+    dependencies=[Depends(require_runtime_token)],
 )
 
 
@@ -349,7 +353,12 @@ def post_instance_cancel(
 
     box = default_mailbox()
     state = box.request_cancel(thread_id, dispatch_id, payload.expectedAttempt)
-    body = {"threadId": thread_id, "dispatchId": dispatch_id, "attempt": payload.expectedAttempt, "state": state}
+    body = {
+        "threadId": thread_id,
+        "dispatchId": dispatch_id,
+        "attempt": payload.expectedAttempt,
+        "state": state,
+    }
     if state == "cancel_requested":
         return body
     reason = "unknown_attempt" if state == "not_found" else "instance_not_running"
@@ -368,7 +377,12 @@ def post_instance_grant(
     from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
 
     result = default_mailbox().open_grant(
-        payload.commandId, thread_id, dispatch_id, payload.expectedAttempt, payload.kind, payload.reassignRole
+        payload.commandId,
+        thread_id,
+        dispatch_id,
+        payload.expectedAttempt,
+        payload.kind,
+        payload.reassignRole,
     )
     body = {
         "status": result.status,

@@ -1,3 +1,16 @@
+import { readFileSync } from "node:fs";
+
+/**
+ * Headers the CLI adds to its direct calls to the LangGraph API. The API refuses callers without the runtime token
+ * (interfaces/api/auth.py). The CLI reads it from the file named by RAPTIX_RUNTIME_API_TOKEN_FILE; without that
+ * variable the CLI sends no token, and a token-protected runtime answers 401.
+ */
+export function runtimeAuthHeaders(): Record<string, string> {
+  const file = process.env.RAPTIX_RUNTIME_API_TOKEN_FILE?.trim();
+  if (!file) return {};
+  return { authorization: `Bearer ${readFileSync(file, "utf8").trim()}` };
+}
+
 /**
  * Resolve the LangGraph API base URL shared by every CLI HTTP surface.
  *

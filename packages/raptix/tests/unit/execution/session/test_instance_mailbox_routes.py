@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -16,20 +19,25 @@ def client(tmp_path, monkeypatch):
     box = InstanceMailbox(tmp_path / "mailbox.sqlite")
     box.start_instance("thread-1", "disp-1", 1, "recon")
     monkeypatch.setattr(mb, "_default", box)
-    yield TestClient(app)
+    token = Path(os.environ["RAPTIX_RUNTIME_API_TOKEN_FILE"]).read_text(encoding="utf-8").strip()
+    yield TestClient(app, headers={"authorization": f"Bearer {token}"})
     box.close()
 
 
 def test_accepted_then_duplicate_then_visible_in_the_instance_read(client):
     url = "/_raptix/instances/thread-1/disp-1/messages"
-    accepted = client.post(url, json={"messageId": "m-1", "body": "Check the login form.", "expectedAttempt": 1})
+    accepted = client.post(
+        url, json={"messageId": "m-1", "body": "Check the login form.", "expectedAttempt": 1}
+    )
     assert accepted.status_code == 200
     assert (
         accepted.json()["status"] == "accepted"
         and accepted.json()["message"]["state"] == "accepted"
     )
 
-    again = client.post(url, json={"messageId": "m-1", "body": "Check the login form.", "expectedAttempt": 1})
+    again = client.post(
+        url, json={"messageId": "m-1", "body": "Check the login form.", "expectedAttempt": 1}
+    )
     assert again.json()["status"] == "duplicate"
 
     read = client.get("/_raptix/instances/thread-1/disp-1").json()
@@ -73,7 +81,9 @@ def test_cancel_is_recorded_then_refuses_messages_and_unknown_attempts(client):
     cancelled = client.post(f"{url}/cancel", json={"expectedAttempt": 1})
     assert cancelled.status_code == 200 and cancelled.json()["state"] == "cancel_requested"
 
-    refused = client.post(f"{url}/messages", json={"messageId": "m-4", "body": "late", "expectedAttempt": 1})
+    refused = client.post(
+        f"{url}/messages", json={"messageId": "m-4", "body": "late", "expectedAttempt": 1}
+    )
     assert refused.status_code == 409 and refused.json()["reason"] == "instance_not_running"
 
     unknown = client.post(f"{url}/cancel", json={"expectedAttempt": 7})
@@ -83,10 +93,23 @@ def test_cancel_is_recorded_then_refuses_messages_and_unknown_attempts(client):
 def test_a_forwarded_message_keeps_its_source_reference(client):
     url = "/_raptix/instances/thread-1/disp-1/messages"
     client.post(url, json={"messageId": "src-1", "body": "original", "expectedAttempt": 1})
-    forwarded = client.post(url, json={"messageId": "fwd-1", "body": "Forwarded: original", "expectedAttempt": 1, "sourceMessageId": "src-1"})
+    forwarded = client.post(
+        url,
+        json={
+            "messageId": "fwd-1",
+            "body": "Forwarded: original",
+            "expectedAttempt": 1,
+            "sourceMessageId": "src-1",
+        },
+    )
     assert forwarded.status_code == 200
-    stored = {m["messageId"]: m for m in client.get("/_raptix/instances/thread-1/disp-1").json()["messages"]}
-    assert stored["fwd-1"]["sourceMessageId"] == "src-1" and stored["src-1"]["sourceMessageId"] is None
+    stored = {
+        m["messageId"]: m
+        for m in client.get("/_raptix/instances/thread-1/disp-1").json()["messages"]
+    }
+    assert (
+        stored["fwd-1"]["sourceMessageId"] == "src-1" and stored["src-1"]["sourceMessageId"] is None
+    )
 
 
 def test_the_thread_listing_names_running_attempts_for_the_roster(client):

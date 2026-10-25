@@ -24,7 +24,7 @@ import {
   getAssistantOverride,
   setAssistantOverride,
 } from "./assistantOverride.js";
-import { resolveApiUrl } from "../utils/apiUrl.js";
+import { resolveApiUrl, runtimeAuthHeaders } from "../utils/apiUrl.js";
 
 interface AssistantRow {
   assistant_id: string;
@@ -43,7 +43,7 @@ function apiBase(): string {
 async function listOrchestrators(): Promise<string[]> {
   const res = await fetch(`${apiBase()}/assistants/search`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...runtimeAuthHeaders() },
     // The server defaults to a short page; orchestration graphs such as
     // Soundwave can otherwise be omitted once specialist graphs are loaded.
     body: JSON.stringify({ limit: 100 }),

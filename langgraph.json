@@ -27,6 +27,9 @@
   },
   "env": ".env",
   "python_version": "3.13",
+  "auth": {
+    "path": "./packages/raptix/raptix/interfaces/api/auth.py:auth"
+  },
   "checkpointer": {
     "path": "./packages/raptix/raptix/interfaces/api/checkpointer.py:sqlite_checkpointer"
   },

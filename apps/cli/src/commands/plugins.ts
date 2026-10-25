@@ -22,7 +22,7 @@
  */
 
 import type { Command } from "./types.js";
-import { resolveApiUrl } from "../utils/apiUrl.js";
+import { resolveApiUrl, runtimeAuthHeaders } from "../utils/apiUrl.js";
 
 interface BundleStatus {
   name: string;
@@ -68,7 +68,7 @@ function formatList(data: ListResponse): string {
 }
 
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
+  const res = await fetch(url, { ...init, headers: { ...runtimeAuthHeaders(), ...(init?.headers as Record<string, string> | undefined) } });
   const text = await res.text();
   if (!res.ok) {
     let detail = text;

@@ -22,9 +22,19 @@ export interface RuntimeReadPort {
   /** P10c operator mailbox: a refusal (409) is data the caller explains, never an error. */
   instanceExchange(method: 'GET' | 'POST', endpoint: string, body?: unknown): Promise<{ status: number; body: unknown }>;
 }
+
+/**
+ * Every call to the runtime carries the runtime API token, which the LangGraph server checks (interfaces/api/auth.py).
+ * Sandboxes never hold it, so a command inside a project sandbox cannot read or start runs of any project.
+ */
+export function withRuntimeAuth(init: RequestInit, token: string | undefined): RequestInit {
+  if (token === undefined) return init;
+  return { ...init, headers: { ...(init.headers as Record<string, string> | undefined), authorization: `Bearer ${token}` } };
+}
+
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 export class RuntimeReadClient implements RuntimeReadPort {
-  public constructor(private readonly apiUrl: string, private readonly timeoutMs = 15000, private readonly mutationTimeoutMs = 15000) {}
+  public constructor(private readonly apiUrl: string, private readonly timeoutMs = 15000, private readonly mutationTimeoutMs = 15000, private readonly apiToken?: string) {}
   /** Identical reads in flight share one request: a page load asks for the same thread state from several places at once. */
   private readonly inflight = new Map<string, Promise<unknown>>();
   protected read(endpoint: string, body?: unknown, mutation = false): Promise<unknown> {
@@ -39,7 +49,8 @@ export class RuntimeReadClient implements RuntimeReadPort {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), mutation ? this.mutationTimeoutMs : this.timeoutMs);
     try {
-      const response = await fetch(`${this.apiUrl}${endpoint}`, { method: body === undefined ? 'GET' : 'POST', ...(body === undefined ? {} : { body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }), signal: controller.signal, redirect: 'error' });
+      const init: RequestInit = { method: body === undefined ? 'GET' : 'POST', ...(body === undefined ? {} : { body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }), signal: controller.signal, redirect: 'error' };
+      const response = await fetch(`${this.apiUrl}${endpoint}`, withRuntimeAuth(init, this.apiToken));
       if (mutation && [400, 404, 409, 422].includes(response.status)) throw new RuntimeRejectedError(response.status === 422 ? 400 : response.status);
       if (!response.ok) throw new RuntimeUnavailableError();
       if (response.status === 204) return null;
@@ -63,12 +74,13 @@ export class RuntimeReadClient implements RuntimeReadPort {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.mutationTimeoutMs);
     try {
-      const response = await fetch(`${this.apiUrl}${endpoint}`, {
+      const init: RequestInit = {
         method,
         ...(body === undefined ? {} : { body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }),
         signal: controller.signal,
         redirect: 'error',
-      });
+      };
+      const response = await fetch(`${this.apiUrl}${endpoint}`, withRuntimeAuth(init, this.apiToken));
       if (![200, 409].includes(response.status)) throw new RuntimeUnavailableError();
       const text = await response.text();
       if (text.length > 64 * 1024) throw new RuntimeUnavailableError();
@@ -81,7 +93,7 @@ export class RuntimeReadClient implements RuntimeReadPort {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.mutationTimeoutMs);
     try {
-      const response = await fetch(`${this.apiUrl}${endpoint}`, { method: 'POST', signal: controller.signal, redirect: 'error' });
+      const response = await fetch(`${this.apiUrl}${endpoint}`, withRuntimeAuth({ method: 'POST', signal: controller.signal, redirect: 'error' }, this.apiToken));
       if ([400, 404, 409, 422].includes(response.status)) throw new RuntimeRejectedError(response.status === 422 ? 400 : response.status);
       if (!response.ok) throw new RuntimeUnavailableError();
       if (response.status === 204) return { status: 204, body: null };
@@ -107,7 +119,7 @@ export class RuntimeReadClient implements RuntimeReadPort {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
-      const response = await fetch(`${this.apiUrl}/threads/${encodeURIComponent(id)}`, { signal: controller.signal, redirect: 'error' });
+      const response = await fetch(`${this.apiUrl}/threads/${encodeURIComponent(id)}`, withRuntimeAuth({ signal: controller.signal, redirect: 'error' }, this.apiToken));
       await response.body?.cancel();
       if (response.status === 404) return false;
       if (!response.ok) throw new RuntimeUnavailableError();
