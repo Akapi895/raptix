@@ -58,24 +58,38 @@ services:
       - HOST=0.0.0.0
       # The web stack's own database on its own postgres (migrations are its own).
       - DATABASE_URL=postgresql://raptix:${POSTGRES_PASSWORD:-raptix}@postgres:5432/raptix_web_raptix
-      - WORKSPACE_PATH=/workspace
       - RAPTIX_RUNTIME_WORKSPACE_ROOT=/workspace
       - LANGGRAPH_API_URL=http://langgraph:2024
       - NEO4J_HTTP_URI=http://neo4j:7474
       - NEO4J_USER=neo4j
       - RAPTIX_CONSOLE_DATA_DIR=/console-data
+      # ADR-0086 A: creating a project starts its own sandbox (sbx-<slug>) through the host sandbox controller.
+      - RAPTIX_SANDBOX_PER_PROJECT=1
+      - RAPTIX_SANDBOX_CONTROLLER_URL=http://host.docker.internal:9200
+      - RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE=/run/secrets/sandbox-controller-token
+      - RAPTIX_SANDBOX_KEY_FILE=/run/secrets/sandbox-key
+      # The LangGraph API requires this token of every caller; the web API presents it on each runtime call.
+      - RAPTIX_RUNTIME_API_TOKEN_FILE=/run/secrets/runtime-api-token
     volumes:
-      - ${RAPTIX_WEB_WORKSPACE_PATH:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
       # Generated, read-only console data (knowledge index, capability catalog); never copied into the image.
       - ./data:/console-data:ro
+      # Secrets for the sandbox controller and token derivation. Mounted only here, never into a sandbox or the runtime.
+      - ${RAPTIX_SANDBOX_SECRETS_DIR:?set RAPTIX_SANDBOX_SECRETS_DIR in .env}/controller-token:/run/secrets/sandbox-controller-token:ro
+      - ${RAPTIX_SANDBOX_SECRETS_DIR:?set RAPTIX_SANDBOX_SECRETS_DIR in .env}/sandbox-key:/run/secrets/sandbox-key:ro
+      - ${RAPTIX_SANDBOX_SECRETS_DIR:?set RAPTIX_SANDBOX_SECRETS_DIR in .env}/runtime-api-token:/run/secrets/runtime-api-token:ro
+    # The API reaches the host sandbox controller (loopback on the host) through this name.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8081/api/health', r => { r.resume(); process.exit(r.statusCode < 500 ? 0 : 1); }).on('error', () => process.exit(1))"]
       interval: 5s
       timeout: 5s
       retries: 12
       start_period: 90s
+    # ADR-0102: the API reads and writes project files through each project's sandbox, so it joins the sandbox network.
     networks:
       - raptix-net
+      - sandbox-net
     restart: unless-stopped
 
   web-raptix-ui:
@@ -109,3 +123,5 @@ volumes:
 networks:
   raptix-net:
     name: ${RAPTIX_NETWORK:-raptix_web_raptix-net}
+  sandbox-net:
+    name: ${RAPTIX_SANDBOX_NETWORK:-raptix_web_sandbox-net}
