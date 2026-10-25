@@ -28,13 +28,19 @@ import os
 import sys
 import threading
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from raptix.execution.backends.project_files import ProjectFiles
 
 log = logging.getLogger("raptix.execution.session.event_log")
+
+# The engagement's events in its project's /workspace (ADR-0102).
+PROJECT_EVENTS_PATH = "events.jsonl"
 
 
 def _env_float(name: str, default: float) -> float:
@@ -219,11 +225,23 @@ class EventLog:
         self._init_at(Path(workspace_dir) / "events.jsonl", engagement_id)
         return self
 
-    def _init_at(self, path: Path, engagement_id: str) -> None:
+    @classmethod
+    def for_project(cls, files: ProjectFiles, engagement_id: str = "") -> EventLog:
+        """Build a log writing ``events.jsonl`` into the project's own sandbox (ADR-0102).
+
+        Each append is one staged write there, so the runtime holds no project volume.
+        """
+        self = cls.__new__(cls)
+        self._init_at(Path(PROJECT_EVENTS_PATH), engagement_id, files)
+        return self
+
+    def _init_at(self, path: Path, engagement_id: str, files: ProjectFiles | None = None) -> None:
         self._engagement_id = engagement_id
         self._path = path
+        self._files = files
         self._lock = threading.RLock()
-        self._path.parent.mkdir(parents=True, exist_ok=True)
+        if files is None:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
 
     @property
     def path(self) -> Path:
@@ -254,6 +272,9 @@ class EventLog:
         )
         line = event.to_json_line() + "\n"
         with self._lock:
+            if self._files is not None:
+                self._files.append_bytes(self._path.as_posix(), line.encode("utf-8"))
+                return event
             with open(self._path, "ab") as fh:
                 fd = fh.fileno()
                 _acquire_lock(fd)
@@ -271,7 +292,22 @@ class EventLog:
         Malformed or torn lines are skipped silently so a process killed
         mid-write cannot make the entire log unreadable.
         """
+        if self._files is not None:
+            data = self._files.read_bytes(self._path.as_posix()) or b""
+            yield from _parse_event_lines(data.splitlines(keepends=True))
+            return
         yield from read_events(self._path)
+
+
+def _parse_event_lines(lines: Iterable[bytes]) -> Iterator[EngagementEvent]:
+    for raw in lines:
+        try:
+            line = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        event = EngagementEvent.from_json_line(line)
+        if event is not None:
+            yield event
 
 
 def read_events(path: str | os.PathLike[str]) -> Iterator[EngagementEvent]:
@@ -280,14 +316,7 @@ def read_events(path: str | os.PathLike[str]) -> Iterator[EngagementEvent]:
     if not p.exists():
         return
     with open(p, "rb") as fh:
-        for raw in fh:
-            try:
-                line = raw.decode("utf-8")
-            except UnicodeDecodeError:
-                continue
-            event = EngagementEvent.from_json_line(line)
-            if event is not None:
-                yield event
+        yield from _parse_event_lines(fh)
 
 
 __all__ = [
