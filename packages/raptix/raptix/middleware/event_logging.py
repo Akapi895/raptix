@@ -47,6 +47,11 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import ToolMessage
 from typing_extensions import override
 
+from raptix.execution.backends.project_files import (
+    ProjectFiles,
+    ProjectFileUnavailable,
+    project_files_for_runtime,
+)
 from raptix.execution.session.event_log import EventLog, EventType
 from raptix.telemetry.sink import (
     get_sink,
@@ -249,25 +254,17 @@ def _session_id(engagement: str | None) -> str:
     return session_id_for(engagement)
 
 
-def _roe_literal_targets(workspace: str) -> list[str]:
-    """Literal in-scope hosts/IPs from ``<workspace>/plan/roe.json``.
+def _roe_literal_targets(files: ProjectFiles) -> list[str]:
+    """Literal in-scope hosts/IPs from the project's ``plan/roe.json``.
 
     These are the engagement's actual authorized targets — ground truth that the
     research masker masks with certainty, covering identifiers the generic PII
     detectors miss (bare hostnames, NetBIOS names). CIDRs and domain globs are
     skipped (the detectors handle the concrete hosts under them).
     """
-    import json
-    from pathlib import Path
+    from raptix.middleware.roe import load_rules
 
-    from raptix_core.types.roe import MachineEnforcement
-
-    try:
-        data = json.loads((Path(workspace) / "plan" / "roe.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return []
-    block = data.get("machine_enforcement") if isinstance(data, dict) else None
-    rules = MachineEnforcement.from_dict(block)
+    rules = load_rules(files)
     return [r.pattern for r in rules.in_scope if r.resolved_kind() in ("ip", "host")]
 
 
@@ -277,7 +274,7 @@ def _roe_literal_targets(workspace: str) -> list[str]:
 _ROE_IDENTITY_FIELDS = ("client", "engagement_name", "engagement_slug", "authorized_by")
 
 
-def _engagement_identity_terms(workspace: str) -> list[str]:
+def _engagement_identity_terms(files: ProjectFiles) -> list[str]:
     """Who was tested, as declared by the engagement itself.
 
     No detector can find this. A client name is not shaped like a hostname, so
@@ -289,19 +286,18 @@ def _engagement_identity_terms(workspace: str) -> list[str]:
     Measured in the live corpus, these leaked verbatim: ``Workspace:
     /workspace/<client>-new`` inside prompts, and the authorizer's name.
 
-    Only declared values are used, plus the workspace directory (which is the
-    engagement slug on disk). Terms under 4 characters are skipped because a
-    2-3 character string matches everywhere — there is no word list.
+    Only the values the operator declared in ``plan/roe.json`` are used. Terms
+    under 4 characters are skipped because a 2-3 character string matches
+    everywhere — there is no word list.
     """
     import json
-    from pathlib import Path
 
-    ws = Path(workspace)
-    terms: list[str] = [ws.name]
+    raw = files.read_bytes("plan/roe.json")
     try:
-        data = json.loads((ws / "plan" / "roe.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        data = json.loads(raw) if raw is not None else {}
+    except ValueError:
         data = {}
+    terms: list[str] = []
     if isinstance(data, dict):
         terms.extend(
             value for key in _ROE_IDENTITY_FIELDS if isinstance(value := data.get(key), str)
@@ -366,6 +362,12 @@ class EventLogMiddleware(AgentMiddleware):
                 agent_name = getattr(runtime, "agent_name", "") or ""
         return str(workspace), str(engagement), (agent_name or None)
 
+    def _warn_once(self, event: str, scope: str, message: str) -> None:
+        if (event, scope) in self._warned:
+            return
+        self._warned.add((event, scope))
+        log.warning("EventLogMiddleware: %s (engagement=%s)", message, scope)
+
     def _context(self, request: Any) -> tuple[EventLog | None, str | None, str]:
         """Resolve the EventLog, agent name, and per-engagement session id.
 
@@ -373,23 +375,20 @@ class EventLogMiddleware(AgentMiddleware):
         not only research trajectory steps — carries the engagement grouping key
         (enables per-engagement analytics: kill-chain depth, tools/engagement).
         """
-        workspace, engagement, agent = self._resolve_scope(request)
+        _workspace, engagement, agent = self._resolve_scope(request)
         sid = _session_id(engagement)
-        key = (workspace, engagement)
+        try:
+            files = project_files_for_runtime(getattr(request, "runtime", None))
+        except ProjectFileUnavailable as exc:
+            self._warn_once(
+                "no-project-files", engagement, f"events disabled for this scope: {exc}"
+            )
+            return None, agent, sid
+        key = (files.key, engagement)
         cached = self._logs.get(key)
         if cached is not None:
             return cached, agent, sid
-        try:
-            event_log = EventLog.for_workspace(workspace, engagement)
-        except Exception:  # noqa: BLE001 — never break the agent on a bad path
-            log.warning(
-                "EventLogMiddleware: cannot open event log "
-                "(workspace=%s engagement=%s); events disabled for this scope",
-                workspace,
-                engagement,
-                exc_info=True,
-            )
-            return None, agent, sid
+        event_log = EventLog.for_project(files, engagement)
         self._logs[key] = event_log
         # Run-start anchor: without this every events.jsonl begins
         # mid-stream and a 2-of-5 missing-capture post-mortem cannot tell
@@ -532,23 +531,26 @@ class EventLogMiddleware(AgentMiddleware):
     # action / observation to the telemetry sink, which MASKS target identifiers
     # before anything leaves the machine. No-op (and no extraction cost) otherwise.
 
-    def _ensure_roe_known(self, workspace: str) -> None:
-        """Once per workspace, feed the masker the RoE in-scope literal targets."""
-        if workspace in self._roe_seen:
-            return
-        self._roe_seen.add(workspace)
+    def _ensure_roe_known(self, request: Any) -> None:
+        """Once per project, feed the masker the RoE in-scope literal targets."""
         try:
-            targets = _roe_literal_targets(workspace)
+            files = project_files_for_runtime(getattr(request, "runtime", None))
+        except ProjectFileUnavailable:
+            return
+        if files.key in self._roe_seen:
+            return
+        try:
+            targets = _roe_literal_targets(files)
+            identities = _engagement_identity_terms(files)
+        except ProjectFileUnavailable:
+            return  # not marked seen: the next event retries the read
         except Exception:  # noqa: BLE001 — never break the run on a bad RoE file
-            targets = []
+            targets, identities = [], []
+        self._roe_seen.add(files.key)
         if targets:
             self._telemetry.add_known_targets(targets)
         # Client / engagement identity. Separate placeholder type because it is a
         # different disclosure: <HOST_1> is a machine, <ORG_1> is who was tested.
-        try:
-            identities = _engagement_identity_terms(workspace)
-        except Exception:  # noqa: BLE001 — never break the run on a bad RoE file
-            identities = []
         if identities:
             self._telemetry.add_known_targets(identities, "ORG")
 
@@ -565,8 +567,8 @@ class EventLogMiddleware(AgentMiddleware):
         try:
             import hashlib
 
-            workspace, engagement, agent = self._resolve_scope(request)
-            self._ensure_roe_known(workspace)
+            _workspace, engagement, agent = self._resolve_scope(request)
+            self._ensure_roe_known(request)
             sid = _session_id(engagement)
             model = _model_name(request)
             prompt = _user_text(getattr(request, "messages", None))[:_TRAJ_TEXT_CAP]
@@ -618,8 +620,8 @@ class EventLogMiddleware(AgentMiddleware):
         try:
             import json
 
-            workspace, engagement, agent = self._resolve_scope(request)
-            self._ensure_roe_known(workspace)
+            _workspace, engagement, agent = self._resolve_scope(request)
+            self._ensure_roe_known(request)
             sid = _session_id(engagement)
             tool = getattr(getattr(request, "tool", None), "name", "") or ""
             args = getattr(request, "tool_call_args", None) or {}

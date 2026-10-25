@@ -20,6 +20,15 @@ from raptix.middleware.engagement import (
     _resolve_workspace_path,
 )
 from raptix.middleware.opplan import OPPLANState
+from raptix.orchestration.mission import engagement as mission_engagement
+
+
+@pytest.fixture(autouse=True)
+def plan_on_disk(monkeypatch, tmp_path, project_files_at) -> None:
+    """The deconfliction block is read from the project's sandbox. The test folder stands in for the project."""
+    monkeypatch.setattr(
+        mission_engagement, "project_files_for_runtime", lambda _runtime: project_files_at(tmp_path)
+    )
 
 
 class _FakeRequest:

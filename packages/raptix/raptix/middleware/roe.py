@@ -28,13 +28,17 @@ audit ledger via :class:`RoEAuditSink`. The ledger is the legal record
 of "what the agent tried, what was approved, what was blocked" - the
 key artifact for paid / regulated engagement out-briefs.
 
-Reading the RoE:
+Reading the RoE (ADR-0102):
 
-  * Default location: ``<workspace>/plan/roe.json``.
-  * Resolved per-iteration from ``state["workspace_path"]`` so the
-    middleware can hot-reload an operator-edited RoE without restart.
-  * ``machine_enforcement`` block is optional - when absent, the
-    middleware logs every tool call but never blocks (``mode=audit``).
+  * The document is ``plan/roe.json`` in the project's own sandbox. The runtime
+    holds no project volume, so every read goes through the sandbox the run is
+    routed to, and it is re-read on every gated call (hot-reload, no restart).
+  * A missing document or a missing ``machine_enforcement`` block means audit
+    only: the planner has not finished writing the RoE yet. A document that
+    cannot be read or parsed, a sandbox that cannot be reached, and an unknown
+    mode all refuse gated calls. Nothing falls back to audit-only silently.
+  * The emergency stop is ``.abort`` in the same sandbox. An unreachable sandbox
+    counts as aborted.
 """
 
 from __future__ import annotations
@@ -59,6 +63,12 @@ from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from typing_extensions import override
 
+from raptix.execution.backends.project_files import (
+    ProjectFiles,
+    ProjectFileUnavailable,
+    project_files_for,
+    project_sandbox_for,
+)
 from raptix.middleware._audit_sink import RoEAuditSink
 from raptix.middleware._command_targets import extract_targets
 from raptix.orchestration.mission.objective_context import ObjectiveContextState
@@ -138,28 +148,53 @@ NETWORK_TARGET_EXTRACTORS: dict[str, Callable[[dict[str, Any]], list[str]]] = {
 }
 
 
-def _load_rules_for_workspace(workspace_path: str | None) -> MachineEnforcement:
-    if not workspace_path:
-        return MachineEnforcement()
-    roe_path = Path(workspace_path) / "plan" / "roe.json"
-    if not roe_path.exists():
-        return MachineEnforcement()
-    try:
-        data = json.loads(roe_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        log.warning("roe: failed to read %s: %s; defaulting to audit-only mode", roe_path, exc)
-        return MachineEnforcement()
-    block = data.get("machine_enforcement") if isinstance(data, dict) else None
-    return MachineEnforcement.from_dict(block)
+ROE_PATH = "plan/roe.json"
+ABORT_PATH = ".abort"
+AUDIT_PATH = "audit/roe-decisions.jsonl"
+_KNOWN_MODES = frozenset(mode.value for mode in EnforcementMode)
+# Used when the RoE cannot be read: every gated call is refused, whatever the mode the document would have set.
+_UNAVAILABLE_RULES = MachineEnforcement(mode=EnforcementMode.ENFORCE)
 
 
-def _abort_marker_present(workspace_path: str | None) -> bool:
-    if not workspace_path:
-        return False
+def _project_files_for_request(request) -> ProjectFiles:
+    """The project's files for this tool call's run. Raises ProjectFileUnavailable when the run has no sandbox."""
+    runtime = getattr(request, "runtime", None)
+    return project_files_for(getattr(runtime, "config", None))
+
+
+def load_rules(files: ProjectFiles) -> MachineEnforcement:
+    """The engagement's machine rules, read from its own sandbox (ADR-0102).
+
+    A missing roe.json is audit-only, because the planner has not written one yet. A document that cannot be read or
+    parsed, and a mode the runtime does not know, raise ProjectFileUnavailable, so the caller refuses gated calls.
+    """
+    raw = files.read_bytes(ROE_PATH)
+    if raw is None:
+        return MachineEnforcement()
     try:
-        return (Path(workspace_path) / ".abort").exists()
-    except OSError:
-        return False
+        data = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ProjectFileUnavailable(f"{ROE_PATH} is not valid JSON") from exc
+    if not isinstance(data, dict):
+        raise ProjectFileUnavailable(f"{ROE_PATH} is not a JSON object")
+    block = data.get("machine_enforcement")
+    if block is None:
+        return MachineEnforcement()
+    if not isinstance(block, dict):
+        raise ProjectFileUnavailable(f"{ROE_PATH} machine_enforcement is not an object")
+    mode = str(block.get("mode", EnforcementMode.AUDIT.value)).lower()
+    if mode not in _KNOWN_MODES:
+        raise ProjectFileUnavailable(
+            f"{ROE_PATH} machine_enforcement.mode {mode!r} is not a known mode"
+        )
+    try:
+        return MachineEnforcement.from_dict(block)
+    except (TypeError, ValueError, KeyError) as exc:
+        raise ProjectFileUnavailable(f"{ROE_PATH} machine_enforcement is malformed: {exc}") from exc
+
+
+def _abort_marker_present(files: ProjectFiles) -> bool:
+    return files.exists(ABORT_PATH)
 
 
 def _halted_message(tool_name: str, tool_call_id: str | None) -> ToolMessage:
@@ -345,17 +380,19 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         self._last_gated_monotonic = 0.0
         self._egress_lock = threading.Lock()
         self._egress_provisioned: set[str] = set()
+        self._sink_lock = threading.Lock()
+        self._project_sinks: dict[str, RoEAuditSink] = {}
 
     @override
     def before_agent(self, state, runtime) -> None:
-        self._maybe_provision_egress(state)
+        self._maybe_provision_egress()
         return None
 
     @override
     async def abefore_agent(self, state, runtime) -> None:
         # Provisioning does a one-time synchronous HTTP round-trip to the
         # sandbox daemon; offload it so the event loop isn't blocked.
-        await asyncio.to_thread(self._maybe_provision_egress, state)
+        await asyncio.to_thread(self._maybe_provision_egress)
         return None
 
     @override
@@ -455,16 +492,36 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         tool_name = getattr(tool, "name", "unknown") if tool else "unknown"
         if tool_name not in self._gated:
             return None
-        state = getattr(request, "state", {}) or {}
-        get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
-        workspace = get("workspace_path") or None
-        if not _abort_marker_present(workspace):
+        try:
+            present = _abort_marker_present(_project_files_for_request(request))
+        except ProjectFileUnavailable as exc:
+            # The emergency stop cannot be checked, so the run counts as aborted (ADR-0102).
+            log.error("roe: abort marker unreadable, treating the run as aborted: %s", exc)
+            present = True
+        if not present:
             return None
         self._record_abort(request, tool_name)
         return _halted_message(tool_name, _tcid(request))
 
+    def _sink_for(self, request) -> RoEAuditSink | None:
+        """The audit ledger for this run: an operator-pinned sink, else the project's own ledger in its sandbox."""
+        if self._sink is not None:
+            return self._sink
+        try:
+            files = _project_files_for_request(request)
+        except ProjectFileUnavailable as exc:
+            log.error("roe: no project ledger for this call: %s", exc)
+            return None
+        with self._sink_lock:
+            sink = self._project_sinks.get(files.key)
+            if sink is None:
+                sink = RoEAuditSink.for_project(files, AUDIT_PATH)
+                self._project_sinks[files.key] = sink
+            return sink
+
     def _record_abort(self, request, tool_name: str) -> None:
-        if self._sink is None:
+        sink = self._sink_for(request)
+        if sink is None:
             return
         state = getattr(request, "state", {}) or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
@@ -481,12 +538,12 @@ class RoEGuardrailMiddleware(AgentMiddleware):
             "command_excerpt": _command_from_tool_call(request)[:512],
         }
         try:
-            self._sink.append(record)
+            sink.append(record)
         except Exception as exc:  # noqa: BLE001 - audit must never break tool execution
             log.error("roe: audit sink write failed: %s", exc)
 
-    def _maybe_provision_egress(self, state) -> None:
-        """Compile + push the Layer-2 egress guardrail, once per workspace.
+    def _maybe_provision_egress(self) -> None:
+        """Compile + push the Layer-2 egress guardrail, once per project sandbox.
 
         Default ON for ``enforce`` mode: skipped only when the operator
         opts out via ``RAPTIX_EGRESS_DISABLE``. audit / warn modes
@@ -495,45 +552,58 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         """
         if _egress_disabled():
             return
-        get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
-        workspace = get("workspace_path") or None
-        if not workspace:
+        try:
+            from langgraph.config import get_config
+
+            config = get_config()
+        except RuntimeError:
+            config = None
+        try:
+            files = project_files_for(config)
+        except ProjectFileUnavailable:
             return
-        rules = _load_rules_for_workspace(workspace)
+        try:
+            rules = load_rules(files)
+        except ProjectFileUnavailable as exc:
+            log.warning("roe: egress skipped, RoE unreadable: %s", exc)
+            return
         if rules.mode != EnforcementMode.ENFORCE:
             return
         with self._egress_lock:
-            if workspace in self._egress_provisioned:
+            if files.key in self._egress_provisioned:
                 return
-            self._egress_provisioned.add(workspace)
+            self._egress_provisioned.add(files.key)
         try:
-            from raptix.execution.backends.factory import build_sandbox_backend
             from raptix.middleware.egress import compile_egress_policy
 
             policy = compile_egress_policy(rules)
-            result = build_sandbox_backend().provision_egress(policy)
+            result = project_sandbox_for(config).provision_egress(policy)
             log.info(
                 "roe: egress provisioned for %s: applied=%s detail=%s",
-                workspace,
+                files.key,
                 result.get("applied"),
                 result.get("detail"),
             )
         except Exception as exc:  # noqa: BLE001 - provisioning must never break the run
-            log.error("roe: egress provisioning failed for %s: %s", workspace, exc)
+            log.error("roe: egress provisioning failed for %s: %s", files.key, exc)
             # Un-mark so a later agent turn can retry rather than silently
             # leaving the engagement with no network boundary.
             with self._egress_lock:
-                self._egress_provisioned.discard(workspace)
+                self._egress_provisioned.discard(files.key)
 
     def _evaluate(self, request) -> tuple[Decision, MachineEnforcement, str]:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "unknown") if tool else "unknown"
         if tool_name not in self._gated:
             return Decision.allow_default(), MachineEnforcement(), tool_name
-        state = getattr(request, "state", {}) or {}
-        get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
-        workspace = get("workspace_path") or None
-        rules = _load_rules_for_workspace(workspace)
+        try:
+            rules = load_rules(_project_files_for_request(request))
+        except ProjectFileUnavailable as exc:
+            unavailable = Decision.refuse(
+                "ROE_UNAVAILABLE",
+                f"the engagement's RoE could not be read from its project sandbox ({exc})",
+            )
+            return unavailable, _UNAVAILABLE_RULES, tool_name
         time_decision = evaluate_time_window(self._now(), rules)
         if not time_decision.allow:
             return time_decision, rules, tool_name
@@ -563,7 +633,8 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         decision: Decision,
         mode: EnforcementMode,
     ) -> None:
-        if self._sink is None:
+        sink = self._sink_for(request)
+        if sink is None:
             return
         state = getattr(request, "state", {}) or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
@@ -583,7 +654,7 @@ class RoEGuardrailMiddleware(AgentMiddleware):
             "command_excerpt": _redact_secrets(_command_from_tool_call(request))[:512],
         }
         try:
-            self._sink.append(record)
+            sink.append(record)
         except Exception as exc:  # noqa: BLE001 - audit must never break tool execution
             log.error("roe: audit sink write failed: %s", exc)
 
@@ -608,7 +679,8 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         return wait
 
     def _record_throttle(self, request, tool_name: str, wait_seconds: float) -> None:
-        if self._sink is None:
+        sink = self._sink_for(request)
+        if sink is None:
             return
         state = getattr(request, "state", {}) or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
@@ -622,7 +694,7 @@ class RoEGuardrailMiddleware(AgentMiddleware):
             "delay_seconds": round(wait_seconds, 3),
         }
         try:
-            self._sink.append(record)
+            sink.append(record)
         except Exception as exc:  # noqa: BLE001 - audit must never break tool execution
             log.error("roe: throttle audit write failed: %s", exc)
 
@@ -636,20 +708,16 @@ def _tcid(request) -> str | None:
     return tc_attr if isinstance(tc_attr, str) else None
 
 
-def build_default_sink(workspace_path: str | None) -> RoEAuditSink | None:
-    """Best-effort default sink path: ``<workspace>/audit/roe-decisions.jsonl``.
+def build_default_sink() -> RoEAuditSink | None:
+    """The operator-pinned local ledger from ``RAPTIX_ROE_AUDIT_PATH``, or None.
 
-    Returns ``None`` when no workspace is set yet (during initial
-    bootstrapping) so the middleware degrades to "no-sink" cleanly.
-    Operators that want a deterministic path can also set
-    ``RAPTIX_ROE_AUDIT_PATH`` in the env.
+    None means the middleware keeps each project's ledger in that project's own sandbox (ADR-0102). A local file is only
+    for an operator who pins one on purpose.
     """
     env_path = os.environ.get("RAPTIX_ROE_AUDIT_PATH")
     if env_path:
         return RoEAuditSink(path=Path(env_path))
-    if not workspace_path:
-        return None
-    return RoEAuditSink(path=Path(workspace_path) / "audit" / "roe-decisions.jsonl")
+    return None
 
 
 # Compat alias (removed at 2.0.0). The class was renamed

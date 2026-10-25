@@ -24,10 +24,10 @@ state-backed context injection via wrap_model_call.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 from typing import Annotated, Any, NotRequired, cast
 
 from langchain.agents import AgentState
@@ -37,6 +37,11 @@ from langgraph.config import get_config
 from langgraph.types import Command
 from typing_extensions import override
 
+from raptix.execution.backends.project_files import (
+    ProjectFiles,
+    ProjectFileUnavailable,
+    project_files_for_runtime,
+)
 from raptix.execution.tools.bash.bash import bash_workspace
 from raptix.middleware.state_reducers import reduce_converging_value
 from raptix_core.utils.engagement_scope import set_active_engagement
@@ -270,40 +275,34 @@ def _build_autohunt_injection(
     )
 
 
-# Cache of parsed deconfliction.json keyed by path → (mtime, value). The
-# injector runs on every model call, so without this the file was stat'd,
-# read, and JSON-parsed once per turn. Keyed on mtime so an updated
-# deconfliction file is still picked up the moment it changes.
-_DECONFLICTION_CACHE: dict[str, tuple[float, dict[str, Any] | None]] = {}
+# Cache of parsed deconfliction.json keyed by project → (sha256 of the bytes, value). The
+# injector runs on every model call, so the file is read from the project's sandbox each time,
+# but it is only parsed again when its content changes.
+_DECONFLICTION_CACHE: dict[str, tuple[str, dict[str, Any] | None]] = {}
 
 
-def _load_deconfliction(workspace: str) -> dict[str, Any] | None:
-    root = workspace.rstrip("/") or workspace
-    path = Path(root) / "plan" / "deconfliction.json"
-    key = str(path)
-    try:
-        mtime = path.stat().st_mtime
-    except OSError:
-        # Absent (or unstattable) — drop any stale entry and skip the block.
+def _load_deconfliction(files: ProjectFiles) -> dict[str, Any] | None:
+    """The deconfliction document from the project's sandbox. Raises ProjectFileUnavailable when it cannot be read."""
+    key = files.key
+    raw = files.read_bytes("plan/deconfliction.json")
+    if raw is None:
         _DECONFLICTION_CACHE.pop(key, None)
         return None
+    digest = hashlib.sha256(raw).hexdigest()
     cached = _DECONFLICTION_CACHE.get(key)
-    if cached is not None and cached[0] == mtime:
+    if cached is not None and cached[0] == digest:
         return cached[1]
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        # Do NOT cache read/parse failures: a transient error (mid-write
-        # file, brief I/O hiccup) must not be pinned as "no deconfliction"
-        # for the lifetime of this mtime. Drop any stale entry and retry on
-        # the next call — matching the pre-cache per-call behaviour.
-        log.warning("engagement: failed to read %s: %s; skipping block", path, exc)
+        data = json.loads(raw)
+    except ValueError as exc:
+        # Do NOT cache a parse failure: a mid-write file must not be pinned as "no deconfliction" until the next edit.
+        log.warning("engagement: failed to parse plan/deconfliction.json: %s; skipping block", exc)
         _DECONFLICTION_CACHE.pop(key, None)
         return None
     # Cache the successful read (including a valid-but-not-a-dict file, which
-    # is a deterministic "no deconfliction" — safe to memoize until mtime moves).
+    # is a deterministic "no deconfliction" — safe to memoize until the bytes change).
     result = data if isinstance(data, dict) else None
-    _DECONFLICTION_CACHE[key] = (mtime, result)
+    _DECONFLICTION_CACHE[key] = (digest, result)
     return result
 
 
@@ -452,7 +451,15 @@ class EngagementContextMiddleware(AgentMiddleware):
         sections: list[str] = []
         if slug:
             sections.append(_build_engagement_injection(slug, workspace))
-            deconfliction = _load_deconfliction(workspace)
+            try:
+                deconfliction = _load_deconfliction(
+                    project_files_for_runtime(getattr(request, "runtime", None))
+                )
+            except ProjectFileUnavailable as exc:
+                log.warning(
+                    "engagement: deconfliction block skipped, project sandbox unavailable: %s", exc
+                )
+                deconfliction = None
             if deconfliction is not None:
                 block = _build_deconfliction_injection(deconfliction)
                 if block:

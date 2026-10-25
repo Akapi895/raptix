@@ -41,10 +41,14 @@ import json
 import logging
 import os
 import threading
+from collections.abc import Hashable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 from weakref import WeakValueDictionary
+
+if TYPE_CHECKING:
+    from raptix.execution.backends.project_files import ProjectFiles
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +84,7 @@ class AuditChainState:
 
 # Compiled parent/child graphs have independent sink objects for the same file.
 # Share their process-local cursor and lock without retaining dead engagements.
-_CHAIN_STATES: WeakValueDictionary[Path, AuditChainState] = WeakValueDictionary()
+_CHAIN_STATES: WeakValueDictionary[Hashable, AuditChainState] = WeakValueDictionary()
 _CHAIN_STATES_LOCK = threading.Lock()
 
 
@@ -90,14 +94,19 @@ class RoEAuditSink:
 
     Construction kwargs:
         path: filesystem path. Parent directory is created on demand.
+        files: a project's files (ADR-0102). The ledger then lives at ``rel``
+            inside that project's sandbox, and ``path`` is not used.
+        rel: the ledger's path relative to the project's /workspace.
         hmac_key: optional bytes for the HMAC binder. When ``None``,
             falls back to ``os.environ['RAPTIX_AUDIT_HMAC_KEY']``
             (utf-8 encoded). When that's also unset, ``hmac`` field
             stays empty in every record.
     """
 
-    path: Path
+    path: Path | None = None
     hmac_key: bytes | None = None
+    files: ProjectFiles | None = None
+    rel: str = ""
     _state: AuditChainState = field(default_factory=AuditChainState)
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _hydrated: bool = False
@@ -105,12 +114,16 @@ class RoEAuditSink:
     def __post_init__(self) -> None:
         if isinstance(self.path, str):
             self.path = Path(self.path)
+        if self.files is None and self.path is None:
+            raise ValueError("RoEAuditSink needs a local path or a project's files")
+        if self.files is not None and not self.rel:
+            raise ValueError("a project ledger needs its path relative to the project")
         if self.hmac_key is None:
             env_key = os.environ.get("RAPTIX_AUDIT_HMAC_KEY")
             if env_key:
                 self.hmac_key = env_key.encode("utf-8")
         with _CHAIN_STATES_LOCK:
-            key = self.path.resolve()
+            key = self._chain_key()
             shared = _CHAIN_STATES.get(key)
             if shared is None:
                 _CHAIN_STATES[key] = self._state
@@ -118,15 +131,53 @@ class RoEAuditSink:
                 self._state = shared
             self._lock = self._state.lock
 
+    @classmethod
+    def for_project(
+        cls, files: ProjectFiles, rel: str, *, hmac_key: bytes | None = None
+    ) -> RoEAuditSink:
+        return cls(files=files, rel=rel, hmac_key=hmac_key)
+
+    def _chain_key(self) -> Hashable:
+        if self.files is not None:
+            return ("project", self.files.key, self.rel)
+        assert self.path is not None
+        return self.path.resolve()
+
     def _ensure_hydrated(self) -> None:
         if self._hydrated or self._state.hydrated:
             return
+        if self.files is not None:
+            # An unreadable project ledger raises before any flag is set, so the chain is never restarted from genesis
+            # over records that already exist. The next append retries.
+            seq, last_hash = self._project_head()
+        else:
+            seq, last_hash = self._path_head()
         self._hydrated = True
         self._state.hydrated = True
-        if not self.path.exists():
-            return
+        self._state.seq = seq
+        self._state.last_hash = last_hash
+
+    def _project_head(self) -> tuple[int, str]:
+        from raptix.execution.backends.project_files import ProjectFileUnavailable
+
+        assert self.files is not None
+        last = self.files.read_last_line(self.rel)
+        if last is None:
+            return 0, _GENESIS_PREV_HASH
+        try:
+            rec = json.loads(last)
+            return int(rec["seq"]), str(rec["hash"])
+        except (ValueError, KeyError, TypeError) as exc:
+            raise ProjectFileUnavailable(
+                f"{self.rel}: last ledger line is not a chain record"
+            ) from exc
+
+    def _path_head(self) -> tuple[int, str]:
+        assert self.path is not None
         last_seq = 0
         last_hash = _GENESIS_PREV_HASH
+        if not self.path.exists():
+            return last_seq, last_hash
         try:
             with self.path.open("r", encoding="utf-8") as fh:
                 for raw in fh:
@@ -141,8 +192,7 @@ class RoEAuditSink:
                     last_hash = str(rec.get("hash", last_hash))
         except OSError as exc:
             log.warning("audit_sink: failed to hydrate from %s: %s", self.path, exc)
-        self._state.seq = last_seq
-        self._state.last_hash = last_hash
+        return last_seq, last_hash
 
     def append(self, record: dict[str, Any]) -> dict[str, Any]:
         """Append ``record`` to the ledger; return the persisted form."""
@@ -155,25 +205,33 @@ class RoEAuditSink:
             stamped["prev_hash"] = self._state.last_hash
             stamped["hash"] = this_hash
             stamped["hmac"] = _record_hmac(this_hash, self.hmac_key)
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            try:
-                with self.path.open("a", encoding="utf-8") as fh:
-                    fh.write(json.dumps(stamped, ensure_ascii=False) + "\n")
-                    fh.flush()
-                    try:
-                        os.fsync(fh.fileno())
-                    except OSError:
-                        # fsync best-effort. The audit line is already in the
-                        # kernel buffer and the outer write succeeded; fsync
-                        # not being supported on this fs (tmpfs, network mounts)
-                        # must not block the hot path.
-                        pass
-            except OSError as exc:
-                log.error("audit_sink: failed to write to %s: %s", self.path, exc)
-                raise
+            line = json.dumps(stamped, ensure_ascii=False) + "\n"
+            if self.files is not None:
+                self.files.append_bytes(self.rel, line.encode("utf-8"))
+            else:
+                self._write_local(line)
             self._state.seq = seq
             self._state.last_hash = this_hash
             return stamped
+
+    def _write_local(self, line: str) -> None:
+        assert self.path is not None
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with self.path.open("a", encoding="utf-8") as fh:
+                fh.write(line)
+                fh.flush()
+                try:
+                    os.fsync(fh.fileno())
+                except OSError:
+                    # fsync best-effort. The audit line is already in the
+                    # kernel buffer and the outer write succeeded; fsync
+                    # not being supported on this fs (tmpfs, network mounts)
+                    # must not block the hot path.
+                    pass
+        except OSError as exc:
+            log.error("audit_sink: failed to write to %s: %s", self.path, exc)
+            raise
 
 
 @dataclass(frozen=True, slots=True)

@@ -9,11 +9,21 @@ import pytest
 from langchain_core.messages import ToolMessage
 
 from raptix.execution.session.event_log import EventLog, EventType, read_events
+from raptix.middleware import event_logging
 from raptix.middleware.event_logging import (
     EventLogMiddleware,
     _redact_args,
     _summarize_value,
 )
+
+
+@pytest.fixture(autouse=True)
+def events_on_disk(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, project_files_at) -> None:
+    """Events go to the project's sandbox. The test's folder on disk stands in for the project's /workspace."""
+    monkeypatch.setattr(
+        event_logging, "project_files_for_runtime", lambda _runtime: project_files_at(tmp_path)
+    )
+
 
 # ── fakes mirroring the request/handler shapes used by other middleware tests ──
 
@@ -238,13 +248,14 @@ def test_append_failure_is_swallowed(tmp_path: Path):
 # ── caching + async parity ───────────────────────────────────────────────────
 
 
-def test_event_log_cached_per_scope(tmp_path: Path):
+def test_event_log_cached_per_scope(tmp_path: Path, project_files_at):
     mw = EventLogMiddleware()
     req = _ModelRequest(tmp_path, "eng-6", messages=[], model="m", agent="a")
     mw.wrap_model_call(req, lambda _r: type("R", (), {})())
-    first = mw._logs[(str(tmp_path), "eng-6")]
+    scope_key = (project_files_at(tmp_path).key, "eng-6")
+    first = mw._logs[scope_key]
     mw.wrap_model_call(req, lambda _r: type("R", (), {})())
-    assert mw._logs[(str(tmp_path), "eng-6")] is first
+    assert mw._logs[scope_key] is first
     assert len(mw._logs) == 1
 
 
@@ -458,7 +469,7 @@ def test_tool_call_binds_the_session_for_tool_side_emits(tmp_path: Path, monkeyp
     assert current_session() is None  # unbound again after the call
 
 
-def test_engagement_identity_terms_come_only_from_declarations(tmp_path: Path):
+def test_engagement_identity_terms_come_only_from_declarations(tmp_path: Path, project_files_at):
     """The org name is declared, not detected.
 
     The RoE interview asks for the client organization outright, so there is
@@ -481,14 +492,14 @@ def test_engagement_identity_terms_come_only_from_declarations(tmp_path: Path):
             }
         )
     )
-    terms = set(_engagement_identity_terms(str(ws)))
+    terms = set(_engagement_identity_terms(project_files_at(ws)))
     assert {"CodeAnt AI", "codeantai-new", "Jane Auditor"} <= terms
     assert "not an identity field" not in terms  # only declared identity fields
 
-    # No RoE at all -> only the workspace directory, never an invented term.
+    # No RoE at all -> nothing is declared, so nothing is invented.
     bare = tmp_path / "someengagement"
     bare.mkdir()
-    assert _engagement_identity_terms(str(bare)) == ["someengagement"]
+    assert _engagement_identity_terms(project_files_at(bare)) == []
 
 
 def test_declared_org_is_masked_in_the_trajectory(tmp_path: Path):

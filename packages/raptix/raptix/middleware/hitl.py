@@ -74,6 +74,11 @@ from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from typing_extensions import override
 
+from raptix.execution.backends.project_files import (
+    ProjectFiles,
+    ProjectFileUnavailable,
+    project_files_for_runtime,
+)
 from raptix_core.types.engagement import DANGEROUS_METHOD_LABELS
 
 log = logging.getLogger(__name__)
@@ -220,37 +225,15 @@ class FileBackedApprovalTransport:
     def _scan_decisions(self) -> list[ApprovalDecision]:
         if not self._decisions_path.exists():
             return []
-        out: list[ApprovalDecision] = []
         with self._decisions_path.open("r", encoding="utf-8") as fh:
             fh.seek(self._decisions_offset)
-            while True:
-                line = fh.readline()
-                if not line:
-                    break
-                self._decisions_offset = fh.tell()
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
-                    log.warning("malformed decision line skipped")
-                    continue
-                if obj.get("kind") != "approval_decision":
-                    continue
-                rid = obj.get("request_id")
-                if not rid or rid in self._consumed_ids:
-                    continue
-                out.append(
-                    ApprovalDecision(
-                        request_id=rid,
-                        action=str(obj.get("action") or "deny"),
-                        operator_note=str(obj.get("operator_note") or ""),
-                        redirect_args=obj.get("redirect_args"),
-                        decided_at=float(obj.get("decided_at") or time.time()),
-                    )
-                )
-        return out
+            lines = fh.readlines()
+            self._decisions_offset = fh.tell()
+        return [
+            decision
+            for decision in _parse_decision_lines(lines)
+            if decision.request_id not in self._consumed_ids
+        ]
 
     def wait_for_decision(self, request_id: str, timeout: float) -> ApprovalDecision | None:
         deadline = time.monotonic() + timeout
@@ -261,6 +244,81 @@ class FileBackedApprovalTransport:
                     return decision
             time.sleep(self._poll_interval)
         return None
+
+
+APPROVAL_REQUESTS_PATH = "approvals/requests.jsonl"
+APPROVAL_DECISIONS_PATH = "approvals/decisions.jsonl"
+
+
+class ProjectApprovalTransport:
+    """The same wire format, kept in the project's ``approvals/`` folder in its sandbox (ADR-0102).
+
+    The web console reads the requests and appends the decisions through the same sandbox, so the runtime writes
+    nothing to a local disk. A sandbox that cannot be reached raises ProjectFileUnavailable from ``submit`` or
+    ``wait_for_decision``, and the middleware turns that into a refusal.
+    """
+
+    def __init__(self, files: ProjectFiles, *, poll_interval: float = 0.25) -> None:
+        self._files = files
+        self._poll_interval = poll_interval
+        self._decisions_seen = 0
+        self._consumed_ids: set[str] = set()
+
+    def submit(self, request: ApprovalRequest) -> None:
+        self._files.append_bytes(
+            APPROVAL_REQUESTS_PATH, (request.to_jsonl() + "\n").encode("utf-8")
+        )
+
+    def _scan_decisions(self) -> list[ApprovalDecision]:
+        raw = self._files.read_bytes(APPROVAL_DECISIONS_PATH)
+        if raw is None:
+            return []
+        lines = raw.decode("utf-8", errors="replace").splitlines()
+        new_lines = lines[self._decisions_seen :]
+        self._decisions_seen = len(lines)
+        return [
+            decision
+            for decision in _parse_decision_lines(new_lines)
+            if decision.request_id not in self._consumed_ids
+        ]
+
+    def wait_for_decision(self, request_id: str, timeout: float) -> ApprovalDecision | None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            for decision in self._scan_decisions():
+                if decision.request_id == request_id:
+                    self._consumed_ids.add(request_id)
+                    return decision
+            time.sleep(self._poll_interval)
+        return None
+
+
+def _parse_decision_lines(lines: list[str]) -> list[ApprovalDecision]:
+    out: list[ApprovalDecision] = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            log.warning("malformed decision line skipped")
+            continue
+        if obj.get("kind") != "approval_decision":
+            continue
+        rid = obj.get("request_id")
+        if not rid:
+            continue
+        out.append(
+            ApprovalDecision(
+                request_id=rid,
+                action=str(obj.get("action") or "deny"),
+                operator_note=str(obj.get("operator_note") or ""),
+                redirect_args=obj.get("redirect_args"),
+                decided_at=float(obj.get("decided_at") or time.time()),
+            )
+        )
+    return out
 
 
 _DEFAULT_SECRET_KEYS = frozenset(
@@ -349,19 +407,12 @@ class HITLApprovalMiddleware(AgentMiddleware):
     def _resolve_transport(self, request: Any) -> ApprovalTransport:
         if self._transport is not None:
             return self._transport
-        state = getattr(request, "state", None) or {}
-        get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
-        workspace = get("workspace_path") or os.environ.get("RAPTIX_WORKSPACE_PATH", "/workspace")
-        workspace = str(workspace)
-        cached = self._transport_cache.get(workspace)
+        files = project_files_for_runtime(getattr(request, "runtime", None))
+        cached = self._transport_cache.get(files.key)
         if cached is not None:
             return cached
-        approvals = Path(workspace) / "approvals"
-        transport = FileBackedApprovalTransport(
-            approvals / "requests.jsonl",
-            approvals / "decisions.jsonl",
-        )
-        self._transport_cache[workspace] = transport
+        transport = ProjectApprovalTransport(files)
+        self._transport_cache[files.key] = transport
         return transport
 
     def _match_rule(
@@ -505,10 +556,13 @@ class HITLApprovalMiddleware(AgentMiddleware):
         )
         if rule is None:
             return handler(request)
-        transport = self._resolve_transport(request)
-        appr = self._build_request(tool_name, tool_args, rule, request)
-        transport.submit(appr)
-        decision = transport.wait_for_decision(appr.request_id, rule.timeout_seconds)
+        try:
+            transport = self._resolve_transport(request)
+            appr = self._build_request(tool_name, tool_args, rule, request)
+            transport.submit(appr)
+            decision = transport.wait_for_decision(appr.request_id, rule.timeout_seconds)
+        except ProjectFileUnavailable as exc:
+            return _approval_unavailable(request, exc)
         return self._decision_to_response(decision, rule, request, handler)
 
     @override
@@ -523,15 +577,32 @@ class HITLApprovalMiddleware(AgentMiddleware):
             return await handler(request)
         import asyncio
 
-        transport = self._resolve_transport(request)
-        appr = self._build_request(tool_name, tool_args, rule, request)
-        transport.submit(appr)
-        # FileBackedApprovalTransport.wait_for_decision blocks on time.sleep;
-        # offload to a worker thread so the LangGraph event loop stays live.
-        decision = await asyncio.to_thread(
-            transport.wait_for_decision, appr.request_id, rule.timeout_seconds
-        )
+        try:
+            transport = self._resolve_transport(request)
+            appr = self._build_request(tool_name, tool_args, rule, request)
+            transport.submit(appr)
+            # wait_for_decision blocks on time.sleep; offload to a worker thread so the LangGraph event loop stays live.
+            decision = await asyncio.to_thread(
+                transport.wait_for_decision, appr.request_id, rule.timeout_seconds
+            )
+        except ProjectFileUnavailable as exc:
+            return _approval_unavailable(request, exc)
         return await self._adecision_to_response(decision, rule, request, handler)
+
+
+def _approval_unavailable(request: Any, exc: Exception) -> ToolMessage:
+    """Refuse a gated call whose approval could not be requested: nothing runs without an operator decision."""
+    tool_name = getattr(getattr(request, "tool", None), "name", "") if request else ""
+    return ToolMessage(
+        content=(
+            f"[HITL_UNAVAILABLE] tool={tool_name}\n"
+            f"The operator approval for this call could not be requested from the project sandbox ({exc}). "
+            "This gated call was NOT executed. Retry once the project sandbox is running."
+        ),
+        tool_call_id=_tool_call(request).get("id", "") or "",
+        name=tool_name,
+        status="error",
+    )
 
 
 def _tool_call(request: Any) -> dict[str, Any]:
