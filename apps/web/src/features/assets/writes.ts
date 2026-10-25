@@ -2,8 +2,8 @@ import type { ActorRef, RequestContext, ServiceResult } from '../../domain/servi
 import type { Asset } from '../../domain/entities'
 import { type ApprovalRef, type ScopeAssetInput } from '../approvals/service'
 import type { AssetService } from './service';
-/** The asset types the import accepts (the catalog's type vocabulary). */
-export const ASSET_TYPES = ['Host', 'IP', 'URL', 'Application', 'Subnet']
+/** The asset types the real inventory stores (the server refuses any other type). */
+export const ASSET_TYPES = ['Host', 'IP', 'URL', 'Subnet']
 const hostRe = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i
 const ipRe = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
 /** Returns true when every octet of the dotted quad is a valid 0–255 value. */
@@ -17,11 +17,11 @@ export function validateIdent(type: string, ident: string): string {
   if (type === 'URL') return /^(https?:\/\/)?[a-z0-9.-]+(:\d+)?(\/\S*)?$/i.test(v) ? '' : 'Invalid URL (example: https://app.example.test).'
   return hostRe.test(v) || okIp(v) ? '' : 'Hostname may only contain letters, digits, dots and hyphens.'
 }
-/** One import row: ticket 21's scope-asset input (added assets stay pending until approval). */
-export type AssetImportRow = ScopeAssetInput
+/** One import row. The real inventory stores the type and identifier only; added assets stay pending until approval. */
+export type AssetImportRow = Pick<ScopeAssetInput, 'name' | 'ident' | 'type' | 'source'>
 /** One row the import refuses, with the exact reasons (reported, never hidden). */
 export interface AssetRowIssue { index: number; name: string; duplicate: boolean; reasons: string[] }
-/** Import checks against the identifiers the project already holds: the mock database or the asset list. */
+/** Import checks against the identifiers the project already holds in its asset list. */
 export function validateImportRows(existingIdents: readonly string[], rows: readonly AssetImportRow[]): AssetRowIssue[] {
   const existing = new Set(existingIdents.map((ident) => ident.trim().toLowerCase()))
   const seen = new Set<string>()
@@ -45,16 +45,6 @@ export function validateImportRows(existingIdents: readonly string[], rows: read
 export interface AssetImportOutcome {
   /** Number of rows committed (all rows — refusals commit zero). */
   added: number
-  /** Mock governance only: true when the transaction invalidated the approved scope. Real sources do not report it. */
-  invalidated?: boolean
-  /** Mock governance only: ROE version after the revision. */
-  roeVersion?: string
-  /** Mock governance only: approved plans expired by the submission. */
-  plansExpired?: string[]
-  /** Mock governance only: ready operations reset to Draft. */
-  operationsReset?: string[]
-  /** Mock governance only: an independent scope approval is required before targeting. */
-  needsApproval?: boolean
 }
 export interface AssetScopeWriteInput {
   /** Audited reason (required by the screens' confirm dialogs for gated changes). */
@@ -88,7 +78,7 @@ export interface AssetWriteHandlers {
 }
 /**
  * Builds the asset write handlers for one actor/scope over the feature port, so the
- * same screen writes through the mock transactions or the real adapter. Contexts are
+ * same screen writes through the feature port. Contexts are
  * built at call time, so a persona/project switch never retargets a mutation.
  */
 export function createAssetWriteHandlers(port: AssetService, actor: ActorRef, scopeProject: string): AssetWriteHandlers {

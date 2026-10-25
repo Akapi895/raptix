@@ -141,8 +141,8 @@ export function ReportNew() {
   const effTpl = tplName || o?.templates.find((t) => t.kind === (project?.type || 'Red Team') && t.status === 'published')?.name || o?.templates[0]?.name || ''
   const effReviewer = reviewer || project?.members.find((m) => m.role === 'reviewer')?.user || o?.reviewers[0] || ''
   const isDirty = !busy && (picked.length > 0 || (!!title && title !== defTitle))
-  const draftNote = () => toast('This report has not been saved as a draft yet. Select "Create draft" to save it.', 'warn')
-  useDirty(isDirty, draftNote)
+  // The draft exists only after "Create draft": the guard offers no Save Draft, because it would not create one.
+  useDirty(isDirty)
 
   if (pid === 'all' || !project) {
     return (
@@ -177,15 +177,15 @@ export function ReportNew() {
   const lockReason = o.createReason
   const fs = o.findings
   const tpl = o.templates.find((t) => t.name === effTpl)
-  const errs = { title: !effTitle.trim() ? 'Enter a report title.' : '', tpl: !tpl && caps.simulatedDraftRules ? 'Choose a template.' : '', reviewer: !effReviewer && caps.simulatedDraftRules ? 'Choose a reviewer.' : effReviewer === me.name ? 'The reviewer cannot be the author.' : '' }
-  const bad = !!(errs.title || errs.tpl || errs.reviewer)
+  const errs = { title: !effTitle.trim() ? 'Enter a report title.' : '', reviewer: effReviewer === me.name ? 'The reviewer cannot be the author.' : '' }
+  const bad = !!(errs.title || errs.reviewer)
   const unapproved = fs.filter((f) => picked.includes(f.id) && !f.reportable)
   const create = async () => {
     setTouched(true)
     setSaveErr(null)
     if (bad || locked || busy) return
     setBusy(true)
-    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: caps.periodStyle === 'iso' ? (from && to ? `${from}/${to}` : '') : `${from} – ${to}` })
+    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: from && to ? `${from}/${to}` : '' })
     setBusy(false)
     if (!res.ok) { setSaveErr(res.failure.message); return }
     const id = res.data.id
@@ -212,7 +212,7 @@ export function ReportNew() {
                 <Select value={kind} onChange={(e) => setKind(e.target.value)} disabled={locked}>{['Red Team', 'Purple Team', 'Assessment'].map((k) => <option key={k}>{k}</option>)}</Select>
               </Field>
               <Field label="Title" required error={touched ? errs.title : ''} className="md:col-span-2"><Input value={effTitle} onChange={(e) => setTitle(e.target.value)} disabled={locked} placeholder="Example: Red Team Q4 Report" /></Field>
-              <Field label="Template" required error={touched ? errs.tpl : ''}>
+              <Field label="Template" required>
                 <Select value={effTpl} onChange={(e) => setTplName(e.target.value)} disabled={locked}>
                   {o.templates.map((t) => <option key={t.id} value={t.name}>{t.name}{t.status !== 'published' ? ' (draft)' : ''}</option>)}
                 </Select>
@@ -306,7 +306,6 @@ export function ReportEditor() {
   return <ReportReadGate q={q}>{(d) => <EditorInner key={d.report.id} d={d} />}</ReportReadGate>
 }
 
-const SUGGEST = (title: string, client: string, roe: string) => `AI draft suggestion for "${title}": summarize the verified results for ${client} under ${roe}, state scope limits, and list recommended remediation. Edit and link a source before relying on it.`
 
 /**
  * Editor on the typed read + writes (ticket 35). The report/project/gate come
@@ -345,18 +344,23 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const lockMsg = d.editReason
   const dirtyIds = r.sections.filter((s) => (drafts[s.id] ?? s.body) !== s.body).map((s) => s.id)
   const dirty = dirtyIds.length > 0
-  const saveAll = (onDone?: () => void) => {
-    if (!editable || !dirtyIds.length) return
+  /** Writes every dirty section; resolves with the failure message, or null when all of them were saved. */
+  const saveSections = (): Promise<string | null> => {
     setState('saving')
     setSaveErr(null)
-    Promise.all(dirtyIds.map((id) => writes.saveSection(r.id, id, drafts[id] ?? ''))).then((results) => {
+    return Promise.all(dirtyIds.map((id) => writes.saveSection(r.id, id, drafts[id] ?? ''))).then((results) => {
       const bad = results.find((x): x is Extract<ServiceResult<Report>, { ok: false }> => !x.ok)
       setState(bad ? 'error' : 'saved')
       setSaveErr(bad?.failure.message ?? null)
-      if (!bad) onDone?.()
+      return bad?.failure.message ?? null
     })
   }
-  useDirty(dirty && editable, () => saveAll())
+  const saveAll = (onDone?: () => void) => {
+    if (!editable || !dirtyIds.length) return
+    void saveSections().then((failure) => { if (failure === null) onDone?.() })
+  }
+  // The shell's Save Draft waits for this outcome, so a failed save must reject instead of reporting success.
+  useDirty(dirty && editable, () => saveSections().then((failure) => { if (failure !== null) throw new Error(failure) }))
   const timer = useRef<number | undefined>(undefined)
   useEffect(() => {
     if (!dirty || !editable) return
@@ -395,11 +399,6 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const blocking = checks.filter((c) => c.state === 'fail')
   const lastReturn = [...r.reviews].reverse().find((x) => x.action === 'Changes requested')
   const submitBlock = !editable ? (lockMsg || 'Cannot submit.') : blocking.length ? `Cannot submit yet: ${blocking.map((c) => c.label).join('; ')}.` : ''
-  const fill = () => {
-    const next = { ...drafts }
-    r.sections.forEach((s) => { if (!(next[s.id] ?? s.body).trim()) next[s.id] = `${s.title}: simulated content for ${project.client} under ROE ${project.roeVersion}. Detailed figures and conclusions will be updated from the completed operations.` })
-    setDrafts(next); toast('Filled empty sections with simulated content. Review it before submitting.', 'info')
-  }
   const submit = () => {
     if (submitBlock) return
     if (dirty) saveAll()
@@ -420,7 +419,6 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const insert = (t: string) => { if (editable && sec) setDrafts({ ...drafts, [sec.id]: (drafts[sec.id] ?? sec.body ?? '') + t }) }
   // Real mode inserts the engagement's recorded testing windows and scope version from the effective scope.
   const insertProjectInfo = () => {
-    if (caps.simulatedEditorHelpers) { insert(`\nScope: ${project.window}. ROE ${project.roeVersion}.`); return }
     const effective = scopeRead.data?.effective
     if (!effective) { toast(scopeRead.isError ? 'The effective scope could not be read.' : 'The effective scope is still loading.', 'warn'); return }
     const windows = effective.roe.windows.map((w) => `${w.start} to ${w.end} ${w.tz}`).join('; ') || 'no testing window recorded'
@@ -496,7 +494,6 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
                 <Button size="sm" icon={ListChecks} onClick={() => insert('\n• Item 1\n• Item 2\n• Item 3')}>List</Button>
                 <Button size="sm" icon={Table2} onClick={() => insert('\n| Column A | Column B |\n|----------|----------|\n| …        | …        |')}>Table</Button>
                 <Button size="sm" icon={Wand2} onClick={() => { void insertProjectInfo() }}>Insert project info</Button>
-                {caps.simulatedEditorHelpers && <Button size="sm" icon={Wand2} onClick={fill}>Fill empty sections with simulated text</Button>}
                 {/Findings/i.test(sec?.title || '') && <Button size="sm" icon={Plus} disabled={!confirmedLinked.length} title={confirmedLinked.length ? undefined : 'Link at least one confirmed finding first. AI-suggested and unconfirmed findings cannot be inserted.'} onClick={insertFindings}>Insert confirmed findings</Button>}
               </div>
             )}
@@ -566,12 +563,6 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
                 })}
               </ul>
             )}
-          </Card>
-          <Card>
-            <CardHeader title="AI writing suggestion" sub="AI draft — verify before approval" />
-            <p className="rounded-lg border border-dashed border-line bg-bg p-3 text-sm text-muted">{SUGGEST(sec?.title || 'section', project.client, project.roeVersion)}</p>
-            <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><AlertTriangle size={13} className="mt-0.5 shrink-0 text-warn" />AI-written claims are not verified results unless they link to a source finding, event or evidence item.</p>
-            {caps.simulatedEditorHelpers && <Button className="mt-2" size="sm" icon={Wand2} disabled={!editable} title={editable ? undefined : lockMsg} onClick={() => insert(`\n[AI draft — verify before approval] ${sec?.title}: summary pending source linkage. Source: cite a finding or evidence ID.`)}>Insert as marked draft</Button>}
           </Card>
           <Card>
             <CardHeader title="Reviewer comments" />
@@ -696,7 +687,6 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
               <Button icon={Download} variant="primary" disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'PDF').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { if (res.data.artifact) saveArtifact(res.data.artifact); toast('PDF exported. Not delivered yet; go to the review page to mark delivery.') } }) }}>Export PDF</Button>
               <Button icon={Download} disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'DOCX').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { if (res.data.artifact) saveArtifact(res.data.artifact); toast('DOCX exported. Not delivered yet.') } }) }}>Export DOCX</Button>
               {caps.artifactDownloads && <ArtifactDownloads reportId={r.id} />}
-              <Button icon={Eye} disabled={me.role === 'viewer'} title={me.role === 'viewer' ? 'The Client / Viewer role cannot create trial exports' : 'Trial copy with watermark; not recorded in export history'} onClick={() => toast('Created a watermarked "DRAFT" trial copy (not saved to export history).', 'info')}>Trial export</Button>
             </div>
             {!canExport && <p className="mt-3 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
             {r.status === 'approved' || r.status === 'exported' ? <Button className="mt-3" size="sm" icon={ShieldCheck} onClick={() => go('report-review', { id: r.id })}>Go to delivery step</Button> : null}
@@ -908,14 +898,14 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
           <Card>
             <CardHeader title="2. Export" sub="Creates a PDF or DOCX with a checksum. Export is not delivery." />
             <div className="flex flex-wrap gap-2">
-              <Button icon={Download} disabled={!!exportWhy || caps.artifactDownloads} title={exportWhy || undefined} onClick={() => doExport('PDF')}>Export PDF</Button>
-              <Button icon={Download} disabled={!!exportWhy || caps.artifactDownloads} title={exportWhy || undefined} onClick={() => doExport('DOCX')}>Export DOCX</Button>
+              <Button icon={Download} disabled={!!exportWhy} title={exportWhy || undefined} onClick={() => doExport('PDF')}>Export PDF</Button>
+              <Button icon={Download} disabled={!!exportWhy} title={exportWhy || undefined} onClick={() => doExport('DOCX')}>Export DOCX</Button>
               {caps.artifactDownloads && <ArtifactDownloads reportId={r.id} />}
               {caps.revision && <StartRevision reportId={r.id} status={r.status} version={r.version} />}
             </div>
             {exportWhy && <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
             {exps.length > 0 && (
-              <ul className="mt-3 space-y-2">{exps.map((e) => <li key={e.id} className="rounded-lg border border-line bg-bg p-2.5 text-xs"><div className="flex justify-between"><Mono className="whitespace-nowrap">{e.id} · {e.version} · {e.format}{e.version === r.version && ['approved', 'exported', 'delivered'].includes(r.status) ? ' · approved version' : ''}</Mono><span className={e.status === 'Delivered' ? 'font-medium text-ok' : 'text-muted'}>{e.status}</span></div><div className="mt-1 break-all font-mono text-neutral">{e.checksum}</div><div className="text-muted">{e.by} · {e.at}</div></li>)}</ul>
+              <ul className="mt-3 space-y-2">{exps.map((e) => <li key={e.id} className="rounded-lg border border-line bg-bg p-2.5 text-xs"><div className="flex justify-between"><Mono className="whitespace-nowrap">{e.id} · {e.version || '—'} · {e.format}{e.version === r.version && ['approved', 'exported', 'delivered'].includes(r.status) ? ' · approved version' : ''}</Mono><span className={e.status === 'Delivered' ? 'font-medium text-ok' : 'text-muted'}>{e.status}</span></div><div className="mt-1 break-all font-mono text-neutral">{e.checksum}</div><div className="text-muted">{e.by} · {e.at}</div></li>)}</ul>
             )}
           </Card>
 

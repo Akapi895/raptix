@@ -1,8 +1,8 @@
 import type { VaultSecret } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
 
-/** List-safe metadata projection; never carries the demo plaintext. */
-export type VaultSecretMeta = Omit<VaultSecret, 'demoPlaintext'>
+/** List-safe secret metadata: the stored value is returned only by reveal. */
+export type VaultSecretMeta = VaultSecret
 
 /** Vault port (plan P09, Vault slice): list, reveal, store and revoke for one engagement. */
 export interface VaultRead {

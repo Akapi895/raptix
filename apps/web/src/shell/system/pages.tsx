@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ArrowLeft, Clock, FileSearch, FolderKanban, Home, LifeBuoy, Loader2, Lock, LogIn, RefreshCw, ShieldOff, ServerCrash, WifiOff } from 'lucide-react'
 import type { Role } from '../../domain/entities'
 import { useMe } from '../../state/console'
 import { useToastStore, useUiStore } from '../../state/stores'
 import { Button, Mono } from '../../ui/index'
+import { fetchCapabilities } from '../../platform/capabilities'
 import { useSystemGo, useSystemRoute } from './nav'
 /** Role display labels (kept local to avoid a store cycle, like the feature services). */
 const ROLE_LABEL: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
@@ -17,7 +18,7 @@ function ErrorFrame({ code, icon: I, tone, title, desc, reason, children, action
       {reason && <div className="mt-5 w-full rounded-xl border border-line bg-panel p-4 text-left text-sm">{reason}</div>}
       {children}
       <div className="mt-6 flex flex-wrap justify-center gap-2">{actions}</div>
-      <p className="mt-8 flex items-center gap-1.5 text-xs text-muted"><LifeBuoy size={13} aria-hidden />Need help? Contact your organization admin or send the incident ID to operations.</p>
+      <p className="mt-8 flex items-center gap-1.5 text-xs text-muted"><LifeBuoy size={13} aria-hidden />Need help? Contact your organization admin or operations.</p>
     </div>
   )
 }
@@ -61,30 +62,28 @@ export function NotFound() {
     />
   )
 }
-const INCIDENT_ID = 'INC-20261013-0427'
+/** Asks the server for its capability document; true only when the server answers. */
+async function serverAnswers(): Promise<boolean> {
+  try { await fetchCapabilities(); return true } catch { return false }
+}
 export function ServerError() {
   const go = useSystemGo()
   const toast = useToastStore((s) => s.toast)
   const [busy, setBusy] = useState(false)
-  const [tries, setTries] = useState(0)
-  const timers = useRef<number[]>([])
-  useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); timers.current = [] }, [])
   const retry = () => {
     setBusy(true)
-    timers.current.push(window.setTimeout(() => {
-      setBusy(false); setTries(tries + 1)
-      if (tries >= 1) { toast('Reloaded successfully.'); go('overview') } else toast('The server is still not responding. Try again in a few seconds.', 'warn')
-    }, 900))
+    void serverAnswers().then((ok) => {
+      setBusy(false)
+      if (ok) { toast('The server is responding again.'); go('overview') } else toast('The server is still not responding. Try again in a few seconds.', 'warn')
+    })
   }
   return (
     <ErrorFrame
       code="500" icon={ServerCrash} tone="text-bad" title="Something went wrong"
-      desc="The request could not be completed because of a server error. Data you already saved is not affected. Try again; if it keeps failing, send the incident ID below to operations."
-      reason={<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted"><span>Incident ID</span><Mono className="text-fg">{INCIDENT_ID}</Mono></div>}
+      desc="The request could not be completed because of a server error. Data you already saved is not affected. Try again; if it keeps failing, contact operations."
       actions={<>
         <Button variant="primary" icon={busy ? Loader2 : RefreshCw} disabled={busy} onClick={retry}>{busy ? 'Retrying…' : 'Retry'}</Button>
         <Button icon={Home} onClick={() => go('overview')}>Back to System Overview</Button>
-        <Button variant="ghost" onClick={() => { void navigator.clipboard?.writeText(INCIDENT_ID); toast('Incident ID copied.', 'info') }}>Copy incident ID</Button>
       </>}
     />
   )
@@ -93,21 +92,18 @@ export function Offline() {
   const go = useSystemGo()
   const toast = useToastStore((s) => s.toast)
   const [busy, setBusy] = useState(false)
-  const [n, setN] = useState(0)
-  const timers = useRef<number[]>([])
-  useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); timers.current = [] }, [])
   const check = () => {
     setBusy(true)
-    timers.current.push(window.setTimeout(() => {
-      setBusy(false); setN(n + 1)
-      if (n >= 1) { toast('Reconnected. Data is in sync.'); go('overview') } else toast('Still no connection to the workspace.', 'warn')
-    }, 1000))
+    void serverAnswers().then((ok) => {
+      setBusy(false)
+      if (ok) { toast('Reconnected to the workspace.'); go('overview') } else toast('Still no connection to the workspace.', 'warn')
+    })
   }
   return (
     <ErrorFrame
       icon={WifiOff} tone="text-warn" title="Workspace temporarily unavailable"
       desc="The connection to the server was lost. Displayed data may be stale and write actions are locked to avoid inconsistencies. Running operations continue to be orchestrated by the execution system and are not stopped."
-      reason={<ul className="space-y-1.5 text-xs text-muted"><li className="flex gap-2"><Clock size={13} className="mt-0.5 shrink-0" aria-hidden />Last successful sync: Oct 13, 2026, 10:42 AM (UTC+7)</li><li className="flex gap-2"><Lock size={13} className="mt-0.5 shrink-0" aria-hidden />Start, stop and approval actions are available only while connected.</li></ul>}
+      reason={<ul className="space-y-1.5 text-xs text-muted"><li className="flex gap-2"><Lock size={13} className="mt-0.5 shrink-0" aria-hidden />Start, stop and approval actions are available only while connected.</li></ul>}
       actions={<>
         <Button variant="primary" icon={busy ? Loader2 : RefreshCw} disabled={busy} onClick={check}>{busy ? 'Checking…' : 'Check connection again'}</Button>
         <Button icon={Home} onClick={() => go('overview')}>Back to System Overview (saved data)</Button>

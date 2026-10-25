@@ -34,7 +34,6 @@ export { Card, CardHeader, PageHeader } from './layout'
 export { Banner, ApprovalBanner } from './banner'
 export { Skeleton, PageSkeleton } from './skeleton'
 export { DescList, Kpi, Progress, Timeline, Stepper } from './data'
-export { DemoTag } from './demo-tag'
 export { Gated, Locked, PersonaHint } from './guard'
 // eslint-disable-next-line react-refresh/only-export-components -- shared UI kit: constants/helpers co-exported with primitives
 export { useGuard } from './use-guard'

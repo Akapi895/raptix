@@ -128,10 +128,13 @@ function FindingFormBody({ editing, db }: { editing: Finding | undefined; db: Fi
     if (submitReason) { toast(submitReason, 'warn'); return }
     await persist(true, true)
   }
-  useDirty(dirty, () => {
-    if (d.title.trim().length >= 5 && projectId && !locked && !saving) {
-      void persist(false, false).then((id) => { if (id) { setSaved(true); toast('Draft saved.') } else setSaved(false) })
-    }
+  // The shell's Save Draft waits for this outcome, so a refused or failed save rejects instead of reporting success.
+  useDirty(dirty, async () => {
+    if (locked) throw new Error(createReason || 'Cannot edit in the current status.')
+    if (d.title.trim().length < 5) throw new Error('Enter a finding title (at least 5 characters) before saving a draft.')
+    const id = await persist(false, false)
+    setSaved(!!id)
+    if (!id) throw new Error('The draft was not saved.')
   })
 
   if (editing && pid !== 'all' && editing.projectId !== pid) return <Empty icon={Lock} title={`${editing.id} belongs to project ${editing.projectId}`} action={<Button onClick={() => setSwitcherOpen(true)}>Select project</Button>}>Select the correct project to edit this finding.</Empty>

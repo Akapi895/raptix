@@ -198,8 +198,8 @@ describe('real asset writes', () => {
   it('imports each console type under its inventory kind and reports the rows it stored', async () => {
     vi.mocked(api_assets.importAssets).mockResolvedValue({ imported: 2, skipped: 0 })
     const res = await createRealAssetService().importRows(ctx, [
-      { name: 'web', ident: 'https://web.example.test', type: 'URL', os: '', owner: '', scope: 'out', source: 'manual' },
-      { name: 'lab', ident: '10.20.0.0/24', type: 'Subnet', os: '', owner: '', scope: 'out', source: 'manual' },
+      { name: 'web', ident: 'https://web.example.test', type: 'URL', source: 'manual' },
+      { name: 'lab', ident: '10.20.0.0/24', type: 'Subnet', source: 'manual' },
     ])
     expect(api_assets.importAssets).toHaveBeenCalledWith('eng-1', ['https://web.example.test'], 'web_url')
     expect(api_assets.importAssets).toHaveBeenCalledWith('eng-1', ['10.20.0.0/24'], 'ip_range')
@@ -207,7 +207,7 @@ describe('real asset writes', () => {
   })
 
   it('refuses a type the inventory does not store before any import call', async () => {
-    const res = await createRealAssetService().importRows(ctx, [{ name: 'app', ident: 'billing', type: 'Application', os: '', owner: '', scope: 'out', source: 'manual' }])
+    const res = await createRealAssetService().importRows(ctx, [{ name: 'app', ident: 'billing', type: 'Application', source: 'manual' }])
     expect(res.ok === false && res.failure.kind).toBe('validation')
     expect(api_assets.importAssets).not.toHaveBeenCalled()
   })
