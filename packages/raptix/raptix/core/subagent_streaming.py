@@ -135,23 +135,32 @@ def _bind_per_run_sandbox():
     """
     token = None
     var = None
+    endpoint_token = None
     try:
         from langgraph.config import get_config
 
         cfg = get_config()
-        sandbox_url = ((cfg or {}).get("configurable", {}) or {}).get("sandbox_url")
+        configurable = (cfg or {}).get("configurable", {}) or {}
+        sandbox_url = configurable.get("sandbox_url")
         if sandbox_url:
             from raptix.execution.backends import build_sandbox_backend
+            from raptix.execution.backends.project_files import bind_project_endpoint
             from raptix.execution.tools.bash.bash import _sandbox_var, set_sandbox
 
             var = _sandbox_var
             token = set_sandbox(build_sandbox_backend(cfg))
+            # Project files (RoE, abort marker, audit ledger) reach the same per-run sandbox from sub-agent tool calls.
+            endpoint_token = bind_project_endpoint(sandbox_url, configurable.get("sandbox_token"))
     except Exception as exc:  # pragma: no cover - defensive
         log.debug("per-run sandbox bind skipped: %s", exc)
         token = None
     try:
         yield
     finally:
+        if endpoint_token is not None:
+            from raptix.execution.backends.project_files import unbind_project_endpoint
+
+            unbind_project_endpoint(endpoint_token)
         if token is not None and var is not None:
             var.reset(token)
 
@@ -573,9 +582,9 @@ class StreamingRunnable(RunnableBinding):
 
         if not has_renderer and writer is None:
             log.warning("[%s] No channels available — falling back to plain invoke()", self._name)
-            return _public_child_state(
-                self._runnable, self._runnable.invoke(input, config, **kwargs)
-            )
+            with _bind_per_run_sandbox():
+                result = self._runnable.invoke(input, config, **kwargs)
+            return _public_child_state(self._runnable, result)
 
         prompt = self._extract_prompt(input)
         # Per-invocation id so consumers can distinguish two concurrent
@@ -698,9 +707,9 @@ class StreamingRunnable(RunnableBinding):
 
         if not has_renderer and writer is None:
             log.warning("[%s] No channels available — falling back to plain ainvoke()", self._name)
-            return _public_child_state(
-                self._runnable, await self._runnable.ainvoke(input, config, **kwargs)
-            )
+            with _bind_per_run_sandbox():
+                result = await self._runnable.ainvoke(input, config, **kwargs)
+            return _public_child_state(self._runnable, result)
 
         prompt = self._extract_prompt(input)
         # Per-invocation id so consumers can distinguish two concurrent
