@@ -54,6 +54,20 @@ Use the `RoE` schema from `raptix_core.types.engagement`. Write to the engagemen
 
 See `references/roe-example.json` for a complete example and `../references/schema-quick-reference.md` for all required fields and valid values.
 
+Add the `machine_enforcement` block to the same file. The runtime enforces scope from this block alone, and the planning handoff is refused without it:
+
+```json
+"machine_enforcement": {
+  "mode": "enforce",
+  "in_scope": ["10.10.0.0/24", "app.example.com"],
+  "out_of_scope": ["10.10.0.99"]
+}
+```
+
+- `mode` must be `"enforce"`.
+- `in_scope` lists the same hosts, CIDRs and domain patterns as the in-scope targets from Step 1. It must not be empty, because an empty list allows every target. It must also cover the target the operator declared at launch.
+- `out_of_scope` lists the exclusions from Step 1. Leave it empty if there are none.
+
 ### Step 3: Validate
 
 Run through the checklist in `references/validation-checklist.md` before presenting to user.
@@ -65,6 +79,7 @@ Run through the checklist in `references/validation-checklist.md` before present
 3. **Testing window must include timezone**
 4. **At least 2 escalation contacts** required
 5. **Authorization reference must not be empty**
+6. **`machine_enforcement` must be present with `mode: "enforce"` and a non-empty `in_scope`** — see Step 2
 
 ## Output
 
