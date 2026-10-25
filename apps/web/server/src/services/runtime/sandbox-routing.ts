@@ -6,6 +6,7 @@
  *
  * The host name must match the container the launcher creates (`sbx-<slug>`).
  */
+import { createHmac } from 'node:crypto';
 import { ProjectApiError } from '../projects-service.js';
 
 export const SANDBOX_PORT = 9999;
@@ -23,4 +24,13 @@ export function sandboxHostFor(slug: string): string {
 
 export function sandboxUrlFor(slug: string): string {
   return `http://${sandboxHostFor(slug)}:${SANDBOX_PORT}`;
+}
+
+/**
+ * The bearer token of one project's sandbox. The launcher derives the same value from the same key when it starts
+ * that sandbox (`TokenFor` in apps/launcher/internal/sandboxes), so a run can authenticate to its own project's
+ * sandbox and to no other. The key never reaches a sandbox or the runtime.
+ */
+export function sandboxTokenFor(key: string, slug: string): string {
+  return createHmac('sha256', key).update(`sandbox-token:${slug}`).digest('hex');
 }

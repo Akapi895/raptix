@@ -16,6 +16,9 @@ import type {
   UpdateProjectData,
 } from '../src/services/projects-service.js';
 import { WorkspaceSlugConflictError } from '../src/services/projects-service.js';
+import { recordingSandboxes } from './support/project-sandboxes.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
+import { SandboxProvisionError } from '../src/integrations/sandboxes/sandbox-controller-client.js';
 
 class FakeEngagementNameConflictError extends Error {
   public constructor(slug: string) {
@@ -84,7 +87,6 @@ class InMemoryProjectRepository implements ProjectRepositoryPort {
       status: 'draft',
       userId,
       threadId: null,
-      workspacePath: data.workspacePath ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -129,7 +131,6 @@ function makeRecord(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
     status: 'draft',
     userId: 'local',
     threadId: null,
-    workspacePath: null,
     createdAt: new Date('2026-09-30T10:00:00.000Z'),
     updatedAt: new Date('2026-09-30T11:00:00.000Z'),
     ...overrides,
@@ -154,8 +155,9 @@ async function setupContext(): Promise<TestContext> {
   registerProjectRoutes(app, {
     service: new ProjectsService({
       repository: repo,
-      workspaceRoot,
+      files: new LocalProjectFiles(workspaceRoot),
       identity: { id: 'local', mode: 'local-single-user' },
+      sandboxes: recordingSandboxes(),
     }),
     identity: { id: 'local', mode: 'local-single-user' },
   });
@@ -203,7 +205,6 @@ describe('GET /api/engagements', () => {
         id: 'eng_003',
         name: 'imported-project',
         targetValue: 'imported from CLI',
-        workspacePath: path.join(ctx.workspaceRoot, 'imported-project'),
       }),
       makeRecord({ id: 'eng_004', name: 'with/slash' }),
     );
@@ -404,12 +405,11 @@ describe('POST /api/engagements', () => {
       name: 'acme-external-assessment',
       targetType: 'web_url',
       authorizationConfirmed: true,
-      workspacePath: path.join(ctx.workspaceRoot, 'acme-external-assessment'),
     });
-    const planStat = await stat(
-      path.join(ctx.workspaceRoot, 'acme-external-assessment', 'plan'),
-    );
-    expect(planStat.isDirectory()).toBe(true);
+    // The API never creates a project directory; the project's sandbox creates it inside its container.
+    await expect(
+      stat(path.join(ctx.workspaceRoot, 'acme-external-assessment')),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
   it('persists an optional displayName on create', async () => {
@@ -561,28 +561,37 @@ describe('POST /api/engagements', () => {
     expect(response.json().error.code).toBe('conflict');
   });
 
-  it('returns a sanitized 500 and no DB write when the plan dir cannot be created', async () => {
-    await writeFile(path.join(ctx.workspaceRoot, 'collides'), 'file');
-
-    const response = await ctx.app.inject({
-      method: 'POST',
-      url: '/api/engagements',
-      payload: {
-        name: 'collides',
-        targetType: 'web_url',
-        targetValue: 'http://t.local',
-        authorizationConfirmed: true,
-        brief: BRIEF,
-      },
+  it('returns 503 and no DB write when the project sandbox cannot be started', async () => {
+    const app = Fastify({ logger: false });
+    registerErrorHandler(app);
+    registerProjectRoutes(app, {
+      service: new ProjectsService({
+        repository: ctx.repo,
+        files: new LocalProjectFiles(ctx.workspaceRoot),
+        identity: { id: 'local', mode: 'local-single-user' },
+        sandboxes: { async ensure() { throw new SandboxProvisionError(); } },
+      }),
+      identity: { id: 'local', mode: 'local-single-user' },
     });
 
-    expect(response.statusCode).toBe(500);
-    const body = response.json();
-    expect(body.statusCode).toBe(500);
-    expect(body.error.code).toBe('internal_error');
-    expect(body.error.message).toBe('Internal server error');
-    expect(response.body).not.toContain(ctx.workspaceRoot);
-    expect(ctx.repo.created).toHaveLength(0);
+    try {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/engagements',
+        payload: {
+          name: 'no-sandbox',
+          targetType: 'web_url',
+          targetValue: 'http://t.local',
+          authorizationConfirmed: true,
+          brief: BRIEF,
+        },
+      });
+
+      expect(response.statusCode).toBe(503);
+      expect(ctx.repo.created).toHaveLength(0);
+    } finally {
+      await app.close();
+    }
   });
 });
 
@@ -729,7 +738,7 @@ describe('PATCH /api/engagements/:id', () => {
     ['status', { status: 'running' }],
     ['threadId', { threadId: 'thread-9' }],
     ['userId', { userId: 'someone-else' }],
-    ['workspacePath', { workspacePath: '/etc/passwd' }],
+    ['workspaceRoot', { workspaceRoot: '/etc/passwd' }],
     ['authorizationConfirmed', { authorizationConfirmed: false }],
     ['unknown field', { bogus: 1 }],
   ])('rejects immutable or unknown field %s with 400 and no write', async (_label, payload) => {
@@ -835,8 +844,9 @@ describe('W01 workspace identity isolation', () => {
 
     const ownerB = new ProjectsService({
       repository: ctx.repo,
-      workspaceRoot: ctx.workspaceRoot,
+      files: new LocalProjectFiles(ctx.workspaceRoot),
       identity: { id: 'operator-b', mode: 'local-single-user' },
+      sandboxes: recordingSandboxes(),
     });
     const appB = Fastify({ logger: false });
     registerErrorHandler(appB);
@@ -855,11 +865,10 @@ describe('W01 workspace identity isolation', () => {
       const a = createdA.json();
       const b = createdB.json();
       expect(b.workspaceSlug).not.toBe(a.workspaceSlug);
+      // In production each project's sandbox creates its plan directory; the test stands in for it.
+      await mkdir(path.join(ctx.workspaceRoot, a.workspaceSlug, 'plan'), { recursive: true });
+      await mkdir(path.join(ctx.workspaceRoot, b.workspaceSlug, 'plan'), { recursive: true });
       expect(ctx.repo.created).toHaveLength(2);
-      expect(ctx.repo.created[1]?.workspacePath).toBeDefined();
-      expect(ctx.repo.created[1]?.workspacePath).not.toBe(
-        ctx.repo.created[0]?.workspacePath,
-      );
 
       await writeFile(
         path.join(ctx.workspaceRoot, a.workspaceSlug, 'plan', 'marker-a'),

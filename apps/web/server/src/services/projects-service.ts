@@ -13,17 +13,14 @@ import {
   parseProjectPatch,
   ProjectPolicyError,
 } from '../security/project-policy.js';
-import {
-  prepareEngagementPlanDir,
-  resolveEngagementWorkspaceDir,
-} from '../security/workspace-policy.js';
 import { readPlannerScope, readPlanningView, type PlannerScope } from './planning-service.js';
+import type { ProjectFiles } from './project-files.js';
 import type { PlanningView } from '@raptix/web-contracts';
 
 /**
  * Persistence-level project record (int-w02-prisma `EngagementRecord` shape).
  * This is NOT the public DTO: `toProjectViewModel` is the only place that
- * produces the wire shape, and it never emits `userId`/`workspacePath`.
+ * produces the wire shape, and it never emits `userId`.
  */
 export interface ProjectRecord {
   readonly id: string;
@@ -39,7 +36,6 @@ export interface ProjectRecord {
   readonly status: EngagementStatus;
   readonly userId: string;
   readonly threadId: string | null;
-  readonly workspacePath: string | null;
   readonly runtimeContextLockedAt?: Date | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -54,7 +50,6 @@ export interface CreateProjectData {
   readonly targetValue: string;
   readonly authorizationConfirmed: boolean;
   readonly brief?: string | null;
-  readonly workspacePath?: string | null;
 }
 
 export interface UpdateProjectData {
@@ -182,26 +177,35 @@ function toProjectViewModel(record: ProjectRecord): ProjectViewModel {
   };
 }
 
+/** Starts the project's own sandbox container. A project is created only after this resolves. */
+export interface ProjectSandboxes {
+  ensure(workspaceSlug: string): Promise<void>;
+}
+
 export interface ProjectsServiceOptions {
   readonly repository: ProjectRepositoryPort;
-  /** Trusted workspace root; the service writes only <root>/<slug>/plan. */
-  readonly workspaceRoot: string;
+  /** Each project's files, held by its own sandbox (ADR-0102). */
+  readonly files: ProjectFiles;
   /** Local single-user owner; used when a method is called without userId. */
   readonly identity: LocalIdentity;
+  /** ADR-0086 A: every project gets its own sandbox container at creation. */
+  readonly sandboxes: ProjectSandboxes;
   /** ADR-0085: approves the planner's scope at the handoff (wired with the database). */
   readonly confirmPlannerScope?: (actorId: string, engagementId: string, plan: PlannerScope) => Promise<unknown>;
 }
 
 export class ProjectsService {
   private readonly repository: ProjectRepositoryPort;
-  private readonly workspaceRoot: string;
+  private readonly files: ProjectFiles;
   private readonly identity: LocalIdentity;
+  private readonly sandboxes: ProjectSandboxes;
   private readonly confirmPlannerScope: ProjectsServiceOptions['confirmPlannerScope'];
 
   public constructor(options: ProjectsServiceOptions) {
     this.repository = options.repository;
-    this.workspaceRoot = options.workspaceRoot;
+    this.files = options.files;
     this.identity = options.identity;
+    this.sandboxes = options.sandboxes;
     this.confirmPlannerScope = options.confirmPlannerScope;
   }
 
@@ -212,7 +216,7 @@ export class ProjectsService {
   public async getPlanning(userId: string, id: string): Promise<PlanningView> {
     const record = await this.repository.findById(userId, id);
     if (record === null || !isProjectSlug(record.name)) throw new ProjectNotFoundError();
-    return readPlanningView(this.workspaceRoot, record, toMetadataState(record) === 'verified');
+    return readPlanningView(this.files, record, toMetadataState(record) === 'verified');
   }
 
   /**
@@ -241,12 +245,16 @@ export class ProjectsService {
   /**
    * Create order matters: parse, then allocate a globally unique workspace
    * slug (W01 — the per-owner `name` alone is not a safe partition identity),
-   * then containment-check and mkdir the plan dir, then persist. A filesystem
-   * failure therefore never leaves a DB row and never yields a fake 201; a DB
-   * failure (409 on the per-owner unique name, or a lost `workspaceSlug`
-   * allocation race) retries allocation on the slug conflict only — an
-   * idempotent empty slug dir may remain, accepted residue, no compensation
-   * needed.
+   * then start the project's own sandbox container (ADR-0086 A), which creates
+   * its directory inside the container, then persist. The API never creates a
+   * project directory itself: the sandbox is the only writer of its workspace.
+   * The sandbox is started before the row exists, so a project never exists
+   * without its sandbox: a failed start returns 503 and leaves no DB row. A
+   * sandbox failure never yields a fake 201; a DB failure (409 on the per-owner
+   * unique name, or a lost `workspaceSlug` allocation race) retries allocation
+   * on the slug conflict only. Residue is accepted: a sandbox container whose row
+   * failed to persist, which an operator removes with
+   * `docker rm -f sbx-<slug>`.
    */
   public async createProject(
     userId: string | undefined,
@@ -258,11 +266,7 @@ export class ProjectsService {
       const workspaceSlug = await this.repository.allocateWorkspaceSlug(
         parsed.name,
       );
-      const workspacePath = await resolveEngagementWorkspaceDir(
-        this.workspaceRoot,
-        workspaceSlug,
-      );
-      await prepareEngagementPlanDir(this.workspaceRoot, workspaceSlug);
+      await this.sandboxes.ensure(workspaceSlug);
       try {
         const record = await this.repository.create(this.ownerId(userId), {
           name: parsed.name,
@@ -274,7 +278,6 @@ export class ProjectsService {
           authorizationConfirmed: parsed.authorizationConfirmed,
           brief: parsed.brief,
           workspaceSlug,
-          workspacePath,
         });
         return toProjectViewModel(record);
       } catch (error) {
@@ -301,14 +304,14 @@ export class ProjectsService {
    * independent scope review.
    */
   private async confirmPlanningHandoff(actorId: string, record: ProjectRecord): Promise<void> {
-    const view = await readPlanningView(this.workspaceRoot, record, toMetadataState(record) === 'verified');
+    const view = await readPlanningView(this.files, record, toMetadataState(record) === 'verified');
     if (view.readiness.state !== 'ready') {
       throw new ProjectApiError(409, `Planning is not ready for handoff: ${view.readiness.reasons.join('; ')}`);
     }
     if (this.confirmPlannerScope === undefined) {
       throw new ProjectApiError(409, 'The planning scope cannot be approved without the database.');
     }
-    const plan = await readPlannerScope(this.workspaceRoot, record.workspaceSlug);
+    const plan = await readPlannerScope(this.files, record.workspaceSlug);
     if (plan === null) throw new ProjectApiError(409, 'roe.json is not a valid planning document, so the handoff cannot approve its scope.');
     await this.confirmPlannerScope(actorId, record.id, plan);
   }
