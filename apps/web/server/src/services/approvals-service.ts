@@ -1,17 +1,16 @@
-import { appendFile, mkdir, readFile, stat } from 'node:fs/promises';
-import * as path from 'node:path';
 import type { ApprovalsView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectPolicyError } from '../security/project-policy.js';
 import { parseApprovalDecision } from '../security/run-policy.js';
-import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
+import type { ProjectFiles } from './project-files.js';
 import { ProjectNotFoundError } from './projects-service.js';
 
 /**
  * W11 file-backed tool HITL: read pending `approval_request` records from the
- * engagement workspace's `approvals/requests.jsonl` (producer contract in
+ * project sandbox's `approvals/requests.jsonl` (producer contract in
  * `raptix/middleware/hitl.py`) and append `approval_decision` records to
- * `decisions.jsonl`. Engagement-scoped only: metadata is never projected, so a
+ * `decisions.jsonl` (ADR-0102: both files live in the project's own sandbox).
+ * Engagement-scoped only: metadata is never projected, so a
  * pending approval is never assigned to a run by name coincidence. Decisions
  * are serialized per engagement behind an in-process async mutex and re-checked
  * inside the lock, so two concurrent decisions cannot both append; cross-process
@@ -21,6 +20,8 @@ import { ProjectNotFoundError } from './projects-service.js';
 const MAX_LINE_BYTES = 64 * 1024;
 const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_RECORDS = 500;
+const REQUESTS = 'approvals/requests.jsonl';
+const DECISIONS = 'approvals/decisions.jsonl';
 
 interface ApprovalRecord {
   requestId: string;
@@ -75,36 +76,32 @@ function toRecord(line: string): ApprovalRecord | null {
 
 export class ApprovalsService {
   private readonly locks = new Map<string, Promise<unknown>>();
-  public constructor(private readonly db: PrismaClient, private readonly workspaceRoot: string) {}
+  public constructor(private readonly db: PrismaClient, private readonly files: ProjectFiles) {}
 
-  private async ownedPaths(userId: string, engagementId: string): Promise<{ requests: string; decisions: string; dir: string }> {
+  private async project(userId: string, engagementId: string): Promise<string> {
     const project = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
     if (!project) throw new ProjectNotFoundError();
-    const dir = await resolveEngagementWorkspaceDir(this.workspaceRoot, project.workspaceSlug);
-    const approvals = path.join(dir, 'approvals');
-    return { dir: approvals, requests: path.join(approvals, 'requests.jsonl'), decisions: path.join(approvals, 'decisions.jsonl') };
+    return project.workspaceSlug;
   }
 
-  private async readJsonl(file: string): Promise<string[]> {
-    try {
-      const info = await stat(file);
-      if (!info.isFile() || info.size > MAX_FILE_BYTES) return [];
-      const raw = await readFile(file, 'utf8');
-      return raw.split('\n').filter(line => line.trim().length > 0 && Buffer.byteLength(line) <= MAX_LINE_BYTES);
-    } catch { return []; }
+  /** A missing or oversized ledger reads as empty; a sandbox failure propagates as an explicit unavailable answer. */
+  private async readJsonl(slug: string, rel: string): Promise<string[]> {
+    const data = await this.files.read(slug, rel);
+    if (data === null || data.length > MAX_FILE_BYTES) return [];
+    return data.toString('utf8').split('\n').filter(line => line.trim().length > 0 && Buffer.byteLength(line) <= MAX_LINE_BYTES);
   }
 
   public async list(userId: string, engagementId: string): Promise<ApprovalsView> {
-    const { requests, decisions } = await this.ownedPaths(userId, engagementId);
+    const slug = await this.project(userId, engagementId);
     const decided = new Set<string>();
-    for (const line of await this.readJsonl(decisions)) {
+    for (const line of await this.readJsonl(slug, DECISIONS)) {
       try {
         const parsed = JSON.parse(line) as Record<string, unknown>;
         if (parsed.kind === 'approval_decision' && typeof parsed.request_id === 'string') decided.add(parsed.request_id);
       } catch { /* malformed producer lines stay invisible */ }
     }
     const pending: ApprovalRecord[] = [];
-    for (const line of await this.readJsonl(requests)) {
+    for (const line of await this.readJsonl(slug, REQUESTS)) {
       const record = toRecord(line);
       if (!record) continue;
       if (decided.has(record.requestId)) continue;
@@ -127,21 +124,20 @@ export class ApprovalsService {
   }
 
   private async decideLocked(userId: string, engagementId: string, decision: { requestId: string; action: 'allow' | 'deny'; operatorNote: string }): Promise<{ ok: true; requestId: string; action: 'allow' | 'deny'; decidedAtSeconds: number }> {
-    const { dir, requests, decisions } = await this.ownedPaths(userId, engagementId);
-    const known = (await this.readJsonl(requests)).some(line => {
+    const slug = await this.project(userId, engagementId);
+    const known = (await this.readJsonl(slug, REQUESTS)).some(line => {
       try { return (JSON.parse(line) as Record<string, unknown>).kind === 'approval_request' && (JSON.parse(line) as Record<string, unknown>).request_id === decision.requestId; }
       catch { return false; }
     });
     if (!known) throw new ProjectNotFoundError();
-    const already = (await this.readJsonl(decisions)).some(line => {
+    const already = (await this.readJsonl(slug, DECISIONS)).some(line => {
       try { return (JSON.parse(line) as Record<string, unknown>).kind === 'approval_decision' && (JSON.parse(line) as Record<string, unknown>).request_id === decision.requestId; }
       catch { return false; }
     });
     if (already) throw new ProjectPolicyError('conflict', 'Approval request already decided');
     const decidedAtSeconds = Date.now() / 1000;
     const line = JSON.stringify({ kind: 'approval_decision', request_id: decision.requestId, action: decision.action, operator_note: decision.operatorNote, redirect_args: null, decided_at: decidedAtSeconds }) + '\n';
-    await mkdir(dir, { recursive: true });
-    await appendFile(decisions, line, 'utf8');
+    await this.files.append(slug, DECISIONS, Buffer.from(line, 'utf8'));
     return { ok: true, requestId: decision.requestId, action: decision.action, decidedAtSeconds };
   }
 }

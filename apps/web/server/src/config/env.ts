@@ -24,11 +24,6 @@ export interface ServerEnv {
    */
   readonly databaseUrl?: string;
   /**
-   * Explicit API-visible workspace root (WORKSPACE_PATH). Optional; the
-   * directory is only ever validated/created at this passed location.
-   */
-  readonly workspacePath?: string;
-  /**
    * Neo4j HTTP endpoint for the W13 scoped graph projection (NEO4J_HTTP_URI,
    * e.g. http://127.0.0.1:7475). Present only when NEO4J_PASSWORD is set and
    * is not the documented public default: like the legacy API, a missing or
@@ -174,19 +169,6 @@ function readDatabaseUrl(
   return raw;
 }
 
-/** Optional WORKSPACE_PATH: non-empty when present; never echoed on error. */
-function readWorkspacePath(
-  source: NodeJS.ProcessEnv,
-  issues: string[],
-): string | undefined {
-  const raw = source.WORKSPACE_PATH;
-  if (raw === undefined) return undefined;
-  if (raw.trim().length === 0) {
-    issues.push('WORKSPACE_PATH must be a non-empty path or unset');
-    return undefined;
-  }
-  return raw;
-}
 
 /**
  * Optional Neo4j HTTP config for the scoped graph projection. The password is
@@ -268,7 +250,6 @@ export function loadServerEnv(
   const nodeEnv = readNodeEnv(source, issues);
   const logLevel = readLogLevel(source, issues);
   const databaseUrl = readDatabaseUrl(source, issues);
-  const workspacePath = readWorkspacePath(source, issues);
   const graph = readGraphConfig(source, issues);
   const vaultKey = readVaultKey(source, issues);
   const gophish = readGoPhish(source, issues);
@@ -302,7 +283,6 @@ export function loadServerEnv(
     ...(singleOperator ? { singleOperator: true } : {}),
     ...(deploymentId === undefined ? {} : { deploymentId }),
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
-    ...(workspacePath === undefined ? {} : { workspacePath }),
     ...(graph === undefined ? {} : { graph }),
     ...(source.RAPTIX_CONSOLE_DATA_DIR ? { consoleDataDir: source.RAPTIX_CONSOLE_DATA_DIR } : {}),
     ...(vaultKey === undefined ? {} : { vaultKey }),

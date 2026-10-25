@@ -1,9 +1,7 @@
-import { stat } from 'node:fs/promises';
-import * as path from 'node:path';
 import type { TimelineEntryView, TimelineView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectPolicyError } from '../security/project-policy.js';
-import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
+import type { ProjectFiles } from './project-files.js';
 import type { ArtifactsService } from './artifacts-service.js';
 import { ARTIFACT_FOLDERS } from './artifacts-service.js';
 import type { RunService } from './runtime/run-service.js';
@@ -48,7 +46,7 @@ export class TimelineService {
     private readonly db: PrismaClient,
     private readonly runs: RunService,
     private readonly artifacts: ArtifactsService,
-    private readonly workspaceRoot: string,
+    private readonly files: ProjectFiles,
   ) {}
 
   public async timeline(userId: string, engagementId: string, options: { limit?: number } = {}): Promise<TimelineView> {
@@ -136,8 +134,7 @@ export class TimelineService {
       }
       if (files.length >= MAX_ARTIFACTS) break;
     }
-    const dir = await this.workspaceDir(slug);
-    const stamps = await Promise.all(files.map((file) => this.artifactMtime(dir, file.path)));
+    const stamps = await Promise.all(files.map((file) => this.artifactMtime(slug, file.path)));
     stamps.forEach((at, index) => {
       if (at === null) return;
       const file = files[index]!;
@@ -172,20 +169,13 @@ export class TimelineService {
     }
   }
 
-  private async workspaceDir(slug: string): Promise<string | null> {
-    try {
-      return await resolveEngagementWorkspaceDir(this.workspaceRoot, slug);
-    } catch {
-      return null;
-    }
-  }
 
-  private async artifactMtime(dir: string | null, relativePath: string): Promise<string | null> {
+  private async artifactMtime(slug: string, relativePath: string): Promise<string | null> {
     const segments = relativePath.split('/');
-    if (dir === null || segments.length !== 2 || !(ARTIFACT_FOLDERS as readonly string[]).includes(segments[0]!)) return null;
+    if (segments.length !== 2 || !(ARTIFACT_FOLDERS as readonly string[]).includes(segments[0]!)) return null;
     try {
-      const info = await stat(path.join(dir, segments[0]!, segments[1]!));
-      return info.mtime.toISOString();
+      const info = await this.files.stat(slug, relativePath);
+      return info === null ? null : info.mtime.toISOString();
     } catch {
       return null;
     }

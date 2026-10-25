@@ -1,8 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { existsSync, symlinkSync } from 'node:fs';
-import * as os from 'node:os';
-import * as path from 'node:path';
+import { describe, expect, it } from 'vitest';
 import {
   PROJECT_SLUG_RE,
   ProjectPolicyError,
@@ -12,10 +8,6 @@ import {
   parseCreateProject,
   parseProjectPatch,
 } from '../src/security/project-policy.js';
-import {
-  prepareEngagementPlanDir,
-  resolveEngagementWorkspaceDir,
-} from '../src/security/workspace-policy.js';
 import {
   LOCAL_USER_ID,
   getLocalIdentity,
@@ -360,123 +352,6 @@ describe('ProjectPolicyError', () => {
     expect(error.message).toBe('duplicate');
     expect(error.details?.field).toBe('name');
     expect(new ProjectPolicyError('not_found', 'missing').details).toBeUndefined();
-  });
-});
-
-describe('workspace policy', () => {
-  let tmpDir: string;
-  let root: string;
-  let outside: string;
-
-  beforeAll(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'w02-policy-'));
-    root = path.join(tmpDir, 'ws');
-    outside = path.join(tmpDir, 'outside');
-    await mkdir(root, { recursive: true });
-    await mkdir(outside, { recursive: true });
-  });
-
-  afterAll(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
-  });
-
-  it('resolves a slug lexically inside the root', async () => {
-    const dir = await resolveEngagementWorkspaceDir(root, 'alpha-target');
-    expect(dir).toBe(path.resolve(root, 'alpha-target'));
-  });
-
-  it('resolves an existing directory inside the root', async () => {
-    await mkdir(path.join(root, 'real-dir'), { recursive: true });
-    const dir = await resolveEngagementWorkspaceDir(root, 'real-dir');
-    expect(dir).toBe(path.resolve(root, 'real-dir'));
-  });
-
-  it('rejects path-shaped and traversal slugs without touching the filesystem', async () => {
-    for (const slug of [
-      '..',
-      '.',
-      'a/b',
-      'a\\b',
-      '../../tmp/pwn',
-      '%2e%2e%2fetc',
-      '.hidden',
-      'C:\\tmp',
-      '/abs',
-      'ab',
-      'UPPER',
-    ]) {
-      await expect(resolveEngagementWorkspaceDir(root, slug)).rejects.toMatchObject({
-        code: 'bad_request',
-        details: { field: 'slug' },
-      });
-    }
-  });
-
-  it('refuses symlinked workspace directories that point outside the root', async () => {
-    symlinkSync(
-      outside,
-      path.join(root, 'linkdir'),
-      process.platform === 'win32' ? 'junction' : 'dir',
-    );
-    await expect(resolveEngagementWorkspaceDir(root, 'linkdir')).rejects.toMatchObject({
-      code: 'bad_request',
-    });
-    expect(existsSync(path.join(outside, 'plan'))).toBe(false);
-  });
-
-  it('prepares the plan directory inside the checked root, idempotently', async () => {
-    const planDir = await prepareEngagementPlanDir(root, 'alpha-target');
-    expect(planDir).toBe(path.resolve(root, 'alpha-target', 'plan'));
-    expect(existsSync(planDir)).toBe(true);
-    expect(existsSync(path.join(root, 'alpha-target'))).toBe(true);
-    const again = await prepareEngagementPlanDir(root, 'alpha-target');
-    expect(again).toBe(planDir);
-  });
-
-  it('refuses an existing plan directory that links outside the root', async () => {
-    await mkdir(path.join(root, 'plan-escape'), { recursive: true });
-    symlinkSync(
-      outside,
-      path.join(root, 'plan-escape', 'plan'),
-      process.platform === 'win32' ? 'junction' : 'dir',
-    );
-    await expect(prepareEngagementPlanDir(root, 'plan-escape')).rejects.toMatchObject({
-      code: 'bad_request',
-      details: { field: 'slug' },
-    });
-    expect(existsSync(path.join(outside, 'plan'))).toBe(false);
-  });
-
-  it('never reports success when the plan link is dangling or escapes after mkdir', async () => {
-    await mkdir(path.join(root, 'plan-swap'), { recursive: true });
-    symlinkSync(
-      path.join(outside, 'swap-target'),
-      path.join(root, 'plan-swap', 'plan'),
-      process.platform === 'win32' ? 'junction' : 'dir',
-    );
-    await expect(prepareEngagementPlanDir(root, 'plan-swap')).rejects.toThrow();
-    expect(existsSync(path.join(root, 'plan-swap', 'plan', 'plan'))).toBe(false);
-  });
-
-  it('treats a symlinked workspace root as trusted and checks against the canonical root', async () => {
-    const realWs = path.join(tmpDir, 'real-ws');
-    await mkdir(realWs, { recursive: true });
-    const linkRoot = path.join(tmpDir, 'link-root');
-    symlinkSync(realWs, linkRoot, process.platform === 'win32' ? 'junction' : 'dir');
-    const planDir = await prepareEngagementPlanDir(linkRoot, 'canonical-slug');
-    expect(planDir).toBe(path.resolve(linkRoot, 'canonical-slug', 'plan'));
-    expect(existsSync(path.join(realWs, 'canonical-slug', 'plan'))).toBe(true);
-  });
-
-  it('never accepts an absolute browser path as a slug', async () => {
-    await expect(prepareEngagementPlanDir(root, 'C:\\Windows\\Temp')).rejects.toMatchObject({
-      code: 'bad_request',
-      details: { field: 'slug' },
-    });
-    await expect(prepareEngagementPlanDir(root, '/etc')).rejects.toMatchObject({
-      code: 'bad_request',
-    });
-    expect(existsSync(path.join(outside, 'plan'))).toBe(false);
   });
 });
 

@@ -13,7 +13,7 @@ type EngagementRow = Awaited<ReturnType<EngagementDelegate['findFirstOrThrow']>>
 /**
  * Persistence-level engagement record (legacy `Engagement` table row shape,
  * camelCase). This is NOT the public project DTO: mapping to
- * `ProjectViewModel` (no `userId`/`workspacePath` exposure) belongs to the
+ * `ProjectViewModel` (no `userId` exposure) belongs to the
  * service/routes owner.
  */
 export interface EngagementRecord {
@@ -29,7 +29,6 @@ export interface EngagementRecord {
   readonly status: EngagementStatus;
   readonly userId: string;
   readonly threadId: string | null;
-  readonly workspacePath: string | null;
   readonly runtimeContextLockedAt: Date | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -44,7 +43,6 @@ export interface CreateEngagementData {
   readonly authorizationConfirmed: boolean;
   readonly brief?: string | null;
   readonly threadId?: string | null;
-  readonly workspacePath?: string | null;
 }
 
 export interface UpdateEngagementData {
@@ -54,7 +52,6 @@ export interface UpdateEngagementData {
   readonly targetValue?: string;
   readonly status?: EngagementStatus;
   readonly threadId?: string | null;
-  readonly workspacePath?: string | null;
   readonly brief?: string | null;
   readonly handoffConfirmedAt?: Date | null;
 }
@@ -121,7 +118,6 @@ function toRecord(row: EngagementRow): EngagementRecord {
     status: row.status as EngagementStatus,
     userId: row.userId,
     threadId: row.threadId,
-    workspacePath: row.workspacePath,
     runtimeContextLockedAt: row.runtimeContextLockedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -201,7 +197,6 @@ export class EngagementsRepository {
           authorizationConfirmed: data.authorizationConfirmed,
           brief: data.brief ?? null,
           threadId: data.threadId ?? null,
-          workspacePath: data.workspacePath ?? null,
           ...(this.deploymentId === undefined ? {} : { environments: { create: { deploymentId: this.deploymentId } } }),
         },
       });
@@ -234,7 +229,6 @@ export class EngagementsRepository {
       targetValue?: string;
       status?: EngagementStatus;
       threadId?: string | null;
-      workspacePath?: string | null;
       brief?: string | null;
       handoffConfirmedAt?: Date | null;
     } = {};
@@ -244,7 +238,6 @@ export class EngagementsRepository {
     if (data.targetValue !== undefined) patch.targetValue = data.targetValue;
     if (data.status !== undefined) patch.status = data.status;
     if (data.threadId !== undefined) patch.threadId = data.threadId;
-    if (data.workspacePath !== undefined) patch.workspacePath = data.workspacePath;
     if (data.brief !== undefined) patch.brief = data.brief;
     if (data.handoffConfirmedAt !== undefined) patch.handoffConfirmedAt = data.handoffConfirmedAt;
 

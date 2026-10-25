@@ -1,49 +1,41 @@
 /**
- * W19: filesystem failures inside the artifact listing are an explicit
- * unavailability, never an empty list — ENOENT (folder simply absent) stays
- * an allowed empty outcome, but anything else must surface.
+ * W19: a failure inside the project sandbox while listing artifacts is an explicit unavailability, never an empty
+ * list. A folder the sandbox reports as absent (null from the port) stays an allowed empty outcome (ADR-0102).
  */
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type * as FsPromises from 'node:fs/promises';
-
-const readdir = vi.fn();
-
-vi.mock('node:fs/promises', async (importActual) => {
-  const actual = await importActual<typeof FsPromises>();
-  return { ...actual, readdir: (...a: unknown[]) => readdir(...a) };
-});
-
-const { ArtifactsService } = await import('../src/services/artifacts-service.js');
+import { describe, expect, it } from 'vitest';
+import { ArtifactsService } from '../src/services/artifacts-service.js';
+import { ProjectFileError, type ProjectFiles } from '../src/services/project-files.js';
 
 const db = {
   engagement: { findFirst: async () => ({ id: 'eng-1', workspaceSlug: 'w-slug' }) },
-  webMembership: { findFirst: async () => null },
 } as never;
 
-describe('W19 artifact listing failure semantics', () => {
-  beforeEach(() => {
-    readdir.mockReset();
-  });
+function filesWith(list: ProjectFiles['list']): ProjectFiles {
+  return {
+    list,
+    stat: async () => null,
+    read: async () => null,
+    write: async () => undefined,
+    writeNew: async () => undefined,
+    append: async () => undefined,
+    rename: async () => undefined,
+    remove: async () => undefined,
+    mkdir: async () => undefined,
+    exists: async () => false,
+  } as unknown as ProjectFiles;
+}
 
-  it('surfaces a filesystem error other than a missing folder as an explicit 503', async () => {
-    const { mkdtemp, mkdir } = await import('node:fs/promises');
-    const { tmpdir } = await import('node:os');
-    const root = await mkdtemp(`${tmpdir()}/w19-`);
-    await mkdir(`${root}/w-slug/findings`, { recursive: true });
-    const service = new ArtifactsService(db, root);
-    readdir.mockRejectedValue(Object.assign(new Error('permission denied'), { code: 'EACCES' }));
+describe('W19 artifact listing failure semantics', () => {
+  it('surfaces a sandbox failure as an explicit 503, not an empty list', async () => {
+    const service = new ArtifactsService(db, filesWith(async () => { throw new ProjectFileError(); }));
     await expect(service.list('local', 'eng-1')).rejects.toMatchObject({
-      name: 'ProjectApiError',
       statusCode: 503,
-      message: expect.stringMatching(/unavailable/i),
+      message: expect.stringMatching(/could not/i),
     });
   });
 
   it('still treats a missing folder as an empty listing, not an outage', async () => {
-    const { mkdtemp } = await import('node:fs/promises');
-    const { tmpdir } = await import('node:os');
-    const root = await mkdtemp(`${tmpdir()}/w19-`);
-    const service = new ArtifactsService(db, root);
+    const service = new ArtifactsService(db, filesWith(async () => null));
     const view = await service.list('local', 'eng-1');
     expect(view.folders).toEqual([]);
   });

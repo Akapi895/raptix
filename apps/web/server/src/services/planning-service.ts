@@ -1,10 +1,8 @@
-import { constants } from 'node:fs';
-import { lstat, open, realpath } from 'node:fs/promises';
-import * as path from 'node:path';
 import { Ajv } from 'ajv';
 import { PLANNING_DOCUMENTS, isPlanningView, type PlanningDocumentName, type PlanningState, type PlanningView } from '@raptix/web-contracts';
 import schemas from './planning-schemas.json' with { type: 'json' };
 import type { ProjectRecord } from './projects-service.js';
+import type { ProjectFiles } from './project-files.js';
 
 // Generated from the runtime Pydantic models. No coercion of malformed JSON;
 // defaults are applied only to the in-memory read, never persisted to disk.
@@ -37,8 +35,8 @@ export function projectContentFor(name: PlanningDocumentName, payload: Record<st
   return name in PUBLIC_FIELDS ? projectContent(name as keyof typeof PUBLIC_FIELDS, payload) : null;
 }
 
-async function readDocument(root: string, slug: string, name: PlanningDocumentName): Promise<ReadDocument> {
-  const raw = await readDocumentSource(root, slug, name);
+async function readDocument(files: ProjectFiles, slug: string, name: PlanningDocumentName): Promise<ReadDocument> {
+  const raw = await readDocumentSource(files, slug, name);
   if (raw.state !== 'present') return { state: raw.state === 'oversized' ? 'invalid' : raw.state };
   let payload: unknown;
   try { payload = JSON.parse(raw.text); } catch { return { state: 'invalid' }; }
@@ -47,51 +45,24 @@ async function readDocument(root: string, slug: string, name: PlanningDocumentNa
 }
 
 /**
- * O06 (ADR-0083): the hardened raw read behind both planning views and the
- * document draft API. Returns the bounded raw bytes when the file is a
- * regular, non-symlink file inside the canonical plan directory, plus the
- * file mtime; `oversized` files are refused without content. Validity is the
- * caller's job (parse + `validateDocument`).
+ * O06 (ADR-0083, ADR-0102): the bounded raw read behind both planning views and the document draft API. The document
+ * is read from the project's own sandbox. Only a regular file within the size bound is returned, with its
+ * modification time; `oversized` files are refused without content. An unreachable sandbox is `unavailable`, never
+ * `missing`. Validity is the caller's job (parse + `validateDocument`).
  */
-export async function readDocumentSource(root: string, slug: string, name: PlanningDocumentName): Promise<{ state: 'present'; text: string; updatedAt: string } | { state: 'oversized' } | { state: 'missing' } | { state: 'unavailable' }> {
-  let canonicalRoot: string;
-  try { canonicalRoot = await realpath(root); } catch { return { state: 'unavailable' }; }
+export async function readDocumentSource(files: ProjectFiles, slug: string, name: PlanningDocumentName): Promise<{ state: 'present'; text: string; updatedAt: string } | { state: 'oversized' } | { state: 'missing' } | { state: 'unavailable' }> {
+  const rel = `plan/${name}.json`;
   try {
-    const segments = [slug, 'plan', `${name}.json`];
-    let candidate = canonicalRoot;
-    for (const segment of segments) {
-      candidate = path.join(candidate, segment);
-      const info = await lstat(candidate);
-      if (info.isSymbolicLink() || await realpath(candidate) !== candidate) return { state: 'unavailable' };
-      if (segment !== segments[2] && !info.isDirectory()) return { state: 'unavailable' };
-    }
-    const info = await lstat(candidate);
-    if (!info.isFile()) return { state: 'unavailable' };
-    const handle = await open(candidate, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
-    let text: string;
-    let updatedAt: string;
-    try {
-      const opened = await handle.stat();
-      if (!opened.isFile() || opened.ino !== info.ino || opened.dev !== info.dev) return { state: 'unavailable' };
-      for (let i = 1; i <= segments.length; i++) {
-        const expected = path.join(canonicalRoot, ...segments.slice(0, i));
-        if ((await lstat(expected)).isSymbolicLink() || await realpath(expected) !== expected) return { state: 'unavailable' };
-      }
-      if (opened.size > MAX_BYTES) return { state: 'oversized' };
-      const buffer = Buffer.alloc(MAX_BYTES + 1);
-      let total = 0;
-      while (total < buffer.length) {
-        const { bytesRead } = await handle.read(buffer, total, buffer.length - total, total);
-        if (bytesRead === 0) break;
-        total += bytesRead;
-      }
-      if (total > MAX_BYTES) return { state: 'oversized' };
-      text = buffer.subarray(0, total).toString('utf8');
-      updatedAt = opened.mtime.toISOString();
-    } finally { await handle.close(); }
-    return { state: 'present', text, updatedAt };
-  } catch (error) {
-    return { state: (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'missing' : 'unavailable' };
+    const info = await files.stat(slug, rel);
+    if (info === null) return { state: 'missing' };
+    if (!info.isFile) return { state: 'unavailable' };
+    if (info.size > MAX_BYTES) return { state: 'oversized' };
+    const data = await files.read(slug, rel);
+    if (data === null) return { state: 'missing' };
+    if (data.length > MAX_BYTES) return { state: 'oversized' };
+    return { state: 'present', text: data.toString('utf8'), updatedAt: info.mtime.toISOString() };
+  } catch {
+    return { state: 'unavailable' };
   }
 }
 
@@ -108,8 +79,8 @@ export interface PlannerScope {
   readonly restrictions: readonly string[];
 }
 
-export async function readPlannerScope(workspaceRoot: string, slug: string): Promise<PlannerScope | null> {
-  const roe = await readDocument(workspaceRoot, slug, 'roe');
+export async function readPlannerScope(files: ProjectFiles, slug: string): Promise<PlannerScope | null> {
+  const roe = await readDocument(files, slug, 'roe');
   if (roe.state !== 'ready') return null;
   const payload = roe.payload as {
     start_date: string; end_date: string;
@@ -134,8 +105,8 @@ export function validateDocument(name: PlanningDocumentName, payload: unknown): 
   return [];
 }
 
-export async function readPlanningView(workspaceRoot: string, project: ProjectRecord, metadataVerified: boolean): Promise<PlanningView> {
-  const entries = await Promise.all(PLANNING_DOCUMENTS.map(async name => [name, await readDocument(workspaceRoot, project.workspaceSlug, name)] as const));
+export async function readPlanningView(files: ProjectFiles, project: ProjectRecord, metadataVerified: boolean): Promise<PlanningView> {
+  const entries = await Promise.all(PLANNING_DOCUMENTS.map(async name => [name, await readDocument(files, project.workspaceSlug, name)] as const));
   const reads = Object.fromEntries(entries) as Record<PlanningDocumentName, ReadDocument>;
   const reasons: string[] = [];
   if (!project.authorizationConfirmed) reasons.push('authorization_not_confirmed');

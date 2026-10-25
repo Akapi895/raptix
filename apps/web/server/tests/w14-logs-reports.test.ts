@@ -10,6 +10,7 @@ import { registerTimelineRoutes } from '../src/http/routes/timeline.routes.js';
 import { ArtifactsService } from '../src/services/artifacts-service.js';
 import { ExportService, isExportFormat } from '../src/services/export-service.js';
 import { TimelineService } from '../src/services/timeline-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import type { RunService } from '../src/services/runtime/run-service.js';
 
 const OLD = '2026-10-01T08:00:00.000Z';
@@ -37,9 +38,9 @@ async function buildHarness(): Promise<Harness> {
       transcriptsTruncated: false,
     }),
   } as unknown as RunService;
-  const artifacts = new ArtifactsService(db as never, workspaceRoot);
-  const timeline = new TimelineService(db as never, runs, artifacts, workspaceRoot);
-  const exports = new ExportService(db as never, workspaceRoot);
+  const artifacts = new ArtifactsService(db as never, new LocalProjectFiles(workspaceRoot));
+  const timeline = new TimelineService(db as never, runs, artifacts, new LocalProjectFiles(workspaceRoot));
+  const exports = new ExportService(db as never, new LocalProjectFiles(workspaceRoot));
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
   registerTimelineRoutes(app, timeline, exports, { id: 'local', mode: 'local-single-user' });

@@ -5,6 +5,8 @@ import { createDbClient } from '../src/db/client.js';
 import { RuntimeOwnershipService } from '../src/services/runtime-ownership.js';
 import { EngagementsRepository } from '../src/repositories/engagements-repository.js';
 import { ProjectsService } from '../src/services/projects-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
+import { recordingSandboxes } from './support/project-sandboxes.js';
 import { buildApp } from '../src/app.js';
 import { isRequestRecoveryView, isThreadBindingView } from '@raptix/web-contracts';
 
@@ -16,7 +18,7 @@ await mkdir(workspace, { recursive: true });
 const db = createDbClient({ connectionString: database });
 const service = new RuntimeOwnershipService(db);
 const identity = { id: 'local', mode: 'local-single-user' } as const;
-const projects = new ProjectsService({ repository: new EngagementsRepository(db.engagement), workspaceRoot: workspace, identity });
+const projects = new ProjectsService({ repository: new EngagementsRepository(db.engagement), files: new LocalProjectFiles(workspace), identity, sandboxes: recordingSandboxes() });
 const app = await buildApp({ projectsService: projects, runtimeOwnership: service });
 const checks: string[] = [];
 async function failure(action: () => Promise<unknown>, status: number): Promise<void> {

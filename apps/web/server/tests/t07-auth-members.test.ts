@@ -69,7 +69,7 @@ type Db = ReturnType<typeof memoryDb>;
 
 function seedEngagement(db: Db, id: string, userId: string): void {
   if (!db.tables.has('engagement')) db.tables.set('engagement', new Map());
-  db.tables.get('engagement')!.set(id, { id, userId, name: id, displayName: null, targetType: 'web_url', targetValue: 'https://x.invalid', authorizationConfirmed: true, status: 'planning', threadId: null, workspacePath: null, runtimeContextLockedAt: null, brief: null, handoffConfirmedAt: null, createdAt: new Date(), updatedAt: new Date() });
+  db.tables.get('engagement')!.set(id, { id, userId, name: id, displayName: null, targetType: 'web_url', targetValue: 'https://x.invalid', authorizationConfirmed: true, status: 'planning', threadId: null, runtimeContextLockedAt: null, brief: null, handoffConfirmedAt: null, createdAt: new Date(), updatedAt: new Date() });
 }
 
 async function seedUser(db: Db, username: string, password = 'correct horse battery'): Promise<string> {

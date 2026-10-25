@@ -184,14 +184,13 @@ const PATCH_ALLOWED_KEYS = ['displayName', 'targetType', 'targetValue', 'handoff
 /**
  * PATCH never accepts authority/control/immutable fields: `name` is the
  * workspace slug (a rename would desync filesystem/runtime), `userId` and
- * `workspacePath` are server-authority, `threadId` is runtime-authority and
+ * `threadId` is runtime-authority and
  * `status` is not PATCH-controlled lifecycle state.
  */
 const PATCH_REJECTED_REASONS: Readonly<Record<string, string>> = {
   name: 'Project name is immutable — it is the workspace slug; create a new project instead',
   userId: 'userId is server-authority and cannot be set from requests',
   threadId: 'threadId is runtime-authority and cannot be set from requests',
-  workspacePath: 'workspacePath is server-authority — the browser never supplies absolute paths',
   status: 'Lifecycle status is not patch-controlled',
 };
 

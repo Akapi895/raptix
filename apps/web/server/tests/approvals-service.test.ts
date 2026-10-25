@@ -7,6 +7,7 @@ import type { FastifyInstance } from 'fastify';
 import { registerErrorHandler } from '../src/http/error-handler.js';
 import { registerApprovalRoutes } from '../src/http/routes/approvals.routes.js';
 import { ApprovalsService } from '../src/services/approvals-service.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import { ProjectNotFoundError } from '../src/services/projects-service.js';
 
 const TIME = 1790925255.367;
@@ -31,7 +32,7 @@ async function buildHarness(): Promise<Harness> {
   };
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
-  registerApprovalRoutes(app, new ApprovalsService(db as never, workspaceRoot), { id: 'local', mode: 'local-single-user' });
+  registerApprovalRoutes(app, new ApprovalsService(db as never, new LocalProjectFiles(workspaceRoot)), { id: 'local', mode: 'local-single-user' });
   await app.ready();
   return {
     app,
@@ -107,7 +108,7 @@ describe('W11 file-backed approvals API', () => {
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-other/approvals' })).statusCode).toBe(404);
       expect((await h.app.inject({ method: 'GET', url: '/api/engagements/eng-1/approvals' })).json().approvals).toEqual([]);
       await expect((async () => {
-        const service = new ApprovalsService({ engagement: { findFirst: async () => ({ id: 'eng-1', name: '../escape', workspaceSlug: '../escape' }) } } as never, h.workspaceRoot);
+        const service = new ApprovalsService({ engagement: { findFirst: async () => ({ id: 'eng-1', name: '../escape', workspaceSlug: '../escape' }) } } as never, new LocalProjectFiles(h.workspaceRoot));
         await service.list('local', 'eng-1');
       })()).rejects.toMatchObject({ code: 'bad_request' });
     });
@@ -125,7 +126,7 @@ describe('W11 file-backed approvals API', () => {
       expect(decided.statusCode).toBe(200);
     });
     await withHarness(async (h) => {
-      const service = new ApprovalsService({ engagement: { findFirst: async () => null } } as never, h.workspaceRoot);
+      const service = new ApprovalsService({ engagement: { findFirst: async () => null } } as never, new LocalProjectFiles(h.workspaceRoot));
       await expect(service.list('local', 'eng-1')).rejects.toBeInstanceOf(ProjectNotFoundError);
     });
   });

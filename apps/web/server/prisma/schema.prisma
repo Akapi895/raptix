@@ -48,7 +48,6 @@ model Engagement {
 
   // LangGraph thread tracking
   threadId      String?
-  workspacePath String?
   runtimeContextLockedAt DateTime?
   threads EngagementThread[]
   requests WebRequestLedger[]

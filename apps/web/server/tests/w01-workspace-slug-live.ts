@@ -8,6 +8,8 @@ import type { ProjectViewModel } from '@raptix/web-contracts';
 import { createDbClient } from '../src/db/client.js';
 import { EngagementsRepository } from '../src/repositories/engagements-repository.js';
 import { ProjectsService, ProjectNameConflictError } from '../src/services/projects-service.js';
+import { recordingSandboxes } from './support/project-sandboxes.js';
+import { LocalProjectFiles } from './support/local-project-files.js';
 import { RuntimeOwnershipService } from '../src/services/runtime-ownership.js';
 import { requestFingerprint } from '../src/security/request-fingerprint.js';
 
@@ -95,7 +97,7 @@ try {
   // ── Fresh schema: cross-owner isolation through the real repository ──
   await applyMigrations(FRESH_DB, false);
   const fresh = createDbClient({ connectionString: database });
-  const projects = new ProjectsService({ repository: new EngagementsRepository(fresh.engagement), workspaceRoot: workspace, identity });
+  const projects = new ProjectsService({ repository: new EngagementsRepository(fresh.engagement), files: new LocalProjectFiles(workspace), identity, sandboxes: recordingSandboxes() });
   const ownership = new RuntimeOwnershipService(fresh);
   try {
     const a = await projects.createProject('local', { name: 'acme-web', ...TARGET });
