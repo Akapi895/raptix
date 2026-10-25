@@ -30,15 +30,19 @@ agent acting under an operator's access; the PTY proposal defines input records 
    membership, grant, scope/window, stop state, console/session and, for agents, active run/delegation. A heartbeat after
    expiry, ending or takeover cannot resurrect a lease. API admission and the bridge check deadlines on every mutation;
    a server-owned sweeper finalizes expired records without a mounted UI. Measure browser throttling, clock skew and
-   reattach latency at the native gate; clock uncertainty fails closed rather than granting extra lifetime.
+   reattach latency at the native gate; clock uncertainty fails closed rather than granting extra lifetime. Heartbeat
+   renewal keeps the holder epoch and carries a monotonic renewal revision plus transition id: the bridge accepts only
+   the next live revision for the same lease, never an older deadline update or a renewal after its installed expiry.
+   A pending renewal blocks control once the last confirmed expiry is reached; a lost ACK is reconciled, not client-extended.
 3. **Explicit acquisition.** An operator needs a live session grant that covers the named shell and interactive control.
    An agent additionally needs an explicit, persisted delegation by that run's acting operator for this console. Delegation
    is not implied by starting a run or by owning a session grant; it cannot renew after that run ends. New grants do not
    silently replace the lease's selected `grantId`: release/reacquire records the new authorization.
 4. **Takeover policy.** A currently authorized operator can take over an agent-held lease. Agent-to-operator or automatic
    agent reacquisition is refused while an operator controls the console. Operator-to-operator takeover is refused; the
-   current operator releases, expires, or an authorized operator explicitly ends the console. A second tab of the same
-   operator shares the displayed identity but not an independent writer: its input sequencing is serialized server-side.
+   current operator releases, expires, or an authorized operator explicitly ends the console. An operator lease also binds
+   a `controllerAttachmentId`: only that attachment may heartbeat/input/resize. A second tab of the same operator observes
+   by default; moving control to it requires release/expiry and explicit reacquire, not a silent same-user takeover.
 5. **Provider-side fencing.** PostgreSQL allocates a monotonically increasing `fenceEpoch` on each console control change.
    Under a per-console row lock/CAS, takeover atomically ends the old lease, creates a pending replacement, records an
    idempotent transition intent and audit entry, and stops admitting old-holder input. An authenticated internal
@@ -115,4 +119,6 @@ and the proposal's native gates. Required cases:
 - Bridge/API restart or partition never resurrects a lease; uncertain control does not admit another writer.
 - Grant/run/delegation revoke and e-stop work without UI mounted; provider acknowledgement/uncertainty is explicit.
 - Operator-to-operator takeover is refused; two tabs of one actor cannot duplicate/reorder writes.
+- Out-of-order renewal ACKs, a heartbeat from an observer attachment, or a renewal delivered after bridge expiry cannot
+  extend or resurrect the holder; no worker relies on a browser unload event to release control.
 - Agent with the wrong run, operator, console or grant cannot heartbeat/acquire/input; read access does not grant control.

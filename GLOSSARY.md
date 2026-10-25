@@ -79,8 +79,9 @@ can stay connected while the actor's access has expired, and losing access does 
 **Single-shot command**: One execution on a C2 session. It keeps no shell state, so the working directory and environment do
 not carry over to the next command.
 
-**Interactive console**: An operator-driven shell on a C2 session that keeps shell state (working directory, environment,
-running programs) between inputs. It is distinct from a single-shot command, which is an independent execution.
+**Interactive console**: A shell on a C2 session that keeps shell state (working directory, environment, running programs)
+between inputs. Its controller may be an operator or an explicitly delegated agent. It is distinct from a single-shot
+command, which is an independent execution.
 
 **Controller**: The one party allowed to send input to an interactive console at a time: an operator or an agent. A console
 with no controller accepts no input.
@@ -89,4 +90,5 @@ with no controller accepts no input.
 releases it, its time runs out without renewal, or the access or the console that it depends on ends.
 
 **Dispatching run**: The runtime run that issued a C2 command. A command that an agent dispatches names its dispatching run;
-a command an operator dispatches from the console names none.
+a command an operator dispatches from the console has none. Missing attribution for a historical command does not prove
+that an operator issued it.
