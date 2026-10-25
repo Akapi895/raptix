@@ -38,4 +38,9 @@ Required before this ADR is Accepted: a native lab gate on an isolated target co
 
 - The bridge gains a PTY stream surface and new state: leases, console metadata and transcript artifacts.
 - ADR-0084's C2 transcript gap stays until this ADR is Accepted and the console UI exists.
-- Open before Accepted: the exact Sliver `Shell` RPC mapping and its failure modes; transcript masking rules; the lease timeout value.
+- Refinements before Accepted: [ADR-0098](0098-controller-lease-for-c2-sessions.md) proposes lease timing, provider-side
+  fencing and recovery; [ADR-0099](0099-runtime-c2-dispatch-through-web-ledger.md) proposes admitted-run identity and
+  credentials. The [implementation proposal](../design/2026-10-23-c2-pty-console-proposal.md) specifies live-output vs
+  retained-transcript permissions, input reconciliation, bounds and native gates. Isolated, feature-flagged implementation
+  is permitted to obtain that evidence; production exposure still requires owner acceptance and passing native gates.
+  The exact pinned Sliver `Shell`/tunnel behaviour remains to be measured, not assumed.
