@@ -9,9 +9,18 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch
+
+import pytest
 
 # ── contracts/tools.py wrappers ────────────────────────────────────────────
+
+
+@pytest.fixture
+def workspace_on_disk(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, project_files_at):
+    """The evidence tools read and write the project's /workspace through its sandbox. The test folder stands in for it."""
+    from raptix.execution.tools.evidence import tools as evtools
+
+    monkeypatch.setattr(evtools, "ambient_project_files", lambda: project_files_at(tmp_path))
 
 
 class TestSolidityScantool:
@@ -157,7 +166,9 @@ class TestExportSessionAsciicastService:
     """export_session_asciicast tool output shapes (Wave T5: restored @tool —
     see evidence/tools.py module docstring for why)."""
 
-    def test_successful_export_returns_status_exported(self, tmp_path: Path) -> None:
+    def test_successful_export_returns_status_exported(
+        self, tmp_path: Path, workspace_on_disk
+    ) -> None:
         from raptix.execution.tools.evidence.tools import export_session_asciicast
 
         log = tmp_path / ".tmux-logs" / "mysession.log"
@@ -167,16 +178,15 @@ class TestExportSessionAsciicastService:
         evidence_dir = tmp_path / "evidence" / "recordings"
         evidence_dir.mkdir(parents=True)
 
-        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast.invoke(
-                {"session_name": "mysession", "title": "Test Session"}
-            )
+        result = export_session_asciicast.invoke(
+            {"session_name": "mysession", "title": "Test Session"}
+        )
 
         data = json.loads(result)
         assert data["status"] == "exported"
         assert "session_name" in data
 
-    def test_explicit_log_path_used_when_provided(self, tmp_path: Path) -> None:
+    def test_explicit_log_path_used_when_provided(self, tmp_path: Path, workspace_on_disk) -> None:
         from raptix.execution.tools.evidence.tools import export_session_asciicast
 
         log = tmp_path / "custom.log"
@@ -184,24 +194,22 @@ class TestExportSessionAsciicastService:
         evidence_dir = tmp_path / "evidence" / "recordings"
         evidence_dir.mkdir(parents=True)
 
-        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast.invoke(
-                {"session_name": "s1", "pipe_pane_log_path": str(log)}
-            )
+        result = export_session_asciicast.invoke(
+            {"session_name": "s1", "pipe_pane_log_path": "custom.log"}
+        )
 
         data = json.loads(result)
         assert data["status"] == "exported"
 
-    def test_missing_log_returns_error_key(self, tmp_path: Path) -> None:
+    def test_missing_log_returns_error_key(self, tmp_path: Path, workspace_on_disk) -> None:
         from raptix.execution.tools.evidence.tools import export_session_asciicast
 
         evidence_dir = tmp_path / "evidence" / "recordings"
         evidence_dir.mkdir(parents=True)
 
-        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast.invoke(
-                {"session_name": "nope", "pipe_pane_log_path": str(tmp_path / "nonexistent.log")}
-            )
+        result = export_session_asciicast.invoke(
+            {"session_name": "nope", "pipe_pane_log_path": "nonexistent.log"}
+        )
 
         data = json.loads(result)
         assert "error" in data
@@ -211,20 +219,19 @@ class TestListSessionRecordingsService:
     """list_session_recordings tool output shapes (Wave T5: restored @tool —
     see evidence/tools.py module docstring for why)."""
 
-    def test_empty_dir_returns_count_zero(self, tmp_path: Path) -> None:
+    def test_empty_dir_returns_count_zero(self, tmp_path: Path, workspace_on_disk) -> None:
         from raptix.execution.tools.evidence.tools import list_session_recordings
 
         recordings_dir = tmp_path / "evidence" / "recordings"
         recordings_dir.mkdir(parents=True)
 
-        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = list_session_recordings.invoke({})
+        result = list_session_recordings.invoke({})
 
         data = json.loads(result)
         assert data["count"] == 0
         assert data["recordings"] == []
 
-    def test_lists_manifests_correctly(self, tmp_path: Path) -> None:
+    def test_lists_manifests_correctly(self, tmp_path: Path, workspace_on_disk) -> None:
         from raptix.execution.tools.evidence.tools import list_session_recordings
 
         recordings_dir = tmp_path / "evidence" / "recordings"
@@ -238,8 +245,7 @@ class TestListSessionRecordingsService:
             encoding="utf-8",
         )
 
-        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = list_session_recordings.invoke({})
+        result = list_session_recordings.invoke({})
 
         data = json.loads(result)
         assert data["count"] == 2

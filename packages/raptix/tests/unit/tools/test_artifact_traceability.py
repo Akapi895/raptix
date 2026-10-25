@@ -45,6 +45,11 @@ class MemoryTransport:
                     ],
                 },
             )
+        if request.url.path == "/execute":
+            # The evidence custody listing asks the sandbox for a folder; this fake has none, so it answers "absent".
+            return httpx.Response(
+                200, json={"output": "__absent__\n", "exit_code": 0, "truncated": False}
+            )
         raise AssertionError(f"unexpected endpoint {request.url.path}")
 
 

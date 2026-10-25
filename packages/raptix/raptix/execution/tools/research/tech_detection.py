@@ -26,10 +26,8 @@ behind the agent's middleware gate.
 from __future__ import annotations
 
 import json
-import os
 import re
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -38,6 +36,7 @@ from langchain_core.tools import tool
 
 from raptix_core.types.kg import TechnologyCategory, technology_key
 from raptix_core.types.roe import (
+    Decision,
     EnforcementMode,
     MachineEnforcement,
     evaluate_target,
@@ -229,29 +228,23 @@ def _json(data: Any) -> str:
     return json.dumps(data, indent=2, default=str, ensure_ascii=False)
 
 
-def _load_roe_rules() -> MachineEnforcement:
-    """Load the engagement's machine-enforcement RoE block.
+def _load_roe_rules() -> MachineEnforcement | None:
+    """The engagement's machine-enforcement RoE, read from the run's project sandbox (ADR-0102).
 
-    Resolves the workspace from ``RAPTIX_WORKSPACE_PATH`` (the same env
-    the middleware factory reads). Absent / unreadable RoE degrades to an
-    empty (audit-only) ruleset — matching the middleware's fail-open posture
-    so a missing file never silently blocks a legitimate probe.
+    None means the RoE could not be read. The caller then refuses egress, the same fail-closed outcome as the
+    guardrail middleware. A missing RoE is audit-only, as it is everywhere else.
     """
-    workspace = os.environ.get("RAPTIX_WORKSPACE_PATH")
-    if not workspace:
-        return MachineEnforcement()
-    roe_path = Path(workspace) / "plan" / "roe.json"
-    if not roe_path.exists():
-        return MachineEnforcement()
+    from raptix.execution.backends.project_files import (
+        ProjectFileUnavailable,
+        ambient_project_files,
+    )
+    from raptix.middleware.roe import load_rules
+
     try:
-        data = json.loads(roe_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        log.warning(
-            "tech_detection: failed to read %s: %s; defaulting to audit-only", roe_path, exc
-        )
-        return MachineEnforcement()
-    block = data.get("machine_enforcement") if isinstance(data, dict) else None
-    return MachineEnforcement.from_dict(block)
+        return load_rules(ambient_project_files())
+    except ProjectFileUnavailable as exc:
+        log.warning("tech_detection: RoE unreadable, refusing egress: %s", exc)
+        return None
 
 
 def _detect(
@@ -326,8 +319,13 @@ async def detect_tech_stack(url: str) -> str:
         return _json({"error": f"invalid url: {url!r}", "url": url})
 
     rules = _load_roe_rules()
-    decision = evaluate_target(host, rules)
-    if not decision.allow and rules.mode == EnforcementMode.ENFORCE:
+    if rules is None:
+        decision = Decision.refuse(
+            "ROE_UNAVAILABLE", "the engagement's RoE could not be read; egress is refused"
+        )
+    else:
+        decision = evaluate_target(host, rules)
+    if not decision.allow and (rules is None or rules.mode == EnforcementMode.ENFORCE):
         log.warning("tech_detection: RoE refused %s (%s)", host, decision.reason_code)
         return _json(
             {

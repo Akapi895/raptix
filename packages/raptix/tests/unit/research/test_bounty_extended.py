@@ -296,12 +296,12 @@ class TestFormatBountyReport:
         program_name: str = "",
         component_name: str = "",
     ) -> dict[str, Any]:
-        """Call format_bounty_report with the filesystem Path mocked out."""
+        """Call format_bounty_report with the project's files mocked out, so the report is not written anywhere."""
         from unittest.mock import patch as _patch
 
-        with _patch("raptix.execution.tools.research.bounty.Path") as mock_path_cls:
-            mock_report_path = MagicMock()
-            mock_path_cls.return_value = mock_report_path
+        from raptix.execution.tools.research import bounty as bounty_mod
+
+        with _patch.object(bounty_mod, "ambient_project_files", return_value=MagicMock()):
             raw = format_bounty_report(
                 finding_id,
                 platform=platform,

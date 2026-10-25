@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from raptix.blue_cell.rule_match import DetectionEvent, DetectionRule
+from raptix.execution.tools.defense import blue_cell as blue_cell_mod
 from raptix.execution.tools.defense.blue_cell import _record_hit, _scan_and_record, blue_cell_scan
 from raptix.execution.tools.research import _state as state
 from raptix_core.types.kg import EdgeKind, KnowledgeGraph, Node, NodeKind
@@ -22,16 +23,21 @@ _KERBEROAST = "$ GetUserSPNs.py -request -dc-ip 10.0.0.1 corp.local/svc"
 _DCSYNC = "$ secretsdump.py -just-dc corp.local/admin@10.0.0.1"
 
 
-def _workspace_with(tmp_path: Path, *lines: str) -> str:
+@pytest.fixture(autouse=True)
+def session_logs_on_disk(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, project_files_at) -> None:
+    """The scan reads the project's /workspace through its sandbox. The test folder on disk stands in for /workspace."""
+    monkeypatch.setattr(blue_cell_mod, "ambient_project_files", lambda: project_files_at(tmp_path))
+
+
+def _workspace_with(tmp_path: Path, *lines: str) -> None:
     sessions = tmp_path / ".sessions"
     sessions.mkdir(parents=True, exist_ok=True)
     (sessions / "main.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return str(tmp_path)
 
 
 def _scan(graph: KnowledgeGraph, tmp_path: Path, *lines: str, now_ts: float = 1_000.0) -> dict:
-    workspace = _workspace_with(tmp_path, *lines)
-    return _scan_and_record(graph, workspace_path=workspace, rules_path="", now_ts=now_ts)
+    _workspace_with(tmp_path, *lines)
+    return _scan_and_record(graph, workspace_rel="", rules_path="", now_ts=now_ts)
 
 
 # ── recording ────────────────────────────────────────────────────────────
@@ -86,7 +92,7 @@ def test_scan_links_detected_to_matching_finding_and_reports_gaps(tmp_path: Path
 def test_scan_empty_workspace_reports_zero_but_still_lists_gaps(tmp_path: Path) -> None:
     graph = KnowledgeGraph()
     graph.upsert_node(Node.make(NodeKind.FINDING, "Undetected RCE", key="FIND-1"))
-    summary = _scan_and_record(graph, workspace_path=str(tmp_path), rules_path="", now_ts=1_000.0)
+    summary = _scan_and_record(graph, workspace_rel="", rules_path="", now_ts=1_000.0)
     assert summary["events_scanned"] == 0
     assert summary["detections"] == 0
     assert summary["detection_gaps"] == ["Undetected RCE"]
@@ -177,9 +183,9 @@ def test_blue_cell_scan_tool_persists_through_transaction(
 ) -> None:
     fake = _FakeStore()
     monkeypatch.setattr(state, "_store", fake)
-    workspace = _workspace_with(tmp_path, _DCSYNC)
+    _workspace_with(tmp_path, _DCSYNC)
 
-    result = json.loads(blue_cell_scan.invoke({"workspace_path": workspace}))
+    result = json.loads(blue_cell_scan.invoke({"workspace_path": "/workspace"}))
 
     assert result["detections"] == 1
     assert result["techniques_detected"] == ["T1003.006"]
