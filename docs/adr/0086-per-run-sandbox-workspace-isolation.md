@@ -160,3 +160,30 @@ Until steps 1–5 are done, the `:3001` deployment has no isolation between proj
 Still open: a live planner run in a project, observed in its `sbx-<slug>` container
 (this would write to a real project, so it was not started here).
 
+## Update 2026-10-25: creation provisions the sandbox, and each sandbox is authenticated
+
+- **Creation starts the sandbox.** `ProjectsService.createProject` starts the project's `sbx-<slug>` container through the
+  host sandbox controller (`raptix web sandboxes serve`) before the project row is persisted. A failed start returns 503
+  and leaves no project. The directory-only creation path is removed. `raptix web sandboxes sync` remains only as a
+  reconciliation for projects created before this change; `watch` is removed.
+- **Each sandbox accepts only its own token.** The launcher starts every sandbox with
+  `SANDBOX_TOKEN = HMAC-SHA256(sandbox-key, "sandbox-token:" + slug)`. A run carries only its project's token, in
+  `configurable.sandbox_token`. The token is kept out of the runtime identity hash and out of the persisted thread state.
+  The key is mounted into the web API only, never into a sandbox or the runtime.
+- **No shared sandbox.** `web-sandbox` and the `SANDBOX_URL` fallback are removed from `docker-compose.web-runtime.yml`.
+  A run without its own project sandbox fails closed.
+- **Verified on this Docker daemon** with a throwaway volume and two probe projects: each sandbox sees only its own
+  directory. Its own token gets HTTP 200 from `/execute`. Another sandbox's token, or no token, gets 401. The API
+  container reaches the controller at `host.docker.internal:9200`.
+- **Not done (verified on this daemon).** The LangGraph API on `:2024` has no auth and shares `raptix_web_sandbox-net`
+  with the sandboxes. A probe sandbox listed threads of other projects through it, so a command inside one project's
+  sandbox can read another project's data. This needs an authenticated runtime API, which is a separate decision.
+  Each sandbox also receives the whole `.env` through `env_file`, so provider keys and the admin password are in its
+  environment, and `kernel/tmux.py` copies that environment into the agent's shell. The live `:3001` stack is not
+  redeployed; that needs the owner's approval.
+
+**Superseded in part by ADR-0102 (2026-10-25).** The subpath mount of the shared volume described in step 1 above is
+replaced: each project now has its own volume `raptix-ws-<slug>` mounted at `/workspace`, and the shared volume is
+deleted. The web API and the runtime read project files only through the project's sandbox. The sandbox-token and
+no-shared-sandbox decisions in this update still stand.
+
