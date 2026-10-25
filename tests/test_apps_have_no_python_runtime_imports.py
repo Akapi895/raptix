@@ -18,7 +18,6 @@ _APPS_ROOT = Path(__file__).resolve().parent.parent / "apps"
 
 _ALLOWED_SCRIPTS = frozenset(
     {
-        Path("web/tools/capture-runtime.py"),
         Path("web/tools/generate-planning-schemas.py"),
     }
 )

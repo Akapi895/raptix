@@ -80,8 +80,6 @@ Run the owning runtime/mission/checkpointer focused suite discovered when implem
 
 ```powershell
 node apps/web/tools/verify-w06-live.mjs
-node apps/web/tools/verify-w07-live.mjs
-node apps/web/tools/verify-iw07-live.mjs
 node apps/web/tools/verify-vault-deployed.mjs
 node apps/web/tools/verify-runtime-durability.mjs --recreate
 node apps/web/tools/verify-sliver-lab.mjs
