@@ -1,1 +1,5 @@
+export { WebShellPanel } from './views/panel'
+export { AddWebShellConnection } from './views/add-connection'
+export { WebShellConsole } from './views/console'
+export { WebShellCommandTable } from './views/command-table'
 export type { WebShellService, WebShellConnectionList, WebShellCommandList, WebShellProbeList, WebShellAcquisitionList, WebShellUpdateInput } from './service'
