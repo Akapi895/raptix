@@ -81,7 +81,7 @@ try {
 
   await step('the project sidebar keeps every section the proposal names', page, async () => {
     const side = await sidebar(page);
-    const sections = ['Scope & ROE', 'Planning', 'AI Workspace', 'Operations', 'C2 Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Fleet', 'Activity & Audit', 'Vault', 'Closeout'];
+    const sections = ['Scope & ROE', 'Planning', 'AI Workspace', 'Operations', 'Sessions', 'Findings', 'Evidence', 'Analysis', 'Reports', 'Team & Approvals', 'Fleet', 'Activity & Audit', 'Vault', 'Closeout'];
     const missing = sections.filter((label) => !side.includes(label));
     return { ok: missing.length === 0, detail: missing.length === 0 ? `all ${sections.length} sections listed` : `missing: ${missing.join(', ')}` };
   });

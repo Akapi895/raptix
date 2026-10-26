@@ -20,12 +20,12 @@ async function executionLabels(): Promise<string[]> {
 
 describe('navigation model and the asset map flag', () => {
   it('keeps the Execution group unchanged while the flag is off', async () => {
-    expect(await executionLabels()).toEqual(['AI Workspace', 'Operations', 'C2 Sessions']);
+    expect(await executionLabels()).toEqual(['AI Workspace', 'Operations', 'Sessions']);
   });
 
   it('lists the asset map beside Execution in the project menu while the flag is on', async () => {
     globalThis.localStorage.setItem('raptix.assetMap', '1');
-    expect(await executionLabels()).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'C2 Sessions']);
+    expect(await executionLabels()).toEqual(['AI Workspace', 'Operations', 'Asset Map', 'Sessions']);
   });
 });
 

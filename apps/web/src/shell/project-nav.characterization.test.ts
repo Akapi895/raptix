@@ -13,7 +13,7 @@ const MENU_ROWS: Row[] = [
   ['PREPARATION', 'planning', 'Planning', ['planning', 'ai-plan', 'ai-plan-review', 'ai-plan-compare']],
   ['OPERATIONS', 'ai-workspace', 'AI Workspace', ['ai-workspace', 'ai-operator', 'ai-history']],
   ['OPERATIONS', 'operations', 'Operations', ['operations', 'operation', 'operation-new', 'preflight', 'operation-schedule', 'ai-trace', 'ai-fanout', 'ai-branch']],
-  ['OPERATIONS', 'c2', 'C2 Sessions', ['c2', 'c2-channel', 'c2-session', 'c2-console']],
+  ['OPERATIONS', 'c2', 'Sessions', ['c2', 'c2-channel', 'c2-session', 'c2-console']],
   ['RESULTS', 'findings', 'Findings', ['findings', 'finding', 'finding-new']],
   ['RESULTS', 'evidence', 'Evidence', ['evidence', 'evidence-inspector']],
   ['RESULTS', 'analysis', 'Analysis', ['analysis']],
