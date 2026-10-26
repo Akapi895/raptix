@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Play } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, Field, Input, Mono } from '../../ui/index'
 import { fetchSealedPoc, reproduceSealedPoc, type Reproduction, type SealedPoc } from './sealed-poc-api'
+import { WebShellAcquirePanel } from '../webshell/index'
 
 const mono = 'whitespace-pre-wrap break-all rounded-lg border border-line bg-bg p-3 font-mono text-xs'
 /** Long text such as a whole PoC file or a full output: scrolls inside its box instead of pushing the page down. */
@@ -62,6 +63,7 @@ export function SealedPocPanel({ engagementId, producerPath, readOnly }: { engag
   }
 
   return (
+    <>
     <Card>
       <CardHeader title="Sealed proof of concept" sub={<span>Reproduces <Mono>{ref}</Mono> from <Mono>findings/{ref}.md</Mono></span>} />
       <div className="space-y-4 text-sm">
@@ -105,5 +107,9 @@ export function SealedPocPanel({ engagementId, producerPath, readOnly }: { engag
         )}
       </div>
     </Card>
+    {poc?.status === 'sealed' && ref !== null && (
+      <WebShellAcquirePanel engagementId={engagementId} findingId={ref} readOnly={readOnly} />
+    )}
+    </>
   )
 }

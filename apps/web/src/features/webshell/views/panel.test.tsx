@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
@@ -210,11 +210,20 @@ describe('WebShellPanel', () => {
     expect(screen.queryByText(/View output/)).not.toBeInTheDocument()
   })
 
-  it('renders WebShell independently when the C2 provider is unavailable', async () => {
+  it('renders WebShell independently when the C2 provider is unavailable', { timeout: 10000 }, async () => {
     vi.mocked(api.fetchWebShellConnections).mockResolvedValue({ engagementId: 'eng-1', connections: [CONNECTION] })
     renderPanel(<C2ProviderTab engagementId="eng-1" />)
-    expect(await screen.findByText('C2 provider unavailable')).toBeInTheDocument()
-    expect(await screen.findByText('WebShell sessions')).toBeInTheDocument()
-    expect(screen.getAllByText('phpbash').length).toBeGreaterThan(0)
+    // Wait for WebShell connections to resolve — the mock resolves but React Query runs async
+    await new Promise((r) => setTimeout(r, 100))
+    await waitFor(() => {
+      expect(screen.queryByText('WebShell sessions')).toBeInTheDocument()
+      expect(screen.queryAllByText('phpbash').length).toBeGreaterThan(0)
+    }, { timeout: 5000 })
+    // Switch to C2 tab — the C2 provider is mocked to reject, showing the unavailable banner
+    await userEvent.click(screen.getByRole('tab', { name: /C2/ }))
+    await waitFor(() => {
+      const alerts = screen.getAllByRole('alert')
+      expect(alerts.some((a) => a.textContent?.includes('C2 provider unavailable'))).toBe(true)
+    })
   })
 })

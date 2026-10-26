@@ -52,3 +52,4 @@ export interface WebShellService {
   createAcquisition(ctx: RequestContext, input: WebShellAcquisitionCreateInput): Promise<ServiceResult<WebShellAcquisitionView>>
   retryAcquisition(ctx: RequestContext, acquisitionId: string): Promise<ServiceResult<WebShellAcquisitionView>>
 }
+
