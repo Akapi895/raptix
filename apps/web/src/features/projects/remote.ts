@@ -1,4 +1,4 @@
-import { isProjectViewModel, type ProjectViewModel } from '@raptix/web-contracts';
+import { isProjectViewModel, isWorkspaceFileView, isWorkspaceTreeView, type ProjectViewModel, type WorkspaceFileView, type WorkspaceTreeView } from '@raptix/web-contracts';
 import { apiFetch } from '../../platform/transport';
 import { guarded } from '../../platform/adapter-shared';
 import { utcMinute } from '../../platform/format';
@@ -40,7 +40,7 @@ export function confirmHandoff(engagementId: string): Promise<ProjectViewModel> 
 }
 
 /** W22: edit the display name, primary target and brief on the project detail Settings tab. */
-export function patchEngagement(engagementId: string, input: { displayName?: string; targetValue?: string; brief?: string }): Promise<ProjectViewModel> {
+export function patchEngagement(engagementId: string, input: { displayName?: string; targetType?: ProjectViewModel['targetType']; targetValue?: string; brief?: string }): Promise<ProjectViewModel> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}`, (v): v is ProjectViewModel => isProjectViewModel(v) && v.id === engagementId, {
     method: 'PATCH',
     body: input,
@@ -107,4 +107,12 @@ export function projectsUnavailableReason(capability: Capability | null): string
   if (!capability || !capability.supported) return 'This capability is not implemented on the connected server.'
   if (!capability.available) return capability.reason ? `Unavailable: ${capability.reason.replace(/_/g, ' ')}.` : 'This capability is currently unavailable on the server.'
   return 'Projects are unavailable on this server.'
+}
+
+export function fetchWorkspaceTree(engagementId: string): Promise<WorkspaceTreeView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/workspace/tree`, isWorkspaceTreeView)
+}
+
+export function fetchWorkspaceFile(engagementId: string, path: string): Promise<WorkspaceFileView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/workspace/file?path=${encodeURIComponent(path)}`, isWorkspaceFileView)
 }
