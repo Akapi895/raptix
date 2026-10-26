@@ -29,6 +29,7 @@ import { RuntimeJoinClient } from './integrations/runtime/join-client.js';
 import { RuntimeRouter, prismaRouteSource } from './integrations/runtime/runtime-router.js';
 import { ApprovalsService } from './services/approvals-service.js';
 import { FindingsService } from './services/findings-service.js';
+import { FindingPocService } from './services/finding-poc-service.js';
 import { ArtifactsService } from './services/artifacts-service.js';
 import { AssetMapService } from './services/asset-map-service.js';
 import { GraphService } from './services/graph-service.js';
@@ -251,6 +252,10 @@ async function main(): Promise<void> {
    }
   const fleetService = dbClient && runtimeContext && runsService ? new FleetService(dbClient, runtimeContext, runsService) : undefined;
   const findingsService = dbClient && projectFiles ? new FindingsService(dbClient, projectFiles) : undefined;
+  // ADR-0104: the sealed PoC of a workspace finding is read and reproduced through the runtime, with the project's sandbox.
+  const findingPocService = dbClient && runtimeConfig && runtimeApiToken && sandboxKey
+    ? new FindingPocService({ db: dbClient, runtimeApiUrl: runtimeConfig.apiUrl, runtimeApiToken, sandboxKey, perProjectSandbox: runtimeConfig.perProjectSandbox })
+    : undefined;
   const artifactsService = dbClient && projectFiles ? new ArtifactsService(dbClient, projectFiles) : undefined;
   const graphService = dbClient && env.graph ? new GraphService(dbClient, env.graph) : undefined;
   const libraryService = graphService && env.graph ? new LibraryService(graphService, env.graph) : undefined;
@@ -298,6 +303,7 @@ async function main(): Promise<void> {
     streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl, undefined, runtimeApiToken), undefined, runtimeRouter) : undefined,
     approvalsService,
     findingsService,
+    findingPocService,
     artifactsService,
     graphService,
   assetMapService: dbClient && env.graph ? new AssetMapService(dbClient, env.graph) : undefined,

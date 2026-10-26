@@ -319,11 +319,11 @@ export function EvidenceInspector() {
   const can = useCan()
   const readOnly = useReadOnly()
   const nav = useDelayedNav()
-  const [orig, setOrig] = useState(false)
+  const [orig, setOrig] = useState(true)
   const [log, setLog] = useState<{ at: string; text: string }[]>([])
   const detail = useEvidenceDetail(route.id || undefined)
   const original = useEvidenceBytes(route.id ?? '', !!detail.data?.canViewOriginal && orig)
-  useEffect(() => { setOrig(false); setLog([]) }, [route.id])
+  useEffect(() => { setOrig(true); setLog([]) }, [route.id])
   if (!route.id) return <EvidenceList />
   if (detail.isError) {
     const err = (detail.error as EvidenceReadError).failure
@@ -387,7 +387,7 @@ export function EvidenceInspector() {
             } />
             {origWhy && ev.sensitive && <div className="mb-3"><Locked reason={origWhy} /></div>}
             {masked ? (
-              <div className="flex h-44 items-center justify-center rounded-lg border border-line bg-bg text-center text-muted" role="img" aria-label="Masked content"><div><Lock size={28} className="mx-auto mb-2 text-warn" aria-hidden /><div className="text-sm">Content masked by default</div><div className="text-xs">Redaction status: Redacted</div></div></div>
+              <div className="flex h-44 items-center justify-center rounded-lg border border-line bg-bg text-center text-muted" role="img" aria-label="Masked content"><div><Lock size={28} className="mx-auto mb-2 text-warn" aria-hidden /><div className="text-sm">Content hidden</div><div className="text-xs">Choose View Original to show it again</div></div></div>
             ) : (
               <CaptureOriginalContent evidence={ev} open={orig} original={original} />
             )}
