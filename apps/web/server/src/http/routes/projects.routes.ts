@@ -113,6 +113,15 @@ export function registerProjectRoutes(
     reply.header('Cache-Control', 'no-store');
     return runProjectsHandler(request, reply, () => service.getPlanning(identity.id, readProjectId(request)));
   });
+  app.get('/api/engagements/:id/workspace/tree', (request, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    return runProjectsHandler(request, reply, () => service.getWorkspaceTree(identity.id, readProjectId(request)));
+  });
+  app.get('/api/engagements/:id/workspace/file', (request, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    const path = (request.query as { path?: unknown }).path;
+    return runProjectsHandler(request, reply, () => service.getWorkspaceFile(identity.id, readProjectId(request), typeof path === 'string' ? path : ''));
+  });
   app.get('/api/engagements/:id/opplan', (request, reply) => {
     reply.header('Cache-Control', 'no-store');
     return runProjectsHandler(request, reply, async () => (await service.getPlanning(identity.id, readProjectId(request))).documents.opplan);

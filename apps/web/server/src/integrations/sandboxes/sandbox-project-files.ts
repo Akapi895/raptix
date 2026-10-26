@@ -9,6 +9,7 @@ import {
   type ProjectDirEntry,
   type ProjectFileStat,
   type ProjectFiles,
+  type ProjectTree,
 } from '../../services/project-files.js';
 import { sandboxTokenFor, sandboxUrlFor } from '../../services/runtime/sandbox-routing.js';
 
@@ -144,6 +145,21 @@ export class SandboxProjectFiles implements ProjectFiles {
       .split('\n')
       .filter(line => line.length > 0)
       .map(line => ({ name: line.slice(2), isDirectory: line.startsWith('d ') }));
+  }
+
+  /** One find over the whole workspace; the head bound keeps the output to the requested size. */
+  public async tree(workspaceSlug: string, limit: number): Promise<ProjectTree> {
+    const result = await this.execute(
+      workspaceSlug,
+      `find ${quote(WORKSPACE)} -mindepth 1 -printf '%y\\t%s\\t%T@\\t%P\\n' | head -n ${limit + 1}`,
+    );
+    if (result.exitCode !== 0) throw new ProjectFileError();
+    const lines = result.output.split('\n').filter(line => line.length > 0);
+    const entries = lines.slice(0, limit).map(line => {
+      const [kind = '', size = '0', mtime = '0', ...path] = line.split('\t');
+      return { path: path.join('\t'), isDirectory: kind === 'd', size: Number(size), mtime: new Date(Number(mtime) * 1000) };
+    });
+    return { entries, truncated: lines.length > limit };
   }
 
   public async mkdir(workspaceSlug: string, rel: string): Promise<void> {

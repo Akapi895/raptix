@@ -11,6 +11,21 @@ export interface ProjectDirEntry {
   readonly isDirectory: boolean;
 }
 
+/** One entry under a project's /workspace: its path relative to /workspace, '/'-separated. */
+export interface ProjectTreeEntry {
+  readonly path: string;
+  readonly isDirectory: boolean;
+  readonly size: number;
+  readonly mtime: Date;
+}
+
+/** The project's /workspace listing: at most the requested number of entries, shallowest first. */
+export interface ProjectTree {
+  readonly entries: ProjectTreeEntry[];
+  /** True when the workspace holds more entries than were returned. */
+  readonly truncated: boolean;
+}
+
 export interface ProjectFileStat {
   readonly size: number;
   readonly mtime: Date;
@@ -33,6 +48,8 @@ export interface ProjectFiles {
   remove(workspaceSlug: string, rel: string): Promise<void>;
   /** The directory's entries, or null when the directory does not exist. */
   list(workspaceSlug: string, rel: string): Promise<ProjectDirEntry[] | null>;
+  /** Every entry under /workspace, shallowest first, at most `limit` of them. */
+  tree(workspaceSlug: string, limit: number): Promise<ProjectTree>;
   mkdir(workspaceSlug: string, rel: string): Promise<void>;
   exists(workspaceSlug: string, rel: string): Promise<boolean>;
 }

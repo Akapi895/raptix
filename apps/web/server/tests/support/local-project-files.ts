@@ -8,6 +8,8 @@ import {
   type ProjectDirEntry,
   type ProjectFileStat,
   type ProjectFiles,
+  type ProjectTree,
+  type ProjectTreeEntry,
 } from '../../src/services/project-files.js';
 
 /**
@@ -62,6 +64,29 @@ export class LocalProjectFiles implements ProjectFiles {
 
   public async remove(workspaceSlug: string, rel: string): Promise<void> {
     await rm(this.at(workspaceSlug, rel), { force: true });
+  }
+
+  public async tree(workspaceSlug: string, limit: number): Promise<ProjectTree> {
+    const root = path.join(this.root, projectSlug(workspaceSlug));
+    const entries: ProjectTreeEntry[] = [];
+    const pending = [root];
+    for (let dir = pending.shift(); dir !== undefined; dir = pending.shift()) {
+      let children;
+      try {
+        children = await readdir(dir, { withFileTypes: true });
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+        throw new ProjectFileError();
+      }
+      for (const child of children) {
+        if (entries.length === limit) return { entries, truncated: true };
+        const full = path.join(dir, child.name);
+        const info = await stat(full);
+        entries.push({ path: path.relative(root, full).split(path.sep).join('/'), isDirectory: child.isDirectory(), size: info.size, mtime: info.mtime });
+        if (child.isDirectory()) pending.push(full);
+      }
+    }
+    return { entries, truncated: false };
   }
 
   public async list(workspaceSlug: string, rel: string): Promise<ProjectDirEntry[] | null> {

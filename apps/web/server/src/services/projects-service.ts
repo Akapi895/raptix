@@ -15,7 +15,7 @@ import {
 } from '../security/project-policy.js';
 import { readPlannerScope, readPlanningView, type PlannerScope } from './planning-service.js';
 import type { ProjectFiles } from './project-files.js';
-import type { PlanningView } from '@raptix/web-contracts';
+import type { PlanningView, WorkspaceFileView, WorkspaceTreeView } from '@raptix/web-contracts';
 
 /**
  * Persistence-level project record (int-w02-prisma `EngagementRecord` shape).
@@ -194,6 +194,11 @@ export interface ProjectsServiceOptions {
   readonly confirmPlannerScope?: (actorId: string, engagementId: string, plan: PlannerScope) => Promise<unknown>;
 }
 
+/** The most workspace entries one listing returns; the rest are reported as truncated. */
+const WORKSPACE_TREE_LIMIT = 2000;
+/** The most bytes one file preview returns; a larger file is shown from its start, marked truncated. */
+const WORKSPACE_FILE_PREVIEW_BYTES = 64 * 1024;
+
 export class ProjectsService {
   private readonly repository: ProjectRepositoryPort;
   private readonly files: ProjectFiles;
@@ -211,6 +216,29 @@ export class ProjectsService {
 
   private ownerId(userId?: string): string {
     return userId ?? this.identity.id;
+  }
+
+  /** The project's whole /workspace as a read-only listing, read from its sandbox. */
+  public async getWorkspaceTree(userId: string, id: string): Promise<WorkspaceTreeView> {
+    const record = await this.repository.findById(userId, id);
+    if (record === null || !isProjectSlug(record.name)) throw new ProjectNotFoundError();
+    const tree = await this.files.tree(record.workspaceSlug, WORKSPACE_TREE_LIMIT);
+    return {
+      root: '/workspace',
+      truncated: tree.truncated,
+      entries: tree.entries.map(entry => ({ path: entry.path, kind: entry.isDirectory ? 'dir' : 'file', size: entry.size, modifiedAt: entry.mtime.toISOString() })),
+    };
+  }
+
+  /** One file under /workspace for display: a preview of its start, and no content for binary files. */
+  public async getWorkspaceFile(userId: string, id: string, rel: string): Promise<WorkspaceFileView> {
+    const record = await this.repository.findById(userId, id);
+    if (record === null || !isProjectSlug(record.name)) throw new ProjectNotFoundError();
+    const data = await this.files.read(record.workspaceSlug, rel);
+    if (data === null) throw new ProjectApiError(404, 'No file exists at this path.');
+    const binary = data.subarray(0, 8192).includes(0);
+    const shown = data.subarray(0, WORKSPACE_FILE_PREVIEW_BYTES);
+    return { path: rel, size: data.length, binary, truncated: data.length > shown.length, content: binary ? null : shown.toString('utf8') };
   }
 
   public async getPlanning(userId: string, id: string): Promise<PlanningView> {
