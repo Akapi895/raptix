@@ -98,6 +98,8 @@ GATED_TOOL_NAMES: frozenset[str] = frozenset(
         "web_fetch",
         "web_search",
         "detect_tech_stack",
+        # Re-runs a sealed PoC against its target (ADR-0103); gated like the commands it runs.
+        "verify_workspace_candidate",
     }
 )
 
