@@ -117,10 +117,11 @@ export function projectStreamFrame(scope: StreamScope, frame: SseFrame, occurren
   const projected = output.slice(-2000);
   return projected.map(({ payload, source }, position) => {
     const domain = payload.type === 'message' ? payload.messageId : 'toolCallId' in payload ? payload.toolCallId : payload.type === 'interrupt' ? payload.interruptId : normalizedEventKey(payload);
-    const identity = frame.id ? 'upstream' : domain && !(payload.type === 'message' && payload.mode === 'delta') ? 'domain' : 'occurrence';
-    const key = identity === 'upstream' ? [frame.id, position] : identity === 'domain' ? [domain, payload] : [occurrence, position];
+    // A tool call keeps one identity in every frame that repeats it (a message chunk or a values snapshot), so the UI shows it once.
+    const identity = 'toolCallId' in payload && domain ? 'call' : frame.id ? 'upstream' : domain && !(payload.type === 'message' && payload.mode === 'delta') ? 'domain' : 'occurrence';
+    const key = identity === 'upstream' ? [frame.id, position] : identity === 'domain' ? [domain, payload] : identity === 'call' ? [domain, payload.type] : [occurrence, position];
     const eventId = createHash('sha256').update(JSON.stringify([scope.engagementId, scope.threadId, identity === 'upstream' || source === 'runtime' ? scope.runId : null, namespace, payload.type, key])).digest('hex');
     const at = 'createdAt' in payload && typeof payload.createdAt === 'string' && Number.isFinite(Date.parse(payload.createdAt)) ? new Date(payload.createdAt).toISOString() : null;
-    return { version: 1, eventId, ...scope, streamRunId: scope.runId, runId: source === 'checkpoint' ? null : scope.runId, source, namespace, ...(frame.id && position === projected.length - 1 ? { upstreamCursor: frame.id } : {}), occurredAt: at, observedAt: new Date().toISOString(), identity, payload };
+    return { version: 1, eventId, ...scope, streamRunId: scope.runId, runId: source === 'checkpoint' ? null : scope.runId, source, namespace, ...(frame.id && position === projected.length - 1 ? { upstreamCursor: frame.id } : {}), occurredAt: at, observedAt: new Date().toISOString(), identity: identity === 'call' ? 'domain' : identity, payload };
   });
 }
