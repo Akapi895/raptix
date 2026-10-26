@@ -371,8 +371,8 @@ def bash_workspace(workspace_path: str, *, engagement_name: str | None = None):
     """Temporarily scope bash tools to one engagement workspace (ADR-0090).
 
     With an operator pin (RAPTIX_ENGAGEMENT) the run's identity must equal the pin.
-    Without a pin, the run's identity is its own workspace slug: the workspace must
-    be exactly /workspace/<slug> or inside it. Nothing outside that subtree is reachable.
+    Without a pin, the project's own sandbox volume is mounted at /workspace (ADR-0102),
+    so every run works under /workspace. Nothing outside that root is reachable.
     """
     normalized = SandboxBase._normalize_workspace_path(workspace_path)
     if normalized != workspace_path.strip().rstrip("/"):
@@ -385,18 +385,13 @@ def bash_workspace(workspace_path: str, *, engagement_name: str | None = None):
                 "recreate the stack for this engagement before executing bash"
             )
         safe_path = _engagement_fence(normalized)
-    elif engagement_name:
-        if not _ENGAGEMENT_SLUG.fullmatch(engagement_name):
-            raise RuntimeError(f"runtime engagement {engagement_name!r} is not a workspace slug")
-        root = f"/workspace/{engagement_name}"
-        if normalized != root and not normalized.startswith(f"{root}/"):
-            raise RuntimeError(
-                f"workspace {normalized!r} is outside engagement {engagement_name!r}; its workspace is {root}"
-            )
-        safe_path = normalized
     else:
-        if normalized != "/workspace":
-            raise RuntimeError("bash run has no engagement identity for workspace " f"{normalized!r}")
+        if normalized != "/workspace" and not normalized.startswith("/workspace/"):
+            raise RuntimeError(
+                f"workspace {normalized!r} is outside the project workspace /workspace"
+            )
+        if engagement_name and not _ENGAGEMENT_SLUG.fullmatch(engagement_name):
+            raise RuntimeError(f"runtime engagement {engagement_name!r} is not a workspace slug")
         safe_path = normalized
     token = _current_workspace_path.set(safe_path)
     try:

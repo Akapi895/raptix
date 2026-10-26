@@ -59,13 +59,13 @@ def test_bash_context_rejects_shared_root_for_a_pinned_engagement(monkeypatch):
             pass
 
 
-def test_context_rejects_a_workspace_outside_the_runtime_engagement_without_pin():
-    # ADR-0090: without an operator pin, a run may reach only /workspace/<its own slug>.
+def test_context_rejects_a_workspace_outside_the_project_volume_without_pin():
+    # ADR-0102: without an operator pin, a run works under the project's /workspace and nowhere else.
     request = SimpleNamespace(
         tool=SimpleNamespace(name="bash"),
-        state={"engagement_name": "lab-a", "workspace_path": "/workspace/other"},
+        state={"engagement_name": "lab-a", "workspace_path": "/home/other"},
     )
-    with pytest.raises(RuntimeError, match="outside engagement 'lab-a'"):
+    with pytest.raises(RuntimeError, match="outside the project workspace"):
         EngagementContextMiddleware().wrap_tool_call(request, lambda request: "executed")
 
 

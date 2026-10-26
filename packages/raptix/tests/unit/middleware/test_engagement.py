@@ -263,7 +263,7 @@ def test_engagement_only_injection(middleware: EngagementContextMiddleware) -> N
 
     assert result is not req  # override produced a fresh request
     text = _flatten(result.system_message)
-    assert "Workspace slug: blue-falcon" in text
+    assert "Engagement name: blue-falcon" in text
     assert "Workspace root: /workspace" in text
     assert "BENCHMARK MODE" not in text  # benchmark section absent
 
@@ -382,7 +382,7 @@ def test_benchmark_mode_full_context(
 
     text = _flatten(result.system_message)
     # engagement section
-    assert "Workspace slug: benchmark-XBEN-001-24" in text
+    assert "Engagement name: benchmark-XBEN-001-24" in text
     # per-challenge context
     assert "## CTF Benchmark Challenge" in text
     assert "**Target URL:** http://host.docker.internal:33001" in text
@@ -394,7 +394,7 @@ def test_benchmark_mode_full_context(
     assert "[BENCHMARK MODE — engaged]" not in text
     assert "/skills/standard/exploit/web/" not in text
     # engagement section comes before benchmark per-challenge section
-    assert text.index("Workspace slug:") < text.index("## CTF Benchmark Challenge")
+    assert text.index("Engagement name:") < text.index("## CTF Benchmark Challenge")
 
 
 def test_benchmark_extra_ports(
@@ -447,9 +447,9 @@ def test_appended_to_existing_system_message(
     text = _flatten(result.system_message)
     # original content is preserved; addendum is appended.
     assert "ORIGINAL_PROMPT_BODY" in text
-    assert "Workspace slug: demo" in text
+    assert "Engagement name: demo" in text
     assert "## CTF Benchmark Challenge" in text
-    assert text.index("ORIGINAL_PROMPT_BODY") < text.index("Workspace slug")
+    assert text.index("ORIGINAL_PROMPT_BODY") < text.index("Engagement name:")
 
 
 def _write_deconfliction(workspace: Path, payload: dict[str, Any]) -> None:
@@ -484,7 +484,7 @@ def test_deconfliction_identifiers_appear_in_injection(
     assert "Deconfliction code: ECHO-9" in text
     assert "source-ip: 10.4.4.4" in text
     assert "user-agent: decepticon/1.0" in text
-    assert text.index("Workspace slug:") < text.index("Deconfliction code: ECHO-9")
+    assert text.index("Engagement name:") < text.index("Deconfliction code: ECHO-9")
 
 
 def test_deconfliction_absent_degrades_cleanly(
@@ -497,7 +497,7 @@ def test_deconfliction_absent_degrades_cleanly(
     result = middleware._inject(req)
     text = _flatten(result.system_message)
 
-    assert "Workspace slug: blue-falcon" in text
+    assert "Engagement name: blue-falcon" in text
     assert "Deconfliction" not in text
 
 
@@ -515,7 +515,7 @@ def test_deconfliction_malformed_json_degrades_cleanly(
     result = middleware._inject(req)
     text = _flatten(result.system_message)
 
-    assert "Workspace slug: blue-falcon" in text
+    assert "Engagement name: blue-falcon" in text
     assert "Deconfliction" not in text
 
 
@@ -533,7 +533,7 @@ def test_deconfliction_empty_identifiers_emit_no_block(
     result = middleware._inject(req)
     text = _flatten(result.system_message)
 
-    assert "Workspace slug: blue-falcon" in text
+    assert "Engagement name: blue-falcon" in text
     assert "Deconfliction" not in text
 
 
@@ -757,7 +757,7 @@ def test_inject_combines_engagement_slug_and_language_in_one_message(
     result = middleware._inject(req)
     text = _flatten(result.system_message)
 
-    assert "Workspace slug: acme" in text
+    assert "Engagement name: acme" in text
     assert "<LANGUAGE_POLICY>" in text
     assert "Japanese" in text
 
