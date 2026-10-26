@@ -11,18 +11,13 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 
 import { useQueryClient } from '@tanstack/react-query'
 import { FolderPlus, Info } from 'lucide-react'
 import { invalidateProjects, projectKeys, useCreateProject, useProjectCacheActor } from '../query'
-import type { CreateEngagementInput } from '../remote'
+import { targetTypeOf } from '../target'
 import { markPlanningSeed } from '../../aichat/planning-seed'
 import { showCreateProject, useCreateProjectDialog } from '../create-dialog-state'
 import { go } from '../../../router/navigate'
 import { useDirty, useSessionStore } from '../../../state/session'
 import { useToastStore } from '../../../state/stores'
-import { Banner, Button, Card, CardHeader, Check, Field, Input, Modal, Select, Textarea } from '../../../ui/index'
-
-const TARGET_TYPES: { value: CreateEngagementInput['targetType']; label: string }[] = [
-  { value: 'web_url', label: 'Web URL' },
-  { value: 'ip_range', label: 'IP range' },
-]
+import { Banner, Button, Card, CardHeader, Check, Field, Input, Modal, Textarea } from '../../../ui/index'
 
 /** Server slug rule (apps/web/server security/project-policy.ts): lowercase
  *  kebab DNS label, 3-63 chars, starts/ends alphanumeric. */
@@ -36,13 +31,12 @@ interface FormState {
   displayName: string
   name: string
   nameTouched: boolean
-  targetType: CreateEngagementInput['targetType']
   targetValue: string
   brief: string
   authorized: boolean
 }
 
-const INITIAL: FormState = { displayName: '', name: '', nameTouched: false, targetType: 'web_url', targetValue: '', brief: '', authorized: false }
+const INITIAL: FormState = { displayName: '', name: '', nameTouched: false, targetValue: '', brief: '', authorized: false }
 
 /** The creation form; it is hosted by the "New project" popup and reset whenever the popup closes. */
 function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactElement {
@@ -62,11 +56,12 @@ function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactEle
   const slug = form.name.trim()
   const targetValue = form.targetValue.trim()
   const brief = form.brief.trim()
+  const targetType = targetTypeOf(targetValue)
 
   const fieldErrors = {
     displayName: displayName ? undefined : 'A display name is required.',
     name: !slug ? 'A workspace slug is required.' : !SLUG_RE.test(slug) ? 'Use 3-63 lowercase letters, digits or dashes; start and end with a letter or digit.' : undefined,
-    targetValue: targetValue ? undefined : 'A target is required.',
+    targetValue: !targetValue ? 'A target is required.' : targetType === null ? 'Enter a web URL (https://…), an IP address or a CIDR range.' : undefined,
     brief: brief.length >= 20 ? undefined : 'Provide the engagement brief (at least 20 characters) — it is required by the API.',
   }
   const valid = !fieldErrors.displayName && !fieldErrors.name && !fieldErrors.targetValue && !fieldErrors.brief && form.authorized
@@ -91,11 +86,11 @@ function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactEle
   const submit = (e: FormEvent): void => {
     e.preventDefault()
     setFormError('')
-    if (!valid) { setFormError('Complete the required fields and confirm the authorization to create the engagement.'); return }
+    if (!valid || targetType === null) { setFormError('Complete the required fields and confirm the authorization to create the engagement.'); return }
     create.mutate({
       name: slug,
       ...(displayName !== slug ? { displayName } : {}),
-      targetType: form.targetType,
+      targetType,
       targetValue,
       authorizationConfirmed: true,
       brief,
@@ -137,12 +132,7 @@ function RealProjectCreateForm({ onCancel }: { onCancel: () => void }): ReactEle
                 aria-invalid={!!fieldErrors.name}
               />
             </Field>
-            <Field label="Target type" required>
-              <Select value={form.targetType} onChange={(e) => set('targetType', e.target.value as CreateEngagementInput['targetType'])}>
-                {TARGET_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </Select>
-            </Field>
-            <Field label="Target value" required error={fieldErrors.targetValue} hint="The URL or IP range the engagement is authorized to test." className="md:col-span-2">
+            <Field label="Target value" required error={fieldErrors.targetValue} hint="A web URL (http:// or https://), an IP address or a CIDR range. The target type is detected from the value." className="md:col-span-2">
               <Input
                 value={form.targetValue}
                 onChange={(e) => set('targetValue', e.target.value)}

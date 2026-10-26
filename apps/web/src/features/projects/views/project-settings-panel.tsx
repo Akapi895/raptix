@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { patchEngagement } from '../remote';
+import { targetTypeOf } from '../target';
 import type { ProjectViewModel } from '@raptix/web-contracts';
 import { useDirty } from '../../../state/session'
 import { Banner, Button, Card, CardHeader, Input } from '../../../ui/index'
@@ -19,10 +20,15 @@ export function ProjectSettingsPanel({ project }: { project: ProjectViewModel })
   const [error, setError] = useState<string | null>(null)
   const dirty = displayName !== project.displayName || targetValue !== project.targetValue
   const save = useMutation({
-    mutationFn: () => patchEngagement(project.id, {
-      displayName: displayName.trim(),
-      targetValue: targetValue.trim(),
-    }),
+    mutationFn: () => {
+      const targetType = targetTypeOf(targetValue)
+      if (targetType === null) throw new Error('Enter a web URL (https://…), an IP address or a CIDR range.')
+      return patchEngagement(project.id, {
+        displayName: displayName.trim(),
+        targetType,
+        targetValue: targetValue.trim(),
+      })
+    },
     onSuccess: () => {
       setError(null)
       void client.invalidateQueries({ queryKey: ['real', 'project', project.id] })
