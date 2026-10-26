@@ -76,6 +76,7 @@ afterEach(() => {
 describe('C2ProviderTab infrastructure (W15)', () => {
   it('lists provider listeners with their job id and stops them by job id', async () => {
     renderTab()
+    await userEvent.click(await screen.findByRole('tab', { name: /C2/ }))
     expect(await screen.findByText('mtls · port 8888 · job 7')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /stop listener 7/i }))
     await waitFor(() => expect(api_c2.stopC2Listener).toHaveBeenCalledWith('eng-1', 7))
@@ -83,6 +84,7 @@ describe('C2ProviderTab infrastructure (W15)', () => {
 
   it('starts a listener for a supported protocol and creates a lab profile by name', async () => {
     renderTab()
+    await userEvent.click(await screen.findByRole('tab', { name: /C2/ }))
     await userEvent.click(await screen.findByRole('button', { name: /start http listener/i }))
     await waitFor(() => expect(api_c2.configureC2Listener).toHaveBeenCalledWith('eng-1', 'http'))
     await userEvent.type(screen.getByLabelText(/profile name/i), 'lab-prof')

@@ -8,27 +8,39 @@
  */
 import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { TerminalSquare } from 'lucide-react'
+import { Globe, TerminalSquare } from 'lucide-react'
 import { go, useRoute } from '../../router/navigate'
 import { utcMinute } from '../../platform/format'
-import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status } from '../../ui/index'
+import { Banner, Button, Card, CardHeader, Empty, Input, Skeleton, Status, Tabs } from '../../ui/index'
 import { CommandTable } from './provider-console'
 import { C2SessionsWorkspace } from './session-workspace'
 import { messageOf, useProviderCommands, useProviderSurface, useProviderWrites } from './provider-query'
 import { c2WorkspaceView } from './workspace/view'
 import { WebShellPanel } from '../webshell'
 
+type SessionsSubTab = 'webshell' | 'c2'
+
+const SESSIONS_TABS: { id: SessionsSubTab; label: string; icon: typeof TerminalSquare }[] = [
+  { id: 'webshell', label: 'WebShell', icon: Globe },
+  { id: 'c2', label: 'C2', icon: TerminalSquare },
+]
+
 export function C2ProviderTab({ engagementId }: { engagementId: string }): ReactElement {
-  // A detail route consumes the resource id from the URL; unknown or foreign ids never render the full console.
   const view = c2WorkspaceView(useRoute())
+  const [subTab, setSubTab] = useState<SessionsSubTab>('webshell')
   if (view.kind === 'session') return <SessionDetail engagementId={engagementId} sessionId={view.sessionId} />
   if (view.kind === 'channel') return <ChannelDetail engagementId={engagementId} transport={view.transport} />
   return (
     <div className="space-y-4">
       {view.kind === 'console' && <Banner tone="info" title="No interactive console in this build">Session commands run only under an approved grant. The sessions below show what is connected and which access you hold.</Banner>}
-      <C2SessionsWorkspace engagementId={engagementId} />
-      <WebShellPanel engagementId={engagementId} />
-      <InfrastructureCard engagementId={engagementId} />
+      <Tabs tabs={SESSIONS_TABS} value={subTab} onChange={(id) => setSubTab(id as SessionsSubTab)} />
+      {subTab === 'webshell' && <WebShellPanel engagementId={engagementId} />}
+      {subTab === 'c2' && (
+        <>
+          <C2SessionsWorkspace engagementId={engagementId} />
+          <InfrastructureCard engagementId={engagementId} />
+        </>
+      )}
     </div>
   )
 }
