@@ -73,7 +73,7 @@ export function C2SessionsWorkspace({ engagementId }: { engagementId: string }):
           <Segmented<StateFilter> value={state} onChange={setState} options={STATE_OPTIONS} />
           <Input aria-label="Search sessions" placeholder="Search by session, host, user, C2 or transport" value={query} onChange={(e) => setQuery(e.target.value)} className="max-w-sm" />
         </div>
-        <p className="px-4 pb-4 text-xs text-muted">No WebShell provider is registered in this deployment, so no WebShell connection can appear here.</p>
+        <p className="px-4 pb-4 text-xs text-muted">This list is the C2 provider registry. WebShell connections are managed in the separate WebShell sessions panel.</p>
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">

@@ -16,6 +16,7 @@ import { CommandTable } from './provider-console'
 import { C2SessionsWorkspace } from './session-workspace'
 import { messageOf, useProviderCommands, useProviderSurface, useProviderWrites } from './provider-query'
 import { c2WorkspaceView } from './workspace/view'
+import { WebShellPanel } from '../webshell'
 
 export function C2ProviderTab({ engagementId }: { engagementId: string }): ReactElement {
   // A detail route consumes the resource id from the URL; unknown or foreign ids never render the full console.
@@ -26,6 +27,7 @@ export function C2ProviderTab({ engagementId }: { engagementId: string }): React
     <div className="space-y-4">
       {view.kind === 'console' && <Banner tone="info" title="No interactive console in this build">Session commands run only under an approved grant. The sessions below show what is connected and which access you hold.</Banner>}
       <C2SessionsWorkspace engagementId={engagementId} />
+      <WebShellPanel engagementId={engagementId} />
       <InfrastructureCard engagementId={engagementId} />
     </div>
   )
