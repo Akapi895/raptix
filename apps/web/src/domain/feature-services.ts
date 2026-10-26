@@ -14,6 +14,7 @@ import type { ObservedAnalysisService } from '../features/analysis/observed'
 import type { PlanningService } from '../features/planning/service'
 import type { GovernanceService } from '../features/governance/service'
 import type { C2ProviderService } from '../features/c2/provider'
+import type { WebShellService } from '../features/webshell/service'
 import type { RuntimeOperationsService } from '../features/operations/runtime'
 import type { NoticeCenterService } from '../features/notices/center'
 import type { SettingsService } from '../features/settings/service'
@@ -36,6 +37,7 @@ export interface FeatureServices {
   planning(actor: ActorRef, projectId: string): PlanningService
   governance(actor: ActorRef, projectId: string): GovernanceService
   c2Provider(actor: ActorRef, projectId: string): C2ProviderService
+  webshell(actor: ActorRef, projectId: string): WebShellService
   runtimeOperations(actor: ActorRef, projectId: string): RuntimeOperationsService
   noticeCenter(actor: ActorRef, projectId: string): NoticeCenterService
 }

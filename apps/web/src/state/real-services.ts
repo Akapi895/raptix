@@ -30,6 +30,8 @@ import type { GovernanceService } from '../features/governance/service'
 import { createRealPlanningService } from '../features/planning/remote'
 import { createRealGovernanceService } from '../features/governance/remote'
 import type { C2ProviderService } from '../features/c2/provider'
+import type { WebShellService } from '../features/webshell/service'
+import { createRealWebShellService } from '../features/webshell/remote'
 import { createRealC2ProviderService } from '../features/c2/remote'
 import type { RuntimeOperationsService } from '../features/operations/runtime'
 import { createRealRuntimeOperationsService } from '../features/operations/remote'
@@ -129,6 +131,12 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
         return () => service
       })()
     : () => unavailableService<C2ProviderService>({ surface: true, grants: true, commands: true, requestGrant: true, decideGrant: true, dispatch: true, reconcile: true, startListener: true, stopListener: true, createProfile: true }, 'The C2 provider is not available on this server.')
+  const webshell: FeatureServices['webshell'] = supported('webshell')
+    ? (() => {
+        const service: WebShellService = createRealWebShellService()
+        return () => service
+      })()
+    : () => unavailableService<WebShellService>({ list: true, get: true, create: true, update: true, close: true, probe: true, probes: true, commands: true, command: true, execute: true, listAcquisitions: true, getAcquisition: true, createAcquisition: true, retryAcquisition: true }, 'WebShell is not available on this server.')
   const runtimeOperations: FeatureServices['runtimeOperations'] = supported('runs')
     ? (() => {
         const service: RuntimeOperationsService = createRealRuntimeOperationsService()
@@ -146,5 +154,5 @@ export function createRealFeatureServices(capabilities: CapabilitiesDocument): F
   const projectsReader: FeatureServices['projects'] = projectsCapability?.supported && projectsCapability.available
     ? (() => { const service = createRealProjectsService(); return () => service })()
     : () => ({ list: async () => ({ ok: false as const, failure: { kind: 'unavailable' as const, message: projectsUnavailableReason(projectsCapability) } }) })
-  return { overview: () => overview, projects: projectsReader, findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, runtimeOperations, noticeCenter }
+  return { overview: () => overview, projects: projectsReader, findings, reports, assets, library, scope, audit, team, settings, vault, closure, observedAnalysis, planning, governance, c2Provider, webshell, runtimeOperations, noticeCenter }
 }
