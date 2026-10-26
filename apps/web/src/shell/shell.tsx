@@ -146,6 +146,7 @@ export function Shell({ children }: { children: ReactNode }) {
   useEffect(() => { document.title = 'Raptix — AI Red Team Platform' }, [])
   useEffect(() => { if (copilotOpen) setNoticesOpen(false) }, [copilotOpen, setNoticesOpen])
   const wide = isWide(route)
+  const fill = route.page === 'project' && route.tab === 'ai-workspace'
   return (
     <div className="flex h-full bg-bg text-fg">
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }} className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[200] focus:rounded-[10px] focus:bg-accent focus:px-4 focus:py-2 focus:text-white">Skip to main content</a>
@@ -160,8 +161,8 @@ export function Shell({ children }: { children: ReactNode }) {
             </Banner>
           </div>
         )}
-        <main id="main" data-wide={wide ? '' : undefined} className={cx('no-scrollbar min-h-0 flex-1 overflow-y-auto', wide ? 'p-0' : 'px-5 py-6 lg:px-8')} tabIndex={-1}>
-          <div className={wide ? 'mx-auto h-full max-w-6xl' : 'mx-auto max-w-[1360px]'}>{loading ? <LoadingState /> : children}</div>
+        <main id="main" data-wide={wide ? '' : undefined} className={cx('no-scrollbar min-h-0 flex-1', fill ? 'overflow-hidden' : 'overflow-y-auto', wide ? 'p-0' : 'px-5 py-6 lg:px-8')} tabIndex={-1}>
+          <div className={wide ? 'mx-auto h-full max-w-6xl' : fill ? 'mx-auto h-full max-w-[1360px]' : 'mx-auto max-w-[1360px]'}>{loading ? <LoadingState /> : children}</div>
         </main>
       </div>
       <RealCopilotDrawer />

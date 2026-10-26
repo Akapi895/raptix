@@ -5,7 +5,6 @@
  * unavailable panel instead of demo data (D4). Planning readiness arrives
  * with ticket 04.
  */
-import { AiRunControls } from '../../operations';
 import { isAssetMapEnabled } from '../../asset-map';
 import { Suspense, lazy, useEffect, useMemo, type ReactElement } from 'react'
 import { RefreshCw, ServerCrash } from 'lucide-react'
@@ -82,19 +81,18 @@ export function RealProjectDetail(): ReactElement {
   }
 
   return (
-    <>
-      {/* The planning-mode AI workspace draws its own header (with the thread actions) inside the page. */}
-      {!(tab === 'ai-workspace' && data.handoffConfirmedAt === null) && <PageHeader
+    <div className={tab === 'ai-workspace' ? 'flex h-full min-h-0 flex-col' : undefined}>
+      {tab !== 'ai-workspace' && <PageHeader
         title={sectionTitle(tab)}
         sub={<span><span className="font-mono">{data.id}</span> · {data.displayName}</span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: data.displayName }]}
         meta={<span className="flex flex-wrap items-center gap-2"><Status kind="project" value={data.lifecycleStatus} size="sm" /><span className="text-xs text-muted">{STAGE_LABEL[projectStage(data.lifecycleStatus)]}</span></span>}
       />}
-      <div className="mt-5">
+      <div className={tab === 'ai-workspace' ? 'mt-5 flex min-h-0 flex-1 flex-col' : 'mt-5'}>
         {tab === 'overview' ? <ProjectOverview d={data} /> : tab === 'assets' ? <ProjectAssets engagementId={data.id} mapEnabled={isAssetMapEnabled()} />
-        : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} brief={data.brief} updatedAt={data.updatedAt} /> : tab === 'ai-workspace' ? <div className="space-y-4"><RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} />{isAssetMapEnabled() ? <AiRunControls engagementId={data.id} /> : null}</div> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}><ReportsPage /></Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
+        : tab === 'planning' ? <PlanningTab engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} brief={data.brief} updatedAt={data.updatedAt} /> : tab === 'ai-workspace' ? <RealConversation key={`${data.id}:${data.handoffConfirmedAt ? 'execution' : 'planning'}`} engagementId={data.id} embedded={data.handoffConfirmedAt !== null} fillViewport /> : tab === 'operations' ? <RuntimeOperationsTab engagementId={data.id} /> : tab === 'fleet' ? <RuntimeFleetTab engagementId={data.id} /> : tab === 'c2' ? <C2ProviderTab engagementId={data.id} /> : tab === 'evidence' ? <EvidenceList /> : tab === 'findings' ? <div className="space-y-4"><FindingList /><div className="flex justify-end"><Button variant="secondary" onClick={() => go('evidence')}>Open evidence inventory</Button></div></div> : tab === 'analysis' ? <ObservedAnalysisTab engagementId={data.id} /> : tab === 'team' ? <div className="space-y-4"><ApprovalInbox engagementId={data.id} /><TeamMembers engagementId={data.id} /></div> : tab === 'scope' ? <ScopeTab engagementId={data.id} /> : tab === 'governance' ? <GovernanceTab engagementId={data.id} /> : tab === 'reports' ? <Suspense fallback={<Skeleton className="h-40" />}><ReportsPage /></Suspense> : tab === 'vault' ? <VaultTab key={data.id} engagementId={data.id} /> : tab === 'audit' ? <AuditPanel engagementId={data.id} /> : tab === 'settings' ? <ProjectSettingsPanel project={data} /> : tab === 'close' ? <ClosureTab engagementId={data.id} /> : tab === 'asset-map' && isAssetMapEnabled() ? <Suspense fallback={<Skeleton className="h-40" />}><ProjectAssetMap /></Suspense> : <NotYetIntegrated label={sectionTitle(tab)} />}
       </div>
-    </>
+    </div>
   )
 }
 
