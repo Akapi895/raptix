@@ -9,11 +9,13 @@ import { type Finding } from '../../domain/entities'
 import { FindingReadError, useEvidenceList, useFindingDetail, useFindingWrites } from './query'
 import type { FindingActivityKind, FindingTransitionTarget } from './service'
 import { ReproducePanel } from './reproduce'
+import { SealedPocPanel } from './sealed-poc'
 import { AddToReport } from './add-to-report'
 import { useAiActions } from './ai-actions'
 import { EvidenceTab } from './evidence'
 import { FindingDenied } from './access'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, Locked, Mono, PageHeader, Person, PersonaHint, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx } from '../../ui/index'
+import { renderMarkdown } from '../../ui/markdown'
 import { go, useRoute } from '../../router/navigate'
 import { realControlGap, useCan, useMe, useReadOnly } from '../../state/console'
 import { useFindingReportChoices } from './projection'
@@ -179,7 +181,7 @@ function FindingDetailBody() {
       {ro && <Banner tone="warn" icon={Lock} title="Read-only mode">{roReason} Actions that change data are disabled, each with an explanation.</Banner>}
       {returnedNote && (
         <Banner tone="bad" icon={RotateCcw} title={`Returned by ${returnedNote.by} — ${returnedNote.at}`} action={!ro && author ? <Button size="sm" variant="secondary" icon={Pencil} onClick={() => go('finding-new', { id: f.id })}>Edit now</Button> : undefined}>
-          <span className="whitespace-pre-wrap">{returnedNote.text.replace(/^Returned for changes(?::\s*)?/, '')}</span>
+          {renderMarkdown(returnedNote.text.replace(/^Returned for changes(?::\s*)?/, ''))}
         </Banner>
       )}
       {f.status === 'ai_suggested' && (
@@ -193,7 +195,7 @@ function FindingDetailBody() {
         value={tab} onChange={(t) => go('finding', { id: f.id, tab: t })}
         tabs={[{ id: 'overview', label: 'Summary & workflow' }, { id: 'evidence', label: 'Evidence', count: f.evidence.length }, { id: 'retest', label: 'Retest', count: f.retests.length }, { id: 'reproduce', label: 'Reproduce' }]}
       />
-      {tab === 'evidence' ? <EvidenceTab f={f} evs={data.evidence} ro={ro} /> : tab === 'retest' ? <RetestTab key={`${f.id}:${f.version}`} f={f} ro={ro} roReason={roReason} /> : tab === 'reproduce' ? <ReproducePanel finding={f} readArtifact={writes.readArtifact} /> : (
+      {tab === 'evidence' ? <EvidenceTab f={f} evs={data.evidence} ro={ro} /> : tab === 'retest' ? <RetestTab key={`${f.id}:${f.version}`} f={f} ro={ro} roReason={roReason} /> : tab === 'reproduce' ? <div className="space-y-6"><SealedPocPanel engagementId={f.projectId} producerPath={data.producer?.path} readOnly={ro} /><ReproducePanel finding={f} readArtifact={writes.readArtifact} /></div> : (
         <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
           <div className="space-y-6">
             {data.producer && <Card>
@@ -205,19 +207,19 @@ function FindingDetailBody() {
                 {data.producer.quality?.placeholderDescription && <Banner tone="warn" title="Description is a placeholder">The source did not provide a description.</Banner>}
                 {data.producer.quality?.placeholderEvidence && <Banner tone="warn" title="Evidence is a placeholder">The source did not provide an evidence reference.</Banner>}
                 {data.producer.quality?.unreadable && <Banner tone="warn" title="Producer source is unreadable">The retained source could not be parsed completely.</Banner>}
-                {data.producer.evidence && <div><div className="mb-1 text-xs text-muted">Producer evidence text — not an evidence reference</div><p className="whitespace-pre-wrap leading-relaxed">{data.producer.evidence}</p></div>}
-                {data.producer.attackVector && <div><div className="mb-1 text-xs text-muted">Attack vector</div><p className="whitespace-pre-wrap leading-relaxed">{data.producer.attackVector}</p></div>}
+                {data.producer.evidence && <div><div className="mb-1 text-xs text-muted">Producer evidence text — not an evidence reference</div><div className="leading-relaxed">{renderMarkdown(data.producer.evidence)}</div></div>}
+                {data.producer.attackVector && <div><div className="mb-1 text-xs text-muted">Attack vector</div><div className="leading-relaxed">{renderMarkdown(data.producer.attackVector)}</div></div>}
               </div>
             </Card>}
             <Card>
               <CardHeader title="Analysis & impact" />
               <div className="space-y-4 text-sm">
-                <div><div className="mb-1 text-xs text-muted">Description</div><p className="leading-relaxed">{f.desc}</p></div>
+                <div><div className="mb-1 text-xs text-muted">Description</div><div className="leading-relaxed">{renderMarkdown(f.desc)}</div></div>
                 <div><div className="mb-1 text-xs text-muted">Technical observations</div><p className="leading-relaxed">{step ? `${step.id} (${step.technique}) on ${step.asset}: ${step.output}` : 'No linked step observation.'}</p></div>
-                <div><div className="mb-1 text-xs text-muted">Impact</div><p className="leading-relaxed">{f.impact || 'Not recorded.'}</p></div>
-                <div><div className="mb-1 text-xs text-muted">Recommendations</div><p className="leading-relaxed">{f.rec || 'Not recorded.'}</p></div>
-                <div><div className="mb-1 text-xs text-muted">Severity rationale</div><p className="leading-relaxed">{f.severityRationale || 'Not recorded.'}</p></div>
-                <div><div className="mb-1 text-xs text-muted">Scope note</div><p className="leading-relaxed">{f.scopeNote || 'Not recorded.'}</p></div>
+                <div><div className="mb-1 text-xs text-muted">Impact</div><div className="leading-relaxed">{renderMarkdown(f.impact || 'Not recorded.')}</div></div>
+                <div><div className="mb-1 text-xs text-muted">Recommendations</div><div className="leading-relaxed">{renderMarkdown(f.rec || 'Not recorded.')}</div></div>
+                <div><div className="mb-1 text-xs text-muted">Severity rationale</div><div className="leading-relaxed">{renderMarkdown(f.severityRationale || 'Not recorded.')}</div></div>
+                <div><div className="mb-1 text-xs text-muted">Scope note</div><div className="leading-relaxed">{renderMarkdown(f.scopeNote || 'Not recorded.')}</div></div>
               </div>
             </Card>
             <Card>
@@ -250,7 +252,7 @@ function FindingDetailBody() {
                   {[...olderComments, ...f.comments].map((c, i) => (
                     <li key={c.id ?? `${c.at}:${c.by}:${i}`} className={cx('rounded-lg border p-3', f.status === 'returned' && i === olderComments.length + f.comments.length - 1 ? 'border-bad/40 bg-bad/5' : 'border-line')}>
                       <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted"><Person name={c.by} /><span className="font-mono">{c.at}</span></div>
-                      <div className="whitespace-pre-wrap text-sm">{c.text}</div>
+                      <div className="text-sm">{renderMarkdown(c.text)}</div>
                     </li>
                   ))}
                 </ul>

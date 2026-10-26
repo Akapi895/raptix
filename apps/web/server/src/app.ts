@@ -23,6 +23,8 @@ import { registerThreadTitleRoutes } from './http/routes/thread-title.routes.js'
 import { registerThreadHitlRoutes } from './http/routes/thread-hitl.routes.js';
 import { registerApprovalRoutes } from './http/routes/approvals.routes.js';
 import { registerFindingsRoutes } from './http/routes/findings.routes.js';
+import { registerPocRoutes } from './http/routes/poc.routes.js';
+import type { FindingPocService } from './services/finding-poc-service.js';
 import { registerAssetMapRoutes } from './http/routes/asset-map.routes.js';
 import { registerGraphRoutes } from './http/routes/graph.routes.js';
 import { registerTimelineRoutes } from './http/routes/timeline.routes.js';
@@ -91,6 +93,7 @@ export interface AppOptions {
   readonly streamService?: StreamService;
   readonly approvalsService?: ApprovalsService;
   readonly findingsService?: FindingsService;
+  readonly findingPocService?: FindingPocService;
   readonly artifactsService?: ArtifactsService;
   readonly graphService?: GraphService;
   readonly assetMapService?: AssetMapService;
@@ -200,6 +203,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.streamService) registerEventRoutes(app, options.streamService, identity);
   if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, identity);
   if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, identity);
+  if (options.findingPocService) registerPocRoutes(app, options.findingPocService, identity);
   if (options.graphService) registerGraphRoutes(app, options.graphService, identity);
   if (options.assetMapService) registerAssetMapRoutes(app, options.assetMapService, identity);
   if (options.timelineService && options.exportService) registerTimelineRoutes(app, options.timelineService, options.exportService, identity);
