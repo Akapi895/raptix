@@ -60,7 +60,6 @@ import { InboxService } from './services/inbox-service.js';
 import { WorkspaceSettingsService } from './services/workspace-settings-service.js';
 import { AuditService } from './services/audit-service.js';
 import { ClosureService } from './services/closure-service.js';
-import { WebShellAcquisitionService } from './services/webshell-acquisition-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 import { configureSingleOperator, requireEngagementAccess } from './auth/membership-policy.js';
 
@@ -299,16 +298,6 @@ async function main(): Promise<void> {
         perProjectSandbox: runtimeConfig.perProjectSandbox,
       })
     : undefined;
-  const webshellAcquisitionService = webshellService && scopeService && governanceService && runtimeConfig && runtimeApiToken && sandboxKey
-    ? new WebShellAcquisitionService({
-        db: dbClient!,
-        runtime: new RuntimeWebShellClient({ runtimeApiUrl: runtimeConfig.apiUrl, runtimeApiToken }),
-        scope: scopeService,
-        governance: governanceService,
-        sandboxKey,
-        perProjectSandbox: runtimeConfig.perProjectSandbox,
-      })
-    : undefined;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const inboxService = dbClient && governanceService ? new InboxService(dbClient, governanceService) : undefined;
@@ -328,7 +317,6 @@ async function main(): Promise<void> {
     findingsService,
     findingPocService,
     webshellService,
-    webshellAcquisitionService,
     artifactsService,
     graphService,
   assetMapService: dbClient && env.graph ? new AssetMapService(dbClient, env.graph) : undefined,
