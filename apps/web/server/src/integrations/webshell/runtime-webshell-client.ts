@@ -121,6 +121,48 @@ export interface RuntimeSandboxRef {
   readonly token: string;
 }
 
+export interface RuntimeDeriveResult {
+  readonly status: 'derived' | 'needs_refinement' | 'refused';
+  readonly profile?: WebShellProfile;
+  readonly reason?: string;
+  readonly pocSha256?: string;
+  readonly specSha256?: string;
+}
+
+export interface RuntimeRefineResult {
+  readonly status: 'refined' | 'failed' | 'refused';
+  readonly profile?: WebShellProfile;
+  readonly reason?: string;
+  readonly confidence?: string;
+}
+
+function deriveResult(raw: Record<string, unknown>): RuntimeDeriveResult {
+  const status = raw.status;
+  if (typeof status !== 'string' || !['derived', 'needs_refinement', 'refused'].includes(status)) {
+    throw new RuntimeWebShellError(502, 'The runtime returned an invalid derive status.');
+  }
+  return {
+    status: status as RuntimeDeriveResult['status'],
+    profile: typeof raw.profile === 'object' && raw.profile !== null ? raw.profile as unknown as WebShellProfile : undefined,
+    reason: typeof raw.reason === 'string' ? raw.reason.slice(0, 2048) : undefined,
+    pocSha256: typeof raw.poc_sha256 === 'string' ? raw.poc_sha256 : undefined,
+    specSha256: typeof raw.spec_sha256 === 'string' ? raw.spec_sha256 : undefined,
+  };
+}
+
+function refineResult(raw: Record<string, unknown>): RuntimeRefineResult {
+  const status = raw.status;
+  if (typeof status !== 'string' || !['refined', 'failed', 'refused'].includes(status)) {
+    throw new RuntimeWebShellError(502, 'The runtime returned an invalid refine status.');
+  }
+  return {
+    status: status as RuntimeRefineResult['status'],
+    profile: typeof raw.profile === 'object' && raw.profile !== null ? raw.profile as unknown as WebShellProfile : undefined,
+    reason: typeof raw.reason === 'string' ? raw.reason.slice(0, 2048) : undefined,
+    confidence: typeof raw.confidence === 'string' ? raw.confidence : undefined,
+  };
+}
+
 export class RuntimeWebShellClient {
   private readonly timeoutMs: number;
 
@@ -134,6 +176,19 @@ export class RuntimeWebShellClient {
 
   public async execute(sandbox: RuntimeSandboxRef, profile: WebShellProfile, requestId: string, command: string): Promise<RuntimeWebShellCommandResult> {
     return commandResult(await this.call('/_raptix/webshell/execute', { sandbox_url: sandbox.url, sandbox_token: sandbox.token, request_id: requestId, profile, command }));
+  }
+
+  public async derive(sandbox: RuntimeSandboxRef, findingId: string, acquisitionId: string): Promise<RuntimeDeriveResult> {
+    return deriveResult(await this.call('/_raptix/webshell/derive', { sandbox_url: sandbox.url, sandbox_token: sandbox.token, finding_id: findingId, acquisition_id: acquisitionId }) as Record<string, unknown>);
+  }
+
+  public async refine(sandbox: RuntimeSandboxRef, input: { findingId: string; acquisitionId: string; sealedPoc: Record<string, unknown>; findingMetadata: Record<string, unknown>; allowedTargets: string[]; failure?: string }): Promise<RuntimeRefineResult> {
+    return refineResult(await this.call('/_raptix/webshell/refine', {
+      sandbox_url: sandbox.url, sandbox_token: sandbox.token,
+      finding_id: input.findingId, acquisition_id: input.acquisitionId,
+      sealed_poc: input.sealedPoc, finding_metadata: input.findingMetadata,
+      allowed_targets: input.allowedTargets, failure: input.failure,
+    }) as Record<string, unknown>);
   }
 
   private async call(path: string, body: Record<string, unknown>): Promise<RuntimeRawResult> {
