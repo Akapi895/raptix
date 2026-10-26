@@ -60,6 +60,10 @@ model Engagement {
   environments ProjectEnvironment[]
   environmentCommands EnvironmentCommand[]
   migrationRecords ThreadMigrationRecord[]
+  webShellConnections WebShellConnection[]
+  webShellProbes WebShellProbe[]
+  webShellCommands WebShellCommand[]
+  webShellAcquisitions WebShellAcquisition[]
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -872,4 +876,113 @@ model LibraryProposalReview {
   createdAt DateTime @default(now())
   proposal LibraryReviewProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
   @@index([proposalId])
+}
+
+// ADR-0105: WebShell is a request/response provider with its own records; it is
+// not a C2 session. The Web server owns business state; the runtime executes
+// through the project sandbox and returns bounded results.
+model WebShellConnection {
+  id String @id @default(cuid())
+  engagementId String
+  assetId String?
+  provider String @default("http-form-command")
+  name String
+  target String
+  endpoint String
+  method String @default("POST")
+  contentType String @default("application/x-www-form-urlencoded")
+  commandParameter String
+  headers Json?
+  probeCommand String
+  probePattern String
+  expectedUser String?
+  state String @default("unverified") // unverified | reachable | reachable_no_proof | unreachable | unknown | closed
+  source String @default("manual") // manual | poc_acquisition
+  createdBy String
+  producerFindingId String?
+  producerPocSha256 String?
+  producerSpecSha256 String?
+  producerAcquisitionId String?
+  lastProbeId String?
+  lastProbeAt DateTime?
+  concurrencyVersion Int @default(1)
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  probes WebShellProbe[]
+  commands WebShellCommand[]
+  acquisitions WebShellAcquisition[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, provider, endpoint, commandParameter], map: "WebShellConnection_endpoint_key")
+  @@index([engagementId, state])
+}
+
+model WebShellProbe {
+  id String @id @default(cuid())
+  connectionId String
+  engagementId String
+  requestId String
+  state String
+  httpStatus Int?
+  matched Boolean @default(false)
+  output String @default("")
+  outputTruncated Boolean @default(false)
+  error String?
+  durationMs Int @default(0)
+  connection WebShellConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  @@unique([connectionId, requestId], map: "WebShellProbe_request_key")
+  @@index([connectionId, createdAt])
+}
+
+model WebShellCommand {
+  id String @id @default(cuid())
+  connectionId String
+  engagementId String
+  requestId String
+  command String
+  payloadHash String
+  status String @default("creating") // creating | delivered | failed | uncertain
+  httpStatus Int?
+  exitCode Int?
+  output String @default("")
+  outputTruncated Boolean @default(false)
+  capturePath String?
+  captureSha256 String?
+  error String?
+  actorId String
+  runId String?
+  invocationId String?
+  activeConnectionId String? @unique
+  connection WebShellConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, requestId], map: "WebShellCommand_request_key")
+  @@index([connectionId, createdAt])
+}
+
+model WebShellAcquisition {
+  id String @id @default(cuid())
+  engagementId String
+  findingId String
+  requestId String
+  mode String // derive | refine
+  state String @default("queued") // queued | running | succeeded | failed | refused | cancelled
+  attempt Int @default(1)
+  maxAttempts Int @default(2)
+  pocSha256 String?
+  specSha256 String?
+  profile Json?
+  connectionId String?
+  error String?
+  artifactPath String?
+  artifactSha256 String?
+  actorId String
+  connection WebShellConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, requestId], map: "WebShellAcquisition_request_key")
+  @@index([engagementId, findingId, createdAt])
 }

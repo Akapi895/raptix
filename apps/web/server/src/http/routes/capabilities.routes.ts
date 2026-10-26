@@ -43,6 +43,8 @@ export interface CapabilitiesResponse {
     readonly c2: CapabilityState;
     readonly vault: CapabilityState;
     readonly members: CapabilityState;
+    readonly webshell: CapabilityState;
+    readonly webshellAcquisition: CapabilityState;
   };
 }
 
@@ -77,6 +79,10 @@ export async function buildCapabilitiesResponse(
   vaultKeyConfigured = false,
   membersSupported = false,
   c2ProviderConfigured = false,
+  webshellSupported = false,
+  webshellRuntimeConfigured = false,
+  webshellAcquisitionSupported = false,
+  webshellRefineConfigured = false,
   mode: CapabilityMode = 'local-single-user',
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
@@ -131,6 +137,25 @@ export async function buildCapabilitiesResponse(
   // Members (W19): the truthful local single-user members view is real;
   // invite/RBAC APIs stay absent with explicit reasons, never faked.
   const members: CapabilityState = !membersSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
+  // WebShell (ADR-0105) is a separate provider. It is wired only when its
+  // service, runtime client and project sandbox path exist; authorization
+  // (single-operator) is checked per request and is not an availability flag.
+  const webshell: CapabilityState = !webshellSupported
+    ? missingCapability()
+    : !projects.available
+      ? { supported: true, available: false, reason: 'database_unavailable' }
+      : !webshellRuntimeConfigured
+        ? { supported: true, available: false, reason: 'runtime_unavailable' }
+        : { supported: true, available: true };
+  const webshellAcquisition: CapabilityState = !webshellAcquisitionSupported
+    ? missingCapability()
+    : !projects.available
+      ? { supported: true, available: false, reason: 'database_unavailable' }
+      : !webshellRuntimeConfigured
+        ? { supported: true, available: false, reason: 'runtime_unavailable' }
+        : !webshellRefineConfigured
+          ? { supported: true, available: false, reason: 'configuration_missing' }
+          : { supported: true, available: true };
   return {
     version: CAPABILITIES_VERSION,
     mode,
@@ -156,6 +181,8 @@ export async function buildCapabilitiesResponse(
       c2,
       vault,
       members,
+      webshell,
+      webshellAcquisition,
     },
   };
 }
@@ -181,6 +208,10 @@ export interface CapabilitiesRouteOptions {
   readonly vaultKeyConfigured?: boolean;
   readonly membersSupported?: boolean;
   readonly c2ProviderConfigured?: boolean;
+  readonly webshellSupported?: boolean;
+  readonly webshellRuntimeConfigured?: boolean;
+  readonly webshellAcquisitionSupported?: boolean;
+  readonly webshellRefineConfigured?: boolean;
 }
 
 export function registerCapabilitiesRoutes(
@@ -207,6 +238,10 @@ export function registerCapabilitiesRoutes(
       options.vaultKeyConfigured === true,
       options.membersSupported === true,
       options.c2ProviderConfigured === true,
+      options.webshellSupported === true,
+      options.webshellRuntimeConfigured === true,
+      options.webshellAcquisitionSupported === true,
+      options.webshellRefineConfigured === true,
       options.mode,
     ),
   }));
