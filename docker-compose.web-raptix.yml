@@ -68,6 +68,8 @@ services:
       - RAPTIX_SANDBOX_CONTROLLER_URL=http://host.docker.internal:9200
       - RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE=/run/secrets/sandbox-controller-token
       - RAPTIX_SANDBOX_KEY_FILE=/run/secrets/sandbox-key
+      # Single-operator: skip the four-eyes gate for direct webshell acquisition and independent review.
+      - RAPTIX_WEB_SINGLE_OPERATOR=${RAPTIX_WEB_SINGLE_OPERATOR:-0}
       # The LangGraph API requires this token of every caller; the web API presents it on each runtime call.
       - RAPTIX_RUNTIME_API_TOKEN_FILE=/run/secrets/runtime-api-token
     volumes:

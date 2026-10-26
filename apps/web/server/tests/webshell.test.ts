@@ -427,3 +427,4 @@ describe('WebShellService', () => {
     await app.close();
   });
 });
+
