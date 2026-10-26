@@ -397,6 +397,10 @@ class StreamingRunnable(RunnableBinding):
         # Build the event once; emit the SAME object to the live stream and
         # append it to the durable transcript, so the persisted payload is
         # byte-identical to the streamed event.
+        # The dispatch this invocation runs: the operator console ties a roster row to its transcript with it.
+        from raptix.core.dispatch_context import active_dispatch
+
+        dispatch = active_dispatch.get()
         event = {
             "type": "subagent_start",
             "created_at": datetime.now(UTC).isoformat(),
@@ -409,6 +413,7 @@ class StreamingRunnable(RunnableBinding):
             # without this field the CLI collapsed both into a
             # single session and lost the first one's tool calls.
             "session_id": session_id,
+            "dispatch_id": dispatch.dispatch_id if dispatch is not None else None,
         }
         if writer:
             writer(event)
