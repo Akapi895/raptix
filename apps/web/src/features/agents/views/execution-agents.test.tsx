@@ -36,11 +36,11 @@ function instance(dispatchId: string, role: string, attempt: number, parentDispa
   return { instanceId: `thread-aaaa1111:${dispatchId}:${attempt}`, threadId: 'thread-aaaa1111', dispatchId, attempt, role, objectiveId: 'OBJ-002', parentDispatchId, outcome: 'success', terminal: false, source: 'dispatch_ledger' }
 }
 
-async function renderAgents(threadId: string | null): Promise<void> {
+async function renderAgents(): Promise<void> {
   const { RealExecutionAgents } = await import('./execution-agents')
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { children: ReactNode }): ReactElement => <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  render(<RealExecutionAgents engagementId="eng-1" assistantId="decepticon" threadId={threadId} branches={[]} selectedKey={null} onSelect={() => undefined} sourceError={null} />, { wrapper })
+  render(<RealExecutionAgents engagementId="eng-1" assistantId="decepticon" openedDispatchId={null} onOpen={() => undefined} />, { wrapper })
 }
 
 afterEach(() => {
@@ -51,7 +51,7 @@ afterEach(() => {
 describe('Agents tab runtime roster', () => {
   it('names the recorded role and marks a legacy row as role not recorded', async () => {
     fetchRuntimeInstances.mockResolvedValue(ROSTER)
-    await renderAgents(null)
+    await renderAgents()
     expect(await screen.findByText('recon · attempt 1')).toBeInTheDocument()
     expect(screen.getByText('role not recorded · attempt 2')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /role not recorded · attempt 2, Failed/ })).toBeInTheDocument()
@@ -60,34 +60,34 @@ describe('Agents tab runtime roster', () => {
 
   it('names a thread the runtime cannot read instead of showing it as empty', async () => {
     fetchRuntimeInstances.mockResolvedValue(ROSTER)
-    await renderAgents(null)
+    await renderAgents()
     expect(await screen.findByText('Some threads could not be read')).toBeInTheDocument()
     expect(screen.getByText(/thread-b: Runtime discovery/)).toBeInTheDocument()
   })
 
-  it('shows only the instances of the selected thread', async () => {
+  it('shows the instances of every thread, each tagged with its thread', async () => {
     fetchRuntimeInstances.mockResolvedValue(ROSTER)
-    await renderAgents('thread-bbbb2222')
-    expect(await screen.findByText('No dispatch instances are recorded on this thread.')).toBeInTheDocument()
-    expect(screen.queryByText('recon · attempt 1')).not.toBeInTheDocument()
+    await renderAgents()
+    expect(await screen.findByText('recon · attempt 1')).toBeInTheDocument()
+    expect(screen.getAllByText('thread-a').length).toBeGreaterThan(0)
   })
 
   it('reports a failed roster read as unavailable', async () => {
     fetchRuntimeInstances.mockRejectedValue(new Error('The runtime roster read failed.'))
-    await renderAgents(null)
+    await renderAgents()
     expect(await screen.findByText('Runtime roster unavailable')).toBeInTheDocument()
   })
 
   it('nests a dispatch under the dispatch that started it', async () => {
     fetchRuntimeInstances.mockResolvedValue({ ...ROSTER, instances: [instance('dispatch-orch', 'surface_exploit', 1, null), instance('dispatch-recon', 'recon', 1, 'dispatch-orch')] })
-    await renderAgents(null)
+    await renderAgents()
     const parent = (await screen.findByText('surface_exploit · attempt 1')).closest('li')
     expect(parent?.textContent).toContain('recon · attempt 1')
   })
 
   it('hangs a child under the newest attempt of its parent only', async () => {
     fetchRuntimeInstances.mockResolvedValue({ ...ROSTER, instances: [instance('dispatch-orch', 'surface_exploit', 1, null), instance('dispatch-orch', 'surface_exploit', 2, null), instance('dispatch-recon', 'recon', 1, 'dispatch-orch')] })
-    await renderAgents(null)
+    await renderAgents()
     expect(await screen.findByText('recon · attempt 1')).toBeInTheDocument()
     expect(screen.getAllByText('recon · attempt 1')).toHaveLength(1)
     expect(screen.getByText('surface_exploit · attempt 1').closest('li')?.textContent).not.toContain('recon · attempt 1')
@@ -95,7 +95,7 @@ describe('Agents tab runtime roster', () => {
 
   it('keeps every dispatch visible when recorded parents form a loop', async () => {
     fetchRuntimeInstances.mockResolvedValue({ ...ROSTER, instances: [instance('dispatch-a', 'alpha', 1, 'dispatch-b'), instance('dispatch-b', 'beta', 1, 'dispatch-a')] })
-    await renderAgents(null)
+    await renderAgents()
     expect(await screen.findByText('alpha · attempt 1')).toBeInTheDocument()
     expect(screen.getByText('beta · attempt 1')).toBeInTheDocument()
   })

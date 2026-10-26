@@ -32,23 +32,27 @@ describe('UpdatesGroup', () => {
   })
 })
 
+const NONE = { agents: { running: 0, done: 0, failed: 0 }, toolCalls: { count: 0, truncated: false }, runningTool: null, objectives: null }
+
 describe('ProgressCard', () => {
   it('counts ready planning documents and names the next one to finish', () => {
-    render(<ProgressCard bundle={{ roe: 'ready', conops: 'missing' }} labels={{ roe: 'RoE', conops: 'CONOPS' }} tools={{ calls: 0, failed: 0, running: null }} />)
+    render(<ProgressCard bundle={{ roe: 'ready', conops: 'missing' }} labels={{ roe: 'RoE', conops: 'CONOPS' }} progress={NONE} />)
     expect(screen.getByText('1/2 documents')).toBeTruthy()
     expect(screen.getByText('next')).toBeTruthy()
     expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('1')
   })
 
-  it('reports tool calls, failures and the running call', () => {
-    render(<ProgressCard bundle={null} labels={{}} tools={{ calls: 4, failed: 1, running: 'tool call: bash' }} />)
+  it('reports agents by state, tool calls and the running call', () => {
+    render(<ProgressCard bundle={null} labels={{}} progress={{ agents: { running: 1, done: 2, failed: 1 }, toolCalls: { count: 4, truncated: false }, runningTool: 'bash', objectives: null }} />)
+    expect(screen.getByText('1 running')).toBeTruthy()
+    expect(screen.getByText('2 done')).toBeTruthy()
+    expect(screen.getByText('1 failed')).toBeTruthy()
     expect(screen.getByText(/4 tool calls/)).toBeTruthy()
-    expect(screen.getByText(/1 failed/)).toBeTruthy()
-    expect(screen.getByText('Running tool call: bash')).toBeTruthy()
+    expect(screen.getByText('Running bash')).toBeTruthy()
   })
 
   it('says so when there is no planning data and no tool activity', () => {
-    render(<ProgressCard bundle={null} labels={{}} tools={{ calls: 0, failed: 0, running: null }} />)
-    expect(screen.getByText(/Nothing in progress yet/)).toBeTruthy()
+    render(<ProgressCard bundle={null} labels={{}} progress={NONE} />)
+    expect(screen.getByText(/No work has started on this thread yet/)).toBeTruthy()
   })
 })

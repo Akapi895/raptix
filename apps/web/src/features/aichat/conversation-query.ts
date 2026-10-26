@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ThreadKind } from '@raptix/web-contracts'
 import { getEngagement, projectKeys, useProjectCacheActor } from '../projects'
 import { fetchPlanning } from '../planning'
-import { cancelRun, fetchFleet } from '../operations'
+import { cancelRun } from '../operations'
 import { decideApproval, fetchApprovals } from '../approvals'
 import { fetchReports } from '../reports'
 import { fetchRuntimeContext } from '../execution'
@@ -61,10 +61,6 @@ export const useThreadRuns = (engagementId: string, threadId: string | null, ena
 /** Tool HITL approvals of the execution scope. */
 export const useApprovalQueue = (engagementId: string, enabled: boolean) =>
   useQuery({ queryKey: ['real', 'approvals', engagementId], queryFn: () => fetchApprovals(engagementId), enabled, refetchInterval: 15_000 })
-
-/** The agent fleet the conversation's sidebar and branch panel read. */
-export const useConversationFleet = (engagementId: string, enabled: boolean) =>
-  useQuery({ queryKey: ['real', 'fleet', engagementId], queryFn: () => fetchFleet(engagementId), enabled, refetchInterval: 8000 })
 
 /** Reports the artifact list links to. */
 export const useConversationReports = (engagementId: string) =>
