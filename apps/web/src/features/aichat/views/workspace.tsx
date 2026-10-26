@@ -10,11 +10,11 @@
  * tool HITL approvals as allow/deny decisions (never business approval).
  */
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, Brain, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock, Copy, ListPlus, MessagesSquare, MoreHorizontal, Pencil, PanelRightClose, PanelRightOpen, RefreshCw, Search, Send, ServerCrash, ShieldQuestion, Wrench, XCircle, type LucideIcon } from 'lucide-react'
 import { TONE, type Tone } from '../../../ui/status-map'
-import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
-import { cancelRun, createThread, decideApproval, getRun, getThreadPage, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun, useApprovalQueue, useConversationFleet, useConversationPlanning, useConversationReports, useConversationThreads, useEngagementDetail, usePlanningDocuments, useRuntimeContext, useThreadRuns, useThreadSnapshot } from '../conversation-query';
+import { isPendingInterruptView, type ApprovalRequestView, type PendingInterruptView, type RuntimeInstanceView, type ScopedThreadMessage, type ThreadKind } from '@raptix/web-contracts'
+import { cancelRun, createThread, decideApproval, getRun, getThreadPage, reconcileRequest, renameThread, resumeThread, setThreadHitl, submitRun, useApprovalQueue, useConversationPlanning, useConversationThreads, useEngagementDetail, useRuntimeContext, useThreadRuns, useThreadSnapshot } from '../conversation-query';
 import { ApiTransportError } from '../../../platform/transport'
 import { isEnvironmentPreparingError, withPreparedEnvironment } from '../../projects';
 import { useCapabilityReady } from '../../../state/real-context'
@@ -26,9 +26,11 @@ import { useProjectStore, useToastStore } from '../../../state/stores'
 import { Banner, Button, Drawer, Empty, PageHeader, Segmented, Skeleton, Textarea, cx } from '../../../ui/index'
 import { utcMinute, utcMinuteOr } from '../../../platform/format'
 import { renderMarkdown } from '../../../ui/markdown'
-import { ProgressCard, UpdatesGroup, type ToolProgress } from './workspace-progress'
+import { ProgressCard, UpdatesGroup, type ExecutionProgress } from './workspace-progress'
 import { isFoldableUpdate } from '../workspace-updates'
-import { RealExecutionAgents, ObservedInvocation } from '../../agents';
+import { RealExecutionAgents, SubagentView, agentStatus, isLiveInstance } from '../../agents';
+import { WorkspaceTree } from './workspace-files';
+import { fetchRuntimeInstances } from '../../agents/remote';
 import { INSP, Separator, useResizable, useViewportW } from '../../../ui/panel-sizing'
 import { readWorkspaceDraft, saveWorkspaceDraft } from '../session'
 import { type ConversationMode, HitlSwitch, ModeToggle } from './workspace-mode'
@@ -89,7 +91,7 @@ export function RealWorkspace(): ReactElement {
   )
 }
 
-export function RealConversation({ engagementId, initialThreadId, embedded = false }: { engagementId: string; initialThreadId?: string; embedded?: boolean }): ReactElement {
+export function RealConversation({ engagementId, initialThreadId, embedded = false, fillViewport = false }: { engagementId: string; initialThreadId?: string; embedded?: boolean; fillViewport?: boolean }): ReactElement {
   const client = useQueryClient()
   const agents = useCapabilityReady('agents')
   const { session, deploymentId } = useSession()
@@ -101,7 +103,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const draftKey = selectedThreadId ?? `new-${kindFilter}`
   const draft = drafts[draftKey] ?? (selectedThreadId ? readWorkspaceDraft(engagementId, selectedThreadId, actorId, deploymentId) : '')
   const setDraft = (text: string): void => { setDrafts((previous) => ({ ...previous, [draftKey]: text })); if (selectedThreadId) { try { saveWorkspaceDraft(engagementId, selectedThreadId, text, actorId, deploymentId) } catch { setDispatchError('Draft recovery storage is unavailable.') } } }
-  const [observation, setObservation] = useState<{ threadId: string; key: string } | null>(null)
+  const [openedInstance, setOpenedInstance] = useState<RuntimeInstanceView | null>(null)
   const [agentsOpen, setAgentsOpen] = useState(true)
   const [agentsSheet, setAgentsSheet] = useState(false)
   const [historySheet, setHistorySheet] = useState(false)
@@ -213,6 +215,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
           finishedRunIds.current.add(activeRunId)
           setObservedRun(null)
           void client.invalidateQueries({ queryKey: ['real', 'thread', engagementId] })
+          void client.invalidateQueries({ queryKey: ['real', 'runtime-instances', engagementId] })
           void client.invalidateQueries({ queryKey: ['real', 'planning'] })
           void client.invalidateQueries({ queryKey: ['real', 'approvals'] })
           void client.invalidateQueries({ queryKey: ['real', 'runs', engagementId, selectedThreadId] })
@@ -238,6 +241,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   /* Scoped SSE for the active run. */
   const streamRef = useRef({ engagementId, threadId: selectedThreadId })
   const checkpointReadAt = useRef(0)
+  const subagentReadAt = useRef(0)
   streamRef.current = { engagementId, threadId: selectedThreadId }
   const stream = useRunStream({
     engagementId,
@@ -277,6 +281,11 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
       if (p.type === 'interrupt' || p.type === 'ask_user_question') {
         void client.invalidateQueries({ queryKey: ['real', 'thread', streamRef.current.engagementId, streamRef.current.threadId] })
         return
+      }
+      if (p.type === 'subagent_start' || p.type === 'subagent_end') void client.invalidateQueries({ queryKey: ['real', 'runtime-instances', streamRef.current.engagementId] })
+      if (p.type.startsWith('subagent_') && Date.now() - subagentReadAt.current >= 1000) {
+        subagentReadAt.current = Date.now()
+        void client.invalidateQueries({ queryKey: ['real', 'thread', streamRef.current.engagementId, streamRef.current.threadId] }, { cancelRefetch: false })
       }
       const line = traceLineFor(event.eventId, p as TraceLikePayload)
       if (line) setTrace((prev) => prev.some((l) => l.id === line.id) ? prev : [...prev.slice(-999), { ...line, after: anchorRef.current }])
@@ -520,26 +529,43 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
   const lastLine = trace[trace.length - 1]
   const agentState = agentStateFor({ running: !!activeRunId, runStatus, waiting: pendingQuestions.length > 0, lastLine })
   const lastUserText = [...displayed].reverse().find((m) => m.role === 'user')?.content ?? null
-  const toolCalls = trace.filter((l) => l.label.startsWith('tool call'))
-  const toolProgress: ToolProgress = { calls: toolCalls.length, failed: trace.filter((l) => l.error).length, running: activeRunId && lastLine?.label.startsWith('tool call') ? lastLine.label : null }
   // Keep the newest content in view only while the operator is already at the bottom; never pull them down while they read older messages.
   useEffect(() => {
     const el = chatScroll.current
     if (el && atBottom) el.scrollTop = el.scrollHeight
   }, [displayed.length, trace.length, atBottom, selectedThreadId])
-  const fleet = useConversationFleet(engagementId, agents.ready)
-  const observationKey = observation?.threadId === selectedThreadId ? observation.key : null
-  const branches = fleet.data?.branches.filter((branch) => branch.threadId === selectedThreadId) ?? []
-  const observedBranch = branches.find((branch) => branch.key === observationKey)
-  const selectObservation = (key: string | null): void => { setObservation(key && selectedThreadId ? { threadId: selectedThreadId, key } : null); setAgentsSheet(false) }
-  const agentPanel = <RealExecutionAgents engagementId={engagementId} assistantId={selectedThread?.assistantId ?? null} threadId={selectedThreadId} branches={branches} selectedKey={observationKey} onSelect={selectObservation} sourceError={fleet.isError ? 'The fleet source is unavailable. No completion is inferred.' : null} />
+  const roster = useQuery({ queryKey: ['real', 'runtime-instances', engagementId], queryFn: () => fetchRuntimeInstances(engagementId) })
+  const runningSubagents = (roster.data?.instances ?? []).filter((instance) => instance.threadId === selectedThreadId && isLiveInstance(instance)).length
+  const opened = openedInstance?.threadId === selectedThreadId ? openedInstance : null
+  const selectOpened = (instance: RuntimeInstanceView | null): void => {
+    if (instance !== null && instance.threadId !== selectedThreadId) {
+      const kind = allThreads.find((t) => t.threadId === instance.threadId)?.kind
+      if (kind !== undefined) setKindFilter(kind)
+      setSelectedThreadId(instance.threadId)
+    }
+    setOpenedInstance(instance)
+    setAgentsSheet(false)
+  }
+  const threadInstances = (roster.data?.instances ?? []).filter((instance) => instance.threadId === selectedThreadId)
+  const tones = threadInstances.map((instance) => agentStatus(instance).tone)
+  const opplan = planning.data?.documents.opplan
+  const executionProgress: ExecutionProgress = {
+    agents: { running: tones.filter((tone) => tone === 'running').length, done: tones.filter((tone) => tone === 'done').length, failed: tones.filter((tone) => tone === 'failed').length },
+    toolCalls: { count: (snapshot.data?.transcripts ?? []).filter((event) => event.payload.type === 'tool_call' || event.payload.type === 'subagent_tool_call').length, truncated: snapshot.data?.transcriptsTruncated ?? false },
+    runningTool: activeRunId && lastLine?.label.startsWith('tool call') ? lastLine.label : null,
+    objectives: selectedKind === 'execution' ? (opplan?.state === 'ready' ? (opplan.content.objectives ?? []).map((objective) => ({ id: objective.id, title: objective.title, status: objective.status ?? 'pending' })) : []) : null,
+  }
+  const agentPanel = <RealExecutionAgents engagementId={engagementId} assistantId={selectedThread?.assistantId ?? null} openedDispatchId={opened?.dispatchId ?? null} onOpen={selectOpened} />
+
+  // The project's AI workspace tab carries no page header of its own (fillViewport).
+  const showHeader = !embedded && !fillViewport
 
   /* Honest unavailable surface (D4): without the assistant runtime the
      workspace has nothing to host - no demo conversation is substituted. */
   if (!agents.ready) {
     return (
       <>
-        {!embedded && <PageHeader
+        {showHeader && <PageHeader
           title="AI Workspace"
           sub={<span>Planning and execution conversations for <span className="font-mono">{engagementId}</span>.</span>}
           crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: 'AI Workspace' }]}
@@ -555,7 +581,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
 
   return (
     <>
-      {!embedded && <PageHeader
+      {showHeader && <PageHeader
         title="AI Workspace"
         sub={<span>Planning and execution conversations for <span className="font-mono">{engagementId}</span>. Threads and messages live on the server and survive a refresh.</span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: 'AI Workspace' }]}
@@ -594,9 +620,9 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
         </Banner>
       )}
 
-      <div className="mt-4 flex min-h-0 min-w-0 gap-3">
-        <div className="flex min-h-[24rem] min-w-0 flex-1 flex-col md:min-h-[32rem] h-[calc(100dvh-12rem)]">
-          {observationKey ? <ObservedInvocation branch={observedBranch} onRoot={() => selectObservation(null)} /> : <>
+      <div className={cx('mt-4 flex min-h-0 min-w-0 gap-3', fillViewport && 'flex-1')}>
+        <div className={cx('flex min-w-0 flex-1 flex-col', fillViewport ? 'min-h-0' : 'min-h-[24rem] md:min-h-[32rem] h-[calc(100dvh-12rem)]')}>
+          {opened ? <SubagentView engagementId={engagementId} instance={opened} transcripts={snapshot.data?.transcripts ?? []} truncated={snapshot.data?.transcriptsTruncated ?? false} peers={roster.data?.instances ?? []} onBack={() => selectOpened(null)} /> : <>
           {activeRunId && (
             <div className="flex items-center gap-2 text-xs text-muted" role="status">
               <span className="inline-flex h-6 items-center rounded-full border border-line bg-subtle px-2.5 font-mono">run {activeRunId.slice(0, 12)}...</span>
@@ -679,7 +705,7 @@ export function RealConversation({ engagementId, initialThreadId, embedded = fal
           />
           </>}
         </div>
-        {wide && agentsOpen && <><Separator label="Resize agent sidebar" side="right" r={agentWidth} cfg={INSP} /><aside style={{ width: agentWidth.w }} className="flex min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-panel xl:h-[calc(100dvh-12rem)]" aria-label="Agent and activity sidebar"><AgentSidebar tab={sideTab} onTab={setSideTab} summary={{ state: runStatus === 'pending' || runStatus === 'running' ? 'Running' : pendingQuestions.length > 0 ? 'Waiting' : 'Idle', active: (fleet.data?.branches ?? []).filter((b) => b.state === 'running').length, task: trace.at(-1)?.label ?? null }} agents={agentPanel} progress={<ProgressCard bundle={selectedKind === 'planning' ? planning.data?.bundle ?? null : null} labels={PLANNING_DOC_LABELS} tools={toolProgress} />} artifacts={<ArtifactLinks engagementId={engagementId} />} /></aside></>}
+        {wide && agentsOpen && <><Separator label="Resize agent sidebar" side="right" r={agentWidth} cfg={INSP} /><aside style={{ width: agentWidth.w }} className="flex min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-panel xl:h-[calc(100dvh-12rem)]" aria-label="Agent and activity sidebar"><AgentSidebar tab={sideTab} onTab={setSideTab} summary={{ state: runStatus === 'pending' || runStatus === 'running' ? 'Running' : pendingQuestions.length > 0 ? 'Waiting' : 'Idle', active: runningSubagents }} agents={agentPanel} progress={<ProgressCard bundle={selectedKind === 'planning' ? planning.data?.bundle ?? null : null} labels={PLANNING_DOC_LABELS} progress={executionProgress} />} artifacts={<WorkspaceTree engagementId={engagementId} />} /></aside></>}
       </div>
       {embedded && <><Drawer open={agentsSheet && !wide} onClose={() => setAgentsSheet(false)} title="Agents / Context" width={420}>{agentPanel}</Drawer><Drawer open={historySheet} onClose={() => setHistorySheet(false)} title="Execution history" width={980}><RealOperationsHistory engagementId={engagementId} /></Drawer></>}
     </>
@@ -939,7 +965,7 @@ function ThinkingBlock({ text, durationMs, streaming }: { text: string; duration
         {open ? <ChevronDown size={12} aria-hidden /> : <ChevronRight size={12} aria-hidden />}
         {open ? 'Hide thinking' : label}
       </button>
-      {open && <p className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap break-words border-l border-line pl-3 italic">{text}</p>}
+      {open && <div className="mt-1 max-h-40 overflow-y-auto break-words border-l border-line pl-3 italic">{renderMarkdown(text)}</div>}
     </div>
   )
 }
@@ -1205,7 +1231,7 @@ type SideTab = 'agents' | 'progress' | 'artifacts'
 function AgentSidebar({ tab, onTab, summary, agents, progress, artifacts }: {
   tab: SideTab
   onTab: (tab: SideTab) => void
-  summary: { state: string; active: number; task: string | null }
+  summary: { state: string; active: number }
   agents: ReactElement
   progress: ReactElement
   artifacts: ReactElement
@@ -1217,7 +1243,7 @@ function AgentSidebar({ tab, onTab, summary, agents, progress, artifacts }: {
           <span className="font-semibold text-fg">{summary.state}</span>
           <span className="text-muted">{summary.active} active</span>
         </div>
-        {summary.task && <p className="truncate text-muted" title={summary.task}>{summary.task}</p>}
+        <p className="text-muted">Agent activity and progress are in the tabs below.</p>
       </div>
       <div className="px-3 pt-2.5">
         <Segmented value={tab} onChange={onTab} options={[{ id: 'agents', label: 'Agents' }, { id: 'progress', label: 'Progress' }, { id: 'artifacts', label: 'Artifacts' }]} />
@@ -1239,84 +1265,6 @@ const PLANNING_DOC_LABELS: Record<string, string> = {
   'data-handling': 'Data handling',
   abort: 'Abort plan',
   cleanup: 'Cleanup plan',
-}
-const PLANNING_STATE_TONE: Record<string, string> = {
-  ready: 'border-ok/40 text-ok',
-  missing: 'border-line text-muted',
-  invalid: 'border-bad/40 text-bad',
-  unavailable: 'border-warn/40 text-warn',
-}
-
-/** Artifacts: real planning document states from the server, plus shortcuts to the surfaces that own each artifact. */
-function ArtifactLinks({ engagementId }: { engagementId: string }): ReactElement {
-  const planning = usePlanningDocuments(engagementId)
-  const reports = useConversationReports(engagementId)
-  const docs = planning.data ? Object.entries(planning.data.bundle) : []
-  const links: { label: string; tab: string }[] = [
-    { label: 'Scope & RoE', tab: 'scope' },
-    { label: 'Findings & evidence', tab: 'findings' },
-    { label: 'Reports', tab: 'reports' },
-  ]
-  return (
-    <div className="space-y-4">
-      <section aria-label="Report files" className="space-y-2">
-        <h3 className="text-xs font-semibold text-fg">Report files</h3>
-        {reports.isPending ? <Skeleton className="h-16" /> : reports.isError ? (
-          <p className="text-xs text-bad" role="alert">{reports.error instanceof Error ? reports.error.message : 'Reports could not be read.'}</p>
-        ) : reports.data.reports.length === 0 ? (
-          <p className="text-xs text-muted">No report has been drafted for this project yet.</p>
-        ) : (
-          <ul className="grid gap-2">
-            {reports.data.reports.map((report) => (
-              <li key={report.id}>
-                <button type="button" onClick={() => go('project', { id: engagementId, tab: 'reports' })}
-                  className="flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-line bg-panel px-3 py-2.5 text-left text-xs hover:bg-hover">
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium text-fg">{report.title}</span>
-                    <span className="block text-[11px] text-muted">Report · v{report.version}</span>
-                  </span>
-                  <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] uppercase text-muted">{report.status.replace('_', ' ')}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <section aria-label="Planning documents" className="space-y-2">
-        <h3 className="text-xs font-semibold text-fg">Planning documents</h3>
-        {planning.isPending ? <Skeleton className="h-16" /> : planning.isError ? (
-          <p className="text-xs text-bad" role="alert">{planning.error instanceof Error ? planning.error.message : 'Planning documents could not be read.'}</p>
-        ) : (
-          <ul className="grid gap-2">
-            {docs.map(([name, state]) => (
-              <li key={name} className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-line bg-panel px-3 py-2.5 text-xs">
-                <span className="min-w-0">
-                  <span className="block truncate font-medium text-fg">{PLANNING_DOC_LABELS[name] ?? name}</span>
-                  <span className="block text-[11px] text-muted">Planning document</span>
-                </span>
-                <span className={cx('shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase', PLANNING_STATE_TONE[state] ?? 'border-line text-muted')}>{state}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Button size="sm" variant="secondary" onClick={() => go('project', { id: engagementId, tab: 'planning' })}>Open planning documents</Button>
-      </section>
-      <section aria-label="Project surfaces" className="space-y-1.5">
-        <h3 className="text-xs font-semibold text-fg">Project surfaces</h3>
-        <ul className="space-y-1.5">
-          {links.map((item) => (
-            <li key={item.tab}>
-              <button type="button" onClick={() => go('project', { id: engagementId, tab: item.tab })}
-                className="flex w-full items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-left text-sm hover:bg-hover">
-                <span className="truncate text-fg">{item.label}</span>
-                <ChevronRight size={14} className="shrink-0 text-muted" aria-hidden />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  )
 }
 
 function QuestionCard({ question, busy, onAnswer, onValue }: { question: PendingInterruptView; busy: boolean; onAnswer?: (value: string | string[]) => void; onValue: (value: string | string[]) => void }): ReactElement {
