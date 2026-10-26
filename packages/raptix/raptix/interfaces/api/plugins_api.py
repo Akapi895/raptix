@@ -54,6 +54,7 @@ from pydantic import BaseModel, Field
 from raptix.graph_registry import _BUNDLE_TO_GRAPHS  # private, but stable: bundle->graphs map
 from raptix.interfaces.api.auth import require_runtime_token
 from raptix.interfaces.api.finding_poc_routes import router as finding_poc_router
+from raptix.interfaces.api.webshell_routes import router as webshell_router
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +142,7 @@ app = FastAPI(
     dependencies=[Depends(require_runtime_token)],
 )
 app.include_router(finding_poc_router)
+app.include_router(webshell_router)
 
 
 @app.get("/_decepticon/bundles", response_model=BundlesResponse)
