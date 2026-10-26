@@ -204,8 +204,17 @@ def _make_skills(*, backend: Any, role: str, skill_sources: list[str] | None = N
     return SkillsMiddleware(backend=backend, sources=sources)
 
 
-def _make_filesystem(*, backend: Any, **_: Any):
-    return FilesystemMiddleware(backend=backend)
+# Roles that read the workspace but never write it. The verifier writes its verdict only through
+# verify_workspace_candidate, which writes the record and the finding status itself.
+_READ_ONLY_FILESYSTEM_ROLES = frozenset({"verifier"})
+_FILESYSTEM_WRITE_TOOLS = frozenset({"write_file", "edit_file"})
+
+
+def _make_filesystem(*, backend: Any, role: str | None = None, **_: Any):
+    middleware = FilesystemMiddleware(backend=backend)
+    if role in _READ_ONLY_FILESYSTEM_ROLES:
+        middleware.tools = [t for t in middleware.tools if t.name not in _FILESYSTEM_WRITE_TOOLS]
+    return middleware
 
 
 def _make_subagent(*, backend: Any, subagents: list | None = None, **_: Any):

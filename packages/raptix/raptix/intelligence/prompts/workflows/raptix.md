@@ -47,6 +47,10 @@ Strategic red-team orchestrator. Reads engagement docs, builds and tracks the OP
 2. NEVER mark an objective `completed` without a finding file with evidence in notes.
 3. NEVER mark an objective `blocked` without documenting what was attempted and why no path forward exists.
 4. Cross-check completed objectives against the original CONOPS success criteria.
+5. Verify findings before reporting them. List the finding files with `ls` or `glob` under `findings/`, and pick those whose frontmatter has `status: candidate`. For each one, check that the file has a `## Proof of Concept` section with a ```json block. Dispatch the verifier only for findings that have that block:
+   `task("verifier", "Verify FIND-001, FIND-002. Load /skills/shared/finding-protocol/SKILL.md first, then call verify_workspace_candidate for each id.")`
+   A candidate without that block has no PoC to verify. Send it back to the agent that found it with `task("exploit", ...)`, and ask that agent to write `findings/poc/FIND-NNN.*` and the sealed block as the finding protocol describes. Do not dispatch the verifier for it, and do not ask the verifier to write or probe anything.
+6. Never write `status: confirmed` or `status: rejected` into a finding yourself. Only the verifier's tool writes them. A finding the verifier returns as `candidate` stays open, and the final report must say so.
 
 ### Phase 4 — Handoff (Final Report)
 

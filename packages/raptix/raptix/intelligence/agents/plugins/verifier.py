@@ -10,9 +10,10 @@ with a ``VALIDATES`` edge is the contract the Patcher and Exploiter
 stages consume. False positives here poison everything downstream, so
 the prompt + tool surface both lean hard into the ZFP workflow.
 
-Tool surface:
-  - ``validate_finding`` — the ZFP-enforcing PoC runner
-  - ``bash`` — start services, stage PoCs, run curl sanity checks
+Tool surface (ADR-0103):
+  - ``verify_workspace_candidate`` — the only verdict path; takes a finding id and reads the sealed PoC from the finding
+  - ``inspect_evidence`` — read-only evidence trail
+  The verifier has no shell and cannot run a command that the sealed PoC does not contain.
 
 Library API
 -----------
@@ -53,25 +54,21 @@ from typing import Any
 from langchain.agents import create_agent
 
 from raptix.execution.backends import build_sandbox_backend, make_agent_backend
-from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
 from raptix.execution.tools.evidence import EVIDENCE_TOOLS
-from raptix.execution.tools.plumbing.verification import WORKSPACE_VERIFICATION_TOOLS
+from raptix.execution.tools.plumbing.candidate_verification import CANDIDATE_VERIFICATION_TOOLS
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
-# Graph-backed verification remains deferred with the Neo4j redesign.  The
-# workspace verifier is graph-independent and enforces positive + negative
-# controls, so the specialist can produce promotable evidence today.
-# ``inspect_evidence`` (Wave T5) is the verifier's read-only evidence trail.
+# The verifier has no shell and no direct PoC runner. ``verify_workspace_candidate`` runs the sealed PoC and its
+# baseline and writes the verdict (ADR-0103). ``inspect_evidence`` (Wave T5) is the read-only evidence trail.
 _STANDARD_TOOLS: dict[str, Any] = {
     t.name: t
     for t in [
-        *WORKSPACE_VERIFICATION_TOOLS,
+        *CANDIDATE_VERIFICATION_TOOLS,
         *EVIDENCE_TOOLS,
-        *BASH_TOOLS,
     ]
 }
 
@@ -155,7 +152,7 @@ def create_verifier_agent(
             sandbox=sandbox,
         )
     if system_prompt is None:
-        system_prompt = load_prompt(_ROLE, shared=["bash"])
+        system_prompt = load_prompt(_ROLE)
 
     return create_agent(
         llm,
@@ -185,7 +182,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "bugs to FINDING nodes with CVSS vectors."
     ),
     factory=create_verifier_agent,
-    parent_agents=("vulnresearch",),
+    parent_agents=("vulnresearch", "raptix"),
     bundle="plugins",
     priority=30,
 )

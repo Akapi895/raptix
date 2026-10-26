@@ -100,6 +100,8 @@ Use [`template.md`](template.md) as the starting point.
 | [0086](0086-per-run-sandbox-workspace-isolation.md) | Per-run workspace isolation replaces the single-engagement sandbox pin | Proposed — revision required |
 | [0098](0098-controller-lease-for-c2-sessions.md) | Give each interactive C2 console one controller at a time through a time-limited lease | Proposed |
 | [0099](0099-runtime-c2-dispatch-through-web-ledger.md) | Dispatch agent C2 commands through the web command ledger so each command names its run | Proposed |
+| [0103](0103-verified-poc-gate-for-workspace-findings.md) | A workspace finding is confirmed only by a separate verifier that re-runs its sealed Proof of Concept | Proposed |
+| [0104](0104-reproduce-sealed-poc-from-the-console.md) | An operator reproduces a finding's sealed Proof of Concept from the console, and a reproduction never writes a verdict | Proposed |
 
 Keep this index in sync when you land a new ADR. (Rows 0027–0048 are missing
 from this index as pre-existing drift, not introduced by ADR-0049 — the files

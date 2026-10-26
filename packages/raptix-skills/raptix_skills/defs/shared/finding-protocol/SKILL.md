@@ -38,6 +38,7 @@ YAML frontmatter — required fields only:
 id: FIND-001
 severity: critical
 title: <one-line summary>
+status: candidate            # candidate | confirmed | rejected; only verify_workspace_candidate writes the last two
 cwe: CWE-89               # optional at operational tier; REQUIRED at deliverable promotion
 vrt: server-side-injection/sql-injection/blind   # optional Bugcrowd VRT path (category/sub-category/variant)
 agent: recon | exploit | postexploit | analyst | ...
@@ -55,13 +56,11 @@ location: http:https://app.example.com/admin/users  # optional but recommended s
 - <pointer 2>: <one-line per pointer>
 
 
+## Proof of Concept
+Sealed as described in "Sealed Proof of Concept" below. A finding without a sealed PoC stays `candidate`.
+
 ## Verification
-Required before a finding is marked confirmed:
-- status: `confirmed` or `rejected`
-- positive command and discriminating success signal
-- equivalent negative-control command and expected baseline signal
-- `findings/evidence/FIND-001_verification.json` from `validate_workspace_finding`
-- CVSS vector string when confirmed
+Written by `verify_workspace_candidate` only. Do not write this section yourself.
 
 ## Next
 next agent should: <action>
@@ -71,6 +70,32 @@ blocking — <reason>
 
 The `## Next` section is the decision-support hook — the orchestrator
 reads it to choose the next dispatch.
+
+## Sealed Proof of Concept
+
+A finding is confirmed only by `verify_workspace_candidate`, which re-runs the PoC from the block below and records the verdict. Write the block once the PoC is final. A later change to the PoC file or to any field breaks the seal, and the verifier refuses the finding.
+
+The block is one JSON object in a fenced `json` block under the `## Proof of Concept` heading:
+
+- `file`: the PoC file, under `findings/poc/`.
+- `poc_sha256`: SHA-256 of that file.
+- `payload`: the exact substring of `command` that carries the exploit. It must occur exactly once in `command`, written inline. A command that reads the payload from a file (`--data-binary @file`, `$(cat file)`) cannot be sealed, because the payload does not appear in `command`. The PoC file under `findings/poc/` holds the same payload for review, but the command itself must contain it.
+- `command`: the PoC command, run from `/workspace`, on one line, with the payload inline. For an HTTP request whose JSON body carries the payload, the form is `curl -s -X POST http://HOST:PORT/PATH -H 'Content-Type: application/json' -d '{"code": "PAYLOAD"}'`. Write the payload on one line: newlines become `\n`, and double quotes inside it become `\"`. Do not use single quotes inside the payload, because the command wraps the body in single quotes.
+- `success_patterns`: Python regular expressions that match the proof output and show the impact the finding claims. Each one is at least 4 characters, matches no empty output, and contains no comma.
+- `negative_command`: `command` with `payload` removed and nothing else changed. For the form above, the negative command is `curl -s -X POST http://HOST:PORT/PATH -H 'Content-Type: application/json' -d '{"code": ""}'`.
+- `negative_patterns`: patterns that match the baseline output.
+- `cvss_vector`: a complete CVSS 4.0 vector for the observed result.
+- `spec_sha256`: the seal. Compute it last.
+
+Seal the block in this order:
+
+1. Write the PoC file. Run `sha256sum findings/poc/FIND-001.py` and put the digest in `poc_sha256`.
+2. Fill the other fields, without `spec_sha256`.
+3. Compute the seal and put it in `spec_sha256`:
+
+````bash
+python3 -c 'import hashlib,json,re,sys; t=open(sys.argv[1]).read(); m=re.search(r"## Proof of Concept.*?```json\n(.*?)\n```", t, re.S); b=json.loads(m.group(1)); b.pop("spec_sha256",None); print(hashlib.sha256(json.dumps(b,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")).hexdigest())' findings/FIND-001.md
+````
 
 ## Severity Guide (operational, principle-only)
 
@@ -133,6 +158,7 @@ Use exactly one of these schemes and normalize the value before writing it:
 - One Markdown file per finding — do NOT bundle multiple vulnerabilities
 - ALL agent documents use Markdown format — never write JSON as a deliverable document
 - Do NOT create `findings.md`; each finding lives in its own `findings/FIND-{NNN}.md` file
+- Never write `status: confirmed` or `status: rejected`. Only `verify_workspace_candidate` writes them.
 
 ## Promotion to Deliverable Tier
 
