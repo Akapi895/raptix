@@ -30,6 +30,8 @@ import { RuntimeRouter, prismaRouteSource } from './integrations/runtime/runtime
 import { ApprovalsService } from './services/approvals-service.js';
 import { FindingsService } from './services/findings-service.js';
 import { FindingPocService } from './services/finding-poc-service.js';
+import { WebShellService } from './services/webshell-service.js';
+import { RuntimeWebShellClient } from './integrations/webshell/runtime-webshell-client.js';
 import { ArtifactsService } from './services/artifacts-service.js';
 import { AssetMapService } from './services/asset-map-service.js';
 import { GraphService } from './services/graph-service.js';
@@ -58,6 +60,7 @@ import { InboxService } from './services/inbox-service.js';
 import { WorkspaceSettingsService } from './services/workspace-settings-service.js';
 import { AuditService } from './services/audit-service.js';
 import { ClosureService } from './services/closure-service.js';
+import { WebShellAcquisitionService } from './services/webshell-acquisition-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 import { configureSingleOperator, requireEngagementAccess } from './auth/membership-policy.js';
 
@@ -269,7 +272,7 @@ async function main(): Promise<void> {
    // landscape — every command dispatch also consumes the engagement's live
    // approved ROE revision, its time windows and the stop state.
    // The grant service and the C2 service reference each other; the provider is bound once the C2 service exists.
-  let sessionProvider: { assertSessionReported(engagementId: string, sessionId: string): Promise<void> } | undefined;
+  const sessionProviderRef: { current: { assertSessionReported(engagementId: string, sessionId: string): Promise<void> } | undefined } = { current: undefined };
   const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined, scopeService && governanceService ? async (engagementId, target) => {
      const approved = await scopeService.latestApproved(engagementId);
      if (approved === null) throw new ProjectApiError(403, 'C2 commands require an approved scope revision for this engagement; complete the scope review first.');
@@ -282,10 +285,30 @@ async function main(): Promise<void> {
        const decision = await scopeService.targetInScope(engagementId, target);
        if (!decision.ok) throw new ProjectApiError(403, decision.reason ?? `Session target ${target} is outside the approved scope.`);
      }
-   } : undefined, (engagementId, sessionId) => sessionProvider!.assertSessionReported(engagementId, sessionId)) : undefined;
+   } : undefined, (engagementId, sessionId) => sessionProviderRef.current!.assertSessionReported(engagementId, sessionId)) : undefined;
   const auditService = dbClient ? new AuditService(dbClient) : undefined;
   const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined, c2Grants?.assertCommandAuthorized.bind(c2Grants)) : undefined;
-  sessionProvider = c2Service;
+  sessionProviderRef.current = c2Service;
+  const webshellService = dbClient && runtimeConfig && runtimeApiToken && sandboxKey && scopeService && governanceService
+    ? new WebShellService({
+        db: dbClient,
+        runtime: new RuntimeWebShellClient({ runtimeApiUrl: runtimeConfig.apiUrl, runtimeApiToken }),
+        scope: scopeService,
+        governance: governanceService,
+        sandboxKey,
+        perProjectSandbox: runtimeConfig.perProjectSandbox,
+      })
+    : undefined;
+  const webshellAcquisitionService = webshellService && scopeService && governanceService && runtimeConfig && runtimeApiToken && sandboxKey
+    ? new WebShellAcquisitionService({
+        db: dbClient!,
+        runtime: new RuntimeWebShellClient({ runtimeApiUrl: runtimeConfig.apiUrl, runtimeApiToken }),
+        scope: scopeService,
+        governance: governanceService,
+        sandboxKey,
+        perProjectSandbox: runtimeConfig.perProjectSandbox,
+      })
+    : undefined;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const inboxService = dbClient && governanceService ? new InboxService(dbClient, governanceService) : undefined;
@@ -304,6 +327,8 @@ async function main(): Promise<void> {
     approvalsService,
     findingsService,
     findingPocService,
+    webshellService,
+    webshellAcquisitionService,
     artifactsService,
     graphService,
   assetMapService: dbClient && env.graph ? new AssetMapService(dbClient, env.graph) : undefined,

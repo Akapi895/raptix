@@ -25,6 +25,9 @@ import { registerApprovalRoutes } from './http/routes/approvals.routes.js';
 import { registerFindingsRoutes } from './http/routes/findings.routes.js';
 import { registerPocRoutes } from './http/routes/poc.routes.js';
 import type { FindingPocService } from './services/finding-poc-service.js';
+import { registerWebShellRoutes, registerWebShellAcquisitionRoutes } from './http/routes/webshell.routes.js';
+import type { WebShellService } from './services/webshell-service.js';
+import type { WebShellAcquisitionService } from './services/webshell-acquisition-service.js';
 import { registerAssetMapRoutes } from './http/routes/asset-map.routes.js';
 import { registerGraphRoutes } from './http/routes/graph.routes.js';
 import { registerTimelineRoutes } from './http/routes/timeline.routes.js';
@@ -94,6 +97,8 @@ export interface AppOptions {
   readonly approvalsService?: ApprovalsService;
   readonly findingsService?: FindingsService;
   readonly findingPocService?: FindingPocService;
+  readonly webshellService?: WebShellService;
+  readonly webshellAcquisitionService?: WebShellAcquisitionService;
   readonly artifactsService?: ArtifactsService;
   readonly graphService?: GraphService;
   readonly assetMapService?: AssetMapService;
@@ -185,6 +190,10 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     vaultSupported: options.vaultService !== undefined,
     vaultKeyConfigured: options.vaultService !== undefined && options.vaultKeyConfigured === true,
     membersSupported: options.membersService !== undefined,
+    webshellSupported: options.webshellService !== undefined,
+    webshellRuntimeConfigured: options.webshellService?.runtimeConfigured === true,
+    webshellAcquisitionSupported: options.webshellAcquisitionService !== undefined,
+    webshellRefineConfigured: options.webshellAcquisitionService !== undefined,
   });
 
   if (options.projectsService !== undefined) {
@@ -204,6 +213,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, identity);
   if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, identity);
   if (options.findingPocService) registerPocRoutes(app, options.findingPocService, identity);
+  if (options.webshellService) registerWebShellRoutes(app, options.webshellService, identity);
+  if (options.webshellAcquisitionService) registerWebShellAcquisitionRoutes(app, options.webshellAcquisitionService, identity);
   if (options.graphService) registerGraphRoutes(app, options.graphService, identity);
   if (options.assetMapService) registerAssetMapRoutes(app, options.assetMapService, identity);
   if (options.timelineService && options.exportService) registerTimelineRoutes(app, options.timelineService, options.exportService, identity);

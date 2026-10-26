@@ -364,4 +364,149 @@ export class WebShellService {
     });
     return toConnectionView(row);
   }
+
+  public async probe(actorId: string, engagementId: string, connectionId: string, body: unknown): Promise<WebShellProbeView> {
+    const requestId = requestIdOf(body);
+    await this.assertCanMutate(actorId, engagementId);
+    const connection = await this.connectionFor(engagementId, connectionId);
+    if (connection.state === 'closed') throw new ProjectApiError(409, 'The WebShell connection is closed; probing is refused.');
+    await this.assertExecutionAllowed(engagementId, connection.target);
+    const previous = await this.options.db.webShellProbe.findUnique({ where: { connectionId_requestId: { connectionId, requestId } } });
+    if (previous !== null) return toProbeView(previous);
+    const sandbox = await this.sandboxFor(engagementId);
+    let result;
+    try {
+      result = await this.options.runtime.probe(sandbox, profileOf(connection), requestId);
+    } catch (error) {
+      throw this.mapRuntimeError(error);
+    }
+    let probe: WebShellProbe;
+    try {
+      probe = await this.options.db.webShellProbe.create({
+        data: {
+          connectionId,
+          engagementId,
+          requestId,
+          state: result.state,
+          httpStatus: result.httpStatus,
+          matched: result.matched,
+          output: bounded(result.output, OUTPUT_LIMIT),
+          outputTruncated: result.outputTruncated || result.output.length > OUTPUT_LIMIT,
+          error: optionalText(result.error, ERROR_LIMIT),
+          durationMs: result.durationMs,
+        },
+      });
+    } catch (error) {
+      if (!isUnique(error)) throw error;
+      const winner = await this.options.db.webShellProbe.findUnique({ where: { connectionId_requestId: { connectionId, requestId } } });
+      if (winner === null) throw new ProjectApiError(409, 'The WebShell probe could not be recorded.');
+      return toProbeView(winner);
+    }
+    await this.options.db.webShellConnection.updateMany({
+      where: { id: connectionId, engagementId, state: { not: 'closed' } },
+      data: { state: result.state, lastProbeId: probe.id, lastProbeAt: probe.createdAt },
+    });
+    return toProbeView(probe);
+  }
+
+  public async probes(actorId: string, engagementId: string, connectionId: string): Promise<{ connectionId: string; probes: WebShellProbeView[] }> {
+    await this.access(actorId, engagementId, 'viewer');
+    await this.connectionFor(engagementId, connectionId);
+    const rows = await this.options.db.webShellProbe.findMany({ where: { connectionId, engagementId }, orderBy: { createdAt: 'desc' }, take: MAX_LIST });
+    return { connectionId, probes: rows.map(toProbeView) };
+  }
+
+  public async commands(actorId: string, engagementId: string, connectionId: string): Promise<{ connectionId: string; commands: WebShellCommandView[] }> {
+    await this.access(actorId, engagementId, 'viewer');
+    await this.connectionFor(engagementId, connectionId);
+    const rows = await this.options.db.webShellCommand.findMany({ where: { connectionId, engagementId }, orderBy: { createdAt: 'desc' }, take: MAX_LIST });
+    return { connectionId, commands: rows.map(toCommandView) };
+  }
+
+  public async command(actorId: string, engagementId: string, connectionId: string, commandId: string): Promise<WebShellCommandView> {
+    await this.access(actorId, engagementId, 'viewer');
+    await this.connectionFor(engagementId, connectionId);
+    const row = await this.options.db.webShellCommand.findFirst({ where: { id: commandId, connectionId, engagementId } });
+    if (row === null) throw new ProjectApiError(404, 'WebShell command not found');
+    return toCommandView(row);
+  }
+
+  public async execute(actorId: string, engagementId: string, connectionId: string, body: unknown): Promise<WebShellCommandView> {
+    if (!isWebShellCommandCreateInput(body)) throw new ProjectApiError(400, 'The WebShell command input is invalid.');
+    const input = body;
+    await this.assertCanMutate(actorId, engagementId);
+    const connection = await this.connectionFor(engagementId, connectionId);
+    if (connection.state === 'closed') throw new ProjectApiError(409, 'The WebShell connection is closed; commands are refused.');
+    await this.assertExecutionAllowed(engagementId, connection.target);
+    const payloadHash = createHash('sha256').update(JSON.stringify([connectionId, input.command])).digest('hex');
+    const previous = await this.options.db.webShellCommand.findUnique({ where: { engagementId_requestId: { engagementId, requestId: input.requestId } } });
+    if (previous !== null) {
+      if (previous.payloadHash !== payloadHash) throw new ProjectApiError(409, 'Command identity was reused with different input.');
+      return toCommandView(previous);
+    }
+    const active = await this.options.db.webShellCommand.findUnique({ where: { activeConnectionId: connectionId } });
+    if (active !== null) throw new ProjectApiError(409, 'The connection already has an unresolved WebShell command; reconcile or close it before sending another.');
+    let reserved: WebShellCommand;
+    try {
+      reserved = await this.options.db.webShellCommand.create({
+        data: {
+          connectionId,
+          engagementId,
+          requestId: input.requestId,
+          command: input.command,
+          payloadHash,
+          status: 'creating',
+          output: '',
+          outputTruncated: false,
+          actorId,
+          activeConnectionId: connectionId,
+        },
+      });
+    } catch (error) {
+      if (!isUnique(error)) throw error;
+      const winner = await this.options.db.webShellCommand.findUnique({ where: { engagementId_requestId: { engagementId, requestId: input.requestId } } });
+      if (winner !== null) {
+        if (winner.payloadHash !== payloadHash) throw new ProjectApiError(409, 'Command identity was reused with different input.');
+        return toCommandView(winner);
+      }
+      throw new ProjectApiError(409, 'The connection already has an unresolved WebShell command; reconcile or close it before sending another.');
+    }
+    try {
+      await this.assertExecutionAllowed(engagementId, connection.target);
+    } catch (error) {
+      await this.options.db.webShellCommand.update({ where: { id: reserved.id }, data: { status: 'failed', activeConnectionId: null, error: error instanceof Error ? error.message.slice(0, ERROR_LIMIT) : 'WebShell gate refused the command.' } });
+      throw error;
+    }
+    const sandbox = await this.sandboxFor(engagementId);
+    let result;
+    try {
+      result = await this.options.runtime.execute(sandbox, profileOf(connection), input.requestId, input.command);
+    } catch (error) {
+      if (error instanceof RuntimeWebShellUnavailableError) {
+        const message = bounded(error.message, ERROR_LIMIT);
+        const row = await this.options.db.webShellCommand.update({ where: { id: reserved.id }, data: { status: 'uncertain', error: message } });
+        return toCommandView(row);
+      }
+      if (error instanceof RuntimeWebShellError && (error.statusCode === 400 || error.statusCode === 403 || error.statusCode === 503)) {
+        await this.options.db.webShellCommand.update({ where: { id: reserved.id }, data: { status: 'failed', activeConnectionId: null, error: bounded(error.message, ERROR_LIMIT) } });
+        throw this.mapRuntimeError(error);
+      }
+      const message = error instanceof Error ? bounded(error.message, ERROR_LIMIT) : 'The runtime did not answer the WebShell command.';
+      const row = await this.options.db.webShellCommand.update({ where: { id: reserved.id }, data: { status: 'uncertain', error: message } });
+      return toCommandView(row);
+    }
+    const row = await this.options.db.webShellCommand.update({
+      where: { id: reserved.id },
+      data: {
+        status: result.state,
+        httpStatus: result.httpStatus,
+        exitCode: result.exitCode,
+        output: bounded(result.output, OUTPUT_LIMIT),
+        outputTruncated: result.outputTruncated || result.output.length > OUTPUT_LIMIT,
+        error: optionalText(result.error, ERROR_LIMIT),
+        activeConnectionId: result.state === 'uncertain' ? connectionId : null,
+      },
+    });
+    return toCommandView(row);
+  }
 }
