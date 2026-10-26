@@ -41,7 +41,7 @@ const SECTIONS: readonly SectionDef[] = [
   { key: 'ai-workspace', group: 'OPERATIONS', label: 'AI Workspace', icon: Bot, tab: 'ai-workspace', match: ['ai-workspace', 'ai-operator', 'ai-history'] },
   { key: 'operations', group: 'OPERATIONS', label: 'Operations', icon: Activity, tab: 'operations', match: EXECUTION_MATCH },
   { key: 'asset-map', group: 'OPERATIONS', label: 'Asset Map', icon: Network, when: isAssetMapEnabled, tab: 'asset-map', match: ['asset-map'] },
-  { key: 'sessions', group: 'OPERATIONS', label: 'C2 Sessions', icon: RadioTower, tab: 'c2', match: ['c2', 'c2-channel', 'c2-session', 'c2-console'], legacy: ['sessions'] },
+  { key: 'sessions', group: 'OPERATIONS', label: 'Sessions', icon: RadioTower, tab: 'c2', match: ['c2', 'c2-channel', 'c2-session', 'c2-console'], legacy: ['sessions'] },
   { key: 'findings', group: 'RESULTS', label: 'Findings', icon: ShieldAlert, tab: 'findings', match: FINDING_MATCH },
   { key: 'evidence', group: 'RESULTS', label: 'Evidence', icon: Archive, tab: 'evidence', match: ['evidence', 'evidence-inspector'] },
   { key: 'analysis', group: 'RESULTS', label: 'Analysis', icon: Network, tab: 'analysis', match: ['analysis'] },

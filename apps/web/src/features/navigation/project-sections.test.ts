@@ -15,9 +15,9 @@ describe('project sections table', () => {
     }
   })
 
-  it('keeps Planning and C2 Sessions on their tab ids, and resolves the legacy ids to them', () => {
+  it('keeps Planning and Sessions on their tab ids, and resolves the legacy ids to them', () => {
     expect(items().find((item) => item.label === 'Planning')?.to).toBe('planning')
-    expect(items().find((item) => item.label === 'C2 Sessions')?.to).toBe('c2')
+    expect(items().find((item) => item.label === 'Sessions')?.to).toBe('c2')
     expect(resolveProjectTab('plans')).toBe('planning')
     expect(resolveProjectTab('sessions')).toBe('c2')
   })
