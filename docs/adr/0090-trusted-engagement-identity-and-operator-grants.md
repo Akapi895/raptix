@@ -59,3 +59,5 @@ validator refused every later run on that thread. Retry and reassign could not r
 - The mailbox schema gains a `grants` table through `CREATE TABLE IF NOT EXISTS`. No migration of existing rows.
 - Retry no longer depends on the model reproducing a fingerprint. A grant whose replacement never started
   stays open until it is revoked or the same command is replayed.
+
+**Superseded in part by ADR-0102 (2026-10-25).** A run works in the project's own sandbox volume, mounted at `/workspace`. The `/workspace/<slug>` fence and the slug in the engagement context were removed. The operator pin (`RAPTIX_ENGAGEMENT`) still applies to the legacy lab stack only.
