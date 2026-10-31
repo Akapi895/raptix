@@ -29,6 +29,8 @@ export interface CreateProjectInput {
   description?: string;
   scopeJson?: string;
   status?: string;
+  /** Server-issued before provisioning (ADR-0086 A): the sandbox must exist before the row. Defaults to a fresh slug. */
+  workspaceSlug?: string;
 }
 
 export interface UpdateProjectInput {
@@ -49,7 +51,7 @@ export interface ProjectStore {
 }
 
 /** `sbx-<slug>` must be a valid DNS label (apps/launcher/internal/sandboxes.ValidSlug): lowercase hex is always valid. */
-function generateWorkspaceSlug(): string {
+export function newWorkspaceSlug(): string {
   return `proj-${randomBytes(6).toString("hex")}`;
 }
 
@@ -81,7 +83,7 @@ export class PrismaProjectStore implements ProjectStore {
         description: input.description,
         scopeJson: input.scopeJson,
         status: input.status ?? "active",
-        workspaceSlug: generateWorkspaceSlug(),
+        workspaceSlug: input.workspaceSlug ?? newWorkspaceSlug(),
       },
       include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
     });

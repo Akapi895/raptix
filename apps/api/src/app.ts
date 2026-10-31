@@ -4,6 +4,7 @@ import type { C2Transport } from "./adapters/c2/client.js";
 import type { ReconProvidersTransport } from "./adapters/recon/client.js";
 import type { RuntimeTransport } from "./adapters/runtime/client.js";
 import type { SandboxFilesTransport } from "./adapters/sandbox/client.js";
+import type { SandboxProvisioner } from "./adapters/sandbox/controller.js";
 import type { AiRoleStore } from "./db/ai-role-store.js";
 import type { AlertSubscriptionStore } from "./db/alert-subscription-store.js";
 import type { AppConfigStore } from "./db/app-config-store.js";
@@ -65,6 +66,7 @@ export interface BuildAppOptions {
   vulnerabilityStore: VulnerabilityStore;
   alertSubscriptionStore: AlertSubscriptionStore;
   sandbox: SandboxFilesTransport;
+  sandboxProvisioner: SandboxProvisioner;
   batchQueueStore: BatchQueueStore;
   webshellStore: WebShellStore;
   c2: C2Transport;
@@ -103,6 +105,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     authStore: options.authStore,
     projectStore: options.projectStore,
     conversationStore: options.conversationStore,
+    sandboxProvisioner: options.sandboxProvisioner,
   });
   registerConversationRoutes(app, {
     authStore: options.authStore,
