@@ -50,8 +50,7 @@ describe("asset routes", () => {
     expect(list.json().assets).toHaveLength(1);
   });
 
-  it("import skips an item with no host/ip/domain", async () => {
-    const response = await app.inject({
+  it("import skips an item with no host/ip/domain", async () => {    const response = await app.inject({
       method: "POST",
       url: "/api/assets/import",
       headers: auth(),
@@ -153,8 +152,27 @@ describe("asset routes", () => {
     expect(stats.json()).toMatchObject({ total: 1, ips: 1 });
   });
 
-  it("scan-links is stubbed 501, not a fabricated success (needs the Neo4j AKG client)", async () => {
-    const response = await app.inject({ method: "POST", url: "/api/assets/scan-links", headers: auth(), payload: { scans: [] } });
-    expect(response.statusCode).toBe(501);
+  it("scan-links records asset-to-scan links and rejects unknown assets", async () => {
+    await importOne("host-i.example.com");
+    const list = await app.inject({ method: "GET", url: "/api/assets", headers: auth() });
+    const assetId = list.json().assets[0].id;
+
+    const linked = await app.inject({
+      method: "POST",
+      url: "/api/assets/scan-links",
+      headers: auth(),
+      payload: { scans: [{ asset_id: assetId, conversation_id: "conv-1" }, { asset_id: assetId, queue_id: "q1", task_id: "t1" }] },
+    });
+    expect(linked.statusCode).toBe(200);
+    expect(linked.json()).toEqual({ success: true });
+
+    const unknown = await app.inject({
+      method: "POST",
+      url: "/api/assets/scan-links",
+      headers: auth(),
+      payload: { scans: [{ asset_id: "nope", conversation_id: "conv-1" }] },
+    });
+    expect(unknown.statusCode).toBe(400);
+    expect(unknown.json().error).toContain("nope");
   });
 });

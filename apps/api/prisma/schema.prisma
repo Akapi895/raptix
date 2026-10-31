@@ -133,8 +133,30 @@ model Asset {
   lastSeenAt        DateTime       @default(now())
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+  scanLinks         ScanLink[]
 
   @@index([projectId])
+}
+
+// Scan links record which scan conversation or batch task touched which
+// asset -- apps/ui-app POSTs them when the operator launches a scan from the
+// asset table (assets feature's ScanLink: asset_id + conversation_id, or
+// asset_id + queue_id + task_id). Write-only from the frontend's side; apps/
+// api stores them for asset-history reads. Not the Neo4j AKG either -- the
+// "observed scan relationships" phrasing in the plan's Tier 3 row was a
+// wrong guess, same as the fact ops.
+model ScanLink {
+  id             String   @id @default(cuid())
+  assetId        String
+  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  conversationId String   @default("")
+  queueId        String   @default("")
+  taskId         String   @default("")
+  createdAt      DateTime @default(now())
+
+  @@index([assetId])
+  @@index([conversationId])
+  @@index([queueId])
 }
 
 model Vulnerability {

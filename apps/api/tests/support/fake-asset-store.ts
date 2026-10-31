@@ -1,4 +1,4 @@
-import type { AssetFields, AssetRecord, AssetStore, ListAssetsQuery } from "../../src/db/asset-store.js";
+import type { AssetFields, AssetRecord, AssetStore, ListAssetsQuery, ScanLinkInput } from "../../src/db/asset-store.js";
 
 const DEFAULTS: Omit<AssetRecord, "id" | "projectId" | "firstSeenAt" | "lastSeenAt" | "createdAt" | "updatedAt"> = {
   host: "",
@@ -141,6 +141,20 @@ export class FakeAssetStore implements AssetStore {
       count += 1;
     }
     return count;
+  }
+
+  public readonly scanLinks: { assetId: string; conversationId: string; queueId: string; taskId: string }[] = [];
+
+  public async createScanLinks(links: ScanLinkInput[]): Promise<number> {
+    for (const link of links) {
+      this.scanLinks.push({
+        assetId: link.assetId,
+        conversationId: link.conversationId ?? "",
+        queueId: link.queueId ?? "",
+        taskId: link.taskId ?? "",
+      });
+    }
+    return links.length;
   }
 
   public async stats() {
