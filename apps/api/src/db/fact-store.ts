@@ -84,6 +84,9 @@ export interface FactStore {
   update(projectId: string, factId: string, input: UpdateFactInput): Promise<FactRecord | null>;
   delete(projectId: string, factId: string): Promise<boolean>;
   count(projectId: string, excludeDeprecated: boolean): Promise<number>;
+  countAll(): Promise<number>;
+  /** Most recently updated facts across all projects (the dashboard's recent_facts). */
+  listRecent(limit: number): Promise<FactRecord[]>;
   /** Marks facts matching any of the given fact_keys OR ids; returns how many rows changed. */
   setDeprecated(projectId: string, factKeys: string[], ids: string[], deprecated: boolean, confidence?: string): Promise<number>;
   listEdges(projectId: string): Promise<FactEdgeRecord[]>;
@@ -237,6 +240,15 @@ export class PrismaFactStore implements FactStore {
 
   public async count(projectId: string, excludeDeprecated: boolean): Promise<number> {
     return this.db.projectFact.count({ where: { projectId, ...(excludeDeprecated ? { deprecated: false } : {}) } });
+  }
+
+  public async countAll(): Promise<number> {
+    return this.db.projectFact.count();
+  }
+
+  public async listRecent(limit: number): Promise<FactRecord[]> {
+    const rows = await this.db.projectFact.findMany({ orderBy: { updatedAt: "desc" }, take: limit });
+    return rows.map(toRecord);
   }
 
   public async setDeprecated(projectId: string, factKeys: string[], ids: string[], deprecated: boolean, confidence?: string): Promise<number> {
