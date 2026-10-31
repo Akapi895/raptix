@@ -17,6 +17,18 @@ export interface RuntimeClientOptions {
   timeoutMs?: number;
 }
 
+/** Port routes depend on (matches AuthStore/ProjectStore/ConversationStore) -- RuntimeClient implements it; tests use a fake. */
+export interface RuntimeTransport {
+  ping(): Promise<{ version: string; graphIds: readonly string[] }>;
+  createThread(threadId: string, metadata?: Record<string, string>): Promise<{ threadId: string; metadata: Record<string, unknown> }>;
+  getThread(threadId: string): Promise<{ threadId: string; metadata: Record<string, unknown>; status?: string }>;
+  getThreadState(threadId: string): Promise<{ values: Record<string, unknown>; tasks: unknown[] }>;
+  createRun(threadId: string, assistantId: string, input: Record<string, unknown>, requestId: string): Promise<RuntimeRun>;
+  getRun(threadId: string, runId: string): Promise<RuntimeRun>;
+  listRuns(threadId: string, offset?: number, limit?: number): Promise<RuntimeRun[]>;
+  cancelRun(threadId: string, runId: string): Promise<void>;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -49,7 +61,7 @@ function toRun(value: unknown, threadId: string): RuntimeRun {
  * token.ts). Tier 2 builds the domain routes (Projects, chat, HITL) on top
  * of this; Tier 1 only needs the client itself to exist and work.
  */
-export class RuntimeClient {
+export class RuntimeClient implements RuntimeTransport {
   private readonly apiUrl: string;
   private readonly apiToken: string | undefined;
   private readonly timeoutMs: number;
@@ -132,6 +144,13 @@ export class RuntimeClient {
       metadata: value.metadata,
       ...(typeof value.status === "string" ? { status: value.status } : {}),
     };
+  }
+
+  /** `/threads/:id/state`: the checkpoint values (including `messages`) plus any pending tasks. */
+  public async getThreadState(threadId: string): Promise<{ values: Record<string, unknown>; tasks: unknown[] }> {
+    const value = await this.fetchJson(`/threads/${encodeURIComponent(threadId)}/state`);
+    if (!isRecord(value) || !isRecord(value.values)) throw new RuntimeUnavailableError();
+    return { values: value.values, tasks: Array.isArray(value.tasks) ? value.tasks : [] };
   }
 
   public async createRun(

@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../../src/app.js";
 import { hashPassword } from "../../src/security/password.js";
 import { FakeAuthStore } from "../support/fake-auth-store.js";
+import { FakeConversationStore } from "../support/fake-conversation-store.js";
+import { FakeProjectStore } from "../support/fake-project-store.js";
+import { FakeRuntime } from "../support/fake-runtime.js";
 
 describe("auth routes", () => {
   let app: FastifyInstance;
@@ -11,7 +14,13 @@ describe("auth routes", () => {
   beforeEach(async () => {
     store = new FakeAuthStore();
     await store.createOperator({ username: "admin", displayName: "Operator", passwordHash: hashPassword("s3cret!") });
-    app = buildApp({ authStore: store, sessionDurationHours: 12 });
+    app = buildApp({
+      authStore: store,
+      sessionDurationHours: 12,
+      projectStore: new FakeProjectStore(),
+      conversationStore: new FakeConversationStore(),
+      runtime: new FakeRuntime(),
+    });
     await app.ready();
   });
 
