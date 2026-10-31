@@ -85,10 +85,23 @@ describe("conversation routes", () => {
     expect(missing.statusCode).toBe(404);
   });
 
-  it("transcript/plan/results/token-usage sub-resources are stubbed 501", async () => {
+  it("transcript/results/token-usage sub-resources are stubbed 501", async () => {
     const create = await app.inject({ method: "POST", url: "/api/conversations", headers: headers(), payload: {} });
     const id = create.json().id;
     const response = await app.inject({ method: "GET", url: `/api/conversations/${id}/token-usage`, headers: headers() });
     expect(response.statusCode).toBe(501);
+  });
+
+  it("plan-tasks is real, not stubbed -- honestly empty since Raptix produces no plan structure", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/conversations", headers: headers(), payload: {} });
+    const id = create.json().id;
+    const response = await app.inject({ method: "GET", url: `/api/conversations/${id}/plan-tasks`, headers: headers() });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ tasks: [], running: false, total: 0, completed: 0 });
+  });
+
+  it("plan-tasks 404s for a missing conversation", async () => {
+    const response = await app.inject({ method: "GET", url: "/api/conversations/missing/plan-tasks", headers: headers() });
+    expect(response.statusCode).toBe(404);
   });
 });
