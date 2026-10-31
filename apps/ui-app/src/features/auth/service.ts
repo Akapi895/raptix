@@ -128,7 +128,14 @@ export function createAuthService(dependencies: AuthServiceDependencies = {}) {
 
   function hasPermission(permission: string): boolean {
     if (!permission) return true;
-    return active()?.permissions.includes(permission) ?? false;
+    const permissions = active()?.permissions;
+    if (!permissions) return false;
+    // The single-operator deployment grants full scope as the "*" wildcard
+    // (apps/api's buildSessionPayload); a namespace may also be granted as
+    // "<namespace>:*". Literal entries always match themselves.
+    if (permissions.includes(permission) || permissions.includes('*')) return true;
+    const namespace = permission.split(':', 1)[0];
+    return permissions.includes(`${namespace}:*`);
   }
 
   function publish(): void {
