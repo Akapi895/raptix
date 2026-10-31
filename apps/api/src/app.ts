@@ -1,14 +1,21 @@
 import multipart from "@fastify/multipart";
 import Fastify, { type FastifyInstance } from "fastify";
 import type { C2Transport } from "./adapters/c2/client.js";
+import type { ReconProvidersTransport } from "./adapters/recon/client.js";
 import type { RuntimeTransport } from "./adapters/runtime/client.js";
 import type { SandboxFilesTransport } from "./adapters/sandbox/client.js";
 import type { AlertSubscriptionStore } from "./db/alert-subscription-store.js";
+import type { AppConfigStore } from "./db/app-config-store.js";
 import type { AssetStore } from "./db/asset-store.js";
 import type { AuthStore } from "./db/auth-store.js";
 import type { BatchQueueStore } from "./db/batch-queue-store.js";
 import type { ConversationStore } from "./db/conversation-store.js";
+import type { ExternalMcpStore } from "./db/external-mcp-store.js";
+import type { HiddenExecutionStore } from "./db/hidden-execution-store.js";
+import type { KnowledgeItemStore } from "./db/knowledge-item-store.js";
 import type { ProjectStore } from "./db/project-store.js";
+import type { RetrievalLogStore } from "./db/retrieval-log-store.js";
+import type { ToolGuardStore } from "./db/tool-guard-store.js";
 import type { VulnerabilityStore } from "./db/vulnerability-store.js";
 import type { WebShellStore } from "./db/webshell-store.js";
 import { handleError } from "./http/error-handler.js";
@@ -18,13 +25,21 @@ import { registerAttackChainRoutes } from "./http/routes/attack-chains.routes.js
 import { registerAuthRoutes } from "./http/routes/auth.routes.js";
 import { registerBatchTaskRoutes } from "./http/routes/batch-tasks.routes.js";
 import { registerC2Routes } from "./http/routes/c2.routes.js";
+import { registerConfigRoutes } from "./http/routes/config.routes.js";
 import { registerConversationRoutes } from "./http/routes/conversations.routes.js";
+import { registerExternalMcpRoutes } from "./http/routes/external-mcp.routes.js";
 import { registerFileRoutes } from "./http/routes/files.routes.js";
+import { registerFofaRoutes } from "./http/routes/fofa.routes.js";
 import { registerHealthRoutes } from "./http/routes/health.routes.js";
 import { registerHitlRoutes } from "./http/routes/hitl.routes.js";
+import { registerKnowledgeRoutes } from "./http/routes/knowledge.routes.js";
+import { registerMcpRoutes } from "./http/routes/mcp.routes.js";
+import { registerMonitorRoutes } from "./http/routes/monitor.routes.js";
 import { registerProjectRoutes } from "./http/routes/projects.routes.js";
+import { registerSkillsRoutes } from "./http/routes/skills.routes.js";
 import { registerStorageRoutes } from "./http/routes/storage.routes.js";
 import { registerTerminalRoutes } from "./http/routes/terminal.routes.js";
+import { registerToolGuardRoutes } from "./http/routes/tool-guard.routes.js";
 import { registerVulnerabilityRoutes } from "./http/routes/vulnerabilities.routes.js";
 import { registerWebShellRoutes } from "./http/routes/webshell.routes.js";
 
@@ -41,6 +56,13 @@ export interface BuildAppOptions {
   batchQueueStore: BatchQueueStore;
   webshellStore: WebShellStore;
   c2: C2Transport;
+  toolGuardStore: ToolGuardStore;
+  knowledgeItemStore: KnowledgeItemStore;
+  retrievalLogStore: RetrievalLogStore;
+  recon: ReconProvidersTransport;
+  appConfigStore: AppConfigStore;
+  externalMcpStore: ExternalMcpStore;
+  hiddenExecutionStore: HiddenExecutionStore;
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
   batchTaskWaitMs?: number;
@@ -104,6 +126,28 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   });
   registerC2Routes(app, { authStore: options.authStore, c2: options.c2 });
   registerTerminalRoutes(app, { authStore: options.authStore });
+  registerToolGuardRoutes(app, { authStore: options.authStore, toolGuardStore: options.toolGuardStore });
+  registerKnowledgeRoutes(app, {
+    authStore: options.authStore,
+    knowledgeItemStore: options.knowledgeItemStore,
+    retrievalLogStore: options.retrievalLogStore,
+  });
+  registerSkillsRoutes(app, { authStore: options.authStore });
+  registerFofaRoutes(app, { authStore: options.authStore, recon: options.recon });
+  registerConfigRoutes(app, { authStore: options.authStore, appConfigStore: options.appConfigStore });
+  registerExternalMcpRoutes(app, { authStore: options.authStore, externalMcpStore: options.externalMcpStore });
+  registerMonitorRoutes(app, {
+    authStore: options.authStore,
+    conversationStore: options.conversationStore,
+    runtime: options.runtime,
+    hiddenExecutionStore: options.hiddenExecutionStore,
+  });
+  registerMcpRoutes(app, {
+    authStore: options.authStore,
+    conversationStore: options.conversationStore,
+    runtime: options.runtime,
+    externalMcpStore: options.externalMcpStore,
+  });
 
   return app;
 }

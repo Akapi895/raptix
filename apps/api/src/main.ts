@@ -1,6 +1,8 @@
 import { buildApp } from "./app.js";
 import { C2BridgeClient, UnconfiguredC2Client } from "./adapters/c2/client.js";
 import { loadC2BridgeConfig } from "./adapters/c2/token.js";
+import { loadReconProviderConfig } from "./adapters/recon/config.js";
+import { ReconProvidersClient } from "./adapters/recon/client.js";
 import { RuntimeClient } from "./adapters/runtime/client.js";
 import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
 import { SandboxFilesClient, UnconfiguredSandboxFilesClient } from "./adapters/sandbox/client.js";
@@ -8,11 +10,17 @@ import { loadSandboxKey } from "./adapters/sandbox/token.js";
 import { loadEnv } from "./config/env.js";
 import { createDbClient, disconnectDb } from "./db/client.js";
 import { PrismaAlertSubscriptionStore } from "./db/alert-subscription-store.js";
+import { PrismaAppConfigStore } from "./db/app-config-store.js";
 import { PrismaAssetStore } from "./db/asset-store.js";
 import { PrismaAuthStore } from "./db/auth-store.js";
 import { PrismaBatchQueueStore } from "./db/batch-queue-store.js";
 import { PrismaConversationStore } from "./db/conversation-store.js";
+import { PrismaExternalMcpStore } from "./db/external-mcp-store.js";
+import { PrismaHiddenExecutionStore } from "./db/hidden-execution-store.js";
+import { PrismaKnowledgeItemStore } from "./db/knowledge-item-store.js";
 import { PrismaProjectStore } from "./db/project-store.js";
+import { PrismaRetrievalLogStore } from "./db/retrieval-log-store.js";
+import { PrismaToolGuardStore } from "./db/tool-guard-store.js";
 import { PrismaVulnerabilityStore } from "./db/vulnerability-store.js";
 import { PrismaWebShellStore } from "./db/webshell-store.js";
 import { ensureOperatorSeeded } from "./security/operator-bootstrap.js";
@@ -28,6 +36,13 @@ async function main(): Promise<void> {
   const alertSubscriptionStore = new PrismaAlertSubscriptionStore(db);
   const batchQueueStore = new PrismaBatchQueueStore(db);
   const webshellStore = new PrismaWebShellStore(db);
+  const toolGuardStore = new PrismaToolGuardStore(db);
+  const knowledgeItemStore = new PrismaKnowledgeItemStore(db);
+  const retrievalLogStore = new PrismaRetrievalLogStore(db);
+  const appConfigStore = new PrismaAppConfigStore(db);
+  const externalMcpStore = new PrismaExternalMcpStore(db);
+  const hiddenExecutionStore = new PrismaHiddenExecutionStore(db);
+  const recon = new ReconProvidersClient(loadReconProviderConfig(process.env));
 
   const seed = await ensureOperatorSeeded(authStore, {
     operatorUsername: env.operatorUsername,
@@ -100,6 +115,13 @@ async function main(): Promise<void> {
     batchQueueStore,
     webshellStore,
     c2,
+    toolGuardStore,
+    knowledgeItemStore,
+    retrievalLogStore,
+    recon,
+    appConfigStore,
+    externalMcpStore,
+    hiddenExecutionStore,
   });
 
   const shutdown = async (): Promise<void> => {
