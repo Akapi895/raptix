@@ -4,7 +4,7 @@
 
 - Goal: clarify what the Autonomous AI Red Team Platform still lacks across planning, execution, evidence, operator workflows and evaluation. Assess the full system; the previous frontend/mock-only focus is superseded.
 - Trace each candidate gap through UI → shared contract → API/service → runtime/tool → persisted evidence. Separate **missing**, **partial/unwired**, **implemented but unavailable/config-gated**, and **unverified**; name the owning layer, source paths, user impact and acceptance check. A missing Web endpoint does not prove a missing runtime capability.
-- Start Web gap analysis with `apps/web/.scratch/frontend-backend-integration/{spec,coverage,execution}.md` and relevant ticket/follow-up evidence. Recheck current routes/services and `apps/web/src/router/registry.tsx`: the original local-only membership inventory predates multi-user implementation, and route counts have changed.
+- `apps/web` was retired by ADR-0106 (2026-10-31) in favor of `apps/ui-app` + a new `apps/api` backend. Start Web gap analysis with `docs/design/2026-10-31-ui-app-integration-implementation-plan.md` instead of the old `apps/web/.scratch/frontend-backend-integration/` tracker, which no longer exists.
 - For runtime/tool gaps, use [the implementation plan](docs/tool-optimization-implementation-plan.md) and its per-wave completion notes: the overview still calls T3–T13 proposed despite completed waves. [The exploitation diagnosis](docs/exploitation-effectiveness-diagnosis-2026-10-15.md) supplies run-specific leads, not a current platform-wide verdict.
 - Verify runtime wiring and outcomes separately. `/api/capabilities` distinguishes support from availability; readiness is not a model/tool execution smoke. An agent prompt, skill, registered graph or successful dispatch is not proof of a working capability or a benchmark win. Use provider evaluation and [published benchmark evidence](benchmarks/README.md), recording configuration and unexecuted checks.
 
@@ -12,13 +12,13 @@
 
 - Follow [CONTRIBUTING_AGENT.md](CONTRIBUTING_AGENT.md) and [QUALITY_BAR](docs/QUALITY_BAR.md): one concern, ≤400 runtime lines / ≤10 files per PR, no AI co-author trailers. New public APIs/subsystem boundaries require a Proposed ADR in `docs/adr/`.
 - Resolve prose conflicts using manifests, `langgraph.json`, `Makefile` recipes and [.github/workflows/ci.yml](.github/workflows/ci.yml). `CLAUDE.md` and architecture docs retain obsolete paths/statuses.
-- Before ownership/import changes, read [runtime boundaries](docs/architecture/runtime-boundaries.md) and [dependency rules](docs/architecture/dependency-rules.md). For Web changes, follow [apps/web/AGENTS.md](apps/web/AGENTS.md) and the integration execution contract, including targeted-only local testing.
+- Before ownership/import changes, read [runtime boundaries](docs/architecture/runtime-boundaries.md) and [dependency rules](docs/architecture/dependency-rules.md). For Web changes, follow `apps/ui-app/README.md` and [the ui-app integration implementation plan](docs/design/2026-10-31-ui-app-integration-implementation-plan.md) — `apps/web/AGENTS.md` no longer exists (ADR-0106).
 
 ## Boundaries and runtime wiring
 
 - Root `pyproject.toml` is a virtual uv workspace; runtime dependencies belong in the owning package. `raptix-core` is framework-free contracts (stdlib/Pydantic/settings/typing-extensions); SDK/plugins import Core/SDK, not runtime internals. Plugins own domain definitions/prompts/offline analyzers; `raptix_sdk.create_domain_agent` bridges to runtime via `raptix.agent_composers`.
 - Skill corpus: `packages/raptix-skills/raptix_skills/defs/` (Markdown/YAML only). Loader/selector/graph engine: `packages/raptix/raptix/skills/`. A corpus entry does not establish that its binaries are installed in the sandbox image.
-- Apps communicate through APIs. Web flow: `apps/web/src/` → `apps/shared/web-contracts/` → `apps/web/server/src/main.ts` → `src/app.ts:buildApp` → Python runtime HTTP API. The Fastify server owns Prisma schema/migrations. `clients/` and Next.js are retired; `infra/config/` provider handlers intentionally have no `raptix` dependency.
+- Apps communicate through APIs. Web flow (post-ADR-0106): `apps/ui-app/src/` → `apps/api/` (new BFF, translates Raptix's domain into `apps/ui-app`'s existing contract; holds the runtime token per `interfaces/api/auth.py`) → Python runtime HTTP API. `apps/api` is not yet built out — see the implementation plan. `clients/`, Next.js and the old `apps/web`/Fastify server are retired; `infra/config/` provider handlers intentionally have no `raptix` dependency.
 
 Runtime paths below are relative to `packages/raptix/raptix/`:
 
@@ -31,9 +31,8 @@ Runtime paths below are relative to `packages/raptix/raptix/`:
 
 ## Web mode and data authority
 
-- The web console reads the real API only (ADR-0101). Root `npm run dev` serves the UI at `127.0.0.1:5273` and needs the API stack; there is no standalone or demo mode, and the `?dataMode=` query, `raptix.dataMode` storage and `VITE_DATA_MODE` switches are removed.
-- The real transport is `apps/web/src/platform/` plus each feature's `remote.ts`. Real mode never falls back to demo data (ADR-0068, ADR-0096, ADR-0101). Runtime checkpoints own thread/run state; Prisma owns Web business records/ownership; workspace artifacts and Neo4j retain evidence/knowledge authority.
-- Database-backed services require `DATABASE_URL` and `WORKSPACE_PATH`. Node startup neither generates Prisma clients nor migrates; API container startup runs `prisma migrate deploy`.
+- ADR-0106 (2026-10-31) retired `apps/web`. The canonical frontend is `apps/ui-app`; its backend is the new `apps/api`, still being built out per `docs/design/2026-10-31-ui-app-integration-implementation-plan.md`. `apps/ui-app` has its own demo/mock transport (`src/mock/`) used for local development only — it is not a stand-in for `apps/api` and does not establish backend compatibility.
+- Once `apps/api` exists: runtime checkpoints own thread/run state; Prisma (under `apps/api`) owns Web business records/ownership; workspace artifacts and Neo4j retain evidence/knowledge authority. Only `apps/api` holds the runtime token (`interfaces/api/auth.py`) — `apps/ui-app` never does.
 
 ## Setup and focused checks
 
