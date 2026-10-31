@@ -65,6 +65,13 @@ export interface ListAssetsQuery {
   offset: number;
 }
 
+export interface ScanLinkInput {
+  assetId: string;
+  conversationId?: string;
+  queueId?: string;
+  taskId?: string;
+}
+
 export interface AssetStore {
   list(query: ListAssetsQuery): Promise<{ assets: AssetRecord[]; total: number }>;
   findById(id: string): Promise<AssetRecord | null>;
@@ -80,6 +87,8 @@ export interface AssetStore {
   /** Merges `mergeIds` into `primaryId` (unions tags, keeps the primary row's other fields), deletes the rest. */
   merge(primaryId: string, mergeIds: string[]): Promise<AssetRecord | null>;
   setProjectBinding(ids: string[], projectId: string | null): Promise<number>;
+  /** Records which scan conversation / batch task touched which asset (assets feature's ScanLink payload). */
+  createScanLinks(links: ScanLinkInput[]): Promise<number>;
   stats(): Promise<{
     total: number;
     ips: number;
@@ -267,6 +276,19 @@ export class PrismaAssetStore implements AssetStore {
   public async setProjectBinding(ids: string[], projectId: string | null): Promise<number> {
     if (ids.length === 0) return 0;
     const result = await this.db.asset.updateMany({ where: { id: { in: ids } }, data: { projectId } });
+    return result.count;
+  }
+
+  public async createScanLinks(links: ScanLinkInput[]): Promise<number> {
+    if (links.length === 0) return 0;
+    const result = await this.db.scanLink.createMany({
+      data: links.map((link) => ({
+        assetId: link.assetId,
+        conversationId: link.conversationId ?? "",
+        queueId: link.queueId ?? "",
+        taskId: link.taskId ?? "",
+      })),
+    });
     return result.count;
   }
 

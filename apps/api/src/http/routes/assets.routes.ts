@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { AssetFields, AssetRecord, AssetStore } from "../../db/asset-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
@@ -81,10 +81,6 @@ function fieldsFromBody(body: Record<string, unknown> | undefined): AssetFields 
     ...(body.status !== undefined ? { status: asString(body.status) ?? "active" } : {}),
     ...(body.tags !== undefined ? { tags: asStringArray(body.tags) } : {}),
   };
-}
-
-async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
-  await reply.code(501).send({ error: "Not implemented for this deployment" });
 }
 
 export function registerAssetRoutes(app: FastifyInstance, options: AssetRoutesOptions): void {
@@ -219,6 +215,40 @@ export function registerAssetRoutes(app: FastifyInstance, options: AssetRoutesOp
     },
   );
 
-  // scan-links correlates assets through observed scan relationships -- needs the Neo4j AKG client (Tier 5).
-  app.post("/api/assets/scan-links", { preHandler: requireSession }, notImplementedForThisDeployment);
+  // Scan links: the assets feature POSTs these when the operator launches a
+  // scan (asset_id + conversation_id, or asset_id + queue_id + task_id) and
+  // ignores the response. Unknown asset ids are a 400 -- never a silent row
+  // pointing at nothing. Stored relationally; not the Neo4j AKG (the plan's
+  // Tier 3 "observed scan relationships" guess was wrong -- see
+  // schema.prisma's ScanLink comment).
+  app.post<{ Body: { scans?: unknown } }>(
+    "/api/assets/scan-links",
+    { preHandler: requireSession },
+    async (request, reply) => {
+      const scans = Array.isArray(request.body?.scans) ? request.body.scans : [];
+      const parsed = scans.map((scan) => {
+        const body = (scan ?? {}) as Record<string, unknown>;
+        return {
+          assetId: asString(body.asset_id) ?? "",
+          conversationId: asString(body.conversation_id) ?? "",
+          queueId: asString(body.queue_id) ?? "",
+          taskId: asString(body.task_id) ?? "",
+        };
+      });
+      if (parsed.length === 0 || parsed.some((scan) => scan.assetId === "")) {
+        await reply.code(400).send({ error: "Invalid request body" });
+        return;
+      }
+      const assetIds = [...new Set(parsed.map((scan) => scan.assetId))];
+      const known = await assetStore.findByIds(assetIds);
+      if (known.length !== assetIds.length) {
+        const knownIds = new Set(known.map((asset) => asset.id));
+        const missing = assetIds.find((id) => !knownIds.has(id)) ?? "";
+        await reply.code(400).send({ error: `Asset not found: ${missing}` });
+        return;
+      }
+      await assetStore.createScanLinks(parsed);
+      await reply.send({ success: true });
+    },
+  );
 }
