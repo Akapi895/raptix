@@ -1,8 +1,14 @@
 import { randomUUID } from "node:crypto";
+import { PassThrough } from "node:stream";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import type { RuntimeRun, RuntimeTransport } from "../../adapters/runtime/client.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
+import type { ProjectStore } from "../../db/project-store.js";
+import { sandboxTokenFor, sandboxUrlFor } from "../../adapters/sandbox/routing.js";
+import { extractLastAssistantText } from "../../adapters/runtime/message-extract.js";
+import type { RuntimeEvent } from "../../adapters/runtime/stream.js";
+import { RuntimeUnavailableError } from "../../adapters/runtime/errors.js";
 import { runAgentTurn, TERMINAL_RUN_STATUSES as TERMINAL_STATUSES } from "../../services/agent-turn.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 import { replyRuntimeError } from "./conversations.routes.js";
@@ -14,6 +20,8 @@ export interface AgentLoopRoutesOptions {
   /** How long POST /api/eino-agent blocks waiting for a terminal run before replying "still running". Default 20s. */
   syncWaitMs?: number;
   defaultAssistantId?: string;
+  projectStore: ProjectStore;
+  sandboxKey?: string;
 }
 
 interface ChatRequestBody {
@@ -44,6 +52,36 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
   const syncWaitMs = options.syncWaitMs ?? 20_000;
   const defaultAssistantId = options.defaultAssistantId ?? "raptix";
   const requireSession = createRequireSession(authStore);
+
+  app.post<{ Body: ChatRequestBody }>("/api/eino-agent/stream", { preHandler: requireSession }, async (request, reply) => {
+    const message = asString(request.body?.message);
+    if (!message?.trim()) return reply.code(400).send({ error: "Enter a message" });
+    const conversationId = asString(request.body?.conversationId);
+    let conversation = conversationId ? await conversationStore.findById(conversationId) : null;
+    if (conversationId && !conversation) return reply.code(404).send({ error: "Conversation not found" });
+    const projectId = conversation?.projectId ?? asString(request.body?.projectId);
+    if (!projectId) return reply.code(400).send({ error: "Select a project before chatting so the agent uses its own workspace." });
+    const project = await options.projectStore.findById(projectId);
+    if (!project) return reply.code(404).send({ error: "Project not found" });
+    if (!options.sandboxKey) return reply.code(503).send({ error: "Project sandbox key is not configured" });
+    try {
+      if (!conversation) {
+        const runtimeThreadId = randomUUID();
+        await runtime.createThread(runtimeThreadId);
+        conversation = await conversationStore.create({ title: titleFromMessage(message), projectId, runtimeThreadId });
+      }
+      const configurable = {
+        engagement_name: project.workspaceSlug, kg_engagement: project.workspaceSlug, workspace_path: "/workspace",
+        sandbox_url: sandboxUrlFor(project.workspaceSlug), sandbox_token: sandboxTokenFor(options.sandboxKey, project.workspaceSlug),
+      };
+      const userMessage = await conversationStore.appendMessage(conversation.id, "user", message);
+      const output = new PassThrough();
+      reply.header("content-type", "text/event-stream; charset=utf-8").header("cache-control", "no-cache, no-transform").header("x-accel-buffering", "no");
+      const pump = streamReply(output, options, conversation, userMessage.id, message, configurable);
+      pump.catch(() => { request.log.error("Chat stream delivery failed"); output.destroy(); });
+      return reply.send(output);
+    } catch (error) { return replyRuntimeError(reply, error); }
+  });
 
   app.post<{ Body: ChatRequestBody }>("/api/eino-agent", { preHandler: requireSession }, async (request, reply) => {
     const message = asString(request.body?.message);
@@ -125,18 +163,90 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
     },
   );
 
-  // SSE streaming (eino-agent/stream, multi-agent/stream) needs a translation from LangGraph's
-  // stream_mode wire format to apps/ui-app's SSE event shape (realtime-api-contracts.md) -- not
-  // built this pass. multi-agent (non-streaming) has no clean Raptix equivalent: subagent dispatch
+  // Explicit multi-agent dispatch has no clean Raptix equivalent: subagent dispatch
   // already happens automatically within a single run (intelligence/agents), there is no separate
   // "invoke N agents explicitly" endpoint to map onto.
   for (const [method, path] of [
-    ["POST", "/api/eino-agent/stream"],
     ["POST", "/api/multi-agent"],
     ["POST", "/api/multi-agent/stream"],
     ["GET", "/api/agent-loop/task-events"],
   ] as const) {
     app.route({ method, url: path, preHandler: requireSession, handler: notImplementedForThisDeployment });
+  }
+}
+
+const record = (value: unknown): Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
+
+async function writeEvent(output: PassThrough, type: string, message: string, data: Record<string, unknown>): Promise<void> {
+  if (output.destroyed) return; // A detached browser never cancels the run or prevents persisting its answer.
+  if (output.write(`data: ${JSON.stringify({ type, message, data })}\n\n`)) return;
+  await new Promise<void>(resolve => {
+    const ready = () => { output.off("drain", ready); output.off("close", ready); resolve(); };
+    output.once("drain", ready).once("close", ready);
+  });
+}
+
+/** Only visible text is projected. Reasoning, config, credentials and raw graph state stay inside the BFF. */
+async function projectRuntimeEvent(event: RuntimeEvent, emit: (type: string, message: string, data?: Record<string, unknown>) => Promise<void>, seen: Set<string>): Promise<void> {
+  if (event.event === "error") throw new RuntimeUnavailableError("The agent run failed; check the runtime logs.");
+  if (event.event === "updates") {
+    for (const stage of Object.keys(record(event.data))) await emit("progress", stage, { stage });
+  }
+  if (event.event !== "messages/partial" && event.event !== "messages/complete") return;
+  for (const chunk of Array.isArray(event.data) ? event.data : []) {
+    const message = record(chunk);
+    if (message.type !== "ai" || typeof message.id !== "string") continue;
+    const content = typeof message.content === "string" ? message.content : Array.isArray(message.content)
+      ? message.content.map(block => { const b = record(block); return b.type === "text" && typeof b.text === "string" ? b.text : ""; }).join("") : "";
+    if (!content) continue;
+    if (!seen.has(message.id)) { seen.add(message.id); await emit("response_start", "", { streamId: message.id }); }
+    await emit("response_delta", content, { streamId: message.id, accumulated: content });
+  }
+}
+
+async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions, conversation: { id: string; runtimeThreadId: string }, userMessageId: string, message: string, configurable: Record<string, string>): Promise<void> {
+  const emit = (type: string, text = "", data: Record<string, unknown> = {}) => writeEvent(output, type, text, { ...data, conversationId: conversation.id });
+  const heartbeat = setInterval(() => { if (!output.destroyed && output.writableLength === 0) output.write(": heartbeat\n\n"); }, 15_000);
+  try {
+    await emit("conversation");
+    await emit("message_saved", "", { userMessageId });
+    await emit("progress", "Starting agent");
+    let runId = "";
+    const seen = new Set<string>();
+    const input = { messages: [{ role: "user", content: message }], engagement_name: configurable.engagement_name, workspace_path: "/workspace" };
+    for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 400 }, AbortSignal.timeout(30 * 60_000))) {
+      if (event.event === "metadata" && typeof record(event.data).run_id === "string") runId = record(event.data).run_id as string;
+      await projectRuntimeEvent(event, emit, seen);
+    }
+    if (!runId) throw new RuntimeUnavailableError("Runtime stream ended without a run identity");
+    let run = await options.runtime.getRun(conversation.runtimeThreadId, runId);
+    // The HTTP stream can close just before the runtime records its terminal status.
+    const deadline = Date.now() + (options.syncWaitMs ?? 5000);
+    while (!TERMINAL_STATUSES.has(run.status) && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      run = await options.runtime.getRun(conversation.runtimeThreadId, runId);
+    }
+    if (run.status !== "success") {
+      await emit(run.status === "interrupted" ? "cancelled" : "error", `Agent run status: ${run.status}`, { retryable: false });
+      await emit("done", "", { status: run.status === "interrupted" ? "cancelled" : "failed" });
+      return;
+    }
+    const state = await options.runtime.getThreadState(conversation.runtimeThreadId);
+    const last = Array.isArray(state.values.messages) ? record(state.values.messages.at(-1)) : {};
+    const role = last.type ?? last.role ?? record(last.kwargs).type;
+    if (role !== "ai" && role !== "assistant") throw new RuntimeUnavailableError("Run finished without a new assistant answer");
+    const answer = extractLastAssistantText(state.values);
+    if (!answer) throw new RuntimeUnavailableError("Run finished without an assistant answer");
+    const saved = await options.conversationStore.appendMessage(conversation.id, "assistant", answer);
+    await emit("response", answer, { messageId: saved.id, finalized: true, finalizable: false, evidenceVerified: false, completionReason: "stop", mcpExecutionIds: [] });
+    await emit("done", "", { status: "success" });
+  } catch (error) {
+    await emit("error", error instanceof RuntimeUnavailableError ? error.message : "Unable to complete the agent turn", { retryable: false });
+    await emit("done", "", { status: "failed" });
+  } finally {
+    clearInterval(heartbeat);
+    output.end();
   }
 }
 

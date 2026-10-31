@@ -90,6 +90,7 @@ export interface BuildAppOptions {
   openApiSpecPath?: string;
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
+  sandboxKey?: string;
   batchTaskWaitMs?: number;
   /** Resolves the AI channel for apps/api's own derivations (attack chains) from the "ai" config. */
   resolveLlmChannel: () => Promise<{ baseUrl: string; apiKey: string; model: string } | null>;
@@ -130,6 +131,8 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     conversationStore: options.conversationStore,
     runtime: options.runtime,
     syncWaitMs: options.agentSyncWaitMs,
+    projectStore: options.projectStore,
+    sandboxKey: options.sandboxKey,
     defaultAssistantId: options.defaultAssistantId,
   });
   registerHitlRoutes(app, { authStore: options.authStore });
