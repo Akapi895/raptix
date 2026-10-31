@@ -3,6 +3,7 @@ import type { RuntimeTransport } from "../../adapters/runtime/client.js";
 import type { BatchQueueRecord, BatchQueueStore, BatchTaskRecord } from "../../db/batch-queue-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
+import type { ProjectStore } from "../../db/project-store.js";
 import { startBatchQueue } from "../../services/batch-processor.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 
@@ -11,6 +12,8 @@ export interface BatchTaskRoutesOptions {
   batchQueueStore: BatchQueueStore;
   conversationStore: ConversationStore;
   runtime: RuntimeTransport;
+  projectStore: ProjectStore;
+  sandboxKey?: string;
   defaultAssistantId?: string;
   /** Per-task wait inside a batch run, separate from POST /api/eino-agent's own syncWaitMs. Default 20s. */
   taskWaitMs?: number;
@@ -67,7 +70,7 @@ export function registerBatchTaskRoutes(app: FastifyInstance, options: BatchTask
   const requireSession = createRequireSession(authStore);
 
   function startInBackground(queueId: string): void {
-    void startBatchQueue(queueId, { store: batchQueueStore, conversationStore, runtime, defaultAssistantId, taskWaitMs }).catch(
+    void startBatchQueue(queueId, { store: batchQueueStore, conversationStore, runtime, defaultAssistantId, taskWaitMs, projectStore: options.projectStore, sandboxKey: options.sandboxKey }).catch(
       (error: unknown) => app.log.error({ err: error, queueId }, "batch queue processing failed"),
     );
   }

@@ -43,3 +43,14 @@ export function sandboxUrlFor(slug: string): string {
 export function sandboxTokenFor(key: string, slug: string): string {
   return createHmac("sha256", key).update(`sandbox-token:${slug}`).digest("hex");
 }
+
+/** The `configurable` block every run needs to route its tool calls at its own project's sandbox (ADR-0086 A/ADR-0102), e.g. for the HITL approval gate to exchange JSONL with the right project. */
+export function runConfigurableFor(workspaceSlug: string, sandboxKey: string): Record<string, string> {
+  return {
+    engagement_name: workspaceSlug,
+    kg_engagement: workspaceSlug,
+    workspace_path: "/workspace",
+    sandbox_url: sandboxUrlFor(workspaceSlug),
+    sandbox_token: sandboxTokenFor(sandboxKey, workspaceSlug),
+  };
+}

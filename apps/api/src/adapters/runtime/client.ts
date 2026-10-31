@@ -24,7 +24,7 @@ export interface RuntimeTransport {
   createThread(threadId: string, metadata?: Record<string, string>): Promise<{ threadId: string; metadata: Record<string, unknown> }>;
   getThread(threadId: string): Promise<{ threadId: string; metadata: Record<string, unknown>; status?: string }>;
   getThreadState(threadId: string): Promise<{ values: Record<string, unknown>; tasks: unknown[] }>;
-  createRun(threadId: string, assistantId: string, input: Record<string, unknown>, requestId: string): Promise<RuntimeRun>;
+  createRun(threadId: string, assistantId: string, input: Record<string, unknown>, requestId: string, config?: Record<string, unknown>): Promise<RuntimeRun>;
   getRun(threadId: string, runId: string): Promise<RuntimeRun>;
   listRuns(threadId: string, offset?: number, limit?: number): Promise<RuntimeRun[]>;
   cancelRun(threadId: string, runId: string): Promise<void>;
@@ -160,6 +160,7 @@ export class RuntimeClient implements RuntimeTransport {
     assistantId: string,
     input: Record<string, unknown>,
     requestId: string,
+    config?: Record<string, unknown>,
   ): Promise<RuntimeRun> {
     return toRun(
       await this.fetchJson(`/threads/${encodeURIComponent(threadId)}/runs`, {
@@ -168,6 +169,7 @@ export class RuntimeClient implements RuntimeTransport {
         metadata: { ui_request_id: requestId },
         multitask_strategy: "reject",
         if_not_exists: "reject",
+        ...(config ? { config } : {}),
       }),
       threadId,
     );

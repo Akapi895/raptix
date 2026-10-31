@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { runConfigurableFor } from "../adapters/sandbox/routing.js";
 import type { RuntimeTransport } from "../adapters/runtime/client.js";
 import type { BatchQueueStore } from "../db/batch-queue-store.js";
 import type { ConversationStore } from "../db/conversation-store.js";
+import type { ProjectStore } from "../db/project-store.js";
 import { runAgentTurn } from "./agent-turn.js";
 
 export interface BatchProcessorDeps {
@@ -10,6 +12,8 @@ export interface BatchProcessorDeps {
   runtime: RuntimeTransport;
   defaultAssistantId: string;
   taskWaitMs: number;
+  projectStore: ProjectStore;
+  sandboxKey?: string;
 }
 
 /**
@@ -68,6 +72,10 @@ async function runWorker(
       }
 
       await deps.store.setTaskRunning(task.id, conversation.id);
+      // Best-effort: a queue not tied to a project (or no sandbox key configured) runs
+      // against the runtime's default sandbox, same as before this was threaded through.
+      const project = queue.projectId && deps.sandboxKey ? await deps.projectStore.findById(queue.projectId) : null;
+      const config = project && deps.sandboxKey ? { ...runConfigurableFor(project.workspaceSlug, deps.sandboxKey), recursion_limit: 400 } : undefined;
       const turn = await runAgentTurn({
         conversation,
         message: task.message,
@@ -75,6 +83,7 @@ async function runWorker(
         conversationStore: deps.conversationStore,
         defaultAssistantId: deps.defaultAssistantId,
         waitMs: deps.taskWaitMs,
+        config,
       });
 
       const succeeded = turn.finalized && turn.status === "success";
