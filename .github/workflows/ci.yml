@@ -53,6 +53,7 @@ jobs:
       desktop: ${{ steps.app.outputs.desktop }}
       launcher: ${{ steps.app.outputs.launcher }}
       compose: ${{ steps.app.outputs.compose }}
+      web: ${{ steps.app.outputs.web }}
       docker-images: ${{ steps.docker.outputs.changes }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -89,6 +90,12 @@ jobs:
               - '.github/workflows/ci.yml'
             compose:
               - 'docker-compose*.yml'
+              - '.github/workflows/ci.yml'
+            web:
+              - 'apps/api/**'
+              - 'apps/ui-app/**'
+              - 'package.json'
+              - 'package-lock.json'
               - '.github/workflows/ci.yml'
       # Per-image filter: filter name == image name so the matrix can pull
       # `outputs.changes` directly as the list of images to build.
@@ -409,6 +416,55 @@ jobs:
         if: needs.changes.outputs.cli == 'true'
         run: cd apps/cli && npm test --if-present
 
+  # apps/api (the ui-app BFF, ADR-0106) + apps/ui-app. Single OS: neither
+  # package has platform-specific code like the CLI/launcher do. apps/api's
+  # own test suite depends only on in-memory fakes (tests/support/*), never
+  # a real Postgres, so no service container is needed here; live
+  # Postgres/server verification is done by hand per tier (see
+  # docs/design/2026-10-31-ui-app-integration-implementation-plan.md), not
+  # in CI. apps/ui-app's vitest suite drives a real headless Chromium
+  # directly (chromium.launch(), not the `playwright test` runner) in a few
+  # *.test.ts files, so the browser binary has to be installed first.
+  web:
+    name: Web (apps/api + apps/ui-app)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - if: needs.changes.outputs.web != 'true'
+        run: 'echo "No apps/api or apps/ui-app changes — emitting success."'
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        if: needs.changes.outputs.web == 'true'
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        if: needs.changes.outputs.web == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - if: needs.changes.outputs.web == 'true'
+        run: npm ci
+      - name: Generate the Prisma client
+        if: needs.changes.outputs.web == 'true'
+        run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - name: apps/api typecheck + lint + build + test
+        if: needs.changes.outputs.web == 'true'
+        run: |
+          npm run typecheck --workspace=@raptix/api
+          npm run lint --workspace=@raptix/api
+          npm run build --workspace=@raptix/api
+          npm run test --workspace=@raptix/api
+      - name: Install Chromium for apps/ui-app's browser-driven unit tests
+        if: needs.changes.outputs.web == 'true'
+        run: npx playwright install --with-deps chromium
+      - name: apps/ui-app typecheck + build + test
+        if: needs.changes.outputs.web == 'true'
+        run: |
+          npm run build --workspace=@raptix/ui-app
+          cd apps/ui-app && npx vitest run
+
   # Electron desktop shell: pure unit tests (config/platform/ui) exercise
   # Windows / macOS / Linux path, menu, and Docker-spawn differences. The
   # ruleset requires a success status, so untouched PRs emit a cheap noop.
@@ -662,6 +718,7 @@ jobs:
       - compose-validate
       - python
       - cli
+      - web
       - desktop
       - launcher
       - docker-build

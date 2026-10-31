@@ -12,6 +12,16 @@ and Workflows (definition CRUD only, execution stubbed) were accepted;
 Robots and bindings and System updates were cut -- their `apps/ui-app`
 frontend features were removed outright (not just left without a backend).
 
+**All 7 tiers are real code, but "the API contract is done" is not the same
+as "the stack runs end to end."** apps/api now has a `docker-compose.yml`
+service and a CI job (see "Dev" below and
+`docs/design/2026-10-31-ui-app-integration-implementation-plan.md` §8), but
+two things it depends on are still unwired: nothing provisions a project's
+sandbox yet (Files/HITL stay real-but-503 until it is -- see "What
+provisions a project's sandbox" below), and there's no bearer token
+exchanged with `langgraph` (matching the CLI's own current, unauthenticated
+path to it, not a gap introduced here).
+
 ## Layout
 
 - `src/http/routes/auth.routes.ts` — the full "Authentication and account"
@@ -338,6 +348,28 @@ frontend features were removed outright (not just left without a backend).
 
 ## Dev
 
+**Docker (recommended, matches production):**
+
+```bash
+docker compose up -d postgres raptix-api-postgres-init  # brings up the shared
+                                                          # Postgres and creates
+                                                          # the raptix_api database
+docker compose up -d --build api                        # builds infra/containers/api.Dockerfile,
+                                                          # runs `prisma migrate deploy`, starts the server
+docker compose logs -f api                               # the first boot logs the generated
+                                                          # operator password once -- see "Single-operator seed" below
+```
+
+apps/api has its own `docker-compose.yml` service (`api`) and an idempotent
+init sidecar (`raptix-api-postgres-init`, same pattern as `bhce-postgres-init`)
+that creates the `raptix_api` database on the *shared* `postgres` container --
+not a separate Postgres container; see "Why a separate database, not a
+separate Postgres" below. `make infra`/`make dev` do **not** start `api` yet
+(no Make target wraps it) -- use the `docker compose` commands above directly,
+or add `api` to whichever `$(COMPOSE)` invocation you're already running.
+
+**Local (`npm run dev`), against that same Postgres:**
+
 ```bash
 npm run dev --workspace=@raptix/api   # listens on 127.0.0.1:8080 by default
 npm run prisma:migrate --workspace=@raptix/api   # apply prisma/migrations/ to DATABASE_URL
@@ -345,6 +377,39 @@ npm run prisma:migrate --workspace=@raptix/api   # apply prisma/migrations/ to D
 
 `apps/ui-app`'s dev proxy (`API_PROXY_TARGET` in its `.env.example`) already
 points at `http://127.0.0.1:8080`, matching this default. Copy `.env.example`
-to `.env.local` and point `DATABASE_URL` at a real Postgres database (`make
-infra` brings one up) before starting the server -- there is no in-memory
-fallback.
+to `.env.local` and point `DATABASE_URL` at `postgresql://raptix:raptix@
+127.0.0.1:5432/raptix_api` (after bringing up `postgres` +
+`raptix-api-postgres-init` as above) -- there is no in-memory fallback.
+
+### Why a separate database, not a separate Postgres container
+
+apps/api owns its own **database** (`raptix_api`) on the same shared
+`postgres` container every other service already uses -- not a new
+container, and not the `litellm` database LiteLLM's spend-tracking owns
+either. Three independent schemas inside one Postgres server:
+`litellm` (LiteLLM), `bloodhound` (BHCE, opt-in), `raptix_api` (apps/api).
+Each has its own migration lifecycle (apps/api's is Prisma, wholly separate
+from LiteLLM's or BHCE's own migrations) and its own blast radius -- a bad
+apps/api migration can't corrupt LiteLLM's spend logs, and vice versa.
+Running a second Postgres *container* instead would cost another
+always-on process for no isolation this doesn't already get from a
+second database.
+
+### What provisions a project's sandbox
+
+Nothing in apps/api does, yet (Tier 3's Files routes and the HITL retrofit
+are real code that 503 until this exists). The mechanism itself already
+exists and is tested, built for exactly this purpose but never wired up
+after `apps/web` was retired: `apps/launcher/internal/sandboxes/` --
+`Ensure(cfg, slug)` writes a per-project sandbox compose file and brings it
+up, and `controller.go`'s `POST /v1/sandboxes/ensure` exposes it as a
+bearer-tokened HTTP endpoint ("the one operation the web API needs from the
+host," per that file's own comment) that `apps/launcher`'s `raptix web
+start` command serves on a host loopback port. Two things are needed to
+actually use it: (1) apps/api needs a new adapter calling that endpoint
+when a Project is created (small -- one HTTP call), and (2) `apps/launcher/
+cmd/web.go`'s own `start`/`stop`/`status` subcommands currently point at
+`docker-compose.web-raptix.yml`, which ADR-0106 deleted along with
+`apps/web` -- that reference needs repointing at apps/api's own compose
+service before `raptix web start` works again. Neither piece is built
+this pass.
