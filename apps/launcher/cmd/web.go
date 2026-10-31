@@ -62,6 +62,7 @@ func (f sandboxFlags) config() (sandboxes.Config, error) {
 
 func init() {
 	web := &cobra.Command{Use: "web", Short: "Manage the web API (apps/api, ADR-0106) in the base stack"}
+	var controller controllerFlags
 	start := &cobra.Command{Use: "start", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		base := compose.New()
 		pull, err := cmd.Flags().GetBool("pull")
@@ -95,11 +96,22 @@ func init() {
 		if port == "" {
 			port = "8080"
 		}
+		// The controller is what makes project creation work (ADR-0086 A):
+		// start it alongside the API so the operator never runs
+		// `sandboxes serve` by hand. Idempotent; already-running wins.
+		settings, err := resolveControllerSettings(controller)
+		if err != nil {
+			return err
+		}
+		if err := ensureSandboxController(cmd.OutOrStdout(), settings); err != nil {
+			return err
+		}
 		fmt.Fprintln(cmd.OutOrStdout(), "Raptix web API: http://127.0.0.1:"+port+" (health: /api/health)")
 		return nil
 	}}
 	start.Flags().Bool("pull", true, "Pull version-selected images before starting (disable for local built images)")
 	start.Flags().Bool("start-infra", true, "Start the full base stack first (disable to start only the api service against an already-running stack)")
+	addControllerFlags(start, &controller)
 
 	sandboxCmd := &cobra.Command{Use: "sandboxes", Short: "Provision one sandbox container per web project (ADR-0086 A)"}
 
@@ -111,6 +123,34 @@ func init() {
 	addSandboxFlags(serveCmd, &serveFlags)
 	serveCmd.Flags().StringVar(&listen, "listen", "127.0.0.1:9200", "loopback address to serve on")
 	sandboxCmd.AddCommand(serveCmd)
+
+	var bgFlags controllerFlags
+	sbStart := &cobra.Command{Use: "start", Short: "Start the controller in the background (idempotent; use this instead of running serve by hand)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		settings, err := resolveControllerSettings(bgFlags)
+		if err != nil {
+			return err
+		}
+		return ensureSandboxController(cmd.OutOrStdout(), settings)
+	}}
+	sbStop := &cobra.Command{Use: "stop", Short: "Stop the background controller (project sandboxes keep running)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		settings, err := resolveControllerSettings(bgFlags)
+		if err != nil {
+			return err
+		}
+		return stopSandboxController(settings)
+	}}
+	sbStatus := &cobra.Command{Use: "status", Short: "Show whether the background controller is running", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		settings, err := resolveControllerSettings(bgFlags)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), controllerStatus(settings))
+		return nil
+	}}
+	addControllerFlags(sbStart, &bgFlags)
+	addControllerFlags(sbStop, &bgFlags)
+	addControllerFlags(sbStatus, &bgFlags)
+	sandboxCmd.AddCommand(sbStart, sbStop, sbStatus)
 
 	var secretsDir string
 	initSecretsCmd := &cobra.Command{Use: "init-secrets", Short: "Create the sandbox key and controller token once, owner-only", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
@@ -126,10 +166,29 @@ func init() {
 	}
 	sandboxCmd.AddCommand(initSecretsCmd)
 
-	web.AddCommand(sandboxCmd)
-	web.AddCommand(start,
-		&cobra.Command{Use: "stop", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Stop("api") }},
-		&cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Ps("api") }},
+	web.AddCommand(sandboxCmd,
+		&cobra.Command{Use: "stop", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+			if err := compose.New().Stop("api"); err != nil {
+				return err
+			}
+			settings, err := resolveControllerSettings(controller)
+			if err != nil {
+				return err
+			}
+			return stopSandboxController(settings)
+		}},
+		&cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+			if err := compose.New().Ps("api"); err != nil {
+				return err
+			}
+			settings, err := resolveControllerSettings(controller)
+			if err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "sandbox controller: settings unavailable (%v)\n", err)
+				return nil
+			}
+			fmt.Fprintln(cmd.OutOrStdout(), controllerStatus(settings))
+			return nil
+		}},
 	)
 	rootCmd.AddCommand(web)
 }
