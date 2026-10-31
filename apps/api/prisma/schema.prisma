@@ -49,9 +49,16 @@ model Project {
   scopeJson     String?
   status        String         @default("active")
   pinned        Boolean        @default(false)
+  // Tier 3: the project's sandbox identity (ADR-0086 A / ADR-0102). Generated
+  // once at creation from the project id (see project-store.ts), never
+  // user-editable -- the sandbox host ("sbx-<slug>") and its workspace
+  // volume are keyed off this, not off `name`, which may repeat.
+  workspaceSlug String         @unique
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   conversations Conversation[]
+  assets        Asset[]
+  vulnerabilities Vulnerability[]
 }
 
 model Conversation {
@@ -66,6 +73,7 @@ model Conversation {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   messages        Message[]
+  vulnerabilities Vulnerability[]
 
   @@index([projectId])
 }
@@ -80,4 +88,83 @@ model Message {
   updatedAt      DateTime     @updatedAt
 
   @@index([conversationId])
+}
+
+// Tier 3 (Findings): shapes match apps/ui-app's authoritative zod schemas
+// (src/api/types/{asset,vulnerability}.ts, derived from internal/database/
+// {asset,vulnerability}.go) field-for-field, not the retired apps/web's
+// WebAsset/FindingRecord models (different DTOs -- see ADR-0106 §0). There is
+// deliberately no Asset<->Vulnerability foreign key: the authoritative
+// Vulnerability schema has no asset_id field, only a free-text `target`: the
+// two were never strictly linked upstream, so Asset.vulnerabilityCount is
+// always 0 here rather than invented from a fuzzy text match.
+
+model Asset {
+  id                String         @id @default(cuid())
+  projectId         String?
+  project           Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  host              String         @default("")
+  ip                String         @default("")
+  port              Int            @default(0)
+  domain            String         @default("")
+  protocol          String         @default("")
+  title             String         @default("")
+  server            String         @default("")
+  country           String         @default("")
+  province          String         @default("")
+  city              String         @default("")
+  responsiblePerson String         @default("")
+  department        String         @default("")
+  businessSystem    String         @default("")
+  environment       String         @default("")
+  criticality       String         @default("")
+  source            String         @default("")
+  sourceQuery       String         @default("")
+  status            String         @default("active")
+  tags              String[]       @default([])
+  firstSeenAt       DateTime       @default(now())
+  lastSeenAt        DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([projectId])
+}
+
+model Vulnerability {
+  id                String        @id @default(cuid())
+  conversationId    String?
+  conversation      Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  projectId         String?
+  project           Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  conversationTag   String?
+  taskTag           String?
+  taskId            String?
+  taskQueueId       String?
+  title             String
+  description       String        @default("")
+  severity          String
+  status            String        @default("open")
+  type              String        @default("")
+  target            String        @default("")
+  preconditions     String        @default("")
+  reproductionSteps String        @default("")
+  evidence          String        @default("")
+  impact            String        @default("")
+  recommendation    String        @default("")
+  retestNotes       String        @default("")
+  retestLog         String        @default("")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([projectId])
+  @@index([conversationId])
+}
+
+// Single row (id is always "singleton") -- apps/ui-app's vulnerability-alerts
+// subscription has no per-user scoping in a single-operator deployment.
+model AlertSubscription {
+  id          String   @id @default("singleton")
+  enabled     Boolean  @default(false)
+  minSeverity String   @default("high")
+  updatedAt   DateTime @updatedAt
 }

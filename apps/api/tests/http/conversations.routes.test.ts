@@ -1,27 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { RuntimeTransport } from "../../src/adapters/runtime/client.js";
-import { buildApp } from "../../src/app.js";
-import { hashPassword } from "../../src/security/password.js";
-import { FakeAuthStore } from "../support/fake-auth-store.js";
-import { FakeConversationStore } from "../support/fake-conversation-store.js";
-import { FakeProjectStore } from "../support/fake-project-store.js";
+import { buildAuthedTestApp } from "../support/build-test-app.js";
 import { FakeRuntime, UnavailableRuntime } from "../support/fake-runtime.js";
-
-async function buildAuthedApp(runtime: RuntimeTransport = new FakeRuntime()) {
-  const authStore = new FakeAuthStore();
-  await authStore.createOperator({ username: "admin", displayName: "Operator", passwordHash: hashPassword("pw") });
-  const app = buildApp({
-    authStore,
-    sessionDurationHours: 12,
-    projectStore: new FakeProjectStore(),
-    conversationStore: new FakeConversationStore(),
-    runtime,
-  });
-  await app.ready();
-  const login = await app.inject({ method: "POST", url: "/api/auth/login", payload: { username: "admin", password: "pw" } });
-  return { app, token: login.json().token as string, runtime };
-}
 
 describe("conversation routes", () => {
   let app: FastifyInstance;
@@ -30,9 +10,7 @@ describe("conversation routes", () => {
 
   beforeEach(async () => {
     runtime = new FakeRuntime();
-    const built = await buildAuthedApp(runtime);
-    app = built.app;
-    token = built.token;
+    ({ app, token } = await buildAuthedTestApp({ runtime }));
   });
 
   afterEach(async () => {
@@ -55,7 +33,7 @@ describe("conversation routes", () => {
   });
 
   it("fails with 503 instead of a fabricated conversation when the runtime is down", async () => {
-    const built = await buildAuthedApp(new UnavailableRuntime());
+    const built = await buildAuthedTestApp({ runtime: new UnavailableRuntime() });
     const response = await built.app.inject({
       method: "POST",
       url: "/api/conversations",

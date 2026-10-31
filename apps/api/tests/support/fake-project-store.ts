@@ -21,16 +21,20 @@ export class FakeProjectStore implements ProjectStore {
 
   public async create(input: CreateProjectInput): Promise<ProjectRecord> {
     const now = new Date();
+    const id = this.nextId++;
     const project: ProjectRecord = {
-      id: `proj-${this.nextId++}`,
+      id: `proj-${id}`,
       name: input.name,
       description: input.description ?? null,
       scopeJson: input.scopeJson ?? null,
       status: input.status ?? "active",
       pinned: false,
+      workspaceSlug: `test-slug-${id}`,
       createdAt: now,
       updatedAt: now,
       conversationCount: 0,
+      vulnerabilityCount: 0,
+      assetCount: 0,
     };
     this.projects.set(project.id, project);
     return project;
@@ -63,7 +67,7 @@ export class FakeProjectStore implements ProjectStore {
   public async stats(id: string): Promise<{ conversations: number; vulnerabilities: number; assets: number } | null> {
     const project = this.projects.get(id);
     if (!project) return null;
-    return { conversations: project.conversationCount, vulnerabilities: 0, assets: 0 };
+    return { conversations: project.conversationCount, vulnerabilities: project.vulnerabilityCount, assets: project.assetCount };
   }
 
   public setConversationCount(id: string, count: number): void {

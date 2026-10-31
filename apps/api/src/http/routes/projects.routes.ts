@@ -48,9 +48,8 @@ function toWire(project: ProjectRecord): Record<string, unknown> {
     created_at: project.createdAt.toISOString(),
     updated_at: project.updatedAt.toISOString(),
     conversation_count: project.conversationCount,
-    // Tier 3 (Findings/Assets) owns these; always 0 until that tier exists -- never fabricated.
-    vulnerability_count: 0,
-    asset_count: 0,
+    vulnerability_count: project.vulnerabilityCount,
+    asset_count: project.assetCount,
   };
 }
 
