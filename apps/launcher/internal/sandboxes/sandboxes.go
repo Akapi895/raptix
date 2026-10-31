@@ -2,7 +2,8 @@
 //
 // Each project's sandbox mounts its own named volume, raptix-ws-<slug>, at /workspace. The volume is not shared
 // with any other project, and no path names a project. Names and paths here must match what the web server routes to
-// (apps/web/server/src/services/runtime/sandbox-routing.ts): the container and DNS host are "sbx-<slug>" and the port is 9999.
+// (apps/api's sandbox-routing equivalent, once rebuilt per ADR-0106 — apps/web/server was removed): the container
+// and DNS host are "sbx-<slug>" and the port is 9999.
 package sandboxes
 
 import (

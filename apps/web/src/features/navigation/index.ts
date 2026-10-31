@@ -1,3 +1,0 @@
-/** Public surface of the navigation feature: the project menu model and project tab resolution. */
-export { GLOBAL_RESOURCE_PAGES, projectMenu, projectSection, resolveProjectTab } from './project-sections'
-export type { ProjectGroupName, ProjectNavGroup, ProjectNavItem } from './project-sections'

@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-// The same vector is asserted by apps/web/server/tests/sandbox-token.test.ts, so the launcher and the web API derive
-// identical project tokens.
+// The same vector was asserted by apps/web/server/tests/sandbox-token.test.ts (removed per ADR-0106); apps/api's
+// rebuilt equivalent must assert it again so the launcher and the web API derive identical project tokens.
 func TestTokenForMatchesTheWebServerDerivation(t *testing.T) {
 	const want = "3b5d7e4b801cb8f017ef2e4d1037d3d8780b6675e37baac28ba6bf9be04f50a3"
 	if got := TokenFor("0123456789abcdef0123456789abcdef", "lab-a"); got != want {
