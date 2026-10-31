@@ -37,7 +37,6 @@ export function createSettingsController(deps: SettingsDependencies, service: Se
     if (section === 'token-usage') deps.section('token-usage'); else deps.stopTokenUsage();
     if (section === 'robots') deps.section('robots');
     if (section === 'terminal' || section === 'audit' || section === 'storage') later(() => deps.section(section));
-    if (section === 'update') deps.section('update'); else deps.stopUpdate();
   }
   function initModelListControls() { for (const ids of Object.values(MODEL_IDS)) selects.enhanceModel(ids.selectId); syncModelListFetchButtons(); }
   function writeAIChannelToMainForm(id: string) {
@@ -53,7 +52,7 @@ export function createSettingsController(deps: SettingsDependencies, service: Se
     try {
       if (!await service.loadConfig() || !live()) return; const config = service.config();
       forms.fill(config); writeAIChannelToMainForm(state.selectedChannel); syncVisionFormEnabled(); syncHitlAuditBackendUI();
-      syncC2NavFromConfig(config); const wechat = object(getPath(config, 'robots.wechat')); deps.refreshWechatRobot({ ...wechat, bound: !!(wechat.bot_token && wechat.ilink_bot_id) });
+      syncC2NavFromConfig(config);
       refreshRobotManager(); if (state.activeRobot) loadRobotAuthPolicyEditor(state.activeRobot); selects.init(); selects.refresh(); view.channels(true);
       if (loadTools) { state.search = ''; await loadToolsList(1, ''); }
     } catch (error) { if (live()) { if (!options.silent) deps.notifyError(t('settings.apply.loadFailed') + ': ' + errorMessage(error)); throw error; } }

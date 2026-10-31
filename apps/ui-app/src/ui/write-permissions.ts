@@ -148,8 +148,6 @@ export const WRITE_PERMISSIONS: Record<string, string> = {
   testWebshellConnection: 'webshell:write',
   openRobotCreateModal: 'robot:write',
   openRobotEditor: 'robot:write',
-  startWechatRobotBind: 'robot:write',
-  submitWechatVerifyCode: 'robot:write',
   exportAuditLogs: 'audit:read',
   exportAuditLogsCsv: 'audit:read',
   runAuditExport: 'audit:read',

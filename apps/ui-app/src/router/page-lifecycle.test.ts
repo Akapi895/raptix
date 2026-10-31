@@ -12,7 +12,7 @@ describe('page lifecycle orchestration', () => {
     const hook = (name: string) => () => { log.push(name); };
     const deps: PageLifecycleDependencies = {
       onError: vi.fn(), stopExternalMcpPoll: hook('stop-external'), cleanupTasksPage: hook('cleanup-tasks'),
-      stopUpdatePolling: hook('stop-update'), stopTokenUsageRequests: hook('stop-token'),
+      stopTokenUsageRequests: hook('stop-token'),
       refreshDashboard: hook('dashboard'), prefetchProjectsForChat: hook('prefetch'), refreshChatProjectSelector: hook('selector'),
       loadToolGuardConfig: hook('tool-guard'), refreshHitlActivePanel: hook('hitl-active'), refreshHitlPending: hook('hitl-fallback'),
       initInfoCollectPage: hook('collect'), loadAssetOverview: hook('overview'), loadAssets: hook('assets'), initTasksPage: hook('tasks'),
@@ -35,7 +35,7 @@ describe('page lifecycle orchestration', () => {
     ];
     for (const [page, expected] of cases) {
       log.length = 0; lifecycle.init(route(page));
-      expect(log, page).toEqual(['stop-external', ...expected, ...(page !== 'tasks' ? ['cleanup-tasks'] : []), 'stop-update', 'stop-token']);
+      expect(log, page).toEqual(['stop-external', ...expected, ...(page !== 'tasks' ? ['cleanup-tasks'] : []), 'stop-token']);
     }
     delete deps.refreshHitlActivePanel; log.length = 0; lifecycle.init(route('hitl'));
     expect(log).toContain('hitl-fallback');

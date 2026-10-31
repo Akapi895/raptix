@@ -737,16 +737,6 @@ export function registerPlatform(M: MockRuntime): void {
   M.route('GET', '/api/storage/meta', function () { return M.ok({ retention_days: 30, auto_cleanup: false, location: 'data/' }); });
   M.route('POST', '/api/storage/cleanup', function () { return M.ok({ freed_bytes: 157286400, message: 'Cleanup completed (demo)' }); });
 
-  M.route('GET', '/api/system/update', function () {
-    return M.ok({ current_version: 'v1.7.24', latest_version: 'v1.7.24', up_to_date: true, source: 'demo', last_checked_at: M.nowISO() });
-  });
-  M.route('GET', '/api/system/update/job', function () { return M.ok({ status: 'idle', progress: 0, logs: [] }); });
-  M.route('POST', '/api/system/update/check', function () { return M.ok({ up_to_date: true, latest_version: 'v1.7.24' }); });
-  M.route('POST', '/api/system/update/apply', function () { return M.ok({ job_id: M.id('job'), status: 'skipped (demo)' }); });
-  M.route('POST', '/api/system/update/restart', function () { return M.ok({ success: true, message: 'Demo mode does not restart' }); });
-  M.route('POST', '/api/system/update/rollback', function () { return M.ok({ success: true }); });
-  M.route('POST', '/api/system/update/adopt', function () { return M.ok({ success: true }); });
-  M.route('POST', '/api/system/update/source', function () { return M.ok({ success: true }); });
 
   /* ---------- FOFA / robot bridges (demo only, no outbound calls) ---------- */
 
@@ -762,10 +752,6 @@ export function registerPlatform(M: MockRuntime): void {
     return M.ok({ query: (ctx.body && ctx.body.query) || '', size: rows.length, total: rows.length, page: 1, fields: Object.keys(rows[0] || {}), results: rows });
   });
 
-  M.route('GET', '/api/robot/wechat/status', function () { return M.ok({ enabled: false, bound: false }); });
-  M.route('POST', '/api/robot/wechat/qrcode', function () { return M.ok({ qrcode: '', status: 'demo', message: 'Demo mode: no real bot connected' }); });
-  M.route('GET', '/api/robot/wechat/qrcode/status', function () { return M.ok({ status: 'idle' }); });
-  M.route('POST', '/api/robot/wechat/qrcode/verify', function () { return M.ok({ success: false, message: 'Demo mode' }); });
   M.route('POST', '/api/robot/test', function () { return M.ok({ success: true, message: 'Demo mode: no real message sent' }); });
   M.route('POST', '/api/robot/dingtalk', function () { return M.ok({ success: true }); });
   M.route('POST', '/api/robot/lark', function () { return M.ok({ success: true }); });

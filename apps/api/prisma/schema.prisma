@@ -317,6 +317,52 @@ model ReadNotification {
   readAt DateTime @default(now())
 }
 
+// Tier 7 (decide, then build or cut; see docs/adr and this plan's §2/§7).
+// MarkdownAgent: apps/ui-app's agent-persona-as-markdown-file feature
+// (internal/handler/markdown_agents.go) -- real CRUD. `filename` is derived
+// as `${id}.md` for wire compatibility, never stored separately (the
+// retired Go backend parses real .md files on disk; this stores the same
+// structured fields in Postgres instead -- there is no markdown file on
+// disk to parse, and apps/ui-app's own client never reads the `raw` field).
+// Not wired into POST /api/multi-agent (stubbed since Tier 2) -- storage
+// is real, dispatch is not, same posture as Tier 5's AI roles/tool-guard.
+
+model MarkdownAgent {
+  id             String   @id
+  name           String
+  description    String   @default("")
+  isOrchestrator Boolean  @default(false)
+  tools          String[] @default([])
+  instruction    String   @default("")
+  bindRole       String   @default("")
+  maxIterations  Int      @default(0)
+  kind           String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Workflow: definition storage ONLY, per the repo owner's explicit
+// accept/cut decision for this tier -- apps/ui-app's "Workflows and
+// packages" module is a full node-graph orchestration engine (nodes:
+// start/tool/agent/condition/hitl/output/end, with validate/dry-run/
+// AI-draft-generation/package-import-export/runs-with-resume-after-HITL)
+// that Raptix has no equivalent of. Building real *execution* would mean
+// writing a new orchestration engine inside this BFF -- out of scope here.
+// list/create/update/delete of the graph definition (graphJson) are real;
+// everything execution-shaped is stubbed in workflows.routes.ts.
+
+model Workflow {
+  id              String   @id @default(cuid())
+  name            String
+  description     String   @default("")
+  version         Int      @default(1)
+  enabled         Boolean  @default(true)
+  graphJson       String   @default("{\"nodes\":[],\"edges\":[],\"config\":{}}")
+  validationError String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 // Tier 4 (Operations): "Batch task queues" maps to Tier 2's chat loop, not
 // the retired apps/web's campaign/gophish/evilginx integration (that
 // mapping in the plan's first draft was wrong -- confirmed from

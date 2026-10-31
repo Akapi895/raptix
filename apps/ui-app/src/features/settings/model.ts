@@ -21,7 +21,7 @@ export interface Probe { status: 'testing' | 'ready' | 'failed'; message: string
 export interface ConnectionResult { success?: boolean; error?: string; model?: string; latency_ms?: number; supported?: boolean; models?: string[]; count?: number }
 export interface Credentials extends ConfigObject { provider?: string; api_key?: string; base_url?: string; model?: string; channel_id?: string; credential_scope?: string }
 export type ModelScope = 'openai' | 'vision' | 'hitlAudit' | 'knowledgeEmbedding';
-export const ROBOTS = ['wechat', 'wecom', 'dingtalk', 'lark', 'telegram', 'slack', 'discord', 'qq'] as const;
+export const ROBOTS = ['wecom', 'dingtalk', 'lark', 'telegram', 'slack', 'discord', 'qq'] as const;
 export type RobotType = typeof ROBOTS[number];
 export interface RobotAuth { mode: 'user_binding' | 'service_account'; service_user_id?: string; allowed_external_users?: string[] }
 export function object(value: unknown): ConfigObject { return value && typeof value === 'object' && !Array.isArray(value) ? value as ConfigObject : {}; }

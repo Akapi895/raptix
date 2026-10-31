@@ -77,10 +77,10 @@ async function setup(options: { demoModels?: boolean; failApply?: boolean } = {}
         browser: { events: globalThis, viewport: () => ({ width: innerWidth, height: innerHeight }), settingsHash() {}, c2Enabled: enabled => { h.c2Enabled = enabled; } },
         navigate: page => { h.hubs.push(page); document.querySelectorAll('.page.active').forEach(node => node.classList.remove('active')); document.getElementById('page-' + page)?.classList.add('active'); },
         navigateSection: section => h.feature.controller.switchSettingsSection(section), notifyError: message => h.hubs.push(message),
-        section: name => h.hubs.push(({ 'token-usage': 'refreshTokenUsage', robots: 'loadVulnerabilityAlertSubscription', terminal: 'initTerminal', audit: 'initAuditLogsSection', storage: 'initStorageSection', update: 'loadUpdateConsole' })[name]),
-        stopTokenUsage: record('stopTokenUsageRequests'), stopUpdate: record('stopUpdatePolling'), syncDashboardAccessTabs: record('syncDashboardAccessTabs'),
+        section: name => h.hubs.push(({ 'token-usage': 'refreshTokenUsage', robots: 'loadVulnerabilityAlertSubscription', terminal: 'initTerminal', audit: 'initAuditLogsSection', storage: 'initStorageSection' })[name]),
+        stopTokenUsage: record('stopTokenUsageRequests'), syncDashboardAccessTabs: record('syncDashboardAccessTabs'),
         refreshChatConfig: async () => { h.hubs.push('refreshChatConfig'); }, populateChatChannels: record('populateChatAIChannelSelect'),
-        refreshMentionTools: record('refreshMentionTools'), refreshWechatRobot: record('refreshWechatRobotBoundUI'), unauthorized: record('handleUnauthorized'), closeMCPDetail: record('closeMCPDetail') });
+        refreshMentionTools: record('refreshMentionTools'), unauthorized: record('handleUnauthorized'), closeMCPDetail: record('closeMCPDetail') });
       h.feature.activate(); h.feature.activate();
     } };
     h.mount();
@@ -97,8 +97,8 @@ describe('isolated settings feature/browser', () => {
       const inline = await page.evaluate(() => [...document.querySelectorAll('#page-settings [onclick],#page-settings [onchange],#page-settings [oninput],#external-mcp-modal [onclick],#page-mcp-management [onclick]')].map(node => node.getAttribute('onclick') || node.getAttribute('onchange') || node.getAttribute('oninput')).filter(value => /(?:AIChannel|applySettings|fetchModelList|testOpenAI|testVision|RobotEditor|RobotType|Password|ExternalMCP|Tools|Search)/.test(value || '')));
       expect(inline).toEqual([]);
       await page.locator('.settings-nav-item[data-section="token-usage"]').click(); expect(await page.evaluate(() => (globalThis as typeof globalThis & { settingsHarness: Harness }).settingsHarness.hubs)).toContain('refreshTokenUsage');
-      for (const name of ['token-usage', 'robots', 'terminal', 'audit', 'storage', 'update', 'basic']) await section(page, name);
-      await browserExpect.poll(() => page.evaluate(() => (globalThis as typeof globalThis & { settingsHarness: Harness }).settingsHarness.hubs)).toEqual(expect.arrayContaining(['refreshTokenUsage', 'loadVulnerabilityAlertSubscription', 'initTerminal', 'initAuditLogsSection', 'initStorageSection', 'loadUpdateConsole', 'stopUpdatePolling']));
+      for (const name of ['token-usage', 'robots', 'terminal', 'audit', 'storage', 'basic']) await section(page, name);
+      await browserExpect.poll(() => page.evaluate(() => (globalThis as typeof globalThis & { settingsHarness: Harness }).settingsHarness.hubs)).toEqual(expect.arrayContaining(['refreshTokenUsage', 'loadVulnerabilityAlertSubscription', 'initTerminal', 'initAuditLogsSection', 'initStorageSection']));
       await section(page, 'unknown'); await browserExpect(page.locator('#settings-section-basic')).toHaveClass(/active/);
       await page.evaluate(() => { document.body.insertAdjacentHTML('beforeend', '<div id="shared-picker" class="pagination-page-size"><label for="shared-size">Rows</label><select id="shared-size"><option>10</option><option>20</option></select></div>'); });
       await page.evaluate(() => { const fn = (globalThis as typeof globalThis & { settingsHarness: Harness }).settingsHarness.feature.selects.pagination; fn(document.getElementById('shared-picker')!); fn(document.getElementById('shared-picker')!); });

@@ -39,7 +39,6 @@ export const SETTINGS_FIELDS: readonly Field[] = [
   n('vision-max-image-bytes', 'vision.max_image_bytes', 5242880), n('vision-max-dimension', 'vision.max_dimension', 2048), n('vision-jpeg-quality', 'vision.jpeg_quality', 82), n('vision-max-payload-bytes', 'vision.max_payload_bytes', 524288),
   n('vision-skip-preprocess-bytes', 'vision.skip_preprocess_below_bytes', 2097152), n('vision-timeout-seconds', 'vision.timeout_seconds', 60), s('vision-detail', 'vision.detail', 'low', ['low', 'auto', 'high']),
   ...ROBOTS.map(type => b(`robot-${type}-enabled`, `robots.${type}.enabled`)),
-  s('robot-wechat-base-url', 'robots.wechat.base_url', 'https://ilinkai.weixin.qq.com'), s('robot-wechat-bot-type', 'robots.wechat.bot_type', '3'), s('robot-wechat-bot-agent', 'robots.wechat.bot_agent', 'Raptix/1.0'), s('robot-wechat-ilink-bot-id', 'robots.wechat.ilink_bot_id'),
   s('robot-wecom-token', 'robots.wecom.token'), s('robot-wecom-encoding-aes-key', 'robots.wecom.encoding_aes_key'), s('robot-wecom-corp-id', 'robots.wecom.corp_id'), s('robot-wecom-secret', 'robots.wecom.secret'), n('robot-wecom-agent-id', 'robots.wecom.agent_id', 0),
   s('robot-dingtalk-client-id', 'robots.dingtalk.client_id'), s('robot-dingtalk-client-secret', 'robots.dingtalk.client_secret'),
   s('robot-lark-app-id', 'robots.lark.app_id'), s('robot-lark-app-secret', 'robots.lark.app_secret'), s('robot-lark-verify-token', 'robots.lark.verify_token'),

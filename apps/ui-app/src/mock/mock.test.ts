@@ -30,14 +30,14 @@ async function eventsOf(result: DispatchResult) {
 afterEach(() => { vi.useRealTimers(); });
 
 describe('typed mock fixture and router', () => {
-  it('retains every method/path in the original 284-route fixture catalog', () => {
+  it('retains every method/path in the 272-route fixture catalog (284 minus the 12 retired system/update + robot/wechat mock routes, Tier 7)', () => {
     const mock = createMock({ delayMs: 0 });
     const catalog = mock.routes.map(route => route.method + ' ' + route.pattern).sort();
     expect(catalog).toContain('GET /api/hitl/logs/:id');
     expect(catalog).toContain('GET /api/workflows/runs'); expect(catalog).toContain('GET /api/batch-tasks/runs');
     const original = catalog.filter(route => !['GET /api/hitl/logs/:id', 'GET /api/workflows/runs', 'GET /api/batch-tasks/runs'].includes(route));
-    expect(original).toHaveLength(284);
-    expect(createHash('sha256').update(original.join('\n')).digest('hex')).toBe('ca46ee3856633af44fd3f7a6cdba004b240d958c379d66d93273c839ad0caaa1');
+    expect(original).toHaveLength(272);
+    expect(createHash('sha256').update(original.join('\n')).digest('hex')).toBe('207ef2b26a0136eedbdfb704333b2d255de31a8728babe6f18eccb326b8c4711');
   });
 
   it('retains the original seed, version, storage keys and browser session shape', () => {

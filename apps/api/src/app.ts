@@ -15,12 +15,14 @@ import type { ConversationStore } from "./db/conversation-store.js";
 import type { ExternalMcpStore } from "./db/external-mcp-store.js";
 import type { HiddenExecutionStore } from "./db/hidden-execution-store.js";
 import type { KnowledgeItemStore } from "./db/knowledge-item-store.js";
+import type { MarkdownAgentStore } from "./db/markdown-agent-store.js";
 import type { ProjectStore } from "./db/project-store.js";
 import type { ReadNotificationStore } from "./db/read-notification-store.js";
 import type { RetrievalLogStore } from "./db/retrieval-log-store.js";
 import type { ToolGuardStore } from "./db/tool-guard-store.js";
 import type { VulnerabilityStore } from "./db/vulnerability-store.js";
 import type { WebShellStore } from "./db/webshell-store.js";
+import type { WorkflowStore } from "./db/workflow-store.js";
 import { handleError } from "./http/error-handler.js";
 import { registerAgentLoopRoutes } from "./http/routes/agent-loop.routes.js";
 import { registerAssetRoutes } from "./http/routes/assets.routes.js";
@@ -37,6 +39,7 @@ import { registerFofaRoutes } from "./http/routes/fofa.routes.js";
 import { registerHealthRoutes } from "./http/routes/health.routes.js";
 import { registerHitlRoutes } from "./http/routes/hitl.routes.js";
 import { registerKnowledgeRoutes } from "./http/routes/knowledge.routes.js";
+import { registerMarkdownAgentRoutes } from "./http/routes/markdown-agents.routes.js";
 import { registerMcpRoutes } from "./http/routes/mcp.routes.js";
 import { registerMonitorRoutes } from "./http/routes/monitor.routes.js";
 import { registerNotificationRoutes } from "./http/routes/notifications.routes.js";
@@ -50,6 +53,7 @@ import { registerToolGuardRoutes } from "./http/routes/tool-guard.routes.js";
 import { registerUsageRoutes } from "./http/routes/usage.routes.js";
 import { registerVulnerabilityRoutes } from "./http/routes/vulnerabilities.routes.js";
 import { registerWebShellRoutes } from "./http/routes/webshell.routes.js";
+import { registerWorkflowRoutes } from "./http/routes/workflows.routes.js";
 
 export interface BuildAppOptions {
   authStore: AuthStore;
@@ -74,6 +78,8 @@ export interface BuildAppOptions {
   aiRoleStore: AiRoleStore;
   auditLogStore: AuditLogStore;
   readNotificationStore: ReadNotificationStore;
+  markdownAgentStore: MarkdownAgentStore;
+  workflowStore: WorkflowStore;
   openApiSpecPath?: string;
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
@@ -173,6 +179,8 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   });
   registerUsageRoutes(app, { authStore: options.authStore });
   registerOpenApiRoutes(app, { authStore: options.authStore, specPath: options.openApiSpecPath });
+  registerMarkdownAgentRoutes(app, { authStore: options.authStore, markdownAgentStore: options.markdownAgentStore });
+  registerWorkflowRoutes(app, { authStore: options.authStore, workflowStore: options.workflowStore });
 
   return app;
 }
