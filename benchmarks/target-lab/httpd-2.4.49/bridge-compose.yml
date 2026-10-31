@@ -1,0 +1,52 @@
+# Phase 2 wiring: IW-09 sliver-bridge next to the vulnerable target so the
+# web console's C2 panels read real, engagement-owned sessions
+# (benchmarks/target-lab/httpd-2.4.49/README.md, "Phase 2" section).
+#
+# Topology: the bridge joins the same sandbox network as the target (the
+# implant checks in to `sliver-bridge:<allocated listener port>`), and the
+# web API reaches it over loopback only (127.0.0.1:19000 -> 9000). The web
+# API process runs on the host in dev; env.ts accepts loopback HTTP for the
+# bridge URL (apps/web/server/src/config/env.ts).
+#
+# Personal lab: the loopback publish is a deliberate deviation from the
+# IW-09 lab's "no published ports" rule — it stays bound to 127.0.0.1.
+name: target-lab-sliver-bridge
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  sliver-bridge:
+    build:
+      context: ../../..
+      dockerfile: infra/containers/sliver-bridge/Dockerfile
+    image: raptix-iw09-sliver-bridge:lab
+    container_name: target-lab-sliver-bridge
+    networks:
+      - sandbox-net
+    ports:
+      - "127.0.0.1:19000:9000"
+    environment:
+      # Required by the bridge entrypoint; set it in .env next to this file.
+      - SLIVER_BRIDGE_TOKEN=${SLIVER_BRIDGE_TOKEN:?set SLIVER_BRIDGE_TOKEN in benchmarks/target-lab/httpd-2.4.49/.env}
+    volumes:
+      - bridge_state:/state
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+    pids_limit: 256
+    restart: unless-stopped
+    logging: *default-logging
+
+volumes:
+  bridge_state:
+
+networks:
+  sandbox-net:
+    external: true
+    name: ${RAPTIX_STACK_SANDBOX_NETWORK:-raptix_sandbox-net}

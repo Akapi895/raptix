@@ -1,0 +1,3829 @@
+/* ==========================================================================
+   Raptix — Mobile UI Layer
+   --------------------------------------------------------------------------
+   Goal: without touching style.css (1.1MB) or the existing desktop layout,
+   use a standalone layer of responsive styles to reshape the platform into
+   a "mobile-first usable" form.
+
+   Design language references the QuantumNous/new-api mobile implementation:
+     - Breakpoint 768px (useIsMobile: innerWidth < 768)
+     - Bottom slide-out sheets (rounded sheet + backdrop-blur scrim + spring animation)
+     - 100svh/dvh viewport units, layout height driven by the --app-header-height variable
+     - Drawer-style navigation + card-based lists
+
+   This file only takes effect at max-width: 767.98px (plus tablet/landscape
+   ranges); the existing behavior on desktop and at >=768px is fully unaffected.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens
+   -------------------------------------------------------------------------- */
+:root {
+    --m-appbar-h: 52px;
+    --m-tabbar-h: 58px;
+    --m-safe-top: env(safe-area-inset-top, 0px);
+    --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --m-safe-left: env(safe-area-inset-left, 0px);
+    --m-safe-right: env(safe-area-inset-right, 0px);
+    --m-drawer-w: min(84vw, 320px);
+    --m-touch: 44px;
+    --m-radius-sheet: 18px;
+    --m-radius-card: 14px;
+    --m-gutter: 14px;
+    /* Metrics from section 24 "Button / Control Visual System": this is the single
+       set of size conventions for every button site-wide. Before this rework,
+       style.css had no .btn base class — 11 border radii, 9 font sizes, 7 font
+       weights, and the same .btn-secondary showed up with 12 signatures
+       (_mbtn.mjs measured 645 controls). */
+    --m-r-ctl: 12px;
+    /* Icon buttons are always perfect circles, text buttons always pills: the batch
+       of !important rules from section 24 reads exactly these two tokens. Change a
+       token once and it applies site-wide — don't patch in more selectors below or
+       trade !important fire */
+    --m-r-icon: 50%;
+    --m-r-btn: 999px;
+    --m-r-pill: 999px;
+    --m-ctl-h: var(--m-touch);
+    --m-ctl-pad-x: 16px;
+    --m-ctl-pad-x-sm: 12px;
+    --m-ctl-fs: 14px;
+    --m-ctl-fs-sm: 13px;
+    --m-ctl-fw: 500;
+    --m-ctl-fw-strong: 600;
+    --m-ctl-gap: 8px;
+    --m-ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --m-scrim: rgba(15, 23, 42, 0.5);
+    --m-z-tabbar: 800;
+    --m-z-scrim: 1200;
+    --m-z-drawer: 1201;
+    --m-z-sheet: 1202;
+    --m-z-toast: 1300;
+    /* Written at runtime by mobile-ui.js as a fallback when 100dvh is unavailable */
+    --m-app-height: 100vh;
+    /* Lift amount for bottom-fixed elements (tab bar / panels): when the iOS Safari
+       toolbar expands, the visible viewport is shorter than 100dvh, and bottom:0
+       fixed elements get covered by Safari's bottom bar. JS rewrites --m-app-height
+       on every resize, so the difference can be computed here in real time.
+       Defaults to 0; untouched on desktop and in environments without dvh. */
+    --m-bar-bottom: 0px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Viewport & Scroll Basics
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    html {
+        --demo-badge-bottom: calc(12px + var(--m-tabbar-h) + var(--m-safe-bottom) + var(--m-bar-bottom));
+        height: 100%;
+        overflow: hidden;
+    }
+
+    body {
+        height: 100vh;
+        height: 100dvh;
+        height: var(--m-app-height, 100dvh);
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    .container {
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: hidden;
+    }
+
+    /* Touch devices: remove the 300ms tap delay and tap highlight */
+    a,
+    button,
+    .nav-item-content,
+    .nav-submenu-item,
+    [onclick],
+    [role="button"] {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    /* Suppress double-tap zoom globally (pinch zoom is kept), replacing the
+       previous global JS touchend interception */
+    body {
+        touch-action: manipulation;
+    }
+
+    /* iOS auto-zoom on input focus: keep every form control at 16px minimum */
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    /* Unify momentum scrolling and boundary containment on scroll containers */
+    .page-content,
+    .main-sidebar-nav,
+    .chat-messages,
+    .conversation-list,
+    .notification-list,
+    .m-sheet-body {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    /* Minimum touch target size */
+    button,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-small,
+    .nav-item-content,
+    .nav-submenu-item,
+    .user-menu-item {
+        min-height: var(--m-touch);
+    }
+
+    button,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    /* Hide desktop-only elements on mobile */
+    .m-desktop-only {
+        display: none !important;
+    }
+}
+
+/* Mobile-only elements are hidden by default to avoid flashing on desktop */
+.m-mobile-only {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .m-mobile-only {
+        display: block;
+    }
+
+    .m-mobile-only.m-flex {
+        display: flex;
+    }
+
+    .m-mobile-only.m-inline-flex {
+        display: inline-flex;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   3. Top App Bar
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    /* Only the application bar has a fixed height and overlays page content.
+       Nested headers (e.g. project details/settings) must grow with their content. */
+    .container > header {
+        height: var(--m-appbar-h);
+        min-height: var(--m-appbar-h);
+        padding: 0 var(--m-gutter);
+        padding-top: var(--m-safe-top);
+        height: calc(var(--m-appbar-h) + var(--m-safe-top));
+        min-height: calc(var(--m-appbar-h) + var(--m-safe-top));
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 20;
+        background: var(--bg-primary);
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .header-logo-link {
+        flex: 1;
+        min-width: 0;
+        gap: 8px;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-logo-link .brand-logo {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+    }
+
+    .header-logo-link .brand-wordmark--lg {
+        font-size: 1.05rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .version-badge {
+        display: none;
+    }
+
+    .header-right {
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .header-actions {
+        gap: 4px;
+        align-items: center;
+    }
+
+    /* Desktop secondary actions (API docs / GitHub / theme / language) move into
+       the "More" panel */
+    .header-actions > .openapi-doc-btn,
+    .header-actions > .lang-switcher,
+    .header-actions > .theme-toggle,
+    .header-actions > #theme-toggle-btn,
+    .header-actions > .theme-toggle-btn {
+        display: none !important;
+    }
+
+    .header-actions > .notification-menu-container,
+    .header-actions > .user-menu-container {
+        display: flex;
+    }
+
+    /* Hamburger button / close button */
+    .m-menu-btn,
+    .m-more-btn,
+    .m-close-btn {
+        width: var(--m-touch);
+        height: var(--m-touch);
+        min-height: var(--m-touch);
+        padding: 0;
+        border: none;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--text-primary);
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .m-menu-btn:active,
+    .m-more-btn:active,
+    .m-close-btn:active {
+        background: var(--bg-tertiary);
+    }
+
+    .m-menu-btn svg,
+    .m-more-btn svg,
+    .m-close-btn svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* The notification and user menus are the only persistent controls in this
+       layer that missed the 44px minimum: at 38px they are "visible but hard to
+       hit" under a finger and must match the --m-touch convention above */
+    .notification-btn,
+    .user-avatar-btn {
+        width: var(--m-touch);
+        height: var(--m-touch);
+        min-height: var(--m-touch);
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   4. Sidebar → Drawer Navigation
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .main-layout {
+        position: relative;
+        overflow: hidden;
+        min-height: 0;
+        flex: 1;
+    }
+
+    .main-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: var(--m-drawer-w) !important;
+        max-width: 86vw;
+        height: 100%;
+        height: 100dvh;
+        height: var(--m-app-height, 100dvh);
+        z-index: var(--m-z-drawer);
+        transform: translateX(-102%);
+        visibility: hidden;
+        transition: transform 0.3s var(--m-ease), visibility 0.3s linear;
+        box-shadow: none;
+        border-right: 1px solid var(--border-color);
+        border-radius: 0 var(--m-radius-sheet) var(--m-radius-sheet) 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .main-sidebar.m-open {
+        transform: translateX(0);
+        visibility: visible;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    /* The collapsed state is meaningless on mobile; force it expanded */
+    .main-sidebar.collapsed {
+        width: var(--m-drawer-w) !important;
+    }
+
+    .main-sidebar.collapsed .nav-item-content span,
+    .main-sidebar.collapsed .nav-submenu-item {
+        display: revert;
+    }
+
+    /* Desktop collapse button replaced by the drawer header close button */
+    .sidebar-collapse-btn {
+        display: none !important;
+    }
+
+    /* Drawer header (injected by mobile-ui.js) */
+    .m-drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 10px 10px 14px;
+        padding-top: calc(10px + var(--m-safe-top));
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .m-drawer-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .m-drawer-brand img {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+    }
+
+    .m-drawer-brand .brand-wordmark {
+        font-size: 1.02rem;
+        white-space: nowrap;
+    }
+
+    .m-drawer-search {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .m-drawer-search input {
+        width: 100%;
+        box-sizing: border-box;
+        height: 38px;
+        padding: 0 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        background: var(--input-bg);
+        color: var(--text-primary);
+        font-size: 15px;
+        outline: none;
+    }
+
+    .m-drawer-search input:focus {
+        border-color: var(--accent-color);
+    }
+
+    .m-nav-empty {
+        padding: 10px 4px 2px;
+        font-size: 13px;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    .m-nav-empty[hidden] {
+        display: none;
+    }
+
+
+    /* Nav items inside the drawer: larger and easier to tap */
+    .main-sidebar-nav {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 8px calc(12px + var(--m-safe-bottom));
+    }
+
+    .nav-section-label {
+        padding: 12px 10px 6px;
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+
+    .nav-item-content {
+        padding: 11px 12px;
+        min-height: 46px;
+        font-size: 0.95rem;
+        border-radius: 10px;
+        gap: 12px;
+    }
+
+    .nav-item-content svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    .nav-submenu-item {
+        padding: 10px 12px 10px 44px;
+        /* Was 42px — one spot where this layer missed its own --m-touch (44px)
+           minimum */
+        min-height: var(--m-touch);
+        font-size: 0.9rem;
+        border-radius: 8px;
+    }
+
+    .nav-item.active > .nav-item-content,
+    .nav-item-content.active {
+        background: color-mix(in srgb, var(--accent-color) 14%, transparent);
+        color: var(--accent-color);
+    }
+
+    .nav-submenu-item.active {
+        background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+        color: var(--accent-color);
+    }
+
+    /* Items matched by menu search */
+    .m-nav-hit > .nav-item-content,
+    .nav-submenu-item.m-nav-hit {
+        outline: 1px solid color-mix(in srgb, var(--accent-color) 45%, transparent);
+    }
+
+    .m-nav-hidden {
+        display: none !important;
+    }
+
+    /* Scrim */
+    .m-scrim {
+        position: fixed;
+        inset: 0;
+        z-index: var(--m-z-scrim);
+        /* Full-screen backdrop-filter is extremely costly without GPU acceleration;
+           use opacity instead */
+        background: var(--m-scrim);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.24s ease, visibility 0.24s linear;
+    }
+
+    .m-scrim.m-show {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   5. Bottom Tab Bar
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .content-area {
+        padding-bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom));
+        background: var(--bg-secondary);
+    }
+
+    #m-tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: var(--m-bar-bottom);
+        z-index: var(--m-z-tabbar);
+        display: flex;
+        align-items: stretch;
+        height: calc(var(--m-tabbar-h) + var(--m-safe-bottom));
+        padding-bottom: var(--m-safe-bottom);
+        padding-left: var(--m-safe-left);
+        padding-right: var(--m-safe-right);
+        /* With backdrop-filter on a fixed bottom bar, software rendering recomputes
+           the blur every frame — the main cause of dropped frames on mobile */
+        background: var(--bg-primary);
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.06);
+        transition: transform 0.24s var(--m-ease);
+    }
+
+    #m-tabbar.m-hidden {
+        transform: translateY(110%);
+    }
+
+    .m-tab {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 6px 2px 4px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        /* Was 0.66rem = 10.56px, missing this layer's own "12px minimum font size"
+           rule (see 18.2); the bottom tab bar is primary navigation, so the font
+           size must meet the standard */
+        font-size: 12px;
+        line-height: 1.15;
+        position: relative;
+        border-radius: var(--m-r-ctl);
+        transition: color 0.16s ease, transform 0.16s ease;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    .m-tab svg {
+        width: 23px;
+        height: 23px;
+        flex-shrink: 0;
+    }
+
+    .m-tab span {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .m-tab.m-active {
+        color: var(--accent-color);
+    }
+
+    .m-tab.m-active svg {
+        transform: translateY(-1px) scale(1.06);
+    }
+
+    .m-tab:active {
+        transform: scale(0.94);
+    }
+
+    .m-tab-badge {
+        position: absolute;
+        top: 3px;
+        left: 50%;
+        margin-left: 6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        background: var(--error-color, #ef4444);
+        color: #fff;
+        font-size: 11px;
+        line-height: 18px;
+        text-align: center;
+        font-weight: 600;
+        box-sizing: border-box;
+    }
+
+    .m-tab-dot {
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        margin-left: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--error-color, #ef4444);
+    }
+
+    /* Make room when the keyboard pops up */
+    body.m-keyboard #m-tabbar {
+        transform: translateY(110%);
+    }
+
+    body.m-keyboard .content-area {
+        padding-bottom: 0;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   6. Bottom Slide-Out Sheet (More / Quick Actions)
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    #m-sheet {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: var(--m-z-sheet);
+        width: 95%;
+        margin: 0 auto;
+        bottom: calc(8px + var(--m-safe-bottom) + var(--m-bar-bottom));
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--m-radius-sheet);
+        box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.32);
+        transform: translateY(calc(100% + 24px));
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.32s var(--m-ease), opacity 0.2s ease, visibility 0.32s linear;
+        max-height: 78vh;
+        max-height: 78dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    #m-sheet.m-show {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .m-sheet-grip {
+        width: 38px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--border-color);
+        margin: 8px auto 2px;
+        flex-shrink: 0;
+    }
+
+    .m-sheet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 16px 10px;
+        flex-shrink: 0;
+    }
+
+    .m-sheet-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .m-sheet-body {
+        overflow-y: auto;
+        padding: 0 10px 12px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+    }
+
+    .m-sheet-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 4px;
+        border: none;
+        background: transparent;
+        border-radius: 12px;
+        color: var(--text-secondary);
+        font-size: 0.72rem;
+        text-align: center;
+        line-height: 1.2;
+        min-height: 74px;
+    }
+
+    .m-sheet-item:active {
+        background: var(--bg-tertiary);
+    }
+
+    .m-sheet-item svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .m-sheet-item.m-on {
+        color: var(--accent-color);
+        background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+    }
+
+    .m-sheet-sep {
+        grid-column: 1 / -1;
+        height: 1px;
+        background: var(--border-color);
+        margin: 8px 6px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   7. Page Header / Content Area
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .page-header {
+        padding: 10px var(--m-gutter);
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 8px;
+        align-items: stretch;
+        border-radius: 0;
+    }
+
+    /* Title takes its own row; the actions area goes full-width onto the next row
+       (keeps space-between from squeezing the buttons and clipping the primary
+       button off the right edge of the screen). The actions area can still scroll
+       horizontally inside, but occupies the full row, aligned left. */
+    .page-header h1,
+    .page-header h2,
+    .page-header h3 {
+        font-size: 1.05rem;
+        line-height: 1.3;
+        width: 100%;
+    }
+
+    .page-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        padding-bottom: 2px;
+        flex-wrap: wrap;
+    }
+
+    .page-header-actions > * {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .page-content {
+        padding: var(--m-gutter) var(--m-gutter) calc(var(--m-gutter) + 8px);
+        overflow-x: hidden;
+    }
+
+    /* Lightweight transition for page switches */
+    .page.active {
+        animation: m-page-in 0.22s var(--m-ease);
+    }
+
+    @keyframes m-page-in {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* Card-ify: unify border radius and padding on common containers */
+    .card,
+    .stat-card,
+    .metric-card,
+    .dashboard-card,
+    .panel,
+    .settings-section,
+    .info-card {
+        border-radius: var(--m-radius-card);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   8. Tables → Horizontal Scroll + Edge Fade
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .m-table-scroll {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        margin-left: calc(-1 * var(--m-gutter));
+        margin-right: calc(-1 * var(--m-gutter));
+        padding: 0 var(--m-gutter);
+        /* Left/right fade shadows (Lea Verou scrolling shadows) */
+        background:
+            linear-gradient(to right, var(--bg-primary) 30%, rgba(255, 255, 255, 0)) left / 32px 100% no-repeat local,
+            linear-gradient(to left, var(--bg-primary) 30%, rgba(255, 255, 255, 0)) right / 32px 100% no-repeat local,
+            radial-gradient(farthest-side at 0 50%, rgba(15, 23, 42, 0.16), rgba(15, 23, 42, 0)) left / 12px 100% no-repeat scroll,
+            radial-gradient(farthest-side at 100% 50%, rgba(15, 23, 42, 0.16), rgba(15, 23, 42, 0)) right / 12px 100% no-repeat scroll;
+    }
+
+    .m-table-scroll > table {
+        min-width: 560px;
+    }
+
+    .m-table-scroll.m-tight > table {
+        min-width: 0;
+    }
+
+    table,
+    .data-table {
+        font-size: 0.82rem;
+    }
+
+    table th,
+    table td,
+    .data-table thead th,
+    .data-table tbody td {
+        padding: 9px 10px;
+        white-space: nowrap;
+    }
+
+    /* Keep buttons inside tables from blowing out the row */
+    table .btn-primary,
+    table .btn-secondary,
+    table .btn-danger,
+    .data-table .btn-primary,
+    .data-table .btn-secondary,
+    .data-table .btn-danger {
+        min-height: 34px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
+    }
+
+    /* Allow long text inside cells to wrap */
+    .data-table td .m-wrap,
+    td.m-wrap {
+        white-space: normal;
+        min-width: 160px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   9. Forms & Buttons
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .form-group,
+    .form-row {
+        margin-bottom: 12px;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="search"],
+    input[type="password"],
+    input[type="number"],
+    input[type="email"],
+    input[type="url"],
+    input[type="date"],
+    input[type="datetime-local"],
+    select,
+    textarea {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: var(--m-touch);
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+
+    /* Preserve the fact search icon gutter after the generic mobile input padding. */
+    .projects-fact-filter-field--search input {
+        padding-left: 34px;
+    }
+
+    .projects-fact-search-icon {
+        bottom: calc((var(--m-touch) - 16px) / 2);
+    }
+
+    textarea {
+        min-height: 96px;
+        resize: vertical;
+    }
+
+    /* Stack multi-column form rows on mobile */
+    .form-grid,
+    .form-row.multi,
+    .settings-grid {
+        grid-template-columns: 1fr !important;
+        display: grid;
+        gap: 12px;
+    }
+
+    .form-actions,
+    .page-header-actions.m-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .form-actions > button,
+    .modal-footer > button {
+        flex: 1 1 auto;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   10. Modals / Dropdowns / Overlays
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .modal {
+        padding: 0;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        margin: 0;
+        border-radius: 0;
+        border: none;
+        animation: m-sheet-up 0.26s var(--m-ease);
+        padding-top: var(--m-safe-top);
+        padding-bottom: var(--m-safe-bottom);
+        box-sizing: border-box;
+    }
+
+    @keyframes m-sheet-up {
+        from {
+            transform: translateY(16px);
+            opacity: 0.4;
+        }
+
+        to {
+            transform: none;
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        padding: 12px var(--m-gutter);
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        background: var(--bg-primary);
+        z-index: 2;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header h2,
+    .modal-header h3 {
+        font-size: 1.02rem;
+    }
+
+    .modal-body {
+        padding: var(--m-gutter);
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-footer {
+        padding: 10px var(--m-gutter);
+        padding-bottom: calc(10px + var(--m-safe-bottom));
+        flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
+        background: var(--bg-primary);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .modal-close,
+    .modal .close {
+        width: var(--m-touch);
+        height: var(--m-touch);
+        min-height: var(--m-touch);
+    }
+
+    /* Header dropdowns: full-width, edge to edge */
+    .notification-dropdown,
+    .user-menu-dropdown,
+    .lang-dropdown {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        top: calc(var(--m-appbar-h) + var(--m-safe-top) - 4px) !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--m-radius-card);
+        z-index: 1210;
+    }
+
+    /* The role / project / chat-mode selection panels all become bottom drawers on
+       mobile, but must NOT cover the input box: YG reported "the input box overlaps
+       these three controls"; measured, a panel at bottom:66px sat exactly on top of
+       the input bar (.chat-input-container occupies the bottom 186px of the
+       viewport). bottom now uses the JS-measured --m-panel-offset (input-bar top to
+       viewport bottom + 8px gap), so the panel always pops up right above the input
+       bar — same behavior as the WeChat input panel: the input bar stays visible and
+       tappable at all times; tapping it collapses the panel.
+       The chat-mode panel was originally left out of this group and still used the
+       desktop position:absolute + left:0 positioning, taking full-screen width based
+       on the button wrapper at 320-412px viewports, with its right edge measured
+       198px off-screen. */
+    .role-selection-panel,
+    .chat-project-panel,
+    .agent-mode-panel {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        bottom: var(--m-panel-offset, calc(var(--m-tabbar-h) + var(--m-safe-bottom) + 8px)) !important;
+        top: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: var(--m-panel-maxh, 62vh);
+        border-radius: var(--m-radius-sheet);
+        z-index: 1210;
+        /* The panel matches the background color; the upward shadow clearly
+           separates the drawer from the chat area */
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.16), 0 -1px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    /* Toast */
+    #m-toast {
+        position: fixed;
+        left: 50%;
+        /* When the tab bar is lifted by --m-bar-bottom, the toast must lift with it,
+           otherwise it sits on top of the bar */
+        bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom) + 16px + var(--m-bar-bottom));
+        transform: translate(-50%, 12px);
+        z-index: var(--m-z-toast);
+        max-width: 88vw;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.92);
+        color: #fff;
+        font-size: 0.82rem;
+        line-height: 1.35;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, transform 0.24s var(--m-ease), visibility 0.24s;
+        pointer-events: none;
+    }
+
+    #m-toast.m-show {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, 0);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   11. Chat Page
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .chat-page-layout {
+        flex-direction: row;
+    }
+
+    /* Conversation list → left drawer */
+    .conversation-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: var(--m-drawer-w) !important;
+        max-width: 86vw;
+        height: 100%;
+        height: 100dvh;
+        height: var(--m-app-height, 100dvh);
+        z-index: var(--m-z-drawer);
+        transform: translateX(-102%);
+        visibility: hidden;
+        transition: transform 0.3s var(--m-ease), visibility 0.3s linear;
+        border-radius: 0 var(--m-radius-sheet) var(--m-radius-sheet) 0;
+        box-shadow: none;
+        padding-top: var(--m-safe-top);
+    }
+
+    .conversation-sidebar.m-open {
+        transform: translateX(0);
+        visibility: visible;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    .conversation-sidebar.collapsed {
+        width: var(--m-drawer-w) !important;
+    }
+
+    /* Desktop "collapse" only adds a useless class on mobile; hide it and let the
+       close button take over */
+    .conversation-sidebar-collapse-btn {
+        display: none !important;
+    }
+
+    /* The drawer covers only the left 320px; toolbar buttons left exposed on the
+       right invite mis-taps, so hide the whole bar while the drawer is open */
+    body.m-chat-drawer-open .m-chat-bar {
+        visibility: hidden;
+    }
+
+    .m-chat-drawer-close {
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .m-chat-drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 10px 8px var(--m-gutter);
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-primary);
+        flex-shrink: 0;
+    }
+
+    .m-chat-drawer-title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .conversation-header {
+        padding: 6px var(--m-gutter);
+    }
+
+    .chat-messages {
+        padding: 12px 12px 12px 12px;
+    }
+
+    /* Message bubbles take the full width */
+    .chat-messages .message,
+    .chat-messages .message-row,
+    .chat-messages .conversation-message {
+        max-width: 100%;
+    }
+
+    /* The turn navigation rail is too cramped on narrow screens; hide it entirely */
+    #chat-turn-rail {
+        display: none !important;
+    }
+
+    #chat-return-latest {
+        right: 10px;
+        bottom: 12px;
+    }
+
+    .chat-input-container {
+        padding: 8px 10px;
+        gap: 6px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .chat-input-primary-row {
+        gap: 6px;
+    }
+
+    .chat-input-leading {
+        gap: 6px;
+    }
+
+    /* Collapse secondary buttons in the input area into icons */
+    .chat-input-container .role-selector-text {
+        max-width: 88px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Close buttons of the three selection panels are 32×32 on desktop; enlarged to
+       44×44 on mobile to meet touch requirements */
+    .role-selection-panel-close {
+        width: var(--m-touch) !important;
+        height: var(--m-touch) !important;
+        min-width: var(--m-touch) !important;
+        min-height: var(--m-touch) !important;
+    }
+
+    /* Send button is a 40×40 circle on desktop; bumped to 44×44 on mobile (minimum
+       touch hit area) */
+    .chat-input-container .send-btn,
+    #chat-send-btn {
+        width: var(--m-touch) !important;
+        min-width: var(--m-touch) !important;
+        height: var(--m-touch) !important;
+        min-height: var(--m-touch) !important;
+    }
+
+    .chat-input-container .send-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* ------------------------------------------------------------------
+       19.1 Unify touch hit areas to 44×44 (WCAG 2.5.8 / iOS HIG minimum
+       tappable area). Per _mtouch.mjs measurements: top bar icons 38×38,
+       generic buttons 40 tall, .btn-small 38 tall, settings nav items 37
+       tall, chat toolbar 40 tall — all below 44. Only hit-area height/width
+       is raised; font size and colors are untouched.
+       ------------------------------------------------------------------ */
+    .header-logo-link,
+    #notification-bell-btn,
+    #user-avatar-btn,
+    .m-chat-bar-btn,
+    .chat-upload-btn,
+    .btn-secondary,
+    .btn-primary,
+    .btn-small,
+    .btn-danger,
+    .settings-nav-item,
+    .settings-custom-select-trigger,
+    .page-header-actions button,
+    .page-header-actions a {
+        min-height: var(--m-touch) !important;
+    }
+
+    #notification-bell-btn,
+    #user-avatar-btn,
+    .chat-upload-btn {
+        width: var(--m-touch) !important;
+        min-width: var(--m-touch) !important;
+    }
+
+    /* The settings nav chip "C2" is the shortest item, measured at only 41px wide */
+    .settings-nav-item {
+        min-width: var(--m-touch) !important;
+    }
+
+    /* Checkbox/radio sizing is covered in 24.11 (folded into the button system to
+       avoid two divergent specs) */
+
+    .chat-input-field textarea,
+    .chat-input-field .chat-textarea {
+        max-height: 132px;
+        font-size: 16px;
+    }
+
+    #chat-hitl-approval-dock {
+        border-radius: var(--m-radius-card);
+    }
+
+    /* Attachment list scrolls horizontally */
+    .chat-file-list {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mobile toolbar for the chat page (injected by mobile-ui.js as the first
+       child of .chat-container) */
+    #m-chat-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        padding: 6px 10px;
+        background: var(--bg-primary);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .m-chat-bar-spacer {
+        flex: 1;
+    }
+
+    .m-chat-bar-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 0 13px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.8125rem;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: transform 0.12s var(--m-ease), background 0.15s;
+    }
+
+    .m-chat-bar-btn svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .m-chat-bar-btn:active {
+        transform: scale(0.95);
+    }
+
+    .m-chat-bar-btn.m-primary {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: #ffffff;
+    }
+
+    /* Per _mchat12.mjs measurements: conversation drawer items 38px, conversation
+       settings collapse headers 39px, HITL reviewer toggles only 30px — all hidden
+       inside drawers/collapse areas, invisible to the earlier site-wide scan.
+       These are tappable controls; raise them all to 44px. */
+    #conversation-sidebar .conversation-item,
+    #conversation-sidebar .project-conversation-item,
+    #conversation-reasoning-toggle,
+    .hitl-reviewer-toggle-btn,
+    .hitl-config-select,
+    .hitl-config-field .hitl-config-label {
+        min-height: var(--m-touch) !important;
+    }
+
+    .hitl-reviewer-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   12. Terminal / WebShell / C2
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .webshell-layout,
+    .c2-layout,
+    .terminal-layout {
+        flex-direction: column !important;
+    }
+
+    .webshell-sidebar,
+    .c2-sidebar,
+    .terminal-sidebar {
+        width: 100% !important;
+        max-width: none !important;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .terminal-container,
+    .xterm {
+        font-size: 12px;
+    }
+
+    .xterm-viewport {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    /* Terminal toolbars scroll horizontally */
+    .terminal-toolbar,
+    .webshell-toolbar,
+    .c2-toolbar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .terminal-toolbar::-webkit-scrollbar,
+    .webshell-toolbar::-webkit-scrollbar,
+    .c2-toolbar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   13. Login Page
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .login-overlay {
+        padding: 16px;
+        padding-top: calc(16px + var(--m-safe-top));
+        padding-bottom: calc(16px + var(--m-safe-bottom));
+        align-items: center;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        padding: 22px 18px;
+        border-radius: var(--m-radius-sheet);
+        margin: auto;
+    }
+
+    .login-title {
+        font-size: 1.25rem;
+    }
+
+    .login-submit {
+        min-height: 48px;
+        font-size: 1rem;
+        width: 100%;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   14. Grids / Stat Cards / Charts
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .stats-grid,
+    .kpi-grid,
+    .cards-grid,
+    .metrics-grid,
+    .dashboard-grid,
+    .overview-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .stats-grid.m-two,
+    .kpi-grid.m-two {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    /* Cap chart container heights so canvas cannot overflow the screen */
+    canvas {
+        max-width: 100% !important;
+    }
+
+    .chart-container,
+    .graph-container,
+    #fact-graph,
+    #asset-graph {
+        min-height: 260px;
+        max-height: 62vh;
+    }
+
+    /* Labels / badges: no wrapping, no overflow */
+    .badge,
+    .tag,
+    .status-badge,
+    .pill {
+        white-space: nowrap;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   15. Tablet Range (768-1023.98px): keep the desktop structure, only tighten spacing
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    /* Keep utility controls reachable without squeezing the project selector. */
+    .header-content .version-badge,
+    .header-actions .openapi-doc-btn > span,
+    .header-actions #theme-toggle-label,
+    .header-actions #current-lang-label {
+        display: none;
+    }
+
+    .header-actions .openapi-doc-btn,
+    .header-actions .theme-toggle-btn,
+    .header-actions .lang-switcher-btn {
+        width: 36px;
+        min-width: 36px;
+        padding: 8px;
+        justify-content: center;
+    }
+
+    #page-webshell .webshell-layout { flex-direction: column; }
+    #page-webshell .webshell-sidebar {
+        width: 100% !important;
+        min-width: 0;
+        max-width: none;
+        max-height: 240px;
+        border-right: 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    #page-webshell .webshell-resize-handle { display: none; }
+
+    .main-sidebar {
+        width: 190px;
+    }
+
+    .page-content {
+        padding: 14px 16px;
+    }
+
+    .chat-messages {
+        padding: 16px 16px 16px 24px;
+    }
+
+    .conversation-sidebar {
+        width: 264px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   16. Landscape Phones: slim down the bottom bars to free vertical space
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+    :root {
+        --m-tabbar-h: 46px;
+        --m-appbar-h: 44px;
+    }
+
+    #m-tabbar .m-tab span {
+        display: none;
+    }
+
+    #m-tabbar .m-tab svg {
+        width: 21px;
+        height: 21px;
+    }
+
+    .main-sidebar {
+        width: min(70vw, 300px) !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   17. Accessibility & Performance
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    @media (prefers-reduced-motion: reduce) {
+
+        .main-sidebar,
+        .conversation-sidebar,
+        #m-tabbar,
+        #m-sheet,
+        .m-scrim,
+        #m-toast {
+            transition-duration: 0.01ms !important;
+        }
+
+        .page.active {
+            animation: none !important;
+        }
+    }
+
+    /* Focus visibility (keyboard / assistive devices) */
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [tabindex]:focus-visible {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+    }
+}
+
+/* Lock background scrolling while a drawer/panel is open */
+body.m-locked {
+    overflow: hidden !important;
+}
+
+/* --------------------------------------------------------------------------
+   17.6 Selection panel stacking fix (critical)
+   --------------------------------------------------------------------------
+   .chat-input-container has container-type: inline-size, which creates its own
+   stacking context. As a result, the z-index:1210 of the position:fixed
+   .chat-project-panel / .role-selection-panel / .agent-mode-panel inside it is
+   only compared within the container and cannot rival the body-level
+   #m-scrim (z-index:1200) — measured, elementFromPoint landed on .m-scrim, the
+   panels received no touch events at all, and swipe-to-close broke.
+   While a panel is open, raise the container to 1215 (above scrim 1200 /
+   drawer 1201 / sheet 1202, below toast 1300). The container itself has no
+   position, so an explicit position: relative is required.
+   -------------------------------------------------------------------------- */
+body.m-panel-open .chat-input-container {
+    position: relative;
+    z-index: 1215;
+}
+
+/* --------------------------------------------------------------------------
+   18. Readability / Contrast / Overflow Fixes
+   --------------------------------------------------------------------------
+   Per _mvisual.mjs measurements: in the light theme --text-muted (#adb5bd) is
+   only 2.07:1 on white and --text-secondary (#6c757d) is 4.69:1, both failing
+   WCAG AA (4.5:1); 11px labels are unreadable on phones; the WebShell workspace
+   is 5px wider than the viewport; the settings dropdown selected value and the
+   AI channel chip get squeezed by flex down to 6-22px wide.
+   All of the following applies only on mobile; desktop stays as-is.
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+
+    /* 18.1 Raise text color tokens to AA */
+    html:not([data-theme="dark"]) {
+        --text-secondary: #525d6c;
+        /* 6.6:1 on white, still >=6.2:1 on gray backgrounds (>=#f8fafc) */
+        --text-muted: #5b6472;
+        /* 6.0:1 on white, 5.5:1 on light gray (#f1f3f5) — the old #adb5bd was only
+           2.07:1 */
+        /* The old #c62828 as body text was only 3.68:1 on white; one step darker
+           gives 5.2:1 */
+        --accent-color: #c62828;
+    }
+
+    html[data-theme="dark"] {
+        --text-muted: #9ca3af;
+        /* 7.2:1 on #111827 */
+    }
+
+    /* 18.2 12px minimum font size */
+    .dashboard-severity-insight-score-label,
+    .dashboard-severity-insight-urgent-label,
+    .dashboard-severity-center-label,
+    .dashboard-severity-status-label,
+    .mcp-stats-kpi__label,
+    .mcp-stats-kpi__chip,
+    .pagination-info,
+    .pagination-page,
+    .hitl-tab-badge,
+    .version-badge,
+    /* Gap fills (still 11px per _mprobe.mjs): the projects page status pill, stat
+       chips, and fact filter labels, plus the pagination "per page" label */
+    .projects-status-pill,
+    .projects-stat-chip,
+    .projects-fact-filter-label,
+    .pagination-page-size {
+        font-size: 12px !important;
+    }
+
+    /* 18.2b Round 9 (after audit coverage was fixed from a fake 14 pages to the
+       real 29 pages): newly exposed small text. asset-overview asset-type stat
+       labels 11px, protocol table headers 9px; agents-management role badges 11px.
+       Icon glyphs (e.g. the 10px ▶ of
+       .tool-expand-icon) are not text and are out of scope here. */
+    .asset-type-item span,
+    .asset-protocol-compact__header p,
+    .asset-panel-meta,
+    .asset-protocol-columns span,
+    .agent-role-badge {
+        font-size: 12px !important;
+    }
+
+    /* 18.3 Bold semantic-color badges/values to compensate for their inherently
+       low contrast */
+    .dashboard-severity-insight-risk-badge,
+    .dashboard-severity-status-value,
+    .dashboard-severity-insight-score-value {
+        font-weight: 700;
+    }
+
+    /* 18.4 WebShell / C2 / terminal workspace horizontal overflow */
+    .webshell-main,
+    .webshell-workspace,
+    .c2-main,
+    .terminal-main {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* 18.5 Settings custom dropdown: the selected value is no longer squashed */
+    *:has(> .settings-custom-select-value) {
+        min-width: 0;
+    }
+
+    .settings-custom-select-value {
+        flex: 1 1 max-content !important;
+        min-width: 0 !important;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* 18.6 AI channel chips: the container takes the full row and wraps, so chips
+       are no longer squeezed into unreadability */
+    *:has(> .ai-channel-editor-chip) {
+        flex: 1 1 100% !important;
+        flex-wrap: wrap !important;
+        width: 100%;
+        min-width: 0;
+        row-gap: 6px;
+    }
+
+    .ai-channel-editor-chip {
+        flex: 0 0 auto !important;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* 18.7 Chat page HITL approval label: the original idea was "shrink by 1px and
+       it fits", but measurement disproved that — see 24.14 for the real root cause
+       (max-width:142px is the bottleneck; shrinking the font only delays the
+       clipping). */
+
+    /* 18.8 Remaining 11px dashboard labels */
+    .dashboard-batch-side-stat-label,
+    .dashboard-severity-progress-legend-item span,
+    .dashboard-severity-status-text span:not([id]) {
+        font-size: 12px !important;
+    }
+
+    /* 18.9 Fix hardcoded light-gray text (not driven by tokens) case by case */
+    #c2-sessions-count,
+    #page-knowledge-management .empty-state p,
+    #page-knowledge-management .empty-state div {
+        color: var(--text-secondary) !important;
+    }
+
+    /* 18.10 Semantic-color badges / status values: darken to AA */
+    .role-card-badge.enabled {
+        color: #157347;
+        background: rgba(40, 167, 69, 0.16);
+    }
+
+    #dashboard-status-fp {
+        color: #64748b !important;
+    }
+
+    /* 18.10b Round 7 addendum: darken semantic-color TEXT again (was 2.09-2.88:1).
+       The values were recomputed not by naively assuming a white background but by
+       using `_mcontrast.mjs` to composite the real effective background layer by
+       layer (the badge itself stacks rgba(34,197,94,0.12)+0.04 -> #dcf6e6), then
+       binary-searching "keep hue and saturation, lower lightness only" toward a
+       5.0:1 target (a little headroom over AA's 4.5 so that different background-
+       compositing algorithms don't reach different conclusions).
+       The critical ones are the dashboard "Safe" badge and the four status counts —
+       they are the page's primary data, and 2.09:1 is basically unreadable on a
+       phone outdoors. Principle: **change lightness only, not hue**, so the
+       semantics of "red = critical / green = fixed / amber = pending / gray =
+       ignored" are fully preserved; the only thing corrected is the antipattern of
+       using a fill color directly as a text color.
+       Dark theme is unaffected (same approach as 18.14; see the mirrored handling
+       in 23.4). */
+    html:not([data-theme="dark"]) #dashboard-severity-risk-level {
+        color: #107636 !important;
+    }
+
+    html:not([data-theme="dark"]) #dashboard-status-open {
+        color: #d81212 !important;
+    }
+
+    html:not([data-theme="dark"]) #dashboard-status-confirmed {
+        color: #986206 !important;
+    }
+
+    html:not([data-theme="dark"]) #dashboard-status-fixed {
+        color: #167e3c !important;
+    }
+
+    html:not([data-theme="dark"]) #dashboard-status-ignored {
+        color: #5a6d88 !important;
+    }
+
+    html:not([data-theme="dark"]) .dashboard-recommend-arrow {
+        color: #67707f !important;
+    }
+
+    html:not([data-theme="dark"]) .projects-fact-filter-label {
+        color: #5d718c !important;
+    }
+
+    /* 18.10c Required-field asterisks: the stylesheets have 4 spellings
+       (`.required-mark` / `.form-required` / `.required` / inline
+       `style="color: red;"`) — one semantic with 4 colors. The inline variant is
+       pure #ff0000, only 4.0:1 on white (an asterisk is text too, so AA applies).
+       Unify on #b02a37 (≈6.0:1), already used by 18.11 — one semantic, one color.
+       Inline styles outrank normal rules, so only !important can override them. */
+    html:not([data-theme="dark"]) label > span[style*="color: red"],
+    html:not([data-theme="dark"]) label > span[style*="color:red"],
+    html:not([data-theme="dark"]) label > span.form-required,
+    html:not([data-theme="dark"]) label > span.required,
+    html:not([data-theme="dark"]) label > span.required-mark {
+        color: #b02a37 !important;
+    }
+
+    /* 18.11 Red text on white buttons: the old #dc3545 was only 4.0:1 */
+    .btn-secondary.btn-danger,
+    .btn-secondary.btn-delete {
+        color: #b02a37 !important;
+    }
+
+    /* 18.13 Remaining low-contrast text in dashboard / HITL / knowledge base
+       (was 3.3-4.5:1) */
+    #dashboard-fix-rate,
+    .dashboard-feed-tab {
+        color: var(--text-secondary) !important;
+    }
+
+    .dashboard-feed-tab.active {
+        color: var(--accent-color) !important;
+    }
+
+    .dashboard-empty-action,
+    #page-knowledge-management .empty-state button,
+    #page-knowledge-management .empty-state .btn,
+    #hitl-pending-count {
+        background-color: #c62828 !important;
+        border-color: #c62828 !important;
+        color: #ffffff !important;
+        font-weight: 600;
+    }
+
+    /* 18.14 Darken hardcoded gray/blue text one more step (measured 4.0-4.34:1).
+       Note: this dark gray only applies in the light theme; the dark theme is
+       overridden by Block 23.4. */
+    html:not([data-theme="dark"]) #chat-hitl-shortcut-text,
+    html:not([data-theme="dark"]) #page-hitl .hitl-reviewer-toggle-btn,
+    html:not([data-theme="dark"]) #page-hitl .hitl-reviewer-toggle-btn span {
+        color: #4a5462 !important;
+    }
+
+    #projects-list-count {
+        color: #a61f1f !important;
+    }
+
+    #page-settings .required-mark {
+        color: #b02a37 !important;
+    }
+}
+
+/* ==========================================================================
+   19. Settings two-column layout collapses on mobile (content area measured at
+   only 98px wide)
+   --------------------------------------------------------------------------
+   Root cause: .page-content.settings-layout is flex-direction:row with
+   .settings-sidebar fixed at 200px. At a 390px viewport .settings-content is left
+   with 162px, minus 32px×2 padding -> 98px of content; the dropdown selected
+   value and AI channel chips get squeezed to 6-22px.
+   Fix: single column on mobile; the left nav becomes a top pill strip that
+   scrolls horizontally.
+   ========================================================================== */
+@media (max-width: 1023.98px) {
+
+    #page-settings .page-content.settings-layout {
+        flex-direction: column !important;
+        padding: 0 0 16px !important;
+    }
+
+    #page-settings .settings-sidebar {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        flex: 0 0 auto !important;
+        border-right: 0 !important;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-primary);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+    }
+
+    #page-settings .settings-nav {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        gap: 6px;
+        padding: 8px 10px;
+        box-sizing: border-box;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #page-settings .settings-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    #page-settings .settings-nav-item {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        max-width: none !important;
+        white-space: nowrap;
+        padding: 8px 13px;
+        border-radius: 999px;
+        font-size: 13px;
+        border-left: 0 !important;
+        border-bottom: 0 !important;
+    }
+
+    #page-settings .settings-nav-item.active {
+        background: var(--accent-color);
+        color: #ffffff;
+    }
+
+    #page-settings .settings-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        padding: 14px 12px 24px !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* 19.1 Let every shrinkable container inside settings take full width; no more
+       squeezing */
+    #page-settings .settings-section-content,
+    #page-settings .settings-subsection,
+    #page-settings .ai-channel-manager,
+    #page-settings .ai-channel-manager-body,
+    #page-settings .ai-channel-editor,
+    #page-settings .ai-channel-editor-head,
+    #page-settings .ai-channel-editor-meta,
+    #page-settings .ai-channel-switcher,
+    #page-settings .ai-channel-switcher-field,
+    #page-settings .settings-custom-select,
+    #page-settings .settings-custom-select-trigger {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+    }
+
+    /* 19.2 The channel switcher area was a grid; stack single-column on mobile */
+    #page-settings .ai-channel-switcher-field {
+        display: block !important;
+    }
+
+    /* 19.3 The settings wide tables (audit log / storage details) carry their own
+       min-width:560px and blow out the page at a 390px viewport -> scroll
+       horizontally inside their container instead */
+    #page-settings *:has(> table.audit-log-table) {
+        overflow-x: auto !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #page-settings table.audit-log-table {
+        max-width: none;
+    }
+
+    /* 19.4 Audit filter area: .audit-field has a fixed min-width:150px, pushing the
+       second field off-screen at a 320px viewport -> allow shrinking + full-row
+       wrapping */
+    #page-settings .audit-field {
+        min-width: 0 !important;
+        flex: 1 1 140px !important;
+    }
+
+    #page-settings .audit-datetime-field,
+    #page-settings .audit-datetime-btn {
+        min-width: 0 !important;
+    }
+
+    #page-settings *:has(> .audit-field) {
+        flex-wrap: wrap !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   20. Page Header Action Layout / Toolbar Touch Targets / Bottom Safe Area
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+
+    /* 20.1 Page header action button placement
+       Root cause: the @media (max-width: 768px) rule at style.css:19132 sets
+       .page-header-actions to flex-direction: column; align-items: stretch;. This
+       file previously only overrode align-items / flex-wrap / width, not
+       flex-direction, so buttons like "Refresh / Bulk Import / Add Asset" each took
+       their own centered row on phones.
+       Changed to a horizontal, wrapping, adaptive layout: one row when it fits
+       (around >=444 wide), automatic wrapping when it doesn't; buttons stay fully
+       visible at any device width with no horizontal scrolling.
+       Note: do not revert to nowrap + overflow-x — that pushes the primary buttons
+       (Save/New) off-screen where they need horizontal scrolling to be seen,
+       defeating the "adaptive" requirement. */
+    .page-header-actions,
+    .page-header > .page-header-actions,
+    .mcp-monitor-page .page-header-actions {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        width: 100%;
+        padding-bottom: 0;
+    }
+
+    /* 20.1b The "synced with server" status block (tool-guard) is 84px wide — too
+       much space, it pushes the primary buttons off the row. Let it shrink with
+       ellipsis in narrow containers to leave room for the buttons. */
+    .page-header-actions > .tool-guard-save-state {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 96px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 11px;
+    }
+
+    .page-header-actions > * {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    /* Unify header text buttons to a tappable size and add horizontal padding */
+    .page-header-actions > button,
+    .page-header-actions > a.btn,
+    .page-header-actions > .btn-primary,
+    .page-header-actions > .btn-secondary,
+    .page-header-actions > .btn-danger {
+        min-height: var(--m-touch) !important;
+        min-width: 64px;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    /* 20.2 Icon buttons (pagination ‹ › etc.) were only 20-32px wide, impossible
+       to hit */
+    .btn-icon-pagination,
+    .btn-icon,
+    .table-icon-btn,
+    .page-size-select {
+        min-width: var(--m-touch) !important;
+        min-height: var(--m-touch) !important;
+    }
+
+    /* 20.3 Workflow canvas toolbar: 5 buttons squeezed into 32px, text truncated */
+    .workflow-toolbar,
+    .workflow-toolbar-actions,
+    .workflow-canvas-toolbar,
+    .workflow-toolbar-group {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+
+    .workflow-toolbar-button,
+    .workflow-save-button {
+        min-width: 72px !important;
+        min-height: var(--m-touch) !important;
+        padding: 0 10px !important;
+        font-size: 12px;
+    }
+
+    /* 20.4 Guarantee touch height for small buttons (the old .btn-small was only
+       30-36px tall) */
+    .btn-small {
+        min-height: var(--m-touch) !important;
+        padding: 0 12px !important;
+    }
+
+    /* 20.5 Bottom safe area: reserve 10px above the tab bar so the last row of
+       controls doesn't stick to the tab bar after scrolling to the bottom */
+    .content-area {
+        padding-bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom) + 10px);
+    }
+
+    /* 20.6 In-page custom dropdown triggers are under 44px tall */
+    .settings-custom-select-trigger,
+    .monitor-filter-select-trigger,
+    .projects-filter-select-trigger {
+        min-height: var(--m-touch) !important;
+    }
+
+    /* 20.7 Chat page top toolbar buttons were 36px tall */
+    .m-chat-bar-btn {
+        min-height: var(--m-touch) !important;
+        padding: 0 12px !important;
+    }
+
+    /* 20.8 Pure icon buttons like upload fall short in both width and height */
+    .chat-upload-btn {
+        min-width: var(--m-touch) !important;
+        min-height: var(--m-touch) !important;
+    }
+}
+
+/* ==========================================================================
+   21. Content Area Scroll Model Fix (local scroll containers collapsing on mobile)
+   --------------------------------------------------------------------------
+   On desktop these pages lock scrolling locally with "fixed-height containers +
+   inner overflow:hidden", e.g. .asset-list-card scrolls its own pagination. At a
+   390x664 phone viewport the parent flex space is insufficient, so these local
+   scroll containers get squeezed to 16-48px tall and their inner controls are
+   clipped by overflow:hidden — no amount of scrolling reveals them. Switch to
+   "the content area scrolls as one page + inner containers expand with their
+   content".
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* 21.1 Asset library: .asset-list-card measured only 48px tall; its 183px of
+       pagination controls were all clipped */
+    .page-content.asset-content {
+        display: block !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .asset-list-card {
+        display: block !important;
+        flex: none !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+
+    #asset-pagination,
+    .pagination-container.pagination-fixed {
+        position: static !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    /* 21.2 Skill management: #skills-list measured only 16px tall; 5483px of
+       content squeezed into a sliver */
+    .page-content.page-content-with-pagination {
+        display: block !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #skills-list,
+    .skills-grid {
+        flex: none !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+
+    #skills-pagination {
+        position: static !important;
+        height: auto !important;
+    }
+
+    /* 21.4 Workflow: the sidebar node list and canvas toolbar get clipped by
+       overflow:hidden */
+    .page-content.workflow-page-content {
+        display: block !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .workflow-sidebar {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    /* The canvas itself needs a fixed height; it must not be squeezed to 0 by its
+       content */
+    .workflow-main {
+        height: auto !important;
+        min-height: 380px !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    /* Projects: one vertical scroller must fit between the page heading and
+       bottom navigation. Desktop viewport minimums and nested flex scrollers
+       otherwise put the final rows outside the clipped mobile page. */
+    #page-projects .page-content.projects-page-layout {
+        display: block;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    #page-projects .projects-sidebar-card {
+        height: auto;
+        min-height: 0;
+        max-height: none;
+        margin-bottom: 12px;
+    }
+
+    #page-projects .projects-list {
+        max-height: 220px;
+    }
+
+    #page-projects .projects-detail,
+    #page-projects .projects-detail-inner,
+    #page-projects .projects-panel,
+    #page-projects .projects-table-wrap,
+    #page-projects .projects-settings-layout {
+        flex: none;
+        height: auto;
+        min-height: 0;
+        max-height: none;
+    }
+
+    #page-projects .projects-panel,
+    #page-projects .projects-settings-layout {
+        overflow: visible;
+    }
+
+    #page-projects .projects-table-wrap {
+        overflow-x: auto;
+        overscroll-behavior-y: auto;
+    }
+
+    /* The project wrapper already owns scrolling; the generic mobile wrapper
+       must not add a second scrollbar or negative gutters inside the card. */
+    #page-projects .projects-table-wrap > .m-table-scroll {
+        overflow: visible;
+        margin: 0;
+        padding: 0;
+        background: none;
+    }
+
+    /* Eight fact columns need readable widths. Keep one horizontal scroll area
+       and let actions scroll with their row instead of covering other cells. */
+    #page-projects #project-panel-facts .data-table--projects {
+        width: 1440px;
+        min-width: 1440px;
+    }
+
+    #page-projects #project-panel-facts th:nth-child(1) { width: 160px; }
+    #page-projects #project-panel-facts th:nth-child(2) { width: 120px; }
+    #page-projects #project-panel-facts th:nth-child(3) { width: 280px; }
+    #page-projects #project-panel-facts th:nth-child(4) { width: 100px; }
+    #page-projects #project-panel-facts th:nth-child(5) { width: 120px; }
+    #page-projects #project-panel-facts th:nth-child(6) { width: 140px; }
+    #page-projects #project-panel-facts th:nth-child(7) { width: 160px; }
+    #page-projects #project-panel-facts th:nth-child(8) { width: 360px; }
+
+    #page-projects #project-panel-facts .data-table--projects .col-actions {
+        position: static;
+        max-width: none;
+        box-shadow: none;
+    }
+
+    #page-projects #project-panel-facts .col-actions .projects-table-actions {
+        flex-wrap: wrap;
+    }
+
+    #page-projects #project-panel-facts :is(.projects-category, .projects-fact-badge, .projects-confidence) {
+        max-width: 100%;
+        box-sizing: border-box;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    #page-projects #project-panel-assets .data-table--projects {
+        height: auto;
+    }
+
+    #page-projects #project-panel-assets .data-table--projects tbody {
+        flex: none;
+        overflow: visible;
+    }
+
+    #page-projects .project-fact-graph-layout {
+        flex: none;
+        height: 360px;
+        max-height: none;
+    }
+
+    /* 21.5 The C2 sessions "Reset" button measured 24x44 — impossible to hit
+       horizontally */
+    #page-c2-sessions button,
+    .c2-sessions-page button {
+        min-width: 44px !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   22. Tablet portrait (768-1023.98px): the three chat page selection panels also
+   anchor to the bottom
+   The desktop rule in @media (max-width:768px) at style.css:29402 sets
+   .role-selection-panel / .agent-mode-panel to width:calc(100vw - 16px) +
+   left:-8px, but they remain position:absolute, anchored to their button wrappers
+   at around 100-200px; measured at 768x1024 their right edges overflow by 563px
+   and 654px respectively, putting the panels entirely off-screen.
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    .role-selection-panel,
+    .chat-project-panel,
+    .agent-mode-panel {
+        position: fixed !important;
+        left: 16px !important;
+        right: 16px !important;
+        bottom: var(--m-panel-offset, 16px) !important;
+        top: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: var(--m-panel-maxh, 62vh);
+        border-radius: var(--m-radius-sheet);
+        z-index: 1210;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.16), 0 -1px 0 rgba(0, 0, 0, 0.06);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   22.2 Touch landscape tablets (1024-1439.98px + pointer:coarse): mode panels still
+   overflow. Per _mchat11.mjs, at 1024x768 the .agent-mode-panel right edge is
+   1035 > 1024 (offR=11). Desktop mouse behavior stays as-is (_mdesktop.mjs showed
+   the 1024x768 desktop overflow is a pre-existing issue, not this layer's to fix).
+   -------------------------------------------------------------------------- */
+@media (min-width: 1024px) and (max-width: 1439.98px) and (pointer: coarse) {
+    .role-selection-panel,
+    .chat-project-panel,
+    .agent-mode-panel {
+        position: fixed !important;
+        left: 16px !important;
+        right: 16px !important;
+        bottom: var(--m-panel-offset, 16px) !important;
+        top: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: var(--m-panel-maxh, 62vh);
+        border-radius: var(--m-radius-sheet);
+        z-index: 1210;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.16), 0 -1px 0 rgba(0, 0, 0, 0.06);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   23. Dark Theme Contrast Fixes (_mdark.mjs measured 4 violation classes site-wide)
+   In the dark tokens --accent-color is #f26166 (light blue); with white text it is
+   only 2.54:1. Semantic green #15803d is 3.33:1 on #111f29; danger red #b02a37 is
+   2.73:1 on #111827. Uniformly only text colors change, backgrounds untouched, so
+   the light theme and desktop are completely unaffected.
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+
+    /* 23.1 White text on light blue (#f26166) -> dark ink blue #0b1120, measured
+       9.4:1 */
+    html[data-theme="dark"] .btn-primary,
+    html[data-theme="dark"] .btn-primary:hover,
+    html[data-theme="dark"] .btn-primary:focus,
+    html[data-theme="dark"] .m-chat-bar-btn.m-primary,
+    html[data-theme="dark"] .settings-nav-item.active,
+    html[data-theme="dark"] .chat-input-container .send-btn,
+    html[data-theme="dark"] .ai-channel-save-btn,
+    html[data-theme="dark"] #hitl-pending-count,
+    html[data-theme="dark"] .dashboard-empty-action,
+    html[data-theme="dark"] #page-knowledge-management .empty-state button,
+    html[data-theme="dark"] #page-knowledge-management .empty-state .btn {
+        color: #0b1120 !important;
+    }
+
+    html[data-theme="dark"] .btn-primary svg,
+    html[data-theme="dark"] .m-chat-bar-btn.m-primary svg,
+    html[data-theme="dark"] .chat-input-container .send-btn svg,
+    html[data-theme="dark"] .settings-nav-item.active svg {
+        color: #0b1120 !important;
+        fill: currentColor;
+        stroke: currentColor;
+    }
+
+    /* 23.2 Brighten semantic green on dark backgrounds: #15803d -> #4ade80,
+       measured 8.9:1 */
+    html[data-theme="dark"] .is-success,
+    html[data-theme="dark"] .dashboard-kpi-sub-text.is-success,
+    html[data-theme="dark"] .mcp-stats-kpi__value--rate.is-success,
+    html[data-theme="dark"] .mcp-stats-kpi__status.is-success,
+    html[data-theme="dark"] .mcp-stats-tool-item__rate.is-success,
+    html[data-theme="dark"] .mcp-stats-rate.is-success {
+        color: #4ade80 !important;
+    }
+
+    /* The refresh flash "last updated" badge is likewise hardcoded #15803d */
+    html[data-theme="dark"] .dashboard-last-updated.is-flash {
+        color: #4ade80 !important;
+        background: rgba(74, 222, 128, 0.14);
+    }
+
+    /* 23.3 Brighten danger red on dark backgrounds: #b02a37 -> #f87171, measured
+       6.4:1 */
+    html[data-theme="dark"] {
+        --danger-color: #f87171;
+        --success-color: #4ade80;
+    }
+
+    html[data-theme="dark"] .required-mark,
+    html[data-theme="dark"] .btn-danger,
+    html[data-theme="dark"] .btn-secondary.btn-small.danger,
+    html[data-theme="dark"] .text-danger,
+    html[data-theme="dark"] .is-danger {
+        color: #f87171 !important;
+    }
+
+    /* 23.4 The 18.14 hardcoded dark gray only holds in the light theme; in dark
+       theme hand back to --text-muted (#9ca3af) */
+    html[data-theme="dark"] #chat-hitl-shortcut-text,
+    html[data-theme="dark"] #page-hitl .hitl-reviewer-toggle-btn,
+    html[data-theme="dark"] #page-hitl .hitl-reviewer-toggle-btn span {
+        color: var(--text-muted) !important;
+    }
+}
+
+/* ==========================================================================
+   24. Unified Button / Control Visual System
+   --------------------------------------------------------------------------
+   _mbtn.mjs measured 645 tappable controls across 27 pages. Objective problems
+   before this rework:
+
+     · style.css has **no .btn base class** (`^\s*\.btn\s*\{` matched zero times),
+       hence no size baseline: .btn-danger was the only "one size up" button at
+       10px 20px / 15px, .btn-search and .pagination-btn were fixed height:32px,
+       .btn-icon-pagination was only 20x20, and .settings-custom-select-trigger had
+       four heights (32/38/42/48px) within one page.
+     · Class semantics broken: the single .btn-secondary class appeared with
+       **12 signatures** (205 instances) — heights 44/52/71, radii 6px/8px, font
+       sizes 13px/14px, horizontal paddings 12/14/16/18px; .btn-primary had 6
+       variants, .btn-small 4.
+     · Divergent metrics: 11 radii (0/4/5/6/7/8/10/12/14/999px/50%), 9 font sizes
+       (10.56-16px), 7 font weights (400/500/520/560/600/650/700).
+     · Sizes differ within the same row (39 containers): the mcp-management
+       pagination "Prev/Next" buttons were squeezed to 53px wide by style.css:11867's
+       `flex:1 + max-width:120px`, with text wrapping inflating them to 53x71, while
+       "First/Last" in the same row were 44x52; the three asset library toolbar
+       buttons had horizontal paddings of 16/16/6; the workflow toolbar mixed 7px
+       and 0px radii.
+     · The phone primary navigation (bottom tab bar) used a 10.56px font and 9.6px
+       badges, below the 12px minimum this layer's own 18.2 set.
+
+   This section only "converges"; it changes no layout structure or colors
+   (colors remain the responsibility of sections 18/23):
+     button height -> 44px (touch minimum, also the only step)
+     radius        -> 10px for rectangular controls / 12px for square icon
+                      buttons / 999px for pill labels
+     font size     -> 14px standard, 13px small and pills
+     font weight   -> 500 regular, 600 for primary actions and selected states
+     h padding     -> 16px standard, 12px small
+     group gap     -> 8px
+
+   Two deliberate exceptions: `.btn-compact` (style.css:32833 explicitly sets
+   `min-height:0`; it is the sidebar pagination compact button and raising it to
+   44px would break the sidebar) and `.chat-files-dropdown-item` (a left-aligned
+   menu row, not a button; defined separately).
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* 24.1 Base: all "button-like controls" share one set of metrics, replacing the
+       per-class patches previously scattered across 20.1 / 20.2 / 20.4 / 20.6 /
+       20.7 / 20.8. Only left/right padding is set; top/bottom are untouched — this
+       preserves the vertical visual center of each family in style.css. */
+    :is(.btn-primary, .btn-secondary, .btn-danger, .btn-ghost,
+        .btn-small, .btn-sm, .btn-filter, .btn-search,
+        .mcp-detail-btn, .btn-delete, .btn-loading,
+        .page-header-actions > button, .page-header-actions > a.btn,
+        .tools-actions button, .attack-chain-action-btn,
+        .attack-chain-filters button, .robot-manager-toolbar button,
+        .robot-command-entry button, .asset-batch-menu button,
+        .workflow-toolbar-button, .workflow-save-button,
+        .m-chat-bar-btn, .chat-session-shortcut, .role-selector-btn,
+        .new-chat-btn, .ai-channel-save-btn, .dashboard-empty-action,
+        .dashboard-severity-status-filter-btn, .empty-state button,
+        .workflow-node-palette button, .c2-sessions-quick-links button,
+        .syntax-guide-toggle) {
+        min-height: var(--m-ctl-h) !important;
+        padding-left: var(--m-ctl-pad-x) !important;
+        padding-right: var(--m-ctl-pad-x) !important;
+        font-size: var(--m-ctl-fs) !important;
+        font-weight: var(--m-ctl-fw) !important;
+        border-radius: var(--m-r-btn) !important;
+        line-height: 1.25 !important;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* 24.2 Small tier: horizontal padding down to 12px, font 13px (height stays at
+       the 44px touch minimum) */
+    :is(.btn-small, .btn-sm, .btn-filter, .btn-search,
+        .btn-icon-pagination, .mcp-detail-btn,
+        .tools-actions button, .workflow-toolbar-button,
+        .workflow-save-button, .m-chat-bar-btn, .chat-session-shortcut,
+        .workflow-node-palette button, .c2-sessions-quick-links button,
+        .syntax-guide-toggle, .robot-command-entry button) {
+        padding-left: var(--m-ctl-pad-x-sm) !important;
+        padding-right: var(--m-ctl-pad-x-sm) !important;
+        font-size: var(--m-ctl-fs-sm) !important;
+    }
+
+    /* 24.3 Icon tier: pure icon buttons are always 44x44 squares, with a radius
+       slightly larger than text buttons so an "icon block" next to a "text bar"
+       doesn't look thin. (Previously .chat-upload-btn 36x36/radius 10,
+       .btn-icon-pagination 20x20, and top icons 38x38 — three conventions
+       coexisting.) */
+    :is(.btn-icon, .btn-icon-pagination, .chat-upload-btn,
+        .m-menu-btn, .m-more-btn, .m-close-btn, .projects-list-item-menu,
+        #notification-bell-btn, #user-avatar-btn, .header-actions .btn-icon) {
+        width: var(--m-ctl-h) !important;
+        min-width: var(--m-ctl-h) !important;
+        height: var(--m-ctl-h) !important;
+        min-height: var(--m-ctl-h) !important;
+        padding: 0 !important;
+        border-radius: var(--m-r-icon) !important;
+        font-size: var(--m-ctl-fs-sm) !important;
+        font-weight: var(--m-ctl-fw) !important;
+    }
+
+    :is(.btn-icon, .chat-upload-btn, .m-menu-btn, .m-more-btn, .m-close-btn,
+        #notification-bell-btn, #user-avatar-btn) svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* 24.4 Inline text buttons (.btn-link): previously only 32px wide, radius 0,
+       6px horizontal padding — even the baselines misaligned when lined up next to
+       6px-radius buttons. Give it a button's sense of place while keeping it bare
+       (no background, no border). */
+    .btn-link {
+        min-width: var(--m-touch) !important;
+        min-height: var(--m-ctl-h) !important;
+        padding-left: var(--m-ctl-pad-x-sm) !important;
+        padding-right: var(--m-ctl-pad-x-sm) !important;
+        font-size: var(--m-ctl-fs-sm) !important;
+        font-weight: var(--m-ctl-fw) !important;
+        border-radius: var(--m-r-btn) !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* 24.5 Label / pill tier: any "pick one from a group" control becomes a pill.
+       Previously .projects-tab had 8px radius,
+       .hitl-page-tab 0 radius, .asset-period-switch 11px font, and
+       .c2-tasks-time-preset-btn 12px font. */
+    :is(.projects-tab, .dashboard-feed-tab, .hitl-page-tab,
+        .settings-nav-item, .preset-chip,
+        .asset-period-switch button, .c2-tasks-time-preset-btn,
+        .hitl-reviewer-toggle-btn) {
+        min-height: var(--m-ctl-h) !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        font-size: var(--m-ctl-fs-sm) !important;
+        font-weight: var(--m-ctl-fw) !important;
+        border-radius: var(--m-r-pill) !important;
+        line-height: 1.25 !important;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+
+    :is(.projects-tab, .dashboard-feed-tab, .hitl-page-tab,
+        .settings-nav-item, .preset-chip,
+        .asset-period-switch button, .c2-tasks-time-preset-btn,
+        .hitl-reviewer-toggle-btn).is-active,
+    :is(.projects-tab, .dashboard-feed-tab, .hitl-page-tab,
+        .settings-nav-item, .preset-chip,
+        .asset-period-switch button, .c2-tasks-time-preset-btn,
+        .hitl-reviewer-toggle-btn).active {
+        font-weight: var(--m-ctl-fw-strong) !important;
+    }
+
+    /* The segmented control (period switch) container becomes a pill too; keep the
+       3px inset */
+    .asset-period-switch {
+        border-radius: var(--m-r-pill) !important;
+        padding: 3px !important;
+        gap: 2px !important;
+        display: inline-flex !important;
+        align-items: center;
+    }
+
+    /* 24.6 Dropdown triggers: same height and radius as buttons, but text
+       left-aligned with the right end reserved for the arrow. The same class had
+       four heights (32/38/42/48px) in the asset library and paddings jumping
+       between 9/11/12. */
+    :is(.settings-custom-select-trigger, .monitor-filter-select-trigger,
+        .projects-filter-select-trigger, .vuln-filter-select-trigger,
+        .tasks-filter-select-trigger, .chat-files-filter-select-trigger,
+        .c2-form-select-trigger, .asset-custom-select .settings-custom-select-trigger) {
+        min-height: var(--m-ctl-h) !important;
+        padding-left: var(--m-ctl-pad-x-sm) !important;
+        padding-right: var(--m-ctl-pad-x-sm) !important;
+        font-size: var(--m-ctl-fs) !important;
+        font-weight: var(--m-ctl-fw) !important;
+        border-radius: var(--m-r-ctl) !important;
+        line-height: 1.25 !important;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    /* 24.7 Pagination structure fix
+       Measured: in the mcp-management pagination, "Prev/Next" were 53x71 (text
+       squeezed onto two lines) while "First/Last" in the same row were 44x52 —
+       style.css:11867 sets `flex:1; min-width:60px; max-width:120px` on
+       `.pagination-fixed .pagination-controls .btn-secondary` at <=768px; the
+       buttons got squeezed narrow and the wrapping text inflated their height.
+       Here: cancel flexing, forbid text wrapping, allow the row to wrap, and all
+       four buttons return to the same height. */
+    :is(.pagination-controls, .pagination-fixed .pagination-controls,
+        .pagination) {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    :is(.pagination-controls, .pagination-fixed .pagination-controls) > :is(button, .btn-secondary, .btn-primary) {
+        flex: 0 0 auto !important;
+        max-width: none !important;
+        min-width: var(--m-touch) !important;
+        min-height: var(--m-ctl-h) !important;
+        padding-left: var(--m-ctl-pad-x-sm) !important;
+        padding-right: var(--m-ctl-pad-x-sm) !important;
+        font-size: var(--m-ctl-fs-sm) !important;
+        border-radius: var(--m-r-ctl) !important;
+        white-space: nowrap !important;
+    }
+
+    /* 24.8 Unify group gaps: 8px whenever controls appear as a group; previously
+       6/8/10/12/16 were mixed */
+    :is(.page-header-actions, .tools-actions, .projects-tabs,
+        .dashboard-feed-tabs, .attack-chain-filters, .asset-toolbar-main,
+        .workflow-toolbar, .workflow-toolbar-group, .workflow-node-palette,
+        .chat-composer-context, .chat-composer-footer-leading,
+        .c2-tasks-time-presets, .c2-sessions-quick-links, .settings-nav,
+        .asset-saved-views, .header-actions, .hitl-reviewer-toggle,
+        .syntax-guide-actions, .empty-state) {
+        gap: var(--m-ctl-gap) !important;
+    }
+
+    /* 24.9 Normalize tappable card/row radii to the card tier (previously five
+       values mixed: 0/4/8/10/12) */
+    :is(.dashboard-resource-item, .dashboard-severity-legend-item,
+        .dashboard-severity-status-cell, .dashboard-access-stat,
+        .dashboard-recommend-item, .tool-guard-rule-summary,
+        .stat-card, .dashboard-kpi-card) {
+        border-radius: var(--m-radius-card) !important;
+    }
+
+    /* 24.10 Hierarchy: 600 for primary actions and selected states, 500 for the
+       rest. A single screen previously carried six weights
+       (400/500/520/560/600/650). */
+    :is(.btn-primary, .new-chat-btn, .ai-channel-save-btn,
+        .empty-state button,
+        .role-selector-btn.m-primary) {
+        font-weight: var(--m-ctl-fw-strong) !important;
+    }
+
+    .chat-input-container .send-btn {
+        font-weight: var(--m-ctl-fw-strong) !important;
+    }
+
+    /* 24.11 Form checkbox/radio controls: 24px visual, 44x44 hit area (provided by
+       the whole-row label). Measured conclusion (_mchk2.mjs, runtime-injected
+       controlled experiment): Chrome does not honor author padding on replaced
+       elements like input[type=checkbox]/radio — even a runtime-injected
+       `input[type=checkbox]{padding:10px !important}` has no effect (computed
+       padding stays 0, the box stays 24x24). Per the CSS cascade spec, !important
+       precedence is inverted: UA !important beats author !important, and Blink's UA
+       stylesheet forces padding on checkboxes. So "inflate the box itself to 44px"
+       is not viable on this platform (even if it worked, it would look like a huge
+       square box). The right approach: keep the box at 24px visual and hand the
+       44px hit area to the whole-row label — measured row 68x44; tapping anywhere
+       in the row toggles it. */
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        /* !important still required: descendant selectors like style.css's
+           `.auto-refresh-toggle input[type=checkbox]` (18871) have higher
+           specificity and would push it back down to 18px */
+    }
+
+    label:has(> input[type="checkbox"]),
+    label:has(> input[type="radio"]) {
+        min-height: var(--m-touch);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* 24.12 Pill tab strips: scroll horizontally, no wrapping, no clipping.
+       _mprobe.mjs measured `.hitl-page-tabs` at a 320px viewport as clientW=292 /
+       scrollW=371 with overflow-x visible — the 4th tab's right edge is 385 > the
+       320px viewport, chopped off by the ancestor
+       `.page-content{overflow-x:hidden}`, and **a finger cannot swipe it out
+       either**: an untouchable tab. Also overflowing by 9px at 390px. This follows
+       the file's existing "horizontal scroll + nowrap" convention (see 6.x terminal
+       toolbars, 19.3 wide tables) and hands the overflow back to the strip itself.
+       Only truly single-row pill strips are listed; containers like the workflow
+       toolbar that show everything by wrapping are left alone. */
+    :is(.hitl-page-tabs, .projects-tabs, .dashboard-feed-tabs,
+        .c2-tasks-time-presets) {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x proximity;
+    }
+
+    :is(.hitl-page-tabs, .projects-tabs, .dashboard-feed-tabs,
+        .c2-tasks-time-presets)::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Items must not be squeezed (otherwise "horizontal scrolling" degrades into
+       "every tab squeezed down to an ellipsis") */
+    :is(.hitl-page-tabs, .projects-tabs, .dashboard-feed-tabs,
+        .c2-tasks-time-presets) > * {
+        flex: 0 0 auto !important;
+        scroll-snap-align: start;
+    }
+
+    /* 24.13 Remaining small font sizes on the projects page have been folded into
+       18.2's minimum list (keep a single source of truth) */
+
+    /* 24.14 Chat page "HITL: off" button: text no longer truncated.
+       Measured root cause (_mprobe.mjs): the button is pinned by style.css's
+       max-width:142px, and after 16px padding plus icon+gap only 69px is left for
+       the label, which actually needs 84px -> permanent ellipsis (only 49px left on
+       iPhone SE). The earlier 18.7 workaround of "shrink the font by 1px" treated
+       the symptom only. This bottom row is 368px wide in total; after the 44px
+       upload and 44px send buttons there is still slack, so relaxing the width
+       shows the full label. */
+    #chat-hitl-shortcut {
+        max-width: none !important;
+        padding-left: var(--m-ctl-pad-x-sm) !important;
+        padding-right: var(--m-ctl-pad-x-sm) !important;
+        font-size: var(--m-ctl-fs-sm) !important;
+        overflow: hidden !important;
+    }
+
+    /* 24.9 The session shortcut button text is written dynamically by JS (e.g.
+       "Agent review: off · OpenAI protocol model · qwen3-max"), measured 30px+
+       wider than the button. The previous forced nowrap + visible had its tail
+       clipped by the button container; changed to shrink inside the button with an
+       ellipsis on overflow (back to the original intent of style.css:44875). */
+    #chat-hitl-shortcut-text {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        font-size: var(--m-ctl-fs-sm) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        text-align: left;
+    }
+
+    /* 24.15 Custom switches: must NOT inherit 24.11's native checkbox sizes
+       (must come after 24.11 and take over via the cascade)
+       The tool-guard page's "call interception" builds a switch out of a checkbox:
+       tool-guard.css:68 defines a 30×18 pill track + 12px round thumb (::after,
+       left:2, translateX(12) when checked); tool-guard.js:205-218 also gives this
+       input a `.theme-checkbox` class. 24.11 is
+       `input[type=checkbox]{width/height:24px !important}` — specificity (0,1,1) is
+       lower than `.tool-guard-page .tool-guard-switch input[type=checkbox]`
+       (0,2,1), but with !important it wins, so:
+         · the track gets crushed into a 24×24 square (it should be a 30×18 pill)
+         · the thumb is still left2 + 12 + shift12 = right edge 26, **out of the
+           track**
+         · unchecked: a 12px dot on the left of a 24px-wide track with 10px empty on
+           the right -> broken control
+       Restore track and thumb to the original design and use higher specificity to
+       own both state offsets. */
+    .tool-guard-page .tool-guard-switch input[type="checkbox"] {
+        width: 30px !important;
+        height: 18px !important;
+        min-width: 30px !important;
+        min-height: 18px !important;
+        border-radius: 999px !important;
+        padding: 0 !important;
+        position: relative !important;
+    }
+
+    /* Unchecked state: thumb back in place. transform must be declared explicitly,
+       otherwise it inherits `translate(-50%,-50%)` from 24.16's hit-area rule and
+       moves the thumb out of the track */
+    .tool-guard-page .tool-guard-switch input[type="checkbox"]::after {
+        content: '' !important;
+        position: absolute !important;
+        top: 2px !important;
+        left: 2px !important;
+        width: 12px !important;
+        height: 12px !important;
+        border-radius: 50% !important;
+        background: #fff !important;
+        transform: none !important;
+    }
+
+    /* Checked state: left2 + thumb12 + shift12 = right edge 26; the inner track
+       width is 28 (30 minus 1px borders), leaving 2px on the right — symmetric with
+       the unchecked state's 2px on the left */
+    .tool-guard-page .tool-guard-switch input[type="checkbox"]:checked::after {
+        transform: translateX(12px) !important;
+    }
+
+    /* Bare switch: when the label contains only an input and no text its width is
+       just 24px; give it a 44px hit area. `justify-content` has no side effect at
+       auto width (content is the container), so the text row "enable call
+       interception" (104×44) is unaffected. */
+    .tool-guard-page .tool-guard-switch {
+        min-height: var(--m-touch);
+        min-width: var(--m-touch);
+        justify-content: center;
+    }
+
+    /* 24.16 Checkboxes (.theme-checkbox): proportional radius + 44px hit area
+       (a) Proportional radius: 24.11 scales the box to 24px, but `.theme-checkbox`
+           has its own border-radius of 4px (designed for the default 16px), which
+           looks squarish at 24px. The button system is 10px/44px ≈ 23%; here use
+           6px/24px = 25% — proportional to size is what makes it harmonious.
+       (b) 44px hit area: the 24.11 comment says "hand the hit area to the whole-row
+           label", but 22 checkboxes site-wide have no tappable label (20 in the
+           mcp-management tool list, the asset-library header select-all, the
+           info-collect select-all); a bare 24×24 box is hard to hit on a phone.
+           `.theme-checkbox` is appearance:none, so the input renders
+           pseudo-elements and **pseudo-elements do participate in hit testing**;
+           with native appearance the UA stylesheet locks them out — which is exactly
+           why "padding can't inflate it" in 24.11; both are two faces of the same
+           mechanism.
+           So a transparent 44×44 ::after expands the hit area: it takes no layout
+           space and changes nothing visually. */
+    .theme-checkbox {
+        position: relative !important;
+        border-radius: 6px !important;
+    }
+
+    .theme-checkbox::after {
+        content: '' !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        width: 44px !important;
+        height: 44px !important;
+        transform: translate(-50%, -50%) !important;
+        background: transparent !important;
+    }
+
+    /* 24.17 Invisible switch-style inputs must be excluded from 24.11
+       The project actually has **three** checkbox/switch mechanisms; 24.11 only
+       fits the first:
+         1. `.theme-checkbox` (style.css:43032) — a true checkbox, appearance:none,
+            visible and tappable; 24.16 already gave it a proportional radius and a
+            44px hit area;
+         2. `.modern-checkbox` + `.checkbox-custom` (style.css:11011) — a switch;
+            the input itself is `position:absolute; opacity:0; width:0; height:0;
+            pointer-events:none` and **receives no clicks at all**; clicks are taken
+            by the outer `.checkbox-label`, visuals by the sibling
+            `.checkbox-custom` (44×24 pill + 16px thumb, translateX(20) when
+            checked: 2+16+20 = 38 <= 40, 2px left on each side — correct design);
+         3. `.tool-guard-page .tool-guard-switch input` — a 30×18 switch, see 24.15.
+       24.11 forcing 24×24 onto the 2nd mechanism's input adds an invisible 24×24
+       box to the page (pointer-events:none so it doesn't block clicks, but it has
+       no reason to exist and makes audit scripts misjudge it as an "unhittable
+       checkbox"). Restore its 0×0 here. */
+    input.modern-checkbox {
+        width: 0 !important;
+        height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+    }
+
+    /* The real click receiver of the 2nd switch mechanism is `.checkbox-label`
+       (measured 150×40, 4px short). That is the correct fix point for "can't hit" —
+       fix the label, not the invisible input. !important is required: info-collect
+       has `#info-collect-full-option .checkbox-label{min-height:40px}`
+       (specificity 1,2,0) overriding the (0,1,0) here; the base rule's 40px comes
+       from `padding:8px 0` + 24px content. */
+    .checkbox-label {
+        min-height: var(--m-touch) !important;
+    }
+}
+
+/* ==========================================================================
+   Block 25: cleanup of issues newly exposed after audit coverage was corrected
+   (fake 14 pages -> real 29 pages)
+   --------------------------------------------------------------------------
+   Origin: the page tables of `_mtouch.mjs` / `_mdark.mjs` contained 6 page ids
+   that do not exist, and `switchPage()` silently no-ops on invalid ids — those 6
+   entries kept re-measuring the previous page, so "14 pages all zero" was fake
+   coverage. Only after fixing the page table (sharing the 29 real ids from
+   `_pages.mjs`, asserting by reading back `.page.active` after switching) and
+   re-measuring did the issues below become visible for the first time.
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* 25.1 The info-collect form is still a 4-column grid on phones.
+       The base rule (style.css:30644) uses
+           grid-template-columns: minmax(160px,.7fr) same ×2
+                                 + minmax(150px,.45fr) + minmax(280px,1fr)
+       totaling 750px minimum, so columns 3/4 are pushed right off the viewport at
+       390px. The single-column rule for `@media (max-width:980px)`
+       (style.css:30627) is written **after it** with equal specificity (0,1,0) —
+       the ordering mistake permanently disables that override.
+       Measured: the "Full mode" option spans left=390 right=540 (vw=390), entirely
+       off-screen. */
+    .info-collect-form-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* 25.2 The mcp-management stats bar uses flex-wrap:nowrap;
+       "📌 resident: 49" right=409 and "🔗 connected: 0" right=468 both cross the
+       right edge of the screen. */
+    #tools-stats,
+    .external-mcp-stats {
+        flex-wrap: wrap !important;
+    }
+
+    /* 25.3 Semantic-color text: reuses the same system as 18.10b (one semantic one
+       color, lower lightness only, freeze hue and saturation, target >=4.5:1),
+       limited to the light theme. Values in the comments are pre-fix measurements. */
+
+    /* Neutral gray — same value as .projects-fact-filter-label, one gray for all
+       gray labels site-wide */
+    .c2-tasks-stat-label,                 /* 2.56 on #fff */
+    .c2-events-stat-label,
+    .c2-tasks-time-preset-btn,            /* 2.45 on #f8fafc */
+    .c2-events-time-preset-btn {
+        color: #5d718c !important;
+    }
+
+    /* Info blue */
+    #c2-events-stat-info,                 /* 3.68 */
+    .c2-tasks-time-preset-btn.is-active,  /* 3.36 on #eff5fe */
+    .c2-events-time-preset-btn.is-active,
+    .agent-role-badge--orchestrator {     /* 4.36 on #e0edff */
+        color: #1557e7 !important;
+    }
+
+    /* Pending amber */
+    #c2-tasks-stat-pending,               /* 2.15 */
+    #c2-events-stat-warn {
+        color: #986206 !important;
+    }
+
+    /* Failed / critical red */
+    #c2-tasks-stat-failed,                /* 3.76 */
+    #c2-events-stat-critical {
+        color: #d81212 !important;
+    }
+
+    /* Success green (.monitor-stat-value is 28.8px large text; the large-text
+       threshold is 3.0, measured 2.97 — 0.03 short) */
+    #c2-tasks-stat-success,               /* 2.54 */
+    .monitor-stat-value.is-success {
+        color: #167e3c !important;
+    }
+
+    /* Danger button text on light pink: same danger semantic, but the background
+       #f6e9ec is darker than the dashboard's #fef8f8; reusing #d81212 gives only
+       4.42:1, so darken separately for this background. */
+    #c2-tasks-batch-delete span,          /* 3.84 */
+    #c2-events-batch-delete span {
+        color: #c22231 !important;
+    }
+
+    /* 25.4 C2 primary action buttons: c2.css uses --c2-accent (#c62828)
+       (c2.css:8) as the button background, giving white text only 3.68:1. The same
+       #c62828 as body text was already handled in 18.x, but as a button background
+       this case was missed. Darken to #c62828 -> 5.17:1.
+       **Must be limited to the light theme**: in dark theme `--c2-accent` becomes
+       light blue and buttons are "light background + dark text"; changing the
+       background in dark mode would tank text contrast (measured 3.64:1). */
+    html:not([data-theme="dark"]) .c2-payload-card .btn-primary,
+    html:not([data-theme="dark"]) #c2-build-btn {
+        background: #c62828 !important;
+        border-color: #c62828 !important;
+    }
+
+    /* 25.5 Round 9, second pass: remaining text-class small fonts on newly exposed
+       pages also join the 12px minimum. The ▶ of `.tool-expand-icon` (10px) is an
+       icon glyph and `svg text` (9px) is an in-chart annotation; both are graphic
+       elements, not bound by the text font-size minimum, and keep their sizes. */
+    .skill-card-tags span,        /* 11.52px skill tags */
+    .c2-tasks-field span,         /* 11px filter field titles */
+    .c2-events-field span,
+    #tools-stats strong,          /* 11.2px tool stat numbers */
+    .asset-protocol-empty p,      /* 11px "no data" */
+    .asset-recent-badge,          /* 10px "7 days" */
+    .asset-recent-caption {       /* 11px "0% of total assets" */
+        font-size: 12px !important;
+    }
+
+    /* 25.6 At iPhone SE (320px viewport) the info-collect results toolbar is pushed
+       off-screen: "Columns / Export CSV / Export JSON" right=386 > 320. Let it wrap
+       instead of overflowing. */
+    .info-collect-results-toolbar,
+    #fofa-selected-meta {
+        flex-wrap: wrap !important;
+    }
+
+    /* 25.6b The header is a single-row space-between; the left column's
+       min-width:240px still pushes the toolbar off. Switch to two rows: the left
+       column takes the first row and the toolbar moves to the next, right-aligned. */
+    .info-collect-results-header {
+        flex-wrap: wrap !important;
+    }
+    .info-collect-results-header-left {
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+    }
+
+    /* 25.7 Input control height fallback: Block 7's
+       input/select{min-height:var(--m-touch)} has specificity (0,1,1), not enough —
+       targeted rules override it down to 36/38/40/42px.
+       - c2.css `#page-c2-events .c2-events-field .form-control` (1,2,1) locks 36px
+       - knowledge's `.knowledge-filters .search-box` (0,2,0) -> 38px
+       - settings' `.form-group input` (settings page) -> 42px
+       Override here with `#page-*` prefixes + !important while keeping the original
+       box-sizing/padding.
+       (form-control sets both height and min-height, so both need overriding;
+        .search-box input and bare inputs only need min-height.) */
+    #page-c2-tasks .c2-tasks-field .form-control,
+    #page-c2-events .c2-events-field .form-control,
+    #page-knowledge-management .knowledge-search-field input,
+    #page-settings .form-group input,
+    #page-settings input[type="text"],
+    #page-settings input[type="password"],
+    #page-settings input[type="url"] {
+        height: var(--m-ctl-h) !important;
+        min-height: var(--m-ctl-h) !important;
+    }
+}
+
+/* ==========================================================================
+   Block 26: Dark theme (html[data-theme="dark"])
+   --------------------------------------------------------------------------
+   These violations were likewise "invisible until audit coverage was fixed":
+   `_mdark.mjs`'s page table previously contained 6 nonexistent page ids, and of
+   the 14 pages those 6 kept re-measuring the previous page, so "dark: 0
+   violations" was fake coverage.
+
+   The 39 recommended colors were solved offline via `_mcontrast.mjs`'s new
+   OFFLINE mode — it deliberately reuses the **same solveFor()** as when running
+   in the page, avoiding an "offline algorithm vs online algorithm" fork. The
+   direction is the opposite of light: in dark mode **brighten** the foreground
+   (search direction is decided automatically by the foreground/background
+   lightness relationship; no manual specification needed). Values likewise follow
+   "one semantic one color"; the ratios in parentheses are pre-fix measurements.
+
+   Two conclusions were confirmed trustworthy by **pixel adjudication**
+   (`_mpixel.mjs` + THEME=dark): the CSS-computed `.mcp-stats-kpi__chip.is-ok` =
+   #166534 matches the pixel ground truth exactly (2.04:1), and
+   `.role-card-badge.enabled` = #157347 matches too (2.43:1) — not modeling error.
+   ========================================================================== */
+html[data-theme="dark"] {
+
+    /* 26.1 [Reverted misjudgment, kept for the record] In dark theme the normal form
+       of `.btn-primary` is "light blue #f26166 background + dark ink blue text",
+       measured 9.4:1 — the inverse of the light theme's "dark blue background +
+       white text"; this is **intentional design** (exactly the scheme handled in
+       Block 23.1).
+       I initially misjudged it as "dark text on blue background" and uniformly
+       switched to light text, dropping the visible primary buttons on 18 pages from
+       9.4:1 to 2.21:1 in one shot — `_mdark.mjs` re-measurement exposed it
+       immediately. Conclusion: **do not touch `.btn-primary`'s text color**.
+
+       The real problem is the login button: `#login-overlay .btn-primary.login-submit`
+       is overlaid with a dark gradient background-image:
+       linear-gradient(135deg,#c62828,#b71c1c) that covers the light blue base while
+       the text stays dark ink blue -> measured 1:1 - 3.64:1. Fix only this spot. */
+    #login-overlay .btn-primary,
+    #login-overlay .login-submit {
+        color: #eceff8 !important;
+    }
+
+    /* 26.2 Neutral gray — in dark theme brighten everything to one color: take the
+       brightest tier among the elements' solutions (#848fa0 is the solution for
+       "filter button / #1f2937 background"; darker backgrounds only give higher
+       ratios). The `.btn-secondary` pagination buttons need the `*` here: the text
+       is actually carried by child elements, and changing only the button itself
+       shows no change at all (verified by measurement). */
+    .c2-tasks-stat-label,                 /* 3.49 on #131a27 */
+    .c2-events-stat-label,
+    .c2-tasks-time-preset-btn,            /* 3.75 on #0c1220 */
+    .c2-events-time-preset-btn,
+    #projects-detail-meta-time,           /* 3.72 */
+    button.btn-secondary,                 /* 2.48 */
+    button.btn-secondary * {
+        color: #8c97a8 !important;
+    }
+
+    /* 26.3 Info blue */
+    #c2-events-stat-info,                 /* 2.95 */
+    .c2-tasks-time-preset-btn.is-active,  /* 2.33 on #1e2d45 */
+    .c2-events-time-preset-btn.is-active,
+    .agent-role-badge--orchestrator {     /* 2.69 */
+        color: #e53935 !important;
+    }
+
+    /* 26.5 Green — #24a655 is the solution for "enabled badge / #142f2c background"
+       (darker chip backgrounds only give higher ratios) */
+    #c2-tasks-stat-success,               /* 3.39 */
+    .mcp-stats-kpi__chip.is-ok,           /* 2.04 <- pixel-adjudicated */
+    .role-card-badge.enabled {            /* 2.42 <- pixel-adjudicated */
+        color: #24a655 !important;
+    }
+    /* The dashboard "Safe" badge has a lighter background (#163a36) and needs a
+       brighter green */
+    #dashboard-severity-risk-level {
+        color: #18b351 !important;        /* 3.77 */
+    }
+
+    /* 26.6 Red — #f04a4a is the solution for "fail chip / #271c2a background"
+       (#ef3e3e against #211a29 is only 4.35:1) */
+    #c2-tasks-stat-failed,                /* 3.33 */
+    #c2-events-stat-critical,
+    #c2-tasks-batch-delete span,          /* 2.86 */
+    #c2-events-batch-delete span,
+    .btn-secondary.btn-delete,            /* 2.73 */
+    .mcp-stats-kpi__chip.is-fail {        /* 1.97 */
+        color: #f25858 !important;
+    }
+    #dashboard-status-open {
+        color: #ef4646 !important;        /* 4.45, 0.05 short; value taken from its own solution */
+    }
+
+    /* 26.7 Amber */
+    #c2-tasks-stat-pending,               /* 3.39 */
+    #c2-events-stat-warn {
+        color: #b47407 !important;
+    }
+
+    /* 26.9 Knowledge base "not enabled" hint (rgb(102,102,102) is only 3.28:1 on
+       dark backgrounds) */
+    #page-knowledge-management h3 {
+        color: #7c7c7c !important;
+    }
+
+    /* 26.10 The mcp-management "All" filter button is white text on light blue
+       #f26166: with hue and saturation frozen there is **no solution** (white has no
+       headroom to brighten; the solver returns #ffffff as-is), so the only option is
+       darkening the background. */
+    .btn-filter.active {
+        background: #c62828 !important;
+        border-color: #c62828 !important;
+    }
+
+    /* 26.12 Empty-state action buttons: 18.13 gave them a solid #c62828 background,
+       and 23.1 then changed the text to dark ink blue under the "light blue
+       (#f26166) background" assumption — the two fixes' premises disagree, yielding
+       "dark blue text on dark blue background" (measured 3.64:1). Since the
+       background is fixed at #c62828, in dark theme the text must go back to light
+       (5.17:1). The prefix is provided by the enclosing `html[data-theme="dark"]`
+       block; it must **not** be handwritten again here (see the 26.11 comment for
+       the reason). */
+    .dashboard-empty-action,
+    #page-knowledge-management .empty-state button,
+    #page-knowledge-management .empty-state .btn,
+    #hitl-pending-count {
+        color: #eceff8 !important;
+    }
+
+    /* 26.13 Unfixed: the asset-library pagination "First/Prev/Next/Last" buttons are
+       `:disabled` on the first page; the #475569 light gray is intentional — WCAG
+       1.4.3 explicitly exempts disabled controls from contrast requirements.
+       `_mdark.mjs` still reports them; that is a tooling gap (`:disabled` not yet
+       filtered). */
+}
+
+/* --------------------------------------------------------------------------
+   25. iOS Look & Feel Revision: materials / radii / press feedback
+   --------------------------------------------------------------------------
+   Conventions:
+   - Materials are always derived with color-mix from the theme's own --bg-primary
+     / --border-color, so light and dark follow automatically; hardcoded rgba
+     turns into a white fog in dark mode.
+   - backdrop-filter is enabled only when the browser supports it; otherwise fall
+     back to a solid background (same look, just no show-through). Blur on fixed
+     bars is the main cause of dropped frames under software rendering (see
+     section 5), so site-wide only the top bar and bottom bar each get one
+     blur(20px) layer; drawers/panels use opaque materials and add no blur.
+   - Radii collapse into one ladder: pill controls, circular icon buttons, cards
+     18, panel top corners 22. This layer's previous mix of 10/12/14/18 reads as
+     "misaligned" on a phone, not "designed".
+   - Press feedback uses scale, and is turned off entirely under
+     prefers-reduced-motion.
+   - All changes touch looks only: the 44px touch minimum, z-order, and scroll
+     containers are untouched.
+   -------------------------------------------------------------------------- */
+:root {
+    --m-r-card: 18px;
+    --m-r-panel: 22px;
+    --m-material: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+    --m-material-solid: color-mix(in srgb, var(--bg-primary) 96%, transparent);
+    --m-hairline: color-mix(in srgb, var(--border-color) 55%, transparent);
+    --m-fill-quaternary: color-mix(in srgb, var(--text-primary) 6%, transparent);
+    --m-fill-press: color-mix(in srgb, var(--text-primary) 10%, transparent);
+    --m-ring: color-mix(in srgb, var(--accent-color) 30%, transparent);
+    --m-shadow-panel: 0 -12px 40px rgba(0, 0, 0, 0.22);
+    --m-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 767.98px) {
+    /* 25.1 Top bar / bottom bar: show-through material + hairline separator.
+       The top bar must carry html[data-theme]: style.css injects an opaque gradient
+       for dark via theme selectors; writing header alone loses the material in dark
+       mode (measured: background got overridden by the gradient). */
+    .container > header,
+    html[data-theme] .container > header {
+        background: var(--m-material-solid);
+        border-bottom: 1px solid var(--m-hairline);
+        box-shadow: none;
+    }
+
+    #m-tabbar {
+        background: var(--m-material-solid);
+        border-top: 1px solid var(--m-hairline);
+        box-shadow: none;
+    }
+
+    @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .container > header,
+        html[data-theme] .container > header {
+            background: var(--m-material);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        #m-tabbar {
+            background: var(--m-material);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+    }
+
+    /* 25.2 Radius ladder: cards, panels, controls, icon buttons */
+    .card,
+    .stat-card,
+    .metric-card,
+    .dashboard-card,
+    .panel,
+    .settings-section,
+    .info-card {
+        border-radius: var(--m-r-card);
+        box-shadow: var(--m-shadow-card);
+    }
+
+    #m-sheet {
+        border-radius: var(--m-r-panel) var(--m-r-panel) 0 0;
+        box-shadow: var(--m-shadow-panel);
+    }
+
+    .main-sidebar {
+        border-radius: 0 var(--m-r-panel) var(--m-r-panel) 0;
+        border-right: none;
+    }
+
+    input:not([type=checkbox]):not([type=radio]),
+    select,
+    textarea {
+        border-radius: 12px;
+    }
+
+    button,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-small,
+    .btn-sm,
+    .m-chat-bar-btn {
+        border-radius: var(--m-r-pill);
+    }
+
+    /* Strip icon buttons of background and border: desktop uses .header-actions
+       button (class + element), two specificity contributions; writing only the
+       class name here gets overridden (measured: border stayed 1px), so this must
+       be written in the same shape */
+    .header-actions :is(.m-more-btn, .m-close-btn, .notification-btn, .user-avatar-btn, .btn-icon),
+    .m-menu-btn {
+        border: none;
+        background: transparent;
+    }
+
+    /* Secondary buttons: the iOS "filled" style; drop the outline so they stop
+       competing with primary buttons for hierarchy */
+    .btn-secondary,
+    .btn-small,
+    .btn-sm {
+        background: var(--m-fill-quaternary);
+        border-color: transparent;
+    }
+
+    /* 25.3 Hairlines: internal separators of drawers / panels / the chat bar */
+    .m-drawer-head,
+    .m-drawer-search,
+    .m-sheet-head,
+    .m-chat-bar {
+        border-bottom-color: var(--m-hairline);
+    }
+
+    .m-sheet-sep {
+        background: var(--m-hairline);
+    }
+
+    .m-sheet-grip {
+        width: 36px;
+        height: 5px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--text-muted) 45%, transparent);
+    }
+
+    /* 25.4 Press feedback: a visible "it registered", without changing layout size */
+    .m-tab,
+    .m-sheet-item,
+    .m-chat-bar-btn,
+    .m-menu-btn,
+    .m-more-btn,
+    .m-close-btn,
+    .notification-btn,
+    .user-avatar-btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-small,
+    .nav-item-content,
+    .nav-submenu-item {
+        transition: transform 0.12s ease, background-color 0.12s ease, color 0.16s ease, opacity 0.12s ease;
+    }
+
+    .m-tab:active,
+    .m-sheet-item:active,
+    .m-chat-bar-btn:active,
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-danger:active,
+    .btn-small:active {
+        transform: scale(0.96);
+        background-color: var(--m-fill-press);
+    }
+
+    .btn-primary:active {
+        /* Keep the accent color while the primary button is pressed; darken only,
+           no gray background */
+        background-color: color-mix(in srgb, var(--accent-color) 88%, #000);
+    }
+
+    /* Active tab: a round tint behind the icon, closer to the system tab bar than
+       tinting the whole cell */
+    .m-tab.m-active {
+        color: var(--accent-color);
+        background: transparent;
+    }
+
+    .m-tab.m-active svg {
+        background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+        border-radius: 50%;
+        padding: 2px;
+        box-sizing: content-box;
+    }
+
+    /* 25.5 Focus ring: swap the 2px hard outline for a 3px soft halo; keyboard
+       accessibility is not downgraded */
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [tabindex]:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--m-ring);
+    }
+
+    .m-drawer-search input:focus {
+        border-color: color-mix(in srgb, var(--accent-color) 55%, transparent);
+    }
+
+    /* Under forced colors the soft halo gets wiped out; give the hard outline back
+       here */
+    @media (forced-colors: active) {
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        [tabindex]:focus-visible {
+            outline: 2px solid Highlight;
+            outline-offset: 2px;
+        }
+    }
+
+    /* <a> buttons inside toolbars (view all / fetch model list / visual test): they
+       are action controls, not body links; desktop renders them as inline blocks
+       21-29px tall, impossible to hit with a finger. Give them this layer's touch
+       minimum; font size and color untouched. Links in body text (inside
+       .markdown-body) are not in these containers and are unaffected. */
+    :is(.page-header-actions, .dashboard-section-actions, .dashboard-section-header,
+         .model-pick-row, .asset-toolbar, .settings-toolbar, .settings-form,
+         .form-group, .info-collect-toolbar, .settings-advanced-block > div)
+        a:not(.btn-primary):not(.btn-secondary):not(.btn-danger) {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--m-touch);
+        padding: 0 8px;
+        box-sizing: border-box;
+    }
+
+    /* Conversation drawer: this layer turns it into a full-screen drawer, so the
+       rows inside must follow the 44px touch convention (measured: search box 42,
+       group button 24 wide, project rows 38, "recent conversations" collapse
+       header 30) */
+    :is(#conversation-sidebar .conversation-search-box input,
+        #conversation-sidebar .add-group-btn,
+        #conversation-sidebar .project-folder-item,
+        #conversation-sidebar .recent-conversations-toggle,
+        #conversation-sidebar .project-folder-header) {
+        min-height: var(--m-touch);
+    }
+
+    #conversation-sidebar .add-group-btn {
+        min-width: var(--m-touch);
+    }
+
+    /* The call-interception switch: the input is a 30x18 slider, but the hit area is
+       really the label wrapping it. Stretch the label to the touch minimum so a
+       finger hits the whole switch, not the 18px core. */
+    .tool-guard-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--m-touch);
+        min-height: var(--m-touch);
+    }
+
+    /* Desktop sets .ai-channel-manager to overflow:hidden (style.css:4796,
+       self-clipping via a fixed height); on mobile its content is taller than the
+       box and the excess is clipped — measured, even scrollIntoView cannot pull the
+       4 channel-selection buttons into the viewport: "visible but untappable". Hand
+       it back to the page scroll container here. */
+    .ai-channel-manager {
+        overflow: visible;
+    }
+
+    /* 25.6 Scrim and toast: no blur on the scrim (full-screen blur is the main
+       cause of dropped frames); the toast uses material */
+    .m-scrim {
+        background: color-mix(in srgb, var(--m-scrim) 88%, transparent);
+    }
+
+    /* The toast keeps the base layer's dark HUD pill (line 1023): this once changed
+       it to a light material while the text stayed #fff, producing white-on-white —
+       what the user saw was "a white blob in the middle of the screen".
+       Only add a shadow here; background and text color untouched. */
+    #m-toast {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+}
+
+@media (max-width: 767.98px) and (prefers-reduced-motion: reduce) {
+    /* Turn off press scaling, keep only color feedback */
+    .m-tab,
+    .m-sheet-item,
+    .m-chat-bar-btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-small {
+        transition: background-color 0.12s ease, color 0.16s ease;
+    }
+
+    .m-tab:active,
+    .m-sheet-item:active,
+    .m-chat-bar-btn:active,
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-danger:active,
+    .btn-small:active {
+        transform: none;
+    }
+}
+
+@supports (height: 100dvh) {
+    :root {
+        --m-bar-bottom: max(0px, calc(100dvh - var(--m-app-height, 100dvh)));
+    }
+}
+
+/* --------------------------------------------------------------------------
+   26. Density & Surfaces: align with new-api's card system + iOS grouped lists and
+   filled forms
+   --------------------------------------------------------------------------
+   This section only governs "how cramped and how aligned things look"; it does not
+   change the color language: the KPI cards' nth-child pastel gradient scheme is
+   the product's own identity (style.css:23789-23793); don't fight it.
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    /* 26.1 KPI: desktop flattens the 5 cards into a single column of 116px-tall
+       bars at <=480px; on a phone you scroll two screens to see four numbers.
+       Switch to a compact two-column grid where the numbers take center stage. */
+    .dashboard-kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    /* With an odd count, let the last card span the full row; no hole in the
+       bottom-right corner */
+    .dashboard-kpi-row > .dashboard-kpi-card:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+
+    .dashboard-kpi-card {
+        padding: 12px 13px !important;
+        min-height: 0 !important;
+        gap: 0 !important;
+    }
+
+    .dashboard-kpi-label {
+        font-size: 12px;
+        line-height: 1.35;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+
+    .dashboard-kpi-value {
+        font-size: 26px;
+        line-height: 1.15;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        margin-top: 6px;
+    }
+
+    .dashboard-kpi-sub,
+    .dashboard-kpi-sub-text {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .dashboard-kpi-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+        flex-shrink: 0;
+    }
+
+    .dashboard-kpi-icon svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .dashboard-access-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px;
+    }
+
+    /* 26.2 Unify card surfaces: hairline border + 16 radius + a barely visible
+       shadow. Desktop's 0 2px 8px double shadow "lifts" every card on a small
+       screen; four per screen and the layout falls apart. */
+    :is(.card, .stat-card, .metric-card, .dashboard-card, .panel,
+         .settings-section, .info-card) {
+        border: 1px solid var(--m-hairline);
+        border-radius: var(--m-r-card);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    /* 26.3 Page header: group the title and actions row together; no more separate
+       blocks of whitespace */
+    .page-header h2,
+    .page-header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    .page-header {
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    /* 26.4 Filled forms (the iOS way: fields are distinguished by fill color, not a
+       gray border) */
+    :is(.form-group, .settings-form, .modal-body, .m-drawer-search) :is(input, select, textarea) {
+        background: var(--m-fill-quaternary);
+        border-color: transparent;
+        border-radius: 12px;
+    }
+
+    /* Focus: keep only the soft halo. Changing the border color too would stack two
+       rings with 25.5's ring (verified on the login box) */
+    :is(.form-group, .settings-form, .modal-body, .m-drawer-search) :is(input, select, textarea):focus {
+        background: var(--bg-primary);
+        border-color: transparent;
+        box-shadow: 0 0 0 3px var(--m-ring);
+    }
+
+    /* 26.5 Login card: full-width card + filled fields + pill primary button */
+    .login-card {
+        border-radius: 20px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .login-form .btn-primary,
+    .login-card .btn-primary {
+        width: 100%;
+        border-radius: var(--m-r-pill);
+    }
+
+    /* 26.6 Grouped lists: hairline separators only between rows inside cards; row
+       heights follow the touch minimum */
+    :is(.settings-section, .card, .panel, .info-card) :is(.form-group, .settings-row, .list-row) + :is(.form-group, .settings-row, .list-row) {
+        border-top: 1px solid var(--m-hairline);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   28. Glass Look: ambient light canvas + glass surfaces + top edge highlight
+   --------------------------------------------------------------------------
+   Goal: push the mobile UI from "flat gray background + separators" toward
+   Apple's glass material language. Glass only reads as glass if there is
+   something behind it to show through, so this section does two things first:
+
+   - Canvas: lay a very faint ambient light on .container (light = near-white base
+     + soft accent glow top-right / purple glow bottom-left; dark = deep base +
+     brighter same-hue glow), then hand the solid base color of .content-area /
+     .chat-messages back to this canvas. From then on every translucent surface
+     has color to show through; the content backgrounds of individual pages are
+     untouched.
+   - Surfaces come in three tiers: blur (backdrop-filter) is only for "small-area
+     or transient" elements — top bar, bottom bar (already in section 25), bottom
+     sheet, drawers, login card, modals; they are either small or only painted
+     while open, never sitting on persistent scrolling content. Persistent cards
+     (the .card/.stat-card/... family) get translucency + hairline border + top
+     edge highlight only, no blur — large-area blur on fixed bars is the main
+     cause of dropped frames on mobile (measured in section 25); that rule stands.
+   - Light and dark are both derived via color-mix from theme tokens; only the
+     "top edge highlight" must flip direction (light = white line, dark = very
+     faint white line) and is overridden separately.
+   - Under prefers-reduced-transparency: reduce, ignore browser support entirely
+     and fall back to solid everywhere.
+   -------------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    :root {
+        /* Bar material from 82% down to 62%: blur backs it up, so what shows through
+           is the canvas, not a gray slab */
+        --m-material: color-mix(in srgb, var(--bg-primary) 62%, transparent);
+        /* Glass cards (persistent, no blur): let a little canvas color show through */
+        --m-glass-card: color-mix(in srgb, var(--card-bg) 66%, transparent);
+        /* Glass panels (transient, with blur): drawers / bottom sheet / login card /
+           modals */
+        --m-glass-panel: color-mix(in srgb, var(--bg-primary) 72%, transparent);
+        --m-glass-blur: saturate(180%) blur(20px);
+        /* Top edge highlight: the glass "lip". White line in light, very faint white
+           in dark (see the override below) */
+        --m-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    html[data-theme="dark"] {
+        --m-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    /* 28.1 Ambient light canvas: the whole app gets a new base; cards and bars show
+       color through this layer */
+    .container {
+        background:
+            radial-gradient(120% 88% at 88% -12%,
+                color-mix(in srgb, var(--accent-color) 14%, transparent), transparent 58%),
+            radial-gradient(95% 72% at -12% 106%,
+                color-mix(in srgb, #8b5cf6 11%, transparent), transparent 60%),
+            var(--bg-secondary);
+    }
+
+    html[data-theme="dark"] .container {
+        background:
+            radial-gradient(120% 88% at 88% -12%,
+                color-mix(in srgb, var(--accent-color) 18%, transparent), transparent 58%),
+            radial-gradient(95% 72% at -12% 106%,
+                color-mix(in srgb, #8b5cf6 13%, transparent), transparent 60%),
+            var(--bg-secondary);
+    }
+
+    /* Hand back the base color: the canvas owns the "ground", cards own the
+       "surface" */
+    .content-area,
+    .chat-messages {
+        background: transparent;
+    }
+
+    /* 28.2 Add a top edge highlight to the bottom bar; the top bar keeps section
+       25's hairline */
+    #m-tabbar {
+        border-top-color: var(--m-hairline);
+        box-shadow: var(--m-bevel);
+    }
+
+    /* 28.3 Card glass: translucent surface + hairline border + top edge highlight;
+       the shadow stays section 26's "barely visible" */
+    :is(.card, .stat-card, .metric-card, .dashboard-card, .panel,
+         .settings-section, .info-card) {
+        background: var(--m-glass-card);
+        border-color: var(--m-hairline);
+        box-shadow: var(--m-bevel), 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    /* 28.4 Bottom sheet: true glass (show-through + blur), painted only while open */
+    #m-sheet {
+        background: var(--m-glass-panel);
+        border-color: color-mix(in srgb, var(--border-color) 50%, transparent);
+        box-shadow: var(--m-bevel), var(--m-shadow-panel);
+    }
+
+    /* 28.5 Drawers (main nav / conversation list): true glass with the panel
+       material. Two selector sets: the attribute-less one covers light and the
+       initial paint, the html[data-theme] one covers dark (style.css's dark drawer
+       is an opaque gradient at (0,2,0) specificity and must be matched in the same
+       shape to override). */
+    .main-sidebar,
+    .conversation-sidebar,
+    html[data-theme] .main-sidebar,
+    html[data-theme] .conversation-sidebar {
+        background: var(--m-glass-panel);
+    }
+
+    .m-chat-drawer-head {
+        background: transparent;
+    }
+
+    .m-drawer-search input {
+        background: color-mix(in srgb, var(--input-bg) 78%, transparent);
+    }
+
+    /* Chat page top toolbar: in flow, scrolling content never passes behind it;
+       pure translucency, no blur */
+    #m-chat-bar {
+        background: color-mix(in srgb, var(--bg-primary) 66%, transparent);
+        border-bottom-color: var(--m-hairline);
+    }
+
+    /* 28.6 Modals: glass at the same tier as panels */
+    .modal-content {
+        background-color: var(--m-glass-panel);
+        border: 1px solid var(--m-hairline);
+    }
+
+    /* 28.7 Login: the overlay itself must first have a "canvas" (otherwise only a
+       gray slab sits behind the card); the card is true glass */
+    .login-overlay {
+        background:
+            radial-gradient(120% 88% at 85% -10%,
+                color-mix(in srgb, var(--accent-color) 13%, transparent), transparent 60%),
+            radial-gradient(95% 72% at -12% 108%,
+                color-mix(in srgb, #8b5cf6 10%, transparent), transparent 62%),
+            color-mix(in srgb, var(--bg-secondary) 92%, transparent);
+    }
+
+    html[data-theme="dark"] .login-overlay {
+        background:
+            radial-gradient(120% 88% at 85% -10%,
+                color-mix(in srgb, var(--accent-color) 17%, transparent), transparent 60%),
+            radial-gradient(95% 72% at -12% 108%,
+                color-mix(in srgb, #8b5cf6 12%, transparent), transparent 62%),
+            color-mix(in srgb, #0b1120 92%, transparent);
+    }
+
+    .login-card {
+        background: var(--m-glass-panel);
+        border-color: var(--m-hairline);
+        box-shadow: var(--m-bevel), 0 18px 44px rgba(0, 0, 0, 0.14);
+    }
+
+    /* 28.8 Blur: only for the transient elements above. The @supports fallback
+       logic matches section 25 */
+    @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        #m-sheet,
+        html[data-theme] .main-sidebar,
+        html[data-theme] .conversation-sidebar,
+        .login-card,
+        .modal-content {
+            -webkit-backdrop-filter: var(--m-glass-blur);
+            backdrop-filter: var(--m-glass-blur);
+        }
+    }
+
+    /* 28.9 Reduced-transparency environments: fall back to solid materials (canvas
+       included) */
+    @media (prefers-reduced-transparency: reduce) {
+        .container,
+        .content-area,
+        .chat-messages,
+        .login-overlay {
+            background: var(--bg-secondary);
+        }
+
+        #m-sheet {
+            background: var(--bg-primary);
+        }
+
+        .main-sidebar,
+        .conversation-sidebar,
+        html[data-theme] .main-sidebar,
+        html[data-theme] .conversation-sidebar,
+        .login-card,
+        .modal-content {
+            background: var(--bg-primary);
+        }
+
+        #m-chat-bar {
+            background: var(--bg-primary);
+        }
+
+        :is(.card, .stat-card, .metric-card, .dashboard-card, .panel,
+             .settings-section, .info-card) {
+            background: var(--card-bg);
+        }
+
+        #m-sheet,
+        html[data-theme] .main-sidebar,
+        html[data-theme] .conversation-sidebar,
+        .login-card,
+        .modal-content {
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+        }
+    }
+}
