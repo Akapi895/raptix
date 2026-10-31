@@ -1,11 +1,13 @@
 import multipart from "@fastify/multipart";
 import Fastify, { type FastifyInstance } from "fastify";
 import type { C2Transport } from "./adapters/c2/client.js";
+import type { LlmClient } from "./adapters/llm/client.js";
 import type { ReconProvidersTransport } from "./adapters/recon/client.js";
 import type { RuntimeTransport } from "./adapters/runtime/client.js";
 import type { SandboxFilesTransport } from "./adapters/sandbox/client.js";
 import type { SandboxProvisioner } from "./adapters/sandbox/controller.js";
 import type { FactStore } from "./db/fact-store.js";
+import { AttackChainService } from "./services/attack-chain.js";
 import type { AiRoleStore } from "./db/ai-role-store.js";
 import type { AlertSubscriptionStore } from "./db/alert-subscription-store.js";
 import type { AppConfigStore } from "./db/app-config-store.js";
@@ -66,6 +68,7 @@ export interface BuildAppOptions {
   assetStore: AssetStore;
   vulnerabilityStore: VulnerabilityStore;
   runtime: RuntimeTransport;
+  llm: LlmClient;
   alertSubscriptionStore: AlertSubscriptionStore;
   sandbox: SandboxFilesTransport;
   sandboxProvisioner: SandboxProvisioner;
@@ -88,10 +91,14 @@ export interface BuildAppOptions {
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
   batchTaskWaitMs?: number;
+  /** Resolves the AI channel for apps/api's own derivations (attack chains) from the "ai" config. */
+  resolveLlmChannel: () => Promise<{ baseUrl: string; apiKey: string; model: string } | null>;
 }
 
 export function buildApp(options: BuildAppOptions): FastifyInstance {
   const app = Fastify({ logger: true });
+
+  const attackChainService = new AttackChainService(options.conversationStore, options.runtime, options.llm, options.resolveLlmChannel);
 
   app.decorateRequest("operator", undefined);
   app.setErrorHandler(handleError);
@@ -110,6 +117,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     factStore: options.factStore,
     assetStore: options.assetStore,
     vulnerabilityStore: options.vulnerabilityStore,
+    attackChainService,
     sandboxProvisioner: options.sandboxProvisioner,
   });
   registerConversationRoutes(app, {
@@ -133,7 +141,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     runtime: options.runtime,
     alertSubscriptionStore: options.alertSubscriptionStore,
   });
-  registerAttackChainRoutes(app, { authStore: options.authStore });
+  registerAttackChainRoutes(app, { authStore: options.authStore, attackChainService });
   registerFileRoutes(app, {
     authStore: options.authStore,
     projectStore: options.projectStore,

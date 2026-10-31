@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { C2BridgeClient, UnconfiguredC2Client } from "./adapters/c2/client.js";
 import { loadC2BridgeConfig } from "./adapters/c2/token.js";
+import { OpenAiCompatibleLlmClient, type LlmChannelConfig } from "./adapters/llm/client.js";
 import { loadReconProviderConfig } from "./adapters/recon/config.js";
 import { ReconProvidersClient } from "./adapters/recon/client.js";
 import { RuntimeClient } from "./adapters/runtime/client.js";
@@ -35,6 +36,7 @@ import { PrismaVulnerabilityStore } from "./db/vulnerability-store.js";
 import { PrismaWebShellStore } from "./db/webshell-store.js";
 import { PrismaWorkflowStore } from "./db/workflow-store.js";
 import { ensureOperatorSeeded } from "./security/operator-bootstrap.js";
+import { resolveLlmChannel } from "./services/llm-channel.js";
 
 async function main(): Promise<void> {
   const env = loadEnv(process.env);
@@ -146,6 +148,8 @@ async function main(): Promise<void> {
     assetStore,
     vulnerabilityStore,
     runtime,
+    llm: new OpenAiCompatibleLlmClient(),
+    resolveLlmChannel: (): Promise<LlmChannelConfig | null> => resolveLlmChannel(appConfigStore),
     alertSubscriptionStore,
     sandbox,
     sandboxProvisioner,
