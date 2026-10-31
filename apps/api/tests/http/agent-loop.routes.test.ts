@@ -1,26 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
-import { buildApp } from "../../src/app.js";
-import { hashPassword } from "../../src/security/password.js";
-import { FakeAuthStore } from "../support/fake-auth-store.js";
-import { FakeConversationStore } from "../support/fake-conversation-store.js";
-import { FakeProjectStore } from "../support/fake-project-store.js";
+import { buildAuthedTestApp } from "../support/build-test-app.js";
 import { FakeRuntime } from "../support/fake-runtime.js";
 
 async function buildAuthedApp(runtime: FakeRuntime, agentSyncWaitMs = 600) {
-  const authStore = new FakeAuthStore();
-  await authStore.createOperator({ username: "admin", displayName: "Operator", passwordHash: hashPassword("pw") });
-  const app = buildApp({
-    authStore,
-    sessionDurationHours: 12,
-    projectStore: new FakeProjectStore(),
-    conversationStore: new FakeConversationStore(),
-    runtime,
-    agentSyncWaitMs,
-  });
-  await app.ready();
-  const login = await app.inject({ method: "POST", url: "/api/auth/login", payload: { username: "admin", password: "pw" } });
-  return { app, token: login.json().token as string };
+  return buildAuthedTestApp({ runtime, agentSyncWaitMs });
 }
 
 describe("agent-loop routes", () => {

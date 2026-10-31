@@ -1,11 +1,16 @@
 import { buildApp } from "./app.js";
 import { RuntimeClient } from "./adapters/runtime/client.js";
 import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
+import { SandboxFilesClient, UnconfiguredSandboxFilesClient } from "./adapters/sandbox/client.js";
+import { loadSandboxKey } from "./adapters/sandbox/token.js";
 import { loadEnv } from "./config/env.js";
 import { createDbClient, disconnectDb } from "./db/client.js";
+import { PrismaAlertSubscriptionStore } from "./db/alert-subscription-store.js";
+import { PrismaAssetStore } from "./db/asset-store.js";
 import { PrismaAuthStore } from "./db/auth-store.js";
 import { PrismaConversationStore } from "./db/conversation-store.js";
 import { PrismaProjectStore } from "./db/project-store.js";
+import { PrismaVulnerabilityStore } from "./db/vulnerability-store.js";
 import { ensureOperatorSeeded } from "./security/operator-bootstrap.js";
 
 async function main(): Promise<void> {
@@ -14,6 +19,9 @@ async function main(): Promise<void> {
   const authStore = new PrismaAuthStore(db);
   const projectStore = new PrismaProjectStore(db);
   const conversationStore = new PrismaConversationStore(db);
+  const assetStore = new PrismaAssetStore(db);
+  const vulnerabilityStore = new PrismaVulnerabilityStore(db);
+  const alertSubscriptionStore = new PrismaAlertSubscriptionStore(db);
 
   const seed = await ensureOperatorSeeded(authStore, {
     operatorUsername: env.operatorUsername,
@@ -44,12 +52,31 @@ async function main(): Promise<void> {
     );
   }
 
+  // Load-bearing for Tier 3's Files routes (ADR-0102: project files only
+  // through the project sandbox). Nothing provisions a sandbox per
+  // apps/api Project yet, so this is expected to be unreachable until that
+  // exists -- Files routes fail 503 honestly rather than a fake success.
+  let sandboxKey: string | undefined;
+  try {
+    sandboxKey = loadSandboxKey(env.sandboxKeyFile);
+  } catch (error) {
+    console.warn(`[apps/api] RAPTIX_SANDBOX_KEY_FILE invalid, Files routes will fail 503. (${(error as Error).message})`);
+  }
+  const sandbox = sandboxKey ? new SandboxFilesClient(sandboxKey) : new UnconfiguredSandboxFilesClient();
+  if (!sandboxKey) {
+    console.warn("[apps/api] RAPTIX_SANDBOX_KEY_FILE not set -- Files routes will fail 503 until it is.");
+  }
+
   const app = buildApp({
     authStore,
     sessionDurationHours: env.sessionDurationHours,
     projectStore,
     conversationStore,
     runtime,
+    assetStore,
+    vulnerabilityStore,
+    alertSubscriptionStore,
+    sandbox,
   });
 
   const shutdown = async (): Promise<void> => {

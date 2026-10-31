@@ -12,14 +12,19 @@ export interface HitlRoutesOptions {
  * pauses synchronously inside the tool call and exchanges
  * `ApprovalRequest`/`ApprovalDecision` records as JSONL lines in the
  * *project's own sandbox* (`approvals/requests.jsonl` /
- * `approvals/decisions.jsonl`, via `ProjectFiles` -- ADR-0102: project files
- * only through the project sandbox). To serve `/api/hitl/pending` for real,
- * apps/api needs an HTTP client to the project sandbox's file API (Tier 4,
- * same integration layer as C2/webshell/environments) to tail
- * `requests.jsonl`; `/api/hitl/decision` and `/api/hitl/dismiss` need the
- * same client to append an `approval_decision` line to `decisions.jsonl`.
- * None of that exists yet -- stub honestly rather than fabricate a pending
- * queue or a decision that was never delivered to the running tool call.
+ * `approvals/decisions.jsonl`, via `ProjectFiles` -- ADR-0102). Tier 3 built
+ * the sandbox-file HTTP client this needs (`adapters/sandbox/`, used for
+ * real by files.routes.ts) -- but that alone is not enough here. The
+ * client's `workspaceSlug` must be the *same sandbox the runtime actually
+ * dispatched this conversation's tool calls to*, and agent-loop.routes.ts's
+ * `createRun` does not pass any per-project sandbox routing
+ * (`configurable.sandbox_url`/`sandbox_token`) to the runtime yet -- every
+ * Tier 2 conversation currently runs against the runtime's default sandbox,
+ * not an `apps/api`-Project-scoped one. Wiring that routing is a Tier 2/4
+ * retrofit of its own (and needs a provisioning story for `sbx-<slug>`
+ * containers per `apps/api` Project, which nothing creates today either).
+ * Stub honestly rather than tail/append a sandbox that may not be the one
+ * actually running the gated tool call.
  */
 async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
   await reply.code(501).send({ error: "Not implemented for this deployment" });

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { PrismaClient } from "../generated/prisma/client.js";
 
 export interface ProjectRecord {
@@ -7,9 +8,13 @@ export interface ProjectRecord {
   scopeJson: string | null;
   status: string;
   pinned: boolean;
+  /** Sandbox identity (ADR-0086 A/ADR-0102) -- internal only, never on the wire (see projects.routes.ts's toWire). */
+  workspaceSlug: string;
   createdAt: Date;
   updatedAt: Date;
   conversationCount: number;
+  vulnerabilityCount: number;
+  assetCount: number;
 }
 
 export interface ListProjectsQuery {
@@ -40,8 +45,12 @@ export interface ProjectStore {
   findById(id: string): Promise<ProjectRecord | null>;
   update(id: string, input: UpdateProjectInput): Promise<ProjectRecord | null>;
   delete(id: string): Promise<boolean>;
-  /** Real counts only (conversations); vulnerability/asset counts are Tier 3 and always 0 until that tier exists. */
   stats(id: string): Promise<{ conversations: number; vulnerabilities: number; assets: number } | null>;
+}
+
+/** `sbx-<slug>` must be a valid DNS label (apps/launcher/internal/sandboxes.ValidSlug): lowercase hex is always valid. */
+function generateWorkspaceSlug(): string {
+  return `proj-${randomBytes(6).toString("hex")}`;
 }
 
 export class PrismaProjectStore implements ProjectStore {
@@ -58,7 +67,7 @@ export class PrismaProjectStore implements ProjectStore {
         orderBy: { updatedAt: "desc" },
         take: query.limit,
         skip: query.offset,
-        include: { _count: { select: { conversations: true } } },
+        include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
       }),
       this.db.project.count({ where }),
     ]);
@@ -72,8 +81,9 @@ export class PrismaProjectStore implements ProjectStore {
         description: input.description,
         scopeJson: input.scopeJson,
         status: input.status ?? "active",
+        workspaceSlug: generateWorkspaceSlug(),
       },
-      include: { _count: { select: { conversations: true } } },
+      include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
     });
     return toRecord(row);
   }
@@ -81,7 +91,7 @@ export class PrismaProjectStore implements ProjectStore {
   public async findById(id: string): Promise<ProjectRecord | null> {
     const row = await this.db.project.findUnique({
       where: { id },
-      include: { _count: { select: { conversations: true } } },
+      include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
     });
     return row ? toRecord(row) : null;
   }
@@ -98,7 +108,7 @@ export class PrismaProjectStore implements ProjectStore {
         ...(input.status !== undefined ? { status: input.status ?? exists.status } : {}),
         ...(input.pinned !== undefined ? { pinned: input.pinned ?? exists.pinned } : {}),
       },
-      include: { _count: { select: { conversations: true } } },
+      include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
     });
     return toRecord(row);
   }
@@ -115,9 +125,12 @@ export class PrismaProjectStore implements ProjectStore {
   public async stats(id: string): Promise<{ conversations: number; vulnerabilities: number; assets: number } | null> {
     const exists = await this.db.project.findUnique({ where: { id }, select: { id: true } });
     if (!exists) return null;
-    const conversations = await this.db.conversation.count({ where: { projectId: id } });
-    // Tier 3 (Findings/Assets) owns vulnerabilities/assets; always 0 until it exists -- never a fabricated count.
-    return { conversations, vulnerabilities: 0, assets: 0 };
+    const [conversations, vulnerabilities, assets] = await Promise.all([
+      this.db.conversation.count({ where: { projectId: id } }),
+      this.db.vulnerability.count({ where: { projectId: id } }),
+      this.db.asset.count({ where: { projectId: id } }),
+    ]);
+    return { conversations, vulnerabilities, assets };
   }
 }
 
@@ -128,9 +141,10 @@ function toRecord(row: {
   scopeJson: string | null;
   status: string;
   pinned: boolean;
+  workspaceSlug: string;
   createdAt: Date;
   updatedAt: Date;
-  _count: { conversations: number };
+  _count: { conversations: number; vulnerabilities: number; assets: number };
 }): ProjectRecord {
   return {
     id: row.id,
@@ -139,8 +153,11 @@ function toRecord(row: {
     scopeJson: row.scopeJson,
     status: row.status,
     pinned: row.pinned,
+    workspaceSlug: row.workspaceSlug,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     conversationCount: row._count.conversations,
+    vulnerabilityCount: row._count.vulnerabilities,
+    assetCount: row._count.assets,
   };
 }
