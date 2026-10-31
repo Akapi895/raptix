@@ -17,3 +17,18 @@ export function loadSandboxKey(keyFilePath: string | undefined): string | undefi
   }
   return key;
 }
+
+/**
+ * RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE names a file holding the bearer token
+ * that authenticates apps/api to the host sandbox controller
+ * (`raptix web sandboxes serve`, apps/launcher/internal/sandboxes). Only
+ * apps/api holds it; the controller compares it constant-time.
+ */
+export function loadSandboxControllerToken(tokenFilePath: string | undefined): string | undefined {
+  if (!tokenFilePath) return undefined;
+  const token = readFileSync(tokenFilePath, "utf8").trim();
+  if (token.length < MIN_KEY_BYTES) {
+    throw new Error(`RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE token must be at least ${MIN_KEY_BYTES} bytes`);
+  }
+  return token;
+}

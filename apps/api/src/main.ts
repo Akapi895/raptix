@@ -6,7 +6,12 @@ import { ReconProvidersClient } from "./adapters/recon/client.js";
 import { RuntimeClient } from "./adapters/runtime/client.js";
 import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
 import { SandboxFilesClient, UnconfiguredSandboxFilesClient } from "./adapters/sandbox/client.js";
-import { loadSandboxKey } from "./adapters/sandbox/token.js";
+import {
+  LauncherSandboxController,
+  UnconfiguredSandboxProvisioner,
+  type SandboxProvisioner,
+} from "./adapters/sandbox/controller.js";
+import { loadSandboxControllerToken, loadSandboxKey } from "./adapters/sandbox/token.js";
 import { loadEnv } from "./config/env.js";
 import { createDbClient, disconnectDb } from "./db/client.js";
 import { PrismaAiRoleStore } from "./db/ai-role-store.js";
@@ -98,6 +103,24 @@ async function main(): Promise<void> {
     console.warn("[apps/api] RAPTIX_SANDBOX_KEY_FILE not set -- Files routes will fail 503 until it is.");
   }
 
+  // Load-bearing for project creation (ADR-0086 A): each project gets its own
+  // sandbox container before its row is persisted. Optional like the sandbox
+  // key -- when unconfigured, project creation fails 503 with a config hint
+  // instead of creating a project that has no sandbox.
+  let sandboxProvisioner: SandboxProvisioner = new UnconfiguredSandboxProvisioner();
+  try {
+    const controllerToken = loadSandboxControllerToken(env.sandboxControllerTokenFile);
+    if (env.sandboxControllerUrl && controllerToken) {
+      sandboxProvisioner = new LauncherSandboxController(env.sandboxControllerUrl, controllerToken);
+    } else {
+      console.warn(
+        "[apps/api] RAPTIX_SANDBOX_CONTROLLER_URL/_TOKEN_FILE not set -- project creation will fail 503 until they are.",
+      );
+    }
+  } catch (error) {
+    console.warn(`[apps/api] Sandbox controller config invalid, project creation will fail 503. (${(error as Error).message})`);
+  }
+
   // Load-bearing for Tier 4's C2 read routes. Optional, like the sandbox key -- most C2
   // ops are stubbed regardless (see c2.routes.ts), so this only affects session/listener/
   // profile listing.
@@ -122,6 +145,7 @@ async function main(): Promise<void> {
     vulnerabilityStore,
     alertSubscriptionStore,
     sandbox,
+    sandboxProvisioner,
     batchQueueStore,
     webshellStore,
     c2,

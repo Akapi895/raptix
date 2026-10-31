@@ -1,6 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { SandboxProvisionError } from "../../src/adapters/sandbox/controller.js";
 import { buildAuthedTestApp } from "../support/build-test-app.js";
+import { FakeSandboxProvisioner } from "../support/fake-sandbox-provisioner.js";
+import { FakeProjectStore } from "../support/fake-project-store.js";
 
 describe("project routes", () => {
   let app: FastifyInstance;
@@ -82,5 +85,34 @@ describe("project routes", () => {
     const id = create.json().id;
     const response = await app.inject({ method: "GET", url: `/api/projects/${id}/fact-graph`, headers: auth() });
     expect(response.statusCode).toBe(501);
+  });
+
+  it("creation provisions the project's sandbox before the row exists (ADR-0086 A)", async () => {
+    const provisioner = new FakeSandboxProvisioner();
+    ({ app, token } = await buildAuthedTestApp({ sandboxProvisioner: provisioner }));
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    expect(create.statusCode).toBe(200);
+    expect(provisioner.ensured).toHaveLength(1);
+    expect(provisioner.ensured[0]).toMatch(/^proj-[0-9a-f]{12}$/);
+  });
+
+  it("a failed sandbox start returns 503 and leaves no project", async () => {
+    const provisioner = new FakeSandboxProvisioner();
+    provisioner.failure = new SandboxProvisionError();
+    const projectStore = new FakeProjectStore();
+    ({ app, token } = await buildAuthedTestApp({ sandboxProvisioner: provisioner, projectStore }));
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    expect(create.statusCode).toBe(503);
+    expect(create.json().error).toContain("sandbox could not be started");
+    expect(provisioner.ensured).toHaveLength(1);
+    expect((await projectStore.list({ limit: 20, offset: 0 })).total).toBe(0);
+  });
+
+  it("an unconfigured sandbox controller names its missing configuration in the 503", async () => {
+    const { UnconfiguredSandboxProvisioner } = await import("../../src/adapters/sandbox/controller.js");
+    ({ app, token } = await buildAuthedTestApp({ sandboxProvisioner: new UnconfiguredSandboxProvisioner() }));
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    expect(create.statusCode).toBe(503);
+    expect(create.json().error).toContain("RAPTIX_SANDBOX_CONTROLLER_URL");
   });
 });

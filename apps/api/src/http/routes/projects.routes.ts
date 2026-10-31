@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
+import { SandboxProvisionError, type SandboxProvisioner } from "../../adapters/sandbox/controller.js";
+import { newWorkspaceSlug } from "../../db/project-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
 import type { ProjectRecord, ProjectStore } from "../../db/project-store.js";
@@ -8,6 +10,8 @@ export interface ProjectRoutesOptions {
   authStore: AuthStore;
   projectStore: ProjectStore;
   conversationStore: ConversationStore;
+  /** ADR-0086 A: every project gets its own sandbox container at creation, before the row is persisted. */
+  sandboxProvisioner: SandboxProvisioner;
 }
 
 interface ListQuery {
@@ -80,11 +84,27 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
       await reply.code(400).send({ error: "Invalid request body" });
       return;
     }
+    // Create order matters (ADR-0086 A): issue the slug, start the project's
+    // own sandbox container, then persist. A failed start returns 503 and
+    // leaves no row, so a project never exists without its sandbox. Residue
+    // from a persist failure is accepted; an operator removes it with
+    // `docker rm -f sbx-<slug>`.
+    const workspaceSlug = newWorkspaceSlug();
+    try {
+      await options.sandboxProvisioner.ensure(workspaceSlug);
+    } catch (error) {
+      if (error instanceof SandboxProvisionError) {
+        await reply.code(503).send({ error: error.message });
+        return;
+      }
+      throw error;
+    }
     const project = await projectStore.create({
       name,
       description: asString(request.body?.description),
       scopeJson: asString(request.body?.scope_json),
       status: asString(request.body?.status),
+      workspaceSlug,
     });
     await reply.send(toWire(project));
   });
