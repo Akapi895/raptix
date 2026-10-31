@@ -59,6 +59,8 @@ model Project {
   conversations Conversation[]
   assets        Asset[]
   vulnerabilities Vulnerability[]
+  batchQueues   BatchQueue[]
+  webshellConnections WebShellConnection[]
 }
 
 model Conversation {
@@ -74,8 +76,11 @@ model Conversation {
   updatedAt       DateTime  @updatedAt
   messages        Message[]
   vulnerabilities Vulnerability[]
+  webshellConnectionId String?
+  webshellConnection   WebShellConnection? @relation(fields: [webshellConnectionId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
+  @@index([webshellConnectionId])
 }
 
 model Message {
@@ -167,4 +172,83 @@ model AlertSubscription {
   enabled     Boolean  @default(false)
   minSeverity String   @default("high")
   updatedAt   DateTime @updatedAt
+}
+
+// Tier 4 (Operations): "Batch task queues" maps to Tier 2's chat loop, not
+// the retired apps/web's campaign/gophish/evilginx integration (that
+// mapping in the plan's first draft was wrong -- confirmed from
+// apps/ui-app's authoritative src/features/tasks/model.ts: a BatchTask IS
+// a chat message, dispatched the same way POST /api/eino-agent dispatches
+// one). "Start" runs queued messages against Tier 2's ConversationStore/
+// RuntimeTransport; cron scheduling fields are stored and returned but not
+// yet auto-triggered (no background scheduler loop built this pass) --
+// see batch-tasks.routes.ts.
+
+model BatchQueue {
+  id                    String      @id @default(cuid())
+  title                 String
+  role                  String      @default("")
+  hitlPolicy            String      @default("")
+  scheduleMode          String      @default("manual")
+  cronExpr              String      @default("")
+  scheduleEnabled       Boolean     @default(true)
+  nextRunAt             DateTime?
+  lastScheduleTriggerAt DateTime?
+  lastScheduleError     String?
+  lastRunError          String?
+  projectId             String?
+  project               Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  concurrency           Int         @default(1)
+  status                String      @default("pending")
+  createdAt             DateTime    @default(now())
+  startedAt             DateTime?
+  completedAt           DateTime?
+  currentIndex          Int         @default(0)
+  tasks                 BatchTask[]
+
+  @@index([projectId])
+}
+
+model BatchTask {
+  id             String     @id @default(cuid())
+  queueId        String
+  queue          BatchQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  position       Int        @default(0)
+  message        String
+  conversationId String?
+  status         String     @default("pending")
+  startedAt      DateTime?
+  completedAt    DateTime?
+  error          String?
+  result         String?
+
+  @@index([queueId])
+}
+
+// Tier 4: a webshell connection is metadata about an HTTP(S) webshell the
+// operator already holds on an authorized target (internal/database/
+// webshell.go's shape: url/password/type/method/cmdParam, not an SSH-style
+// session). stateJson is the opaque UI-side PersistState blob (saved DB
+// profiles, terminal tabs) the frontend round-trips -- apps/api does not
+// interpret it. `exec`/`file` (actually issuing the HTTP request to `url`)
+// are deliberately not built on this model -- see webshell.routes.ts.
+
+model WebShellConnection {
+  id            String         @id @default(cuid())
+  projectId     String?
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  url           String
+  password      String         @default("")
+  type          String         @default("php")
+  method        String         @default("post")
+  cmdParam      String         @default("")
+  remark        String         @default("")
+  encoding      String         @default("auto")
+  os            String         @default("auto")
+  stateJson     String         @default("{}")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+
+  @@index([projectId])
 }
