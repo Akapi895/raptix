@@ -9,7 +9,7 @@ import type { RuntimeEvent } from "../../src/adapters/runtime/stream.js";
  */
 export class FakeRuntime implements RuntimeTransport {
   public createdThreads: string[] = [];
-  public createdRuns: { threadId: string; assistantId: string; input: Record<string, unknown> }[] = [];
+  public createdRuns: { threadId: string; assistantId: string; input: Record<string, unknown>; config?: Record<string, unknown> }[] = [];
   public cancelledRuns: { threadId: string; runId: string }[] = [];
   public stateValues: Record<string, unknown> = {};
   public streamEvents: RuntimeEvent[] = [];
@@ -47,8 +47,9 @@ export class FakeRuntime implements RuntimeTransport {
     assistantId: string,
     input: Record<string, unknown>,
     _requestId: string,
+    config?: Record<string, unknown>,
   ): Promise<RuntimeRun> {
-    this.createdRuns.push({ threadId, assistantId, input });
+    this.createdRuns.push({ threadId, assistantId, input, config });
     const status = this.runStatusQueue.shift() ?? "success";
     const run: RuntimeRun = {
       runId: `run-${this.createdRuns.length}`,

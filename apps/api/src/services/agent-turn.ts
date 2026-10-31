@@ -29,8 +29,10 @@ export async function runAgentTurn(args: {
   conversationStore: ConversationStore;
   defaultAssistantId: string;
   waitMs: number;
+  /** Project-scoped sandbox routing (ADR-0086 A/ADR-0102), when a project and sandbox key are available. Omitted, the run uses the runtime's default sandbox -- same as before this was threaded through. */
+  config?: Record<string, unknown>;
 }): Promise<AgentTurnResult> {
-  const { conversation, message, runtime, conversationStore, defaultAssistantId, waitMs } = args;
+  const { conversation, message, runtime, conversationStore, defaultAssistantId, waitMs, config } = args;
 
   await conversationStore.appendMessage(conversation.id, "user", message);
 
@@ -40,6 +42,7 @@ export async function runAgentTurn(args: {
     assistantId,
     { messages: [{ role: "user", content: message }] },
     randomUUID(),
+    config,
   );
 
   const deadline = Date.now() + waitMs;

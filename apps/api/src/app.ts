@@ -157,6 +157,8 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     batchQueueStore: options.batchQueueStore,
     conversationStore: options.conversationStore,
     runtime: options.runtime,
+    projectStore: options.projectStore,
+    sandboxKey: options.sandboxKey,
     defaultAssistantId: options.defaultAssistantId,
     taskWaitMs: options.batchTaskWaitMs,
   });

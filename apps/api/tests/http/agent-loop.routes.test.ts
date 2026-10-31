@@ -37,6 +37,26 @@ describe("agent-loop routes", () => {
     expect(runtime.createdRuns).toHaveLength(1);
   });
 
+  it("eino-agent routes a project's run to its own sandbox when a project is given", async () => {
+    runtime = new FakeRuntime();
+    runtime.queueRunStatuses("success");
+    runtime.stateValues = { messages: [{ type: "ai", content: "ok" }] };
+    ({ app, token } = await buildAuthedApp(runtime));
+
+    const project = await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "Reddish" } });
+    const projectId = project.json().id as string;
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/eino-agent",
+      headers: headers(),
+      payload: { message: "hi", projectId },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(runtime.createdRuns).toHaveLength(1);
+    expect(runtime.createdRuns[0]!.config).toMatchObject({ engagement_name: expect.any(String), sandbox_url: expect.any(String), sandbox_token: expect.any(String) });
+  });
+
   it("rejects an empty message with 400", async () => {
     ({ app, token } = await buildAuthedApp(new FakeRuntime()));
     const response = await app.inject({ method: "POST", url: "/api/eino-agent", headers: headers(), payload: {} });

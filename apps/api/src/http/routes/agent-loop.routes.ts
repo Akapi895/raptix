@@ -5,7 +5,7 @@ import type { RuntimeRun, RuntimeTransport } from "../../adapters/runtime/client
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
 import type { ProjectStore } from "../../db/project-store.js";
-import { sandboxTokenFor, sandboxUrlFor } from "../../adapters/sandbox/routing.js";
+import { runConfigurableFor } from "../../adapters/sandbox/routing.js";
 import { extractLastAssistantText } from "../../adapters/runtime/message-extract.js";
 import type { RuntimeEvent } from "../../adapters/runtime/stream.js";
 import { RuntimeUnavailableError } from "../../adapters/runtime/errors.js";
@@ -36,6 +36,23 @@ interface CancelBody {
 }
 
 const asString = (value: unknown): string | undefined => (typeof value === "string" && value.length > 0 ? value : undefined);
+
+/**
+ * Best-effort project-scoped sandbox routing for the non-streaming chat path
+ * and batch tasks -- neither requires a project the way /stream does
+ * (POST /api/eino-agent predates per-project sandboxes and some callers
+ * still don't set one), so this degrades to "no routing, runtime default
+ * sandbox" instead of failing the run. When it CAN resolve one, the run's
+ * tool calls (and any HITL approval they trigger) land in the right
+ * project's sandbox instead of silently using whichever one the runtime
+ * defaults to.
+ */
+async function sandboxConfigFor(options: AgentLoopRoutesOptions, projectId: string | null | undefined): Promise<Record<string, unknown> | undefined> {
+  if (!projectId || !options.sandboxKey) return undefined;
+  const project = await options.projectStore.findById(projectId);
+  if (!project) return undefined;
+  return { ...runConfigurableFor(project.workspaceSlug, options.sandboxKey), recursion_limit: 400 };
+}
 
 async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
   await reply.code(501).send({ error: "Not implemented for this deployment" });
@@ -70,10 +87,7 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
         await runtime.createThread(runtimeThreadId);
         conversation = await conversationStore.create({ title: titleFromMessage(message), projectId, runtimeThreadId });
       }
-      const configurable = {
-        engagement_name: project.workspaceSlug, kg_engagement: project.workspaceSlug, workspace_path: "/workspace",
-        sandbox_url: sandboxUrlFor(project.workspaceSlug), sandbox_token: sandboxTokenFor(options.sandboxKey, project.workspaceSlug),
-      };
+      const configurable = runConfigurableFor(project.workspaceSlug, options.sandboxKey);
       const userMessage = await conversationStore.appendMessage(conversation.id, "user", message);
       const output = new PassThrough();
       reply.header("content-type", "text/event-stream; charset=utf-8").header("cache-control", "no-cache, no-transform").header("x-accel-buffering", "no");
@@ -113,6 +127,7 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
         conversationStore,
         defaultAssistantId,
         waitMs: syncWaitMs,
+        config: await sandboxConfigFor(options, conversation.projectId),
       });
 
       await reply.send({
