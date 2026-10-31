@@ -179,12 +179,32 @@ export function registerConversationRoutes(app: FastifyInstance, options: Conver
     },
   );
 
-  // Turn-editing, plan/task breakdown, results digest and token-usage accounting all read
-  // transcript/run detail this pass doesn't build (replay, plan extraction, usage metering).
-  // Explicit 501s, not fabricated empty successes.
+  // Real, not a stub: Raptix's agent graphs don't run deepagents' planning/
+  // todo middleware (confirmed -- no `write_todos` tool, no `todos` state
+  // key anywhere in intelligence/agents), so there is structurally no plan
+  // to report for any conversation. Returning 501 for that made the
+  // workspace/plan-progress panels (which poll this constantly while
+  // chatting, not just on a tab click) show a scary "Workspace
+  // unavailable" error for something that will never exist, not a bug.
+  // {tasks: [], running: false} is the honest answer, not a fabricated
+  // one: it is true, always, for every conversation this runtime produces.
+  app.get<{ Params: { id: string } }>("/api/conversations/:id/plan-tasks", { preHandler: requireSession }, async (request, reply) => {
+    const conversation = await conversationStore.findById(request.params.id);
+    if (!conversation) {
+      await reply.code(404).send({ error: "Conversation not found" });
+      return;
+    }
+    return { tasks: [], running: false, total: 0, completed: 0 };
+  });
+
+  // Turn-editing, results digest and token-usage accounting all read
+  // transcript/run detail this pass doesn't build (replay, usage
+  // metering). Explicit 501s, not fabricated empty successes -- unlike
+  // plan-tasks above, these describe something that *could* exist (a
+  // deleted turn, a per-message cost breakdown) but hasn't been built,
+  // not something that structurally never will.
   for (const [method, path] of [
     ["POST", "/api/conversations/:id/delete-turn"],
-    ["GET", "/api/conversations/:id/plan-tasks"],
     ["GET", "/api/conversations/:id/results"],
     ["GET", "/api/conversations/:id/token-usage"],
   ] as const) {
