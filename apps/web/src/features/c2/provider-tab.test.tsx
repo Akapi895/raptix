@@ -36,6 +36,7 @@ const { createRealFeatureServices } = await import('../../state/real-services')
 const { resetNavStores } = await import('../../router/navigate')
 const { C2ProviderTab } = await import('./provider-tab')
 const { ConsoleCard } = await import('./provider-console')
+const { SessionContext } = await import('../../platform/session')
 
 const CAPABILITIES = { version: 1, mode: 'multi-user', capabilities: { c2: { supported: true, available: true } } } as never
 
@@ -51,9 +52,12 @@ const SESSIONS = {
 function renderTab(content: ReactElement = <C2ProviderTab engagementId="eng-1" />): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const services = createRealFeatureServices(CAPABILITIES)
+  const session = { session: { actor: { id: 'u-owner', username: 'owner', displayName: 'Owner' } } as never, pending: false, error: null, retry: () => {} }
   const wrapper = ({ children }: { children: ReactNode }): ReactElement => (
     <QueryClientProvider client={client}>
-      <RealFeatureServicesCtx.Provider value={services}>{children}</RealFeatureServicesCtx.Provider>
+      <RealFeatureServicesCtx.Provider value={services}>
+        <SessionContext.Provider value={session}>{children}</SessionContext.Provider>
+      </RealFeatureServicesCtx.Provider>
     </QueryClientProvider>
   )
   render(content, { wrapper })

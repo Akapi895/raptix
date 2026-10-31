@@ -8,7 +8,7 @@ import { useState, type ReactElement } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { go } from '../../router/navigate'
-import { useQueryScope } from '../../state/keys'
+import { useSession } from '../../platform/session'
 import { utcMinute } from '../../platform/format'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Input, Segmented, Skeleton, Status, Textarea } from '../../ui/index'
 import type { C2ProviderCommand, C2ProviderGrant, C2ProviderSession } from './provider'
@@ -126,8 +126,12 @@ function SessionDetail({ engagementId, session, assets, inventoryError, grants, 
   commandsError: string | null
 }): ReactElement {
   const [tab, setTab] = useState<DetailTab>('overview')
-  const scope = useQueryScope()
-  const access: MyAccess = grantsError !== null ? { key: 'none', label: 'Unknown — the grants could not be read', until: null } : myAccessOf(grants, session.id, scope.actor, Date.now())
+  const actorId = useSession().session?.actor?.id
+  const access: MyAccess = grantsError !== null
+    ? { key: 'none', label: 'Unknown — the grants could not be read', until: null }
+    : actorId === undefined
+      ? { key: 'none', label: 'Unknown — the signed-in actor could not be read', until: null }
+      : myAccessOf(grants, session.id, actorId, Date.now())
   const alive = connectionOf(session) === 'alive'
   const sessionCommands = commands.filter((command) => command.sessionId === session.id)
   const link: AssetLink | null = assets === null ? null : assetLinkOf(session, assets)
