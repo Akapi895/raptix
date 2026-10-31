@@ -61,21 +61,15 @@ func (f sandboxFlags) config() (sandboxes.Config, error) {
 }
 
 func init() {
-	web := &cobra.Command{Use: "web", Short: "Manage the independent web-raptix UI/API stack"}
+	web := &cobra.Command{Use: "web", Short: "Manage the web API (apps/api, ADR-0106) in the base stack"}
 	start := &cobra.Command{Use: "start", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		base := compose.New()
-		if _, err := os.Stat(filepath.Join(base.Home, "docker-compose.web-raptix.yml")); err != nil {
-			return fmt.Errorf("web deployment config missing; update the installed configuration: %w", err)
-		}
 		pull, err := cmd.Flags().GetBool("pull")
 		if err != nil {
 			return err
 		}
 		if pull {
 			if err := base.Pull(""); err != nil {
-				return err
-			}
-			if err := base.Web().Pull(""); err != nil {
 				return err
 			}
 		}
@@ -87,29 +81,25 @@ func init() {
 			if err := base.Up(); err != nil {
 				return err
 			}
-		}
-		if err := base.EnsureWebDatabase(); err != nil {
+		} else if err := base.UpServices("api"); err != nil {
 			return err
 		}
-		if err := base.Web().Up(); err != nil {
-			return err
-		}
-		port := os.Getenv("WEB_RAPTIX_PORT")
+		port := os.Getenv("API_PORT")
 		if port == "" {
 			env, err := config.LoadEnv(base.EnvFile)
 			if err != nil {
 				return err
 			}
-			port = env["WEB_RAPTIX_PORT"]
+			port = env["API_PORT"]
 		}
 		if port == "" {
-			port = "3000"
+			port = "8080"
 		}
-		fmt.Fprintln(cmd.OutOrStdout(), "Web raptix: http://127.0.0.1:"+port+"/projects")
+		fmt.Fprintln(cmd.OutOrStdout(), "Raptix web API: http://127.0.0.1:"+port+" (health: /api/health)")
 		return nil
 	}}
 	start.Flags().Bool("pull", true, "Pull version-selected images before starting (disable for local built images)")
-	start.Flags().Bool("start-infra", true, "Start base infrastructure first (disable when an existing shared stack is already running)")
+	start.Flags().Bool("start-infra", true, "Start the full base stack first (disable to start only the api service against an already-running stack)")
 
 	sandboxCmd := &cobra.Command{Use: "sandboxes", Short: "Provision one sandbox container per web project (ADR-0086 A)"}
 
@@ -138,8 +128,8 @@ func init() {
 
 	web.AddCommand(sandboxCmd)
 	web.AddCommand(start,
-		&cobra.Command{Use: "stop", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Web().Down() }},
-		&cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Web().Ps() }},
+		&cobra.Command{Use: "stop", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Stop("api") }},
+		&cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: func(_ *cobra.Command, _ []string) error { return compose.New().Ps("api") }},
 	)
 	rootCmd.AddCommand(web)
 }

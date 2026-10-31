@@ -270,9 +270,25 @@ func imageTag(version string) string {
 	return strings.TrimPrefix(strings.TrimSpace(version), "v")
 }
 
-// Ps shows service status.
-func (c *Compose) Ps() error {
-	return c.run([]string{"ps"}, false)
+// Ps shows service status; with arguments, only those services.
+func (c *Compose) Ps(services ...string) error {
+	args := append([]string{"ps"}, services...)
+	return c.run(args, false)
+}
+
+// Stop stops the given services without removing their containers.
+func (c *Compose) Stop(services ...string) error {
+	args := append([]string{"stop"}, services...)
+	return c.run(args, false)
+}
+
+// UpServices starts only the named services (compose also starts their
+// depends_on dependencies) and waits for healthchecks. Used when the rest
+// of the shared stack is already running, e.g. `raptix web start
+// --start-infra=false`.
+func (c *Compose) UpServices(services ...string) error {
+	args := append([]string{"up", "-d", "--no-build", "--wait", "--wait-timeout", startupTimeoutSeconds()}, services...)
+	return c.run(args, false)
 }
 
 // Logs follows service logs.
@@ -288,30 +304,6 @@ func (c *Compose) Logs(service string) error {
 func (c *Compose) Exec(service string, command ...string) error {
 	args := append([]string{"exec", "-T", service}, command...)
 	return c.run(args, false)
-}
-
-// Web selects the independent web project; it must not merge with base/opscontrol.
-func (c *Compose) Web() *Compose {
-	web := *c
-	web.ComposeFile = filepath.Join(c.Home, "docker-compose.web-raptix.yml")
-	web.Project = opscontrol.ComposeProjectName() + "-web-raptix"
-	web.Standalone = true
-	return &web
-}
-
-// EnsureWebDatabase creates only the dedicated new-server database when absent.
-func (c *Compose) EnsureWebDatabase() error {
-	args := append(c.baseArgs(), "exec", "-T", "postgres", "psql", "-U", "raptix", "-d", "postgres", "-At", "-c", "SELECT 1 FROM pg_database WHERE datname = 'raptix_web_raptix'")
-	cmd := exec.Command(c.Runtime.Bin, args...)
-	cmd.Env = c.composeEnv()
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("check web database: %w", err)
-	}
-	if strings.TrimSpace(string(output)) == "1" {
-		return nil
-	}
-	return c.Exec("postgres", "createdb", "-U", "raptix", "raptix_web_raptix")
 }
 
 // RunInteractive runs a one-off container with stdin attached.
