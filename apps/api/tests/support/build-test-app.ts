@@ -3,11 +3,14 @@ import { hashPassword } from "../../src/security/password.js";
 import { FakeAlertSubscriptionStore } from "./fake-alert-subscription-store.js";
 import { FakeAssetStore } from "./fake-asset-store.js";
 import { FakeAuthStore } from "./fake-auth-store.js";
+import { FakeBatchQueueStore } from "./fake-batch-queue-store.js";
+import { FakeC2 } from "./fake-c2.js";
 import { FakeConversationStore } from "./fake-conversation-store.js";
 import { FakeProjectStore } from "./fake-project-store.js";
 import { FakeRuntime } from "./fake-runtime.js";
 import { FakeSandbox } from "./fake-sandbox.js";
 import { FakeVulnerabilityStore } from "./fake-vulnerability-store.js";
+import { FakeWebShellStore } from "./fake-webshell-store.js";
 
 /** Every store defaults to a fresh fake; pass `overrides` to swap one in (e.g. a specific FakeRuntime instance). */
 export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): BuildAppOptions {
@@ -21,6 +24,9 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     vulnerabilityStore: new FakeVulnerabilityStore(),
     alertSubscriptionStore: new FakeAlertSubscriptionStore(),
     sandbox: new FakeSandbox(),
+    batchQueueStore: new FakeBatchQueueStore(),
+    webshellStore: new FakeWebShellStore(),
+    c2: new FakeC2(),
     ...overrides,
   };
 }

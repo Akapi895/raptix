@@ -1,13 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import type { RuntimeRun, RuntimeTransport } from "../../adapters/runtime/client.js";
-import { extractLastAssistantText } from "../../adapters/runtime/message-extract.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
+import { runAgentTurn, TERMINAL_RUN_STATUSES as TERMINAL_STATUSES } from "../../services/agent-turn.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 import { replyRuntimeError } from "./conversations.routes.js";
-
-const TERMINAL_STATUSES = new Set(["success", "error", "timeout", "interrupted"]);
 
 export interface AgentLoopRoutesOptions {
   authStore: AuthStore;
@@ -41,10 +39,6 @@ function titleFromMessage(message: string): string {
   return trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed;
 }
 
-async function sleep(ms: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoopRoutesOptions): void {
   const { authStore, conversationStore, runtime } = options;
   const syncWaitMs = options.syncWaitMs ?? 20_000;
@@ -74,62 +68,23 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
         });
       }
 
-      await conversationStore.appendMessage(conversation.id, "user", message);
-
-      const assistantId = conversation.roleName ?? defaultAssistantId;
-      const requestId = randomUUID();
-      let run: RuntimeRun = await runtime.createRun(
-        conversation.runtimeThreadId,
-        assistantId,
-        { messages: [{ role: "user", content: message }] },
-        requestId,
-      );
-
-      const deadline = Date.now() + syncWaitMs;
-      while (!TERMINAL_STATUSES.has(run.status) && Date.now() < deadline) {
-        await sleep(500);
-        run = await runtime.getRun(conversation.runtimeThreadId, run.runId);
-      }
-
-      const time = new Date().toISOString();
-      if (!TERMINAL_STATUSES.has(run.status)) {
-        await reply.send({
-          response: "The agent is still working on this. Poll GET /api/agent-loop/tasks for progress.",
-          conversationId: conversation.id,
-          time,
-          finalizable: false,
-          finalized: false,
-          status: "running",
-          evidenceVerified: false,
-        });
-        return;
-      }
-
-      if (run.status !== "success") {
-        await reply.send({
-          response: `The run ended with status "${run.status}".`,
-          conversationId: conversation.id,
-          time,
-          finalizable: false,
-          finalized: true,
-          status: run.status,
-          completionReason: run.status,
-          evidenceVerified: false,
-        });
-        return;
-      }
-
-      const state = await runtime.getThreadState(conversation.runtimeThreadId);
-      const answer = extractLastAssistantText(state.values);
-      if (answer !== null) await conversationStore.appendMessage(conversation.id, "assistant", answer);
+      const turn = await runAgentTurn({
+        conversation,
+        message,
+        runtime,
+        conversationStore,
+        defaultAssistantId,
+        waitMs: syncWaitMs,
+      });
 
       await reply.send({
-        response: answer ?? "The run finished, but no assistant message could be extracted from the runtime state.",
+        response: turn.response,
         conversationId: conversation.id,
-        time,
+        time: new Date().toISOString(),
         finalizable: false,
-        finalized: true,
-        status: run.status,
+        finalized: turn.finalized,
+        status: turn.status,
+        ...(turn.finalized && turn.status !== "success" ? { completionReason: turn.status } : {}),
         evidenceVerified: false,
       });
     } catch (error) {

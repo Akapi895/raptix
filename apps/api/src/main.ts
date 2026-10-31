@@ -1,4 +1,6 @@
 import { buildApp } from "./app.js";
+import { C2BridgeClient, UnconfiguredC2Client } from "./adapters/c2/client.js";
+import { loadC2BridgeConfig } from "./adapters/c2/token.js";
 import { RuntimeClient } from "./adapters/runtime/client.js";
 import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
 import { SandboxFilesClient, UnconfiguredSandboxFilesClient } from "./adapters/sandbox/client.js";
@@ -8,9 +10,11 @@ import { createDbClient, disconnectDb } from "./db/client.js";
 import { PrismaAlertSubscriptionStore } from "./db/alert-subscription-store.js";
 import { PrismaAssetStore } from "./db/asset-store.js";
 import { PrismaAuthStore } from "./db/auth-store.js";
+import { PrismaBatchQueueStore } from "./db/batch-queue-store.js";
 import { PrismaConversationStore } from "./db/conversation-store.js";
 import { PrismaProjectStore } from "./db/project-store.js";
 import { PrismaVulnerabilityStore } from "./db/vulnerability-store.js";
+import { PrismaWebShellStore } from "./db/webshell-store.js";
 import { ensureOperatorSeeded } from "./security/operator-bootstrap.js";
 
 async function main(): Promise<void> {
@@ -22,6 +26,8 @@ async function main(): Promise<void> {
   const assetStore = new PrismaAssetStore(db);
   const vulnerabilityStore = new PrismaVulnerabilityStore(db);
   const alertSubscriptionStore = new PrismaAlertSubscriptionStore(db);
+  const batchQueueStore = new PrismaBatchQueueStore(db);
+  const webshellStore = new PrismaWebShellStore(db);
 
   const seed = await ensureOperatorSeeded(authStore, {
     operatorUsername: env.operatorUsername,
@@ -67,6 +73,20 @@ async function main(): Promise<void> {
     console.warn("[apps/api] RAPTIX_SANDBOX_KEY_FILE not set -- Files routes will fail 503 until it is.");
   }
 
+  // Load-bearing for Tier 4's C2 read routes. Optional, like the sandbox key -- most C2
+  // ops are stubbed regardless (see c2.routes.ts), so this only affects session/listener/
+  // profile listing.
+  let c2Config: ReturnType<typeof loadC2BridgeConfig>;
+  try {
+    c2Config = loadC2BridgeConfig(env.sliverBridgeUrl, env.sliverBridgeToken);
+  } catch (error) {
+    console.warn(`[apps/api] SLIVER_BRIDGE_URL/_TOKEN invalid, C2 read routes will fail 503. (${(error as Error).message})`);
+  }
+  const c2 = c2Config ? new C2BridgeClient(c2Config) : new UnconfiguredC2Client();
+  if (!c2Config) {
+    console.warn("[apps/api] SLIVER_BRIDGE_URL/_TOKEN not set -- C2 read routes will fail 503 until they are.");
+  }
+
   const app = buildApp({
     authStore,
     sessionDurationHours: env.sessionDurationHours,
@@ -77,6 +97,9 @@ async function main(): Promise<void> {
     vulnerabilityStore,
     alertSubscriptionStore,
     sandbox,
+    batchQueueStore,
+    webshellStore,
+    c2,
   });
 
   const shutdown = async (): Promise<void> => {

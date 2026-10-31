@@ -12,6 +12,8 @@ export interface ApiEnv {
   runtimeApiTokenFile: string | undefined;
   langgraphApiUrl: string;
   sandboxKeyFile: string | undefined;
+  sliverBridgeUrl: string | undefined;
+  sliverBridgeToken: string | undefined;
   operatorUsername: string | undefined;
   operatorPassword: string | undefined;
   sessionDurationHours: number;
@@ -42,6 +44,8 @@ export function loadEnv(source: NodeJS.ProcessEnv): ApiEnv {
     runtimeApiTokenFile: source.RAPTIX_RUNTIME_API_TOKEN_FILE,
     langgraphApiUrl: (source.LANGGRAPH_API_URL ?? "http://127.0.0.1:2024").replace(/\/$/, ""),
     sandboxKeyFile: source.RAPTIX_SANDBOX_KEY_FILE,
+    sliverBridgeUrl: source.SLIVER_BRIDGE_URL,
+    sliverBridgeToken: source.SLIVER_BRIDGE_TOKEN,
     operatorUsername: source.RAPTIX_API_OPERATOR_USERNAME,
     operatorPassword: source.RAPTIX_API_OPERATOR_PASSWORD,
     sessionDurationHours,

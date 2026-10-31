@@ -5,9 +5,9 @@ model (OPPLAN/`EngagementContext`, capability runtime, AKG, asset-map,
 governance, closure, scope, vault...) into the contract `apps/ui-app` already
 speaks (`apps/ui-app/docs/openapi.yaml`, `apps/ui-app/docs/api-contracts.md`).
 
-**Tier 1 (foundation)**, **Tier 2 (core loop)** and **Tier 3 (findings)** are
-done. Tier 4+ (C2, WebShell, Skills, Knowledge, RBAC, everything else) is not
-started — see
+**Tier 1-4** (foundation, core loop, findings, operations) are done. Tier 5+
+(Skills, Knowledge, RBAC, Configuration/AI models, MCP, everything else) is
+not started — see
 `docs/design/2026-10-31-ui-app-integration-implementation-plan.md` before
 adding the next route group.
 
@@ -80,6 +80,43 @@ adding the next route group.
   sandbox per `apps/api` Project yet -- Files routes are real code that
   will work once that provisioning exists, same as Tier 1/2's runtime
   routes before a LangGraph container is up.
+- `src/http/routes/batch-tasks.routes.ts` -- "Batch task queues": real, all
+  12 ops. Maps to Tier 2's chat loop, not the retired `apps/web`'s campaign/
+  gophish/evilginx integration (that mapping in the plan's first draft was
+  wrong): a `BatchTask` *is* a chat message, dispatched through the same
+  `services/agent-turn.ts` helper `POST /api/eino-agent` uses. `start` runs
+  pending tasks with up to `concurrency` workers (`services/
+  batch-processor.ts`, optimistic per-task claim against Postgres) in the
+  background and returns immediately; cron scheduling fields are stored
+  and returned but not auto-triggered (no background scheduler loop built
+  this pass -- manual `start` always works).
+- `src/http/routes/webshell.routes.ts` -- "Webshell": connections CRUD +
+  `state` (an opaque UI-side JSON blob, round-tripped not interpreted) +
+  `ai-conversations`/`ai-history` (real, via a new `Conversation.
+  webshellConnectionId` link) are real, Prisma-backed. `exec`/`file` --
+  actually issuing the HTTP request to the connection's `url` to run a
+  command or move a file on the target -- are stubbed `501`: that is a raw
+  outbound HTTP relay to an operator-supplied URL with no RoE/scope gate,
+  bypassing Raptix's sandbox-mediated network egress entirely. Building
+  that without a safety gate is exactly what CONTRIBUTING_AGENT.md's
+  guard-rail rule requires an ADR + threat model for.
+- `src/http/routes/c2.routes.ts` + `src/adapters/c2/` -- a bridge client
+  (`C2BridgeClient`, port `C2Transport`) ported from the retired
+  `apps/web/server`'s `SliverClient`: one endpoint (`${url}/v1/c2`), one
+  generic `{op, ...}` JSON call, Bearer auth (`SLIVER_BRIDGE_URL`/
+  `SLIVER_BRIDGE_TOKEN`). Only `GET sessions[/:id]`, `GET listeners`,
+  `GET profiles` are wired to real bridge ops (`sessions.list`,
+  `sessions.get`, `listeners.list`, `profiles.list` -- the only op names
+  evidenced in the retired code; nothing else was guessed). Every mutating
+  op (dispatch a task to a live session, start/stop a listener, build a
+  payload, ...) is stubbed `501` for the same reason as webshell `exec`:
+  the retired `C2Service` gated every one of these behind an approved
+  `ScopeRevision` + a per-command grant, which apps/api has no equivalent
+  of (Tier 6). Dispatching to a live implant with no RoE/scope gate at all
+  would weaken a guard rail, not just skip a nice-to-have.
+- `src/http/routes/terminal.routes.ts` -- both ops stubbed `501`: ADR-0095
+  ("Interactive C2 console (PTY)"), the decision that puts an interactive
+  Shell/PTY surface in scope at all, is still Proposed, not Accepted.
 - `src/http/plugins/auth-guard.ts` — the `preHandler` every `bearerAuth`
   route in `apps/ui-app/docs/openapi.yaml` needs; looks up the session by
   token (`src/db/auth-store.ts`), never a JWT.
@@ -98,14 +135,16 @@ adding the next route group.
   (`interfaces/api/auth.py`). `RuntimeTransport` is the port routes depend
   on; `RuntimeClient` implements it, `tests/support/fake-runtime.ts` fakes
   it.
-- `src/integrations/` — infrastructure plumbing (C2, webshell, environments,
-  campaigns) salvaged from the retired `apps/web/server` (recoverable from
-  git history prior to the ADR-0106 deletion commit). Not yet populated
-  (Tier 4) -- `adapters/sandbox/` (Tier 3) is a different, already-built
-  piece (project files, not C2/webshell).
+- `src/integrations/` — infrastructure plumbing (environments) salvaged from
+  the retired `apps/web/server` (recoverable from git history prior to the
+  ADR-0106 deletion commit). Not yet populated -- C2 and sandbox-files are
+  now `adapters/c2/` and `adapters/sandbox/` instead (Tier 3/4), campaigns
+  turned out not to be what "Batch task queues" needed (see
+  `batch-tasks.routes.ts`'s note).
 - `prisma/schema.prisma` — `Operator`/`Session` (Tier 1),
   `Project`/`Conversation`/`Message` (Tier 2), `Asset`/`Vulnerability`/
-  `AlertSubscription` (Tier 3). RBAC/AI-roles proper is a Tier 6 design
+  `AlertSubscription` (Tier 3), `BatchQueue`/`BatchTask`/
+  `WebShellConnection` (Tier 4). RBAC/AI-roles proper is a Tier 6 design
   spike, not this.
 
 ## Dev
