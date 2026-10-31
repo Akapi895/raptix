@@ -4,12 +4,16 @@ import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
 import { loadEnv } from "./config/env.js";
 import { createDbClient, disconnectDb } from "./db/client.js";
 import { PrismaAuthStore } from "./db/auth-store.js";
+import { PrismaConversationStore } from "./db/conversation-store.js";
+import { PrismaProjectStore } from "./db/project-store.js";
 import { ensureOperatorSeeded } from "./security/operator-bootstrap.js";
 
 async function main(): Promise<void> {
   const env = loadEnv(process.env);
   const db = createDbClient({ connectionString: env.databaseUrl });
   const authStore = new PrismaAuthStore(db);
+  const projectStore = new PrismaProjectStore(db);
+  const conversationStore = new PrismaConversationStore(db);
 
   const seed = await ensureOperatorSeeded(authStore, {
     operatorUsername: env.operatorUsername,
@@ -26,9 +30,9 @@ async function main(): Promise<void> {
     }
   }
 
-  // Foundation-only check: Tier 2 makes this load-bearing (Projects, chat,
-  // HITL). A failure here does not block apps/api from serving auth, but is
-  // worth surfacing loudly since nothing downstream will work without it.
+  // Load-bearing for every Tier 2 route (chat, tasks, cancel). A failure
+  // here does not block apps/api from serving auth, but is worth surfacing
+  // loudly since nothing downstream will work until it's reachable.
   const runtimeToken = loadRuntimeApiToken(env.runtimeApiTokenFile);
   const runtime = new RuntimeClient({ apiUrl: env.langgraphApiUrl, apiToken: runtimeToken });
   try {
@@ -40,7 +44,13 @@ async function main(): Promise<void> {
     );
   }
 
-  const app = buildApp({ authStore, sessionDurationHours: env.sessionDurationHours });
+  const app = buildApp({
+    authStore,
+    sessionDurationHours: env.sessionDurationHours,
+    projectStore,
+    conversationStore,
+    runtime,
+  });
 
   const shutdown = async (): Promise<void> => {
     await app.close();

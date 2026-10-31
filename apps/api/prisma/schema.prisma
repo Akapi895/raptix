@@ -32,3 +32,52 @@ model Session {
 
   @@index([operatorId])
 }
+
+// Tier 2: Projects and Conversations are business records with no Raptix
+// runtime equivalent -- "project" is apps/ui-app's own grouping concept, not
+// the same as a Raptix EngagementContext/OPPLAN (that mapping is a Tier 3+
+// decision, not made here). A Conversation's identity *is* a LangGraph
+// thread -- runtimeThreadId is never optional, created in the same request
+// that creates the Conversation row (see routes/conversations.routes.ts).
+// Facts/fact-edges (Neo4j AKG) are Tier 5 (knowledge/graph) and deliberately
+// not modeled here.
+
+model Project {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  scopeJson     String?
+  status        String         @default("active")
+  pinned        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+}
+
+model Conversation {
+  id              String    @id @default(cuid())
+  title           String
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  roleName        String?
+  agentMode       String    @default("eino_single")
+  pinned          Boolean   @default(false)
+  runtimeThreadId String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  messages        Message[]
+
+  @@index([projectId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([conversationId])
+}
