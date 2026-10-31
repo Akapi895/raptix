@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { SandboxProvisionError, type SandboxProvisioner } from "../../adapters/sandbox/controller.js";
+import type { AttackChainService } from "../../services/attack-chain.js";
 import { FactNotFoundError, type FactEdgeRecord, type FactRecord, type FactStore, type UpdateFactInput } from "../../db/fact-store.js";
 import { newWorkspaceSlug } from "../../db/project-store.js";
 import type { AssetStore } from "../../db/asset-store.js";
@@ -16,6 +17,7 @@ export interface ProjectRoutesOptions {
   factStore: FactStore;
   assetStore: AssetStore;
   vulnerabilityStore: VulnerabilityStore;
+  attackChainService: AttackChainService;
   /** ADR-0086 A: every project gets its own sandbox container at creation, before the row is persisted. */
   sandboxProvisioner: SandboxProvisioner;
 }
@@ -61,11 +63,6 @@ function toWire(project: ProjectRecord): Record<string, unknown> {
     vulnerability_count: project.vulnerabilityCount,
     asset_count: project.assetCount,
   };
-}
-
-/** Fact graph / fact-edge sub-resources need the Neo4j AKG client (Tier 5, knowledge/graph) -- not built yet. */
-async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
-  await reply.code(501).send({ error: "Not implemented for this deployment" });
 }
 
 /** Prisma unique-violation (P2002): a duplicate fact_key within one project. */
@@ -128,7 +125,7 @@ interface FactsQuery {
 }
 
 export function registerProjectRoutes(app: FastifyInstance, options: ProjectRoutesOptions): void {
-  const { authStore, projectStore, conversationStore, factStore, assetStore, vulnerabilityStore } = options;
+  const { authStore, projectStore, conversationStore, factStore, assetStore, vulnerabilityStore, attackChainService } = options;
   const requireSession = createRequireSession(authStore);
 
   // The dashboard's totals strip (T463_ProjectSummary): real aggregates over
@@ -595,8 +592,74 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
     },
   );
 
+  // Promotes the conversation's derived attack chain into project facts:
+  // one fact per chain node (keyed chain/<type>/<slug>), edges for the
+  // chain's links. Idempotent: re-promoting updates the existing facts and
+  // reports them as facts_updated, never duplicates.
   app.post<{ Params: { id: string; conversationId: string } }>(
     "/api/projects/:id/promote-attack-chain/:conversationId",
-    { preHandler: requireSession, handler: notImplementedForThisDeployment },
+    { preHandler: requireSession },
+    async (request, reply) => {
+      const project = await findProjectOr404(reply, request.params.id);
+      if (!project) return;
+      const { conversationId } = request.params;
+      const conversation = await conversationStore.findById(conversationId);
+      if (!conversation) {
+        await reply.code(404).send({ error: "Conversation not found" });
+        return;
+      }
+      const chain = await attackChainService.get(conversationId);
+      const factKeyFor = (nodeId: string): string | null => {
+        const node = chain.nodes.find((candidate) => candidate.id === nodeId);
+        if (!node) return null;
+        const slug = node.label
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, ".")
+          .replace(/^\.+|\.+$/g, "")
+          .slice(0, 80);
+        return `chain/${node.type}/${slug || node.id.toLowerCase()}`;
+      };
+      let factsCreated = 0;
+      let factsUpdated = 0;
+      let edgesCreated = 0;
+      for (const node of chain.nodes) {
+        const factKey = factKeyFor(node.id);
+        if (!factKey) continue;
+        const confidence = node.risk_score >= 60 ? "high" : node.risk_score >= 30 ? "medium" : "low";
+        const body = Object.keys(node.metadata).length > 0 ? JSON.stringify(node.metadata) : "";
+        const existing = await factStore.findByKey(project.id, factKey);
+        if (existing) {
+          await factStore.update(project.id, existing.id, {
+            summary: node.label,
+            body,
+            confidence,
+            category: node.type,
+          });
+          factsUpdated += 1;
+        } else {
+          await factStore.create(project.id, {
+            factKey,
+            category: node.type,
+            summary: node.label,
+            body,
+            confidence,
+            sourceConversationId: conversationId,
+          });
+          factsCreated += 1;
+        }
+      }
+      const existingEdges = new Set(
+        (await factStore.listEdges(project.id)).map((edge) => `${edge.sourceFactKey}->${edge.targetFactKey}`),
+      );
+      for (const edge of chain.edges) {
+        const source = factKeyFor(edge.source);
+        const target = factKeyFor(edge.target);
+        if (!source || !target || existingEdges.has(`${source}->${target}`)) continue;
+        await factStore.createEdge(project.id, { sourceFactKey: source, targetFactKey: target, edgeType: "related" });
+        existingEdges.add(`${source}->${target}`);
+        edgesCreated += 1;
+      }
+      await reply.send({ success: true, conversation_id: conversationId, facts_created: factsCreated, facts_updated: factsUpdated, edges_created: edgesCreated });
+    },
   );
 }

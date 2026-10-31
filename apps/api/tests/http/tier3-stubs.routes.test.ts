@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildAuthedTestApp } from "../support/build-test-app.js";
 
-describe("attack-chain and storage routes (stubbed -- no Raptix equivalent built yet)", () => {
+describe("storage routes (stubbed -- no Raptix equivalent built yet)", () => {
   let app: FastifyInstance;
   let token: string;
 
@@ -16,10 +16,9 @@ describe("attack-chain and storage routes (stubbed -- no Raptix equivalent built
 
   const auth = () => ({ authorization: `Bearer ${token}` });
 
+  // Attack chains are real now (attack-chains.routes.test.ts); Storage has no
+  // Raptix equivalent -- there is no artifact store behind apps/api to clean.
   it.each([
-    ["GET", "/api/attack-chain/conv-1"],
-    ["POST", "/api/attack-chain/conv-1/regenerate"],
-    ["GET", "/api/conversations/conv-1/attack-chain"],
     ["GET", "/api/storage/meta"],
     ["GET", "/api/storage/status"],
     ["POST", "/api/storage/cleanup"],

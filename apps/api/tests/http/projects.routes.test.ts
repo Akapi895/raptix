@@ -269,13 +269,6 @@ describe("project routes", () => {
     expect(edgesAfter.json()).toEqual([]);
   });
 
-  it("promote-attack-chain stays 501 until the LLM client exists", async () => {
-    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
-    const id = create.json().id;
-    const response = await app.inject({ method: "POST", url: `/api/projects/${id}/promote-attack-chain/conv-1`, headers: auth() });
-    expect(response.statusCode).toBe(501);
-  });
-
   it("fact routes 404 for a project that does not exist", async () => {
     for (const [method, url] of [
       ["GET", "/api/projects/nope/facts"],
@@ -315,5 +308,48 @@ describe("project routes", () => {
     const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
     expect(create.statusCode).toBe(503);
     expect(create.json().error).toContain("RAPTIX_SANDBOX_CONTROLLER_URL");
+  });
+
+  it("promote-attack-chain derives the chain into facts and edges, idempotently", async () => {
+    const { FakeConversationStore } = await import("../support/fake-conversation-store.js");
+    const { FakeLlm } = await import("../support/fake-llm.js");
+    const { FakeRuntime } = await import("../support/fake-runtime.js");
+    const llm = new FakeLlm();
+    llm.response = JSON.stringify({
+      nodes: [
+        { id: "n1", type: "target", label: "Web app", risk_score: 0, tool_call_id: "call-1", metadata: {} },
+        { id: "n2", type: "vulnerability", label: "No lockout on /admin", risk_score: 78, tool_call_id: "", metadata: { severity: "high" } },
+      ],
+      edges: [{ source: "n1", target: "n2" }],
+    });
+    const runtime = new FakeRuntime();
+    runtime.stateValues = { messages: [{ type: "ai", content: "probe", tool_calls: [{ id: "call-1", name: "nmap", args: {} }] }] };
+    const conversationStore = new FakeConversationStore();
+    const conversation = await conversationStore.create({ title: "Recon", runtimeThreadId: "thread-1" });
+    ({ app, token } = await buildAuthedTestApp({ llm, runtime, conversationStore }));
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+
+    const first = await app.inject({ method: "POST", url: `/api/projects/${id}/promote-attack-chain/${conversation.id}`, headers: auth() });
+    expect(first.statusCode).toBe(200);
+    expect(first.json()).toMatchObject({ success: true, conversation_id: conversation.id, facts_created: 2, facts_updated: 0, edges_created: 1 });
+
+    const facts = await app.inject({ method: "GET", url: `/api/projects/${id}/facts`, headers: auth() });
+    const byKey = Object.fromEntries(facts.json().map((f: { fact_key: string }) => [f.fact_key, f]));
+    expect(Object.keys(byKey)).toContain("chain/target/web.app");
+    expect(byKey["chain/vulnerability/no.lockout.on.admin"]).toMatchObject({ confidence: "high", source_conversation_id: conversation.id });
+
+    const second = await app.inject({ method: "POST", url: `/api/projects/${id}/promote-attack-chain/${conversation.id}`, headers: auth() });
+    expect(second.statusCode).toBe(200);
+    expect(second.json()).toMatchObject({ facts_created: 0, facts_updated: 2, edges_created: 0 });
+    const factsAfter = await app.inject({ method: "GET", url: `/api/projects/${id}/facts`, headers: auth() });
+    expect(factsAfter.json()).toHaveLength(2);
+  });
+
+  it("promote-attack-chain 404s for an unknown conversation without deriving", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    const response = await app.inject({ method: "POST", url: `/api/projects/${id}/promote-attack-chain/nope`, headers: auth() });
+    expect(response.statusCode).toBe(404);
   });
 });

@@ -12,6 +12,7 @@ import { FakeConversationStore } from "./fake-conversation-store.js";
 import { FakeExternalMcpStore } from "./fake-external-mcp-store.js";
 import { FakeFactStore } from "./fake-fact-store.js";
 import { FakeHiddenExecutionStore } from "./fake-hidden-execution-store.js";
+import { FakeLlm } from "./fake-llm.js";
 import { FakeKnowledgeItemStore } from "./fake-knowledge-item-store.js";
 import { FakeMarkdownAgentStore } from "./fake-markdown-agent-store.js";
 import { FakeProjectStore } from "./fake-project-store.js";
@@ -35,6 +36,7 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     conversationStore: new FakeConversationStore(),
     factStore: new FakeFactStore(),
     runtime: new FakeRuntime(),
+    llm: new FakeLlm(),
     assetStore: new FakeAssetStore(),
     vulnerabilityStore: new FakeVulnerabilityStore(),
     alertSubscriptionStore: new FakeAlertSubscriptionStore(),
@@ -56,6 +58,7 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     markdownAgentStore: new FakeMarkdownAgentStore(),
     workflowStore: new FakeWorkflowStore(),
     ...overrides,
+    resolveLlmChannel: overrides.resolveLlmChannel ?? (async () => ({ baseUrl: "http://llm.test/v1", apiKey: "test-key", model: "test-model" })),
   };
 }
 
