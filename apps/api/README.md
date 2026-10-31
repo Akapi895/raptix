@@ -5,9 +5,9 @@ model (OPPLAN/`EngagementContext`, capability runtime, AKG, asset-map,
 governance, closure, scope, vault...) into the contract `apps/ui-app` already
 speaks (`apps/ui-app/docs/openapi.yaml`, `apps/ui-app/docs/api-contracts.md`).
 
-**Tier 1-4** (foundation, core loop, findings, operations) are done. Tier 5+
-(Skills, Knowledge, RBAC, Configuration/AI models, MCP, everything else) is
-not started — see
+**Tier 1-5** (foundation, core loop, findings, operations, knowledge &
+tooling) are done. Tier 6+ (RBAC, AI roles, audit, dashboard/notifications/
+usage, OpenAPI/misc) is not started — see
 `docs/design/2026-10-31-ui-app-integration-implementation-plan.md` before
 adding the next route group.
 
@@ -20,7 +20,10 @@ adding the next route group.
 - `src/http/routes/projects.routes.ts` — "Projects and fact graphs": CRUD +
   stats + conversations-by-project are real (Prisma-backed, no runtime
   equivalent). The 11 fact-graph/fact/promote-attack-chain sub-resources are
-  stubbed `501` -- they need the Neo4j AKG client (Tier 5), not built yet.
+  stubbed `501` -- they need a Neo4j AKG client, which Tier 5 did not build
+  (its Knowledge module turned out to be an unrelated RAG document store,
+  not the asset/vuln knowledge graph; see Tier 5's note below). Still not
+  built; still needed before these can go real.
 - `src/http/routes/conversations.routes.ts` — "Conversations and messages"
   CRUD (list/create/get/rename/delete/pinned/project) is real; creating a
   conversation creates a real LangGraph thread (`RuntimeClient.createThread`)
@@ -49,7 +52,8 @@ adding the next route group.
 - `src/http/routes/assets.routes.ts` — "Assets": list/replace(full
   replace)/delete/batch-delete/bulk-patch/import(upsert)/merge/
   project-binding/selection/stats (10 ops) are real, Prisma-backed.
-  `scan-links` is stubbed `501` -- needs the Neo4j AKG client (Tier 5).
+  `scan-links` is stubbed `501` -- needs a Neo4j AKG client, still not built
+  (see the Projects note above).
 - `src/http/routes/vulnerabilities.routes.ts` — "Vulnerabilities" CRUD +
   `retest` (branches a real conversation with a real LangGraph thread) +
   `batch` (deletes everything matching the current filter, not an explicit
@@ -66,7 +70,10 @@ adding the next route group.
   an oversight.
 - `src/http/routes/attack-chains.routes.ts` -- stubbed `501`: deriving a
   chain from a transcript needs an LLM summarization call
-  (`intelligence/llm`), which is Tier 5 territory, not a CRUD concern.
+  (`intelligence/llm`) apps/api still has no client for -- Tier 5 added a
+  recon-provider HTTP client and config-test passthroughs
+  (`src/http/routes/config.routes.ts`), but nothing that calls an LLM
+  directly for a one-off text task like this.
 - `src/http/routes/storage.routes.ts` -- stubbed `501`: CyberStrikeAI's
   "storage" is a server-wide local-disk retention policy with no Raptix
   equivalent (project files live only in sandboxes, ADR-0102; there is no
@@ -117,6 +124,92 @@ adding the next route group.
 - `src/http/routes/terminal.routes.ts` -- both ops stubbed `501`: ADR-0095
   ("Interactive C2 console (PTY)"), the decision that puts an interactive
   Shell/PTY surface in scope at all, is still Proposed, not Accepted.
+- `src/http/routes/tool-guard.routes.ts` -- "Tool guard": all 3 ops real
+  (GET/PUT the rule set, POST test matches a sample tool call against it).
+  Patterns run on Node's `RegExp`, not RE2 (apps/ui-app's own model.ts says
+  RE2 is the authority; no RE2 binding exists in this stack -- a documented
+  deviation, not an oversight). Storage + testing only: nothing here is
+  wired into the live agent tool-call path yet, so "enabled" does not
+  actually block anything in a real run.
+- `src/http/routes/knowledge.routes.ts` -- "Knowledge": a RAG-style document
+  knowledge base (`internal/knowledge/types.go`) with **no Raptix runtime
+  equivalent** -- this is CyberStrikeAI's own feature, not the Neo4j asset/
+  vuln knowledge graph (don't confuse the two; the AKG client the
+  fact-graph/scan-links stubs above need is a separate, still-unbuilt
+  thing). Items CRUD + categories + stats + retrieval-logs (9 ops) are
+  real, Prisma-backed. `scan`/`index`/`index-status` (3 ops) are stubbed
+  `501`: embedding-backed indexing would need a real LiteLLM `/embeddings`
+  call (the pattern Skillogy's hybrid retrieval already uses,
+  `packages/raptix/raptix/skills/engine/server`) *and* a retrieval endpoint
+  to consume those embeddings during chat -- neither exists anywhere
+  apps/api touches, so storing vectors nobody reads would be inert
+  scaffolding. `apps/ui-app` degrades this gracefully (index-status treats
+  any non-2xx as "no status").
+- `src/http/routes/skills.routes.ts` -- "Skills": all 12 ops stubbed `501`,
+  deliberately in full, not piecemeal -- see the route file's top comment.
+  Short version: Skillogy (`packages/raptix/raptix/skills/engine/server`, a
+  separate Neo4j-backed REST service) is a real, reachable backend for
+  *reads*, but its `find`/`load` ops require a filter and it deliberately
+  removed its old unconditional list endpoint, so `apps/ui-app`'s default
+  (no-search) list view can't be served for real; writes need the repo's
+  documented `audit-skills` -> `build-skill-graph` -> `check-skill-graph`
+  corpus pipeline, not a live HTTP mutation. Wiring only the search-filtered
+  read case would make the page work when you search and break on load --
+  stub the whole module instead of shipping that half-measure.
+- `src/http/routes/fofa.routes.ts` -- "Recon / information collection": a
+  real passthrough to the four public attack-surface search engines
+  `apps/ui-app` targets (FOFA/ZoomEye/Quake/Shodan, `src/adapters/recon/`) --
+  read-only queries against already-public internet-wide scan databases
+  using the operator's own configured key, the same thing a browser-based
+  Shodan/FOFA search does. Each provider is independently optional; an
+  unconfigured one fails `503`, a rejected one `502`, never a fabricated
+  empty result. `parse` (natural-language-to-query-DSL) is stubbed `501` --
+  it needs an LLM call apps/api has no direct client for (see the
+  attack-chains note above); the search itself is this feature's real
+  value.
+- `src/http/routes/config.routes.ts` -- "Configuration and AI models": `GET/
+  POST/PUT /api/config` persist the saved settings object faithfully
+  (`AppConfig` KV store, `src/db/app-config-store.ts`); `list-models`/
+  `test-openai`/`test-vision` are real OpenAI-compatible-API passthrough
+  probes using the operator-supplied credentials from the request body
+  (never a stored secret). `apply` is stubbed `501`:
+  `infra/config/litellm.yaml` pins `store_model_in_db: false`, a deliberate
+  upstream choice that there is no live admin API to defeat -- what's saved
+  is real, but pushing it live into the running LiteLLM/runtime stack would
+  need an env var/YAML edit and a restart, not an HTTP call. `test-typesafe`
+  is stubbed `501` -- TypeSafe/Jev is a third-party HITL-audit protocol with
+  no documented wire format anywhere in this repo; guessing it would risk a
+  false "connection successful". `tools` GET/PUT/`:name/schema` (3 ops) are
+  stubbed `501` -- no HTTP introspection of Raptix's ~159-function tool
+  catalog exists to enumerate or toggle against.
+- `src/http/routes/external-mcp.routes.ts` -- "External MCP servers": list/
+  get-one/stats/PUT(upsert)/DELETE (5 ops, `src/db/external-mcp-store.ts`)
+  are real Prisma CRUD of the operator's *desired* config.
+  `start`/`stop` are stubbed `501`: the real control surface
+  (`RAPTIX_MCP__SERVERS`, `execution/tools/mcp/client.py`) is an env var
+  parsed once at the langgraph container's startup -- no live reload, no
+  per-server RPC to action. `status`/`tool_count`/`error` are reported as
+  `"unknown"` rather than guessed, since nothing here can observe the live
+  connection. (`POST /api/external-mcp` to create is in `apps/ui-app`'s
+  OpenAPI extraction but classified mock-only there -- the real UI always
+  upserts by name via PUT, so it isn't built.)
+- `src/http/routes/monitor.routes.ts` + `src/http/routes/mcp.routes.ts` --
+  "MCP monitor and execution details": `GET /api/monitor[/stats]`,
+  `/calls-timeline`, and the two delete/hide ops, plus `GET
+  /api/mcp/external` and `GET /api/mcp/executions/:id`, are real --
+  "executions" are **derived live** from every known conversation's actual
+  LangGraph thread state (`services/execution-derivation.ts` pairs each
+  `AIMessage.tool_calls[]` entry with its matching `ToolMessage` by
+  `tool_call_id`, same message-shape handling as
+  `adapters/runtime/message-extract.ts`), never stored separately. A thread
+  has no delete primitive on its own history, so `DELETE /api/monitor/
+  execution[s]` hides an id from this derived view (`HiddenExecution`
+  table) without touching the underlying thread. `GET /api/mcp/tools` and
+  `POST /api/mcp/executions/:id/cancel` are stubbed `501`: no HTTP
+  introspection of the real tool catalog exists for the former, and no
+  per-tool-call cancel primitive exists in the LangGraph runtime API for
+  the latter -- only whole-run cancellation (`POST /api/agent-loop/cancel`,
+  Tier 2) is possible.
 - `src/http/plugins/auth-guard.ts` — the `preHandler` every `bearerAuth`
   route in `apps/ui-app/docs/openapi.yaml` needs; looks up the session by
   token (`src/db/auth-store.ts`), never a JWT.
@@ -144,8 +237,9 @@ adding the next route group.
 - `prisma/schema.prisma` — `Operator`/`Session` (Tier 1),
   `Project`/`Conversation`/`Message` (Tier 2), `Asset`/`Vulnerability`/
   `AlertSubscription` (Tier 3), `BatchQueue`/`BatchTask`/
-  `WebShellConnection` (Tier 4). RBAC/AI-roles proper is a Tier 6 design
-  spike, not this.
+  `WebShellConnection` (Tier 4), `ToolGuardConfig`/`AppConfig`/
+  `KnowledgeItem`/`RetrievalLog`/`ExternalMcpServer`/`HiddenExecution`
+  (Tier 5). RBAC/AI-roles proper is a Tier 6 design spike, not this.
 
 ## Dev
 
