@@ -256,6 +256,67 @@ model HiddenExecution {
   hiddenAt DateTime @default(now())
 }
 
+// Tier 6 (Platform). AiRole: apps/ui-app's agent-persona catalog
+// (internal/config/config.go RoleConfig -- "AI roles" in the plan, never
+// confused with user RBAC, which apps/ui-app's own frontend has no feature
+// for at all; see §2's correction). Plain CRUD -- `tools`/`mcps` are stored
+// as opaque name lists, never validated against Raptix's real tool/MCP
+// catalog, because no HTTP introspection of that catalog exists (same
+// reasoning as Tier 5's config/tools stub).
+
+model AiRole {
+  name           String   @id
+  description    String   @default("")
+  icon           String   @default("")
+  userPrompt     String   @default("")
+  tools          String[] @default([])
+  mcps           String[] @default([])
+  enabled        Boolean  @default(true)
+  workflowId     String   @default("")
+  workflowPolicy String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// AuditLog: real storage + read (list/summary/detail/export). Write points
+// are wired into auth.routes.ts only this pass (login success/failure,
+// logout, change-password) -- a real but deliberately partial
+// instrumentation. Retrofitting every mutating route across Tiers 1-5 to
+// write audit entries is future work, not done here to keep this tier's
+// diff bounded (see audit.routes.ts's top comment).
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  level             String   @default("info")
+  category          String
+  action            String
+  result            String
+  actor             String   @default("")
+  message           String   @default("")
+  sessionHint       String?
+  clientIp          String?
+  userAgent         String?
+  resourceType      String?
+  resourceId        String?
+  resourceAvailable Boolean  @default(true)
+  detailJson        String?
+  createdAt         DateTime @default(now())
+
+  @@index([category])
+  @@index([createdAt])
+}
+
+// ReadNotification: Vulnerability-derived notifications (see
+// monitor.routes.ts's execution-derivation precedent) have no row of their
+// own to update, so "read" is tracked the same way Tier 5 tracked a
+// hidden execution -- a small marker table, not a mutation of the source
+// Vulnerability row.
+
+model ReadNotification {
+  id     String   @id
+  readAt DateTime @default(now())
+}
+
 // Tier 4 (Operations): "Batch task queues" maps to Tier 2's chat loop, not
 // the retired apps/web's campaign/gophish/evilginx integration (that
 // mapping in the plan's first draft was wrong -- confirmed from

@@ -1,8 +1,10 @@
 import { buildApp, type BuildAppOptions } from "../../src/app.js";
 import { hashPassword } from "../../src/security/password.js";
+import { FakeAiRoleStore } from "./fake-ai-role-store.js";
 import { FakeAlertSubscriptionStore } from "./fake-alert-subscription-store.js";
 import { FakeAppConfigStore } from "./fake-app-config-store.js";
 import { FakeAssetStore } from "./fake-asset-store.js";
+import { FakeAuditLogStore } from "./fake-audit-log-store.js";
 import { FakeAuthStore } from "./fake-auth-store.js";
 import { FakeBatchQueueStore } from "./fake-batch-queue-store.js";
 import { FakeC2 } from "./fake-c2.js";
@@ -11,6 +13,7 @@ import { FakeExternalMcpStore } from "./fake-external-mcp-store.js";
 import { FakeHiddenExecutionStore } from "./fake-hidden-execution-store.js";
 import { FakeKnowledgeItemStore } from "./fake-knowledge-item-store.js";
 import { FakeProjectStore } from "./fake-project-store.js";
+import { FakeReadNotificationStore } from "./fake-read-notification-store.js";
 import { FakeRecon } from "./fake-recon.js";
 import { FakeRetrievalLogStore } from "./fake-retrieval-log-store.js";
 import { FakeRuntime } from "./fake-runtime.js";
@@ -41,6 +44,9 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     appConfigStore: new FakeAppConfigStore(),
     externalMcpStore: new FakeExternalMcpStore(),
     hiddenExecutionStore: new FakeHiddenExecutionStore(),
+    aiRoleStore: new FakeAiRoleStore(),
+    auditLogStore: new FakeAuditLogStore(),
+    readNotificationStore: new FakeReadNotificationStore(),
     ...overrides,
   };
 }

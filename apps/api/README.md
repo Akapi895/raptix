@@ -5,9 +5,10 @@ model (OPPLAN/`EngagementContext`, capability runtime, AKG, asset-map,
 governance, closure, scope, vault...) into the contract `apps/ui-app` already
 speaks (`apps/ui-app/docs/openapi.yaml`, `apps/ui-app/docs/api-contracts.md`).
 
-**Tier 1-5** (foundation, core loop, findings, operations, knowledge &
-tooling) are done. Tier 6+ (RBAC, AI roles, audit, dashboard/notifications/
-usage, OpenAPI/misc) is not started — see
+**Tier 1-6** (foundation, core loop, findings, operations, knowledge &
+tooling, platform) are done. Tier 7 (Workflows/packages, Markdown agents,
+Robots and bindings, System updates — each needs the repo owner's explicit
+accept/cut call before any route work starts) is not started — see
 `docs/design/2026-10-31-ui-app-integration-implementation-plan.md` before
 adding the next route group.
 
@@ -118,9 +119,11 @@ adding the next route group.
   op (dispatch a task to a live session, start/stop a listener, build a
   payload, ...) is stubbed `501` for the same reason as webshell `exec`:
   the retired `C2Service` gated every one of these behind an approved
-  `ScopeRevision` + a per-command grant, which apps/api has no equivalent
-  of (Tier 6). Dispatching to a live implant with no RoE/scope gate at all
-  would weaken a guard rail, not just skip a nice-to-have.
+  `ScopeRevision` + a per-command grant, which apps/api still has no
+  equivalent of (Tier 6's Platform work did not add a Scope/Governance
+  subsystem; see that tier's note below). Dispatching to a live implant
+  with no RoE/scope gate at all would weaken a guard rail, not just skip a
+  nice-to-have.
 - `src/http/routes/terminal.routes.ts` -- both ops stubbed `501`: ADR-0095
   ("Interactive C2 console (PTY)"), the decision that puts an interactive
   Shell/PTY surface in scope at all, is still Proposed, not Accepted.
@@ -210,6 +213,59 @@ adding the next route group.
   per-tool-call cancel primitive exists in the LangGraph runtime API for
   the latter -- only whole-run cancellation (`POST /api/agent-loop/cancel`,
   Tier 2) is possible.
+- `src/http/routes/roles.routes.ts` — "AI roles": apps/ui-app's agent-persona
+  catalog (`internal/config/config.go` `RoleConfig`) -- **not** user RBAC
+  and **not** Raptix's own agent specialist roles (`intelligence/agents`);
+  all 5 ops real, Prisma CRUD (`db/ai-role-store.ts`). `tools`/`mcps` are
+  stored as opaque name lists, never validated against a real catalog
+  (same reasoning as Tier 5's `config/tools` stub).
+- **Platform access / RBAC**: not built, not even stubbed. Confirmed from
+  `apps/ui-app/docs/openapi.yaml` that every `/api/rbac/*` operation is
+  classified mock-only -- the real frontend has no code path that calls any
+  of them (`features/rbac/` is an empty directory in `apps/ui-app`'s own
+  source tree). Stubbing a `501` for an endpoint nothing ever calls would
+  serve no purpose; there is no route file for this module.
+- `src/http/routes/audit.routes.ts` -- "Audit": `GET /api/audit/
+  logs[/export]`, `GET /api/audit/summary`, `GET /api/audit/logs/:id` (4
+  ops, not the originally-estimated 6 -- `conversationExists` in
+  `apps/ui-app`'s client reuses the existing real
+  `GET /api/conversations/:id`, not a new audit op) are real,
+  Prisma-backed (`db/audit-log-store.ts`). Write points are wired into
+  `auth.routes.ts` only this pass (login success/failure, logout,
+  change-password success/failure) -- a real but deliberately partial
+  instrumentation; retrofitting every mutating route across Tiers 1-5 to
+  write audit entries is future work, not done here to keep this tier's
+  diff bounded.
+- `src/http/routes/notifications.routes.ts` -- "Notifications" (part of
+  "Dashboard, notifications and usage"): both ops real.
+  `GET /api/notifications/summary` **derives** one notification per real
+  Vulnerability record (new findings), the same "derive, don't store a
+  parallel feed" approach Tier 5 used for MCP monitor executions;
+  `POST /api/notifications/read` marks ids read via a small
+  `ReadNotification` marker table (`db/read-notification-store.ts`). A
+  deliberately narrow slice of `apps/ui-app`'s `NotificationItem` contract
+  -- there is no event bus anywhere in apps/api, so HITL/execution-failure/
+  session notifications (the other id fields the wire type carries)
+  have no source to derive from yet.
+- `src/http/routes/usage.routes.ts` -- "Usage" (part of the same module):
+  `GET /api/usage/tokens` stubbed `501`. Real per-model token accounting
+  would need LiteLLM's own spend-tracking API
+  (`general_settings.database_url` is set in `infra/config/litellm.yaml`,
+  so LiteLLM does track this) -- but its exact `/spend/logs` response
+  schema isn't reliably documented, and there is no running LiteLLM
+  instance in this dev environment to verify it against empirically,
+  unlike this repo's own internal patterns which can be read from source.
+  Guessing a third-party wire format risks silently reporting wrong
+  numbers; stubbed honestly instead.
+- `src/http/routes/openapi.routes.ts` -- "OpenAPI and misc": the one real
+  op found (`GET /api/openapi/spec`; the originally-estimated 3 ops turned
+  out to be a single real one, per this tier's plan note) parses
+  `apps/ui-app/docs/openapi.yaml` (a sibling package's checked-in file, via
+  the new `yaml` dependency) to JSON and serves it, matching what
+  `apps/ui-app`'s own api-docs page expects -- apps/api has no OpenAPI
+  generator of its own. A deployment where that sibling directory isn't on
+  disk (a container built from apps/api alone) gets a clear `503`, never a
+  fabricated empty spec.
 - `src/http/plugins/auth-guard.ts` — the `preHandler` every `bearerAuth`
   route in `apps/ui-app/docs/openapi.yaml` needs; looks up the session by
   token (`src/db/auth-store.ts`), never a JWT.
@@ -239,7 +295,7 @@ adding the next route group.
   `AlertSubscription` (Tier 3), `BatchQueue`/`BatchTask`/
   `WebShellConnection` (Tier 4), `ToolGuardConfig`/`AppConfig`/
   `KnowledgeItem`/`RetrievalLog`/`ExternalMcpServer`/`HiddenExecution`
-  (Tier 5). RBAC/AI-roles proper is a Tier 6 design spike, not this.
+  (Tier 5), `AiRole`/`AuditLog`/`ReadNotification` (Tier 6).
 
 ## Dev
 
