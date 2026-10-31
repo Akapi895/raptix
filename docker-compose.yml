@@ -94,8 +94,9 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Auto-create raptix_web DB on first startup (empty volume only).
-      # Existing deployments: run the SQL manually or `docker volume rm postgres_data`.
+      # Auto-create the raptix_api DB on first startup (empty volume only).
+      # Existing deployments: the raptix-api-postgres-init sidecar below
+      # re-runs the same idempotent script against a populated volume.
       - ./infra/containers/postgres-init:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
@@ -110,6 +111,79 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # Idempotent on every `docker compose up`, not just on a fresh
+  # postgres_data volume (same reasoning as bhce-postgres-init below) --
+  # most existing installs already have a populated volume from before
+  # apps/api existed.
+  raptix-api-postgres-init:
+    image: postgres:17-alpine
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-api-postgres-init
+    environment:
+      POSTGRES_USER: raptix
+      POSTGRES_DB: litellm
+      PGPASSWORD: ${POSTGRES_PASSWORD:-raptix}
+      PGHOST: postgres
+      RAPTIX_API_POSTGRES_DB: ${RAPTIX_API_POSTGRES_DB:-raptix_api}
+    volumes:
+      - ./infra/containers/postgres-init/01-create-api-db.sh:/raptix/ensure-api-db.sh:ro
+    entrypoint: ["bash", "/raptix/ensure-api-db.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - raptix-net
+    restart: "no"
+
+  # apps/api -- the ui-app BFF (ADR-0106). Reaches langgraph over raptix-net
+  # the same way the CLI does, with no bearer token by default (matching
+  # today's actual `langgraph dev` behavior; RAPTIX_RUNTIME_API_TOKEN_FILE
+  # stays optional -- see apps/api/.env.example). On sandbox-net too, ahead
+  # of need, so joining it later (once per-project sandbox provisioning
+  # exists, see apps/launcher/internal/sandboxes/) is a code change in
+  # apps/api only, not another compose edit.
+  api:
+    image: ghcr.io/akapi895/raptix-api:${RAPTIX_VERSION:-stable}
+    build:
+      context: .
+      dockerfile: infra/containers/api.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.0}
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-api
+    env_file: .env
+    environment:
+      - API_PORT=8080
+      - API_HOST=0.0.0.0
+      - DATABASE_URL=postgresql://raptix:${POSTGRES_PASSWORD:-raptix}@postgres:5432/${RAPTIX_API_POSTGRES_DB:-raptix_api}
+      - LANGGRAPH_API_URL=http://langgraph:2024
+      - RAPTIX_API_OPERATOR_USERNAME=${RAPTIX_API_OPERATOR_USERNAME:-admin}
+      - RAPTIX_API_OPERATOR_PASSWORD=${RAPTIX_API_OPERATOR_PASSWORD:-}
+      - RAPTIX_API_SESSION_DURATION_HOURS=${RAPTIX_API_SESSION_DURATION_HOURS:-12}
+      # Optional integrations -- apps/api degrades each to a clear 503/501
+      # when unset, never a fabricated success (see apps/api/README.md).
+      - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-}
+      - RAPTIX_SANDBOX_KEY_FILE=${RAPTIX_SANDBOX_KEY_FILE:-}
+      - SLIVER_BRIDGE_URL=${SLIVER_BRIDGE_URL:-}
+      - SLIVER_BRIDGE_TOKEN=${SLIVER_BRIDGE_TOKEN:-}
+      - FOFA_EMAIL=${FOFA_EMAIL:-}
+      - FOFA_KEY=${FOFA_KEY:-}
+      - ZOOMEYE_API_KEY=${ZOOMEYE_API_KEY:-}
+      - QUAKE_API_KEY=${QUAKE_API_KEY:-}
+      - SHODAN_API_KEY=${SHODAN_API_KEY:-}
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      raptix-api-postgres-init:
+        condition: service_completed_successfully
+      langgraph:
+        condition: service_started
+    networks:
+      - raptix-net
+      - sandbox-net
+    restart: unless-stopped
+    logging: *default-logging
 
   # Neo4j — Attack Chain Graph (the agent's persistent working memory)
   # On sandbox-net so cypher-shell from inside sandbox reaches bolt://neo4j:7687

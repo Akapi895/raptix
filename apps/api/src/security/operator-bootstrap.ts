@@ -22,7 +22,12 @@ export async function ensureOperatorSeeded(
   if (existing) return { seeded: false, username: existing.username };
 
   const username = env.operatorUsername ?? "admin";
-  const password = env.operatorPassword ?? randomBytes(9).toString("base64url");
+  // `??` alone treats an empty string as "provided" -- Docker Compose's
+  // `${VAR:-}` substitutes exactly that (a defined, empty env var) when the
+  // operator hasn't set one, which would otherwise seed a real, silent,
+  // empty-string password with no generated-password log to catch it.
+  const configuredPassword = env.operatorPassword?.trim() || undefined;
+  const password = configuredPassword ?? randomBytes(9).toString("base64url");
   await store.createOperator({
     username,
     displayName: "Operator",
@@ -32,6 +37,6 @@ export async function ensureOperatorSeeded(
   return {
     seeded: true,
     username,
-    ...(env.operatorPassword ? {} : { generatedPassword: password }),
+    ...(configuredPassword ? {} : { generatedPassword: password }),
   };
 }

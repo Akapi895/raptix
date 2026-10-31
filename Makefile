@@ -22,10 +22,11 @@ COMPOSE_DEV   := docker compose -f docker-compose.yml -f docker-compose.dev.yml
 COMPOSE_WATCH := docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.watch.yml
 PROFILES_ALL  := --profile cli --profile c2-sliver
 # apps/web (React UI + Fastify/Prisma server) was retired by ADR-0106 in
-# favor of apps/ui-app + a new apps/api backend. apps/api has no compose
-# service or Make targets yet — see
-# docs/design/2026-10-31-ui-app-integration-implementation-plan.md for the
-# sequencing that reintroduces them.
+# favor of apps/ui-app + a new apps/api backend. apps/api now has a
+# docker-compose service (`api`, plus the `raptix-api-postgres-init`
+# sidecar) -- `docker compose up -d api` brings it up with the rest of the
+# stack. It still has no dedicated Make targets (quality/health/etc.) --
+# see docs/design/2026-10-31-ui-app-integration-implementation-plan.md.
 
 # Dogfood: isolated $RAPTIX_HOME so the launcher can onboard, write .env,
 # and stand up the stack without touching the user's real ~/.raptix. The
@@ -98,8 +99,8 @@ help:
 	@echo "  make lint           Python lint + format check + basedpyright (all levels, local exploratory)"
 	@echo "  make lint-fix       Auto-fix Python lint + format"
 	@echo ""
-	@echo "Web (apps/ui-app + apps/api): no Make targets yet — ADR-0106 retired"
-	@echo "the apps/web stack; see docs/design/2026-10-31-ui-app-integration-implementation-plan.md"
+	@echo "Web (apps/ui-app + apps/api): docker compose up -d api brings up apps/api;"
+	@echo "no dedicated Make targets yet — see docs/design/2026-10-31-ui-app-integration-implementation-plan.md"
 	@echo ""
 	@echo "Ops:"
 	@echo "  make status       docker compose ps"
@@ -290,8 +291,10 @@ quality-cli: node-install
 
 ## PR gate — mirrors CI PR lane (errors-only typecheck + fast pytest + CLI).
 ## Use before opening a PR; security/release/remote-run checks are separate gates.
-## apps/ui-app / apps/api have no quality target yet (ADR-0106 migration in
-## progress) — add one back here once apps/api exists.
+## apps/ui-app / apps/api have their own CI job (the `web` job in
+## .github/workflows/ci.yml) but no Make target of their own yet -- run
+## `npm run typecheck|lint|build|test --workspace=@raptix/api` and the
+## apps/ui-app equivalents directly until one is added here.
 quality: ci-lint ci-test quality-cli
 	@echo ""
 	@echo "OK — PR gates passed (mirrors CI PR lane)"
@@ -306,8 +309,10 @@ quality-strict: ci-lint ci-test-coverage quality-cli
 	@echo "OK — release gate passed (mirrors CI main lane + warning audit)"
 
 # ── Web Dashboard ─────────────────────────────────────────────────
-# apps/web (UI + Fastify/Prisma server) was retired by ADR-0106. There is no
-# web Make target until apps/api is built out — see
+# apps/web (UI + Fastify/Prisma server) was retired by ADR-0106 in favor of
+# apps/ui-app + apps/api. `docker compose up -d api` (or the base `$(COMPOSE)`
+# invocation this Makefile already uses) brings up apps/api; there is no
+# dedicated web Make target (start/stop/status) yet -- see
 # docs/design/2026-10-31-ui-app-integration-implementation-plan.md.
 
 # ── Status / Logs / Health / Clean ───────────────────────────────
@@ -319,8 +324,10 @@ status:
 logs:
 	$(COMPOSE) logs -f $(or $(SVC),langgraph)
 
-## Health checks: KG backend + Neo4j (parity with `raptix health`; web stack
-## retired by ADR-0106, no health check until apps/api exists).
+## Health checks: KG backend + Neo4j (parity with `raptix health`; the old
+## web stack's health check was retired by ADR-0106 and apps/api has no
+## Make-level health check of its own yet -- its docker-compose service
+## does carry its own container HEALTHCHECK, see infra/containers/api.Dockerfile).
 health:
 	@$(COMPOSE) exec -T langgraph python -m raptix.execution.tools.research.health >/dev/null 2>&1 \
 		&& echo "kg:    OK" || (echo "kg:    FAIL" && exit 1)
