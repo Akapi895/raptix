@@ -1,4 +1,5 @@
 import { RuntimeRejectedError, RuntimeUnavailableError } from "./errors.js";
+import { streamRuntimeRun, type RuntimeEvent } from "./stream.js";
 
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 
@@ -27,6 +28,7 @@ export interface RuntimeTransport {
   getRun(threadId: string, runId: string): Promise<RuntimeRun>;
   listRuns(threadId: string, offset?: number, limit?: number): Promise<RuntimeRun[]>;
   cancelRun(threadId: string, runId: string): Promise<void>;
+  streamRun(threadId: string, assistantId: string, input: Record<string, unknown>, config: Record<string, unknown>, signal: AbortSignal): AsyncIterable<RuntimeEvent>;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -192,5 +194,12 @@ export class RuntimeClient implements RuntimeTransport {
       undefined,
       "POST",
     );
+  }
+
+  public streamRun(threadId: string, assistantId: string, input: Record<string, unknown>, config: Record<string, unknown>, signal: AbortSignal): AsyncIterable<RuntimeEvent> {
+    return streamRuntimeRun(`${this.apiUrl}/threads/${encodeURIComponent(threadId)}/runs/stream`, this.apiToken, {
+      assistant_id: assistantId, input, config, stream_mode: ["messages", "updates"],
+      multitask_strategy: "reject", if_not_exists: "reject", on_disconnect: "continue",
+    }, signal);
   }
 }

@@ -140,6 +140,7 @@ async function main(): Promise<void> {
   }
 
   const app = buildApp({
+    sandboxKey,
     authStore,
     sessionDurationHours: env.sessionDurationHours,
     projectStore,

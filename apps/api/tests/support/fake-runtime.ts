@@ -1,4 +1,5 @@
 import type { RuntimeRun, RuntimeTransport } from "../../src/adapters/runtime/client.js";
+import type { RuntimeEvent } from "../../src/adapters/runtime/stream.js";
 
 /**
  * Scriptable RuntimeTransport fake. Tests push the run statuses `getRun`
@@ -11,6 +12,8 @@ export class FakeRuntime implements RuntimeTransport {
   public createdRuns: { threadId: string; assistantId: string; input: Record<string, unknown> }[] = [];
   public cancelledRuns: { threadId: string; runId: string }[] = [];
   public stateValues: Record<string, unknown> = {};
+  public streamEvents: RuntimeEvent[] = [];
+  public streamConfigs: Record<string, unknown>[] = [];
   private runStatusQueue: string[] = ["success"];
   private activeRuns = new Map<string, RuntimeRun>();
 
@@ -82,6 +85,13 @@ export class FakeRuntime implements RuntimeTransport {
     const run = this.activeRuns.get(runId);
     if (run) this.activeRuns.set(runId, { ...run, status: "interrupted" });
   }
+
+  public async *streamRun(threadId: string, assistantId: string, input: Record<string, unknown>, config: Record<string, unknown>): AsyncGenerator<RuntimeEvent> {
+    this.streamConfigs.push(config);
+    const run = await this.createRun(threadId, assistantId, input, "stream-test");
+    yield { event: "metadata", data: { run_id: run.runId } };
+    yield* this.streamEvents;
+  }
 }
 
 /** Always throws RuntimeUnavailableError -- used to test the "runtime down" error path. */
@@ -98,4 +108,5 @@ export class UnavailableRuntime implements RuntimeTransport {
   public getRun = () => this.fail();
   public listRuns = () => this.fail();
   public cancelRun = () => this.fail();
+  public async *streamRun(): AsyncGenerator<RuntimeEvent> { yield await this.fail(); }
 }

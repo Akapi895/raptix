@@ -4,7 +4,7 @@ import { buildAuthedTestApp } from "../support/build-test-app.js";
 import { FakeRuntime } from "../support/fake-runtime.js";
 
 async function buildAuthedApp(runtime: FakeRuntime, agentSyncWaitMs = 600) {
-  return buildAuthedTestApp({ runtime, agentSyncWaitMs });
+  return buildAuthedTestApp({ runtime, agentSyncWaitMs, sandboxKey: "k".repeat(64) });
 }
 
 describe("agent-loop routes", () => {
@@ -100,9 +100,74 @@ describe("agent-loop routes", () => {
     expect(active.json().tasks).toHaveLength(0);
   });
 
-  it("streaming and multi-agent routes are stubbed 501, not a silent no-op", async () => {
+  it("multi-agent dispatch stays explicit rather than a silent no-op", async () => {
     ({ app, token } = await buildAuthedApp(new FakeRuntime()));
     const response = await app.inject({ method: "POST", url: "/api/multi-agent", headers: headers(), payload: {} });
     expect(response.statusCode).toBe(501);
+  });
+
+  it("streams a real turn in the UI envelope and persists the answer for reload and follow-up", async () => {
+    runtime = new FakeRuntime();
+    runtime.stateValues = { messages: [{ type: "ai", content: "hello back" }] };
+    runtime.streamEvents = [
+      { event: "messages/partial", data: [{ type: "ai", id: "answer", content: "hello", additional_kwargs: { reasoning_content: "private reasoning" } }] },
+      { event: "messages/partial", data: [{ type: "ai", id: "answer", content: "hello back" }] },
+    ];
+    ({ app, token } = await buildAuthedApp(runtime));
+    const project = await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "chat workspace" } });
+    const response = await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: { message: "hi", projectId: project.json().id } });
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toContain("text/event-stream");
+    const events = response.body.split("\n").filter(line => line.startsWith("data: ")).map(line => JSON.parse(line.slice(6)));
+    expect(events.map(event => event.type)).toEqual(expect.arrayContaining(["conversation", "message_saved", "response", "done"]));
+    const final = events.find(event => event.type === "response");
+    expect(final).toMatchObject({ message: "hello back", data: { finalized: true, evidenceVerified: false } });
+    const conversationId = final.data.conversationId;
+    const history = await app.inject({ url: `/api/conversations/${conversationId}`, headers: headers() });
+    expect(history.json().messages.map((message: { content: string }) => message.content)).toEqual(["hi", "hello back"]);
+    const followUp = await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: { message: "again", conversationId } });
+    expect(followUp.statusCode).toBe(200);
+    expect(runtime.createdThreads).toHaveLength(1);
+    const configurable = runtime.streamConfigs[0].configurable as Record<string, string>;
+    expect(configurable.workspace_path).toBe("/workspace");
+    expect(configurable.sandbox_url).toBe("http://sbx-test-slug-1:9999");
+    expect(configurable.sandbox_token).toHaveLength(64);
+    expect(response.body).not.toContain(configurable.sandbox_token);
+    expect(response.body).not.toContain("private reasoning");
+    expect(events.filter(event => event.type === "response_start")).toHaveLength(1);
+    expect(events.filter(event => event.type === "response_delta").map(event => event.data.accumulated)).toEqual(["hello", "hello back"]);
+  });
+
+  it("rejects missing sessions, empty messages and unknown conversations before dispatch", async () => {
+    runtime = new FakeRuntime();
+    ({ app, token } = await buildAuthedApp(runtime));
+    expect((await app.inject({ method: "POST", url: "/api/eino-agent/stream", payload: { message: "hi" } })).statusCode).toBe(401);
+    expect((await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: {} })).statusCode).toBe(400);
+    expect((await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: { message: "hi", conversationId: "missing" } })).statusCode).toBe(404);
+    expect(runtime.createdRuns).toHaveLength(0);
+  });
+
+  it("does not turn a failed run or an unfinished stream into a successful answer", async () => {
+    runtime = new FakeRuntime();
+    runtime.queueRunStatuses("error");
+    runtime.stateValues = { messages: [{ type: "ai", content: "stale answer" }] };
+    ({ app, token } = await buildAuthedApp(runtime));
+    const project = await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "failed chat" } });
+    const response = await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: { message: "hi", projectId: project.json().id } });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('"type":"error"');
+    expect(response.body).not.toContain('"type":"response"');
+    expect(response.body).not.toContain("stale answer");
+  });
+
+  it("does not claim completion when native SSE closes while the run is still running", async () => {
+    runtime = new FakeRuntime();
+    runtime.queueRunStatuses("running", "running");
+    ({ app, token } = await buildAuthedApp(runtime));
+    const project = await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "incomplete chat" } });
+    const response = await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: { message: "hi", projectId: project.json().id } });
+    expect(response.body).toContain('"type":"error"');
+    expect(response.body).not.toContain('"type":"response"');
+    expect(response.body).not.toContain('"status":"success"');
   });
 });

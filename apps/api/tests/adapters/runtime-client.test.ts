@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RuntimeClient } from "../../src/adapters/runtime/client.js";
 import { RuntimeRejectedError, RuntimeUnavailableError } from "../../src/adapters/runtime/errors.js";
+import { readRuntimeEvents } from "../../src/adapters/runtime/stream.js";
 
 async function readBody(request: IncomingMessage): Promise<unknown> {
   const chunks: Uint8Array[] = [];
@@ -24,11 +25,20 @@ describe("RuntimeClient", () => {
   let server: Server;
   let baseUrl: string;
   let lastAuthHeader: string | undefined;
+  let streamBody: unknown;
 
   beforeEach(async () => {
     server = createServer((request, response) => {
       lastAuthHeader = request.headers.authorization;
       void readBody(request).then((body) => {
+        if (request.url === "/threads/t1/runs/stream") {
+          streamBody = body;
+          response.setHeader("content-type", "text/event-stream");
+          const wire = Buffer.from('event: metadata\r\ndata: {"run_id":"r1"}\r\n\r\n: heartbeat\r\n\r\nevent: messages/partial\r\ndata: [{"type":"ai","id":"m1","content":"xin chào"}]\r\n\r\n');
+          for (const byte of wire) response.write(Buffer.from([byte]));
+          response.end();
+          return;
+        }
         if (request.url === "/info" && request.method === "GET") {
           send(response, 200, { version: "9.9.9" });
           return;
@@ -124,5 +134,23 @@ describe("RuntimeClient", () => {
   it("maps an unreachable host to RuntimeUnavailableError", async () => {
     const client = new RuntimeClient({ apiUrl: "http://127.0.0.1:1", timeoutMs: 500 });
     await expect(client.ping()).rejects.toBeInstanceOf(RuntimeUnavailableError);
+  });
+
+  it("decodes native cumulative messages over split UTF-8/CRLF and sends server-owned run config", async () => {
+    const client = new RuntimeClient({ apiUrl: baseUrl, apiToken: "t".repeat(32) });
+    const events = [];
+    for await (const event of client.streamRun("t1", "raptix", { messages: [] }, { configurable: { engagement_name: "proj-test" } }, AbortSignal.timeout(5000))) events.push(event);
+    expect(lastAuthHeader).toBe(`Bearer ${"t".repeat(32)}`);
+    expect(streamBody).toMatchObject({ assistant_id: "raptix", config: { configurable: { engagement_name: "proj-test" } }, multitask_strategy: "reject" });
+    expect(events).toEqual([
+      { event: "metadata", data: { run_id: "r1" } },
+      { event: "messages/partial", data: [{ type: "ai", id: "m1", content: "xin chào" }] },
+    ]);
+  });
+
+  it("rejects truncated SSE rather than inventing a terminal event", async () => {
+    const body = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new TextEncoder().encode('event: metadata\ndata: {"run_id":"r1"}')); controller.close(); } });
+    const consume = async () => { for await (const event of readRuntimeEvents(body)) expect(event).toBeUndefined(); };
+    await expect(consume()).rejects.toThrow("mid-frame");
   });
 });

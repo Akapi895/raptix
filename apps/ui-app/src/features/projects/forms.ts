@@ -36,6 +36,9 @@ export function createProjectForms(ctx: ProjectsContext) {
     const editId = projectEditId, from = origin;
     try {
       const saved = await service.saveProject(editId, { name, description: dom.value('project-modal-description').trim().slice(0, 4000) });
+      // Selecting the new workspace must precede closing the modal: the next
+      // click may already open a new chat while the project list is reloading.
+      if (!editId && from === 'projects' && saved.id) service.setActiveProjectId(saved.id);
       closeProjectModal(); await ctx.reload();
       if (saved.id) {
         if (!editId && from === 'webshell') await deps.applyWebshellProjectSelection(saved.id);
