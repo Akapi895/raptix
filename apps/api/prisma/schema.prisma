@@ -61,6 +61,8 @@ model Project {
   vulnerabilities Vulnerability[]
   batchQueues   BatchQueue[]
   webshellConnections WebShellConnection[]
+  facts         ProjectFact[]
+  factEdges     ProjectFactEdge[]
 }
 
 model Conversation {
@@ -361,6 +363,59 @@ model Workflow {
   validationError String   @default("")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// Project facts and fact edges: apps/ui-app's project "facts" tab and
+// fact-graph view (internal/database/project.go's ProjectFact/ProjectFactEdge
+// + internal/handler/project.go's factWithLinksResponse). The plan's first
+// draft routed these through the Neo4j AKG (knowledge/graph), but the
+// authoritative contract is relational CRUD -- fact_key/category/summary/
+// confidence records the Go backend kept in Postgres; the runtime's AKG is a
+// scanner-observation graph (Host/Service/Vulnerability nodes keyed by
+// engagement) with a different node model and no operator-facing CRUD. The
+// fact-graph view is derived here from the same two tables the mock derives
+// it from (see projects.routes.ts). promote-attack-chain (deriving facts from
+// a conversation transcript via an LLM call) stays stubbed until the LLM
+// client exists.
+
+model ProjectFact {
+  id                     String            @id @default(cuid())
+  projectId              String
+  project                Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  factKey                String
+  category               String            @default("note")
+  summary                String            @default("")
+  body                   String            @default("")
+  confidence             String            @default("medium")
+  pinned                 Boolean           @default(false)
+  deprecated             Boolean           @default(false)
+  relatedVulnerabilityId String            @default("")
+  sourceConversationId   String            @default("")
+  sourceMessageId        String            @default("")
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  outgoingEdges          ProjectFactEdge[] @relation("factEdgeSource")
+  incomingEdges          ProjectFactEdge[] @relation("factEdgeTarget")
+
+  @@unique([projectId, factKey])
+  @@index([projectId, deprecated])
+}
+
+model ProjectFactEdge {
+  id            String      @id @default(cuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  edgeType      String      @default("related")
+  confidence    String      @default("medium")
+  createdAt     DateTime    @default(now())
+  sourceFact    ProjectFact @relation("factEdgeSource", fields: [sourceFactId], references: [id], onDelete: Cascade)
+  sourceFactId  String
+  targetFact    ProjectFact @relation("factEdgeTarget", fields: [targetFactId], references: [id], onDelete: Cascade)
+  targetFactId  String
+
+  @@index([projectId])
+  @@index([sourceFactId])
+  @@index([targetFactId])
 }
 
 // Tier 4 (Operations): "Batch task queues" maps to Tier 2's chat loop, not
