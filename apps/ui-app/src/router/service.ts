@@ -8,7 +8,7 @@ export function parseRoute(hash: string): Route | null {
   const separator = clean.indexOf('?');
   let page = separator < 0 ? clean : clean.slice(0, separator);
   const query = new URLSearchParams(separator < 0 ? '' : clean.slice(separator + 1));
-  if (page === 'platform-rbac' || (page === 'settings' && query.get('section') === 'rbac')) return { page: 'dashboard', query: new URLSearchParams() };
+  if (page === 'platform-rbac' || page === 'system-update' || (page === 'settings' && (query.get('section') === 'rbac' || query.get('section') === 'update'))) return { page: 'dashboard', query: new URLSearchParams() };
   if (page === 'c2') page = 'c2-listeners';
   if (page === 'c2-tasks' || page === 'c2-events') { query.set('tab', page === 'c2-events' ? 'events' : 'tasks'); page = 'c2-activity'; }
   if (page === 'c2-profiles') { page = 'c2-listeners'; query.set('tab', 'profiles'); }
@@ -16,7 +16,6 @@ export function parseRoute(hash: string): Route | null {
   if (page === 'agents-management') page = 'roles-management';
   if (page === 'asset-overview' || page === 'assets') page = 'asset-library';
   if (page === 'discover-assets') page = 'info-collect';
-  if (page === 'system-update') { page = 'settings'; query.set('section', 'update'); }
   if (page === 'tasks') { page = 'workflows'; query.set('tab', 'schedule'); }
   return isPageId(page) ? { page, query } : null;
 }

@@ -12,6 +12,7 @@ import { FakeConversationStore } from "./fake-conversation-store.js";
 import { FakeExternalMcpStore } from "./fake-external-mcp-store.js";
 import { FakeHiddenExecutionStore } from "./fake-hidden-execution-store.js";
 import { FakeKnowledgeItemStore } from "./fake-knowledge-item-store.js";
+import { FakeMarkdownAgentStore } from "./fake-markdown-agent-store.js";
 import { FakeProjectStore } from "./fake-project-store.js";
 import { FakeReadNotificationStore } from "./fake-read-notification-store.js";
 import { FakeRecon } from "./fake-recon.js";
@@ -21,6 +22,7 @@ import { FakeSandbox } from "./fake-sandbox.js";
 import { FakeToolGuardStore } from "./fake-tool-guard-store.js";
 import { FakeVulnerabilityStore } from "./fake-vulnerability-store.js";
 import { FakeWebShellStore } from "./fake-webshell-store.js";
+import { FakeWorkflowStore } from "./fake-workflow-store.js";
 
 /** Every store defaults to a fresh fake; pass `overrides` to swap one in (e.g. a specific FakeRuntime instance). */
 export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): BuildAppOptions {
@@ -47,6 +49,8 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     aiRoleStore: new FakeAiRoleStore(),
     auditLogStore: new FakeAuditLogStore(),
     readNotificationStore: new FakeReadNotificationStore(),
+    markdownAgentStore: new FakeMarkdownAgentStore(),
+    workflowStore: new FakeWorkflowStore(),
     ...overrides,
   };
 }

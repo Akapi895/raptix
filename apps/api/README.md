@@ -5,12 +5,12 @@ model (OPPLAN/`EngagementContext`, capability runtime, AKG, asset-map,
 governance, closure, scope, vault...) into the contract `apps/ui-app` already
 speaks (`apps/ui-app/docs/openapi.yaml`, `apps/ui-app/docs/api-contracts.md`).
 
-**Tier 1-6** (foundation, core loop, findings, operations, knowledge &
-tooling, platform) are done. Tier 7 (Workflows/packages, Markdown agents,
-Robots and bindings, System updates — each needs the repo owner's explicit
-accept/cut call before any route work starts) is not started — see
-`docs/design/2026-10-31-ui-app-integration-implementation-plan.md` before
-adding the next route group.
+**Tier 1-7 are done** — this is the last planned tier; see
+`docs/design/2026-10-31-ui-app-integration-implementation-plan.md` §2/§5
+for the repo owner's per-module accept/cut decisions. Markdown agents (built)
+and Workflows (definition CRUD only, execution stubbed) were accepted;
+Robots and bindings and System updates were cut -- their `apps/ui-app`
+frontend features were removed outright (not just left without a backend).
 
 ## Layout
 
@@ -266,6 +266,31 @@ adding the next route group.
   generator of its own. A deployment where that sibling directory isn't on
   disk (a container built from apps/api alone) gets a clear `503`, never a
   fabricated empty spec.
+- `src/http/routes/markdown-agents.routes.ts` -- "Markdown agents"
+  (`/api/multi-agent/markdown-agents`, Tier 7, accepted): all 5 ops real,
+  Prisma CRUD (`db/markdown-agent-store.ts`). `filename` on the wire is
+  derived as `${id}.md`, never stored separately -- the retired Go backend
+  parsed real `.md` files on disk; this stores the same structured fields
+  in Postgres instead, and `apps/ui-app`'s own client never reads the
+  `raw` field, so it's simply omitted. Not wired into
+  `POST /api/multi-agent` (stubbed `501` since Tier 2) -- storage is real,
+  dispatching an agent defined here is not, the same posture as Tier 5/6's
+  AI roles and tool-guard config.
+- `src/http/routes/workflows.routes.ts` -- "Workflows and packages" (Tier
+  7, accepted in a narrowed form per the repo owner's explicit decision):
+  list/create/update/delete of the workflow *definition* (`graphJson`, 4
+  ops) are real, Prisma-backed (`db/workflow-store.ts`); there is no
+  `GET /api/workflows/:id` -- `apps/ui-app`'s own client never calls one,
+  loading the full list instead. Every execution-shaped op (`validate`,
+  `dry-run`, `generate-draft`, package import/export, `runs`/`replay`/
+  `resume`) is stubbed `501`: `apps/ui-app`'s workflow feature is a full
+  node-graph orchestration engine (nodes: start/tool/agent/condition/hitl/
+  output/end) with AI-assisted authoring and HITL-pause/resume execution
+  semantics that Raptix has no equivalent of -- building real execution
+  would mean writing a new orchestration engine inside this BFF, out of
+  scope for what a translation layer should own. The repo owner chose
+  "ship the storage, stub the engine" over cutting the module outright or
+  designing the engine first.
 - `src/http/plugins/auth-guard.ts` — the `preHandler` every `bearerAuth`
   route in `apps/ui-app/docs/openapi.yaml` needs; looks up the session by
   token (`src/db/auth-store.ts`), never a JWT.
@@ -295,7 +320,21 @@ adding the next route group.
   `AlertSubscription` (Tier 3), `BatchQueue`/`BatchTask`/
   `WebShellConnection` (Tier 4), `ToolGuardConfig`/`AppConfig`/
   `KnowledgeItem`/`RetrievalLog`/`ExternalMcpServer`/`HiddenExecution`
-  (Tier 5), `AiRole`/`AuditLog`/`ReadNotification` (Tier 6).
+  (Tier 5), `AiRole`/`AuditLog`/`ReadNotification` (Tier 6),
+  `MarkdownAgent`/`Workflow` (Tier 7).
+- **Robots and bindings** and **System updates**: cut, per the repo
+  owner's explicit decision (Tier 7) -- not just left without a backend.
+  Their `apps/ui-app` frontend features (`features/wechat-robot/`,
+  `features/update/`, the matching nav items, settings-page markup, CSS,
+  router aliases, and mock routes) were removed outright, since both have
+  zero Raptix equivalent (a messaging-platform bot QR-bind flow; a
+  self-update mechanism Raptix ships via the Go launcher instead). The
+  generic multi-platform "Bots" settings section (wecom/dingtalk/lark/
+  telegram/slack/discord/qq auth-policy config, served for real by Tier
+  5's `/api/config`) was deliberately kept -- only the WeChat-specific
+  QR-binding sub-feature was wechat-robot's own; a stray old hash like
+  `#system-update` now redirects to Dashboard, the same pattern already
+  used for the retired `#platform-rbac` link.
 
 ## Dev
 

@@ -29,7 +29,7 @@ describe('typed router', () => {
     expect(parseRoute('#/operation-center')?.page).toBe('projects');
     expect(routeHash(parseRoute('#projects?project=p1')!)).toBe('operation-center?project=p1');
     expect(routeHash(parseRoute('#operation-center?project=p1')!)).toBe('operation-center?project=p1');
-    expect(routeHash(parseRoute('#system-update')!)).toBe('settings?section=update');
+    expect(parseRoute('#system-update')).toEqual({ page: 'dashboard', query: new URLSearchParams() });
     expect(parseRoute('#chat?conversation=a%2Fb&project=x?y')?.query.get('project')).toBe('x?y');
     expect(parseRoute('#unknown')).toBeNull();
   });
@@ -105,5 +105,13 @@ describe('typed router', () => {
       expect(f.hash()).toBe('#dashboard');
     }
     expect(pageIds).not.toContain('platform-rbac');
+  });
+  it('redirects retired one-click-update links to Dashboard', () => {
+    for (const hash of ['#system-update', '#settings?section=update']) {
+      const f = fixture(hash); f.router.start();
+      expect(f.hash()).toBe('#dashboard');
+      expect(f.router.page()).toBe('dashboard');
+    }
+    expect(pageIds).not.toContain('system-update');
   });
 });

@@ -47,11 +47,11 @@ function browserSource(): string {
         refreshDashboard: () => record('dashboard'), initVulnerabilityPage: () => record('vulnerabilities'),
         prefetchProjectsForChat: () => record('prefetch-projects'), refreshChatProjectSelector: () => record('project-selector'),
         stopExternalMcpPoll: () => record('stop-mcp'), cleanupTasksPage: () => record('cleanup-tasks'),
-        stopUpdatePolling: () => record('stop-update'), stopTokenUsageRequests: () => record('stop-token'),
+        stopTokenUsageRequests: () => record('stop-token'),
         hasPermission: permission => permission !== 'denied', loadConfig: async (tools, options) => record('config:' + tools + ':' + !!options?.silent),
         loadToolsList: async (page, search) => record('tools:37:' + page + ':' + search),
         loadExternalMCPs: async () => record('external-mcp'), startExternalMcpPoll: () => record('start-mcp'),
-        loadUpdateConsole: () => record('update'), refreshTokenUsage: () => record('token'),
+        refreshTokenUsage: () => record('token'),
         loadRoles: async () => record('roles'), renderRolesList: () => record('render-roles'),
         initSkillsPagination: () => record('skills-pagination'), loadSkills: () => record('skills'),
         loadKnowledgeCategories: () => record('categories'), loadKnowledgePage: () => record('knowledge:saved:1:23'),
@@ -67,7 +67,7 @@ function browserSource(): string {
         switchSettingsSection: section => {
           const target = document.getElementById('settings-section-' + section); if (!target) return;
           document.querySelectorAll('.settings-section-content').forEach(node => node.classList.remove('active')); target.classList.add('active');
-          if (section === 'update') record('update'); if (section === 'token-usage') record('token');
+          if (section === 'token-usage') record('token');
         },
         onNavigation: page => { record('close-drawer'); record('close-sheet'); if (page !== 'chat') record('close-chat'); },
         onError: error => { throw error; },
@@ -84,7 +84,7 @@ const shell = `<!doctype html><html class="initial-route-pending"><head><style>#
   <button id="collapse" data-router-action="sidebar">Collapse</button><button id="chat-collapse" data-router-action="conversation-sidebar">Chat list</button>
   <div id="conversation-sidebar"></div><div class="chat-container"></div>
   ${pageIds.map(page => `<section class="page" id="page-${page}"></section>`).join('')}
-  <div class="settings-section-content" id="settings-section-update"></div><div class="settings-section-content" id="settings-section-token-usage"></div>
+  <div class="settings-section-content" id="settings-section-token-usage"></div>
   <nav id="m-tabbar"><button class="m-tab" data-tab="dashboard"></button><button class="m-tab" data-tab="hitl"></button></nav>
   <input id="roles-search" value="old"><button id="roles-search-clear"></button><input id="skills-search" value="old"><button id="skills-search-clear"></button>
   </body></html>`;
@@ -179,13 +179,13 @@ describe('router browser parity (isolated, in-memory)', () => {
     await page.close();
   });
   it('loads settings aliases and retained sections once and preserves token query', async () => {
-    for (const [hash, hook] of [['system-update', 'update'], ['settings?section=token-usage', 'token']] as const) {
+    for (const [hash, hook] of [['settings?section=token-usage', 'token']] as const) {
       const page = await setup(hash);
       expect((await calls(page)).filter(call => call === hook)).toHaveLength(1);
       expect(await page.evaluate(() => {
         const route = (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.current();
         return route?.query.toString();
-      })).toBe(hash === 'system-update' ? 'section=update' : 'section=token-usage');
+      })).toBe('section=token-usage');
       await page.evaluate(() => (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.go('settings'));
       expect((await calls(page)).filter(call => call === hook)).toHaveLength(1);
       await page.evaluate(() => {

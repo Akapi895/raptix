@@ -20,12 +20,14 @@ import { PrismaConversationStore } from "./db/conversation-store.js";
 import { PrismaExternalMcpStore } from "./db/external-mcp-store.js";
 import { PrismaHiddenExecutionStore } from "./db/hidden-execution-store.js";
 import { PrismaKnowledgeItemStore } from "./db/knowledge-item-store.js";
+import { PrismaMarkdownAgentStore } from "./db/markdown-agent-store.js";
 import { PrismaProjectStore } from "./db/project-store.js";
 import { PrismaReadNotificationStore } from "./db/read-notification-store.js";
 import { PrismaRetrievalLogStore } from "./db/retrieval-log-store.js";
 import { PrismaToolGuardStore } from "./db/tool-guard-store.js";
 import { PrismaVulnerabilityStore } from "./db/vulnerability-store.js";
 import { PrismaWebShellStore } from "./db/webshell-store.js";
+import { PrismaWorkflowStore } from "./db/workflow-store.js";
 import { ensureOperatorSeeded } from "./security/operator-bootstrap.js";
 
 async function main(): Promise<void> {
@@ -49,6 +51,8 @@ async function main(): Promise<void> {
   const aiRoleStore = new PrismaAiRoleStore(db);
   const auditLogStore = new PrismaAuditLogStore(db);
   const readNotificationStore = new PrismaReadNotificationStore(db);
+  const markdownAgentStore = new PrismaMarkdownAgentStore(db);
+  const workflowStore = new PrismaWorkflowStore(db);
 
   const seed = await ensureOperatorSeeded(authStore, {
     operatorUsername: env.operatorUsername,
@@ -131,6 +135,8 @@ async function main(): Promise<void> {
     aiRoleStore,
     auditLogStore,
     readNotificationStore,
+    markdownAgentStore,
+    workflowStore,
   });
 
   const shutdown = async (): Promise<void> => {

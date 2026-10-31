@@ -25,7 +25,6 @@ export interface PageLifecycleDependencies {
   initVulnerabilityPage?: Hook;
   initWebshellPage?: Hook;
   initChatFilesPage?: Hook;
-  loadUpdateConsole?: Hook;
   refreshTokenUsage?: Hook;
   loadRoles?: Hook;
   renderRolesList?: Hook;
@@ -40,7 +39,6 @@ export interface PageLifecycleDependencies {
   stopKnowledgeIndexPoll?: Hook;
   initC2?: (page: PageId) => unknown;
   cleanupTasksPage?: Hook;
-  stopUpdatePolling?: Hook;
   stopTokenUsageRequests?: Hook;
   onError(error: unknown): void;
 }
@@ -100,7 +98,6 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
         run(() => deps.loadConfig?.(false));
         // A deep-link section callback already performs its own load.
         if (!sectionHandled) {
-          if (root.getElementById('settings-section-update')?.classList.contains('active')) run(deps.loadUpdateConsole);
           if (root.getElementById('settings-section-token-usage')?.classList.contains('active')) run(deps.refreshTokenUsage);
         }
         break;
@@ -126,7 +123,7 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
     }
     if (page !== 'tasks') run(deps.cleanupTasksPage);
     if (page !== 'knowledge-management') run(deps.stopKnowledgeIndexPoll);
-    if (page !== 'settings') { run(deps.stopUpdatePolling); run(deps.stopTokenUsageRequests); }
+    if (page !== 'settings') run(deps.stopTokenUsageRequests);
   }
   return { init, invalidate, dispose: invalidate };
 }

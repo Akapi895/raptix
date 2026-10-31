@@ -18,10 +18,8 @@ import { initTasks } from '@/features/tasks';
 import { initTerminalFeature, buildTerminalURL } from '@/features/terminal';
 import { initTokenUsage } from '@/features/token-usage';
 import { initToolGuard } from '@/features/tool-guard';
-import { initUpdate } from '@/features/update';
 import { initVulnerability } from '@/features/vulnerability';
 import { initWebshell } from '@/features/webshell';
-import { initWechatRobot } from '@/features/wechat-robot';
 import { initWorkflows, createWorkflowOrchestration } from '@/features/workflows';
 import { applyTranslations, currentLanguage, translateRuntime, type TranslationOptions } from '@/i18n';
 import { createAccessBrowser, openAccessEventStream } from '@/platform/access-browser';
@@ -100,16 +98,13 @@ export function createDomainApplication(deps: DomainDependencies) {
         case 'terminal': run(terminal.initTerminal); break;
         case 'audit': run(audit.view.init); break;
         case 'storage': run(storageFeature.initStorageSection); break;
-        case 'update': run(update.service.load); break;
       }
     },
     stopTokenUsage: () => tokens.service.stop(),
-    stopUpdate: () => { update.service.stopPolling(); update.service.stopWatchdog(); },
     syncDashboardAccessTabs: () => dashboard.syncAccessTabs(),
     refreshChatConfig: () => chat.refreshChatConfig(),
     populateChatChannels: ai => chat.populateChatChannels(ai),
     refreshMentionTools: () => run(() => chat.refreshMentionTools()),
-    refreshWechatRobot: config => wechat.service.refreshBound(config),
     unauthorized: message => auth.view.showLoginOverlay(message),
     closeMCPDetail: () => chat.closeMCPDetail(),
   });
@@ -287,17 +282,6 @@ export function createDomainApplication(deps: DomainDependencies) {
     now: Date.now, sleep: lifetime.sleep,
   });
   const toolGuard = initToolGuard({ doc, canRead: () => auth.hasPermission('config:read'), canWrite: () => can('config:write') });
-  const update = initUpdate(doc, {
-    request, translate: t, runtime: notificationBrowser,
-    isActive: () => currentPage() === 'settings' && !!doc.getElementById('settings-section-update')?.classList.contains('active'),
-    confirm: browser.confirm, notify, applyPermissions,
-    probe: notificationBrowser.probe, restarted: notificationBrowser.restarted, reload: notificationBrowser.reload,
-  });
-  const wechat = initWechatRobot(doc, {
-    request, translate: t, runtime: notificationBrowser, applyPermissions, canWrite: () => can('robot:write'),
-    loadConfig: async () => { await settings.controller.loadConfig(false); return true; },
-    refreshRobotManager: () => settings.controller.refreshRobotManager(), toast: text => notify(text, 'success'),
-  });
   function navigateNotification(item: NotificationItem): void {
     switch (item.type) {
       case 'vulnerability_created': if (item.vulnerabilityId) browser.location.hash = 'vulnerabilities?id=' + encodeURIComponent(item.vulnerabilityId); break;
@@ -342,7 +326,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     loadToolsList: settings.controller.loadToolsList, loadExternalMCPs: settings.controller.loadExternalMCPs,
     startExternalMcpPoll: settings.controller.startExternalMcpPoll, hasPermission: auth.hasPermission, loadConfig: settings.controller.loadConfig,
     initProjectsPage, initVulnerabilityPage: vulnerability.view.initPage, initWebshellPage: webshell.controller.initWebshellPage,
-    initChatFilesPage: () => chat.initChatFilesPage(), loadUpdateConsole: update.service.load,
+    initChatFilesPage: () => chat.initChatFilesPage(),
     refreshTokenUsage: () => doc.getElementById('settings-token-analysis') ? tokens.service.refresh() : undefined,
     loadRoles: roles.view.loadForPage, renderRolesList: roles.view.renderList,
     refreshWorkflows: async () => { if (can('workflow:read')) await workflows.hooks.refreshWorkflows(); await orchestration.sync(); }, loadSkillsMonitor: skills.controller.monitor, loadSkills: () => skills.controller.load(),
@@ -351,7 +335,6 @@ export function createDomainApplication(deps: DomainDependencies) {
     updateIndexProgress: knowledge.controller.updateIndex, loadRetrievalLogs: knowledge.controller.logs,
     stopKnowledgeIndexPoll: () => knowledge.controller.stopIndex(false), initC2: () => c2.controller.init(),
     cleanupTasksPage: () => { if (currentPage() !== 'workflows') tasks.hooks.cleanupTasksPage(); },
-    stopUpdatePolling: () => { update.service.stopPolling(); update.service.stopWatchdog(); },
     stopTokenUsageRequests: tokens.service.stop, onError: error => console.warn('[router]', error),
   });
   function onNavigation(page: PageId) {
@@ -386,7 +369,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     void authReady.then(() => { if (!lifetime.disposed) orchestration.mount(); });
     webshell.activate(); c2.activate(); audit.afterClassicScripts(); tokens.afterClassicScripts();
     terminal.activate(); storageFeature.bind(); skills.activate(); knowledge.activate(); monitor.activate();
-    update.activate(); wechat.activate(); notifications.activate(); mobile.activate();
+    notifications.activate(); mobile.activate();
     void hitl.afterClassicScripts().then(resolveHitlReady, error => { console.warn('HITL activation failed', error); resolveHitlReady(); });
     run(toolGuard.start); run(roles.view.loadForPage);
     installDomainEvents();
@@ -436,7 +419,7 @@ export function createDomainApplication(deps: DomainDependencies) {
   function dispose(): Promise<void> {
     if (disposal) return disposal;
     lifetime.dispose(); resolveHitlReady(); stopSwitcher?.(); routerView.dispose(); pageLifecycle.dispose(); routerService.dispose();
-    auth.dispose(); mobile.dispose(); notifications.dispose(); wechat.dispose(); update.dispose(); toolGuard.dispose();
+    auth.dispose(); mobile.dispose(); notifications.dispose(); toolGuard.dispose();
     hitl.dispose(); monitor.controller.stopPolling(); monitor.dispose(); knowledge.dispose(); skills.dispose();
     storageFeature.dispose(); terminal.dispose(); tokens.dispose(); audit.dispose(); c2.dispose();
     orchestration.dispose(); tasks.dispose(); workflows.dispose(); vulnerability.dispose(); infoCollect.dispose(); assets.dispose();
@@ -457,7 +440,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     audit, tokens, terminal, storage: storageFeature,
     skills, knowledge, monitor,
     hitl: { ...hitl, get ready() { return hitlReady; }, defaults: () => hitlDefaults, whitelist: () => hitlWhitelist },
-    toolGuard, update, wechat, notifications, dashboard, mobile, settings,
+    toolGuard, notifications, dashboard, mobile, settings,
     notify, start, dispose,
   };
 }
