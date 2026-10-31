@@ -120,6 +120,13 @@ benchmarks/results/runs/*
 !benchmarks/results/runs/README.md
 benchmarks/external/*
 !benchmarks/external/README.md
+
+# Personal, disposable Sliver C2 test lab — never a tracked benchmark suite.
+benchmarks/sliver-lab/
+
+# Ad-hoc local scratch dumps (docker ps / vitest output), never source of truth.
+/now.txt
+/infra-test.log
 benchmarks/results/published/xbow/XBEN-*-24/evidence/langsmith_trace.json
 benchmarks/results/published/xbow/XBEN-*-24/evidence/iter14_pass.json
 benchmarks/results/published/xbow/XBEN-*-24/evidence/*_iter*.json

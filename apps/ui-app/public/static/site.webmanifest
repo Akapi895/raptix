@@ -1,0 +1,14 @@
+{
+  "name": "Raptix",
+  "short_name": "Raptix",
+  "description": "AI security testing platform WebUI",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc",
+  "icons": [
+    { "src": "/static/logo.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+  ]
+}
