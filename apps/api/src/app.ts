@@ -5,6 +5,7 @@ import type { ReconProvidersTransport } from "./adapters/recon/client.js";
 import type { RuntimeTransport } from "./adapters/runtime/client.js";
 import type { SandboxFilesTransport } from "./adapters/sandbox/client.js";
 import type { SandboxProvisioner } from "./adapters/sandbox/controller.js";
+import type { FactStore } from "./db/fact-store.js";
 import type { AiRoleStore } from "./db/ai-role-store.js";
 import type { AlertSubscriptionStore } from "./db/alert-subscription-store.js";
 import type { AppConfigStore } from "./db/app-config-store.js";
@@ -61,6 +62,7 @@ export interface BuildAppOptions {
   sessionDurationHours: number;
   projectStore: ProjectStore;
   conversationStore: ConversationStore;
+  factStore: FactStore;
   runtime: RuntimeTransport;
   assetStore: AssetStore;
   vulnerabilityStore: VulnerabilityStore;
@@ -105,6 +107,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     authStore: options.authStore,
     projectStore: options.projectStore,
     conversationStore: options.conversationStore,
+    factStore: options.factStore,
     sandboxProvisioner: options.sandboxProvisioner,
   });
   registerConversationRoutes(app, {

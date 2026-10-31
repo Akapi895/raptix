@@ -10,6 +10,7 @@ import { FakeBatchQueueStore } from "./fake-batch-queue-store.js";
 import { FakeC2 } from "./fake-c2.js";
 import { FakeConversationStore } from "./fake-conversation-store.js";
 import { FakeExternalMcpStore } from "./fake-external-mcp-store.js";
+import { FakeFactStore } from "./fake-fact-store.js";
 import { FakeHiddenExecutionStore } from "./fake-hidden-execution-store.js";
 import { FakeKnowledgeItemStore } from "./fake-knowledge-item-store.js";
 import { FakeMarkdownAgentStore } from "./fake-markdown-agent-store.js";
@@ -32,6 +33,7 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     sessionDurationHours: 12,
     projectStore: new FakeProjectStore(),
     conversationStore: new FakeConversationStore(),
+    factStore: new FakeFactStore(),
     runtime: new FakeRuntime(),
     assetStore: new FakeAssetStore(),
     vulnerabilityStore: new FakeVulnerabilityStore(),

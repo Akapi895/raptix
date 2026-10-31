@@ -23,6 +23,7 @@ import { PrismaAuthStore } from "./db/auth-store.js";
 import { PrismaBatchQueueStore } from "./db/batch-queue-store.js";
 import { PrismaConversationStore } from "./db/conversation-store.js";
 import { PrismaExternalMcpStore } from "./db/external-mcp-store.js";
+import { PrismaFactStore } from "./db/fact-store.js";
 import { PrismaHiddenExecutionStore } from "./db/hidden-execution-store.js";
 import { PrismaKnowledgeItemStore } from "./db/knowledge-item-store.js";
 import { PrismaMarkdownAgentStore } from "./db/markdown-agent-store.js";
@@ -41,6 +42,7 @@ async function main(): Promise<void> {
   const authStore = new PrismaAuthStore(db);
   const projectStore = new PrismaProjectStore(db);
   const conversationStore = new PrismaConversationStore(db);
+  const factStore = new PrismaFactStore(db);
   const assetStore = new PrismaAssetStore(db);
   const vulnerabilityStore = new PrismaVulnerabilityStore(db);
   const alertSubscriptionStore = new PrismaAlertSubscriptionStore(db);
@@ -140,6 +142,7 @@ async function main(): Promise<void> {
     sessionDurationHours: env.sessionDurationHours,
     projectStore,
     conversationStore,
+    factStore,
     runtime,
     assetStore,
     vulnerabilityStore,

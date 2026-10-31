@@ -2,8 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SandboxProvisionError } from "../../src/adapters/sandbox/controller.js";
 import { buildAuthedTestApp } from "../support/build-test-app.js";
-import { FakeSandboxProvisioner } from "../support/fake-sandbox-provisioner.js";
 import { FakeProjectStore } from "../support/fake-project-store.js";
+import { FakeSandboxProvisioner } from "../support/fake-sandbox-provisioner.js";
 
 describe("project routes", () => {
   let app: FastifyInstance;
@@ -80,11 +80,161 @@ describe("project routes", () => {
     expect(conversations.json()).toMatchObject({ conversations: [], total: 0 });
   });
 
-  it("fact-graph sub-resources are stubbed 501, not a fabricated empty success", async () => {
+  it("fact CRUD works against the fact store, with wire aliases the Go backend used", async () => {
     const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
     const id = create.json().id;
-    const response = await app.inject({ method: "GET", url: `/api/projects/${id}/fact-graph`, headers: auth() });
+
+    const fact = await app.inject({
+      method: "POST",
+      url: `/api/projects/${id}/facts`,
+      headers: auth(),
+      payload: { fact_key: "host.10.0.0.1", category: "host", summary: "nginx", body: "observed", confidence: "high" },
+    });
+    expect(fact.statusCode).toBe(200);
+    expect(fact.json()).toMatchObject({ fact_key: "host.10.0.0.1", category: "host", confidence: "high", pinned: false, deprecated: false, incoming_links: 0 });
+
+    const duplicate = await app.inject({
+      method: "POST",
+      url: `/api/projects/${id}/facts`,
+      headers: auth(),
+      payload: { fact_key: "host.10.0.0.1" },
+    });
+    expect(duplicate.statusCode).toBe(409);
+
+    const list = await app.inject({ method: "GET", url: `/api/projects/${id}/facts`, headers: auth() });
+    expect(list.statusCode).toBe(200);
+    expect(Array.isArray(list.json())).toBe(true);
+    expect(list.json()).toHaveLength(1);
+
+    const factId = fact.json().id;
+    const update = await app.inject({
+      method: "PUT",
+      url: `/api/projects/${id}/facts/${factId}`,
+      headers: auth(),
+      payload: { confidence: "medium", pinned: true },
+    });
+    expect(update.json()).toMatchObject({ confidence: "medium", pinned: true });
+
+    const deleted = await app.inject({ method: "DELETE", url: `/api/projects/${id}/facts/${factId}`, headers: auth() });
+    expect(deleted.json()).toEqual({ success: true });
+    const missing = await app.inject({ method: "DELETE", url: `/api/projects/${id}/facts/${factId}`, headers: auth() });
+    expect(missing.statusCode).toBe(404);
+  });
+
+  it("a single fact read carries incoming links as edge details plus link counts", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "src" } });
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "dst" } });
+    const edge = await app.inject({
+      method: "POST",
+      url: `/api/projects/${id}/fact-edges`,
+      headers: auth(),
+      payload: { source_fact_key: "src", target_fact_key: "dst", edge_type: "related" },
+    });
+    expect(edge.statusCode).toBe(200);
+    expect(edge.json()).toMatchObject({
+      source: "src", target: "dst", source_fact_key: "src", target_fact_key: "dst", type: "related", edge_type: "related", confidence: "medium",
+    });
+
+    const detail = await app.inject({ method: "GET", url: `/api/projects/${id}/facts?fact_key=dst`, headers: auth() });
+    expect(detail.statusCode).toBe(200);
+    expect(detail.json()).toMatchObject({
+      fact_key: "dst",
+      incoming_links: [{ edge_type: "related", source_fact_key: "src" }],
+      link_counts: { incoming: 1, outgoing: 0 },
+    });
+
+    const list = await app.inject({ method: "GET", url: `/api/projects/${id}/facts`, headers: auth() });
+    const dst = list.json().find((f: { fact_key: string }) => f.fact_key === "dst");
+    expect(dst.incoming_links).toBe(1);
+  });
+
+  it("an edge to a fact that does not exist is a 400, never a dangling row", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/projects/${id}/fact-edges`,
+      headers: auth(),
+      payload: { source_fact_key: "nope", target_fact_key: "also-nope" },
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toContain("nope");
+  });
+
+  it("deprecate/restore match fact keys and ids, and restore can downgrade confidence", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "a", confidence: "high" } });
+    const b = (await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "b" } })).json();
+
+    const deprecate = await app.inject({
+      method: "POST",
+      url: `/api/projects/${id}/facts/deprecate`,
+      headers: auth(),
+      payload: { fact_keys: ["a"], ids: [b.id] },
+    });
+    expect(deprecate.json()).toEqual({ success: true });
+    let list = await app.inject({ method: "GET", url: `/api/projects/${id}/facts`, headers: auth() });
+    expect(list.json().every((f: { deprecated: boolean }) => f.deprecated)).toBe(true);
+
+    // Excluded from the graph by default; included with exclude_deprecated=0.
+    const graph = await app.inject({ method: "GET", url: `/api/projects/${id}/fact-graph`, headers: auth() });
+    expect(graph.json().nodes).toHaveLength(0);
+    const graphAll = await app.inject({ method: "GET", url: `/api/projects/${id}/fact-graph?exclude_deprecated=0`, headers: auth() });
+    expect(graphAll.json().nodes).toHaveLength(2);
+
+    const restore = await app.inject({
+      method: "POST",
+      url: `/api/projects/${id}/facts/restore`,
+      headers: auth(),
+      payload: { fact_key: "a", confidence: "tentative" },
+    });
+    expect(restore.json()).toEqual({ success: true });
+    list = await app.inject({ method: "GET", url: `/api/projects/${id}/facts?fact_key=a`, headers: auth() });
+    expect(list.json()).toMatchObject({ deprecated: false, confidence: "tentative" });
+  });
+
+  it("deleting a fact removes its edges; the graph derives nodes from facts and edges from links", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "src", category: "host" } });
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "dst", category: "note" } });
+    await app.inject({ method: "POST", url: `/api/projects/${id}/fact-edges`, headers: auth(), payload: { source_fact_key: "src", target_fact_key: "dst" } });
+
+    const graph = await app.inject({ method: "GET", url: `/api/projects/${id}/fact-graph`, headers: auth() });
+    expect(graph.json()).toEqual({
+      nodes: [
+        { id: "src", fact_key: "src", label: "src", summary: "", category: "host", type: "host", confidence: "medium", pinned: false },
+        { id: "dst", fact_key: "dst", label: "dst", summary: "", category: "note", type: "note", confidence: "medium", pinned: false },
+      ],
+      edges: [{ id: expect.any(String), source: "src", target: "dst", type: "related", confidence: "medium" }],
+    });
+
+    const srcFact = (await app.inject({ method: "GET", url: `/api/projects/${id}/facts?fact_key=src`, headers: auth() })).json();
+    await app.inject({ method: "DELETE", url: `/api/projects/${id}/facts/${srcFact.id}`, headers: auth() });
+    const edgesAfter = await app.inject({ method: "GET", url: `/api/projects/${id}/fact-edges`, headers: auth() });
+    expect(edgesAfter.json()).toEqual([]);
+  });
+
+  it("promote-attack-chain stays 501 until the LLM client exists", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    const response = await app.inject({ method: "POST", url: `/api/projects/${id}/promote-attack-chain/conv-1`, headers: auth() });
     expect(response.statusCode).toBe(501);
+  });
+
+  it("fact routes 404 for a project that does not exist", async () => {
+    for (const [method, url] of [
+      ["GET", "/api/projects/nope/facts"],
+      ["POST", "/api/projects/nope/facts"],
+      ["GET", "/api/projects/nope/fact-edges"],
+      ["GET", "/api/projects/nope/fact-graph"],
+    ] as const) {
+      const response = await app.inject({ method, url, headers: auth(), payload: method === "POST" ? {} : undefined });
+      expect(response.statusCode).toBe(404);
+    }
   });
 
   it("creation provisions the project's sandbox before the row exists (ADR-0086 A)", async () => {
