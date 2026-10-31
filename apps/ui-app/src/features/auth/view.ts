@@ -84,6 +84,11 @@ export function createAuthView(dependencies: AuthViewDependencies) {
     const username = byId<HTMLInputElement>(doc, 'login-username');
     const password = byId<HTMLInputElement>(doc, 'login-password');
     setTimeout(() => {
+      // A background request that needs a session re-asks while the overlay is
+      // already open; if the operator is mid-typing in a field, that re-ask
+      // must not steal the caret (it used to jump username -> password).
+      const active = doc.activeElement;
+      if (active && (active === username || active === password)) return;
       if (username && !username.value) username.focus();
       else password?.focus();
     }, 100);

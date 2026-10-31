@@ -45,6 +45,23 @@ describe('auth service', () => {
     expect(peek()).toContain('tok-1');
   });
 
+  it('honors the full-scope "*" and namespace wildcards the server grants', async () => {
+    const wildcard = { ...payload, permissions: ['*'] };
+    const api = fakeApi({ post: vi.fn(async () => wildcard) });
+    const { store } = memoryStore();
+    const service = createAuthService({ api, store, now: NOW });
+    await service.login('admin', 'secret');
+    expect(service.hasPermission('project:write')).toBe(true);
+    expect(service.hasPermission('vulnerability:delete')).toBe(true);
+    const scoped = { ...payload, permissions: ['project:*'] };
+    const api2 = fakeApi({ post: vi.fn(async () => scoped) });
+    const service2 = createAuthService({ api: api2, store: memoryStore().store, now: NOW });
+    await service2.login('admin', 'secret');
+    expect(service2.hasPermission('project:write')).toBe(true);
+    expect(service2.hasPermission('project:delete')).toBe(true);
+    expect(service2.hasPermission('chat:write')).toBe(false);
+  });
+
   it('reports the server error message for a rejected login', async () => {
     const api = fakeApi({
       post: vi.fn(async () => { throw new HttpError(401, '/api/auth/login', { error: '\u5bc6\u7801\u9519\u8bef' }); }),
