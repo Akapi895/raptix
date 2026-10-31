@@ -98,13 +98,13 @@ async function main(): Promise<void> {
   // exists -- Files routes fail 503 honestly rather than a fake success.
   let sandboxKey: string | undefined;
   try {
-    sandboxKey = loadSandboxKey(env.sandboxKeyFile);
+    sandboxKey = loadSandboxKey(env.sandboxKeyFile, env.sandboxKey);
   } catch (error) {
-    console.warn(`[apps/api] RAPTIX_SANDBOX_KEY_FILE invalid, Files routes will fail 503. (${(error as Error).message})`);
+    console.warn(`[apps/api] RAPTIX_SANDBOX_KEY invalid, Files routes will fail 503. (${(error as Error).message})`);
   }
   const sandbox = sandboxKey ? new SandboxFilesClient(sandboxKey) : new UnconfiguredSandboxFilesClient();
   if (!sandboxKey) {
-    console.warn("[apps/api] RAPTIX_SANDBOX_KEY_FILE not set -- Files routes will fail 503 until it is.");
+    console.warn("[apps/api] RAPTIX_SANDBOX_KEY_FILE/RAPTIX_SANDBOX_KEY not set -- Files routes will fail 503 until one is.");
   }
 
   // Load-bearing for project creation (ADR-0086 A): each project gets its own
@@ -113,12 +113,12 @@ async function main(): Promise<void> {
   // instead of creating a project that has no sandbox.
   let sandboxProvisioner: SandboxProvisioner = new UnconfiguredSandboxProvisioner();
   try {
-    const controllerToken = loadSandboxControllerToken(env.sandboxControllerTokenFile);
+    const controllerToken = loadSandboxControllerToken(env.sandboxControllerTokenFile, env.sandboxControllerToken);
     if (env.sandboxControllerUrl && controllerToken) {
       sandboxProvisioner = new LauncherSandboxController(env.sandboxControllerUrl, controllerToken);
     } else {
       console.warn(
-        "[apps/api] RAPTIX_SANDBOX_CONTROLLER_URL/_TOKEN_FILE not set -- project creation will fail 503 until they are.",
+        "[apps/api] RAPTIX_SANDBOX_CONTROLLER_URL + RAPTIX_SANDBOX_CONTROLLER_TOKEN(_FILE) not set -- project creation will fail 503 until they are.",
       );
     }
   } catch (error) {

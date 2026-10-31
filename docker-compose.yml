@@ -161,10 +161,18 @@ services:
       - RAPTIX_API_SESSION_DURATION_HOURS=${RAPTIX_API_SESSION_DURATION_HOURS:-12}
       # Optional integrations -- apps/api degrades each to a clear 503/501
       # when unset, never a fabricated success (see apps/api/README.md).
-      - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-}
+      # The runtime token defaults to the shared sandbox-secrets mount below:
+      # the same file the langgraph service reads, so one
+      # `raptix web sandboxes init-secrets` run configures the whole
+      # api<->runtime lane (auth.py fails closed without it -- every request
+      # would 401, which is why the default points at the mount instead of
+      # staying unset).
+      - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-/run/raptix/sandbox-secrets/runtime-api-token}
       - RAPTIX_SANDBOX_KEY_FILE=${RAPTIX_SANDBOX_KEY_FILE:-}
+      - RAPTIX_SANDBOX_KEY=${RAPTIX_SANDBOX_KEY:-}
       - RAPTIX_SANDBOX_CONTROLLER_URL=${RAPTIX_SANDBOX_CONTROLLER_URL:-}
       - RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE=${RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE:-}
+      - RAPTIX_SANDBOX_CONTROLLER_TOKEN=${RAPTIX_SANDBOX_CONTROLLER_TOKEN:-}
       - SLIVER_BRIDGE_URL=${SLIVER_BRIDGE_URL:-}
       - SLIVER_BRIDGE_TOKEN=${SLIVER_BRIDGE_TOKEN:-}
       - FOFA_EMAIL=${FOFA_EMAIL:-}
@@ -174,6 +182,14 @@ services:
       - SHODAN_API_KEY=${SHODAN_API_KEY:-}
     ports:
       - "127.0.0.1:${API_PORT:-8080}:8080"
+    volumes:
+      # Shared sandbox secrets (ADR-0086 A): the controller token, the
+      # sandbox key and the runtime-api token live here (created once by
+      # `raptix web sandboxes init-secrets`, default RAPTIX_SANDBOX_SECRETS_DIR).
+      # Read-only; sandboxes never receive them. Missing on a fresh install
+      # until init-secrets runs -- every consumer then degrades exactly as
+      # before (503 hints, runtime 401s), never a fabricated success.
+      - ${RAPTIX_SANDBOX_SECRETS_DIR:-${RAPTIX_HOME:-~/.raptix}/sandbox-secrets}:/run/raptix/sandbox-secrets:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -483,6 +499,11 @@ services:
       # all of them. Port 9999 is the FastAPI daemon baked into the sandbox image
       # (see ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
       - SANDBOX_URL=http://raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox:9999
+      # Bearer token every caller must present (interfaces/api/auth.py). Same
+      # shared secrets mount as the api service: one init-secrets run
+      # configures the whole api<->runtime lane; without the file the runtime
+      # refuses every request (fail closed).
+      - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-/run/raptix/sandbox-secrets/runtime-api-token}
       # The same workspace root as the runtime, so a pinned engagement's files
       # are at /workspace/<slug> in both containers.
       - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
@@ -522,6 +543,9 @@ services:
       # handoff validator runs in this container and reads them locally.
       # Mount the same workspace root at the same in-container path.
       - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
+      # Shared sandbox secrets (ADR-0086 A) -- see the api service's mount.
+      # Read-only; sandboxes never receive them.
+      - ${RAPTIX_SANDBOX_SECRETS_DIR:-${RAPTIX_HOME:-~/.raptix}/sandbox-secrets}:/run/raptix/sandbox-secrets:ro
     # Wait for litellm to be healthy: langgraph has retry logic but the launcher
     # uses `compose up --wait` and needs healthy as the single readiness signal.
     depends_on:
