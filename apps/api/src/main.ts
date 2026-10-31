@@ -1,13 +1,65 @@
 import { buildApp } from "./app.js";
+import { RuntimeClient } from "./adapters/runtime/client.js";
+import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
+import { loadEnv } from "./config/env.js";
+import { createDbClient, disconnectDb } from "./db/client.js";
+import { PrismaAuthStore } from "./db/auth-store.js";
+import { ensureOperatorSeeded } from "./security/operator-bootstrap.js";
 
-const port = Number(process.env.API_PORT ?? 8080);
-const host = process.env.API_HOST ?? "127.0.0.1";
+async function main(): Promise<void> {
+  const env = loadEnv(process.env);
+  const db = createDbClient({ connectionString: env.databaseUrl });
+  const authStore = new PrismaAuthStore(db);
 
-const app = buildApp();
-
-app
-  .listen({ port, host })
-  .catch((error: unknown) => {
-    app.log.error(error);
-    process.exit(1);
+  const seed = await ensureOperatorSeeded(authStore, {
+    operatorUsername: env.operatorUsername,
+    operatorPassword: env.operatorPassword,
   });
+  if (seed.seeded) {
+    if (seed.generatedPassword) {
+      console.warn(
+        `[apps/api] Seeded operator "${seed.username}" with a generated password: ${seed.generatedPassword}\n` +
+          "[apps/api] Set RAPTIX_API_OPERATOR_PASSWORD to pin this instead, and change it via POST /api/auth/change-password.",
+      );
+    } else {
+      console.warn(`[apps/api] Seeded operator "${seed.username}" from RAPTIX_API_OPERATOR_PASSWORD.`);
+    }
+  }
+
+  // Foundation-only check: Tier 2 makes this load-bearing (Projects, chat,
+  // HITL). A failure here does not block apps/api from serving auth, but is
+  // worth surfacing loudly since nothing downstream will work without it.
+  const runtimeToken = loadRuntimeApiToken(env.runtimeApiTokenFile);
+  const runtime = new RuntimeClient({ apiUrl: env.langgraphApiUrl, apiToken: runtimeToken });
+  try {
+    const info = await runtime.ping();
+    console.info(`[apps/api] Runtime reachable at ${env.langgraphApiUrl} (version ${info.version}, graphs: ${info.graphIds.join(", ") || "none"})`);
+  } catch (error) {
+    console.warn(
+      `[apps/api] Runtime not reachable at ${env.langgraphApiUrl} -- auth works, but every Tier 2+ route will fail until it is. (${(error as Error).message})`,
+    );
+  }
+
+  const app = buildApp({ authStore, sessionDurationHours: env.sessionDurationHours });
+
+  const shutdown = async (): Promise<void> => {
+    await app.close();
+    await disconnectDb(db);
+    process.exit(0);
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+
+  try {
+    await app.listen({ port: env.port, host: env.host });
+  } catch (error) {
+    app.log.error(error);
+    await disconnectDb(db);
+    process.exit(1);
+  }
+}
+
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exit(1);
+});

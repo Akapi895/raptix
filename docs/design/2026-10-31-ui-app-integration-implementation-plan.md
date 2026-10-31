@@ -34,7 +34,7 @@ Ordered by the priority tiers in §3, not by the module index's own order. "Runt
 
 | Module (ops) | Raptix concept | Runtime fit | Notes |
 |---|---|---|---|
-| Authentication and account (7) | single-operator mode (ADR-0100) | needs design | No multi-user auth exists; `apps/ui-app` expects login/account. Single-operator stub first, real auth only if multi-operator is ever decided. |
+| Authentication and account (7) | single-operator mode (ADR-0100) | **done (Tier 1)** | `src/http/routes/auth.routes.ts`: login/logout/validate/change-password are real, Postgres-backed. `robot-binding-code`/`robot-bindings` (3 of the 7 ops) stubbed `501` -- they belong to the Robots-and-bindings cut candidate, not auth proper. |
 | Dashboard, notifications and usage (5) | telemetry, token-usage middleware | partial | Token/usage data exists in runtime telemetry; notifications need a new sink. |
 | Projects and fact graphs (18) | `orchestration/mission` (OPPLAN/`EngagementContext`) + `knowledge/graph` (Neo4j AKG) | good fit | Closest 1:1 mapping in the whole contract. Start here. |
 | Agent chat and running tasks (8) | LangGraph `/runs`, `intelligence/agents` | good fit | Near-native; translate run/thread IDs and streaming event shapes. |
@@ -87,7 +87,7 @@ Each tier is its own run of PRs, each PR one module (or one C2 sub-area), each r
 
 ## 5. Tier progress checklist
 
-- [ ] Tier 1 — Foundation
+- [x] Tier 1 — Foundation (2026-10-31): auth module (login/logout/validate/change-password) against a real Postgres-backed `Operator`/`Session` schema, single-operator first-boot seed, the LangGraph runtime adapter (`src/adapters/runtime/client.ts`, unit-tested; not yet wired to a route). `robot-binding-code`/`robot-bindings` stubbed `501` per §2/§7. Verified with a live end-to-end smoke test (real Postgres, real server, curl) in addition to the unit suite.
 - [ ] Tier 2 — Core loop
 - [ ] Tier 3 — Findings
 - [ ] Tier 4 — Operations
