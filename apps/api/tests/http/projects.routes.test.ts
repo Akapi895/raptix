@@ -74,10 +74,61 @@ describe("project routes", () => {
     const id = create.json().id;
 
     const stats = await app.inject({ method: "GET", url: `/api/projects/${id}/stats`, headers: auth() });
-    expect(stats.json()).toEqual({ conversations: 0, vulnerabilities: 0, assets: 0 });
+    expect(stats.json()).toEqual({
+      fact_count: 0,
+      vuln_count: 0,
+      conversation_count: 0,
+      asset_count: 0,
+      vulnerability_stats: { total: 0, by_severity: {}, by_status: {} },
+    });
 
     const conversations = await app.inject({ method: "GET", url: `/api/projects/${id}/conversations`, headers: auth() });
     expect(conversations.json()).toMatchObject({ conversations: [], total: 0 });
+  });
+
+  it("stats count the project's facts and vulnerability breakdown (T518 + vulnerability_stats)", async () => {
+    const { FakeFactStore } = await import("../support/fake-fact-store.js");
+    const { FakeVulnerabilityStore } = await import("../support/fake-vulnerability-store.js");
+    const factStore = new FakeFactStore();
+    const vulnerabilityStore = new FakeVulnerabilityStore();
+    ({ app, token } = await buildAuthedTestApp({ factStore, vulnerabilityStore }));
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "a" } });
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "b" } });
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts/deprecate`, headers: auth(), payload: { fact_key: "b" } });
+    await vulnerabilityStore.create({ projectId: id, title: "V1", severity: "high", status: "open" });
+    await vulnerabilityStore.create({ projectId: id, title: "V2", severity: "low", status: "fixed" });
+
+    const stats = await app.inject({ method: "GET", url: `/api/projects/${id}/stats`, headers: auth() });
+    expect(stats.json()).toEqual({
+      fact_count: 1,
+      vuln_count: 2,
+      conversation_count: 0,
+      asset_count: 0,
+      vulnerability_stats: {
+        total: 2,
+        by_severity: { high: 1, low: 1 },
+        by_status: { open: 1, fixed: 1 },
+      },
+    });
+  });
+
+  it("dashboard-summary aggregates real counts across stores", async () => {
+    const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
+    const id = create.json().id;
+    await app.inject({ method: "POST", url: `/api/projects/${id}/facts`, headers: auth(), payload: { fact_key: "a" } });
+    await app.inject({ method: "POST", url: "/api/assets/import", headers: auth(), payload: { assets: [{ host: "h1", ip: "10.0.0.1" }], source: "manual" } });
+
+    const summary = await app.inject({ method: "GET", url: "/api/projects/dashboard-summary?fact_limit=10", headers: auth() });
+    expect(summary.statusCode).toBe(200);
+    expect(summary.json()).toMatchObject({
+      active_projects: 1,
+      total_facts: 1,
+      totals: { projects: 1, conversations: 0, vulnerabilities: 0, assets: 1, open_vulnerabilities: 0 },
+    });
+    expect(summary.json().recent_facts).toHaveLength(1);
+    expect(summary.json().recent_facts[0]).toMatchObject({ fact_key: "a", project_id: id });
   });
 
   it("fact CRUD works against the fact store, with wire aliases the Go backend used", async () => {

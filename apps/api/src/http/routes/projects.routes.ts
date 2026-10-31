@@ -2,9 +2,11 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import { SandboxProvisionError, type SandboxProvisioner } from "../../adapters/sandbox/controller.js";
 import { FactNotFoundError, type FactEdgeRecord, type FactRecord, type FactStore, type UpdateFactInput } from "../../db/fact-store.js";
 import { newWorkspaceSlug } from "../../db/project-store.js";
+import type { AssetStore } from "../../db/asset-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
 import type { ProjectRecord, ProjectStore } from "../../db/project-store.js";
+import type { VulnerabilityStore } from "../../db/vulnerability-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 
 export interface ProjectRoutesOptions {
@@ -12,6 +14,8 @@ export interface ProjectRoutesOptions {
   projectStore: ProjectStore;
   conversationStore: ConversationStore;
   factStore: FactStore;
+  assetStore: AssetStore;
+  vulnerabilityStore: VulnerabilityStore;
   /** ADR-0086 A: every project gets its own sandbox container at creation, before the row is persisted. */
   sandboxProvisioner: SandboxProvisioner;
 }
@@ -124,8 +128,56 @@ interface FactsQuery {
 }
 
 export function registerProjectRoutes(app: FastifyInstance, options: ProjectRoutesOptions): void {
-  const { authStore, projectStore, conversationStore, factStore } = options;
+  const { authStore, projectStore, conversationStore, factStore, assetStore, vulnerabilityStore } = options;
   const requireSession = createRequireSession(authStore);
+
+  // The dashboard's totals strip (T463_ProjectSummary): real aggregates over
+  // every store, with the latest facts on top. Registered before the /:id
+  // routes for readability (find-my-way prefers the static segment anyway).
+  app.get<{ Querystring: { fact_limit?: string } }>(
+    "/api/projects/dashboard-summary",
+    { preHandler: requireSession },
+    async (request, reply) => {
+      const factLimit = Number(request.query.fact_limit ?? 5) || 5;
+      const [active, all, recent, conversations, vulnerabilities, openVulnerabilities, assets] = await Promise.all([
+        projectStore.list({ status: "active", limit: 0, offset: 0 }),
+        projectStore.list({ limit: 0, offset: 0 }),
+        factStore.listRecent(factLimit),
+        conversationStore.list({ limit: 0, offset: 0 }),
+        vulnerabilityStore.list({ limit: 0, offset: 0 }),
+        vulnerabilityStore.list({ status: "open", limit: 0, offset: 0 }),
+        assetStore.list({ limit: 0, offset: 0 }),
+      ]);
+      // Recent facts can span projects; incoming-link counts are per-project
+      // because fact keys are only unique within one.
+      const keysByProject = new Map<string, string[]>();
+      for (const fact of recent) {
+        const keys = keysByProject.get(fact.projectId) ?? [];
+        keys.push(fact.factKey);
+        keysByProject.set(fact.projectId, keys);
+      }
+      const linkCounts = new Map<string, number>();
+      await Promise.all(
+        [...keysByProject].map(async ([projectId, keys]) => {
+          for (const [key, count] of await factStore.incomingCounts(projectId, keys)) {
+            linkCounts.set(`${projectId}|${key}`, count);
+          }
+        }),
+      );
+      await reply.send({
+        active_projects: active.total,
+        total_facts: await factStore.countAll(),
+        recent_facts: recent.map((fact) => factToWire(fact, linkCounts.get(`${fact.projectId}|${fact.factKey}`) ?? 0)),
+        totals: {
+          projects: all.total,
+          conversations: conversations.total,
+          vulnerabilities: vulnerabilities.total,
+          assets: assets.total,
+          open_vulnerabilities: openVulnerabilities.total,
+        },
+      });
+    },
+  );
 
   /** 404s when the path project does not exist; returns the project otherwise. */
   async function findProjectOr404(reply: FastifyReply, id: string) {
@@ -229,12 +281,31 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
     "/api/projects/:id/stats",
     { preHandler: requireSession },
     async (request, reply) => {
-      const stats = await projectStore.stats(request.params.id);
-      if (!stats) {
+      const project = await findProjectOr404(reply, request.params.id);
+      if (!project) return;
+      // apps/ui-app's Stats (T518) + the mock's vulnerability_stats: counts
+      // over this project's facts (non-deprecated), conversations, assets and
+      // vulnerabilities with their severity/status breakdown.
+      const [factCount, vulnStats, counts] = await Promise.all([
+        factStore.count(project.id, true),
+        vulnerabilityStore.projectStats(project.id),
+        projectStore.stats(project.id),
+      ]);
+      if (!counts) {
         await reply.code(404).send({ error: "Project not found" });
         return;
       }
-      await reply.send(stats);
+      await reply.send({
+        fact_count: factCount,
+        vuln_count: vulnStats.total,
+        conversation_count: counts.conversations,
+        asset_count: counts.assets,
+        vulnerability_stats: {
+          total: vulnStats.total,
+          by_severity: vulnStats.bySeverity,
+          by_status: vulnStats.byStatus,
+        },
+      });
     },
   );
 

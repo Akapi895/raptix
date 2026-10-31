@@ -122,6 +122,14 @@ export class FakeFactStore implements FactStore {
     return [...this.facts.values()].filter((f) => f.projectId === projectId && (!excludeDeprecated || !f.deprecated)).length;
   }
 
+  public async countAll(): Promise<number> {
+    return this.facts.size;
+  }
+
+  public async listRecent(limit: number): Promise<FactRecord[]> {
+    return [...this.facts.values()].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, limit);
+  }
+
   public async setDeprecated(projectId: string, factKeys: string[], ids: string[], deprecated: boolean, confidence?: string): Promise<number> {
     let changed = 0;
     for (const fact of this.facts.values()) {

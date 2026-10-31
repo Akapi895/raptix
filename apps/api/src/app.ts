@@ -63,9 +63,9 @@ export interface BuildAppOptions {
   projectStore: ProjectStore;
   conversationStore: ConversationStore;
   factStore: FactStore;
-  runtime: RuntimeTransport;
   assetStore: AssetStore;
   vulnerabilityStore: VulnerabilityStore;
+  runtime: RuntimeTransport;
   alertSubscriptionStore: AlertSubscriptionStore;
   sandbox: SandboxFilesTransport;
   sandboxProvisioner: SandboxProvisioner;
@@ -108,6 +108,8 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     projectStore: options.projectStore,
     conversationStore: options.conversationStore,
     factStore: options.factStore,
+    assetStore: options.assetStore,
+    vulnerabilityStore: options.vulnerabilityStore,
     sandboxProvisioner: options.sandboxProvisioner,
   });
   registerConversationRoutes(app, {
