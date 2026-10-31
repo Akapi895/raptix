@@ -21,7 +21,8 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "fastify": "^5.2.1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

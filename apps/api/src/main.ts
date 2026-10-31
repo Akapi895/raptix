@@ -9,9 +9,11 @@ import { SandboxFilesClient, UnconfiguredSandboxFilesClient } from "./adapters/s
 import { loadSandboxKey } from "./adapters/sandbox/token.js";
 import { loadEnv } from "./config/env.js";
 import { createDbClient, disconnectDb } from "./db/client.js";
+import { PrismaAiRoleStore } from "./db/ai-role-store.js";
 import { PrismaAlertSubscriptionStore } from "./db/alert-subscription-store.js";
 import { PrismaAppConfigStore } from "./db/app-config-store.js";
 import { PrismaAssetStore } from "./db/asset-store.js";
+import { PrismaAuditLogStore } from "./db/audit-log-store.js";
 import { PrismaAuthStore } from "./db/auth-store.js";
 import { PrismaBatchQueueStore } from "./db/batch-queue-store.js";
 import { PrismaConversationStore } from "./db/conversation-store.js";
@@ -19,6 +21,7 @@ import { PrismaExternalMcpStore } from "./db/external-mcp-store.js";
 import { PrismaHiddenExecutionStore } from "./db/hidden-execution-store.js";
 import { PrismaKnowledgeItemStore } from "./db/knowledge-item-store.js";
 import { PrismaProjectStore } from "./db/project-store.js";
+import { PrismaReadNotificationStore } from "./db/read-notification-store.js";
 import { PrismaRetrievalLogStore } from "./db/retrieval-log-store.js";
 import { PrismaToolGuardStore } from "./db/tool-guard-store.js";
 import { PrismaVulnerabilityStore } from "./db/vulnerability-store.js";
@@ -43,6 +46,9 @@ async function main(): Promise<void> {
   const externalMcpStore = new PrismaExternalMcpStore(db);
   const hiddenExecutionStore = new PrismaHiddenExecutionStore(db);
   const recon = new ReconProvidersClient(loadReconProviderConfig(process.env));
+  const aiRoleStore = new PrismaAiRoleStore(db);
+  const auditLogStore = new PrismaAuditLogStore(db);
+  const readNotificationStore = new PrismaReadNotificationStore(db);
 
   const seed = await ensureOperatorSeeded(authStore, {
     operatorUsername: env.operatorUsername,
@@ -122,6 +128,9 @@ async function main(): Promise<void> {
     appConfigStore,
     externalMcpStore,
     hiddenExecutionStore,
+    aiRoleStore,
+    auditLogStore,
+    readNotificationStore,
   });
 
   const shutdown = async (): Promise<void> => {

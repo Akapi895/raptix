@@ -1,4 +1,5 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { AuditLogStore } from "../../db/audit-log-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import { hashPassword, verifyPassword } from "../../security/password.js";
 import { buildSessionPayload, generateSessionToken } from "../../security/session.js";
@@ -7,6 +8,7 @@ import { createRequireSession } from "../plugins/auth-guard.js";
 export interface AuthRoutesOptions {
   store: AuthStore;
   sessionDurationHours: number;
+  auditLogStore: AuditLogStore;
 }
 
 interface LoginBody {
@@ -28,8 +30,19 @@ async function notImplementedForThisDeployment(_request: unknown, reply: Fastify
 
 /** Everything under apps/ui-app/docs/api-contracts.md's "Authentication and account" module (7 ops). */
 export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOptions): void {
-  const { store, sessionDurationHours } = options;
+  const { store, sessionDurationHours, auditLogStore } = options;
   const requireSession = createRequireSession(store);
+
+  const recordAuth = (request: FastifyRequest, action: string, result: "success" | "failure", actor: string, message: string) =>
+    auditLogStore.record({
+      category: "auth",
+      action,
+      result,
+      actor,
+      message,
+      clientIp: request.ip,
+      userAgent: request.headers["user-agent"],
+    });
 
   app.post<{ Body: LoginBody }>("/api/auth/login", async (request, reply) => {
     const username = asString(request.body?.username);
@@ -41,6 +54,7 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
 
     const operator = await store.findOperatorByUsername(username);
     if (!operator || !verifyPassword(password, operator.passwordHash)) {
+      await recordAuth(request, "login", "failure", username, "incorrect credentials");
       await reply.code(401).send({ error: "Incorrect password" });
       return;
     }
@@ -48,6 +62,7 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
     const token = generateSessionToken();
     const expiresAt = new Date(Date.now() + sessionDurationHours * 3_600_000);
     await store.createSession({ token, operatorId: operator.id, expiresAt });
+    await recordAuth(request, "login", "success", operator.username, "signed in");
     await reply.send(buildSessionPayload({ token, expiresAt, sessionDurationHours, operator }));
   });
 
@@ -69,6 +84,7 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
   app.post("/api/auth/logout", { preHandler: requireSession }, async (request, reply) => {
     const token = request.headers.authorization?.slice("Bearer ".length);
     if (token) await store.deleteSession(token);
+    await recordAuth(request, "logout", "success", request.operator?.username ?? "", "signed out");
     await reply.send({ message: "Signed out" });
   });
 
@@ -88,11 +104,13 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
 
       const current = await store.findOperatorById(operator.id);
       if (!current || !verifyPassword(oldPassword, current.passwordHash)) {
+        await recordAuth(request, "change_password", "failure", operator.username, "incorrect current password");
         await reply.code(400).send({ error: "Invalid request body" });
         return;
       }
 
       await store.updateOperatorPassword(operator.id, hashPassword(newPassword));
+      await recordAuth(request, "change_password", "success", operator.username, "password changed");
       await reply.send({ message: "Password changed" });
     },
   );

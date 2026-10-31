@@ -4,9 +4,11 @@ import type { C2Transport } from "./adapters/c2/client.js";
 import type { ReconProvidersTransport } from "./adapters/recon/client.js";
 import type { RuntimeTransport } from "./adapters/runtime/client.js";
 import type { SandboxFilesTransport } from "./adapters/sandbox/client.js";
+import type { AiRoleStore } from "./db/ai-role-store.js";
 import type { AlertSubscriptionStore } from "./db/alert-subscription-store.js";
 import type { AppConfigStore } from "./db/app-config-store.js";
 import type { AssetStore } from "./db/asset-store.js";
+import type { AuditLogStore } from "./db/audit-log-store.js";
 import type { AuthStore } from "./db/auth-store.js";
 import type { BatchQueueStore } from "./db/batch-queue-store.js";
 import type { ConversationStore } from "./db/conversation-store.js";
@@ -14,6 +16,7 @@ import type { ExternalMcpStore } from "./db/external-mcp-store.js";
 import type { HiddenExecutionStore } from "./db/hidden-execution-store.js";
 import type { KnowledgeItemStore } from "./db/knowledge-item-store.js";
 import type { ProjectStore } from "./db/project-store.js";
+import type { ReadNotificationStore } from "./db/read-notification-store.js";
 import type { RetrievalLogStore } from "./db/retrieval-log-store.js";
 import type { ToolGuardStore } from "./db/tool-guard-store.js";
 import type { VulnerabilityStore } from "./db/vulnerability-store.js";
@@ -22,6 +25,7 @@ import { handleError } from "./http/error-handler.js";
 import { registerAgentLoopRoutes } from "./http/routes/agent-loop.routes.js";
 import { registerAssetRoutes } from "./http/routes/assets.routes.js";
 import { registerAttackChainRoutes } from "./http/routes/attack-chains.routes.js";
+import { registerAuditRoutes } from "./http/routes/audit.routes.js";
 import { registerAuthRoutes } from "./http/routes/auth.routes.js";
 import { registerBatchTaskRoutes } from "./http/routes/batch-tasks.routes.js";
 import { registerC2Routes } from "./http/routes/c2.routes.js";
@@ -35,11 +39,15 @@ import { registerHitlRoutes } from "./http/routes/hitl.routes.js";
 import { registerKnowledgeRoutes } from "./http/routes/knowledge.routes.js";
 import { registerMcpRoutes } from "./http/routes/mcp.routes.js";
 import { registerMonitorRoutes } from "./http/routes/monitor.routes.js";
+import { registerNotificationRoutes } from "./http/routes/notifications.routes.js";
+import { registerOpenApiRoutes } from "./http/routes/openapi.routes.js";
 import { registerProjectRoutes } from "./http/routes/projects.routes.js";
+import { registerRolesRoutes } from "./http/routes/roles.routes.js";
 import { registerSkillsRoutes } from "./http/routes/skills.routes.js";
 import { registerStorageRoutes } from "./http/routes/storage.routes.js";
 import { registerTerminalRoutes } from "./http/routes/terminal.routes.js";
 import { registerToolGuardRoutes } from "./http/routes/tool-guard.routes.js";
+import { registerUsageRoutes } from "./http/routes/usage.routes.js";
 import { registerVulnerabilityRoutes } from "./http/routes/vulnerabilities.routes.js";
 import { registerWebShellRoutes } from "./http/routes/webshell.routes.js";
 
@@ -63,6 +71,10 @@ export interface BuildAppOptions {
   appConfigStore: AppConfigStore;
   externalMcpStore: ExternalMcpStore;
   hiddenExecutionStore: HiddenExecutionStore;
+  aiRoleStore: AiRoleStore;
+  auditLogStore: AuditLogStore;
+  readNotificationStore: ReadNotificationStore;
+  openApiSpecPath?: string;
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
   batchTaskWaitMs?: number;
@@ -76,7 +88,11 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   app.register(multipart);
 
   registerHealthRoutes(app);
-  registerAuthRoutes(app, { store: options.authStore, sessionDurationHours: options.sessionDurationHours });
+  registerAuthRoutes(app, {
+    store: options.authStore,
+    sessionDurationHours: options.sessionDurationHours,
+    auditLogStore: options.auditLogStore,
+  });
   registerProjectRoutes(app, {
     authStore: options.authStore,
     projectStore: options.projectStore,
@@ -148,6 +164,15 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     runtime: options.runtime,
     externalMcpStore: options.externalMcpStore,
   });
+  registerRolesRoutes(app, { authStore: options.authStore, aiRoleStore: options.aiRoleStore });
+  registerAuditRoutes(app, { authStore: options.authStore, auditLogStore: options.auditLogStore });
+  registerNotificationRoutes(app, {
+    authStore: options.authStore,
+    vulnerabilityStore: options.vulnerabilityStore,
+    readNotificationStore: options.readNotificationStore,
+  });
+  registerUsageRoutes(app, { authStore: options.authStore });
+  registerOpenApiRoutes(app, { authStore: options.authStore, specPath: options.openApiSpecPath });
 
   return app;
 }
