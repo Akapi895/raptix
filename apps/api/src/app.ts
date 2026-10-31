@@ -135,7 +135,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     sandboxKey: options.sandboxKey,
     defaultAssistantId: options.defaultAssistantId,
   });
-  registerHitlRoutes(app, { authStore: options.authStore });
+  registerHitlRoutes(app, { authStore: options.authStore, projectStore: options.projectStore, sandbox: options.sandbox });
   registerAssetRoutes(app, { authStore: options.authStore, assetStore: options.assetStore });
   registerVulnerabilityRoutes(app, {
     authStore: options.authStore,
