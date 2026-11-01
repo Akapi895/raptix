@@ -10,6 +10,8 @@ import { extractLastAssistantText } from "../../adapters/runtime/message-extract
 import type { RuntimeEvent } from "../../adapters/runtime/stream.js";
 import { RuntimeUnavailableError } from "../../adapters/runtime/errors.js";
 import { runAgentTurn, TERMINAL_RUN_STATUSES as TERMINAL_STATUSES } from "../../services/agent-turn.js";
+import { captureExecutionEvents } from "../../services/execution-events.js";
+import type { MessageEventInput, MessageEventStore } from "../../db/message-event-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 import { replyRuntimeError } from "./conversations.routes.js";
 
@@ -22,6 +24,7 @@ export interface AgentLoopRoutesOptions {
   defaultAssistantId?: string;
   projectStore: ProjectStore;
   sandboxKey?: string;
+  messageEventStore: MessageEventStore;
 }
 
 interface ChatRequestBody {
@@ -222,13 +225,19 @@ async function writeEvent(output: PassThrough, type: string, message: string, da
 }
 
 /** Only visible text is projected. Reasoning, config, credentials and raw graph state stay inside the BFF. */
-async function projectRuntimeEvent(event: RuntimeEvent, emit: (type: string, message: string, data?: Record<string, unknown>) => Promise<void>, seen: Set<string>): Promise<void> {
+async function projectRuntimeEvent(
+  event: RuntimeEvent,
+  emit: (type: string, message: string, data?: Record<string, unknown>) => Promise<void>,
+  seen: Set<string>,
+  capture?: { events: MessageEventInput[]; seenCalls: Set<string> },
+): Promise<void> {
   if (event.event === "error") throw new RuntimeUnavailableError("The agent run failed; check the runtime logs.");
   if (event.event === "updates") {
     for (const stage of Object.keys(record(event.data))) await emit("progress", stage, { stage });
   }
   if (event.event !== "messages/partial" && event.event !== "messages/complete") return;
   for (const chunk of Array.isArray(event.data) ? event.data : []) {
+    if (capture) capture.events.push(...captureExecutionEvents(chunk, capture.seenCalls));
     const message = record(chunk);
     if (message.type !== "ai" || typeof message.id !== "string") continue;
     const content = typeof message.content === "string" ? message.content : Array.isArray(message.content)
@@ -248,10 +257,11 @@ async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions,
     await emit("progress", "Starting agent");
     let runId = "";
     const seen = new Set<string>();
+    const capture = { events: [] as MessageEventInput[], seenCalls: new Set<string>() };
     const input = { messages: [{ role: "user", content: message }], engagement_name: configurable.engagement_name, workspace_path: "/workspace" };
     for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 1000 }, AbortSignal.timeout(30 * 60_000))) {
       if (event.event === "metadata" && typeof record(event.data).run_id === "string") runId = record(event.data).run_id as string;
-      await projectRuntimeEvent(event, emit, seen);
+      await projectRuntimeEvent(event, emit, seen, capture);
     }
     if (!runId) throw new RuntimeUnavailableError("Runtime stream ended without a run identity");
     let run = await options.runtime.getRun(conversation.runtimeThreadId, runId);
@@ -273,6 +283,7 @@ async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions,
     const answer = extractLastAssistantText(state.values);
     if (!answer) throw new RuntimeUnavailableError("Run finished without an assistant answer");
     const saved = await options.conversationStore.appendMessage(conversation.id, "assistant", answer);
+    await options.messageEventStore.appendMany(saved.id, capture.events);
     await emit("response", answer, { messageId: saved.id, finalized: true, finalizable: false, evidenceVerified: false, completionReason: "stop", mcpExecutionIds: [] });
     await emit("done", "", { status: "success" });
   } catch (error) {
