@@ -127,6 +127,8 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     authStore: options.authStore,
     conversationStore: options.conversationStore,
     runtime: options.runtime,
+    projectStore: options.projectStore,
+    sandbox: options.sandbox,
   });
   registerAgentLoopRoutes(app, {
     authStore: options.authStore,
