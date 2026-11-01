@@ -107,6 +107,42 @@ describe("agent-loop routes", () => {
     expect(response.statusCode).toBe(400);
   });
 
+  it("task-events reattaches to a conversation's active run instead of starting or cancelling it", async () => {
+    runtime = new FakeRuntime();
+    ({ app, token } = await buildAuthedApp(runtime, 600));
+
+    const created = await app.inject({ method: "POST", url: "/api/conversations", headers: headers(), payload: {} });
+    const conversationId = created.json().id;
+    runtime.queueRunStatuses("running", "running", "running");
+    await app.inject({ method: "POST", url: "/api/eino-agent", headers: headers(), payload: { message: "go", conversationId } });
+
+    runtime.queueRunStatuses("success"); // consumed by joinReply's getRun once the joined stream ends
+    runtime.joinEvents = [{ event: "messages/partial", data: [{ type: "ai", id: "a1", content: "still working" }] }];
+    const response = await app.inject({ method: "GET", url: `/api/agent-loop/task-events?conversationId=${conversationId}`, headers: headers() });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toContain("text/event-stream");
+    expect(runtime.joinedRuns).toHaveLength(1);
+    expect(runtime.createdRuns).toHaveLength(1); // only the original run -- joining never creates a second one
+    const events = response.body.split("\n").filter(line => line.startsWith("data: ")).map(line => JSON.parse(line.slice(6)));
+    expect(events.map(event => event.type)).toEqual(expect.arrayContaining(["response_start", "response_delta", "done"]));
+    expect(events.find(event => event.type === "done")).toMatchObject({ data: { status: "success" } });
+  }, 10_000);
+
+  it("task-events 404s when the conversation has no run in flight", async () => {
+    runtime = new FakeRuntime();
+    ({ app, token } = await buildAuthedApp(runtime));
+    const created = await app.inject({ method: "POST", url: "/api/conversations", headers: headers(), payload: {} });
+    const response = await app.inject({ method: "GET", url: `/api/agent-loop/task-events?conversationId=${created.json().id}`, headers: headers() });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("task-events rejects a missing conversationId and an unknown conversation", async () => {
+    ({ app, token } = await buildAuthedApp(new FakeRuntime()));
+    expect((await app.inject({ method: "GET", url: "/api/agent-loop/task-events", headers: headers() })).statusCode).toBe(400);
+    expect((await app.inject({ method: "GET", url: "/api/agent-loop/task-events?conversationId=missing", headers: headers() })).statusCode).toBe(404);
+  });
+
   it("tasks and tasks/completed split by terminal status", async () => {
     runtime = new FakeRuntime();
     runtime.queueRunStatuses("success");

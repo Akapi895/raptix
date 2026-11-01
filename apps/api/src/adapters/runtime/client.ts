@@ -1,5 +1,5 @@
 import { RuntimeRejectedError, RuntimeUnavailableError } from "./errors.js";
-import { streamRuntimeRun, type RuntimeEvent } from "./stream.js";
+import { joinRuntimeRun, streamRuntimeRun, type RuntimeEvent } from "./stream.js";
 
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 
@@ -29,6 +29,8 @@ export interface RuntimeTransport {
   listRuns(threadId: string, offset?: number, limit?: number): Promise<RuntimeRun[]>;
   cancelRun(threadId: string, runId: string): Promise<void>;
   streamRun(threadId: string, assistantId: string, input: Record<string, unknown>, config: Record<string, unknown>, signal: AbortSignal): AsyncIterable<RuntimeEvent>;
+  /** Re-subscribes to an already-running run's events; never creates or cancels a run. */
+  joinRun(threadId: string, runId: string, signal: AbortSignal): AsyncIterable<RuntimeEvent>;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -203,5 +205,10 @@ export class RuntimeClient implements RuntimeTransport {
       assistant_id: assistantId, input, config, stream_mode: ["messages", "updates"],
       multitask_strategy: "reject", if_not_exists: "reject", on_disconnect: "continue",
     }, signal);
+  }
+
+  public joinRun(threadId: string, runId: string, signal: AbortSignal): AsyncIterable<RuntimeEvent> {
+    const url = `${this.apiUrl}/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}/stream?stream_mode=messages&stream_mode=updates`;
+    return joinRuntimeRun(url, this.apiToken, signal);
   }
 }

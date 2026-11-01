@@ -14,6 +14,8 @@ export class FakeRuntime implements RuntimeTransport {
   public stateValues: Record<string, unknown> = {};
   public streamEvents: RuntimeEvent[] = [];
   public streamConfigs: Record<string, unknown>[] = [];
+  public joinEvents: RuntimeEvent[] = [];
+  public joinedRuns: { threadId: string; runId: string }[] = [];
   private runStatusQueue: string[] = ["success"];
   private activeRuns = new Map<string, RuntimeRun>();
 
@@ -93,6 +95,11 @@ export class FakeRuntime implements RuntimeTransport {
     yield { event: "metadata", data: { run_id: run.runId } };
     yield* this.streamEvents;
   }
+
+  public async *joinRun(threadId: string, runId: string): AsyncGenerator<RuntimeEvent> {
+    this.joinedRuns.push({ threadId, runId });
+    yield* this.joinEvents;
+  }
 }
 
 /** Always throws RuntimeUnavailableError -- used to test the "runtime down" error path. */
@@ -110,4 +117,5 @@ export class UnavailableRuntime implements RuntimeTransport {
   public listRuns = () => this.fail();
   public cancelRun = () => this.fail();
   public async *streamRun(): AsyncGenerator<RuntimeEvent> { yield await this.fail(); }
+  public async *joinRun(): AsyncGenerator<RuntimeEvent> { yield await this.fail(); }
 }
