@@ -2451,7 +2451,7 @@
                         </div>
                     </div>
                     <div class="page-content fm-content">
-                        <div class="fm-context"><p>Chat uploads and generated files, together in your project.</p><button type="button" class="btn-secondary" id="chat-files-explorer-toggle" data-action="chat-files.explorer" aria-controls="chat-files-explorer" aria-expanded="true">Explorer</button></div>
+                        <div class="fm-context"><p>Chat uploads and generated files, together in your project.</p></div>
                         <div class="fm-layout" id="chat-files-layout">
                           <section class="fm-main" aria-label="Project files">
                             <div class="fm-toolbar">
@@ -2468,17 +2468,15 @@
                               <label>File type<select id="chat-files-filter-type" class="form-control" data-change="chat-files.reset"><option value="all">All types</option><option value="text">Text &amp; code</option><option value="image">Images</option><option value="pdf">PDF documents</option><option value="other">Other files</option></select></label>
                               <label><span data-i18n="chatFilesPage.groupBy">Group by</span>
                                 <select id="chat-files-group-by" class="form-control" data-change="chat-files.reset">
-                                    <option value="none" data-i18n="chatFilesPage.groupNone">None (flat list)</option>
+                                    <option value="none" data-i18n="chatFilesPage.groupNone">None (folder tree)</option>
                                     <option value="date" data-i18n="chatFilesPage.groupByDate">By date</option>
                                     <option value="conversation" data-i18n="chatFilesPage.groupByConversation">By conversation</option>
                                     <option value="project" data-i18n="chatFilesPage.groupByProject">By project</option>
-                                    <option value="folder" data-i18n="chatFilesPage.groupByFolder">By folder (path navigation)</option>
                                 </select>
                               </label><button type="button" class="btn-secondary" data-action="chat-files.clear">Clear filters</button>
                               </div></details>
+                              <label class="fm-sort"><span class="fm-sr-only">Sort files</span><select id="chat-files-sort" aria-label="Sort files" data-change="chat-files.reset"><option value="modified-desc">Recently modified</option><option value="name-asc">Name: A–Z</option><option value="name-desc">Name: Z–A</option><option value="size-desc">Largest first</option><option value="size-asc">Smallest first</option><option value="modified-asc">Oldest first</option></select></label>
                             </div>
-                            <div class="fm-location"><nav id="chat-files-breadcrumb" aria-label="File location"></nav><label><span class="fm-sr-only">Sort files</span><select id="chat-files-sort" aria-label="Sort files" data-change="chat-files.reset"><option value="modified-desc">Recently modified</option><option value="name-asc">Name: A–Z</option><option value="name-desc">Name: Z–A</option><option value="size-desc">Largest first</option><option value="size-asc">Smallest first</option><option value="modified-asc">Oldest first</option></select></label></div>
-                            <div class="fm-folder-tools" id="chat-files-folder-tools" hidden></div>
                         <div id="chat-files-upload-progress" class="chat-upload-progress-row chat-upload-progress-row--files" hidden role="status" aria-live="polite">
                             <div class="chat-upload-progress-track" aria-hidden="true"><div class="chat-upload-progress-fill" id="chat-files-upload-progress-fill"></div></div>
                             <span class="chat-upload-progress-label" id="chat-files-upload-progress-label"></span>
@@ -2486,10 +2484,8 @@
                         <div id="chat-files-list-wrap" class="fm-list" aria-busy="true">
                             <div class="loading-spinner" data-i18n="common.loading">Loading…</div>
                         </div>
-                        <div id="chat-files-pagination" class="fm-pagination" hidden></div>
                         <div class="fm-status"><span id="chat-files-summary"></span><span id="chat-files-status" role="status" aria-live="polite"></span></div>
                           </section>
-                          <aside class="fm-explorer" id="chat-files-explorer" aria-labelledby="chat-files-explorer-title"><div class="fm-explorer-head"><h3 id="chat-files-explorer-title">Explorer</h3><button type="button" class="btn-icon" data-action="chat-files.explorer" aria-label="Collapse Explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div><div class="fm-explorer-tree" id="chat-files-tree"><p>Loading folders…</p></div><p class="fm-explorer-note">Storage locations stay separate. Workspace and generated files are read-only.</p></aside>
                         </div>
                     </div>
                 </div>

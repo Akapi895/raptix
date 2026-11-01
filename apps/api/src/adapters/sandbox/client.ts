@@ -1,7 +1,9 @@
 import { SandboxInvalidPathError, SandboxUnavailableError } from "./errors.js";
 import { sandboxTokenFor, sandboxUrlFor } from "./routing.js";
 
-const WORKSPACE = "/workspace";
+/** The sandbox-side mount every project's files live under; also the real absolute path callers
+ *  (e.g. "copy folder path") should show for the root, since nothing else resolves it for them. */
+export const WORKSPACE = "/workspace";
 const MAX_READ_BYTES = 8 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 60_000;
 const SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -31,6 +33,9 @@ function quote(path: string): string {
 export interface SandboxDirEntry {
   readonly name: string;
   readonly isDirectory: boolean;
+  /** Undefined for directories -- only regular files carry a meaningful size/mtime here. */
+  readonly size?: number;
+  readonly mtime?: Date;
 }
 
 export interface SandboxFileStat {
@@ -159,7 +164,14 @@ export class SandboxFilesClient implements SandboxFilesTransport {
 
   public async list(workspaceSlug: string, rel: string): Promise<SandboxDirEntry[] | null> {
     const dir = rel === "" ? WORKSPACE : `${WORKSPACE}/${sandboxFilePath(rel)}`;
-    const result = await this.execute(workspaceSlug, `find ${quote(dir)} -mindepth 1 -maxdepth 1 -printf '%y %f\\n'`);
+    // \037 (octal, unit separator) delimits fields so a filename containing spaces can't be
+    // misparsed; %f is always last, so splitting into exactly 4 parts is always correct.
+    // find's -printf only expands backslash escapes it recognizes (\n, \t, \NNN octal, ...) --
+    // \x1f (hex) is NOT one of them and would be emitted as the four literal characters "\x1f".
+    const result = await this.execute(
+      workspaceSlug,
+      `find ${quote(dir)} -mindepth 1 -maxdepth 1 -printf '%y\\037%s\\037%T@\\037%f\\n'`,
+    );
     if (result.exitCode !== 0) {
       if (/No such file or directory/i.test(result.output)) return null;
       throw new SandboxUnavailableError();
@@ -167,7 +179,16 @@ export class SandboxFilesClient implements SandboxFilesTransport {
     return result.output
       .split("\n")
       .filter((line) => line.length > 0)
-      .map((line) => ({ name: line.slice(2), isDirectory: line.startsWith("d ") }));
+      .map((line) => {
+        const [type, sizeField, mtimeField, name] = line.split("\x1f");
+        const isDirectory = type === "d";
+        return {
+          name: name ?? "",
+          isDirectory,
+          size: isDirectory ? undefined : Number(sizeField),
+          mtime: isDirectory ? undefined : new Date(Number(mtimeField) * 1000),
+        };
+      });
   }
 
   public async mkdir(workspaceSlug: string, rel: string): Promise<void> {

@@ -59,6 +59,29 @@ export function previewKind(name: string): PreviewKind {
     if (['txt', 'md', 'markdown', 'json', 'jsonl', 'csv', 'tsv', 'log', 'xml', 'yaml', 'yml', 'toml', 'ini', 'conf', 'config', 'html', 'htm', 'svg', 'css', 'js', 'mjs', 'ts', 'tsx', 'jsx', 'py', 'go', 'rs', 'java', 'c', 'h', 'cpp', 'sh', 'bash', 'ps1', 'sql', 'http', 'diff', 'env'].includes(ext) || ['Dockerfile', 'Makefile', 'README', 'LICENSE'].includes(name)) return 'text';
     return 'other';
 }
+export function isMarkdownFile(name: string): boolean {
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    return ext === 'md' || ext === 'markdown';
+}
+/** Direct (non-recursive) children of each folder, keyed by the folder's tree path ('' for the tree roots). */
+export function filesByParent(files: ChatFile[]): Map<string, ChatFile[]> {
+    const map = new Map<string, ChatFile[]>();
+    for (const file of files) {
+        const parent = treePath(file).split('/').slice(0, -1).join('/');
+        (map.get(parent) ?? map.set(parent, []).get(parent)!).push(file);
+    }
+    return map;
+}
+export type SortKey = 'name-asc' | 'name-desc' | 'size-asc' | 'size-desc' | 'modified-asc' | 'modified-desc';
+/** Files sort by the chosen key; a folder's position among its siblings is always alphabetical (it has no size/date of its own). */
+export function fileComparator(sort: SortKey): (a: ChatFile, b: ChatFile) => number {
+    return (a, b) => {
+        const diff = sort.startsWith('name') ? a.name.localeCompare(b.name, undefined, { numeric: true })
+            : sort.startsWith('size') ? (a.size || 0) - (b.size || 0)
+                : (a.modifiedUnix || 0) - (b.modifiedUnix || 0);
+        return (sort.endsWith('desc') ? -diff : diff) || a.relativePath.localeCompare(b.relativePath);
+    };
+}
 export interface Folder { path: string; name: string; children: Map<string, Folder>; count: number }
 export function buildFolders(files: ChatFile[], folders: string[]): Folder {
     const root: Folder = { path: '', name: 'All files', children: new Map(), count: files.length };

@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import type { SandboxFilesTransport } from "../../adapters/sandbox/client.js";
+import { WORKSPACE, type SandboxFilesTransport } from "../../adapters/sandbox/client.js";
 import { SandboxInvalidPathError, SandboxUnavailableError } from "../../adapters/sandbox/errors.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
@@ -68,8 +68,9 @@ export function registerFileRoutes(app: FastifyInstance, options: FileRoutesOpti
   ): Promise<void> {
     try {
       const entries = await sandbox.list(workspaceSlug, rel);
+      const dirAbsolutePath = rel ? `${WORKSPACE}/${rel}` : WORKSPACE;
       if (entries === null) {
-        await reply.send({ files: [], folders: [] });
+        await reply.send({ files: [], folders: [], absolutePath: dirAbsolutePath });
         return;
       }
       const files = entries
@@ -77,9 +78,12 @@ export function registerFileRoutes(app: FastifyInstance, options: FileRoutesOpti
         .map((entry) => ({
           relativePath: `${projectId}/${rel ? `${rel}/` : ""}${entry.name}`,
           name: entry.name,
+          size: entry.size,
+          modifiedUnix: entry.mtime ? Math.floor(entry.mtime.getTime() / 1000) : undefined,
+          absolutePath: `${dirAbsolutePath}/${entry.name}`,
         }));
       const folders = entries.filter((entry) => entry.isDirectory).map((entry) => entry.name);
-      await reply.send({ files, folders });
+      await reply.send({ files, folders, absolutePath: dirAbsolutePath });
     } catch (error) {
       await sendSandboxError(reply, error);
     }

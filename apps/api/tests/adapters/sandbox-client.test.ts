@@ -66,7 +66,13 @@ describe("SandboxFilesClient", () => {
               const rest = prefix ? key.slice(prefix.length + 1) : key;
               names.add(rest.split("/")[0]!);
             }
-            return send(response, 200, { output: [...names].map((n) => `f ${n}\n`).join(""), exit_code: 0 });
+            const output = [...names]
+              .map((n) => {
+                const size = Buffer.from(files.get(n) ?? "", "base64").length;
+                return `f\x1f${size}\x1f1700000000\x1f${n}\n`;
+              })
+              .join("");
+            return send(response, 200, { output, exit_code: 0 });
           }
           return send(response, 200, { output: "", exit_code: 0 });
         }
@@ -148,12 +154,15 @@ describe("SandboxFilesClient", () => {
     await expect(client.read(SLUG, "a.txt")).resolves.toBeNull();
   });
 
-  it("list reflects writes at the root", async () => {
+  it("list reflects writes at the root, with real size and mtime per file", async () => {
     const client = clientWithLocalFetch();
     await client.write(SLUG, "a.txt", Buffer.from("x"));
     await client.write(SLUG, "b.txt", Buffer.from("y"));
     const entries = await client.list(SLUG, "");
     expect(entries?.map((e) => e.name).sort()).toEqual(["a.txt", "b.txt"]);
+    const a = entries?.find((e) => e.name === "a.txt");
+    expect(a).toMatchObject({ isDirectory: false, size: 1 });
+    expect(a?.mtime).toBeInstanceOf(Date);
   });
 
   it("rejects a path that escapes the workspace", async () => {
