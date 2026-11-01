@@ -2,14 +2,19 @@ import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import type { RuntimeTransport } from "../../adapters/runtime/client.js";
 import { RuntimeRejectedError, RuntimeUnavailableError } from "../../adapters/runtime/errors.js";
+import type { SandboxFilesTransport } from "../../adapters/sandbox/client.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationRecord, ConversationStore, MessageRecord } from "../../db/conversation-store.js";
+import type { ProjectStore } from "../../db/project-store.js";
+import { readPlanTasks } from "../../services/opplan-tasks.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 
 export interface ConversationRoutesOptions {
   authStore: AuthStore;
   conversationStore: ConversationStore;
   runtime: RuntimeTransport;
+  projectStore: ProjectStore;
+  sandbox: SandboxFilesTransport;
 }
 
 interface ListQuery {
@@ -69,7 +74,7 @@ function toWire(conversation: ConversationRecord, messages?: MessageRecord[]): R
 }
 
 export function registerConversationRoutes(app: FastifyInstance, options: ConversationRoutesOptions): void {
-  const { authStore, conversationStore, runtime } = options;
+  const { authStore, conversationStore, runtime, projectStore, sandbox } = options;
   const requireSession = createRequireSession(authStore);
 
   app.get<{ Querystring: ListQuery }>(
@@ -186,15 +191,22 @@ export function registerConversationRoutes(app: FastifyInstance, options: Conver
   // workspace/plan-progress panels (which poll this constantly while
   // chatting, not just on a tab click) show a scary "Workspace
   // unavailable" error for something that will never exist, not a bug.
-  // {tasks: [], running: false} is the honest answer, not a fabricated
-  // one: it is true, always, for every conversation this runtime produces.
+  // Raptix's real plan lives at workspace/plan/opplan.json (OPPLAN objectives,
+  // ADR-0040) in the conversation's project sandbox, not as a per-conversation
+  // "todo list" tool -- see services/opplan-tasks.ts. {tasks: [], running:
+  // false} stays the honest answer when there's no project, no sandbox file
+  // yet, or the file fails to parse -- never fabricated.
   app.get<{ Params: { id: string } }>("/api/conversations/:id/plan-tasks", { preHandler: requireSession }, async (request, reply) => {
     const conversation = await conversationStore.findById(request.params.id);
     if (!conversation) {
       await reply.code(404).send({ error: "Conversation not found" });
       return;
     }
-    return { tasks: [], running: false, total: 0, completed: 0 };
+    const project = conversation.projectId ? await projectStore.findById(conversation.projectId) : null;
+    const plan = project ? await readPlanTasks(sandbox, project.workspaceSlug) : null;
+    if (!plan) return { tasks: [], running: false, total: 0, completed: 0 };
+    const running = plan.tasks.some((task) => task.status === "in_progress");
+    return { tasks: plan.tasks, running, total: plan.total, completed: plan.completed };
   });
 
   // Turn-editing, results digest and token-usage accounting all read
