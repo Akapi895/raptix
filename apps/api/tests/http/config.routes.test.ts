@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { UnconfiguredC2Client } from "../../src/adapters/c2/client.js";
 import { buildAuthedTestApp } from "../support/build-test-app.js";
 import { FakeAppConfigStore } from "../support/fake-app-config-store.js";
 
@@ -27,12 +28,18 @@ describe("config routes", () => {
     const posted = await app.inject({ method: "POST", url: "/api/config", headers: auth(), payload });
     expect(posted.json()).toEqual(payload);
     const read = await app.inject({ method: "GET", url: "/api/config", headers: auth() });
-    expect(read.json()).toEqual(payload);
+    expect(read.json()).toEqual({ ...payload, c2: { enabled: true } });
 
     const updated = { ai: { default_channel: "default", channels: { default: { provider: "anthropic", model: "claude-opus-4-8" } } } };
     await app.inject({ method: "PUT", url: "/api/config", headers: auth(), payload: updated });
     const readAgain = await app.inject({ method: "GET", url: "/api/config", headers: auth() });
-    expect(readAgain.json()).toEqual(updated);
+    expect(readAgain.json()).toEqual({ ...updated, c2: { enabled: true } });
+  });
+
+  it("c2.enabled reflects whether a real C2 bridge is configured, for the sidebar's nav toggle", async () => {
+    ({ app, token } = await buildAuthedTestApp({ c2: new UnconfiguredC2Client() }));
+    const response = await app.inject({ method: "GET", url: "/api/config", headers: auth() });
+    expect(response.json()).toMatchObject({ c2: { enabled: false } });
   });
 
   it("apply is stubbed 501 -- store_model_in_db is false, no live admin API to push into", async () => {

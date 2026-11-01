@@ -44,6 +44,12 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
 
+# Raptix's real skill corpus (read-only; see src/adapters/skills/corpus.ts
+# and skills.routes.ts for why writes stay stubbed). Git-authored, so this
+# image is only as fresh as its last rebuild -- matches the corpus's own
+# audit-skills -> build-skill-graph -> commit pipeline (CLAUDE.md).
+COPY packages/raptix-skills/raptix_skills/defs ./skills-corpus
+
 ENV NODE_ENV=production
 
 HEALTHCHECK --interval=5s --timeout=5s --retries=12 --start-period=30s \

@@ -51,6 +51,7 @@ import { registerOpenApiRoutes } from "./http/routes/openapi.routes.js";
 import { registerProjectRoutes } from "./http/routes/projects.routes.js";
 import { registerRolesRoutes } from "./http/routes/roles.routes.js";
 import { registerSkillsRoutes } from "./http/routes/skills.routes.js";
+import type { SkillsCorpus } from "./adapters/skills/corpus.js";
 import { registerStorageRoutes } from "./http/routes/storage.routes.js";
 import { registerTerminalRoutes } from "./http/routes/terminal.routes.js";
 import { registerToolGuardRoutes } from "./http/routes/tool-guard.routes.js";
@@ -87,6 +88,7 @@ export interface BuildAppOptions {
   readNotificationStore: ReadNotificationStore;
   markdownAgentStore: MarkdownAgentStore;
   workflowStore: WorkflowStore;
+  skillsCorpus: SkillsCorpus;
   openApiSpecPath?: string;
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
@@ -175,9 +177,9 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     knowledgeItemStore: options.knowledgeItemStore,
     retrievalLogStore: options.retrievalLogStore,
   });
-  registerSkillsRoutes(app, { authStore: options.authStore });
+  registerSkillsRoutes(app, { authStore: options.authStore, corpus: options.skillsCorpus });
   registerFofaRoutes(app, { authStore: options.authStore, recon: options.recon });
-  registerConfigRoutes(app, { authStore: options.authStore, appConfigStore: options.appConfigStore });
+  registerConfigRoutes(app, { authStore: options.authStore, appConfigStore: options.appConfigStore, c2: options.c2 });
   registerExternalMcpRoutes(app, { authStore: options.authStore, externalMcpStore: options.externalMcpStore });
   registerMonitorRoutes(app, {
     authStore: options.authStore,

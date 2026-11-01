@@ -22,6 +22,7 @@ import { FakeRetrievalLogStore } from "./fake-retrieval-log-store.js";
 import { FakeRuntime } from "./fake-runtime.js";
 import { FakeSandbox } from "./fake-sandbox.js";
 import { FakeSandboxProvisioner } from "./fake-sandbox-provisioner.js";
+import { EmptySkillsCorpus } from "../../src/adapters/skills/corpus.js";
 import { FakeToolGuardStore } from "./fake-tool-guard-store.js";
 import { FakeVulnerabilityStore } from "./fake-vulnerability-store.js";
 import { FakeWebShellStore } from "./fake-webshell-store.js";
@@ -57,6 +58,7 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     readNotificationStore: new FakeReadNotificationStore(),
     markdownAgentStore: new FakeMarkdownAgentStore(),
     workflowStore: new FakeWorkflowStore(),
+    skillsCorpus: new EmptySkillsCorpus(),
     ...overrides,
     resolveLlmChannel: overrides.resolveLlmChannel ?? (async () => ({ baseUrl: "http://llm.test/v1", apiKey: "test-key", model: "test-model" })),
   };

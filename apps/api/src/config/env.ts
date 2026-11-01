@@ -21,6 +21,7 @@ export interface ApiEnv {
   operatorUsername: string | undefined;
   operatorPassword: string | undefined;
   sessionDurationHours: number;
+  skillsCorpusDir: string | undefined;
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv): ApiEnv {
@@ -57,5 +58,6 @@ export function loadEnv(source: NodeJS.ProcessEnv): ApiEnv {
     operatorUsername: source.RAPTIX_API_OPERATOR_USERNAME,
     operatorPassword: source.RAPTIX_API_OPERATOR_PASSWORD,
     sessionDurationHours,
+    skillsCorpusDir: source.RAPTIX_SKILLS_CORPUS_DIR,
   };
 }

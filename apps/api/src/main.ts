@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildApp } from "./app.js";
 import { C2BridgeClient, UnconfiguredC2Client } from "./adapters/c2/client.js";
 import { loadC2BridgeConfig } from "./adapters/c2/token.js";
@@ -5,6 +8,7 @@ import { OpenAiCompatibleLlmClient, type LlmChannelConfig } from "./adapters/llm
 import { loadReconProviderConfig } from "./adapters/recon/config.js";
 import { ReconProvidersClient } from "./adapters/recon/client.js";
 import { RuntimeClient } from "./adapters/runtime/client.js";
+import { EmptySkillsCorpus, FilesystemSkillsCorpus } from "./adapters/skills/corpus.js";
 import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
 import { SandboxFilesClient, UnconfiguredSandboxFilesClient } from "./adapters/sandbox/client.js";
 import {
@@ -139,6 +143,20 @@ async function main(): Promise<void> {
     console.warn("[apps/api] SLIVER_BRIDGE_URL/_TOKEN not set -- C2 read routes will fail 503 until they are.");
   }
 
+  // Baked into the image at /app/skills-corpus (see api.Dockerfile); resolved
+  // relative to this module in a local checkout instead. Read-only -- see
+  // skills.routes.ts for why writes stay stubbed.
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  const corpusDir = [
+    env.skillsCorpusDir,
+    "/app/skills-corpus",
+    path.resolve(moduleDir, "../../../packages/raptix-skills/raptix_skills/defs"),
+  ].filter((candidate): candidate is string => !!candidate).find((candidate) => existsSync(candidate));
+  if (!corpusDir) {
+    console.warn("[apps/api] Skills corpus directory not found -- /api/skills will return an empty list.");
+  }
+  const skillsCorpus = corpusDir ? new FilesystemSkillsCorpus(corpusDir) : new EmptySkillsCorpus();
+
   const app = buildApp({
     sandboxKey,
     authStore,
@@ -169,6 +187,7 @@ async function main(): Promise<void> {
     readNotificationStore,
     markdownAgentStore,
     workflowStore,
+    skillsCorpus,
   });
 
   const shutdown = async (): Promise<void> => {
