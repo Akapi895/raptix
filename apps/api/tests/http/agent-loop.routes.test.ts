@@ -194,6 +194,33 @@ describe("agent-loop routes", () => {
     expect(events.filter(event => event.type === "response_delta").map(event => event.data.accumulated)).toEqual(["hello", "hello back"]);
   });
 
+  it("captures a real task() delegation from the stream into the saved message's processDetails", async () => {
+    runtime = new FakeRuntime();
+    runtime.stateValues = { messages: [{ type: "ai", content: "Dispatched recon." }] };
+    runtime.streamEvents = [
+      {
+        event: "messages/partial",
+        data: [{ type: "ai", id: "answer", content: "", tool_calls: [{ id: "call-1", name: "task", args: { subagent_type: "recon", objective_id: "OBJ-001" } }] }],
+      },
+      { event: "messages/partial", data: [{ type: "tool", tool_call_id: "call-1", name: "task", status: "success", content: "Recon done." }] },
+      { event: "messages/partial", data: [{ type: "ai", id: "answer", content: "Dispatched recon." }] },
+    ];
+    ({ app, token } = await buildAuthedApp(runtime));
+    const project = await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "delegation test" } });
+    const response = await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: { message: "go", projectId: project.json().id } });
+    const events = response.body.split("\n").filter(line => line.startsWith("data: ")).map(line => JSON.parse(line.slice(6)));
+    const final = events.find(event => event.type === "response");
+    if (!final) throw new Error("no response event: " + JSON.stringify(events));
+    const conversationId = final.data.conversationId;
+
+    const history = await app.inject({ url: `/api/conversations/${conversationId}`, headers: headers() });
+    const assistant = history.json().messages.find((message: { role: string }) => message.role === "assistant");
+    expect(assistant.processDetails).toEqual([
+      { eventType: "tool_call", data: { einoAgent: "raptix", einoRole: "orchestrator", toolName: "task", toolCallId: "call-1", argumentsObj: { subagent_type: "recon", objective_id: "OBJ-001" } } },
+      { eventType: "tool_result", data: { toolCallId: "call-1", toolName: "task", isError: false, success: true } },
+    ]);
+  });
+
   it("rejects missing sessions, empty messages and unknown conversations before dispatch", async () => {
     runtime = new FakeRuntime();
     ({ app, token } = await buildAuthedApp(runtime));

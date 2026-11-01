@@ -28,6 +28,7 @@ import { PrismaAuditLogStore } from "./db/audit-log-store.js";
 import { PrismaAuthStore } from "./db/auth-store.js";
 import { PrismaBatchQueueStore } from "./db/batch-queue-store.js";
 import { PrismaConversationStore } from "./db/conversation-store.js";
+import { PrismaMessageEventStore } from "./db/message-event-store.js";
 import { PrismaExternalMcpStore } from "./db/external-mcp-store.js";
 import { PrismaFactStore } from "./db/fact-store.js";
 import { PrismaHiddenExecutionStore } from "./db/hidden-execution-store.js";
@@ -49,6 +50,7 @@ async function main(): Promise<void> {
   const authStore = new PrismaAuthStore(db);
   const projectStore = new PrismaProjectStore(db);
   const conversationStore = new PrismaConversationStore(db);
+  const messageEventStore = new PrismaMessageEventStore(db);
   const factStore = new PrismaFactStore(db);
   const assetStore = new PrismaAssetStore(db);
   const vulnerabilityStore = new PrismaVulnerabilityStore(db);
@@ -200,6 +202,7 @@ async function main(): Promise<void> {
     workflowStore,
     skillsCorpus,
     knowledgeGraph,
+    messageEventStore,
   });
 
   const shutdown = async (): Promise<void> => {

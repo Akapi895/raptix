@@ -23,6 +23,7 @@ import { FakeRuntime } from "./fake-runtime.js";
 import { FakeSandbox } from "./fake-sandbox.js";
 import { FakeSandboxProvisioner } from "./fake-sandbox-provisioner.js";
 import { FakeKnowledgeGraph } from "./fake-knowledge-graph.js";
+import { FakeMessageEventStore } from "./fake-message-event-store.js";
 import { EmptySkillsCorpus } from "../../src/adapters/skills/corpus.js";
 import { FakeToolGuardStore } from "./fake-tool-guard-store.js";
 import { FakeVulnerabilityStore } from "./fake-vulnerability-store.js";
@@ -61,6 +62,7 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     workflowStore: new FakeWorkflowStore(),
     skillsCorpus: new EmptySkillsCorpus(),
     knowledgeGraph: new FakeKnowledgeGraph(),
+    messageEventStore: new FakeMessageEventStore(),
     ...overrides,
     resolveLlmChannel: overrides.resolveLlmChannel ?? (async () => ({ baseUrl: "http://llm.test/v1", apiKey: "test-key", model: "test-model" })),
   };

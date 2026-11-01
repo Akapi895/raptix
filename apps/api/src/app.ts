@@ -53,6 +53,7 @@ import { registerRolesRoutes } from "./http/routes/roles.routes.js";
 import { registerSkillsRoutes } from "./http/routes/skills.routes.js";
 import type { SkillsCorpus } from "./adapters/skills/corpus.js";
 import type { KnowledgeGraph } from "./adapters/knowledge-graph/client.js";
+import type { MessageEventStore } from "./db/message-event-store.js";
 import { registerStorageRoutes } from "./http/routes/storage.routes.js";
 import { registerTerminalRoutes } from "./http/routes/terminal.routes.js";
 import { registerToolGuardRoutes } from "./http/routes/tool-guard.routes.js";
@@ -91,6 +92,7 @@ export interface BuildAppOptions {
   workflowStore: WorkflowStore;
   skillsCorpus: SkillsCorpus;
   knowledgeGraph: KnowledgeGraph;
+  messageEventStore: MessageEventStore;
   openApiSpecPath?: string;
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
@@ -131,6 +133,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     runtime: options.runtime,
     projectStore: options.projectStore,
     sandbox: options.sandbox,
+    messageEventStore: options.messageEventStore,
   });
   registerAgentLoopRoutes(app, {
     authStore: options.authStore,
@@ -140,6 +143,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     projectStore: options.projectStore,
     sandboxKey: options.sandboxKey,
     defaultAssistantId: options.defaultAssistantId,
+    messageEventStore: options.messageEventStore,
   });
   registerHitlRoutes(app, { authStore: options.authStore, projectStore: options.projectStore, sandbox: options.sandbox });
   registerAssetRoutes(app, { authStore: options.authStore, assetStore: options.assetStore, projectStore: options.projectStore, knowledgeGraph: options.knowledgeGraph });

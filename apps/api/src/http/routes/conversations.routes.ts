@@ -5,6 +5,7 @@ import { RuntimeRejectedError, RuntimeUnavailableError } from "../../adapters/ru
 import type { SandboxFilesTransport } from "../../adapters/sandbox/client.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationRecord, ConversationStore, MessageRecord } from "../../db/conversation-store.js";
+import type { MessageEventRecord, MessageEventStore } from "../../db/message-event-store.js";
 import type { ProjectStore } from "../../db/project-store.js";
 import { readPlanTasks } from "../../services/opplan-tasks.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
@@ -15,6 +16,7 @@ export interface ConversationRoutesOptions {
   runtime: RuntimeTransport;
   projectStore: ProjectStore;
   sandbox: SandboxFilesTransport;
+  messageEventStore: MessageEventStore;
 }
 
 interface ListQuery {
@@ -44,8 +46,13 @@ interface ProjectBody {
 
 const asString = (value: unknown): string | undefined => (typeof value === "string" && value.length > 0 ? value : undefined);
 
+/** apps/ui-app's Message.processDetails shape (features/chat/workspace/execution.ts's ExecutionEvent). */
+function eventToWire(event: MessageEventRecord): Record<string, unknown> {
+  return { eventType: event.eventType, data: event.data };
+}
+
 /** apps/ui-app's Conversation shape (src/api/types/conversation.ts): camelCase, unlike Project's snake_case. */
-function toWire(conversation: ConversationRecord, messages?: MessageRecord[]): Record<string, unknown> {
+function toWire(conversation: ConversationRecord, messages?: MessageRecord[], events?: Map<string, MessageEventRecord[]>): Record<string, unknown> {
   return {
     id: conversation.id,
     title: conversation.title,
@@ -64,7 +71,7 @@ function toWire(conversation: ConversationRecord, messages?: MessageRecord[]): R
             content: m.content,
             reasoningContent: "",
             mcpExecutionIds: [],
-            processDetails: [],
+            processDetails: (events?.get(m.id) ?? []).map(eventToWire),
             createdAt: m.createdAt.toISOString(),
             updatedAt: m.updatedAt.toISOString(),
           })),
@@ -74,7 +81,7 @@ function toWire(conversation: ConversationRecord, messages?: MessageRecord[]): R
 }
 
 export function registerConversationRoutes(app: FastifyInstance, options: ConversationRoutesOptions): void {
-  const { authStore, conversationStore, runtime, projectStore, sandbox } = options;
+  const { authStore, conversationStore, runtime, projectStore, sandbox, messageEventStore } = options;
   const requireSession = createRequireSession(authStore);
 
   app.get<{ Querystring: ListQuery }>(
@@ -118,7 +125,8 @@ export function registerConversationRoutes(app: FastifyInstance, options: Conver
         return;
       }
       const messages = await conversationStore.listMessages(conversation.id);
-      await reply.send(toWire(conversation, messages));
+      const events = await messageEventStore.listForMessages(messages.map((m) => m.id));
+      await reply.send(toWire(conversation, messages, events));
     },
   );
 
