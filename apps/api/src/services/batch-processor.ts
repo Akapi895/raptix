@@ -75,7 +75,7 @@ async function runWorker(
       // Best-effort: a queue not tied to a project (or no sandbox key configured) runs
       // against the runtime's default sandbox, same as before this was threaded through.
       const project = queue.projectId && deps.sandboxKey ? await deps.projectStore.findById(queue.projectId) : null;
-      const config = project && deps.sandboxKey ? { ...runConfigurableFor(project.workspaceSlug, deps.sandboxKey), recursion_limit: 400 } : undefined;
+      const config = project && deps.sandboxKey ? { ...runConfigurableFor(project.workspaceSlug, deps.sandboxKey), recursion_limit: 1000 } : undefined;
       const turn = await runAgentTurn({
         conversation,
         message: task.message,
