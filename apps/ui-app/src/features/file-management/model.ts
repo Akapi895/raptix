@@ -25,12 +25,28 @@ export const storageRoots = [
     { key: 'tool_outputs', label: 'Tool outputs', prefix: '__reduction__/', source: 'reduction' },
     { key: 'conversation_artifacts', label: 'Conversation artifacts', prefix: '__conversation_artifact__/', source: 'conversation_artifact' },
 ] as const;
+/** The real backend's relativePath is "<projectId>/<relPathInSandbox>" with none of the mock's __workspace__/-style
+ *  markers -- strip the leading project-id segment to get the path actually inside the sandbox. */
+function sandboxRelativePath(relativePath: string): string {
+    return relativePath.split('/').slice(1).join('/');
+}
+/** Everything under a project's one sandbox is genuinely workspace content except an actual uploads/ subtree
+ *  (written by the chat-upload flow itself), so that's the only case classified as 'upload' by default. */
+function isUploadsPath(relativePath: string): boolean {
+    const rel = sandboxRelativePath(relativePath);
+    return rel === 'uploads' || rel.startsWith('uploads/');
+}
 export function fileSource(file: ChatFile): string {
-    return storageRoots.find(root => root.prefix && file.relativePath.startsWith(root.prefix))?.source || file.source || 'upload';
+    const special = storageRoots.find(root => root.prefix && file.relativePath.startsWith(root.prefix))?.source;
+    if (special) return special;
+    if (file.source) return file.source;
+    return isUploadsPath(file.relativePath) ? 'upload' : 'workspace';
 }
 export function treePath(file: ChatFile): string {
-    const root = storageRoots.find(root => root.source === fileSource(file)) || storageRoots[0];
-    return root.key + '/' + file.relativePath.slice(root.prefix.length);
+    const matched = storageRoots.find(root => root.prefix && file.relativePath.startsWith(root.prefix));
+    if (matched) return matched.key + '/' + file.relativePath.slice(matched.prefix.length);
+    const bucket = storageRoots.find(root => root.source === fileSource(file)) || storageRoots[0];
+    return bucket.key + '/' + sandboxRelativePath(file.relativePath);
 }
 export function validPath(path: string): boolean {
     return !!path && !path.includes('\\') && !path.startsWith('/') && !path.includes('\0') && !path.split('/').some(part => part === '.' || part === '..' || !part);
@@ -57,7 +73,7 @@ export function buildFolders(files: ChatFile[], folders: string[]): Folder {
     }
     storageRoots.forEach(item => insert(item.key, false));
     files.forEach(file => insert(treePath(file).split('/').slice(0, -1).join('/'), true));
-    folders.forEach(path => insert('uploads/' + path, false));
+    folders.forEach(path => insert(path === 'uploads' ? 'uploads' : 'workspace/' + path, false));
     return root;
 }
 export function findFolder(root: Folder, path: string): Folder | undefined {

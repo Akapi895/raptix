@@ -88,7 +88,9 @@ export function createChatFiles(document: Document, deps: ChatFilesDependencies)
             const diff = sort.startsWith('name') ? a.name.localeCompare(b.name, undefined, { numeric: true }) : sort.startsWith('size') ? (a.size || 0) - (b.size || 0) : (a.modifiedUnix || 0) - (b.modifiedUnix || 0);
             return (sort.endsWith('desc') ? -diff : diff) || a.relativePath.localeCompare(b.relativePath);
         });
-        const childFolders = (path || group === 'folder') && !query ? [...current.children.values()].filter(folder => source === 'all' || storageRoots.find(storage => folder.path === storage.key || folder.path.startsWith(storage.key + '/'))?.source === source).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })) : [];
+        // 'none' (the default landing view) shows folders alongside files, same as a plain file browser;
+        // date/conversation/project grouping intentionally flattens everything instead.
+        const childFolders = (path || group === 'folder' || group === 'none') && !query ? [...current.children.values()].filter(folder => source === 'all' || storageRoots.find(storage => folder.path === storage.key || folder.path.startsWith(storage.key + '/'))?.source === source).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })) : [];
         total = filtered.length + childFolders.length;
         page = Math.min(page, Math.max(1, Math.ceil(total / pageSize)));
         const offset = (page - 1) * pageSize;
@@ -136,6 +138,30 @@ export function createChatFiles(document: Document, deps: ChatFilesDependencies)
         return new Error(text || 'The operation failed. Please try again.');
     }
     async function run(task: () => Promise<void>) { try { await task(); } catch (error) { if (!disposed) status(error instanceof Error ? error.message : 'The operation failed. Please try again.'); } }
+    // Raptix's /api/chat-uploads returns one directory level at a time (ADR-0102: files live in a
+    // project's own sandbox tree, not a flat global bucket) -- walk every discovered folder so the
+    // table shows everything under /workspace, not just its root. Bounded: a sandbox tree is a handful
+    // of folders a few levels deep in practice, but a runaway/circular listing must still terminate.
+    const CRAWL_LIMIT = 500;
+    async function crawlFolders(projectId: string, rootFolders: string[]): Promise<{ files: ChatFile[]; folders: string[] }> {
+        const files: ChatFile[] = [];
+        const folderPaths: string[] = [];
+        const queue = [...rootFolders];
+        let visited = 0;
+        while (queue.length && visited < CRAWL_LIMIT) {
+            const relPath = queue.shift()!;
+            if (!validPath(relPath)) continue;
+            folderPaths.push(relPath);
+            visited++;
+            const response = await deps.service.directory(`${projectId}/${relPath}`).catch(() => null);
+            if (!response?.ok) continue;
+            const data = await response.json().catch(() => null);
+            if (!data) continue;
+            for (const file of data.files) if (validPath(file.relativePath)) files.push(file);
+            for (const folder of data.folders) if (validPath(folder)) queue.push(`${relPath}/${folder}`);
+        }
+        return { files, folders: folderPaths };
+    }
     async function load() {
         const wrap = el('chat-files-list-wrap'); if (!wrap || disposed) return;
         const token = ++generation;
@@ -149,14 +175,15 @@ export function createChatFiles(document: Document, deps: ChatFilesDependencies)
         const tree = el('chat-files-tree'); if (tree) tree.innerHTML = '<p role="status">Loading folders…</p>';
         if (!context.project) { loading = false; wrap.setAttribute('aria-busy', 'false'); wrap.innerHTML = '<div class="fm-empty"><h3>Select a project</h3><p>Choose a project in the header to browse its files.</p></div>'; if (tree) tree.textContent = 'No project selected'; status(''); return; }
         try {
-            // The existing API has no directory endpoint. Fetch one scoped inventory; filter and paginate its render locally.
             const response = await deps.service.list({ ...context, source: 'all', search: '' }, 1, 'all');
             if (!response.ok) throw await responseError(response);
             const data = await response.json();
+            const rootFolders = data.folders.filter(validPath);
+            const nested = await crawlFolders(context.project, rootFolders);
             if (disposed || token !== generation) return;
             loading = false;
-            files = data.files.filter(file => validPath(file.relativePath) && (!file.projectId || file.projectId === context.project));
-            folders = data.folders.filter(validPath);
+            files = [...data.files, ...nested.files].filter(file => validPath(file.relativePath) && (!file.projectId || file.projectId === context.project));
+            folders = nested.folders;
             root = buildFolders(files, folders);
             if (path && !findFolder(root, path)) path = '';
             render(); renderTree();
