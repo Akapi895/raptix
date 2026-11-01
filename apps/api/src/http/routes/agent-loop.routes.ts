@@ -51,7 +51,7 @@ async function sandboxConfigFor(options: AgentLoopRoutesOptions, projectId: stri
   if (!projectId || !options.sandboxKey) return undefined;
   const project = await options.projectStore.findById(projectId);
   if (!project) return undefined;
-  return { ...runConfigurableFor(project.workspaceSlug, options.sandboxKey), recursion_limit: 400 };
+  return { ...runConfigurableFor(project.workspaceSlug, options.sandboxKey), recursion_limit: 1000 };
 }
 
 async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
@@ -249,7 +249,7 @@ async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions,
     let runId = "";
     const seen = new Set<string>();
     const input = { messages: [{ role: "user", content: message }], engagement_name: configurable.engagement_name, workspace_path: "/workspace" };
-    for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 400 }, AbortSignal.timeout(30 * 60_000))) {
+    for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 1000 }, AbortSignal.timeout(30 * 60_000))) {
       if (event.event === "metadata" && typeof record(event.data).run_id === "string") runId = record(event.data).run_id as string;
       await projectRuntimeEvent(event, emit, seen);
     }
