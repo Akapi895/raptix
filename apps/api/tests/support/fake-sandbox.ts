@@ -2,11 +2,16 @@ import type { SandboxDirEntry, SandboxFileStat, SandboxFilesTransport } from "..
 import { SandboxUnavailableError } from "../../src/adapters/sandbox/errors.js";
 
 /** In-memory per-slug filesystem for files.routes.ts / hitl tests -- no network, no Docker. */
+interface FakeEntry {
+  data: Buffer;
+  mtime: Date;
+}
+
 export class FakeSandbox implements SandboxFilesTransport {
-  private readonly files = new Map<string, Map<string, Buffer>>();
+  private readonly files = new Map<string, Map<string, FakeEntry>>();
   public unavailableSlugs = new Set<string>();
 
-  private tree(slug: string): Map<string, Buffer> {
+  private tree(slug: string): Map<string, FakeEntry> {
     let tree = this.files.get(slug);
     if (!tree) {
       tree = new Map();
@@ -21,28 +26,28 @@ export class FakeSandbox implements SandboxFilesTransport {
 
   public async read(slug: string, rel: string): Promise<Buffer | null> {
     this.guard(slug);
-    return this.tree(slug).get(rel) ?? null;
+    return this.tree(slug).get(rel)?.data ?? null;
   }
 
   public async write(slug: string, rel: string, data: Buffer): Promise<void> {
     this.guard(slug);
-    this.tree(slug).set(rel, data);
+    this.tree(slug).set(rel, { data, mtime: new Date() });
   }
 
   public async append(slug: string, rel: string, data: Buffer): Promise<void> {
     this.guard(slug);
     const tree = this.tree(slug);
     const existing = tree.get(rel);
-    tree.set(rel, existing ? Buffer.concat([existing, data]) : data);
+    tree.set(rel, { data: existing ? Buffer.concat([existing.data, data]) : data, mtime: new Date() });
   }
 
   public async rename(slug: string, from: string, to: string): Promise<void> {
     this.guard(slug);
     const tree = this.tree(slug);
-    const data = tree.get(from);
-    if (data === undefined) throw new SandboxUnavailableError();
+    const entry = tree.get(from);
+    if (entry === undefined) throw new SandboxUnavailableError();
     tree.delete(from);
-    tree.set(to, data);
+    tree.set(to, entry);
   }
 
   public async remove(slug: string, rel: string): Promise<void> {
@@ -55,13 +60,14 @@ export class FakeSandbox implements SandboxFilesTransport {
     const prefix = rel ? `${rel}/` : "";
     const names = new Set<string>();
     const entries: SandboxDirEntry[] = [];
-    for (const path of this.tree(slug).keys()) {
+    for (const [path, entry] of this.tree(slug)) {
       if (!path.startsWith(prefix)) continue;
       const rest = path.slice(prefix.length);
       const [name, ...more] = rest.split("/");
       if (!name || names.has(name)) continue;
       names.add(name);
-      entries.push({ name, isDirectory: more.length > 0 });
+      const isDirectory = more.length > 0;
+      entries.push(isDirectory ? { name, isDirectory } : { name, isDirectory, size: entry.data.length, mtime: entry.mtime });
     }
     return entries;
   }
@@ -72,8 +78,8 @@ export class FakeSandbox implements SandboxFilesTransport {
 
   public async stat(slug: string, rel: string): Promise<SandboxFileStat | null> {
     this.guard(slug);
-    const data = this.tree(slug).get(rel);
-    if (data === undefined) return null;
-    return { size: data.length, mtime: new Date(), isFile: true, isDirectory: false };
+    const entry = this.tree(slug).get(rel);
+    if (entry === undefined) return null;
+    return { size: entry.data.length, mtime: entry.mtime, isFile: true, isDirectory: false };
   }
 }

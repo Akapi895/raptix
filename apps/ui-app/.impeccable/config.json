@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/styles/file-manager.css"
+        ],
+        "createdAt": "2026-11-01T17:00:12.642Z",
+        "reason": "blockquote left-rule in rendered Markdown preview, standard quote typography (GitHub/email convention), neutral --fm-line token not a brand accent, not a card/callout"
+      }
+    ]
+  }
+}

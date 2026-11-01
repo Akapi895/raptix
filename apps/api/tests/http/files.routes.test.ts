@@ -76,10 +76,21 @@ describe("file routes (ADR-0102: project files only through the project sandbox)
     expect(read.json()).toEqual({ content: "# Hello" });
   });
 
-  it("list reflects what was written", async () => {
+  it("list reflects what was written, with real size and modified time", async () => {
     await app.inject({ method: "PUT", url: "/api/chat-uploads/content", headers: auth(), payload: { path: `${projectId}/a.txt`, content: "a" } });
     const list = await app.inject({ method: "GET", url: `/api/chat-uploads?project=${projectId}`, headers: auth() });
-    expect(list.json().files).toEqual([{ relativePath: `${projectId}/a.txt`, name: "a.txt" }]);
+    const [file] = list.json().files;
+    expect(file).toMatchObject({ relativePath: `${projectId}/a.txt`, name: "a.txt", size: 1, absolutePath: "/workspace/a.txt" });
+    expect(file.modifiedUnix).toBeTypeOf("number");
+    expect(file.modifiedUnix).toBeGreaterThan(0);
+  });
+
+  it("directory listing reports the real absolute sandbox path, at the root and nested", async () => {
+    await app.inject({ method: "PUT", url: "/api/chat-uploads/content", headers: auth(), payload: { path: `${projectId}/sub/b.txt`, content: "b" } });
+    const root = await app.inject({ method: "GET", url: `/api/chat-uploads?project=${projectId}`, headers: auth() });
+    expect(root.json().absolutePath).toBe("/workspace");
+    const nested = await app.inject({ method: "GET", url: `/api/chat-uploads/path?kind=directory&path=${encodeURIComponent(`${projectId}/sub`)}`, headers: auth() });
+    expect(nested.json().absolutePath).toBe("/workspace/sub");
   });
 
   it("rename moves the file within the same project", async () => {
