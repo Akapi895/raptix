@@ -23,7 +23,7 @@ export interface PageLifecycleDependencies {
   initProjectsPage?: Hook;
   initVulnerabilityPage?: Hook;
   initWebshellPage?: Hook;
-  initChatFilesPage?: Hook;
+  initFileManagementPage?: Hook;
   refreshTokenUsage?: Hook;
   loadRoles?: Hook;
   renderRolesList?: Hook;
@@ -91,7 +91,7 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
       case 'projects': run(deps.initProjectsPage); break;
       case 'vulnerabilities': run(deps.initVulnerabilityPage); break;
       case 'webshell': run(deps.initWebshellPage); break;
-      case 'chat-files': run(deps.initChatFilesPage); break;
+      case 'file-management': run(deps.initFileManagementPage); break;
       case 'settings':
         run(() => deps.loadConfig?.(false));
         // A deep-link section callback already performs its own load.

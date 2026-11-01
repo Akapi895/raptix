@@ -31471,7 +31471,7 @@ button.chat-files-dropdown-item:hover:not(:disabled) {
     z-index: 10100 !important;
 }
 
-.chat-files-toast {
+.file-management-toast {
     position: fixed;
     z-index: 10100;
     bottom: 28px;
@@ -31492,25 +31492,25 @@ button.chat-files-dropdown-item:hover:not(:disabled) {
     text-align: center;
 }
 
-.chat-files-toast.chat-files-toast-visible {
+.file-management-toast.file-management-toast-visible {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
 
-.chat-files-toast.chat-toast--error {
+.file-management-toast.chat-toast--error {
     background: #b91c1c;
     color: #fff;
     border-color: #991b1b;
 }
 
-html[data-theme="dark"] .chat-files-toast {
+html[data-theme="dark"] .file-management-toast {
     background: var(--bg-tertiary);
     color: var(--text-primary);
     border-color: var(--border-color);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme="dark"] .chat-files-toast.chat-toast--error {
+html[data-theme="dark"] .file-management-toast.chat-toast--error {
     background: #991b1b;
     color: #fecaca;
     border-color: #b91c1c;

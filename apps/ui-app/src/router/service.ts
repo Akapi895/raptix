@@ -1,4 +1,4 @@
-export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'chat-files', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'knowledge-retrieval-logs', 'roles-management', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
+export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'file-management', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'knowledge-retrieval-logs', 'roles-management', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
 export type PageId = typeof pageIds[number];
 export interface Route { page: PageId; query: URLSearchParams }
 export interface Navigation { route: Route; previous: Route | null; kind: 'replace' | 'external' | 'initial'; pageChanged: boolean; restore: boolean }
@@ -15,6 +15,7 @@ export function parseRoute(hash: string): Route | null {
   if (page === 'operation-center') page = 'projects';
   if (page === 'agents-management') page = 'roles-management';
   if (page === 'asset-overview' || page === 'assets' || page === 'asset-library') page = 'asset-management';
+  if (page === 'chat-files') page = 'file-management';
   if (page === 'tasks') { page = 'workflows'; query.set('tab', 'schedule'); }
   return isPageId(page) ? { page, query } : null;
 }

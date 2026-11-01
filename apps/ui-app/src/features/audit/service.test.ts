@@ -70,7 +70,7 @@ describe('audit public service and date contracts', () => {
     expect(auditResourceDestination(log)).toEqual({ page: 'chat', conversationId: 'conversation-1' });
     expect(auditResourceDestination({ ...log, action: 'delete' })).toBeNull();
     expect(auditResourceUnavailable({ ...log, resourceAvailable: false })).toBe(true);
-    for (const [type, destination] of Object.entries({ vulnerability: 'vulnerabilities', batch_queue: 'tasks', c2_listener: 'c2-listeners', c2_session: 'c2-sessions', c2_task: 'c2-tasks', webshell_connection: 'webshell', knowledge_item: 'knowledge-management', chat_upload: 'chat-files', tool_execution: 'mcp-monitor' })) expect(auditResourceDestination({ ...log, resourceType: type })?.page).toBe(destination);
+    for (const [type, destination] of Object.entries({ vulnerability: 'vulnerabilities', batch_queue: 'tasks', c2_listener: 'c2-listeners', c2_session: 'c2-sessions', c2_task: 'c2-tasks', webshell_connection: 'webshell', knowledge_item: 'knowledge-management', chat_upload: 'file-management', tool_execution: 'mcp-monitor' })) expect(auditResourceDestination({ ...log, resourceType: type })?.page).toBe(destination);
     for (const type of ['role', 'skill', 'markdown_agent']) expect(auditResourceDestination({ ...log, resourceType: type })).toEqual({ page: 'settings', section: 'roles' });
     expect(auditResourceDestination({ ...log, resourceType: '', resourceId: 'c2_unknown' })).toBeNull();
   });

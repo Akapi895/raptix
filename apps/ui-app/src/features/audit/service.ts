@@ -37,7 +37,7 @@ export function auditResourceDestination(log: AuditLog): { page: string; section
   if (!id || auditResourceUnavailable(log)) return null;
   const type = log.resourceType || '';
   if (type === 'conversation' || (!type && id.length > 8 && !id.startsWith('c2_'))) return { page: 'chat', conversationId: id };
-  const pages: Record<string, string> = { vulnerability: 'vulnerabilities', batch_queue: 'tasks', c2_listener: 'c2-listeners', c2_session: 'c2-sessions', c2_task: 'c2-tasks', webshell_connection: 'webshell', knowledge_item: 'knowledge-management', chat_upload: 'chat-files', tool_execution: 'mcp-monitor' };
+  const pages: Record<string, string> = { vulnerability: 'vulnerabilities', batch_queue: 'tasks', c2_listener: 'c2-listeners', c2_session: 'c2-sessions', c2_task: 'c2-tasks', webshell_connection: 'webshell', knowledge_item: 'knowledge-management', chat_upload: 'file-management', tool_execution: 'mcp-monitor' };
   if (['role', 'skill', 'markdown_agent'].includes(type)) return { page: 'settings', section: 'roles' };
   return pages[type] ? { page: pages[type] } : null;
 }

@@ -16,7 +16,7 @@ export const PAGE_PERMISSION_MAP: Readonly<Record<string, string>> = {
   workflows: 'workflow:read',
   projects: 'project:read',
   vulnerabilities: 'vulnerability:read',
-  'chat-files': 'files:read',
+  'file-management': 'files:read',
   webshell: 'webshell:read',
   c2: 'c2:read',
   'c2-listeners': 'c2:read',
