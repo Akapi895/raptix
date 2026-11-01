@@ -9,6 +9,7 @@ import { loadReconProviderConfig } from "./adapters/recon/config.js";
 import { ReconProvidersClient } from "./adapters/recon/client.js";
 import { RuntimeClient } from "./adapters/runtime/client.js";
 import { EmptySkillsCorpus, FilesystemSkillsCorpus } from "./adapters/skills/corpus.js";
+import { Neo4jKnowledgeGraph, UnconfiguredKnowledgeGraph } from "./adapters/knowledge-graph/client.js";
 import { loadRuntimeApiToken } from "./adapters/runtime/token.js";
 import { SandboxFilesClient, UnconfiguredSandboxFilesClient } from "./adapters/sandbox/client.js";
 import {
@@ -157,6 +158,16 @@ async function main(): Promise<void> {
   }
   const skillsCorpus = corpusDir ? new FilesystemSkillsCorpus(corpusDir) : new EmptySkillsCorpus();
 
+  // Load-bearing for Tier 3's Asset Library sync (see assets.routes.ts / services/kg-assets-sync.ts).
+  // Optional, like the sandbox key and C2 bridge above -- the page degrades to whatever's already
+  // in the Asset table instead of failing the request.
+  const knowledgeGraph = env.neo4jUri && env.neo4jUser && env.neo4jPassword
+    ? new Neo4jKnowledgeGraph(env.neo4jUri, env.neo4jUser, env.neo4jPassword)
+    : new UnconfiguredKnowledgeGraph();
+  if (!(knowledgeGraph instanceof Neo4jKnowledgeGraph)) {
+    console.warn("[apps/api] RAPTIX_NEO4J_URI/_USER/_PASSWORD not set -- Asset Library will not sync from the knowledge graph.");
+  }
+
   const app = buildApp({
     sandboxKey,
     authStore,
@@ -188,6 +199,7 @@ async function main(): Promise<void> {
     markdownAgentStore,
     workflowStore,
     skillsCorpus,
+    knowledgeGraph,
   });
 
   const shutdown = async (): Promise<void> => {

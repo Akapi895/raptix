@@ -1,11 +1,16 @@
 import type { FastifyInstance } from "fastify";
+import type { KnowledgeGraph } from "../../adapters/knowledge-graph/client.js";
 import type { AssetFields, AssetRecord, AssetStore } from "../../db/asset-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
+import type { ProjectStore } from "../../db/project-store.js";
+import { syncAssetsFromKnowledgeGraph } from "../../services/kg-assets-sync.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 
 export interface AssetRoutesOptions {
   authStore: AuthStore;
   assetStore: AssetStore;
+  projectStore: ProjectStore;
+  knowledgeGraph: KnowledgeGraph;
 }
 
 interface ListQuery {
@@ -84,10 +89,14 @@ function fieldsFromBody(body: Record<string, unknown> | undefined): AssetFields 
 }
 
 export function registerAssetRoutes(app: FastifyInstance, options: AssetRoutesOptions): void {
-  const { authStore, assetStore } = options;
+  const { authStore, assetStore, projectStore, knowledgeGraph } = options;
   const requireSession = createRequireSession(authStore);
 
   app.get<{ Querystring: ListQuery }>("/api/assets", { preHandler: requireSession }, async (request, reply) => {
+    if (request.query.project_id) {
+      const project = await projectStore.findById(request.query.project_id);
+      if (project) await syncAssetsFromKnowledgeGraph(knowledgeGraph, assetStore, project.id, project.workspaceSlug).catch(() => {});
+    }
     const pageSize = Number(request.query.page_size ?? 20) || 20;
     const page = Number(request.query.page ?? 1) || 1;
     const { assets, total } = await assetStore.list({
