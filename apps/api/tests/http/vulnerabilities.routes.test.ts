@@ -114,6 +114,34 @@ describe("vulnerability routes", () => {
     expect(stats.json()).toMatchObject({ total: 2, by_severity: { high: 1, low: 1 } });
   });
 
+  it("GET syncs real findings/*.md from the project's sandbox instead of staying empty", async () => {
+    const { app: scopedApp, token: scopedToken, options } = await buildAuthedTestApp();
+    const scopedAuth = { authorization: `Bearer ${scopedToken}` };
+    const project = await scopedApp.inject({ method: "POST", url: "/api/projects", headers: scopedAuth, payload: { name: "Reddish" } });
+    const projectId = project.json().id as string;
+    const record = await options.projectStore.findById(projectId);
+    const workspaceSlug = record!.workspaceSlug;
+    await options.sandbox.write(
+      workspaceSlug,
+      "findings/FIND-001.md",
+      Buffer.from(
+        ["---", "id: FIND-001", "severity: critical", "title: Unauthenticated RCE", "cwe: CWE-78", "location: http://10.0.0.5/remote_agent.php", "---", "", "## Description", "RCE via XFF bypass."].join("\n"),
+      ),
+    );
+
+    const list = await scopedApp.inject({ method: "GET", url: `/api/vulnerabilities?project_id=${projectId}`, headers: scopedAuth });
+    expect(list.json().total).toBe(1);
+    expect(list.json().vulnerabilities[0]).toMatchObject({ title: "Unauthenticated RCE", severity: "critical", type: "CWE-78", target: "http://10.0.0.5/remote_agent.php", status: "open" });
+
+    // Re-syncing never creates a duplicate, and never clobbers an operator's own edit to the imported row.
+    const id = list.json().vulnerabilities[0].id as string;
+    await scopedApp.inject({ method: "PUT", url: `/api/vulnerabilities/${id}`, headers: scopedAuth, payload: { status: "fixed" } });
+    const second = await scopedApp.inject({ method: "GET", url: `/api/vulnerabilities?project_id=${projectId}`, headers: scopedAuth });
+    expect(second.json().total).toBe(1);
+    expect(second.json().vulnerabilities[0].status).toBe("fixed");
+    await scopedApp.close();
+  });
+
   it("the alert subscription round-trips through a real store", async () => {
     const save = await app.inject({
       method: "PUT",

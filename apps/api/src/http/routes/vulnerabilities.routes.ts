@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import type { RuntimeTransport } from "../../adapters/runtime/client.js";
+import type { SandboxFilesTransport } from "../../adapters/sandbox/client.js";
 import type { AlertSubscriptionStore } from "../../db/alert-subscription-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import type { ConversationStore } from "../../db/conversation-store.js";
+import type { ProjectStore } from "../../db/project-store.js";
 import type { VulnerabilityFields, VulnerabilityRecord, VulnerabilityStore } from "../../db/vulnerability-store.js";
+import { syncFindingsForProject } from "../../services/findings-sync.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 import { replyRuntimeError } from "./conversations.routes.js";
 
@@ -14,6 +17,8 @@ export interface VulnerabilityRoutesOptions {
   conversationStore: ConversationStore;
   runtime: RuntimeTransport;
   alertSubscriptionStore: AlertSubscriptionStore;
+  projectStore: ProjectStore;
+  sandbox: SandboxFilesTransport;
 }
 
 interface ListQuery {
@@ -98,13 +103,17 @@ function listFilters(query: ListQuery) {
 }
 
 export function registerVulnerabilityRoutes(app: FastifyInstance, options: VulnerabilityRoutesOptions): void {
-  const { authStore, vulnerabilityStore, conversationStore, runtime, alertSubscriptionStore } = options;
+  const { authStore, vulnerabilityStore, conversationStore, runtime, alertSubscriptionStore, projectStore, sandbox } = options;
   const requireSession = createRequireSession(authStore);
 
   app.get<{ Querystring: ListQuery }>(
     "/api/vulnerabilities",
     { preHandler: requireSession },
     async (request, reply) => {
+      if (request.query.project_id) {
+        const project = await projectStore.findById(request.query.project_id);
+        if (project) await syncFindingsForProject(sandbox, vulnerabilityStore, project.id, project.workspaceSlug).catch(() => {});
+      }
       const limit = Number(request.query.limit ?? 20) || 20;
       const offset = Number(request.query.offset ?? 0) || 0;
       const { vulnerabilities, total } = await vulnerabilityStore.list({ ...listFilters(request.query), limit, offset });

@@ -145,6 +145,8 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     conversationStore: options.conversationStore,
     runtime: options.runtime,
     alertSubscriptionStore: options.alertSubscriptionStore,
+    projectStore: options.projectStore,
+    sandbox: options.sandbox,
   });
   registerAttackChainRoutes(app, { authStore: options.authStore, attackChainService });
   registerFileRoutes(app, {
