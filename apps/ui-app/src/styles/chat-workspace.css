@@ -223,6 +223,7 @@ html[data-theme="dark"] #page-chat { --chat-secondary: #abb7c8; }
 #csai-ws-panel.is-collapsed .csai-wsp-head { padding: 12px 6px; }
 #csai-ws-panel.is-collapsed .csai-wsp-toggle svg { transform: rotate(180deg); }
 #csai-ws-panel.is-collapsed .csai-wsp-title,
+#csai-ws-panel.is-collapsed .csai-wsp-files-link,
 #csai-ws-panel.is-collapsed .csai-wsp-tabs,
 #csai-ws-panel.is-collapsed .csai-wsp-body { display: none; }
 .csai-wsp-tabs { display: flex; padding: 0 16px; gap: 16px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
