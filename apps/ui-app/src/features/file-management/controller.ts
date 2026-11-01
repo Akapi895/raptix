@@ -204,7 +204,7 @@ export function createChatFiles(document: Document, deps: ChatFilesDependencies)
         for (const kind of ['edit', 'rename', 'mkdir']) closeAppModal(`chat-files-${kind}-modal`);
         editing = ''; renaming = '';
         setValue('chat-files-filter-conv', '');
-        if (deps.currentPage() === 'chat-files') { void loadConversations(); void load(); }
+        if (deps.currentPage() === 'file-management') { void loadConversations(); void load(); }
         else { ++generation; files = []; folders = []; displayed = []; }
     }
     function saveBlob(blob: Blob, name: string) {
@@ -403,8 +403,8 @@ export function createChatFiles(document: Document, deps: ChatFilesDependencies)
                 }
                 if (['ArrowDown', 'ArrowUp'].includes(event.key) && event.target instanceof Element && event.target.closest('.fm-menu')) { event.preventDefault(); const buttons = [...event.target.closest('.fm-menu')!.querySelectorAll<HTMLButtonElement>('button')]; const index = buttons.indexOf(event.target as HTMLButtonElement); buttons[(index + (event.key === 'ArrowDown' ? 1 : buttons.length - 1)) % buttons.length]?.focus(); }
             }, { signal: lifecycle.signal });
-            document.addEventListener('languagechange', () => { if (deps.currentPage() === 'chat-files') render(); }, { signal: lifecycle.signal });
-            browser.addEventListener('hashchange', () => { if (deps.currentPage() !== 'chat-files') closePreview(); }, { signal: lifecycle.signal });
+            document.addEventListener('languagechange', () => { if (deps.currentPage() === 'file-management') render(); }, { signal: lifecycle.signal });
+            browser.addEventListener('hashchange', () => { if (deps.currentPage() !== 'file-management') closePreview(); }, { signal: lifecycle.signal });
             browser.addEventListener('resize', closeMenus, { signal: lifecycle.signal });
             document.addEventListener('scroll', closeMenus, { signal: lifecycle.signal, capture: true });
             const wrap = el('chat-files-list-wrap');
