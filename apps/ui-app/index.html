@@ -225,16 +225,12 @@
                             <span data-i18n="nav.projects">Operation Center</span>
                         </div>
                     </div>
-                    <div class="nav-item nav-item-has-submenu" data-page="assets" data-require-permission-any="asset:read fofa:execute">
-                        <div class="nav-item-content" data-title="Asset Management" data-router-action="submenu" data-router-value="assets" data-i18n="nav.assets" data-i18n-attr="data-title" data-i18n-skip-text="true">
+                    <div class="nav-item" data-page="asset-management" data-require-permission-any="asset:read fofa:execute">
+                        <div class="nav-item-content" data-title="Asset Management" data-router-action="navigate" data-router-value="asset-management" data-i18n="nav.assets" data-i18n-attr="data-title" data-i18n-skip-text="true">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 7l9-4 9 4-9 4-9-4z"></path><path d="M3 12l9 4 9-4"></path><path d="M3 17l9 4 9-4"></path>
                             </svg>
                             <span data-i18n="nav.assets">Asset Management</span>
-                            <svg class="submenu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-                        <div class="nav-submenu">
-                            <div class="nav-submenu-item" data-page="asset-management"  data-i18n="nav.assetLibrary" data-router-action="navigate" data-router-value="asset-management">Assets</div>
                         </div>
                     </div>
                     <div class="nav-item" data-page="vulnerabilities">

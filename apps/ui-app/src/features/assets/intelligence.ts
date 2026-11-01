@@ -2,6 +2,20 @@ import type { Vulnerability } from '../../api/types/vulnerability';
 import { isIPv4, isIPv6, targetLabel, type Asset } from './model';
 
 const DAY = 86_400_000;
+/** Groups assets that look like the same real target recorded twice (same project + host identity +
+ *  port + protocol, but a different record id) -- evidence for the user to review and merge, never
+ *  auto-merged or hidden. A group with no identity at all (no host/ip/domain) is too ambiguous to flag. */
+function findDuplicateGroups(assets: Asset[]): { groups: number; assets: number } {
+  const groups = new Map<string, Asset[]>();
+  for (const a of assets) {
+    const identity = (a.host || a.domain || a.ip || '').toLowerCase().trim();
+    if (!identity) continue;
+    const key = [a.project_id || '', identity, a.port || 0, (a.protocol || '').toLowerCase()].join('|');
+    (groups.get(key) ?? groups.set(key, []).get(key)!).push(a);
+  }
+  const duplicated = [...groups.values()].filter(members => members.length > 1);
+  return { groups: duplicated.length, assets: duplicated.reduce((sum, members) => sum + members.length, 0) };
+}
 export function summarizeAssets(assets: Asset[], now = Date.now()) {
   const distinct = (key: 'ip' | 'domain') => new Set(assets.map(a => a[key]?.toLowerCase()).filter(Boolean)).size;
   const scanned = assets.filter(a => a.last_scan_at).length;
@@ -19,6 +33,7 @@ export function summarizeAssets(assets: Asset[], now = Date.now()) {
     stale: assets.filter(a => a.last_scan_at && Date.parse(a.last_scan_at) < now - 30 * DAY).length,
     recent: recent.length, discoveries: recent.sort((a, b) => Date.parse(b.first_seen_at) - Date.parse(a.first_seen_at)).slice(0, 4),
     protocols: [...protocols].sort((a, b) => b[1] - a[1]),
+    duplicates: findDuplicateGroups(assets),
   };
 }
 

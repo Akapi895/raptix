@@ -65,7 +65,7 @@ export function createRouterView(router: Router, deps: RouterDependencies, root:
   function updateNavState(page: PageId): void {
     root.querySelectorAll('.nav-item').forEach(element => element.classList.remove('active', 'expanded'));
     root.querySelectorAll('.nav-submenu-item').forEach(element => element.classList.remove('active'));
-    const groups: Partial<Record<PageId, string>> = { hitl: 'security', 'tool-guard': 'security', 'asset-overview': 'assets', 'asset-management': 'assets', 'mcp-monitor': 'mcp', 'mcp-management': 'mcp', 'knowledge-management': 'knowledge', 'knowledge-retrieval-logs': 'knowledge', 'skills-monitor': 'skills', 'skills-management': 'skills' };
+    const groups: Partial<Record<PageId, string>> = { hitl: 'security', 'tool-guard': 'security', 'mcp-monitor': 'mcp', 'mcp-management': 'mcp', 'knowledge-management': 'knowledge', 'knowledge-retrieval-logs': 'knowledge', 'skills-monitor': 'skills', 'skills-management': 'skills' };
     const group = page.startsWith('c2-') ? 'c2' : groups[page];
     const item = root.querySelector(`.nav-item[data-page="${group || page}"]`);
     item?.classList.add('active');

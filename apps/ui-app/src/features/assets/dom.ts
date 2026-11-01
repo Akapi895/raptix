@@ -52,7 +52,7 @@ export function toast(doc: Document, text: string, options: ToastOptions = {}): 
   if ((options.duration ?? 1200) > 0) timer = setTimeout(remove, options.duration ?? 1200);
   return { remove };
 }
-export const icon = (kind: 'copy' | 'scan' | 'download' | 'edit' | 'delete' | 'import') => {
+export const icon = (kind: 'copy' | 'scan' | 'download' | 'edit' | 'delete' | 'import' | 'zoom-in' | 'zoom-out' | 'fullscreen' | 'fullscreen-exit') => {
   const paths = {
     copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
     scan: '<path d="M10.5 13.5l3-3M8 8H5a4 4 0 1 0 0 8h3M16 8h3a4 4 0 0 1 0 8h-3"/>',
@@ -60,6 +60,10 @@ export const icon = (kind: 'copy' | 'scan' | 'download' | 'edit' | 'delete' | 'i
     edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
     delete: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>',
     import: '<path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/>',
+    'zoom-in': '<circle cx="10" cy="10" r="7"/><path d="M10 7v6M7 10h6M21 21l-5.2-5.2"/>',
+    'zoom-out': '<circle cx="10" cy="10" r="7"/><path d="M7 10h6M21 21l-5.2-5.2"/>',
+    fullscreen: '<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>',
+    'fullscreen-exit': '<path d="M9 3v4a2 2 0 0 1-2 2H3M15 3v4a2 2 0 0 0 2 2h4M21 15h-4a2 2 0 0 0-2 2v4M3 15h4a2 2 0 0 1 2 2v4"/>',
   };
   return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths[kind]}</svg>`;
 };
