@@ -268,7 +268,7 @@ describe('router browser parity (isolated, in-memory)', () => {
             currentConversationId: () => '', abandonConversation() {}, conversationsSearchQuery: () => '', setConversationProjectFilter() {}, refreshConversationProjectFilter() {}, refreshAllProjectFilterSelects() {},
             getConversationProjectId: () => '', setConversationProjectId() {}, onConversationProjectBindingChanged() {}, refreshChatWelcomeEmptyState() {}, openConversationContextMenu() {},
             formatProjectName: name => name, applyProjectName() {}, closeChatReasoningPanel() {}, roleChanged() {}, sendMessage: async () => {}, requireExecutionEvidence() {},
-            refreshChatProjectFoldersAfterAction() {}, showMCPDetail() {}, cancelMCPToolExecution() {}, closeMCPDetail() {}, refreshProgressAndTimelineI18n() {}, initChatFilesPage() {},
+            refreshChatProjectFoldersAfterAction() {}, showMCPDetail() {}, cancelMCPToolExecution() {}, closeMCPDetail() {}, refreshProgressAndTimelineI18n() {}, initFileManagementPage() {},
             populateChatChannels() {}, refreshMentionTools() {}, reasoning: () => ({}), hitl: {},
           };
           h.app = createDomainApplication({ doc: document, i18nReady: Promise.resolve(), chat, permissionAllowedForElement: () => true, cycleTheme() {}, selectLanguage() {} });

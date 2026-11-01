@@ -85,7 +85,7 @@ export function createApplication(i18nReady: Promise<unknown>) {
       cancelMCPToolExecution: id => chat.mcpDetail.cancel(id),
       closeMCPDetail: () => chat.mcpDetail.close(),
       refreshProgressAndTimelineI18n: () => chat.page.refreshI18n(),
-      initChatFilesPage: () => chat.files.initPage(),
+      initFileManagementPage: () => chat.files.initPage(),
       populateChatChannels: ai => chat.session.picker.populateChannels(ai),
       refreshMentionTools: () => chat.composer.mention.refreshTools(),
       reasoning: () => chat.session.reasoning.requestField(),

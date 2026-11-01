@@ -324,7 +324,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     loadToolsList: settings.controller.loadToolsList, loadExternalMCPs: settings.controller.loadExternalMCPs,
     startExternalMcpPoll: settings.controller.startExternalMcpPoll, hasPermission: auth.hasPermission, loadConfig: settings.controller.loadConfig,
     initProjectsPage, initVulnerabilityPage: vulnerability.view.initPage, initWebshellPage: webshell.controller.initWebshellPage,
-    initChatFilesPage: () => chat.initChatFilesPage(),
+    initFileManagementPage: () => chat.initFileManagementPage(),
     refreshTokenUsage: () => doc.getElementById('settings-token-analysis') ? tokens.service.refresh() : undefined,
     loadRoles: roles.view.loadForPage, renderRolesList: roles.view.renderList,
     refreshWorkflows: async () => { if (can('workflow:read')) await workflows.hooks.refreshWorkflows(); await orchestration.sync(); }, loadSkillsMonitor: skills.controller.monitor, loadSkills: () => skills.controller.load(),

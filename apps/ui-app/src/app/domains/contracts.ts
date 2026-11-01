@@ -34,7 +34,7 @@ export interface DomainChatPorts {
   cancelMCPToolExecution(id: string): unknown;
   closeMCPDetail(): void;
   refreshProgressAndTimelineI18n(): void;
-  initChatFilesPage(): unknown;
+  initFileManagementPage(): unknown;
   populateChatChannels: SettingsDependencies['populateChatChannels'];
   refreshMentionTools(): unknown;
   reasoning: WebshellDependencies['reasoning'];
