@@ -6,10 +6,9 @@ import { join, resolve } from 'node:path';
 import { parse, serialize, type DefaultTreeAdapterTypes } from 'parse5';
 import type { initAssets, AssetsDependencies } from './index';
 import type { initVulnerability } from '../vulnerability';
-import type { initInfoCollect } from '../info-collect';
 
 interface Harness {
-  create(): Promise<{ assets: ReturnType<typeof initAssets>; vulnerability: ReturnType<typeof initVulnerability>; infoCollect: ReturnType<typeof initInfoCollect>; activate(): void; dispose(): void }>;
+  create(): Promise<{ assets: ReturnType<typeof initAssets>; vulnerability: ReturnType<typeof initVulnerability>; activate(): void; dispose(): void }>;
   deps: AssetsDependencies; requests: number; conversation: string; accepted: boolean;
 }
 
@@ -18,7 +17,7 @@ test.beforeAll(async () => {
   cache = await mkdtemp(join(tmpdir(), 'opencode', 'assets-vite-'));
   const tree = parse(await readFile(new URL('../../../index.html', import.meta.url), 'utf8'));
   const clean = (node: DefaultTreeAdapterTypes.Node) => { if (!('childNodes' in node)) return; node.childNodes = node.childNodes.filter(child => !('tagName' in child) || !['script', 'link'].includes(child.tagName)); node.childNodes.forEach(clean); }; clean(tree);
-  const shell = serialize(tree).replace('</head>', '<style>.page { display:none } .page.active {display:block} .modal,.info-collect-cell-modal{display:none} [hidden]{display:none!important}</style></head>');
+  const shell = serialize(tree).replace('</head>', '<style>.page { display:none } .page.active {display:block} .modal{display:none} [hidden]{display:none!important}</style></head>');
   server = await createServer({ configFile: false, root: process.cwd(), cacheDir: cache, resolve: { alias: { '@': resolve('src') } }, optimizeDeps: { entries: ['src/features/assets/index.ts'] }, server: { host: '127.0.0.1', port: 0 }, plugins: [{ name: 'step7-isolated-shell', configureServer(instance) { instance.middlewares.use('/__step7__', (_request, response) => { response.setHeader('Content-Type', 'text/html'); response.end(shell); }); } }] });
   await server.listen(); const socket = server.httpServer?.address(); if (!socket || typeof socket === 'string') throw new Error('Missing isolated server'); address = `http://127.0.0.1:${socket.port}/__step7__`;
 });
@@ -28,11 +27,10 @@ test.beforeEach(async ({ page }) => {
     const h: Harness = (globalThis as typeof globalThis & { assetsHarness: Harness }).assetsHarness = {
       requests: 0, conversation: '', accepted: false, deps: undefined as unknown as AssetsDependencies,
       async create() {
-        const assetsUrl = '/src/features/assets/index.ts', vulnerabilityUrl = '/src/features/vulnerability/index.ts', infoUrl = '/src/features/info-collect/index.ts';
-        const [{ initAssets }, { initVulnerability }, { initInfoCollect }] = await Promise.all([
+        const assetsUrl = '/src/features/assets/index.ts', vulnerabilityUrl = '/src/features/vulnerability/index.ts';
+        const [{ initAssets }, { initVulnerability }] = await Promise.all([
           import(/* @vite-ignore */ assetsUrl) as Promise<typeof import('./index')>,
           import(/* @vite-ignore */ vulnerabilityUrl) as Promise<typeof import('../vulnerability')>,
-          import(/* @vite-ignore */ infoUrl) as Promise<typeof import('../info-collect')>,
         ]);
         h.deps = { request: (path, init) => { h.requests++; return fetch(path, init); },
           storage: { get: key => localStorage.getItem(key), set: (key, value) => { localStorage.setItem(key, value); return true; }, remove: key => { localStorage.removeItem(key); return true; } },
@@ -46,8 +44,8 @@ test.beforeEach(async ({ page }) => {
           requireExecutionEvidence() {}, refreshConversations() {}, showQueue() {}, currentRole: () => '', activeProject: () => '',
           refreshProjectAssets: async () => {}, openProjectFact: async () => {}, robotEnabled: () => false, notify() {},
         };
-        const assets = initAssets(document, h.deps), vulnerability = initVulnerability(document, h.deps), infoCollect = initInfoCollect(document, h.deps);
-        return { assets, vulnerability, infoCollect, activate() { assets.activate(); vulnerability.activate(); infoCollect.activate(); }, dispose() { assets.dispose(); vulnerability.dispose(); infoCollect.dispose(); } };
+        const assets = initAssets(document, h.deps), vulnerability = initVulnerability(document, h.deps);
+        return { assets, vulnerability, activate() { assets.activate(); vulnerability.activate(); }, dispose() { assets.dispose(); vulnerability.dispose(); } };
       },
     };
   });
@@ -66,7 +64,7 @@ test('literal shell actions, lazy dependencies, CRUD, selection and disposal', a
     const checkbox = document.querySelector<HTMLInputElement>('#asset-table-body input'); if (checkbox) { checkbox.checked = true; checkbox.dispatchEvent(new Event('change', { bubbles: true })); }
     const selected = feature.assets.service.state.selected.size;
     const target = document.querySelector<HTMLButtonElement>('#asset-table-body .asset-target-link'); target?.click(); const detail = document.getElementById('asset-detail-grid')?.textContent;
-    const inline = document.querySelectorAll('#page-asset-library [onclick],#page-asset-library [onchange],#asset-editor-modal [onclick],#asset-editor-modal [onsubmit],#asset-import-modal [onclick],#asset-import-modal [onchange]').length;
+    const inline = document.querySelectorAll('#page-asset-management [onclick],#page-asset-management [onchange],#asset-editor-modal [onclick],#asset-editor-modal [onsubmit],#asset-import-modal [onclick],#asset-import-modal [onchange]').length;
     const active = h.requests; feature.dispose(); checkbox?.dispatchEvent(new Event('change', { bubbles: true }));
     const after = h.requests, fresh = await h.create(); fresh.activate(); fresh.activate();
     const isolated = fresh.assets.service.state.selected.size; fresh.dispose();
@@ -105,15 +103,12 @@ test('vulnerability status/details, facts, filters and accepted retest stream', 
   expect(result).toMatchObject({ accepted: true, locked: false, input: 'resolved retest prompt', pickerOpen: true, inline: 0 }); expect(result.guidance).toContain('Verify fix carefully'); expect(result.facts).toContain('Related fact'); expect(writes.some(w => w.path === '/api/vulnerabilities/v1/retest')).toBe(true); expect(writes.some(w => (w.body as { status?: string }).status === 'confirmed')).toBe(true); expect(errors).toEqual([]);
 });
 
-test('unchanged demo mock: all recon providers, column selection/import and parse UI', async ({ page }) => {
+test('unchanged demo mock: assets and vulnerabilities load from the mock backend', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message)); page.on('dialog', dialog => dialog.accept()); await page.goto(address);
   const result = await page.evaluate(async () => {
     const mockUrl = '/src/mock/index.ts', mock = await import(/* @vite-ignore */ mockUrl) as { installMock(): void }; mock.installMock();
-    const feature = await (globalThis as typeof globalThis & { assetsHarness: Harness }).assetsHarness.create(); feature.activate(); feature.infoCollect.view.initPage();
-    const counts: number[] = []; for (const provider of ['fofa', 'zoomeye', 'quake', 'shodan']) { const select = document.getElementById('fofa-provider'); if (select instanceof HTMLSelectElement) { select.value = provider; select.dispatchEvent(new Event('change', { bubbles: true })); } feature.infoCollect.view.applyQuery('domain="example.com"'); await feature.infoCollect.view.search(); counts.push(feature.infoCollect.service.state.currentPayload?.results.length || 0); }
-    feature.infoCollect.service.selectAll(true); await feature.infoCollect.view.importRows([0]); const first = feature.infoCollect.service.state.currentPayload?.fields[0]; if (first) { feature.infoCollect.service.toggleColumn(first, false); feature.infoCollect.view.render(); }
-    const nl = document.getElementById('fofa-nl'); if (nl instanceof HTMLTextAreaElement) nl.value = 'Find Apache services'; await feature.infoCollect.view.parse(); const parse = !!document.getElementById('fofa-parse-modal'), inline = document.querySelectorAll('#page-info-collect [onclick],#page-info-collect [onchange]').length;
-    await feature.assets.view.load(); await feature.vulnerability.view.initPage(); const assets = feature.assets.service.state.total, vulns = feature.vulnerability.service.state.pagination.total; feature.dispose(); return { counts, parse, inline, assets, vulns };
+    const feature = await (globalThis as typeof globalThis & { assetsHarness: Harness }).assetsHarness.create(); feature.activate();
+    await feature.assets.view.load(); await feature.vulnerability.view.initPage(); const assets = feature.assets.service.state.total, vulns = feature.vulnerability.service.state.pagination.total; feature.dispose(); return { assets, vulns };
   });
-  expect(result.counts.every(count => count > 0)).toBe(true); expect(result.parse).toBe(true); expect(result.inline).toBe(0); expect(result.assets).toBeGreaterThan(0); expect(result.vulns).toBeGreaterThan(0); expect(errors).toEqual([]);
+  expect(result.assets).toBeGreaterThan(0); expect(result.vulns).toBeGreaterThan(0); expect(errors).toEqual([]);
 });

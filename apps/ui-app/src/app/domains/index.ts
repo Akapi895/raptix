@@ -3,7 +3,6 @@ import { initAudit } from '@/features/audit';
 import { initC2, type C2Event } from '@/features/c2';
 import { initDashboard } from '@/features/dashboard';
 import { initHitl, type HitlDefaults } from '@/features/hitl';
-import { initInfoCollect } from '@/features/info-collect';
 import { initKnowledge, createKnowledgeToast, type ToastKind } from '@/features/knowledge';
 import { initMobileUI } from '@/features/mobile-ui';
 import { initMonitor } from '@/features/monitor';
@@ -175,7 +174,6 @@ export function createDomainApplication(deps: DomainDependencies) {
     robotEnabled: type => settings.controller.getRobotStatus(type)?.state === 'enabled', notify,
   };
   const assets = initAssets(doc, assetDeps);
-  const infoCollect = initInfoCollect(doc, assetDeps);
   const vulnerability = initVulnerability(doc, assetDeps, force => projects.fetchAllProjects(force));
   const workflows = initWorkflows({
     doc, request, t, sessionStorage, can, confirm: browser.confirm, notify, translate: applyTranslations,
@@ -320,7 +318,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     stopExternalMcpPoll: settings.controller.stopExternalMcpPoll, refreshDashboard: dashboard.refresh,
     prefetchProjectsForChat: projects.prefetchProjectsForChat, refreshChatProjectSelector: projects.refreshChatProjectSelector,
     loadToolGuardConfig: toolGuard.load, refreshHitlActivePanel: hitl.view.refreshActivePanel,
-    initInfoCollectPage: infoCollect.view.initPage, loadAssetOverview: assets.view.overview, loadAssets: assets.view.load,
+    loadAssetOverview: assets.view.overview, loadAssets: assets.view.load,
     initTasksPage: tasks.hooks.initTasksPage, refreshMonitorPanel: monitor.controller.refresh, startMonitorPoll: monitor.controller.startPolling,
     prepareToolsPagination: () => { settings.service.state.pagination.page_size = settings.service.getToolsPageSize(); },
     loadToolsList: settings.controller.loadToolsList, loadExternalMCPs: settings.controller.loadExternalMCPs,
@@ -365,7 +363,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     // request that can itself be waiting for the user to authenticate.
     const authReady = auth.start();
     settings.activate(); roles.activate(); projects.mount();
-    assets.activate(); infoCollect.activate(); vulnerability.activate(); workflows.activate(); tasks.activate();
+    assets.activate(); vulnerability.activate(); workflows.activate(); tasks.activate();
     void authReady.then(() => { if (!lifetime.disposed) orchestration.mount(); });
     webshell.activate(); c2.activate(); audit.afterClassicScripts(); tokens.afterClassicScripts();
     terminal.activate(); storageFeature.bind(); skills.activate(); knowledge.activate(); monitor.activate();
@@ -422,7 +420,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     auth.dispose(); mobile.dispose(); notifications.dispose(); toolGuard.dispose();
     hitl.dispose(); monitor.controller.stopPolling(); monitor.dispose(); knowledge.dispose(); skills.dispose();
     storageFeature.dispose(); terminal.dispose(); tokens.dispose(); audit.dispose(); c2.dispose();
-    orchestration.dispose(); tasks.dispose(); workflows.dispose(); vulnerability.dispose(); infoCollect.dispose(); assets.dispose();
+    orchestration.dispose(); tasks.dispose(); workflows.dispose(); vulnerability.dispose(); assets.dispose();
     projects.dispose(); roles.dispose(); settings.dispose(); settingsBrowser.dispose(); dashboard.dispose(); toast.dispose();
     disposal = webshell.dispose(); return disposal;
   }
@@ -434,7 +432,7 @@ export function createDomainApplication(deps: DomainDependencies) {
       syncChatConversationHash: (id: string) => { if (id.trim() && currentPage() === 'chat') routerService.replaceQuery({ conversation: id.trim() }); },
       clearChatConversationHash: () => { if (currentPage() === 'chat') routerService.replaceQuery({}); },
     },
-    roles, projects: { ...projects, initProjectsPage, ensureProjectsLoaded }, assets, infoCollect, vulnerability,
+    roles, projects: { ...projects, initProjectsPage, ensureProjectsLoaded }, assets, vulnerability,
     workflows, tasks, webshell,
     c2: { ...c2, downloadPayload: async (filename: string) => accessBrowser.download(await c2.service.downloadPayload(filename), filename) },
     audit, tokens, terminal, storage: storageFeature,

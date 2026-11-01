@@ -9,7 +9,6 @@ export const PAGE_PERMISSION_MAP: Readonly<Record<string, string>> = {
   chat: 'chat:read',
   hitl: 'hitl:read',
   'tool-guard': 'config:read',
-  'info-collect': 'fofa:execute',
   assets: 'asset:read',
   'asset-overview': 'asset:read',
   'asset-library': 'asset:read',
