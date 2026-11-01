@@ -17,13 +17,13 @@ function fixture(hash = '', canActivate?: RouterPort['canActivate']) {
 
 describe('typed router', () => {
   it('parses every legacy page, aliases, slash hashes and query values containing ?', () => {
-    const aliases: Record<string, string> = { 'asset-overview': 'asset-library', tasks: 'workflows', 'c2-tasks': 'c2-activity', 'c2-events': 'c2-activity', 'c2-profiles': 'c2-listeners' };
+    const aliases: Record<string, string> = { 'asset-overview': 'asset-management', tasks: 'workflows', 'c2-tasks': 'c2-activity', 'c2-events': 'c2-activity', 'c2-profiles': 'c2-listeners' };
     for (const page of pageIds) expect(parseRoute('#/' + page)?.page).toBe(aliases[page] || page);
     expect(routeHash(parseRoute('#c2-events?session=s_1')!)).toBe('c2-activity?session=s_1&tab=events');
     expect(routeHash(parseRoute('#c2-profiles')!)).toBe('c2-listeners?tab=profiles');
     expect(routeHash(parseRoute('#tasks?queue=q1')!)).toBe('workflows?queue=q1&tab=schedule');
-    expect(parseRoute('#asset-overview?project=p1')).toEqual({ page: 'asset-library', query: new URLSearchParams('project=p1') });
-    expect(parseRoute('#discover-assets')?.page).toBe('info-collect');
+    expect(parseRoute('#asset-overview?project=p1')).toEqual({ page: 'asset-management', query: new URLSearchParams('project=p1') });
+    expect(parseRoute('#asset-library')?.page).toBe('asset-management');
     expect(parseRoute('#c2')?.page).toBe('c2-listeners');
     expect(parseRoute('#/agents-management')?.page).toBe('roles-management');
     expect(parseRoute('#/operation-center')?.page).toBe('projects');

@@ -18,7 +18,7 @@ export function createAssetWorkspace(doc: Document, service: AssetsService, deps
   const format = (value: number) => value.toLocaleString(deps.locale());
   function mount() {
     if (mounted) return; mounted = true;
-    const toolbar = doc.querySelector('#page-asset-library .asset-toolbar');
+    const toolbar = doc.querySelector('#page-asset-management .asset-toolbar');
     toolbar?.insertAdjacentHTML('beforeend', '<div id="asset-active-filters" class="asm-active-filters" aria-label="Active filters" hidden></div>');
     toolbar?.insertAdjacentHTML('beforebegin', `
       <section id="asset-workspace-summary" class="asm-summary" aria-label="Asset summary" aria-live="polite"><p class="muted">Loading asset summary…</p></section>
@@ -28,7 +28,7 @@ export function createAssetWorkspace(doc: Document, service: AssetsService, deps
         <button id="asset-inventory-tab" type="button" role="tab" aria-selected="true" aria-controls="asset-inventory-panel" ${action('workspace.view', { view: 'inventory' })}>Inventory</button>
         <button id="asset-graph-tab" type="button" role="tab" aria-selected="false" aria-controls="asset-graph-panel" tabindex="-1" ${action('workspace.view', { view: 'graph' })}>Asset Graph</button>
       </div><span id="asset-scope-caption" class="muted"></span></div>`);
-    const card = doc.querySelector<HTMLElement>('#page-asset-library .asset-list-card');
+    const card = doc.querySelector<HTMLElement>('#page-asset-management .asset-list-card');
     if (card) { card.id = 'asset-inventory-panel'; card.setAttribute('role', 'tabpanel'); card.setAttribute('aria-labelledby', 'asset-inventory-tab'); }
     card?.insertAdjacentHTML('afterend', `
       <section id="asset-graph-panel" class="asm-graph-panel" role="tabpanel" aria-labelledby="asset-graph-tab" hidden>

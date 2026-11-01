@@ -1,4 +1,4 @@
-export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-library', 'info-collect', 'projects', 'vulnerabilities', 'webshell', 'chat-files', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'knowledge-retrieval-logs', 'roles-management', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
+export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'chat-files', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'knowledge-retrieval-logs', 'roles-management', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
 export type PageId = typeof pageIds[number];
 export interface Route { page: PageId; query: URLSearchParams }
 export interface Navigation { route: Route; previous: Route | null; kind: 'replace' | 'external' | 'initial'; pageChanged: boolean; restore: boolean }
@@ -14,8 +14,7 @@ export function parseRoute(hash: string): Route | null {
   if (page === 'c2-profiles') { page = 'c2-listeners'; query.set('tab', 'profiles'); }
   if (page === 'operation-center') page = 'projects';
   if (page === 'agents-management') page = 'roles-management';
-  if (page === 'asset-overview' || page === 'assets') page = 'asset-library';
-  if (page === 'discover-assets') page = 'info-collect';
+  if (page === 'asset-overview' || page === 'assets' || page === 'asset-library') page = 'asset-management';
   if (page === 'tasks') { page = 'workflows'; query.set('tab', 'schedule'); }
   return isPageId(page) ? { page, query } : null;
 }
@@ -61,7 +60,7 @@ export function createRouter(port: RouterPort) {
       if (page === 'platform-rbac') { commit({ page: 'dashboard', query: new URLSearchParams() }, 'replace'); return; }
       if (['c2-tasks', 'c2-events', 'c2-profiles', 'c2'].includes(page)) { const route = parseRoute(page + (query ? '?' + new URLSearchParams(query) : '')); if (route) commit(route, 'replace'); return; }
       if (page === 'tasks') { commit({ page: 'workflows', query: new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(query)), tab: 'schedule' }) }, 'replace'); return; }
-      if (page === 'asset-overview') page = 'asset-library';
+      if (page === 'asset-overview') page = 'asset-management';
       if (!isPageId(page)) return;
       // Classic feature callbacks may have updated their query without hashchange.
       const location = parseRoute(port.readHash());

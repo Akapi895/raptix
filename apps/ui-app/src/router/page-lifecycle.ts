@@ -9,7 +9,6 @@ export interface PageLifecycleDependencies {
   loadToolGuardConfig?: Hook;
   refreshHitlActivePanel?: Hook;
   refreshHitlPending?: Hook;
-  initInfoCollectPage?: Hook;
   loadAssetOverview?: Hook;
   loadAssets?: Hook;
   initTasksPage?: Hook;
@@ -70,9 +69,8 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
       case 'chat': run(deps.prefetchProjectsForChat); run(deps.refreshChatProjectSelector); break;
       case 'tool-guard': run(deps.loadToolGuardConfig); break;
       case 'hitl': run(deps.refreshHitlActivePanel ?? deps.refreshHitlPending); break;
-      case 'info-collect': run(deps.initInfoCollectPage); break;
       case 'asset-overview': run(deps.loadAssetOverview); break;
-      case 'asset-library': run(deps.loadAssets); break;
+      case 'asset-management': run(deps.loadAssets); break;
       case 'tasks': run(deps.initTasksPage); break;
       case 'mcp-monitor': run(deps.refreshMonitorPanel); run(deps.startMonitorPoll); break;
       case 'mcp-management': {

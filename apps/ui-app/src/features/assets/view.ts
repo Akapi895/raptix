@@ -72,7 +72,7 @@ export function createAssetsView(doc: Document, service: AssetsService, deps: As
     catch (error) { if (disposed || sequence !== loadSequence) return; console.warn(error); s.items = []; s.total = 0; s.totalPages = 1; dom.text('asset-list-meta', ''); dom.html('asset-table-body', `<tr><td colspan="10" class="muted">${e(t('assets.loadFailed'))}. <button class="btn-link" type="button" ${action('asset.load')}>Retry</button></td></tr>`); renderPagination(); }
     await summary;
   }
-  async function overview() { deps.switchPage('asset-library'); await load(1); }
+  async function overview() { deps.switchPage('asset-management'); await load(1); }
   function period(days: number) { const value = [7, 30, 90].includes(days) ? days : 30; if (s.overviewDays === value) return; s.overviewDays = value; doc.querySelectorAll<HTMLElement>('.asset-period-switch button').forEach(el => { const active = Number(el.dataset.days) === value; el.classList.toggle('active', active); el.setAttribute('aria-pressed', String(active)); }); void overview(); }
   function clearSelection() { service.clearSelection(); closeBatchMenu(); renderRows(); }
   function toggleAdvanced() { const panel = dom.get('asset-advanced-filters'); if (panel) { panel.hidden = !panel.hidden; dom.get('asset-advanced-toggle')?.setAttribute('aria-expanded', String(!panel.hidden)); } }
@@ -179,7 +179,7 @@ export function createAssetsView(doc: Document, service: AssetsService, deps: As
     ...workspace.handlers, ...evidence.handlers,
     'asset.discover': () => deps.switchPage('info-collect'),
     'asset.project-context': () => { const project = dom.value('asset-project-filter'); if (deps.setActiveProject && project !== deps.activeProject()) deps.setActiveProject(project); else return load(1); },
-    'asset.library': () => deps.switchPage('asset-library'), 'asset.overview': () => overview(), 'asset.period': el => period(Number(el.dataset.days)), 'asset.load': () => load(), 'asset.search': () => load(1), 'asset.search-key': (_el, event) => { if (event instanceof KeyboardEvent && event.key === 'Enter') return load(1); },
+    'asset.library': () => deps.switchPage('asset-management'), 'asset.overview': () => overview(), 'asset.period': el => period(Number(el.dataset.days)), 'asset.load': () => load(), 'asset.search': () => load(1), 'asset.search-key': (_el, event) => { if (event instanceof KeyboardEvent && event.key === 'Enter') return load(1); },
     'asset.page': el => load(Number(el.dataset.page)), 'asset.page-size': () => { service.setPageSize(Number(dom.value('asset-page-size-pagination'))); return load(1); }, 'asset.advanced': toggleAdvanced, 'asset.reset': resetFilters,
     'asset.save-view': saveView, 'asset.apply-view': el => applyView(el instanceof HTMLSelectElement ? el.value : ''), 'asset.delete-view': deleteView,
     'asset.select': el => { service.select(Number(el.dataset.index), checked(el)); updateSelection(); }, 'asset.select-page': el => { service.selectPage(checked(el)); renderRows(); }, 'asset.clear': clearSelection,
@@ -194,12 +194,12 @@ export function createAssetsView(doc: Document, service: AssetsService, deps: As
   function activate() {
     if (activated || disposed) return; activated = true;
     workspace.mount();
-    projectOff = deps.onProjectChange?.(() => { const project = deps.activeProject(); if (project === activeProject) return; activeProject = project; dom.set('asset-project-filter', project); syncSelect('asset-project-filter'); clearSelection(); evidence.cancel(); closeModal('asset-detail-modal'); if (dom.get('page-asset-library')?.classList.contains('active')) void load(1); });
+    projectOff = deps.onProjectChange?.(() => { const project = deps.activeProject(); if (project === activeProject) return; activeProject = project; dom.set('asset-project-filter', project); syncSelect('asset-project-filter'); clearSelection(); evidence.cancel(); closeModal('asset-detail-modal'); if (dom.get('page-asset-management')?.classList.contains('active')) void load(1); });
     const modals: [string, () => void][] = [['asset-import-modal', () => closeImport()], ['asset-project-modal', () => closeModal('asset-project-modal')], ['asset-bulk-edit-modal', () => closeModal('asset-bulk-edit-modal')], ['asset-scan-modal', () => closeModal('asset-scan-modal')], ['asset-editor-modal', () => closeEditor()], ['asset-detail-modal', () => closeModal('asset-detail-modal')]];
     for (const [id, close] of modals) { const modal = dom.get(id); modal?.addEventListener('click', event => { if (event.target === modal) close(); }, { signal: abort.signal }); }
     bindActions(doc, abort.signal, handlers, report); selectIds.forEach(syncSelect); renderSavedViews();
     dom.on('click', event => { const menu = dom.get('asset-batch-more'); if (menu instanceof HTMLDetailsElement && menu.open && event.target instanceof Node && !menu.contains(event.target)) closeBatchMenu(); });
-    dom.on('languagechange', () => { selectIds.forEach(syncSelect); renderSavedViews(dom.value('asset-saved-view-select')); if (dom.get('page-asset-library')?.classList.contains('active')) { renderRows(); renderPagination(); } });
+    dom.on('languagechange', () => { selectIds.forEach(syncSelect); renderSavedViews(dom.value('asset-saved-view-select')); if (dom.get('page-asset-management')?.classList.contains('active')) { renderRows(); renderPagination(); } });
     const form = dom.get('asset-editor-form'), target = dom.field('asset-edit-target'), tags = dom.field('asset-edit-tags');
     form?.addEventListener('input', event => { if (event.target !== tags) s.editorDirty = true; if (event.target === target) fieldError('asset-edit-target', ''); formError(''); }, { signal: abort.signal });
     target?.addEventListener('blur', () => { if (target.value.trim()) applyTarget(); }, { signal: abort.signal });

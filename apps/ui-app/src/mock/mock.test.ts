@@ -30,14 +30,14 @@ async function eventsOf(result: DispatchResult) {
 afterEach(() => { vi.useRealTimers(); });
 
 describe('typed mock fixture and router', () => {
-  it('retains every method/path in the 272-route fixture catalog (284 minus the 12 retired system/update + robot/wechat mock routes, Tier 7)', () => {
+  it('retains every method/path in the 271-route fixture catalog (284 minus the 12 retired system/update + robot/wechat mock routes, Tier 7, minus the retired info-collect mock)', () => {
     const mock = createMock({ delayMs: 0 });
     const catalog = mock.routes.map(route => route.method + ' ' + route.pattern).sort();
     expect(catalog).toContain('GET /api/hitl/logs/:id');
     expect(catalog).toContain('GET /api/workflows/runs'); expect(catalog).toContain('GET /api/batch-tasks/runs');
     const original = catalog.filter(route => !['GET /api/hitl/logs/:id', 'GET /api/workflows/runs', 'GET /api/batch-tasks/runs'].includes(route));
-    expect(original).toHaveLength(272);
-    expect(createHash('sha256').update(original.join('\n')).digest('hex')).toBe('207ef2b26a0136eedbdfb704333b2d255de31a8728babe6f18eccb326b8c4711');
+    expect(original).toHaveLength(271);
+    expect(createHash('sha256').update(original.join('\n')).digest('hex')).toBe('7e7bf848fb53df7867881d617ff1e52f96e26357292e1bb88054dd668e532d79');
   });
 
   it('retains the original seed, version, storage keys and browser session shape', () => {

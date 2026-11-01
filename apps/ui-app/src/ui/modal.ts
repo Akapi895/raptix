@@ -1,4 +1,4 @@
-const overlays = '.projects-modal-overlay, .c2-modal-overlay, .modal, .info-collect-cell-modal, #login-overlay';
+const overlays = '.projects-modal-overlay, .c2-modal-overlay, .modal, #login-overlay';
 const flexIds = new Set(['role-modal', 'skill-modal', 'agent-md-modal', 'batch-manage-modal', 'workflow-meta-modal', 'workflow-dry-run-modal', 'login-overlay']);
 type ModalTarget = string | HTMLElement | null | undefined;
 export interface ModalOptions { display?: string; focus?: boolean; focusSelector?: string; focusEl?: HTMLElement | null }
@@ -16,7 +16,7 @@ export function syncAppModalBodyLock(): void {
 export function openAppModal(target: ModalTarget, options: ModalOptions = {}): HTMLElement | null {
   const element = resolve(target); if (!element) return null;
   if (!visible(element) && document.activeElement instanceof HTMLElement) previousFocus.set(element, document.activeElement);
-  element.style.display = options.display || (flexIds.has(element.id) || element.matches('.projects-modal-overlay,.c2-modal-overlay,.info-collect-cell-modal,.chat-files-form-modal') ? 'flex' : 'block');
+  element.style.display = options.display || (flexIds.has(element.id) || element.matches('.projects-modal-overlay,.c2-modal-overlay,.chat-files-form-modal') ? 'flex' : 'block');
   syncAppModalBodyLock();
   if (options.focus !== false) {
     const focus = options.focusEl || element.querySelector<HTMLElement>(options.focusSelector || 'input.form-input,textarea.form-input,select.form-input,input:not([type="hidden"]):not([disabled]),textarea:not([disabled]),select:not([disabled])');

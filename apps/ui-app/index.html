@@ -234,8 +234,7 @@
                             <svg class="submenu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
                         <div class="nav-submenu">
-                            <div class="nav-submenu-item" data-page="asset-library"  data-i18n="nav.assetLibrary" data-router-action="navigate" data-router-value="asset-library">Assets</div>
-                            <div class="nav-submenu-item" data-page="info-collect"  data-i18n="nav.infoCollect" data-router-action="navigate" data-router-value="info-collect">Discover Assets</div>
+                            <div class="nav-submenu-item" data-page="asset-management"  data-i18n="nav.assetLibrary" data-router-action="navigate" data-router-value="asset-management">Assets</div>
                         </div>
                     </div>
                     <div class="nav-item" data-page="vulnerabilities">
@@ -1682,14 +1681,13 @@
                 </div>
 
                 <!-- Asset library page -->
-                <div id="page-asset-library" class="page asset-page">
+                <div id="page-asset-management" class="page asset-page">
                     <div class="page-header">
                         <div><h2 data-i18n="assets.libraryTitle">Assets</h2><p class="asm-page-description">Understand exposure, prioritize risk, and investigate your attack surface.</p></div>
                         <div class="page-header-actions">
                             <button class="btn-secondary" type="button"  data-i18n="common.refresh" data-assets-click="asset.load">Refresh</button>
                             <button class="btn-secondary" data-require-permission="asset:write" type="button"  data-i18n="assets.bulkImport" data-assets-click="asset.import">Bulk import</button>
                             <button class="btn-secondary" data-require-permission="asset:write" type="button" data-i18n="assets.addAsset" data-assets-click="asset.edit">+ Add asset</button>
-                            <button class="btn-primary" data-require-permission="fofa:execute" type="button" data-i18n="nav.infoCollect" data-router-action="navigate" data-router-value="info-collect">Discover Assets</button>
                         </div>
                     </div>
                     <div class="page-content asset-content">
@@ -1922,130 +1920,6 @@
                             <div id="asset-detail-grid" class="asset-detail-grid"></div>
                         </div>
                         <div class="modal-footer"><button class="btn-secondary"  data-i18n="common.close" data-assets-click="asset.close-detail">Close</button><button id="asset-detail-edit" class="btn-primary" data-require-permission="asset:write"  data-i18n="common.edit" data-assets-click="asset.edit-detail">Edit</button></div>
-                    </div>
-                </div>
-
-                <!-- Info collection page -->
-                <div id="page-info-collect" class="page">
-                    <div class="page-header">
-                        <div><h2 data-i18n="infoCollectPage.title">Discover Assets</h2><p class="asm-page-description">Search external sources, review results, and import only the assets you need.</p></div>
-                        <div class="page-header-actions">
-                            <button class="btn-secondary"  data-i18n="infoCollectPage.reset" data-assets-click="info.reset">Reset</button>
-                            <button class="btn-secondary" type="button" data-router-action="navigate" data-router-value="asset-library">Back to assets</button>
-                        </div>
-                    </div>
-                    <div class="page-content">
-                        <div class="asm-discover-context" id="asset-discover-context" role="status"></div>
-                        <div class="info-collect-panel">
-                            <div class="info-collect-form">
-                                <div class="info-collect-form-top">
-                                    <div class="info-collect-provider-card form-group">
-                                        <div class="info-collect-step-title">
-                                            <label for="fofa-provider">Data source</label>
-                                        </div>
-                                        <select id="fofa-provider"  data-assets-change="info.provider-change">
-                                            <option value="fofa">FOFA</option>
-                                            <option value="zoomeye">ZoomEye</option>
-                                            <option value="quake">Quake</option>
-                                            <option value="shodan">Shodan</option>
-                                        </select>
-                                        <small class="form-hint">Supports FOFA, ZoomEye, Quake and Shodan; API keys can be configured in Settings or via environment variables.</small>
-                                    </div>
-                                    <div class="info-collect-query-card form-group">
-                                        <div class="info-collect-step-title">
-                                            <div>Search for assets</div>
-                                        </div>
-                                        <details class="asm-query-assistant"><summary>Build a query with AI</summary><div id="info-collect-natural-panel" class="info-collect-query-mode-panel info-collect-natural-panel">
-                                            <label for="fofa-nl" id="info-collect-nl-label" class="info-collect-inner-label">Natural language (optional; AI parses it into query syntax)</label>
-                                            <div class="info-collect-nl-row">
-                                                <textarea id="fofa-nl" class="info-collect-query-input" rows="1" placeholder="e.g. find Apache sites in China"></textarea>
-                                                <button id="fofa-nl-parse-btn" class="btn-secondary" type="button"  data-i18n="infoCollectPage.parseBtn" data-i18n-attr="title" data-i18n-title="infoCollectPage.parseBtnTitle" title="AI parse" data-assets-click="info.parse">AI parse</button>
-                                            </div>
-                                            <div id="fofa-nl-status" class="fofa-nl-status muted" style="display: none;" aria-live="polite"></div>
-                                            <small class="form-hint" id="info-collect-parse-hint">After parsing, a dialog shows the provider's syntax (editable); confirm it, then fill it into the query box and run the search.</small>
-                                        </div></details>
-                                        <div id="info-collect-syntax-panel" class="info-collect-query-mode-panel is-active">
-                                            <label for="fofa-query" id="info-collect-query-label" class="info-collect-inner-label">Query syntax (editable, query directly)</label>
-                                            <div class="info-collect-query-row">
-                                                <textarea id="fofa-query" class="info-collect-query-input" rows="1" placeholder='e.g. app="Apache" && country="CN"'></textarea>
-                                                <button id="fofa-query-submit-btn" class="btn-primary" data-require-permission="fofa:execute" type="button"  data-assets-click="info.search">Search</button>
-                                            </div>
-                                            <small class="form-hint" id="info-collect-query-hint">The syntax hint for the selected data source appears here.</small>
-                                            <div class="info-collect-presets" id="info-collect-query-presets" aria-label="Query examples"></div>
-                                            <div class="info-collect-syntax-guide" id="info-collect-syntax-guide" hidden></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <details class="asm-discovery-options"><summary>Advanced search options</summary><div class="info-collect-options-card">
-                                    <div class="info-collect-step-title">
-                                        <div>Result options</div>
-                                    </div>
-                                    <div class="info-collect-form-row">
-                                        <div class="form-group">
-                                            <label for="fofa-size" data-i18n="infoCollectPage.returnCount">Return count</label>
-                                            <input type="number" id="fofa-size" min="1" max="10000" value="100" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="fofa-page" data-i18n="infoCollectPage.pageNum">Page</label>
-                                            <input type="number" id="fofa-page" min="1" value="1" />
-                                        </div>
-                                        <div class="form-group" id="info-collect-full-option">
-                                            <label class="checkbox-label">
-                                                <input type="checkbox" id="fofa-full" class="modern-checkbox" />
-                                                <span class="checkbox-custom"></span>
-                                                <span class="checkbox-text" data-i18n="infoCollectPage.fullLabel">full</span>
-                                            </label>
-                                        </div>
-                                        <small class="form-hint info-collect-row-hint" id="info-collect-size-hint">Per-request result limits differ across providers.</small>
-                                    </div>
-                                </div>
-                                <div class="info-collect-fields-card form-group">
-                                    <div class="info-collect-step-title">
-                                        <label for="fofa-fields" data-i18n="infoCollectPage.returnFields">Return fields (comma-separated)</label>
-                                    </div>
-                                    <input type="text" id="fofa-fields" value="host,ip,port,domain,title,protocol,country,region,city,server" />
-                                    <div class="info-collect-presets" id="info-collect-fields-presets" aria-label="Field templates"></div>
-                                </div></details>
-                            </div>
-                        </div>
-
-                        <div class="info-collect-results">
-                            <div class="info-collect-results-header">
-                                <div class="info-collect-results-header-left">
-                                    <div class="info-collect-results-title" data-i18n="infoCollectPage.queryResults">Review &amp; import</div>
-                                    <div class="info-collect-results-meta" id="fofa-results-meta">-</div>
-                                </div>
-                                <div class="info-collect-results-toolbar" aria-label="Results toolbar" data-i18n="infoCollectPage.resultsToolbarAria" data-i18n-attr="aria-label" data-i18n-skip-text="true">
-                                    <div class="info-collect-selected" id="fofa-selected-meta" data-i18n="infoCollectPage.selectedRowsZero">0 rows selected</div>
-                                    <button class="btn-secondary btn-small" type="button"  data-i18n="infoCollectPage.showHideColumns" data-i18n-attr="title" title="Show/hide columns" data-assets-click="info.columns"><span data-i18n="infoCollectPage.columns">Show/hide columns</span></button>
-                                    <button class="btn-secondary btn-small" type="button" data-require-permission="fofa:execute"  data-i18n="infoCollectPage.exportCsvTitle" data-i18n-attr="title" title="Export results as CSV (UTF-8)" data-assets-click="info.export-csv"><span data-i18n="infoCollectPage.exportCsv">Export CSV</span></button>
-                                    <button class="btn-secondary btn-small" type="button" data-require-permission="fofa:execute"  data-i18n="infoCollectPage.exportJsonTitle" data-i18n-attr="title" title="Export results as JSON" data-assets-click="info.export-json"><span data-i18n="infoCollectPage.exportJson">Export results as JSON JSON</span></button>
-                                    <button class="btn-secondary btn-small" type="button" data-require-permission="fofa:execute"  data-i18n="infoCollectPage.exportXlsxTitle" data-i18n-attr="title" title="Export results as Excel" data-assets-click="info.export-xlsx"><span data-i18n="infoCollectPage.exportXlsx">Export XLSX</span></button>
-                                    <button id="asset-discover-import" class="btn-primary btn-small" data-require-permission="asset:write" type="button" data-i18n="assets.importSelected" data-assets-click="info.import-selected" disabled>Import selected</button>
-                                    <button id="asset-discover-scan" class="btn-secondary btn-small" data-require-permission="fofa:execute" data-i18n="infoCollectPage.batchScanTitle" data-i18n-attr="title" title="Create batch task queue from selected rows" data-assets-click="info.batch-scan" disabled>Scan selected</button>
-                                </div>
-                            </div>
-                            <div class="info-collect-results-table-wrap">
-                                <!-- Column show/hide panel -->
-                                <div id="fofa-columns-panel" class="info-collect-columns-panel" style="display: none;">
-                                    <div class="info-collect-columns-panel-header">
-                                        <div class="info-collect-columns-title" data-i18n="infoCollectPage.showColumns">Show columns</div>
-                                        <div class="info-collect-columns-actions">
-                                            <button class="btn-secondary btn-small" type="button"  data-i18n="infoCollectPage.columnsPanelAll" data-assets-click="info.columns-all">Select all</button>
-                                            <button class="btn-secondary btn-small" type="button"  data-i18n="infoCollectPage.columnsPanelNone" data-assets-click="info.columns-none">Deselect all</button>
-                                            <button class="btn-secondary btn-small" type="button"  data-i18n="infoCollectPage.columnsPanelClose" data-assets-click="info.columns-close">Close</button>
-                                        </div>
-                                    </div>
-                                    <div id="fofa-columns-list" class="info-collect-columns-list"></div>
-                                </div>
-                                <table class="info-collect-table">
-                                    <thead id="fofa-results-thead"></thead>
-                                    <tbody id="fofa-results-tbody">
-                                        <tr><td class="muted" style="padding: 16px;" data-i18n="common.noData">No data</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

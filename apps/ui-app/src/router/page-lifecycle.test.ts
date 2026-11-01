@@ -15,7 +15,7 @@ describe('page lifecycle orchestration', () => {
       stopTokenUsageRequests: hook('stop-token'),
       refreshDashboard: hook('dashboard'), prefetchProjectsForChat: hook('prefetch'), refreshChatProjectSelector: hook('selector'),
       loadToolGuardConfig: hook('tool-guard'), refreshHitlActivePanel: hook('hitl-active'), refreshHitlPending: hook('hitl-fallback'),
-      initInfoCollectPage: hook('collect'), loadAssetOverview: hook('overview'), loadAssets: hook('assets'), initTasksPage: hook('tasks'),
+      loadAssetOverview: hook('overview'), loadAssets: hook('assets'), initTasksPage: hook('tasks'),
       refreshMonitorPanel: hook('monitor'), startMonitorPoll: hook('monitor-poll'), initProjectsPage: hook('projects'),
       initVulnerabilityPage: hook('vulns'), initWebshellPage: hook('webshell'), initChatFilesPage: hook('files'),
       refreshWorkflows: hook('workflows'), loadSkillsMonitor: hook('skills-monitor'),
@@ -26,7 +26,7 @@ describe('page lifecycle orchestration', () => {
     const lifecycle = createPageLifecycle(root, deps);
     const cases: [PageId, string[]][] = [
       ['dashboard', ['dashboard']], ['chat', ['prefetch', 'selector']], ['tool-guard', ['tool-guard']], ['hitl', ['hitl-active']],
-      ['info-collect', ['collect']], ['asset-overview', ['overview']], ['asset-library', ['assets']], ['tasks', ['tasks']],
+      ['asset-overview', ['overview']], ['asset-management', ['assets']], ['tasks', ['tasks']],
       ['mcp-monitor', ['monitor', 'monitor-poll']], ['projects', ['projects']], ['vulnerabilities', ['vulns']], ['webshell', ['webshell']],
       ['chat-files', ['files']], ['workflows', ['workflows']], ['skills-monitor', ['skills-monitor']],
       ['skills-management', ['skills-pages', 'skills']],

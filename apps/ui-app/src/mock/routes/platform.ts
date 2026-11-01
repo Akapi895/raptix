@@ -866,8 +866,6 @@ export function registerPlatform(M: MockRuntime): void {
   M.route('GET', '/api/files', function () { return M.ok({ files: uploadStore().files }); });
   M.route('POST', '/api/files/upload', function () { return M.ok({ ok: true }); });
 
-  M.route('GET', '/api/info-collect', function () { return M.ok({ items: [] }); });
-
   M.route('GET', '/api/conversations/:id/attack-chain', function () { return M.ok({ nodes: [], edges: [] }); });
 
   M.route('GET', '/api/events', function () { return M.ok({ events: [] }); });
