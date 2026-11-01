@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { UnconfiguredC2Client, type C2Transport } from "../../adapters/c2/client.js";
 import type { AppConfigStore } from "../../db/app-config-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
@@ -6,6 +7,7 @@ import { createRequireSession } from "../plugins/auth-guard.js";
 export interface ConfigRoutesOptions {
   authStore: AuthStore;
   appConfigStore: AppConfigStore;
+  c2: C2Transport;
   fetchImpl?: typeof fetch;
 }
 
@@ -80,7 +82,8 @@ export function registerConfigRoutes(app: FastifyInstance, options: ConfigRoutes
 
   app.get("/api/config", { preHandler: requireSession }, async () => {
     const config = await appConfigStore.get(CONFIG_KEY);
-    return config ?? {};
+    // apps/ui-app's sidebar hides the C2 nav entirely unless this reflects a real, configured C2 bridge (RAPTIX_SLIVER_BRIDGE_URL/TOKEN) -- never fabricated.
+    return { ...(config ?? {}), c2: { enabled: !(options.c2 instanceof UnconfiguredC2Client) } };
   });
 
   app.post("/api/config", { preHandler: requireSession }, async (request: FastifyRequest) => {
