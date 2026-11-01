@@ -178,13 +178,32 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
     },
   );
 
+  app.get<{ Querystring: { conversationId?: string } }>(
+    "/api/agent-loop/task-events",
+    { preHandler: requireSession },
+    async (request, reply) => {
+      const conversationId = asString(request.query.conversationId);
+      if (!conversationId) return reply.code(400).send({ error: "conversationId is required" });
+      const conversation = await conversationStore.findById(conversationId);
+      if (!conversation) return reply.code(404).send({ error: "Conversation not found" });
+      const runs = await runtime.listRuns(conversation.runtimeThreadId, 0, 5);
+      const active = runs.find((run) => !TERMINAL_STATUSES.has(run.status));
+      if (!active) return reply.code(404).send({ error: "No active run for this conversation" });
+
+      const output = new PassThrough();
+      reply.header("content-type", "text/event-stream; charset=utf-8").header("cache-control", "no-cache, no-transform").header("x-accel-buffering", "no");
+      const pump = joinReply(output, runtime, conversation.id, conversation.runtimeThreadId, active.runId);
+      pump.catch(() => { request.log.error("Task-event join delivery failed"); output.destroy(); });
+      return reply.send(output);
+    },
+  );
+
   // Explicit multi-agent dispatch has no clean Raptix equivalent: subagent dispatch
   // already happens automatically within a single run (intelligence/agents), there is no separate
   // "invoke N agents explicitly" endpoint to map onto.
   for (const [method, path] of [
     ["POST", "/api/multi-agent"],
     ["POST", "/api/multi-agent/stream"],
-    ["GET", "/api/agent-loop/task-events"],
   ] as const) {
     app.route({ method, url: path, preHandler: requireSession, handler: notImplementedForThisDeployment });
   }
@@ -258,6 +277,33 @@ async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions,
     await emit("done", "", { status: "success" });
   } catch (error) {
     await emit("error", error instanceof RuntimeUnavailableError ? error.message : "Unable to complete the agent turn", { retryable: false });
+    await emit("done", "", { status: "failed" });
+  } finally {
+    clearInterval(heartbeat);
+    output.end();
+  }
+}
+
+/**
+ * Reattaches to a run already started by `streamReply` (e.g. the browser
+ * left the conversation and came back). Only observes -- the original
+ * `streamReply` call is still the one driving the run and persisting its
+ * answer (a detached browser never cancels the run, see `writeEvent`), so
+ * this never creates, cancels or saves anything; it just re-projects events
+ * for whoever is watching now.
+ */
+async function joinReply(output: PassThrough, runtime: RuntimeTransport, conversationId: string, threadId: string, runId: string): Promise<void> {
+  const emit = (type: string, text = "", data: Record<string, unknown> = {}) => writeEvent(output, type, text, { ...data, conversationId });
+  const heartbeat = setInterval(() => { if (!output.destroyed && output.writableLength === 0) output.write(": heartbeat\n\n"); }, 15_000);
+  try {
+    const seen = new Set<string>();
+    for await (const event of runtime.joinRun(threadId, runId, AbortSignal.timeout(30 * 60_000))) {
+      await projectRuntimeEvent(event, emit, seen);
+    }
+    const run = await runtime.getRun(threadId, runId);
+    await emit("done", "", { status: run.status === "success" ? "success" : run.status === "interrupted" ? "cancelled" : "failed" });
+  } catch (error) {
+    await emit("error", error instanceof RuntimeUnavailableError ? error.message : "Lost the connection to the running agent", { retryable: false });
     await emit("done", "", { status: "failed" });
   } finally {
     clearInterval(heartbeat);

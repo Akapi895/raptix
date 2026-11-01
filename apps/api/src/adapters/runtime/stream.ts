@@ -38,6 +38,13 @@ export async function* readRuntimeEvents(body: ReadableStream<Uint8Array>): Asyn
   }
 }
 
+function assertStreamResponse(response: Response): asserts response is Response & { body: ReadableStream<Uint8Array> } {
+  if ([400, 404, 409, 422].includes(response.status)) throw new RuntimeRejectedError(response.status === 422 ? 400 : response.status);
+  if (!response.ok || !response.body || !response.headers.get("content-type")?.includes("text/event-stream")) {
+    throw new RuntimeUnavailableError("Runtime stream unavailable");
+  }
+}
+
 export async function* streamRuntimeRun(url: string, token: string | undefined, body: unknown, signal: AbortSignal): AsyncGenerator<RuntimeEvent> {
   try {
     const response = await fetch(url, {
@@ -45,10 +52,28 @@ export async function* streamRuntimeRun(url: string, token: string | undefined, 
       headers: { "content-type": "application/json", accept: "text/event-stream", ...(token ? { authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(body),
     });
-    if ([400, 404, 409, 422].includes(response.status)) throw new RuntimeRejectedError(response.status === 422 ? 400 : response.status);
-    if (!response.ok || !response.body || !response.headers.get("content-type")?.includes("text/event-stream")) {
-      throw new RuntimeUnavailableError("Runtime stream unavailable");
-    }
+    assertStreamResponse(response);
+    yield* readRuntimeEvents(response.body);
+  } catch (error) {
+    if (error instanceof RuntimeRejectedError || error instanceof RuntimeUnavailableError) throw error;
+    throw new RuntimeUnavailableError("Runtime stream disconnected or malformed");
+  }
+}
+
+/**
+ * Joins the event stream of a run that already exists (LangGraph's
+ * `GET .../runs/:runId/stream`), instead of creating a new one. Used to
+ * reattach after the browser was away from a conversation while its run kept
+ * executing server-side (`on_disconnect: "continue"` -- see `createRun`'s
+ * caller) -- this only re-subscribes, it never starts or cancels anything.
+ */
+export async function* joinRuntimeRun(url: string, token: string | undefined, signal: AbortSignal): AsyncGenerator<RuntimeEvent> {
+  try {
+    const response = await fetch(url, {
+      method: "GET", redirect: "error", signal,
+      headers: { accept: "text/event-stream", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    });
+    assertStreamResponse(response);
     yield* readRuntimeEvents(response.body);
   } catch (error) {
     if (error instanceof RuntimeRejectedError || error instanceof RuntimeUnavailableError) throw error;
