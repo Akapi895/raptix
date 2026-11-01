@@ -80,8 +80,10 @@ demo.tape
 .raptix/
 .dogfood/
 workspace/
-# Source folder of the C2 workspace view; the rule above is for runtime data only.
-!apps/web/src/features/c2/workspace/
+# Source folder of the chat workspace panel (Agents/Progress sidebar); the rule
+# above is for runtime data only. apps/web (the pre-ADR-0106 product this
+# exception used to point at) is retired and no longer exists on disk.
+!apps/ui-app/src/features/chat/workspace/
 .bg-shell/
 # Root-level runtime outputs (W1: never source-of-truth, never committed)
 /run/
