@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildAuthedTestApp } from "../support/build-test-app.js";
+import { FakeKnowledgeGraph } from "../support/fake-knowledge-graph.js";
 
 describe("asset routes", () => {
   let app: FastifyInstance;
@@ -174,5 +175,42 @@ describe("asset routes", () => {
     });
     expect(unknown.statusCode).toBe(400);
     expect(unknown.json().error).toContain("nope");
+  });
+
+  it("GET syncs real Host/Service nodes from the knowledge graph instead of staying empty", async () => {
+    const { app: scopedApp, token: scopedToken, options } = await buildAuthedTestApp();
+    const scopedAuth = { authorization: `Bearer ${scopedToken}` };
+    const project = await scopedApp.inject({ method: "POST", url: "/api/projects", headers: scopedAuth, payload: { name: "MonitorsTwo" } });
+    const projectId = project.json().id as string;
+    const record = await options.projectStore.findById(projectId);
+    const kg = options.knowledgeGraph as FakeKnowledgeGraph;
+    kg.hostsByEngagement.set(record!.workspaceSlug, [
+      {
+        host: "10.129.228.231",
+        ip: "10.129.228.231",
+        services: [
+          { port: 80, protocol: "tcp", service: "http", banner: "nginx/1.18.0 (Ubuntu)", status: "open" },
+          { port: 22, protocol: "tcp", service: "ssh", banner: "OpenSSH 8.2p1", status: "open" },
+        ],
+      },
+      { host: "50bca5e748b0", ip: "", services: [] },
+    ]);
+
+    const list = await scopedApp.inject({ method: "GET", url: `/api/assets?project_id=${projectId}`, headers: scopedAuth });
+    expect(kg.queries).toEqual([record!.workspaceSlug]);
+    const body = list.json();
+    expect(body.total).toBe(2);
+    expect(body.assets.find((asset: { host: string }) => asset.host === "10.129.228.231")).toMatchObject({
+      ip: "10.129.228.231",
+      port: 22,
+      protocol: "tcp",
+      title: "ssh, http",
+    });
+    expect(body.assets.find((asset: { host: string }) => asset.host === "50bca5e748b0")).toMatchObject({ port: 0 });
+
+    // Re-syncing never duplicates -- same two hosts, not four.
+    const second = await scopedApp.inject({ method: "GET", url: `/api/assets?project_id=${projectId}`, headers: scopedAuth });
+    expect(second.json().total).toBe(2);
+    await scopedApp.close();
   });
 });

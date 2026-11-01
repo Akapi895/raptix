@@ -52,6 +52,7 @@ import { registerProjectRoutes } from "./http/routes/projects.routes.js";
 import { registerRolesRoutes } from "./http/routes/roles.routes.js";
 import { registerSkillsRoutes } from "./http/routes/skills.routes.js";
 import type { SkillsCorpus } from "./adapters/skills/corpus.js";
+import type { KnowledgeGraph } from "./adapters/knowledge-graph/client.js";
 import { registerStorageRoutes } from "./http/routes/storage.routes.js";
 import { registerTerminalRoutes } from "./http/routes/terminal.routes.js";
 import { registerToolGuardRoutes } from "./http/routes/tool-guard.routes.js";
@@ -89,6 +90,7 @@ export interface BuildAppOptions {
   markdownAgentStore: MarkdownAgentStore;
   workflowStore: WorkflowStore;
   skillsCorpus: SkillsCorpus;
+  knowledgeGraph: KnowledgeGraph;
   openApiSpecPath?: string;
   agentSyncWaitMs?: number;
   defaultAssistantId?: string;
@@ -140,7 +142,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     defaultAssistantId: options.defaultAssistantId,
   });
   registerHitlRoutes(app, { authStore: options.authStore, projectStore: options.projectStore, sandbox: options.sandbox });
-  registerAssetRoutes(app, { authStore: options.authStore, assetStore: options.assetStore });
+  registerAssetRoutes(app, { authStore: options.authStore, assetStore: options.assetStore, projectStore: options.projectStore, knowledgeGraph: options.knowledgeGraph });
   registerVulnerabilityRoutes(app, {
     authStore: options.authStore,
     vulnerabilityStore: options.vulnerabilityStore,

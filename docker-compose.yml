@@ -180,6 +180,9 @@ services:
       - ZOOMEYE_API_KEY=${ZOOMEYE_API_KEY:-}
       - QUAKE_API_KEY=${QUAKE_API_KEY:-}
       - SHODAN_API_KEY=${SHODAN_API_KEY:-}
+      - RAPTIX_NEO4J_URI=bolt://neo4j:7687
+      - RAPTIX_NEO4J_USER=neo4j
+      - RAPTIX_NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
     ports:
       - "127.0.0.1:${API_PORT:-8080}:8080"
     volumes:

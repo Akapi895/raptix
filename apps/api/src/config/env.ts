@@ -22,6 +22,9 @@ export interface ApiEnv {
   operatorPassword: string | undefined;
   sessionDurationHours: number;
   skillsCorpusDir: string | undefined;
+  neo4jUri: string | undefined;
+  neo4jUser: string | undefined;
+  neo4jPassword: string | undefined;
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv): ApiEnv {
@@ -59,5 +62,8 @@ export function loadEnv(source: NodeJS.ProcessEnv): ApiEnv {
     operatorPassword: source.RAPTIX_API_OPERATOR_PASSWORD,
     sessionDurationHours,
     skillsCorpusDir: source.RAPTIX_SKILLS_CORPUS_DIR,
+    neo4jUri: source.RAPTIX_NEO4J_URI,
+    neo4jUser: source.RAPTIX_NEO4J_USER,
+    neo4jPassword: source.RAPTIX_NEO4J_PASSWORD,
   };
 }
