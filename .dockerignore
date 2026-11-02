@@ -3,6 +3,10 @@
 **/.next
 **/dist
 **/build
+!apps/ui-app/build
+!apps/ui-app/build/**
+**/dist-demo
+**/test-results
 **/*.tsbuildinfo
 
 # ── Version control ──────────────────────────────────────────
@@ -21,6 +25,8 @@
 .env
 .env.local
 .env.*.local
+**/.env
+**/.env.*
 .venv
 .raptix
 *.pem
