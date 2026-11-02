@@ -17,6 +17,25 @@ npm run dev -- --mode demo
 
 Development in demo mode and `build:demo` use the local demo API. `npm run dev` uses the configured API unless `VITE_MOCK=1` is set. `npm run build` produces `dist/`; demo output is separate in `dist-demo/`. See `.env.example` for the HTTP base and development proxy. Some realtime and legacy requests use same-origin paths; see the audit before moving the package.
 
+## Docker
+
+From the repository root, build and start the production UI against `apps/api`:
+
+```sh
+docker compose up -d --build ui
+```
+
+Open `http://127.0.0.1:5173/` (override the host port with `UI_PORT` in the
+root `.env`). Stop any Vite dev server using that port first. Nginx serves the
+compiled frontend and proxies `/api` to the API container, including SSE and
+WebSocket requests. The image does not include local `.env` files or use the
+development-only `API_PROXY_TARGET`.
+
+Once created, the UI container's `restart: unless-stopped` policy brings it
+back when Docker Desktop starts. No Windows Startup shortcut or host Node
+process is needed. After an explicit `docker compose stop` or `down`, run
+`docker compose up -d ui` to enable it again. Source changes need a rebuild.
+
 ## Verification
 
 From this directory:

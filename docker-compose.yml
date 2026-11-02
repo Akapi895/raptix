@@ -206,6 +206,33 @@ services:
     restart: unless-stopped
     logging: *default-logging
 
+  # Production frontend, served independently of the host's Node/Vite processes.
+  ui:
+    image: ghcr.io/akapi895/raptix-ui:${RAPTIX_VERSION:-stable}
+    build:
+      context: .
+      dockerfile: infra/containers/ui-app.Dockerfile
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-ui
+    ports:
+      - "127.0.0.1:${UI_PORT:-5173}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - raptix-net
+    user: nginx
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    pids_limit: 128
+    restart: unless-stopped
+    logging: *default-logging
+
   # Neo4j — Attack Chain Graph (the agent's persistent working memory)
   # On sandbox-net so cypher-shell from inside sandbox reaches bolt://neo4j:7687
   neo4j:
