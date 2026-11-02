@@ -2,7 +2,7 @@ import { projectsBrowser as browser } from '../../platform/projects-browser';
 import type { ProjectsContext } from './context';
 import type { Fact, FactInput } from './types';
 import { FACT_ATTACK_CHAIN_BODY_TEMPLATE, FACT_ENV_BODY_TEMPLATE, isSparseFactBody, requiresAttackChainFact } from './fact-body';
-import { formatProjectTime } from './dom';
+import { esc, formatProjectTime } from './dom';
 
 export function createProjectForms(ctx: ProjectsContext) {
   const { service, deps, dom } = ctx, { t, fmt } = dom;
@@ -124,7 +124,7 @@ export function createProjectForms(ctx: ProjectsContext) {
       const parts = [fmt('projects.factMetaCategory', `Category: ${fact.category}`, { value: fact.category }), fmt('projects.factMetaConfidence', `Confidence: ${fact.confidence}`, { value: fact.confidence }), fmt('projects.factMetaUpdated', `Updated: ${time}`, { time })];
       if (fact.related_vulnerability_id) parts.push(fmt('projects.factMetaRelatedVuln', `Related vulnerability: ${fact.related_vulnerability_id}`, { value: fact.related_vulnerability_id }));
       if (fact.source_conversation_id) parts.push(fmt('projects.factMetaSourceConversation', `Source conversation: ${fact.source_conversation_id}`, { value: fact.source_conversation_id }));
-      dom.text('fact-detail-meta', parts.join(' · ')); dom.text('fact-detail-body', fact.body || t('projects.emptyBody'));
+      dom.html('fact-detail-meta', `${esc(parts.join(' · '))}${fact.source_conversation_id ? ` <button type="button" class="btn-secondary btn-small" data-action="projects.open-conversation" data-id="${esc(fact.source_conversation_id)}">Open source conversation</button>` : ''}${fact.related_vulnerability_id ? ` <button type="button" class="btn-secondary btn-small" data-action="projects.open-vulnerability" data-id="${esc(fact.related_vulnerability_id)}">Open vulnerability</button>` : ''}`); dom.text('fact-detail-body', fact.body || t('projects.emptyBody'));
       const sparse = isSparseFactBody(fact.category, fact.fact_key, fact.body); dom.hidden('fact-detail-sparse-warn', !sparse); dom.text('fact-detail-sparse-warn', sparse ? t('projects.factSparseWarn') : '');
       dom.hidden('fact-detail-link-vuln-btn', false); dom.hidden('fact-detail-create-vuln-btn', false);
     });

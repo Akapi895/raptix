@@ -15,14 +15,19 @@ export function parseRoute(hash: string): Route | null {
   if (page === 'operation-center') page = 'projects';
   if (page === 'agents-management') page = 'roles-management';
   if (page === 'asset-overview' || page === 'assets' || page === 'asset-library') page = 'asset-management';
-  if (page === 'chat-files') page = 'file-management';
+  if (page === 'chat-files' || page === 'files') page = 'file-management';
+  if (page === 'mcp') page = 'mcp-management';
+  if (page === 'webshell-management') page = 'webshell';
+  if (page === 'system-settings') page = 'settings';
+  if (page === 'settings' && (query.get('section') === 'rbac' || query.get('section') === 'update')) return { page: 'dashboard', query: new URLSearchParams() };
   if (page === 'tasks') { page = 'workflows'; query.set('tab', 'schedule'); }
   return isPageId(page) ? { page, query } : null;
 }
 export function routeHash(route: Route): string {
   const query = route.query.toString();
-  // Keep the projects feature ID stable while exposing its user-facing route.
-  const page = route.page === 'projects' ? 'operation-center' : route.page;
+  // Feature IDs remain stable while URLs use concise public names.
+  const publicNames: Partial<Record<PageId, string>> = { projects: 'operation-center', 'asset-management': 'assets', 'file-management': 'files' };
+  const page = publicNames[route.page] ?? route.page;
   return page + (query ? '?' + query : '');
 }
 export interface RouterPort {
@@ -62,6 +67,11 @@ export function createRouter(port: RouterPort) {
       if (['c2-tasks', 'c2-events', 'c2-profiles', 'c2'].includes(page)) { const route = parseRoute(page + (query ? '?' + new URLSearchParams(query) : '')); if (route) commit(route, 'replace'); return; }
       if (page === 'tasks') { commit({ page: 'workflows', query: new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(query)), tab: 'schedule' }) }, 'replace'); return; }
       if (page === 'asset-overview') page = 'asset-management';
+      if (page === 'assets') page = 'asset-management';
+      if (page === 'files') page = 'file-management';
+      if (page === 'mcp') page = 'mcp-management';
+      if (page === 'webshell-management') page = 'webshell';
+      if (page === 'system-settings') page = 'settings';
       if (!isPageId(page)) return;
       // Classic feature callbacks may have updated their query without hashchange.
       const location = parseRoute(port.readHash());

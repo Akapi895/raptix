@@ -28,6 +28,7 @@ export function createProjectTables(ctx: ProjectsContext) {
     if (dom.checked('project-facts-filter-hide-deprecated')) query.exclude_deprecated = true;
     try {
       const facts = await service.api.facts(id, query); if (seq !== factsSequence || id !== service.state.selectedId) return;
+      dom.el('project-facts-tbody')?.closest('.projects-table-wrap')?.classList.toggle('operation-empty', !facts.length);
       if (!facts.length) { dom.empty('project-facts-tbody', 8, query.search || query.category || query.confidence || query.sparse_only ? 'projects.noMatchingFacts' : 'projects.noFacts'); }
       else dom.html('project-facts-tbody', facts.map(fact => {
         const category = fact.category.trim().toLowerCase() || 'note', categoryClass = ['target', 'auth', 'infra', 'business', 'finding', 'chain', 'exploit', 'poc', 'note', 'vuln'].includes(category) ? category === 'vuln' ? 'exploit' : category : 'custom';
@@ -77,13 +78,14 @@ export function createProjectTables(ctx: ProjectsContext) {
   }
   function openProjectConversation(id: string) { if (!id) return; deps.navigate('chat'); setTimeout(() => ctx.run(() => deps.loadConversation(id)), 200); }
   async function loadProjectConversations() {
-    const id = service.state.selectedId, seq = ++conversationsSequence; if (!id || !dom.el('project-conversations-tbody')) return;
-    dom.empty('project-conversations-tbody', 3, 'common.loading');
+    const id = service.state.selectedId, seq = ++conversationsSequence; if (!id || !dom.el('project-conversations-list')) return;
+    dom.text('project-conversations-list', t('common.loading'));
     try {
       const data = await service.api.conversations(id); if (seq !== conversationsSequence || id !== service.state.selectedId) return;
-      if (!data.conversations.length) return dom.empty('project-conversations-tbody', 3, 'projects.noBoundConversations');
-      dom.html('project-conversations-tbody', data.conversations.map(item => `<tr><td class="cell-summary" title="${esc(item.title || t('projects.untitledConversation'))}">${esc(item.title || t('projects.untitledConversation'))}</td><td>${esc(formatProjectTime(t, item.updatedAt || item.updated_at, item.createdAt || item.created_at))}</td><td class="col-actions"><div class="projects-table-actions">${button('open-conversation', t('projects.open'), `data-id="${esc(item.id)}"`)}${button('promote-conversation', t('projects.promoteAttackChain'), `data-id="${esc(item.id)}"`, '', t('projects.promoteAttackChainTitle'))}${button('unbind-conversation', t('projects.unbind'), `data-id="${esc(item.id)}"`, 'mute', t('projects.unbindProjectTitle'))}</div></td></tr>`).join(''));
-    } catch (error) { if (seq === conversationsSequence && id === service.state.selectedId) dom.empty('project-conversations-tbody', 3, 'common.loadFailed'); throw error; }
+      if (!data.conversations.length) return dom.text('project-conversations-list', t('projects.noBoundConversations'));
+      dom.html('project-conversations-list', data.conversations.map(item => `<article class="operation-conversation"><div><h4>${button('open-conversation', item.title || t('projects.untitledConversation'), `data-id="${esc(item.id)}"`)}</h4><p>${esc(formatProjectTime(t, item.updatedAt || item.updated_at, item.createdAt || item.created_at))}${item.roleName || item.role_name ? ` · ${esc(item.roleName || item.role_name || '')}` : ''}${item.agent_mode ? ` · ${esc(item.agent_mode)}` : ''}</p></div><div class="projects-table-actions">${button('open-conversation', t('projects.open'), `data-id="${esc(item.id)}"`)}${button('promote-conversation', t('projects.promoteAttackChain'), `data-id="${esc(item.id)}" data-require-permission="project:write"`, '', t('projects.promoteAttackChainTitle'))}${button('unbind-conversation', t('projects.unbind'), `data-id="${esc(item.id)}"`, 'mute', t('projects.unbindProjectTitle'))}</div></article>`).join(''));
+      const root = dom.el('project-conversations-list'); if (root) deps.applyRBAC(root);
+    } catch (error) { if (seq === conversationsSequence && id === service.state.selectedId) dom.text('project-conversations-list', t('common.loadFailed')); throw error; }
   }
   async function promoteConversationAttackChain(id: string) {
     if (!deps.requirePermission('project:write') || !browser.confirm(t('projects.confirmPromoteAttackChain'))) return;

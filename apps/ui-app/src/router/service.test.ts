@@ -16,6 +16,21 @@ function fixture(hash = '', canActivate?: RouterPort['canActivate']) {
 }
 
 describe('typed router', () => {
+  it('canonicalizes old and new feature URLs while preserving queries and navigation', () => {
+    for (const [oldPage, publicPage, internalPage] of [
+      ['asset-management', 'assets', 'asset-management'],
+      ['file-management', 'files', 'file-management'],
+      ['mcp', 'mcp-management', 'mcp-management'],
+      ['webshell-management', 'webshell', 'webshell'],
+      ['system-settings', 'settings', 'settings'],
+    ] as const) {
+      const f = fixture(`#/${oldPage}?project_id=p1`); f.router.start();
+      expect(f.hash()).toBe(`#${publicPage}?project_id=p1`);
+      expect(f.router.page()).toBe(internalPage);
+      f.router.go('dashboard'); f.router.go(publicPage, { project_id: 'p2' });
+      expect(f.hash()).toBe(`#${publicPage}?project_id=p2`);
+    }
+  });
   it('parses every legacy page, aliases, slash hashes and query values containing ?', () => {
     const aliases: Record<string, string> = { 'asset-overview': 'asset-management', tasks: 'workflows', 'c2-tasks': 'c2-activity', 'c2-events': 'c2-activity', 'c2-profiles': 'c2-listeners' };
     for (const page of pageIds) expect(parseRoute('#/' + page)?.page).toBe(aliases[page] || page);

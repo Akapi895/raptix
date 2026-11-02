@@ -302,7 +302,7 @@ export function createRolesView(deps: RolesViewDeps) {
     const plan = await editor.planSave(isDefault, isFirstUserRole);
     if (plan.firstRoleDefault) deps.notify(t('roleModal.firstRoleNoToolsHint', 'The first agent with no tools selected will use all tools by default.'), 'info');
     if (plan.disabledNames.length > 0) {
-      const message = `The following ${plan.disabledNames.length} tools are not enabled in MCP Management and cannot be configured for the agent:\n\n${plan.disabledNames.join(', ')}\n\nEnable them in "MCP Management" first, then configure them for the agent.\n\nSave anyway? (Only enabled tools will be saved)`;
+      const message = `The following ${plan.disabledNames.length} tools are not enabled in MCP and cannot be configured for the agent:\n\n${plan.disabledNames.join(', ')}\n\nEnable them in "MCP" first, then configure them for the agent.\n\nSave anyway? (Only enabled tools will be saved)`;
       if (!deps.confirm(message)) return;
     }
     saving = true;
@@ -313,7 +313,7 @@ export function createRolesView(deps: RolesViewDeps) {
       if (plan.disabledNames.length > 0) {
         let names = plan.disabledNames.join(', ');
         if (names.length > 100) names = names.substring(0, 100) + '...';
-        deps.notify(`${isEdit ? 'Agent updated' : 'Agent created'}, but ${plan.disabledNames.length} tools not enabled in MCP Management were filtered out: ${names}. Enable them in "MCP Management" first, then configure them for the agent.`, 'warning');
+        deps.notify(`${isEdit ? 'Agent updated' : 'Agent created'}, but ${plan.disabledNames.length} tools not enabled in MCP were filtered out: ${names}. Enable them in "MCP" first, then configure them for the agent.`, 'warning');
       } else {
         deps.notify(isEdit ? 'Agent updated' : 'Agent created', 'success');
       }
@@ -365,11 +365,11 @@ export function createRolesView(deps: RolesViewDeps) {
     const pageRow = `<div class="role-tools-stats-row"><span title="${escapeAttr(t('roleModal.statsPageLinkedTitle', 'Checked = link tool to this agent; unrelated to MCP on/off'))}">${escapeHtml(t('roleModal.statsPageLinked', `Checked on this page ${stats.pageChecked} / ${stats.pageTotal}`, { current: stats.pageChecked, total: stats.pageTotal }))}</span></div>`;
     const hint = `<div class="role-tools-stats-hint">${escapeHtml(scopeLine())}</div>`;
     if (stats.usesAllTools) {
-      statsEl.innerHTML = `${pageRow}<div class="role-tools-stats-row"><span title="${escapeAttr(t('roleModal.statsRoleUsesAllTitle', 'Matches MCP Management “enabled” count; no explicit tool list'))}">${escapeHtml(t('roleModal.statsRoleUsesAll', `Uses all tools (MCP on ${stats.mcpOnMax} / ${stats.grandAll} total)`, { mcpOn: stats.mcpOnMax, all: stats.grandAll }))}</span></div>${hint}`;
+      statsEl.innerHTML = `${pageRow}<div class="role-tools-stats-row"><span title="${escapeAttr(t('roleModal.statsRoleUsesAllTitle', 'Matches MCP “enabled” count; no explicit tool list'))}">${escapeHtml(t('roleModal.statsRoleUsesAll', `Uses all tools (MCP on ${stats.mcpOnMax} / ${stats.grandAll} total)`, { mcpOn: stats.mcpOnMax, all: stats.grandAll }))}</span></div>${hint}`;
       return;
     }
     const roleRow = stats.mcpOnMax > 0
-      ? `<span title="${escapeAttr(t('roleModal.statsRoleLinkedTitle', 'Numerator: checked tools (MCP on only). Denominator: MCP-on tool count (same as MCP Management filter)'))}">${escapeHtml(t('roleModal.statsRoleLinked', `Linked to this agent ${stats.roleLinked} / ${stats.mcpOnMax}`, { current: stats.roleLinked, max: stats.mcpOnMax }))}</span>`
+      ? `<span title="${escapeAttr(t('roleModal.statsRoleLinkedTitle', 'Numerator: checked tools (MCP on only). Denominator: MCP-on tool count (same as MCP filter)'))}">${escapeHtml(t('roleModal.statsRoleLinked', `Linked to this agent ${stats.roleLinked} / ${stats.mcpOnMax}`, { current: stats.roleLinked, max: stats.mcpOnMax }))}</span>`
       : `<span title="${escapeAttr(t('roleModal.statsRoleLinkedNoMaxTitle', 'MCP-on total not cached yet'))}">${escapeHtml(t('roleModal.statsRoleLinkedNoMax', `Linked to this agent ${stats.roleLinked}`, { current: stats.roleLinked }))}</span>`;
     statsEl.innerHTML = `${pageRow}<div class="role-tools-stats-row">${roleRow}</div>${hint}`;
   }
@@ -384,7 +384,7 @@ export function createRolesView(deps: RolesViewDeps) {
       ? `<span class="external-tool-badge" title="${escapeAttr(externalMcp ? `External MCP tool - source: ${externalMcp}` : 'External MCP tool')}">${escapeHtml(externalMcp ? `External (${externalMcp})` : 'External')}</span>`
       : '';
     const disabledBadge = tool.enabled === false
-      ? `<span class="role-tool-mcp-disabled-badge" title="${escapeAttr(t('roleModal.mcpDisabledBadgeTitle', 'Off in MCP Management; check only expresses agent linkage—turn on in MCP to run'))}">${escapeHtml(t('roleModal.mcpDisabledBadge', 'MCP off'))}</span>`
+      ? `<span class="role-tool-mcp-disabled-badge" title="${escapeAttr(t('roleModal.mcpDisabledBadgeTitle', 'Off in MCP; check only expresses agent linkage—turn on in MCP to run'))}">${escapeHtml(t('roleModal.mcpDisabledBadge', 'MCP off'))}</span>`
       : '';
     return `<div class="role-tool-item" data-tool-key="${escapeAttr(key)}" data-tool-name="${escapeAttr(tool.name)}" data-is-external="${isExternal ? 'true' : 'false'}" data-external-mcp="${escapeAttr(externalMcp)}">
       <input type="checkbox" id="role-tool-${escapeAttr(key).replace(/::/g, '--')}" ${state?.enabled ? 'checked' : ''} title="${title}" aria-label="${title}"

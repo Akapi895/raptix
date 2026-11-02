@@ -36,6 +36,8 @@ export function createProjectGraph(ctx: ProjectsContext) {
       const data = await service.loadGraph(dom.value('project-graph-view') || 'path', dom.checked('project-facts-filter-hide-deprecated'));
       if (!data) return;
       graph.render(container, data, { emptyText: t('projects.graphEmpty'), emptyTitle: t('projects.graphEmptyTitle'), emptySteps: [1, 2, 3].map(n => t(`projects.graphEmptyStep${n}`)), emptyActionLabel: t('projects.graphEmptyCta'), onEmptyAction: ctx.showNewFact, onNodeSelect: key => showNode(key), onEdgeSelect: focusProjectFactGraphEdge });
+      graph.filterBySearch(dom.value('project-graph-search')); graph.setConnectMode(connecting, key => ctx.run(() => handlePick(key)));
+      dom.html('project-graph-node-picker', `<option value="">Choose a fact…</option>${data.nodes.map(node => `<option value="${esc(node.fact_key || node.id)}">${esc(node.summary || node.fact_key || node.id)}</option>`).join('')}`);
       dom.html('project-fact-graph-stats', `<span class="projects-graph-stat-badge"><strong>${data.nodes.length}</strong> ${esc(t('projects.graphStatsNodes'))}</span><span class="projects-graph-stat-badge"><strong>${data.edges.length}</strong> ${esc(t('projects.graphStatsEdges'))}</span>`);
     } catch (error) { if (id === service.state.selectedId) { container.innerHTML = `<div class="error-message">${esc(error instanceof Error ? error.message : t('common.loadFailed'))}</div>`; dom.text('project-fact-graph-stats', ''); } }
   }
@@ -57,10 +59,10 @@ export function createProjectGraph(ctx: ProjectsContext) {
     if (synthetic(edge) || !deps.requirePermission('project:write') || !browser.confirm(t('projects.confirmDeleteGraphEdge'))) return;
     await service.api.deleteEdge(service.state.selectedId, id); deps.notify(t('projects.graphEdgeDeleteSuccess'), 'success'); const key = selectedKey; await loadProjectFactGraph(); if (key) showNode(key); await ctx.refreshFacts();
   }
-  return { graph, loadProjectFactGraph, closeProjectFactGraphSidebar, focusProjectFactGraphEdge, deleteProjectFactEdge, toggleProjectFactGraphConnectMode,
+  return { graph, loadProjectFactGraph, closeProjectFactGraphSidebar, focusProjectFactGraphEdge, deleteProjectFactEdge, toggleProjectFactGraphConnectMode, inspectNode: (key: string) => { if (key) { if (connecting) ctx.run(() => handlePick(key)); else showNode(key); } },
     filterProjectFactGraph: () => graph.filterBySearch(dom.value('project-graph-search')), centerProjectFactGraph: graph.center,
     openSelectedGraphFactDetail() { if (selectedKey.startsWith('vuln:')) ctx.openVulnerability(selectedKey.slice(5)); else if (selectedKey) ctx.run(() => ctx.showFact(selectedKey)); },
     editSelectedGraphFact() { if (selectedKey && !selectedKey.startsWith('vuln:')) ctx.run(() => ctx.showEditFact(selectedKey)); },
-    reset() { source = ''; closeProjectFactGraphSidebar(); graph.destroy(); }, dispose: graph.dispose,
+    reset() { if (connecting) toggleProjectFactGraphConnectMode(); source = ''; closeProjectFactGraphSidebar(); graph.destroy(); }, dispose: graph.dispose,
   };
 }

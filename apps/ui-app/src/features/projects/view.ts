@@ -11,7 +11,7 @@ import type { ProjectsContext } from './context';
 import type { ProjectsDependencies, ProjectTab } from './types';
 import type { ProjectsService } from './service';
 
-const tabs: ProjectTab[] = ['facts', 'graph', 'assets', 'conversations', 'vulns', 'settings'];
+const tabs: ProjectTab[] = ['facts', 'graph', 'conversations'];
 export function createProjectsView(document: Document, deps: ProjectsDependencies, service: ProjectsService) {
   const dom = createProjectsDom(document, deps.translate);
   let mounted = false, disposed = false;
@@ -35,17 +35,23 @@ export function createProjectsView(document: Document, deps: ProjectsDependencie
   const folders = createProjectFolders(ctx, list.showProjectListActionMenu), picker = createProjectPicker(ctx, folders.render, () => folders.model.state.ready);
   function debounce(key: string, work: () => void | Promise<void>) { clearTimeout(timers.get(key)); timers.set(key, setTimeout(() => { timers.delete(key); run(work); }, 280)); }
   async function selectProject(id: string) {
+    dom.document.querySelector<HTMLDialogElement>('#project-settings-dialog')?.close();
     graph.reset();
     for (const field of ['project-facts-search', 'project-facts-filter-category', 'project-facts-filter-confidence', 'project-vulns-search', 'project-vulns-filter-severity', 'project-vulns-filter-status']) dom.setValue(field, '');
     dom.setChecked('project-facts-filter-sparse', false); selects.syncAll();
     const loading = service.selectProject(id); list.renderProjectsSidebar(); list.updateProjectsDetailVisibility();
     const project = await loading; if (!project || disposed) return;
-    list.renderDetail(); await tables.refreshProjectHeaderStats(); if (id === service.state.selectedId) switchProjectTab(service.state.tab);
+    list.renderDetail();
+    for (const [field, page] of [['assets', 'assets'], ['vulns', 'vulnerabilities']]) dom.el(`project-${field}-link`)?.setAttribute('href', `#${page}?project_id=${encodeURIComponent(id)}`);
+    await tables.refreshProjectHeaderStats(); if (id === service.state.selectedId) switchProjectTab(service.state.tab);
   }
   function switchProjectTab(tab: string) {
+    if (tab === 'settings') { dom.document.querySelector<HTMLDialogElement>('#project-settings-dialog')?.showModal(); return; }
+    if (tab === 'assets' && deps.hasPermission('asset:read')) { browser.setHash(`assets?project_id=${encodeURIComponent(service.state.selectedId)}`); return; }
+    if (tab === 'vulns') { tables.openVulnerabilitiesForProject(); return; }
     let next: ProjectTab = tabs.find(value => value === tab) ?? 'facts';
     if (next === 'assets' && !deps.hasPermission('asset:read')) next = 'facts'; service.state.tab = next;
-    for (const key of tabs) { dom.el(`project-tab-${key}`)?.classList.toggle('is-active', key === next); dom.el(`project-tab-${key}`)?.setAttribute('aria-selected', String(key === next)); dom.hidden(`project-panel-${key}`, key !== next); }
+    for (const key of tabs) { const tab = dom.el(`project-tab-${key}`); tab?.classList.toggle('is-active', key === next); tab?.setAttribute('aria-selected', String(key === next)); tab?.setAttribute('tabindex', key === next ? '0' : '-1'); tab?.setAttribute('aria-controls', `project-panel-${key}`); dom.el(`project-panel-${key}`)?.setAttribute('aria-labelledby', `project-tab-${key}`); dom.hidden(`project-panel-${key}`, key !== next); }
     if (next === 'facts') run(ctx.refreshFacts); if (next === 'graph') run(ctx.refreshGraph); if (next === 'assets') run(() => tables.loadProjectAssets()); if (next === 'conversations') run(tables.loadProjectConversations); if (next === 'vulns') run(ctx.refreshVulnerabilities);
   }
   async function initProjectsPage() {
@@ -56,13 +62,17 @@ export function createProjectsView(document: Document, deps: ProjectsDependencie
     if (id) await selectProject(id); else list.renderProjectsSidebar();
   }
   const actions: Record<string, (element: HTMLElement, event: Event) => void | Promise<void>> = {
+    settings: () => switchProjectTab('settings'), 'close-settings': () => dom.document.querySelector<HTMLDialogElement>('#project-settings-dialog')?.close(),
+    'new-conversation': async () => { await deps.startNewConversation({ projectId: service.state.selectedId }); deps.navigate('chat'); },
+    'zoom-in': () => graph.graph.zoom(1.25), 'zoom-out': () => graph.graph.zoom(0.8),
+    fullscreen: async () => { if (document.fullscreenElement) await document.exitFullscreen(); else await dom.el('project-panel-graph')?.requestFullscreen(); },
     select: element => selectProject(element.dataset.id || ''), page: element => list.goProjectsPage(Number(element.dataset.page)),
     menu: (element, event) => { if (event instanceof MouseEvent) list.showProjectListActionMenu(event, element.dataset.id || ''); },
     'edit-fact': element => forms.showEditFactModal(element.dataset.key || ''), 'view-fact': element => forms.viewProjectFactBody(element.dataset.key || ''),
     'delete-fact': element => tables.deleteProjectFact(element.dataset.id || ''), 'restore-fact': element => tables.restoreProjectFactByKey(element.dataset.key || ''), 'deprecate-fact': element => tables.deprecateProjectFactByKey(element.dataset.key || ''),
     'assets-page': element => tables.loadProjectAssets(Number(element.dataset.page)), 'asset-detail': element => tables.openProjectAssetDetail(Number(element.dataset.index)), 'unbind-asset': element => tables.unbindAssetFromProject(Number(element.dataset.index)),
-    'open-conversation': element => tables.openProjectConversation(element.dataset.id || ''), 'promote-conversation': element => tables.promoteConversationAttackChain(element.dataset.id || ''), 'unbind-conversation': element => tables.unbindConversationFromProject(element.dataset.id || ''),
-    'open-vulnerability': element => tables.openVulnerabilityDetail(element.dataset.id || ''), 'vulnerability-facts': element => tables.viewFactsForVulnerability(element.dataset.id || ''),
+    'open-conversation': element => { forms.closeFactDetailModal(); tables.openProjectConversation(element.dataset.id || ''); }, 'promote-conversation': element => tables.promoteConversationAttackChain(element.dataset.id || ''), 'unbind-conversation': element => tables.unbindConversationFromProject(element.dataset.id || ''),
+    'open-vulnerability': element => { forms.closeFactDetailModal(); tables.openVulnerabilityDetail(element.dataset.id || ''); }, 'vulnerability-facts': element => tables.viewFactsForVulnerability(element.dataset.id || ''),
     'focus-edge': element => graph.focusProjectFactGraphEdge(element.dataset.edgeId || ''), 'delete-edge': element => graph.deleteProjectFactEdge(element.dataset.edgeId || ''),
     tab: element => switchProjectTab(element.dataset.tab || 'facts'), template: element => forms.insertFactBodyTemplate(element.dataset.kind || 'attack'),
   };
@@ -88,6 +98,7 @@ export function createProjectsView(document: Document, deps: ProjectsDependencie
       const listener = (event: Event) => { if (event.target === overlay) close(); }; overlay.addEventListener('click', listener); cleanups.push(() => overlay.removeEventListener('click', listener));
     }
     const inputs: [string, string, () => void][] = [
+      ['project-graph-node-picker', 'change', () => graph.inspectNode(dom.value('project-graph-node-picker'))],
       ['projects-list-search', 'input', () => debounce('list', list.filterProjectsList)], ['project-facts-search', 'input', () => debounce('facts', tables.loadProjectFacts)],
       ['project-vulns-search', 'input', () => debounce('vulns', tables.loadProjectVulnerabilities)], ['project-graph-search', 'input', graph.filterProjectFactGraph],
       ['conversation-search-input', 'input', () => folders.handleProjectFolderSearch(dom.value('conversation-search-input'))],
@@ -106,6 +117,8 @@ export function createProjectsView(document: Document, deps: ProjectsDependencie
     };
     const change = (event: Event) => { const target = event.target; if (target instanceof HTMLSelectElement && target.dataset.change === 'projects.assets-size') run(() => tables.changeProjectAssetsPageSize(target.value)); };
     const keydown = (event: KeyboardEvent) => {
+      const tab = event.target instanceof Element ? event.target.closest<HTMLElement>('.projects-tab') : null;
+      if (tab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const index = tabs.indexOf(service.state.tab), next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; switchProjectTab(tabs[next]!); dom.el(`project-tab-${tabs[next]}`)?.focus(); return; }
       if (event.key !== 'Escape') return; list.closeProjectListActionMenu(); folders.previews.hide();
       if (deps.isModalOpen('project-modal')) forms.closeProjectModal(); else if (deps.isModalOpen('fact-modal')) forms.closeFactModal(); else if (deps.isModalOpen('fact-detail-modal')) forms.closeFactDetailModal();
     };

@@ -89,7 +89,9 @@ button.asm-kpi:hover { background: color-mix(in srgb, var(--asm-accent) 4%, var(
 .asm-graph-toolbar-actions .btn-secondary { min-height: 34px; padding: 0 12px; font-size: 12px; }
 .asm-graph-status { min-height: 18px; padding: 6px 16px; color: var(--asm-muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
 /* The graph is the point of this view: give it most of the viewport, not a fixed demo-sized box. */
-.asm-graph-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; flex: 1; min-height: min(72vh, 720px); }
+.asm-graph-layout { display: grid; grid-template-columns: minmax(0, 1fr); flex: 1; height: min(72vh, 720px); min-height: 360px; }
+.asm-graph-layout:has(.asm-graph-explorer:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); }
+.asm-graph-layout:has(.asm-graph-explorer.is-collapsed:not([hidden])) { grid-template-columns: minmax(0, 1fr) 180px; }
 .asm-graph-canvas { min-width: 0; height: 100%; background: var(--bg-secondary, #f8fafc); outline: none; }
 .asm-graph-canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--asm-accent); }
 .asm-graph-panel:fullscreen { border-radius: 0; }
@@ -98,16 +100,30 @@ button.asm-kpi:hover { background: color-mix(in srgb, var(--asm-accent) 4%, var(
 .asm-graph-empty { display: flex; min-height: inherit; flex-direction: column; justify-content: center; align-items: center; padding: 24px; text-align: center; color: var(--asm-muted); }
 .asm-graph-empty h3 { color: var(--asm-ink); font-size: 16px; margin-bottom: 8px; }
 .asm-graph-empty p { font-size: 13px; max-width: 45ch; }
-.asm-graph-explorer { padding: 14px; min-width: 0; border-left: 1px solid var(--asm-line); overflow: auto; }
-.asm-graph-explorer h3 { margin: 0 0 8px; font-size: 13px; }
-.asm-graph-explorer p, .asm-graph-explorer label { font-size: 12px; line-height: 1.5; }
-.asm-graph-explorer label { display: block; margin-bottom: 4px; }
-#asset-graph-inspector { overflow-wrap: anywhere; }
-#asset-graph-inspector h4 { margin: 16px 0 8px; font-size: 13px; }
-.asm-record-link, .asm-connections button { display: block; max-width: 100%; border: 0; padding: 4px 0; background: transparent; color: var(--asm-accent); font-size: 12px; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
-.asm-connections { margin: 12px 0; padding: 0; list-style: none; }
-.asm-connections li { border-top: 1px solid var(--asm-line); padding: 8px 0; }
-.asm-connections small { color: var(--asm-muted); font-size: 11px; }
+.asm-graph-explorer { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--asm-line); background: var(--asm-surface); }
+.asm-graph-explorer h3 { margin: 0; font-size: 13px; }
+.asm-graph-explorer-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; padding: 12px 16px; border-bottom: 1px solid var(--asm-line); }
+.asm-graph-explorer-heading > div { display: flex; gap: 10px; }
+.asm-inspector-control, .asm-inspector-link { border: 0; padding: 4px 0; background: transparent; color: var(--asm-muted); font: inherit; font-size: 11px; cursor: pointer; }
+.asm-inspector-control:hover, .asm-inspector-link:hover { color: var(--asm-ink); text-decoration: underline; }
+#asset-graph-inspector { min-height: 0; overflow: auto; padding: 0 16px 16px; overflow-wrap: anywhere; scrollbar-width: thin; }
+.asm-inspector-section { padding-top: 18px; }
+.asm-inspector-section h4 { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 8px; color: var(--asm-muted); font-size: 11px; font-weight: 650; }
+.asm-inspector-section h4 span { font-variant-numeric: tabular-nums; }
+.asm-node-name { color: var(--asm-ink); font-size: 14px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.asm-node-meta, .asm-inspector-caption, .asm-inspector-empty { margin: 4px 0 0; color: var(--asm-muted); font-size: 11px; line-height: 1.5; }
+.asm-node-id { margin-top: 8px; color: var(--asm-muted); font-size: 11px; }
+.asm-node-id summary { cursor: pointer; }
+.asm-node-id span { display: block; margin-top: 6px; overflow-wrap: anywhere; }
+.asm-connections { margin: 8px 0 0; padding: 0; list-style: none; }
+.asm-connections li + li { border-top: 1px solid var(--asm-line); }
+.asm-connections button { display: grid; width: 100%; gap: 3px; border: 0; padding: 9px 4px; background: transparent; color: var(--asm-ink); font: inherit; text-align: left; cursor: pointer; }
+.asm-connections button:hover, .asm-record-link:hover { background: var(--bg-secondary, #f8fafc); }
+.asm-connection-meta, .asm-connection-kind { color: var(--asm-muted); font-size: 11px; }
+.asm-connection-target, .asm-record-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; }
+.asm-record-group { padding: 8px 0; }
+.asm-record-group + .asm-record-group { border-top: 1px solid var(--asm-line); }
+.asm-record-link { display: block; width: 100%; border: 0; padding: 4px; background: transparent; color: var(--asm-muted); font: inherit; font-size: 11px; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
 .asm-graph-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--asm-line); font-size: 11px; color: var(--asm-muted); }
 .asm-graph-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .asm-node-dot { width: 8px; height: 8px; border-radius: 2px; background: #64748b; }
@@ -140,7 +156,7 @@ button.asm-kpi:hover { background: color-mix(in srgb, var(--asm-accent) 4%, var(
 #page-asset-management ::selection { color: var(--asm-ink); background: color-mix(in srgb, var(--asm-accent) 20%, var(--asm-surface)); }
 #page-asset-management input { caret-color: var(--asm-accent); }
 @media (max-width: 1366px) {
-  .asm-graph-layout { grid-template-columns: minmax(0, 1fr) 200px; min-height: min(68vh, 620px); }
+  .asm-graph-layout { height: min(68vh, 620px); }
 }
 @media (max-width: 1200px) {
   .asm-insights.is-expanded { grid-template-columns: 1fr 1fr; }
@@ -165,9 +181,9 @@ button.asm-kpi:hover { background: color-mix(in srgb, var(--asm-accent) 4%, var(
   #page-asset-management .asset-toolbar-main > input { flex-basis: 100%; min-width: 0; }
   #page-asset-management .asset-advanced-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #page-asset-management .asset-list-card .asset-table-wrap { max-height: 520px; }
-  .asm-graph-layout { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .asm-graph-layout, .asm-graph-layout:has(.asm-graph-explorer:not([hidden])), .asm-graph-layout:has(.asm-graph-explorer.is-collapsed:not([hidden])) { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 0; }
   .asm-graph-canvas { min-height: 360px; height: 360px; }
-  .asm-graph-explorer { border-left: 0; border-top: 1px solid var(--asm-line); max-height: 260px; }
+  .asm-graph-explorer { border-left: 0; border-top: 1px solid var(--asm-line); max-height: 300px; }
   .asm-graph-toolbar { padding: 12px; gap: 8px; }
   .asm-graph-toolbar label { width: 100%; }
   .asm-graph-toolbar input, .asm-graph-toolbar select { width: 100%; }

@@ -191,9 +191,9 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
     toggle.addEventListener('click', () => setCollapsed(!state.collapsed));
     head.appendChild(el(doc, 'div', 'csai-wsp-title', 'Workspace'));
     const files = el(doc, 'a', 'csai-wsp-files-link', 'Files') as HTMLAnchorElement;
-    files.href = '#file-management';
-    files.title = 'Open conversation files in File Management';
-    files.addEventListener('click', () => { const id = conversationFromHash(ports.hash()); files.href = '#file-management' + (id ? '?conversation=' + encodeURIComponent(id) : ''); });
+    files.href = '#files';
+    files.title = 'Open conversation files in Files';
+    files.addEventListener('click', () => { const id = conversationFromHash(ports.hash()); files.href = '#files' + (id ? '?conversation=' + encodeURIComponent(id) : ''); });
     head.appendChild(files);
     head.appendChild(toggle);
 
