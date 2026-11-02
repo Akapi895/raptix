@@ -29,6 +29,7 @@ test('legacy queues remain editable through Schedule, including cron, concurrenc
 
 test('executes saved workflows, inspects graph node records, approves a run and preserves builder edits', async ({ page }) => {
   await openApp(page, 'workflows');
+  await expect(page).toHaveURL(/#workflows\?tab=builder$/);
   await page.getByRole('button', { name: 'Runs', exact: true }).click();
   await expect(page.locator('#workflow-runs-list')).toContainText('No runs found');
   await page.getByRole('button', { name: 'Run workflow', exact: true }).click();

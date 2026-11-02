@@ -194,6 +194,9 @@ export function createWorkflowOrchestration(deps: {
     if (!/^#\/?workflows(?:\?|$)/.test(hash)) { tasks.hooks.cleanupTasksPage(); return; }
     const requested = query.get('tab'); const next: Tab = requested === 'schedule' || requested === 'runs' ? requested : can('workflow:read') ? 'builder' : 'schedule';
     if (next === 'schedule' && !can('tasks:read') || next === 'builder' && !can('workflow:read') || next === 'runs' && !can('workflow:read') && !can('tasks:read')) return;
+    // The resolved default tab must be reflected back into the URL so a bare #workflows
+    // link is shareable/reloadable as the exact tab the viewer landed on.
+    if (requested !== next) { query.set('tab', next); doc.defaultView!.location.hash = 'workflows?' + query; return; }
     const changed = next !== tab; tab = next;
     for (const name of ['builder', 'runs', 'schedule']) { const panel = dom.el('workflow-' + name); if (panel) panel.hidden = name !== tab; }
     dom.el('page-workflows')!.dataset.workflowTab = tab;
