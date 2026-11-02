@@ -315,7 +315,7 @@ export function createModelPicker(deps: ModelPickerDependencies): ModelPicker {
     setStatus(t('chat.systemModelLoading', 'Fetching model list…'), 'loading');
     try {
       if (!String(channel.api_key || '').trim()) {
-        throw new Error(t('chat.systemModelNeedApiKey', 'Configure an API key in System Settings first'));
+        throw new Error(t('chat.systemModelNeedApiKey', 'Configure an API key in Settings first'));
       }
       const response = await deps.request('/api/config/list-models', {
         method: 'POST',

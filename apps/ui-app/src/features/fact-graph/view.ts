@@ -9,7 +9,7 @@ export function createFactGraphView(document: Document) {
   let connect = false, pick: ((key: string) => void) | undefined;
   const dark = () => document.documentElement.getAttribute('data-theme') === 'dark';
   function destroy() { resize?.disconnect(); resize = null; cy?.destroy(); cy = null; }
-  function center() { if (!cy || cy.destroyed()) return; cy.resize(); cy.fit(undefined, 56); if (cy.zoom() < 0.65) { cy.zoom(0.65); cy.center(); } }
+  function center() { if (!cy || cy.destroyed()) return; cy.resize(); cy.fit(undefined, 40); }
   function refreshTheme() {
     if (!cy) return;
     cy.nodes().forEach(node => { const data = node.data() as GraphNodeData; node.data(buildNodeCard(data.type, data.summary, data.confidence, data.factKey, dark())); });
@@ -33,7 +33,7 @@ export function createFactGraphView(document: Document) {
       return { data: { ...node, ...card, factKey, type, typeLabel: card.theme.typeLabel, typeEn: card.theme.typeEn, accentColor: card.theme.accent } };
     });
     elements.push(...edges.map(edge => ({ data: { ...edge, type: edge.type || 'leads_to', confidence: edge.confidence || 'confirmed' } })));
-    cy = cytoscape({ container, elements, minZoom: 0.35, maxZoom: 3, style: [
+    cy = cytoscape({ container, elements, minZoom: 0.02, maxZoom: 3, style: [
       { selector: 'node', style: { label: '', width: (node: NodeSingular) => Number(node.data('nodeWidth')) || 340, height: node => Number(node.data('nodeHeight')) || 88,
         shape: 'round-rectangle', 'background-color': dark() ? '#1e293b' : '#ffffff', 'background-image': (node: NodeSingular) => String(node.data('cardSvgUrl') || 'none'),
         'background-width': node => `${Number(node.data('nodeWidth')) || 340}px`, 'background-height': node => `${Number(node.data('nodeHeight')) || 88}px`,
@@ -55,6 +55,7 @@ export function createFactGraphView(document: Document) {
   }
   document.addEventListener('raptix-themechange', refreshTheme);
   return { render, destroy, center, refreshTheme,
+    zoom(factor: number) { if (cy) cy.zoom({ level: Math.max(cy.minZoom(), Math.min(cy.maxZoom(), cy.zoom() * factor)), renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); },
     filterBySearch(query: string) { const q = query.trim().toLowerCase(); cy?.nodes().forEach(node => { const data = node.data() as GraphNodeData; node.style('opacity', !q || `${data.label} ${data.factKey} ${data.typeLabel}`.toLowerCase().includes(q) ? 1 : 0.15); }); cy?.edges().style('opacity', q ? 0.12 : 0.9); },
     selectEdge(id: string) { cy?.elements().unselect(); cy?.getElementById(id).select(); },
     clearEdgeSelection() { cy?.elements().unselect(); },

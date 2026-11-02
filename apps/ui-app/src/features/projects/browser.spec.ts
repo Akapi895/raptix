@@ -83,9 +83,11 @@ test('typed feature shell actions, forms, graph editing, folders and cross-featu
   await expect(page.locator('#fact-modal-key')).toHaveValue('finding/a'); await expect(page.locator('#fact-modal-links')).toHaveValue('discovered_on: target/a');
   await page.locator('#fact-modal-summary').fill('Edited summary'); await page.locator('#fact-modal-submit-btn').click();
   await expect.poll(() => writes.some(write => write.url.endsWith('/facts/f1') && (write.body as { summary?: string }).summary === 'Edited summary')).toBe(true);
-  await page.locator('#project-tab-settings').click(); await page.locator('#project-edit-pinned').check();
+  await expect(page.locator('.projects-tabs [role="tab"]')).toHaveCount(3);
+  await page.locator('[data-action="projects.settings"]').click(); await expect(page.locator('#project-settings-dialog')).toBeVisible(); await page.locator('#project-edit-pinned').check();
   await page.locator('[data-action="projects.saveProjectSettings"]').click();
   await expect.poll(() => writes.some(write => write.url === '/api/projects/p1' && (write.body as { pinned?: boolean }).pinned === true)).toBe(true);
+  await page.keyboard.press('Escape'); await expect(page.locator('#project-settings-dialog')).not.toBeVisible();
   await page.locator('#project-tab-graph').click(); await expect(page.locator('#project-fact-graph-container canvas').first()).toBeVisible();
   // Drive the public renderer callbacks through real Cytoscape node taps.
   const graphResult = await page.evaluate(async () => {
@@ -107,7 +109,7 @@ test('typed feature shell actions, forms, graph editing, folders and cross-featu
     cy?.getElementById('target/a').emit('tap'); cy?.getElementById('finding/a').emit('tap');
   });
   await expect.poll(() => writes.some(write => write.url.endsWith('/fact-edges') && (write.body as { edge_type?: string }).edge_type === 'supports')).toBe(true);
-  await page.locator('#project-tab-conversations').click(); await expect(page.locator('#project-conversations-tbody')).toContainText('Conversation one');
+  await page.locator('#project-tab-conversations').click(); await expect(page.locator('#project-conversations-list')).toContainText('Conversation one');
   await expect(page.locator('#project-folders-list .project-folder-item')).toHaveCount(2);
   await expect(page.locator('.project-conversation-item')).toHaveCount(1);
   const navigation = await page.evaluate(async () => {

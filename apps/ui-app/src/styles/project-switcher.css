@@ -27,6 +27,48 @@
   width: 100% !important;
 }
 
+/* Operation Center keeps evidence work in the foreground. */
+#page-projects .projects-detail-header { padding: 16px 20px; gap: 12px; flex-wrap: wrap; }
+#page-projects .projects-detail-header-main { flex: 1 1 320px; }
+#page-projects .projects-detail-title { white-space: normal; overflow-wrap: anywhere; }
+#page-projects .projects-detail-header-actions { flex-wrap: wrap; }
+#page-projects .projects-detail-desc { margin-top: 6px; max-width: 75ch; }
+#page-projects .projects-tabs { background: var(--bg-primary); gap: 16px; padding: 0 20px; }
+#page-projects .projects-tab { min-height: 44px; border-radius: 0; border-bottom: 2px solid transparent; }
+#page-projects .projects-tab.is-active { border-bottom-color: var(--primary-color); box-shadow: none; background: transparent; }
+.operation-context { margin: 0 0 14px; color: var(--text-secondary); font-size: .8125rem; line-height: 1.6; max-width: 90ch; }
+#page-projects .operation-empty { flex: 0 0 auto; min-height: 0; }
+#page-projects .operation-empty thead { display: none; }
+#page-projects .operation-empty td { padding: 24px 16px; white-space: normal; text-align: left; }
+.operation-conversations-intro, .operation-conversation { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.operation-conversations-intro { align-items: flex-start; }
+.operation-conversations-intro > button { flex-shrink: 0; }
+.operation-conversation { padding: 16px 0; border-bottom: 1px solid var(--border-color); }
+.operation-conversation > div { min-width: 0; }
+.operation-conversation h4 { margin: 0 0 6px; overflow-wrap: anywhere; }
+.operation-conversation h4 button { text-align: left; font-weight: 600; white-space: normal; }
+.operation-conversation p { margin: 0; font-size: .8125rem; color: var(--text-secondary); }
+#project-panel-graph .project-fact-graph-layout { min-height: 320px; }
+#project-panel-graph:fullscreen { padding: 20px; background: var(--bg-primary); overflow: auto; }
+#project-settings-dialog { width: min(920px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); }
+#project-settings-dialog::backdrop { background: rgb(15 23 42 / .4); }
+.operation-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; position: sticky; top: 0; z-index: 2; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
+.operation-settings-heading h3 { margin: 0; }
+#project-settings-dialog .projects-settings-layout { background: var(--bg-primary); }
+#project-settings-dialog .projects-settings-card { box-shadow: none; height: auto; }
+#project-settings-dialog .projects-scope-editor { background: var(--bg-primary); border-color: var(--border-color); }
+#project-settings-dialog .projects-scope-textarea { width: 100%; min-height: 180px; padding: 12px; resize: vertical; color: var(--text-primary); background: var(--bg-primary); }
+#project-settings-dialog .projects-scope-footnote { color: var(--text-primary); margin-top: 8px; line-height: 1.6; }
+#project-settings-dialog .projects-settings-footer { position: sticky; bottom: 0; background: var(--bg-primary); }
+#page-projects :is(button, a, input, select):focus-visible, #project-settings-dialog :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
+@media (max-width: 760px) {
+  .operation-conversation, .operation-conversations-intro { align-items: flex-start; flex-direction: column; gap: 8px; }
+  #project-settings-dialog .projects-settings-grid { grid-template-columns: minmax(0, 1fr); padding: 12px; }
+  #project-settings-dialog .projects-form-row--2 { grid-template-columns: minmax(0, 1fr); }
+  #page-projects .projects-graph-actions { flex-wrap: wrap; margin-left: 0; }
+  #page-projects .projects-detail-header-actions :is(a, button), #page-projects .projects-graph-action-btn, .operation-conversation button { min-height: 44px; }
+}
+
 /* ---- The navbar switcher itself ---- */
 .csai-project-switcher {
   position: relative;

@@ -5,6 +5,7 @@ import { escapeHtml as e, errorMessage, type AssetsDependencies } from './contra
 import { buildAssetGraph, summarizeAssets, type AssetGraph, type NodeKind } from './intelligence';
 import { targetLabel, type Asset } from './model';
 import type { AssetsService } from './service';
+import { assetGraphLayout, compactGraphLayers } from './graph-layout';
 
 // A sandbox/pentest project can realistically carry hundreds of hosts/services; 250 was a
 // demo-sized ceiling. This bounds worst case without hiding most real topologies.
@@ -47,7 +48,7 @@ export function createAssetWorkspace(doc: Document, service: AssetsService, deps
         </div></div>
         <div id="asset-graph-status" class="asm-graph-status" role="status"></div>
         <div class="asm-graph-layout"><div id="asset-graph-canvas" class="asm-graph-canvas" role="img" tabindex="0" aria-label="Recorded asset relationships. Drag to pan, Ctrl+scroll or the zoom buttons to zoom, arrow keys to pan when focused."></div>
-        <aside class="asm-graph-explorer" aria-label="Node details"><h3>Node details</h3><div id="asset-graph-inspector" aria-live="polite"><p class="muted">Click a node to inspect its recorded connections.</p></div>
+        <aside id="asset-graph-explorer" class="asm-graph-explorer" aria-label="Node details" hidden><div class="asm-graph-explorer-heading"><h3>Node details</h3><div><button type="button" class="asm-inspector-control" ${action('workspace.toggle-inspector')} aria-expanded="true" aria-controls="asset-graph-inspector">Collapse</button><button type="button" class="asm-inspector-control" ${action('workspace.clear-node')} aria-label="Close node details">Close</button></div></div><div id="asset-graph-inspector" aria-live="polite"></div>
         </aside></div>
         <div class="asm-graph-legend">${kinds.map(kind => `<span><i class="asm-node-dot asm-node-dot--${kind}"></i>${labels[kind]}</span>`).join('')}<span>Edges represent saved records, not live connectivity.</span></div>
       </section>`);
@@ -57,7 +58,7 @@ export function createAssetWorkspace(doc: Document, service: AssetsService, deps
       event.preventDefault(); const next = event.key === 'Home' ? 'inventory' : event.key === 'End' ? 'graph' : view === 'graph' ? 'inventory' : 'graph';
       void setView(next); dom.get(next === 'graph' ? 'asset-graph-tab' : 'asset-inventory-tab')?.focus();
     }, { signal });
-    const resize = new ResizeObserver(() => { if (view === 'graph' && cy) cy.resize(); });
+    const resize = new ResizeObserver(() => { if (view === 'graph' && cy) { cy.resize(); keepSelectionVisible(); } });
     const canvas = dom.get('asset-graph-canvas');
     if (canvas) {
       resize.observe(canvas);
@@ -77,11 +78,12 @@ export function createAssetWorkspace(doc: Document, service: AssetsService, deps
         else if (event.key === '-' || event.key === '_') { event.preventDefault(); cy.zoom({ level: cy.zoom() / zoomStep, renderedPosition: mid }); }
       }, { signal });
     }
+    doc.addEventListener('keydown', event => { if (event.key === 'Escape' && view === 'graph' && selectedNode) clearFocus(); }, { signal });
     doc.addEventListener('fullscreenchange', () => {
       const panel = dom.get('asset-graph-panel'), isFull = doc.fullscreenElement === panel;
       const btn = dom.get('asset-graph-fullscreen-btn');
       if (btn) { btn.innerHTML = icon(isFull ? 'fullscreen-exit' : 'fullscreen'); btn.setAttribute('aria-label', isFull ? 'Exit fullscreen' : 'Fullscreen'); btn.setAttribute('title', isFull ? 'Exit fullscreen' : 'Fullscreen'); }
-      requestAnimationFrame(() => { cy?.resize(); const visible = cy?.elements().not('.asm-hidden'); if (visible?.length) cy?.fit(visible, 36); });
+      requestAnimationFrame(() => { cy?.resize(); fitGraph(); });
     }, { signal });
     signal.addEventListener('abort', () => { request?.abort(); graphRequest?.abort(); resize.disconnect(); cy?.destroy(); }, { once: true });
   }
@@ -157,53 +159,82 @@ export function createAssetWorkspace(doc: Document, service: AssetsService, deps
   function statusText(visible: { nodes: unknown[]; edges: unknown[] }) {
     dom.text('asset-graph-status', `${visible.nodes.length} nodes · ${visible.edges.length} relationships${assets.length > GRAPH_NODE_LIMIT ? ` · Showing the first ${format(GRAPH_NODE_LIMIT)} of ${format(assets.length)} matching assets; narrow inventory filters to explore more.` : ''}${findingsStatus ? ' · ' + findingsStatus : ''}${!visible.nodes.length ? ' · No recorded relationships match these filters.' : ''}`);
   }
+  function fitGraph() {
+    const shown = cy?.elements().not('.asm-hidden');
+    if (!cy || !shown?.length) return;
+    cy.resize(); cy.fit(shown, 36);
+    if (cy.zoom() > 1.2) { cy.zoom(1.2); cy.center(shown); }
+  }
   function renderGraph() {
     if (view !== 'graph' || signal.aborted) return;
     const canvas = dom.get('asset-graph-canvas'); if (!canvas) return;
     const signature = buildSignature(), rebuild = signature !== builtSignature;
     if (rebuild) {
-      builtSignature = signature; fittedOnce = false; selectedNode = ''; dom.html('asset-graph-inspector', '<p class="muted">Click a node to inspect its recorded connections.</p>');
+      builtSignature = signature; fittedOnce = false; clearFocus();
       cy?.destroy(); cy = undefined; dom.html('asset-graph-canvas', '');
       if (!graph.nodes.length) { statusText({ nodes: [], edges: [] }); dom.html('asset-graph-canvas', '<div class="asm-graph-empty"><h3>No recorded relationships</h3><p>Clear node filters or broaden the inventory search to explore saved asset data.</p></div>'); return; }
       const colors = getComputedStyle(canvas), color = (key: string, fallback: string) => colors.getPropertyValue(key).trim() || fallback;
-      const narrow = canvas.clientWidth < 500;
       cy = cytoscape({ container: canvas, elements: [...graph.nodes.map(n => ({ data: { ...n } })), ...graph.edges.map(edge => ({ data: { ...edge } }))],
         minZoom: .05, maxZoom: 4, wheelSensitivity: 0, userZoomingEnabled: false,
-        layout: { name: 'cose', animate: false, padding: 40, nodeRepulsion: 9000, idealEdgeLength: 90, edgeElasticity: 120, gravity: 45, numIter: 1000, nestingFactor: 1.2 },
+        layout: assetGraphLayout,
         style: [
-          { selector: 'node', style: { label: (node: NodeSingular) => narrow && ['service', 'vulnerability'].includes(String(node.data('kind'))) ? '' : String(node.data('label')), 'font-size': narrow ? 10 : 11, 'min-zoomed-font-size': 8, color: color('--text-primary', '#18212f'), 'text-wrap': 'ellipsis', 'text-max-width': narrow ? '68px' : '140px', 'text-valign': 'bottom', 'text-margin-y': 8, width: 28, height: 28, 'background-color': '#64748b', 'border-width': 2, 'border-color': color('--card-bg', '#ffffff') } },
+          { selector: 'node', style: { label: (node: NodeSingular) => String(node.data('label')), 'font-size': 12, 'min-zoomed-font-size': 5, 'font-weight': 500, color: '#ffffff', 'text-wrap': 'ellipsis', 'text-max-width': '132px', 'text-valign': 'center', 'text-halign': 'center', width: 156, height: 36, shape: 'round-rectangle', 'background-color': '#526174', 'border-width': 2, 'border-color': color('--card-bg', '#ffffff') } },
           { selector: 'node[kind="domain"]', style: { 'background-color': '#4f46a5', shape: 'round-rectangle' } },
           { selector: 'node[kind="ip"]', style: { 'background-color': '#21776e' } },
-          { selector: 'node[kind="port"]', style: { 'background-color': '#986b20', shape: 'diamond', width: 22, height: 22 } },
+          { selector: 'node[kind="port"]', style: { 'background-color': '#805916' } },
           { selector: 'node[kind="service"]', style: { 'background-color': '#3569a5', shape: 'round-rectangle' } },
-          { selector: 'node[kind="vulnerability"]', style: { 'background-color': '#c62828', shape: 'hexagon' } },
-          { selector: 'edge', style: { width: 1, 'line-color': color('--text-secondary', '#64748b'), 'target-arrow-color': color('--text-secondary', '#64748b'), 'target-arrow-shape': 'triangle', 'curve-style': 'bezier' } },
-          { selector: '.asm-faded', style: { opacity: .15 } },
+          { selector: 'node[kind="vulnerability"]', style: { 'background-color': '#b42323' } },
+          { selector: 'edge', style: { width: 1.5, 'line-color': color('--text-secondary', '#64748b'), 'target-arrow-color': color('--text-secondary', '#64748b'), 'target-arrow-shape': 'triangle', 'arrow-scale': .8, 'curve-style': 'bezier' } },
+          { selector: 'edge.asm-connected', style: { width: 2.5, 'line-color': '#526b85', 'target-arrow-color': '#526b85' } },
+          { selector: 'edge.asm-edge-hover', style: { label: 'data(label)', 'font-size': 11, 'min-zoomed-font-size': 7, color: color('--text-primary', '#18212f'), 'text-rotation': 'none', 'text-background-color': color('--card-bg', '#ffffff'), 'text-background-opacity': 1, 'text-background-padding': '3px' } },
+          { selector: '.asm-faded', style: { opacity: .65 } },
           { selector: '.asm-hidden', style: { display: 'none' } },
-          { selector: ':selected', style: { 'border-color': '#c62828', 'border-width': 3 } },
-          { selector: 'node:selected', style: { label: 'data(label)', 'text-max-width': '160px', 'text-background-color': color('--card-bg', '#ffffff'), 'text-background-opacity': 1, 'text-background-padding': '3px' } },
+          { selector: 'node:selected', style: { 'border-color': '#203e59', 'border-width': 4, 'overlay-color': '#527796', 'overlay-opacity': .12, 'overlay-padding': '6px' } },
         ],
       });
+      compactGraphLayers(cy);
       cy.on('tap', 'node', event => inspect(String(event.target.id())));
       cy.on('tap', event => { if (event.target === cy) clearFocus(); });
+      cy.on('mouseover', 'node', event => { canvas.title = String(event.target.data('label')); });
+      cy.on('mouseout', 'node', () => { canvas.title = ''; });
+      cy.on('mouseover', 'edge', event => event.target.addClass('asm-edge-hover'));
+      cy.on('mouseout', 'edge', event => event.target.removeClass('asm-edge-hover'));
     }
     if (!graph.nodes.length) return;
     const visible = applyVisibility(); if (!visible) return;
     statusText(visible);
-    if (!fittedOnce) { const shown = cy?.elements().not('.asm-hidden'); if (shown?.length) cy?.fit(shown, 36); fittedOnce = true; }
+    if (!fittedOnce) { fitGraph(); fittedOnce = true; }
+  }
+  function keepSelectionVisible() {
+    if (!cy || !selectedNode) return;
+    const node = cy.getElementById(selectedNode); if (!node.length || node.hasClass('asm-hidden')) return;
+    const box = node.renderedBoundingBox(), pad = 16, width = cy.width(), height = cy.height();
+    const shift = (start: number, end: number, limit: number) => end - start > limit - 2 * pad ? limit / 2 - (start + end) / 2 : start < pad ? pad - start : end > limit - pad ? limit - pad - end : 0;
+    const x = shift(box.x1, box.x2, width), y = shift(box.y1, box.y2, height);
+    if (x || y) cy.panBy({ x, y });
   }
   function inspect(id: string) {
     const node = graph.nodes.find(n => n.id === id); if (!node || !cy) return; selectedNode = id;
-    cy.elements().removeClass('asm-faded').unselect();
-    const element = cy.getElementById(id); cy.elements().difference(element.closedNeighborhood()).addClass('asm-faded'); element.select();
-    cy.animate({ center: { eles: element } }, { duration: 200 });
+    dom.hidden('asset-graph-explorer', false);
+    dom.hidden('asset-graph-inspector', false);
+    dom.get('asset-graph-explorer')?.classList.remove('is-collapsed');
+    const toggle = doc.querySelector<HTMLButtonElement>('[data-assets-click="workspace.toggle-inspector"]');
+    if (toggle) { toggle.setAttribute('aria-expanded', 'true'); toggle.textContent = 'Collapse'; }
+    cy.elements().removeClass('asm-faded asm-connected').unselect();
+    const element = cy.getElementById(id); element.removeClass('asm-hidden'); element.connectedEdges().filter(edge => !edge.source().hasClass('asm-hidden') && !edge.target().hasClass('asm-hidden')).removeClass('asm-hidden');
+    cy.elements().difference(element.closedNeighborhood()).addClass('asm-faded'); element.select();
+    element.connectedEdges().addClass('asm-connected');
     const connections = graph.edges.filter(edge => edge.source === id || edge.target === id);
-    dom.html('asset-graph-inspector', `<h4>${e(node.label)}</h4><p>${e(labels[node.kind])} · ${connections.length} recorded connections</p>
-      <ul class="asm-connections">${connections.slice(0, 30).map(edge => { const other = graph.nodes.find(n => n.id === (edge.source === id ? edge.target : edge.source)); return `<li><small>${e(edge.label)}</small><button type="button" ${action('workspace.node-link', { id: other?.id || '' })}>${e(other?.label)}</button></li>`; }).join('')}</ul>
-      ${node.findingId ? `<button class="btn-link" type="button" ${action('workspace.finding', { id: node.findingId })}>Open finding</button>` : ''}
-      <h4>Asset records</h4>${node.assetIds.slice(0, 20).map(id => { const asset = assets.find(a => a.id === id); return `<button class="asm-record-link" type="button" ${action('workspace.detail', { id })}>${e(asset ? targetLabel(asset) : id)}</button>`; }).join('')}`);
+    const nodesById = new Map(graph.nodes.map(item => [item.id, item]));
+    const assetsById = new Map(assets.map(asset => [asset.id, asset]));
+    const records = new Map<string, string[]>();
+    for (const recordId of node.assetIds) { const asset = assetsById.get(recordId), label = asset ? targetLabel(asset) : recordId; records.set(label, [...(records.get(label) || []), recordId]); }
+    dom.html('asset-graph-inspector', `<section class="asm-inspector-section"><h4>Node identity</h4><div class="asm-node-name" title="${e(node.label)}">${e(node.label)}</div><p class="asm-node-meta">${e(labels[node.kind])}${node.severity ? ` · ${e(node.severity)}` : ''}</p><details class="asm-node-id"><summary>Node ID</summary><span>${e(node.id)}</span></details>${node.findingId ? `<button class="asm-inspector-link" type="button" ${action('workspace.finding', { id: node.findingId })}>Open finding</button>` : ''}</section>
+      <section class="asm-inspector-section"><h4>Relationships <span>${connections.length}</span></h4><p class="asm-inspector-caption">${connections.length} recorded connections</p>${connections.length ? `<ul class="asm-connections">${connections.map(edge => { const outgoing = edge.source === id, other = nodesById.get(outgoing ? edge.target : edge.source); return `<li><button type="button" ${action('workspace.node-link', { id: other?.id || '' })} title="${e(other?.label || '')}"><span class="asm-connection-meta">${outgoing ? 'Outgoing →' : 'Incoming ←'} · ${e(edge.label)}</span><span class="asm-connection-target">${e(other?.label || '')}</span><span class="asm-connection-kind">${e(other ? labels[other.kind] : '')}</span></button></li>`; }).join('')}</ul>` : '<p class="asm-inspector-empty">No recorded relationships.</p>'}</section>
+      <section class="asm-inspector-section"><h4>Linked asset records <span>${node.assetIds.length}</span></h4>${records.size ? [...records].map(([label, ids]) => `<div class="asm-record-group"><div class="asm-record-label" title="${e(label)}">${e(label)}</div>${ids.map(recordId => `<button class="asm-record-link" type="button" ${action('workspace.detail', { id: recordId })} title="${e(recordId)}">${e(recordId)}</button>`).join('')}</div>`).join('') : '<p class="asm-inspector-empty">No linked asset records.</p>'}</section>`);
+    requestAnimationFrame(() => { cy?.resize(); keepSelectionVisible(); });
   }
-  function clearFocus() { selectedNode = ''; cy?.elements().removeClass('asm-faded').unselect(); dom.html('asset-graph-inspector', '<p class="muted">Click a node to inspect its recorded connections.</p>'); }
+  function clearFocus() { selectedNode = ''; cy?.elements().removeClass('asm-faded asm-connected').unselect(); dom.hidden('asset-graph-explorer', true); dom.html('asset-graph-inspector', ''); }
   async function setView(next: string) {
     mount(); view = next === 'graph' ? 'graph' : 'inventory';
     for (const name of ['inventory', 'graph']) { const active = view === name; const tab = dom.get(`asset-${name}-tab`); tab?.setAttribute('aria-selected', String(active)); tab?.setAttribute('tabindex', active ? '0' : '-1'); dom.hidden(`asset-${name}-panel`, !active); }
@@ -217,12 +248,13 @@ export function createAssetWorkspace(doc: Document, service: AssetsService, deps
       'workspace.filter': el => filter(el.dataset.field || '', el.dataset.value || ''),
       'workspace.detail': el => { const asset = assets.find(a => a.id === el.dataset.id); if (asset) openDetail(asset); },
       'workspace.graph-filter': () => renderGraph(),
-      'workspace.fit': () => { const shown = cy?.elements().not('.asm-hidden'); if (shown?.length) cy?.fit(shown, 36); },
-      'workspace.reset-view': () => { dom.set('asset-graph-search', ''); dom.set('asset-graph-kind', ''); clearFocus(); renderGraph(); cy?.fit(undefined, 36); },
+      'workspace.fit': fitGraph,
+      'workspace.reset-view': () => { dom.set('asset-graph-search', ''); dom.set('asset-graph-kind', ''); clearFocus(); renderGraph(); fitGraph(); },
       'workspace.zoom-in': () => { if (!cy) return; cy.zoom({ level: cy.zoom() * 1.25, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); },
       'workspace.zoom-out': () => { if (!cy) return; cy.zoom({ level: cy.zoom() / 1.25, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); },
       'workspace.fullscreen': () => { const panel = dom.get('asset-graph-panel'); if (!panel) return; if (doc.fullscreenElement === panel) void doc.exitFullscreen(); else void panel.requestFullscreen?.().catch(() => {}); },
       'workspace.clear-node': clearFocus, 'workspace.node-link': el => inspect(el.dataset.id || ''),
+      'workspace.toggle-inspector': el => { const expanded = el.getAttribute('aria-expanded') === 'true'; el.setAttribute('aria-expanded', String(!expanded)); el.textContent = expanded ? 'Expand' : 'Collapse'; dom.hidden('asset-graph-inspector', expanded); dom.get('asset-graph-explorer')?.classList.toggle('is-collapsed', expanded); requestAnimationFrame(() => { cy?.resize(); keepSelectionVisible(); }); },
       'workspace.finding': el => deps.setHash('vulnerabilities?id=' + encodeURIComponent(el.dataset.id || '')),
     } satisfies Record<string, ActionHandler>,
     dispose() { request?.abort(); graphRequest?.abort(); cy?.destroy(); selectedNode = ''; },
