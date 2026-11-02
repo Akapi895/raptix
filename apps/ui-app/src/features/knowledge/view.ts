@@ -117,6 +117,11 @@ export function createKnowledgeView({ doc, t, afterRender }: KnowledgeViewDeps) 
     closeCategory: () => byId('knowledge-category-filter-wrapper')?.classList.remove('open'),
     toggleCategory: () => byId('knowledge-category-filter-wrapper')?.classList.toggle('open'),
     isManagementActive: () => byId('page-knowledge-management')?.classList.contains('active') ?? false,
+    setTab: (tab: 'library' | 'logs') => {
+      const page = byId('page-knowledge-management'); if (page) page.dataset.knowledgeTab = tab;
+      doc.querySelectorAll<HTMLElement>('.cap-local-nav a[data-tab]').forEach(link => { if (link.dataset.tab === tab) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current'); });
+      doc.querySelectorAll<HTMLElement>('[data-knowledge-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.knowledgeTabPanel !== tab; });
+    },
     loading: () => html('knowledge-items-list', capabilityState('Loading knowledge…')),
   };
 }

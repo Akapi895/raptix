@@ -138,6 +138,16 @@ export function createKnowledgeController(deps: KnowledgeControllerDeps) {
       catch (error) { report(t('retrievalLogs.detailError'), error); }
     },
     closeDetails(): void { detailsEpoch++; view.closeDetails(); },
+    setTab(tab: string): void { view.setTab(tab === 'logs' ? 'logs' : 'library'); },
+    // Switching the Library/Retrieval tabs only changes the query string, which the router
+    // treats as the same page (no re-activation) -- react to the hashchange directly instead.
+    syncTab(): void {
+      const hash = doc.defaultView?.location.hash ?? '';
+      if (!/^#\/?knowledge-management(?:\?|$)/.test(hash)) return;
+      const tab = new URLSearchParams(hash.split('?')[1] ?? '').get('tab') === 'logs' ? 'logs' : 'library';
+      view.setTab(tab);
+      if (tab === 'logs') void api.filterLogs(); else { void api.categories(); void api.load(); }
+    },
     activate(): void {
       if (active || disposed) return; active = true;
       const actions = createActions();
@@ -162,14 +172,14 @@ export function createKnowledgeController(deps: KnowledgeControllerDeps) {
       on('copy', el => { void deps.copy(el.dataset.copy ?? '').then(() => { if (disposed) return; el.title = t('common.copied'); delay(() => { el.title = t('retrievalLogs.clickToCopy'); }, 2000); }).catch(error => report(t('retrievalLogs.clickToCopy'), error)); });
       on('settings', deps.navigateSettings);
       unbind = view.bind(actions);
-      doc.addEventListener('languagechange', language); doc.addEventListener('click', outside);
+      doc.addEventListener('languagechange', language); doc.addEventListener('click', outside); doc.defaultView?.addEventListener('hashchange', api.syncTab);
       const page = doc.getElementById('page-knowledge-management');
       if (page && typeof MutationObserver !== 'undefined') { observer = new MutationObserver(() => { if (!view.isManagementActive()) stopPoll(); }); observer.observe(page, { attributes: true, attributeFilter: ['class'] }); }
       view.categories(service.state);
     },
     dispose(): void {
       if (disposed) return; disposed = true; detailsEpoch++; stopPoll(); clearTimeout(searchTimer); timers.forEach(clearTimeout); timers.clear(); observer?.disconnect(); unbind?.();
-      doc.removeEventListener('languagechange', language); doc.removeEventListener('click', outside); service.dispose();
+      doc.removeEventListener('languagechange', language); doc.removeEventListener('click', outside); doc.defaultView?.removeEventListener('hashchange', api.syncTab); service.dispose();
     },
   };
   function language(): void { if (!disposed) { view.categories(service.state); view.items(service.state); view.logs(service.state); } }

@@ -21,6 +21,7 @@ describe('page lifecycle orchestration', () => {
       refreshWorkflows: hook('workflows'), loadSkillsMonitor: hook('skills-monitor'),
       initSkillsPagination: hook('skills-pages'), loadSkills: hook('skills'),
       loadKnowledgeCategories: hook('categories'), loadKnowledgePage: hook('knowledge'), updateIndexProgress: hook('index'), loadRetrievalLogs: hook('retrieval'),
+      setKnowledgeTab: tab => log.push('tab:' + tab),
       initC2: page => { log.push(page); },
     };
     const lifecycle = createPageLifecycle(root, deps);
@@ -30,13 +31,17 @@ describe('page lifecycle orchestration', () => {
       ['mcp-monitor', ['monitor', 'monitor-poll']], ['projects', ['projects']], ['vulnerabilities', ['vulns']], ['webshell', ['webshell']],
       ['file-management', ['files']], ['workflows', ['workflows']], ['skills-monitor', ['skills-monitor']],
       ['skills-management', ['skills-pages', 'skills']],
-      ['knowledge-management', ['categories', 'knowledge', 'index']], ['knowledge-retrieval-logs', ['retrieval']],
       ...(['c2-listeners', 'c2-sessions', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const).map(page => [page, [page]] satisfies [PageId, string[]]),
     ];
     for (const [page, expected] of cases) {
       log.length = 0; lifecycle.init(route(page));
       expect(log, page).toEqual(['stop-external', ...expected, ...(page !== 'tasks' ? ['cleanup-tasks'] : []), 'stop-token']);
     }
+    // Library and Retrieval history are tabs of the same knowledge-management page.
+    log.length = 0; lifecycle.init({ page: 'knowledge-management', query: new URLSearchParams() });
+    expect(log).toEqual(['stop-external', 'tab:library', 'categories', 'knowledge', 'index', 'cleanup-tasks', 'stop-token']);
+    log.length = 0; lifecycle.init({ page: 'knowledge-management', query: new URLSearchParams({ tab: 'logs' }) });
+    expect(log).toEqual(['stop-external', 'tab:logs', 'retrieval', 'cleanup-tasks', 'stop-token']);
     delete deps.refreshHitlActivePanel; log.length = 0; lifecycle.init(route('hitl'));
     expect(log).toContain('hitl-fallback');
   });

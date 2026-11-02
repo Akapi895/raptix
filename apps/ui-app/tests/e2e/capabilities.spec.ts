@@ -1,6 +1,6 @@
 import { expect, openApp, test } from './fixtures';
 
-const routes = ['mcp-management', 'mcp-monitor', 'knowledge-management', 'knowledge-retrieval-logs', 'skills-management', 'skills-monitor', 'roles-management'];
+const routes = ['mcp-management', 'mcp-monitor', 'knowledge-management', 'skills-management', 'skills-monitor', 'roles-management'];
 
 test('Capabilities sidebar opens management directly and stays active across internal tabs', async ({ page }) => {
   await openApp(page);
@@ -8,7 +8,6 @@ test('Capabilities sidebar opens management directly and stays active across int
     if (collapsed) await page.locator('[data-router-action="sidebar"]').click();
     for (const [group, primary, activity] of [
       ['mcp', 'mcp-management', 'mcp-monitor'],
-      ['knowledge', 'knowledge-management', 'knowledge-retrieval-logs'],
       ['skills', 'skills-management', 'skills-monitor'],
     ]) {
       const item = page.locator(`#main-sidebar .nav-item[data-page="${group}"]`);
@@ -27,6 +26,18 @@ test('Capabilities sidebar opens management directly and stays active across int
       await page.locator(`#page-${activity} .cap-local-nav a[href="#${primary}"]`).click();
       await expect(page).toHaveURL(new RegExp(`#${primary}$`));
     }
+    // Knowledge's library and retrieval history are tabs of one page (?tab=), not separate pages.
+    const knowledgeItem = page.locator('#main-sidebar .nav-item[data-page="knowledge"]');
+    const knowledgeLink = knowledgeItem.locator('.nav-item-content');
+    await knowledgeLink.focus(); await knowledgeLink.press('Enter');
+    await expect(page).toHaveURL(/#knowledge-management$/);
+    await expect(knowledgeItem).toHaveClass(/active/);
+    await page.locator('#page-knowledge-management .cap-local-nav a[data-tab="logs"]').click();
+    await expect(page).toHaveURL(/#knowledge-management\?tab=logs$/);
+    await expect(page.locator('#page-knowledge-management')).toHaveAttribute('data-knowledge-tab', 'logs');
+    await expect(knowledgeItem).toHaveClass(/active/);
+    await page.locator('#page-knowledge-management .cap-local-nav a[data-tab="library"]').click();
+    await expect(page).toHaveURL(/#knowledge-management\?tab=library$/);
   }
 });
 
@@ -38,7 +49,7 @@ test('all Capabilities routes fit desktop and responsive widths without page ove
       await openApp(page, route);
       const root = page.locator(`#page-${route}`);
       await expect(root.locator('h2')).toBeVisible();
-      await expect(root.locator('.loading-spinner')).toHaveCount(0);
+      await expect(root.locator('.loading-spinner:visible')).toHaveCount(0);
       await expect(root.locator('.cap-table, .monitor-table, .tool-item').first()).toBeVisible();
       expect(await root.evaluate(node => node.scrollWidth <= node.clientWidth + 1), `${route} at ${width}px`).toBe(true);
       const content = root.locator('.page-content');
@@ -111,8 +122,8 @@ test('local navigation, native category filtering, retrieval details and agent a
   await expect(page.locator('#knowledge-items-list')).toContainText('No matching knowledge');
   await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
   await expect(page.locator('.knowledge-category-section')).toHaveCount(3);
-  await page.locator('#page-knowledge-management .cap-local-nav a[href="#knowledge-retrieval-logs"]').click();
-  await expect(page).toHaveURL(/#knowledge-retrieval-logs$/);
+  await page.locator('#page-knowledge-management .cap-local-nav a[data-tab="logs"]').click();
+  await expect(page).toHaveURL(/#knowledge-management\?tab=logs$/);
   await page.locator('[data-action="knowledge.logDetails"]').first().click();
   await expect(page.locator('#retrieval-log-details-modal')).toContainText('refresh token rotation');
   await page.keyboard.press('Escape');
@@ -154,7 +165,7 @@ test('retrieval failures are recoverable errors instead of empty history', async
       return original(input, init);
     };
   });
-  await page.locator('#page-knowledge-retrieval-logs .page-header button').click();
+  await page.locator('#page-knowledge-management .page-header [data-action="knowledge.filterLogs"]').click();
   await expect(page.locator('#retrieval-logs-list [role="alert"]')).toContainText('retry');
   await page.locator('#retrieval-logs-list').getByRole('button', { name: 'Retry' }).click();
   await expect(page.locator('.retrieval-log-card')).toHaveCount(2);

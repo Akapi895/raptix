@@ -231,7 +231,11 @@ describe('router browser parity (isolated, in-memory)', () => {
     await page.evaluate(() => (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.go('knowledge-management'));
     expect(await calls(page)).toContain('knowledge:saved:1:23');
     expect(await calls(page)).not.toContain('knowledge-wrapper');
-    await page.evaluate(() => (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.go('knowledge-retrieval-logs'));
+    // Library and Retrieval history are tabs of one page now; a same-page query change does not
+    // re-activate it (by design -- the knowledge feature's own hashchange listener handles that
+    // in the real app), so force a real page change to exercise the "logs" tab's load branch.
+    await page.evaluate(() => (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.go('roles-management'));
+    await page.evaluate(() => (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.go('knowledge-management', { tab: 'logs' }));
     expect(await calls(page)).toContain('retrieval');
     await page.waitForTimeout(100);
     expect(await calls(page)).not.toContain('index-tick');

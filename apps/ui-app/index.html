@@ -1581,97 +1581,93 @@
                     </div>
                 </div>
 
-                <!-- Knowledge management page -->
+                <!-- Knowledge management page: Library and Retrieval history are tabs of the same page (?tab=library|logs) -->
                 <div id="page-knowledge-management" class="page capabilities-page">
                     <div class="page-header">
                         <div><h2 data-i18n="knowledge.title">Knowledge Management</h2><p class="cap-page-description">Maintain the reference material agents can retrieve during assessments.</p></div>
                         <div class="page-header-actions">
-                            <button class="btn-secondary" data-require-permission="knowledge:write" data-action="knowledge.refresh" title="Scan the configured knowledge directory for new or updated files">Scan sources</button>
-                            <details class="cap-action-disclosure"><summary>Index actions</summary><div><button class="btn-secondary" data-require-permission="knowledge:write" data-i18n="knowledge.buildIndex" data-action="knowledge.build">Build index</button><button class="btn-secondary btn-danger" data-require-permission="knowledge:write" data-i18n="knowledge.rebuildIndexFull" data-action="knowledge.rebuild">Full rebuild</button></div></details>
-                            <button class="btn-primary" data-require-permission="knowledge:write"  data-i18n="knowledge.addKnowledge" data-action="knowledge.add">Add knowledge</button>
+                            <div data-knowledge-tab-panel="library" class="knowledge-tab-actions">
+                                <button class="btn-secondary" data-require-permission="knowledge:write" data-action="knowledge.refresh" title="Scan the configured knowledge directory for new or updated files">Scan sources</button>
+                                <details class="cap-action-disclosure"><summary>Index actions</summary><div><button class="btn-secondary" data-require-permission="knowledge:write" data-i18n="knowledge.buildIndex" data-action="knowledge.build">Build index</button><button class="btn-secondary btn-danger" data-require-permission="knowledge:write" data-i18n="knowledge.rebuildIndexFull" data-action="knowledge.rebuild">Full rebuild</button></div></details>
+                                <button class="btn-primary" data-require-permission="knowledge:write"  data-i18n="knowledge.addKnowledge" data-action="knowledge.add">Add knowledge</button>
+                            </div>
+                            <button hidden data-knowledge-tab-panel="logs" class="btn-secondary"  data-i18n="common.refresh" data-action="knowledge.filterLogs">Refresh</button>
                         </div>
                     </div>
                     <div class="page-content">
-                        <nav class="cap-local-nav" aria-label="Knowledge pages"><a href="#knowledge-management" aria-current="page">Knowledge library</a><a href="#knowledge-retrieval-logs">Retrieval history</a></nav>
-                        <div class="knowledge-controls">
-                            <div class="knowledge-stats-bar" id="knowledge-stats">
-                                <div class="knowledge-stat-item">
-                                    <span class="knowledge-stat-label" data-i18n="knowledge.totalItems">Total items</span>
-                                    <span class="knowledge-stat-value">-</span>
-                                </div>
-                                <div class="knowledge-stat-item">
-                                    <span class="knowledge-stat-label" data-i18n="knowledge.categories">Categories</span>
-                                    <span class="knowledge-stat-value">-</span>
-                                </div>
-                                <div class="knowledge-stat-item">
-                                    <span class="knowledge-stat-label" data-i18n="knowledgePage.totalContent">Total content</span>
-                                    <span class="knowledge-stat-value">-</span>
-                                </div>
-                            </div>
-                            <div id="knowledge-index-progress" style="display: none; margin-bottom: 16px;"></div>
-                            <div class="knowledge-filters">
-                                <label>
-                                    <span data-i18n="knowledgePage.categoryFilter">Category filter</span>
-                                    <select id="knowledge-category-filter" data-change="knowledge.categorySelect" aria-label="Category"><option value="">All categories</option></select>
-                                </label>
-                                <label class="knowledge-search-field">
-                                    <span data-i18n="common.search">Search</span>
-                                    <div class="search-box">
-                                        <input type="search" id="knowledge-search" data-i18n="knowledgePage.searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search knowledge..."    data-input="knowledge.searchInput" data-keydown="knowledge.searchKey"/>
-                                        <button class="btn-search"  data-i18n="common.search" data-i18n-attr="title" title="Search" data-action="knowledge.search">Search</button>
+                        <nav class="cap-local-nav" aria-label="Knowledge tabs"><a href="#knowledge-management?tab=library" data-tab="library" aria-current="page">Knowledge library</a><a href="#knowledge-management?tab=logs" data-tab="logs">Retrieval history</a></nav>
+                        <div data-knowledge-tab-panel="library">
+                            <div class="knowledge-controls">
+                                <div class="knowledge-stats-bar" id="knowledge-stats">
+                                    <div class="knowledge-stat-item">
+                                        <span class="knowledge-stat-label" data-i18n="knowledge.totalItems">Total items</span>
+                                        <span class="knowledge-stat-value">-</span>
                                     </div>
-                                </label>
-                            </div>
-                        </div>
-                        <div id="knowledge-items-list" class="knowledge-items-list">
-                            <div class="loading-spinner" data-i18n="knowledgePage.loading">Loading...</div>
-                        </div>
-                        <div id="knowledge-pagination"></div>
-                    </div>
-                </div>
-
-                <!-- Knowledge retrieval history page -->
-                <div id="page-knowledge-retrieval-logs" class="page capabilities-page">
-                    <div class="page-header">
-                        <div><h2 data-i18n="knowledge.retrievalLogs">Retrieval history</h2><p class="cap-page-description">Review retrieval queries and the knowledge returned to agents.</p></div>
-                        <button class="btn-secondary"  data-i18n="common.refresh" data-action="knowledge.filterLogs">Refresh</button>
-                    </div>
-                    <div class="page-content">
-                        <nav class="cap-local-nav" aria-label="Knowledge pages"><a href="#knowledge-management">Knowledge library</a><a href="#knowledge-retrieval-logs" aria-current="page">Retrieval history</a></nav>
-                        <div class="retrieval-logs-controls">
-                            <div class="retrieval-stats-bar" id="retrieval-stats">
-                                <div class="retrieval-stat-item">
-                                    <span class="retrieval-stat-label" data-i18n="retrievalLogs.totalRetrievals">Total retrievals</span>
-                                    <span class="retrieval-stat-value">-</span>
+                                    <div class="knowledge-stat-item">
+                                        <span class="knowledge-stat-label" data-i18n="knowledge.categories">Categories</span>
+                                        <span class="knowledge-stat-value">-</span>
+                                    </div>
+                                    <div class="knowledge-stat-item">
+                                        <span class="knowledge-stat-label" data-i18n="knowledgePage.totalContent">Total content</span>
+                                        <span class="knowledge-stat-value">-</span>
+                                    </div>
                                 </div>
-                                <div class="retrieval-stat-item">
-                                    <span class="retrieval-stat-label" data-i18n="retrievalLogs.successRetrievals">Success</span>
-                                    <span class="retrieval-stat-value">-</span>
-                                </div>
-                                <div class="retrieval-stat-item">
-                                    <span class="retrieval-stat-label" data-i18n="retrievalLogs.successRate">Success rate</span>
-                                    <span class="retrieval-stat-value">-</span>
-                                </div>
-                                <div class="retrieval-stat-item">
-                                    <span class="retrieval-stat-label" data-i18n="retrievalLogs.retrievedItems">Items retrieved</span>
-                                    <span class="retrieval-stat-value">-</span>
+                                <div id="knowledge-index-progress" style="display: none; margin-bottom: 16px;"></div>
+                                <div class="knowledge-filters">
+                                    <label>
+                                        <span data-i18n="knowledgePage.categoryFilter">Category filter</span>
+                                        <select id="knowledge-category-filter" data-change="knowledge.categorySelect" aria-label="Category"><option value="">All categories</option></select>
+                                    </label>
+                                    <label class="knowledge-search-field">
+                                        <span data-i18n="common.search">Search</span>
+                                        <div class="search-box">
+                                            <input type="search" id="knowledge-search" data-i18n="knowledgePage.searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search knowledge..."    data-input="knowledge.searchInput" data-keydown="knowledge.searchKey"/>
+                                            <button class="btn-search"  data-i18n="common.search" data-i18n-attr="title" title="Search" data-action="knowledge.search">Search</button>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
-                            <div class="retrieval-logs-filters">
-                                <label>
-                                    <span data-i18n="retrievalLogs.conversationId">Conversation ID</span>
-                                    <input type="text" id="retrieval-logs-conversation-id" data-keydown="knowledge.logsKey" data-i18n="retrievalLogs.optionalConversation" data-i18n-attr="placeholder" placeholder="Optional: filter by conversation" />
-                                </label>
-                                <label>
-                                    <span data-i18n="retrievalLogs.messageId">Message ID</span>
-                                    <input type="text" id="retrieval-logs-message-id" data-keydown="knowledge.logsKey" data-i18n="retrievalLogs.optionalMessage" data-i18n-attr="placeholder" placeholder="Optional: filter by message" />
-                                </label>
-                                <button class="btn-secondary"  data-i18n="retrievalLogs.filter" data-action="knowledge.filterLogs">Filter</button>
-                                <button class="btn-secondary" data-action="knowledge.clearLogs">Clear filters</button>
+                            <div id="knowledge-items-list" class="knowledge-items-list">
+                                <div class="loading-spinner" data-i18n="knowledgePage.loading">Loading...</div>
                             </div>
+                            <div id="knowledge-pagination"></div>
                         </div>
-                        <div id="retrieval-logs-list" class="retrieval-logs-list">
-                            <div class="loading-spinner" data-i18n="retrievalLogs.loading">Loading...</div>
+                        <div data-knowledge-tab-panel="logs" hidden>
+                            <div class="retrieval-logs-controls">
+                                <div class="retrieval-stats-bar" id="retrieval-stats">
+                                    <div class="retrieval-stat-item">
+                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.totalRetrievals">Total retrievals</span>
+                                        <span class="retrieval-stat-value">-</span>
+                                    </div>
+                                    <div class="retrieval-stat-item">
+                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.successRetrievals">Success</span>
+                                        <span class="retrieval-stat-value">-</span>
+                                    </div>
+                                    <div class="retrieval-stat-item">
+                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.successRate">Success rate</span>
+                                        <span class="retrieval-stat-value">-</span>
+                                    </div>
+                                    <div class="retrieval-stat-item">
+                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.retrievedItems">Items retrieved</span>
+                                        <span class="retrieval-stat-value">-</span>
+                                    </div>
+                                </div>
+                                <div class="retrieval-logs-filters">
+                                    <label>
+                                        <span data-i18n="retrievalLogs.conversationId">Conversation ID</span>
+                                        <input type="text" id="retrieval-logs-conversation-id" data-keydown="knowledge.logsKey" data-i18n="retrievalLogs.optionalConversation" data-i18n-attr="placeholder" placeholder="Optional: filter by conversation" />
+                                    </label>
+                                    <label>
+                                        <span data-i18n="retrievalLogs.messageId">Message ID</span>
+                                        <input type="text" id="retrieval-logs-message-id" data-keydown="knowledge.logsKey" data-i18n="retrievalLogs.optionalMessage" data-i18n-attr="placeholder" placeholder="Optional: filter by message" />
+                                    </label>
+                                    <button class="btn-secondary"  data-i18n="retrievalLogs.filter" data-action="knowledge.filterLogs">Filter</button>
+                                    <button class="btn-secondary" data-action="knowledge.clearLogs">Clear filters</button>
+                                </div>
+                            </div>
+                            <div id="retrieval-logs-list" class="retrieval-logs-list">
+                                <div class="loading-spinner" data-i18n="retrievalLogs.loading">Loading...</div>
+                            </div>
                         </div>
                     </div>
                 </div>

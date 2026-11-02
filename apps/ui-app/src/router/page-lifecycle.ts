@@ -35,6 +35,7 @@ export interface PageLifecycleDependencies {
   loadKnowledgePage?: Hook;
   updateIndexProgress?: Hook;
   loadRetrievalLogs?: Hook;
+  setKnowledgeTab?: (tab: string) => void;
   stopKnowledgeIndexPoll?: Hook;
   initC2?: (page: PageId) => unknown;
   cleanupTasksPage?: Hook;
@@ -110,14 +111,19 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
         run(() => deps.initC2?.(page)); break;
       // These hooks used to live in knowledge.js's switchPage wrapper. They must
       // also run for service-owned hash changes and delegated navigation now.
-      case 'knowledge-management':
-        run(deps.loadKnowledgeCategories); run(deps.loadKnowledgePage);
-        if (deps.updateIndexProgress) run(async () => {
-          try { await deps.updateIndexProgress?.(); }
-          finally { if (activePage !== 'knowledge-management') run(deps.stopKnowledgeIndexPoll); }
-        });
+      case 'knowledge-management': {
+        const tab = route.query.get('tab') === 'logs' ? 'logs' : 'library';
+        run(() => deps.setKnowledgeTab?.(tab));
+        if (tab === 'logs') run(deps.loadRetrievalLogs);
+        else {
+          run(deps.loadKnowledgeCategories); run(deps.loadKnowledgePage);
+          if (deps.updateIndexProgress) run(async () => {
+            try { await deps.updateIndexProgress?.(); }
+            finally { if (activePage !== 'knowledge-management') run(deps.stopKnowledgeIndexPoll); }
+          });
+        }
         break;
-      case 'knowledge-retrieval-logs': run(deps.loadRetrievalLogs); break;
+      }
     }
     if (page !== 'tasks') run(deps.cleanupTasksPage);
     if (page !== 'knowledge-management') run(deps.stopKnowledgeIndexPoll);

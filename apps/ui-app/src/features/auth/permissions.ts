@@ -30,7 +30,6 @@ export const PAGE_PERMISSION_MAP: Readonly<Record<string, string>> = {
   'mcp-monitor': 'monitor:read',
   'mcp-management': 'mcp:read',
   knowledge: 'knowledge:read',
-  'knowledge-retrieval-logs': 'knowledge:read',
   'knowledge-management': 'knowledge:read',
   skills: 'skills:read',
   'skills-monitor': 'skills:read',
