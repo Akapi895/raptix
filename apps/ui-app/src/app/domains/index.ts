@@ -331,6 +331,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     loadKnowledgeCategories: knowledge.controller.categories,
     loadKnowledgePage: () => knowledge.controller.load(knowledge.service.state.pagination.currentCategory, 1, knowledge.service.state.pagination.pageSize),
     updateIndexProgress: knowledge.controller.updateIndex, loadRetrievalLogs: knowledge.controller.logs,
+    setKnowledgeTab: knowledge.controller.setTab,
     stopKnowledgeIndexPoll: () => knowledge.controller.stopIndex(false), initC2: () => c2.controller.init(),
     cleanupTasksPage: () => { if (currentPage() !== 'workflows') tasks.hooks.cleanupTasksPage(); },
     stopTokenUsageRequests: tokens.service.stop, onError: error => console.warn('[router]', error),

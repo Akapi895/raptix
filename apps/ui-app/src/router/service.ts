@@ -1,4 +1,4 @@
-export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'file-management', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'knowledge-retrieval-logs', 'roles-management', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
+export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'file-management', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'roles-management', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
 export type PageId = typeof pageIds[number];
 export interface Route { page: PageId; query: URLSearchParams }
 export interface Navigation { route: Route; previous: Route | null; kind: 'replace' | 'external' | 'initial'; pageChanged: boolean; restore: boolean }
@@ -17,6 +17,7 @@ export function parseRoute(hash: string): Route | null {
   if (page === 'asset-overview' || page === 'assets' || page === 'asset-library') page = 'asset-management';
   if (page === 'chat-files' || page === 'files') page = 'file-management';
   if (page === 'mcp') page = 'mcp-management';
+  if (page === 'knowledge-retrieval-logs') { page = 'knowledge-management'; query.set('tab', 'logs'); }
   if (page === 'webshell-management') page = 'webshell';
   if (page === 'system-settings') page = 'settings';
   if (page === 'settings' && (query.get('section') === 'rbac' || query.get('section') === 'update')) return { page: 'dashboard', query: new URLSearchParams() };
@@ -64,7 +65,7 @@ export function createRouter(port: RouterPort) {
     },
     go(page: string, query?: URLSearchParams | Record<string, string>): void {
       if (page === 'platform-rbac') { commit({ page: 'dashboard', query: new URLSearchParams() }, 'replace'); return; }
-      if (['c2-tasks', 'c2-events', 'c2-profiles', 'c2'].includes(page)) { const route = parseRoute(page + (query ? '?' + new URLSearchParams(query) : '')); if (route) commit(route, 'replace'); return; }
+      if (['c2-tasks', 'c2-events', 'c2-profiles', 'c2', 'knowledge-retrieval-logs'].includes(page)) { const route = parseRoute(page + (query ? '?' + new URLSearchParams(query) : '')); if (route) commit(route, 'replace'); return; }
       if (page === 'tasks') { commit({ page: 'workflows', query: new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(query)), tab: 'schedule' }) }, 'replace'); return; }
       if (page === 'asset-overview') page = 'asset-management';
       if (page === 'assets') page = 'asset-management';

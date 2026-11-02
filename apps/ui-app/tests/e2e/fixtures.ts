@@ -19,7 +19,7 @@ export async function openApp(page: import('@playwright/test').Page, route = 'da
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
   await expect(page.locator('#csai-mock-badge')).toBeVisible();
   await expect(page.locator('#login-overlay')).toBeHidden();
-  const aliases: Record<string, string> = { tasks: 'workflows', 'c2-tasks': 'c2-activity', 'c2-events': 'c2-activity', 'c2-profiles': 'c2-listeners' };
+  const aliases: Record<string, string> = { tasks: 'workflows', 'c2-tasks': 'c2-activity', 'c2-events': 'c2-activity', 'c2-profiles': 'c2-listeners', 'knowledge-retrieval-logs': 'knowledge-management' };
   const requested = route.split('?')[0]!; const routePage = aliases[requested] || requested;
   await expect(page.locator(`#page-${routePage}.active`)).toBeVisible();
 }

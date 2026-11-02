@@ -55,7 +55,7 @@ function browserSource(): string {
 }
 function shell(): string {
   const source = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
-  const ids = new Set(['page-skills-management', 'page-skills-monitor', 'page-knowledge-management', 'page-knowledge-retrieval-logs', 'skill-modal', 'knowledge-item-modal']);
+  const ids = new Set(['page-skills-management', 'page-skills-monitor', 'page-knowledge-management', 'skill-modal', 'knowledge-item-modal']);
   const selected: string[] = [];
   function walk(node: DefaultTreeAdapterTypes.Node): void {
     if ('attrs' in node && ids.has(node.attrs.find(attr => attr.name === 'id')?.value ?? '')) { selected.push(serializeOuter(node)); return; }
@@ -156,7 +156,7 @@ describe('skills + knowledge standalone browser integration', () => {
       expect(await page.evaluate(() => localStorage.getItem('skillsPageSize'))).toBe('10');
       await page.locator('#skills-search').fill('sample-20'); await page.locator('#skills-search').press('Enter'); await browserExpect(page.locator('.skill-card')).toHaveCount(1); await browserExpect(page.locator('#skills-pagination')).toBeEmpty();
       await page.locator('#skills-search-clear').click(); await browserExpect(page.locator('.skill-card')).toHaveCount(10);
-      const inline = await page.locator('#page-skills-management, #page-skills-monitor, #page-knowledge-management, #page-knowledge-retrieval-logs, #skill-modal, #knowledge-item-modal').evaluateAll(roots => roots.flatMap(root => [...root.querySelectorAll('*')].flatMap(node => [...node.attributes].filter(attr => /^on/.test(attr.name)).map(attr => attr.value))));
+      const inline = await page.locator('#page-skills-management, #page-skills-monitor, #page-knowledge-management, #skill-modal, #knowledge-item-modal').evaluateAll(roots => roots.flatMap(root => [...root.querySelectorAll('*')].flatMap(node => [...node.attributes].filter(attr => /^on/.test(attr.name)).map(attr => attr.value))));
       expect(inline).toEqual([]);
       await page.clock.install();
       await page.locator('[data-action="skills.add"]').click(); const before = state.requests.length; await page.clock.fastForward(5500); expect(state.requests.length).toBe(before);
@@ -219,7 +219,8 @@ describe('skills + knowledge standalone browser integration', () => {
   it('renders normalized retrieval logs safely, copies IDs, loads partial details, re-renders on languagechange and retries deletion', async () => {
     const { page, state, errors } = await setup();
     try {
-      await activatePage(page, 'knowledge-retrieval-logs'); await page.locator('[data-action="knowledge.filterLogs"]').first().click(); await browserExpect(page.locator('.retrieval-log-card')).toHaveCount(1);
+      await activatePage(page, 'knowledge-management'); await page.evaluate(() => (globalThis as typeof globalThis & { stepSix: Harness }).stepSix.bridge.knowledge.controller.setTab('logs'));
+      await page.locator('[data-action="knowledge.filterLogs"]').first().click(); await browserExpect(page.locator('.retrieval-log-card')).toHaveCount(1);
       await browserExpect(page.locator('.retrieval-log-card .cap-primary-cell strong')).toHaveText('query <safe>');
       await page.locator('[data-action="knowledge.logDetails"]').click(); await page.locator('[data-action="knowledge.copy"]').first().click(); expect(await page.evaluate(() => (globalThis as typeof globalThis & { stepSix: Harness }).stepSix.copied)).toEqual(['conv "quoted"']);
       await browserExpect(page.locator('.cap-retrieved-item')).toHaveCount(1); await browserExpect(page.locator('#retrieval-log-details-modal')).toContainText('Knowledge 0'); await page.locator('[data-action="knowledge.closeDetails"]').last().click();
