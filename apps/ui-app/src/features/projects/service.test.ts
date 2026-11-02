@@ -1,22 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createHttp, HttpError } from '../../platform/http';
 import type { KeyValueStorage } from '../../platform/storage';
+import type { WorkspacePath } from '../../platform/workspace-path';
 import { createProjectsApi, createProjectsService, createProjectFoldersService, filterActiveProjectsLocal, getProjectApprovalTiming, isSparseFactBody, parseProjectsListResponse, type Project, type FactInput } from './index';
 
 const project = (id: string, changes: Partial<Project> = {}): Project => ({ id, name: id, status: 'active', pinned: false, created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z', ...changes });
 function persistence(initial: Record<string, string> = {}): KeyValueStorage {
   const values = new Map(Object.entries(initial)); return { get: key => values.get(key) ?? null, set: (key, value) => { values.set(key, value); return true; }, remove: key => values.delete(key) };
 }
-function setup(handler: (url: URL, method: string, body: unknown) => unknown | Promise<unknown>, saved = persistence()) {
+function setup(handler: (url: URL, method: string, body: unknown) => unknown | Promise<unknown>, saved = persistence(), path?: WorkspacePath) {
   const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const body: unknown = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
     const result = await handler(new URL(String(input), 'http://test'), init?.method || 'GET', body);
     return result instanceof Response ? result : Response.json(result);
   });
   const transport = createHttp({ fetcher, session: { read: () => null, clear() {} }, events: { emit() {} } });
-  const service = createProjectsService(createProjectsApi(transport), saved); return { service, fetcher, saved };
+  const service = createProjectsService(createProjectsApi(transport), saved, path); return { service, fetcher, saved };
 }
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; }
+function fakePath(initial = ''): WorkspacePath & { current: string } {
+  const port = { current: initial, read: () => port.current, write: (id: string) => { port.current = id; } };
+  return port;
+}
 
 describe('public projects service', () => {
   it('accepts Go envelopes, historical items/string counts and array responses', () => {
@@ -72,6 +77,20 @@ describe('public projects service', () => {
     await service.selectProject('a'); const graphRequest = service.loadGraph('path', true), assetsRequest = service.loadAssets();
     await service.selectProject('b'); await service.selectProject('a'); graph.resolve({ nodes: [], edges: [] }); assets.resolve({ assets: [], total: 0, page: 1, total_pages: 1 });
     expect(await graphRequest).toBeNull(); expect(await assetsRequest).toBe(false); expect(service.state.graph).toBeNull();
+  });
+  it('syncs the active project with the URL path segment: path wins on load, otherwise storage seeds a bare path, and writes flow both ways', () => {
+    const storedAndPathed = persistence({ 'raptix.activeProjectId': 'from-storage' });
+    setup(() => ({}), storedAndPathed, fakePath('from-path'));
+    expect(storedAndPathed.get('raptix.activeProjectId')).toBe('from-path');
+
+    const noPath = fakePath('');
+    setup(() => ({}), persistence({ 'raptix.activeProjectId': 'from-storage' }), noPath);
+    expect(noPath.current).toBe('from-storage');
+
+    const writable = fakePath('');
+    const { service } = setup(() => ({}), persistence(), writable);
+    service.setActiveProjectId('new-id'); expect(writable.current).toBe('new-id');
+    service.setActiveProjectId(''); expect(writable.current).toBe('');
   });
   it('preserves active storage keys, validates list sizes and clears a deleted or archived default project', async () => {
     const { service, saved } = setup((url, method) => method === 'DELETE' ? {} : project(url.pathname.split('/').pop() || '', { status: 'archived' }), persistence({ 'raptix.projects_list_page_size': '100', 'raptix.project_assets_page_size': '10', 'raptix.activeProjectId': 'old' }));

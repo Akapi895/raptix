@@ -1,4 +1,5 @@
 import { storage, type KeyValueStorage } from '../../platform/storage';
+import { workspacePath, type WorkspacePath } from '../../platform/workspace-path';
 import { HttpError } from '../../platform/http';
 import { createProjectsApi, type ProjectsApi } from './client';
 import type { CreateProjectRequest, UpdateProjectRequest } from '../../api/types/project';
@@ -28,7 +29,7 @@ export function filterActiveProjectsLocal(projects: Project[], query = ''): Proj
   return sortProjectsForPicker(projects.filter(p => p.id && p.status !== 'archived' && matchProjectSearchQuery(p, query)));
 }
 
-export function createProjectsService(api: ProjectsApi = createProjectsApi(), persistence: KeyValueStorage = storage) {
+export function createProjectsService(api: ProjectsApi = createProjectsApi(), persistence: KeyValueStorage = storage, path: WorkspacePath = workspacePath) {
   const savedSize = (key: string, allowed: number[], fallback: number) => { const size = Number(persistence.get(key)); return allowed.includes(size) ? size : fallback; };
   const state: ProjectsSnapshot = {
     projects: [], allProjects: [], selectedId: '', project: null, tab: 'facts', page: 1,
@@ -48,7 +49,10 @@ export function createProjectsService(api: ProjectsApi = createProjectsApi(), pe
   function remember(list: Project[]) { for (const p of list) if (p.id) names[p.id] = p.name || p.id; }
   function rebuild(list: Project[]) { for (const key of Object.keys(names)) delete names[key]; remember(list); }
   function getActiveProjectId() { return persistence.get(ACTIVE) ?? ''; }
-  function setActiveProjectId(id: string) { if (id) persistence.set(ACTIVE, id); else persistence.remove(ACTIVE); emit(); }
+  function setActiveProjectId(id: string) { if (id) persistence.set(ACTIVE, id); else persistence.remove(ACTIVE); path.write(id); emit(); }
+  // The URL path segment is the source of truth on load (what the viewer navigated to or
+  // bookmarked); fall back to reflecting the last stored project into a bare "/" on first run.
+  { const fromPath = path.read(); if (fromPath) persistence.set(ACTIVE, fromPath); else { const stored = getActiveProjectId(); if (stored) path.write(stored); } }
   async function fetchAllProjects(includeArchived = false) {
     const all: Project[] = [];
     const seen = new Set<string>();
