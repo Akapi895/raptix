@@ -90,8 +90,10 @@ describe('typed mock fixture and router', () => {
     const mock = createMock({ delayMs: 0 });
     const project = projectSchema.parse(bodyOf(await request(mock, 'POST', '/api/projects', { name: 'New engagement', scope_json: '{"targets":["example.com"]}' })));
     const id = project.id;
+    expect(project).toMatchObject({ auto_ingest_enabled: false, tried_edges_enabled: false });
     expect(bodyOf(await request(mock, 'GET', '/api/projects?search=New&limit=1&offset=0'))).toMatchObject({ total: 1, limit: 1, offset: 0 });
-    await request(mock, 'PUT', '/api/projects/' + id, { name: 'Edited', pinned: true, unknown: 'ignored' });
+    await request(mock, 'PUT', '/api/projects/' + id, { name: 'Edited', pinned: true, auto_ingest_enabled: true, tried_edges_enabled: false, unknown: 'ignored' });
+    expect(bodyOf(await request(mock, 'GET', '/api/projects/' + id))).toMatchObject({ auto_ingest_enabled: true, tried_edges_enabled: false });
     const fact = z.object({ id: z.string(), fact_key: z.string() }).parse(bodyOf(await request(mock, 'POST', '/api/projects/' + id + '/facts', { fact_key: 'host.demo', summary: 'Demo host' })));
     await request(mock, 'POST', '/api/projects/' + id + '/facts/deprecate', { fact_keys: [fact.fact_key] });
     expect(bodyOf(await request(mock, 'GET', '/api/projects/' + id + '/facts?hide_deprecated=true'))).toEqual([]);

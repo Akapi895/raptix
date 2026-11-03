@@ -33588,6 +33588,10 @@ html[data-theme="dark"] .projects-panel-count { color: var(--accent-color); back
 .projects-settings-card--scope {
     min-height: 0;
 }
+.projects-settings-card--graph {
+    grid-column: 1 / -1;
+    min-height: min-content;
+}
 .projects-settings-card-head {
     display: flex;
     align-items: flex-start;
@@ -33623,6 +33627,14 @@ html[data-theme="dark"] .projects-panel-count { color: var(--accent-color); back
 .projects-settings-icon--red {
     background: #fef2f2;
     color: #dc2626;
+}
+.projects-settings-icon--teal {
+    background: #ecfdf5;
+    color: #0d9488;
+}
+html[data-theme="dark"] .projects-settings-icon--teal {
+    background: rgba(45, 212, 191, 0.12);
+    color: #5eead4;
 }
 .projects-settings-card-head .projects-settings-card-title {
     margin: 0;

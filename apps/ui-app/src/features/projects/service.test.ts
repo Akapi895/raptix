@@ -4,7 +4,7 @@ import type { KeyValueStorage } from '../../platform/storage';
 import type { WorkspacePath } from '../../platform/workspace-path';
 import { createProjectsApi, createProjectsService, createProjectFoldersService, filterActiveProjectsLocal, getProjectApprovalTiming, isSparseFactBody, parseProjectsListResponse, type Project, type FactInput } from './index';
 
-const project = (id: string, changes: Partial<Project> = {}): Project => ({ id, name: id, status: 'active', pinned: false, created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z', ...changes });
+const project = (id: string, changes: Partial<Project> = {}): Project => ({ id, name: id, status: 'active', pinned: false, auto_ingest_enabled: false, tried_edges_enabled: false, created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z', ...changes });
 function persistence(initial: Record<string, string> = {}): KeyValueStorage {
   const values = new Map(Object.entries(initial)); return { get: key => values.get(key) ?? null, set: (key, value) => { values.set(key, value); return true; }, remove: key => values.delete(key) };
 }

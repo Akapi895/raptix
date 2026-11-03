@@ -116,7 +116,8 @@ export function registerSecurity(M: MockRuntime): void {
     const assets = M.state.assets.filter(function (a) { return a.project_id === p.id; }).length;
     return {
       id: p.id, name: p.name, description: p.description, scope_json: p.scope_json, status: p.status,
-      pinned: !!p.pinned, created_at: p.created_at, updated_at: p.updated_at,
+      pinned: !!p.pinned, auto_ingest_enabled: !!p.auto_ingest_enabled, tried_edges_enabled: !!p.tried_edges_enabled,
+      created_at: p.created_at, updated_at: p.updated_at,
       conversation_count: convs, vulnerability_count: vulns, asset_count: assets,
     };
   }
@@ -132,7 +133,7 @@ export function registerSecurity(M: MockRuntime): void {
   M.route('POST', '/api/projects', bodies.project, function (ctx) {
     const b = ctx.body || {};
     if (!b.name) return M.fail(400, 'Project name is required');
-    const p = { id: M.id('proj'), name: b.name, description: b.description || '', scope_json: b.scope_json || '{}', status: 'active', pinned: false, created_at: M.nowISO(), updated_at: M.nowISO() };
+    const p = { id: M.id('proj'), name: b.name, description: b.description || '', scope_json: b.scope_json || '{}', status: 'active', pinned: false, auto_ingest_enabled: false, tried_edges_enabled: false, created_at: M.nowISO(), updated_at: M.nowISO() };
     M.state.projects.unshift(p);
     M.save();
     return M.ok(projectView(p));
@@ -147,7 +148,7 @@ export function registerSecurity(M: MockRuntime): void {
   M.route('PUT', '/api/projects/:id', bodies.project, function (ctx) {
     const found = M.findById(M.state.projects, ctx.params.id);
     if (!found) return M.fail(404, 'Project not found');
-    M.mergeInto(found.item, ctx.body, ['name', 'description', 'scope_json', 'status', 'pinned']);
+    M.mergeInto(found.item, ctx.body, ['name', 'description', 'scope_json', 'status', 'pinned', 'auto_ingest_enabled', 'tried_edges_enabled']);
     found.item.updated_at = M.nowISO();
     M.save();
     return M.ok(projectView(found.item));

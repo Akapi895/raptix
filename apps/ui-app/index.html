@@ -2217,6 +2217,33 @@
                                                     <p class="projects-scope-footnote" id="project-scope-warning" role="status">Empty scope means no project scope limit. Specify authorized targets and exclusions before execution. Saving scope does not prove runtime enforcement.</p>
                                                 </div>
                                             </section>
+                                            <section class="projects-settings-card projects-settings-card--graph">
+                                                <div class="projects-settings-card-head">
+                                                    <div class="projects-settings-card-head-left">
+                                                        <span class="projects-settings-icon projects-settings-icon--teal" aria-hidden="true">
+                                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M6.7 7.2L11 16"/><path d="M17.3 7.2L13 16"/></svg>
+                                                        </span>
+                                                        <div>
+                                                            <h4 class="projects-settings-card-title" data-i18n="projects.graphTitle">Knowledge graph auto-capture</h4>
+                                                            <p class="projects-settings-card-hint" data-i18n="projects.graphHint">Off by default. Changes apply to new runs in this project. Graph queries, reference knowledge and manual recording remain available.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="projects-settings-card-body">
+                                                    <div class="projects-form-field">
+                                                        <label class="projects-filter-check">
+                                                            <input type="checkbox" id="project-edit-auto-ingest-enabled" aria-describedby="project-auto-ingest-hint"> <span data-i18n="projects.autoIngestLabel">Auto-ingest scanner output</span>
+                                                        </label>
+                                                        <small id="project-auto-ingest-hint" class="form-hint" data-i18n="projects.autoIngestHint">Parses known scanner output (nmap, httpx, nuclei, katana, arjun, subfinder, dnsx, ffuf, masscan, gobuster) from bash commands and writes Host/Service/Vulnerability nodes automatically.</small>
+                                                    </div>
+                                                    <div class="projects-form-field">
+                                                        <label class="projects-filter-check">
+                                                            <input type="checkbox" id="project-edit-tried-edges-enabled" aria-describedby="project-tried-edges-hint"> <span data-i18n="projects.triedEdgesLabel">Auto-record attempted targets</span>
+                                                        </label>
+                                                        <small id="project-tried-edges-hint" class="form-hint" data-i18n="projects.triedEdgesHint">Records attempted actions and their outcome for the project's active target. An attempt does not mean an exploit succeeded.</small>
+                                                    </div>
+                                                </div>
+                                            </section>
                                         </div>
                                         <section class="projects-settings-card projects-settings-card--danger">
                                             <div class="projects-settings-danger-main">

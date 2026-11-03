@@ -59,7 +59,8 @@ export function createProjectForms(ctx: ProjectsContext) {
     const name = dom.value('project-edit-name').trim(); if (!name) return browser.alert(t('projects.enterProjectName'));
     const scope = dom.value('project-edit-scope').trim();
     try { if (scope) JSON.parse(scope); } catch (error) { return browser.alert(t('projects.invalidScopeJson') + ': ' + String(error)); }
-    await service.saveProject(id, { name, description: dom.value('project-edit-description').trim().slice(0, 4000), scope_json: scope, status: dom.value('project-edit-status') || 'active', pinned: dom.checked('project-edit-pinned') });
+    await service.saveProject(id, { name, description: dom.value('project-edit-description').trim().slice(0, 4000), scope_json: scope, status: dom.value('project-edit-status') || 'active', pinned: dom.checked('project-edit-pinned'),
+      auto_ingest_enabled: dom.checked('project-edit-auto-ingest-enabled'), tried_edges_enabled: dom.checked('project-edit-tried-edges-enabled') });
     await ctx.reload(); await ctx.select(id); deps.notifyApiError(t('projects.saved'), 'success');
   }
   function updateFactFormHints() {

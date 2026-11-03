@@ -127,8 +127,10 @@ test('typed feature shell actions, forms, graph editing, folders and cross-featu
   await expect.poll(() => writes.some(write => write.url.endsWith('/facts/f1') && (write.body as { summary?: string }).summary === 'Edited summary')).toBe(true);
   await expect(page.locator('.projects-tabs [role="tab"]')).toHaveCount(3);
   await page.locator('[data-action="projects.settings"]').click(); await expect(page.locator('#project-settings-dialog')).toBeVisible(); await page.locator('#project-edit-pinned').check();
+  await page.locator('#project-edit-auto-ingest-enabled').check(); await page.locator('#project-edit-tried-edges-enabled').check();
   await page.locator('[data-action="projects.saveProjectSettings"]').click();
   await expect.poll(() => writes.some(write => write.url === '/api/projects/p1' && (write.body as { pinned?: boolean }).pinned === true)).toBe(true);
+  await expect.poll(() => writes.some(write => write.url === '/api/projects/p1' && (write.body as { auto_ingest_enabled?: boolean; tried_edges_enabled?: boolean }).auto_ingest_enabled === true && (write.body as { tried_edges_enabled?: boolean }).tried_edges_enabled === true)).toBe(true);
   await page.keyboard.press('Escape'); await expect(page.locator('#project-settings-dialog')).not.toBeVisible();
   await page.locator('#project-tab-graph').click(); await expect(page.locator('#project-fact-graph-container canvas').first()).toBeVisible();
   // Drive the public renderer callbacks through real Cytoscape node taps.
