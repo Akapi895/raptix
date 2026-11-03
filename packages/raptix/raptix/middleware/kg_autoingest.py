@@ -27,6 +27,7 @@ output path yet, so they stay explicit ``@tool`` calls
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import os
 import posixpath
@@ -41,6 +42,7 @@ from langchain_core.messages import ToolMessage
 
 from raptix.knowledge.graph.ingest import ingest
 from raptix.knowledge.graph.store import KGStore
+from raptix.knowledge.graph.trust import ChannelStore
 from raptix.knowledge.ingest import default_registry
 from raptix.knowledge.ingest.materialize import observations_to_records
 from raptix.middleware.filesystem import _normalize_engagement_workspace
@@ -143,7 +145,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
 
     def __init__(self, *, store: KGStore, sandbox: Any, role: str) -> None:
         super().__init__()
-        self._store = store
+        self._store = ChannelStore(store, "tool_autoingest")
         self._sandbox = sandbox
         self._role = role
         self._slots = threading.BoundedSemaphore(value=2)
@@ -213,16 +215,10 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             entries = sandbox.ls_info(posixpath.dirname(output_path))
             file_info = next((entry for entry in entries if entry.get("path") == output_path), None)
             size = file_info.get("size") if file_info is not None else None
-            if not isinstance(size, int):
+            if isinstance(size, int) and size > _MAX_BYTES:
                 return
-            if size > _MAX_BYTES:
-                return
-            downloaded = (
-                sandbox.download_files(
-                    [output_path], workspace_path=workspace, max_bytes=_MAX_BYTES
-                )
-                if _capture_enabled()
-                else sandbox.download_files([output_path])
+            downloaded = sandbox.download_files(
+                [output_path], workspace_path=workspace, max_bytes=_MAX_BYTES
             )
             if len(downloaded) != 1 or downloaded[0].error:
                 return
@@ -247,7 +243,15 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 workspace=workspace,
             )
             return
-        store: Any = self._store
+        store: Any = _CaptureStore(
+            self._store,
+            {
+                "source_artifact_ref": output_path
+                if output_path != "-"
+                else f"episode://{episode_id}/{kind}",
+                "source_artifact_digest": hashlib.sha256(content).hexdigest(),
+            },
+        )
         if _capture_enabled():
             from raptix.execution.tools.evidence.artifacts import retain_artifact
 
@@ -270,7 +274,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 # Legacy adapters use their own node identity, so the capture is
                 # retained for integrity/traceability but not source-assessed.
                 store = _CaptureStore(
-                    self._store,
+                    store,
                     {
                         "source_artifact_ref": retained.artifact_ref,
                         "source_artifact_id": retained.id,
@@ -322,6 +326,11 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             records = observations_to_records(outcome.observations)
             if not records:
                 return
+            for record in records:
+                record.setdefault("props", {}).update(
+                    source_artifact_ref=artifact.artifact_ref,
+                    source_artifact_digest=hashlib.sha256(content).hexdigest(),
+                )
             if _capture_enabled() and sandbox is not None and workspace is not None:
                 from raptix.execution.tools.evidence.artifacts import retain_artifact
 

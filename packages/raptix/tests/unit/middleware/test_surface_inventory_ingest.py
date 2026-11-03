@@ -29,6 +29,7 @@ class _StubStore:
         engagement: str,
         created_by: str,
         source_episode_id: str,
+        provenance_channel: str = "legacy_unknown",
     ) -> dict[str, int]:
         self.calls.append(
             {
@@ -36,6 +37,7 @@ class _StubStore:
                 "engagement": engagement,
                 "created_by": created_by,
                 "source_episode_id": source_episode_id,
+                "provenance_channel": provenance_channel,
             }
         )
         return {"created": len(observations), "merged": 0, "edges": 0}
@@ -49,7 +51,9 @@ class _Sandbox:
     def ls_info(self, directory: str) -> list[dict[str, Any]]:
         return [{"path": f"{directory}/katana.jsonl", "size": len(self.content)}]
 
-    def download_files(self, paths: list[str]) -> list[Any]:
+    def download_files(
+        self, paths: list[str], *, workspace_path: str | None = None, max_bytes: int | None = None
+    ) -> list[Any]:
         self.downloaded.extend(paths)
         return [SimpleNamespace(content=self.content, error=None)]
 
