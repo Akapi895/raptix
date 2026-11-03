@@ -42,6 +42,8 @@ interface UpdateBody {
   scope_json?: unknown;
   status?: unknown;
   pinned?: unknown;
+  auto_ingest_enabled?: unknown;
+  tried_edges_enabled?: unknown;
 }
 
 const asString = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
@@ -57,6 +59,8 @@ function toWire(project: ProjectRecord): Record<string, unknown> {
     scope_json: project.scopeJson ?? "",
     status: project.status,
     pinned: project.pinned,
+    auto_ingest_enabled: project.autoIngestEnabled,
+    tried_edges_enabled: project.triedEdgesEnabled,
     created_at: project.createdAt.toISOString(),
     updated_at: project.updatedAt.toISOString(),
     conversation_count: project.conversationCount,
@@ -251,12 +255,22 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
     "/api/projects/:id",
     { preHandler: requireSession },
     async (request, reply) => {
+      for (const field of ["auto_ingest_enabled", "tried_edges_enabled"] as const) {
+        const value = request.body?.[field];
+        if (value != null && typeof value !== "boolean") {
+          return reply.code(400).send({ error: `${field} must be a boolean` });
+        }
+      }
       const project = await projectStore.update(request.params.id, {
         name: asNullableString(request.body?.name),
         description: asNullableString(request.body?.description),
         scopeJson: asNullableString(request.body?.scope_json),
         status: asNullableString(request.body?.status),
         pinned: typeof request.body?.pinned === "boolean" ? request.body.pinned : undefined,
+        autoIngestEnabled:
+          typeof request.body?.auto_ingest_enabled === "boolean" ? request.body.auto_ingest_enabled : undefined,
+        triedEdgesEnabled:
+          typeof request.body?.tried_edges_enabled === "boolean" ? request.body.tried_edges_enabled : undefined,
       });
       if (!project) {
         await reply.code(404).send({ error: "Project not found" });

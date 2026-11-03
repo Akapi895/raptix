@@ -56,7 +56,16 @@ async function sandboxConfigFor(options: AgentLoopRoutesOptions, projectId: stri
   if (!projectId || !options.sandboxKey) return undefined;
   const project = await options.projectStore.findById(projectId);
   if (!project) return undefined;
-  return { ...runConfigurableFor(project.workspaceSlug, options.sandboxKey), recursion_limit: 1000 };
+  return {
+    configurable: {
+      ...runConfigurableFor(project.workspaceSlug, options.sandboxKey),
+      graph_toggles: {
+        auto_ingest_enabled: project.autoIngestEnabled,
+        tried_edges_enabled: project.triedEdgesEnabled,
+      },
+    },
+    recursion_limit: 1000,
+  };
 }
 
 async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
@@ -93,6 +102,7 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
         conversation = await conversationStore.create({ title: titleFromMessage(message), projectId, runtimeThreadId, roleName: asString(request.body?.role) });
       }
       const configurable: Record<string, unknown> = { ...runConfigurableFor(project.workspaceSlug, options.sandboxKey),
+        graph_toggles: { auto_ingest_enabled: project.autoIngestEnabled, tried_edges_enabled: project.triedEdgesEnabled },
         ...(options.specialistConfiguration ? { specialist_configuration: await options.specialistConfiguration.snapshot(projectId) } : {}) };
       const userMessage = await conversationStore.appendMessage(conversation.id, "user", message);
       const output = new PassThrough();

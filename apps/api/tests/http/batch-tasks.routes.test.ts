@@ -71,6 +71,20 @@ describe("batch-tasks routes", () => {
     expect(runtime.createdRuns).toHaveLength(2);
   });
 
+  it("batch dispatch snapshots the saved project's graph toggles", async () => {
+    runtime = new FakeRuntime();
+    runtime.queueRunStatuses("success");
+    ({ app, token } = await buildAuthedTestApp({ runtime, sandboxKey: "k".repeat(64) }));
+    const project = (await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "Batch graph" } })).json();
+    await app.inject({ method: "PUT", url: `/api/projects/${project.id}`, headers: headers(), payload: { auto_ingest_enabled: true, tried_edges_enabled: false } });
+    const queue = await createQueue({ projectId: project.id, tasks: ["capture probe"] });
+    await app.inject({ method: "POST", url: `/api/batch-tasks/${queue.id}/start`, headers: headers() });
+    await expect.poll(() => runtime.createdRuns.length).toBe(1);
+    expect(runtime.createdRuns[0]?.config).toMatchObject({ configurable: {
+      graph_toggles: { auto_ingest_enabled: true, tried_edges_enabled: false },
+    } });
+  });
+
   it("executeNow on create starts the queue immediately", async () => {
     runtime = new FakeRuntime();
     runtime.queueRunStatuses("success", "success");

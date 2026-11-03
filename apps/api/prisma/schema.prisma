@@ -49,6 +49,9 @@ model Project {
   scopeJson     String?
   status        String         @default("active")
   pinned        Boolean        @default(false)
+  // Automatic AKG capture for new runs; explicit project choices override env defaults.
+  autoIngestEnabled Boolean     @default(false)
+  triedEdgesEnabled Boolean     @default(false)
   // Tier 3: the project's sandbox identity (ADR-0086 A / ADR-0102). Generated
   // once at creation from the project id (see project-store.ts), never
   // user-editable -- the sandbox host ("sbx-<slug>") and its workspace

@@ -42,6 +42,8 @@ describe("project routes", () => {
       name: "Lab Web Perimeter",
       status: "active",
       pinned: false,
+      auto_ingest_enabled: false,
+      tried_edges_enabled: false,
       conversation_count: 0,
       vulnerability_count: 0,
       asset_count: 0,
@@ -58,15 +60,35 @@ describe("project routes", () => {
       method: "PUT",
       url: `/api/projects/${created.id}`,
       headers: auth(),
-      payload: { status: "archived", pinned: true },
+      payload: { status: "archived", pinned: true, auto_ingest_enabled: true, tried_edges_enabled: true },
     });
-    expect(update.json()).toMatchObject({ status: "archived", pinned: true });
+    expect(update.json()).toMatchObject({
+      status: "archived",
+      pinned: true,
+      auto_ingest_enabled: true,
+      tried_edges_enabled: true,
+    });
 
     const del = await app.inject({ method: "DELETE", url: `/api/projects/${created.id}`, headers: auth() });
     expect(del.json()).toEqual({ success: true });
 
     const getAfterDelete = await app.inject({ method: "GET", url: `/api/projects/${created.id}`, headers: auth() });
     expect(getAfterDelete.statusCode).toBe(404);
+  });
+
+  it("preserves independently saved graph toggles and rejects non-booleans", async () => {
+    const created = (await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "Graph controls" } })).json();
+    const url = `/api/projects/${created.id}`;
+    await app.inject({ method: "PUT", url, headers: auth(), payload: { auto_ingest_enabled: true } });
+    await app.inject({ method: "PUT", url, headers: auth(), payload: { tried_edges_enabled: true } });
+    const changed = await app.inject({ method: "PUT", url, headers: auth(), payload: { auto_ingest_enabled: false, name: "Renamed" } });
+    expect(changed.json()).toMatchObject({ auto_ingest_enabled: false, tried_edges_enabled: true });
+    for (const field of ["auto_ingest_enabled", "tried_edges_enabled"]) {
+      const invalid = await app.inject({ method: "PUT", url, headers: auth(), payload: { [field]: "false" } });
+      expect(invalid.statusCode).toBe(400);
+    }
+    const saved = await app.inject({ url, headers: auth() });
+    expect(saved.json()).toMatchObject({ auto_ingest_enabled: false, tried_edges_enabled: true });
   });
 
   it("stats and conversations sub-resources are real, not fabricated", async () => {
