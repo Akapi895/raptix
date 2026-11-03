@@ -233,7 +233,7 @@ export function createC2Controller(deps: C2ControllerDependencies, service: C2Se
   function updateOnelinerKinds(): void {
     const listener = state.listeners.find(item => item.id === value('c2-payload-listener')); const selected = value('c2-payload-kind');
     const compatible = onelinerKinds(listener?.type); const all = ['bash', 'nc', 'nc_mkfifo', 'python', 'perl', 'powershell', 'curl_beacon'];
-    view.set('c2-payload-kind', `<option value="">${view.t(listener ? 'c2.payloads.noKindOption' : 'c2.payloads.selectListener')}</option>` + all.map(kind => `<option value="${kind}"${compatible.includes(kind) ? '' : ' disabled'}>${view.t('c2.payloads.kinds.' + kind)}${compatible.includes(kind) ? '' : ' — ' + view.t('c2.payloads.incompatible')}</option>`).join(''));
+    view.set('c2-payload-kind', `<option value="">${view.t(listener ? 'c2.payloads.noKindOption' : 'c2.payloads.selectKind')}</option>` + all.map(kind => `<option value="${kind}"${compatible.includes(kind) ? '' : ' disabled'}>${view.t('c2.payloads.kinds.' + kind)}${compatible.includes(kind) ? '' : ' — ' + view.t('c2.payloads.incompatible')}</option>`).join(''));
     assign('c2-payload-kind', compatible.includes(selected) ? selected : compatible[0] || '');
     const select = view.element('c2-payload-kind'); if (select instanceof HTMLSelectElement) select.disabled = !compatible.length;
     payloadNotice('c2-oneliner-availability', listener ? compatible.length ? 'c2.payloads.kindAvailability' : 'c2.payloads.unsupportedListener' : 'c2.payloads.pickListenerHint');

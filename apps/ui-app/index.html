@@ -861,7 +861,7 @@
                                     <div id="recent-conversations-body" class="recent-conversations-body" hidden>
                                         <div class="section-header-actions recent-conversations-actions">
                                             <div class="conversation-sort-dropdown" id="conversation-sort-dropdown">
-                                                <button type="button" class="conversation-sort-btn" id="conversation-sort-btn" data-act-click='[["toggleConversationSortMenu","$event"]]' aria-haspopup="menu" aria-expanded="false" aria-controls="conversation-sort-menu" data-i18n="chat.sortConversations" data-i18n-attr="title" data-i18n-skip-text="true" title="Sort">
+                                                <button type="button" class="conversation-sort-btn" id="conversation-sort-btn" data-act-click='[["toggleConversationSortMenu","$event"]]' aria-haspopup="menu" aria-expanded="false" aria-controls="conversation-sort-menu" data-i18n="chat.sortConversations" data-i18n-attr="title,aria-label" data-i18n-skip-text="true" title="Sort" aria-label="Sort">
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                         <path d="M3 6h18M7 12h10M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                                     </svg>
@@ -891,7 +891,7 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <button class="batch-manage-btn" data-require-permission="chat:delete" data-act-click='[["showBatchManageModal"]]' data-i18n="chat.batchManage" data-i18n-attr="title" data-i18n-skip-text="true" title="Batch manage">
+                                            <button class="batch-manage-btn" data-require-permission="chat:delete" data-act-click='[["showBatchManageModal"]]' data-i18n="chat.batchManage" data-i18n-attr="title,aria-label" data-i18n-skip-text="true" title="Batch manage" aria-label="Batch manage">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                                     <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -977,10 +977,6 @@
 	                            </div>
 	                        </div>
                             </details>
-                            <button type="button" class="chat-new-task" data-require-permission="chat:write" data-act-click="[[&quot;startNewConversation&quot;]]">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                                <span data-i18n="chat.newTask">New task</span>
-                            </button>
                         </div>
                         
                         <!-- Chat interface -->
