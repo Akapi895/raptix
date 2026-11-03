@@ -14,8 +14,10 @@ import { captureExecutionEvents } from "../../services/execution-events.js";
 import type { MessageEventInput, MessageEventStore } from "../../db/message-event-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 import { replyRuntimeError } from "./conversations.routes.js";
+import type { SpecialistConfigurationService } from '../../services/specialist-configuration.js';
 
 export interface AgentLoopRoutesOptions {
+  specialistConfiguration?: SpecialistConfigurationService;
   authStore: AuthStore;
   conversationStore: ConversationStore;
   runtime: RuntimeTransport;
@@ -88,9 +90,10 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
       if (!conversation) {
         const runtimeThreadId = randomUUID();
         await runtime.createThread(runtimeThreadId);
-        conversation = await conversationStore.create({ title: titleFromMessage(message), projectId, runtimeThreadId });
+        conversation = await conversationStore.create({ title: titleFromMessage(message), projectId, runtimeThreadId, roleName: asString(request.body?.role) });
       }
-      const configurable = runConfigurableFor(project.workspaceSlug, options.sandboxKey);
+      const configurable: Record<string, unknown> = { ...runConfigurableFor(project.workspaceSlug, options.sandboxKey),
+        ...(options.specialistConfiguration ? { specialist_configuration: await options.specialistConfiguration.snapshot(projectId) } : {}) };
       const userMessage = await conversationStore.appendMessage(conversation.id, "user", message);
       const output = new PassThrough();
       reply.header("content-type", "text/event-stream; charset=utf-8").header("cache-control", "no-cache, no-transform").header("x-accel-buffering", "no");
@@ -124,6 +127,7 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
       }
 
       const turn = await runAgentTurn({
+        specialistConfiguration: options.specialistConfiguration,
         conversation,
         message,
         runtime,
@@ -248,7 +252,7 @@ async function projectRuntimeEvent(
   }
 }
 
-async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions, conversation: { id: string; runtimeThreadId: string }, userMessageId: string, message: string, configurable: Record<string, string>): Promise<void> {
+async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions, conversation: { id: string; runtimeThreadId: string; roleName?: string | null }, userMessageId: string, message: string, configurable: Record<string, unknown>): Promise<void> {
   const emit = (type: string, text = "", data: Record<string, unknown> = {}) => writeEvent(output, type, text, { ...data, conversationId: conversation.id });
   const heartbeat = setInterval(() => { if (!output.destroyed && output.writableLength === 0) output.write(": heartbeat\n\n"); }, 15_000);
   try {
@@ -259,7 +263,7 @@ async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions,
     const seen = new Set<string>();
     const capture = { events: [] as MessageEventInput[], seenCalls: new Set<string>() };
     const input = { messages: [{ role: "user", content: message }], engagement_name: configurable.engagement_name, workspace_path: "/workspace" };
-    for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 1000 }, AbortSignal.timeout(30 * 60_000))) {
+    for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, conversation.roleName ?? options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 1000 }, AbortSignal.timeout(30 * 60_000))) {
       if (event.event === "metadata" && typeof record(event.data).run_id === "string") runId = record(event.data).run_id as string;
       await projectRuntimeEvent(event, emit, seen, capture);
     }

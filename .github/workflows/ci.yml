@@ -94,6 +94,7 @@ jobs:
             web:
               - 'apps/api/**'
               - 'apps/ui-app/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
@@ -449,6 +450,11 @@ jobs:
       - name: Generate the Prisma client
         if: needs.changes.outputs.web == 'true'
         run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - name: Build shared Web contracts
+        if: needs.changes.outputs.web == 'true'
+        run: |
+          npm run build --workspace=@raptix/streaming
+          npm run build --workspace=@raptix/web-contracts
       - name: apps/api typecheck + lint + build + test
         if: needs.changes.outputs.web == 'true'
         run: |

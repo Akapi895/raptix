@@ -40,13 +40,10 @@ function fieldsFromBody(body: Record<string, unknown> | undefined) {
 
 /**
  * "AI roles" (agent personas apps/ui-app lets an operator author) are
- * stored and returned faithfully, but `tools`/`mcps` are opaque name
- * lists -- never validated against Raptix's real tool/MCP catalog, since
- * no HTTP introspection of that catalog exists anywhere apps/api touches
- * (same reasoning as Tier 5's config/tools stub). Not to be confused with
- * Raptix's own agent specialist roles (intelligence/agents) or with user
- * RBAC (apps/ui-app's own frontend has no feature for that at all -- see
- * this tier's plan note).
+ * stored and returned faithfully. `tools`/`mcps` remain reference lists;
+ * browsing the read-only runtime catalog does not give personas a runtime
+ * execution binding. These records are separate from Raptix's specialist
+ * graphs and from user RBAC.
  */
 export function registerRolesRoutes(app: FastifyInstance, options: RolesRoutesOptions): void {
   const requireSession = createRequireSession(options.authStore);
@@ -69,16 +66,17 @@ export function registerRolesRoutes(app: FastifyInstance, options: RolesRoutesOp
 
   app.post("/api/roles", { preHandler: requireSession }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as { name?: string } & Record<string, unknown> | undefined;
-    if (!body?.name) {
-      await reply.code(400).send({ error: "name is required" });
+    const name = typeof body?.name === 'string' ? body.name.trim() : '';
+    if (!name || name.length > 120) {
+      await reply.code(400).send({ error: "name is required and must be at most 120 characters" });
       return;
     }
-    const existing = await aiRoleStore.get(body.name);
+    const existing = await aiRoleStore.get(name);
     if (existing) {
       await reply.code(409).send({ error: "a role with this name already exists" });
       return;
     }
-    const role = await aiRoleStore.create(body.name, fieldsFromBody(body));
+    const role = await aiRoleStore.create(name, fieldsFromBody(body));
     return toWire(role);
   });
 

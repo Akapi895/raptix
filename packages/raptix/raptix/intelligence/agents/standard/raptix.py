@@ -63,6 +63,7 @@ from langchain.agents import create_agent
 from raptix.core.subagent_streaming import StreamingRunnable
 from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.intelligence.agents.build import build_middleware, build_tools
+from raptix.intelligence.agents.specialist_configuration import assemble_specialist
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import (
@@ -153,7 +154,7 @@ def create_raptix_agent(
             CompiledSubAgent(
                 name=spec.name,
                 description=spec.description,
-                runnable=StreamingRunnable(spec.factory(), spec.name),
+                runnable=StreamingRunnable(assemble_specialist(spec.name, spec.factory), spec.name),
             )
             for spec in load_subagents_for_parent(_ROLE)
         ]

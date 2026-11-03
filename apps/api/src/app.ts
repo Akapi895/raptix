@@ -51,6 +51,10 @@ import { registerOpenApiRoutes } from "./http/routes/openapi.routes.js";
 import { registerProjectRoutes } from "./http/routes/projects.routes.js";
 import { registerRolesRoutes } from "./http/routes/roles.routes.js";
 import { registerSkillsRoutes } from "./http/routes/skills.routes.js";
+import { registerSpecialistsRoutes } from "./http/routes/specialists.routes.js";
+import { registerSpecialistConfigurationRoutes } from "./http/routes/specialist-configuration.routes.js";
+import { SpecialistConfigurationService } from "./services/specialist-configuration.js";
+import { ToolCatalogService } from "./services/tool-catalog.js";
 import type { SkillsCorpus } from "./adapters/skills/corpus.js";
 import type { KnowledgeGraph } from "./adapters/knowledge-graph/client.js";
 import type { MessageEventStore } from "./db/message-event-store.js";
@@ -104,6 +108,8 @@ export interface BuildAppOptions {
 
 export function buildApp(options: BuildAppOptions): FastifyInstance {
   const app = Fastify({ logger: true });
+  const specialistConfiguration = new SpecialistConfigurationService(options.appConfigStore, options.runtime);
+  const toolCatalog = new ToolCatalogService(options.runtime);
 
   const attackChainService = new AttackChainService(options.conversationStore, options.runtime, options.llm, options.resolveLlmChannel);
 
@@ -136,6 +142,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     messageEventStore: options.messageEventStore,
   });
   registerAgentLoopRoutes(app, {
+    specialistConfiguration,
     authStore: options.authStore,
     conversationStore: options.conversationStore,
     runtime: options.runtime,
@@ -165,6 +172,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   });
   registerStorageRoutes(app, { authStore: options.authStore });
   registerBatchTaskRoutes(app, {
+    specialistConfiguration,
     authStore: options.authStore,
     batchQueueStore: options.batchQueueStore,
     conversationStore: options.conversationStore,
@@ -189,7 +197,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   });
   registerSkillsRoutes(app, { authStore: options.authStore, corpus: options.skillsCorpus });
   registerFofaRoutes(app, { authStore: options.authStore, recon: options.recon });
-  registerConfigRoutes(app, { authStore: options.authStore, appConfigStore: options.appConfigStore, c2: options.c2 });
+  registerConfigRoutes(app, { authStore: options.authStore, appConfigStore: options.appConfigStore, c2: options.c2, toolCatalog });
   registerExternalMcpRoutes(app, { authStore: options.authStore, externalMcpStore: options.externalMcpStore });
   registerMonitorRoutes(app, {
     authStore: options.authStore,
@@ -204,6 +212,8 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     externalMcpStore: options.externalMcpStore,
   });
   registerRolesRoutes(app, { authStore: options.authStore, aiRoleStore: options.aiRoleStore });
+  registerSpecialistsRoutes(app, { authStore: options.authStore, runtime: options.runtime });
+  registerSpecialistConfigurationRoutes(app, { authStore: options.authStore, runtime: options.runtime, projectStore: options.projectStore, configuration: specialistConfiguration });
   registerAuditRoutes(app, { authStore: options.authStore, auditLogStore: options.auditLogStore });
   registerNotificationRoutes(app, {
     authStore: options.authStore,

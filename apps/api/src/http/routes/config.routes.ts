@@ -1,13 +1,16 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { UnconfiguredC2Client, type C2Transport } from "../../adapters/c2/client.js";
+import { RuntimeUnavailableError } from "../../adapters/runtime/errors.js";
 import type { AppConfigStore } from "../../db/app-config-store.js";
 import type { AuthStore } from "../../db/auth-store.js";
+import type { ToolCatalogService } from "../../services/tool-catalog.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 
 export interface ConfigRoutesOptions {
   authStore: AuthStore;
   appConfigStore: AppConfigStore;
   c2: C2Transport;
+  toolCatalog: ToolCatalogService;
   fetchImpl?: typeof fetch;
 }
 
@@ -27,12 +30,10 @@ async function applyNotImplemented(_request: unknown, reply: FastifyReply): Prom
 }
 
 /**
- * Raptix's tool catalog (~159 @tool-decorated functions across
- * execution/tools/<domain>/, docs/architecture/tool-classification.md) has
- * no HTTP introspection endpoint to enumerate or toggle -- hardcoding a
- * copy here would drift from the real catalog silently. Stub honestly
- * rather than let an operator "disable" a tool name apps/api can't verify
- * exists, or miss real ones.
+ * Global tool enable/disable and per-tool schema endpoints stay stubbed:
+ * this deployment has no tool-toggle store, and fabricating one would let
+ * an operator "disable" a tool name apps/api can't verify. The read-only
+ * listing is real (services/tool-catalog.ts).
  */
 async function toolsNotImplemented(_request: unknown, reply: FastifyReply): Promise<void> {
   await reply.code(501).send({ error: "Not implemented for this deployment" });
@@ -129,7 +130,23 @@ export function registerConfigRoutes(app: FastifyInstance, options: ConfigRoutes
     await reply.code(501).send({ error: "Not implemented for this deployment" });
   });
 
-  app.get("/api/config/tools", { preHandler: requireSession }, toolsNotImplemented);
+  // Read-only tool listing comes from the runtime's real catalog
+  // (services/tool-catalog.ts). Toggling a tool globally has no backing
+  // store in this deployment, so PUT and per-tool schemas stay stubs.
+  app.get("/api/config/tools", { preHandler: requireSession }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const query = (request.query ?? {}) as { search?: string; page?: string; page_size?: string };
+    const page = Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1);
+    const pageSize = Math.min(200, Math.max(1, Number.parseInt(query.page_size ?? "50", 10) || 50));
+    try {
+      return await options.toolCatalog.listTools(query.search ?? "", page, pageSize);
+    } catch (error) {
+      if (error instanceof RuntimeUnavailableError) {
+        await reply.code(503).send({ error: error.message });
+        return;
+      }
+      throw error;
+    }
+  });
   app.put("/api/config/tools", { preHandler: requireSession }, toolsNotImplemented);
   app.get("/api/config/tools/:name/schema", { preHandler: requireSession }, toolsNotImplemented);
 }

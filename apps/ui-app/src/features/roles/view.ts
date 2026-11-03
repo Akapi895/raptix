@@ -1,5 +1,5 @@
 import type { Actions } from '../../ui/actions';
-import { capabilityState, capabilityTable, openCapabilityModal } from '../../ui/capabilities';
+import { capabilityState, openCapabilityModal } from '../../ui/capabilities';
 import { escapeAttr, escapeHtml } from '../../ui/format';
 import { closeAppModal } from '../../ui/modal';
 import { DEFAULT_ROLE, decodeRoleIcon, encodeRoleIcon, plainDescription, sortRoles, toolKey, type Role, type RoleLinkFilter, type RoleTool } from './model';
@@ -33,6 +33,8 @@ const SEARCH_DEBOUNCE_MS = 300;
 const WORKFLOW_SELECTS = ['role-workflow-id', 'role-workflow-policy'] as const;
 const SELECT_CARET = '<svg class="role-form-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+type AgentsTab = 'specialists' | 'custom';
+
 interface SkinnedSelect { wrapper: HTMLElement; trigger: HTMLButtonElement; dropdown: HTMLElement; select: HTMLSelectElement }
 
 export function createRolesView(deps: RolesViewDeps) {
@@ -43,6 +45,12 @@ export function createRolesView(deps: RolesViewDeps) {
   /** The role being edited, or null while creating. */
   let editing: string | null = null;
   let saving = false;
+  let editorSequence = 0;
+  let toolsReady = false;
+  let originalTools: string[] = [];
+  let originalForm = '';
+  let originalSelection = '';
+  let agentsTab: AgentsTab = 'specialists';
 
   const iconOf = (role: Role, fallback: string): string => (role.icon ? decodeRoleIcon(role.icon) : fallback);
 
@@ -159,6 +167,35 @@ export function createRolesView(deps: RolesViewDeps) {
     return t('roleModal.usingAllTools', 'Use all tools');
   }
 
+  function personaCard(role: Role): string {
+    const enabled = role.enabled !== false;
+    const name = escapeAttr(role.name);
+    const isDefault = role.name === DEFAULT_ROLE;
+    const plain = plainDescription(role);
+    const description = plain || (isDefault
+      ? t('roles.defaultRoleDescription', 'Default agent, no extra user prompt, uses default MCP')
+      : t('roles.noDescription', 'No description'));
+    const workflow = role.workflow_id
+      ? `<span class="agent-card-meta-item">${escapeHtml(role.workflow_id)} · ${role.workflow_policy === 'off' ? t('roleModal.workflowPolicyOff', 'Off') : t('roleModal.workflowPolicyAuto', 'Auto trigger')}</span>`
+      : '';
+    const actions = [`<button class="btn-secondary btn-small" type="button" data-require-permission="roles:write" data-action="roles.edit" data-role-name="${name}">${escapeHtml(t('common.edit', 'Edit'))}</button>`];
+    if (!isDefault) {
+      actions.push(`<button class="btn-secondary btn-small btn-danger" type="button" data-require-permission="roles:delete" data-action="roles.delete" data-role-name="${name}">${escapeHtml(t('common.delete', 'Delete'))}</button>`);
+    }
+    return `<article class="agent-card agent-card-persona${enabled ? '' : ' is-disabled'}" data-action="roles.edit" data-keydown="roles.editKey" data-role-name="${name}" tabindex="0">
+      <div class="agent-card-head">
+        <span class="agent-card-icon" aria-hidden="true">${escapeHtml(role.icon ? decodeRoleIcon(role.icon) : DEFAULT_CARD_ICON)}</span>
+        <div class="agent-card-id">
+          <h4 class="agent-card-name">${escapeHtml(role.name)}</h4>
+          <p class="agent-card-desc">${escapeHtml(description)}</p>
+        </div>
+        <span class="agent-card-badge ${enabled ? 'is-success' : 'is-muted'}">${escapeHtml(enabled ? t('roles.enabled', 'Enabled') : t('roles.disabled', 'Disabled'))}</span>
+      </div>
+      <div class="agent-card-meta"><span class="agent-card-meta-item" title="${escapeAttr(t('roleModal.relatedTools', 'Related tools'))}">${toolsSummary(role)}</span>${workflow}</div>
+      <div class="agent-card-actions">${actions.join('')}</div>
+    </article>`;
+  }
+
   function renderList(): void {
     const list = byId('roles-list');
     if (!list) return;
@@ -168,19 +205,15 @@ export function createRolesView(deps: RolesViewDeps) {
     const matching = service.roles.filter(role => (!keyword || role.name.toLowerCase().includes(needle) || (role.description ?? '').toLowerCase().includes(needle)) && (!availability || (role.enabled !== false) === (availability === 'enabled')));
     const count = byId('roles-result-count'); if (count) count.textContent = `${matching.length} of ${service.roles.length} agents`;
     if (matching.length === 0) {
-      list.innerHTML = capabilityState(keyword || availability ? t('roles.noMatchingRoles', 'No matching agents') : t('roles.noRoles', 'No agents'));
+      const filtered = !!(keyword || availability);
+      list.innerHTML = capabilityState(
+        filtered ? t('roles.noMatchingRoles', 'No matching agents') : t('roles.noRoles', 'No custom agents yet'),
+        filtered ? t('roles.noMatchingHint', 'Adjust the search or availability filter.') : t('roles.noRolesHint', 'Create a reusable persona with a name, description, and instructions.'),
+        !filtered && deps.can('roles:write') ? '<button type="button" class="btn-primary" data-require-permission="roles:write" data-action="roles.create">Create persona</button>' : '',
+      );
       return;
     }
-    list.innerHTML = capabilityTable('Agent definitions', ['Agent', 'Availability', 'Tool access', 'Workflow', 'Actions'], sortRoles(matching).map(role => {
-      const enabled = role.enabled !== false;
-      const name = escapeAttr(role.name);
-      const plain = plainDescription(role);
-      return `<tr class="role-card"><td class="cap-primary-cell"><strong>${role.icon ? `<span class="cap-agent-icon" aria-hidden="true">${escapeHtml(iconOf(role, ''))}</span>` : ''}${escapeHtml(role.name)}</strong><p class="cap-row-description">${escapeHtml(plain || t('roles.noDescriptionShort', 'No description'))}</p></td>
-        <td><span class="role-card-badge cap-status ${enabled ? 'enabled is-success' : 'disabled'}">${escapeHtml(enabled ? t('roles.enabled', 'Enabled') : t('roles.disabled', 'Disabled'))}</span></td>
-        <td class="cap-tools-summary">${toolsSummary(role)}</td><td>${role.workflow_id ? `<strong>${escapeHtml(role.workflow_id)}</strong><p class="cap-row-description">${role.workflow_policy === 'off' ? 'Trigger off' : 'Auto trigger'}</p>` : '<span class="cap-muted">None</span>'}</td>
-        <td><div class="cap-row-actions"><button class="btn-secondary btn-small" type="button" data-require-permission="roles:write" data-action="roles.edit" data-role-name="${name}">${escapeHtml(t('common.edit', 'Edit'))}</button>
-          ${role.name !== DEFAULT_ROLE ? `<button class="btn-secondary btn-small btn-danger" type="button" data-require-permission="roles:delete" data-action="roles.delete" data-role-name="${name}">${escapeHtml(t('common.delete', 'Delete'))}</button>` : ''}</div></td></tr>`;
-    }).join(''));
+    list.innerHTML = sortRoles(matching).map(personaCard).join('');
   }
 
   function syncSearchClear(keyword: string): void {
@@ -226,18 +259,19 @@ export function createRolesView(deps: RolesViewDeps) {
   async function openCreate(): Promise<void> {
     if (!deps.can('roles:write') || !byId('role-modal')) return;
     editing = null;
+    originalTools = [];
+    editor.reset();
     const workflow = byId<HTMLDetailsElement>('role-workflow-options'); if (workflow) workflow.open = false;
     setFormValues({ title: t('roleModal.addRole', 'Add agent'), name: '', nameDisabled: false, description: '', icon: '', prompt: '', enabled: true });
-    await deps.loadWorkflowOptions('');
     const policy = byId<HTMLSelectElement>('role-workflow-policy');
     if (policy) policy.value = 'auto';
     setToolsSectionVisible(true);
     resetToolSearch();
     renderFilterButtons();
-    await editor.beginCreate();
-    renderTools();
-    refreshSkins();
-    openCapabilityModal(byId('role-modal'));
+    await openEditor(async () => {
+      await deps.loadWorkflowOptions('');
+      await editor.beginCreate();
+    });
   }
 
   async function openEdit(name: string): Promise<void> {
@@ -248,12 +282,13 @@ export function createRolesView(deps: RolesViewDeps) {
     }
     if (!byId('role-modal')) return;
     editing = name;
+    originalTools = [...(role.tools ?? role.mcps ?? [])];
+    editor.reset();
     const workflow = byId<HTMLDetailsElement>('role-workflow-options'); if (workflow) workflow.open = !!role.workflow_id;
     setFormValues({
       title: t('roleModal.editRole', 'Edit agent'), name: role.name, nameDisabled: true, description: role.description || '',
       icon: role.icon ? decodeRoleIcon(role.icon) : '', prompt: role.user_prompt || '', enabled: role.enabled !== false,
     });
-    await deps.loadWorkflowOptions(role.workflow_id || '');
     const policy = byId<HTMLSelectElement>('role-workflow-policy');
     if (policy) policy.value = role.workflow_policy || 'auto';
     const isDefault = name === DEFAULT_ROLE;
@@ -261,14 +296,56 @@ export function createRolesView(deps: RolesViewDeps) {
     if (!isDefault) {
       resetToolSearch();
       renderFilterButtons();
-      await editor.beginEdit(role);
-      renderTools();
+      await openEditor(async () => {
+        await deps.loadWorkflowOptions(role.workflow_id || '');
+        await editor.beginEdit(role);
+      });
+      return;
     }
-    refreshSkins();
-    openCapabilityModal(byId('role-modal'));
+    await openEditor(async () => { await deps.loadWorkflowOptions(role.workflow_id || ''); });
   }
 
-  function closeModal(): void {
+  /**
+   * Opens the modal immediately, then loads the editor's data. A slow or
+   * failed tool catalog degrades the picker (loading state, then an error row
+   * with the linked set preserved on save); it never blocks persona editing.
+   */
+  async function openEditor(prepare: () => Promise<void>): Promise<void> {
+    const epoch = ++editorSequence;
+    toolsReady = false;
+    originalSelection = '';
+    formError('');
+    originalForm = formFingerprint();
+    const list = byId('role-tools-list');
+    if (list) list.innerHTML = '<p class="tools-loading" role="status">Loading tool references… You can save the persona while these load.</p>';
+    openCapabilityModal(byId('role-modal'));
+    try {
+      await prepare();
+      if (epoch !== editorSequence) return;
+      toolsReady = true;
+      originalSelection = JSON.stringify(editor.selection.linkedEntries().map(entry => entry.key).sort());
+      renderTools();
+    } catch {
+      if (epoch !== editorSequence) return;
+      if (list) list.innerHTML = '<div class="tools-error" role="status">Tool references could not be loaded. You can still save this persona; existing tool links will be kept. Reopen the editor to retry.</div>';
+    }
+    refreshSkins();
+  }
+
+  function formFingerprint(): string {
+    return JSON.stringify(payloadFromForm(false, []));
+  }
+
+  function formError(message: string): void {
+    const error = byId('role-form-error');
+    if (error) { error.textContent = message; error.hidden = !message; }
+    byId('role-name')?.removeAttribute('aria-invalid');
+  }
+
+  function closeModal(force = false): void {
+    const toolsChanged = toolsReady && JSON.stringify(editor.selection.linkedEntries().map(entry => entry.key).sort()) !== originalSelection;
+    if (saving || (!force && (formFingerprint() !== originalForm || toolsChanged) && !deps.confirm('Discard unsaved persona changes?'))) return;
+    editorSequence++;
     closeSkinnedSelects();
     closeAppModal('role-modal');
   }
@@ -293,22 +370,22 @@ export function createRolesView(deps: RolesViewDeps) {
     if (saving || !deps.can('roles:write')) return;
     const name = (byId<HTMLInputElement>('role-name')?.value ?? '').trim();
     if (!name) {
-      deps.notify(t('roleModal.roleNameRequired', 'Agent name is required'), 'error');
+      formError(t('roleModal.roleNameRequired', 'Agent name is required'));
+      byId('role-name')?.setAttribute('aria-invalid', 'true');
+      byId('role-name')?.focus();
       return;
     }
     const isEdit = editing !== null;
     const isDefault = name === DEFAULT_ROLE;
     const isFirstUserRole = !isEdit && !isDefault && service.roles.every(role => role.name === DEFAULT_ROLE);
-    const plan = await editor.planSave(isDefault, isFirstUserRole);
-    if (plan.firstRoleDefault) deps.notify(t('roleModal.firstRoleNoToolsHint', 'The first agent with no tools selected will use all tools by default.'), 'info');
-    if (plan.disabledNames.length > 0) {
-      const message = `The following ${plan.disabledNames.length} tools are not enabled in MCP and cannot be configured for the agent:\n\n${plan.disabledNames.join(', ')}\n\nEnable them in "MCP" first, then configure them for the agent.\n\nSave anyway? (Only enabled tools will be saved)`;
-      if (!deps.confirm(message)) return;
-    }
+    formError('');
     saving = true;
     const saveButton = byId('role-modal')?.querySelector<HTMLButtonElement>('[data-action="roles.save"]');
     if (saveButton) { saveButton.disabled = true; saveButton.textContent = 'Saving…'; }
     try {
+      const plan = toolsReady ? await editor.planSave(isDefault, isFirstUserRole)
+        : { tools: originalTools, disabledNames: [], firstRoleDefault: false };
+      if (plan.disabledNames.length > 0 && !deps.confirm(`Some linked tools are unavailable: ${plan.disabledNames.join(', ')}. Save with only the available tool links?`)) return;
       await service.saveRole(payloadFromForm(isDefault, plan.tools), isEdit);
       if (plan.disabledNames.length > 0) {
         let names = plan.disabledNames.join(', ');
@@ -317,11 +394,11 @@ export function createRolesView(deps: RolesViewDeps) {
       } else {
         deps.notify(isEdit ? 'Agent updated' : 'Agent created', 'success');
       }
-      closeModal();
+      saving = false;
+      closeModal(true);
       await reload();
     } catch (error) {
-      console.error('Failed to save role:', error);
-      deps.notify('Failed to save agent: ' + (error as Error).message, 'error');
+      formError('Could not save this persona: ' + (error as Error).message);
     } finally { saving = false; if (saveButton) { saveButton.disabled = false; saveButton.textContent = t('common.save', 'Save'); } }
   }
 
@@ -391,7 +468,7 @@ export function createRolesView(deps: RolesViewDeps) {
         data-change="roles.tools.toggle" data-tool-key="${escapeAttr(key)}" />
       <div class="role-tool-item-info">
         <div class="role-tool-item-name">${escapeHtml(tool.name)} ${externalBadge} ${disabledBadge}</div>
-        <div class="role-tool-item-desc">${escapeHtml(tool.description || 'No description')}</div>
+        <details class="persona-tool-detail"><summary class="role-tool-item-desc">${escapeHtml((tool.description || 'No description').slice(0, 140))}</summary><p>${escapeHtml(tool.description || 'No description')}</p></details>
       </div>
     </div>`;
   }
@@ -524,11 +601,47 @@ export function createRolesView(deps: RolesViewDeps) {
     });
   }
 
+  // ---- agents page tabs ----
+
+  function syncAgentTabs(): void {
+    for (const tab of doc.querySelectorAll<HTMLButtonElement>('.agents-tab')) {
+      const active = tab.dataset.agentsTab === agentsTab;
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+    }
+    const specialists = byId('agents-panel-specialists');
+    const custom = byId('agents-panel-custom');
+    if (specialists) specialists.hidden = agentsTab !== 'specialists';
+    if (custom) custom.hidden = agentsTab !== 'custom';
+  }
+
+  function setAgentsTab(tab: string): void {
+    if (tab !== 'specialists' && tab !== 'custom') return;
+    agentsTab = tab;
+    syncAgentTabs();
+  }
+
+  function moveAgentTab(current: HTMLElement, key: string): void {
+    const tabs = [...doc.querySelectorAll<HTMLButtonElement>('.agents-tab')];
+    const index = key === 'Home' ? 0 : key === 'End' ? tabs.length - 1 : (tabs.indexOf(current as HTMLButtonElement) + (key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    const next = tabs[index];
+    if (!next) return;
+    setAgentsTab(next.dataset.agentsTab ?? '');
+    next.focus();
+  }
+
   // ---- bindings ----
 
   function bind(): () => void {
     const unregister = [
       actions.register('roles.select', element => { selectRole(element.dataset.roleName ?? ''); closePanel(); }),
+      actions.register('agents.tab', element => { setAgentsTab(element.dataset.agentsTab ?? ''); }),
+      actions.register('agents.tabKey', (element, event) => {
+        const key = (event as KeyboardEvent).key;
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) return;
+        event.preventDefault();
+        moveAgentTab(element, key);
+      }),
       actions.register('roles.selectKey', (element, event) => {
         const key = (event as KeyboardEvent).key;
         if (key !== 'Enter' && key !== ' ') return;
@@ -541,6 +654,12 @@ export function createRolesView(deps: RolesViewDeps) {
       actions.register('roles.refresh', () => { void refresh(); }),
       actions.register('roles.create', () => { void openCreate(); }),
       actions.register('roles.edit', element => { void openEdit(element.dataset.roleName ?? ''); }),
+      actions.register('roles.editKey', (element, event) => {
+        if (event.target !== element) return;
+        if ((event as KeyboardEvent).key !== 'Enter' && (event as KeyboardEvent).key !== ' ') return;
+        event.preventDefault();
+        void openEdit(element.dataset.roleName ?? '');
+      }),
       actions.register('roles.delete', element => { void remove(element.dataset.roleName ?? ''); }),
       actions.register('roles.search', () => {
         clearTimeout(searchTimer);
@@ -626,7 +745,7 @@ export function createRolesView(deps: RolesViewDeps) {
       if (target instanceof HTMLElement && target.id === 'role-modal') closeModal();
       const wrapper = chatWrapper();
       if (isPanelOpen() && !(wrapper && target instanceof Node && wrapper.contains(target))) closePanel();
-      closeSkinnedSelects();
+      if (!(target instanceof Element && target.closest('.role-form-select-ui'))) closeSkinnedSelects();
     };
     const onEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') closeSkinnedSelects(); };
     doc.addEventListener('click', onDocumentClick);
@@ -656,8 +775,9 @@ export function createRolesView(deps: RolesViewDeps) {
     }
   }
 
-  /** Loads roles when the app starts or the roles page opens. Errors are shown, not thrown. */
+  /** Loads roles when the app starts or the agents page opens. Errors are shown, not thrown. */
   async function loadForPage(): Promise<void> {
+    syncAgentTabs();
     try {
       await reload();
     } catch (error) {
@@ -679,6 +799,8 @@ export function createRolesView(deps: RolesViewDeps) {
     openEdit,
     save,
     remove,
+    /** Restores the locally persisted Specialists | Custom Agents tab. */
+    syncAgentTabs,
     /** Re-renders the workflow selects after the options were replaced. */
     refreshSkins,
   };

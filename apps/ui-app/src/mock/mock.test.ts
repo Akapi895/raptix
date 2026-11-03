@@ -30,14 +30,15 @@ async function eventsOf(result: DispatchResult) {
 afterEach(() => { vi.useRealTimers(); });
 
 describe('typed mock fixture and router', () => {
-  it('retains every method/path in the 271-route fixture catalog (284 minus the 12 retired system/update + robot/wechat mock routes, Tier 7, minus the retired info-collect mock)', () => {
+  it('retains every method/path in the 272-route fixture catalog (284 minus the 12 retired system/update + robot/wechat mock routes, Tier 7, minus the retired info-collect mock, plus GET /api/specialists)', () => {
     const mock = createMock({ delayMs: 0 });
     const catalog = mock.routes.map(route => route.method + ' ' + route.pattern).sort();
     expect(catalog).toContain('GET /api/hitl/logs/:id');
     expect(catalog).toContain('GET /api/workflows/runs'); expect(catalog).toContain('GET /api/batch-tasks/runs');
-    const original = catalog.filter(route => !['GET /api/hitl/logs/:id', 'GET /api/workflows/runs', 'GET /api/batch-tasks/runs'].includes(route));
-    expect(original).toHaveLength(271);
-    expect(createHash('sha256').update(original.join('\n')).digest('hex')).toBe('7e7bf848fb53df7867881d617ff1e52f96e26357292e1bb88054dd668e532d79');
+    expect(catalog).toContain('PUT /api/specialists/:id/configuration');
+    const original = catalog.filter(route => !['GET /api/hitl/logs/:id', 'GET /api/workflows/runs', 'GET /api/batch-tasks/runs', 'GET /api/specialists/:id/catalog', 'GET /api/specialists/:id/configuration', 'PUT /api/specialists/:id/configuration'].includes(route));
+    expect(original).toHaveLength(272);
+    expect(createHash('sha256').update(original.join('\n')).digest('hex')).toBe('54985dd415f52c3868fa283fe32722bb143431bea780fcdf1dfacd40f493a49a');
   });
 
   it('retains the original seed, version, storage keys and browser session shape', () => {

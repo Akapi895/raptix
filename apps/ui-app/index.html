@@ -323,8 +323,8 @@
                             <span data-i18n="nav.skills">Skills</span>
                         </div>
                     </div>
-                    <div class="nav-item" data-page="roles-management">
-                        <div class="nav-item-content" data-title="Agents" data-router-action="navigate" data-router-value="roles-management" data-i18n="nav.agents" data-i18n-attr="data-title" data-i18n-skip-text="true">
+                    <div class="nav-item" data-page="agents">
+                        <div class="nav-item-content" data-title="Agents" data-router-action="navigate" data-router-value="agents" data-i18n="nav.agents" data-i18n-attr="data-title" data-i18n-skip-text="true">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                                 <polyline points="2 17 12 22 22 17"></polyline>
@@ -762,7 +762,7 @@
                                                 <span class="dashboard-resource-label" data-i18n="dashboard.knowledgeLabel">Knowledge</span>
                                                 <span class="dashboard-resource-value" id="dashboard-resource-knowledge">-</span>
                                             </a>
-                                            <a class="dashboard-resource-item"  role="button" tabindex="0" data-action="navigate" data-page="roles-management">
+                                            <a class="dashboard-resource-item"  role="button" tabindex="0" data-action="navigate" data-page="agents">
                                                 <span class="dashboard-resource-icon dashboard-resource-icon-roles" aria-hidden="true">
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                                                 </span>
@@ -2944,31 +2944,49 @@
                     </div>
                 </div>
 
-                <!-- Agent configuration (uses the existing roles API) -->
-                <div id="page-roles-management" class="page capabilities-page">
+                <!-- Agents: runtime specialists and custom agent personas (uses the existing roles/specialists APIs) -->
+                <div id="page-agents" class="page capabilities-page agents-page">
                     <div class="page-header">
-                        <div><h2 data-i18n="roles.title">Agents</h2><p class="cap-page-description">Configure agent definitions, instructions, and tool access. Enabled agents are available for selection.</p></div>
-                        <div class="page-header-actions">
-                            <button class="btn-secondary" data-action="roles.refresh" data-i18n="common.refresh">Refresh</button>
-                            <button class="btn-primary" data-require-permission="roles:write" data-action="roles.create" data-i18n="roles.createRole">Create agent</button>
-                        </div>
+                        <div><h2 data-i18n="roles.title">Agents</h2><p class="cap-page-description" data-i18n="roles.pageDescription">Runtime specialists and custom agent personas in one place.</p></div>
                     </div>
                     <div class="page-content">
-                        <div class="roles-controls">
-                            <div class="roles-search-box">
-                                <input type="text" id="roles-search" aria-label="Search agents" data-i18n="roles.searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search agents..." data-input="roles.search" data-keydown="roles.searchKey" />
-                                <button class="roles-search-clear" id="roles-search-clear" data-action="roles.searchClear" style="display: none;" data-i18n="common.clearSearch" data-i18n-attr="title" title="Clear search">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <label class="cap-inline-filter">Availability<select id="roles-availability" data-change="roles.availability"><option value="">All agents</option><option value="enabled">Enabled</option><option value="disabled">Disabled</option></select></label>
-                            <span id="roles-result-count" class="cap-result-count" role="status"></span>
+                        <div class="agents-tabs" role="tablist" aria-label="Agent groups" data-i18n-skip-text="true">
+                            <button type="button" id="agents-tab-specialists" class="agents-tab" role="tab" aria-selected="true" aria-controls="agents-panel-specialists" data-action="agents.tab" data-keydown="agents.tabKey" data-agents-tab="specialists"><span data-i18n="roles.specialistsTitle">Specialists</span></button>
+                            <button type="button" id="agents-tab-custom" class="agents-tab" role="tab" aria-selected="false" aria-controls="agents-panel-custom" data-action="agents.tab" data-keydown="agents.tabKey" data-agents-tab="custom" tabindex="-1"><span data-i18n="roles.customTitle">Custom Agents</span></button>
                         </div>
-                        <div id="roles-list" class="roles-grid">
-                            <div class="loading-spinner" data-i18n="knowledgePage.loading">Loading...</div>
+                        <div id="agents-panel-specialists" class="agents-panel" role="tabpanel" aria-labelledby="agents-tab-specialists" tabindex="0">
+                            <div class="agents-controls">
+                                <div class="roles-search-box">
+                                    <input type="text" id="specialists-search" aria-label="Search specialists" data-i18n="roles.searchSpecialistsPlaceholder" data-i18n-attr="placeholder" placeholder="Search specialists..." data-specialist-search />
+                                </div>
+                                <span data-specialist-count class="cap-result-count" role="status"></span>
+                            </div>
+                            <div id="specialists-list" class="agents-grid" aria-live="polite">
+                                <div class="loading-spinner" data-i18n="knowledgePage.loading">Loading...</div>
+                            </div>
+                        </div>
+                        <div id="agents-panel-custom" class="agents-panel" role="tabpanel" aria-labelledby="agents-tab-custom" tabindex="0" hidden>
+                            <div class="agents-controls">
+                                <div class="roles-search-box">
+                                    <input type="text" id="roles-search" aria-label="Search agents" data-i18n="roles.searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search agents..." data-input="roles.search" data-keydown="roles.searchKey" />
+                                    <button class="roles-search-clear" id="roles-search-clear" data-action="roles.searchClear" style="display: none;" data-i18n="common.clearSearch" data-i18n-attr="title" title="Clear search">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                            <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <label class="cap-inline-filter">Availability<select id="roles-availability" data-change="roles.availability"><option value="">All agents</option><option value="enabled">Enabled</option><option value="disabled">Disabled</option></select></label>
+                                <span id="roles-result-count" class="cap-result-count" role="status"></span>
+                                <div class="agents-controls-actions">
+                                    <button class="btn-secondary" data-action="roles.refresh" data-i18n="common.refresh">Refresh</button>
+                                    <button class="btn-primary" data-require-permission="roles:write" data-action="roles.create" data-i18n="roles.createRole">Create agent</button>
+                                </div>
+                            </div>
+                            <p class="agents-note" data-i18n="roles.customNote">Custom personas are separate from runtime specialists; their saved tool names do not configure specialist execution.</p>
+                            <div id="roles-list" class="agents-grid" aria-live="polite">
+                                <div class="loading-spinner" data-i18n="knowledgePage.loading">Loading...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5697,10 +5715,12 @@ Enumerate subdomains of example.com</textarea>
                 <button type="button" class="modal-close" aria-label="Close agent editor" data-action="roles.modal.close">&times;</button>
             </div>
             <div class="modal-body">
+                <p class="persona-runtime-note">Custom agents are saved personas, not runtime specialists. Instructions and references are stored here; Chat execution is not connected.</p>
+                <p id="role-form-error" class="persona-form-error" role="alert" hidden></p>
                 <section class="cap-form-section cap-agent-identity"><h3>Identity</h3>
                 <div class="form-group">
                     <label for="role-name"><span data-i18n="roleModal.roleName">Agent name</span> <span style="color: red;">*</span></label>
-                    <input type="text" id="role-name" data-i18n="roleModal.roleNamePlaceholder" data-i18n-attr="placeholder" placeholder="Enter agent name" required />
+                    <input type="text" id="role-name" data-i18n="roleModal.roleNamePlaceholder" data-i18n-attr="placeholder" placeholder="Enter agent name" required maxlength="120" aria-describedby="role-form-error" />
                 </div>
                 <div class="form-group">
                     <label for="role-description" data-i18n="roleModal.roleDescription">Agent description</label>
@@ -5716,9 +5736,8 @@ Enumerate subdomains of example.com</textarea>
                 </section>
                 <section class="cap-form-section"><h3>Instructions</h3>
                 <div class="form-group">
-                    <label for="role-user-prompt" data-i18n="roleModal.userPrompt">User prompt</label>
-                    <textarea id="role-user-prompt" rows="6" data-i18n="roleModal.userPromptPlaceholder" data-i18n-attr="placeholder" placeholder="Appended before user message...">Appended before user message...</textarea>
-                    <small class="form-hint" data-i18n="roleModal.userPromptHint">This prompt is appended before user message to guide AI. It does not change system prompt.</small>
+                    <label for="role-user-prompt">Persona instructions</label>
+                    <textarea id="role-user-prompt" rows="4" placeholder="Describe this persona's purpose, expertise, and preferred approach…"></textarea>
                 </div>
                 </section>
                 <details class="cap-form-section cap-reference" id="role-workflow-options"><summary>Workflow automation (optional)</summary>
@@ -5727,7 +5746,7 @@ Enumerate subdomains of example.com</textarea>
                     <select id="role-workflow-id" class="role-form-select-native">
                         <option value="" data-i18n="roleModal.noWorkflowBind">No workflow</option>
                     </select>
-                    <small class="form-hint" data-i18n="roleModal.bindWorkflowHint">When a workflow is selected, conversations with this agent run it automatically; workflow fields are configured freely in the graph JSON.</small>
+                    <small class="form-hint">Stores a workflow preference with this persona. Automatic runtime execution is not connected in this deployment.</small>
                 </div>
                 <div class="form-group">
                     <label for="role-workflow-policy" data-i18n="roleModal.workflowPolicy">Workflow trigger policy</label>
@@ -5737,7 +5756,7 @@ Enumerate subdomains of example.com</textarea>
                     </select>
                 </div>
                 </details>
-                <section class="cap-form-section"><h3>Tool access</h3><p class="cap-panel-description">Link tools to this agent. MCP-wide availability is configured in MCP.</p>
+                <section class="cap-form-section"><h3>Tool references</h3><p class="cap-panel-description">Save tool links with this persona. These references do not grant or restrict runtime tool access.</p>
                 <div class="form-group" id="role-tools-section">
                     <label data-i18n="roleModal.relatedTools">Related tools (optional)</label>
                     <div id="role-tools-default-hint" class="role-tools-default-hint" style="display: none;">
@@ -5759,7 +5778,7 @@ Enumerate subdomains of example.com</textarea>
                                 <button type="button" class="btn-filter" data-filter="role_off" data-action="roles.tools.filter" data-i18n="roleModal.filterRoleOff">Not linked</button>
                             </div>
                             <div class="role-tools-search-box">
-                                <input type="text" id="role-tools-search" data-i18n="roleModal.searchToolsPlaceholder" data-i18n-attr="placeholder" placeholder="Search tools..." 
+                                <input type="text" id="role-tools-search" aria-label="Search tool references" data-i18n="roleModal.searchToolsPlaceholder" data-i18n-attr="placeholder" placeholder="Search tools..."
                                        data-input="roles.tools.search" 
                                        data-keydown="roles.tools.searchKey" />
                                 <button class="role-tools-search-clear" id="role-tools-search-clear" 
@@ -5790,6 +5809,46 @@ Enumerate subdomains of example.com</textarea>
             <div class="modal-footer">
                 <button class="btn-secondary" data-action="roles.modal.close" data-i18n="common.cancel">Cancel</button>
                 <button class="btn-primary" data-require-permission="roles:write" data-action="roles.save" data-i18n="common.save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Specialist configuration modal (runtime specialists; opens from an agent card) -->
+    <div id="specialist-modal" class="modal capabilities-modal specialist-modal" style="display: none;">
+        <div class="modal-content specialist-modal-content">
+            <div class="modal-header specialist-modal-header">
+                <div class="specialist-modal-heading">
+                    <h2 id="specialist-modal-title">Specialist</h2>
+                    <p id="specialist-modal-description" class="specialist-modal-description"></p>
+                </div>
+                <div class="specialist-modal-header-side">
+                    <span class="agent-card-badge" data-specialist-state role="status"></span>
+                    <div class="specialist-scope-field">
+                        <span class="specialist-scope-label" id="specialist-scope-label">Configure</span>
+                        <select id="specialist-scope" class="specialist-scope-native" data-specialist-scope aria-labelledby="specialist-scope-label">
+                            <option value="global" data-i18n="roles.scopeGlobal">Global defaults</option>
+                            <option value="project" data-i18n="roles.scopeProject">Current project</option>
+                        </select>
+                    </div>
+                    <button type="button" class="modal-close" aria-label="Close specialist configuration" data-specialist-close data-i18n-attr="aria-label">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p class="specialist-notice" data-specialist-status role="status"></p>
+                <div class="specialist-toolbar"><div class="specialist-tabs" role="tablist" aria-label="Specialist capabilities">
+                    <button type="button" id="specialist-tab-overview" role="tab" aria-controls="specialist-content" data-specialist-section="overview" aria-selected="true">Overview</button>
+                    <button type="button" id="specialist-tab-skills" role="tab" aria-controls="specialist-content" data-specialist-section="skills" aria-selected="false" tabindex="-1">Skills</button>
+                    <button type="button" id="specialist-tab-tools" role="tab" aria-controls="specialist-content" data-specialist-section="tools" aria-selected="false" tabindex="-1">Tools</button>
+                    <button type="button" id="specialist-tab-mcp" role="tab" aria-controls="specialist-content" data-specialist-section="mcp" aria-selected="false" tabindex="-1">MCP</button>
+                </div><button type="button" class="specialist-refresh" data-specialist-reload aria-label="Refresh configuration and catalogs">Refresh</button></div>
+                <div id="specialist-content" role="tabpanel" aria-labelledby="specialist-tab-overview" data-specialist-content></div>
+            </div>
+            <div class="modal-footer specialist-actions">
+                <span class="specialist-actions-note" data-i18n="roles.actionsNote">Existing runs keep their configuration.</span>
+                <span data-specialist-dirty role="status" aria-live="polite"></span>
+                <button type="button" class="btn-secondary" data-specialist-reset>Reset additions</button>
+                <button type="button" class="btn-secondary" data-specialist-cancel>Cancel</button>
+                <button type="button" class="btn-primary" data-specialist-save>Save additions</button>
             </div>
         </div>
     </div>

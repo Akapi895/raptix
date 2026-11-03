@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { RuntimeRun, RuntimeTransport } from "../adapters/runtime/client.js";
 import { extractLastAssistantText } from "../adapters/runtime/message-extract.js";
 import type { ConversationStore } from "../db/conversation-store.js";
+import type { SpecialistConfigurationService } from './specialist-configuration.js';
 
 export const TERMINAL_RUN_STATUSES = new Set(["success", "error", "timeout", "interrupted"]);
 
@@ -23,7 +24,8 @@ export interface AgentTurnResult {
  * the same way, so there is exactly one place that knows how.
  */
 export async function runAgentTurn(args: {
-  conversation: { id: string; runtimeThreadId: string; roleName: string | null };
+  conversation: { id: string; runtimeThreadId: string; roleName: string | null; projectId?: string | null };
+  specialistConfiguration?: SpecialistConfigurationService;
   message: string;
   runtime: RuntimeTransport;
   conversationStore: ConversationStore;
@@ -42,7 +44,8 @@ export async function runAgentTurn(args: {
     assistantId,
     { messages: [{ role: "user", content: message }] },
     randomUUID(),
-    config,
+    args.specialistConfiguration ? { ...config, configurable: { ...(config?.configurable as Record<string, unknown> ?? {}),
+      specialist_configuration: await args.specialistConfiguration.snapshot(conversation.projectId ?? null) } } : config,
   );
 
   const deadline = Date.now() + waitMs;

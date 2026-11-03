@@ -1,0 +1,299 @@
+openapi: 3.1.0
+info:
+  title: Specialist Configuration & Capability Extension
+  version: 1.0.0
+security:
+  - operatorSession: []
+paths:
+  /api/specialists:
+    get:
+      summary: List specialists from the live runtime graph registry
+      responses:
+        '200':
+          description: Registered specialist graphs
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [specialists]
+                properties:
+                  specialists:
+                    type: array
+                    items: {$ref: '#/components/schemas/Specialist'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /api/specialists/{id}/catalog:
+    parameters:
+      - {$ref: '#/components/parameters/SpecialistId'}
+    get:
+      summary: Discover built-ins, registered tools, installed skills and configured MCP tools
+      responses:
+        '200':
+          description: Current runtime catalog; readiness is not authorization
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Catalog'}
+        '400': {$ref: '#/components/responses/Invalid'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /api/specialists/{id}/configuration:
+    parameters:
+      - {$ref: '#/components/parameters/SpecialistId'}
+      - {$ref: '#/components/parameters/ProjectId'}
+    get:
+      summary: Read saved additions, resolved built-ins and current availability diagnostics
+      responses:
+        '200':
+          description: Global scope if project_id is omitted; effective project scope otherwise
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Configuration'}
+        '400': {$ref: '#/components/responses/Invalid'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+    put:
+      summary: Replace additions in one scope; reset by sending three empty arrays
+      description: Validated IDs only. Built-ins and other scopes are never removed. Applies to new runs only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [revision, additions]
+              properties:
+                revision: {type: integer, minimum: 0}
+                additions: {$ref: '#/components/schemas/Additions'}
+      responses:
+        '200':
+          description: Saved configuration with incremented revision
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Configuration'}
+        '400': {$ref: '#/components/responses/Invalid'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: Configuration changed since the supplied revision; reload and reconcile edits
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /_raptix/specialists:
+    get:
+      summary: Runtime-only enabled factory roster
+      security: [{runtimeToken: []}]
+      responses:
+        '200':
+          description: Installed enabled factories that participate in shared assembly
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [specialists]
+                properties:
+                  specialists: {type: array, items: {$ref: '#/components/schemas/Specialist'}}
+  /_raptix/specialists/catalog:
+    get:
+      summary: Runtime-only catalog discovery
+      security: [{runtimeToken: []}]
+      parameters:
+        - name: specialist_id
+          in: query
+          required: true
+          schema: {type: string, minLength: 1, maxLength: 128}
+      responses:
+        '200':
+          description: Runtime catalog
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Catalog'}
+        '400': {$ref: '#/components/responses/Invalid'}
+  /_raptix/specialists/validate:
+    post:
+      summary: Runtime-only preflight; never executes a selected tool
+      security: [{runtimeToken: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [specialist_id, additions]
+              properties:
+                specialist_id: {type: string}
+                additions: {$ref: '#/components/schemas/Additions'}
+      responses:
+        '200':
+          description: Available for assembly, subject to invocation authorization
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [valid, status, authorization]
+                properties:
+                  valid: {const: true}
+                  status: {const: ready_for_assembly}
+                  authorization: {const: checked_at_invocation}
+        '422':
+          description: Unknown, malformed or unavailable selection
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [detail]
+                properties:
+                  detail:
+                    oneOf:
+                      - {type: string}
+                      - {type: array, items: {type: object}}
+components:
+  securitySchemes:
+    operatorSession: {type: http, scheme: bearer}
+    runtimeToken: {type: http, scheme: bearer, description: Backend-only runtime token; never sent to the browser}
+  parameters:
+    SpecialistId:
+      name: id
+      in: path
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 128, pattern: '^[a-zA-Z0-9_-]+$'}
+    ProjectId:
+      name: project_id
+      in: query
+      required: false
+      description: Existing project ID; omission selects global scope
+      schema: {type: string, minLength: 1, maxLength: 128}
+  responses:
+    Invalid:
+      description: Invalid payload, duplicate selection, unknown ID or unavailable selected capability
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Unauthorized:
+      description: Session or runtime token is missing or invalid
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    NotFound:
+      description: Project does not exist
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Unavailable:
+      description: Runtime transport is unavailable; no fabricated empty catalog
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: {type: string}
+        message: {type: string}
+        statusCode: {type: integer}
+    Specialist:
+      type: object
+      required: [id, name, description]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        description: {type: string}
+        available: {type: boolean}
+        status: {type: string}
+        source: {type: string}
+    Ids:
+      type: array
+      uniqueItems: true
+      maxItems: 200
+      items: {type: string, minLength: 1, maxLength: 512}
+    Additions:
+      type: object
+      additionalProperties: false
+      required: [skills, tools, mcp]
+      properties:
+        skills: {$ref: '#/components/schemas/Ids'}
+        tools: {$ref: '#/components/schemas/Ids'}
+        mcp: {$ref: '#/components/schemas/Ids'}
+    Builtins:
+      type: object
+      required: [tools, skills, skill_sources, behavior]
+      properties:
+        tools: {type: array, items: {type: string}, description: Actual tool names from factory and middleware assembly}
+        skills: {type: array, items: {type: string}, description: Canonical installed skill IDs}
+        skill_sources: {type: array, items: {type: string}}
+        behavior: {type: string}
+    Capability:
+      type: object
+      required: [id, name, description, source, installed, available, status, requirements]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        description: {type: string}
+        source: {type: string}
+        installed: {type: boolean}
+        available: {type: boolean}
+        status: {type: string}
+        requirements: {type: array, items: {type: string}}
+        runtime_name: {type: string, description: Collision-resistant MCP tool alias}
+        execution_readiness: {type: string, enum: [invocation_checked, knowledge_only]}
+    McpServer:
+      type: object
+      required: [id, name, configured, enabled, installed, reachable, available, status, tools, requirements]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        configured: {type: boolean}
+        enabled: {type: boolean}
+        installed: {type: boolean}
+        reachable: {type: boolean}
+        available: {type: boolean}
+        status: {type: string, enum: [connected, disconnected, unavailable]}
+        tools: {type: array, items: {$ref: '#/components/schemas/Capability'}}
+        requirements: {type: array, items: {type: string}}
+        error: {type: string, description: Sanitized recovery guidance without configuration values}
+    Catalog:
+      type: object
+      required: [specialist_id, builtins, tools, skills, servers]
+      properties:
+        specialist_id: {type: string}
+        builtins: {$ref: '#/components/schemas/Builtins'}
+        tools: {type: array, items: {$ref: '#/components/schemas/Capability'}}
+        skills: {type: array, items: {$ref: '#/components/schemas/Capability'}}
+        servers: {type: array, items: {$ref: '#/components/schemas/McpServer'}}
+    Resolved:
+      type: object
+      required: [skills, tools, mcp]
+      description: Deduplicated union including built-in IDs; unlike selections, built-ins may exceed 200 entries
+      properties:
+        skills: {type: array, uniqueItems: true, items: {type: string}}
+        tools: {type: array, uniqueItems: true, items: {type: string}}
+        mcp: {type: array, uniqueItems: true, items: {type: string}}
+    Configuration:
+      type: object
+      required: [specialist_id, project_id, revision, global, project, global_revision, project_revision, effective, builtins, resolved, diagnostics, status]
+      properties:
+        specialist_id: {type: string}
+        project_id: {type: [string, 'null']}
+        revision: {type: integer, minimum: 0}
+        global: {$ref: '#/components/schemas/Additions'}
+        project: {$ref: '#/components/schemas/Additions'}
+        global_revision: {type: integer, minimum: 0}
+        project_revision: {type: integer, minimum: 0}
+        effective: {$ref: '#/components/schemas/Resolved'}
+        builtins: {$ref: '#/components/schemas/Builtins'}
+        resolved: {$ref: '#/components/schemas/Resolved'}
+        status: {type: string, enum: [ready_for_new_run, unavailable]}
+        diagnostics:
+          type: array
+          items:
+            type: object
+            required: [id, kind, status, message]
+            properties:
+              id: {type: string}
+              kind: {type: string, enum: [skills, tools, mcp]}
+              status: {const: unavailable}
+              message: {type: string}

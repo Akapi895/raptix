@@ -1,5 +1,6 @@
 import type { RuntimeRun, RuntimeTransport } from "../../src/adapters/runtime/client.js";
 import type { RuntimeEvent } from "../../src/adapters/runtime/stream.js";
+import { RuntimeRejectedError } from '../../src/adapters/runtime/errors.js';
 
 /**
  * Scriptable RuntimeTransport fake. Tests push the run statuses `getRun`
@@ -8,6 +9,22 @@ import type { RuntimeEvent } from "../../src/adapters/runtime/stream.js";
  * `getThreadState`.
  */
 export class FakeRuntime implements RuntimeTransport {
+  public specialistCatalog: unknown = { specialist_id: 'recon', builtins: { tools: [], skills: [], skill_sources: [], behavior: 'Reconnaissance' }, tools: [], skills: [], servers: [] };
+  /** Optional per-specialist catalogs; consulted by `specialist_id` before the shared fallback. */
+  public specialistCatalogs: Record<string, unknown> = {};
+  public async specialistRequest(path: string, body?: unknown): Promise<unknown> {
+    if (path.endsWith('/validate')) {
+      const selection = (body as { additions: { tools: string[]; skills: string[]; mcp: string[] } }).additions;
+      const catalog = this.specialistCatalog as { tools: { id: string }[]; skills: { id: string }[]; servers: { tools: { id: string }[] }[] };
+      if (selection.tools.some(id => !catalog.tools.some(t => t.id === id)) || selection.skills.some(id => !catalog.skills.some(s => s.id === id)) || selection.mcp.some(id => !catalog.servers.some(s => s.tools.some(t => t.id === id)))) throw new RuntimeRejectedError(400);
+      return { valid: true };
+    }
+    if (path.includes('/catalog?specialist_id=')) {
+      const id = decodeURIComponent(path.split('specialist_id=')[1] ?? '');
+      if (id in this.specialistCatalogs) return this.specialistCatalogs[id]!;
+    }
+    return this.specialistCatalog;
+  }
   public createdThreads: string[] = [];
   public createdRuns: { threadId: string; assistantId: string; input: Record<string, unknown>; config?: Record<string, unknown> }[] = [];
   public cancelledRuns: { threadId: string; runId: string }[] = [];
@@ -18,13 +35,16 @@ export class FakeRuntime implements RuntimeTransport {
   public joinedRuns: { threadId: string; runId: string }[] = [];
   private runStatusQueue: string[] = ["success"];
   private activeRuns = new Map<string, RuntimeRun>();
+  public graphIds: readonly string[] = ["raptix"];
+  public pingError: Error | undefined;
 
   public queueRunStatuses(...statuses: string[]): void {
     this.runStatusQueue = statuses;
   }
 
   public async ping(): Promise<{ version: string; graphIds: readonly string[] }> {
-    return { version: "test", graphIds: ["raptix"] };
+    if (this.pingError) throw this.pingError;
+    return { version: "test", graphIds: this.graphIds };
   }
 
   public async createThread(
@@ -104,6 +124,7 @@ export class FakeRuntime implements RuntimeTransport {
 
 /** Always throws RuntimeUnavailableError -- used to test the "runtime down" error path. */
 export class UnavailableRuntime implements RuntimeTransport {
+  public specialistRequest = () => this.fail();
   private async fail(): Promise<never> {
     const { RuntimeUnavailableError } = await import("../../src/adapters/runtime/errors.js");
     throw new RuntimeUnavailableError("test: runtime unavailable");

@@ -5,8 +5,10 @@ import type { BatchQueueStore } from "../db/batch-queue-store.js";
 import type { ConversationStore } from "../db/conversation-store.js";
 import type { ProjectStore } from "../db/project-store.js";
 import { runAgentTurn } from "./agent-turn.js";
+import type { SpecialistConfigurationService } from './specialist-configuration.js';
 
 export interface BatchProcessorDeps {
+  specialistConfiguration?: SpecialistConfigurationService;
   store: BatchQueueStore;
   conversationStore: ConversationStore;
   runtime: RuntimeTransport;
@@ -77,6 +79,7 @@ async function runWorker(
       const project = queue.projectId && deps.sandboxKey ? await deps.projectStore.findById(queue.projectId) : null;
       const config = project && deps.sandboxKey ? { ...runConfigurableFor(project.workspaceSlug, deps.sandboxKey), recursion_limit: 1000 } : undefined;
       const turn = await runAgentTurn({
+        specialistConfiguration: deps.specialistConfiguration,
         conversation,
         message: task.message,
         runtime: deps.runtime,

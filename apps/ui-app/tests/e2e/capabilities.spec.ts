@@ -1,6 +1,6 @@
 import { expect, openApp, test } from './fixtures';
 
-const routes = ['mcp-management', 'mcp-monitor', 'knowledge-management', 'skills-management', 'skills-monitor', 'roles-management'];
+const routes = ['mcp-management', 'mcp-monitor', 'knowledge-management', 'skills-management', 'skills-monitor', 'agents'];
 
 test('Capabilities sidebar opens management directly and stays active across internal tabs', async ({ page }) => {
   await openApp(page);
@@ -50,11 +50,11 @@ test('all Capabilities routes fit desktop and responsive widths without page ove
       const root = page.locator(`#page-${route}`);
       await expect(root.locator('h2')).toBeVisible();
       await expect(root.locator('.loading-spinner:visible')).toHaveCount(0);
-      await expect(root.locator('.cap-table, .monitor-table, .tool-item').first()).toBeVisible();
+      await expect(root.locator('.cap-table, .monitor-table, .tool-item, .agent-card').first()).toBeVisible();
       expect(await root.evaluate(node => node.scrollWidth <= node.clientWidth + 1), `${route} at ${width}px`).toBe(true);
       const content = root.locator('.page-content');
       expect(await content.evaluate(node => node.scrollWidth <= node.clientWidth + 1), `${route} content at ${width}px`).toBe(true);
-      if (route !== 'roles-management') await expect(root.locator('.cap-local-nav [aria-current="page"]')).toBeVisible();
+      if (route !== 'agents') await expect(root.locator('.cap-local-nav [aria-current="page"]')).toBeVisible();
     }
   }
 });
@@ -65,10 +65,11 @@ test('capability editors keep keyboard focus inside and close with Escape', asyn
     ['knowledge-management', '[data-action="knowledge.add"]', 'knowledge-item-modal'],
     ['skills-management', '[data-action="skills.edit"]', 'skill-modal'],
     ['skills-management', '[data-action="skills.view"]', 'skill-view-modal'],
-    ['roles-management', '[data-action="roles.create"]', 'role-modal'],
+    ['agents', '[data-action="roles.create"]', 'role-modal'],
     ['knowledge-retrieval-logs', '[data-action="knowledge.logDetails"]', 'retrieval-log-details-modal'],
   ] as const) {
     await openApp(page, route);
+    if (route === 'agents') await page.getByRole('tab', { name: 'Custom Agents', exact: true }).click();
     await page.locator(action).first().click();
     const modal = page.locator(`#${id}`);
     await expect(modal).toHaveAttribute('role', 'dialog');
@@ -128,11 +129,12 @@ test('local navigation, native category filtering, retrieval details and agent a
   await expect(page.locator('#retrieval-log-details-modal')).toContainText('refresh token rotation');
   await page.keyboard.press('Escape');
   await expect(page.locator('#retrieval-log-details-modal')).toBeHidden();
-  await page.goto('/#roles-management');
+  await page.goto('/#agents');
+  await page.getByRole('tab', { name: 'Custom Agents', exact: true }).click();
   await page.locator('#roles-availability').selectOption('disabled');
-  await expect(page.locator('.role-card')).toHaveCount(1);
-  await expect(page.locator('.role-card')).toContainText('Report Writer');
-  await page.locator('.role-card [data-action="roles.edit"]').click();
+  await expect(page.locator('.agent-card-persona')).toHaveCount(1);
+  await expect(page.locator('.agent-card-persona')).toContainText('Report Writer');
+  await page.locator('.agent-card-persona [data-action="roles.edit"]').click();
   await expect(page.locator('#role-modal')).toBeVisible();
   await expect(page.locator('#role-modal .cap-form-section').first()).toContainText('Identity');
   await expect(page.locator('#role-workflow-options')).not.toHaveAttribute('open');

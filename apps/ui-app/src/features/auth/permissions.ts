@@ -34,7 +34,7 @@ export const PAGE_PERMISSION_MAP: Readonly<Record<string, string>> = {
   skills: 'skills:read',
   'skills-monitor': 'skills:read',
   'skills-management': 'skills:read',
-  'roles-management': 'roles:read',
+  agents: 'roles:read',
   settings: 'config:read',
 };
 

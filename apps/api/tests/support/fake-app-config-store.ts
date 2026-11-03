@@ -11,4 +11,10 @@ export class FakeAppConfigStore implements AppConfigStore {
     this.values.set(key, value);
     return value;
   }
+
+  public async compareAndSet(key: string, previous: Record<string, unknown> | null, value: Record<string, unknown>): Promise<boolean> {
+    if (JSON.stringify(await this.get(key)) !== JSON.stringify(previous)) return false;
+    await this.set(key, structuredClone(value));
+    return true;
+  }
 }

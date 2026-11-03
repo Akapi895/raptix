@@ -8,13 +8,17 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
+COPY apps/shared/streaming/package.json apps/shared/streaming/
+COPY apps/shared/web-contracts/package.json apps/shared/web-contracts/
 
 ARG VERSION=0.0.0
 RUN sed -i 's/"version": "[^"]*"/"version": "'"$VERSION"'"/' apps/api/package.json
 
-RUN npm ci --workspace=@raptix/api
+RUN npm ci --workspace=@raptix/api --workspace=@raptix/streaming --workspace=@raptix/web-contracts
 
 COPY apps/api/ apps/api/
+COPY apps/shared/ apps/shared/
+RUN npm run build --workspace=@raptix/streaming && npm run build --workspace=@raptix/web-contracts
 
 # The Prisma client (src/generated/prisma) is generated TypeScript, not
 # checked in (gitignored) -- it has to exist before tsc runs, and tsc's
@@ -43,6 +47,10 @@ COPY --from=builder /app/apps/api/prisma.config.ts ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
+COPY --from=builder /app/apps/shared/web-contracts/package.json ./apps/shared/web-contracts/package.json
+COPY --from=builder /app/apps/shared/web-contracts/dist ./apps/shared/web-contracts/dist
+COPY --from=builder /app/apps/shared/streaming/package.json ./apps/shared/streaming/package.json
+COPY --from=builder /app/apps/shared/streaming/dist ./apps/shared/streaming/dist
 
 # Raptix's real skill corpus (read-only; see src/adapters/skills/corpus.ts
 # and skills.routes.ts for why writes stay stubbed). Git-authored, so this

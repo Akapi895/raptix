@@ -10,6 +10,7 @@ import { initNotifications, type NotificationItem } from '@/features/notificatio
 import { initProjects } from '@/features/projects';
 import { startProjectSwitcher } from '@/features/projects/switcher';
 import { initRoles } from '@/features/roles';
+import { createSpecialistManager } from '@/features/roles/specialist-manager';
 import { initSettings } from '@/features/settings';
 import { initSkills } from '@/features/skills';
 import { initStorage } from '@/features/storage';
@@ -113,7 +114,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     loadWorkflowOptions: id => { run(() => workflows.hooks.loadWorkflowOptionsForRoleModal(id)); },
     closeOtherChatPanels: () => { projects.closeChatProjectPanel(); chat.closeChatReasoningPanel(); },
     onRoleChanged: () => chat.roleChanged(), initPaginationSelects: pagination,
-    isRolesPageOpen: () => currentPage() === 'roles-management',
+    isRolesPageOpen: () => currentPage() === 'agents',
   });
   const projects = initProjects(doc, {
     translate: t, hasPermission: auth.hasPermission, requirePermission: can, applyRBAC: applyPermissions,
@@ -145,6 +146,7 @@ export function createDomainApplication(deps: DomainDependencies) {
       try { await projects.selectProject(active); } catch (error) { console.warn('Selecting active project failed', error); }
     }
   }
+  const specialistManager = createSpecialistManager({ doc, request, activeProject: () => projects.getActiveProjectId(), setActiveProject: id => projects.setActiveProjectId(id), projectName: id => projects.getProjectName(id), confirm: browser.confirm, onProjectChange: listener => projects.service.subscribe(listener) });
   async function ensureProjectsLoaded(force?: boolean) {
     const list = await projects.ensureProjectsLoaded(force);
     if (!lifetime.disposed) chat.refreshConversationProjectFilter();
@@ -326,7 +328,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     initProjectsPage, initVulnerabilityPage: vulnerability.view.initPage, initWebshellPage: webshell.controller.initWebshellPage,
     initFileManagementPage: () => chat.initFileManagementPage(),
     refreshTokenUsage: () => doc.getElementById('settings-token-analysis') ? tokens.service.refresh() : undefined,
-    loadRoles: roles.view.loadForPage, renderRolesList: roles.view.renderList,
+    loadRoles: roles.view.loadForPage, renderRolesList: roles.view.renderList, loadSpecialists: specialistManager.load,
     refreshWorkflows: async () => { if (can('workflow:read')) await workflows.hooks.refreshWorkflows(); await orchestration.sync(); }, loadSkillsMonitor: skills.controller.monitor, loadSkills: () => skills.controller.load(),
     loadKnowledgeCategories: knowledge.controller.categories,
     loadKnowledgePage: () => knowledge.controller.load(knowledge.service.state.pagination.currentCategory, 1, knowledge.service.state.pagination.pageSize),
@@ -422,7 +424,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     hitl.dispose(); monitor.controller.stopPolling(); monitor.dispose(); knowledge.dispose(); skills.dispose();
     storageFeature.dispose(); terminal.dispose(); tokens.dispose(); audit.dispose(); c2.dispose();
     orchestration.dispose(); tasks.dispose(); workflows.dispose(); vulnerability.dispose(); assets.dispose();
-    projects.dispose(); roles.dispose(); settings.dispose(); settingsBrowser.dispose(); dashboard.dispose(); toast.dispose();
+    specialistManager.dispose(); projects.dispose(); roles.dispose(); settings.dispose(); settingsBrowser.dispose(); dashboard.dispose(); toast.dispose();
     disposal = webshell.dispose(); return disposal;
   }
   return {

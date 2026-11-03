@@ -392,6 +392,19 @@ def build_middleware(
         ordered list of middleware instances, ready to pass to
         ``create_agent(..., middleware=...)``.
     """
+    from raptix.intelligence.agents.middleware_slots import skills_sources_for
+    from raptix.intelligence.agents.specialist_configuration import (
+        additional_sources,
+        assembly_context,
+        record_assembly,
+    )
+
+    baseline_sources = []
+    if assembly_context.get() is not None:
+        baseline_sources = (
+            list(skill_sources) if skill_sources is not None else skills_sources_for(role)
+        )
+        skill_sources = additional_sources(role, baseline_sources)
     if slots is None:
         slots = SLOTS_PER_ROLE.get(role)
     if slots is None:
@@ -460,7 +473,7 @@ def build_middleware(
     # per-role visibility.
     result = maybe_install_skillogy(result, role=role, skill_sources=skill_sources)
 
-    return result
+    return record_assembly(role, baseline_sources, result)
 
 
 def build_tools(
@@ -527,7 +540,16 @@ def build_tools(
         record_exposure_shadow(role, result)
         if exposure_mode.role_active:
             result = active_exposure_tools(role, result)
-    return result
+    from raptix.intelligence.agents.specialist_configuration import (
+        additional_tools,
+        assembly_context,
+        assembly_role,
+    )
+
+    assembly = assembly_context.get()
+    if assembly is not None:
+        assembly.builtins.setdefault(assembly_role(role), {})["tools"] = [t.name for t in result]
+    return additional_tools(role, result)
 
 
 def _tool_name(tool: Any) -> str:
