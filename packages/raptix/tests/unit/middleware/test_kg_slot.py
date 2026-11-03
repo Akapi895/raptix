@@ -36,7 +36,12 @@ def test_orchestrator_role_gets_planning_context(monkeypatch: pytest.MonkeyPatch
     make_kg(role="raptix")
     assert _RecordingKG.instances == [
         {
-            "enabled_tools": {"kg_surface_inventory", "challenge_inventory"},
+            "enabled_tools": {
+                "kg_surface_inventory",
+                "challenge_inventory",
+                "kg_query",
+                "kg_query_reference",
+            },
             "operational_shadow": False,
             "planning_context": True,
         }
@@ -44,9 +49,29 @@ def test_orchestrator_role_gets_planning_context(monkeypatch: pytest.MonkeyPatch
 
 
 def test_specialist_roles_have_no_planning_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``recon`` has no planning context, but does get bounded read+write KG
+    tools (Mục 4 role grant: recon/exploit keep write, postexploit is
+    read-only) — ``enabled_tools`` is no longer ``None`` for this role."""
     make_kg = _make_kg_with_recorder(monkeypatch)
     make_kg(role="recon")
     assert _RecordingKG.instances[0]["planning_context"] is False
+    assert _RecordingKG.instances[0]["enabled_tools"] == {
+        "kg_query",
+        "kg_query_reference",
+        "kg_surface_inventory",
+        "kg_record",
+        "kg_ingest",
+    }
+
+
+def test_unlisted_role_keeps_no_enabled_tools_restriction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A role outside {raptix, recon, exploit, postexploit} gets the
+    unrestricted default (``enabled_tools=None``) — the read-only grant is
+    scoped to exactly those roles, not opened to every specialist."""
+    make_kg = _make_kg_with_recorder(monkeypatch)
+    make_kg(role="ad_operator")
     assert _RecordingKG.instances[0]["enabled_tools"] is None
 
 

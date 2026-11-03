@@ -1,5 +1,6 @@
 import { RuntimeRejectedError, RuntimeUnavailableError } from "./errors.js";
 import { joinRuntimeRun, streamRuntimeRun, type RuntimeEvent } from "./stream.js";
+import type { GraphRequest, GraphResult } from "./graph.js";
 
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 
@@ -20,6 +21,7 @@ export interface RuntimeClientOptions {
 
 /** Port routes depend on (matches AuthStore/ProjectStore/ConversationStore) -- RuntimeClient implements it; tests use a fake. */
 export interface RuntimeTransport {
+  queryKnowledgeGraph(engagement: string, query: GraphRequest): Promise<GraphResult>;
   specialistRequest(path: string, body?: unknown): Promise<unknown>;
   ping(): Promise<{ version: string; graphIds: readonly string[] }>;
   createThread(threadId: string, metadata?: Record<string, string>): Promise<{ threadId: string; metadata: Record<string, unknown> }>;
@@ -80,6 +82,14 @@ export class RuntimeClient implements RuntimeTransport {
   public async specialistRequest(path: string, body?: unknown): Promise<unknown> {
     if (!/^\/_raptix\/specialists(?:\/catalog\?specialist_id=[^&]+|\/validate)?$/.test(path)) throw new RuntimeRejectedError(400);
     return this.fetchJson(path, body);
+  }
+
+  public async queryKnowledgeGraph(engagement: string, query: GraphRequest): Promise<GraphResult> {
+    const response = await this.fetchJson("/_raptix/kg/query", { ...query, engagement });
+    if (!isRecord(response) || !Array.isArray(response.nodes) || !Array.isArray(response.edges) || typeof response.truncated !== "boolean" || response.nodes.length > 20 || response.edges.length > 20 || JSON.stringify(response).length > 64_000) {
+      throw new RuntimeUnavailableError("Malformed graph response");
+    }
+    return response as unknown as GraphResult;
   }
 
   private async fetchJson(

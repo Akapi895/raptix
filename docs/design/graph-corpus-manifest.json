@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "atlas": {
+      "files": 262,
+      "sha256": "f2b15c492e4adb2b06355abfc1b3845bb6c3a49bc8f0c316a49c3e15808b1761"
+    },
+    "attack": {
+      "files": 1813,
+      "sha256": "fdf30726a926dc76d7c85c59710b328b6e30b0bebffbb6cf58b01cb9cee0f155"
+    },
+    "capec": {
+      "files": 558,
+      "sha256": "78cc76c264324d1dcbc5601ca1fa82d3306a1db0bd9fda70ea8e340906a0fd9c"
+    },
+    "cisa": {
+      "files": 1665,
+      "sha256": "4e2c58c5f615601ebbe190cbabd58916a8e135f5d76eda93bc77550d761a0ab9"
+    },
+    "cwe": {
+      "files": 969,
+      "sha256": "ad7ff54c179e98a8a2bb8d8427c6c1c777f4ba7fe07291ae8f8cab63fd0697c3"
+    },
+    "owasp": {
+      "files": 583,
+      "sha256": "dff4e80d308d79e314b0ac9b722993f7edd9b515b24f1716af5c7eb31110a9fe"
+    }
+  },
+  "files": 5850,
+  "errors": [],
+  "corpus_sha256": "1786e053f53fd792b67e3c663a690ab4b5034f3b91fd49f167d748910e6de2ff"
+}

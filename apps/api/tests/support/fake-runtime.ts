@@ -1,6 +1,7 @@
 import type { RuntimeRun, RuntimeTransport } from "../../src/adapters/runtime/client.js";
 import type { RuntimeEvent } from "../../src/adapters/runtime/stream.js";
 import { RuntimeRejectedError } from '../../src/adapters/runtime/errors.js';
+import type { GraphRequest, GraphResult } from '../../src/adapters/runtime/graph.js';
 
 /**
  * Scriptable RuntimeTransport fake. Tests push the run statuses `getRun`
@@ -9,6 +10,13 @@ import { RuntimeRejectedError } from '../../src/adapters/runtime/errors.js';
  * `getThreadState`.
  */
 export class FakeRuntime implements RuntimeTransport {
+  public graphResponses = new Map<string, GraphResult>();
+  public graphQueries: { engagement: string; query: GraphRequest }[] = [];
+  public async queryKnowledgeGraph(engagement: string, query: GraphRequest): Promise<GraphResult> {
+    this.graphQueries.push({ engagement, query });
+    const response = this.graphResponses.get(engagement) ?? { nodes: [], edges: [], truncated: false };
+    return query.query_type === 'observation' ? { ...response, nodes: response.nodes.filter(node => node.kind === query.params.kind && node.key === query.params.key) } : response;
+  }
   public specialistCatalog: unknown = { specialist_id: 'recon', builtins: { tools: [], skills: [], skill_sources: [], behavior: 'Reconnaissance' }, tools: [], skills: [], servers: [] };
   /** Optional per-specialist catalogs; consulted by `specialist_id` before the shared fallback. */
   public specialistCatalogs: Record<string, unknown> = {};
@@ -124,6 +132,7 @@ export class FakeRuntime implements RuntimeTransport {
 
 /** Always throws RuntimeUnavailableError -- used to test the "runtime down" error path. */
 export class UnavailableRuntime implements RuntimeTransport {
+  public queryKnowledgeGraph = () => this.fail();
   public specialistRequest = () => this.fail();
   private async fail(): Promise<never> {
     const { RuntimeUnavailableError } = await import("../../src/adapters/runtime/errors.js");

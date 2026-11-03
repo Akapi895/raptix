@@ -74,6 +74,8 @@ sliver-py/
 /src/
 infra/config/*.local.*
 reference/
+!packages/raptix/raptix/knowledge/reference/
+!packages/raptix/raptix/knowledge/reference/*.py
 demo.tape
 
 # Raptix runtime data

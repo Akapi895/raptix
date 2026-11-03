@@ -225,7 +225,7 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     # orchestrator's kg_surface_inventory re-check (raptix.md).
     "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "surface_exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
-    "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     # Three OSS roles run the KG middleware — the persistent-graph use
     # cases the spec calls out
     # (docs/design/2026-06-03-kg-middleware-redesign.md § 4.10).

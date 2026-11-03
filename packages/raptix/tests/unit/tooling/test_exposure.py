@@ -107,6 +107,9 @@ def test_recovery_surface_names_match_plan_and_runtime() -> None:
         {
             "inspect_context",
             "search_knowledge",
+            "kg_query",
+            "kg_query_reference",
+            "kg_surface_inventory",
             "load_skill",
             "ask_user",
             "diagnose_execution",
