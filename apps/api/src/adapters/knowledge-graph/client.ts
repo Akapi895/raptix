@@ -32,10 +32,13 @@ export class Neo4jKnowledgeGraph implements KnowledgeGraph {
     try {
       const result = await session.run(
         `MATCH (h:Host) WHERE h.engagement = $engagement
-         OPTIONAL MATCH (s:Service)-[:HOSTS]->(h)
+          WITH h LIMIT 500
+          OPTIONAL MATCH (h)-[r:HOSTS]-(s:Service)
+          WHERE s.engagement = $engagement AND r.engagement = $engagement
          RETURN h.ip AS ip, h.hostname AS hostname,
                 collect(CASE WHEN s IS NULL THEN NULL ELSE {port: s.port, protocol: s.protocol, service: s.service, banner: s.banner, status: s.status} END) AS services`,
         { engagement },
+        { timeout: 4000 },
       );
       return result.records.flatMap((record) => {
         const ip = asString(record.get("ip"));
