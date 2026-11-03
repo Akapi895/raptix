@@ -53,7 +53,7 @@ Verified NOT broken (do not "fix" these):
   (`recording.py:208-215`) — envelope additions are replay-safe. All new
   envelope fields are ignored by replay.
 - T0 baseline capture explicitly runs with recording off
-  (`benchmarks/tool_eval/baseline/capture_assembled_baseline.py:64`) —
+  (`benchmarks/suites/tool_eval/baseline/capture_assembled_baseline.py:64`) —
   frozen baseline unaffected.
 - `.env` never-override semantics (`cli/auth.py:93`) is intentional
   (exported env must win). Keep semantics; add visibility only.

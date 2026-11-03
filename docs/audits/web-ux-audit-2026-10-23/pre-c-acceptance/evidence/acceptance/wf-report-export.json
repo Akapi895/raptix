@@ -1,0 +1,86 @@
+{
+ "workflow": "WF-08 reports and export content",
+ "generatedAt": "2026-10-24T03:23:11.698Z",
+ "counts": {
+  "PASS": 7,
+  "PARTIAL": 1,
+  "NV": 1
+ },
+ "results": [
+  {
+   "id": "the operator creates a report and selects the confirmed finding",
+   "workflow": "WF-08 reports and export content",
+   "status": "PASS",
+   "detail": "create HTTP 200; select HTTP 200; selected 1",
+   "evidence": null
+  },
+  {
+   "id": "the markdown export carries the title, the summary and the selected finding, and its digest matches the bytes",
+   "workflow": "WF-08 reports and export content",
+   "status": "PASS",
+   "detail": "HTTP 200; text/markdown; digest matches; content carries the report",
+   "evidence": {
+    "mediaType": "text/markdown",
+    "bytes": 223
+   }
+  },
+  {
+   "id": "the json export carries the title, the summary and the selected finding, and its digest matches the bytes",
+   "workflow": "WF-08 reports and export content",
+   "status": "PASS",
+   "detail": "HTTP 200; application/json; digest matches; content carries the report",
+   "evidence": {
+    "mediaType": "application/json",
+    "bytes": 848
+   }
+  },
+  {
+   "id": "the pdf export carries the title, the summary and the selected finding, and its digest matches the bytes",
+   "workflow": "WF-08 reports and export content",
+   "status": "PARTIAL",
+   "detail": "HTTP 200; application/pdf; digest matches; content carries the report; file structure only: the PDF text streams are compressed",
+   "evidence": {
+    "mediaType": "application/pdf",
+    "bytes": 17841
+   }
+  },
+  {
+   "id": "the docx export carries the title, the summary and the selected finding, and its digest matches the bytes",
+   "workflow": "WF-08 reports and export content",
+   "status": "PASS",
+   "detail": "HTTP 200; application/vnd.openxmlformats-officedocument.wordprocessingml.document; digest matches; content carries the report; read from word/document.xml",
+   "evidence": {
+    "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "bytes": 9744
+   }
+  },
+  {
+   "id": "the markdown export names the finding version the stored report snapshots",
+   "workflow": "WF-08 reports and export content",
+   "status": "PASS",
+   "detail": "snapshot finding v3; markdown names it: true",
+   "evidence": null
+  },
+  {
+   "id": "an outsider gets 404 for the export and no report text",
+   "workflow": "WF-08 reports and export content",
+   "status": "PASS",
+   "detail": "outsider export HTTP 404",
+   "evidence": null
+  },
+  {
+   "id": "an unknown export format is refused and produces no file",
+   "workflow": "WF-08 reports and export content",
+   "status": "PASS",
+   "detail": "format=xlsx HTTP 400",
+   "evidence": null
+  },
+  {
+   "id": "snapshot-after-live-change",
+   "workflow": "WF-08 reports and export content",
+   "status": "NV",
+   "detail": "the export reads stored snapshots; a live finding change is not exercised here (no finding edit path in this check)",
+   "evidence": null
+  }
+ ]
+}

@@ -7,12 +7,14 @@ captures the ``record_observations`` payload without hitting Neo4j.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from raptix.knowledge.graph.asset_identity import host_ref, web_origin_ref
 from raptix.knowledge.graph.ingest import (
     _REGISTRY,
     ScannerAdapter,
@@ -20,10 +22,13 @@ from raptix.knowledge.graph.ingest import (
     _adapt_nmap_xml,
     _adapt_nuclei_jsonl,
     _adapt_sarif,
+    _ArtifactStampedStore,
     available_scanners,
     ingest,
     register_adapter,
+    workspace_artifact_ref,
 )
+from raptix_core.types.asset import asset_id
 
 # ── Stub store ──────────────────────────────────────────────────────────
 
@@ -41,6 +46,7 @@ class _StubStore:
         engagement: str,
         created_by: str,
         source_episode_id: str,
+        provenance_channel: str = "legacy_unknown",
     ) -> dict[str, Any]:
         self.calls.append(
             {
@@ -48,6 +54,7 @@ class _StubStore:
                 "engagement": engagement,
                 "created_by": created_by,
                 "source_episode_id": source_episode_id,
+                "provenance_channel": provenance_channel,
             }
         )
         return {"created": len(observations), "merged": 0, "edges": 0, "revision": "rev-stub"}
@@ -577,3 +584,314 @@ def test_sarif_adapter_handles_empty_runs(tmp_path: Path) -> None:
     result = _adapt_sarif(f, store, "acme", "t", "ep")  # type: ignore[arg-type]
     assert result == {"results_processed": 0, "ingested": 0}
     assert store.calls == []
+
+
+# ── asset identity on asset-bearing nodes (ADR-0094) ────────────────────
+
+
+def _nmap_host_xml(path: Path) -> Path:
+    path.write_text(
+        """<?xml version="1.0"?>
+        <nmaprun>
+          <host>
+            <status state="up"/>
+            <address addr="10.0.0.1" addrtype="ipv4"/>
+            <hostnames><hostname name="target.local"/></hostnames>
+            <ports>
+              <port portid="80" protocol="tcp">
+                <state state="open"/>
+                <service name="http"/>
+              </port>
+            </ports>
+          </host>
+        </nmaprun>
+        """,
+        encoding="utf-8",
+    )
+    return path
+
+
+def _props(obs: list[dict[str, Any]], kind: str) -> list[dict[str, Any]]:
+    return [o["props"] for o in obs if o["kind"] == kind]
+
+
+def test_nmap_host_and_entrypoint_carry_asset_identity(tmp_path: Path) -> None:
+    store = _StubStore()
+    _adapt_nmap_xml(_nmap_host_xml(tmp_path / "scan.xml"), store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+
+    host = _props(obs, "Host")[0]
+    assert host["asset_id"] == asset_id("acme", host_ref("10.0.0.1"))
+    assert host["asset_kind"] == "host"
+    assert host["asset_canonical"] == "10.0.0.1"
+
+    entry = _props(obs, "Entrypoint")[0]
+    assert entry["asset_kind"] == "web_origin"
+    assert entry["asset_canonical"] == "http://target.local:80"
+
+
+def test_replaying_the_same_nmap_scan_keeps_asset_ids(tmp_path: Path) -> None:
+    scan = _nmap_host_xml(tmp_path / "scan.xml")
+    first, second = _StubStore(), _StubStore()
+    _adapt_nmap_xml(scan, first, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    _adapt_nmap_xml(scan, second, "acme", "recon", "ep-2")  # type: ignore[arg-type]
+    assert _props(first.calls[0]["observations"], "Host") == _props(
+        second.calls[0]["observations"], "Host"
+    )
+
+
+def test_httpx_dns_host_and_origin_are_separate_assets(tmp_path: Path) -> None:
+    f = tmp_path / "httpx.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "url": "https://App.Example.com/login",
+                "host": "App.Example.com",
+                "port": 443,
+                "status-code": 200,
+            }
+        )
+        + "\n"
+        + json.dumps({"url": "http://10.0.0.5:8080/", "port": 8080, "status-code": 200})
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_httpx_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+
+    hosts = _props(obs, "Host")
+    assert [(h["asset_kind"], h["asset_canonical"]) for h in hosts] == [
+        ("dns_name", "app.example.com"),
+        ("host", "10.0.0.5"),
+    ]
+    origins = _props(obs, "Entrypoint")
+    assert [o["asset_canonical"] for o in origins] == [
+        "https://app.example.com:443",
+        "http://10.0.0.5:8080",
+    ]
+    assert all(o["asset_kind"] == "web_origin" for o in origins)
+
+
+def test_katana_endpoint_is_linked_to_its_web_origin(tmp_path: Path) -> None:
+    from raptix.knowledge.graph.ingest import _adapt_katana_jsonl
+
+    f = tmp_path / "katana.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "request": {"method": "GET", "endpoint": "https://App.Example.com/users?id=1"},
+                "status_code": 200,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_katana_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    endpoint = _props(store.calls[0]["observations"], "Endpoint")[0]
+    assert endpoint["origin_asset_id"] == asset_id(
+        "acme", web_origin_ref("https://app.example.com")
+    )
+    origins = [
+        props
+        for props in _props(store.calls[0]["observations"], "Entrypoint")
+        if props.get("asset_kind") == "web_origin"
+    ]
+    assert [props["asset_canonical"] for props in origins] == ["https://app.example.com:443"]
+
+
+def test_parameter_edges_attach_to_the_endpoint_not_the_host(tmp_path: Path) -> None:
+    from raptix.knowledge.graph.ingest import _adapt_katana_jsonl
+
+    f = tmp_path / "katana.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "request": {"method": "GET", "endpoint": "http://app.example.com/users?id=1"},
+                "status_code": 200,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_katana_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+    host = next(o for o in obs if o["kind"] == "Host")
+    endpoint = next(o for o in obs if o["kind"] == "Endpoint")
+    parameter_keys = {o["key"] for o in obs if o["kind"] == "Parameter"}
+    assert {e["to_key"] for e in endpoint["edges_out"]} == parameter_keys
+    assert {e["to_key"] for e in host["edges_out"]} == {endpoint["key"]}
+
+
+def test_credentials_and_secret_query_values_never_reach_the_graph(tmp_path: Path) -> None:
+    from raptix.knowledge.graph.ingest import _adapt_katana_jsonl
+
+    f = tmp_path / "katana.jsonl"
+    url = "https://alice:hunter2@app.example.com/reset?token=abc123&page=2#frag"
+    f.write_text(
+        json.dumps({"request": {"method": "GET", "endpoint": url}}) + "\n", encoding="utf-8"
+    )
+    store = _StubStore()
+    _adapt_katana_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    rendered = json.dumps(store.calls[0]["observations"], default=str)
+    assert "hunter2" not in rendered and "alice" not in rendered and "abc123" not in rendered
+    assert "page=2" in rendered
+    endpoint = next(o for o in store.calls[0]["observations"] if o["kind"] == "Endpoint")
+    assert endpoint["props"]["url"] == "https://app.example.com/reset?token=REDACTED&page=2"
+    token = next(
+        o
+        for o in store.calls[0]["observations"]
+        if o["kind"] == "Parameter" and o["props"]["name"] == "token"
+    )
+    assert token["props"]["value_hint"] == "REDACTED"
+
+
+def test_nmap_host_links_to_its_web_origin(tmp_path: Path) -> None:
+    store = _StubStore()
+    _adapt_nmap_xml(_nmap_host_xml(tmp_path / "scan.xml"), store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+    host = next(o for o in obs if o["kind"] == "Host")
+    entrypoint = next(o for o in obs if o["kind"] == "Entrypoint")
+    assert {e["to_key"] for e in host["edges_out"] if e["kind"] == "HAS"} == {entrypoint["key"]}
+
+
+def test_httpx_redacts_the_origin_and_links_the_host_to_it(tmp_path: Path) -> None:
+    f = tmp_path / "httpx.jsonl"
+    f.write_text(
+        json.dumps(
+            {
+                "url": "http://alice:hunter2@10.0.0.5:8080/admin?token=abc",
+                "port": 8080,
+                "status-code": 200,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    store = _StubStore()
+    _adapt_httpx_jsonl(f, store, "acme", "recon", "ep-1")  # type: ignore[arg-type]
+    obs = store.calls[0]["observations"]
+    rendered = json.dumps(obs, default=str)
+    assert "hunter2" not in rendered and "abc" not in rendered
+    entrypoint = next(o for o in obs if o["kind"] == "Entrypoint")
+    host = next(o for o in obs if o["kind"] == "Host")
+    assert entrypoint["label"] == "http://10.0.0.5:8080/admin?token=REDACTED"
+    assert {e["to_key"] for e in host["edges_out"]} == {entrypoint["key"]}
+
+
+def test_a_file_under_the_engagement_workspace_gives_its_engagement_relative_reference() -> None:
+    assert (
+        workspace_artifact_ref(Path("/workspace/eng-1/scans/nmap.xml"), "eng-1") == "scans/nmap.xml"
+    )
+    assert workspace_artifact_ref(Path("/workspace/other/scans/nmap.xml"), "eng-1") is None
+    assert workspace_artifact_ref(Path("/tmp/nmap.xml"), "eng-1") is None
+    assert workspace_artifact_ref(Path("/workspace/eng-1/"), "eng-1") is None
+
+
+def test_stamped_writes_keep_existing_props_and_delegate_everything_else() -> None:
+    inner = _StubStore()
+    stamped = _ArtifactStampedStore(inner, "scans/nmap.xml", DIGEST_A)  # type: ignore[arg-type]
+    observations = [
+        {"kind": "Host", "key": "host::10.0.0.1", "props": {"ip": "10.0.0.1"}},
+        {
+            "kind": "Service",
+            "key": "service::10.0.0.1:80",
+            "props": {"source_artifact_ref": "scans/earlier.xml"},
+        },
+        {"kind": "Summary", "key": "summary"},
+    ]
+    stamped.record_observations(
+        observations, engagement="eng-1", created_by="it", source_episode_id="ep-1"
+    )
+    assert observations[0]["props"]["source_artifact_ref"] == "scans/nmap.xml"
+    assert observations[0]["props"]["source_artifact_digest"] == DIGEST_A
+    assert observations[1]["props"]["source_artifact_ref"] == "scans/earlier.xml"
+    assert "props" not in observations[2]
+    assert inner.calls[0]["engagement"] == "eng-1"
+    assert stamped.calls is inner.calls
+
+
+DIGEST_A = "a" * 64
+DIGEST_B = "b" * 64
+
+
+def _workspace_nmap_adapter(seen: dict[str, bytes]) -> ScannerAdapter:
+    """Adapter that records the bytes it parsed and writes one Host observation, as an adapter does."""
+
+    def adapter(
+        path: Path, store: Any, engagement: str, created_by: str, source_episode_id: str
+    ) -> dict[str, Any]:
+        seen["bytes"] = path.read_bytes()
+        store.record_observations(
+            [{"kind": "Host", "key": "host::10.0.0.1", "props": {"ip": "10.0.0.1"}}],
+            engagement=engagement,
+            created_by=created_by,
+            source_episode_id=source_episode_id,
+        )
+        return {"records": {}}
+
+    return adapter
+
+
+def test_ingest_stamps_the_digest_of_the_bytes_the_adapter_parsed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "nmap.xml"
+    source.write_bytes(b"<nmaprun>first</nmaprun>")
+    monkeypatch.setattr(
+        "raptix.knowledge.graph.ingest.workspace_artifact_ref",
+        lambda path, engagement: "findings/evidence/nmap.xml",
+    )
+    seen: dict[str, bytes] = {}
+    monkeypatch.setitem(_REGISTRY, "test_workspace_nmap", _workspace_nmap_adapter(seen))
+    store = _StubStore()
+
+    result = ingest(
+        "test_workspace_nmap",
+        source,
+        store=store,  # type: ignore[arg-type]
+        engagement="eng-1",
+        created_by="it",
+        source_episode_id="ep-1",
+    )
+
+    assert "error" not in result
+    assert seen["bytes"] == b"<nmaprun>first</nmaprun>"
+    props = store.calls[0]["observations"][0]["props"]
+    assert props["source_artifact_ref"] == "findings/evidence/nmap.xml"
+    assert (
+        props["source_artifact_digest"] == hashlib.sha256(b"<nmaprun>first</nmaprun>").hexdigest()
+    )
+
+
+def test_a_file_rewritten_at_the_same_path_gets_the_digest_of_its_new_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "nmap.xml"
+    monkeypatch.setattr(
+        "raptix.knowledge.graph.ingest.workspace_artifact_ref",
+        lambda path, engagement: "findings/evidence/nmap.xml",
+    )
+    monkeypatch.setitem(_REGISTRY, "test_workspace_nmap", _workspace_nmap_adapter({}))
+    store = _StubStore()
+
+    def run() -> str:
+        ingest(
+            "test_workspace_nmap",
+            source,
+            store=store,  # type: ignore[arg-type]
+            engagement="eng-1",
+            created_by="it",
+            source_episode_id="ep-1",
+        )
+        return str(store.calls[-1]["observations"][0]["props"]["source_artifact_digest"])
+
+    source.write_bytes(b"version one")
+    first = run()
+    assert run() == first  # replaying the same bytes stamps the same version
+    source.write_bytes(b"version two")
+    second = run()
+    assert second != first
+    assert second == hashlib.sha256(b"version two").hexdigest()

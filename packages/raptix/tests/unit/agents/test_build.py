@@ -20,9 +20,15 @@ from langchain_core.messages import ToolMessage
 
 from raptix.intelligence.agents import build as build_module
 from raptix.intelligence.agents.middleware_slots import SAFETY_CRITICAL_SLOTS, MiddlewareSlot
+from raptix.middleware import hitl as hitl_mod
 from raptix.middleware.budget import BudgetEnforcementMiddleware
 from raptix.middleware.event_logging import EventLogMiddleware
-from raptix.middleware.hitl import HITLApprovalMiddleware
+from raptix.middleware.hitl import (
+    ApprovalPolicyRule,
+    ApprovalRequest,
+    HITLApprovalMiddleware,
+    ProjectApprovalTransport,
+)
 from raptix.middleware.prompt_injection_shield import PromptInjectionShieldMiddleware
 from raptix.middleware.untrusted_output import UNTRUSTED_TOOL_NAMES
 from raptix_core import plugin_loader
@@ -552,25 +558,36 @@ def test_exploit_stack_shield_does_not_double_inject_policy(monkeypatch):
 
 
 @pytest.mark.parametrize("flag", ["1", "true", "yes", "on"])
-def test_exploit_stack_includes_hitl_when_env_enabled(monkeypatch, tmp_path, flag):
+def test_exploit_stack_includes_hitl_when_env_enabled(
+    monkeypatch, tmp_path, flag, project_files_at
+):
     monkeypatch.setenv("RAPTIX_HITL__ENABLED", flag)
     monkeypatch.setenv("RAPTIX_ENGAGEMENT_ID", "eng-test")
-    # Workspace is no longer bound at build time — the transport is lazy.
-    monkeypatch.delenv("RAPTIX_WORKSPACE_PATH", raising=False)
     stack = _build_exploit_stack()
     hitl = next(m for m in stack if isinstance(m, HITLApprovalMiddleware))
-    # No build-time transport: nothing touches the filesystem until a
-    # request resolves a per-request transport from its workspace_path.
+    # No build-time transport: nothing touches the project until a request resolves its transport.
     assert hitl._transport is None
-    # Resolve the transport from a fake request's workspace_path and assert
-    # the contract path shared with the web bridge — keep it exactly.
+    # The transport is the project's own approvals folder, reached through the project's sandbox. The test folder on
+    # disk stands in for the project's /workspace.
+    project = project_files_at(tmp_path)
+    monkeypatch.setattr(hitl_mod, "project_files_for_runtime", lambda _runtime: project)
     req = SimpleNamespace(state={"workspace_path": str(tmp_path)})
     transport = hitl._resolve_transport(req)
-    approvals = tmp_path / "approvals"
-    assert approvals.is_dir()
-    assert transport._requests_path == approvals / "requests.jsonl"
-    assert transport._decisions_path == approvals / "decisions.jsonl"
-    # Cached: a second resolve for the same workspace returns the same object.
+    assert isinstance(transport, ProjectApprovalTransport)
+    transport.submit(
+        ApprovalRequest(
+            request_id="r-build",
+            engagement_name="eng-test",
+            agent_name="exploit",
+            tool_name="bash",
+            tool_args_redacted={},
+            matched_rule=ApprovalPolicyRule(tool_pattern="bash"),
+            reason="",
+            created_at=0.0,
+        )
+    )
+    assert "r-build" in (tmp_path / "approvals" / "requests.jsonl").read_text(encoding="utf-8")
+    # Cached: a second resolve for the same project returns the same object.
     assert hitl._resolve_transport(req) is transport
 
 
@@ -606,6 +623,8 @@ def test_middleware_slot_enum_order_is_assembly_order():
         "summarization",
         "prompt-caching",
         "patch-tool-calls",
+        # P10c: operator messages reach a running dispatch before its recorded model call.
+        "instance-mailbox",
         "record",
     ]
 
@@ -650,7 +669,7 @@ def test_record_slot_absent_by_default(monkeypatch):
     """Without ``RAPTIX_RUNTIME__RECORD_PATH`` the stack assembles
     byte-identical to before — no recorder, no behavior change."""
     monkeypatch.delenv("RAPTIX_RUNTIME__RECORD_PATH", raising=False)
-    from raptix.runtime.recording import RecordingMiddleware
+    from raptix.execution.session.recording import RecordingMiddleware
 
     stack = _build_exploit_stack()
     assert not any(isinstance(m, RecordingMiddleware) for m in stack)
@@ -660,7 +679,7 @@ def test_record_slot_is_innermost_when_enabled(monkeypatch, tmp_path):
     """With the env var set the recorder assembles LAST (innermost), so
     it observes exact model/tool payloads, and it is observability-only:
     responses pass through unchanged and land in the JSONL."""
-    from raptix.runtime.recording import RecordingMiddleware
+    from raptix.execution.session.recording import RecordingMiddleware
 
     record_path = tmp_path / "record.jsonl"
     monkeypatch.setenv("RAPTIX_RUNTIME__RECORD_PATH", str(record_path))

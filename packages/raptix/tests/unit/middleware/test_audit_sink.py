@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,28 @@ from raptix.middleware._audit_sink import (
     iter_records,
     verify_ledger,
 )
+
+
+def test_independent_agent_sinks_share_one_ledger_chain(tmp_path: Path) -> None:
+    path = tmp_path / "audit.jsonl"
+    parent = RoEAuditSink(path=path)
+    child = RoEAuditSink(path=path)
+    parent.append({"event": "parent-start"})
+    child.append({"event": "child-check"})
+    parent.append({"event": "parent-verify"})
+    result = verify_ledger(path)
+    assert result.ok, result.reason
+    assert result.records_checked == 3
+
+
+def test_concurrent_agent_sinks_preserve_sequence_and_hashes(tmp_path: Path) -> None:
+    path = tmp_path / "audit.jsonl"
+    sinks = [RoEAuditSink(path=path), RoEAuditSink(path=path)]
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(lambda index: sinks[index % 2].append({"event": index}), range(40)))
+    result = verify_ledger(path)
+    assert result.ok, result.reason
+    assert result.records_checked == 40
 
 
 class TestPostInitStrToPath:

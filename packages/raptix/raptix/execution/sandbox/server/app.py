@@ -55,6 +55,11 @@ from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
 
 log = logging.getLogger("raptix.execution.sandbox.server")
 
+# Upper bound on a single scoped download. Matches the runtime capture cap
+# (``raptix.execution.tools.evidence.artifacts.MAX_CAPTURE_BYTES``) so the
+# wire layer cannot be asked to buffer an unbounded file in memory.
+MAX_DOWNLOAD_BYTES = 256_000
+
 # ── Wire models. Mirror the in-process types one-to-one so the daemon
 # stays a thin transport layer over the canonical DockerSandbox API. ──
 
@@ -81,6 +86,7 @@ class UploadFileEntry(BaseModel):
 
 class UploadFilesRequest(BaseModel):
     files: list[UploadFileEntry]
+    workspace_path: str | None = None
 
 
 class FileResultModel(BaseModel):
@@ -90,10 +96,13 @@ class FileResultModel(BaseModel):
 
 class UploadFilesResponse(BaseModel):
     files: list[FileResultModel]
+    scope: str | None = None
 
 
 class DownloadFilesRequest(BaseModel):
     paths: list[str]
+    workspace_path: str | None = None
+    max_bytes: int | None = Field(default=None, ge=0, le=MAX_DOWNLOAD_BYTES)
 
 
 class DownloadResultModel(BaseModel):
@@ -104,6 +113,7 @@ class DownloadResultModel(BaseModel):
 
 class DownloadFilesResponse(BaseModel):
     files: list[DownloadResultModel]
+    scope: str | None = None
 
 
 # ── tmux / background surface — wraps DockerSandbox.execute_tmux,
@@ -236,41 +246,46 @@ def auth(
     authorization: Annotated[str | None, Header()] = None,
 ) -> None:
     _verify_token(authorization)
-    slug = _fenced_engagement_slug()
-    if slug is not None and os.environ.get("RAPTIX_WORKSPACE_ISOLATED") != "1":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"engagement {slug!r} requires an isolated /workspace bind mount",
-        )
 
 
 def _checked_workspace(path: str | None, *, runtime_root: bool = False) -> str | None:
-    normalized = DaemonSandbox._normalize_workspace_path(path)
     slug = _fenced_engagement_slug()
-    if slug is None and runtime_root:
-        return path
-    if slug is not None:
-        raw = (path or "/workspace").strip().rstrip("/")
-        if normalized != raw or runtime_root and normalized != "/workspace":
-            raise HTTPException(
-                status_code=403, detail="workspace must resolve to the pinned /workspace root"
-            )
-        error = DaemonSandbox.engagement_fence_error(normalized, slug, isolated_root=True)
-        if error is not None:
-            raise HTTPException(status_code=403, detail=error)
+    if slug is None:
+        normalized = DaemonSandbox._normalize_workspace_path(path)
+        return path if runtime_root else normalized
+    root = f"/workspace/{slug}"
+    raw = (path or root).strip().rstrip("/")
+    normalized = DaemonSandbox._normalize_workspace_path(raw)
+    if normalized != raw or runtime_root and normalized != root:
+        raise HTTPException(
+            status_code=403, detail=f"workspace must resolve to the pinned engagement root {root}"
+        )
+    error = DaemonSandbox.engagement_fence_error(normalized, slug)
+    if error is not None:
+        raise HTTPException(status_code=403, detail=error)
     return normalized
 
 
-def _check_file_paths(paths: list[str]) -> None:
-    if _fenced_engagement_slug() is None:
-        return
-    root = Path("/workspace").resolve()
-    if any(
-        not path.startswith("/") or not Path(path).resolve().is_relative_to(root) for path in paths
-    ):
-        raise HTTPException(
-            status_code=403, detail="file path is outside the isolated engagement workspace"
-        )
+def _check_file_paths(paths: list[str], workspace_path: str | None = None) -> None:
+    slug = _fenced_engagement_slug()
+    if slug is not None:
+        root = Path(f"/workspace/{slug}").resolve()
+        if any(
+            not path.startswith("/") or not Path(path).resolve().is_relative_to(root)
+            for path in paths
+        ):
+            raise HTTPException(
+                status_code=403, detail="file path is outside the pinned engagement workspace"
+            )
+    if workspace_path is not None:
+        root = Path(workspace_path)
+        if not root.is_absolute() or root.resolve() != root:
+            raise HTTPException(status_code=403, detail="workspace root is not canonical")
+        if any(
+            not Path(path).is_absolute() or not Path(path).resolve().is_relative_to(root)
+            for path in paths
+        ):
+            raise HTTPException(status_code=403, detail="file path escapes the requested workspace")
 
 
 @asynccontextmanager
@@ -353,28 +368,35 @@ def execute(
     )
 
 
-@app.post("/upload_files", response_model=UploadFilesResponse)
+@app.post("/upload_files", response_model=UploadFilesResponse, response_model_exclude_unset=True)
 def upload_files(
     req: UploadFilesRequest,
     _: Annotated[None, Depends(auth)],
 ) -> UploadFilesResponse:
     backend = _get_backend()
-    _check_file_paths([file.path for file in req.files])
+    _check_file_paths([file.path for file in req.files], req.workspace_path)
     decoded = [(f.path, base64.b64decode(f.data_b64)) for f in req.files]
     results = backend.upload_files(decoded)
     return UploadFilesResponse(
         files=[FileResultModel(path=r.path, error=r.error) for r in results],
+        **({"scope": req.workspace_path} if req.workspace_path is not None else {}),
     )
 
 
-@app.post("/download_files", response_model=DownloadFilesResponse)
+@app.post(
+    "/download_files", response_model=DownloadFilesResponse, response_model_exclude_unset=True
+)
 def download_files(
     req: DownloadFilesRequest,
     _: Annotated[None, Depends(auth)],
 ) -> DownloadFilesResponse:
     backend = _get_backend()
-    _check_file_paths(req.paths)
-    results = backend.download_files(req.paths)
+    _check_file_paths(req.paths, req.workspace_path)
+    results = (
+        backend.download_files(req.paths, max_bytes=req.max_bytes)
+        if req.max_bytes is not None
+        else backend.download_files(req.paths)
+    )
     return DownloadFilesResponse(
         files=[
             DownloadResultModel(
@@ -386,6 +408,7 @@ def download_files(
             )
             for r in results
         ],
+        **({"scope": req.workspace_path} if req.workspace_path is not None else {}),
     )
 
 

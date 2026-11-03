@@ -12,7 +12,7 @@ raptix/
 │   └── raptix-skills/          # Skill corpus (SKILL.md files + metadata)
 ├── plugins/                    # Domain packs (AD, cloud, web, network, reversing, mobile, IoT, ICS, wireless, phishing, contracts)
 ├── infra/                      # containers/, config/, telemetry-gateway/
-├── benchmarks/                 # harness.py, runner.py, scenarios, configs, results
+├── benchmarks/                 # runner.py, engine/, providers/, suites/, configs/, scenarios/, results/
 ├── tests/                      # Cross-package integration + compose isolation tests
 ├── docs/
 │   ├── adr/                    # ADR-0001 … ADR-0041 (decisions)

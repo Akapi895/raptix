@@ -1,11 +1,11 @@
-"""Tests for ``raptix.execution.tools.skills`` — skill loader tool and its helpers."""
+"""Tests for ``raptix.execution.tools.plumbing.skills`` — skill loader tool and its helpers."""
 
 from __future__ import annotations
 
 from types import SimpleNamespace
 from typing import Any
 
-from raptix.execution.tools.skills import (
+from raptix.execution.tools.plumbing.skills import (
     _format_skill_body,
     _list_dir_via_backend,
     _read_via_backend,

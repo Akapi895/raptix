@@ -74,18 +74,31 @@ from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from typing_extensions import override
 
+from raptix.execution.backends.project_files import (
+    ProjectFiles,
+    ProjectFileUnavailable,
+    project_files_for_runtime,
+)
+from raptix_core.types.engagement import DANGEROUS_METHOD_LABELS
+
 log = logging.getLogger(__name__)
 
 
 @dataclass
 class ApprovalPolicyRule:
-    """Single approval rule. Either ``technique_tag`` or ``tool_pattern`` MUST be set."""
+    """Single approval rule. Either ``technique_tag`` or ``tool_pattern`` MUST be set.
+
+    ``command_pattern`` narrows a bash rule to commands whose ``command`` argument
+    matches it. ``dangerous`` rules apply even when the conversation's HITL is off.
+    """
 
     technique_tag: str | None = None
     tool_pattern: str | None = None
     timeout_seconds: float = 300.0
     default_on_timeout: str = "deny"
     reason: str = ""
+    command_pattern: str | None = None
+    dangerous: bool = False
 
 
 @dataclass
@@ -212,37 +225,15 @@ class FileBackedApprovalTransport:
     def _scan_decisions(self) -> list[ApprovalDecision]:
         if not self._decisions_path.exists():
             return []
-        out: list[ApprovalDecision] = []
         with self._decisions_path.open("r", encoding="utf-8") as fh:
             fh.seek(self._decisions_offset)
-            while True:
-                line = fh.readline()
-                if not line:
-                    break
-                self._decisions_offset = fh.tell()
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
-                    log.warning("malformed decision line skipped")
-                    continue
-                if obj.get("kind") != "approval_decision":
-                    continue
-                rid = obj.get("request_id")
-                if not rid or rid in self._consumed_ids:
-                    continue
-                out.append(
-                    ApprovalDecision(
-                        request_id=rid,
-                        action=str(obj.get("action") or "deny"),
-                        operator_note=str(obj.get("operator_note") or ""),
-                        redirect_args=obj.get("redirect_args"),
-                        decided_at=float(obj.get("decided_at") or time.time()),
-                    )
-                )
-        return out
+            lines = fh.readlines()
+            self._decisions_offset = fh.tell()
+        return [
+            decision
+            for decision in _parse_decision_lines(lines)
+            if decision.request_id not in self._consumed_ids
+        ]
 
     def wait_for_decision(self, request_id: str, timeout: float) -> ApprovalDecision | None:
         deadline = time.monotonic() + timeout
@@ -253,6 +244,81 @@ class FileBackedApprovalTransport:
                     return decision
             time.sleep(self._poll_interval)
         return None
+
+
+APPROVAL_REQUESTS_PATH = "approvals/requests.jsonl"
+APPROVAL_DECISIONS_PATH = "approvals/decisions.jsonl"
+
+
+class ProjectApprovalTransport:
+    """The same wire format, kept in the project's ``approvals/`` folder in its sandbox (ADR-0102).
+
+    The web console reads the requests and appends the decisions through the same sandbox, so the runtime writes
+    nothing to a local disk. A sandbox that cannot be reached raises ProjectFileUnavailable from ``submit`` or
+    ``wait_for_decision``, and the middleware turns that into a refusal.
+    """
+
+    def __init__(self, files: ProjectFiles, *, poll_interval: float = 0.25) -> None:
+        self._files = files
+        self._poll_interval = poll_interval
+        self._decisions_seen = 0
+        self._consumed_ids: set[str] = set()
+
+    def submit(self, request: ApprovalRequest) -> None:
+        self._files.append_bytes(
+            APPROVAL_REQUESTS_PATH, (request.to_jsonl() + "\n").encode("utf-8")
+        )
+
+    def _scan_decisions(self) -> list[ApprovalDecision]:
+        raw = self._files.read_bytes(APPROVAL_DECISIONS_PATH)
+        if raw is None:
+            return []
+        lines = raw.decode("utf-8", errors="replace").splitlines()
+        new_lines = lines[self._decisions_seen :]
+        self._decisions_seen = len(lines)
+        return [
+            decision
+            for decision in _parse_decision_lines(new_lines)
+            if decision.request_id not in self._consumed_ids
+        ]
+
+    def wait_for_decision(self, request_id: str, timeout: float) -> ApprovalDecision | None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            for decision in self._scan_decisions():
+                if decision.request_id == request_id:
+                    self._consumed_ids.add(request_id)
+                    return decision
+            time.sleep(self._poll_interval)
+        return None
+
+
+def _parse_decision_lines(lines: list[str]) -> list[ApprovalDecision]:
+    out: list[ApprovalDecision] = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            log.warning("malformed decision line skipped")
+            continue
+        if obj.get("kind") != "approval_decision":
+            continue
+        rid = obj.get("request_id")
+        if not rid:
+            continue
+        out.append(
+            ApprovalDecision(
+                request_id=rid,
+                action=str(obj.get("action") or "deny"),
+                operator_note=str(obj.get("operator_note") or ""),
+                redirect_args=obj.get("redirect_args"),
+                decided_at=float(obj.get("decided_at") or time.time()),
+            )
+        )
+    return out
 
 
 _DEFAULT_SECRET_KEYS = frozenset(
@@ -310,9 +376,25 @@ class HITLApprovalMiddleware(AgentMiddleware):
         *,
         engagement_name: str = "",
         agent_name: str = "",
+        require_bash_approval: bool = False,
     ) -> None:
         super().__init__()
-        self._policy = policy
+        self._policy = [*DANGEROUS_RULES, *policy]
+        if require_bash_approval:
+            self._policy = [
+                rule
+                for rule in self._policy
+                if rule.dangerous
+                or not (rule.tool_pattern and re.fullmatch(rule.tool_pattern, "bash"))
+            ]
+            self._policy.append(
+                ApprovalPolicyRule(
+                    tool_pattern=r"^bash$",
+                    timeout_seconds=300,
+                    default_on_timeout="deny",
+                    reason="Web execution requires an explicit operator decision for bash.",
+                )
+            )
         # Static transport (tests / single-process UIs). When None, the
         # transport is resolved per request from the request's workspace
         # so a long-lived server serving many engagements writes
@@ -325,28 +407,43 @@ class HITLApprovalMiddleware(AgentMiddleware):
     def _resolve_transport(self, request: Any) -> ApprovalTransport:
         if self._transport is not None:
             return self._transport
-        state = getattr(request, "state", None) or {}
-        get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
-        workspace = get("workspace_path") or os.environ.get("RAPTIX_WORKSPACE_PATH", "/workspace")
-        workspace = str(workspace)
-        cached = self._transport_cache.get(workspace)
+        files = project_files_for_runtime(getattr(request, "runtime", None))
+        cached = self._transport_cache.get(files.key)
         if cached is not None:
             return cached
-        approvals = Path(workspace) / "approvals"
-        transport = FileBackedApprovalTransport(
-            approvals / "requests.jsonl",
-            approvals / "decisions.jsonl",
-        )
-        self._transport_cache[workspace] = transport
+        transport = ProjectApprovalTransport(files)
+        self._transport_cache[files.key] = transport
         return transport
 
-    def _match_rule(self, tool_name: str, technique_tag: str | None) -> ApprovalPolicyRule | None:
+    def _match_rule(
+        self,
+        tool_name: str,
+        technique_tag: str | None,
+        tool_args: Any = None,
+        hitl_enabled: bool = True,
+    ) -> ApprovalPolicyRule | None:
+        command = tool_args.get("command") if isinstance(tool_args, dict) else None
+        command = command if isinstance(command, str) else ""
         for rule in self._policy:
+            if not hitl_enabled and not rule.dangerous:
+                continue
             if rule.technique_tag and technique_tag and rule.technique_tag == technique_tag:
                 return rule
             if rule.tool_pattern and re.search(rule.tool_pattern, tool_name):
+                if rule.command_pattern is not None and not re.search(
+                    rule.command_pattern, command, re.IGNORECASE
+                ):
+                    continue
                 return rule
         return None
+
+    def _hitl_enabled(self, request: Any) -> bool:
+        runtime = getattr(request, "runtime", None)
+        config = getattr(runtime, "config", None)
+        configurable = config.get("configurable") if isinstance(config, dict) else None
+        if isinstance(configurable, dict) and "hitl_enabled" in configurable:
+            return bool(configurable["hitl_enabled"])
+        return True
 
     def _engagement(self, request: Any) -> str:
         if self._engagement_name:
@@ -402,12 +499,12 @@ class HITLApprovalMiddleware(AgentMiddleware):
             action = decision.action
             note = decision.operator_note
 
-        tool_call_id = getattr(request, "tool_call_id", "") or ""
+        tool_call_id = _tool_call(request).get("id", "") or ""
         tool_name = getattr(getattr(request, "tool", None), "name", "") if request else ""
         if action == "allow":
             return handler(request)
         if action == "redirect" and decision and decision.redirect_args is not None:
-            redirected = request.override(tool_call_args=decision.redirect_args)
+            redirected = _redirect_request(request, decision.redirect_args)
             return handler(redirected)
         denial_text = f"HITL gate denied tool call ``{tool_name}``" + (f": {note}" if note else "")
         return ToolMessage(
@@ -434,12 +531,12 @@ class HITLApprovalMiddleware(AgentMiddleware):
             action = decision.action
             note = decision.operator_note
 
-        tool_call_id = getattr(request, "tool_call_id", "") or ""
+        tool_call_id = _tool_call(request).get("id", "") or ""
         tool_name = getattr(getattr(request, "tool", None), "name", "") if request else ""
         if action == "allow":
             return await handler(request)
         if action == "redirect" and decision and decision.redirect_args is not None:
-            redirected = request.override(tool_call_args=decision.redirect_args)
+            redirected = _redirect_request(request, decision.redirect_args)
             return await handler(redirected)
         denial_text = f"HITL gate denied tool call ``{tool_name}``" + (f": {note}" if note else "")
         return ToolMessage(
@@ -453,35 +550,81 @@ class HITLApprovalMiddleware(AgentMiddleware):
     def wrap_tool_call(self, request, handler) -> ToolMessage | Command:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
-        tool_args = getattr(request, "tool_call_args", {}) or {}
-        rule = self._match_rule(tool_name, self._technique_tag(request))
+        metadata = getattr(tool, "metadata", None)
+        if isinstance(metadata, dict) and isinstance(metadata.get("mcp_tool"), str):
+            tool_name = metadata["mcp_tool"]
+        tool_args = _tool_call(request).get("args", {}) or {}
+        rule = self._match_rule(
+            tool_name, self._technique_tag(request), tool_args, self._hitl_enabled(request)
+        )
         if rule is None:
             return handler(request)
-        transport = self._resolve_transport(request)
-        appr = self._build_request(tool_name, tool_args, rule, request)
-        transport.submit(appr)
-        decision = transport.wait_for_decision(appr.request_id, rule.timeout_seconds)
+        try:
+            transport = self._resolve_transport(request)
+            appr = self._build_request(tool_name, tool_args, rule, request)
+            transport.submit(appr)
+            decision = transport.wait_for_decision(appr.request_id, rule.timeout_seconds)
+        except ProjectFileUnavailable as exc:
+            return _approval_unavailable(request, exc)
         return self._decision_to_response(decision, rule, request, handler)
 
     @override
     async def awrap_tool_call(self, request, handler) -> ToolMessage | Command:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
-        tool_args = getattr(request, "tool_call_args", {}) or {}
-        rule = self._match_rule(tool_name, self._technique_tag(request))
+        metadata = getattr(tool, "metadata", None)
+        if isinstance(metadata, dict) and isinstance(metadata.get("mcp_tool"), str):
+            tool_name = metadata["mcp_tool"]
+        tool_args = _tool_call(request).get("args", {}) or {}
+        rule = self._match_rule(
+            tool_name, self._technique_tag(request), tool_args, self._hitl_enabled(request)
+        )
         if rule is None:
             return await handler(request)
         import asyncio
 
-        transport = self._resolve_transport(request)
-        appr = self._build_request(tool_name, tool_args, rule, request)
-        transport.submit(appr)
-        # FileBackedApprovalTransport.wait_for_decision blocks on time.sleep;
-        # offload to a worker thread so the LangGraph event loop stays live.
-        decision = await asyncio.to_thread(
-            transport.wait_for_decision, appr.request_id, rule.timeout_seconds
-        )
+        try:
+            transport = self._resolve_transport(request)
+            appr = self._build_request(tool_name, tool_args, rule, request)
+            transport.submit(appr)
+            # wait_for_decision blocks on time.sleep; offload to a worker thread so the LangGraph event loop stays live.
+            decision = await asyncio.to_thread(
+                transport.wait_for_decision, appr.request_id, rule.timeout_seconds
+            )
+        except ProjectFileUnavailable as exc:
+            return _approval_unavailable(request, exc)
         return await self._adecision_to_response(decision, rule, request, handler)
+
+
+def _approval_unavailable(request: Any, exc: Exception) -> ToolMessage:
+    """Refuse a gated call whose approval could not be requested: nothing runs without an operator decision."""
+    tool_name = getattr(getattr(request, "tool", None), "name", "") if request else ""
+    return ToolMessage(
+        content=(
+            f"[HITL_UNAVAILABLE] tool={tool_name}\n"
+            f"The operator approval for this call could not be requested from the project sandbox ({exc}). "
+            "This gated call was NOT executed. Retry once the project sandbox is running."
+        ),
+        tool_call_id=_tool_call(request).get("id", "") or "",
+        name=tool_name,
+        status="error",
+    )
+
+
+def _tool_call(request: Any) -> dict[str, Any]:
+    call = getattr(request, "tool_call", None)
+    if isinstance(call, dict):
+        return call
+    return {
+        "id": getattr(request, "tool_call_id", ""),
+        "args": getattr(request, "tool_call_args", {}),
+    }
+
+
+def _redirect_request(request: Any, arguments: dict[str, Any]) -> Any:
+    if isinstance(getattr(request, "tool_call", None), dict):
+        return request.override(tool_call={**request.tool_call, "args": arguments})
+    return request.override(tool_call_args=arguments)
 
 
 DEFAULT_HIGH_IMPACT_POLICY: list[ApprovalPolicyRule] = [
@@ -496,12 +639,14 @@ DEFAULT_HIGH_IMPACT_POLICY: list[ApprovalPolicyRule] = [
         timeout_seconds=600,
         default_on_timeout="deny",
         reason="Data Encrypted for Impact (T1486) — destructive operation.",
+        dangerous=True,
     ),
     ApprovalPolicyRule(
         technique_tag="T1485",
         timeout_seconds=600,
         default_on_timeout="deny",
         reason="Data Destruction (T1485) — destructive operation.",
+        dangerous=True,
     ),
     ApprovalPolicyRule(
         tool_pattern=r"^(sliver_implant|sliver_generate|c2_deploy)",
@@ -522,3 +667,50 @@ DEFAULT_HIGH_IMPACT_POLICY: list[ApprovalPolicyRule] = [
         reason="(informational) bash invocation logged for audit only.",
     ),
 ]
+
+
+# Methods the operator confirms during planning. Their rules are always enforced,
+# even when a conversation's HITL is off. Labels are what the planner asks about.
+DANGEROUS_METHODS: dict[str, tuple[str, str]] = {
+    "denial_of_service": (
+        DANGEROUS_METHOD_LABELS["denial_of_service"],
+        r"\b(hping3\b.*--flood|slowloris|goldeneye|\bloic\b|hulk\.py|udp-flood|mausezahn|ab\s+-n\s*\d{5,})",
+    ),
+    "brute_force": (
+        DANGEROUS_METHOD_LABELS["brute_force"],
+        r"\b(hydra|medusa|patator|ncrack|brutespray|kerbrute\s+passwordspray|--password-spray)\b",
+    ),
+    "data_destruction": (
+        DANGEROUS_METHOD_LABELS["data_destruction"],
+        r"(\brm\s+-[a-z]*r[a-z]*f|\brm\s+-[a-z]*f[a-z]*r|\bmkfs(\.|\s)|\bdd\s+if=|\bshred\s|\bformat\s+[a-z]:|\bdrop\s+(table|database)\b)",
+    ),
+    "ransomware": (
+        DANGEROUS_METHOD_LABELS["ransomware"],
+        r"(vssadmin\s+delete\s+shadows|wbadmin\s+delete|\bcipher\s+/w|bcdedit\b.*recoveryenabled\s+no)",
+    ),
+    "persistence": (
+        DANGEROUS_METHOD_LABELS["persistence"],
+        r"(\bcrontab\s+-[el]\b|\bschtasks\s+/create|\bsc(\.exe)?\s+create\b|\run\|/etc/rc\.local|authorized_keys|\bsystemctl\s+enable\b|\bnet\s+user\s+\S+\s+/add\b|\buseradd\b)",
+    ),
+    "disable_security_controls": (
+        DANGEROUS_METHOD_LABELS["disable_security_controls"],
+        r"(setenforce\s+0|\bufw\s+disable\b|systemctl\s+(stop|disable)\s+(auditd|falcon|defender|wazuh|sysmon|rsyslog|osquery)|set-mppreference\b.*disable|auditctl\s+-(e\s+0|d\b))",
+    ),
+}
+
+
+def _dangerous_rules() -> list[ApprovalPolicyRule]:
+    return [
+        ApprovalPolicyRule(
+            tool_pattern=r"^bash$",
+            command_pattern=pattern,
+            timeout_seconds=600,
+            default_on_timeout="deny",
+            reason=f"Dangerous method, always requires approval: {label}.",
+            dangerous=True,
+        )
+        for label, pattern in DANGEROUS_METHODS.values()
+    ]
+
+
+DANGEROUS_RULES: list[ApprovalPolicyRule] = _dangerous_rules()

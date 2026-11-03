@@ -22,9 +22,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qsl, urlparse
 
 import defusedxml.ElementTree as ET
@@ -37,7 +38,18 @@ from raptix.knowledge.graph.ai_surface import (
     technology_for_port,
     technology_for_title,
 )
+from raptix.knowledge.graph.asset_identity import (
+    REDACTED,
+    WEB_PORTS,
+    host_or_dns_ref,
+    host_ref,
+    identity_props,
+    is_sensitive_name,
+    redact_url,
+    web_origin_ref,
+)
 from raptix.knowledge.graph.store import KGStore
+from raptix_core.types.asset import AssetRef
 from raptix_core.utils.logging import get_logger
 
 log = get_logger("kg.ingest")
@@ -80,6 +92,46 @@ def available_scanners() -> list[str]:
     return sorted(_REGISTRY.keys())
 
 
+def workspace_artifact_ref(path: Path, engagement: str) -> str | None:
+    """The engagement-relative path of a file under /workspace/<engagement>/, or None for any other path.
+
+    The Web keeps workspace artifacts under the same engagement folder, so this reference is the one the
+    Web's capture import records as its producer; the two sides join on it, not on a guessed name.
+    """
+    prefix = f"/workspace/{engagement}/"
+    text = path.as_posix()
+    if text.startswith(prefix) and len(text) > len(prefix):
+        return text[len(prefix) :]
+    return None
+
+
+class _ArtifactStampedStore:
+    """Passes writes through to the store and marks each observation with the artifact version it came from.
+
+    Adapters keep their own shape. The path (``source_artifact_ref``) and the sha256 of the parsed bytes
+    (``source_artifact_digest``) are added once, here, to every observation's props; every other store
+    method is delegated unchanged.
+    """
+
+    def __init__(self, store: KGStore, artifact_ref: str, artifact_digest: str) -> None:
+        self._store = store
+        self._artifact_ref = artifact_ref
+        self._artifact_digest = artifact_digest
+
+    def record_observations(
+        self, observations: list[dict[str, Any]], **scope: Any
+    ) -> dict[str, Any]:
+        for observation in observations:
+            props = observation.get("props") if isinstance(observation, dict) else None
+            if isinstance(props, dict):
+                props.setdefault("source_artifact_ref", self._artifact_ref)
+                props.setdefault("source_artifact_digest", self._artifact_digest)
+        return self._store.record_observations(observations, **scope)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._store, name)
+
+
 def ingest(
     scanner_kind: str,
     path: str | Path,
@@ -109,9 +161,33 @@ def ingest(
             "scanner": scanner_kind,
         }
 
+    from raptix.knowledge.graph.trust import ChannelStore
+
     adapter = _REGISTRY[scanner_kind]
+    # An outer auto-ingest binding overrides this manual-import channel.
+    store = cast(KGStore, ChannelStore(store, "tool_ingest"))
+    artifact_ref = workspace_artifact_ref(target, engagement)
     try:
-        result = adapter(target, store, engagement, created_by, source_episode_id)
+        source = target.read_bytes()
+    except OSError as exc:
+        return {
+            "error": f"file unreadable: {exc}",
+            "scanner": scanner_kind,
+            "path": str(target),
+        }
+    # The digest names the bytes the adapter parses. The adapter reads a copy of exactly these bytes, so a
+    # file rewritten during the ingest cannot be parsed under the digest of its earlier version.
+    digest = hashlib.sha256(source).hexdigest()
+    writer = (
+        cast(KGStore, _ArtifactStampedStore(store, artifact_ref, digest))
+        if artifact_ref is not None
+        else store
+    )
+    try:
+        with tempfile.TemporaryDirectory(prefix="raptix-kg-") as scratch:
+            copy = Path(scratch) / target.name
+            copy.write_bytes(source)
+            result = adapter(copy, writer, engagement, created_by, source_episode_id)
     except Exception as exc:
         log.warning("kg_ingest adapter %s raised: %s", scanner_kind, exc)
         return {
@@ -125,7 +201,19 @@ def ingest(
 # ── Built-in adapters ──────────────────────────────────────────────────
 
 
-_WEB_PORTS = {80, 443, 8000, 8080, 8443, 8888}
+_WEB_PORTS = WEB_PORTS
+
+
+def _asset_props(
+    engagement: str,
+    normalize: Callable[[str], AssetRef],
+    raw: str,
+) -> dict[str, Any]:
+    """Identity properties for a node; empty when the raw locator does not normalize."""
+    try:
+        return identity_props(engagement, normalize(raw))
+    except ValueError:
+        return {}
 
 
 def _adapt_nmap_xml(
@@ -219,6 +307,7 @@ def _adapt_nmap_xml(
                 scheme = "https" if port in {443, 8443} else "http"
                 url = f"{scheme}://{host_label}:{port}/"
                 ep_key = f"entrypoint::{url}"
+                host_edges.append({"to_key": ep_key, "kind": "HAS", "weight": 0.5})
                 observations.append(
                     {
                         "kind": "Entrypoint",
@@ -229,6 +318,7 @@ def _adapt_nmap_xml(
                             "host": host_label,
                             "port": port,
                             "source": "nmap",
+                            **_asset_props(engagement, web_origin_ref, url),
                         },
                     }
                 )
@@ -244,6 +334,7 @@ def _adapt_nmap_xml(
                     "hostname": hostname or "",
                     "explored": True,
                     "source": "nmap",
+                    **_asset_props(engagement, host_ref, ip),
                 },
                 "edges_out": host_edges,
             }
@@ -299,6 +390,8 @@ def _adapt_nuclei_jsonl(
         severity = str(info.get("severity") or "info").lower()
         rule_id = str(record.get("template-id") or "unknown-template")
         target = str(record.get("matched-at") or record.get("host") or "unknown-target")
+        if "://" in target:
+            target = redact_url(target)
 
         vuln_key = f"vuln::nuclei::{rule_id}::{target}"
         observations.append(
@@ -399,7 +492,8 @@ def _adapt_httpx_jsonl(
 
         host_key = f"host::{host_value}"
         svc_key = f"service::{host_value}:{port_int}"
-        ep_key = f"entrypoint::{url}"
+        safe_url = redact_url(url)
+        ep_key = f"entrypoint::{safe_url}"
 
         service_obs: dict[str, Any] = {
             "kind": "Service",
@@ -439,19 +533,25 @@ def _adapt_httpx_jsonl(
                     "kind": "Host",
                     "key": host_key,
                     "label": host_value,
-                    "props": {"hostname": host_value, "source": "httpx"},
+                    "props": {
+                        "hostname": host_value,
+                        "source": "httpx",
+                        **_asset_props(engagement, host_or_dns_ref, host_value),
+                    },
+                    "edges_out": [{"to_key": ep_key, "kind": "HAS", "weight": 0.5}],
                 },
                 service_obs,
                 {
                     "kind": "Entrypoint",
                     "key": ep_key,
-                    "label": url,
+                    "label": safe_url,
                     "props": {
                         "host": host_value,
                         "scheme": scheme,
                         "port": port_int,
                         "status_code": status_code,
                         "source": "httpx",
+                        **_asset_props(engagement, web_origin_ref, url),
                     },
                 },
             ]
@@ -471,6 +571,7 @@ def _adapt_httpx_jsonl(
 
 def _surface_observations(
     *,
+    engagement: str,
     url: str,
     method: str,
     source: str,
@@ -482,32 +583,49 @@ def _surface_observations(
     if not host:
         return []
     normalized_method = (method or "GET").upper()
-    endpoint_key = f"endpoint::{normalized_method}::{url}"
+    # Stored and keyed by the redacted URL: credentials and secret-looking query values never reach the graph.
+    safe_url = redact_url(url)
+    endpoint_key = f"endpoint::{normalized_method}::{safe_url}"
     endpoint_props: dict[str, Any] = {
         "method": normalized_method,
-        "url": url,
+        "url": safe_url,
         "path": parsed.path or "/",
         "host": host,
         "source": source,
     }
     if status is not None:
         endpoint_props["status_code"] = status
-    observations: list[dict[str, Any]] = [
-        {
-            "kind": "Host",
-            "key": f"host::{host}",
-            "label": host,
-            "props": {"hostname": host, "source": source},
-            "edges_out": [{"to_key": endpoint_key, "kind": "HAS", "weight": 0.5}],
-        },
-        {
-            "kind": "Endpoint",
-            "key": endpoint_key,
-            "label": f"{normalized_method} {parsed.path or '/'}",
-            "props": endpoint_props,
-            "edges_out": [],
-        },
-    ]
+    # Links the endpoint to its web origin so the asset map can list a sitemap per origin.
+    # The origin is also observed as an Entrypoint so reconciliation catalogues it,
+    # even when no scanner reported that origin on its own (for example an IP origin).
+    origin = _asset_props(engagement, web_origin_ref, url)
+    observations: list[dict[str, Any]] = []
+    if "asset_id" in origin:
+        endpoint_props["origin_asset_id"] = origin["asset_id"]
+        origin_label = web_origin_ref(url).canonical_key
+        observations.append(
+            {
+                "kind": "Entrypoint",
+                "key": f"entrypoint::{origin_label}/",
+                "label": origin_label,
+                "props": {"host": parsed.hostname or "", "source": source, **origin},
+            }
+        )
+    host_obs: dict[str, Any] = {
+        "kind": "Host",
+        "key": f"host::{host}",
+        "label": host,
+        "props": {"hostname": host, "source": source},
+        "edges_out": [{"to_key": endpoint_key, "kind": "HAS", "weight": 0.5}],
+    }
+    endpoint_obs: dict[str, Any] = {
+        "kind": "Endpoint",
+        "key": endpoint_key,
+        "label": f"{normalized_method} {parsed.path or '/'}",
+        "props": endpoint_props,
+        "edges_out": [],
+    }
+    observations.extend([host_obs, endpoint_obs])
     for name, value in parse_qsl(parsed.query, keep_blank_values=True):
         parameter_key = f"parameter::{endpoint_key}::query::{name}"
         observations.append(
@@ -518,13 +636,14 @@ def _surface_observations(
                 "props": {
                     "name": name,
                     "location": "query",
-                    "value_hint": value[:128],
+                    "value_hint": REDACTED if is_sensitive_name(name) else value[:128],
                     "source": source,
                 },
                 "edges_out": [],
             }
         )
-        observations[1]["edges_out"].append({"to_key": parameter_key, "kind": "HAS", "weight": 1.0})
+        # Attach to the endpoint by reference: list position shifts when the origin observation is present.
+        endpoint_obs["edges_out"].append({"to_key": parameter_key, "kind": "HAS", "weight": 1.0})
     return observations
 
 
@@ -565,6 +684,7 @@ def _adapt_katana_jsonl(
             continue
         observations.extend(
             _surface_observations(
+                engagement=engagement,
                 url=url,
                 method=str(row.get("method") or request.get("method") or "GET"),
                 source="katana",
@@ -607,6 +727,7 @@ def _adapt_arjun_json(
         if not url:
             continue
         base = _surface_observations(
+            engagement=engagement,
             url=url,
             method=str(row.get("method") or "GET"),
             source="arjun",

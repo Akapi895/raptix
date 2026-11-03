@@ -1,175 +1,58 @@
 # Raptix agent notes
 
-Read [`CONTRIBUTING_AGENT.md`](CONTRIBUTING_AGENT.md), [`docs/QUALITY_BAR.md`](docs/QUALITY_BAR.md),
-and [`docs/agents.md`](docs/agents.md) (agent roster + middleware stack) for
-contributor rules: one concern per PR, ≤400 runtime lines / ≤10 files, banned
-patterns + AI-slop signatures in QUALITY_BAR, no guardrail weakening without an
-ADR and threat model, no AI co-author trailers.
+## Focus: missing platform capabilities
 
-## Current focus: tool-optimization plan — finish wave T2
+- Goal: clarify what the Autonomous AI Red Team Platform still lacks across planning, execution, evidence, operator workflows and evaluation. Assess the full system; the previous frontend/mock-only focus is superseded.
+- Trace each candidate gap through UI → shared contract → API/service → runtime/tool → persisted evidence. Separate **missing**, **partial/unwired**, **implemented but unavailable/config-gated**, and **unverified**; name the owning layer, source paths, user impact and acceptance check. A missing Web endpoint does not prove a missing runtime capability.
+- `apps/web` was retired by ADR-0106 (2026-10-31) in favor of `apps/ui-app` + a new `apps/api` backend. Start Web gap analysis with `docs/design/2026-10-31-ui-app-integration-implementation-plan.md` instead of the old `apps/web/.scratch/frontend-backend-integration/` tracker, which no longer exists.
+- For runtime/tool gaps, use [the implementation plan](docs/tool-optimization-implementation-plan.md) and its per-wave completion notes: the overview still calls T3–T13 proposed despite completed waves. [The exploitation diagnosis](docs/exploitation-effectiveness-diagnosis-2026-10-15.md) supplies run-specific leads, not a current platform-wide verdict.
+- Verify runtime wiring and outcomes separately. `/api/capabilities` distinguishes support from availability; readiness is not a model/tool execution smoke. An agent prompt, skill, registered graph or successful dispatch is not proof of a working capability or a benchmark win. Use provider evaluation and [published benchmark evidence](benchmarks/README.md), recording configuration and unexecuted checks.
 
-Active initiative:
-[`docs/tool-optimization-implementation-plan.md`](docs/tool-optimization-implementation-plan.md)
-(T0/T1 FROZEN, T2 GO, T3–T13 sequential after T2 sign-off). Root-level
-[`docs/tool-optimization-plan.md`](docs/tool-optimization-plan.md) is the raw
-analysis transcript behind the plan — the implementation plan is canonical.
+## Contribution contract
 
-State (branch `structure`, as of 2026-10-06): T2 contracts live in
-`packages/raptix-core/raptix_core/types/capability.py`. First pass committed
-(`feat(core): T2 capability-registry contracts`); the second-review hardening
-sits on top in the working tree — `ExecutionSpec.implementation_id` and
-`CompletionSpec.max_steps` became REQUIRED, and `CapabilityResult.execution`
-became `executions: tuple[ExecutionRecord, ...]`. Frozen contract decisions —
-do not relax without re-reviewing the same points:
+- Follow [CONTRIBUTING_AGENT.md](CONTRIBUTING_AGENT.md) and [QUALITY_BAR](docs/QUALITY_BAR.md): one concern, ≤400 runtime lines / ≤10 files per PR, no AI co-author trailers. New public APIs/subsystem boundaries require a Proposed ADR in `docs/adr/`.
+- Resolve prose conflicts using manifests, `langgraph.json`, `Makefile` recipes and [.github/workflows/ci.yml](.github/workflows/ci.yml). `CLAUDE.md` and architecture docs retain obsolete paths/statuses.
+- Before ownership/import changes, read [runtime boundaries](docs/architecture/runtime-boundaries.md) and [dependency rules](docs/architecture/dependency-rules.md). For Web changes, follow `apps/ui-app/README.md` and [the ui-app integration implementation plan](docs/design/2026-10-31-ui-app-integration-implementation-plan.md) — `apps/web/AGENTS.md` no longer exists (ADR-0106).
 
-- No `RequirementSpec.query` — core never couples to the AKG/Cypher backend; a
-  runtime `RequirementEvaluator` decides HOW to check each requirement id.
-- `ExecutionSpec.implementation_id` required — provenance when two
-  implementations of one capability share an `ExecutorKind`.
-- `CompletionSpec.max_steps` required — the only guaranteed worker termination;
-  success/failure observations are early-exit signals layered on top.
-- `allowed_roles == ()` means UNRESTRICTED (matches `PluginBundle.roles`), not
-  "no roles".
-- A `WORKER` `ImplementationSpec` carries only `worker_id`; the scoped-toolset
-  allowlist lives in the `WorkerSpec` resolved by T10's `WorkerRegistry` — a
-  `worker_id` that resolves to no such spec means UNAVAILABLE, never an
-  unscoped toolset.
-- `Artifact.artifact_ref` is never a filesystem path (`artifact://`, `s3://`,
-  db id are legal) — T3 parsers read content via `ArtifactStore` and stay
-  storage-agnostic.
-- `raptix-core` imports only pydantic + pydantic-settings + typing-extensions +
-  stdlib (enforced by `tests/test_no_runtime_deps.py`).
-- Public-API names are pinned in `tests/test_public_api_stability.py` — bump
-  the expected count deliberately, with the CHANGELOG, in the same commit.
-- Unrelated in-flight rename: `create_raptix_agent` now lives in
-  `intelligence/agents/standard/raptix.py` (module renamed from
-  `decepticon.py`; function name unchanged — do not "fix" it back).
+## Boundaries and runtime wiring
 
-Standing rules for every tool wave (T3+):
+- Root `pyproject.toml` is a virtual uv workspace; runtime dependencies belong in the owning package. `raptix-core` is framework-free contracts (stdlib/Pydantic/settings/typing-extensions); SDK/plugins import Core/SDK, not runtime internals. Plugins own domain definitions/prompts/offline analyzers; `raptix_sdk.create_domain_agent` bridges to runtime via `raptix.agent_composers`.
+- Skill corpus: `packages/raptix-skills/raptix_skills/defs/` (Markdown/YAML only). Loader/selector/graph engine: `packages/raptix/raptix/skills/`. A corpus entry does not establish that its binaries are installed in the sandbox image.
+- Apps communicate through APIs. Web flow (post-ADR-0106): `apps/ui-app/src/` → `apps/api/` (new BFF, translates Raptix's domain into `apps/ui-app`'s existing contract; holds the runtime token per `interfaces/api/auth.py`) → Python runtime HTTP API. `apps/api` is not yet built out — see the implementation plan. `clients/`, Next.js and the old `apps/web`/Fastify server are retired; `infra/config/` provider handlers intentionally have no `raptix` dependency.
 
-- Never delete code — remove the `@tool` decorator and `*_TOOLS` list
-  membership only; keep functions importable (re-export shims).
-- Shadow mode before enforcement (T9); prove adapters on existing binaries
-  before adding executor profiles (T7 before T8).
-- Bash never counts as a capability implementation; the resolver never falls
-  back to bash implicitly.
-- Recovery surface (`inspect_context`, `search_knowledge`, `load_skill`,
-  `ask_user`, `diagnose_execution`) is never filtered by exposure.
-- `phase_affinity` is soft ranking; `allowed_phases` is a hard constraint used
-  sparingly. Exposure is UX, never a security control.
-- Telemetry/eval never logs or tunes on raw parameter values (credentials,
-  hashes, tokens, keys).
-- `tests/fixtures/capabilities/held-out.jsonl` is a T11 artifact (does not
-  exist yet); never tune tool schemas against held-out scenarios.
-- One semantic concern per PR; ~400 behavior LOC preferred.
+Runtime paths below are relative to `packages/raptix/raptix/`:
 
-Key files for tool work (many registrations are NOT in `execution/tools/`):
+- `langgraph.json` loads `.env`, graphs and the HTTP app/checkpointer in `interfaces/api/`. `raptix` and alias `decepticon` share `intelligence/agents/standard/raptix.py:graph`; the orchestrator discovers `raptix.subagents` and delegates via `task`. Soundwave is a standalone planner.
+- Plugin activation is CWD-sensitive: `RAPTIX_PLUGINS` → `.raptix.toml` → `[tool.raptix.plugins]` → `standard`; this checkout enables `standard,plugins`.
+- Assembly: `intelligence/agents/{build,middleware_slots}.py` follows Core's `MiddlewareSlot` enum order and `SLOTS_PER_ROLE`. Inventory the assembled role/profile: middleware and nested factories contribute tools, so `_STANDARD_TOOLS` or `^@tool` scans undercount.
+- `capabilities/` resolves WHAT; `execution/{adapters,workers}/` executes HOW; `knowledge/ingest/` alone normalizes output. `specialist_contracts/` is separate evidence/scorecard machinery. Engagement/OPPLAN state belongs in `orchestration/mission/`, recording/replay in `execution/session/`; UKC phases are runtime state, not a directory taxonomy.
+- Import contracts from `raptix_core.*`; legacy contract/API shims are removed. `raptix.core` still holds real dispatch/streaming code. `middleware/{opplan,engagement}.py` are live redirects; edit canonical implementations in `orchestration/mission/`.
+- `execution/backends/factory.py` is HTTP-only. Pass explicit run config for subagent filesystem/bash calls to reach the per-engagement sandbox; ambient config is insufficient. `/workspace/` is sandbox-backed; `/skills/` is in-process corpus data accessed via `load_skill`.
 
-- `execution/tools/` — most `@tool` functions, but `opplan.py` (7 nested
-  closures) and `skills.py` (nested `load_skill`) hide theirs inside factories.
-- `knowledge/graph/tools.py` (`kg_record`/`kg_ingest`/`kg_surface_inventory`),
-  `middleware/skillogy.py` (default skill backend), `middleware/dispatch.py`
-  (`task` via `StructuredTool.from_function`) — outside `execution/tools/`.
-- `intelligence/agents/build.py` (`build_tools()`/`build_middleware()`),
-  `intelligence/agents/middleware_slots.py` (any factory whose instance sets
-  `self.tools` adds to the assembled surface — static `_STANDARD_TOOLS` is only
-  half the per-turn surface), `intelligence/agents/domain_composer.py`.
-- `docs/architecture/tool-classification.md` — frozen 159-row v2 table; its
-  Target Capability ID column feeds T3+.
-- `benchmarks/tool_eval/baseline/` — pinned T0 baseline (`baseline.jsonl`,
-  `assembled_baseline.jsonl`) + capture scripts.
-- `infra/containers/sandbox.Dockerfile` — the real binary inventory; several
-  `kg_ingest_*` parsers have no executor installed yet (T8 closes that gap).
+## Web mode and data authority
 
-## Where changes belong
+- ADR-0106 (2026-10-31) retired `apps/web`. The canonical frontend is `apps/ui-app`; its backend is the new `apps/api`, still being built out per `docs/design/2026-10-31-ui-app-integration-implementation-plan.md`. `apps/ui-app` has its own demo/mock transport (`src/mock/`) used for local development only — it is not a stand-in for `apps/api` and does not establish backend compatibility.
+- Once `apps/api` exists: runtime checkpoints own thread/run state; Prisma (under `apps/api`) owns Web business records/ownership; workspace artifacts and Neo4j retain evidence/knowledge authority. Only `apps/api` holds the runtime token (`interfaces/api/auth.py`) — `apps/ui-app` never does.
 
-- Root `pyproject.toml` is an unpublished uv workspace (Python 3.13), not the
-  package to edit for runtime features. `packages/raptix-core` owns contracts
-  (no LangChain, LangGraph, HTTP or FastAPI imports); `packages/raptix` owns
-  agents, middleware, tools and runtime; `packages/raptix-sdk` exposes the
-  plugin-author API; `packages/raptix-skills` holds the SKILL.md corpus. Never
-  import upward from core; SDK and plugins touch only SDK + core contracts;
-  apps never import runtime internals.
-- Top-level layout: `apps/{cli,web,desktop,launcher,shared}`,
-  `infra/{containers,config,telemetry-gateway}`, `benchmarks/` (Python package,
-  run via `-m benchmarks.runner`). Compose files stay at repo root (launcher
-  contract) and mount `./infra/{config,containers}`.
-- Runtime subsystems under `packages/raptix/raptix/`: `orchestration/`
-  (`phases/` = UKC runtime state, `mission/`), `knowledge/graph/`,
-  `intelligence/{agents,prompts,llm}`, `execution/{tools,sandbox,backends}`,
-  `interfaces/{mcp,api}`, `middleware/` (cross-cutting only — ADR-0041).
-  Full layout and dependency rules: `docs/architecture/` (8 authoritative docs).
-- Re-export shims still standing: `mcp_server/`, `server/`,
-  `middleware/engagement.py`, `middleware/opplan.py`, plus the Phase-1
-  `raptix.core.*` / `raptix.plugin_loader` shims (2.0.0 contract). Everything
-  else was retired in W11.
-- Domain ownership: `plugins/{contracts,reversing,mobile,iot,ics,wireless,
-  cloud,phishing,active-directory,web,network}` own specialist definitions,
-  prompts and offline analyzers; they import stdlib + SDK/core only.
-  `raptix_sdk.create_domain_agent` dispatches to the runtime
-  `raptix.agent_composers` provider (ADR-0038).
-- UKC phases are orchestration state (`orchestration/phases/`), never a source
-  tree — never organize agents/skills/tools by phase; skills carry
-  `ukc_phases` metadata (ADR-0037). Nothing in the runtime gates on them yet.
-- `infra/config/` LLM provider handlers stay there intentionally — zero raptix
-  dependency, container-mount artifacts (ADR-0039).
-- Structural invariants (SDK/app/skill imports, UKC phase tree, middleware
-  shims) are enforced by tests, not just docs: a boundary violation fails CI —
-  fix the placement, don't bypass the test.
-- `langgraph.json` maps graph names to
-  `packages/raptix/raptix/intelligence/agents/standard/` and loads `.env`;
-  in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
-- Node workspaces are rooted in `package.json` (`apps/*`, `apps/shared/*`).
-  Build `@raptix/streaming` and `@raptix/web-contracts` before CLI
-  typecheck/build or web-raptix build; both consume their `dist/`. For
-  apps/web edits follow `apps/web/AGENTS.md`.
-- Runtime artifacts (`workspace/`, `run/`, `telemetry/`, `test-results*/`,
-  `dist/`, `node_modules/`, `generated/`) are outputs — never source-of-truth,
-  never default fixtures.
+## Setup and focused checks
 
-## Run from repo root
+- Run from repo root unless specified. Make recipes need a POSIX shell; on Windows use a compatible shell or the underlying commands. Python 3.13: `uv sync --dev --locked` (`--extra neo4j` for live KG). Node: root `npm ci`, npm/root lockfile only (CI Node 24; Web ≥22.12). Go version: `apps/launcher/go.mod`.
+- Focused Python: `uv run pytest path/to/test.py::test_name`; package: `uv run pytest packages/raptix-core/tests`. Default collection **excludes root `tests/` and skills tests**; select affected structural/skills tests explicitly. Compose edits require `uv run pytest tests/test_compose_network_isolation.py`.
+- Python PR lane: `make ci-lint` → `make ci-test` (Ruff check/format, errors-only basedpyright, then `pytest -n auto -q -m "not slow"`). `make lint` checks all typecheck levels; `make quality-strict` includes slow tests and 60% coverage.
+- Shared ESM packages export `dist/`: `npm run build --workspace=@raptix/streaming` first; Web also needs `npm run build --workspace=@raptix/web-contracts`, then `npm run prisma:generate --workspace=@raptix/web-raptix-server` (no DB needed) before server typecheck/lint/build/tests. `make quality` omits skill audit/graph gates and Web Prisma generation/server lint/build; consult CI for the full lane.
+- Focused JS tests: `npm run test --workspace=@raptix/web-raptix -- src/real/markdown.test.tsx`; substitute the owning workspace/file for server or CLI. CLI `dev` only watches TypeScript; after building, run `node apps/cli/dist/index.js` in a foreground TTY.
+- Launcher: in `apps/launcher`, `go vet ./...` then `go test ./...`. Desktop: `npm run desktop:test`. Skill edits: `make audit-skills-strict` → `make build-skill-graph` → `make check-skill-graph`; commit regenerated `packages/raptix/raptix/skills/.graph/skills.cypher` (graph targets fetch pinned MITRE STIX).
+- Benchmarks: [benchmarks/README.md](benchmarks/README.md), entry `uv run python -m benchmarks.runner`; live runner needs Docker, reachable LangGraph and provider targets. Generated attempts go in `benchmarks/results/runs/<suite>/<run-id>/`, selected evidence in `results/published/<suite>/` under `benchmarks/`.
 
-- `uv sync --dev --locked`; focused Python test: `uv run pytest
-  packages/raptix/tests/path/test_x.py::test_name` or
-  `make test-local ARGS="path::test"`.
-- `make ci-lint` then `make ci-test` is the Python PR lane: Ruff + format +
-  errors-only basedpyright, then `pytest -n auto -q -m "not slow"`.
-- `make quality` adds CLI + Web checks; `make quality-strict` adds the 60%
-  coverage gate; `make smoke` is the cross-stack smoke test.
-- Skill edits require `make audit-skills-strict` and `make check-skill-graph`
-  in CI; the latter bootstraps pinned MITRE STIX and checks `skills.cypher`.
-- `make dev` uses base + dev + watch Compose files; plain `docker compose` uses
-  base only. `make dogfood` exercises launcher/onboard/CLI from local images;
-  `make clean` removes Compose volumes and `.dogfood/`.
+## Tool and safety constraints
 
-## Guardrails — never weaken without an ADR + threat model
+- Before capability changes, read frozen invariants in `packages/raptix-core/raptix_core/types/capability.py`; verify with `uv run pytest -q packages/raptix/tests/unit/capabilities`. Core public API changes update `packages/raptix-core/tests/test_public_api_stability.py` and `CHANGELOG.md`.
+- Availability, eligibility and invocation authorization are separate. Bash never implicitly satisfies a capability or resolver fallback. Exposure rollout is UX, not authorization; preserve shadow/rollback/recovery tools and importable functions when retiring exposure.
+- Check configured enforcement, not feature names: RoE without `machine_enforcement` is audit-only; HITL assembly is opt-in via `RAPTIX_HITL__ENABLED`. Weakening `SafeCommand`, RoE/egress, `EngagementContext`, HITL, OPSEC skills, Semgrep or container hardening requires an ADR/threat model. Safety-critical replacements/disables require `RAPTIX_ALLOW_SAFETY_OVERRIDES=1`.
+- Post-tool hooks bound work, catch failures and return the original result unchanged; KG remains canonical. For concurrency/planning changes covered by [Incalmo](docs/incalmo-lessons-implementation-guide.md), read its scoped/deferred lessons and benchmark gates before changing blocking/pruning behavior.
+- Telemetry/eval excludes raw parameter values/secrets. Never tune against capability `held-out.jsonl` fixtures; pinned baselines live in `benchmarks/suites/tool_eval/baseline/`.
 
-- Exploit-execution path (`execution/tools/bash/`, sandbox dispatch,
-  Sliver/msf/impacket), `SafeCommand`, RoE, `EngagementContext`, egress, HITL,
-  `.semgrep` `raptix-no-*` rules, container hardening.
-- Safety-critical middleware slots (`engagement-context`, `roe-guardrail`,
-  `untrusted-output`, `prompt-injection-shield`, `hitl-approval`) can only be
-  replaced or disabled with `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` set.
-- Post-tool middleware hooks must bound their work, catch failures, and return
-  the original tool result unchanged; hook failure never blocks or alters tool
-  execution. KG remains the canonical state store.
-- New subsystem boundary, public-API change, guardrail relaxation, or new
-  dependency → ADR in `docs/adr/` (`Status: Proposed`) before code lands;
-  latest is ADR-0041.
+## Operational gotchas
 
-## Incalmo-lessons initiative (safe subset)
-
-Follow [`docs/incalmo-lessons-implementation-guide.md`](docs/incalmo-lessons-implementation-guide.md).
-Only L2a (fail-safe post-tool KG auto-ingest), L2b (parsers for verified
-coverage gaps), L6 (investigate structured decoding before implementing),
-L7-obs (record/surface tried edges + fail reasons), and L9 (optional per-role
-structure, current default) are in scope. L1, L3, L4, L5 gating and L7
-blocking/pruning need explicit sign-off + a before/after benchmark — do not
-implement them.
-
-- Naming trap: the Incalmo guide's T0/T1/T2 are *benchmark tiers*, unrelated
-  to the tool-optimization plan's waves T0–T13.
-- T3 (ParserRegistry) wires into the L2a auto-ingest hook. One lesson per ADR
-  and PR; deterministic mechanism tests (including hook-failure behavior) +
-  T1 replay via `runtime/recording.py` `ReplayMiddleware`; flag-gate changes
-  to agent input.
+- `make dev` combines base + dev + watch Compose files; plain `docker compose` uses base only. Compose files stay at root for the launcher. `make dogfood` exercises launcher/onboard/CLI from local images; `make smoke` purges volumes before rebuilding; `make clean` deletes volumes and `.dogfood/`.
+- Runtime state goes under `RAPTIX_HOME` (default `~/.raptix`); local experiments under `tests/local/artifacts/`. Keep generated `dist/`, Prisma clients and run outputs out of source fixtures.

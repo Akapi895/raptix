@@ -50,7 +50,7 @@ raptix-active-directory = { workspace = true }
 raptix-web = { workspace = true }
 raptix-network = { workspace = true }
 
-# Project-level plugin activation, read by ``raptix.plugin_loader``
+# Project-level plugin activation, read by ``raptix_core.plugin_loader``
 # from the CWD's pyproject.toml. Kept at the workspace root so the
 # in-checkout dev workflow (``make dev``, ``langgraph dev``,
 # ``make benchmark``) automatically activates both OSS bundles
@@ -95,8 +95,7 @@ lint = [
 line-length = 100
 target-version = "py313"
 extend-exclude = [
-    "benchmarks/xbow-validation-benchmarks",
-    "benchmarks/MHBench",
+    "benchmarks/external",
     "benchmarks/results",
 ]
 
@@ -210,8 +209,7 @@ exclude = [
     "**/node_modules",
     "reference",
     "packages/raptix/raptix/auth/providers",
-    "benchmarks/xbow-validation-benchmarks",
-    "benchmarks/MHBench",
+    "benchmarks/external",
     "benchmarks/results",
 ]
 # Use pyright "standard" semantics rather than the basedpyright "all" default —
@@ -260,8 +258,7 @@ reportPrivateImportUsage = "warning"
 [tool.bandit]
 exclude_dirs = [
     "tests",
-    "benchmarks/xbow-validation-benchmarks",
-    "benchmarks/MHBench",
+    "benchmarks/external",
     "node_modules",
     ".venv",
 ]
@@ -276,8 +273,7 @@ files = [
 ]
 exclude = [
     "tests/",
-    "benchmarks/xbow-validation-benchmarks",
-    "benchmarks/MHBench",
+    "benchmarks/external",
     "node_modules",
     ".venv",
 ]
@@ -341,8 +337,7 @@ paths = [
 ]
 exclude = [
     "tests/",
-    "benchmarks/xbow-validation-benchmarks",
-    "benchmarks/MHBench",
+    "benchmarks/external",
     ".venv/",
     "node_modules/",
 ]
@@ -370,8 +365,7 @@ ignore_names = [
 [tool.deptry]
 extend_exclude = [
     "tests",
-    "benchmarks/xbow-validation-benchmarks",
-    "benchmarks/MHBench",
+    "benchmarks/external",
     "scripts",
     ".venv",
     "node_modules",

@@ -5,6 +5,10 @@ export type RequestOperation = 'create_thread' | 'create_run' | 'resume'
 export type RequestState = 'creating' | 'accepted' | 'uncertain' | 'rejected'
 export interface ThreadBindingView {
   engagementId: string; threadId: string; assistantId: string; kind: ThreadKind
+  /** Owner-set display name; null until someone names the conversation. */
+  title?: string | null
+  /** Per-conversation HITL switch; absent or true means approval gates apply to ordinary tools. */
+  hitlEnabled?: boolean
   createdAt: string; updatedAt: string
 }
 export interface RequestRecoveryView {

@@ -1,0 +1,29 @@
+{
+  "mode": "real",
+  "app": "http://127.0.0.1:7624",
+  "generatedAt": "2026-10-24T03:19:36.530Z",
+  "steps": [
+    {
+      "step": "the stored template list shows the create control enabled for an admin",
+      "matches": true,
+      "detail": "enabled"
+    },
+    {
+      "step": "an admin creates a stored template through the form and sees it listed",
+      "matches": true,
+      "detail": "Click template mvltyh82 listed"
+    },
+    {
+      "step": "an admin inserts the effective scope into a report section",
+      "matches": true,
+      "detail": "the section now contains the Scope line"
+    },
+    {
+      "step": "a reviewer finds the create control locked, with its reason on the screen",
+      "matches": true,
+      "detail": "disabled; reason shown"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

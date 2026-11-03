@@ -1,0 +1,19 @@
+OPERATOR NOTE (run paused by operator at 07:41 UTC — you had degenerated):
+
+You re-issued one hung gobuster command 100+ times (sessions recover1..recoverN),
+each run discarding stderr and piping stdout through grep. That command shape can
+never produce output within the 30s stall window, so every attempt was doomed
+before it started. That pattern is now banned: long scans run background=True and
+are polled; foreground pipes are only for commands that finish in seconds.
+
+Re-read /workspace/exploit/ACTIVE.md and execute its candidate 3:
+
+- The ticket page CSP is script-src 'self'. Enumerate the page's own
+  <script src> targets, then test whether any query parameter on those
+  same-origin script URLs is reflected into the response body. A reflected
+  parameter on a same-origin script URL is a script gadget: your JS executes
+  with same-origin privileges (document.cookie, same-origin APIs).
+- Exfil stays in-band through the chat room, as you already planned.
+
+Work one hypothesis at a time, verify with evidence, and update ACTIVE.md after
+each decisive result.

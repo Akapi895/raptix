@@ -142,7 +142,9 @@ class DaemonSandbox(SandboxBase):
                 responses.append(FileUploadResponse(path=path, error="file_not_found"))
         return responses
 
-    def download_files(self, paths: list[str]) -> list[FileDownloadResponse]:
+    def download_files(
+        self, paths: list[str], *, max_bytes: int | None = None
+    ) -> list[FileDownloadResponse]:
         # See upload_files note on absent path validation.
         responses: list[FileDownloadResponse] = []
         for path in paths:
@@ -158,7 +160,13 @@ class DaemonSandbox(SandboxBase):
                         FileDownloadResponse(path=path, content=None, error="is_directory")
                     )
                     continue
-                content = source.read_bytes()
+                with source.open("rb") as stream:
+                    content = stream.read() if max_bytes is None else stream.read(max_bytes + 1)
+                if max_bytes is not None and len(content) > max_bytes:
+                    responses.append(
+                        FileDownloadResponse(path=path, content=None, error="file_too_large")
+                    )
+                    continue
                 responses.append(FileDownloadResponse(path=path, content=content, error=None))
             except FileNotFoundError:
                 responses.append(

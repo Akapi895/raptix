@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import pytest
 
-from raptix.execution.capabilities import AvailabilityEvaluator, CapabilityRegistry
+from raptix.capabilities import AvailabilityEvaluator, CapabilityRegistry
 from raptix.intelligence.tooling.exposure import (
     RECOVERY_TOOL_NAMES,
     ROLLOUT_ORDER,
@@ -107,6 +107,9 @@ def test_recovery_surface_names_match_plan_and_runtime() -> None:
         {
             "inspect_context",
             "search_knowledge",
+            "kg_query",
+            "kg_query_reference",
+            "kg_surface_inventory",
             "load_skill",
             "ask_user",
             "diagnose_execution",

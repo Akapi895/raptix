@@ -8,8 +8,315 @@ design spec, §13.4).
 
 ## [Unreleased]
 
+### Added
+
+- Projects: independent AutoIngest and TriedEdges switches in Project Settings,
+  persisted per project and applied to new streaming, synchronous and batch runs.
+- Graph architecture: bounded project AKG and security-reference retrieval tools,
+  authenticated runtime query API, corpus manifest/checksum ingestion, and additive
+  Neo4j V008/V009 migrations. Reference data shares the existing Neo4j instance.
+- Project findings: verification lifecycle, immutable evidence snapshots and review
+  history, concurrent-transition protection, and observation-to-finding review UI.
+- Runtime: server-owned observation trust channels protect tool-derived content;
+  recon/exploit/postexploit gain bounded read-only query access. Postexploit now
+  assembles the KG slot without adding write tools. AutoIngest/TriedEdges remain opt-in.
+
+- Core: `raptix_core.types.asset` defines `AssetKind`, `AssetRef` and the deterministic
+  `asset_id()` shared by the runtime and the Web catalog (ADR-0094). Runtime locator
+  normalization for hosts, DNS names and web origins lives in
+  `raptix.knowledge.graph.asset_identity`.
+- Runtime: nmap and httpx ingest stamp `asset_id` and its parts onto Host and Entrypoint
+  nodes; existing node keys are unchanged.
+- Web console: `POST /api/engagements/:id/assets/catalog/reconcile` upserts the additive
+  `AssetIdentity` catalog from KG identity nodes (operator role, idempotent, rejected rows
+  reported by reason). Migration `20261031000100_asset_identity` is additive; its rollback
+  script lives in `prisma/rollback/`.
+- Web console: asset map read models (`/api/engagements/:id/asset-map/...`): overview,
+  group members with revision-bound cursors, search, neighborhood and asset detail
+  (services for hosts, sitemap for web origins). Every response reports total, loaded,
+  hasMore, truncated, per-source state and revision.
+- Runtime: katana and arjun endpoints link to their web origin and observe that origin,
+  so IP origins reach the catalog.
+- Runtime: edge writes match endpoints by label when the batch knows it, so the KG
+  constraint index is used. Live KG constraints and indexes come from the existing
+  migration runner (V001–V006); the runtime does not run it at startup yet.
+- Web console: flagged Asset Map (off by default; VITE_ASSET_MAP=1 or raptix.assetMap=1 in the
+  browser) with a Cytoscape canvas, inspector, relation and sitemap paging, visible budget
+  (100 nodes / 250 relations), a saved selection per user and project kept in the browser only,
+  search that opens any catalogued asset, refresh that reports graph changes, fit, group collapse
+  and expand, a kind switch, a sitemap filter by URL or path, and a findings section linked
+  through the owning web asset (findings with no link are counted as unknown attribution).
+- Runtime: every KG write stamps the ADR-0094 identity on Host and Entrypoint nodes that do not
+  carry one, and redacts entrypoint URLs before storage. A locator that does not resolve is
+  written without identity and counted as `unidentified`; it is not guessed.
+- Runtime: a file ingested from `/workspace/<engagement>/` stamps its engagement-relative path as
+  `source_artifact_ref` on every observation it writes, so the Web can join the observation to the
+  capture imported from that file. Files outside the workspace are written as before.
+- Web console: the Asset Map inspector shows the imported capture behind each observation, with its
+  classification and digest, and opens it through the capture content route. An artifact that was
+  never imported is shown as not imported; an unclassified capture asks for classification first.
+- Web console: the saved Asset Map view keeps the canvas camera (zoom and pan) per user and project,
+  in the browser only. Pinning an asset is not part of this release.
+- Web console: with the Asset Map flag on, the AI Workspace shows run controls for each thread.
+  Execution keeps its own controls until they are verified in the workspace.
+- Web console: a scope change (another engagement) drops responses still in flight and clears state
+  from the previous one. Hosts, origins, services and sitemap rows load in pages with a
+  completeness indicator and a Load more control instead of stopping at the first page.
+- Runtime:  (make webraptix-kg-bootstrap) runs the
+  KG migrations after a duplicate-node preflight; a rerun applies nothing.
+- Runtime: nmap and httpx hosts link to their web origins; httpx and nuclei URLs are redacted
+  before they are stored.
+- Web console: planning documents gain server-side drafts with a digest
+  precondition (O06, ADR-0083) — the Planning panel can open a source/draft
+  editor for every allowlisted plan document; drafts persist in Postgres,
+  survive refresh and restarts, and stay invisible to agents. Saving or
+  publishing with a stale base digest answers 409 instead of clobbering a
+  concurrent browser edit or a model rewrite, publishing validates the schema
+  and atomically replaces the workspace file, and ROE publishing is refused in
+  favour of the Scope & ROE revision workflow. Reads stay viewer-level;
+  writes require the operator role and are audited.
+- Web console: the project AI Workspace combines a recipient-aware conversation
+  with an Agents/Context panel and an execution-history drawer; the Execution
+  surface keeps the operations/runs table plus the tool-call trace. Mock instances
+  have isolated drafts, questions, delivery/recovery states and ACK-gated controls
+  in the shared authority. Real mode reuses owned thread/run/interrupt contracts
+  and renders checkpoint invocations observe-only when per-instance identity,
+  messaging or control contracts are absent (Proposed ADR-0078).
+- Web console: the tool event inspector opens as a centered modal instead of a
+  right-side drawer, in both the standalone trace page and the embedded
+  Execution logs view.
+- Web console: a mock credentials-vault tab mirrors the real engagement vault
+  placement — a metadata-only secrets list with audited reveal/revoke/store
+  through the mock authority; plaintext exists only as seeded demo data shown
+  in-session after an explicit reveal.
+- Web console: real mode now lands on a **System Overview** dashboard
+  (`overview` route) with per-domain cross-project reads — projects, findings
+  rollup (`GET /api/overview/findings`), durable C2 activity
+  (`GET /api/overview/c2`) and the task inbox — each independently loading and
+  explicitly degraded when its source is unavailable (see
+  `docs/adr/0076-web-system-overview-cross-project-reads.md`).
+- Web console: with a project open, the sidebar replaces the global navigation
+  with the project's own tab strip (Overview, Planning, Operations, …) plus an
+  "All projects" return link.
+- AI workspace: once the planning bundle is ready and the one-way handoff is
+  confirmed, the execution thread is created and selected automatically —
+  nothing is dispatched; the operator reviews and presses Send.
+- The web engagement artifact browser now includes the `plan/` folder:
+  operators can view the planning documents (`roe.json`, `conops.json`,
+  …) the planning panel validates directly in the console
+  (project → Findings tab → Artifacts).
+- Added the orchestrator-only `challenge_inventory` tool plus the
+  `raptix.md` **Challenge-family sweep** flow: every unsolved scoreboard
+  entry derives exactly one bounded `surface_exploit` cell (one
+  win-condition each; target-owned names/difficulty; generic
+  keyword→skill mapping; no hint ingestion; RoE-gated families pinned
+  to the dispatch tail; skipped/attempted-failed outcomes require
+  bounded empirical evidence) so entries outside the endpoint coverage
+  matrix — XSS, information-hunting, account-takeover chains,
+  availability tests — receive a recorded terminal outcome. See
+  `docs/adr/0075-challenge-inventory.md`.
+- Added an empty-completion guard to the proxied chat models: a
+  successful response carrying neither content nor tool calls (observed:
+  23k-43k reasoning tokens, zero content) triggers one same-model retry
+  and then reroutes down the model fallback chain instead of dead-ending
+  the agent loop.
+- Added the generic fan-out admission contract (ADR-0077): `Objective`
+  gains optional `effects` (`read`/`mutate`/`destructive`),
+  `resources`, and `parallel_safe` annotations (unknown ⇒ mutate,
+  conservatively serialized); a pure `raptix.middleware.fanout_admission`
+  policy admits/rejects dispatches on resource overlap, effect class,
+  OPSEC tier, per-target resilience, and the global ceiling, with
+  machine-readable reject codes; `DispatchMiddleware` consults it behind
+  the `RAPTIX_FANOUT_ADMISSION` flag (default off = prior behaviour) and
+  emits `dispatch.admission` events. Domain facts enter only through
+  objective annotations and skill `metadata.fanout` metadata — no
+  per-domain scheduler code. See `docs/adr/0077-generic-fanout-admission.md`.
+
+- Web console real mode now binds its own execution plane: a dedicated
+  `docker-compose.web-runtime.yml` layer runs `web-runtime` (LangGraph dev
+  server with the existing strict-async guard) plus `web-sandbox` on named
+  volumes and the shared `sandbox-net`, with sandbox-parity hardening
+  (`cap_drop: [ALL]`, `no-new-privileges`, memory/pid limits) on the
+  dual-homed runtime; CLI compose files and volumes stay untouched
+  (Proposed ADR-0082, pinned in `tests/test_compose_network_isolation.py`).
+- Web console: `/api/capabilities` reports a non-secret `deploymentId`
+  (validated `RAPTIX_WEB_DEPLOYMENT_ID`); the login gate passes it to the
+  session store so browser recovery keys are scoped to
+  deployment + actor + engagement and a replaced deployment cannot replay an
+  earlier deployment's drafts (Proposed ADR-0079).
+- Web console: the operations timeline projects ordinary root tool calls from
+  owned checkpoint `values.messages` through the same bounded/redacted
+  projection used for live messages (`source: checkpoint`, `runId: null`),
+  so the Execution logs view survives refresh (Proposed ADR-0080).
+- Runtime: `HITLApprovalMiddleware` reads approval requests from the
+  LangChain `ToolCallRequest` contract (args/ID via `request.tool_call`)
+  with the legacy kwargs path as fallback; `RAPTIX_HITL__REQUIRE_BASH_APPROVAL`
+  enables an explicit approve/deny policy for every `bash` invocation
+  (timeout denies, rule matching by exact command name)
+  (Proposed ADR-0081).
+- Web operations tooling: `verify-operational-m1.mjs` (deployed M1 acceptance:
+  prepare/planning/execution/vault phases), `verify-operational-storage.mjs`
+  (three-way workspace round-trip; backup/restore proving the migration
+  ledger, a vault ciphertext decrypted by the backed-up key and a restored
+  workspace manifest) and `capture-operational-release.mjs` (source digest
+  plus deployed image IDs and revision labels).
+- Runtime: a workspace file's observations carry the digest of the bytes they were parsed from
+  (`source_artifact_digest`), so evidence links to the capture of that version only.
+- Web console: a finding on a `web_url` inventory item links to the web origin the URL names (scheme, host
+  and effective port; path, query and fragment ignored). The rule is shared by the runtime and the server
+  through one set of vectors.
+- Web console: workspace evidence in XML and JSONL can be imported as captures as they are written; each
+  version of a file is its own capture.
+- Web console: the AI Workspace run controls show a stop as requested until the runtime reports the run
+  ended; a refused stop keeps the run in flight and says so.
+
+### Removed
+
+- Retired the Phase 1 core/framework/sdk-split compat shim layer ahead of the
+  originally planned `2.0.0` milestone: `raptix.core.schemas`, `raptix.core.config`,
+  `raptix.core.logging`, `raptix.plugin_loader`, `raptix.llm.models`, and
+  `raptix.execution.tools.research.graph` no longer resolve — import from
+  `raptix_core.*` directly (see `docs/migration/from-0.0.x.md`). The `raptix.server`
+  and `raptix.mcp_server` W14/W15 deprecated re-export shims are also removed —
+  import from `raptix.interfaces.api` / `raptix.interfaces.mcp`.
+- Promoted `execution/capabilities/` to top-level `capabilities/` (a sibling of
+  `execution/`, not nested in it); renamed the old top-level `capabilities/`
+  (plugin/specialist contracts, evidence, scorecards) to `specialist_contracts/`
+  to remove the name collision; folded top-level `runtime/` into
+  `execution/session/`.
+
+### Changed
+
+- Group benchmark implementation under `benchmarks/engine/` and independent
+  suites under `benchmarks/suites/`; retain the shared `benchmarks.runner` CLI
+  and root type exports. Internal imports and suite CLI commands use the new paths.
+- Group configs/guides/scenario inputs and upstream checkouts separately.
+  New runs use `benchmarks/results/runs/<suite>/<run-id>/`; selected historical
+  evidence moves to `benchmarks/results/published/<suite>/` without regeneration.
+
 ### Fixed
 
+- A continuous upstream SSE stream could starve the Web API's re-attestation
+  window: authorization was measured per event, so heavy traffic kept
+  resetting it and a stale connection stayed subscribed. Re-attestation now
+  uses an elapsed-time deadline and refuses to a closed `stream_closed`
+  event, forcing clients through recovery instead of silently consuming
+  another actor's stream.
+- An authenticated actor switch in real mode kept the previous actor's
+  React Query cache in flight: each login now owns a dedicated QueryClient
+  that is cancelled and cleared at the actor boundary, and session changes
+  announce themselves across tabs/focus so foreign history never renders.
+- Browser recovery storage was keyed by engagement only; keys are now
+  versioned and scoped (deployment, actor, engagement), legacy v1 entries are
+  dropped, and clearing recovery state no longer wipes unrelated UI
+  preferences.
+- `HITLApprovalMiddleware`'s bash approval rule matched substrings; commands
+  whose name merely contained `bash` (e.g. `bashfuscate`) would slip past the
+  approval gate. Matching is now anchored to the full command name.
+
+- A transient `APITimeoutError` from the LLM proxy escaped every retry layer
+  and tore down the whole engagement run ("LLM proxy unreachable") — observed
+  twice in one benchmark session, including a resumed run wedged mid-graph
+  with zero traffic for 18 minutes. Model calls now retry transport-level
+  timeouts (`openai.APITimeoutError`, `APIConnectionError`, `httpx`
+  timeout/connect/protocol errors) up to `RAPTIX_LLM_TIMEOUT_RETRIES`
+  (default 2) with linear `RAPTIX_LLM_TIMEOUT_RETRY_BACKOFF_S` backoff before
+  the actionable error is raised.
+- Every bash-driven specialist except the orchestrator hardcoded its LangGraph
+  `recursion_limit` with no env override; a production run showed 18 of 20
+  dispatch crashes landing at exactly `surface_exploit`'s old ceiling of 300 —
+  a cell's own register-user/login/captcha preamble alone can approach that
+  budget before any evidence is gathered. All 11 specialist roles
+  (`analyst`, `autohunt`, `blue_cell`, `exploit`, `forensicator`,
+  `osint_operator`, `postexploit`, `recon`, `soundwave`,
+  `supply_chain_operator`, `surface_exploit`) now read
+  `RAPTIX_<ROLE>_RECURSION_LIMIT`, matching the pattern `raptix.py` already
+  used for the orchestrator; every default is unchanged except
+  `surface_exploit`'s, raised from 300 to 1000 to match its sibling bash
+  specialists (`recon`/`exploit`).
+- `record.jsonl` could grow by hundreds of MB from a single stuck dispatch:
+  each time the same `GraphRecursionError` got re-recorded for the same
+  request (observed: 215 copies of one ~3MB serialized failure in production),
+  the sink wrote a full duplicate line. `RecordingMiddleware`'s sink now
+  collapses a run of back-to-back identical failures (same kind, req_hash,
+  exception type and message) into one `duplicate_collapsed` summary line;
+  `_Replay` already ignores unrecognized `kind` values, so replay is
+  unaffected.
+- No agent role had a way to prove a client-side payload actually executes in
+  a rendered page — only that it survives unescaped in an API response. The
+  sandbox already vendors a working Node Playwright install (reused by
+  `web_fetch`'s anti-bot chain) and a working system Chromium binary; added
+  `execution/sandbox/web/templates/xss_probe.js`, a one-shot render-navigate-
+  evaluate-capture script reusing that existing install (no new dependency),
+  and rewrote the `xss` skill's CSTI section to (a) gate the AngularJS-1.x-only
+  sandbox-escape technique behind an explicit version check — it does not
+  apply to modern Angular 2+, which Juice Shop's current build uses — and
+  (b) make the new script the framework-agnostic render-and-execute
+  verification step for any DOM-sink class, before concluding `ruled_out`.
+- The exploitation-cell protocol (`surface_exploit.md`) had no step
+  connecting a `confirmed` vulnerability to a benchmark's own win-condition
+  oracle (e.g. Juice Shop's `GET /api/Challenges` scoreboard) — a run produced
+  many well-evidenced findings that scored zero challenge-points because
+  "the vulnerability class is real" and "this specific named challenge's
+  trigger fired" are different bars. `raptix.md`'s dispatch loop now appends
+  one `Oracle: ...` line to a cell's task description only when the mission's
+  own `conops.json` names such an endpoint (real engagements never see this —
+  the line is absent, not merely inert); `surface_exploit.md` gained a
+  `confirmed_solved`/`confirmed_unsolved` outcome pair for that case; OPPLAN
+  accounting treats `confirmed_unsolved` as `in-progress`, same as an open
+  proof gap, instead of silently closing the objective.
+- `recon.md` named only `kg_ingest` (scanner-file-only) for its KG handoff, so
+  black-box recon that never shells out to nmap/nuclei/httpx had no instructed
+  path to write Endpoint/Parameter/Form/Technology/AuthModel nodes — the
+  orchestrator's `kg_surface_inventory` coverage-matrix trigger (ADR-0068)
+  then always saw `independent_count=0` regardless of how much real surface
+  recon found, silently disabling fan-out. `recon.md` now names `kg_record`
+  explicitly for freeform/manual observations, with a concrete call shape, and
+  requires the write to happen incrementally as each observation is confirmed
+  rather than batched right before return — a recursion-limit or
+  budget-exhaustion cutoff mid-dispatch (observed in production) no longer
+  silently drops every pending KG write along with it.
+- `exploit` had no path to feed newly-discovered surface (endpoint/parameter
+  families recon's original handoff never covered) back into the KG — it only
+  held `MiddlewareSlot.KG_AUTOINGEST` (scanner-tool auto-capture), not
+  `MiddlewareSlot.KG` (`kg_record`/`kg_ingest`). Added the KG slot to
+  `exploit`'s entry in `SLOTS_PER_ROLE`, gave `exploit.md` an explicit
+  new-surface recording rule (CRITICAL_RULES #16), and extended `raptix.md`'s
+  coverage-matrix trigger to re-call `kg_surface_inventory` after `exploit`
+  dispatches too, not only recon/osint/pivot — so surface discovered mid-
+  exploitation can still open a late fan-out window.
+- Exploitation-type objectives were authored from whichever vulnerability
+  classes the orchestrator happened to think of (observed in production: 5
+  skills cited — sqli/idor/file-upload/xss/business-logic — out of 15+
+  plausible classes, with no mechanism to catch the ones left out before the
+  objective closed). `raptix.md` Section A now carries a generic,
+  domain-agnostic technique-completeness checklist (SQLi, IDOR, mass
+  assignment, broken-auth/token-forgery, CSRF, SSRF, XSS/CSTI, SSTI, XXE,
+  file-upload/traversal, open-redirect, race-condition/business-logic,
+  supply-chain/CVE, sensitive-data-exposure, privilege-escalation) to
+  cross-reference against recon's actual observations when authoring any
+  exploitation objective — recall against a fixed list, not invention. This
+  is the authoring-time counterpart to the gap-sweep fix below, which catches
+  the same class of miss retroactively, after the fact.
+- OPPLAN had no gate stopping an engagement from reaching Terminal state while
+  a completed objective's own dispatch report still named untested/skipped
+  techniques (observed in production: an objective's description explicitly
+  called for "template injection" testing, the sub-agent substituted
+  HTML-tag XSS instead, concluded negative, and the orchestrator accepted the
+  objective as complete with no follow-up). `raptix.md`'s `COMPLETION_CRITERIA`
+  now requires a one-time gap sweep over every completed objective's notes/
+  SUMMARY/outcomes/EXIT_REPORT before the Terminal-state check: each
+  untested/skipped item needs either a dedicated follow-up `add_objective` or
+  an explicit waiver sentence in that objective's own notes — it can no longer
+  sit silently in a sub-agent's report.
+- The `xss` skill (`exploit/web/xss/SKILL.md`) covered only CTF-flag-style
+  HTML-sink payloads (`<script>`, bot/report exfiltration, JSFuck filter
+  bypass) with zero mention of AngularJS/Angular client-side template
+  injection (CSTI) anywhere in the skill corpus — on an Angular SPA, a
+  negative HTML-tag-XSS result was being read as "not exploitable" without
+  ever testing the template-expression sink (`{{constructor.constructor(...)}}`).
+  Added an explicit CSTI section with detection/sandbox-escape payloads and
+  updated `when_to_use`/`tags` so Angular-flagged targets route here.
 - Preserve model content, tool calls and usage through LangChain ModelResponse
   recording; propagate validated dispatch objectives to child graphs and audit
   records before execution.
@@ -19,6 +326,37 @@ design spec, §13.4).
 - Repair lab runner input creation, canonical injection audit and turn delivery,
   delivered-versus-planned counters, failed reset/log handling, cancellation
   event pairs and unknown-checkout provenance refusal.
+- Bound a sub-agent dispatch's wall clock (default 45 minutes, override
+  `RAPTIX_DISPATCH_TIMEOUT_SECONDS`) so a runaway probe loop fails in minutes
+  instead of up to ~70; classify the resulting `TimeoutError` as an
+  `EXECUTION` failure, not `TOOL` (it is an `OSError` subclass and would
+  otherwise be silently misbucketed).
+- Enforce a real per-engagement concurrency ceiling on simultaneous dispatches
+  (default 3, override `RAPTIX_MAX_CONCURRENT_DISPATCHES`) — the prior "up to
+  3 at a time" bound was prompt-text convention only; nothing in code stopped
+  an unbounded number of concurrent dispatches from piling up against the same
+  target (ADR-0067).
+- Trigger the surface-exploit coverage matrix on KG data instead of an
+  objective-wording match: the prior "Initial Foothold" literal-text gate
+  never matched real engagement phrasing ("initial access and foothold"),
+  so `kg_surface_inventory` was never called in 9 real engagements analyzed.
+  `kg_surface_inventory` now also returns `independent_count` and
+  `recommended_in_flight` (chain-dependent cells excluded, capped to 1 when a
+  known single-worker-fragile technology such as `werkzeug` is detected,
+  else 3); the orchestrator builds the matrix only when
+  `recommended_in_flight >= 2`, regardless of phase or wording (ADR-0068).
+- Runtime: entrypoint URLs with an uppercase scheme (`HTTPS://`) are redacted like lowercase ones; the
+  scheme check was case-sensitive, so such a URL could keep its credentials in a label or property.
+- Runtime: the nmap parser in the ingest registry writes the same service keys, web origins and edge
+  kinds as the legacy nmap adapter, so the inspector reads the same graph from either path.
+- Runtime and Web: the Asset Map revision is one counter lookup per engagement (`KGRevision`), advanced
+  inside the same transaction as each graph write, instead of a scan of every relation in the database.
+- Runtime: the Asset Map identity lookups name their node labels and use the migration V007 indexes, so a
+  lookup seeks the index instead of scanning every node in the database.
+- Runtime: schema migrations run without the engagement revision counter. A schema change and a write cannot
+  share a transaction, so the counter bump made every schema migration fail once it existed.
+- Web console: a project switch no longer writes the previous project's selection or camera into the saved
+  view of the next project.
 
 ## [1.1.47] — 2026-09-26
 
@@ -93,7 +431,7 @@ remained unpublished GitHub drafts.
 - Update Python dependencies to address security advisories. (#797)
 - Reject default launcher credentials and disable telemetry in `.env.example`.
   The onboarding wizard still preselects telemetry sharing; select
-  "No, keep it off" or set `DECEPTICON_TELEMETRY=off` to disable it.
+  "No, keep it off" or set `RAPTIX_TELEMETRY=off` to disable it.
   Add a release image-digest manifest workflow for immutable image pinning.
   Existing installations using default credentials or missing secrets must
   update their configuration before starting. (#802, #804)

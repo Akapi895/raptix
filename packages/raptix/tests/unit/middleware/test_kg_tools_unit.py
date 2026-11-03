@@ -8,6 +8,7 @@ dispatch through to the store / adapter registry.
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -41,6 +42,8 @@ def _call(tool: Any, args: dict[str, Any], state: dict[str, Any]) -> str:
 def _fake_store(record_result: dict[str, Any] | None = None) -> MagicMock:
     """Mock KGStore with ``record_observations`` recording its inputs."""
     store = MagicMock(name="KGStore")
+    session = store._driver.session.return_value.__enter__.return_value
+    session.execute_read.side_effect = lambda read: store.execute_read.return_value
     store.record_observations.return_value = record_result or {
         "created": 1,
         "merged": 0,
@@ -109,6 +112,8 @@ def test_surface_inventory_preserves_b5_initial_matrix() -> None:
     ]
     assert {cell["gen"] for cell in payload["cells"]} == {0}
     assert all("gen=0" in child["notes"] for child in payload["objective_children"])
+    assert payload["independent_count"] == 2
+    assert payload["recommended_in_flight"] == 2
 
 
 def test_surface_inventory_reexpansion_deduplicates_and_enforces_generation_bound() -> None:
@@ -134,6 +139,8 @@ def test_surface_inventory_reexpansion_deduplicates_and_enforces_generation_boun
     ]
     assert payload["cells"][0]["gen"] == 1
     assert "gen=1" in payload["objective_children"][0]["notes"]
+    assert payload["independent_count"] == 1
+    assert payload["recommended_in_flight"] == 1
 
     capped = _call(inventory, {"base_generation": 3}, state=state)
     assert json.loads(capped.content)["cells"] == []
@@ -301,14 +308,22 @@ def test_kg_ingest_unknown_scanner_returns_dispatcher_error() -> None:
     assert "unknown scanner_kind" in payload["error"]
 
 
-def test_kg_ingest_missing_file_returns_dispatcher_error(tmp_path: Any) -> None:
+def test_kg_ingest_missing_file_returns_dispatcher_error(tmp_path: Any, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend",
+        lambda config: SimpleNamespace(
+            download_files=lambda paths, **kwargs: [
+                SimpleNamespace(error="not found", content=None)
+            ]
+        ),
+    )
     store = _fake_store()
     [_, kg_ingest] = build_kg_tools(store)
     out_msg = _call(
         kg_ingest,
         {
             "scanner_kind": "nmap_xml",
-            "path": str(tmp_path / "missing.xml"),
+            "path": "/workspace/missing.xml",
         },
         state={"kg_engagement": "acme"},
     )
@@ -317,7 +332,7 @@ def test_kg_ingest_missing_file_returns_dispatcher_error(tmp_path: Any) -> None:
     assert "not found" in payload["error"]
 
 
-def test_kg_ingest_routes_to_adapter_and_returns_summary(tmp_path: Any) -> None:
+def test_kg_ingest_routes_to_adapter_and_returns_summary(tmp_path: Any, monkeypatch) -> None:
     """Happy-path nmap_xml ingest — the adapter writes via the store
     mock, the tool returns the dispatcher's wrapped summary."""
     f = tmp_path / "scan.xml"
@@ -339,6 +354,14 @@ def test_kg_ingest_routes_to_adapter_and_returns_summary(tmp_path: Any) -> None:
         encoding="utf-8",
     )
 
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend",
+        lambda config: SimpleNamespace(
+            download_files=lambda paths, **kwargs: [
+                SimpleNamespace(error=None, content=f.read_bytes())
+            ]
+        ),
+    )
     store = MagicMock()
     store.record_observations.return_value = {
         "created": 3,
@@ -349,12 +372,12 @@ def test_kg_ingest_routes_to_adapter_and_returns_summary(tmp_path: Any) -> None:
     [_, kg_ingest] = build_kg_tools(store)
     out_msg = _call(
         kg_ingest,
-        {"scanner_kind": "nmap_xml", "path": str(f)},
+        {"scanner_kind": "nmap_xml", "path": "/workspace/scan.xml"},
         state={"kg_engagement": "acme", "role": "recon"},
     )
     payload = json.loads(out_msg.content)
     assert payload["scanner"] == "nmap_xml"
-    assert payload["path"] == str(f)
+    assert payload["path"] == "/workspace/scan.xml"
     assert payload["hosts"] == 1
     assert payload["services"] == 1
     assert payload["entrypoints"] == 1

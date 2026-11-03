@@ -309,7 +309,7 @@ def get_sandbox(config: RunnableConfig | None = None) -> HTTPSandbox | None:
 
 
 def _engagement_fence(workspace_path: str) -> str:
-    """A named engagement requires the operator's isolated /workspace mount."""
+    """A named engagement's workspace is /workspace/<slug>; nothing outside it is reachable."""
     slug = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
     if not slug:
         return workspace_path
@@ -319,15 +319,11 @@ def _engagement_fence(workspace_path: str) -> str:
             "bash tools refuse to resolve a workspace without a fenced subtree. "
             "Set RAPTIX_ENGAGEMENT to a [A-Za-z0-9][A-Za-z0-9._-]{0,127} slug."
         )
-    if os.environ.get("RAPTIX_WORKSPACE_ISOLATED") != "1":
+    root = f"/workspace/{slug}"
+    if workspace_path != root and not workspace_path.startswith(f"{root}/"):
         raise RuntimeError(
-            f"engagement {slug!r} requires an isolated workspace bind mount; "
-            "recreate the stack with RAPTIX_ENGAGEMENT_WORKSPACE set to its host directory"
-        )
-    if workspace_path != "/workspace":
-        raise RuntimeError(
-            f"workspace {workspace_path!r} is outside engagement {slug!r}'s runtime root; "
-            "the engagement is mounted at /workspace. Set workspace_path=/workspace."
+            f"workspace {workspace_path!r} is outside engagement {slug!r}; "
+            f"its workspace is {root}. Set workspace_path={root}."
         )
     return workspace_path
 
@@ -354,8 +350,6 @@ def _raw_workspace_path_from_config(config: RunnableConfig | None) -> str:
 
     env_slug = os.environ.get("RAPTIX_ENGAGEMENT")
     if env_slug:
-        if os.environ.get("RAPTIX_WORKSPACE_ISOLATED") == "1":
-            return "/workspace"
         normalized = SandboxBase._normalize_workspace_path(f"/workspace/{env_slug}")
         if normalized != "/workspace":
             return normalized
@@ -369,18 +363,36 @@ def _with_workspace_kwargs(workspace_path: str) -> dict[str, str]:
     return {"workspace_path": workspace_path}
 
 
+_ENGAGEMENT_SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+
+
 @contextlib.contextmanager
 def bash_workspace(workspace_path: str, *, engagement_name: str | None = None):
-    """Temporarily scope bash tools to one engagement workspace."""
-    if engagement_name and engagement_name != os.environ.get("RAPTIX_ENGAGEMENT", "").strip():
-        raise RuntimeError(
-            f"runtime engagement {engagement_name!r} does not match the pinned engagement; "
-            "recreate the stack for this engagement before executing bash"
-        )
+    """Temporarily scope bash tools to one engagement workspace (ADR-0090).
+
+    With an operator pin (RAPTIX_ENGAGEMENT) the run's identity must equal the pin.
+    Without a pin, the project's own sandbox volume is mounted at /workspace (ADR-0102),
+    so every run works under /workspace. Nothing outside that root is reachable.
+    """
     normalized = SandboxBase._normalize_workspace_path(workspace_path)
     if normalized != workspace_path.strip().rstrip("/"):
         raise RuntimeError(f"invalid workspace_path: {workspace_path!r}")
-    safe_path = _engagement_fence(normalized)
+    pinned = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
+    if pinned:
+        if engagement_name and engagement_name != pinned:
+            raise RuntimeError(
+                f"runtime engagement {engagement_name!r} does not match the pinned engagement; "
+                "recreate the stack for this engagement before executing bash"
+            )
+        safe_path = _engagement_fence(normalized)
+    else:
+        if normalized != "/workspace" and not normalized.startswith("/workspace/"):
+            raise RuntimeError(
+                f"workspace {normalized!r} is outside the project workspace /workspace"
+            )
+        if engagement_name and not _ENGAGEMENT_SLUG.fullmatch(engagement_name):
+            raise RuntimeError(f"runtime engagement {engagement_name!r} is not a workspace slug")
+        safe_path = normalized
     token = _current_workspace_path.set(safe_path)
     try:
         yield

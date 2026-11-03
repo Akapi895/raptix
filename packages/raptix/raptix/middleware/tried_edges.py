@@ -41,13 +41,17 @@ _REASONS = frozenset(
 _WRITE = (
     "MERGE (a:Candidate {key: $actor_key, engagement: $engagement}) "
     "ON CREATE SET a.label = $actor, a.firstseen = $now, a.created_by = $actor "
-    "SET a.lastupdated = $now "
+    "SET a.lastupdated = $now, a.provenance_channel = 'execution_ledger', "
+    "a.trust_state = 'unverified' "
     "MERGE (t:Candidate {key: $target_key, engagement: $engagement}) "
     "ON CREATE SET t.label = $target, t.firstseen = $now, t.created_by = $actor "
-    "SET t.lastupdated = $now "
+    "SET t.lastupdated = $now, t.provenance_channel = 'execution_ledger', "
+    "t.trust_state = 'unverified' "
     "MERGE (a)-[r:MAPS_TO {engagement: $engagement, tried_ledger: true}]->(t) "
     "ON CREATE SET r.firstseen = $now "
-    "SET r.entries = (coalesce(r.entries, []) + $entry)[-20..], "
+    "SET r.entries = CASE WHEN r.source_episode_id = $call_id THEN r.entries "
+    "ELSE (coalesce(r.entries, []) + $entry)[-20..] END, "
+    "r.provenance_channel = 'execution_ledger', r.trust_state = 'unverified', "
     "r.lastupdated = $now, r.created_by = $actor, r.source_episode_id = $call_id "
     "RETURN size(r.entries) AS count"
 )
@@ -130,11 +134,23 @@ def _recent_text(rows: list[dict[str, Any]]) -> str:
 class TriedEdgesMiddleware(AgentMiddleware):
     """Keep a bounded, engagement-scoped attempt ledger; never veto a call."""
 
-    def __init__(self, *, store: KGStore, role: str) -> None:
+    def __init__(
+        self,
+        *,
+        store: KGStore,
+        role: str,
+        enabled: bool | None = None,
+        context_enabled: bool = True,
+    ) -> None:
         super().__init__()
         self._store = store
         self._role = role
+        self._enabled = enabled
+        self._context_enabled = context_enabled
         self._slots = threading.BoundedSemaphore(value=2)
+
+    def _is_enabled(self) -> bool:
+        return self._enabled if self._enabled is not None else _enabled()
 
     def _bounded_call(self, action: Any, *args: Any, **kwargs: Any) -> Any:
         if not self._slots.acquire(blocking=False):
@@ -146,7 +162,7 @@ class TriedEdgesMiddleware(AgentMiddleware):
 
     async def awrap_tool_call(self, request: Any, handler: Any) -> Any:
         result = await handler(request)
-        if _enabled():
+        if self._is_enabled():
             try:
                 await asyncio.wait_for(
                     asyncio.to_thread(self._bounded_call, self._record, request, result),
@@ -202,7 +218,7 @@ class TriedEdgesMiddleware(AgentMiddleware):
         )
 
     async def awrap_model_call(self, request: Any, handler: Any) -> Any:
-        if not _enabled():
+        if not self._is_enabled() or not self._context_enabled:
             return await handler(request)
         state = request.state or {}
         engagement = state.get("engagement_name") or state.get("kg_engagement")

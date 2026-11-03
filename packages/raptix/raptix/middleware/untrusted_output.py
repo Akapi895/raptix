@@ -67,6 +67,8 @@ UNTRUSTED_TOOL_NAMES: frozenset[str] = frozenset(
         "bash_status",
         "read_file",
         "kg_query",
+        "kg_query_reference",
+        "kg_surface_inventory",
         "kg_neighbors",
         "kg_stats",
         "kg_backend_health",

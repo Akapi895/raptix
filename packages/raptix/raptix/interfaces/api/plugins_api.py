@@ -48,10 +48,16 @@ import logging
 from typing import Annotated
 from uuid import uuid5
 
-from fastapi import FastAPI, HTTPException, Path
-from pydantic import BaseModel
+from fastapi import Depends, FastAPI, HTTPException, Path, Query
+from pydantic import BaseModel, Field
 
 from raptix.graph_registry import _BUNDLE_TO_GRAPHS  # private, but stable: bundle->graphs map
+from raptix.interfaces.api.auth import require_runtime_token
+from raptix.interfaces.api.finding_poc_routes import router as finding_poc_router
+from raptix.interfaces.api.kg_query_routes import router as kg_query_router
+from raptix.interfaces.api.knowledge_routes import router as knowledge_router
+from raptix.interfaces.api.specialist_routes import router as specialist_router
+from raptix.interfaces.api.webshell_routes import router as webshell_router
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +140,15 @@ def _registered_graph_ids() -> set[str]:
 app = FastAPI(
     title="Raptix plugin bundle API",
     summary="Runtime activation/deactivation of agent bundles on the LangGraph platform.",
+    # Every route here (bundle switches, instance grants, transcripts) needs the runtime API token, the same one the
+    # LangGraph API checks. Routes added to this app are not covered by the LangGraph auth handler, so each one checks it.
+    dependencies=[Depends(require_runtime_token)],
 )
+app.include_router(finding_poc_router)
+app.include_router(webshell_router)
+app.include_router(specialist_router)
+app.include_router(kg_query_router)
+app.include_router(knowledge_router)
 
 
 @app.get("/_decepticon/bundles", response_model=BundlesResponse)
@@ -278,3 +292,226 @@ def lg_api_feature_postgres() -> bool:
     from langgraph_api.feature_flags import IS_POSTGRES_OR_GRPC_BACKEND  # noqa: PLC0415
 
     return IS_POSTGRES_OR_GRPC_BACKEND
+
+
+# ── Operator mailbox for running dispatch instances (P10c) ─────────────
+# A message is durably accepted, delivered at the instance's model-call safe
+# point, and handled when that turn completes. A refusal is an explicit
+# reason, never a silent drop. The mailbox lives beside the checkpointer.
+
+_INSTANCE_PATH = "/_raptix/instances/{thread_id}/{dispatch_id}"
+
+
+class InstanceMessageIn(BaseModel):
+    messageId: str
+    body: str
+    expectedAttempt: int = Field(ge=1)
+    # Set only by the operator's explicit forward; the runtime never copies a message between attempts.
+    sourceMessageId: str | None = None
+
+
+class InstanceCancelIn(BaseModel):
+    expectedAttempt: int = Field(ge=1)
+
+
+class InstanceGrantIn(BaseModel):
+    commandId: str
+    kind: str
+    expectedAttempt: int = Field(ge=1)
+    reassignRole: str | None = None
+
+
+@app.post(_INSTANCE_PATH + "/messages")
+def post_instance_message(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    payload: InstanceMessageIn,
+) -> dict:
+    from fastapi.responses import JSONResponse  # noqa: PLC0415
+
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    result = default_mailbox().accept(
+        payload.messageId,
+        thread_id,
+        dispatch_id,
+        payload.body,
+        expected_attempt=payload.expectedAttempt,
+        source_message_id=payload.sourceMessageId,
+    )
+    body = {
+        "status": result.status,
+        "reason": result.reason,
+        "attempt": result.attempt,
+        "message": _message_view(result.message),
+    }
+    if result.status == "refused":
+        return JSONResponse(status_code=409, content=body)
+    return body
+
+
+@app.post(_INSTANCE_PATH + "/cancel")
+def post_instance_cancel(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    payload: InstanceCancelIn,
+) -> dict:
+    """Cooperative cancel of one attempt: the cancel is recorded now; the final observation comes from the dispatch."""
+    from fastapi.responses import JSONResponse  # noqa: PLC0415
+
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    box = default_mailbox()
+    state = box.request_cancel(thread_id, dispatch_id, payload.expectedAttempt)
+    body = {
+        "threadId": thread_id,
+        "dispatchId": dispatch_id,
+        "attempt": payload.expectedAttempt,
+        "state": state,
+    }
+    if state == "cancel_requested":
+        return body
+    reason = "unknown_attempt" if state == "not_found" else "instance_not_running"
+    return JSONResponse(status_code=409, content={**body, "reason": reason})
+
+
+@app.post(_INSTANCE_PATH + "/grants")
+def post_instance_grant(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    payload: InstanceGrantIn,
+) -> dict:
+    """An operator's Retry or Reassign of an ended attempt: the runtime records it with the attempt's persisted intent (ADR-0090)."""
+    from fastapi.responses import JSONResponse  # noqa: PLC0415
+
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    result = default_mailbox().open_grant(
+        payload.commandId,
+        thread_id,
+        dispatch_id,
+        payload.expectedAttempt,
+        payload.kind,
+        payload.reassignRole,
+    )
+    body = {
+        "status": result.status,
+        "reason": result.reason,
+        "grant": None if result.grant is None else _grant_view(result.grant),
+    }
+    if result.status == "refused":
+        return JSONResponse(status_code=409, content=body)
+    return body
+
+
+@app.post(_INSTANCE_PATH + "/grants/{command_id}/revoke")
+def post_instance_grant_revoke(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+    command_id: Annotated[str, Path(min_length=1, max_length=128)],
+) -> dict:
+    """Withdraw a grant whose run was refused before the replacement was admitted; a consumed grant is never revived."""
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    return {"commandId": command_id, "state": default_mailbox().revoke_grant(command_id)}
+
+
+def _grant_view(grant) -> dict:
+    return {
+        "commandId": grant.command_id,
+        "kind": grant.kind,
+        "sourceDispatchId": grant.source_dispatch_id,
+        "sourceAttempt": grant.source_attempt,
+        "targetDispatchId": grant.target_dispatch_id,
+        "targetRole": grant.target_role,
+        "state": grant.state,
+    }
+
+
+@app.get(_INSTANCE_PATH)
+def get_instance(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    dispatch_id: Annotated[str, Path(min_length=1, max_length=256)],
+) -> dict:
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    instances, messages = default_mailbox().snapshot(thread_id, dispatch_id)
+    return {
+        "threadId": thread_id,
+        "dispatchId": dispatch_id,
+        "instances": [
+            {
+                "attempt": row.attempt,
+                "role": row.role,
+                "state": row.state,
+                "startedAt": row.started_at,
+                "finishedAt": row.finished_at,
+                "intent": row.intent,
+                "objectiveId": row.objective_id,
+            }
+            for row in instances
+        ],
+        "messages": [_message_view(message) for message in messages],
+    }
+
+
+@app.get("/_raptix/threads/{thread_id}/instances")
+def list_thread_instances(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+) -> dict:
+    """Every dispatch attempt the mailbox recorded on a thread, running ones included (roster, P10)."""
+    from raptix.execution.session.instance_mailbox import default_mailbox  # noqa: PLC0415
+
+    return {
+        "threadId": thread_id,
+        "instances": [
+            {
+                "dispatchId": row.dispatch_id,
+                "attempt": row.attempt,
+                "role": row.role,
+                "state": row.state,
+                "startedAt": row.started_at,
+                "finishedAt": row.finished_at,
+                "parentDispatchId": row.parent_dispatch_id,
+            }
+            for _, row in default_mailbox().list_instances(thread_id)
+        ],
+    }
+
+
+@app.get("/_raptix/threads/{thread_id}/transcripts")
+def list_thread_transcripts(
+    thread_id: Annotated[str, Path(min_length=1, max_length=256)],
+    before: Annotated[int | None, Query(ge=1)] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 500,
+) -> dict:
+    """Sub-agent events recorded on a thread, newest page first by ``before`` (exclusive sequence number).
+
+    The events are the sidecar copy written as they streamed (see ``transcript_sidecar``), so they are not part of the
+    graph state. ``oldestSeq`` is the cursor for the next older page; it is null when this page starts the thread.
+    """
+    from raptix.execution.session.transcript_sidecar import default_sidecar  # noqa: PLC0415
+
+    rows = default_sidecar().page(thread_id, before, limit)
+    return {
+        "threadId": thread_id,
+        "events": [{"seq": seq, "event": event} for seq, event in rows],
+        "oldestSeq": rows[0][0] if rows else None,
+    }
+
+
+def _message_view(message) -> dict | None:
+    if message is None:
+        return None
+    return {
+        "messageId": message.message_id,
+        "attempt": message.attempt,
+        "seq": message.seq,
+        "body": message.body,
+        "state": message.state,
+        "acceptedAt": message.accepted_at,
+        "deliveredAt": message.delivered_at,
+        "handledAt": message.handled_at,
+        "outcome": message.outcome,
+        "sourceMessageId": message.source_message_id,
+    }

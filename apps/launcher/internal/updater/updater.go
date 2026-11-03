@@ -336,7 +336,7 @@ func parseUint(s string) (int, bool) {
 	return n, true
 }
 
-// SyncConfigFiles verifies and installs the base/web Compose and LiteLLM configs.
+// SyncConfigFiles verifies and installs the base Compose and LiteLLM configs.
 //
 // When “release“ is non-nil AND the release exposes a
 // “config-checksums.txt“ asset, every downloaded file is verified
@@ -357,9 +357,8 @@ func SyncConfigFiles(branch string, release *Release) error {
 		// is never downloaded, never manifest-verified, and never
 		// release-tied. Previously every overlay change forced a point
 		// release with a "no checksum entry" sync warning.
-		"docker-compose.yml":            filepath.Join(home, "docker-compose.yml"),
-		"docker-compose.web-raptix.yml": filepath.Join(home, "docker-compose.web-raptix.yml"),
-		"infra/config/litellm.yaml":       filepath.Join(home, "infra", "config", "litellm.yaml"),
+		"docker-compose.yml":        filepath.Join(home, "docker-compose.yml"),
+		"infra/config/litellm.yaml": filepath.Join(home, "infra", "config", "litellm.yaml"),
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -696,9 +695,6 @@ func ApplyUpdate(release *Release, ref string) error {
 	ui.Info("Pulling Docker images (" + targetVersion + ")...")
 	if err := c.Pull(targetVersion); err != nil {
 		return fmt.Errorf("image pull: %w", err)
-	}
-	if err := c.Web().Pull(targetVersion); err != nil {
-		return fmt.Errorf("new web image pull: %w", err)
 	}
 
 	if err := SelfUpdate(release); err != nil {

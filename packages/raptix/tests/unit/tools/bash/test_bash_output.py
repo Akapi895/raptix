@@ -73,7 +73,7 @@ class _SessionIsolatingSandbox:
 
 
 def _invoke_bash(command: str, session: str) -> str:
-    with bash_workspace("/workspace/b0-isolation"):
+    with bash_workspace("/workspace/b0-isolation", engagement_name="b0-isolation"):
         return asyncio.run(
             bash.ainvoke(
                 {
@@ -154,7 +154,7 @@ def test_bash_status_lists_running_and_done_jobs():
 def test_bash_status_empty_returns_empty_marker():
     sandbox = _fake_sandbox()
     set_sandbox(sandbox)
-    with bash_workspace("/workspace/test"):
+    with bash_workspace("/workspace/test", engagement_name="test"):
         result = asyncio.run(bash_status.ainvoke({}))
     assert "[EMPTY]" in result
 
@@ -165,7 +165,7 @@ def test_bash_background_uses_engagement_workspace_context():
     sandbox.start_background = MagicMock()
     set_sandbox(sandbox)
 
-    with bash_workspace("/workspace/test"):
+    with bash_workspace("/workspace/test", engagement_name="test"):
         result = asyncio.run(
             bash.ainvoke(
                 {
@@ -185,13 +185,12 @@ def test_bash_background_uses_engagement_workspace_context():
     assert "[BACKGROUND]" in result
 
 
-def test_bash_uses_isolated_mount_root_from_environment(monkeypatch):
+def test_bash_uses_engagement_workspace_from_environment(monkeypatch):
     sandbox = _fake_sandbox()
     sandbox.execute = MagicMock()
     sandbox.execute_tmux_async = AsyncMock(return_value="ok")
     set_sandbox(sandbox)
     monkeypatch.setenv("RAPTIX_ENGAGEMENT", "env-engagement")
-    monkeypatch.setenv("RAPTIX_WORKSPACE_ISOLATED", "1")
 
     result = asyncio.run(bash.ainvoke({"command": "pwd", "description": "Print working directory"}))
 
@@ -200,6 +199,7 @@ def test_bash_uses_isolated_mount_root_from_environment(monkeypatch):
         session="main",
         timeout=120,
         is_input=False,
+        workspace_path="/workspace/env-engagement",
     )
     assert result == "ok"
 

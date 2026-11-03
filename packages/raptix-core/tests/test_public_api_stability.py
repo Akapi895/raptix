@@ -32,6 +32,7 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     ("raptix_core.types.engagement", "ObjectivePhase"),
     ("raptix_core.types.engagement", "ObjectiveStatus"),
     ("raptix_core.types.engagement", "OpsecLevel"),
+    ("raptix_core.types.engagement", "EffectClass"),
     ("raptix_core.types.engagement", "C2Tier"),
     ("raptix_core.types.engagement", "FindingSeverity"),
     ("raptix_core.types.engagement", "FindingConfidence"),
@@ -54,6 +55,9 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     ("raptix_core.types.kg", "EdgeKind"),
     ("raptix_core.types.kg", "Severity"),
     ("raptix_core.types.kg", "KnowledgeGraph"),
+    ("raptix_core.types.asset", "AssetKind"),
+    ("raptix_core.types.asset", "AssetRef"),
+    ("raptix_core.types.asset", "asset_id"),
     # raptix_core.types.roe — machine-readable RoE enforcement schema
     ("raptix_core.types.roe", "EnforcementMode"),
     ("raptix_core.types.roe", "ScopeRule"),
@@ -157,9 +161,15 @@ def test_manifest_count_unchanged() -> None:
     a major-version bump is an audit signal.
     """
     # Update this number deliberately when adding/removing public names.
-    expected = 95
+    expected = 99
     actual = len(CORE_PUBLIC_API)
     assert actual == expected, (
         f"CORE_PUBLIC_API has {actual} entries, expected {expected}. "
         f"If intentional, bump this number AND update the CHANGELOG."
     )
+
+
+def test_postexploit_keeps_project_graph_slot() -> None:
+    from raptix_core.contracts.slots import SLOTS_PER_ROLE, MiddlewareSlot
+
+    assert MiddlewareSlot.KG in SLOTS_PER_ROLE["postexploit"]

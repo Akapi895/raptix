@@ -1,0 +1,217 @@
+{
+  "app": "http://127.0.0.1:2473",
+  "generatedAt": "2026-10-24T03:24:17.227Z",
+  "rows": [
+    {
+      "op": "capabilities",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "{\"scopeApprovalRequests\":false,\"observedGraph\":true,\"simulated\":false}"
+    },
+    {
+      "op": "list (first page)",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "{items,page,pageSize,total,kpis,owners,types,sources,oses,observation} | total 2, 2 on the page"
+    },
+    {
+      "op": "get (the seeded host)",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "{asset,project,operations,findings,evidence,agents,approvals,techniques,history,canViewSensitive,unmodelled} | scope in"
+    },
+    {
+      "op": "scope (map rows)",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "{unmodelled,rows,projects,accessibleCount} | 2 rows for 2 assets"
+    },
+    {
+      "op": "observedGraph",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "{nodes,edges,truncated} | 0 nodes, 0 edges"
+    },
+    {
+      "op": "importRows (new host)",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "{added} | added 1, total 2 -> 3"
+    },
+    {
+      "op": "imported host is listed as pending",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "scope pending"
+    },
+    {
+      "op": "importRows (same host again, nothing added)",
+      "expect": "ok",
+      "expectKind": null,
+      "outcome": "ok",
+      "failureKind": null,
+      "matches": true,
+      "detail": "{added} | added 0, total 3"
+    },
+    {
+      "op": "importRows (unknown type refused, nothing stored)",
+      "expect": "refused",
+      "expectKind": "validation",
+      "outcome": "refused",
+      "failureKind": "validation",
+      "matches": true,
+      "detail": "validation: Row 1: the Mobile type is not stored by the real asset inventory. | total 3 -> 3"
+    },
+    {
+      "op": "importRows (empty batch refused, nothing stored)",
+      "expect": "refused",
+      "expectKind": "validation",
+      "outcome": "refused",
+      "failureKind": "validation",
+      "matches": true,
+      "detail": "validation: Add at least one asset to import. | total 3 -> 3"
+    },
+    {
+      "op": "changeScope (to in, no approved revision): refused, scope stays pending",
+      "expect": "refused",
+      "expectKind": "conflict",
+      "outcome": "refused",
+      "failureKind": "conflict",
+      "matches": true,
+      "detail": "conflict: Marking stack-host-mvlu4is8.verify.example.test in scope requires an approved scope revision that adds it; newly added targets stay pending. | scope pending"
+    },
+    {
+      "op": "changeScope (unclassified): refused, scope stays pending",
+      "expect": "refused",
+      "expectKind": "validation",
+      "outcome": "refused",
+      "failureKind": "validation",
+      "matches": true,
+      "detail": "validation: An asset can only be set to in scope, out of scope or pending. | scope pending"
+    },
+    {
+      "op": "requestScopeApproval (real mode refuses, nothing raised)",
+      "expect": "refused",
+      "expectKind": "unavailable",
+      "outcome": "refused",
+      "failureKind": "unavailable",
+      "matches": true,
+      "detail": "unavailable: Scope change requests are raised from the Scope revisions panel in real mode."
+    },
+    {
+      "op": "corpus",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "{items,page,pageSize,total,counts,subdomains,techniquesCovered,excludedActions}"
+    },
+    {
+      "op": "skill",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "{name,description,subdomain,mitreIds,whenToUse,path,body,contentSha256,commitSha,allowedTools,publication}"
+    },
+    {
+      "op": "technique",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "{id,name,description,url,skills}"
+    },
+    {
+      "op": "proposals",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "{items,counts}"
+    },
+    {
+      "op": "proposal",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "{id,projectId,skillName,skillPath,baseRevision,status,version,proposedBody,baseBody,rationale,createdBy,createdAt}"
+    },
+    {
+      "op": "amend (author, draft)",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "{id,projectId,skillName,skillPath,baseRevision,status,version,proposedBody,baseBody,rationale,createdBy,createdAt}"
+    },
+    {
+      "op": "propose (draft to proposed)",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "{id,projectId,skillName,skillPath,baseRevision,status,version,proposedBody,baseBody,rationale,createdBy,createdAt}"
+    },
+    {
+      "op": "decide (author refused)",
+      "expect": "refused",
+      "outcome": "refused",
+      "matches": true,
+      "detail": "forbidden: The library proposal decision requires an independent actor: cmvlu2bps0000iwfikuqjef6p submitted this item and cannot decide it."
+    },
+    {
+      "op": "decide (reviewer approves)",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "status approved"
+    },
+    {
+      "op": "export (approved proposal)",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "status undefined"
+    },
+    {
+      "op": "export (author reads the approved proposal)",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "status exported"
+    },
+    {
+      "op": "amend (approved proposal refused)",
+      "expect": "refused",
+      "outcome": "refused",
+      "matches": true,
+      "detail": "conflict: Concurrent edit: the proposal moved to version 2 while you edited version 99."
+    },
+    {
+      "op": "submit (new draft for the same skill)",
+      "expect": "ok",
+      "outcome": "ok",
+      "matches": true,
+      "detail": "status draft"
+    }
+  ],
+  "fatal": [],
+  "notRun": [],
+  "mismatches": 0
+}

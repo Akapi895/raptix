@@ -167,3 +167,62 @@ class TestFallbackExecution:
 
         assert result is ok_message
         assert calls == [primary.model_name]
+
+    def test_empty_completion_retries_same_model_then_falls_back(self, monkeypatch, chain) -> None:
+        """A content-less, tool-call-less turn must not end the agent loop.
+
+        Production failure mode: reasoning-heavy models emit tens of
+        thousands of reasoning tokens and zero content. The guard retries
+        the same model once, then raises ``EmptyCompletionError`` so
+        ``ModelFallbackMiddleware`` reroutes down the chain.
+        """
+        primary, fallbacks = chain
+        fallback_used = fallbacks[0]
+        ok_message = AIMessage(content="from-fallback")
+        calls: list[str] = []
+
+        def fake_invoke(self, *args, **kwargs):
+            calls.append(self.model_name)
+            if self.model_name == primary.model_name:
+                return AIMessage(content="")
+            if self.model_name == fallback_used.model_name:
+                return ok_message
+            raise AssertionError(f"unexpected fallback hit: {self.model_name}")
+
+        monkeypatch.setattr(BaseChatModel, "invoke", fake_invoke)
+
+        mw = ModelFallbackMiddleware(*fallbacks)
+        result = mw.wrap_model_call(_make_request(primary), _handler)
+
+        assert result is ok_message
+        # Primary attempted twice (original + one retry), then fallback.
+        assert calls == [
+            primary.model_name,
+            primary.model_name,
+            fallback_used.model_name,
+        ]
+
+    def test_empty_content_with_tool_calls_is_usable(self, monkeypatch, chain) -> None:
+        """Tool-call-only turns are valid agent turns — no retry, no fallback."""
+        primary, fallbacks = chain
+        tool_message = AIMessage(
+            content="",
+            tool_calls=[
+                {"name": "bash", "args": {"cmd": "id"}, "id": "call-1", "type": "tool_call"}
+            ],
+        )
+        calls: list[str] = []
+
+        def fake_invoke(self, *args, **kwargs):
+            calls.append(self.model_name)
+            if self.model_name == primary.model_name:
+                return tool_message
+            raise AssertionError("fallback must not be called for tool-call turns")
+
+        monkeypatch.setattr(BaseChatModel, "invoke", fake_invoke)
+
+        mw = ModelFallbackMiddleware(*fallbacks)
+        result = mw.wrap_model_call(_make_request(primary), _handler)
+
+        assert result is tool_message
+        assert calls == [primary.model_name]

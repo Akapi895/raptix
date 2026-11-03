@@ -14,9 +14,11 @@ stubbing at all.
 
 from __future__ import annotations
 
+import os
 import sys
 import types
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -25,14 +27,17 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from raptix.graph_registry import _BUNDLE_TO_GRAPHS
-from raptix.server import plugins_api
-from raptix.server.plugins_api import (
+from raptix.interfaces.api import plugins_api
+from raptix.interfaces.api.plugins_api import (
     _path_to_module,
     _resolve_bundle,
     app,
 )
 
-client = TestClient(app)
+_RUNTIME_TOKEN = (
+    Path(os.environ["RAPTIX_RUNTIME_API_TOKEN_FILE"]).read_text(encoding="utf-8").strip()
+)
+client = TestClient(app, headers={"authorization": f"Bearer {_RUNTIME_TOKEN}"})
 
 # Names the route handlers import lazily. The fixture below removes any
 # real instances around each test so a partially-importable real package

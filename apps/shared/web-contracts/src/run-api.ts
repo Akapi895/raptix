@@ -1,6 +1,6 @@
 import type { ThreadBindingView } from './ownership.js'
 import { isThreadBindingView } from './ownership.js'
-import { isPublicStreamPayload, type CustomPayload } from './stream-events.js'
+import { isPublicStreamPayload, type CustomPayload, type ToolPayload } from './stream-events.js'
 import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 import type { EngagementStatus, EngagementTargetType } from './engagements.js'
 export interface ScopedRunView {
@@ -9,6 +9,8 @@ export interface ScopedRunView {
 }
 export interface ScopedThreadMessage {
   role: 'user' | 'assistant'; content: string; messageId?: string | null
+  /** Thinking trace stowed in `additional_kwargs.reasoning_content` (assistant only, optional). */
+  reasoning?: string
 }
 /**
  * One durable checkpoint transcript entry (W09). Provenance `key` comes from
@@ -17,15 +19,22 @@ export interface ScopedThreadMessage {
  * thread-level rather than being assigned to an active run.
  */
 export interface ThreadHistoryEvent {
-  key: string | null; runId: null; source: 'checkpoint'; truncated: boolean; payload: CustomPayload
+  key: string | null; runId: null; source: 'checkpoint'; truncated: boolean; payload: CustomPayload | ToolPayload
 }
 export interface ScopedThreadView {
   binding: ThreadBindingView; rawStatus: string | null
   messages: ScopedThreadMessage[]
-  messagesTruncated: boolean; historyScope: 'root_messages_only'; source: 'runtime'
+  messagesTruncated: boolean
+  /** Message index where the next older page ends (exclusive); null when this page starts the conversation. */
+  olderCursor?: number | null
+  historyScope: 'root_messages_only'; source: 'runtime'
   transcripts?: ThreadHistoryEvent[]; transcriptsTruncated?: boolean
+  /** Per-conversation tool approval switch; absent means on (the default). */
+  hitlEnabled?: boolean
   /** Restored graph-interrupt question (W11): lets the picker survive reloads. */
   pendingQuestion?: PendingInterruptView
+  /** Every restorable `ask_user_question` interrupt (parallel tool calls raise several at once). */
+  pendingQuestions?: PendingInterruptView[]
 }
 /** Owner-scoped bound-thread list for the Console selector (W10). */
 export interface ScopedThreadListView {
@@ -36,6 +45,10 @@ export interface PendingInterruptView {
   questionId: string; question: string; header: string
   options: { label: string; description: string }[]
   multiSelect: boolean; allowOther: boolean; source: 'runtime'
+  /** LangGraph interrupt identity — required to resume when several interrupts are pending at once. */
+  interruptId?: string
+  /** P10e: the dispatch attempt that asked, when the question came from a running instance. The batch answer still covers every pending question. */
+  instance?: { dispatchId: string; attempt: number }
 }
 /** One workspace-file-backed HITL approval request, public projection (W11). */
 export interface ApprovalRequestView {
@@ -55,8 +68,9 @@ export function isScopedRunView(v: unknown): v is ScopedRunView {
 }
 export function isScopedThreadView(v: unknown): v is ScopedThreadView {
   if (!isRecord(v) || !isThreadBindingView(v.binding) || (v.rawStatus !== null && !isNonEmptyString(v.rawStatus)) || !Array.isArray(v.messages) || typeof v.messagesTruncated !== 'boolean' || v.historyScope !== 'root_messages_only' || v.source !== 'runtime') return false
-  if (!v.messages.every(m => isRecord(m) && typeof m.role === 'string' && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && (m.messageId === undefined || m.messageId === null || isNonEmptyString(m.messageId)))) return false
+  if (!v.messages.every(m => isRecord(m) && typeof m.role === 'string' && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && (m.reasoning === undefined || typeof m.reasoning === 'string') && (m.messageId === undefined || m.messageId === null || isNonEmptyString(m.messageId)))) return false
   if (v.pendingQuestion !== undefined && !isPendingInterruptView(v.pendingQuestion)) return false
+  if (v.pendingQuestions !== undefined && (!Array.isArray(v.pendingQuestions) || !v.pendingQuestions.every(isPendingInterruptView))) return false
   if (v.transcripts === undefined && v.transcriptsTruncated === undefined) return true
   if (!Array.isArray(v.transcripts) || typeof v.transcriptsTruncated !== 'boolean') return false
   return v.transcripts.every(t => isRecord(t) && (t.key === null || isNonEmptyString(t.key)) && t.runId === null && t.source === 'checkpoint' && typeof t.truncated === 'boolean' && isPublicStreamPayload(t.payload))
@@ -65,7 +79,7 @@ export function isScopedThreadListView(v: unknown): v is ScopedThreadListView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && v.source === 'runtime' && Array.isArray(v.threads) && v.threads.every(isThreadBindingView)
 }
 export function isPendingInterruptView(v: unknown): v is PendingInterruptView {
-  return isRecord(v) && isNonEmptyString(v.questionId) && isNonEmptyString(v.question) && typeof v.header === 'string' && Array.isArray(v.options) && v.options.every(o => isRecord(o) && isNonEmptyString(o.label) && typeof o.description === 'string') && typeof v.multiSelect === 'boolean' && typeof v.allowOther === 'boolean' && v.source === 'runtime'
+  return isRecord(v) && isNonEmptyString(v.questionId) && isNonEmptyString(v.question) && typeof v.header === 'string' && Array.isArray(v.options) && v.options.every(o => isRecord(o) && isNonEmptyString(o.label) && typeof o.description === 'string') && typeof v.multiSelect === 'boolean' && typeof v.allowOther === 'boolean' && v.source === 'runtime' && (v.interruptId === undefined || isNonEmptyString(v.interruptId)) && (v.instance === undefined || isRecord(v.instance) && isNonEmptyString(v.instance.dispatchId) && Number.isSafeInteger(v.instance.attempt) && (v.instance.attempt as number) >= 1)
 }
 export function isApprovalRequestView(v: unknown): v is ApprovalRequestView {
   if (!isRecord(v) || !isNonEmptyString(v.engagementId) || !isNonEmptyString(v.requestId) || typeof v.engagementName !== 'string' || !isNonEmptyString(v.agentName) || !isNonEmptyString(v.toolName) || !isRecord(v.toolArgsRedacted) || !isRecord(v.matchedRule)) return false
@@ -94,6 +108,42 @@ export interface ArtifactsView {
   engagementId: string
   folders: { folder: string; files: { name: string; path: string; sizeBytes: number }[] }[]
   source: 'workspace'
+}
+export type CaptureClassification = 'unclassified' | 'standard' | 'sensitive'
+export interface RetainedCaptureView {
+  id: string; engagementId: string; filename: string | null; mediaType: string
+  sizeBytes: number; digest: string; producer: string | null; classification: CaptureClassification
+  classificationVersion: number; uploadedBy: string; classifiedBy: string | null
+  classificationReason: string | null; classifiedAt: string | null; createdAt: string
+  canReadOriginal: boolean; canClassify: boolean
+}
+export interface RetainedCapturesView {
+  engagementId: string; captures: RetainedCaptureView[]; source: 'db'
+}
+export interface WorkspaceEvidenceImportView {
+  engagementId: string; captures: RetainedCaptureView[]; skipped: { path: string; reason: string }[]
+}
+export interface RetainCaptureInput {
+  requestId: string; filename: string; mediaType: string; base64: string
+}
+export interface ClassifyCaptureInput {
+  classification: 'standard' | 'sensitive'; expectedVersion: number; reason: string
+}
+export function isRetainedCaptureView(v: unknown): v is RetainedCaptureView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.engagementId) || (v.filename !== null && typeof v.filename !== 'string')) return false
+  if (!isNonEmptyString(v.mediaType) || typeof v.sizeBytes !== 'number' || !Number.isSafeInteger(v.sizeBytes) || v.sizeBytes <= 0) return false
+  if (typeof v.digest !== 'string' || !/^[a-f0-9]{64}$/.test(v.digest) || !['unclassified', 'standard', 'sensitive'].includes(v.classification as string)) return false
+  if (!Number.isSafeInteger(v.classificationVersion) || Number(v.classificationVersion) < 1 || !isNonEmptyString(v.uploadedBy)) return false
+  if ((v.producer !== null && typeof v.producer !== 'string') || (v.classifiedBy !== null && typeof v.classifiedBy !== 'string') || (v.classificationReason !== null && typeof v.classificationReason !== 'string')) return false
+  return typeof v.canReadOriginal === 'boolean' && typeof v.canClassify === 'boolean' &&
+    (v.classifiedAt === null || typeof v.classifiedAt === 'string' && Number.isFinite(Date.parse(v.classifiedAt))) && typeof v.createdAt === 'string' && Number.isFinite(Date.parse(v.createdAt))
+}
+export function isRetainedCapturesView(v: unknown): v is RetainedCapturesView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.captures) && v.captures.every(capture => isRetainedCaptureView(capture) && capture.engagementId === v.engagementId) && v.source === 'db'
+}
+export function isWorkspaceEvidenceImportView(v: unknown): v is WorkspaceEvidenceImportView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.captures) && v.captures.every(capture => isRetainedCaptureView(capture) && capture.engagementId === v.engagementId)
+    && Array.isArray(v.skipped) && v.skipped.every(item => isRecord(item) && typeof item.path === 'string' && typeof item.reason === 'string')
 }
 export interface ArtifactContentView {
   engagementId: string; path: string; content: string
@@ -184,7 +234,14 @@ export interface TimelineEntryView {
  */
 export interface TimelineView {
   engagementId: string; entries: TimelineEntryView[]
-  truncated: boolean; source: 'mixed'
+  /** The source window hit its bound, so older activity beyond it is not projected. */
+  truncated: boolean
+  /** More entries exist in the window than this page returned; a larger limit returns them. */
+  hasMore: boolean
+  /** Checkpoint events with no recorded time. They cannot be ordered, so they are left out of the timeline. */
+  untimedCheckpoints: number
+  /** Threads left out because their runtime binding conflicts with persisted state. */
+  unavailableThreads: number; source: 'mixed'
 }
 export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
   if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.at) || Number.isNaN(Date.parse(v.at)) || !isNonEmptyString(v.kind) || typeof v.label !== 'string') return false
@@ -195,7 +252,7 @@ export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
   return true
 }
 export function isTimelineView(v: unknown): v is TimelineView {
-  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && v.source === 'mixed'
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && typeof v.hasMore === 'boolean' && typeof v.untimedCheckpoints === 'number' && typeof v.unavailableThreads === 'number' && v.source === 'mixed'
 }
 /**
  * W15 engagement settings: only the fields the new server actually persists
@@ -314,28 +371,43 @@ export function isVaultRevealView(v: unknown): v is VaultRevealView {
   return isNonEmptyString(v.revealedAt) && !Number.isNaN(Date.parse(v.revealedAt))
 }
 /**
- * W19 members: the truthful local single-user topology. The auth bridge
- * always resolves the local operator (no hosted authentication exists), so
- * the view states the mode, the single operator and the explicit reason why
- * invite/RBAC APIs are absent — never a fake Owner/Viewer hierarchy.
+ * W19 members, extended by integration ticket 07: the local single-user
+ * topology stays truthful (single operator, invites unsupported); multi-user
+ * deployments (RAPTIX_WEB_AUTH_MODE=multi) report persisted memberships with
+ * invite/role APIs backed by session-authenticated, server-side checks.
  */
 export interface MemberView {
-  id: string; label: string; role: string; source: 'local'
+  id: string; label: string; role: string; source: 'local' | 'membership'
+}
+/** P11: the operation lifecycle the runtime reports for one execution thread. `state` is the server's word. */
+export interface OperationView {
+  engagementId: string; threadId: string; state: string
+  latestRunId: string | null; latestRunStatus: string | null; source: 'runtime'
+}
+export function isOperationView(v: unknown): v is OperationView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && isNonEmptyString(v.threadId) && isNonEmptyString(v.state)
+    && (v.latestRunId === null || isNonEmptyString(v.latestRunId)) && (v.latestRunStatus === null || isNonEmptyString(v.latestRunStatus))
+    && v.source === 'runtime'
 }
 export interface MembersView {
-  engagementId: string; mode: 'local-single-user'
+  engagementId: string; mode: 'local-single-user' | 'multi-user'
   members: MemberView[]
+  /** True only when the signed-in actor is the engagement owner; the server decides, the console only shows it. */
+  canManage: boolean
   inviteSupported: boolean; reason: string | null
   source: 'db'
 }
 export function isMemberView(v: unknown): v is MemberView {
-  return isRecord(v) && isNonEmptyString(v.id) && isNonEmptyString(v.label) && isNonEmptyString(v.role) && v.source === 'local'
+  return isRecord(v) && isNonEmptyString(v.id) && isNonEmptyString(v.label) && isNonEmptyString(v.role) && (v.source === 'local' || v.source === 'membership')
 }
 export function isMembersView(v: unknown): v is MembersView {
-  if (!isRecord(v) || !isNonEmptyString(v.engagementId) || v.mode !== 'local-single-user') return false
+  if (!isRecord(v) || !isNonEmptyString(v.engagementId)) return false
+  if (v.mode !== 'local-single-user' && v.mode !== 'multi-user') return false
   if (!Array.isArray(v.members) || !v.members.every(isMemberView)) return false
   // In the local single-user topology invites can never be supported; a view
   // claiming otherwise would be a fake membership hierarchy.
-  if (v.inviteSupported !== false || v.source !== 'db') return false
+  if (v.mode === 'local-single-user' && v.inviteSupported !== false) return false
+  if (typeof v.canManage !== 'boolean' || (v.mode === 'local-single-user' && v.canManage)) return false
+  if (v.source !== 'db') return false
   return v.reason === null || isNonEmptyString(v.reason)
 }

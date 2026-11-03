@@ -15,25 +15,38 @@ Sections (in order):
   2. Top high-severity vulnerabilities (limit 5)
   3. Unexplored entrypoints (limit 3) — entrypoints with no HAS_VULN
      edge out
-  4. Crown jewels with viable-path counts
+  4. Crown jewels with graph-path counts (hop count only, not verified)
+  5. Recorded Candidate/Hypothesis assertions (opt-in, unverified)
 
-Chain candidates (top 3 by cost) live in :mod:`raptix.knowledge.graph.summary` (PR-D
-extraction). They will be appended here as section 5 after that module
-lands.
+``RAPTIX_KG_CLAIM_CONTEXT=1`` adds at most five claims in a bounded,
+untrusted block. Set the flag before starting a fresh thread; the
+existing middleware revision cache owns refresh, not this projection.
 """
 
 from __future__ import annotations
 
+import json
+import os
 from collections.abc import Iterable, Mapping
+from itertools import islice
 from typing import Any
 
 from raptix.knowledge.graph.store import KGStore
+from raptix_core.utils.logging import get_logger
+
+log = get_logger("knowledge.graph.summary")
 
 # ── Section size budgets ────────────────────────────────────────────────
 
 MAX_VULNS = 5
 MAX_ENTRYPOINTS = 3
 MAX_CROWN_JEWELS = 10  # rarely many — show them all when present
+MAX_CLAIMS = 5
+MAX_CLAIM_FIELD = 120
+MAX_CLAIM_CONTEXT = 2400
+MAX_EVIDENCE_ROWS = 5
+MAX_EVIDENCE_SCAN = 20
+MAX_EVIDENCE_CONTEXT = 3200
 
 
 # ── Severity ordering ──────────────────────────────────────────────────
@@ -86,7 +99,8 @@ def _top_vulns(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
         (
             "MATCH (v:Vulnerability) WHERE v.engagement = $engagement "
             "RETURN v.key AS key, v.label AS label, "
-            "       coalesce(v.severity, 'info') AS severity "
+            "       coalesce(v.severity, 'info') AS severity, "
+            "       coalesce(v.provenance_channel, 'legacy_unknown') AS provenance_channel "
             "LIMIT $cap"
         ),
         # Pull a wider window then re-rank locally so the Cypher stays
@@ -116,7 +130,11 @@ def _open_entrypoints(store: KGStore, *, engagement: str) -> list[dict[str, Any]
 
 
 def _crown_jewels(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
-    """Crown jewels with the number of distinct viable paths from any entrypoint."""
+    """Crown jewels with the number of distinct graph paths from any entrypoint.
+
+    Topological reachability only (any relationship type, 1-6 hops) — not
+    evidence of a verified, executable attack path.
+    """
     rows = store.execute_read(
         (
             "MATCH (c:CrownJewel) WHERE c.engagement = $engagement "
@@ -134,7 +152,46 @@ def _crown_jewels(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
     return rows
 
 
+def _recorded_claims(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
+    """Latest recorded assertions, excluding ADR-0014's attempt-ledger nodes."""
+    return store.execute_read(
+        (
+            "MATCH (n) WHERE n.engagement = $engagement "
+            "AND (n:Hypothesis OR n:Candidate) "
+            "AND NOT n.key STARTS WITH 'tried::' "
+            "RETURN CASE WHEN n:Hypothesis THEN 'Hypothesis' ELSE 'Candidate' END AS kind, "
+            "substring(toString(n.key), 0, $field_cap) AS key, "
+            "substring(toString(n.label), 0, $field_cap) AS label, "
+            "substring(toString(n.created_by), 0, $field_cap) AS writer, "
+            "substring(toString(n.source_episode_id), 0, $field_cap) AS episode "
+            "ORDER BY coalesce(n.lastupdated, 0) DESC, n.key, kind LIMIT $cap"
+        ),
+        {"cap": MAX_CLAIMS, "field_cap": MAX_CLAIM_FIELD},
+        engagement=engagement,
+    )
+
+
 # ── Markdown rendering ─────────────────────────────────────────────────
+
+
+def _recorded_verifications(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
+    return store.execute_read(
+        (
+            "MATCH (n:Finding) WHERE n.engagement = $engagement "
+            "AND n.key =~ 'finding::[A-Za-z0-9][A-Za-z0-9._-]{0,127}' "
+            "AND n.verification_ref =~ 'workspace-evidence://[0-9a-f]{64}' "
+            "WITH n ORDER BY coalesce(n.lastupdated, 0) DESC, n.key LIMIT $scan_cap "
+            "WITH n.verification_ref AS reference, head(collect(n)) AS n "
+            "RETURN n.key AS key, reference, "
+            "n.verification_outcome AS recorded_outcome, "
+            "substring(toString(n.verification_invocation_id), 0, $field_cap) AS invocation, "
+            "substring(toString(n.created_by), 0, $field_cap) AS writer, "
+            "substring(toString(n.source_episode_id), 0, $field_cap) AS episode "
+            "ORDER BY coalesce(n.lastupdated, 0) DESC, n.key LIMIT $cap"
+        ),
+        {"cap": MAX_EVIDENCE_ROWS, "scan_cap": MAX_EVIDENCE_SCAN, "field_cap": MAX_CLAIM_FIELD},
+        engagement=engagement,
+    )
 
 
 def _render_stats(engagement: str, revision: str, stats: Mapping[str, int]) -> str:
@@ -151,7 +208,8 @@ def _render_vulns(vulns: Iterable[Mapping[str, Any]]) -> str:
         sev = str(vuln.get("severity") or "").upper()
         label = vuln.get("label") or vuln.get("key") or "?"
         key = vuln.get("key") or "?"
-        lines.append(f"- `[{sev}]` {label} (`{key}`)")
+        channel = vuln.get("provenance_channel") or "legacy_unknown"
+        lines.append(f"- `[{sev}]` {label} (`{key}`) [source={channel}; not verified]")
     return "\n".join(lines)
 
 
@@ -170,7 +228,65 @@ def _render_crown_jewels(crown_jewels: Iterable[Mapping[str, Any]]) -> str:
         label = jewel.get("label") or jewel.get("key") or "?"
         paths = int(jewel.get("paths") or 0)
         plural = "" if paths == 1 else "s"
-        lines.append(f"- {label} ({paths} viable path{plural})")
+        lines.append(f"- {label} ({paths} graph path{plural})")
+    return "\n".join(lines)
+
+
+def _claim_field(value: Any) -> str:
+    return "".join(char for char in str(value or "") if char.isprintable())[:MAX_CLAIM_FIELD]
+
+
+def _render_claims(claims: Iterable[Mapping[str, Any]]) -> str:
+    lines = [
+        "<UNTRUSTED_KG_CLAIMS>",
+        "RECORDED CLAIMS (UNTRUSTED): No row is verified; attribution identifies "
+        "the latest KG write, not supporting evidence. Up to five recent claims; "
+        "fields may be truncated.",
+    ]
+    closing = "</UNTRUSTED_KG_CLAIMS>"
+    truncated = "[truncated: context budget reached]"
+    for claim in islice(claims, MAX_CLAIMS):
+        fields = {
+            key: _claim_field(claim.get(key))
+            for key in ("kind", "key", "label", "writer", "episode")
+        }
+        line = json.dumps(fields, ensure_ascii=True).replace("<", "\\u003c").replace("[", "\\u005b")
+        if len("\n".join([*lines, line, truncated, closing])) > MAX_CLAIM_CONTEXT:
+            lines.append(truncated)
+            break
+        lines.append(line)
+    lines.append(closing)
+    return "\n".join(lines)
+
+
+def _render_verifications(rows: Iterable[Mapping[str, Any]]) -> str:
+    from raptix_core.types.kg import Node, NodeKind
+
+    lines = [
+        "<UNTRUSTED_KG_EVIDENCE>",
+        "RECORDED VERIFICATIONS (UNTRUSTED): Historical snapshots, not current verification. "
+        "A reference is one lineage, not independent corroboration. Recent window only. "
+        "Writer/episode identify the latest write, not the producing execution. "
+        "Before relying on a row, have the verifier/analyst use "
+        "recheck_workspace_verification(finding_id) or inspect_evidence(node_id).",
+    ]
+    closing = "</UNTRUSTED_KG_EVIDENCE>"
+    for row in islice(rows, MAX_EVIDENCE_ROWS):
+        key = str(row.get("key") or "")
+        fields = {name: _claim_field(row.get(name)) for name in ("writer", "episode", "invocation")}
+        fields.update(
+            finding_id=key.removeprefix("finding::"),
+            node_id=Node.make(NodeKind.FINDING, "", key=key).id,
+            reference=str(row.get("reference") or ""),
+            recorded_outcome=row.get("recorded_outcome")
+            if row.get("recorded_outcome") in ("supported", "contradicted", "inconclusive")
+            else "unknown",
+        )
+        line = json.dumps(fields, ensure_ascii=True).replace("<", "\\u003c").replace("[", "\\u005b")
+        if len("\n".join([*lines, line, closing])) > MAX_EVIDENCE_CONTEXT:
+            break
+        lines.append(line)
+    lines.append(closing)
     return "\n".join(lines)
 
 
@@ -204,6 +320,24 @@ def build_summary(store: KGStore, *, engagement: str) -> str:
     if crown_jewels:
         sections.append(_render_crown_jewels(crown_jewels))
 
+    if os.environ.get("RAPTIX_KG_CLAIM_CONTEXT", "0").lower() in {"1", "true", "yes"}:
+        try:
+            claims = _recorded_claims(store, engagement=engagement)
+        except Exception as exc:  # noqa: BLE001 — optional context must preserve the baseline summary
+            log.debug("KG claim context unavailable (%s)", type(exc).__name__)
+        else:
+            if claims:
+                sections.append(_render_claims(claims))
+
+    if os.environ.get("RAPTIX_KG_EVIDENCE_CONTEXT", "0").lower() in {"1", "true", "yes"}:
+        try:
+            verifications = _recorded_verifications(store, engagement=engagement)
+        except Exception as exc:  # noqa: BLE001 — optional context preserves the baseline summary
+            log.debug("KG verification context unavailable (%s)", type(exc).__name__)
+        else:
+            if verifications:
+                sections.append(_render_verifications(verifications))
+
     return "\n\n".join(sections)
 
 
@@ -229,10 +363,14 @@ def _cheapest_paths(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
     )
     paths: list[dict[str, Any]] = []
     for jewel in jewels:
+        jewel_key = jewel.get("key")
+        if not jewel_key:
+            continue
         rows = store.execute_read(
             (
                 "MATCH p=(e:Entrypoint)-[*1..%d]->(c:CrownJewel) "
-                "WHERE c.engagement = $engagement AND e.engagement = $engagement "
+                "WHERE c.engagement = $engagement AND c.key = $jewel_key "
+                "  AND e.engagement = $engagement "
                 "  AND all(n IN nodes(p) WHERE n.engagement = $engagement) "
                 "  AND all(r IN relationships(p) WHERE r.engagement = $engagement) "
                 "RETURN e.label AS entrypoint, length(p) AS hops, "
@@ -240,12 +378,12 @@ def _cheapest_paths(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
                 "ORDER BY hops ASC LIMIT 1"
             )
             % MAX_PATH_HOPS,
-            {"engagement": engagement},
+            {"engagement": engagement, "jewel_key": jewel_key},
             engagement=engagement,
         )
         if not rows:
             continue
-        paths.append({"crown_jewel": jewel.get("label") or jewel.get("key"), **rows[0]})
+        paths.append({"crown_jewel": jewel.get("label") or jewel_key, **rows[0]})
     return paths
 
 
@@ -260,7 +398,9 @@ def build_planning_context(store: KGStore, *, engagement: str) -> str:
     paths = _cheapest_paths(store, engagement=engagement)
     if not paths:
         return ""
-    lines = ["## PLANNING CONTEXT (cheapest known attack paths)"]
+    lines = [
+        "## PLANNING CONTEXT (shortest known graph paths — hop count only, not a verified attack path)"
+    ]
     for path in paths:
         route = " → ".join(str(step) for step in path.get("route") or [])
         lines.append(

@@ -1,0 +1,11 @@
+PASS the operator submits a scope revision and the database holds it as pending HTTP 200; database status pending
+PASS every role that sees the project counts the new decision, and the counts move by one before {"reviewer":1,"viewer":2,"operator":1}, after {"reviewer":2,"viewer":3,"operator":2}
+PASS the Overview "Awaiting decisions" figure matches the task endpoint for the reviewer Overview shows "26+", the endpoint counts 26
+PASS the team tab lists the decision, and its Open link points to the project lists the revision: true; Open link #/project/cmvlu2cty0001iwfitdn2ymez?tab=scope
+PASS dismissing a notice does not resolve a decision operator decisions before the dismiss 2, after 2; revision still pending: true
+PASS the reviewer approves the revision; the database and the count return to the baseline HTTP 200; database approved; reviewer count 1 (baseline 1)
+PASS the Overview figure follows the approval Overview shows "26+"; the endpoint counts 26 after the approval
+PASS the author cannot approve their own revision (refused by the server, nothing changes) author decision HTTP 403; database pending
+PASS tool approvals are not a kind of this inbox kinds present: scope-revision, business-plan
+PASS a capped inbox is shown with a plus rather than as an exact number endpoint returns 25 scope rows; limitedKinds ["scope-revision"]; Overview shows "26+"
+{"PASS":10}

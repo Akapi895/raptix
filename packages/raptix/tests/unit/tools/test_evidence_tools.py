@@ -25,19 +25,10 @@ def _seed_evidence(workspace: Path) -> Path:
     return evidence
 
 
-def test_workspace_default_when_env_unset(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("RAPTIX_ENGAGEMENT_WORKSPACE", raising=False)
-    assert evtools._workspace() == Path("/workspace")
-
-
-def test_workspace_returns_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
-    assert evtools._workspace() == tmp_path
-
-
-def test_evidence_dir_is_workspace_subpath(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
-    assert evtools._evidence_dir() == tmp_path / "evidence" / "recordings"
+@pytest.fixture(autouse=True)
+def workspace_on_disk(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, project_files_at) -> None:
+    """The evidence tools read and write the project's /workspace through its sandbox. The test folder stands in for it."""
+    monkeypatch.setattr(evtools, "ambient_project_files", lambda: project_files_at(tmp_path))
 
 
 def test_json_helper_round_trips_dict() -> None:
@@ -45,10 +36,7 @@ def test_json_helper_round_trips_dict() -> None:
     assert json.loads(result) == {"k": 1}
 
 
-def test_export_session_asciicast_explicit_log_path_success(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
+def test_export_session_asciicast_explicit_log_path_success(tmp_path: Path) -> None:
     log_file = tmp_path / "cmd.log"
     log_file.write_text(
         "first\nRAPTIX_PROMPT_END_xx\nsecond\nRAPTIX_PROMPT_END_xx\n",
@@ -58,7 +46,7 @@ def test_export_session_asciicast_explicit_log_path_success(
         export_session_asciicast.invoke(
             {
                 "session_name": "sess",
-                "pipe_pane_log_path": str(log_file),
+                "pipe_pane_log_path": "cmd.log",
                 "title": "My Title",
             }
         )
@@ -66,17 +54,14 @@ def test_export_session_asciicast_explicit_log_path_success(
     assert result["status"] == "exported"
     assert result["session_name"] == "sess"
     assert result["segments"] == 2
-    cast_path = Path(result["asciicast_path"])
-    assert cast_path == tmp_path / "evidence" / "recordings" / "sess.cast"
+    assert result["asciicast_path"] == "/workspace/evidence/recordings/sess.cast"
+    cast_path = tmp_path / "evidence" / "recordings" / "sess.cast"
     assert cast_path.exists()
     sidecar = cast_path.with_suffix(cast_path.suffix + ".manifest.json")
     assert sidecar.exists()
 
 
-def test_export_session_asciicast_fallback_tmux_log_path(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
+def test_export_session_asciicast_fallback_tmux_log_path(tmp_path: Path) -> None:
     tmux_logs_dir = tmp_path / ".tmux-logs"
     tmux_logs_dir.mkdir()
     log_file = tmux_logs_dir / "fb.log"
@@ -86,35 +71,30 @@ def test_export_session_asciicast_fallback_tmux_log_path(
     )
     result = json.loads(export_session_asciicast.invoke({"session_name": "fb"}))
     assert result["status"] == "exported"
-    assert (
-        result["source_log"].endswith(".tmux-logs/fb.log")
-        or result["source_log"] == str(log_file).replace("\\", "/")
-        or Path(result["source_log"]) == log_file
+    assert result["source_log"] == "/workspace/.tmux-logs/fb.log"
+
+
+def test_export_session_asciicast_refuses_a_log_outside_the_workspace(tmp_path: Path) -> None:
+    result = json.loads(
+        export_session_asciicast.invoke({"session_name": "x", "pipe_pane_log_path": "/etc/passwd"})
     )
+    assert "error" in result
+    assert "outside /workspace" in result["error"]
 
 
-def test_export_session_asciicast_error_when_log_missing(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
+def test_export_session_asciicast_error_when_log_missing(tmp_path: Path) -> None:
     result = json.loads(export_session_asciicast.invoke({"session_name": "missing"}))
     assert "error" in result
     assert "status" not in result
     assert "pipe-pane log not found" in result["error"]
 
 
-def test_list_session_recordings_empty_when_evidence_dir_absent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
+def test_list_session_recordings_empty_when_evidence_dir_absent(tmp_path: Path) -> None:
     result = json.loads(list_session_recordings.invoke({}))
     assert result == {"count": 0, "recordings": []}
 
 
-def test_list_session_recordings_returns_manifests(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
+def test_list_session_recordings_returns_manifests(tmp_path: Path) -> None:
     recordings_dir = tmp_path / "evidence" / "recordings"
     recordings_dir.mkdir(parents=True)
     (recordings_dir / "a.cast.manifest.json").write_text(
@@ -129,14 +109,14 @@ def test_list_session_recordings_returns_manifests(
 
 
 def test_seal_evidence_error_when_dir_missing(tmp_path: Path) -> None:
-    result = json.loads(seal_evidence.invoke({"workspace_path": str(tmp_path)}))
+    result = json.loads(seal_evidence.invoke({"workspace_path": "/workspace"}))
     assert "error" in result
     assert "status" not in result
 
 
 def test_seal_evidence_writes_manifest_for_each_file(tmp_path: Path) -> None:
     _seed_evidence(tmp_path)
-    result = json.loads(seal_evidence.invoke({"workspace_path": str(tmp_path)}))
+    result = json.loads(seal_evidence.invoke({"workspace_path": "/workspace"}))
     assert result["status"] == "sealed"
     assert result["sealed"] == 2
     assert sorted(result["files"]) == ["a.txt", "captures/b.bin"]
@@ -153,8 +133,8 @@ def test_seal_evidence_writes_manifest_for_each_file(tmp_path: Path) -> None:
 
 def test_verify_evidence_ok_after_seal(tmp_path: Path) -> None:
     _seed_evidence(tmp_path)
-    seal_evidence.invoke({"workspace_path": str(tmp_path)})
-    result = json.loads(verify_evidence(str(tmp_path)))
+    seal_evidence.invoke({"workspace_path": "/workspace"})
+    result = json.loads(verify_evidence("/workspace"))
     assert result["ok"] is True
     assert result["records_checked"] == 2
     assert result["drift"] == []
@@ -164,9 +144,9 @@ def test_verify_evidence_ok_after_seal(tmp_path: Path) -> None:
 
 def test_verify_evidence_flags_drift_when_file_tampered(tmp_path: Path) -> None:
     evidence = _seed_evidence(tmp_path)
-    seal_evidence.invoke({"workspace_path": str(tmp_path)})
+    seal_evidence.invoke({"workspace_path": "/workspace"})
     (evidence / "a.txt").write_text("TAMPERED", encoding="utf-8")
-    result = json.loads(verify_evidence(str(tmp_path)))
+    result = json.loads(verify_evidence("/workspace"))
     assert result["ok"] is False
     drift_paths = [d["path"] for d in result["drift"]]
     assert "a.txt" in drift_paths
@@ -174,16 +154,16 @@ def test_verify_evidence_flags_drift_when_file_tampered(tmp_path: Path) -> None:
 
 def test_verify_evidence_flags_missing_file(tmp_path: Path) -> None:
     evidence = _seed_evidence(tmp_path)
-    seal_evidence.invoke({"workspace_path": str(tmp_path)})
+    seal_evidence.invoke({"workspace_path": "/workspace"})
     (evidence / "a.txt").unlink()
-    result = json.loads(verify_evidence(str(tmp_path)))
+    result = json.loads(verify_evidence("/workspace"))
     assert result["ok"] is False
     assert "a.txt" in result["missing"]
 
 
 def test_verify_evidence_error_when_manifest_absent(tmp_path: Path) -> None:
     (tmp_path / "evidence").mkdir()
-    result = json.loads(verify_evidence(str(tmp_path)))
+    result = json.loads(verify_evidence("/workspace"))
     assert "error" in result
 
 
@@ -192,14 +172,14 @@ def test_verify_evidence_flags_hmac_chain_break(
 ) -> None:
     monkeypatch.setenv("RAPTIX_AUDIT_HMAC_KEY", "secret-key")
     _seed_evidence(tmp_path)
-    seal_evidence.invoke({"workspace_path": str(tmp_path)})
+    seal_evidence.invoke({"workspace_path": "/workspace"})
     manifest = tmp_path / "evidence" / "chain-of-custody.jsonl"
     lines = manifest.read_text().splitlines()
     first = json.loads(lines[0])
     first["sha256"] = "0" * 64
     lines[0] = json.dumps(first)
     manifest.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    result = json.loads(verify_evidence(str(tmp_path)))
+    result = json.loads(verify_evidence("/workspace"))
     assert result["ok"] is False
     assert result["chain_errors"]
 
@@ -239,7 +219,7 @@ class TestInspectEvidence:
         monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         graph, finding, host = self._seed_graph()
         _seed_evidence(tmp_path)  # seed custody-manifested files
-        seal_evidence.invoke({"workspace_path": str(tmp_path)})
+        seal_evidence.invoke({"workspace_path": "/workspace"})
 
         token = set_active_engagement("eng-test")
         try:

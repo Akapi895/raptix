@@ -1,10 +1,17 @@
-"""Sigma → Elastic Detection Engine rule (Kibana Detection API push).
+"""Sigma → Elastic Detection Engine rule (Kibana Detection API push), via pySigma.
 
 Elastic's Detection Engine accepts a JSON rule via
-``POST /api/detection_engine/rules``. We translate the Sigma body to an
-Elastic Query Language (EQL) or Lucene KQL query depending on rule type;
-this minimal converter emits Lucene KQL since Detector mostly emits
-single-table conditions.
+``POST /api/detection_engine/rules``. We translate the Sigma body to a
+Lucene query using the official ``pySigma`` engine + the
+``pySigma-backend-elasticsearch`` ECS field-mapping pipeline (Detector
+mostly emits single-table conditions, so Lucene over EQL).
+
+Earlier versions hand-rolled a partial Sigma condition parser with no
+field-name mapping — Sigma's generic field names (``Image``,
+``CommandLine``, …) went straight into the Lucene query unmapped, which can
+silently miss against a real ECS-indexed Elastic cluster (e.g. ``Image``
+needs to be ``process.executable.caseless``). pySigma's ECS pipeline fixes
+that at the source.
 """
 
 from __future__ import annotations
@@ -18,71 +25,34 @@ from raptix_defense.conops import (
     resolve_auth_value,
     resolve_siem_target,
 )
+from sigma.backends.elasticsearch import LuceneBackend
+from sigma.collection import SigmaCollection
+from sigma.exceptions import SigmaError
+from sigma.pipelines.elasticsearch import ecs_windows
 
 
 class SigmaToElasticError(RuntimeError):
-    """Raised on unsupported Sigma constructs."""
-
-
-def _field_clause_lucene(field: str, modifier: str, value: Any) -> str:
-    if isinstance(value, str):
-        escaped = value.replace('"', '\\"')
-        if modifier == "contains":
-            return f"{field}: *{escaped}*"
-        if modifier == "startswith":
-            return f"{field}: {escaped}*"
-        if modifier == "endswith":
-            return f"{field}: *{escaped}"
-        if modifier in ("", "equals"):
-            return f'{field}: "{escaped}"'
-    else:
-        if modifier in ("", "equals"):
-            return f"{field}: {value}"
-    raise SigmaToElasticError(f"unsupported modifier ``{modifier}`` for Lucene")
-
-
-def _selection_to_lucene(selection: dict[str, Any]) -> str:
-    clauses: list[str] = []
-    for field, value in selection.items():
-        base, modifier = (field.split("|", 1) + [""])[:2]
-        if isinstance(value, list):
-            sub = " OR ".join(_field_clause_lucene(base, modifier, v) for v in value)
-            clauses.append(f"({sub})")
-        else:
-            clauses.append(_field_clause_lucene(base, modifier, value))
-    return " AND ".join(clauses)
+    """Raised when pySigma can't translate a Sigma rule to a Lucene query."""
 
 
 def sigma_to_lucene(sigma_rule: dict[str, Any]) -> str:
-    """Translate a Sigma rule dict to a Lucene query string."""
-    detection = sigma_rule.get("detection")
-    if not isinstance(detection, dict):
-        raise SigmaToElasticError("Sigma rule missing ``detection`` block")
-    condition = detection.get("condition")
-    if not isinstance(condition, str):
-        raise SigmaToElasticError("``detection.condition`` must be a string")
+    """Translate a Sigma rule dict to a Lucene query string via pySigma.
 
-    selections = {k: v for k, v in detection.items() if k != "condition"}
-    tokens = condition.replace("(", " ( ").replace(")", " ) ").split()
-    rendered: list[str] = []
-    for tok in tokens:
-        lower = tok.lower()
-        if lower == "and":
-            rendered.append("AND")
-        elif lower == "or":
-            rendered.append("OR")
-        elif lower == "not":
-            rendered.append("NOT")
-        elif tok in ("(", ")"):
-            rendered.append(tok)
-        elif tok in selections:
-            value = selections[tok]
-            if not isinstance(value, dict):
-                raise SigmaToElasticError(f"selection ``{tok}`` must be a dict")
-            rendered.append(f"({_selection_to_lucene(value)})")
-        else:
-            raise SigmaToElasticError(f"unknown token ``{tok}`` in condition")
-    return " ".join(rendered)
+    Applies the ECS Windows field-mapping pipeline when the rule's
+    ``logsource.product`` is ``windows``; other log sources convert without
+    a pipeline. Raises SigmaToElasticError — not a raw pySigma exception —
+    so callers keep one exception type to catch.
+    """
+    logsource = sigma_rule.get("logsource") or {}
+    pipeline = ecs_windows() if logsource.get("product") == "windows" else None
+    try:
+        collection = SigmaCollection.from_dicts([sigma_rule])
+        queries = LuceneBackend(processing_pipeline=pipeline).convert(collection)
+    except SigmaError as exc:
+        raise SigmaToElasticError(str(exc)) from exc
+    if not queries:
+        raise SigmaToElasticError("pySigma produced no Lucene query for this rule")
+    return str(queries[0])
 
 
 _SEVERITY_MAP = {

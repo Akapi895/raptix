@@ -1,0 +1,694 @@
+"""Decision-eval tests exercise scoring and agent replay without a provider network."""
+
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
+from langchain_core.messages import AIMessage, BaseMessage
+
+from benchmarks.engine.paths import BENCHMARKS_DIR
+from benchmarks.suites.decision_eval.evaluate import (
+    Scenario,
+    load_scenarios,
+    parse_decision,
+    run_episode,
+    score_decision,
+    summarize,
+)
+
+
+def _correct_decision(scenario: Scenario) -> dict[str, Any]:
+    return {
+        "outcome": scenario.expected.outcome,
+        "next_action": scenario.expected.accepted_actions[0],
+        "evidence_refs": list(scenario.expected.evidence_refs),
+        "lineage_count": scenario.expected.lineage_count,
+    }
+
+
+def test_unsupported_report_is_a_false_positive_even_with_inconclusive_verdict() -> None:
+    scenario = Scenario.model_validate(
+        {
+            "scenario_id": "drift",
+            "objective": "Assess one claim",
+            "finding_id": "FIND-1",
+            "claim_replays": ["FIND-1"],
+            "checkpoint": "A previously retained capture drifted.",
+            "history": [],
+            "snapshots": [],
+            "replays": {"FIND-1": {"outcome": "inconclusive", "reason": "content_drift"}},
+            "expected": {
+                "outcome": "inconclusive",
+                "accepted_actions": ["gather_evidence"],
+                "evidence_refs": [],
+                "lineage_count": 0,
+                "required_reads": ["FIND-1"],
+            },
+        }
+    )
+    answer = json.dumps(
+        {
+            "outcome": "inconclusive",
+            "next_action": "report_scoped",
+            "evidence_refs": [],
+            "lineage_count": 0,
+        }
+    )
+    scored = score_decision(scenario, answer, ["FIND-1"], [])
+    assert scored["false_positive"] is True
+    assert scored["decision_correct"] is False
+
+
+class ReplayModel(FakeMessagesListChatModel):
+    def bind_tools(self, tools: Any, **kwargs: Any) -> Any:
+        return self
+
+
+class PromptCapture(BaseCallbackHandler):
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    def on_chat_model_start(
+        self, serialized: dict[str, Any], messages: list[list[BaseMessage]], **kwargs: Any
+    ) -> None:
+        self.prompts.append("\n".join(str(message.content) for message in messages[0]))
+
+
+@pytest.mark.asyncio
+async def test_output_boundary_rejects_lookup_id_as_reference() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    scenario.replays = {"FIND-001": {"outcome": "inconclusive", "reason": "missing_baseline"}}
+    content = '{"outcome":"inconclusive","next_action":"gather_evidence","evidence_refs":["FIND-001"],"lineage_count":1}'
+    model = ReplayModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "read_replayed_verification",
+                        "id": "read-1",
+                        "args": {"finding_id": "FIND-001"},
+                    }
+                ],
+            ),
+            AIMessage(content=content),
+        ]
+    )
+    row = await run_episode(scenario, model, "baseline", timeout=5)
+    assert row.get("provenance", {}).get("accepted") is False
+    assert row["bound_decision"] is None
+    assert "unknown_reference" in row["provenance"]["issues"]
+    assert row["content"] == content
+
+
+@pytest.mark.asyncio
+async def test_agent_consumes_replay_without_exposing_golden_answers() -> None:
+    scenario = Scenario.model_validate(
+        {
+            "scenario_id": "fresh",
+            "objective": "Assess one claim",
+            "finding_id": "FIND-1",
+            "claim_replays": ["FIND-1"],
+            "checkpoint": "Decide the next step.",
+            "history": [],
+            "snapshots": [],
+            "replays": {
+                "FIND-1": {
+                    "outcome": "supported",
+                    "reference": "workspace-evidence://" + "a" * 64,
+                    "invocation_id": "run-A",
+                }
+            },
+            "expected": {
+                "outcome": "supported",
+                "accepted_actions": ["report_scoped"],
+                "evidence_refs": ["workspace-evidence://" + "a" * 64],
+                "lineage_count": 1,
+                "required_reads": ["FIND-1"],
+            },
+        }
+    )
+    capture = PromptCapture()
+    model = ReplayModel(
+        callbacks=[capture],
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "read_replayed_verification",
+                        "id": "read-1",
+                        "args": {"finding_id": "FIND-1"},
+                    }
+                ],
+            ),
+            AIMessage(
+                content=json.dumps(
+                    {
+                        "outcome": "supported",
+                        "next_action": "report_scoped",
+                        "evidence_refs": ["workspace-evidence://" + "a" * 64],
+                        "lineage_count": 1,
+                    }
+                )
+            ),
+        ],
+    )
+    result = await run_episode(scenario, model, "baseline", timeout=5)
+    assert result["scores"]["decision_correct"] is True
+    assert result["provenance"]["accepted"] is True
+    assert result["bound_decision"] is not None
+    assert result["reads"] == ["FIND-1"]
+    assert result["cost_usd"] is None
+    assert "workspace-evidence://" + "a" * 64 not in capture.prompts[0]
+    assert all(
+        word not in capture.prompts[0]
+        for word in ("accepted_actions", "required_reads", '"expected"')
+    )
+
+
+@pytest.mark.asyncio
+async def test_ablation_changes_only_kg_evidence_context_and_restores_flags(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cases = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")
+    scenario = cases[0]
+    monkeypatch.setenv("RAPTIX_KG_EVIDENCE_CONTEXT", "caller-value")
+    prompts = {}
+    for variant in ("baseline", "evidence"):
+        capture = PromptCapture()
+        model = ReplayModel(responses=[AIMessage(content="not-json")], callbacks=[capture])
+        result = await run_episode(scenario, model, variant, timeout=5)
+        assert result["scores"]["valid_response"] is False
+        prompts[variant] = capture.prompts[0]
+    assert "UNTRUSTED_KG_EVIDENCE" not in prompts["baseline"]
+    assert "UNTRUSTED_KG_EVIDENCE" in prompts["evidence"]
+    assert "required_reads" not in prompts["evidence"]
+    import os
+
+    assert os.environ["RAPTIX_KG_EVIDENCE_CONTEXT"] == "caller-value"
+
+
+def test_scoring_rejects_oracle_answer_without_required_reads() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = json.dumps(
+        {
+            "outcome": "supported",
+            "next_action": "report_scoped",
+            "evidence_refs": scenario.expected.evidence_refs,
+            "lineage_count": 1,
+        }
+    )
+    assert score_decision(scenario, content, [], [])["decision_correct"] is False
+
+
+def test_duplicate_reads_are_counted() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    scored = score_decision(scenario, "invalid", ["FIND-001", "FIND-001"], [])
+    assert scored["redundant_reads"] == 1
+
+
+def test_foreign_lookup_and_forbidden_tool_attempt_are_scope_violations() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    scored = score_decision(scenario, "invalid", ["FOREIGN"], ["bash"])
+    assert scored["scope_violations"] == 2
+
+
+def test_shared_lineage_cannot_be_scored_as_independent_sources() -> None:
+    scenario = next(
+        case
+        for case in load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")
+        if case.scenario_id == "shared-lineage"
+    )
+    content = json.dumps(
+        {
+            "outcome": "supported",
+            "next_action": "report_scoped",
+            "evidence_refs": scenario.expected.evidence_refs,
+            "lineage_count": 2,
+        }
+    )
+    scored = score_decision(scenario, content, ["FIND-005", "FIND-005-ALIAS"], [])
+    assert scored["verdict_correct"] is True
+    assert scored["lineage_correct"] is False
+    assert scored["decision_correct"] is False
+
+
+@pytest.mark.parametrize("corpus", ["dev", "held-out"])
+def test_corpus_scenarios_are_internally_consistent(corpus: str) -> None:
+    cases = load_scenarios(BENCHMARKS_DIR / f"scenarios/decision-eval/{corpus}.json")
+    assert len({case.scenario_id for case in cases}) == len(cases)
+    assert len({case.finding_id for case in cases}) == len(cases)
+    for case in cases:
+        assert case.expected.required_reads
+        assert set(case.expected.required_reads) <= set(case.claim_replays) <= set(case.replays)
+        references = {
+            row["reference"]
+            for lookup, row in case.replays.items()
+            if lookup in case.claim_replays
+            if isinstance(row.get("reference"), str)
+        }
+        assert set(case.expected.evidence_refs) <= references, case.scenario_id
+        invocations = {
+            row["invocation_id"]
+            for row in case.replays.values()
+            if row.get("reference") in set(case.expected.evidence_refs)
+        }
+        assert case.expected.lineage_count == len(invocations), case.scenario_id
+
+
+def test_held_out_corpus_stays_in_the_evaluation_band() -> None:
+    cases = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/held-out.json")
+    assert 15 <= len(cases) <= 20
+
+
+@pytest.mark.parametrize("corpus", ["dev", "held-out"])
+def test_verification_reference_has_one_recorded_invocation(corpus: str) -> None:
+    cases = load_scenarios(BENCHMARKS_DIR / f"scenarios/decision-eval/{corpus}.json")
+    for case in cases:
+        producers: dict[str, str] = {}
+        for replay in case.replays.values():
+            if "reference" not in replay:
+                continue
+            reference, invocation = replay["reference"], replay["invocation_id"]
+            assert producers.setdefault(reference, invocation) == invocation, case.scenario_id
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        "{body}",
+        "```json\n{body}\n```",
+        "Here is my decision:\n\n```json\n{body}\n```\n",
+        "{body}\n\nRationale: the current read supports the scoped claim.",
+        "Analysis follows.\n\n{body}\n\nEnd of analysis.",
+    ],
+)
+def test_enveloped_valid_decision_is_scored(template: str) -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = template.format(body=json.dumps(_correct_decision(scenario)))
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is True
+    assert scored["decision_correct"] is True
+
+
+def test_prose_without_a_json_decision_stays_invalid() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = "The retained capture supports the claim, so report it."
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is False
+    assert scored["decision_correct"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        {"outcome": "believed"},
+        {"next_action": "print_flag"},
+        {"lineage_count": "1"},
+        {"unexpected": True},
+    ],
+)
+def test_enveloped_but_invalid_decision_stays_unscored(mutation: dict[str, Any]) -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    body = {**_correct_decision(scenario), **mutation}
+    content = f"```json\n{json.dumps(body)}\n```"
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is False
+    assert scored["decision_correct"] is False
+
+
+def test_enveloped_decision_missing_a_field_stays_unscored() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    body = _correct_decision(scenario)
+    del body["lineage_count"]
+    content = f"```json\n{json.dumps(body)}\n```"
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is False
+
+
+def test_non_decision_json_before_the_decision_is_skipped() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = (
+        'Metadata: {"source": "replay", "count": 1}\n'
+        "```json\n" + json.dumps(_correct_decision(scenario)) + "\n```"
+    )
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is True
+    assert scored["decision_correct"] is True
+
+
+def test_braces_inside_string_values_do_not_break_extraction() -> None:
+    decision = parse_decision(
+        'note {"outcome": "supported", "next_action": "report_scoped", '
+        '"evidence_refs": ["ref{with}braces"], "lineage_count": 1}'
+    )
+    assert decision is not None
+    assert decision.evidence_refs == ["ref{with}braces"]
+
+
+@pytest.mark.asyncio
+async def test_timeout_is_a_failed_episode_with_unknown_usage() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    model = ReplayModel(responses=[AIMessage(content="irrelevant")], sleep=1)
+    row = await run_episode(scenario, model, "baseline", timeout=0.01)
+    assert row["error"] == "TimeoutError"
+    assert row["scores"]["decision_correct"] is False
+    assert row["input_tokens"] is None and row["cost_usd"] is None
+
+
+def test_paired_summary_keeps_failures_in_denominator() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = json.dumps(
+        {
+            "outcome": "supported",
+            "next_action": "report_scoped",
+            "evidence_refs": scenario.expected.evidence_refs,
+            "lineage_count": 1,
+        }
+    )
+    rows = [
+        {
+            "scenario_id": scenario.scenario_id,
+            "model": "test",
+            "variant": variant,
+            "expected_outcome": "supported",
+            "scores": score_decision(
+                scenario, content if variant == "evidence" else "invalid", ["FIND-001"], []
+            ),
+            "error": "ProviderError" if variant == "baseline" else None,
+        }
+        for variant in ("baseline", "evidence")
+    ]
+    report = summarize(rows)
+    assert report["paired_decision_gain"]["test"] == 1
+    assert report["groups"]["test:baseline"]["provider_failures"] == 1
+    assert report["groups"]["test:baseline"]["decision_correct"] == 0
+    assert report["groups"]["test:baseline"]["provenance_rejections"] is None
+    with pytest.raises(ValueError, match="both conditions"):
+        summarize(rows[:1])
+    with pytest.raises(ValueError, match="duplicate"):
+        summarize(rows + rows[:1])
+
+
+def test_cli_runs_both_conditions_against_scripted_http_provider(tmp_path: Path) -> None:
+    import os
+    import subprocess
+    import sys
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    from benchmarks.engine.paths import REPO_ROOT
+
+    second_episode_started = threading.Event()
+    release_provider = threading.Event()
+    first_progress_received = threading.Event()
+    logs: list[str] = []
+
+    class Provider(BaseHTTPRequestHandler):
+        requests = 0
+
+        def log_message(self, format: str, *args: Any) -> None:
+            return None
+
+        def do_POST(self) -> None:
+            Provider.requests += 1
+            if Provider.requests == 3:
+                second_episode_started.set()
+                release_provider.wait(30)
+            request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            user = next(message for message in request["messages"] if message["role"] == "user")
+            checkpoint = json.loads(user["content"])
+            assert "expected" not in checkpoint and "required_reads" not in checkpoint
+            if request["messages"][-1]["role"] == "tool":
+                message = {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "outcome": "supported",
+                            "next_action": "report_scoped",
+                            "evidence_refs": ["workspace-evidence://" + "a" * 64],
+                            "lineage_count": 1,
+                        }
+                    ),
+                }
+                finish = "stop"
+            else:
+                message = {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "type": "function",
+                            "id": "read-1",
+                            "function": {
+                                "name": "read_replayed_verification",
+                                "arguments": json.dumps(
+                                    {"finding_id": checkpoint["available_replays"][0]}
+                                ),
+                            },
+                        }
+                    ],
+                }
+                finish = "tool_calls"
+            body = json.dumps(
+                {
+                    "id": "scripted",
+                    "object": "chat.completion",
+                    "created": 0,
+                    "model": "scripted-http",
+                    "choices": [{"index": 0, "message": message, "finish_reason": finish}],
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+                }
+            ).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Provider)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        command = [
+            sys.executable,
+            "-m",
+            "benchmarks.suites.decision_eval",
+            "--model",
+            "scripted-http",
+            "--output",
+            str(tmp_path / "report"),
+            "--timeout",
+            "10",
+        ]
+        env = {
+            **os.environ,
+            "RAPTIX_PLUGINS": "__benchmark_tests__",
+            "RAPTIX_LLM__PROXY_URL": f"http://127.0.0.1:{server.server_port}",
+            "RAPTIX_LLM__PROXY_API_KEY": "scripted-secret-not-for-report",
+        }
+        process = subprocess.Popen(
+            command,
+            env=env,
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+
+        def read_progress() -> None:
+            assert process.stdout is not None
+            for line in process.stdout:
+                logs.append(line)
+                if "[1/12] DONE" in line:
+                    first_progress_received.set()
+
+        reader = threading.Thread(target=read_progress, daemon=True)
+        reader.start()
+        try:
+            assert second_episode_started.wait(15), "provider never reached the next episode"
+            assert first_progress_received.wait(2), "no flushed progress before the run finished"
+            partial = (tmp_path / "report/episodes.jsonl").read_text(encoding="utf-8").splitlines()
+            assert len(partial) == 1
+            assert json.loads(partial[0])["scenario_id"] == "fresh-supported"
+        finally:
+            release_provider.set()
+            try:
+                process.wait(timeout=90)
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait(timeout=5)
+                reader.join(5)
+        assert process.returncode == 0, "".join(logs)
+        report_text = (tmp_path / "report/report.json").read_text(encoding="utf-8")
+        report = json.loads(report_text)
+        assert "scripted-secret-not-for-report" not in report_text
+        assert len(report["episodes"]) == 12
+        assert report["output_boundary"] == "read-bound-v1"
+        assert report["episodes"][0]["provenance"]["accepted"] is True
+        assert report["episodes"][0]["bound_decision"]["lineage_count"] == 1
+        assert report["summary"]["groups"]["scripted-http:baseline"]["decision_correct"] == 1 / 6
+        assert report["summary"]["groups"]["scripted-http:evidence"]["false_positive_rate"] == 1
+        assert report["summary"]["paired_decision_gain"]["scripted-http"] == 0
+        assert all(
+            row["input_tokens"] == 20 and row["cost_usd"] is None for row in report["episodes"]
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(5)
+
+
+@pytest.mark.asyncio
+async def test_completed_tool_attempt_survives_later_provider_failure() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+
+    class FailingProvider(ReplayModel):
+        async def _agenerate(self, *args: Any, **kwargs: Any) -> Any:
+            if self.i == 1:
+                raise RuntimeError("provider failed on the next turn")
+            return await super()._agenerate(*args, **kwargs)
+
+    model = FailingProvider(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[{"name": "bash", "id": "outside", "args": {"command": "not-executed"}}],
+            ),
+            AIMessage(content="never reached"),
+        ]
+    )
+    row = await run_episode(scenario, model, "baseline", timeout=5)
+    assert row["error"] == "RuntimeError"
+    assert row["bound_decision"] is None
+    assert row["provenance"]["issues"] == ["episode_failed"]
+    assert row["scores"]["scope_violations"] == 1
+    assert row["completed_model_turns"] == 1
+    assert row["cost_usd"] is None
+
+
+def test_cli_authentication_failure_saves_report_and_exits_nonzero(tmp_path: Path) -> None:
+    import os
+    import subprocess
+    import sys
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    from benchmarks.engine.paths import REPO_ROOT
+
+    class DeniedProvider(BaseHTTPRequestHandler):
+        def log_message(self, format: str, *args: Any) -> None:
+            return None
+
+        def do_POST(self) -> None:
+            self.rfile.read(int(self.headers["Content-Length"]))
+            body = json.dumps(
+                {"error": {"message": "invalid authentication", "type": "authentication_error"}}
+            ).encode()
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), DeniedProvider)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "benchmarks.suites.decision_eval",
+                "--model",
+                "scripted-denied",
+                "--output",
+                str(tmp_path / "denied"),
+                "--timeout",
+                "10",
+            ],
+            cwd=REPO_ROOT,
+            env={
+                **os.environ,
+                "RAPTIX_PLUGINS": "__benchmark_tests__",
+                "RAPTIX_LLM__PROXY_URL": f"http://127.0.0.1:{server.server_port}",
+                "RAPTIX_LLM__PROXY_API_KEY": "synthetic-denied-key",
+            },
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+        assert result.returncode != 0
+        report = json.loads((tmp_path / "denied/report.json").read_text(encoding="utf-8"))
+        assert len(report["episodes"]) == 12
+        assert all(
+            row["error"] == "AuthenticationError" and row["completed_model_turns"] == 0
+            for row in report["episodes"]
+        )
+        assert "All episodes failed during execution" in result.stderr
+        assert "synthetic-denied-key" not in result.stdout + result.stderr
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(5)
+
+
+@pytest.mark.asyncio
+async def test_slow_episode_emits_heartbeat_and_retains_failed_results(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from benchmarks.suites.decision_eval import evaluate
+
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    monkeypatch.setattr(evaluate, "PROGRESS_INTERVAL_SECONDS", 0.02)
+    monkeypatch.setattr(
+        evaluate,
+        "ChatOpenAI",
+        lambda **kwargs: ReplayModel(responses=[AIMessage(content="invalid")], sleep=0.08),
+    )
+    rows = await evaluate.evaluate_models([scenario], ["scripted-slow"], 1, 0, 5, tmp_path)
+    log = capsys.readouterr().out
+    assert "[1/2] WAIT" in log
+    assert "[2/2] DONE" in log and "status=FAIL" in log
+    journal = [
+        json.loads(line)
+        for line in (tmp_path / "episodes.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert journal == rows
+    assert (tmp_path / "progress.log").read_text(encoding="utf-8") == log
+
+
+@pytest.mark.asyncio
+async def test_cancelling_progress_monitor_restores_episode_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import asyncio
+    import os
+
+    from benchmarks.suites.decision_eval import evaluate
+
+    entered = asyncio.Event()
+
+    class SlowProvider(ReplayModel):
+        async def _agenerate(self, *args: Any, **kwargs: Any) -> Any:
+            entered.set()
+            return await super()._agenerate(*args, **kwargs)
+
+    monkeypatch.setenv("RAPTIX_KG_EVIDENCE_CONTEXT", "caller-value")
+    monkeypatch.setattr(
+        evaluate,
+        "ChatOpenAI",
+        lambda **kwargs: SlowProvider(responses=[AIMessage(content="invalid")], sleep=10),
+    )
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    run = asyncio.create_task(evaluate.evaluate_models([scenario], ["scripted-slow"], 1, 0, 30))
+    await asyncio.wait_for(entered.wait(), timeout=5)
+    run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await run
+    assert os.environ["RAPTIX_KG_EVIDENCE_CONTEXT"] == "caller-value"

@@ -166,6 +166,30 @@ find / -name "*.xml" -path "*/security/*" 2>/dev/null
 cat /ros2_ws/install/*/share/*/keystore/enclaves/**/*.pem 2>/dev/null
 ```
 
+## Evidence
+
+```bash
+EVIDENCE="/workspace/evidence/iot/ros2-dds/$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$EVIDENCE"
+cp /tmp/ros2_capture.pcap "$EVIDENCE/" 2>/dev/null
+# Any extracted key material found in Phase 4:
+find / -name "*.pem" -o -name "*.key" -o -name "id_rsa" 2>/dev/null | \
+    xargs -I{} cp {} "$EVIDENCE/" 2>/dev/null
+sha256sum "$EVIDENCE"/* >> "$EVIDENCE/sha256.txt"
+```
+
+```python
+kg_record(
+    '[{"kind": "Finding", "key": f"ros2-dds::{domain_id}::{topic}",'
+    '  "label": f"Unauthenticated ROS2/DDS topic exposure on domain {domain_id}",'
+    '  "props": {"domain_id": domain_id,'
+    '            "topic": topic,'
+    '            "technique": "unauthenticated-subscribe-or-publish",'
+    '            "safety_critical_confirmed": safety_critical_confirmed,'
+    '            "source": "cyclonedds+ros2-cli"}}]'
+)
+```
+
 ## ATT&CK Mapping
 
 | Technique | ID | Notes |

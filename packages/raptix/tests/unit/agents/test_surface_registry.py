@@ -5,6 +5,9 @@ from raptix.intelligence.agents.standard._surface_registry import (
     applicable_vuln_classes,
     build_coverage_matrix,
     build_objective_expand_payload,
+    independent_cell_count,
+    recommended_in_flight,
+    server_resilience_cap,
     session_name_for_cell,
     surfaces_from_kg_inventory,
 )
@@ -103,3 +106,41 @@ def test_kg_inventory_and_objective_payload_are_deterministic() -> None:
     assert all(child["mitre"] == ["T1190"] for child in payload["children"])
     assert all("session_name=" in child["notes"] for child in payload["children"])
     assert all("gen=0" in child["notes"] for child in payload["children"])
+
+
+def test_independent_cell_count_excludes_chain_dependent_cells() -> None:
+    cells = [
+        {"cell_id": "sqli::a", "via_cell": ""},
+        {"cell_id": "xss::a"},
+        {"cell_id": "ssrf::b", "via_cell": "sqli::a"},
+    ]
+
+    assert independent_cell_count(cells) == 2
+
+
+def test_server_resilience_cap_defaults_to_three_for_unmatched_technology() -> None:
+    surfaces = [{"key": "s1", "technologies": [{"label": "nginx"}]}]
+
+    assert server_resilience_cap(surfaces) == 3
+    assert server_resilience_cap([]) == 3
+
+
+def test_server_resilience_cap_drops_to_one_for_known_fragile_technology() -> None:
+    surfaces = [
+        {"key": "s1", "technologies": [{"label": "nginx"}]},
+        {"key": "s2", "technologies": [{"label": "Werkzeug/3.0"}]},
+    ]
+
+    assert server_resilience_cap(surfaces) == 1
+
+
+def test_recommended_in_flight_combines_independence_and_resilience() -> None:
+    independent_cells = [{"cell_id": f"sqli::{i}"} for i in range(5)]
+    resilient_surfaces = [{"key": "s1", "technologies": [{"label": "nginx"}]}]
+    fragile_surfaces = [{"key": "s1", "technologies": [{"label": "werkzeug"}]}]
+
+    assert recommended_in_flight(independent_cells, resilient_surfaces) == 3
+    assert recommended_in_flight(independent_cells, fragile_surfaces) == 1
+
+    one_independent = [{"cell_id": "sqli::a"}, {"cell_id": "ssrf::b", "via_cell": "sqli::a"}]
+    assert recommended_in_flight(one_independent, resilient_surfaces) == 1

@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.cve_bench import live
-from benchmarks.cve_bench.live import LiveConfig, invoke_live_agent, load_evidence
-from benchmarks.cve_bench.loader import CVEBenchChallenge
+from benchmarks.suites.cve_bench import live
+from benchmarks.suites.cve_bench.live import LiveConfig, invoke_live_agent, load_evidence
+from benchmarks.suites.cve_bench.loader import CVEBenchChallenge
 
 
 def _challenge() -> CVEBenchChallenge:

@@ -1,0 +1,50 @@
+# Vulnerable target lab (see README.md for the full runbook and acceptance
+# checks).
+#
+# Joins the Raptix production stack's sandbox network so the agent sandbox
+# can reach the target; publishes no host ports and drops all capabilities
+# except the two httpd's root master needs to drop to its worker user.
+# The network exists once the main stack is up; for a standalone target
+# test create it first: docker network create raptix_sandbox-net
+name: target-lab-httpd-2-4-49
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  vuln-target:
+    build: .
+    image: target-lab-httpd2449:local
+    container_name: target-lab-httpd2449
+    networks:
+      - sandbox-net
+    cap_drop:
+      - ALL
+    cap_add:
+      # httpd's root master drops privileges to the `daemon` worker user
+      # (SETUID/SETGID); the cgid daemon chowns its request socket (CHOWN).
+      # Binding :8080 needs no NET_BIND_SERVICE.
+      - SETUID
+      - SETGID
+      - CHOWN
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    # Go implants hold many OS threads (GOMAXPROCS on a many-core host);
+    # two concurrent implants + httpd exhaust anything smaller.
+    pids_limit: 512
+    restart: unless-stopped
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+
+networks:
+  sandbox-net:
+    external: true
+    name: ${RAPTIX_STACK_SANDBOX_NETWORK:-raptix_sandbox-net}

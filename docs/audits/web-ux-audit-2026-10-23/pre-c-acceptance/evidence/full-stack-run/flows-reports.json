@@ -1,0 +1,142 @@
+{
+  "app": "http://127.0.0.1:7624",
+  "generatedAt": "2026-10-24T03:20:13.911Z",
+  "rows": [
+    {
+      "op": "capabilities",
+      "ok": true,
+      "detail": "{\"noFindingsVariant\":false,\"simulatedEditorHelpers\":false,\"simulatedDraftRules\":false,\"periodStyle\":\"iso\",\"artifactDownloads\":true,\"revision\":true,\"storedTemplates\":true}"
+    },
+    {
+      "op": "list",
+      "ok": true,
+      "detail": "{items,page,pageSize,total,counts,projects,templates,authors}"
+    },
+    {
+      "op": "templates",
+      "ok": true,
+      "detail": "array(1)"
+    },
+    {
+      "op": "deliveries",
+      "ok": true,
+      "detail": "{items,page,pageSize,total}"
+    },
+    {
+      "op": "draftOptions",
+      "ok": true,
+      "detail": "{projectId,templates,findings,reviewers,canCreate,createReason,confirmedCount}"
+    },
+    {
+      "op": "editor (fixture report)",
+      "ok": true,
+      "detail": "{report,project,canEdit,editReason,findings,linked}"
+    },
+    {
+      "op": "review (fixture report)",
+      "ok": true,
+      "detail": "{report,project,checks,linked,exports,gates}"
+    },
+    {
+      "op": "createTemplate",
+      "ok": true,
+      "detail": "{id,name,kind,version,owner,status,lang,updated,sections}"
+    },
+    {
+      "op": "templates (after createTemplate)",
+      "ok": true,
+      "detail": "array(2)"
+    },
+    {
+      "op": "createDraft",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "editor (new draft)",
+      "ok": true,
+      "detail": "{report,project,canEdit,editReason,findings,linked}"
+    },
+    {
+      "op": "saveSection (Summary)",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "saveSection (Scope and method)",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "saveSection (Findings)",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "addSection",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "removeSection",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "reorderSections",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "setFindings (confirmed finding)",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "submit",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt,findings,sections}"
+    },
+    {
+      "op": "review (in review)",
+      "ok": true,
+      "detail": "{report,project,checks,linked,exports,gates}"
+    },
+    {
+      "op": "decide (approve, reviewer)",
+      "ok": true,
+      "detail": "approved"
+    },
+    {
+      "op": "exportVersion (PDF)",
+      "ok": true,
+      "detail": "{report,rec,artifact}"
+    },
+    {
+      "op": "exportArtifact (markdown)",
+      "ok": true,
+      "detail": "{filename,mediaType,content,encoding,digest}"
+    },
+    {
+      "op": "deliver",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt}"
+    },
+    {
+      "op": "deliveries (after deliver)",
+      "ok": true,
+      "detail": "{items,page,pageSize,total}"
+    },
+    {
+      "op": "acknowledge",
+      "ok": true,
+      "detail": "{id,reportId,version,format,by,at,recipient,status,checksum,ackAt}"
+    },
+    {
+      "op": "revise",
+      "ok": true,
+      "detail": "{id,projectId,title,template,version,status,author,reviewer,updated,deliveredAt}"
+    }
+  ],
+  "refused": 0
+}

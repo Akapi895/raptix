@@ -31,17 +31,42 @@ Drive each dimension through one `ask_user_question` call (per CRITICAL_RULES #8
 3. Start date / end date / testing window with timezone (free-form, `allow_other=true` — suggest defaults like "Mon-Fri 09:00-18:00 client TZ")
 4. In-scope targets AND out-of-scope targets (ONE combined free-form question — "What's in scope, and what's explicitly excluded?", `allow_other=true`)
 
+**Dangerous methods (mandatory, always asked)**
+1b. Ask once with `ask_user_question`: "Confirm the dangerous-method list. These methods are always prohibited and always need operator approval at runtime, even when HITL is off." Options: `Confirm the default list (Recommended)` (description lists the six labels below) and `Add more methods` with `allow_other=true`. This call counts as one of the six RoE questions. If the six are otherwise used up, fold item 3 (dates and window) into item 1's combined answer. Never skip this step.
+   The six default labels, kept verbatim in `prohibited_actions`:
+   - `Denial of Service (DoS/DDoS) and flooding`
+   - `Brute-force or password spraying`
+   - `Destructive data changes (wipe, format, mass delete, drop)`
+   - `Encrypting data for impact (ransomware)`
+   - `Persistence beyond the engagement`
+   - `Disabling security controls or audit logging`
+   Operator additions are appended. A default label is never removed, even if the operator answers with nothing else.
+
 **Boundaries & Escalation**
-5. Special permitted actions — phishing, password spraying, raw-socket scans (multi-select). Additional prohibited actions beyond the schema defaults are NOT a separate question — default silently to the Generation Rules #1 deny-list and only add a custom prohibition if the operator volunteers one unprompted; the summary in Phase 3 surfaces it for correction.
+5. Special permitted actions — phishing, raw-socket scans (multi-select). Do NOT offer password spraying here: it is a dangerous method, always prohibited by Step 1b. Prohibitions are handled by Step 1b, not by this question.
 6. Escalation contacts (ONE combined free-form question asking for both slots at once — "Who are your primary contacts? (client lead + red team lead, with name/role/channel for each)", minimum 2) AND authorization reference / contract # folded into the same answer as a trailing field (`allow_other=true`)
 
 If the operator's opening message already answers a dimension (e.g. they paste a CIDR range and say "external pentest"), extract it directly — do not re-ask it as one of the 6.
 
 ### Step 2: Generate plan/roe.json
 
-Use the `RoE` schema from `raptix.core.schemas`. Write to the engagement directory.
+Use the `RoE` schema from `raptix_core.types.engagement`. Write to the engagement directory.
 
 See `references/roe-example.json` for a complete example and `../references/schema-quick-reference.md` for all required fields and valid values.
+
+Add the `machine_enforcement` block to the same file. The runtime enforces scope from this block alone, and the planning handoff is refused without it:
+
+```json
+"machine_enforcement": {
+  "mode": "enforce",
+  "in_scope": ["10.10.0.0/24", "app.example.com"],
+  "out_of_scope": ["10.10.0.99"]
+}
+```
+
+- `mode` must be `"enforce"`.
+- `in_scope` lists the same hosts, CIDRs and domain patterns as the in-scope targets from Step 1. It must not be empty, because an empty list allows every target. It must also cover the target the operator declared at launch.
+- `out_of_scope` lists the exclusions from Step 1. Leave it empty if there are none.
 
 ### Step 3: Validate
 
@@ -49,11 +74,12 @@ Run through the checklist in `references/validation-checklist.md` before present
 
 ## Generation Rules
 
-1. **Always include default prohibited actions** — DoS, unauthorized social engineering, unauthorized physical access, real data exfiltration, production data modification
+1. **Always include default prohibited actions** — the six dangerous-method labels from Step 1b (verbatim), unauthorized social engineering, unauthorized physical access, real data exfiltration, production data modification
 2. **Scope must be specific** — CIDR notation for IPs, wildcard notation for domains
 3. **Testing window must include timezone**
 4. **At least 2 escalation contacts** required
 5. **Authorization reference must not be empty**
+6. **`machine_enforcement` must be present with `mode: "enforce"` and a non-empty `in_scope`** — see Step 2
 
 ## Output
 

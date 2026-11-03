@@ -1,0 +1,10 @@
+PASS the capabilities document advertises single-operator review independentReview "single-operator"
+PASS the owner proposes their own plan propose HTTP 200; database proposed
+PASS the Governance page offers the owner an Approve control on their own plan Approve controls on the owner's proposed plan: 1
+PASS the owner approves the plan from the page; the database records approved and the decider database status approved; decidedBy is the author: true
+PASS the owner approves their own scope revision submit HTTP 200; approve HTTP 200; database approved
+PASS the owner captures, creates, reviews and confirms a finding capture HTTP 200; create HTTP 200; review HTTP 200; confirm HTTP 200; database confirmed
+PASS the owner sets up, selects the finding, submits the report and approves it template HTTP 200; setup HTTP 200; select HTTP 200; submit HTTP 200; approve HTTP 200; database approved
+PASS the approved report exports as DOCX, with its title and the finding title HTTP 200; title true; finding true
+{"PASS":8}
+SOLO_EXIT=0

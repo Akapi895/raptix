@@ -1,0 +1,16 @@
+route-smoke: 56 routes x 1 mode(s); new failures: 0; declared: 14; not occurring: 1
+  declared real:project [api-error] (the project overview reads the C2 sessions, which answer 503 because the verification stack has no C2 server (Sliver). The fleet read that used to fail is answered in the current stack.)
+  declared real:operation-new [api-error] (the thread read is served by the agent runtime (LangGraph), which the verification stack does not start; it answers 404.)
+  declared real:preflight [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:operation-schedule [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:operation [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:agent [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:ai-plan [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:ai-plan-review [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:ai-plan-compare [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:ai-branch [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:c2 [api-error] (the C2 sessions read answers 503 because the verification stack has no C2 server (Sliver).)
+  declared real:c2-channel [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:c2-session [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  declared real:c2-console [fixture-missing] (fixture not seeded by the verification stack; its real resource needs a runtime or flow that this environment does not create)
+  not occurring real:infrastructure: its declared cause did not fail in this run

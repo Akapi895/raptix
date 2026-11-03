@@ -57,6 +57,10 @@ class MiddlewareSlot(StrEnum):
     SUMMARIZATION = "summarization"
     PROMPT_CACHING = "prompt-caching"
     PATCH_TOOL_CALLS = "patch-tool-calls"
+    # P10c: delivers operator messages to a running dispatch at its model-call
+    # safe point. Declared after PATCH_TOOL_CALLS and before RECORD, so the
+    # delivered message is part of the request the recorder observes.
+    INSTANCE_MAILBOX = "instance-mailbox"
     # Full-fidelity run recording (model requests/responses + tool
     # calls/results as JSONL). Declared LAST so the recorder sits
     # innermost — closest to the runtime — and observes the exact
@@ -177,6 +181,7 @@ _BASE_SLOTS: frozenset[MiddlewareSlot] = _TAIL_SLOTS | {
     # Full-fidelity recording for lab/benchmark analysis. Env-gated
     # (no-op unless RAPTIX_RUNTIME__RECORD_PATH is set) so every
     # agent gets it without changing default-run behavior.
+    MiddlewareSlot.INSTANCE_MAILBOX,
     MiddlewareSlot.RECORD,
 }
 
@@ -213,9 +218,14 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     "blue_cell": _BASE_SLOTS,
     # ── Standard bash-executing specialists ──
     "recon": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
-    "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    # exploit gained the KG slot (not just KG_AUTOINGEST) so it can
+    # kg_record endpoint families it discovers mid-exploitation that
+    # weren't in recon's original handoff — otherwise a second surface
+    # wave found during exploitation has no path back into the
+    # orchestrator's kg_surface_inventory re-check (raptix.md).
+    "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "surface_exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
-    "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     # Three OSS roles run the KG middleware — the persistent-graph use
     # cases the spec calls out
     # (docs/design/2026-06-03-kg-middleware-redesign.md § 4.10).

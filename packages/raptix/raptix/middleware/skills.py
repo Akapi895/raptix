@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING, Any
 from deepagents.middleware._utils import append_to_system_message
 from deepagents.middleware.skills import SkillsMiddleware as BaseSkillsMiddleware
 
-from raptix.execution.tools.skills import build_load_skill_tool
+from raptix.execution.tools.plumbing.skills import build_load_skill_tool
 
 log = logging.getLogger(__name__)
 

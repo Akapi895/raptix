@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from raptix.runtime.recording import RecordingMiddleware, ReplayMiddleware
+from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
 from raptix_core.contracts.slots import SLOTS_PER_ROLE, MiddlewareSlot
 
 NMAP_XML = b"""<nmaprun><host><status state="up"/><address addr="10.0.0.1" addrtype="ipv4"/>
@@ -39,7 +39,7 @@ class _Sandbox:
     def ls_info(self, directory: str):
         return [{"path": f"{directory}/{self.name}", "size": len(self.content)}]
 
-    def download_files(self, paths: list[str]):
+    def download_files(self, paths: list[str], **kwargs):
         self.downloaded.extend(paths)
         return [SimpleNamespace(content=self.content, error=None)]
 

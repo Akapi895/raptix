@@ -94,8 +94,9 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Auto-create raptix_web DB on first startup (empty volume only).
-      # Existing deployments: run the SQL manually or `docker volume rm postgres_data`.
+      # Auto-create the raptix_api DB on first startup (empty volume only).
+      # Existing deployments: the raptix-api-postgres-init sidecar below
+      # re-runs the same idempotent script against a populated volume.
       - ./infra/containers/postgres-init:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
@@ -110,6 +111,132 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # Idempotent on every `docker compose up`, not just on a fresh
+  # postgres_data volume (same reasoning as bhce-postgres-init below) --
+  # most existing installs already have a populated volume from before
+  # apps/api existed.
+  raptix-api-postgres-init:
+    image: postgres:17-alpine
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-api-postgres-init
+    environment:
+      POSTGRES_USER: raptix
+      POSTGRES_DB: litellm
+      PGPASSWORD: ${POSTGRES_PASSWORD:-raptix}
+      PGHOST: postgres
+      RAPTIX_API_POSTGRES_DB: ${RAPTIX_API_POSTGRES_DB:-raptix_api}
+    volumes:
+      - ./infra/containers/postgres-init/01-create-api-db.sh:/raptix/ensure-api-db.sh:ro
+    entrypoint: ["bash", "/raptix/ensure-api-db.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - raptix-net
+    restart: "no"
+
+  # apps/api -- the ui-app BFF (ADR-0106). Reaches langgraph over raptix-net
+  # the same way the CLI does, with no bearer token by default (matching
+  # today's actual `langgraph dev` behavior; RAPTIX_RUNTIME_API_TOKEN_FILE
+  # stays optional -- see apps/api/.env.example). On sandbox-net too, ahead
+  # of need, so joining it later (once per-project sandbox provisioning
+  # exists, see apps/launcher/internal/sandboxes/) is a code change in
+  # apps/api only, not another compose edit.
+  api:
+    image: ghcr.io/akapi895/raptix-api:${RAPTIX_VERSION:-stable}
+    build:
+      context: .
+      dockerfile: infra/containers/api.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.0}
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-api
+    env_file: .env
+    environment:
+      - API_PORT=8080
+      - API_HOST=0.0.0.0
+      - DATABASE_URL=postgresql://raptix:${POSTGRES_PASSWORD:-raptix}@postgres:5432/${RAPTIX_API_POSTGRES_DB:-raptix_api}
+      - LANGGRAPH_API_URL=http://langgraph:2024
+      - RAPTIX_API_OPERATOR_USERNAME=${RAPTIX_API_OPERATOR_USERNAME:-admin}
+      - RAPTIX_API_OPERATOR_PASSWORD=${RAPTIX_API_OPERATOR_PASSWORD:-}
+      - RAPTIX_API_SESSION_DURATION_HOURS=${RAPTIX_API_SESSION_DURATION_HOURS:-12}
+      # Optional integrations -- apps/api degrades each to a clear 503/501
+      # when unset, never a fabricated success (see apps/api/README.md).
+      # The runtime token defaults to the shared sandbox-secrets mount below:
+      # the same file the langgraph service reads, so one
+      # `raptix web sandboxes init-secrets` run configures the whole
+      # api<->runtime lane (auth.py fails closed without it -- every request
+      # would 401, which is why the default points at the mount instead of
+      # staying unset).
+      - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-/run/raptix/sandbox-secrets/runtime-api-token}
+      # Vault: AES-256-GCM master key (apps/api only) and the bearer token the
+      # runtime presents to the internal vault routes -- same shared mount,
+      # same init-secrets run, reverse direction of the runtime-api-token lane.
+      - RAPTIX_VAULT_MASTER_KEY_FILE=${RAPTIX_VAULT_MASTER_KEY_FILE:-/run/raptix/sandbox-secrets/vault-master-key}
+      - RAPTIX_WEB_API_INTERNAL_TOKEN_FILE=${RAPTIX_WEB_API_INTERNAL_TOKEN_FILE:-/run/raptix/sandbox-secrets/web-api-internal-token}
+      - RAPTIX_SANDBOX_KEY_FILE=${RAPTIX_SANDBOX_KEY_FILE:-}
+      - RAPTIX_SANDBOX_KEY=${RAPTIX_SANDBOX_KEY:-}
+      - RAPTIX_SANDBOX_CONTROLLER_URL=${RAPTIX_SANDBOX_CONTROLLER_URL:-}
+      - RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE=${RAPTIX_SANDBOX_CONTROLLER_TOKEN_FILE:-}
+      - RAPTIX_SANDBOX_CONTROLLER_TOKEN=${RAPTIX_SANDBOX_CONTROLLER_TOKEN:-}
+      - SLIVER_BRIDGE_URL=${SLIVER_BRIDGE_URL:-}
+      - SLIVER_BRIDGE_TOKEN=${SLIVER_BRIDGE_TOKEN:-}
+      - FOFA_EMAIL=${FOFA_EMAIL:-}
+      - FOFA_KEY=${FOFA_KEY:-}
+      - ZOOMEYE_API_KEY=${ZOOMEYE_API_KEY:-}
+      - QUAKE_API_KEY=${QUAKE_API_KEY:-}
+      - SHODAN_API_KEY=${SHODAN_API_KEY:-}
+      - RAPTIX_NEO4J_URI=bolt://neo4j:7687
+      - RAPTIX_NEO4J_USER=neo4j
+      - RAPTIX_NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    volumes:
+      # Shared sandbox secrets (ADR-0086 A): the controller token, the
+      # sandbox key and the runtime-api token live here (created once by
+      # `raptix web sandboxes init-secrets`, default RAPTIX_SANDBOX_SECRETS_DIR).
+      # Read-only; sandboxes never receive them. Missing on a fresh install
+      # until init-secrets runs -- every consumer then degrades exactly as
+      # before (503 hints, runtime 401s), never a fabricated success.
+      - ${RAPTIX_SANDBOX_SECRETS_DIR:-${RAPTIX_HOME:-~/.raptix}/sandbox-secrets}:/run/raptix/sandbox-secrets:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      raptix-api-postgres-init:
+        condition: service_completed_successfully
+      langgraph:
+        condition: service_started
+    networks:
+      - raptix-net
+      - sandbox-net
+    restart: unless-stopped
+    logging: *default-logging
+
+  # Production frontend, served independently of the host's Node/Vite processes.
+  ui:
+    image: ghcr.io/akapi895/raptix-ui:${RAPTIX_VERSION:-stable}
+    build:
+      context: .
+      dockerfile: infra/containers/ui-app.Dockerfile
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-ui
+    ports:
+      - "127.0.0.1:${UI_PORT:-5173}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - raptix-net
+    user: nginx
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    pids_limit: 128
+    restart: unless-stopped
+    logging: *default-logging
 
   # Neo4j — Attack Chain Graph (the agent's persistent working memory)
   # On sandbox-net so cypher-shell from inside sandbox reaches bolt://neo4j:7687
@@ -273,22 +400,18 @@ services:
       # since the HTTP-only migration; this stanza pins it explicitly so
       # ``docker compose config`` shows intent.
       - SANDBOX_DAEMON=1
-      # Named engagements require the launcher's single-engagement mount.
-      # Cwd prefixes cannot isolate arbitrary shell commands (ADR-0042).
+      # A pinned engagement's workspace is /workspace/<slug>; the fence keeps
+      # every tool call inside it (ADR-0042).
       - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
-      - RAPTIX_WORKSPACE_ISOLATED=${RAPTIX_ENGAGEMENT_WORKSPACE:+1}
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
       - GHIDRA_INSTALL_DIR=/opt/ghidra
       - GHIDRA_MCP_URL=http://ghidra-mcp:8089
     volumes:
-      # Bind is engagement-scoped. The launcher sets RAPTIX_ENGAGEMENT_WORKSPACE
-      # to <home>/workspace/<slug> after the engagement picker, so the agent only
-      # ever sees its own engagement at /workspace. When the launcher is not in
-      # play (raw `make dev`, benchmark harness, dev workflows), the fallback is
-      # the whole tree under <home>/workspace.
-      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
+      # The workspace root is mounted at /workspace; each engagement lives at
+      # /workspace/<slug> and RAPTIX_ENGAGEMENT fences the runtime to one of them.
+      - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
       # Skills are no longer baked into this image — they live at
       # ``/app/skills/`` in the LANGGRAPH container (see
       # ``infra/containers/langgraph.Dockerfile``) and are read in-process by
@@ -405,19 +528,33 @@ services:
     environment:
       - RAPTIX_LLM__PROXY_URL=http://litellm:4000
       - RAPTIX_LLM__PROXY_API_KEY=${LITELLM_MASTER_KEY:-sk-raptix-master}
-      # HTTPSandbox transport target. ``sandbox`` is the compose service
-      # name (resolves via the shared ``sandbox-net`` network below). Port
-      # 9999 is the FastAPI daemon baked into the sandbox image (see
-      # ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
-      - SANDBOX_URL=http://sandbox:9999
-      # The launcher pins this engagement and binds its directory at /workspace.
-      # The harness verifies both containers' actual mounts before starting.
+      # HTTPSandbox transport target. The stack's own sandbox container name,
+      # not the ``sandbox`` service alias: per-project sandboxes (sbx-<slug>) join
+      # the same sandbox-net, and a shared alias would resolve round-robin across
+      # all of them. Port 9999 is the FastAPI daemon baked into the sandbox image
+      # (see ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
+      - SANDBOX_URL=http://raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox:9999
+      # Bearer token every caller must present (interfaces/api/auth.py). Same
+      # shared secrets mount as the api service: one init-secrets run
+      # configures the whole api<->runtime lane; without the file the runtime
+      # refuses every request (fail closed).
+      - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-/run/raptix/sandbox-secrets/runtime-api-token}
+      # Vault: where the agent's vault tools reach apps/api, and the bearer
+      # token they present to its internal routes (apps/api verifies it).
+      # Distinct from RAPTIX_API_URL (set on the cli service only, meaning
+      # "this stack's own langgraph API") -- RAPTIX_WEB_API_URL always means
+      # apps/api, the Node service that owns Vault/Project/WebShell records.
+      - RAPTIX_WEB_API_URL=${RAPTIX_WEB_API_URL:-http://api:8080}
+      - RAPTIX_WEB_API_INTERNAL_TOKEN_FILE=${RAPTIX_WEB_API_INTERNAL_TOKEN_FILE:-/run/raptix/sandbox-secrets/web-api-internal-token}
+      # The same workspace root as the runtime, so a pinned engagement's files
+      # are at /workspace/<slug> in both containers.
       - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
-      - RAPTIX_WORKSPACE_ISOLATED=${RAPTIX_ENGAGEMENT_WORKSPACE:+1}
       - RAPTIX_NEO4J_URI=bolt://neo4j:7687
       - RAPTIX_NEO4J_USER=neo4j
       - RAPTIX_NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
       # Skillogy is the canonical skill-retrieval backend (Neo4j-backed,
+      - RAPTIX_KNOWLEDGE_CORPUS_DIR=/data/knowledge
+      - RAPTIX_KNOWLEDGE_STATE_DIR=/var/lib/raptix/knowledge
       # phase-scoped retrieval). The in-process file-system
       # ``SkillsMiddleware`` stays available as an explicit opt-out via
       # ``RAPTIX_USE_SKILLOGY=0`` for standalone library use and
@@ -446,10 +583,16 @@ services:
       - ${RAPTIX_HOME:-~/.raptix}/telemetry:/root/.raptix/telemetry
       # SQLite checkpoints and dev-server thread/run metadata survive recreate.
       - langgraph_state:/app/.langgraph_api
+      # Curated sources are never edited by scan/index operations.
+      - ${RAPTIX_KNOWLEDGE_CORPUS_DIR:-./data/knowledge}:/data/knowledge:ro
+      - knowledge_state:/var/lib/raptix/knowledge
       # Soundwave writes planning documents through the sandbox, while the
       # handoff validator runs in this container and reads them locally.
-      # Mount the same per-engagement workspace at the same in-container path.
-      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
+      # Mount the same workspace root at the same in-container path.
+      - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
+      # Shared sandbox secrets (ADR-0086 A) -- see the api service's mount.
+      # Read-only; sandboxes never receive them.
+      - ${RAPTIX_SANDBOX_SECRETS_DIR:-${RAPTIX_HOME:-~/.raptix}/sandbox-secrets}:/run/raptix/sandbox-secrets:ro
     # Wait for litellm to be healthy: langgraph has retry logic but the launcher
     # uses `compose up --wait` and needs healthy as the single readiness signal.
     depends_on:
@@ -770,6 +913,7 @@ services:
       - ad
 
 volumes:
+  knowledge_state:
   postgres_data:
   langgraph_state:
   # Old .env files can reference this indirectly through RAPTIX_WORKSPACE_PATH.
@@ -787,3 +931,7 @@ networks:
     driver: bridge
   sandbox-net:
     driver: bridge
+    # This stack's own sandbox network. The default keeps the shared name that the web
+    # stack's per-project sandboxes use; set RAPTIX_STACK_SANDBOX_NETWORK to keep this
+    # stack's sandboxes apart from them.
+    name: ${RAPTIX_STACK_SANDBOX_NETWORK:-raptix_sandbox-net}

@@ -4,6 +4,22 @@
 flipped to strict mode in the same PR. Phase 1a (graph builder) is
 unblocked.
 
+> **Re-verified (2026-10-14):** the corpus has grown to 324 `SKILL.md`
+> files (+73 since this 251-file baseline). Re-ran the real validator —
+> `uv run python -m raptix.skills.audit --mode strict` — after fixing a
+> broken local `.venv`: **324 files scanned, 0 violations, exit code 0.**
+> Phase 0's "0 violations" claim still holds today, not just at the
+> 2026-06-03 baseline. An earlier static `grep` pass (done while the real
+> tool couldn't run) had estimated ~46 files missing `mitre_attack` and
+> flagged several non-canonical `subdomain` spellings as drift — the real
+> run shows that estimate was wrong: `R-no-attribution` accepts
+> `aatmf_tactic`/`upstream_ref` in place of `mitre_attack`, several of
+> those files sit under exempt paths (`reporting/`/`analyst/`), and the
+> alias map resolves the non-canonical spellings exactly as designed.
+> No Phase-0-extension batch is needed for the +73 files on this evidence.
+> Full detail: `../comparative-analysis-skills-raptix-vs-claude-red.md`
+> (§3.2, F8, corrected).
+
 Baseline scan (2026-06-03 right after Task 11 wired CI):
 
 ```
