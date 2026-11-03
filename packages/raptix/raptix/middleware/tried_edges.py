@@ -134,11 +134,19 @@ def _recent_text(rows: list[dict[str, Any]]) -> str:
 class TriedEdgesMiddleware(AgentMiddleware):
     """Keep a bounded, engagement-scoped attempt ledger; never veto a call."""
 
-    def __init__(self, *, store: KGStore, role: str, enabled: bool | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        store: KGStore,
+        role: str,
+        enabled: bool | None = None,
+        context_enabled: bool = True,
+    ) -> None:
         super().__init__()
         self._store = store
         self._role = role
         self._enabled = enabled
+        self._context_enabled = context_enabled
         self._slots = threading.BoundedSemaphore(value=2)
 
     def _is_enabled(self) -> bool:
@@ -210,7 +218,7 @@ class TriedEdgesMiddleware(AgentMiddleware):
         )
 
     async def awrap_model_call(self, request: Any, handler: Any) -> Any:
-        if not self._is_enabled():
+        if not self._is_enabled() or not self._context_enabled:
             return await handler(request)
         state = request.state or {}
         engagement = state.get("engagement_name") or state.get("kg_engagement")

@@ -3,11 +3,28 @@ import type { AuthStore } from "../../db/auth-store.js";
 import type { KnowledgeItemRecord, KnowledgeItemStore } from "../../db/knowledge-item-store.js";
 import type { RetrievalLogStore } from "../../db/retrieval-log-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
+import type { RuntimeTransport } from "../../adapters/runtime/client.js";
+import type { ConversationStore } from "../../db/conversation-store.js";
+import type { KnowledgeConfigurationService } from "../../services/knowledge-configuration.js";
+import { KnowledgeLibrary, knowledgeHistory } from "../../services/knowledge-library.js";
+import { RuntimeRejectedError } from "../../adapters/runtime/errors.js";
+
+class KnowledgeOperationError extends Error {
+  public readonly statusCode: number;
+  public constructor(error: unknown) {
+    const rejected = error instanceof RuntimeRejectedError;
+    super(rejected && [400, 404, 409, 422].includes(error.status) ? error.message : "Knowledge runtime unavailable. Check runtime authentication and Neo4j connectivity.");
+    this.statusCode = rejected && [400, 404, 409, 422].includes(error.status) ? error.status : 503;
+  }
+}
 
 export interface KnowledgeRoutesOptions {
   authStore: AuthStore;
   knowledgeItemStore: KnowledgeItemStore;
   retrievalLogStore: RetrievalLogStore;
+  runtime: RuntimeTransport;
+  conversationStore: ConversationStore;
+  configuration: KnowledgeConfigurationService;
 }
 
 function itemWire(item: KnowledgeItemRecord) {
@@ -22,25 +39,22 @@ function itemWire(item: KnowledgeItemRecord) {
   };
 }
 
-/**
- * index/index-status/scan would need a real embedding call (LiteLLM
- * /embeddings, the same pattern Skillogy's hybrid retrieval already uses --
- * see packages/raptix/raptix/skills/engine/server/app.py) AND a
- * retrieval/search endpoint to consume those embeddings during chat.
- * Neither a consumer nor a wiring point exists anywhere apps/api touches
- * yet; storing vectors nobody reads would be inert scaffolding dressed up
- * as a feature. apps/ui-app degrades this gracefully (indexStatus() treats
- * any non-2xx as "no status", scan()/startIndex() only error when clicked),
- * so items/categories/stats/retrieval-logs below stand on their own as a
- * real, browsable knowledge base.
- */
-async function indexingNotImplemented(_request: unknown, reply: FastifyReply): Promise<void> {
-  await reply.code(501).send({ error: "Not implemented for this deployment" });
-}
-
 export function registerKnowledgeRoutes(app: FastifyInstance, options: KnowledgeRoutesOptions): void {
   const requireSession = createRequireSession(options.authStore);
   const { knowledgeItemStore, retrievalLogStore } = options;
+  const library = new KnowledgeLibrary(options.runtime, knowledgeItemStore);
+  const invoke = (action: string, body: Record<string, unknown> = {}) => options.runtime.knowledgeRequest(action, body).catch(error => { throw new KnowledgeOperationError(error); });
+
+  app.get("/api/knowledge/graph-configuration", { preHandler: requireSession }, async () => {
+    const configuration = await options.configuration.snapshot();
+    let status: unknown;
+    try { status = await options.runtime.knowledgeRequest("status"); }
+    catch { status = { graph_available: false, graph_error: "Knowledge runtime unavailable. Check the runtime connection.", initialized: false }; }
+    return { ...configuration, status, applies_to: "New Web executions; running executions retain their snapshot. CLI defaults are unchanged." };
+  });
+  app.put<{ Body: { enabled: boolean; revision: number } }>("/api/knowledge/graph-configuration", {
+    preHandler: requireSession, schema: { body: { type: "object", additionalProperties: false, required: ["enabled", "revision"], properties: { enabled: { type: "boolean" }, revision: { type: "integer", minimum: 0 } } } },
+  }, request => options.configuration.update(request.body.enabled, request.body.revision));
 
   app.get("/api/knowledge/categories", { preHandler: requireSession }, async () => {
     const categories = await knowledgeItemStore.listCategories();
@@ -48,7 +62,8 @@ export function registerKnowledgeRoutes(app: FastifyInstance, options: Knowledge
   });
 
   app.get("/api/knowledge/items", { preHandler: requireSession }, async (request: FastifyRequest) => {
-    const query = request.query as { search?: string; category?: string; limit?: string; offset?: string };
+    const query = request.query as { view?: string; source?: string; search?: string; category?: string; limit?: string; offset?: string };
+    if (query.view === "documents") return library.page({ search: query.search?.slice(0, 200), source: query.source?.slice(0, 64), category: query.category?.slice(0, 128), limit: Math.min(100, Math.max(1, Number(query.limit) || 50)), offset: Math.min(100000, Math.max(0, Number(query.offset) || 0)) });
     if (query.search) {
       const { items, total } = await knowledgeItemStore.search(query.search);
       return { enabled: true, items: items.map(itemWire), total };
@@ -65,6 +80,7 @@ export function registerKnowledgeRoutes(app: FastifyInstance, options: Knowledge
 
   app.get("/api/knowledge/items/:id", { preHandler: requireSession }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = request.params as { id: string };
+    if (id.startsWith("ref::")) return invoke("detail", { id });
     const item = await knowledgeItemStore.get(id);
     if (!item) {
       await reply.code(404).send({ error: "knowledge item not found" });
@@ -110,7 +126,8 @@ export function registerKnowledgeRoutes(app: FastifyInstance, options: Knowledge
   });
 
   app.get("/api/knowledge/retrieval-logs", { preHandler: requireSession }, async (request: FastifyRequest) => {
-    const query = request.query as { conversationId?: string; messageId?: string; limit?: string };
+    const query = request.query as { view?: string; search?: string; offset?: string; conversationId?: string; messageId?: string; limit?: string };
+    if (query.view === "events") return knowledgeHistory(options.runtime, options.conversationStore, retrievalLogStore, { conversationId: query.conversationId, search: query.search?.slice(0, 200), offset: Math.min(100000, Math.max(0, Number(query.offset) || 0)), limit: Math.min(100, Math.max(1, Number(query.limit) || 50)) });
     const logs = await retrievalLogStore.list({
       conversationId: query.conversationId,
       messageId: query.messageId,
@@ -132,11 +149,13 @@ export function registerKnowledgeRoutes(app: FastifyInstance, options: Knowledge
 
   app.delete("/api/knowledge/retrieval-logs/:id", { preHandler: requireSession }, async (request: FastifyRequest) => {
     const { id } = request.params as { id: string };
+    if (id.startsWith("runtime::")) return invoke("delete-history", { id: id.slice(9) });
     const deleted = await retrievalLogStore.delete(id);
     return { success: deleted };
   });
 
-  app.post("/api/knowledge/scan", { preHandler: requireSession }, indexingNotImplemented);
-  app.post("/api/knowledge/index", { preHandler: requireSession }, indexingNotImplemented);
-  app.get("/api/knowledge/index-status", { preHandler: requireSession }, indexingNotImplemented);
+  app.post("/api/knowledge/scan", { preHandler: requireSession }, () => invoke("scan"));
+  app.post<{ Body: { allow_partial?: boolean } }>("/api/knowledge/index", { preHandler: requireSession }, request => invoke("index", { allow_partial: request.body?.allow_partial === true }));
+  app.get("/api/knowledge/index-status", { preHandler: requireSession }, () => invoke("status"));
+  app.post<{ Body: { query: Record<string, unknown> } }>("/api/knowledge/retrieve", { preHandler: requireSession }, request => invoke("search", { query: request.body?.query }));
 }

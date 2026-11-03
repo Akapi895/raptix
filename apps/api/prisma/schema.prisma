@@ -67,6 +67,7 @@ model Project {
   facts         ProjectFact[]
   factEdges     ProjectFactEdge[]
   factEvidence  ProjectFactEvidence[]
+  vaultSecrets  VaultSecret[]
 }
 
 model Conversation {
@@ -554,6 +555,55 @@ model BatchTask {
   result         String?
 
   @@index([queueId])
+}
+
+// Tier 4 (Vault): project-scoped secret storage, reversible (AES-256-GCM via
+// vault-crypto.ts), store/list(redacted)/reveal(audited)/revoke. Deliberately
+// NOT a global vault at launch: VaultSecret.projectId is required unless
+// scope is GLOBAL, which only the explicit promote action ever sets.
+// sourceProjectId is lineage after a promote, never re-interpreted as an
+// access scope. Every reveal (and every store/revoke/promote) writes a
+// VaultAudit row -- a dedicated table rather than the existing, deliberately
+// partial AuditLog model, so the trail is secret-id-indexed from day one.
+
+enum VaultSecretScope {
+  PROJECT
+  GLOBAL
+}
+
+model VaultSecret {
+  id              String           @id @default(cuid())
+  projectId       String?
+  project         Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scope           VaultSecretScope @default(PROJECT)
+  name            String
+  description     String           @default("")
+  kind            String           @default("credential")
+  cipherText      String
+  keyVersion      Int              @default(1)
+  sourceProjectId String?
+  revokedAt       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  createdBy       String           @default("")
+
+  @@index([projectId])
+  @@index([scope])
+  @@unique([projectId, name])
+}
+
+model VaultAudit {
+  id        String   @id @default(cuid())
+  secretId  String
+  action    String
+  actor     String
+  actorKind String
+  projectId String?
+  reason    String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([secretId])
+  @@index([createdAt])
 }
 
 // Tier 4: a webshell connection is metadata about an HTTP(S) webshell the

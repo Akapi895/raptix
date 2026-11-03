@@ -97,6 +97,7 @@ logger = logging.getLogger(__name__)
 graph_toggles_context: ContextVar[dict[str, bool] | None] = ContextVar(
     "graph_toggles", default=None
 )
+knowledge_graph_context: ContextVar[bool] = ContextVar("knowledge_graph_assistance", default=True)
 
 
 def _graph_toggle(name: str, env_var: str) -> bool:
@@ -179,7 +180,12 @@ def _make_tried_edges(*, role: str, **_: Any):
     from raptix.middleware.tried_edges import TriedEdgesMiddleware
 
     try:
-        return TriedEdgesMiddleware(store=KGStore.from_env(), role=role, enabled=True)
+        return TriedEdgesMiddleware(
+            store=KGStore.from_env(),
+            role=role,
+            enabled=True,
+            context_enabled=knowledge_graph_context.get(),
+        )
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         logger.debug("tried-edge slot skipped: %s", exc)
         return None
@@ -285,6 +291,9 @@ def _make_kg(*, role: str, **_: Any):
                 enabled_tools |= {"kg_record", "kg_ingest"}
         else:
             enabled_tools = None
+        assistance = knowledge_graph_context.get()
+        if not assistance and enabled_tools is not None:
+            enabled_tools -= {"kg_query", "kg_query_reference", "kg_surface_inventory"}
         experimental = os.environ.get("RAPTIX_KG_OPERATIONAL_SHADOW", "0").lower() in {
             "1",
             "true",
@@ -292,6 +301,7 @@ def _make_kg(*, role: str, **_: Any):
         }
         return KGMiddleware(
             enabled_tools=enabled_tools,
+            **({"context_enabled": False} if not assistance else {}),
             operational_shadow=role == "raptix" and experimental,
             # Wave T4: the orchestrator gets the planner's
             # planning-context projection (cheapest known attack paths)

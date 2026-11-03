@@ -94,12 +94,12 @@ describe("knowledge routes", () => {
     expect(deleted.json()).toEqual({ success: true });
   });
 
-  it("scan, index and index-status are stubbed 501 -- no embedding consumer exists yet", async () => {
+  it("scan, index and index-status dispatch to the authenticated reference runtime", async () => {
     const scan = await app.inject({ method: "POST", url: "/api/knowledge/scan", headers: auth() });
-    expect(scan.statusCode).toBe(501);
+    expect(scan.statusCode).toBe(200);
     const index = await app.inject({ method: "POST", url: "/api/knowledge/index", headers: auth() });
-    expect(index.statusCode).toBe(501);
+    expect(index.statusCode).toBe(200);
     const status = await app.inject({ method: "GET", url: "/api/knowledge/index-status", headers: auth() });
-    expect(status.statusCode).toBe(501);
+    expect(status.statusCode).toBe(200);
   });
 });

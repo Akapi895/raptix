@@ -17,6 +17,7 @@ import { replyRuntimeError } from "./conversations.routes.js";
 import type { SpecialistConfigurationService } from '../../services/specialist-configuration.js';
 
 export interface AgentLoopRoutesOptions {
+  knowledgeConfiguration?: import('../../services/knowledge-configuration.js').KnowledgeConfigurationService;
   specialistConfiguration?: SpecialistConfigurationService;
   authStore: AuthStore;
   conversationStore: ConversationStore;
@@ -102,6 +103,7 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
         conversation = await conversationStore.create({ title: titleFromMessage(message), projectId, runtimeThreadId, roleName: asString(request.body?.role) });
       }
       const configurable: Record<string, unknown> = { ...runConfigurableFor(project.workspaceSlug, options.sandboxKey),
+        ...(options.knowledgeConfiguration ? { knowledge_graph: await options.knowledgeConfiguration.snapshot() } : {}),
         graph_toggles: { auto_ingest_enabled: project.autoIngestEnabled, tried_edges_enabled: project.triedEdgesEnabled },
         ...(options.specialistConfiguration ? { specialist_configuration: await options.specialistConfiguration.snapshot(projectId) } : {}) };
       const userMessage = await conversationStore.appendMessage(conversation.id, "user", message);
@@ -137,6 +139,7 @@ export function registerAgentLoopRoutes(app: FastifyInstance, options: AgentLoop
       }
 
       const turn = await runAgentTurn({
+        knowledgeConfiguration: options.knowledgeConfiguration,
         specialistConfiguration: options.specialistConfiguration,
         conversation,
         message,

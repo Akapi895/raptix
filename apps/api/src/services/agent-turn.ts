@@ -24,6 +24,7 @@ export interface AgentTurnResult {
  * the same way, so there is exactly one place that knows how.
  */
 export async function runAgentTurn(args: {
+  knowledgeConfiguration?: import('./knowledge-configuration.js').KnowledgeConfigurationService;
   conversation: { id: string; runtimeThreadId: string; roleName: string | null; projectId?: string | null };
   specialistConfiguration?: SpecialistConfigurationService;
   message: string;
@@ -39,13 +40,17 @@ export async function runAgentTurn(args: {
   await conversationStore.appendMessage(conversation.id, "user", message);
 
   const assistantId = conversation.roleName ?? defaultAssistantId;
+  const effectiveConfig = { ...config, configurable: {
+    ...(config?.configurable as Record<string, unknown> ?? {}),
+    ...(args.specialistConfiguration ? { specialist_configuration: await args.specialistConfiguration.snapshot(conversation.projectId ?? null) } : {}),
+    ...(args.knowledgeConfiguration ? { knowledge_graph: await args.knowledgeConfiguration.snapshot() } : {}),
+  } };
   let run: RuntimeRun = await runtime.createRun(
     conversation.runtimeThreadId,
     assistantId,
     { messages: [{ role: "user", content: message }] },
     randomUUID(),
-    args.specialistConfiguration ? { ...config, configurable: { ...(config?.configurable as Record<string, unknown> ?? {}),
-      specialist_configuration: await args.specialistConfiguration.snapshot(conversation.projectId ?? null) } } : config,
+    effectiveConfig,
   );
 
   const deadline = Date.now() + waitMs;

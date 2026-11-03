@@ -21,6 +21,7 @@ export interface RuntimeClientOptions {
 
 /** Port routes depend on (matches AuthStore/ProjectStore/ConversationStore) -- RuntimeClient implements it; tests use a fake. */
 export interface RuntimeTransport {
+  knowledgeRequest(action: string, body?: Record<string, unknown>): Promise<unknown>;
   queryKnowledgeGraph(engagement: string, query: GraphRequest): Promise<GraphResult>;
   specialistRequest(path: string, body?: unknown): Promise<unknown>;
   ping(): Promise<{ version: string; graphIds: readonly string[] }>;
@@ -82,6 +83,11 @@ export class RuntimeClient implements RuntimeTransport {
   public async specialistRequest(path: string, body?: unknown): Promise<unknown> {
     if (!/^\/_raptix\/specialists(?:\/catalog\?specialist_id=[^&]+|\/validate)?$/.test(path)) throw new RuntimeRejectedError(400);
     return this.fetchJson(path, body);
+  }
+
+  public async knowledgeRequest(action: string, body: Record<string, unknown> = {}): Promise<unknown> {
+    if (!["status", "library", "detail", "scan", "index", "search", "history", "delete-history"].includes(action)) throw new RuntimeRejectedError(400);
+    return this.fetchJson(`/_raptix/knowledge/${action}`, body);
   }
 
   public async queryKnowledgeGraph(engagement: string, query: GraphRequest): Promise<GraphResult> {

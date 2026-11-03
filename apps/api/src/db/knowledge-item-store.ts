@@ -34,6 +34,7 @@ export interface CreateKnowledgeItemInput {
 }
 
 export interface KnowledgeItemStore {
+  page(args: { search?: string; category?: string; limit: number; offset: number }): Promise<KnowledgeSearchResult>;
   listCategories(): Promise<string[]>;
   listByCategoryPage(args: { category?: string; limit: number; offset: number }): Promise<KnowledgeListResult>;
   search(query: string): Promise<KnowledgeSearchResult>;
@@ -46,6 +47,18 @@ export interface KnowledgeItemStore {
 
 export class PrismaKnowledgeItemStore implements KnowledgeItemStore {
   public constructor(private readonly db: PrismaClient) {}
+
+  public async page(args: { search?: string; category?: string; limit: number; offset: number }): Promise<KnowledgeSearchResult> {
+    const where = {
+      ...(args.category ? { category: args.category } : {}),
+      ...(args.search ? { OR: ["title", "content", "category"].map(field => ({ [field]: { contains: args.search, mode: "insensitive" as const } })) } : {}),
+    };
+    const [items, total] = await Promise.all([
+      this.db.knowledgeItem.findMany({ where, orderBy: [{ updatedAt: "desc" }, { id: "asc" }], take: args.limit, skip: args.offset }),
+      this.db.knowledgeItem.count({ where }),
+    ]);
+    return { items, total };
+  }
 
   public async listCategories(): Promise<string[]> {
     const rows = await this.db.knowledgeItem.findMany({ select: { category: true }, distinct: ["category"], orderBy: { category: "asc" } });

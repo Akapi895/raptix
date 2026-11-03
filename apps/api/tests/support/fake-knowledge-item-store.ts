@@ -10,6 +10,11 @@ export class FakeKnowledgeItemStore implements KnowledgeItemStore {
   private items = new Map<string, KnowledgeItemRecord>();
   private nextId = 1;
 
+  public async page(args: { search?: string; category?: string; limit: number; offset: number }): Promise<KnowledgeSearchResult> {
+    const rows = (await this.search(args.search ?? "")).items.filter(item => !args.category || item.category === args.category);
+    return { items: rows.slice(args.offset, args.offset + args.limit), total: rows.length };
+  }
+
   public async listCategories(): Promise<string[]> {
     return [...new Set([...this.items.values()].map((item) => item.category))].sort();
   }

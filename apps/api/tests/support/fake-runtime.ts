@@ -10,6 +10,12 @@ import type { GraphRequest, GraphResult } from '../../src/adapters/runtime/graph
  * `getThreadState`.
  */
 export class FakeRuntime implements RuntimeTransport {
+  public knowledgeResponses: Record<string, unknown> = {};
+  public knowledgeCalls: { action: string; body: Record<string, unknown> }[] = [];
+  public async knowledgeRequest(action: string, body: Record<string, unknown> = {}): Promise<unknown> {
+    this.knowledgeCalls.push({ action, body });
+    return this.knowledgeResponses[action] ?? (action === "library" ? { items: [], total: 0, status: {} } : action === "history" ? { logs: [], total: 0 } : { graph_available: true, initialized: false, sources: [], job: { state: "idle" }, total_items: 0, indexed_items: 0 });
+  }
   public graphResponses = new Map<string, GraphResult>();
   public graphQueries: { engagement: string; query: GraphRequest }[] = [];
   public async queryKnowledgeGraph(engagement: string, query: GraphRequest): Promise<GraphResult> {
@@ -132,6 +138,7 @@ export class FakeRuntime implements RuntimeTransport {
 
 /** Always throws RuntimeUnavailableError -- used to test the "runtime down" error path. */
 export class UnavailableRuntime implements RuntimeTransport {
+  public async knowledgeRequest(): Promise<never> { throw new Error("runtime unavailable"); }
   public queryKnowledgeGraph = () => this.fail();
   public specialistRequest = () => this.fail();
   private async fail(): Promise<never> {

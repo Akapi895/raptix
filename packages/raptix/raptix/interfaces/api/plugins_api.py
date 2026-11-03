@@ -55,6 +55,7 @@ from raptix.graph_registry import _BUNDLE_TO_GRAPHS  # private, but stable: bund
 from raptix.interfaces.api.auth import require_runtime_token
 from raptix.interfaces.api.finding_poc_routes import router as finding_poc_router
 from raptix.interfaces.api.kg_query_routes import router as kg_query_router
+from raptix.interfaces.api.knowledge_routes import router as knowledge_router
 from raptix.interfaces.api.specialist_routes import router as specialist_router
 from raptix.interfaces.api.webshell_routes import router as webshell_router
 
@@ -147,6 +148,7 @@ app.include_router(finding_poc_router)
 app.include_router(webshell_router)
 app.include_router(specialist_router)
 app.include_router(kg_query_router)
+app.include_router(knowledge_router)
 
 
 @app.get("/_decepticon/bundles", response_model=BundlesResponse)

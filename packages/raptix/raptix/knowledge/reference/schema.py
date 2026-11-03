@@ -19,7 +19,7 @@ TYPE_LABELS = {
     ("atlas", "technique"): "KrgAtlasTechnique",
     ("atlas", "tactic"): "KrgAtlasTactic",
 }
-LABELS = frozenset(TYPE_LABELS.values()) | {"KrgUnresolvedRef"}
+LABELS = frozenset(TYPE_LABELS.values()) | {"KrgUnresolvedRef", "KrgReference"}
 RELATIONSHIPS = {
     "child_of": "CHILD_OF",
     "childof": "CHILD_OF",

@@ -18,6 +18,7 @@ export const PAGE_PERMISSION_MAP: Readonly<Record<string, string>> = {
   vulnerabilities: 'vulnerability:read',
   'file-management': 'files:read',
   webshell: 'webshell:read',
+  vault: 'vault:read',
   c2: 'c2:read',
   'c2-listeners': 'c2:read',
   'c2-sessions': 'c2:read',

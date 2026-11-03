@@ -261,6 +261,15 @@
                             <span data-i18n="nav.webshell">WebShell</span>
                         </div>
                     </div>
+                    <div class="nav-item" data-page="vault">
+                        <div class="nav-item-content" data-title="Vault"  data-i18n="nav.vault" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="vault">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <span data-i18n="nav.vault">Vault</span>
+                        </div>
+                    </div>
                     <!-- C2 sidebar entry (with submenu) -->
                     <div class="nav-item nav-item-has-submenu" data-page="c2" id="nav-c2">
                         <div class="nav-item-content" data-title="C2" data-router-action="submenu" data-router-value="c2" data-i18n="nav.c2" data-i18n-attr="data-title" data-i18n-skip-text="true">
@@ -1276,6 +1285,57 @@
                     </dialog>
                 </div>
 
+                <div id="page-vault" class="page vault-page">
+                    <div class="page-header">
+                        <h2 data-i18n="vault.title">Vault</h2>
+                        <div class="page-header-actions">
+                            <select id="vault-project-select" class="form-control vault-project-select" data-require-permission="vault:read"></select>
+                            <button type="button" id="vault-add" class="btn-primary" data-require-permission="vault:write" data-action="vault.add" data-i18n="vault.addSecret" disabled>Add secret</button>
+                        </div>
+                    </div>
+                    <div class="page-content vault-content">
+                        <div id="vault-feedback" class="vault-feedback" role="status" aria-live="polite" hidden></div>
+                        <section class="vault-card" aria-labelledby="vault-secrets-title">
+                            <div class="vault-section-header">
+                                <h3 id="vault-secrets-title" data-i18n="vault.secretsTitle">Secrets</h3>
+                                <p data-i18n="vault.secretsHint">Reveal is explicit and audited. Revoke prevents reuse; it never regenerates a value.</p>
+                            </div>
+                            <div id="vault-secrets" class="vault-secrets"></div>
+                        </section>
+                        <section class="vault-card" aria-labelledby="vault-global-title">
+                            <div class="vault-section-header">
+                                <h3 id="vault-global-title" data-i18n="vault.globalTitle">Promoted (global) secrets</h3>
+                                <p data-i18n="vault.globalHint">Visible to every project. Promotion is a one-way, explicit action.</p>
+                            </div>
+                            <div id="vault-global-secrets" class="vault-secrets"></div>
+                        </section>
+                    </div>
+                    <dialog id="vault-add-dialog" class="vault-add-dialog" aria-labelledby="vault-add-title">
+                        <form novalidate data-submit="vault.dialog.commit">
+                            <header class="vault-add-header">
+                                <h3 id="vault-add-title" data-i18n="vault.addDialogTitle">Add secret</h3>
+                                <button type="button" class="vault-dialog-close" data-action="vault.dialog.close" data-i18n="vault.closeDialog" data-i18n-attr="aria-label,title" data-i18n-skip-text="true" aria-label="Close add secret dialog" title="Close add secret dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+                            </header>
+                            <div class="vault-field">
+                                <label for="vault-add-name" data-i18n="vault.name">Name</label>
+                                <input id="vault-add-name" type="text" maxlength="200" autocomplete="off" spellcheck="false" required>
+                            </div>
+                            <div class="vault-field">
+                                <label for="vault-add-value" data-i18n="vault.value">Value</label>
+                                <input id="vault-add-value" type="password" autocomplete="off" spellcheck="false" required>
+                            </div>
+                            <div class="vault-field">
+                                <label for="vault-add-description" data-i18n="vault.description">Description (optional)</label>
+                                <input id="vault-add-description" type="text" maxlength="500" autocomplete="off" spellcheck="false">
+                            </div>
+                            <footer class="vault-dialog-actions">
+                                <button type="button" class="btn-secondary" data-action="vault.dialog.close" data-i18n="vault.cancelAdd">Cancel</button>
+                                <button type="submit" id="vault-add-confirm" class="btn-primary" data-require-permission="vault:write" data-i18n="vault.addToList">Store secret</button>
+                            </footer>
+                        </form>
+                    </dialog>
+                </div>
+
                 <div id="page-hitl" class="page">
                     <div class="page-header">
                         <h2 data-i18n="hitl.pageTitle">Execution Approvals</h2>
@@ -1581,93 +1641,70 @@
                     </div>
                 </div>
 
-                <!-- Knowledge management page: Library and Retrieval history are tabs of the same page (?tab=library|logs) -->
-                <div id="page-knowledge-management" class="page capabilities-page">
-                    <div class="page-header">
-                        <div><h2 data-i18n="knowledge.title">Knowledge Management</h2><p class="cap-page-description">Maintain the reference material agents can retrieve during assessments.</p></div>
-                        <div class="page-header-actions">
-                            <div data-knowledge-tab-panel="library" class="knowledge-tab-actions">
-                                <button class="btn-secondary" data-require-permission="knowledge:write" data-action="knowledge.refresh" title="Scan the configured knowledge directory for new or updated files">Scan sources</button>
-                                <details class="cap-action-disclosure"><summary>Index actions</summary><div><button class="btn-secondary" data-require-permission="knowledge:write" data-i18n="knowledge.buildIndex" data-action="knowledge.build">Build index</button><button class="btn-secondary btn-danger" data-require-permission="knowledge:write" data-i18n="knowledge.rebuildIndexFull" data-action="knowledge.rebuild">Full rebuild</button></div></details>
-                                <button class="btn-primary" data-require-permission="knowledge:write"  data-i18n="knowledge.addKnowledge" data-action="knowledge.add">Add knowledge</button>
+                <!-- Knowledge: reference corpus and manual notes; operational AKG remains project-scoped. -->
+                <div id="page-knowledge-management" class="page capabilities-page kn-page">
+                    <div class="page-header kn-header">
+                        <div class="kn-header-title"><h2 data-i18n="knowledge.title">Knowledge</h2><p class="cap-page-description">Security references, source indexes and retrieval activity.</p></div>
+                        <div class="page-header-actions kn-toolbar" role="toolbar" aria-label="Knowledge actions">
+                            <div class="kn-graph-control">
+                                <label class="kn-switch" title="Global preference for graph-assisted reads in new Web executions"><input id="knowledge-graph-enabled" type="checkbox" role="switch" disabled data-change="knowledge.graphToggle" data-require-permission="knowledge:write" aria-describedby="knowledge-graph-help"><span>Knowledge Graph</span></label>
+                                <span id="knowledge-graph-status" class="kn-status" role="status">Checking runtime…</span>
+                                <details class="kn-graph-help"><summary aria-label="About Knowledge Graph" title="About Knowledge Graph">?</summary><p id="knowledge-graph-help">Applies to new Web executions only. Stored data, manual recording, project auto-capture and Skillogy are unchanged.</p></details>
                             </div>
-                            <button hidden data-knowledge-tab-panel="logs" class="btn-secondary"  data-i18n="common.refresh" data-action="knowledge.filterLogs">Refresh</button>
+                            <span class="kn-toolbar-divider" aria-hidden="true"></span>
+                            <button type="button" class="btn-secondary" data-action="knowledge.refreshPage">Refresh</button>
+                            <details data-knowledge-tab-panel="library" class="cap-action-disclosure kn-actions"><summary>Source actions</summary><div>
+                                <button class="btn-secondary" data-require-permission="knowledge:write" data-action="knowledge.refresh" title="Scan the configured knowledge directory for new or updated files">Scan sources</button>
+                                <button class="btn-secondary" data-require-permission="knowledge:write" data-action="knowledge.build">Index sources</button>
+                                <button class="btn-secondary" data-action="knowledge.openRetrieve">Test reference retrieval</button>
+                            </div></details>
+                            <span class="kn-toolbar-slot" data-knowledge-tab-panel="library"><button class="btn-primary" data-require-permission="knowledge:write" data-i18n="knowledge.addKnowledge" data-action="knowledge.add">Add knowledge</button></span>
                         </div>
                     </div>
                     <div class="page-content">
-                        <nav class="cap-local-nav" aria-label="Knowledge tabs"><a href="#knowledge-management?tab=library" data-tab="library" aria-current="page">Knowledge library</a><a href="#knowledge-management?tab=logs" data-tab="logs">Retrieval history</a></nav>
-                        <div data-knowledge-tab-panel="library">
+                        <p id="knowledge-graph-error" class="kn-graph-error" role="status"></p>
+                        <p id="knowledge-result-announcement" class="kn-screenreader" role="status" aria-live="polite"></p>
+                        <nav class="cap-local-nav kn-tabs" role="tablist" aria-label="Knowledge tabs"><a href="#knowledge-management?tab=library" role="tab" id="knowledge-tab-library" data-tab="library" data-keydown="knowledge.tabKey" aria-selected="true" aria-controls="knowledge-panel-library">Knowledge Library</a><a href="#knowledge-management?tab=logs" role="tab" id="knowledge-tab-logs" data-tab="logs" data-keydown="knowledge.tabKey" aria-selected="false" aria-controls="knowledge-panel-logs" tabindex="-1">Retrieval History</a></nav>
+                        <div data-knowledge-tab-panel="library" id="knowledge-panel-library" role="tabpanel" aria-labelledby="knowledge-tab-library">
                             <div class="knowledge-controls">
                                 <div class="knowledge-stats-bar" id="knowledge-stats">
-                                    <div class="knowledge-stat-item">
-                                        <span class="knowledge-stat-label" data-i18n="knowledge.totalItems">Total items</span>
-                                        <span class="knowledge-stat-value">-</span>
-                                    </div>
-                                    <div class="knowledge-stat-item">
-                                        <span class="knowledge-stat-label" data-i18n="knowledge.categories">Categories</span>
-                                        <span class="knowledge-stat-value">-</span>
-                                    </div>
-                                    <div class="knowledge-stat-item">
-                                        <span class="knowledge-stat-label" data-i18n="knowledgePage.totalContent">Total content</span>
-                                        <span class="knowledge-stat-value">-</span>
-                                    </div>
+                                    <span>Loading source catalog…</span>
                                 </div>
                                 <div id="knowledge-index-progress" style="display: none; margin-bottom: 16px;"></div>
+                                <div id="knowledge-library-notice" role="status"></div>
                                 <div class="knowledge-filters">
-                                    <label>
-                                        <span data-i18n="knowledgePage.categoryFilter">Category filter</span>
-                                        <select id="knowledge-category-filter" data-change="knowledge.categorySelect" aria-label="Category"><option value="">All categories</option></select>
-                                    </label>
-                                    <label class="knowledge-search-field">
-                                        <span data-i18n="common.search">Search</span>
-                                        <div class="search-box">
-                                            <input type="search" id="knowledge-search" data-i18n="knowledgePage.searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search knowledge..."    data-input="knowledge.searchInput" data-keydown="knowledge.searchKey"/>
-                                            <button class="btn-search"  data-i18n="common.search" data-i18n-attr="title" title="Search" data-action="knowledge.search">Search</button>
-                                        </div>
-                                    </label>
+                                    <input type="search" id="knowledge-search" class="knowledge-search-field" data-i18n="knowledgePage.searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search documents" aria-label="Search knowledge" data-input="knowledge.searchInput" data-keydown="knowledge.searchKey"/>
+                                    <select id="knowledge-source-filter" data-change="knowledge.source" aria-label="Source"><option value="">All sources</option><option value="reference">Security reference corpus</option><option value="manual">Manual notes</option></select>
+                                    <select id="knowledge-category-filter" data-change="knowledge.categorySelect" aria-label="Category"><option value="">All categories</option></select>
+                                    <button class="btn-search" data-i18n="common.search" data-i18n-attr="title" title="Search" data-action="knowledge.search">Search</button>
                                 </div>
                             </div>
                             <div id="knowledge-items-list" class="knowledge-items-list">
                                 <div class="loading-spinner" data-i18n="knowledgePage.loading">Loading...</div>
                             </div>
-                            <div id="knowledge-pagination"></div>
+                            <div class="kn-library-footer"><label for="knowledge-page-size">Per page <select id="knowledge-page-size" data-change="knowledge.pageSize" aria-label="Documents per page"><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label><div id="knowledge-pagination"></div></div>
                         </div>
-                        <div data-knowledge-tab-panel="logs" hidden>
+                        <div data-knowledge-tab-panel="logs" id="knowledge-panel-logs" role="tabpanel" aria-labelledby="knowledge-tab-logs" hidden>
                             <div class="retrieval-logs-controls">
                                 <div class="retrieval-stats-bar" id="retrieval-stats">
-                                    <div class="retrieval-stat-item">
-                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.totalRetrievals">Total retrievals</span>
-                                        <span class="retrieval-stat-value">-</span>
-                                    </div>
-                                    <div class="retrieval-stat-item">
-                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.successRetrievals">Success</span>
-                                        <span class="retrieval-stat-value">-</span>
-                                    </div>
-                                    <div class="retrieval-stat-item">
-                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.successRate">Success rate</span>
-                                        <span class="retrieval-stat-value">-</span>
-                                    </div>
-                                    <div class="retrieval-stat-item">
-                                        <span class="retrieval-stat-label" data-i18n="retrievalLogs.retrievedItems">Items retrieved</span>
-                                        <span class="retrieval-stat-value">-</span>
-                                    </div>
+                                    <span>Retrieval activity is recorded when queries execute.</span>
                                 </div>
                                 <div class="retrieval-logs-filters">
-                                    <label>
-                                        <span data-i18n="retrievalLogs.conversationId">Conversation ID</span>
-                                        <input type="text" id="retrieval-logs-conversation-id" data-keydown="knowledge.logsKey" data-i18n="retrievalLogs.optionalConversation" data-i18n-attr="placeholder" placeholder="Optional: filter by conversation" />
-                                    </label>
-                                    <label>
-                                        <span data-i18n="retrievalLogs.messageId">Message ID</span>
-                                        <input type="text" id="retrieval-logs-message-id" data-keydown="knowledge.logsKey" data-i18n="retrievalLogs.optionalMessage" data-i18n-attr="placeholder" placeholder="Optional: filter by message" />
-                                    </label>
-                                    <button class="btn-secondary"  data-i18n="retrievalLogs.filter" data-action="knowledge.filterLogs">Filter</button>
-                                    <button class="btn-secondary" data-action="knowledge.clearLogs">Clear filters</button>
+                                    <input type="search" id="knowledge-history-search" class="knowledge-search-field" placeholder="Search recorded queries" aria-label="Search recorded queries" data-keydown="knowledge.logsKey">
+                                    <input type="search" id="retrieval-logs-conversation-id" list="knowledge-conversation-options" data-keydown="knowledge.logsKey" placeholder="Conversation" aria-label="Filter by conversation" autocomplete="off" />
+                                    <datalist id="knowledge-conversation-options"></datalist>
+                                    <details class="kn-technical-filter"><summary>Message ID</summary>
+                                        <input type="text" id="retrieval-logs-message-id" data-keydown="knowledge.logsKey" data-i18n="retrievalLogs.optionalMessage" data-i18n-attr="placeholder" placeholder="Optional: filter by message" aria-label="Filter by message ID" />
+                                    </details>
+                                    <button class="btn-secondary" data-i18n="retrievalLogs.filter" data-action="knowledge.filterLogs">Filter</button>
+                                    <button class="btn-secondary" data-action="knowledge.clearLogs">Clear</button>
                                 </div>
                             </div>
+                            <div id="knowledge-history-notice" role="status"></div>
                             <div id="retrieval-logs-list" class="retrieval-logs-list">
                                 <div class="loading-spinner" data-i18n="retrievalLogs.loading">Loading...</div>
                             </div>
+                            <div id="knowledge-history-pagination"></div>
                         </div>
                     </div>
                 </div>

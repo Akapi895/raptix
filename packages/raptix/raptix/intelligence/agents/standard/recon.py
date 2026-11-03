@@ -50,6 +50,7 @@ from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
 from raptix.execution.tools.references.tools import search_security_references
+from raptix.execution.tools.vault import VAULT_TOOLS
 from raptix.execution.tools.web.search import web_fetch, web_search
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
@@ -70,6 +71,8 @@ _STANDARD_TOOLS: dict[str, Any] = {
         # Open-web acquisition (ADR-0010): keyword search + RoE-gated fetch
         web_search,
         web_fetch,
+        # Credential reuse across the engagement (found mid-lab)
+        *VAULT_TOOLS,
         # Execution
         *BASH_TOOLS,
     ]

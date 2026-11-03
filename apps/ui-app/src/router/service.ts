@@ -1,4 +1,4 @@
-export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'file-management', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'agents', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
+export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'vault', 'file-management', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'agents', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
 export type PageId = typeof pageIds[number];
 export interface Route { page: PageId; query: URLSearchParams }
 export interface Navigation { route: Route; previous: Route | null; kind: 'replace' | 'external' | 'initial'; pageChanged: boolean; restore: boolean }
@@ -21,6 +21,7 @@ export function parseRoute(hash: string): Route | null {
   if (page === 'asset-overview' || page === 'assets' || page === 'asset-library') page = 'asset-management';
   if (page === 'chat-files' || page === 'files') page = 'file-management';
   if (page === 'mcp') page = 'mcp-management';
+  if (page === 'knowledge') page = 'knowledge-management';
   if (page === 'knowledge-retrieval-logs') { page = 'knowledge-management'; query.set('tab', 'logs'); }
   if (page === 'webshell-management') page = 'webshell';
   if (page === 'system-settings') page = 'settings';
@@ -29,9 +30,11 @@ export function parseRoute(hash: string): Route | null {
   return isPageId(page) ? { page, query } : null;
 }
 export function routeHash(route: Route): string {
-  const query = route.query.toString();
+  const params = new URLSearchParams(route.query);
+  if (route.page === 'knowledge-management') params.delete('tab');
+  const query = params.toString();
   // Feature IDs remain stable while URLs use concise public names.
-  const publicNames: Partial<Record<PageId, string>> = { projects: 'operation-center', 'asset-management': 'assets', 'file-management': 'files' };
+  const publicNames: Partial<Record<PageId, string>> = { projects: 'operation-center', 'asset-management': 'assets', 'file-management': 'files', 'knowledge-management': 'knowledge' };
   const page = publicNames[route.page] ?? route.page;
   return page + (query ? '?' + query : '');
 }
@@ -75,6 +78,7 @@ export function createRouter(port: RouterPort) {
       if (page === 'assets') page = 'asset-management';
       if (page === 'files') page = 'file-management';
       if (page === 'mcp') page = 'mcp-management';
+      if (page === 'knowledge') page = 'knowledge-management';
       if (page === 'webshell-management') page = 'webshell';
       if (page === 'system-settings') page = 'settings';
       if (!isPageId(page)) return;

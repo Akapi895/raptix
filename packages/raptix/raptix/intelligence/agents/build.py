@@ -549,7 +549,23 @@ def build_tools(
     assembly = assembly_context.get()
     if assembly is not None:
         assembly.builtins.setdefault(assembly_role(role), {})["tools"] = [t.name for t in result]
-    return additional_tools(role, result)
+    result = additional_tools(role, result)
+    from raptix.intelligence.agents.middleware_slots import knowledge_graph_context
+
+    if not knowledge_graph_context.get():
+        graph_reads = {
+            "kg_query",
+            "kg_query_reference",
+            "kg_neighbors",
+            "kg_stats",
+            "kg_surface_inventory",
+            "search_knowledge",
+            "inspect_asset",
+            "find_attack_paths",
+            "get_attack_context",
+        }
+        result = [tool for tool in result if _tool_name(tool) not in graph_reads]
+    return result
 
 
 def _tool_name(tool: Any) -> str:

@@ -38,6 +38,9 @@ import { PrismaProjectStore } from "./db/project-store.js";
 import { PrismaReadNotificationStore } from "./db/read-notification-store.js";
 import { PrismaRetrievalLogStore } from "./db/retrieval-log-store.js";
 import { PrismaToolGuardStore } from "./db/tool-guard-store.js";
+import { PrismaVaultStore, UnconfiguredVaultStore } from "./db/vault-store.js";
+import { loadVaultMasterKey } from "./security/vault-crypto.js";
+import { loadWebApiInternalToken } from "./adapters/runtime/internal-token.js";
 import { PrismaVulnerabilityStore } from "./db/vulnerability-store.js";
 import { PrismaWebShellStore } from "./db/webshell-store.js";
 import { PrismaWorkflowStore } from "./db/workflow-store.js";
@@ -69,6 +72,22 @@ async function main(): Promise<void> {
   const readNotificationStore = new PrismaReadNotificationStore(db);
   const markdownAgentStore = new PrismaMarkdownAgentStore(db);
   const workflowStore = new PrismaWorkflowStore(db);
+
+  // Vault (Tier 4): degrades to 503 rather than storing unencrypted secrets
+  // when RAPTIX_VAULT_MASTER_KEY_FILE is unset or invalid.
+  let vaultStore: PrismaVaultStore | UnconfiguredVaultStore;
+  try {
+    vaultStore = new PrismaVaultStore(db, loadVaultMasterKey(env.vaultMasterKeyFile));
+  } catch (error) {
+    console.warn(`[apps/api] Vault master key invalid, Vault routes will fail 503. (${(error as Error).message})`);
+    vaultStore = new UnconfiguredVaultStore();
+  }
+  let webApiInternalToken: string | undefined;
+  try {
+    webApiInternalToken = loadWebApiInternalToken(env.webApiInternalTokenFile);
+  } catch (error) {
+    console.warn(`[apps/api] RAPTIX_WEB_API_INTERNAL_TOKEN_FILE invalid, internal Vault routes will refuse every call. (${(error as Error).message})`);
+  }
 
   const seed = await ensureOperatorSeeded(authStore, {
     operatorUsername: env.operatorUsername,
@@ -187,6 +206,8 @@ async function main(): Promise<void> {
     sandboxProvisioner,
     batchQueueStore,
     webshellStore,
+    vaultStore,
+    webApiInternalToken,
     c2,
     toolGuardStore,
     knowledgeItemStore,

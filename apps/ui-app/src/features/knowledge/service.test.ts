@@ -72,10 +72,10 @@ describe('knowledge public service', () => {
     const demo = setup(async () => response({ total: 4, pending: 1, status: 'pending' })); expect(await demo.service.indexStatus()).toMatchObject({ total_items: 4, indexed_items: 3, progress_percent: 75, is_complete: false });
     const ready = setup(async () => response({ total: 4, pending: 0, status: 'ready' })); expect((await ready.service.indexStatus())?.is_complete).toBe(true);
   });
-  it('invalidates an in-flight index read when polling is stopped; HTTP failure stays silent', async () => {
+  it('invalidates an in-flight index read and reports an unavailable index backend', async () => {
     const pending = deferred<Response>(); const { service } = setup(async () => pending.promise);
     const load = service.indexStatus(); service.invalidateIndex(); pending.resolve(response({ total_items: 5 })); expect(await load).toBeNull(); expect(service.state.index).toBeNull();
-    expect(await setup(async () => response({}, 500)).service.indexStatus()).toBeNull();
+    await expect(setup(async () => response({}, 500)).service.indexStatus()).rejects.toThrow('Knowledge index status unavailable');
   });
   it('loads filtered logs, normalizes JSON-string IDs and unknown-result sentinel, and skips unavailable item details', async () => {
     const { service, request } = setup(async path => path.includes('retrieval-logs?') ? response({ logs: [{ id: 'log', retrievedItems: '["_has_results","one","gone"]', query: 'q' }] }) : path.endsWith('/gone') ? response({}, 404) : response(item));

@@ -108,6 +108,7 @@ def project_files_at():
 def isolated_instance_mailbox(tmp_path, monkeypatch):
     """Each test gets its own operator mailbox, so attempt numbers never carry over between runs."""
     monkeypatch.setenv(mb.PATH_ENV, str(tmp_path / "instance_mailbox.sqlite"))
+    monkeypatch.setenv("RAPTIX_KNOWLEDGE_STATE_DIR", str(tmp_path / "knowledge"))
     monkeypatch.setattr(mb, "_default", None)
     yield
     if mb._default is not None:

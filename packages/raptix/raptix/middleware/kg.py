@@ -111,11 +111,13 @@ class KGMiddleware(AgentMiddleware):
         enabled_tools: Iterable[str] | None = None,
         operational_shadow: bool = False,
         planning_context: bool = False,
+        context_enabled: bool = True,
     ) -> None:
         super().__init__()
         self._store = store if store is not None else KGStore.from_env()
         self._operational_shadow = operational_shadow
         self._planning_context = planning_context
+        self._context_enabled = context_enabled
         self.tools = build_kg_tools(self._store, enabled=enabled_tools)
         self._kg_tool_names = {getattr(t, "name", "") for t in self.tools}
 
@@ -150,6 +152,8 @@ class KGMiddleware(AgentMiddleware):
         engagement = str(get("kg_engagement") or get("engagement_name") or "").strip()
         if not engagement:
             return None
+        if not self._context_enabled:
+            return {"kg_engagement": engagement} if get("kg_engagement") != engagement else None
 
         try:
             revision = self._store.revision(engagement=engagement)
@@ -203,6 +207,8 @@ class KGMiddleware(AgentMiddleware):
         re-use the static prefix across turns (same pattern as
         ``OPPLANMiddleware._inject_opplan_context`` at
         ``middleware/opplan.py:350``)."""
+        if not self._context_enabled:
+            return request
         state = request.state or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
         summary = str(get("kg_summary") or "")

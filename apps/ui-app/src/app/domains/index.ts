@@ -18,6 +18,7 @@ import { initTasks } from '@/features/tasks';
 import { initTerminalFeature, buildTerminalURL } from '@/features/terminal';
 import { initTokenUsage } from '@/features/token-usage';
 import { initToolGuard } from '@/features/tool-guard';
+import { initVault } from '@/features/vault';
 import { initVulnerability } from '@/features/vulnerability';
 import { initWebshell } from '@/features/webshell';
 import { initWorkflows, createWorkflowOrchestration } from '@/features/workflows';
@@ -282,6 +283,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     now: Date.now, sleep: lifetime.sleep,
   });
   const toolGuard = initToolGuard({ doc, canRead: () => auth.hasPermission('config:read'), canWrite: () => can('config:write') });
+  const vault = initVault({ doc, canRead: () => auth.hasPermission('vault:read'), canWrite: () => can('vault:write') });
   function navigateNotification(item: NotificationItem): void {
     switch (item.type) {
       case 'vulnerability_created': if (item.vulnerabilityId) browser.location.hash = 'vulnerabilities?id=' + encodeURIComponent(item.vulnerabilityId); break;
@@ -319,7 +321,7 @@ export function createDomainApplication(deps: DomainDependencies) {
   const pageLifecycle = createPageLifecycle(doc, {
     stopExternalMcpPoll: settings.controller.stopExternalMcpPoll, refreshDashboard: dashboard.refresh,
     prefetchProjectsForChat: projects.prefetchProjectsForChat, refreshChatProjectSelector: projects.refreshChatProjectSelector,
-    loadToolGuardConfig: toolGuard.load, refreshHitlActivePanel: hitl.view.refreshActivePanel,
+    loadToolGuardConfig: toolGuard.load, initVaultPage: vault.load, refreshHitlActivePanel: hitl.view.refreshActivePanel,
     loadAssetOverview: assets.view.overview, loadAssets: assets.view.load,
     initTasksPage: tasks.hooks.initTasksPage, refreshMonitorPanel: monitor.controller.refresh, startMonitorPoll: monitor.controller.startPolling,
     prepareToolsPagination: () => { settings.service.state.pagination.page_size = settings.service.getToolsPageSize(); },
@@ -331,6 +333,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     loadRoles: roles.view.loadForPage, renderRolesList: roles.view.renderList, loadSpecialists: specialistManager.load,
     refreshWorkflows: async () => { if (can('workflow:read')) await workflows.hooks.refreshWorkflows(); await orchestration.sync(); }, loadSkillsMonitor: skills.controller.monitor, loadSkills: () => skills.controller.load(),
     loadKnowledgeCategories: knowledge.controller.categories,
+    initKnowledge: knowledge.controller.initialize,
     loadKnowledgePage: () => knowledge.controller.load(knowledge.service.state.pagination.currentCategory, 1, knowledge.service.state.pagination.pageSize),
     updateIndexProgress: knowledge.controller.updateIndex, loadRetrievalLogs: knowledge.controller.logs,
     setKnowledgeTab: knowledge.controller.setTab,
@@ -372,7 +375,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     terminal.activate(); storageFeature.bind(); skills.activate(); knowledge.activate(); monitor.activate();
     notifications.activate(); mobile.activate();
     void hitl.afterClassicScripts().then(resolveHitlReady, error => { console.warn('HITL activation failed', error); resolveHitlReady(); });
-    run(toolGuard.start); run(roles.view.loadForPage);
+    run(toolGuard.start); run(vault.start); run(roles.view.loadForPage);
     installDomainEvents();
     stopSwitcher = startProjectSwitcher({
       doc, getActive: projects.getActiveProjectId, setActive: projects.setActiveProjectId,
@@ -420,7 +423,7 @@ export function createDomainApplication(deps: DomainDependencies) {
   function dispose(): Promise<void> {
     if (disposal) return disposal;
     lifetime.dispose(); resolveHitlReady(); stopSwitcher?.(); routerView.dispose(); pageLifecycle.dispose(); routerService.dispose();
-    auth.dispose(); mobile.dispose(); notifications.dispose(); toolGuard.dispose();
+    auth.dispose(); mobile.dispose(); notifications.dispose(); toolGuard.dispose(); vault.dispose();
     hitl.dispose(); monitor.controller.stopPolling(); monitor.dispose(); knowledge.dispose(); skills.dispose();
     storageFeature.dispose(); terminal.dispose(); tokens.dispose(); audit.dispose(); c2.dispose();
     orchestration.dispose(); tasks.dispose(); workflows.dispose(); vulnerability.dispose(); assets.dispose();
@@ -441,7 +444,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     audit, tokens, terminal, storage: storageFeature,
     skills, knowledge, monitor,
     hitl: { ...hitl, get ready() { return hitlReady; }, defaults: () => hitlDefaults, whitelist: () => hitlWhitelist },
-    toolGuard, notifications, dashboard, mobile, settings,
+    toolGuard, vault, notifications, dashboard, mobile, settings,
     notify, start, dispose,
   };
 }
