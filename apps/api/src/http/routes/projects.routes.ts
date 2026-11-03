@@ -86,6 +86,11 @@ function factToWire(fact: FactRecord, incomingLinks: number): Record<string, unk
     related_vulnerability_id: fact.relatedVulnerabilityId,
     source_conversation_id: fact.sourceConversationId,
     source_message_id: fact.sourceMessageId,
+    verification_state: fact.verificationState,
+    verification_source: fact.verificationSource,
+    verified_at: fact.verifiedAt?.toISOString() ?? null,
+    verified_by: fact.verifiedBy,
+    revision: fact.revision,
     created_at: fact.createdAt.toISOString(),
     updated_at: fact.updatedAt.toISOString(),
   };
@@ -580,6 +585,7 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
           type: f.category,
           confidence: f.confidence,
           pinned: f.pinned,
+          verification_state: f.verificationState,
         })),
         edges: edges.map((e) => ({
           id: e.id,
@@ -604,7 +610,7 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
       if (!project) return;
       const { conversationId } = request.params;
       const conversation = await conversationStore.findById(conversationId);
-      if (!conversation) {
+      if (!conversation || conversation.projectId !== project.id) {
         await reply.code(404).send({ error: "Conversation not found" });
         return;
       }
@@ -629,6 +635,8 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
         const body = Object.keys(node.metadata).length > 0 ? JSON.stringify(node.metadata) : "";
         const existing = await factStore.findByKey(project.id, factKey);
         if (existing) {
+          // Re-deriving a chat visualization cannot rewrite an accepted finding.
+          if (existing.verificationState === "verified") continue;
           await factStore.update(project.id, existing.id, {
             summary: node.label,
             body,
@@ -637,14 +645,20 @@ export function registerProjectRoutes(app: FastifyInstance, options: ProjectRout
           });
           factsUpdated += 1;
         } else {
-          await factStore.create(project.id, {
+          try { await factStore.create(project.id, {
             factKey,
             category: node.type,
             summary: node.label,
             body,
             confidence,
             sourceConversationId: conversationId,
-          });
+            verificationSource: "chat-promote",
+          }); } catch (error) {
+            if (!isUniqueViolation(error)) throw error;
+            // A concurrent promotion won the unique (projectId, factKey) insert.
+            factsUpdated += 1;
+            continue;
+          }
           factsCreated += 1;
         }
       }

@@ -257,8 +257,8 @@ describe("project routes", () => {
     const graph = await app.inject({ method: "GET", url: `/api/projects/${id}/fact-graph`, headers: auth() });
     expect(graph.json()).toEqual({
       nodes: [
-        { id: "src", fact_key: "src", label: "src", summary: "", category: "host", type: "host", confidence: "medium", pinned: false },
-        { id: "dst", fact_key: "dst", label: "dst", summary: "", category: "note", type: "note", confidence: "medium", pinned: false },
+        { id: "src", fact_key: "src", label: "src", summary: "", category: "host", type: "host", confidence: "medium", pinned: false, verification_state: "observed" },
+        { id: "dst", fact_key: "dst", label: "dst", summary: "", category: "note", type: "note", confidence: "medium", pinned: false, verification_state: "observed" },
       ],
       edges: [{ id: expect.any(String), source: "src", target: "dst", type: "related", confidence: "medium" }],
     });
@@ -330,6 +330,7 @@ describe("project routes", () => {
     const create = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "P" } });
     const id = create.json().id;
 
+    await conversationStore.setProject(conversation.id, id);
     const first = await app.inject({ method: "POST", url: `/api/projects/${id}/promote-attack-chain/${conversation.id}`, headers: auth() });
     expect(first.statusCode).toBe(200);
     expect(first.json()).toMatchObject({ success: true, conversation_id: conversation.id, facts_created: 2, facts_updated: 0, edges_created: 1 });
