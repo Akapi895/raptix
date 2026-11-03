@@ -8,7 +8,7 @@ tools' results match what the LLM would see.
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from raptix.knowledge.graph.store import KGStore
@@ -45,10 +45,10 @@ def test_kg_record_writes_through_live_store(kgstore: KGStore, engagement: str) 
     assert payload["merged"] == 0
 
     rows = kgstore.execute_read(
-        "MATCH (h:Host) WHERE h.engagement = $eng AND h.key = $key "
+        "MATCH (h:Host) WHERE h.engagement = $engagement AND h.key = $key "
         "RETURN h.label AS label, h.created_by AS created_by, "
         "       h.source_episode_id AS sep",
-        {"eng": engagement, "key": f"host::tool-record::{engagement}"},
+        {"key": f"host::tool-record::{engagement}"},
         engagement=engagement,
     )
     assert rows
@@ -85,8 +85,8 @@ def test_kg_record_atomic_batch_with_edges_live(kgstore: KGStore, engagement: st
     )
     edge_rows = kgstore.execute_read(
         "MATCH (h:Host)-[r:HOSTS]->(s:Service) "
-        "WHERE h.engagement = $eng AND h.key = $hk RETURN r.weight AS w",
-        {"eng": engagement, "hk": f"host::batch::{engagement}"},
+        "WHERE h.engagement = $engagement AND h.key = $hk RETURN r.weight AS w",
+        {"hk": f"host::batch::{engagement}"},
         engagement=engagement,
     )
     assert edge_rows
@@ -94,10 +94,12 @@ def test_kg_record_atomic_batch_with_edges_live(kgstore: KGStore, engagement: st
 
 
 def test_kg_ingest_routes_nuclei_jsonl_through_live_store(
-    kgstore: KGStore, engagement: str, tmp_path: Path
+    kgstore: KGStore, engagement: str, monkeypatch: Any
 ) -> None:
-    f = tmp_path / "nuclei.jsonl"
-    f.write_text(
+    # kg_ingest fetches its artifact through the sandbox backend (same path
+    # kg_autoingest always used) rather than reading the local disk -- fake
+    # that one call, since this test's "live" fixture is Neo4j, not a sandbox.
+    content = (
         json.dumps(
             {
                 "template-id": "tool-ssrf",
@@ -106,13 +108,21 @@ def test_kg_ingest_routes_nuclei_jsonl_through_live_store(
                 "host": "tool-test.example",
             }
         )
-        + "\n",
-        encoding="utf-8",
+        + "\n"
+    ).encode()
+
+    class _FakeSandbox:
+        def download_files(self, paths, *, workspace_path=None, max_bytes=None):
+            return [SimpleNamespace(content=content, error=None)]
+
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend",
+        lambda config=None: _FakeSandbox(),
     )
     [_, kg_ingest] = build_kg_tools(kgstore)
     out_msg = _call(
         kg_ingest,
-        {"scanner_kind": "nuclei_jsonl", "path": str(f)},
+        {"scanner_kind": "nuclei_jsonl", "path": "/workspace/nuclei.jsonl"},
         state={"kg_engagement": engagement, "role": "analyst"},
     )
     payload = json.loads(out_msg.content)
@@ -120,10 +130,10 @@ def test_kg_ingest_routes_nuclei_jsonl_through_live_store(
     assert payload["parsed"] == 1
 
     rows = kgstore.execute_read(
-        "MATCH (v:Vulnerability) WHERE v.engagement = $eng "
+        "MATCH (v:Vulnerability) WHERE v.engagement = $engagement "
         "AND v.rule_id = 'tool-ssrf' "
         "RETURN v.created_by AS created_by, v.source_episode_id AS sep",
-        {"eng": engagement},
+        {},
         engagement=engagement,
     )
     assert rows
