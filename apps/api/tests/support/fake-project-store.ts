@@ -29,6 +29,8 @@ export class FakeProjectStore implements ProjectStore {
       scopeJson: input.scopeJson ?? null,
       status: input.status ?? "active",
       pinned: false,
+      autoIngestEnabled: false,
+      triedEdgesEnabled: false,
       workspaceSlug: `test-slug-${id}`,
       createdAt: now,
       updatedAt: now,
@@ -54,6 +56,12 @@ export class FakeProjectStore implements ProjectStore {
       ...(input.scopeJson !== undefined ? { scopeJson: input.scopeJson } : {}),
       ...(input.status !== undefined ? { status: input.status ?? existing.status } : {}),
       ...(input.pinned !== undefined ? { pinned: input.pinned ?? existing.pinned } : {}),
+      ...(input.autoIngestEnabled !== undefined
+        ? { autoIngestEnabled: input.autoIngestEnabled ?? existing.autoIngestEnabled }
+        : {}),
+      ...(input.triedEdgesEnabled !== undefined
+        ? { triedEdgesEnabled: input.triedEdgesEnabled ?? existing.triedEdgesEnabled }
+        : {}),
       updatedAt: new Date(),
     };
     this.projects.set(id, updated);

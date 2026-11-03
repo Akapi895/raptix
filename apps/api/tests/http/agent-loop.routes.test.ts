@@ -54,7 +54,35 @@ describe("agent-loop routes", () => {
     });
     expect(response.statusCode).toBe(200);
     expect(runtime.createdRuns).toHaveLength(1);
-    expect(runtime.createdRuns[0]!.config).toMatchObject({ engagement_name: expect.any(String), sandbox_url: expect.any(String), sandbox_token: expect.any(String) });
+    expect(runtime.createdRuns[0]!.config).toMatchObject({ configurable: {
+      engagement_name: expect.any(String), sandbox_url: expect.any(String), sandbox_token: expect.any(String),
+      graph_toggles: { auto_ingest_enabled: false, tried_edges_enabled: false },
+    } });
+  });
+
+  it.each(["/api/eino-agent", "/api/eino-agent/stream"])("%s snapshots project toggles for each new run", async (url) => {
+    runtime = new FakeRuntime();
+    runtime.stateValues = { messages: [{ type: "ai", content: "ok" }] };
+    ({ app, token } = await buildAuthedApp(runtime));
+    const project = (await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "capture" } })).json();
+    const other = (await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "no capture" } })).json();
+    for (const settings of [
+      { auto_ingest_enabled: true, tried_edges_enabled: false },
+      { auto_ingest_enabled: false, tried_edges_enabled: true },
+      { auto_ingest_enabled: false, tried_edges_enabled: false },
+    ]) {
+      await app.inject({ method: "PUT", url: `/api/projects/${project.id}`, headers: headers(), payload: settings });
+      runtime.queueRunStatuses("success");
+      const response = await app.inject({ method: "POST", url, headers: headers(), payload: {
+        message: "probe", projectId: project.id,
+        graph_toggles: { auto_ingest_enabled: true, tried_edges_enabled: true },
+      } });
+      expect(response.statusCode).toBe(200);
+      const config = url.endsWith("/stream") ? runtime.streamConfigs.at(-1) : runtime.createdRuns.at(-1)?.config;
+      expect(config).toMatchObject({ configurable: { graph_toggles: settings } });
+    }
+    const unchanged = await app.inject({ url: `/api/projects/${other.id}`, headers: headers() });
+    expect(unchanged.json()).toMatchObject({ auto_ingest_enabled: false, tried_edges_enabled: false });
   });
 
   it("rejects an empty message with 400", async () => {

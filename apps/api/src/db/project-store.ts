@@ -8,6 +8,10 @@ export interface ProjectRecord {
   scopeJson: string | null;
   status: string;
   pinned: boolean;
+  /** Per-project override of the server-wide RAPTIX_KG_AUTOINGEST/RAPTIX_KG_TRIED_EDGES
+   * defaults (both off by default) -- docs/design/2026-11-03-graph-technical-design.md Mục 3/9. */
+  autoIngestEnabled: boolean;
+  triedEdgesEnabled: boolean;
   /** Sandbox identity (ADR-0086 A/ADR-0102) -- internal only, never on the wire (see projects.routes.ts's toWire). */
   workspaceSlug: string;
   createdAt: Date;
@@ -39,6 +43,8 @@ export interface UpdateProjectInput {
   scopeJson?: string | null;
   status?: string | null;
   pinned?: boolean | null;
+  autoIngestEnabled?: boolean | null;
+  triedEdgesEnabled?: boolean | null;
 }
 
 export interface ProjectStore {
@@ -109,6 +115,12 @@ export class PrismaProjectStore implements ProjectStore {
         ...(input.scopeJson !== undefined ? { scopeJson: input.scopeJson } : {}),
         ...(input.status !== undefined ? { status: input.status ?? exists.status } : {}),
         ...(input.pinned !== undefined ? { pinned: input.pinned ?? exists.pinned } : {}),
+        ...(input.autoIngestEnabled !== undefined
+          ? { autoIngestEnabled: input.autoIngestEnabled ?? exists.autoIngestEnabled }
+          : {}),
+        ...(input.triedEdgesEnabled !== undefined
+          ? { triedEdgesEnabled: input.triedEdgesEnabled ?? exists.triedEdgesEnabled }
+          : {}),
       },
       include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
     });
@@ -143,6 +155,8 @@ function toRecord(row: {
   scopeJson: string | null;
   status: string;
   pinned: boolean;
+  autoIngestEnabled: boolean;
+  triedEdgesEnabled: boolean;
   workspaceSlug: string;
   createdAt: Date;
   updatedAt: Date;
@@ -155,6 +169,8 @@ function toRecord(row: {
     scopeJson: row.scopeJson,
     status: row.status,
     pinned: row.pinned,
+    autoIngestEnabled: row.autoIngestEnabled,
+    triedEdgesEnabled: row.triedEdgesEnabled,
     workspaceSlug: row.workspaceSlug,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
