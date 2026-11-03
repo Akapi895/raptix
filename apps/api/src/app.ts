@@ -49,6 +49,7 @@ import { registerMonitorRoutes } from "./http/routes/monitor.routes.js";
 import { registerNotificationRoutes } from "./http/routes/notifications.routes.js";
 import { registerOpenApiRoutes } from "./http/routes/openapi.routes.js";
 import { registerProjectRoutes } from "./http/routes/projects.routes.js";
+import { registerFactPromotionRoutes } from "./http/routes/fact-promotion.routes.js";
 import { registerRolesRoutes } from "./http/routes/roles.routes.js";
 import { registerSkillsRoutes } from "./http/routes/skills.routes.js";
 import { registerSpecialistsRoutes } from "./http/routes/specialists.routes.js";
@@ -153,6 +154,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     messageEventStore: options.messageEventStore,
   });
   registerHitlRoutes(app, { authStore: options.authStore, projectStore: options.projectStore, sandbox: options.sandbox });
+  registerFactPromotionRoutes(app, options);
   registerAssetRoutes(app, { authStore: options.authStore, assetStore: options.assetStore, projectStore: options.projectStore, knowledgeGraph: options.knowledgeGraph });
   registerVulnerabilityRoutes(app, {
     authStore: options.authStore,

@@ -1,4 +1,5 @@
 import { FactNotFoundError } from "../../src/db/fact-store.js";
+import { FactConflictError, TRANSITIONS, type VerificationState, type FactEvidenceInput, type FactEvidenceRecord, type FactVerificationRecord, type LinkedFinding } from "../../src/db/fact-verification.js";
 import type {
   CreateFactEdgeInput,
   CreateFactInput,
@@ -14,6 +15,52 @@ export class FakeFactStore implements FactStore {
   public readonly facts = new Map<string, FactRecord>();
   public readonly edges = new Map<string, FactEdgeRecord>();
   private nextId = 1;
+  private snapshots: FactEvidenceRecord[] = [];
+  private history: (FactVerificationRecord & { factId: string; projectId: string })[] = [];
+
+  public async linkedFindings(projectId: string, observations: { kind: string; key: string; observationId: string }[]): Promise<LinkedFinding[]> {
+    return this.snapshots.filter(row => row.projectId === projectId && observations.some(node => node.kind === row.akgObservationKind && node.key === row.akgObservationKey && node.observationId === row.observationId)).slice(0, 20).flatMap(row => {
+      const fact = this.facts.get(row.factId);
+      return fact ? [{ id: fact.id, fact_key: fact.factKey, summary: fact.summary.slice(0, 512), verification_state: fact.verificationState, observation_kind: row.akgObservationKind, observation_key: row.akgObservationKey, snapshot_hash: row.snapshotHash }] : [];
+    });
+  }
+
+  public async findById(projectId: string, factId: string): Promise<FactRecord | null> {
+    const fact = this.facts.get(factId);
+    return fact?.projectId === projectId ? fact : null;
+  }
+
+  public async evidence(projectId: string, factId: string, offset = 0): Promise<{ evidence: FactEvidenceRecord[]; history: FactVerificationRecord[]; hasMore: boolean }> {
+    const evidence = this.snapshots.filter(snapshot => snapshot.projectId === projectId && snapshot.factId === factId).reverse();
+    const history = this.history.filter(entry => entry.projectId === projectId && entry.factId === factId).reverse();
+    return { evidence: evidence.slice(offset, offset + 50), history: history.slice(offset, offset + 50), hasMore: evidence.length > offset + 50 || history.length > offset + 50 };
+  }
+
+  public async propose(projectId: string, input: CreateFactInput, evidence: FactEvidenceInput[], actor: string, expectedRevision?: number): Promise<FactRecord> {
+    const existing = await this.findByKey(projectId, input.factKey);
+    const addedEvidence = evidence.some(snapshot => !this.snapshots.some(row => row.factId === existing?.id && row.snapshotHash === snapshot.snapshotHash));
+    if (existing?.verificationState === "proposed" && !addedEvidence && input.summary === existing.summary && input.body === existing.body) return existing;
+    if (existing && ["rejected", "stale"].includes(existing.verificationState) && !addedEvidence) throw new FactConflictError();
+    if (existing && (existing.revision !== expectedRevision || existing.verificationState === "verified")) throw new FactConflictError();
+    const created = existing ?? await this.create(projectId, input);
+    const fact = { ...created, summary: input.summary ?? created.summary, body: input.body ?? created.body, verificationState: "proposed", verificationSource: "akg", revision: existing ? created.revision + 1 : 1 };
+    this.facts.set(fact.id, fact);
+    for (const snapshot of evidence) {
+      if (!this.snapshots.some(row => row.factId === fact.id && row.snapshotHash === snapshot.snapshotHash)) this.snapshots.push({ ...snapshot, id: `evidence-${this.nextId++}`, factId: fact.id, projectId, createdAt: new Date() });
+    }
+    this.history.push({ id: `review-${this.nextId++}`, factId: fact.id, projectId, fromState: existing?.verificationState ?? "", toState: "proposed", actor, note: "", factRevision: fact.revision, snapshotJson: JSON.stringify(fact), createdAt: new Date() });
+    return fact;
+  }
+
+  public async transition(projectId: string, factId: string, expectedRevision: number, target: VerificationState, actor: string, note: string): Promise<FactRecord> {
+    const existing = this.facts.get(factId);
+    if (!existing || existing.projectId !== projectId || existing.revision !== expectedRevision || !TRANSITIONS[existing.verificationState as VerificationState]?.includes(target)) throw new FactConflictError();
+    if (target === "proposed" && existing.verificationSource === "akg" && ["rejected", "stale"].includes(existing.verificationState)) throw new FactConflictError();
+    const fact = { ...existing, verificationState: target, revision: existing.revision + 1, verifiedAt: target === "verified" ? new Date() : null, verifiedBy: target === "verified" ? actor : "" };
+    this.facts.set(factId, fact);
+    this.history.push({ id: `review-${this.nextId++}`, factId, projectId, fromState: existing.verificationState, toState: target, actor, note, factRevision: fact.revision, snapshotJson: JSON.stringify(fact), createdAt: new Date() });
+    return fact;
+  }
 
   public async list(projectId: string, query: ListFactsQuery): Promise<{ facts: FactRecord[]; total: number }> {
     let rows = [...this.facts.values()].filter((f) => f.projectId === projectId);
@@ -78,6 +125,11 @@ export class FakeFactStore implements FactStore {
       sourceMessageId: input.sourceMessageId ?? "",
       createdAt: now,
       updatedAt: now,
+      verificationState: "observed",
+      verificationSource: input.verificationSource ?? "manual",
+      verifiedAt: null,
+      verifiedBy: "",
+      revision: 1,
     };
     this.facts.set(fact.id, fact);
     return fact;
@@ -103,6 +155,8 @@ export class FakeFactStore implements FactStore {
       ...(input.confidence !== undefined ? { confidence: input.confidence } : {}),
       ...(input.pinned !== undefined ? { pinned: input.pinned } : {}),
       updatedAt: new Date(),
+      revision: existing.revision + 1,
+      ...(existing.verificationState === "verified" && [input.summary, input.body, input.category].some(value => value !== undefined) ? { verificationState: "stale", verifiedAt: null, verifiedBy: "" } : {}),
     };
     this.facts.set(factId, updated);
     return updated;

@@ -1,4 +1,5 @@
 import type { PrismaClient, ProjectFact } from "../generated/prisma/client.js";
+import { FactConflictError, TRANSITIONS, type VerificationState, type FactEvidenceInput, type FactEvidenceRecord, type FactVerificationRecord, type LinkedFinding } from "./fact-verification.js";
 
 /** Fact-graph render bound: a project graph beyond this would be unusable to lay out anyway. */
 const MAX_GRAPH_FACTS = 1000;
@@ -18,6 +19,11 @@ export interface FactRecord {
   sourceMessageId: string;
   createdAt: Date;
   updatedAt: Date;
+  verificationState: string;
+  verificationSource: string;
+  verifiedAt: Date | null;
+  verifiedBy: string;
+  revision: number;
 }
 
 export interface CreateFactInput {
@@ -30,6 +36,7 @@ export interface CreateFactInput {
   relatedVulnerabilityId?: string;
   sourceConversationId?: string;
   sourceMessageId?: string;
+  verificationSource?: string;
 }
 
 export interface UpdateFactInput {
@@ -73,6 +80,11 @@ export interface FactLink {
 }
 
 export interface FactStore {
+  linkedFindings(projectId: string, observations: { kind: string; key: string; observationId: string }[]): Promise<LinkedFinding[]>;
+  propose(projectId: string, input: CreateFactInput, evidence: FactEvidenceInput[], actor: string, expectedRevision?: number): Promise<FactRecord>;
+  transition(projectId: string, factId: string, expectedRevision: number, target: VerificationState, actor: string, note: string): Promise<FactRecord>;
+  evidence(projectId: string, factId: string, offset?: number): Promise<{ evidence: FactEvidenceRecord[]; history: FactVerificationRecord[]; hasMore: boolean }>;
+  findById(projectId: string, factId: string): Promise<FactRecord | null>;
   list(projectId: string, query: ListFactsQuery): Promise<{ facts: FactRecord[]; total: number }>;
   findByKey(projectId: string, factKey: string): Promise<FactRecord | null>;
   /** Per-fact incoming-link detail for the single-fact read (factWithLinksResponse). */
@@ -111,6 +123,11 @@ function toRecord(row: ProjectFact): FactRecord {
     sourceMessageId: row.sourceMessageId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    verificationState: row.verificationState,
+    verificationSource: row.verificationSource,
+    verifiedAt: row.verifiedAt,
+    verifiedBy: row.verifiedBy,
+    revision: row.revision,
   };
 }
 
@@ -136,6 +153,73 @@ function edgeToRecord(row: {
 
 export class PrismaFactStore implements FactStore {
   public constructor(private readonly db: PrismaClient) {}
+
+  public async linkedFindings(projectId: string, observations: { kind: string; key: string; observationId: string }[]): Promise<LinkedFinding[]> {
+    if (!observations.length) return [];
+    const rows = await this.db.projectFactEvidence.findMany({ where: { projectId, OR: observations.slice(0, 20).map(node => ({ akgObservationKind: node.kind, akgObservationKey: node.key, observationId: node.observationId })) }, include: { fact: true }, orderBy: { createdAt: "desc" }, take: 20 });
+    return rows.map(row => ({ id: row.fact.id, fact_key: row.fact.factKey, summary: row.fact.summary.slice(0, 512), verification_state: row.fact.verificationState, observation_kind: row.akgObservationKind, observation_key: row.akgObservationKey, snapshot_hash: row.snapshotHash }));
+  }
+
+  public async findById(projectId: string, factId: string): Promise<FactRecord | null> {
+    const row = await this.db.projectFact.findFirst({ where: { id: factId, projectId } });
+    return row ? toRecord(row) : null;
+  }
+
+  public async evidence(projectId: string, factId: string, offset = 0): Promise<{ evidence: FactEvidenceRecord[]; history: FactVerificationRecord[]; hasMore: boolean }> {
+    const [evidence, history] = await Promise.all([
+      this.db.projectFactEvidence.findMany({ where: { projectId, factId }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 51, skip: offset }),
+      this.db.projectFactVerification.findMany({ where: { projectId, factId }, orderBy: { factRevision: "desc" }, take: 51, skip: offset }),
+    ]);
+    return { evidence: evidence.slice(0, 50), history: history.slice(0, 50), hasMore: evidence.length > 50 || history.length > 50 };
+  }
+
+  public async propose(projectId: string, input: CreateFactInput, evidence: FactEvidenceInput[], actor: string, expectedRevision?: number): Promise<FactRecord> {
+    return this.db.$transaction(async (tx) => {
+      const existing = await tx.projectFact.findUnique({ where: { projectId_factKey: { projectId, factKey: input.factKey } } });
+      let row: ProjectFact;
+      if (existing) {
+        const previous = await tx.projectFactEvidence.findMany({ where: { projectId, factId: existing.id, snapshotHash: { in: evidence.map(snapshot => snapshot.snapshotHash) } }, select: { snapshotHash: true } });
+        const addedEvidence = evidence.some(snapshot => !previous.some(row => row.snapshotHash === snapshot.snapshotHash));
+        if (existing.verificationState === "proposed" && !addedEvidence && input.summary === existing.summary && input.body === existing.body) return toRecord(existing);
+        if (["rejected", "stale"].includes(existing.verificationState) && !addedEvidence) throw new FactConflictError();
+        if (expectedRevision !== existing.revision || !["observed", "proposed", "rejected", "stale"].includes(existing.verificationState)) throw new FactConflictError();
+        const changed = await tx.projectFact.updateMany({
+          where: { id: existing.id, projectId, revision: expectedRevision },
+          data: { summary: input.summary, body: input.body, verificationState: "proposed", verificationSource: "akg", verifiedAt: null, verifiedBy: "", revision: { increment: 1 } },
+        });
+        if (!changed.count) throw new FactConflictError();
+        row = await tx.projectFact.findUniqueOrThrow({ where: { id: existing.id } });
+      } else {
+        row = await tx.projectFact.create({ data: { ...input, projectId, verificationState: "proposed", verificationSource: "akg" } });
+      }
+      await tx.projectFactEvidence.createMany({ data: evidence.map(snapshot => ({ ...snapshot, factId: row.id, projectId })), skipDuplicates: true });
+      await tx.projectFactVerification.create({ data: {
+        factId: row.id, projectId, fromState: existing?.verificationState ?? "", toState: "proposed", actor,
+        factRevision: row.revision, snapshotJson: JSON.stringify({ summary: row.summary, body: row.body, evidence: evidence.map(snapshot => snapshot.snapshotHash) }),
+      } });
+      return toRecord(row);
+    });
+  }
+
+  public async transition(projectId: string, factId: string, expectedRevision: number, target: VerificationState, actor: string, note: string): Promise<FactRecord> {
+    return this.db.$transaction(async (tx) => {
+      const existing = await tx.projectFact.findFirst({ where: { id: factId, projectId } });
+      if (!existing || !TRANSITIONS[existing.verificationState as VerificationState]?.includes(target)) throw new FactConflictError();
+      if (target === "proposed" && existing.verificationSource === "akg" && ["rejected", "stale"].includes(existing.verificationState)) throw new FactConflictError();
+      const changed = await tx.projectFact.updateMany({ where: { id: factId, projectId, revision: expectedRevision, verificationState: existing.verificationState }, data: {
+        verificationState: target, revision: { increment: 1 },
+        verifiedAt: target === "verified" ? new Date() : null, verifiedBy: target === "verified" ? actor : "",
+      } });
+      if (!changed.count) throw new FactConflictError();
+      const row = await tx.projectFact.findUniqueOrThrow({ where: { id: factId } });
+      const snapshots = await tx.projectFactEvidence.findMany({ where: { projectId, factId }, select: { snapshotHash: true } });
+      await tx.projectFactVerification.create({ data: {
+        factId, projectId, fromState: existing.verificationState, toState: target, actor, note,
+        factRevision: row.revision, snapshotJson: JSON.stringify({ summary: row.summary, body: row.body, evidence: snapshots.map(snapshot => snapshot.snapshotHash) }),
+      } });
+      return toRecord(row);
+    });
+  }
 
   public async list(projectId: string, query: ListFactsQuery): Promise<{ facts: FactRecord[]; total: number }> {
     const where = {
@@ -209,16 +293,18 @@ export class PrismaFactStore implements FactStore {
         relatedVulnerabilityId: input.relatedVulnerabilityId ?? "",
         sourceConversationId: input.sourceConversationId ?? "",
         sourceMessageId: input.sourceMessageId ?? "",
+        verificationSource: input.verificationSource ?? "manual",
       },
     });
     return toRecord(row);
   }
 
   public async update(projectId: string, factId: string, input: UpdateFactInput): Promise<FactRecord | null> {
-    const exists = await this.db.projectFact.findFirst({ where: { id: factId, projectId } });
+    return this.db.$transaction(async (tx) => {
+    const exists = await tx.projectFact.findFirst({ where: { id: factId, projectId } });
     if (!exists) return null;
-    const row = await this.db.projectFact.update({
-      where: { id: factId },
+    const changed = await tx.projectFact.updateMany({
+      where: { id: factId, projectId, revision: exists.revision },
       data: {
         ...(input.factKey !== undefined ? { factKey: input.factKey } : {}),
         ...(input.category !== undefined ? { category: input.category } : {}),
@@ -226,9 +312,22 @@ export class PrismaFactStore implements FactStore {
         ...(input.body !== undefined ? { body: input.body } : {}),
         ...(input.confidence !== undefined ? { confidence: input.confidence } : {}),
         ...(input.pinned !== undefined ? { pinned: input.pinned } : {}),
+        revision: { increment: 1 },
+        ...(exists.verificationState === "verified" && [input.summary, input.body, input.category].some(value => value !== undefined)
+          ? { verificationState: "stale", verifiedAt: null, verifiedBy: "" } : {}),
       },
     });
+    if (!changed.count) throw new FactConflictError();
+    const row = await tx.projectFact.findUniqueOrThrow({ where: { id: factId } });
+    if (row.verificationState !== exists.verificationState) {
+      await tx.projectFactVerification.create({ data: {
+        factId, projectId, fromState: exists.verificationState, toState: row.verificationState,
+        actor: "content-edit", note: "Verified content changed; re-verification required",
+        factRevision: row.revision, snapshotJson: JSON.stringify({ summary: row.summary, body: row.body }),
+      } });
+    }
     return toRecord(row);
+    });
   }
 
   public async delete(projectId: string, factId: string): Promise<boolean> {
@@ -261,7 +360,7 @@ export class PrismaFactStore implements FactStore {
           ...(ids.length > 0 ? [{ id: { in: ids } }] : []),
         ],
       },
-      data: { deprecated, ...(confidence !== undefined ? { confidence } : {}) },
+      data: { deprecated, revision: { increment: 1 }, ...(confidence !== undefined ? { confidence } : {}) },
     });
     return result.count;
   }

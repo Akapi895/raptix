@@ -63,6 +63,7 @@ model Project {
   webshellConnections WebShellConnection[]
   facts         ProjectFact[]
   factEdges     ProjectFactEdge[]
+  factEvidence  ProjectFactEvidence[]
 }
 
 model Conversation {
@@ -431,13 +432,57 @@ model ProjectFact {
   relatedVulnerabilityId String            @default("")
   sourceConversationId   String            @default("")
   sourceMessageId        String            @default("")
+  verificationState      String            @default("observed")
+  verificationSource     String            @default("manual")
+  verifiedAt             DateTime?
+  verifiedBy             String            @default("")
+  revision               Int               @default(1)
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
   outgoingEdges          ProjectFactEdge[] @relation("factEdgeSource")
   incomingEdges          ProjectFactEdge[] @relation("factEdgeTarget")
+  evidence               ProjectFactEvidence[]
+  verificationHistory    ProjectFactVerification[]
 
   @@unique([projectId, factKey])
+  @@unique([id, projectId])
   @@index([projectId, deprecated])
+  @@index([projectId, verificationState])
+}
+
+model ProjectFactEvidence {
+  id                 String      @id @default(cuid())
+  projectId          String
+  project            Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  factId             String
+  fact               ProjectFact @relation(fields: [factId, projectId], references: [id, projectId], onDelete: Cascade)
+  engagement         String
+  akgObservationKind String
+  akgObservationKey  String
+  observationId      String
+  provenanceChannel  String
+  snapshotJson       String
+  snapshotHash       String
+  createdAt          DateTime    @default(now())
+
+  @@unique([factId, akgObservationKind, akgObservationKey, snapshotHash], map: "fact_evidence_snapshot_key")
+  @@index([projectId, akgObservationKind, akgObservationKey], map: "fact_evidence_project_identity_idx")
+}
+
+model ProjectFactVerification {
+  id           String      @id @default(cuid())
+  factId       String
+  projectId    String
+  fact         ProjectFact @relation(fields: [factId, projectId], references: [id, projectId], onDelete: Cascade)
+  fromState    String
+  toState      String
+  actor        String
+  note         String      @default("")
+  factRevision Int
+  snapshotJson String
+  createdAt    DateTime    @default(now())
+
+  @@unique([factId, factRevision])
 }
 
 model ProjectFactEdge {
