@@ -1985,6 +1985,21 @@
                                 </nav>
                                 <div id="project-panel-facts" class="projects-panel" role="tabpanel">
                                     <p class="operation-context">Facts retain assessment context and evidence across conversations. Link supported findings and exploit steps to build an Attack Path. Vulnerabilities remain separate records.</p>
+                                    <details class="projects-fact-toolbar">
+                                        <summary data-i18n="projects.runtimeObservations">Runtime observations → proposed findings</summary>
+                                        <p class="operation-context" data-i18n="projects.observationTrustNotice">Scanner-derived observations are not verified findings. Inspect the evidence before proposing and verifying.</p>
+                                        <div class="projects-fact-toolbar-filters">
+                                            <label class="projects-fact-filter-field"><span data-i18n="projects.observationKind">Observation type</span><select id="project-observation-kind"><option>Vulnerability</option><option>Host</option><option>Service</option><option>Endpoint</option><option>Credential</option><option>Hypothesis</option><option>Finding</option></select></label>
+                                            <label class="projects-fact-filter-field"><span data-i18n="common.search">Search</span><input id="project-observation-search" type="search" maxlength="200"></label>
+                                            <button type="button" class="btn-secondary btn-small" data-action="projects.load-observations" data-i18n="projects.loadObservations">Load observations</button>
+                                        </div>
+                                        <div id="project-observation-results" aria-live="polite"></div>
+                                        <div class="projects-fact-toolbar-filters">
+                                            <label class="projects-fact-filter-field"><span data-i18n="projects.factKey">Fact key</span><input id="project-observation-fact-key" maxlength="256"></label>
+                                            <label class="projects-fact-filter-field"><span data-i18n="projects.summary">Summary</span><input id="project-observation-summary" maxlength="2000"></label>
+                                            <button type="button" class="btn-secondary btn-small" data-action="projects.propose-observations" data-require-permission="project:write" data-i18n="projects.proposeObservations">Propose selected evidence</button>
+                                        </div>
+                                    </details>
                                     <div class="projects-fact-toolbar">
                                         <div class="projects-fact-toolbar-filters" role="search">
                                             <label class="projects-fact-filter-field projects-fact-filter-field--search">

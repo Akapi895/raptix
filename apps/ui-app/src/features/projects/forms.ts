@@ -1,6 +1,6 @@
 import { projectsBrowser as browser } from '../../platform/projects-browser';
 import type { ProjectsContext } from './context';
-import type { Fact, FactInput } from './types';
+import type { Fact, FactInput, VerificationState } from './types';
 import { FACT_ATTACK_CHAIN_BODY_TEMPLATE, FACT_ENV_BODY_TEMPLATE, isSparseFactBody, requiresAttackChainFact } from './fact-body';
 import { esc, formatProjectTime } from './dom';
 
@@ -9,6 +9,7 @@ export function createProjectForms(ctx: ProjectsContext) {
   let projectEditId = '', origin: 'projects' | 'chat' | 'sidebar' | 'webshell' = 'projects';
   let factEditId = '', detail: Fact | null = null;
   let projectSequence = 0, factSequence = 0, detailSequence = 0;
+  let evidenceOffset = 0;
   const allowWrite = () => deps.requirePermission('project:write', fmt('projects.writePermissionDenied', 'This account is read-only and cannot create or edit projects'));
   function closeProjectModal() { ++projectSequence; projectEditId = ''; origin = 'projects'; deps.closeModal('project-modal'); }
   function showNewProjectModal(from: typeof origin = 'projects') {
@@ -112,22 +113,53 @@ export function createProjectForms(ctx: ProjectsContext) {
   function closeFactDetailModal() { ++detailSequence; detail = null; deps.closeModal('fact-detail-modal'); }
   async function viewProjectFactBody(key: string) {
     const seq = ++detailSequence, id = service.state.selectedId; detail = null;
+    evidenceOffset = 0;
     dom.text('fact-detail-title', key); dom.text('fact-detail-meta', '…'); dom.text('fact-detail-body', ''); dom.hidden('fact-detail-sparse-warn', true); dom.hidden('fact-detail-link-vuln-btn', true); dom.hidden('fact-detail-create-vuln-btn', true);
     deps.openModal('fact-detail-modal', { focus: false });
     let fact: Fact;
     try { fact = await service.api.fact(id, key); }
     catch (error) { if (seq === detailSequence) closeFactDetailModal(); throw error; }
+    let retained: Awaited<ReturnType<typeof service.api.evidence>> | null = null;
+    try { retained = fact.verification_state ? await service.api.evidence(id, fact.id) : null; }
+    catch (error) { if (seq === detailSequence) dom.text('fact-detail-meta', fmt('projects.evidenceLoadFailed', 'Evidence could not be loaded. Close and reopen this finding to retry.')); throw error; }
     deps.deferModalContent(() => {
       if (seq !== detailSequence || id !== service.state.selectedId) return; detail = fact;
       dom.text('fact-detail-title', `[${fact.fact_key}]`);
       const time = formatProjectTime(t, fact.updated_at, fact.created_at);
       const parts = [fmt('projects.factMetaCategory', `Category: ${fact.category}`, { value: fact.category }), fmt('projects.factMetaConfidence', `Confidence: ${fact.confidence}`, { value: fact.confidence }), fmt('projects.factMetaUpdated', `Updated: ${time}`, { time })];
+      if (fact.verification_state) parts.push(`${fmt('projects.verification', 'Verification')}: ${fact.verification_state}`);
       if (fact.related_vulnerability_id) parts.push(fmt('projects.factMetaRelatedVuln', `Related vulnerability: ${fact.related_vulnerability_id}`, { value: fact.related_vulnerability_id }));
       if (fact.source_conversation_id) parts.push(fmt('projects.factMetaSourceConversation', `Source conversation: ${fact.source_conversation_id}`, { value: fact.source_conversation_id }));
       dom.html('fact-detail-meta', `${esc(parts.join(' · '))}${fact.source_conversation_id ? ` <button type="button" class="btn-secondary btn-small" data-action="projects.open-conversation" data-id="${esc(fact.source_conversation_id)}">Open source conversation</button>` : ''}${fact.related_vulnerability_id ? ` <button type="button" class="btn-secondary btn-small" data-action="projects.open-vulnerability" data-id="${esc(fact.related_vulnerability_id)}">Open vulnerability</button>` : ''}`); dom.text('fact-detail-body', fact.body || t('projects.emptyBody'));
       const sparse = isSparseFactBody(fact.category, fact.fact_key, fact.body); dom.hidden('fact-detail-sparse-warn', !sparse); dom.text('fact-detail-sparse-warn', sparse ? t('projects.factSparseWarn') : '');
       dom.hidden('fact-detail-link-vuln-btn', false); dom.hidden('fact-detail-create-vuln-btn', false);
+      const nextStates: Record<string, VerificationState[]> = { observed: ['proposed'], proposed: ['verified', 'rejected'], verified: ['stale'], rejected: fact.verification_source === 'akg' ? [] : ['proposed'], stale: fact.verification_source === 'akg' ? [] : ['proposed'] };
+      const controls = dom.document.createElement('div');
+      controls.className = 'projects-table-actions';
+      if (fact.revision && deps.hasPermission('project:write')) controls.innerHTML = (nextStates[fact.verification_state || ''] || []).map(state => dom.button('review-fact', fmt(`projects.review.${state}`, state), `data-state="${state}"`)).join('');
+      dom.el('fact-detail-meta')?.append(controls);
+      const section = dom.document.createElement('section'); section.id = 'fact-retained-evidence';
+      if (retained) renderEvidence(section, retained);
+      dom.el('fact-detail-meta')?.append(section);
     });
+  }
+  function renderEvidence(section: HTMLElement, retained: Awaited<ReturnType<typeof service.api.evidence>>) {
+    section.innerHTML = `<h3>${esc(fmt('projects.retainedEvidence', 'Retained evidence and verification history'))}</h3>${retained.evidence.map(snapshot => `<details><summary>${esc(snapshot.akgObservationKind)}: ${esc(snapshot.akgObservationKey)} — ${esc(snapshot.provenanceChannel)}</summary><pre class="fact-detail-body">${esc(snapshot.snapshotJson)}</pre></details>`).join('')}<pre class="fact-detail-body">${esc(JSON.stringify(retained.history, null, 2))}</pre>${evidenceOffset ? dom.button('evidence-page', fmt('projects.evidenceNewer', 'Newer records'), `data-offset="${Math.max(0, evidenceOffset - 50)}"`) : ''}${retained.hasMore ? dom.button('evidence-page', fmt('projects.evidenceOlder', 'Older records'), `data-offset="${evidenceOffset + 50}"`) : ''}`;
+  }
+  async function evidencePage(offset: number) {
+    const fact = detail, seq = detailSequence, id = service.state.selectedId;
+    if (!fact) return;
+    const retained = await service.api.evidence(id, fact.id, offset);
+    if (seq !== detailSequence || id !== service.state.selectedId) return;
+    evidenceOffset = offset;
+    const section = dom.el('fact-retained-evidence'); if (section) renderEvidence(section, retained);
+  }
+  async function reviewFact(state: string) {
+    const fact = detail, id = service.state.selectedId, seq = detailSequence;
+    if (!fact?.revision || !allowWrite()) return;
+    await service.api.reviewFact(id, fact.id, fact.revision, state as VerificationState);
+    if (id !== service.state.selectedId || seq !== detailSequence) return;
+    await viewProjectFactBody(fact.fact_key); await ctx.refreshFacts();
   }
   async function linkFactToExistingVulnerability() {
     const fact = detail; if (!fact || !allowWrite()) return;
@@ -146,6 +178,8 @@ export function createProjectForms(ctx: ProjectsContext) {
     await service.linkFact(fact, vulnerability.id); browser.alert(t('projects.createVulnerabilityAndLinkSuccess', { value: vulnerability.title || vulnerability.id, interpolation: { escapeValue: false } })); closeFactDetailModal(); await ctx.refreshFacts(); if (service.state.tab === 'vulns') await ctx.refreshVulnerabilities();
   }
   return { allowWrite, showNewProjectModal, showEditProjectModal, closeProjectModal, saveProjectModal, formatProjectScopeJson, insertProjectScopeExample, saveProjectSettings,
+    reviewFact,
+    evidencePage,
     showNewProjectModalFromChat() { ctx.closeChatPanel(); showNewProjectModal('chat'); }, showNewProjectModalFromChatSidebar: () => showNewProjectModal('sidebar'),
     setWebshellOrigin() { origin = 'webshell'; },
     showAddFactModal, showEditFactModal, closeFactModal, saveFactModal, updateFactFormHints, insertFactBodyTemplate, viewProjectFactBody, closeFactDetailModal, linkFactToExistingVulnerability, createVulnerabilityFromCurrentFact,

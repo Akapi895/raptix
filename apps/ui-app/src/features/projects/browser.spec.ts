@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { ProjectsFeature } from './index';
 
-interface Harness { create(): Promise<ProjectsFeature>; feature: ProjectsFeature; allowed: boolean; calls: string[]; conversation: string; binding: string }
+interface Harness { create(): Promise<ProjectsFeature>; feature: ProjectsFeature; allowed: boolean; calls: string[]; conversation: string; binding: string; defer?: (callback: () => void) => void }
 
 let server: ViteDevServer, address: string, cache: string;
 test.beforeAll(async () => {
@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
           translate: key => key, hasPermission: () => h.allowed, requirePermission: () => h.allowed, applyRBAC() {},
           openModal: id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; },
           closeModal: id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; },
-          isModalOpen: id => document.getElementById(id)?.style.display === 'block', syncModalBodyLock() {}, deferModalContent: callback => callback(),
+          isModalOpen: id => document.getElementById(id)?.style.display === 'block', syncModalBodyLock() {}, deferModalContent: callback => h.defer ? h.defer(callback) : callback(),
           notify() {}, notifyApiError: (message, kind) => { if (kind !== 'success') throw new Error(message); },
           refreshProjectFilters() {}, refreshConversationProjectFilter() {}, getConversationId: () => h.conversation,
           getConversationProjectId: () => h.binding, setConversationProjectId: id => { h.binding = id; }, onConversationProjectBindingChanged() {},
@@ -39,6 +39,48 @@ test.beforeEach(async ({ page }) => {
       },
     };
   });
+});
+
+test('reviews retained runtime evidence after deferred modal rendering', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  const project = { id: 'p1', name: 'Graph project', status: 'active', created_at: '2026-11-03T00:00:00Z', updated_at: '2026-11-03T00:00:00Z' };
+  let fact: Record<string, unknown> | null = null;
+  const observation = { kind: 'Vulnerability', key: 'vuln::retained', label: 'Observed issue', props: { provenance_channel: 'tool_autoingest' }, snapshot_hash: 'a'.repeat(64) };
+  await page.route('**/api/**', async route => {
+    const request = route.request(), url = new URL(request.url());
+    let result: unknown = {};
+    if (url.pathname === '/api/projects') result = [project];
+    else if (url.pathname === '/api/projects/p1') result = project;
+    else if (url.pathname.endsWith('/akg-candidates')) result = { nodes: [observation], truncated: false };
+    else if (url.pathname.endsWith('/facts/propose')) { fact = { id: 'f1', project_id: 'p1', fact_key: 'finding/retained', category: 'finding', summary: 'Observed issue', body: 'Reviewed detail', confidence: 'medium', pinned: false, revision: 1, verification_state: 'proposed', verification_source: 'akg', created_at: project.created_at, updated_at: project.updated_at }; result = fact; }
+    else if (url.pathname.endsWith('/facts')) {
+      if (url.searchParams.has('fact_key') && !fact) { await route.fulfill({ status: 404, json: { error: 'Fact not found' } }); return; }
+      result = url.searchParams.has('fact_key') ? fact : fact ? [fact] : [];
+    } else if (url.pathname.endsWith('/promote')) { expect(request.postDataJSON().expected_revision).toBe(1); fact = { ...fact, verification_state: 'verified', revision: 2 }; result = fact; }
+    else if (url.pathname.endsWith('/evidence')) result = { evidence: [{ id: 'e1', akgObservationKind: observation.kind, akgObservationKey: observation.key, provenanceChannel: 'tool_autoingest', snapshotJson: '{"label":"Retained observation"}' }], history: [{ toState: fact?.verification_state, actor: 'operator' }], hasMore: false };
+    else if (url.pathname.endsWith('/stats')) result = { fact_count: fact ? 1 : 0, vuln_count: 0, conversation_count: 0, sparse_fact_count: 0 };
+    else if (url.pathname.includes('/tasks')) result = { tasks: [] };
+    else if (url.pathname.includes('/conversations')) result = { conversations: [] };
+    else if (url.pathname === '/api/hitl/pending') result = { items: [] };
+    await route.fulfill({ json: result });
+  });
+  await page.goto(address);
+  await page.evaluate(async () => {
+    const h = (globalThis as typeof globalThis & { projectsHarness: Harness }).projectsHarness;
+    h.defer = callback => { setTimeout(callback, 50); };
+    const feature = await h.create(); document.getElementById('page-projects')!.style.display = 'block'; feature.mount(); await feature.initProjectsPage();
+  });
+  await page.locator('#project-panel-facts details > summary').first().click();
+  await page.locator('[data-action="projects.load-observations"]').click();
+  await page.locator('input[name="graph-observation"]').check();
+  await page.locator('#project-observation-fact-key').fill('finding/retained');
+  await page.locator('[data-action="projects.propose-observations"]').click();
+  await expect(page.locator('#project-facts-tbody')).toContainText('Proposed', { ignoreCase: true });
+  await page.locator('[data-action="projects.view-fact"]').click();
+  await expect(page.locator('#fact-retained-evidence')).toContainText('Retained observation');
+  await page.locator('[data-action="projects.review-fact"][data-state="verified"]').click();
+  await expect(page.locator('#fact-detail-meta')).toContainText('verified');
+  expect(errors).toEqual([]);
 });
 
 test('typed feature shell actions, forms, graph editing, folders and cross-feature navigation', async ({ page }) => {

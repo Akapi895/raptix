@@ -10,6 +10,15 @@ design spec, §13.4).
 
 ### Added
 
+- Graph architecture: bounded project AKG and security-reference retrieval tools,
+  authenticated runtime query API, corpus manifest/checksum ingestion, and additive
+  Neo4j V008/V009 migrations. Reference data shares the existing Neo4j instance.
+- Project findings: verification lifecycle, immutable evidence snapshots and review
+  history, concurrent-transition protection, and observation-to-finding review UI.
+- Runtime: server-owned observation trust channels protect tool-derived content;
+  recon/exploit/postexploit gain bounded read-only query access. Postexploit now
+  assembles the KG slot without adding write tools. AutoIngest/TriedEdges remain opt-in.
+
 - Core: `raptix_core.types.asset` defines `AssetKind`, `AssetRef` and the deterministic
   `asset_id()` shared by the runtime and the Web catalog (ADR-0094). Runtime locator
   normalization for hosts, DNS names and web origins lives in
