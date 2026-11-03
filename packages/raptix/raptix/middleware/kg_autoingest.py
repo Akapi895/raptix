@@ -115,6 +115,14 @@ def _output(command: str) -> tuple[str, str] | None:
     if not args or any(part in {";", "&&", "||", "|", ">", "<"} for part in args):
         return None
     binary = posixpath.basename(args[0])
+    # Kali (this image's base, per packages/raptix/tests/fixtures/real_scanner_output/README.md)
+    # packages ProjectDiscovery's httpx as ``httpx-toolkit`` -- the unadorned
+    # ``httpx`` name is already taken by the unrelated python-httpx pip CLI.
+    # Every skill still documents the invocation as ``httpx``; recognize both
+    # names as the same scanner rather than relying on skill docs matching
+    # whatever a given sandbox image happens to call the real binary.
+    if binary == "httpx-toolkit":
+        binary = "httpx"
     kind: str | None = None
     output_flag = ""
     if binary in _SCANNERS:

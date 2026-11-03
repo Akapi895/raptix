@@ -1,0 +1,2 @@
+{"host":"example.com","ttl":273,"resolver":["1.0.0.1:53"],"a":["104.20.23.154","172.66.147.243"],"all":["example.com.\t273\tIN\tA\t104.20.23.154","example.com.\t273\tIN\tA\t172.66.147.243"],"status_code":"NOERROR","timestamp":"2026-11-03T05:41:19.574703647Z","query-time":"73ms"}
+{"host":"www.example.com","ttl":300,"resolver":["8.8.4.4:53"],"a":["172.66.147.243","104.20.23.154"],"all":["www.example.com.\t300\tIN\tA\t172.66.147.243","www.example.com.\t300\tIN\tA\t104.20.23.154"],"status_code":"NOERROR","timestamp":"2026-11-03T05:41:19.583435273Z","query-time":"82ms"}
