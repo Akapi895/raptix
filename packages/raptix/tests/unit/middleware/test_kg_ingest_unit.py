@@ -46,6 +46,7 @@ class _StubStore:
         engagement: str,
         created_by: str,
         source_episode_id: str,
+        provenance_channel: str = "legacy_unknown",
     ) -> dict[str, Any]:
         self.calls.append(
             {
@@ -53,6 +54,7 @@ class _StubStore:
                 "engagement": engagement,
                 "created_by": created_by,
                 "source_episode_id": source_episode_id,
+                "provenance_channel": provenance_channel,
             }
         )
         return {"created": len(observations), "merged": 0, "edges": 0, "revision": "rev-stub"}
@@ -859,7 +861,9 @@ def test_ingest_stamps_the_digest_of_the_bytes_the_adapter_parsed(
     assert seen["bytes"] == b"<nmaprun>first</nmaprun>"
     props = store.calls[0]["observations"][0]["props"]
     assert props["source_artifact_ref"] == "findings/evidence/nmap.xml"
-    assert props["source_artifact_digest"] == hashlib.sha256(b"<nmaprun>first</nmaprun>").hexdigest()
+    assert (
+        props["source_artifact_digest"] == hashlib.sha256(b"<nmaprun>first</nmaprun>").hexdigest()
+    )
 
 
 def test_a_file_rewritten_at_the_same_path_gets_the_digest_of_its_new_bytes(

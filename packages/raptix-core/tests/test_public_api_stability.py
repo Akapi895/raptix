@@ -167,3 +167,9 @@ def test_manifest_count_unchanged() -> None:
         f"CORE_PUBLIC_API has {actual} entries, expected {expected}. "
         f"If intentional, bump this number AND update the CHANGELOG."
     )
+
+
+def test_postexploit_keeps_project_graph_slot() -> None:
+    from raptix_core.contracts.slots import SLOTS_PER_ROLE, MiddlewareSlot
+
+    assert MiddlewareSlot.KG in SLOTS_PER_ROLE["postexploit"]

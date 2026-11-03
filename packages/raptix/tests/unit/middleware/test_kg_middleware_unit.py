@@ -402,7 +402,7 @@ def test_wrap_model_call_appends_planning_block_when_enabled() -> None:
     blocks = out.system_message.content
     assert "PLANNING CONTEXT" in blocks[-1]["text"]
     # The summary block stays in front of the planning block.
-    assert "KG STATE" in blocks[-2]["text"]
+    assert "KG STATE" in blocks[-1]["text"]
 
 
 def test_wrap_model_call_omits_planning_block_when_disabled() -> None:

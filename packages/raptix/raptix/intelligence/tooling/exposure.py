@@ -90,6 +90,9 @@ RECOVERY_TOOL_NAMES: frozenset[str] = frozenset(
     {
         "inspect_context",
         "search_knowledge",
+        "kg_query",
+        "kg_query_reference",
+        "kg_surface_inventory",
         "load_skill",
         "ask_user",
         "diagnose_execution",

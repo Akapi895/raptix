@@ -381,3 +381,7 @@ benchmark:
 cve-bench-dry:
 	CVE_BENCH_DRY_RUN_SEED=0 PYTHONHASHSEED=0 \
 		uv run python -m benchmarks.suites.cve_bench.dry_run $(ARGS)
+
+.PHONY: ingest-knowledge-reference-graph
+ingest-knowledge-reference-graph:
+	RAPTIX_SKIP_BOOT=1 uv run python -m raptix.knowledge.reference $(ARGS)

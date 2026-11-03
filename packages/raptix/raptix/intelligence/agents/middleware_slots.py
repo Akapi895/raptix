@@ -259,9 +259,20 @@ def _make_kg(*, role: str, **_: Any):
     )
 
     try:
-        enabled_tools = (
-            {"kg_surface_inventory", "challenge_inventory"} if role == "raptix" else None
-        )
+        if role == "raptix":
+            enabled_tools = {
+                "kg_surface_inventory",
+                "challenge_inventory",
+                "kg_query",
+                "kg_query_reference",
+            }
+        elif role in {"recon", "exploit", "postexploit"}:
+            enabled_tools = {"kg_query", "kg_query_reference", "kg_surface_inventory"}
+            # Post-exploitation reads the graph but must not rewrite history.
+            if role != "postexploit":
+                enabled_tools |= {"kg_record", "kg_ingest"}
+        else:
+            enabled_tools = None
         experimental = os.environ.get("RAPTIX_KG_OPERATIONAL_SHADOW", "0").lower() in {
             "1",
             "true",
