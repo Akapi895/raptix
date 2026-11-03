@@ -11,6 +11,8 @@ export interface ApiEnv {
   databaseUrl: string;
   runtimeApiTokenFile: string | undefined;
   langgraphApiUrl: string;
+  vaultMasterKeyFile: string | undefined;
+  webApiInternalTokenFile: string | undefined;
   sandboxKeyFile: string | undefined;
   sandboxKey: string | undefined;
   sandboxControllerUrl: string | undefined;
@@ -51,6 +53,8 @@ export function loadEnv(source: NodeJS.ProcessEnv): ApiEnv {
     databaseUrl: databaseUrl as string,
     runtimeApiTokenFile: source.RAPTIX_RUNTIME_API_TOKEN_FILE,
     langgraphApiUrl: (source.LANGGRAPH_API_URL ?? "http://127.0.0.1:2024").replace(/\/$/, ""),
+    vaultMasterKeyFile: source.RAPTIX_VAULT_MASTER_KEY_FILE,
+    webApiInternalTokenFile: source.RAPTIX_WEB_API_INTERNAL_TOKEN_FILE,
     sandboxKeyFile: source.RAPTIX_SANDBOX_KEY_FILE,
     sandboxKey: source.RAPTIX_SANDBOX_KEY,
     sandboxControllerUrl: source.RAPTIX_SANDBOX_CONTROLLER_URL,

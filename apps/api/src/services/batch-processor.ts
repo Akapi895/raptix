@@ -8,6 +8,7 @@ import { runAgentTurn } from "./agent-turn.js";
 import type { SpecialistConfigurationService } from './specialist-configuration.js';
 
 export interface BatchProcessorDeps {
+  knowledgeConfiguration?: import('./knowledge-configuration.js').KnowledgeConfigurationService;
   specialistConfiguration?: SpecialistConfigurationService;
   store: BatchQueueStore;
   conversationStore: ConversationStore;
@@ -88,6 +89,7 @@ async function runWorker(
         recursion_limit: 1000,
       } : undefined;
       const turn = await runAgentTurn({
+        knowledgeConfiguration: deps.knowledgeConfiguration,
         specialistConfiguration: deps.specialistConfiguration,
         conversation,
         message: task.message,

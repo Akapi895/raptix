@@ -13,3 +13,5 @@ import './workflow-builder.css';
 import './capabilities.css';
 import './file-manager.css';
 import './vulnerability-workspace.css';
+import './vault.css';
+import './knowledge.css';

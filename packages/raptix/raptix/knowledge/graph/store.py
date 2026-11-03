@@ -481,6 +481,9 @@ class KGStore:
                         "status",
                     }
                 }
+                # vault:// is produced by execution/tools/vault/tools.py::vault_store
+                # (its JSON result's "vault_ref" field) -- passing it here is optional,
+                # never required (ADR-0104: opt-in per secret, never forced).
                 if not str(props.get("credential_ref") or "").startswith(
                     ("vault://", "credential://", "workspace-evidence://")
                 ):

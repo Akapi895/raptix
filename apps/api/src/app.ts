@@ -24,6 +24,7 @@ import type { ProjectStore } from "./db/project-store.js";
 import type { ReadNotificationStore } from "./db/read-notification-store.js";
 import type { RetrievalLogStore } from "./db/retrieval-log-store.js";
 import type { ToolGuardStore } from "./db/tool-guard-store.js";
+import type { VaultStore } from "./db/vault-store.js";
 import type { VulnerabilityStore } from "./db/vulnerability-store.js";
 import type { WebShellStore } from "./db/webshell-store.js";
 import type { WorkflowStore } from "./db/workflow-store.js";
@@ -56,6 +57,7 @@ import { registerSpecialistsRoutes } from "./http/routes/specialists.routes.js";
 import { registerSpecialistConfigurationRoutes } from "./http/routes/specialist-configuration.routes.js";
 import { SpecialistConfigurationService } from "./services/specialist-configuration.js";
 import { ToolCatalogService } from "./services/tool-catalog.js";
+import { KnowledgeConfigurationService } from "./services/knowledge-configuration.js";
 import type { SkillsCorpus } from "./adapters/skills/corpus.js";
 import type { KnowledgeGraph } from "./adapters/knowledge-graph/client.js";
 import type { MessageEventStore } from "./db/message-event-store.js";
@@ -63,6 +65,8 @@ import { registerStorageRoutes } from "./http/routes/storage.routes.js";
 import { registerTerminalRoutes } from "./http/routes/terminal.routes.js";
 import { registerToolGuardRoutes } from "./http/routes/tool-guard.routes.js";
 import { registerUsageRoutes } from "./http/routes/usage.routes.js";
+import { registerVaultRoutes } from "./http/routes/vault.routes.js";
+import { registerVaultInternalRoutes } from "./http/routes/vault-internal.routes.js";
 import { registerVulnerabilityRoutes } from "./http/routes/vulnerabilities.routes.js";
 import { registerWebShellRoutes } from "./http/routes/webshell.routes.js";
 import { registerWorkflowRoutes } from "./http/routes/workflows.routes.js";
@@ -82,6 +86,9 @@ export interface BuildAppOptions {
   sandboxProvisioner: SandboxProvisioner;
   batchQueueStore: BatchQueueStore;
   webshellStore: WebShellStore;
+  vaultStore: VaultStore;
+  /** Undefined when RAPTIX_WEB_API_INTERNAL_TOKEN_FILE is unset -- every internal vault call then refuses (fail closed). */
+  webApiInternalToken?: string;
   c2: C2Transport;
   toolGuardStore: ToolGuardStore;
   knowledgeItemStore: KnowledgeItemStore;
@@ -111,6 +118,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   const app = Fastify({ logger: true });
   const specialistConfiguration = new SpecialistConfigurationService(options.appConfigStore, options.runtime);
   const toolCatalog = new ToolCatalogService(options.runtime);
+  const knowledgeConfiguration = new KnowledgeConfigurationService(options.appConfigStore);
 
   const attackChainService = new AttackChainService(options.conversationStore, options.runtime, options.llm, options.resolveLlmChannel);
 
@@ -143,6 +151,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     messageEventStore: options.messageEventStore,
   });
   registerAgentLoopRoutes(app, {
+    knowledgeConfiguration,
     specialistConfiguration,
     authStore: options.authStore,
     conversationStore: options.conversationStore,
@@ -174,6 +183,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   });
   registerStorageRoutes(app, { authStore: options.authStore });
   registerBatchTaskRoutes(app, {
+    knowledgeConfiguration,
     specialistConfiguration,
     authStore: options.authStore,
     batchQueueStore: options.batchQueueStore,
@@ -189,10 +199,23 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     webshellStore: options.webshellStore,
     conversationStore: options.conversationStore,
   });
+  registerVaultRoutes(app, {
+    authStore: options.authStore,
+    vaultStore: options.vaultStore,
+    projectStore: options.projectStore,
+  });
+  registerVaultInternalRoutes(app, {
+    vaultStore: options.vaultStore,
+    projectStore: options.projectStore,
+    internalToken: options.webApiInternalToken,
+  });
   registerC2Routes(app, { authStore: options.authStore, c2: options.c2 });
   registerTerminalRoutes(app, { authStore: options.authStore });
   registerToolGuardRoutes(app, { authStore: options.authStore, toolGuardStore: options.toolGuardStore });
   registerKnowledgeRoutes(app, {
+    runtime: options.runtime,
+    conversationStore: options.conversationStore,
+    configuration: knowledgeConfiguration,
     authStore: options.authStore,
     knowledgeItemStore: options.knowledgeItemStore,
     retrievalLogStore: options.retrievalLogStore,

@@ -13,6 +13,9 @@ from raptix_core.types.kg import NodeKind
 
 MAX_QUERY_BYTES = 64_000
 QUERY_TIMEOUT_SECONDS = 4.0
+# Whole-inventory reads scan every reference node; a cold Neo4j cache or a
+# concurrent index write can exceed the interactive statement ceiling.
+INVENTORY_TIMEOUT_SECONDS = 20.0
 _PUBLIC_PROPS = frozenset(
     {
         "ip",
@@ -118,11 +121,17 @@ class GraphQuery(BaseModel):
         return self
 
 
-def bounded_read(store: KGStore, cypher: str, params: dict[str, Any]) -> list[dict[str, Any]]:
+def bounded_read(
+    store: KGStore,
+    cypher: str,
+    params: dict[str, Any],
+    *,
+    timeout: float | None = None,
+) -> list[dict[str, Any]]:
     """Templates own scope; the driver enforces a transaction-time ceiling."""
     from neo4j import unit_of_work
 
-    @unit_of_work(timeout=QUERY_TIMEOUT_SECONDS)
+    @unit_of_work(timeout=timeout or QUERY_TIMEOUT_SECONDS)
     def read(tx: Any) -> list[dict[str, Any]]:
         return [dict(row) for row in tx.run(cypher, **params)]
 

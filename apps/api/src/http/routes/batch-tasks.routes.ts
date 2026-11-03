@@ -8,6 +8,7 @@ import { startBatchQueue } from "../../services/batch-processor.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 
 export interface BatchTaskRoutesOptions {
+  knowledgeConfiguration?: import('../../services/knowledge-configuration.js').KnowledgeConfigurationService;
   specialistConfiguration?: import('../../services/specialist-configuration.js').SpecialistConfigurationService;
   authStore: AuthStore;
   batchQueueStore: BatchQueueStore;
@@ -71,7 +72,7 @@ export function registerBatchTaskRoutes(app: FastifyInstance, options: BatchTask
   const requireSession = createRequireSession(authStore);
 
   function startInBackground(queueId: string): void {
-    void startBatchQueue(queueId, { store: batchQueueStore, conversationStore, runtime, defaultAssistantId, taskWaitMs, projectStore: options.projectStore, sandboxKey: options.sandboxKey, specialistConfiguration: options.specialistConfiguration }).catch(
+    void startBatchQueue(queueId, { store: batchQueueStore, conversationStore, runtime, defaultAssistantId, taskWaitMs, projectStore: options.projectStore, sandboxKey: options.sandboxKey, specialistConfiguration: options.specialistConfiguration, knowledgeConfiguration: options.knowledgeConfiguration }).catch(
       (error: unknown) => app.log.error({ err: error, queueId }, "batch queue processing failed"),
     );
   }

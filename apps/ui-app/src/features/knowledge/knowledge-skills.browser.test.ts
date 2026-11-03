@@ -71,7 +71,9 @@ interface ApiState {
   files: Record<string, string>;
   items: { id: string; category: string; title: string; content: string }[];
   logs: { id: string; query: string; retrievedItems: string | string[]; conversationId: string; messageId: string; createdAt: string }[];
-  index: Record<string, string | number | boolean>;
+  index: Record<string, unknown>;
+  graph: { enabled: boolean; revision: number; status: Record<string, unknown> };
+  graphUnavailable?: boolean;
   failWrite: boolean;
   conflict: boolean;
   enabled?: boolean;
@@ -87,6 +89,7 @@ async function setup() {
     items: Array.from({ length: 12 }, (_value, index) => ({ id: `item-${index}`, category: `Category-${String(index).padStart(2, '0')}`, title: `Knowledge ${index}`, content: '# Useful content' })),
     logs: [{ id: 'log-1', query: 'query <safe>', retrievedItems: '["_has_results","item-0","gone"]', conversationId: 'conv "quoted"', messageId: 'msg-1', createdAt: '2026-10-29T01:00:00Z' }],
     index: { total_items: 12, indexed_items: 12, progress_percent: 100, is_complete: true }, failWrite: false, conflict: false,
+    graph: { enabled: true, revision: 0, status: { graph_available: true, initialized: false } },
   };
   await page.route('https://step6.test/**', async route => {
     const req = route.request(); const url = new URL(req.url());
@@ -95,6 +98,15 @@ async function setup() {
     state.requests.push({ path: url.pathname + url.search, method, body });
     const ok = (value: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(value) });
     if (state.failWrite && method !== 'GET') { await ok({ error: 'disk full' }, 500); return; }
+    if (url.pathname === '/api/knowledge/graph-configuration') {
+      if (state.graphUnavailable) { await ok({ error: 'runtime unavailable' }, 503); return; }
+      if (method === 'PUT') {
+        if (Number(body.revision) !== state.graph.revision) { await ok({ error: 'Settings changed; refresh' }, 409); return; }
+        state.graph.enabled = String(body.enabled) === 'true'; state.graph.revision++;
+        await ok({ enabled: state.graph.enabled, revision: state.graph.revision }); return;
+      }
+      await ok(state.graph); return;
+    }
     const skillPath = url.pathname.match(/^\/api\/skills\/([^/]+)(?:\/(.*))?$/);
     if (url.pathname === '/api/skills/stats') { await ok(method === 'DELETE' ? {} : { total_skills: 21, total_calls: 8, total_success: 7, total_failed: 1, stats: [{ skill_name: 'sample-0', total_calls: 8, success_calls: 7, failed_calls: 1 }] }); return; }
     if (url.pathname === '/api/skills') {
@@ -245,6 +257,70 @@ describe('skills + knowledge standalone browser integration', () => {
       expect(state.requests.filter(request => request.method !== 'GET')).toEqual([]);
     } finally { await finish(page, errors); }
   }, 30000);
+  it('controlled graph preference reflects saving, initialization and unavailable runtime states', async () => {
+    const { page, state, errors } = await setup();
+    try {
+      await activatePage(page, 'knowledge-management');
+      await page.evaluate(async () => { await (globalThis as typeof globalThis & { stepSix: Harness }).stepSix.bridge.knowledge.controller.graph(); });
+      await browserExpect(page.locator('#knowledge-graph-status')).toContainText('Requires initialization');
+      await browserExpect(page.locator('#knowledge-graph-enabled')).toBeChecked();
+      await page.locator('#knowledge-graph-enabled').uncheck();
+      await browserExpect(page.locator('#knowledge-graph-status')).toContainText('Disabled');
+      expect(state.graph.enabled).toBe(false);
+      expect(state.requests.filter(request => request.path === '/api/knowledge/graph-configuration' && request.method === 'PUT')).toHaveLength(1);
+      state.graph = { enabled: true, revision: 2, status: { graph_available: false, initialized: true, graph_error: 'Neo4j offline; check its configuration.' } };
+      await page.evaluate(async () => { await (globalThis as typeof globalThis & { stepSix: Harness }).stepSix.bridge.knowledge.controller.graph(); });
+      await browserExpect(page.locator('#knowledge-graph-status')).toHaveText('Unavailable');
+      await browserExpect(page.locator('#knowledge-graph-error')).toContainText('Neo4j offline');
+    } finally { await finish(page, errors); }
+  }, 30000);
+
+  it('controlled large document pages stay bounded and preserve search through pagination', async () => {
+    const { page, state, errors } = await setup();
+    const requests: URL[] = [];
+    state.index = { total_items: 5850, indexed_items: 5850, is_complete: true };
+    await page.route('https://step6.test/api/knowledge/items?**', async route => {
+      const url = new URL(route.request().url()); requests.push(url);
+      const offset = Number(url.searchParams.get('offset'));
+      const items = Array.from({ length: 10 }, (_, i) => ({ id: `ref::attack:fixture-${offset + i}`, title: `Command reference ${offset + i} <script>unsafe</script>`, category: 'technique', source: 'attack', type: 'technique', content: 'Long content '.repeat(50), index_status: 'indexed', read_only: true }));
+      await route.fulfill({ json: { items, total: 5850, document_page: true } });
+    });
+    try {
+      await activatePage(page, 'knowledge-management');
+      await page.evaluate(async () => { await (globalThis as typeof globalThis & { stepSix: Harness }).stepSix.bridge.knowledge.controller.load(); });
+      await browserExpect(page.locator('.knowledge-item-card')).toHaveCount(10);
+      expect(requests).toHaveLength(1);
+      expect(await page.locator('#knowledge-items-list script').count()).toBe(0);
+      await page.locator('#knowledge-search').fill('command');
+      await page.locator('#knowledge-search').press('Enter');
+      await browserExpect.poll(() => requests.at(-1)?.searchParams.get('search')).toBe('command');
+      await page.locator('#knowledge-pagination [data-action="knowledge.page"]').last().focus();
+      await page.keyboard.press('Enter');
+      await browserExpect.poll(() => requests.at(-1)?.searchParams.get('offset')).toBe('10');
+      expect(requests.at(-1)?.searchParams.get('search')).toBe('command');
+      await browserExpect(page.locator('#knowledge-search')).toHaveValue('command');
+      await browserExpect(page.locator('#knowledge-pagination button').last()).toBeFocused();
+    } finally { await finish(page, errors); }
+  }, 30000);
+
+  it('controlled failed indexing and empty retrieval history remain distinct and recoverable', async () => {
+    const { page, state, errors } = await setup();
+    try {
+      state.graphUnavailable = true;
+      state.index = { total_items: 1, discovered_items: 1, indexed_items: 0, is_complete: false, graph_available: true, directory_available: true, job: { state: 'failed', error: 'Source validation failed; no writes were made', errors: [{ path: 'invalid.yaml', error: 'missing required fields' }] } };
+      await activatePage(page, 'knowledge-management');
+      await page.evaluate(async () => { const controller = (globalThis as typeof globalThis & { stepSix: Harness }).stepSix.bridge.knowledge.controller; await controller.graph(); await controller.updateIndex(); });
+      await browserExpect(page.locator('#knowledge-graph-enabled')).toBeDisabled();
+      await browserExpect(page.locator('#knowledge-graph-status')).toContainText('configuration unavailable');
+      await browserExpect(page.locator('#knowledge-index-progress')).toContainText('Source validation failed');
+      await browserExpect(page.locator('#knowledge-index-progress [data-action="knowledge.partialIndex"]')).toBeVisible();
+      state.logs = [];
+      await page.locator('#knowledge-tab-logs').click();
+      await browserExpect(page.locator('.retrieval-log-card')).toHaveCount(0);
+      await browserExpect(page.locator('#retrieval-logs-list .cap-state')).toBeVisible();
+    } finally { await finish(page, errors); }
+  }, 30000);
+
   it('isolates feature state and supports a fresh mount without duplicate listeners', async () => {
     const { page, errors } = await setup();
     try {

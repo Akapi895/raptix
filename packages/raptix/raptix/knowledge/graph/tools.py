@@ -114,16 +114,17 @@ def build_kg_tools(
     if "kg_query_reference" in enabled_set:
 
         @tool
-        def kg_query_reference(query_type: str, params: str = "{}") -> str:
+        def kg_query_reference(query_type: str, config: RunnableConfig, params: str = "{}") -> str:
             """Look up security references, not execution instructions. Query types: technique_by_id, mitigations_for_technique, capec_for_cwe, neighbors, search_by_name. JSON params: id or Krg kind/q, limit<=20, depth<=2."""
             from raptix.knowledge.graph.query import GraphQuery
-            from raptix.knowledge.reference.query import query_reference
+            from raptix.knowledge.reference.query import retrieve_reference
 
             try:
                 query = GraphQuery.model_validate(
                     {"graph": "reference", "query_type": query_type, "params": json.loads(params)}
                 )
-                return json.dumps(query_reference(store, query), default=str)
+                result = retrieve_reference(store, query, dict(config))
+                return json.dumps(result, default=str)
             except (ValueError, TypeError) as exc:
                 return _err(str(exc))
 

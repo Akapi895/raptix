@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter, defaultdict
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -36,6 +37,14 @@ def read_corpus(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     for path in sorted(root.rglob("*.yaml")):
         relative = path.relative_to(root).as_posix()
         try:
+            if any(
+                part.is_symlink()
+                for part in (path, *path.parents)
+                if part != root and part.is_relative_to(root)
+            ):
+                raise ValueError("source symlinks are not supported")
+            if not path.resolve().is_relative_to(root.resolve()):
+                raise ValueError("source escapes configured corpus directory")
             raw = path.read_bytes()
             record = yaml.load(raw, Loader=yaml.CSafeLoader)
             if not isinstance(record, dict) or any(
@@ -141,6 +150,8 @@ def ingest_corpus(
     report: dict[str, Any],
     *,
     allow_partial: bool = False,
+    progress: Callable[[int, int], None] | None = None,
+    retire_missing: bool = True,
 ) -> dict[str, Any]:
     if report["errors"] and not allow_partial:
         raise ValueError("corpus validation failed; no graph writes performed")
@@ -222,6 +233,8 @@ def ingest_corpus(
             )
             report["created"] += counters.nodes_created
             report["merged"] += len(chunk) - counters.nodes_created
+            if progress is not None:
+                progress(report["created"] + report["merged"], len(records))
     if placeholders:
         write(
             "UNWIND $rows AS row MERGE (n:KrgUnresolvedRef {id: row.id, namespace: row.namespace}) SET n.name = row.name",
@@ -237,17 +250,20 @@ def ingest_corpus(
             )
     if complete:
         for label in set(TYPE_LABELS.values()):
-            counters = write(
-                f"MATCH (n:{label}) WHERE n.source IN $sources AND NOT n.id IN $ids AND n.deprecated_at IS NULL SET n.deprecated_at = $now",
-                sources=list(report["sources"]),
-                ids=list(identities),
-                now=now,
-            )
-            report["deprecated"] += counters.properties_set
+            if retire_missing:
+                counters = write(
+                    f"MATCH (n:{label}) WHERE n.source IN $sources AND NOT n.id IN $ids AND n.deprecated_at IS NULL SET n.deprecated_at = $now",
+                    sources=list(report["sources"]),
+                    ids=list(identities),
+                    now=now,
+                )
+                report["deprecated"] += counters.properties_set
             write(
-                f"MATCH (s:{label})-[r]->(d) WHERE r.source IN $sources AND NOT r.identity IN $ids AND r.deprecated_at IS NULL SET r.deprecated_at = $now",
+                f"MATCH (s:{label})-[r]->(d) WHERE r.source IN $sources AND ($retire_missing OR s.id IN $present) AND NOT r.identity IN $ids AND r.deprecated_at IS NULL SET r.deprecated_at = $now",
                 sources=list(report["sources"]),
                 ids=[edge["identity"] for group in edge_groups.values() for edge in group],
+                present=list(identities),
+                retire_missing=retire_missing,
                 now=now,
             )
     return {

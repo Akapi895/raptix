@@ -3,16 +3,34 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from raptix.knowledge.graph.query import MAX_QUERY_BYTES, GraphQuery, bounded_read
 from raptix.knowledge.graph.store import KGStore
 
 
+def retrieve_reference(store: KGStore, query: GraphQuery, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Return the existing bounded projection and record the actual retrieval outcome."""
+    from raptix.knowledge.reference.history import record_retrieval
+
+    result: dict[str, Any] = {}
+    status = "error"
+    try:
+        result = query_reference(store, query)
+        status = "success"
+        return result
+    finally:
+        try:
+            record_retrieval(query.query_type, query.params.model_dump(), result, config, status=status)
+        except Exception:  # noqa: BLE001 — history failure cannot replace a retrieval outcome
+            logging.getLogger(__name__).warning("Reference retrieval history could not be persisted")
+
+
 def query_reference(store: KGStore, query: GraphQuery) -> dict[str, Any]:
     p = query.params
     if query.query_type == "search_by_name":
-        cypher = f"MATCH (n:{p.kind}) WHERE ($include OR n.deprecated_at IS NULL) AND toLower(n.name) CONTAINS toLower($q) RETURN [properties(n)] AS nodes, [] AS edges ORDER BY n.id LIMIT $cap"
+        cypher = f"MATCH (n:{p.kind}) WHERE ($include OR n.deprecated_at IS NULL) AND (toLower(n.name) CONTAINS toLower($q) OR toLower(n.id) CONTAINS toLower($q)) RETURN [properties(n)] AS nodes, [] AS edges ORDER BY n.id LIMIT $cap"
     elif query.query_type == "technique_by_id":
         cypher = "MATCH (n:KrgReference {id: $id}) WHERE (n:KrgAttackTechnique OR n:KrgAtlasTechnique) AND ($include OR n.deprecated_at IS NULL) RETURN [properties(n)] AS nodes, [] AS edges LIMIT $cap"
     else:

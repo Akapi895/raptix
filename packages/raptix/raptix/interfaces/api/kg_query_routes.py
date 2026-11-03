@@ -9,7 +9,7 @@ from pydantic import Field
 from raptix.interfaces.api.auth import require_runtime_token
 from raptix.knowledge.graph.query import GraphQuery, query_runtime
 from raptix.knowledge.graph.store import KGStore, KGStoreConfigError
-from raptix.knowledge.reference.query import query_reference
+from raptix.knowledge.reference.query import retrieve_reference
 
 # Declared on the router itself (not only inherited from plugins_api.py's
 # FastAPI(dependencies=[...])) so this router stays self-defending if ever
@@ -34,7 +34,7 @@ def query_graph(body: InternalGraphQuery) -> dict[str, Any]:
     try:
         store = KGStore.from_env()
         if body.graph == "reference":
-            return query_reference(store, body)
+            return retrieve_reference(store, body)
         return query_runtime(store, body.engagement, body)
     except (ValueError, TypeError) as exc:
         raise HTTPException(400, "invalid graph query") from exc

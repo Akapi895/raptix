@@ -9,7 +9,10 @@ from urllib.parse import unquote
 
 from langchain_core.runnables import RunnableConfig
 
-from raptix.intelligence.agents.middleware_slots import graph_toggles_context
+from raptix.intelligence.agents.middleware_slots import (
+    graph_toggles_context,
+    knowledge_graph_context,
+)
 from raptix.intelligence.agents.specialist_catalog import (
     ORCHESTRATORS,
     skill_catalog,
@@ -33,6 +36,9 @@ async def assemble_graph(role: str, config: RunnableConfig, **factory_kwargs: An
         configurable.get("specialist_configuration", {})
     )
     graph_toggles = configurable.get("graph_toggles")
+    knowledge_graph = configurable.get("knowledge_graph", {"enabled": True})
+    if not isinstance(knowledge_graph, dict) or type(knowledge_graph.get("enabled")) is not bool:
+        raise ConfigurationError("knowledge_graph.enabled must be a boolean")
     if graph_toggles is not None:
         if (
             not isinstance(graph_toggles, dict)
@@ -76,7 +82,13 @@ async def assemble_graph(role: str, config: RunnableConfig, **factory_kwargs: An
             dict.fromkeys(i.rsplit("/", 1)[0] + "/" for i in selection.skills)
         )
     return await asyncio.to_thread(
-        _build_graph, role, factories, assembly, factory_kwargs, graph_toggles
+        _build_graph,
+        role,
+        factories,
+        assembly,
+        factory_kwargs,
+        graph_toggles,
+        knowledge_graph["enabled"],
     )
 
 
@@ -86,9 +98,11 @@ def _build_graph(
     assembly: Assembly,
     factory_kwargs: dict[str, Any],
     graph_toggles: dict[str, Any] | None = None,
+    knowledge_graph_enabled: bool = True,
 ) -> Any:
     assembly_token = assembly_context.set(assembly)
     toggles_token = graph_toggles_context.set(graph_toggles)
+    knowledge_token = knowledge_graph_context.set(knowledge_graph_enabled)
     try:
         if role in ORCHESTRATORS:
             module_name = "plugins.vulnresearch" if role == "vulnresearch" else "standard.raptix"
@@ -111,6 +125,7 @@ def _build_graph(
             raise ConfigurationError(f"Selected specialists were not assembled: {sorted(missing)}")
         return graph
     finally:
+        knowledge_graph_context.reset(knowledge_token)
         graph_toggles_context.reset(toggles_token)
         assembly_context.reset(assembly_token)
 

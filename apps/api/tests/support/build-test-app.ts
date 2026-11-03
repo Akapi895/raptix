@@ -26,6 +26,7 @@ import { FakeKnowledgeGraph } from "./fake-knowledge-graph.js";
 import { FakeMessageEventStore } from "./fake-message-event-store.js";
 import { EmptySkillsCorpus } from "../../src/adapters/skills/corpus.js";
 import { FakeToolGuardStore } from "./fake-tool-guard-store.js";
+import { FakeVaultStore } from "./fake-vault-store.js";
 import { FakeVulnerabilityStore } from "./fake-vulnerability-store.js";
 import { FakeWebShellStore } from "./fake-webshell-store.js";
 import { FakeWorkflowStore } from "./fake-workflow-store.js";
@@ -47,6 +48,8 @@ export function buildTestAppOptions(overrides: Partial<BuildAppOptions> = {}): B
     sandboxProvisioner: new FakeSandboxProvisioner(),
     batchQueueStore: new FakeBatchQueueStore(),
     webshellStore: new FakeWebShellStore(),
+    vaultStore: new FakeVaultStore(),
+    webApiInternalToken: "test-internal-token".repeat(2),
     c2: new FakeC2(),
     toolGuardStore: new FakeToolGuardStore(),
     knowledgeItemStore: new FakeKnowledgeItemStore(),

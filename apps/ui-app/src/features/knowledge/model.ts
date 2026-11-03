@@ -1,8 +1,10 @@
 /** JSON contracts: internal/knowledge/types.go and internal/handler/knowledge.go. */
-export interface KnowledgeItem { id: string; category: string; title: string; content?: string; filePath?: string; createdAt?: string; updatedAt?: string }
+export interface KnowledgeItem { id: string; category: string; title: string; content?: string; filePath?: string; createdAt?: string; updatedAt?: string; source?: string; type?: string; index_status?: string; indexed_at?: string; read_only?: boolean; format?: string; reference_id?: string; indexed_snapshot?: boolean }
 export interface KnowledgeCategory { category: string; itemCount: number; items: KnowledgeItem[] }
-export interface RetrievalLog { id: string; query?: string; conversationId?: string; messageId?: string; riskType?: string; retrievedItems: string[]; createdAt?: string; hits?: number }
+export interface RetrievalLog { id: string; query?: string; conversationId?: string; messageId?: string; riskType?: string; retrievedItems: string[]; createdAt?: string; hits?: number; method?: string; status?: string; source?: string; conversationTitle?: string; threadId?: string; runId?: string; origin?: string }
 export interface IndexStatus {
+  directory?: string; directory_available?: boolean; discovered_items?: number; current_items?: number; graph_available?: boolean; graph_error?: string; initialized?: boolean; sources?: string[]; categories?: string[]; last_indexed_at?: string;
+  job?: { state: string; processed?: number; total?: number; errors?: { path: string; error: string }[]; error?: string };
   enabled?: boolean;
   total_items: number; indexed_items: number; progress_percent: number; is_complete: boolean;
   last_error?: string; is_rebuilding?: boolean; rebuild_total?: number; rebuild_current?: number; rebuild_failed?: number;
@@ -10,6 +12,11 @@ export interface IndexStatus {
 }
 export interface KnowledgePayload { category: string; title: string; content: string }
 export interface KnowledgeState {
+  documentPagination?: boolean; source?: string; referenceError?: string;
+  graph?: { enabled: boolean; revision: number; status: IndexStatus; applies_to?: string };
+  graphSaving?: boolean; document?: KnowledgeItem;
+  tab?: 'library' | 'logs'; logOffset?: number; logTotal?: number; logSearch?: string;
+  conversations?: { id: string; title: string }[]; historyError?: string;
   enabled: boolean;
   categories: string[];
   groups: KnowledgeCategory[];

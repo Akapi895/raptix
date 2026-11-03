@@ -23,6 +23,7 @@ export interface PageLifecycleDependencies {
   initProjectsPage?: Hook;
   initVulnerabilityPage?: Hook;
   initWebshellPage?: Hook;
+  initVaultPage?: Hook;
   initFileManagementPage?: Hook;
   refreshTokenUsage?: Hook;
   loadRoles?: Hook;
@@ -33,6 +34,7 @@ export interface PageLifecycleDependencies {
   initSkillsPagination?: Hook;
   loadSkills?: Hook;
   loadKnowledgeCategories?: Hook;
+  initKnowledge?: Hook;
   loadKnowledgePage?: Hook;
   updateIndexProgress?: Hook;
   loadRetrievalLogs?: Hook;
@@ -93,6 +95,7 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
       case 'projects': run(deps.initProjectsPage); break;
       case 'vulnerabilities': run(deps.initVulnerabilityPage); break;
       case 'webshell': run(deps.initWebshellPage); break;
+      case 'vault': run(deps.initVaultPage); break;
       case 'file-management': run(deps.initFileManagementPage); break;
       case 'settings':
         run(() => deps.loadConfig?.(false));
@@ -114,6 +117,11 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
       // These hooks used to live in knowledge.js's switchPage wrapper. They must
       // also run for service-owned hash changes and delegated navigation now.
       case 'knowledge-management': {
+        if (deps.initKnowledge) {
+          if (route.query.has('tab')) run(() => deps.setKnowledgeTab?.(route.query.get('tab') ?? 'library'));
+          run(deps.initKnowledge);
+          break;
+        }
         const tab = route.query.get('tab') === 'logs' ? 'logs' : 'library';
         run(() => deps.setKnowledgeTab?.(tab));
         if (tab === 'logs') run(deps.loadRetrievalLogs);

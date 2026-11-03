@@ -46,6 +46,10 @@ export class FakeProjectStore implements ProjectStore {
     return this.projects.get(id) ?? null;
   }
 
+  public async findByWorkspaceSlug(workspaceSlug: string): Promise<ProjectRecord | null> {
+    return [...this.projects.values()].find((p) => p.workspaceSlug === workspaceSlug) ?? null;
+  }
+
   public async update(id: string, input: UpdateProjectInput): Promise<ProjectRecord | null> {
     const existing = this.projects.get(id);
     if (!existing) return null;

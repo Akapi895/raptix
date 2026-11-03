@@ -51,6 +51,8 @@ export interface ProjectStore {
   list(query: ListProjectsQuery): Promise<{ projects: ProjectRecord[]; total: number }>;
   create(input: CreateProjectInput): Promise<ProjectRecord>;
   findById(id: string): Promise<ProjectRecord | null>;
+  /** Resolves the id the Python runtime is actually allowed to offer (workspaceSlug) into an internal id -- see vault-internal.routes.ts. */
+  findByWorkspaceSlug(workspaceSlug: string): Promise<ProjectRecord | null>;
   update(id: string, input: UpdateProjectInput): Promise<ProjectRecord | null>;
   delete(id: string): Promise<boolean>;
   stats(id: string): Promise<{ conversations: number; vulnerabilities: number; assets: number } | null>;
@@ -99,6 +101,14 @@ export class PrismaProjectStore implements ProjectStore {
   public async findById(id: string): Promise<ProjectRecord | null> {
     const row = await this.db.project.findUnique({
       where: { id },
+      include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
+    });
+    return row ? toRecord(row) : null;
+  }
+
+  public async findByWorkspaceSlug(workspaceSlug: string): Promise<ProjectRecord | null> {
+    const row = await this.db.project.findUnique({
+      where: { workspaceSlug },
       include: { _count: { select: { conversations: true, vulnerabilities: true, assets: true } } },
     });
     return row ? toRecord(row) : null;

@@ -168,6 +168,11 @@ services:
       # would 401, which is why the default points at the mount instead of
       # staying unset).
       - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-/run/raptix/sandbox-secrets/runtime-api-token}
+      # Vault: AES-256-GCM master key (apps/api only) and the bearer token the
+      # runtime presents to the internal vault routes -- same shared mount,
+      # same init-secrets run, reverse direction of the runtime-api-token lane.
+      - RAPTIX_VAULT_MASTER_KEY_FILE=${RAPTIX_VAULT_MASTER_KEY_FILE:-/run/raptix/sandbox-secrets/vault-master-key}
+      - RAPTIX_WEB_API_INTERNAL_TOKEN_FILE=${RAPTIX_WEB_API_INTERNAL_TOKEN_FILE:-/run/raptix/sandbox-secrets/web-api-internal-token}
       - RAPTIX_SANDBOX_KEY_FILE=${RAPTIX_SANDBOX_KEY_FILE:-}
       - RAPTIX_SANDBOX_KEY=${RAPTIX_SANDBOX_KEY:-}
       - RAPTIX_SANDBOX_CONTROLLER_URL=${RAPTIX_SANDBOX_CONTROLLER_URL:-}
@@ -534,6 +539,13 @@ services:
       # configures the whole api<->runtime lane; without the file the runtime
       # refuses every request (fail closed).
       - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-/run/raptix/sandbox-secrets/runtime-api-token}
+      # Vault: where the agent's vault tools reach apps/api, and the bearer
+      # token they present to its internal routes (apps/api verifies it).
+      # Distinct from RAPTIX_API_URL (set on the cli service only, meaning
+      # "this stack's own langgraph API") -- RAPTIX_WEB_API_URL always means
+      # apps/api, the Node service that owns Vault/Project/WebShell records.
+      - RAPTIX_WEB_API_URL=${RAPTIX_WEB_API_URL:-http://api:8080}
+      - RAPTIX_WEB_API_INTERNAL_TOKEN_FILE=${RAPTIX_WEB_API_INTERNAL_TOKEN_FILE:-/run/raptix/sandbox-secrets/web-api-internal-token}
       # The same workspace root as the runtime, so a pinned engagement's files
       # are at /workspace/<slug> in both containers.
       - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
@@ -541,6 +553,8 @@ services:
       - RAPTIX_NEO4J_USER=neo4j
       - RAPTIX_NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
       # Skillogy is the canonical skill-retrieval backend (Neo4j-backed,
+      - RAPTIX_KNOWLEDGE_CORPUS_DIR=/data/knowledge
+      - RAPTIX_KNOWLEDGE_STATE_DIR=/var/lib/raptix/knowledge
       # phase-scoped retrieval). The in-process file-system
       # ``SkillsMiddleware`` stays available as an explicit opt-out via
       # ``RAPTIX_USE_SKILLOGY=0`` for standalone library use and
@@ -569,6 +583,9 @@ services:
       - ${RAPTIX_HOME:-~/.raptix}/telemetry:/root/.raptix/telemetry
       # SQLite checkpoints and dev-server thread/run metadata survive recreate.
       - langgraph_state:/app/.langgraph_api
+      # Curated sources are never edited by scan/index operations.
+      - ${RAPTIX_KNOWLEDGE_CORPUS_DIR:-./data/knowledge}:/data/knowledge:ro
+      - knowledge_state:/var/lib/raptix/knowledge
       # Soundwave writes planning documents through the sandbox, while the
       # handoff validator runs in this container and reads them locally.
       # Mount the same workspace root at the same in-container path.
@@ -896,6 +913,7 @@ services:
       - ad
 
 volumes:
+  knowledge_state:
   postgres_data:
   langgraph_state:
   # Old .env files can reference this indirectly through RAPTIX_WORKSPACE_PATH.

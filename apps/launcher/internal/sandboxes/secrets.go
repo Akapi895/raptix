@@ -23,6 +23,14 @@ const ControllerTokenFile = "controller-token"
 // mount it. Sandboxes never receive it, so a command inside a sandbox cannot start or read runs.
 const RuntimeAPITokenFile = "runtime-api-token"
 
+// VaultMasterKeyFile holds the AES-256-GCM key that encrypts every vault secret. Only the web API mounts it; it
+// never leaves apps/api, and a rerun never rotates it, so secrets encrypted before a restart still decrypt after.
+const VaultMasterKeyFile = "vault-master-key"
+
+// WebAPIInternalTokenFile holds the bearer token the runtime presents to the web API's internal vault routes. The
+// web API verifies it; the runtime (langgraph) presents it. This is the reverse direction of RuntimeAPITokenFile.
+const WebAPIInternalTokenFile = "web-api-internal-token"
+
 const minSecretLen = 32
 
 // TokenFor returns the bearer token of one project's sandbox. The web API derives the same value from the same key,
@@ -46,13 +54,14 @@ func ReadSecret(path string) (string, error) {
 	return value, nil
 }
 
-// InitSecrets creates the sandbox key, the controller token and the runtime API token in dir with mode 0600. An existing file is kept, so a rerun
-// never rotates a key that running sandboxes were started with.
+// InitSecrets creates the sandbox key, the controller token, the runtime API token, the vault master key and the
+// web API internal token in dir with mode 0600. An existing file is kept, so a rerun never rotates a key that
+// running sandboxes or stored vault secrets depend on.
 func InitSecrets(dir string) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("create secrets directory: %w", err)
 	}
-	for _, name := range []string{KeyFile, ControllerTokenFile, RuntimeAPITokenFile} {
+	for _, name := range []string{KeyFile, ControllerTokenFile, RuntimeAPITokenFile, VaultMasterKeyFile, WebAPIInternalTokenFile} {
 		path := filepath.Join(dir, name)
 		if _, err := os.Stat(path); err == nil {
 			continue

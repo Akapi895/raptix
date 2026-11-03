@@ -24,6 +24,7 @@ stable import paths and are never moved for cosmetic grouping.
 | `interaction/` | Human-in-the-loop interaction tools. |
 | `proxy/` | Proxy / traffic interception helpers. |
 | `ops/` | Operational / engagement utilities. |
+| `vault/` | Reversible, engagement-scoped credential storage (`vault_store`/`vault_retrieve`/`vault_list`) for reuse found mid-lab. Not bound to bash/webshell/C2/PTY specifically -- any execution surface can call it once it exists. |
 
 ## Framework plumbing (not attack-surface tools)
 
