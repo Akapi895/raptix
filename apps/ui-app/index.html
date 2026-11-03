@@ -2860,13 +2860,14 @@
                         </div>
                     </div>
                     <nav class="workflow-tabs" aria-label="Workflow workspace">
-                        <button type="button" data-orch-click="tab" data-tab="builder" aria-current="page" data-require-permission="workflow:read">Builder</button>
-                        <button type="button" data-orch-click="tab" data-tab="runs" data-require-permission-any="workflow:read tasks:read">Runs</button>
+                        <!-- Builder tab is hidden (canvas editor disabled); no data-require-permission so the RBAC pass never un-hides it. -->
+                        <button type="button" data-orch-click="tab" data-tab="builder" hidden>Builder</button>
+                        <button type="button" data-orch-click="tab" data-tab="runs" aria-current="page" data-require-permission-any="workflow:read tasks:read">Runs</button>
                         <button type="button" data-orch-click="tab" data-tab="schedule" data-require-permission="tasks:read">Schedule</button>
                     </nav>
-                    <section id="workflow-runs" class="workflow-operations" hidden aria-label="Workflow runs"></section>
+                    <section id="workflow-runs" class="workflow-operations" aria-label="Workflow runs"></section>
                     <section id="workflow-schedule" class="workflow-operations" hidden aria-label="Schedules and queues"></section>
-                    <div class="page-content workflow-page-content" id="workflow-builder">
+                    <div class="page-content workflow-page-content" id="workflow-builder" hidden>
                         <aside id="workflow-switcher" class="workflow-sidebar workflow-popover" popover="auto" aria-label="Choose a workflow">
                             <div class="workflow-panel">
                                 <div class="workflow-panel-header">
