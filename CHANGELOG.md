@@ -10,6 +10,8 @@ design spec, §13.4).
 
 ### Added
 
+- Projects: independent AutoIngest and TriedEdges switches in Project Settings,
+  persisted per project and applied to new streaming, synchronous and batch runs.
 - Graph architecture: bounded project AKG and security-reference retrieval tools,
   authenticated runtime query API, corpus manifest/checksum ingestion, and additive
   Neo4j V008/V009 migrations. Reference data shares the existing Neo4j instance.
