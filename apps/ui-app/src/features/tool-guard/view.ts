@@ -168,7 +168,8 @@ export function createToolGuardView(dependencies: ToolGuardViewDependencies) {
     }
     const protection = el(doc, 'tool-guard-protection-status');
     if (protection && state.config) {
-      protection.textContent = t(state.config.enabled ? 'protectionOn' : 'protectionOff');
+      const messageKey = state.config.enabled && state.config.rules.length === 0 ? 'protectionOnNoRules' : state.config.enabled ? 'protectionOn' : 'protectionOff';
+      protection.textContent = t(messageKey);
       protection.classList.toggle('is-off', !state.config.enabled);
     }
     const count = el(doc, 'tool-guard-rule-count');
