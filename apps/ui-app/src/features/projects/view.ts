@@ -7,6 +7,7 @@ import { createProjectList } from './list';
 import { createProjectFolders } from './folders';
 import { createProjectPicker } from './picker';
 import { createProjectsSelects } from './selects';
+import { createProjectObservations } from './observations';
 import type { ProjectsContext } from './context';
 import type { ProjectsDependencies, ProjectTab } from './types';
 import type { ProjectsService } from './service';
@@ -32,9 +33,11 @@ export function createProjectsView(document: Document, deps: ProjectsDependencie
     'projects-page-size-pagination': () => run(() => list.changeProjectsPageSize()),
   });
   const forms = createProjectForms(ctx), tables = createProjectTables(ctx), graph = createProjectGraph(ctx), list = createProjectList(ctx, selects.refresh);
+  const observations = createProjectObservations(ctx);
   const folders = createProjectFolders(ctx, list.showProjectListActionMenu), picker = createProjectPicker(ctx, folders.render, () => folders.model.state.ready);
   function debounce(key: string, work: () => void | Promise<void>) { clearTimeout(timers.get(key)); timers.set(key, setTimeout(() => { timers.delete(key); run(work); }, 280)); }
   async function selectProject(id: string) {
+    observations.reset();
     dom.document.querySelector<HTMLDialogElement>('#project-settings-dialog')?.close();
     graph.reset();
     for (const field of ['project-facts-search', 'project-facts-filter-category', 'project-facts-filter-confidence', 'project-vulns-search', 'project-vulns-filter-severity', 'project-vulns-filter-status']) dom.setValue(field, '');
@@ -62,6 +65,9 @@ export function createProjectsView(document: Document, deps: ProjectsDependencie
     if (id) await selectProject(id); else list.renderProjectsSidebar();
   }
   const actions: Record<string, (element: HTMLElement, event: Event) => void | Promise<void>> = {
+    'load-observations': observations.load, 'propose-observations': observations.propose,
+    'review-fact': element => forms.reviewFact(element.dataset.state || ''),
+    'evidence-page': element => forms.evidencePage(Number(element.dataset.offset || 0)),
     settings: () => switchProjectTab('settings'), 'close-settings': () => dom.document.querySelector<HTMLDialogElement>('#project-settings-dialog')?.close(),
     'new-conversation': async () => { await deps.startNewConversation({ projectId: service.state.selectedId }); deps.navigate('chat'); },
     'zoom-in': () => graph.graph.zoom(1.25), 'zoom-out': () => graph.graph.zoom(0.8),

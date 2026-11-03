@@ -5,7 +5,11 @@ import type { FactGraph } from '../fact-graph';
 export type { Project, ProjectQuery, Asset };
 // Go factWithLinksResponse and ProjectFactEdge, internal/handler/project.go.
 export interface FactLink { edge_type?: string; source_fact_key?: string; type?: string; from?: string }
-export type Fact = ProjectFact & { incoming_links?: FactLink[]; link_counts?: { incoming?: number; outgoing?: number } };
+export type Fact = ProjectFact & { incoming_links?: FactLink[]; link_counts?: { incoming?: number; outgoing?: number }; verification_state?: VerificationState; verification_source?: string; revision?: number; verified_by?: string; verified_at?: string | null };
+export type VerificationState = 'observed' | 'proposed' | 'verified' | 'rejected' | 'stale';
+export interface RuntimeObservation { kind: string; key: string; label: string; props: Record<string, unknown>; snapshot_hash: string }
+export interface FactEvidence { id: string; akgObservationKind: string; akgObservationKey: string; provenanceChannel: string; snapshotHash: string; snapshotJson: string; createdAt: string }
+export interface FactHistory { fromState: string; toState: string; actor: string; note: string; factRevision: number; createdAt: string }
 export interface FactInput {
   fact_key: string; category: string; summary: string; body: string; confidence: string;
   pinned?: boolean; related_vulnerability_id?: string; links_text?: string;

@@ -1,6 +1,7 @@
 import { http, HttpError } from '../../platform/http';
 import type { CreateProjectRequest, UpdateProjectRequest } from '../../api/types/project';
 import type { FactGraph } from '../fact-graph';
+import type { RuntimeObservation, FactEvidence, FactHistory, VerificationState } from './types';
 import type { Approval, Asset, Fact, FactLink, FactInput, Project, ProjectConversation, ProjectQuery, Promotion, Stats, TaskSummary, VulnerabilitySummary } from './types';
 
 type ProjectEnvelope = { projects?: Project[]; items?: Project[]; total?: number | string; limit?: number | string; offset?: number | string };
@@ -9,6 +10,7 @@ type Vulnerabilities = VulnerabilitySummary[] | { Vulnerabilities?: Vulnerabilit
 // Normalize only this boundary; the rest of the feature works with real links.
 type FactResponse = Pick<Fact, 'id' | 'project_id' | 'fact_key' | 'category' | 'summary' | 'body' | 'confidence' | 'pinned' | 'updated_at' | 'related_vulnerability_id' | 'source_conversation_id' | 'source_message_id' | 'link_counts'> & {
   created_at?: string; incoming_links?: FactLink[] | number; deprecated?: boolean;
+  verification_state?: VerificationState; verification_source?: string; revision?: number; verified_by?: string; verified_at?: string | null;
 };
 function normalizeFact(fact: FactResponse): Fact {
   return { ...fact, created_at: fact.created_at ?? '', incoming_links: Array.isArray(fact.incoming_links) ? fact.incoming_links : [], confidence: fact.deprecated ? 'deprecated' : fact.confidence, body: fact.body || '' };
@@ -22,6 +24,10 @@ export function vulnerabilityItems(data: Vulnerabilities): VulnerabilitySummary[
 export function createProjectsApi(transport = http) {
   const path = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
   return {
+    observations: (id: string, kind: string, q: string) => transport.get<{ nodes: RuntimeObservation[]; truncated: boolean }>(`${path(id)}/akg-candidates`, { query: { kind, q, limit: 20 } }),
+    proposeFact: (id: string, body: { fact_key: string; summary: string; observations: { kind: string; key: string; snapshot_hash: string }[]; expected_revision?: number }) => transport.post<{ id: string }>(`${path(id)}/facts/propose`, body),
+    reviewFact: (id: string, factId: string, revision: number, state: VerificationState) => transport.post<unknown>(`${path(id)}/facts/${encodeURIComponent(factId)}/promote`, { verification_state: state, expected_revision: revision }),
+    evidence: (id: string, factId: string, offset = 0) => transport.get<{ evidence: FactEvidence[]; history: FactHistory[]; hasMore: boolean }>(`${path(id)}/facts/${encodeURIComponent(factId)}/evidence`, { query: { offset } }),
     list: (query: ProjectQuery) => transport.get<Project[] | ProjectEnvelope>('/api/projects', { query }),
     get: (id: string) => transport.get<Project>(path(id)),
     save: (id: string, body: CreateProjectRequest | UpdateProjectRequest) => id ? transport.put<Project>(path(id), body) : transport.post<Project>('/api/projects', body),
