@@ -1,0 +1,2 @@
+admin                (Status: 301) [Size: 0] [--> /admin/]
+api                  (Status: 301) [Size: 0] [--> /api/]
