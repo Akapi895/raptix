@@ -51,22 +51,22 @@ def test_ingest_nmap_xml_creates_host_service_entrypoint(
 
     # Verify in graph
     rows = kgstore.execute_read(
-        "MATCH (h:Host) WHERE h.engagement = $eng RETURN h.label AS label",
-        {"eng": engagement},
+        "MATCH (h:Host) WHERE h.engagement = $engagement RETURN h.label AS label",
+        {},
         engagement=engagement,
     )
     assert any(row["label"] == "live.test" for row in rows)
 
     svc_rows = kgstore.execute_read(
-        "MATCH (s:Service) WHERE s.engagement = $eng RETURN s.port AS port",
-        {"eng": engagement},
+        "MATCH (s:Service) WHERE s.engagement = $engagement RETURN s.port AS port",
+        {},
         engagement=engagement,
     )
     assert any(row["port"] == 80 for row in svc_rows)
 
     ep_rows = kgstore.execute_read(
-        "MATCH (h:Host)-[:HOSTS]->(s:Service) WHERE h.engagement = $eng RETURN count(*) AS c",
-        {"eng": engagement},
+        "MATCH (h:Host)-[:HOSTS]->(s:Service) WHERE h.engagement = $engagement RETURN count(*) AS c",
+        {},
         engagement=engagement,
     )
     assert ep_rows[0]["c"] >= 1
@@ -100,9 +100,9 @@ def test_ingest_nuclei_jsonl_creates_vuln_linked_to_entrypoint(
     assert result["parsed"] == 1
 
     vuln_rows = kgstore.execute_read(
-        "MATCH (v:Vulnerability) WHERE v.engagement = $eng "
+        "MATCH (v:Vulnerability) WHERE v.engagement = $engagement "
         "RETURN v.severity AS sev, v.rule_id AS rule_id",
-        {"eng": engagement},
+        {},
         engagement=engagement,
     )
     assert vuln_rows
@@ -112,8 +112,8 @@ def test_ingest_nuclei_jsonl_creates_vuln_linked_to_entrypoint(
     # Entrypoint has HAS_VULN edge to the vulnerability.
     edge_rows = kgstore.execute_read(
         "MATCH (e:Entrypoint)-[:HAS_VULN]->(v:Vulnerability) "
-        "WHERE e.engagement = $eng RETURN count(*) AS c",
-        {"eng": engagement},
+        "WHERE e.engagement = $engagement RETURN count(*) AS c",
+        {},
         engagement=engagement,
     )
     assert edge_rows[0]["c"] == 1
@@ -145,8 +145,8 @@ def test_ingest_httpx_jsonl_creates_host_service_entrypoint(
     )
     assert result["parsed"] == 1
     rows = kgstore.execute_read(
-        "MATCH (e:Entrypoint) WHERE e.engagement = $eng RETURN e.label AS label",
-        {"eng": engagement},
+        "MATCH (e:Entrypoint) WHERE e.engagement = $engagement RETURN e.label AS label",
+        {},
         engagement=engagement,
     )
     assert any("https://live.test:8443/admin" in (row["label"] or "") for row in rows)
@@ -192,8 +192,8 @@ def test_ingest_sarif_creates_vuln_linked_to_code_location(
 
     edge_rows = kgstore.execute_read(
         "MATCH (v:Vulnerability)-[:DEFINED_IN]->(c:CodeLocation) "
-        "WHERE v.engagement = $eng RETURN v.severity AS sev, c.file AS file, c.start_line AS line",
-        {"eng": engagement},
+        "WHERE v.engagement = $engagement RETURN v.severity AS sev, c.file AS file, c.start_line AS line",
+        {},
         engagement=engagement,
     )
     assert edge_rows
@@ -243,9 +243,9 @@ def test_ingest_idempotent_rerun_same_file_merges(
     )
 
     rows = kgstore.execute_read(
-        "MATCH (h:Host) WHERE h.engagement = $eng AND h.key = 'host::10.0.0.42' "
+        "MATCH (h:Host) WHERE h.engagement = $engagement AND h.key = 'host::10.0.0.42' "
         "RETURN count(h) AS c",
-        {"eng": engagement},
+        {},
         engagement=engagement,
     )
     assert rows[0]["c"] == 1  # dedup MERGE works

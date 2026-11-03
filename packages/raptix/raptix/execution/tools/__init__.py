@@ -16,6 +16,7 @@ from raptix.execution.tools.research.patch import PATCH_TOOLS
 from raptix.execution.tools.research.scanner_tools import SCANNER_TOOLS
 from raptix.execution.tools.research.tools import RESEARCH_TOOLS
 from raptix.execution.tools.reversing.tools import REVERSING_TOOLS
+from raptix.execution.tools.vault import VAULT_TOOLS
 from raptix.execution.tools.web.tools import WEB_TOOLS
 
 __all__ = [
@@ -35,5 +36,6 @@ __all__ = [
     "RESEARCH_TOOLS",
     "REVERSING_TOOLS",
     "SCANNER_TOOLS",
+    "VAULT_TOOLS",
     "WEB_TOOLS",
 ]

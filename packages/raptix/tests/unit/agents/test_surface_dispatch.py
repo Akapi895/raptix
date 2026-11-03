@@ -79,7 +79,27 @@ def test_surface_exploit_outcomes_follow_opplan_transitions() -> None:
         "confirmed": "completed",
         "ruled_out": "completed",
         "open_proof_gap": "in-progress",
+        "confirmed_solved": "completed",
+        "confirmed_unsolved": "in-progress",
     }
+
+
+def test_oracle_line_appended_only_when_requested() -> None:
+    objectives = _cell_objectives()
+
+    without_oracle = next_surface_exploit_dispatch(objectives)
+    assert without_oracle is not None
+    assert "Oracle:" not in without_oracle["task_description"]
+
+    with_oracle = next_surface_exploit_dispatch(
+        objectives, oracle="GET /api/Challenges (field: solved)"
+    )
+    assert with_oracle is not None
+    assert with_oracle["task_description"] == (
+        without_oracle["task_description"]
+        + " Oracle: after a confirmed result, GET /api/Challenges (field: solved) once "
+        "and report confirmed_solved or confirmed_unsolved instead of confirmed."
+    )
 
 
 def _batch_objective(
@@ -144,8 +164,8 @@ def test_orchestrator_prompt_allows_bounded_parallel_surface_exploit_tasks() -> 
     prompt = _PROMPT.read_text(encoding="utf-8")
 
     prompt_lower = prompt.lower()
-    assert "max_in_flight" in prompt
-    assert "up to 3 " in prompt
+    assert "recommended_in_flight" in prompt
+    assert "never more than 3 regardless" in prompt_lower
     assert "distinct session" in prompt_lower
     assert "authorized by adr-0021" in prompt_lower
     assert "sequential" in prompt_lower

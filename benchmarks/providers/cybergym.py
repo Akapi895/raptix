@@ -44,9 +44,15 @@ from pathlib import Path
 import httpx
 import yaml
 
+from benchmarks.engine.schemas import (
+    Challenge,
+    ChallengeResult,
+    CyberGymSpec,
+    FilterConfig,
+    SetupResult,
+)
+from benchmarks.engine.state import BenchmarkRunState
 from benchmarks.providers.base import BaseBenchmarkProvider
-from benchmarks.schemas import Challenge, ChallengeResult, CyberGymSpec, FilterConfig, SetupResult
-from benchmarks.state import BenchmarkRunState
 
 log = logging.getLogger(__name__)
 

@@ -40,10 +40,16 @@ def reduce_converging_value(current: _T | None, update: _T | None) -> _T | None:
     return update if update is not None else current
 
 
+TRANSCRIPT_CHANNEL_LIMIT = 500
+"""Newest sub-agent events kept in the thread state. Every thread read returns the whole state, so an unbounded
+channel makes each read slower with every run; the web console shows at most this many history events."""
+
+
 def reduce_concat_transcript(current, update):
     """Order-stable concat for an accumulating list channel written by one or
-    more concurrent graph branches (parallel task() dispatch). Append-only;
-    idempotent on None. Each entry is an opaque event dict."""
+    more concurrent graph branches (parallel task() dispatch). Idempotent on
+    None. Each entry is an opaque event dict. Keeps only the newest
+    ``TRANSCRIPT_CHANNEL_LIMIT`` entries."""
     if not update:
         return current or []
-    return (current or []) + list(update)
+    return ((current or []) + list(update))[-TRANSCRIPT_CHANNEL_LIMIT:]

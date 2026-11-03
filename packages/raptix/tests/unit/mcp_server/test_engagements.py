@@ -1,4 +1,4 @@
-"""Tests for raptix.mcp_server.engagements (LangGraph SDK bridge).
+"""Tests for raptix.interfaces.mcp.engagements (LangGraph SDK bridge).
 
 Uses an in-memory fake LangGraph client rather than a mock — the fake records
 what the bridge sent so the scope/RoE payload and continuation contract are
@@ -10,8 +10,8 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from typing import Any
 
-from raptix.mcp_server.config import ServerConfig
-from raptix.mcp_server.engagements import EngagementClient
+from raptix.interfaces.mcp.config import ServerConfig
+from raptix.interfaces.mcp.engagements import EngagementClient
 
 
 class _Part:

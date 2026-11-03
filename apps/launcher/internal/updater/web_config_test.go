@@ -15,7 +15,7 @@ func TestWebConfigSyncVerifiesAllFilesBeforeReplacementAndRetainsEnv(t *testing.
 		t.Run(fmt.Sprint(corrupt), func(t *testing.T) {
 			home := t.TempDir()
 			t.Setenv("RAPTIX_HOME", home)
-			files := map[string]string{"docker-compose.yml": "base-new", "docker-compose.web-raptix.yml": "web-new", "infra/config/litellm.yaml": "proxy-new"}
+			files := map[string]string{"docker-compose.yml": "base-new", "infra/config/litellm.yaml": "proxy-new"}
 			for name := range files {
 				dst := filepath.Join(home, filepath.FromSlash(name))
 				if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
@@ -31,7 +31,7 @@ func TestWebConfigSyncVerifiesAllFilesBeforeReplacementAndRetainsEnv(t *testing.
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.URL.Path == "/manifest" {
 					for name, body := range files {
-						if corrupt && name == "docker-compose.web-raptix.yml" {
+						if corrupt && name == "infra/config/litellm.yaml" {
 							body = "mismatched"
 						}
 						fmt.Fprintf(w, "%x  %s\n", sha256.Sum256([]byte(body)), name)

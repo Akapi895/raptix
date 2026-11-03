@@ -34,7 +34,9 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from langchain_core.tools import tool
 
+from raptix.execution.tools.research._state import _json
 from raptix_core.utils.logging import get_logger
 
 log = get_logger("research.cve")
@@ -266,6 +268,22 @@ async def _fetch_osv(
         return {}
 
 
+async def _fetch_nvd_keyword(
+    client: httpx.AsyncClient, keyword: str, *, results_per_page: int = 20
+) -> dict[str, Any]:
+    try:
+        resp = await client.get(
+            NVD_URL,
+            params={"keywordSearch": keyword, "resultsPerPage": results_per_page},
+            timeout=DEFAULT_TIMEOUT,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, ValueError) as e:
+        log.debug("nvd keyword lookup failed for %r: %s", keyword, e)
+        return {}
+
+
 # ── Parsers ─────────────────────────────────────────────────────────────
 
 
@@ -307,6 +325,29 @@ def _parse_nvd(data: dict[str, Any]) -> dict[str, Any]:
     # References (first 10)
     refs = cve.get("references") or []
     out["references"] = [r.get("url") for r in refs[:10] if r.get("url")]
+    return out
+
+
+def _parse_nvd_candidates(data: dict[str, Any]) -> list[dict[str, str]]:
+    """Extract every CVE id + English summary from an NVD keyword-search response.
+
+    Unlike ``_parse_nvd`` (a single-CVE lookup, reads only
+    ``vulnerabilities[0]``), a keyword search can match many CVEs —
+    callers need the full list to pick candidates for ``cve_lookup``
+    scoring.
+    """
+    out: list[dict[str, str]] = []
+    for vuln in data.get("vulnerabilities") or []:
+        cve = vuln.get("cve") or {}
+        cve_id = cve.get("id")
+        if not cve_id:
+            continue
+        summary = ""
+        for desc in cve.get("descriptions", []):
+            if desc.get("lang") == "en":
+                summary = desc.get("value", "")
+                break
+        out.append({"cve_id": cve_id, "summary": summary})
     return out
 
 
@@ -475,6 +516,126 @@ async def lookup_package(
     return ids
 
 
+async def lookup_product(
+    product: str,
+    version: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+    cache: _Cache | None = None,
+) -> list[dict[str, str]]:
+    """Search NVD by free-text product name + version (no ecosystem needed).
+
+    Unlike ``lookup_package`` (OSV, requires an exact package-manager
+    ecosystem — PyPI/npm/Go/...), this works for anything NVD has
+    catalogued: self-hosted web apps, network appliances, OS packages.
+    It uses NVD's keyword search against CVE descriptions rather than an
+    exact CPE match, so results are candidates, not a verdict — many CVE
+    descriptions state an affected *range* instead of repeating the exact
+    version string, so a version-qualified query can under-match.
+
+    Returns up to 20 ``{"cve_id", "summary"}`` candidates in NVD's own
+    ranking order. Empty list on no match or network failure.
+    """
+    cache = cache or _Cache()
+    key = f"product:{product.strip().lower()}@{version.strip()}"
+    cached = cache.get(key)
+    if cached is not None:
+        return list(cached.get("candidates", []))
+
+    own_client = client is None
+    client = client or httpx.AsyncClient(timeout=httpx.Timeout(30.0, connect=10.0))
+    try:
+        data = await _fetch_nvd_keyword(client, f"{product} {version}")
+    finally:
+        if own_client:
+            await client.aclose()
+
+    candidates = _parse_nvd_candidates(data)
+    cache.set(key, {"candidates": candidates})
+    return candidates
+
+
 def rank_exploitability(records: list[Exploitability]) -> list[Exploitability]:
     """Return a copy sorted by composite exploitability score, highest first."""
     return sorted(records, key=lambda r: r.score, reverse=True)
+
+
+# ── Agent-facing tools ───────────────────────────────────────────────────
+
+
+@tool
+async def cve_lookup(cve_ids: str) -> str:
+    """Look up CVEs against NVD + EPSS with real-world exploitability scoring.
+
+    WHEN TO USE: Whenever you find a service version (nmap -sV),
+    dependency (package.json, requirements.txt, Cargo.lock), or CVE ID
+    from any source. Returns a ranked list: CVEs with high CVSS *and*
+    high EPSS (or KEV listing) bubble to the top.
+
+    The composite ``score`` blends:
+    - CVSS base (0-10)
+    - EPSS probability (log-scaled)
+    - CISA KEV membership (floors score at 9.0)
+
+    Args:
+        cve_ids: Comma-separated CVE IDs, e.g. ``"CVE-2024-12345,CVE-2023-99999"``.
+
+    Returns:
+        JSON list of exploitability records, highest score first.
+    """
+    ids = [c.strip() for c in cve_ids.split(",") if c.strip()]
+    if not ids:
+        return _json({"error": "no CVE IDs provided"})
+    records = await lookup_cves(ids)
+    return _json([r.to_dict() for r in records])
+
+
+@tool
+async def cve_by_package(package: str, version: str, ecosystem: str = "PyPI") -> str:
+    """Query OSV for CVEs affecting ``package@version`` in an ecosystem.
+
+    WHEN TO USE: After reading a manifest file (requirements.txt,
+    package.json, go.sum, Cargo.lock). Pair with ``cve_lookup`` to score
+    the results and prioritise bounty-worthy targets.
+
+    Args:
+        package: Package name (exact, case-sensitive).
+        version: Installed version string.
+        ecosystem: One of PyPI, npm, crates.io, Go, Maven, RubyGems,
+            NuGet, Packagist, Pub, Hex.
+
+    Returns:
+        JSON list of vulnerability IDs (CVE/GHSA). Empty if the package
+        version is clean (or the OSV API was unreachable).
+    """
+    ids = await lookup_package(package, version, ecosystem)
+    return _json({"package": package, "version": version, "ecosystem": ecosystem, "ids": ids})
+
+
+@tool
+async def cve_by_product(product: str, version: str) -> str:
+    """Search NVD by product name + version when no package-manager ecosystem applies.
+
+    WHEN TO USE: After fingerprinting a technology (e.g. via
+    ``detect_tech_stack`` or a service banner) that is NOT installed
+    through a package manager — self-hosted web apps, CMSs, network
+    appliances, OS-level software. ``cve_by_package`` needs an OSV
+    ecosystem (PyPI/npm/Go/...); this needs only a product name.
+
+    Matching is NVD free-text keyword search against CVE descriptions,
+    not an exact CPE/version-range match — treat the result as
+    CANDIDATES. Pair with ``cve_lookup`` on the returned ids to get
+    CVSS/EPSS scoring and confirm relevance. If this returns nothing,
+    retry with just the product name: some CVE descriptions state an
+    affected range rather than your exact version string.
+
+    Args:
+        product: Product/application name, e.g. "Flowise", "nginx".
+        version: Observed version string, e.g. "3.0.5".
+
+    Returns:
+        JSON list of up to 20 candidate {"cve_id", "summary"} records,
+        in NVD's own ranking order.
+    """
+    candidates = await lookup_product(product, version)
+    return _json({"product": product, "version": version, "candidates": candidates})

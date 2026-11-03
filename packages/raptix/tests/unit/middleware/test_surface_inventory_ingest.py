@@ -8,13 +8,14 @@ from typing import Any
 import pytest
 from langchain_core.messages import ToolMessage
 
+from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
+from raptix.knowledge.graph.asset_identity import identity_props, web_origin_ref
 from raptix.knowledge.graph.ingest import (
     _adapt_arjun_json,
     _adapt_katana_jsonl,
     available_scanners,
 )
 from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
-from raptix.runtime.recording import RecordingMiddleware, ReplayMiddleware
 
 
 class _StubStore:
@@ -28,6 +29,7 @@ class _StubStore:
         engagement: str,
         created_by: str,
         source_episode_id: str,
+        provenance_channel: str = "legacy_unknown",
     ) -> dict[str, int]:
         self.calls.append(
             {
@@ -35,6 +37,7 @@ class _StubStore:
                 "engagement": engagement,
                 "created_by": created_by,
                 "source_episode_id": source_episode_id,
+                "provenance_channel": provenance_channel,
             }
         )
         return {"created": len(observations), "merged": 0, "edges": 0}
@@ -48,7 +51,9 @@ class _Sandbox:
     def ls_info(self, directory: str) -> list[dict[str, Any]]:
         return [{"path": f"{directory}/katana.jsonl", "size": len(self.content)}]
 
-    def download_files(self, paths: list[str]) -> list[Any]:
+    def download_files(
+        self, paths: list[str], *, workspace_path: str | None = None, max_bytes: int | None = None
+    ) -> list[Any]:
         self.downloaded.extend(paths)
         return [SimpleNamespace(content=self.content, error=None)]
 
@@ -74,6 +79,7 @@ def test_katana_adapter_records_endpoint_and_query_parameter(tmp_path: Path) -> 
     observations = store.calls[0]["observations"]
     endpoint = next(item for item in observations if item["kind"] == "Endpoint")
     parameter = next(item for item in observations if item["kind"] == "Parameter")
+    origin = identity_props("eng-1", web_origin_ref("https://app.example.test/users?id=7"))
     assert endpoint["props"] == {
         "method": "GET",
         "url": "https://app.example.test/users?id=7",
@@ -81,6 +87,7 @@ def test_katana_adapter_records_endpoint_and_query_parameter(tmp_path: Path) -> 
         "host": "app.example.test",
         "source": "katana",
         "status_code": 200,
+        "origin_asset_id": origin["asset_id"],
     }
     assert parameter["props"]["name"] == "id"
     assert parameter["props"]["location"] == "query"

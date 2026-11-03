@@ -1,0 +1,200 @@
+/* Agents page (/#agents): card grids for specialists and custom agent personas,
+   plus the specialist configuration modal. Uses shared design tokens only. */
+
+/* ---- page tabs ---- */
+.agents-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-secondary); margin-bottom: 18px; }
+.agents-tab { font: inherit; font-size: .875rem; font-weight: 500; padding: 7px 18px; border: 0; border-radius: 7px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: background .15s ease, color .15s ease; }
+.agents-tab:hover { color: var(--text-primary); }
+.agents-tab[aria-selected="true"] { background: var(--bg-primary); color: var(--accent-color); font-weight: 600; box-shadow: var(--shadow-sm); }
+.agents-tab:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.agents-panel:focus-visible { outline: none; }
+.agents-panel { min-width: 0; }
+
+/* ---- controls row ---- */
+.agents-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.agents-controls .roles-search-box { margin-bottom: 0; width: min(320px, 100%); }
+.agents-controls-actions { display: flex; gap: 8px; margin-left: auto; }
+.agents-note { color: var(--cap-muted); font-size: .8125rem; line-height: 1.5; margin: -6px 0 14px; max-width: 80ch; }
+
+/* ---- card grid ---- */
+.agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: stretch; }
+
+/* ---- agent cards ---- */
+.agent-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); font: inherit; text-align: left; box-shadow: var(--shadow-sm); transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+button.agent-card { cursor: pointer; }
+.agent-card:hover { border-color: color-mix(in srgb, var(--accent-color) 38%, var(--border-color)); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.agent-card:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.agent-card-head { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.agent-card-id { min-width: 0; flex: 1; }
+.agent-card-name { margin: 2px 0 3px; font-size: .9375rem; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.agent-card-desc { margin: 0; color: var(--cap-muted); font-size: .8125rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.agent-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; background: var(--bg-tertiary); font-size: 1rem; flex-shrink: 0; }
+.agent-card-badge { flex-shrink: 0; padding: 3px 10px; border-radius: 999px; font-size: .7188rem; font-weight: 600; letter-spacing: .01em; white-space: nowrap; background: var(--bg-tertiary); color: var(--text-secondary); }
+.agent-card-badge.is-accent { background: color-mix(in srgb, var(--accent-color) 12%, var(--bg-primary)); color: var(--accent-color); }
+.agent-card-badge.is-success { background: color-mix(in srgb, var(--success-color) 14%, var(--bg-primary)); color: color-mix(in srgb, var(--success-color) 72%, var(--text-primary)); }
+.agent-card-badge.is-warning { background: color-mix(in srgb, var(--warning-color) 18%, var(--bg-primary)); color: color-mix(in srgb, var(--warning-color) 55%, var(--text-primary)); }
+.agent-card.is-disabled .agent-card-name, .agent-card.is-disabled .agent-card-desc { opacity: .72; }
+.agent-card-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--cap-muted); font-size: .75rem; line-height: 1.5; min-width: 0; min-height: 1.2em; }
+.agent-card-meta:empty { display: none; }
+.agent-card-meta-item { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-card-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-color); }
+
+/* ---- specialist configuration modal ---- */
+.specialist-modal-content { width: min(960px, 94vw); max-width: none; height: min(85vh, 860px); }
+.specialist-modal .modal-header { align-items: flex-start; gap: 16px; }
+.specialist-modal .modal-header h2 { background: none; -webkit-background-clip: initial; -webkit-text-fill-color: initial; background-clip: initial; color: var(--text-primary); font-size: 1.2rem; }
+.specialist-modal .modal-header h2::before { content: none; }
+.specialist-modal-heading { min-width: 0; flex: 1; }
+.specialist-modal-description { margin: 4px 0 0; color: var(--cap-muted); font-size: .8125rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.specialist-modal-header-side { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+/* scope selector: same select skin as the role editor, sized for the modal header */
+.specialist-scope-field { display: flex; align-items: center; gap: 8px; }
+.specialist-scope-label { color: var(--cap-muted); font-size: .8125rem; white-space: nowrap; }
+.specialist-scope-native { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.specialist-scope-ui { position: relative; width: auto; min-width: 176px; max-width: 260px; }
+.specialist-scope-ui .role-form-select-trigger { min-height: 36px; padding: 7px 10px; font-size: .8125rem; border-radius: 8px; background: var(--bg-primary); }
+.specialist-scope-ui .role-form-select-dropdown { left: auto; right: 0; min-width: 176px; max-height: 160px; }
+#specialist-modal .role-form-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); line-height: 1.25; cursor: pointer; font-family: inherit; transition: border-color .15s ease, box-shadow .15s ease; }
+#specialist-modal .role-form-select-trigger:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent-color) 45%, var(--border-color)); }
+#specialist-modal .role-form-select-ui.open { z-index: 120; }
+#specialist-modal .role-form-select-ui.open .role-form-select-trigger { border-color: var(--accent-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 12%, transparent); }
+#specialist-modal .role-form-select-trigger:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+#specialist-modal .role-form-select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+#specialist-modal .role-form-select-caret { flex-shrink: 0; color: var(--text-secondary); transition: transform .15s ease; }
+#specialist-modal .role-form-select-ui.open .role-form-select-caret { transform: rotate(180deg); }
+#specialist-modal .role-form-select-dropdown { display: none; position: absolute; top: calc(100% + 4px); z-index: 200; overflow-y: auto; padding: 4px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow-lg); }
+#specialist-modal .role-form-select-ui.open .role-form-select-dropdown { display: block; }
+#specialist-modal .role-form-select-option { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-primary); font-size: .8125rem; font-family: inherit; cursor: pointer; text-align: left; transition: background .12s ease, color .12s ease; }
+#specialist-modal .role-form-select-option:hover:not(:disabled) { background: var(--bg-secondary); }
+#specialist-modal .role-form-select-option:disabled { opacity: .55; cursor: not-allowed; }
+#specialist-modal .role-form-select-option.is-selected { background: color-mix(in srgb, var(--accent-color) 8%, transparent); color: var(--accent-color); font-weight: 500; }
+#specialist-modal .role-form-select-check { width: 14px; flex-shrink: 0; visibility: hidden; color: var(--accent-color); font-size: 12px; line-height: 1; }
+#specialist-modal .role-form-select-option.is-selected .role-form-select-check { visibility: visible; }
+#specialist-modal .role-form-select-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.specialist-notice { margin: 0 0 14px; color: var(--cap-muted); font-size: .8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+.specialist-notice[hidden] { display: none; }
+.specialist-notice.is-error { color: var(--cap-danger); }
+.specialist-modal .modal-body { padding: 0 24px 20px; display: flex; flex-direction: column; overflow: hidden; flex: 1; }
+.specialist-modal [data-specialist-content] { overflow-y: auto; min-height: 0; padding: 18px 2px 2px; scrollbar-gutter: stable; }
+.specialist-modal .specialist-notice { margin: 12px 0 0; flex-shrink: 0; }
+.specialist-modal .modal-header { padding-inline: 24px; }
+.specialist-modal .modal-close { width: 36px; height: 36px; }
+:is(#specialist-modal, #role-modal) .modal-close { color: var(--text-secondary); }
+:is(#specialist-modal, #role-modal) .btn-secondary { background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color); }
+:is(#specialist-modal, #role-modal) .btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); }
+.specialist-modal :is(button, summary, input) { caret-color: var(--accent-color); }
+.specialist-modal summary:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.specialist-modal button:disabled { cursor: not-allowed; }
+.specialist-modal ::selection { background: color-mix(in srgb, var(--accent-color) 20%, var(--bg-primary)); color: var(--text-primary); }
+
+/* modal tabs */
+.specialist-toolbar { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+.specialist-tabs { display: flex; gap: 22px; padding: 0 0 0 2px; margin: 0; flex: 1; }
+.specialist-refresh { font: inherit; font-size: .8125rem; border: 0; background: none; color: var(--cap-muted); cursor: pointer; padding: 8px 2px; }
+.specialist-refresh:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.specialist-tabs button { font: inherit; font-size: .875rem; padding: 10px 2px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--cap-muted); background: transparent; cursor: pointer; }
+.specialist-tabs button:hover { color: var(--text-primary); }
+.specialist-tabs button[aria-selected="true"] { border-bottom-color: var(--accent-color); color: var(--accent-color); font-weight: 600; }
+.specialist-tabs button:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; border-radius: 4px; }
+
+/* modal body content */
+.specialist-modal h4 { margin: 20px 0 8px; font-size: .9375rem; font-weight: 600; }
+.specialist-modal h4:first-child { margin-top: 0; }
+.specialist-help { color: var(--cap-muted); max-width: 72ch; font-size: .8125rem; line-height: 1.5; margin: 0 0 16px; }
+.specialist-summary { display: flex; gap: 10px 24px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 0; border-block: 1px solid var(--border-color); }
+.specialist-summary div { display: flex; align-items: baseline; gap: 8px; }
+.specialist-summary dt { color: var(--cap-muted); font-size: .75rem; }
+.specialist-summary dd { margin: 0; font-size: 1.0625rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.specialist-revision { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 14px; color: var(--cap-muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.specialist-modal details { border-top: 1px solid var(--border-color); padding: 12px 0; }
+.specialist-modal details summary { cursor: pointer; font-size: .875rem; font-weight: 500; overflow-wrap: anywhere; line-height: 1.5; }
+.specialist-modal details li { font-size: .8125rem; line-height: 1.6; overflow-wrap: anywhere; }
+.specialist-modal details ul { padding-left: 20px; margin: 6px 0 12px; }
+.specialist-modal details h5 { margin: 12px 0 4px; font-size: .8125rem; font-weight: 600; color: var(--text-secondary); }
+.specialist-none { color: var(--cap-muted); list-style: none; margin-left: -20px; }
+.specialist-builtin-details input[type="search"] { margin: 10px 0 4px; width: min(100%, 280px); }
+.specialist-catalog-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+.specialist-catalog-header h4 { margin: 0; }
+.specialist-catalog-header input { width: min(100%, 280px); }
+.specialist-modal input[type="search"] { box-sizing: border-box; min-height: 36px; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); font: inherit; font-size: .8125rem; }
+.specialist-modal input[type="search"]::placeholder { color: var(--cap-muted); }
+.specialist-modal input[type="search"]:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.specialist-capability { display: flex; align-items: flex-start; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--border-color); min-width: 0; }
+.specialist-capability[hidden] { display: none; }
+.specialist-modal .specialist-capability input[type="checkbox"] { margin: 3px 0 0; accent-color: var(--accent-color); width: 16px; height: 16px; min-width: 16px; min-height: 16px; flex-shrink: 0; }
+.specialist-capability-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.specialist-capability-copy label { cursor: pointer; min-height: 24px; display: flex; align-items: center; }
+.specialist-capability strong { color: var(--text-primary); font-size: .8125rem; font-weight: 500; overflow-wrap: anywhere; }
+.specialist-modal .specialist-capability-detail { border: 0; padding: 0; min-width: 0; }
+.specialist-modal .specialist-capability-detail summary { color: var(--cap-muted); font-size: .8125rem; font-weight: 400; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.specialist-capability-detail p { margin: 6px 0; color: var(--text-secondary); font-size: .8125rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.specialist-capability-detail summary:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.specialist-capability small { color: var(--cap-muted); font-size: .7188rem; overflow-wrap: anywhere; }
+.specialist-origin { color: var(--cap-muted); font-size: .7188rem; flex-shrink: 0; white-space: nowrap; }
+.specialist-capability-copy > small { display: flex; gap: 4px; }
+.specialist-capability-copy > small span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.specialist-capability:has(input:disabled:checked) { background: var(--bg-secondary); }
+.specialist-origin { padding-top: 4px; }
+.specialist-skeleton { max-width: 100%; }
+.specialist-skeleton > div { background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 16px; }
+.specialist-skeleton-heading { width: 180px; height: 20px; }
+.specialist-skeleton-line { width: 70%; height: 14px; }
+.specialist-skeleton-summary { height: 48px; }
+.specialist-skeleton-row { height: 44px; }
+.specialist-empty { padding: 14px 0; color: var(--cap-muted); font-size: .875rem; line-height: 1.5; }
+.specialist-error { color: var(--cap-danger); font-size: .8125rem; margin: 8px 0; }
+
+/* modal footer */
+.specialist-actions { justify-content: flex-end; gap: 10px; }
+.specialist-actions .specialist-actions-note { margin-right: auto; color: var(--cap-muted); font-size: .75rem; }
+.specialist-actions [data-specialist-dirty] { color: var(--cap-muted); font-size: .75rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Persona editor: keep limitations, field errors, and task controls in view. */
+#role-modal .persona-runtime-note { margin: 0 0 18px; color: var(--cap-muted); font-size: .8125rem; line-height: 1.6; }
+#role-modal .persona-form-error { margin: 0 0 16px; padding: 10px 12px; color: var(--cap-danger); background: var(--bg-secondary); border: 1px solid currentColor; border-radius: 8px; font-size: .875rem; }
+#role-modal [aria-invalid="true"] { border-color: var(--cap-danger); }
+#role-modal #role-user-prompt { min-height: 96px; max-height: 240px; resize: vertical; }
+#role-modal .role-tools-list-items { max-height: 280px; overflow-y: auto; scrollbar-gutter: stable; }
+#role-modal .persona-tool-detail summary { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; line-height: 1.5; }
+#role-modal .persona-tool-detail p { font-size: .8125rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0; }
+#role-modal .persona-tool-detail summary:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.agent-card-persona { cursor: pointer; }
+.agent-card-desc { min-height: 3em; }
+.agent-card-actions { margin-top: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .agent-card, .agents-tab { transition: none; }
+  .agent-card:hover { transform: none; }
+}
+
+/* ---- responsive ---- */
+@media (max-width: 1000px) {
+  .agents-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .specialist-actions .specialist-actions-note { display: none; }
+}
+@media (max-width: 680px) {
+  #role-modal, #specialist-modal { z-index: var(--m-z-sheet, 1202); }
+  .agents-tabs { width: 100%; }
+  .agents-tab { flex: 1; text-align: center; padding: 8px 10px; }
+  .agents-grid { grid-template-columns: minmax(0, 1fr); }
+  .agents-page .agent-card-name, .agents-page .agent-card-desc { text-align: left; }
+  .agents-controls-actions { margin-left: 0; width: 100%; }
+  .specialist-modal .modal-header { flex-direction: column; }
+  .specialist-modal-header-side { width: 100%; }
+  .specialist-modal .modal-body { padding-inline: 16px; }
+  .specialist-modal .modal-header { padding-inline: 16px; }
+  .specialist-modal-header-side .modal-close { position: absolute; top: 12px; right: 12px; }
+  .specialist-modal-heading { padding-right: 32px; }
+  .specialist-scope-field { flex: 1; min-width: 0; }
+  .specialist-tabs { gap: 16px; }
+  .specialist-tabs button { min-height: 44px; }
+  .specialist-refresh { min-height: 44px; }
+  .specialist-modal .specialist-capability-detail summary { min-height: 24px; }
+  .specialist-scope-ui .role-form-select-trigger { min-height: 44px; }
+  .specialist-scope-ui { flex: 1; min-width: 0; }
+  .specialist-modal .specialist-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .specialist-actions [data-specialist-dirty] { grid-column: 1 / -1; }
+  .specialist-actions button { min-width: 0; padding-inline: 8px; font-size: .75rem; white-space: normal; }
+  .specialist-capability { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 4px 10px; }
+  .specialist-capability .specialist-origin { grid-column: 2; margin: 0; padding: 0; }
+  .specialist-capability-copy label { min-height: 30px; }
+}

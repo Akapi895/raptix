@@ -135,8 +135,20 @@ def _main(argv: list[str]) -> int:
     return 0 if all(r.ok for r in results) else 1
 
 
+def main() -> None:
+    """Console-script entrypoint (``raptix-hydrate-references``).
+
+    Exit code is 0 when every reference repo hydrated cleanly, 1 otherwise.
+    Run this once per deployment (or after a reference repo moves) — nothing
+    else in the stack hydrates the cache automatically, so ``research_cve``
+    and ``search_security_references`` stay empty on a fresh checkout until
+    this has run.
+    """
+    raise SystemExit(_main(sys.argv[1:]))
+
+
 if __name__ == "__main__":  # pragma: no cover
-    sys.exit(_main(sys.argv[1:]))
+    main()
 
 
 __all__ = [
@@ -144,4 +156,5 @@ __all__ = [
     "INDEXED_SLUGS",
     "format_report",
     "hydrate_all",
+    "main",
 ]

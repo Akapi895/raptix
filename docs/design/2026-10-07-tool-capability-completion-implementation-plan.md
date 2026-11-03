@@ -481,4 +481,4 @@ Decide at TC-0: the first supported credential formats, Linux/Windows architectu
 - `plugins/contracts/raptix_contracts/{tools,foundry}.py` and `packages/raptix/raptix/execution/tools/research/fuzz.py`: offline/generation semantics.
 - `packages/raptix/raptix/execution/tools/network/protocols.py`, `packages/raptix/raptix/execution/tools/ad/{bloodhound,bhce_client}.py`: SNMP and BloodHound paths.
 - `packages/raptix/tests/unit/{adapters,capabilities,execution}/`: existing deterministic tests, including `test_sandbox_tool_profiles.py`.
-- `benchmarks/tool_eval/evaluate.py`: scripted/canned/live evaluation boundaries; `tests/local/harnesses/lab_run.py`: isolated run capture.
+- `benchmarks/suites/tool_eval/evaluate.py`: scripted/canned/live evaluation boundaries; `tests/local/harnesses/lab_run.py`: isolated run capture.

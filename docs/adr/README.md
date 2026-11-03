@@ -88,5 +88,22 @@ Use [`template.md`](template.md) as the starting point.
 | [0024](0024-code-owned-surface-reexpansion-bounds.md) | Wire bounded re-expansion into KG surface inventory | Proposed |
 | [0025](0025-surface-exploit-chained-surface-provenance.md) | Record chained surface provenance on confirmation | Proposed |
 | [0026](0026-bounded-parallel-surface-fanout.md) | Bound parallel surface-exploit fan-out | Proposed |
+| [0049](0049-evidence-model-extends-capability-contract.md) | Evidence modeling extends the capability-layer Observation contract; AKG redesign and Exploration Planner are deferred | Proposed |
+| [0060](0060-project-recorded-claims-through-existing-kg-context.md) | Project recorded claims through the existing KG summary | Proposed |
+| [0061](0061-retain-and-inspect-scanner-captures.md) | Retain scanner captures and inspect their source consistency | Proposed |
+| [0062](0062-differential-verification-over-retained-captures.md) | Differential verification over retained captures | Superseded by 0063 |
+| [0063](0063-bounded-recorded-verification-context.md) | Bounded recorded verification context on the existing KG summary | Proposed |
+| [0064](0064-evaluate-evidence-informed-decisions-with-replay.md) | Evaluate evidence-informed decisions at replay checkpoints | Proposed |
+| [0065](0065-tolerate-enveloped-json-in-decision-scoring.md) | Tolerate enveloped JSON in decision scoring | Proposed |
+| [0066](0066-bind-decision-output-to-consumed-provenance.md) | Bind decision output to consumed provenance | Proposed |
+| [0085](0085-single-operator-planning-scope.md) | Approve the planner's scope at the handoff for single-operator engagements | Proposed |
+| [0086](0086-per-run-sandbox-workspace-isolation.md) | Per-run workspace isolation replaces the single-engagement sandbox pin | Proposed — revision required |
+| [0098](0098-controller-lease-for-c2-sessions.md) | Give each interactive C2 console one controller at a time through a time-limited lease | Proposed |
+| [0099](0099-runtime-c2-dispatch-through-web-ledger.md) | Dispatch agent C2 commands through the web command ledger so each command names its run | Proposed |
+| [0103](0103-verified-poc-gate-for-workspace-findings.md) | A workspace finding is confirmed only by a separate verifier that re-runs its sealed Proof of Concept | Proposed |
+| [0104](0104-reproduce-sealed-poc-from-the-console.md) | An operator reproduces a finding's sealed Proof of Concept from the console, and a reproduction never writes a verdict | Proposed |
+| [0105](0105-webshell-provider-and-single-operator-sessions.md) | A WebShell session is a typed request/response provider, and direct use requires single-operator mode | Proposed |
 
-Keep this index in sync when you land a new ADR.
+Keep this index in sync when you land a new ADR. (Rows 0027–0048 are missing
+from this index as pre-existing drift, not introduced by ADR-0049 — the files
+exist under `docs/adr/`; backfilling them is a separate cleanup.)

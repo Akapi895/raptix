@@ -59,3 +59,19 @@ class TestHydrateAll:
         )
         assert len(results) == 1
         assert results[0].slug == "hackerone-reports"
+
+
+class TestMain:
+    """Console-script entrypoint (``raptix-hydrate-references``)."""
+
+    def test_exits_zero_on_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(hydrate, "_main", lambda argv: 0)
+        with pytest.raises(SystemExit) as exc:
+            hydrate.main()
+        assert exc.value.code == 0
+
+    def test_exits_nonzero_on_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(hydrate, "_main", lambda argv: 1)
+        with pytest.raises(SystemExit) as exc:
+            hydrate.main()
+        assert exc.value.code == 1

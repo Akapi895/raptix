@@ -1,6 +1,6 @@
 # ADR-0036: Sliver C2 sessions and HTTP C2 Profiles via a typed gRPC bridge
 
-Status: Proposed (IW-09 implementation in progress)
+Status: Proposed (IW-09 implementation in progress). The Shell/PTY clause below is superseded by ADR-0095 (Proposed).
 
 ## Decision
 
@@ -17,7 +17,7 @@ Protobuf definitions are pinned by commit `0aa7e5b` (tag `v1.7.7`). The bridge d
 operator interface (mTLS plus per-RPC token from the generated operator
 config). No shell text crosses the API boundary: commands are `Execute`
 requests with `Output` set, a fixed environment policy and a bridge-enforced
-deadline. The interactive `Shell` RPC and the PTY console are out of scope.
+deadline. The interactive `Shell` RPC and the PTY console were out of scope; ADR-0095 supersedes that clause.
 
 ## Scope and threat model
 

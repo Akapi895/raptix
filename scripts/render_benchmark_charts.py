@@ -1,11 +1,12 @@
 """Render PNG charts for the XBOW benchmark write-ups.
 
-Outputs go to assets/benchmarks/. Re-run after updating numbers:
+Outputs go to benchmarks/results/runs/charts/<run-id>/. Re-run after updating numbers:
     python scripts/render_benchmark_charts.py
 """
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -15,7 +16,14 @@ import numpy as np
 # Data — keep in one place so the script is the single source of truth.
 # ---------------------------------------------------------------------------
 
-OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "benchmarks"
+OUT_DIR = (
+    Path(__file__).resolve().parents[1]
+    / "benchmarks"
+    / "results"
+    / "runs"
+    / "charts"
+    / datetime.now(timezone.utc).strftime("run-%Y%m%d_%H%M%S_%f")
+)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Leaderboard — XBOW publishers only.

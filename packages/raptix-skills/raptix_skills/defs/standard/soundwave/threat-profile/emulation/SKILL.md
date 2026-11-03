@@ -50,14 +50,14 @@ For the one-card quick reference (attribution, targets, full TTP table) on any a
    surviving phase), and embed the one-entry `threat_actors` summary.
 5. **Carry the safety gates** from the playbook's *RoE / safety gates* section into
    `abort.json` (destructive / ICS / identity-takeover actors need at least one
-   `EMERGENCY` trigger) and the deconfliction identifiers into `deconfliction.json`.
+   `emergency` trigger) and the deconfliction identifiers into `deconfliction.json`.
 6. Hand off. The orchestrator's OPPLAN-builder reads `threat-profile.json` + `conops.json`
    and emits `add_objective` calls; each objective's executing agent loads the skill named
    in that kill-chain row.
 
 ## Playbook anatomy (every leaf has these)
 
-- **ThreatProfile seed** — a valid `raptix.core.schemas.ThreatProfile` JSON (drop your
+- **ThreatProfile seed** — a valid `raptix_core.types.engagement.ThreatProfile` JSON (drop your
   `engagement_name`).
 - **Kill-chain emulation table** — `# | phase | MITRE | emulated action | executing agent → skill`.
 - **CONOPS kill_chain** — the phase order to copy into `conops.json`.

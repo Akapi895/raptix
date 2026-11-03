@@ -1,0 +1,19 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:17:59.714Z",
+  "steps": [
+    {
+      "step": "the organization settings page renders for an admin",
+      "matches": true,
+      "detail": "heading shown"
+    },
+    {
+      "step": "an analyst finds the user list locked, with its reason on the screen",
+      "matches": true,
+      "detail": "reason shown"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

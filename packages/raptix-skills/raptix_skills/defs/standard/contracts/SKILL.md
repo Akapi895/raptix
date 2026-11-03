@@ -31,6 +31,9 @@ metadata:
 | `/skills/standard/contracts/access-control/SKILL.md`     | Missing modifiers, wrong msg.sender |
 | `/skills/standard/contracts/upgradeable-proxy/SKILL.md`  | Uninitialized impl, storage clash |
 | `/skills/standard/contracts/signature-replay/SKILL.md`   | Cross-chain, ecrecover zero address |
+| `/skills/standard/contracts/bridge-exploit/SKILL.md`     | Cross-chain bridge: validator/signature bypass, Merkle-proof forgery |
+| `/skills/standard/contracts/governance-attack/SKILL.md`  | DAO governance: flash-loan vote, delegation hijack, time-lock bypass |
+| `/skills/standard/contracts/mev-sandwich/SKILL.md`       | MEV front-run/back-run sandwich, JIT liquidity, Flashbots bundling |
 
 ## Workflow
 1. Map the target: `bash("find /workspace/src -name '*.sol' | head -50")`

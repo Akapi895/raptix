@@ -44,6 +44,8 @@ export interface NormalizedSubagentEvent {
   agent: string;
   /** Raw `session_id` — invocation-unique grouping key (absent on some emitters). */
   sessionId?: string;
+  /** The dispatch this invocation runs (producer `dispatch_id`); absent outside a dispatch. */
+  dispatchId?: string;
   /** Raw `created_at` — ISO-8601 UTC timestamp, preserved verbatim. */
   createdAt?: string;
   /** Tool name, when the event carries one. */
@@ -159,6 +161,7 @@ export function normalizeSubagentEvent(
   const event: NormalizedSubagentEvent = { type: eventType, agent };
 
   if (typeof raw.session_id === "string") event.sessionId = raw.session_id;
+  if (typeof raw.dispatch_id === "string") event.dispatchId = raw.dispatch_id;
   if (typeof raw.created_at === "string") event.createdAt = raw.created_at;
   if (typeof raw.tool === "string") event.tool = raw.tool;
   if (isRecord(raw.args)) event.args = raw.args;

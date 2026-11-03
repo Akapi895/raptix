@@ -108,14 +108,19 @@ class TestProviderAttributionLogging:
     def test_invoke_broken_metadata_does_not_raise(
         self, monkeypatch: pytest.MonkeyPatch, propagate_decepticon_logs
     ) -> None:
-        # Pathological return value (non-AIMessage) — attribution is
-        # best-effort and must never propagate exceptions to callers.
-        sentinel = object()
+        # Pathological metadata on an otherwise-valid turn — attribution
+        # is best-effort and must never propagate exceptions to callers.
+        # (Responses pass the empty-completion guard first, so the fake
+        # must carry usable content; model_construct bypasses pydantic's
+        # dict-type check to inject the broken metadata.)
+        broken = AIMessage.model_construct(content="attribution-ok", response_metadata=[])
 
         def fake_invoke(self, *args, **kwargs):
-            return sentinel
+            return broken
 
         monkeypatch.setattr(ChatOpenAI, "invoke", fake_invoke)
 
         model = _make_proxy()
-        assert model.invoke("hi") is sentinel
+        result = model.invoke("hi")
+        assert result is broken
+        assert result.content == "attribution-ok"

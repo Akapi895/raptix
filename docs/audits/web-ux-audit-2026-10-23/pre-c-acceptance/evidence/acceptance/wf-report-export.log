@@ -1,0 +1,10 @@
+PASS the operator creates a report and selects the confirmed finding create HTTP 200; select HTTP 200; selected 1
+PASS the markdown export carries the title, the summary and the selected finding, and its digest matches the bytes HTTP 200; text/markdown; digest matches; content carries the report
+PASS the json export carries the title, the summary and the selected finding, and its digest matches the bytes HTTP 200; application/json; digest matches; content carries the report
+PARTIAL the pdf export carries the title, the summary and the selected finding, and its digest matches the bytes HTTP 200; application/pdf; digest matches; content carries the report; file structure only: the PDF text streams are compressed
+PASS the docx export carries the title, the summary and the selected finding, and its digest matches the bytes HTTP 200; application/vnd.openxmlformats-officedocument.wordprocessingml.document; digest matches; content carries the report; read from word/document.xml
+PASS the markdown export names the finding version the stored report snapshots snapshot finding v3; markdown names it: true
+PASS an outsider gets 404 for the export and no report text outsider export HTTP 404
+PASS an unknown export format is refused and produces no file format=xlsx HTTP 400
+NV snapshot-after-live-change the export reads stored snapshots; a live finding change is not exercised here (no finding edit path in this check)
+{"PASS":7,"PARTIAL":1,"NV":1}

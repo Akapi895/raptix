@@ -14,15 +14,16 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.prebuilt.tool_node import ToolCallRequest, ToolRuntime
 
+from raptix.execution.backends.project_files import ProjectFileUnavailable
 from raptix.middleware import roe as roe_mod
 from raptix.middleware._audit_sink import RoEAuditSink, verify_ledger
 from raptix.middleware._command_targets import extract_targets
 from raptix.middleware.roe import (
     RoEGuardrailMiddleware,
-    _load_rules_for_workspace,
     _redact_secrets,
     _to_text,
     build_default_sink,
+    load_rules,
 )
 from raptix_core.types.roe import (
     EnforcementMode,
@@ -31,6 +32,21 @@ from raptix_core.types.roe import (
     evaluate_target,
     evaluate_time_window,
 )
+
+# Captured before the autouse fixture below replaces it, so tests can restore the real resolver.
+_PROJECT_FILES_FOR_REQUEST = roe_mod._project_files_for_request
+
+
+@pytest.fixture(autouse=True)
+def roe_documents_on_disk(monkeypatch, tmp_path, project_files_at):
+    """The RoE reads the project's files from its sandbox. Each run's workspace folder on disk stands in for that sandbox."""
+
+    def files_for_request(request):
+        state = getattr(request, "state", None) or {}
+        workspace = state.get("workspace_path") if hasattr(state, "get") else None
+        return project_files_at(Path(workspace) if workspace else tmp_path)
+
+    monkeypatch.setattr(roe_mod, "_project_files_for_request", files_for_request)
 
 
 def test_framework_dict_tool_call_refuses_out_of_scope_command(tmp_path: Path) -> None:
@@ -938,18 +954,31 @@ class _FakeSandbox:
         return {"applied": True, "detail": "ok"}
 
 
+@pytest.fixture
+def egress_on_disk(monkeypatch, tmp_path, project_files_at):
+    """Egress provisioning reaches the project's sandbox. The project folder on disk and a fake sandbox stand in."""
+
+    def use(sandbox_factory) -> None:
+        monkeypatch.setattr(
+            roe_mod, "project_files_for", lambda _config: project_files_at(tmp_path)
+        )
+        monkeypatch.setattr(roe_mod, "project_sandbox_for", lambda _config: sandbox_factory())
+
+    return use
+
+
 class TestEgressProvisioningHook:
     """Layer-2 hook: the guardrail middleware compiles + pushes the egress
-    policy once per workspace. Default ON for enforce mode; opt-out only."""
+    policy once per project sandbox. Default ON for enforce mode; opt-out only."""
 
-    def test_provisions_by_default_for_enforce_mode(self, tmp_path: Path, monkeypatch) -> None:
+    def test_provisions_by_default_for_enforce_mode(
+        self, tmp_path: Path, monkeypatch, egress_on_disk
+    ) -> None:
         # No env set — egress provisioning is on by default.
         monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         sandbox = _FakeSandbox()
-        monkeypatch.setattr(
-            "raptix.execution.backends.factory.build_sandbox_backend", lambda: sandbox
-        )
+        egress_on_disk(lambda: sandbox)
         mw = RoEGuardrailMiddleware()
         state = {"workspace_path": str(tmp_path)}
         mw.before_agent(state, runtime=None)
@@ -960,31 +989,31 @@ class TestEgressProvisioningHook:
         assert isinstance(sandbox.pushed[0], EgressPolicy)
         assert "10.0.0.0/24" in sandbox.pushed[0].allowed_cidrs
 
-    def test_opt_out_env_disables_provisioning(self, tmp_path: Path, monkeypatch) -> None:
+    def test_opt_out_env_disables_provisioning(
+        self, tmp_path: Path, monkeypatch, egress_on_disk
+    ) -> None:
         monkeypatch.setenv("RAPTIX_EGRESS_DISABLE", "1")
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         calls: list = []
-        monkeypatch.setattr(
-            "raptix.execution.backends.factory.build_sandbox_backend",
-            lambda: calls.append(1),
-        )
+        egress_on_disk(lambda: calls.append(1))
         mw = RoEGuardrailMiddleware()
         mw.before_agent({"workspace_path": str(tmp_path)}, runtime=None)
         assert calls == []
 
-    def test_audit_mode_does_not_provision(self, tmp_path: Path, monkeypatch) -> None:
+    def test_audit_mode_does_not_provision(
+        self, tmp_path: Path, monkeypatch, egress_on_disk
+    ) -> None:
         monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
         _write_roe(tmp_path, {"mode": "audit", "in_scope": ["10.0.0.0/24"]})
         calls: list = []
-        monkeypatch.setattr(
-            "raptix.execution.backends.factory.build_sandbox_backend",
-            lambda: calls.append(1),
-        )
+        egress_on_disk(lambda: calls.append(1))
         mw = RoEGuardrailMiddleware()
         mw.before_agent({"workspace_path": str(tmp_path)}, runtime=None)
         assert calls == []
 
-    def test_retries_after_provision_failure(self, tmp_path: Path, monkeypatch) -> None:
+    def test_retries_after_provision_failure(
+        self, tmp_path: Path, monkeypatch, egress_on_disk
+    ) -> None:
         monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         attempts: list = []
@@ -996,9 +1025,7 @@ class TestEgressProvisioningHook:
                     raise RuntimeError("daemon down")
                 return {"applied": True, "detail": "ok"}
 
-        monkeypatch.setattr(
-            "raptix.execution.backends.factory.build_sandbox_backend", lambda: _Flaky()
-        )
+        egress_on_disk(lambda: _Flaky())
         mw = RoEGuardrailMiddleware()
         state = {"workspace_path": str(tmp_path)}
         mw.before_agent(state, runtime=None)  # fails, un-marks workspace
@@ -1099,14 +1126,23 @@ class TestFqdnTrailingDotNormalization:
         assert evaluate_target("other.example.", rules).allow is False
 
 
-class TestLoadRulesFallback:
-    def test_malformed_roe_json_falls_back_to_audit(self, tmp_path: Path) -> None:
+class TestUnreadableRoeFailsClosed:
+    """ADR-0102: a RoE that cannot be read refuses gated calls. Only a missing document means audit-only."""
+
+    def test_malformed_roe_json_raises_unavailable(self, tmp_path: Path, project_files_at) -> None:
         (tmp_path / "plan").mkdir(parents=True, exist_ok=True)
         (tmp_path / "plan" / "roe.json").write_text("{not valid json", encoding="utf-8")
-        rules = _load_rules_for_workspace(str(tmp_path))
-        assert rules.mode == EnforcementMode.AUDIT
+        with pytest.raises(ProjectFileUnavailable):
+            load_rules(project_files_at(tmp_path))
 
-    def test_malformed_roe_json_gated_call_allowed_and_logged(self, tmp_path: Path) -> None:
+    def test_unknown_enforcement_mode_raises_unavailable(
+        self, tmp_path: Path, project_files_at
+    ) -> None:
+        _write_roe(tmp_path, {"mode": "enforced", "in_scope": ["10.0.0.0/24"]})
+        with pytest.raises(ProjectFileUnavailable):
+            load_rules(project_files_at(tmp_path))
+
+    def test_malformed_roe_json_refuses_gated_call_and_records_why(self, tmp_path: Path) -> None:
         (tmp_path / "plan").mkdir(parents=True, exist_ok=True)
         (tmp_path / "plan" / "roe.json").write_text("}}garbage{{", encoding="utf-8")
         sink = RoEAuditSink(path=tmp_path / "audit.jsonl")
@@ -1114,13 +1150,39 @@ class TestLoadRulesFallback:
         req = _make_request("bash", "nmap 8.8.8.8", state={"workspace_path": str(tmp_path)})
         handler = MagicMock(return_value=ToolMessage(content="ok", tool_call_id="tc-test"))
         result = mw.wrap_tool_call(req, handler)
-        assert handler.called
-        assert isinstance(result, ToolMessage)
-        assert result.content == "ok"
+        assert not handler.called
+        assert result.status == "error"
+        assert "ROE_REFUSED] code=ROE_UNAVAILABLE" in result.content
         recs = [json.loads(line) for line in (tmp_path / "audit.jsonl").read_text().splitlines()]
         assert len(recs) == 1
-        assert recs[0]["decision"] == "allow"
-        assert recs[0]["mode"] == "audit"
+        assert recs[0]["decision"] == "refuse"
+        assert recs[0]["reason_code"] == "ROE_UNAVAILABLE"
+        assert recs[0]["mode"] == "enforce"
+
+    def test_unreachable_sandbox_halts_gated_call_as_aborted(
+        self, tmp_path: Path, project_files_at, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The abort marker is read first. An unreachable sandbox cannot prove the run is not aborted, so it counts as aborted.
+        unreachable = project_files_at(tmp_path)
+        unreachable.unavailable = True
+        monkeypatch.setattr(roe_mod, "_project_files_for_request", lambda _request: unreachable)
+        mw = RoEGuardrailMiddleware(sink=RoEAuditSink(path=tmp_path / "audit.jsonl"))
+        req = _make_request("bash", "nmap 8.8.8.8", state={"workspace_path": str(tmp_path)})
+        handler = MagicMock(return_value=ToolMessage(content="ok", tool_call_id="tc-test"))
+        result = mw.wrap_tool_call(req, handler)
+        assert not handler.called
+        assert "[AGENT_HALTED] code=EMERGENCY_ABORT" in result.content
+
+    def test_run_without_a_sandbox_endpoint_halts_gated_call_as_aborted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(roe_mod, "_project_files_for_request", _PROJECT_FILES_FOR_REQUEST)
+        mw = RoEGuardrailMiddleware(sink=RoEAuditSink(path=tmp_path / "audit.jsonl"))
+        req = _make_request("bash", "nmap 8.8.8.8", state={"workspace_path": str(tmp_path)})
+        handler = MagicMock(return_value=ToolMessage(content="ok", tool_call_id="tc-test"))
+        result = mw.wrap_tool_call(req, handler)
+        assert not handler.called
+        assert "[AGENT_HALTED] code=EMERGENCY_ABORT" in result.content
 
 
 class TestToTextFlattening:
@@ -1214,22 +1276,52 @@ class TestTcidFallback:
 
 
 class TestBuildDefaultSink:
-    def test_env_path_used(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_env_path_pins_a_local_ledger(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         env_target = tmp_path / "env" / "ledger.jsonl"
         monkeypatch.setenv("RAPTIX_ROE_AUDIT_PATH", str(env_target))
-        sink = build_default_sink(str(tmp_path / "workspace"))
+        sink = build_default_sink()
         assert sink is not None
         assert sink.path == env_target
 
-    def test_no_env_no_workspace_returns_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_no_env_leaves_the_ledger_to_the_project_sandbox(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.delenv("RAPTIX_ROE_AUDIT_PATH", raising=False)
-        assert build_default_sink(None) is None
+        assert build_default_sink() is None
 
-    def test_workspace_path_default(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("RAPTIX_ROE_AUDIT_PATH", raising=False)
-        sink = build_default_sink(str(tmp_path))
-        assert sink is not None
-        assert sink.path == tmp_path / "audit" / "roe-decisions.jsonl"
+
+class TestProjectLedger:
+    def test_project_ledger_chains_across_sinks_and_lives_at_its_relative_path(
+        self, tmp_path: Path, project_files_at
+    ) -> None:
+        files = project_files_at(tmp_path)
+        first = RoEAuditSink.for_project(files, "audit/roe-decisions.jsonl")
+        second = RoEAuditSink.for_project(files, "audit/roe-decisions.jsonl")
+        first.append({"event": "one"})
+        second.append({"event": "two"})
+        lines = (
+            (tmp_path / "audit" / "roe-decisions.jsonl").read_text(encoding="utf-8").splitlines()
+        )
+        assert [json.loads(line)["seq"] for line in lines] == [1, 2]
+        assert json.loads(lines[1])["prev_hash"] == json.loads(lines[0])["hash"]
+
+    def test_unreachable_project_ledger_keeps_the_chain_unchanged(
+        self, tmp_path: Path, project_files_at
+    ) -> None:
+        files = project_files_at(tmp_path)
+        RoEAuditSink.for_project(files, "audit/roe-decisions.jsonl").append({"event": "kept"})
+        files.unavailable = True
+        with pytest.raises(ProjectFileUnavailable):
+            RoEAuditSink.for_project(files, "audit/roe-decisions.jsonl").append({"event": "lost"})
+        files.unavailable = False
+        RoEAuditSink.for_project(files, "audit/roe-decisions.jsonl").append({"event": "after"})
+        lines = (
+            (tmp_path / "audit" / "roe-decisions.jsonl").read_text(encoding="utf-8").splitlines()
+        )
+        assert [json.loads(line)["event"] for line in lines] == ["kept", "after"]
+        assert json.loads(lines[1])["seq"] == 2
 
 
 class _ConcurrencyProbe:

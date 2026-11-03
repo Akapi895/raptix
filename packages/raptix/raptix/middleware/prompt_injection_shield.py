@@ -333,7 +333,7 @@ def _skill_tool_names() -> frozenset[str]:
     """
     names: set[str] = set()
     try:
-        from raptix.execution.tools.skills import build_load_skill_tool
+        from raptix.execution.tools.plumbing.skills import build_load_skill_tool
 
         names.add(build_load_skill_tool(None, []).name)
     except Exception as e:  # noqa: BLE001 - registry optional; fall back below

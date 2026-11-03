@@ -50,10 +50,10 @@ jobs:
     outputs:
       python: ${{ steps.app.outputs.python }}
       cli: ${{ steps.app.outputs.cli }}
-      web-raptix: ${{ steps.app.outputs['web-raptix'] }}
       desktop: ${{ steps.app.outputs.desktop }}
       launcher: ${{ steps.app.outputs.launcher }}
       compose: ${{ steps.app.outputs.compose }}
+      web: ${{ steps.app.outputs.web }}
       docker-images: ${{ steps.docker.outputs.changes }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -80,16 +80,6 @@ jobs:
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
-            web-raptix:
-              - 'apps/web/**'
-              - 'apps/shared/**'
-              - 'infra/containers/web-raptix.Dockerfile'
-              - 'infra/containers/web-raptix-server.Dockerfile'
-              - 'infra/containers/web-raptix-proxy.conf'
-              - 'docker-compose.web-raptix.yml'
-              - 'package.json'
-              - 'package-lock.json'
-              - '.github/workflows/ci.yml'
             desktop:
               - 'apps/desktop/**'
               - 'package.json'
@@ -100,6 +90,13 @@ jobs:
               - '.github/workflows/ci.yml'
             compose:
               - 'docker-compose*.yml'
+              - '.github/workflows/ci.yml'
+            web:
+              - 'apps/api/**'
+              - 'apps/ui-app/**'
+              - 'apps/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
               - '.github/workflows/ci.yml'
       # Per-image filter: filter name == image name so the matrix can pull
       # `outputs.changes` directly as the list of images to build.
@@ -135,21 +132,6 @@ jobs:
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
-            web-raptix:
-              - 'infra/containers/web-raptix.Dockerfile'
-              - 'infra/containers/web-raptix-proxy.conf'
-              - 'apps/web/**'
-              - 'apps/shared/**'
-              - 'package.json'
-              - 'package-lock.json'
-              - '.github/workflows/ci.yml'
-            web-raptix-server:
-              - 'infra/containers/web-raptix-server.Dockerfile'
-              - 'apps/web/**'
-              - 'apps/shared/**'
-              - 'package.json'
-              - 'package-lock.json'
-              - '.github/workflows/ci.yml'
             c2-sliver:
               - 'infra/containers/c2-sliver.Dockerfile'
               - '.github/workflows/ci.yml'
@@ -176,8 +158,6 @@ jobs:
         run: touch .env
       - name: Validate base docker-compose.yml
         run: docker compose -f docker-compose.yml config > /dev/null
-      - name: Validate new web-raptix deployment
-        run: docker compose -f docker-compose.web-raptix.yml config > /dev/null
       - name: Validate base + dev override
         run: docker compose -f docker-compose.yml -f docker-compose.dev.yml config > /dev/null
       - name: Validate base + dev + watch
@@ -437,6 +417,60 @@ jobs:
         if: needs.changes.outputs.cli == 'true'
         run: cd apps/cli && npm test --if-present
 
+  # apps/api (the ui-app BFF, ADR-0106) + apps/ui-app. Single OS: neither
+  # package has platform-specific code like the CLI/launcher do. apps/api's
+  # own test suite depends only on in-memory fakes (tests/support/*), never
+  # a real Postgres, so no service container is needed here; live
+  # Postgres/server verification is done by hand per tier (see
+  # docs/design/2026-10-31-ui-app-integration-implementation-plan.md), not
+  # in CI. apps/ui-app's vitest suite drives a real headless Chromium
+  # directly (chromium.launch(), not the `playwright test` runner) in a few
+  # *.test.ts files, so the browser binary has to be installed first.
+  web:
+    name: Web (apps/api + apps/ui-app)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - if: needs.changes.outputs.web != 'true'
+        run: 'echo "No apps/api or apps/ui-app changes — emitting success."'
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        if: needs.changes.outputs.web == 'true'
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        if: needs.changes.outputs.web == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - if: needs.changes.outputs.web == 'true'
+        run: npm ci
+      - name: Generate the Prisma client
+        if: needs.changes.outputs.web == 'true'
+        run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - name: Build shared Web contracts
+        if: needs.changes.outputs.web == 'true'
+        run: |
+          npm run build --workspace=@raptix/streaming
+          npm run build --workspace=@raptix/web-contracts
+      - name: apps/api typecheck + lint + build + test
+        if: needs.changes.outputs.web == 'true'
+        run: |
+          npm run typecheck --workspace=@raptix/api
+          npm run lint --workspace=@raptix/api
+          npm run build --workspace=@raptix/api
+          npm run test --workspace=@raptix/api
+      - name: Install Chromium for apps/ui-app's browser-driven unit tests
+        if: needs.changes.outputs.web == 'true'
+        run: npx playwright install --with-deps chromium
+      - name: apps/ui-app typecheck + build + test
+        if: needs.changes.outputs.web == 'true'
+        run: |
+          npm run build --workspace=@raptix/ui-app
+          cd apps/ui-app && npx vitest run
+
   # Electron desktop shell: pure unit tests (config/platform/ui) exercise
   # Windows / macOS / Linux path, menu, and Docker-spawn differences. The
   # ruleset requires a success status, so untouched PRs emit a cheap noop.
@@ -480,68 +514,11 @@ jobs:
         if: needs.changes.outputs.desktop == 'true'
         run: npm run desktop:test
 
-  # New-stack (W16 cutover) lane: web-raptix UI + API quality gates. The
-  # legacy `web` (Next.js) job was retired with W20 (guide §14.5): the
-  # clients/web folder itself was removed in the W2 repo restructure.
-  web-raptix:
-    name: Web raptix (lint + test + build)
-    needs: changes
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - if: needs.changes.outputs['web-raptix'] != 'true'
-        run: 'echo "No web-raptix-relevant changes — emitting success."'
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        if: needs.changes.outputs['web-raptix'] == 'true'
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        if: needs.changes.outputs['web-raptix'] == 'true'
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - if: needs.changes.outputs['web-raptix'] == 'true'
-        run: npm ci
-      - name: Build shared workspaces
-        if: needs.changes.outputs['web-raptix'] == 'true'
-        run: |
-          npm run build --workspace=@raptix/streaming
-          npm run build --workspace=@raptix/web-contracts
-      - name: Server Prisma generate + typecheck + lint + build + tests
-        if: needs.changes.outputs['web-raptix'] == 'true'
-        run: |
-          npm run prisma:generate --workspace=@raptix/web-raptix-server
-          npm run typecheck --workspace=@raptix/web-raptix-server
-          npm run lint --workspace=@raptix/web-raptix-server
-          npm run build --workspace=@raptix/web-raptix-server
-          npm run test --workspace=@raptix/web-raptix-server
-      - name: UI typecheck + lint + build + tests
-        if: needs.changes.outputs['web-raptix'] == 'true'
-        run: |
-          npm run typecheck --workspace=@raptix/web-raptix
-          npm run lint --workspace=@raptix/web-raptix
-          npm run build --workspace=@raptix/web-raptix
-          npm run test --workspace=@raptix/web-raptix
-      - name: Install Chromium for Docker mode smoke
-        if: needs.changes.outputs['web-raptix'] == 'true'
-        working-directory: apps/web
-        run: npx playwright install --with-deps chromium
-      - name: Build Docker UI and bootstrap API images
-        if: needs.changes.outputs['web-raptix'] == 'true'
-        run: |
-          docker build -f infra/containers/web-raptix.Dockerfile -t raptix-web-raptix-ui:ci .
-          docker build -f infra/containers/web-raptix-server.Dockerfile -t raptix-web-raptix-server:ci .
-      - name: Docker default real-mode smoke (bootstrap API, no DB or LLM)
-        if: needs.changes.outputs['web-raptix'] == 'true'
-        run: node apps/web/tools/verify-docker-real-mode.mjs
-      - name: Upload Docker mode smoke evidence
-        if: always() && needs.changes.outputs['web-raptix'] == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: web-raptix-docker-mode-smoke
-          path: apps/web/test-results-deployed/iw05/
-          if-no-files-found: ignore
-          retention-days: 7
-
+  # apps/web (and its web-raptix CI lane) was retired by ADR-0106 in favor of
+  # apps/ui-app + a new apps/api backend. There is no web CI job until
+  # apps/api exists -- see
+  # docs/design/2026-10-31-ui-app-integration-implementation-plan.md for the
+  # job this section is reintroduced for.
   # Go launcher: vet + test. Mirrors what release.yml runs before GoReleaser
   # builds the binaries on tag push, so a broken `go test ./...` is caught
   # at PR time instead of blocking the release pipeline.
@@ -747,8 +724,8 @@ jobs:
       - compose-validate
       - python
       - cli
+      - web
       - desktop
-      - web-raptix
       - launcher
       - docker-build
       - docker-build-arm64

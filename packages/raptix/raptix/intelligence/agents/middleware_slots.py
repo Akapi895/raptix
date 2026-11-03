@@ -24,18 +24,30 @@ from __future__ import annotations
 
 import copy
 import logging
+import os
+import uuid
 from collections.abc import Awaitable, Callable
-from typing import Any
+from contextvars import ContextVar
+from typing import Annotated, Any, NotRequired
 
 # Middleware classes & factory helpers — imported at module level so
 # slot factories don't pay per-call import cost. langchain + langgraph
 # packages are listed as runtime deps; only ``benchmark_skill_sources``
 # is raptix-internal.
+from deepagents.backends import CompositeBackend
 from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
-from deepagents.middleware.summarization import create_summarization_middleware
+from deepagents.middleware.summarization import (
+    SummarizationState,
+    compute_summarization_defaults,
+    create_summarization_middleware,
+)
 from langchain.agents.middleware import AgentMiddleware, ModelFallbackMiddleware
+from langchain.agents.middleware.types import ExtendedModelResponse, PrivateStateAttr
 from langchain_anthropic.middleware import AnthropicPromptCachingMiddleware
+from langgraph.types import Command
 
+from raptix.core.dispatch_context import active_dispatch
+from raptix.execution.session.recording import RecordingMiddleware
 from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
 from raptix.middleware import (
     EngagementContextMiddleware,
@@ -52,6 +64,7 @@ from raptix.middleware.hitl import (
     DEFAULT_HIGH_IMPACT_POLICY,
     HITLApprovalMiddleware,
 )
+from raptix.middleware.instance_mailbox import InstanceMailboxMiddleware
 from raptix.middleware.model_override import ModelOverrideMiddleware
 from raptix.middleware.notifications import SandboxNotificationMiddleware
 from raptix.middleware.opscontrol_notifications import (
@@ -60,7 +73,6 @@ from raptix.middleware.opscontrol_notifications import (
 from raptix.middleware.prompt_injection_shield import PromptInjectionShieldMiddleware
 from raptix.middleware.proxy_key_override import ProxyKeyOverrideMiddleware
 from raptix.middleware.roe import build_default_sink
-from raptix.runtime.recording import RecordingMiddleware
 
 # Slot enum + per-role applicability mapping + safety-critical set
 # all live in the contract layer now (raptix_core.contracts.slots).
@@ -79,6 +91,29 @@ from raptix_core.contracts.slots import (
 from raptix_core.plugin_loader import load_plugin_skill_sources
 
 logger = logging.getLogger(__name__)
+
+# Task-local assembly input; factories capture each run's effective settings.
+# Runs without project overrides retain the environment defaults.
+graph_toggles_context: ContextVar[dict[str, bool] | None] = ContextVar(
+    "graph_toggles", default=None
+)
+knowledge_graph_context: ContextVar[bool] = ContextVar("knowledge_graph_assistance", default=True)
+
+
+def _graph_toggle(name: str, env_var: str) -> bool:
+    """``True`` when ``name`` ("auto_ingest_enabled"/"tried_edges_enabled")
+    should be on: the current project's override if one is set, else the
+    server-wide env var default."""
+    toggles = graph_toggles_context.get()
+    if toggles is not None and name in toggles:
+        return toggles[name]
+    return os.environ.get(env_var, "0").strip().lower() in {"1", "true", "yes"}
+
+
+# langchain's summary helper returns this literal as the summary text when
+# summary generation raises (langchain/agents/middleware/summarization.py).
+# A compaction event carrying it must be dropped, never applied (ADR-0047).
+_SUMMARY_ERROR_MARKER = "Error generating summary:"
 
 # ─────────────────────────────────────────────────────────────────────
 # Skills sources — role-specific
@@ -135,13 +170,7 @@ def _make_engagement_context(**_: Any):
 
 
 def _make_tried_edges(*, role: str, **_: Any):
-    import os
-
-    if os.environ.get("RAPTIX_KG_TRIED_EDGES", "0").strip().lower() not in {
-        "1",
-        "true",
-        "yes",
-    }:
+    if not _graph_toggle("tried_edges_enabled", "RAPTIX_KG_TRIED_EDGES"):
         return None
     from raptix.knowledge.graph.store import (
         KGStore,
@@ -151,24 +180,24 @@ def _make_tried_edges(*, role: str, **_: Any):
     from raptix.middleware.tried_edges import TriedEdgesMiddleware
 
     try:
-        return TriedEdgesMiddleware(store=KGStore.from_env(), role=role)
+        return TriedEdgesMiddleware(
+            store=KGStore.from_env(),
+            role=role,
+            enabled=True,
+            context_enabled=knowledge_graph_context.get(),
+        )
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         logger.debug("tried-edge slot skipped: %s", exc)
         return None
 
 
 def _make_roe_guardrail(*, role: str, **_: Any):
-    """Build the RoE guardrail middleware with a per-engagement sink.
+    """Build the RoE guardrail middleware.
 
-    The sink path defaults to ``<workspace>/audit/roe-decisions.jsonl``
-    and is resolved lazily on first tool call (workspace_path is not
-    yet hydrated at slot-build time). Operators can pin a path with
-    ``RAPTIX_ROE_AUDIT_PATH``.
+    Each project's audit ledger lives in that project's sandbox and is resolved per
+    tool call (ADR-0102). Operators can pin a local ledger with ``RAPTIX_ROE_AUDIT_PATH``.
     """
-    import os
-
-    sink = build_default_sink(os.environ.get("RAPTIX_WORKSPACE_PATH"))
-    return RoEGuardrailMiddleware(sink=sink)
+    return RoEGuardrailMiddleware(sink=build_default_sink())
 
 
 def _make_untrusted_output(*, role: str, **_: Any):
@@ -193,8 +222,17 @@ def _make_skills(*, backend: Any, role: str, skill_sources: list[str] | None = N
     return SkillsMiddleware(backend=backend, sources=sources)
 
 
-def _make_filesystem(*, backend: Any, **_: Any):
-    return FilesystemMiddleware(backend=backend)
+# Roles that read the workspace but never write it. The verifier writes its verdict only through
+# verify_workspace_candidate, which writes the record and the finding status itself.
+_READ_ONLY_FILESYSTEM_ROLES = frozenset({"verifier"})
+_FILESYSTEM_WRITE_TOOLS = frozenset({"write_file", "edit_file"})
+
+
+def _make_filesystem(*, backend: Any, role: str | None = None, **_: Any):
+    middleware = FilesystemMiddleware(backend=backend)
+    if role in _READ_ONLY_FILESYSTEM_ROLES:
+        middleware.tools = [t for t in middleware.tools if t.name not in _FILESYSTEM_WRITE_TOOLS]
+    return middleware
 
 
 def _make_subagent(*, backend: Any, subagents: list | None = None, **_: Any):
@@ -239,7 +277,23 @@ def _make_kg(*, role: str, **_: Any):
     )
 
     try:
-        enabled_tools = {"kg_surface_inventory"} if role == "raptix" else None
+        if role == "raptix":
+            enabled_tools = {
+                "kg_surface_inventory",
+                "challenge_inventory",
+                "kg_query",
+                "kg_query_reference",
+            }
+        elif role in {"recon", "exploit", "postexploit"}:
+            enabled_tools = {"kg_query", "kg_query_reference", "kg_surface_inventory"}
+            # Post-exploitation reads the graph but must not rewrite history.
+            if role != "postexploit":
+                enabled_tools |= {"kg_record", "kg_ingest"}
+        else:
+            enabled_tools = None
+        assistance = knowledge_graph_context.get()
+        if not assistance and enabled_tools is not None:
+            enabled_tools -= {"kg_query", "kg_query_reference", "kg_surface_inventory"}
         experimental = os.environ.get("RAPTIX_KG_OPERATIONAL_SHADOW", "0").lower() in {
             "1",
             "true",
@@ -247,6 +301,7 @@ def _make_kg(*, role: str, **_: Any):
         }
         return KGMiddleware(
             enabled_tools=enabled_tools,
+            **({"context_enabled": False} if not assistance else {}),
             operational_shadow=role == "raptix" and experimental,
             # Wave T4: the orchestrator gets the planner's
             # planning-context projection (cheapest known attack paths)
@@ -265,8 +320,6 @@ def _make_kg(*, role: str, **_: Any):
 
 
 def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
-    import os
-
     from raptix.knowledge.graph.store import (
         KGStore,
         KGStoreConfigError,
@@ -274,14 +327,12 @@ def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
     )
     from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
 
-    if sandbox is None or os.environ.get("RAPTIX_KG_AUTOINGEST", "0").lower() not in {
-        "1",
-        "true",
-        "yes",
-    }:
+    if sandbox is None or not _graph_toggle("auto_ingest_enabled", "RAPTIX_KG_AUTOINGEST"):
         return None
     try:
-        return KGAutoIngestMiddleware(store=KGStore.from_env(), sandbox=sandbox, role=role)
+        return KGAutoIngestMiddleware(
+            store=KGStore.from_env(), sandbox=sandbox, role=role, enabled=True
+        )
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         logger.debug("KG auto-ingest slot skipped: %s", exc)
         return None
@@ -328,28 +379,85 @@ def _make_model_fallback(*, fallback_models: list | None = None, **_: Any):
     return ModelFallbackMiddleware(*fallback_models)
 
 
+class _RaptixSummarizationState(SummarizationState):
+    context_epoch: NotRequired[Annotated[int, PrivateStateAttr]]
+
+
+class _SummaryGenerationFailed(RuntimeError):
+    """A failed summary must not be submitted as conversation context."""
+
+
+def _failed_summary_message(message: Any) -> bool:
+    content = getattr(message, "content", "")
+    if not isinstance(content, str):
+        return False
+    if content.startswith("You are in the middle of a conversation that has been summarized."):
+        content = content.partition("<summary>\n")[2]
+    elif content.startswith("Here is a summary of the conversation to date:\n\n"):
+        content = content.partition("\n\n")[2]
+    return content.lstrip().startswith(_SUMMARY_ERROR_MARKER)
+
+
+def _rebuild_summary_helper(helper: Any, model: Any, trigger: Any, keep: Any) -> Any:
+    # Trigger clauses, retention validation and profile checks are constructor
+    # state in LangChain. Assigning helper.trigger does not reconfigure them.
+    return type(helper)(
+        model=model,
+        trigger=trigger,
+        keep=keep,
+        token_counter=helper.token_counter,
+        summary_prompt=helper.summary_prompt,
+        trim_tokens_to_summarize=helper.trim_tokens_to_summarize,
+    )
+
+
 class _SafeSummarizationProxy(AgentMiddleware):
     """Defensive wrapper around the deepagents summarization middleware.
 
-    The inner middleware's ``wrap_model_call`` / ``awrap_model_call``
-    hooks issue a live LLM call to compute the summary; a provider
-    timeout or 5xx would otherwise propagate up and kill the whole
-    agent run for one transient backend failure. This proxy delegates
-    to the inner hook and, on exception, logs a warning and falls back
-    to invoking the downstream ``handler`` unchanged — effectively
-    skipping summarization for that turn rather than aborting the run.
-    Successful summarization is passed through untouched.
+    Beyond delegation this proxy enforces three contracts (ADR-0047, WP-A3):
+
+    1. **Fail-open.** The inner hook issues a live LLM call to compute the
+       summary; a provider timeout/5xx skips summarization for that turn
+       rather than aborting the run.
+    2. **No error-text summaries.** A failed summary generation comes back as
+       the literal text ``"Error generating summary: ..."``; left in place that
+       failed compaction would replace live history with the error string. The
+       proxy strips the compaction event so the failed summary never becomes
+       agent context.
+    3. **No blind re-invocation.** If the downstream handler was already
+       entered, a failure belongs to the model call, not the summarizer — the
+       proxy re-raises so model-fallback sees the real error. Only failures
+       *before* the handler runs fall back to a plain ``handler(request)``.
+
+    Successful compaction events are passed through with additive identity
+    fields stamped on (thread id, worker id, monotone context epoch).
     """
 
-    def __init__(self, inner: AgentMiddleware) -> None:
+    def __init__(
+        self,
+        inner: AgentMiddleware,
+        *,
+        capacity: int | None = None,
+        trigger_override: Any = None,
+        keep_override: Any = None,
+        role: str = "",
+    ) -> None:
         super().__init__()
         self._inner = inner
         # Forward the inner's state schema and tools so langchain's agent
         # factory sees the same merged state shape and registered tools
         # it would see for the unwrapped middleware. ``name`` is a
         # property on AgentMiddleware so it's delegated below instead.
-        self.state_schema = inner.state_schema
+        self.state_schema = (
+            _RaptixSummarizationState
+            if inner.state_schema is SummarizationState
+            else inner.state_schema
+        )
         self.tools = list(getattr(inner, "tools", []) or [])
+        self._capacity = capacity
+        self._trigger_override = trigger_override
+        self._keep_override = keep_override
+        self._worker_instance_id = f"{role or 'worker'}:{uuid.uuid4().hex}"
 
     @property
     def name(self) -> str:
@@ -373,37 +481,266 @@ class _SafeSummarizationProxy(AgentMiddleware):
         model = getattr(request, "model", None)
         if model is None or model is self._inner.model:
             return self._inner
+        if self._capacity is not None:
+            model = _apply_capacity_profile(model, self._capacity)
+        defaults = compute_summarization_defaults(model)
         scoped_inner = copy.copy(self._inner)
-        scoped_helper = copy.copy(self._inner._lc_helper)
-        scoped_helper.model = model
-        scoped_inner._lc_helper = scoped_helper
+        scoped_inner._lc_helper = _rebuild_summary_helper(
+            self._inner._lc_helper,
+            model,
+            self._trigger_override or defaults["trigger"],
+            self._keep_override or defaults["keep"],
+        )
         return scoped_inner
 
+    @staticmethod
+    def _is_failed_summary_event(event: Any) -> bool:
+        message = event.get("summary_message") if isinstance(event, dict) else None
+        return _failed_summary_message(message)
+
+    def _stamp_identity(self, event: dict, request: Any) -> dict:
+        """Additive identity fields for a persisted compaction event (ADR-0047).
+
+        ``thread_id``/``worker_instance_id`` come from the run config; the
+        ``context_epoch`` is a per-thread monotone counter (previous event's
+        epoch + 1) so a consumer can reject a stale/foreign event. Extra keys
+        are inert upstream — deepagents reads only cutoff_index,
+        summary_message and file_path.
+        """
+        cfg = getattr(getattr(request, "runtime", None), "config", None) or {}
+        if not cfg:
+            from langgraph.config import get_config
+
+            try:
+                cfg = get_config()
+            except RuntimeError:
+                logger.debug("Compaction event has no runnable config")
+        thread_id = (cfg.get("configurable") or {}).get("thread_id")
+        state = getattr(request, "state", None) or {}
+        prior = state.get("_summarization_event") or {}
+        epoch = max(state.get("context_epoch", 0), prior.get("context_epoch", 0)) + 1
+        dispatch = active_dispatch.get()
+        worker_id = self._worker_instance_id
+        if dispatch is not None:
+            worker_id = f"{worker_id}:{dispatch.dispatch_id}:{dispatch.attempt}"
+        covered: list[str] = []
+        cutoff = event.get("cutoff_index")
+        messages = state.get("messages", getattr(request, "messages", None))
+        if isinstance(cutoff, int) and isinstance(messages, list):
+            for msg in messages[:cutoff]:
+                mid = getattr(msg, "id", None)
+                if mid:
+                    covered.append(str(mid))
+        return {
+            "thread_id": str(thread_id) if thread_id is not None else None,
+            "worker_instance_id": worker_id,
+            "context_epoch": epoch,
+            "source_revision": 0,  # replaced by task-state revision in Wave B
+            "covered_message_ids": covered,
+        }
+
+    def _finalize(self, result: Any, request: Any) -> Any:
+        """Strip failed summaries / stamp identity on a compaction event."""
+        command = getattr(result, "command", None)
+        update = getattr(command, "update", None) if command is not None else None
+        if not isinstance(update, dict) or "_summarization_event" not in update:
+            return result
+        event = update.get("_summarization_event")
+        if self._is_failed_summary_event(event):
+            logger.warning(
+                "Summarization middleware produced an error summary; dropping "
+                "the compaction event so the failed summary never replaces "
+                "live context."
+            )
+            new_update = {k: v for k, v in update.items() if k != "_summarization_event"}
+            return ExtendedModelResponse(result.model_response, command=Command(update=new_update))
+        if isinstance(event, dict):
+            stamped = {**event, **self._stamp_identity(event, request)}
+            return ExtendedModelResponse(
+                result.model_response,
+                command=Command(
+                    update={
+                        **update,
+                        "_summarization_event": stamped,
+                        "context_epoch": stamped["context_epoch"],
+                    }
+                ),
+            )
+        return result
+
     def wrap_model_call(self, request: Any, handler: Callable[[Any], Any]) -> Any:
+        started = False
+
+        def tracked(req: Any) -> Any:
+            nonlocal started
+            if any(
+                msg.additional_kwargs.get("lc_source") == "summarization"
+                and _failed_summary_message(msg)
+                for msg in getattr(req, "messages", [])
+            ):
+                raise _SummaryGenerationFailed("Summary generation returned an error marker")
+            started = True
+            return handler(req)
+
         try:
-            return self._scoped_inner(request).wrap_model_call(request, handler)
+            result = self._scoped_inner(request).wrap_model_call(request, tracked)
         except Exception:
+            if started:
+                # The downstream model call itself failed — that error is not
+                # the summarizer's to mask. Let model-fallback handle it.
+                raise
             logger.warning(
                 "Summarization middleware failed; skipping summarization "
                 "this turn and forwarding the original request.",
                 exc_info=True,
             )
             return handler(request)
+        return self._finalize(result, request)
 
     async def awrap_model_call(self, request: Any, handler: Callable[[Any], Awaitable[Any]]) -> Any:
+        started = False
+
+        async def tracked(req: Any) -> Any:
+            nonlocal started
+            if any(
+                msg.additional_kwargs.get("lc_source") == "summarization"
+                and _failed_summary_message(msg)
+                for msg in getattr(req, "messages", [])
+            ):
+                raise _SummaryGenerationFailed("Summary generation returned an error marker")
+            started = True
+            return await handler(req)
+
         try:
-            return await self._scoped_inner(request).awrap_model_call(request, handler)
+            result = await self._scoped_inner(request).awrap_model_call(request, tracked)
         except Exception:
+            if started:
+                raise
             logger.warning(
                 "Summarization middleware failed; skipping summarization "
                 "this turn and forwarding the original request.",
                 exc_info=True,
             )
             return await handler(request)
+        return self._finalize(result, request)
 
 
-def _make_summarization(*, backend: Any, llm: Any, **_: Any):
-    return _SafeSummarizationProxy(create_summarization_middleware(llm, backend))
+class _EngagementSummarizationBackend(CompositeBackend):
+    """Summarization offload backend resolved to the engagement workspace (WP-A2).
+
+    deepagents computes the history prefix at construction time from the
+    backend it is handed (``/conversation_history`` for a bare composite) and
+    later resolves a *callable* backend per summarization with the live
+    ``ToolRuntime``. This subclass satisfies both ends:
+
+    - As a ``CompositeBackend`` with ``artifacts_root="/workspace"`` it makes
+      ``_history_path_prefix`` ``/workspace/conversation_history``.
+    - As a callable it returns the per-run backend mirroring
+      ``FilesystemMiddleware._get_backend`` exactly: the per-run sandbox is
+      rebound from ``runtime.config`` and the workspace is engagement-scoped,
+      so the offloaded file lands inside the engagement directory and the
+      pointer embedded in the summary resolves through the worker's own
+      ``read_file`` (defect C2, invariant I-4, ADR-0046).
+
+    The engagement fence (ADR-0042) is not relaxed — the wrapper *maps* the
+    virtual ``/workspace`` path into the fence, the same way filesystem tools
+    already do.
+    """
+
+    def __init__(self, backend: CompositeBackend) -> None:
+        super().__init__(
+            default=backend.default,
+            routes=dict(backend.routes),
+            artifacts_root="/workspace",
+        )
+
+    def __call__(self, runtime: Any) -> Any:
+        # Local import: keep the middleware-slot module import-light and avoid
+        # any import ordering coupling with the middleware package.
+        from raptix.middleware.filesystem import (
+            EngagementFilesystemBackend,
+            _rebind_sandbox_per_run,
+            _workspace_from_runtime,
+        )
+
+        rebound = _rebind_sandbox_per_run(self, runtime)
+        workspace = _workspace_from_runtime(runtime)
+        return EngagementFilesystemBackend(rebound, workspace)
+
+
+def _parse_positive_int(value: str, env_name: str) -> int:
+    """Parse a positive integer env value, naming the variable on failure."""
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(f"{env_name}={value!r} is not an integer.") from exc
+    if parsed <= 0:
+        raise RuntimeError(f"{env_name}={value!r} must be a positive integer.")
+    return parsed
+
+
+def _apply_capacity_profile(llm: Any, capacity: int | None = None) -> Any:
+    """Optionally stamp ``profile.max_input_tokens`` from the environment (WP-A4).
+
+    No env → the model is returned untouched (default behavior unchanged).
+    With ``RAPTIX_LLM__MAX_INPUT_TOKENS`` set, ``compute_summarization_defaults``
+    switches to its fraction-based thresholds (85% trigger / 10% keep) instead
+    of the conservative 170K/6 fallback.
+    """
+    if capacity is None:
+        raw = os.environ.get("RAPTIX_LLM__MAX_INPUT_TOKENS", "").strip()
+        if not raw:
+            return llm
+        capacity = _parse_positive_int(raw, "RAPTIX_LLM__MAX_INPUT_TOKENS")
+    profile = dict(getattr(llm, "profile", None) or {})
+    profile["max_input_tokens"] = capacity
+    return llm.model_copy(update={"profile": profile})
+
+
+def _summarization_overrides(llm: Any) -> tuple[Any, Any, bool]:
+    """Resolve trigger/keep with optional operator overrides (WP-A4).
+
+    Returns ``(trigger, keep, overridden)``. Operator envs are applied on top
+    of whatever ``compute_summarization_defaults`` would pick, so a deployment
+    can pin one dimension without restating the other.
+    """
+    defaults = compute_summarization_defaults(llm)
+    trigger = defaults["trigger"]
+    keep = defaults["keep"]
+    raw_trigger = os.environ.get("RAPTIX_SUMMARIZATION_TRIGGER_TOKENS", "").strip()
+    raw_keep = os.environ.get("RAPTIX_SUMMARIZATION_KEEP_MESSAGES", "").strip()
+    if raw_trigger:
+        trigger = (
+            "tokens",
+            _parse_positive_int(raw_trigger, "RAPTIX_SUMMARIZATION_TRIGGER_TOKENS"),
+        )
+    if raw_keep:
+        keep = ("messages", _parse_positive_int(raw_keep, "RAPTIX_SUMMARIZATION_KEEP_MESSAGES"))
+    return trigger, keep, bool(raw_trigger or raw_keep)
+
+
+def _make_summarization(*, backend: Any, llm: Any, role: str = "", **_: Any):
+    summarization_backend: Any = backend
+    if isinstance(backend, CompositeBackend) and not isinstance(
+        backend, _EngagementSummarizationBackend
+    ):
+        summarization_backend = _EngagementSummarizationBackend(backend)
+    model = _apply_capacity_profile(llm)
+    inner = create_summarization_middleware(model, summarization_backend)
+    trigger, keep, overridden = _summarization_overrides(model)
+    if overridden:
+        inner._lc_helper = _rebuild_summary_helper(inner._lc_helper, model, trigger, keep)
+    return _SafeSummarizationProxy(
+        inner,
+        capacity=model.profile["max_input_tokens"] if model is not llm else None,
+        trigger_override=trigger
+        if os.environ.get("RAPTIX_SUMMARIZATION_TRIGGER_TOKENS", "").strip()
+        else None,
+        keep_override=keep
+        if os.environ.get("RAPTIX_SUMMARIZATION_KEEP_MESSAGES", "").strip()
+        else None,
+        role=role,
+    )
 
 
 def _make_prompt_caching(**_: Any):
@@ -412,6 +749,10 @@ def _make_prompt_caching(**_: Any):
 
 def _make_patch_tool_calls(**_: Any):
     return PatchToolCallsMiddleware()
+
+
+def _make_instance_mailbox(**_: Any):
+    return InstanceMailboxMiddleware()
 
 
 def _make_record(*, role: str = "", **_: Any):
@@ -486,6 +827,10 @@ def _make_hitl(*, role: str, **_: Any):
         transport=None,
         engagement_name=eid,
         agent_name=role,
+        require_bash_approval=os.environ.get("RAPTIX_HITL__REQUIRE_BASH_APPROVAL", "")
+        .strip()
+        .lower()
+        not in _HITL_FALSY,
     )
 
 
@@ -515,6 +860,7 @@ DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.SUMMARIZATION: _make_summarization,
     MiddlewareSlot.PROMPT_CACHING: _make_prompt_caching,
     MiddlewareSlot.PATCH_TOOL_CALLS: _make_patch_tool_calls,
+    MiddlewareSlot.INSTANCE_MAILBOX: _make_instance_mailbox,
     MiddlewareSlot.RECORD: _make_record,
 }
 """Slot → factory mapping. Plugin overrides shallow-merge into this

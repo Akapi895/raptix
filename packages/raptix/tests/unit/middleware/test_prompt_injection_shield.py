@@ -195,7 +195,7 @@ def test_skill_loader_name_resolved_from_registry():
 def test_skill_loader_rename_is_picked_up_dynamically(monkeypatch):
     # Simulate Skillogy renaming its tools: the resolver must follow the new
     # ``.name`` values with no edit to this module — proving it is registry-driven.
-    import raptix.execution.tools.skills as skills_tools
+    import raptix.execution.tools.plumbing.skills as skills_tools
     from raptix.middleware import skillogy
 
     class _RenamedTool:
@@ -252,7 +252,7 @@ def test_untrusted_network_tools_are_skipped_by_shield():
 def test_fallback_when_registry_unavailable(monkeypatch):
     # Both registries fail to resolve -> documented fallback keeps the historical
     # skill-tool names trusted so default behavior is unchanged.
-    import raptix.execution.tools.skills as skills_tools
+    import raptix.execution.tools.plumbing.skills as skills_tools
     from raptix.middleware import skillogy
 
     def _boom(*_a, **_k):

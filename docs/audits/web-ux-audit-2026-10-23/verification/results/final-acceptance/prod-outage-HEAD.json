@@ -1,0 +1,24 @@
+{
+ "boot": {
+  "h1": [
+   "Raptix is unavailable right now"
+  ],
+  "userCopy": true,
+  "technicalNonJson": false,
+  "devHint": false,
+  "demoSwitchButtons": 0,
+  "retryButtons": 1,
+  "snippet": "Raptix is unavailable right now Raptix returned a response it could not read. Try again; if it continues, contact your administrator. Real mode shows no demo data. Retry"
+ },
+ "projects": {
+  "h1": [
+   "Raptix is unavailable right now"
+  ],
+  "userCopy": true,
+  "technicalNonJson": false,
+  "devHint": false,
+  "demoSwitchButtons": 0,
+  "retryButtons": 1,
+  "snippet": "Raptix is unavailable right now Raptix returned a response it could not read. Try again; if it continues, contact your administrator. Real mode shows no demo data. Retry"
+ }
+}

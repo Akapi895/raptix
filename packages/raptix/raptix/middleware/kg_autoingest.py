@@ -27,6 +27,7 @@ output path yet, so they stay explicit ``@tool`` calls
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import os
 import posixpath
@@ -41,6 +42,7 @@ from langchain_core.messages import ToolMessage
 
 from raptix.knowledge.graph.ingest import ingest
 from raptix.knowledge.graph.store import KGStore
+from raptix.knowledge.graph.trust import ChannelStore
 from raptix.knowledge.ingest import default_registry
 from raptix.knowledge.ingest.materialize import observations_to_records
 from raptix.middleware.filesystem import _normalize_engagement_workspace
@@ -66,6 +68,36 @@ _REGISTRY_SCANNERS = {
 }
 
 
+def _capture_enabled() -> bool:
+    return os.environ.get("RAPTIX_KG_EVIDENCE_CAPTURE", "0").lower() in {"1", "true", "yes"}
+
+
+class _CaptureStore:
+    """Delegate a store, stamping one capture reference onto every node written.
+
+    The legacy adapter path builds its observation dicts and writes them itself,
+    so a thin wrapper keeps adapters unchanged while giving every node the same
+    ``source_artifact_ref`` for the one scan that produced it.
+    """
+
+    def __init__(self, store: Any, extra_props: dict[str, Any]) -> None:
+        self._store = store
+        self._extra = extra_props
+
+    def record_observations(self, observations: Any, **scope: Any) -> Any:
+        for observation in observations:
+            if not isinstance(observation, dict):
+                continue
+            props = observation.setdefault("props", {})
+            if isinstance(props, dict):
+                for key, value in self._extra.items():
+                    props.setdefault(key, value)
+        return self._store.record_observations(observations, **scope)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._store, name)
+
+
 def _flag_value(args: list[str], flag: str) -> str | None:
     """Value immediately following the first (and only) occurrence of
     ``flag`` in ``args``, or ``None`` if it's absent or ambiguous."""
@@ -83,6 +115,14 @@ def _output(command: str) -> tuple[str, str] | None:
     if not args or any(part in {";", "&&", "||", "|", ">", "<"} for part in args):
         return None
     binary = posixpath.basename(args[0])
+    # Kali (this image's base, per packages/raptix/tests/fixtures/real_scanner_output/README.md)
+    # packages ProjectDiscovery's httpx as ``httpx-toolkit`` -- the unadorned
+    # ``httpx`` name is already taken by the unrelated python-httpx pip CLI.
+    # Every skill still documents the invocation as ``httpx``; recognize both
+    # names as the same scanner rather than relying on skill docs matching
+    # whatever a given sandbox image happens to call the real binary.
+    if binary == "httpx-toolkit":
+        binary = "httpx"
     kind: str | None = None
     output_flag = ""
     if binary in _SCANNERS:
@@ -111,16 +151,26 @@ def _output(command: str) -> tuple[str, str] | None:
 class KGAutoIngestMiddleware(AgentMiddleware):
     """Best-effort KG writes; never replace the tool's response."""
 
-    def __init__(self, *, store: KGStore, sandbox: Any, role: str) -> None:
+    def __init__(
+        self, *, store: KGStore, sandbox: Any, role: str, enabled: bool | None = None
+    ) -> None:
         super().__init__()
-        self._store = store
+        self._store = ChannelStore(store, "tool_autoingest")
         self._sandbox = sandbox
         self._role = role
+        self._enabled = enabled
         self._slots = threading.BoundedSemaphore(value=2)
 
     async def awrap_tool_call(self, request: Any, handler: Any) -> Any:
         result = await handler(request)
-        if os.environ.get("RAPTIX_KG_AUTOINGEST", "0").lower() not in {"1", "true", "yes"}:
+        enabled = (
+            self._enabled
+            if self._enabled is not None
+            else (
+                os.environ.get("RAPTIX_KG_AUTOINGEST", "0").strip().lower() in {"1", "true", "yes"}
+            )
+        )
+        if not enabled:
             return result
         try:
             await asyncio.wait_for(
@@ -162,6 +212,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
         workspace = _normalize_engagement_workspace(state.get("workspace_path"))
         if not isinstance(engagement, str) or not engagement or workspace is None:
             return
+        sandbox = self._sandbox
         if output_path == "-" and kind == "nmap_xml":
             output = result.content.rsplit("\n[Exit code: 0]", 1)[0]
             content = output.encode("utf-8")
@@ -174,7 +225,6 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 or len(output_path) > 512
             ):
                 return
-            sandbox = self._sandbox
             runtime = getattr(request, "runtime", None)
             if runtime is not None and getattr(runtime, "config", None):
                 from raptix.execution.backends.factory import build_sandbox_backend
@@ -183,11 +233,11 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             entries = sandbox.ls_info(posixpath.dirname(output_path))
             file_info = next((entry for entry in entries if entry.get("path") == output_path), None)
             size = file_info.get("size") if file_info is not None else None
-            if not isinstance(size, int):
+            if isinstance(size, int) and size > _MAX_BYTES:
                 return
-            if size > _MAX_BYTES:
-                return
-            downloaded = sandbox.download_files([output_path])
+            downloaded = sandbox.download_files(
+                [output_path], workspace_path=workspace, max_bytes=_MAX_BYTES
+            )
             if len(downloaded) != 1 or downloaded[0].error:
                 return
             content = downloaded[0].content
@@ -201,15 +251,60 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 if not base_url:
                     return
                 metadata["base_url"] = base_url
-            self._ingest_via_registry(kind, content, engagement, episode_id, metadata=metadata)
+            self._ingest_via_registry(
+                kind,
+                content,
+                engagement,
+                episode_id,
+                metadata=metadata,
+                sandbox=sandbox,
+                workspace=workspace,
+            )
             return
+        store: Any = _CaptureStore(
+            self._store,
+            {
+                "source_artifact_ref": output_path
+                if output_path != "-"
+                else f"episode://{episode_id}/{kind}",
+                "source_artifact_digest": hashlib.sha256(content).hexdigest(),
+            },
+        )
+        if _capture_enabled():
+            from raptix.execution.tools.evidence.artifacts import retain_artifact
+
+            try:
+                retained = retain_artifact(
+                    Artifact(
+                        id=episode_id,
+                        artifact_ref=f"episode://{episode_id}/{kind}",
+                        format_hint=kind,
+                        producer=self._role,
+                    ),
+                    content,
+                    sandbox=sandbox,
+                    workspace=workspace,
+                    engagement=engagement,
+                )
+            except Exception as exc:  # noqa: BLE001 — retention failure preserves baseline ingestion
+                log.debug("Scanner capture unavailable (%s)", type(exc).__name__)
+            else:
+                # Legacy adapters use their own node identity, so the capture is
+                # retained for integrity/traceability but not source-assessed.
+                store = _CaptureStore(
+                    store,
+                    {
+                        "source_artifact_ref": retained.artifact_ref,
+                        "source_artifact_id": retained.id,
+                    },
+                )
         with tempfile.TemporaryDirectory(prefix="raptix-kg-") as directory:
             path = Path(directory) / "scan"
             path.write_bytes(content)
             outcome = ingest(
                 kind,
                 path,
-                store=self._store,
+                store=store,
                 engagement=engagement,
                 created_by=self._role,
                 source_episode_id=episode_id,
@@ -225,6 +320,8 @@ class KGAutoIngestMiddleware(AgentMiddleware):
         episode_id: str,
         *,
         metadata: dict[str, Any] | None = None,
+        sandbox: Any = None,
+        workspace: str | None = None,
     ) -> None:
         """Parse through the T3 ParserRegistry and record the observations.
 
@@ -247,6 +344,29 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             records = observations_to_records(outcome.observations)
             if not records:
                 return
+            for record in records:
+                record.setdefault("props", {}).update(
+                    source_artifact_ref=artifact.artifact_ref,
+                    source_artifact_digest=hashlib.sha256(content).hexdigest(),
+                )
+            if _capture_enabled() and sandbox is not None and workspace is not None:
+                from raptix.execution.tools.evidence.artifacts import retain_artifact
+
+                try:
+                    retained = retain_artifact(
+                        artifact,
+                        content,
+                        sandbox=sandbox,
+                        workspace=workspace,
+                        engagement=engagement,
+                        parser_id=outcome.format_id,
+                        parser_version=outcome.parser_version,
+                    )
+                except Exception as exc:  # noqa: BLE001 — retention failure preserves baseline ingestion
+                    log.debug("Scanner capture unavailable (%s)", type(exc).__name__)
+                else:
+                    for record in records:
+                        record["props"]["source_artifact_ref"] = retained.artifact_ref
             self._store.record_observations(
                 records,
                 engagement=engagement,

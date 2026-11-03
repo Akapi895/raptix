@@ -6,6 +6,11 @@ metadata:
   when_to_use: "dcsync replication rights secretsdump krbtgt nt hash dump"
   mitre_attack:
     - T1003.006
+  fanout:
+    effects: destructive
+    notes: >-
+      replication dump is a high-signal, high-impact DC operation; run alone
+      in the mission-sanctioned phase, never concurrently with other dispatches
 ---
 
 # DCSync Playbook

@@ -1,4 +1,4 @@
-"""ExploitBench-style YAML configs for the Raptix benchmark runner.
+"""Suite-grouped YAML configs for the Raptix benchmark runners.
 
 Each file in this directory is a thin port of an upstream
 ``exploitbench/benchmarks/*.yaml`` config, restricted to the fields the

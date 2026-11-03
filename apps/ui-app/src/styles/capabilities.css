@@ -1,0 +1,283 @@
+/* Capabilities only: the application shell and other domains retain their styles. */
+.capabilities-page,
+.capabilities-modal {
+  --cap-muted: #59636e;
+  --cap-positive: #21683a;
+  --cap-danger: #a61f1f;
+  --cap-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+html[data-theme="dark"] :is(.capabilities-page, .capabilities-modal) {
+  --cap-muted: #b0bac7;
+  --cap-positive: #8bd4a0;
+  --cap-danger: #ff9b9b;
+}
+.capabilities-page .page-header {
+  padding: 16px 24px;
+  gap: 16px;
+  background: var(--bg-primary);
+  box-shadow: none;
+  align-items: center;
+}
+.capabilities-page .page-header h2 { font-size: 1.25rem; font-weight: 600; line-height: 1.4; }
+.capabilities-page .page-content { padding: 0 24px 28px; overflow: auto; min-width: 0; }
+.capabilities-page .cap-page-description { margin: 4px 0 0; color: var(--cap-muted); font-size: .8125rem; line-height: 1.5; max-width: 85ch; }
+.capabilities-page .page-header-actions { flex-wrap: wrap; gap: 8px; }
+.cap-local-nav { display: flex; gap: 24px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+.cap-local-nav a { display: inline-flex; align-items: center; padding: 14px 0 11px; color: var(--cap-muted); font-size: .875rem; font-weight: 500; text-decoration: none; border-bottom: 2px solid transparent; }
+.cap-local-nav a:hover { color: var(--text-primary); }
+.cap-local-nav a[aria-current="page"] { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+:is(.capabilities-page, .capabilities-modal) :is(button, input, select, textarea, summary, a, [tabindex]):focus-visible { outline: 2px solid var(--accent-color); outline-offset: 3px; }
+:is(.capabilities-page, .capabilities-modal) input::placeholder,
+:is(.capabilities-page, .capabilities-modal) textarea::placeholder { color: var(--cap-muted); opacity: 1; }
+:is(.capabilities-page, .capabilities-modal) ::selection { background: color-mix(in srgb, var(--accent-color) 18%, var(--bg-primary)); color: var(--text-primary); }
+:is(.capabilities-page, .capabilities-modal) :is(input, textarea) { caret-color: var(--accent-color); }
+:is(.capabilities-page, .capabilities-modal) :is(.btn-primary, .btn-secondary, .btn-filter, .btn-small, .btn-search) { min-height: 34px; padding: 6px 12px; font-size: .8125rem; line-height: 1.4; border-radius: var(--cap-radius); box-shadow: none; transform: none; font-weight: 500; }
+:is(.capabilities-page, .capabilities-modal) .btn-primary { background: var(--accent-color); border: 1px solid var(--accent-color); color: #fff; }
+:is(.capabilities-page, .capabilities-modal) .btn-primary:hover { background: var(--accent-hover); }
+:is(.capabilities-page, .capabilities-modal) :is(.btn-secondary, .btn-small, .btn-search) { background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); }
+:is(.capabilities-page, .capabilities-modal) :is(.btn-secondary, .btn-search):hover { background: var(--bg-tertiary); border-color: var(--cap-muted); }
+:is(.capabilities-page, .capabilities-modal) :is(.btn-danger, .btn-delete) { color: var(--cap-danger); background: var(--bg-primary); border-color: color-mix(in srgb, var(--accent-color) 22%, var(--border-color)); }
+:is(.capabilities-page, .capabilities-modal) :is(.btn-danger, .btn-delete):hover { color: var(--cap-danger); background: color-mix(in srgb, var(--accent-color) 6%, var(--bg-primary)); border-color: var(--cap-danger); }
+:is(.capabilities-page, .capabilities-modal) button:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+.capabilities-page :is(input:not([type="checkbox"]), select) { font: inherit; font-size: .875rem; min-height: 36px; padding: 7px 10px; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--cap-radius); box-shadow: none; min-width: 0; }
+.capabilities-page label { color: var(--text-primary); font-size: .8125rem; }
+.capabilities-page :is(.roles-controls, .skills-controls) { margin-bottom: 12px; }
+.capabilities-page .roles-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding-top: 20px; }
+.capabilities-page :is(.roles-search-box, .skills-search-box) { margin: 0; max-width: 560px; width: 100%; }
+.capabilities-page :is(.roles-search-box, .skills-search-box) input { height: 38px; padding-left: 12px; padding-right: 40px; border-radius: var(--cap-radius); box-shadow: none; }
+.capabilities-page .skills-search-box::before { content: none; }
+.capabilities-page :is(.skills-grid, .roles-grid, .retrieval-logs-list) { display: block; margin: 0; padding: 0; min-height: 0; overflow: visible; }
+.capabilities-page .cap-inline-filter { display: inline-flex; align-items: center; gap: 10px; margin: 0; }
+.cap-result-count { color: var(--cap-muted); font-size: .8125rem; }
+
+/* Native tables retain headers and horizontal scrolling on small screens. */
+.cap-table-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--cap-radius); background: var(--bg-primary); }
+.cap-table { width: 100%; min-width: 760px; border-collapse: collapse; text-align: left; font-size: .8125rem; line-height: 1.5; }
+.cap-table th { padding: 10px 14px; background: var(--bg-secondary); color: var(--cap-muted); font-weight: 500; white-space: nowrap; border-bottom: 1px solid var(--border-color); }
+.cap-table td { padding: 13px 14px; border-bottom: 1px solid var(--border-color); vertical-align: top; overflow-wrap: anywhere; }
+.cap-table tr:last-child td { border-bottom: 0; }
+.cap-table tbody tr:hover { background: var(--bg-secondary); }
+.cap-table .cap-primary-cell { width: 41%; min-width: 240px; }
+.cap-table strong { font-size: .875rem; font-weight: 600; }
+.capabilities-page .cap-table :is(.role-card, .skill-card, .knowledge-item-card, .retrieval-log-card) { display: table-row; min-height: 0; border: 0; border-radius: 0; padding: 0; box-shadow: none; background: none; transform: none; cursor: default; overflow: visible; position: static; transition: none; }
+.capabilities-page .cap-table :is(.role-card, .skill-card, .knowledge-item-card, .retrieval-log-card)::before,
+.capabilities-page .cap-table :is(.role-card, .skill-card, .knowledge-item-card, .retrieval-log-card)::after { content: none; display: none; }
+.capabilities-page .cap-table :is(.role-card, .skill-card, .knowledge-item-card, .retrieval-log-card):hover { background: var(--bg-secondary); transform: none; box-shadow: none; }
+.cap-row-description { margin: 4px 0 0; color: var(--cap-muted); font-size: .8125rem; line-height: 1.55; max-width: 72ch; overflow-wrap: anywhere; }
+.cap-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.cap-table .cap-row-actions { flex-wrap: nowrap; }
+.cap-table td:has(> .cap-row-actions) { width: 1%; }
+.cap-table td:last-child { white-space: nowrap; }
+.cap-table .cap-row-actions button { white-space: nowrap; }
+.cap-date { white-space: nowrap; color: var(--cap-muted); }
+.cap-path { max-width: 180px; color: var(--cap-muted); overflow-wrap: anywhere; margin-top: 4px; }
+.cap-source-label { color: var(--cap-muted); font-size: .75rem; font-weight: 400; }
+.cap-status,
+.capabilities-page .role-card-badge { display: inline-flex; align-items: center; background: var(--bg-tertiary); color: var(--cap-muted); padding: 3px 8px; border-radius: 4px; border: 0; font-size: .75rem; font-weight: 500; white-space: nowrap; }
+.cap-status.is-success,
+.capabilities-page .role-card-badge.enabled { background: color-mix(in srgb, var(--success-color) 9%, var(--bg-primary)); color: var(--cap-positive); }
+.cap-muted { color: var(--cap-muted); }
+.cap-agent-icon { margin-right: 8px; }
+.cap-tools-summary { min-width: 150px; max-width: 260px; }
+.cap-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.cap-tags span { background: var(--bg-secondary); color: var(--cap-muted); border: 1px solid var(--border-color); padding: 1px 6px; border-radius: 4px; }
+.cap-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.cap-state { padding: 28px 20px; border: 1px solid var(--border-color); border-radius: var(--cap-radius); background: var(--bg-primary); font-size: .875rem; color: var(--text-primary); }
+.cap-state p { color: var(--cap-muted); margin: 6px 0 12px; max-width: 75ch; }
+.cap-state-error { border-color: color-mix(in srgb, var(--accent-color) 30%, var(--border-color)); }
+.cap-state-error strong { color: var(--cap-danger); }
+.capabilities-page :is(.loading-spinner, .tools-loading, .monitor-empty) { font-size: .875rem; color: var(--cap-muted); padding: 24px; }
+.capabilities-page :is(.skills-overview, .knowledge-stats-bar, .retrieval-stats-bar, #skills-stats) { display: flex; flex-wrap: wrap; gap: 10px 24px; padding: 12px 0; margin: 0 0 16px; background: none; border: 0; border-bottom: 1px solid var(--border-color); border-radius: 0; box-shadow: none; }
+.capabilities-page :is(.skills-overview-card, .knowledge-stat-item, .retrieval-stat-item, .skills-stat-card) { display: flex; flex-direction: row; align-items: baseline; gap: 8px; min-width: 0; min-height: 0; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; transform: none; }
+.capabilities-page :is(.skills-overview-card strong, .knowledge-stat-value, .retrieval-stat-value, .skills-stat-card .monitor-stat-value) { font-size: .9375rem; line-height: 1.5; color: var(--text-primary); font-weight: 600; margin: 0; }
+.capabilities-page :is(.skills-overview-label, .knowledge-stat-label, .retrieval-stat-label, .skills-stat-card .monitor-stat-label) { font-size: .8125rem; font-weight: 400; color: var(--cap-muted); text-transform: none; letter-spacing: normal; }
+.capabilities-page :is(.skills-overview-card, .skills-stat-card)::before,
+.capabilities-page :is(.skills-overview-card, .skills-stat-card)::after { content: none; }
+.capabilities-page .pagination-container { position: static; margin-top: 0; padding: 0; width: 100%; bottom: auto; left: auto; right: auto; box-shadow: none; border-radius: 0; background: none; }
+.capabilities-page :is(.pagination, .monitor-pagination, .tools-pagination, .role-tools-pagination, .cap-pagination) { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 0; font-size: .8125rem; border: 0; box-shadow: none; background: none; }
+.cap-pagination span { color: var(--cap-muted); }
+
+/* MCP: compact master inventory and tool configuration, without nested scroll panes. */
+.capabilities-page .mcp-management-layout { grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr); gap: 24px; height: auto; max-height: none; min-height: 0; align-items: start; }
+.capabilities-page .mcp-management-panel { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.capabilities-page .cap-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.capabilities-page .cap-panel-heading h3 { font-size: 1rem; padding: 0; border: 0; }
+.cap-panel-description { font-size: .8125rem; color: var(--cap-muted); margin: 0 0 16px; line-height: 1.5; }
+.capabilities-page :is(.tools-list, .tools-list-items, .external-mcp-list) { max-height: none; overflow: visible; padding: 0; }
+.capabilities-page :is(.tools-controls, .external-mcp-controls, .mcp-panel-body) { display: block; }
+.capabilities-page .tools-actions { display: flex; gap: 8px; margin: 0 0 12px; }
+.capabilities-page .tools-actions .search-box { flex: 1 0 100%; min-width: 0; }
+.capabilities-page :is(.tools-stats, .external-mcp-stats) { display: flex; flex-wrap: wrap; gap: 6px 16px; background: none; padding: 8px 0; border: 0; box-shadow: none; border-radius: 0; color: var(--cap-muted); font-size: .75rem; }
+.capabilities-page .tools-stats { width: 100%; justify-content: flex-start; }
+.capabilities-page .tools-stats span { padding: 0; border: 0; }
+.capabilities-page .tools-list-items { border: 1px solid var(--border-color); border-radius: var(--cap-radius); background: var(--bg-primary); }
+.capabilities-page .tool-item { display: flex; gap: 12px; margin: 0; padding: 13px 14px; background: none; border: 0; border-bottom: 1px solid var(--border-color); box-shadow: none; border-radius: 0; transform: none; }
+.capabilities-page .tool-item:last-child { border-bottom: 0; }
+.capabilities-page .tool-item > input { margin-top: 4px; flex-shrink: 0; }
+.capabilities-page .tool-item-info { min-width: 0; flex: 1; }
+.capabilities-page .tool-item-name { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
+.capabilities-page .tool-item-desc { color: var(--cap-muted); font-size: .8125rem; margin-top: 4px; line-height: 1.5; }
+.capabilities-page :is(.tool-resident-toggle, .external-tool-badge) { border-radius: 4px; color: var(--cap-muted); background: var(--bg-secondary); border: 1px solid var(--border-color); font-size: .75rem; font-weight: 400; margin: 0; padding: 2px 6px; }
+.cap-schema-toggle { color: var(--accent-color); border: 0; background: none; font: inherit; font-size: .75rem; padding: 3px; cursor: pointer; margin-left: auto; text-decoration: underline; text-underline-offset: 3px; }
+.capabilities-page .tool-item-detail { overflow-x: auto; margin-top: 12px; border-top: 1px solid var(--border-color); }
+.capabilities-page .external-mcp-items { display: block; border: 1px solid var(--border-color); border-radius: var(--cap-radius); background: var(--bg-primary); }
+.capabilities-page .external-mcp-item { padding: 16px; gap: 8px; border: 0; border-bottom: 1px solid var(--border-color); background: none; border-radius: 0; box-shadow: none; transform: none; }
+.capabilities-page .external-mcp-item:last-child { border-bottom: 0; }
+.capabilities-page .external-mcp-item.selected { background: color-mix(in srgb, var(--accent-color) 4%, var(--bg-primary)); box-shadow: none; }
+.capabilities-page .external-mcp-item-info { gap: 8px; }
+.capabilities-page .external-mcp-item-info h4 { font-size: .9375rem; flex: 1 1 auto; }
+.capabilities-page .external-mcp-status { padding: 3px 7px; font-size: .75rem; border-radius: 4px; }
+.capabilities-page .external-mcp-status::before { content: none; animation: none; }
+.capabilities-page .external-mcp-status.status-connected { color: var(--cap-positive); }
+.capabilities-page .external-mcp-status.status-disabled { color: var(--cap-muted); background: var(--bg-secondary); border-color: var(--border-color); }
+.capabilities-page .external-mcp-item-actions { display: flex; gap: 6px; flex-wrap: wrap; padding: 0; margin: 4px 0; border: 0; }
+.cap-server-summary { color: var(--cap-muted); font-size: .8125rem; margin: 0; }
+.cap-server-details { font-size: .8125rem; color: var(--cap-muted); }
+.cap-server-details summary { cursor: pointer; padding: 4px 0; }
+.capabilities-page .external-mcp-item-details { display: block; margin-top: 8px; }
+.capabilities-page .external-mcp-item-details > div { display: flex; flex-direction: column; padding: 6px 0; border: 0; border-radius: 0; background: none; }
+.capabilities-page .external-mcp-item-details strong { font-size: .75rem; color: var(--cap-muted); text-transform: none; }
+.capabilities-page .external-mcp-item-details code { overflow-wrap: anywhere; white-space: pre-wrap; }
+.capabilities-page .external-mcp-error { padding: 10px; font-size: .8125rem; border: 1px solid color-mix(in srgb, var(--accent-color) 30%, var(--border-color)); border-radius: 4px; color: var(--cap-danger); }
+
+/* Knowledge: category headers and aligned rows, global index status. */
+.capabilities-page .knowledge-categories-container { gap: 20px; }
+.capabilities-page .knowledge-category-section { padding: 0; background: none; border: 0; box-shadow: none; border-radius: 0; }
+.capabilities-page .knowledge-category-header { display: flex; align-items: baseline; gap: 10px; padding: 0; margin: 0 0 8px; border: 0; background: none; box-shadow: none; }
+.capabilities-page .cap-knowledge-table .cap-table { table-layout: fixed; }
+.capabilities-page .cap-knowledge-table .cap-table thead th:first-child { width: 45%; }
+.capabilities-page .cap-knowledge-table .cap-table thead th:nth-child(2) { width: 16%; }
+.capabilities-page .cap-knowledge-table .cap-table thead th:nth-child(3) { width: 23%; }
+.capabilities-page .cap-knowledge-table .cap-table thead th:last-child { width: 16%; }
+.capabilities-page .cap-category-row th { padding: 8px 14px; border-top: 1px solid var(--border-color); }
+.capabilities-page .cap-category-row .knowledge-category-header { margin: 0; }
+.capabilities-page .knowledge-controls { gap: 0; margin-bottom: 0; }
+.capabilities-page .knowledge-items-list { min-height: 0; }
+.knowledge-category-header h3 { font-size: .9375rem; font-weight: 600; }
+.knowledge-category-header > span { font-size: .8125rem; color: var(--cap-muted); }
+.capabilities-page :is(.knowledge-filters, .retrieval-logs-filters) { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; padding: 0; margin: 0 0 20px; background: none; border: 0; box-shadow: none; }
+.capabilities-page :is(.knowledge-filters, .retrieval-logs-filters) label { display: flex; flex-direction: column; gap: 6px; }
+.capabilities-page .knowledge-filters > label:first-child { flex: 0 0 210px; }
+.capabilities-page .knowledge-search-field { flex: 1; }
+.capabilities-page .retrieval-logs-filters label { flex: 1 1 260px; }
+.cap-index-status { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 12px 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--cap-radius); font-size: .8125rem; }
+.cap-index-status > div, .cap-index-status progress { grid-column: 1 / -1; }
+.cap-index-status > div { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+.cap-index-status span, .cap-index-status p { color: var(--cap-muted); }
+.cap-index-status progress { display: block; width: 100%; height: 6px; margin: 0; accent-color: var(--accent-color); }
+.cap-index-status p { margin: 0; align-self: center; }
+.cap-action-disclosure { font-size: .8125rem; }
+.cap-action-disclosure > summary { padding: 7px 10px; min-height: 34px; border: 1px solid var(--border-color); border-radius: var(--cap-radius); cursor: pointer; }
+.cap-action-disclosure > div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* Monitoring: let outcome records carry the visual weight. */
+.capabilities-page .monitor-sections { gap: 20px; }
+.capabilities-page .monitor-section { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.capabilities-page .monitor-section > .section-header { padding: 0; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+.capabilities-page .section-header h3 { font-size: 1rem; }
+.capabilities-page .mcp-stats-kpi { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--cap-radius); box-shadow: none; padding: 12px 0; }
+.capabilities-page .mcp-stats-kpi__item { padding: 0 16px; min-height: 0; }
+.capabilities-page .mcp-stats-kpi__accent { display: none; }
+.capabilities-page .mcp-stats-kpi__value { font-size: 1.125rem; }
+.capabilities-page .mcp-stats-kpi__value--time { font-size: .875rem; }
+.capabilities-page .mcp-stats-kpi__label { color: var(--cap-muted); text-transform: none; font-size: .8125rem; }
+.capabilities-page .mcp-stats-combined { border: 1px solid var(--border-color); border-radius: var(--cap-radius); box-shadow: none; }
+.capabilities-page .mcp-stats-combined__body { padding: 12px 16px; }
+.capabilities-page .mcp-stats-combined__head { padding: 12px 16px; }
+.capabilities-page .mcp-stats-tools-panel__list { display: flex; flex-direction: column; gap: 0; }
+.capabilities-page .mcp-stats-tool-item { display: grid; grid-template-columns: minmax(120px, 1fr) auto; gap: 4px 12px; padding: 8px 0; min-height: 0; border: 0; border-bottom: 1px solid var(--border-color); border-radius: 0; background: none; box-shadow: none; }
+.capabilities-page .mcp-stats-tool-item:last-child { border-bottom: 0; }
+.capabilities-page .mcp-stats-tool-item__top { grid-column: 1; gap: 6px; }
+.capabilities-page .mcp-stats-tool-item__middle { grid-column: 2; grid-row: 1; margin: 0; }
+.capabilities-page .mcp-stats-tool-item__bottom { grid-column: 1 / -1; margin: 0; gap: 6px; }
+.capabilities-page .mcp-stats-tool-item__calls { font-size: .875rem; }
+.capabilities-page .mcp-stats-tool-item__rank { background: none; color: var(--cap-muted); padding: 0; font-size: .75rem; }
+.capabilities-page .mcp-stats-tool-item__track { display: none; }
+.capabilities-page .mcp-stats-tool-item__name { font-family: inherit; font-size: .8125rem; }
+.capabilities-page .mcp-stats-tool-item__share { color: var(--cap-muted); }
+.capabilities-page .mcp-stats-combined__meta { color: var(--cap-muted); }
+.capabilities-page .monitor-table-container { border-radius: var(--cap-radius); box-shadow: none; }
+.capabilities-page .monitor-table { min-width: 760px; font-size: .8125rem; }
+.capabilities-page .monitor-table :is(th, td) { padding: 10px 12px; }
+.capabilities-page .monitor-table th { color: var(--cap-muted); }
+.capabilities-page .monitor-table { background: var(--bg-primary); }
+.capabilities-page .monitor-stats-grid { margin-bottom: 0; }
+.capabilities-page #monitor-tool-filter { background: var(--bg-primary); border-radius: var(--cap-radius); box-shadow: none; border-color: var(--border-color); }
+.capabilities-page #monitor-tool-filter::placeholder { color: var(--cap-muted); }
+.capabilities-page .monitor-overview > .section-header { margin-bottom: 0; }
+
+/* Editors share the existing modal lifecycle and keyboard/focus layer. */
+.capabilities-modal { animation: none !important; }
+.capabilities-modal .modal-content { animation: none !important; transform: none; opacity: 1; }
+.capabilities-modal .modal-content { width: min(900px, calc(100% - 32px)); max-height: calc(100dvh - 48px); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); backdrop-filter: none; }
+.capabilities-modal .modal-header { flex-shrink: 0; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+.capabilities-modal .modal-header h2 { font-size: 1.125rem !important; font-weight: 600 !important; background: none; color: var(--text-primary); -webkit-text-fill-color: currentColor; letter-spacing: normal !important; }
+.capabilities-modal .modal-header { background: var(--bg-primary) !important; }
+.capabilities-modal .modal-header h2::before,
+.capabilities-modal .modal-header::after { content: none; }
+.capabilities-modal .modal-body { overflow-y: auto; padding: 20px; min-height: 0; background: var(--bg-primary); }
+.capabilities-modal .modal-footer { flex-shrink: 0; padding: 12px 20px; border-top: 1px solid var(--border-color); background: var(--bg-primary); }
+.capabilities-modal .form-group { margin-bottom: 16px; }
+.capabilities-modal .form-group :is(input:not([type="checkbox"]), textarea, select) { border-radius: var(--cap-radius); padding: 8px 10px; font-size: .875rem; }
+.capabilities-modal .form-hint { font-size: .75rem; color: var(--cap-muted); }
+.capabilities-modal .modal-close { flex-shrink: 0; }
+.cap-editor-intro { color: var(--cap-muted); font-size: .875rem; margin-bottom: 16px; max-width: 75ch; }
+.cap-form-section { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+.cap-form-section h3 { font-size: .9375rem; margin-bottom: 12px; font-weight: 600; }
+.cap-reference { padding: 12px 0; background: none; border: 0; border-bottom: 1px solid var(--border-color); font-size: .8125rem; }
+.cap-reference summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+.cap-package-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 16px; }
+.capabilities-modal #skill-package-tree { width: auto; max-height: 420px; overflow: auto; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--cap-radius); }
+.capabilities-modal .skill-tree-row { white-space: normal; overflow-wrap: anywhere; }
+.capabilities-modal #skill-package-tree .skill-tree-row.is-selected { background: color-mix(in srgb, var(--accent-color) 6%, var(--bg-primary)); color: var(--accent-color); }
+.capabilities-modal .cap-agent-identity { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.capabilities-modal .cap-agent-identity > :is(h3, details) { grid-column: 1 / -1; }
+.capabilities-modal .cap-agent-appearance { margin: 0; border: 0; padding: 0; }
+.capabilities-modal .cap-agent-appearance .form-group { margin-top: 12px; }
+.capabilities-modal :is(#skill-new-file-row, .role-tools-actions) { flex-wrap: wrap; }
+.capabilities-modal #skill-new-file-path { min-width: 160px; }
+.capabilities-modal :is(.role-tools-list, .role-tools-controls) { background: none; border-radius: var(--cap-radius); }
+.capabilities-modal .role-tool-item { padding: 10px; border-radius: 0; box-shadow: none; }
+.capabilities-modal .role-tools-list { padding: 0; border: 0; }
+.capabilities-modal .role-tools-list-items { display: block; gap: 0; padding: 0; border: 1px solid var(--border-color); border-radius: var(--cap-radius); }
+.capabilities-modal .role-tools-list-items .role-tool-item { margin: 0; border: 0; border-bottom: 1px solid var(--border-color); background: none; }
+.capabilities-modal .role-tools-list-items .role-tool-item:last-child { border-bottom: 0; }
+.capabilities-modal .role-tool-item-desc { color: var(--cap-muted); }
+.capabilities-modal .role-tools-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 8px 0; margin-bottom: 12px; border: 0; background: none; font-size: .75rem; color: var(--cap-muted); }
+.cap-detail-list { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 8px 16px; margin-top: 16px; font-size: .8125rem; }
+.cap-detail-list dt { color: var(--cap-muted); }
+.cap-detail-list dd { margin: 0; overflow-wrap: anywhere; }
+.cap-copy { border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 8px; background: var(--bg-secondary); color: var(--text-primary); text-align: left; cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
+.cap-retrieved-item { padding: 16px 0; border-bottom: 1px solid var(--border-color); font-size: .875rem; }
+.cap-retrieved-item p { margin-top: 8px; }
+@media (max-width: 1150px) {
+  .capabilities-page .mcp-management-layout { grid-template-columns: minmax(0, 1fr); }
+  .capabilities-page .external-mcp-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .capabilities-page .external-mcp-item { border-bottom: 1px solid var(--border-color); }
+  .capabilities-page .page-header { align-items: flex-start; }
+}
+@media (max-width: 767px) {
+  .capabilities-page .page-header { padding: 16px; flex-direction: column; gap: 12px; }
+  .capabilities-page .page-content { padding: 0 16px 24px; }
+  .capabilities-page .page-header-actions { width: 100%; }
+  .capabilities-page .external-mcp-items { display: block; }
+  .capabilities-page :is(.knowledge-search-field, .knowledge-filters > label:first-child) { flex: 1 1 100%; width: 100%; }
+  .capabilities-page .knowledge-filters .search-box { width: 100%; }
+  .capabilities-page .mcp-stats-combined__body--full { display: flex; flex-direction: column; }
+  .capabilities-page .mcp-stats-combined__timeline { border-left: 0; padding: 16px 0 0; }
+  .capabilities-page :is(.monitor-section .section-actions, .monitor-section .section-actions label) { flex-wrap: wrap; }
+  :is(.capabilities-page, .capabilities-modal) :is(.btn-primary, .btn-secondary, .btn-filter, .btn-small, .btn-search, summary) { min-height: 40px; }
+  html body :is(.capabilities-page, .capabilities-modal) :is(.btn-primary, .btn-secondary, .btn-filter, .btn-small, .btn-search) { border-radius: var(--cap-radius) !important; }
+  .capabilities-modal .modal-content { width: calc(100% - 16px); max-height: calc(100dvh - 24px); margin-inline: auto; }
+  .capabilities-modal .modal-body { padding: 16px; }
+  .cap-package-layout { grid-template-columns: minmax(0, 1fr); }
+  .capabilities-modal .cap-agent-identity { grid-template-columns: minmax(0, 1fr); }
+  .capabilities-modal #skill-package-tree { max-height: 150px; }
+  .cap-detail-list { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .cap-detail-list dd { margin-bottom: 12px; }
+  .cap-local-nav { gap: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.capabilities-page, .capabilities-modal) * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

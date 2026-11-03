@@ -1,0 +1,14 @@
+{
+  "mode": "mock",
+  "app": "http://127.0.0.1:29752",
+  "generatedAt": "2026-10-24T03:17:54.952Z",
+  "steps": [
+    {
+      "step": "the simulated gallery renders its template actions",
+      "matches": true,
+      "detail": "template actions shown"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0
+}

@@ -14,10 +14,10 @@ from __future__ import annotations
 import json
 import re
 import time
-from pathlib import Path
 
 from langchain_core.tools import tool
 
+from raptix.execution.backends.project_files import ProjectFileUnavailable, ambient_project_files
 from raptix.execution.tools.research._state import _json, _load, _save
 from raptix_core.types.kg import (
     EdgeKind,
@@ -301,12 +301,11 @@ def format_bounty_report(
 
     # Write report file
     short_id = finding_id[:8]
-    report_path = Path("/workspace/findings") / f"BOUNTY-{short_id}.md"
+    report_rel = f"findings/BOUNTY-{short_id}.md"
     try:
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(report_content, encoding="utf-8")
+        ambient_project_files().write_bytes(report_rel, report_content.encode("utf-8"))
         wrote = True
-    except OSError as e:
+    except (ProjectFileUnavailable, ValueError) as e:
         log.warning("Could not write bounty report: %s", e)
         wrote = False
 
@@ -331,7 +330,7 @@ def format_bounty_report(
             "cvss_score": cvss_score,
             "cvss_vector": cvss_vector,
             "platform": platform,
-            "report_path": str(report_path) if wrote else None,
+            "report_path": f"/workspace/{report_rel}" if wrote else None,
             "preview": report_content[:500],
         }
     )

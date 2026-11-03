@@ -42,13 +42,13 @@ from typing import TYPE_CHECKING
 from benchmarks.providers.base import BaseBenchmarkProvider
 
 if TYPE_CHECKING:
-    from benchmarks.schemas import (
+    from benchmarks.engine.schemas import (
         Challenge,
         ChallengeResult,
         FilterConfig,
         SetupResult,
     )
-    from benchmarks.state import BenchmarkRunState
+    from benchmarks.engine.state import BenchmarkRunState
 
 log = logging.getLogger(__name__)
 
@@ -102,7 +102,8 @@ class ButtercupProvider(BaseBenchmarkProvider):
     def __init__(self, *, upstream_dir: Path | None = None) -> None:
         super().__init__()
         self._upstream_dir = (
-            upstream_dir or Path(__file__).resolve().parent.parent / "buttercup" / "upstream"
+            upstream_dir
+            or Path(__file__).resolve().parent.parent / "external" / "buttercup" / "upstream"
         )
 
     @property
@@ -110,7 +111,7 @@ class ButtercupProvider(BaseBenchmarkProvider):
         return "buttercup"
 
     def load_challenges(self, filters: FilterConfig) -> list[Challenge]:
-        from benchmarks.schemas import Challenge  # noqa: PLC0415
+        from benchmarks.engine.schemas import Challenge  # noqa: PLC0415
 
         _ensure_upstream(self._upstream_dir)
         root = _challenges_root(self._upstream_dir)
@@ -157,7 +158,7 @@ class ButtercupProvider(BaseBenchmarkProvider):
         return True
 
     def setup(self, challenge: Challenge) -> SetupResult:
-        from benchmarks.schemas import SetupResult  # noqa: PLC0415
+        from benchmarks.engine.schemas import SetupResult  # noqa: PLC0415
 
         if not challenge.compose_dir or not (challenge.compose_dir / "Makefile").exists():
             return SetupResult(
@@ -217,7 +218,7 @@ class ButtercupProvider(BaseBenchmarkProvider):
         state: BenchmarkRunState,
         workspace: Path,
     ) -> ChallengeResult:
-        from benchmarks.schemas import ChallengeResult  # noqa: PLC0415
+        from benchmarks.engine.schemas import ChallengeResult  # noqa: PLC0415
 
         if not challenge.compose_dir:
             return ChallengeResult(

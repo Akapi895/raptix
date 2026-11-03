@@ -31,6 +31,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
+from raptix.knowledge.graph.asset_identity import (
+    ASSET_BEARING_KINDS,
+    canonical_key,
+    identity_for,
+    redact_text,
+)
 from raptix_core.utils.engagement_scope import is_valid_engagement_label
 from raptix_core.utils.logging import get_logger
 
@@ -45,6 +51,14 @@ log = get_logger("kg.store")
 # UPPER_CASE (HOSTS, HAS_VULN, EXPLOITS).
 _SAFE_LABEL_RE = re.compile(r"^[A-Z][A-Za-z0-9]{0,63}$")
 _SAFE_REL_TYPE_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
+
+
+# Advances the engagement's write counter inside the transaction that changed the graph.
+_REVISION_BUMP = (
+    "MERGE (v:KGRevision {scope: $engagement}) "
+    "ON CREATE SET v.counter = 0 "
+    "SET v.counter = v.counter + 1"
+)
 
 
 class KGStoreUnavailableError(RuntimeError):
@@ -215,52 +229,96 @@ class KGStore:
         *,
         engagement: str,
     ) -> list[dict[str, Any]]:
-        """Run a write transaction. Driver retries deadlock errors."""
+        """Run a write transaction. Driver retries deadlock errors.
+
+        Every scoped write advances the engagement's ``KGRevision`` counter in the same
+        transaction, so a write that bypasses ``record_observations`` (a delete, a
+        relationship written by a legacy adapter) still moves the revision that cursors
+        are bound to.
+        """
         self._check_engagement(engagement)
         self._check_scoped_cypher(cypher, engagement)
+        self._ensure_revision_schema()
+        return self._write(cypher, params, engagement=engagement, bump=True)
+
+    def execute_migration_statement(
+        self,
+        cypher: str,
+        *,
+        engagement: str,
+    ) -> list[dict[str, Any]]:
+        """Run one statement of a schema migration, without advancing any revision counter.
+
+        Neo4j does not allow a schema modification and a write in one transaction, and the counter bump is a
+        write. Migrations change the schema, and the graph a cursor reads is unchanged by them, so no revision moves.
+        """
+        self._check_engagement(engagement)
+        self._check_scoped_cypher(cypher, engagement)
+        return self._write(cypher, None, engagement=engagement, bump=False)
+
+    def _ensure_revision_schema(self) -> None:
+        # The schema migration is not part of every runtime boot. Enforce the uniqueness
+        # invariant before the first write from each store, so two independent processes
+        # cannot create duplicate markers.
+        if self._revision_schema_ready:
+            return
+        self._write(
+            "CREATE CONSTRAINT kg_revision_scope IF NOT EXISTS "
+            "FOR (v:KGRevision) REQUIRE v.scope IS UNIQUE",
+            None,
+            engagement="schema",
+            bump=False,
+        )
+        self._revision_schema_ready = True
+
+    def _write(
+        self,
+        cypher: str,
+        params: dict[str, Any] | None,
+        *,
+        engagement: str,
+        bump: bool,
+    ) -> list[dict[str, Any]]:
         scoped_params = {**(params or {}), "engagement": engagement}
+
+        def _transaction(tx: Any) -> list[dict[str, Any]]:
+            rows = [dict(record) for record in tx.run(cypher, **scoped_params)]
+            if bump:
+                tx.run(_REVISION_BUMP, engagement=engagement).consume()
+            return rows
+
         with self._driver.session(database=self._database) as session:
-            return session.execute_write(
-                lambda tx: [dict(record) for record in tx.run(cypher, **scoped_params)]
-            )
+            return session.execute_write(_transaction)
 
     # ── AttackGraphProtocol implementation ─────────────────────────────
 
     def revision(self, *, engagement: str) -> str:
-        """Read an atomic per-engagement write counter plus legacy graph timestamps.
+        """The engagement's write counter: one indexed lookup on ``KGRevision.scope``.
 
-        Separate subqueries avoid the node × edge Cartesian product. The counter
-        advances inside the observation transaction across stores/processes;
-        legacy graph writers still contribute via node/edge timestamps.
+        Writers advance it in the transaction that changes the graph (``record_observations``
+        and every ``execute_write``), so no scan of the node or relationship set is needed.
         """
         self._check_engagement(engagement)
-        cypher = (
-            "CALL () { MATCH (v:KGRevision {scope: $engagement}) "
-            "RETURN coalesce(max(v.counter), 0) AS seq } "
-            "CALL () { MATCH (n) WHERE n.engagement = $engagement "
-            "RETURN coalesce(max(n.lastupdated), 0) AS node_rev } "
-            "CALL () { MATCH (src)-[r]->(dst) WHERE src.engagement = $engagement "
-            "AND dst.engagement = $engagement AND r.engagement = $engagement "
-            "RETURN coalesce(max(r.lastupdated), 0) AS edge_rev } "
-            "RETURN seq, node_rev, edge_rev"
+        rows = self.execute_read(
+            "MATCH (v:KGRevision {scope: $engagement}) RETURN coalesce(v.counter, 0) AS seq",
+            {},
+            engagement=engagement,
         )
-        rows = self.execute_read(cypher, {"engagement": engagement}, engagement=engagement)
-        row = rows[0] if rows else {}
-        seq = int(row.get("seq") or 0)
-        node = int(row.get("node_rev") or row.get("rev") or 0)
-        edge = int(row.get("edge_rev") or 0)
-        if not seq and not edge:
-            return f"rev-{engagement}-{node}"
-        return f"rev-{engagement}-{seq}:{node}:{edge}"
+        seq = int(rows[0]["seq"]) if rows else 0
+        return f"rev-{engagement}-{seq}"
 
     def snapshot(self, *, engagement: str):
         """Build an EngagementSnapshot for ``cart.diff_snapshots`` consumption.
 
         Lazy-imported to avoid a circular: ``cart.py`` imports from
-        ``raptix.runtime``, which the middleware does not need to
+        ``raptix.execution.session``, which the middleware does not need to
         pull in just to construct a snapshot.
         """
-        from raptix.runtime.cart import EngagementSnapshot, SnapshotNodeKey, _hash_snapshot
+        from raptix.execution.session.cart import (
+            EngagementSnapshot,
+            SnapshotNodeKey,
+            _hash_snapshot,
+        )
 
         self._check_engagement(engagement)
 
@@ -331,6 +389,7 @@ class KGStore:
         engagement: str,
         created_by: str,
         source_episode_id: str,
+        provenance_channel: str = "legacy_unknown",
     ) -> dict[str, Any]:
         """Atomic batch write of node + outgoing-edge observations.
 
@@ -348,7 +407,19 @@ class KGStore:
         if not isinstance(source_episode_id, str) or not source_episode_id:
             raise ValueError("source_episode_id must be a non-empty string (tool_call_id)")
 
-        obs_list = [o for o in observations if isinstance(o, dict)]
+        import hashlib
+        from uuid import uuid4
+
+        from raptix.knowledge.graph.trust import (
+            CHANNEL_RANK,
+            PRIVATE_FIELDS,
+            RESERVED,
+            sanitize_properties,
+            validate_batch,
+        )
+
+        obs_list = list(observations)
+        validate_batch(obs_list, provenance_channel)
         if not obs_list:
             return {
                 "created": 0,
@@ -357,20 +428,24 @@ class KGStore:
                 "revision": self.revision(engagement=engagement),
             }
 
-        # The schema migration is not part of every runtime boot. Enforce the
-        # uniqueness invariant before the first write from each store as well,
-        # so two independent processes cannot create duplicate markers.
-        if not self._revision_schema_ready:
-            self.execute_write(
-                "CREATE CONSTRAINT kg_revision_scope IF NOT EXISTS "
-                "FOR (v:KGRevision) REQUIRE v.scope IS UNIQUE",
-                engagement="schema",
-            )
-            self._revision_schema_ready = True
+        self._ensure_revision_schema()
 
         update_tag = int(time.time())
+        credential_keys = {
+            canonical_key(obs["key"]) for obs in obs_list if obs["kind"] in {"Credential", "Secret"}
+        }
+        credential_nodes = {
+            (obs["kind"], canonical_key(obs["key"]))
+            for obs in obs_list
+            if obs["kind"] in {"Credential", "Secret"}
+        }
+
+        def opaque_credential_key(value: str) -> str:
+            return "credential-ref::" + hashlib.sha256(value.encode()).hexdigest()
+
         node_rows: list[dict[str, Any]] = []
         edge_rows: list[dict[str, Any]] = []
+        unidentified = 0
 
         for obs in obs_list:
             kind = _safe_label(obs.get("kind", ""))
@@ -379,19 +454,60 @@ class KGStore:
                 raise ValueError(
                     f"observation kind={kind!r} missing mandatory 'key' (deterministic dedup)"
                 )
-            label = str(obs.get("label") or key)
+            # Redacted before anything is written, so the key, label and edges agree.
+            key = canonical_key(key)
+            if (kind, key) in credential_nodes:
+                key = opaque_credential_key(key)
+            label = redact_text(str(obs.get("label") or key))
             raw_props = obs.get("props")
-            props = _flatten_props(dict(raw_props) if isinstance(raw_props, dict) else {})
+            props = _flatten_props(
+                sanitize_properties(dict(raw_props) if isinstance(raw_props, dict) else {})
+            )
+            if kind in {"Credential", "Secret"}:
+                label = "Credential reference"
+                props = {
+                    name: value
+                    for name, value in props.items()
+                    if name
+                    in {
+                        "credential_ref",
+                        "source_artifact_ref",
+                        "source_artifact_digest",
+                        "username",
+                        "domain",
+                        "host",
+                        "credential_type",
+                        "format",
+                        "status",
+                    }
+                }
+                # vault:// is produced by execution/tools/vault/tools.py::vault_store
+                # (its JSON result's "vault_ref" field) -- passing it here is optional,
+                # never required (ADR-0104: opt-in per secret, never forced).
+                if not str(props.get("credential_ref") or "").startswith(
+                    ("vault://", "credential://", "workspace-evidence://")
+                ):
+                    props.pop("credential_ref", None)
             # Reserve provenance fields — operator-supplied values are
             # silently discarded so the agent cannot forge provenance.
-            for reserved in (
-                "engagement",
-                "firstseen",
-                "lastupdated",
-                "created_by",
-                "source_episode_id",
-            ):
+            for reserved in RESERVED | PRIVATE_FIELDS:
                 props.pop(reserved, None)
+            # Any web URL carried in a property is redacted, whatever the case of its scheme.
+            for prop_name, prop_value in list(props.items()):
+                if isinstance(prop_value, str):
+                    props[prop_name] = redact_text(prop_value)
+                elif isinstance(prop_value, list):
+                    props[prop_name] = [
+                        redact_text(item) if isinstance(item, str) else item for item in prop_value
+                    ]
+            # Asset-bearing nodes carry the identity ADR-0094 derives from their locator, whichever
+            # writer produced them. An agent-supplied locator that is not valid stays unidentified.
+            if kind in ASSET_BEARING_KINDS and "asset_id" not in props:
+                identity = identity_for(engagement, kind, key, props)
+                if identity is None:
+                    unidentified += 1
+                else:
+                    props.update(identity)
 
             node_rows.append(
                 {
@@ -399,6 +515,7 @@ class KGStore:
                     "key": key,
                     "label": label,
                     "props": props,
+                    "observation_id": str(uuid4()),
                 }
             )
 
@@ -409,6 +526,9 @@ class KGStore:
                 rel_kind = edge.get("kind")
                 if not isinstance(to_key, str) or not to_key:
                     continue
+                to_key = canonical_key(to_key)
+                if to_key in credential_keys:
+                    to_key = opaque_credential_key(to_key)
                 # Fail-fast: silently dropping edges here hides data
                 # loss (the IngestState stats counter already counted
                 # this edge before observation handoff). ``_safe_rel_type``
@@ -424,17 +544,15 @@ class KGStore:
                     weight = 1.0
                 edge_props_raw = edge.get("props")
                 edge_props = _flatten_props(
-                    dict(edge_props_raw) if isinstance(edge_props_raw, dict) else {}
+                    sanitize_properties(
+                        dict(edge_props_raw) if isinstance(edge_props_raw, dict) else {}
+                    )
                 )
-                for reserved in (
-                    "engagement",
-                    "firstseen",
-                    "lastupdated",
-                    "created_by",
-                    "source_episode_id",
-                    "weight",
-                ):
+                for reserved in RESERVED | PRIVATE_FIELDS | {"weight"}:
                     edge_props.pop(reserved, None)
+                for prop_name, prop_value in list(edge_props.items()):
+                    if isinstance(prop_value, str):
+                        edge_props[prop_name] = redact_text(prop_value)
                 edge_rows.append(
                     {
                         "src_key": key,
@@ -445,39 +563,72 @@ class KGStore:
                     }
                 )
 
+        # Endpoint labels let the edge MATCH use the (key, engagement) constraint
+        # index; without them each edge scans every node in the engagement. A key
+        # seen under two kinds in one batch stays unlabelled rather than guessing.
+        key_kind: dict[str, str | None] = {}
+        for node_row in node_rows:
+            seen = key_kind.get(node_row["key"], node_row["kind"])
+            key_kind[node_row["key"]] = node_row["kind"] if seen == node_row["kind"] else None
+        for edge_row in edge_rows:
+            edge_row["src_kind"] = key_kind.get(edge_row["src_key"])
+            edge_row["dst_kind"] = key_kind.get(edge_row["dst_key"])
+
         # Group node rows by label so we can MERGE under the right
         # label (Cypher doesn't parameterize labels). For each label
-        # batch one UNWIND-MERGE. Same for edges grouped by rel type.
+        # batch one UNWIND-MERGE. Same for edges grouped by rel type and endpoint labels.
         nodes_by_label: dict[str, list[dict[str, Any]]] = {}
         for row in node_rows:
             nodes_by_label.setdefault(row["kind"], []).append(row)
-        edges_by_type: dict[str, list[dict[str, Any]]] = {}
+        edges_by_shape: dict[tuple[str, str | None, str | None], list[dict[str, Any]]] = {}
         for row in edge_rows:
-            edges_by_type.setdefault(row["kind"], []).append(row)
+            shape = (row["kind"], row["src_kind"], row["dst_kind"])
+            edges_by_shape.setdefault(shape, []).append(row)
 
         created = 0
         merged = 0
         edges_written = 0
 
-        def _do_writes(tx: Any) -> tuple[int, int, int, int]:
+        def _do_writes(tx: Any) -> tuple[int, int, int, int, int]:
             local_created = 0
             local_merged = 0
             local_edges = 0
+            protected = 0
             for label, rows in nodes_by_label.items():
                 node_query = (
                     f"UNWIND $rows AS row "
                     f"MERGE (n:{label} {{key: row.key, engagement: $engagement}}) "
                     "ON CREATE SET n.firstseen = $now, n._jc = true "
                     "ON MATCH SET n._jc = false "
-                    "SET n.label = row.label, "
+                    # A trust upgrade replaces the lower-trust property set; retaining
+                    # omitted fields would launder an old model claim as scanner data.
+                    "FOREACH (_ IN CASE WHEN coalesce(n.trust_rank, 0) < $trust_rank "
+                    "THEN [1] ELSE [] END | SET n = {key: n.key, engagement: n.engagement, "
+                    "firstseen: n.firstseen, observation_id: n.observation_id, _jc: n._jc}) "
+                    "FOREACH (_ IN CASE WHEN coalesce(n.trust_rank, 0) <= $trust_rank "
+                    "THEN [1] ELSE [] END | "
+                    "SET n.conflict_detected = coalesce(n.conflict_detected, false) OR "
+                    "(n.status IS NOT NULL AND row.props.status IS NOT NULL AND n.status <> row.props.status) OR "
+                    "(n.version IS NOT NULL AND row.props.version IS NOT NULL AND n.version <> row.props.version) OR "
+                    "(n.severity IS NOT NULL AND row.props.severity IS NOT NULL AND n.severity <> row.props.severity), "
+                    "n.previous_status = CASE WHEN row.props.status IS NOT NULL THEN n.status ELSE n.previous_status END, "
+                    "n.previous_version = CASE WHEN row.props.version IS NOT NULL THEN n.version ELSE n.previous_version END, "
+                    "n.previous_severity = CASE WHEN row.props.severity IS NOT NULL THEN n.severity ELSE n.previous_severity END, "
+                    "n.previous_source_episode_id = n.source_episode_id, "
+                    "n.label = row.label, "
                     "    n.lastupdated = $now, "
                     "    n.created_by = $created_by, "
                     "    n.source_episode_id = $source_episode_id, "
-                    "    n += row.props "
+                    "    n += row.props, "
+                    "    n.provenance_channel = $channel, n.trust_rank = $trust_rank, "
+                    "    n.trust_state = CASE WHEN $trust_rank = 1 THEN 'observed' "
+                    "    ELSE 'unverified' END) "
+                    "SET n.observation_id = coalesce(n.observation_id, row.observation_id) "
                     "WITH n, n._jc AS just_created "
                     "REMOVE n._jc "
                     "RETURN sum(CASE WHEN just_created THEN 1 ELSE 0 END) AS created, "
-                    "       sum(CASE WHEN just_created THEN 0 ELSE 1 END) AS merged"
+                    "       sum(CASE WHEN just_created THEN 0 ELSE 1 END) AS merged, "
+                    "       sum(CASE WHEN coalesce(n.trust_rank, 0) > $trust_rank THEN 1 ELSE 0 END) AS protected"
                 )
                 for record in tx.run(
                     node_query,
@@ -486,14 +637,19 @@ class KGStore:
                     now=update_tag,
                     created_by=created_by,
                     source_episode_id=source_episode_id,
+                    channel=provenance_channel,
+                    trust_rank=CHANNEL_RANK[provenance_channel],
                 ):
                     local_created += int(record["created"] or 0)
                     local_merged += int(record["merged"] or 0)
-            for rel_type, rows in edges_by_type.items():
+                    protected += int(record.get("protected") or 0)
+            for (rel_type, src_kind, dst_kind), rows in edges_by_shape.items():
+                src_pattern = f"s:{src_kind}" if src_kind else "s"
+                dst_pattern = f"d:{dst_kind}" if dst_kind else "d"
                 edge_query = (
                     "UNWIND $rows AS row "
-                    "MATCH (s {key: row.src_key, engagement: $engagement}) "
-                    "MATCH (d {key: row.dst_key, engagement: $engagement}) "
+                    f"MATCH ({src_pattern} {{key: row.src_key, engagement: $engagement}}) "
+                    f"MATCH ({dst_pattern} {{key: row.dst_key, engagement: $engagement}}) "
                     f"MERGE (s)-[r:{rel_type}]->(d) "
                     # ``r.engagement`` is mandatory: engagement-scoped
                     # reads filter every edge via ``WHERE r.engagement
@@ -503,12 +659,16 @@ class KGStore:
                     # mistake was silent because V001 / V002 only
                     # constrain node uniqueness, not edge properties.
                     "ON CREATE SET r.firstseen = $now, r.engagement = $engagement "
-                    "SET r.lastupdated = $now, "
+                    "FOREACH (_ IN CASE WHEN coalesce(r.trust_rank, 0) <= $trust_rank "
+                    "THEN [1] ELSE [] END | SET r.lastupdated = $now, "
                     "    r.engagement = $engagement, "
                     "    r.created_by = $created_by, "
                     "    r.source_episode_id = $source_episode_id, "
                     "    r.weight = row.weight, "
-                    "    r += row.props "
+                    "    r += row.props, "
+                    "    r.provenance_channel = $channel, r.trust_rank = $trust_rank, "
+                    "    r.trust_state = CASE WHEN $trust_rank = 1 THEN 'observed' "
+                    "    ELSE 'unverified' END) "
                     "RETURN count(r) AS written"
                 )
                 for record in tx.run(
@@ -518,6 +678,8 @@ class KGStore:
                     now=update_tag,
                     created_by=created_by,
                     source_episode_id=source_episode_id,
+                    channel=provenance_channel,
+                    trust_rank=CHANNEL_RANK[provenance_channel],
                 ):
                     local_edges += int(record["written"] or 0)
             # This marker has no `engagement` property: it is invisible to
@@ -529,17 +691,22 @@ class KGStore:
                 "SET v.counter = v.counter + 1 RETURN v.counter AS counter",
                 engagement=engagement,
             ).single()["counter"]
-            return local_created, local_merged, local_edges, int(revision)
+            return local_created, local_merged, local_edges, int(revision), protected
 
         with self._driver.session(database=self._database) as session:
-            created, merged, edges_written, _revision = session.execute_write(_do_writes)
+            created, merged, edges_written, _revision, protected = session.execute_write(_do_writes)
 
-        return {
+        result: dict[str, Any] = {
             "created": created,
             "merged": merged,
             "edges": edges_written,
             "revision": self.revision(engagement=engagement),
         }
+        if unidentified:
+            result["unidentified"] = unidentified
+        if protected:
+            result["protected"] = protected
+        return result
 
     # ── Stale-node cleanup (Cartography update_tag pattern) ────────────
 

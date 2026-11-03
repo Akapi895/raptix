@@ -36,22 +36,24 @@ every write-scope skill carries an explicit safety gate.
 
 ## Playbooks
 
-> **Inline technique reference — not separately loadable skills.** The entries below
-> are summarized here for direct use; there is no separate `SKILL.md` to open for
-> each. Do NOT call the skill loader on them — apply the technique with your tools
-> using this summary and the Workflow in this file.
+> **Mixed depth.** Most entries below are summarized inline for direct
+> use — no separate `SKILL.md` to open. Five entries (marked ✅ below)
+> DO have a deeper, separately loadable skill under
+> `standard/exploit/ics-ot/` (same `ics-ot` subdomain, so `load_skill`
+> resolves them) — call the loader on those five when you need
+> command-level depth beyond this summary. Treat everything else in
+> this table as inline-only; apply it with your tools directly.
 
-
-| Technique | Use for |
-|---|---|
-| **modbus-discovery** | Read-only Modbus TCP/RTU enumeration, function code 3/4 polling |
-| **modbus-write** | **GATED** Write coils / registers; safety gate enforced |
-| **bacnet-discovery** | BACnet/IP Who-Is, object enumeration, device profile |
-| **s7comm** | Siemens S7 / S7Comm Plus enumeration via Snap7 / python-snap7 |
-| **dnp3** | DNP3 outstation / master discovery; integrity poll |
-| **opcua** | OPC-UA browse, anonymous auth check, certificate analysis |
-| **hmi-web** | HMI web stacks (Wonderware, Iconics, Schneider) — known CVEs |
-| **engineering-software** | TIA Portal / Studio 5000 / Unity Pro project extraction |
+| Technique | Use for | Deeper skill |
+|---|---|---|
+| **modbus-discovery** | Read-only Modbus TCP/RTU enumeration, function code 3/4 polling | ✅ `standard/exploit/ics-ot/modbus` (`ics-modbus`) |
+| **modbus-write** | **GATED** Write coils / registers; safety gate enforced | ✅ same as above |
+| **bacnet-discovery** | BACnet/IP Who-Is, object enumeration, device profile | ✅ `standard/exploit/ics-ot/bacnet` (`ics-bacnet`) |
+| **s7comm** | Siemens S7 / S7Comm Plus enumeration via Snap7 / python-snap7 | ✅ `standard/exploit/ics-ot/s7comm` (`ics-s7comm`) |
+| **dnp3** | DNP3 outstation / master discovery; integrity poll | ✅ `standard/exploit/ics-ot/dnp3` (`ics-dnp3`) |
+| **opcua** | OPC-UA browse, anonymous auth check, certificate analysis | ✅ `standard/exploit/ics-ot/opcua` |
+| **hmi-web** | HMI web stacks (Wonderware, Iconics, Schneider) — known CVEs | inline only |
+| **engineering-software** | TIA Portal / Studio 5000 / Unity Pro project extraction | inline only |
 
 ## Workflow
 

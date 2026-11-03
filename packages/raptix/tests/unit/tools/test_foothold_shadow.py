@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from raptix.execution.tools.opplan import build_opplan_tools
+from raptix.execution.tools.plumbing.opplan import build_opplan_tools
 from raptix_core.types.foothold import AccessObservation, AccessOperation, assess_access
 
 

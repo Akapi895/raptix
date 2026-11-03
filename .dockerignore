@@ -3,6 +3,10 @@
 **/.next
 **/dist
 **/build
+!apps/ui-app/build
+!apps/ui-app/build/**
+**/dist-demo
+**/test-results
 **/*.tsbuildinfo
 
 # ── Version control ──────────────────────────────────────────
@@ -21,6 +25,10 @@
 .env
 .env.local
 .env.*.local
+**/.env
+**/.env.*
+.venv
+.raptix
 *.pem
 *.key
 
@@ -47,3 +55,8 @@ reference
 assets
 tests
 workspace
+benchmarks/results
+benchmarks/external
+
+# Local console data; not needed by any image
+data

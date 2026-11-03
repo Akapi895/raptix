@@ -1,0 +1,635 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tier 1 (ADR-0106): the only business records with no Raptix runtime
+// equivalent that Tier 1 itself needs -- a single-operator credential and
+// its sessions. RBAC/AI-roles proper is a Tier 6 design spike (see
+// docs/design/2026-10-31-ui-app-integration-implementation-plan.md); this
+// is intentionally not that schema.
+
+model Operator {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  displayName  String
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+}
+
+model Session {
+  token      String   @id
+  operatorId String
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([operatorId])
+}
+
+// Tier 2: Projects and Conversations are business records with no Raptix
+// runtime equivalent -- "project" is apps/ui-app's own grouping concept, not
+// the same as a Raptix EngagementContext/OPPLAN (that mapping is a Tier 3+
+// decision, not made here). A Conversation's identity *is* a LangGraph
+// thread -- runtimeThreadId is never optional, created in the same request
+// that creates the Conversation row (see routes/conversations.routes.ts).
+// Facts/fact-edges (Neo4j AKG) are Tier 5 (knowledge/graph) and deliberately
+// not modeled here.
+
+model Project {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  scopeJson     String?
+  status        String         @default("active")
+  pinned        Boolean        @default(false)
+  // Automatic AKG capture for new runs; explicit project choices override env defaults.
+  autoIngestEnabled Boolean     @default(false)
+  triedEdgesEnabled Boolean     @default(false)
+  // Tier 3: the project's sandbox identity (ADR-0086 A / ADR-0102). Generated
+  // once at creation from the project id (see project-store.ts), never
+  // user-editable -- the sandbox host ("sbx-<slug>") and its workspace
+  // volume are keyed off this, not off `name`, which may repeat.
+  workspaceSlug String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+  assets        Asset[]
+  vulnerabilities Vulnerability[]
+  batchQueues   BatchQueue[]
+  webshellConnections WebShellConnection[]
+  facts         ProjectFact[]
+  factEdges     ProjectFactEdge[]
+  factEvidence  ProjectFactEvidence[]
+  vaultSecrets  VaultSecret[]
+}
+
+model Conversation {
+  id              String    @id @default(cuid())
+  title           String
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  roleName        String?
+  agentMode       String    @default("eino_single")
+  pinned          Boolean   @default(false)
+  runtimeThreadId String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  messages        Message[]
+  vulnerabilities Vulnerability[]
+  webshellConnectionId String?
+  webshellConnection   WebShellConnection? @relation(fields: [webshellConnectionId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([webshellConnectionId])
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  events         MessageEvent[]
+
+  @@index([conversationId])
+}
+
+// The Agents tab's execution tree (apps/ui-app's processDetails): one row per
+// tool_call/tool_result the orchestrator's own message stream carries while
+// an assistant turn runs (see services/execution-events.ts). Buffered in
+// memory during the stream, written once the final assistant Message exists
+// -- never claims a turn produced delegation it didn't.
+model MessageEvent {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  eventType String
+  dataJson  String
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+}
+
+// Tier 3 (Findings): shapes match apps/ui-app's authoritative zod schemas
+// (src/api/types/{asset,vulnerability}.ts, derived from internal/database/
+// {asset,vulnerability}.go) field-for-field, not the retired apps/web's
+// WebAsset/FindingRecord models (different DTOs -- see ADR-0106 §0). There is
+// deliberately no Asset<->Vulnerability foreign key: the authoritative
+// Vulnerability schema has no asset_id field, only a free-text `target`: the
+// two were never strictly linked upstream, so Asset.vulnerabilityCount is
+// always 0 here rather than invented from a fuzzy text match.
+
+model Asset {
+  id                String         @id @default(cuid())
+  projectId         String?
+  project           Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  host              String         @default("")
+  ip                String         @default("")
+  port              Int            @default(0)
+  domain            String         @default("")
+  protocol          String         @default("")
+  title             String         @default("")
+  server            String         @default("")
+  country           String         @default("")
+  province          String         @default("")
+  city              String         @default("")
+  responsiblePerson String         @default("")
+  department        String         @default("")
+  businessSystem    String         @default("")
+  environment       String         @default("")
+  criticality       String         @default("")
+  source            String         @default("")
+  sourceQuery       String         @default("")
+  status            String         @default("active")
+  tags              String[]       @default([])
+  firstSeenAt       DateTime       @default(now())
+  lastSeenAt        DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  scanLinks         ScanLink[]
+
+  @@index([projectId])
+}
+
+// Scan links record which scan conversation or batch task touched which
+// asset -- apps/ui-app POSTs them when the operator launches a scan from the
+// asset table (assets feature's ScanLink: asset_id + conversation_id, or
+// asset_id + queue_id + task_id). Write-only from the frontend's side; apps/
+// api stores them for asset-history reads. Not the Neo4j AKG either -- the
+// "observed scan relationships" phrasing in the plan's Tier 3 row was a
+// wrong guess, same as the fact ops.
+model ScanLink {
+  id             String   @id @default(cuid())
+  assetId        String
+  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  conversationId String   @default("")
+  queueId        String   @default("")
+  taskId         String   @default("")
+  createdAt      DateTime @default(now())
+
+  @@index([assetId])
+  @@index([conversationId])
+  @@index([queueId])
+}
+
+model Vulnerability {
+  id                String        @id @default(cuid())
+  conversationId    String?
+  conversation      Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  projectId         String?
+  project           Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  conversationTag   String?
+  taskTag           String?
+  taskId            String?
+  taskQueueId       String?
+  title             String
+  description       String        @default("")
+  severity          String
+  status            String        @default("open")
+  type              String        @default("")
+  target            String        @default("")
+  preconditions     String        @default("")
+  reproductionSteps String        @default("")
+  evidence          String        @default("")
+  impact            String        @default("")
+  recommendation    String        @default("")
+  retestNotes       String        @default("")
+  retestLog         String        @default("")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([projectId])
+  @@index([conversationId])
+}
+
+// Single row (id is always "singleton") -- apps/ui-app's vulnerability-alerts
+// subscription has no per-user scoping in a single-operator deployment.
+model AlertSubscription {
+  id          String   @id @default("singleton")
+  enabled     Boolean  @default(false)
+  minSeverity String   @default("high")
+  updatedAt   DateTime @updatedAt
+}
+
+// Tier 5 (Knowledge & tooling). ToolGuardConfig: a single operator-authored
+// regex blocklist, tested against tool-call arguments on demand
+// (POST /api/tool-guard/test) -- storage + testing only, not wired into the
+// live agent tool-call path (no enforcement integration exists yet; see
+// tool-guard.routes.ts). AppConfig: a generic key/value JSON store reused by
+// both the "ai" config section and the "tools" config section
+// (config.routes.ts) -- apps/api persists what's saved here faithfully, but
+// "apply" (push it live into the running LiteLLM/runtime stack) is stubbed:
+// infra/config/litellm.yaml pins `store_model_in_db: false`, a deliberate
+// upstream choice that there is no live admin API to defeat.
+
+model ToolGuardConfig {
+  id        String   @id @default("singleton")
+  enabled   Boolean  @default(false)
+  rulesJson String   @default("[]")
+  updatedAt DateTime @updatedAt
+}
+
+model AppConfig {
+  key       String   @id
+  valueJson String
+  updatedAt DateTime @updatedAt
+}
+
+// Knowledge: a RAG-style document knowledge base (internal/knowledge/types.go)
+// -- no Raptix runtime equivalent (this is CyberStrikeAI's own feature, not
+// the Neo4j asset/vuln knowledge graph). Items/categories/stats/retrieval-logs
+// are real CRUD; embedding-backed indexing/search is deliberately not built
+// (see knowledge.routes.ts) -- there is no consumer of an embedding anywhere
+// else in this op list, so storing vectors nobody reads would be inert
+// scaffolding, not a real feature.
+
+model KnowledgeItem {
+  id        String   @id @default(cuid())
+  category  String
+  title     String
+  content   String   @default("")
+  filePath  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
+model RetrievalLog {
+  id             String   @id @default(cuid())
+  query          String?
+  conversationId String?
+  messageId      String?
+  riskType       String?
+  retrievedItems String[] @default([])
+  hits           Int?
+  createdAt      DateTime @default(now())
+}
+
+// External MCP servers the agent would connect out to. The real control
+// surface (RAPTIX_MCP__SERVERS, packages/raptix/raptix/execution/tools/mcp/
+// client.py) is an env var parsed once at the langgraph container's
+// startup -- no live reload, no per-server start/stop RPC. This table is
+// the operator's *desired* config (real CRUD); start/stop stay stubbed
+// (external-mcp.routes.ts) because there is nothing live to start or stop.
+
+model ExternalMcpServer {
+  name       String   @id
+  configJson String
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Tier 5 monitor: "executions" are derived live from each known
+// Conversation's LangGraph thread state (AIMessage.tool_calls + the matching
+// ToolMessage), never stored -- see services/execution-derivation.ts. There
+// is no delete primitive on a thread's own message history, so a "delete"
+// here hides an execution from this derived view without touching the
+// underlying thread (monitor.routes.ts says so explicitly in its responses).
+
+model HiddenExecution {
+  id       String   @id
+  hiddenAt DateTime @default(now())
+}
+
+// Tier 6 (Platform). AiRole: apps/ui-app's agent-persona catalog
+// (internal/config/config.go RoleConfig -- "AI roles" in the plan, never
+// confused with user RBAC, which apps/ui-app's own frontend has no feature
+// for at all; see §2's correction). Plain CRUD -- `tools`/`mcps` are stored
+// as opaque name lists, never validated against Raptix's real tool/MCP
+// catalog, because no HTTP introspection of that catalog exists (same
+// reasoning as Tier 5's config/tools stub).
+
+model AiRole {
+  name           String   @id
+  description    String   @default("")
+  icon           String   @default("")
+  userPrompt     String   @default("")
+  tools          String[] @default([])
+  mcps           String[] @default([])
+  enabled        Boolean  @default(true)
+  workflowId     String   @default("")
+  workflowPolicy String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// AuditLog: real storage + read (list/summary/detail/export). Write points
+// are wired into auth.routes.ts only this pass (login success/failure,
+// logout, change-password) -- a real but deliberately partial
+// instrumentation. Retrofitting every mutating route across Tiers 1-5 to
+// write audit entries is future work, not done here to keep this tier's
+// diff bounded (see audit.routes.ts's top comment).
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  level             String   @default("info")
+  category          String
+  action            String
+  result            String
+  actor             String   @default("")
+  message           String   @default("")
+  sessionHint       String?
+  clientIp          String?
+  userAgent         String?
+  resourceType      String?
+  resourceId        String?
+  resourceAvailable Boolean  @default(true)
+  detailJson        String?
+  createdAt         DateTime @default(now())
+
+  @@index([category])
+  @@index([createdAt])
+}
+
+// ReadNotification: Vulnerability-derived notifications (see
+// monitor.routes.ts's execution-derivation precedent) have no row of their
+// own to update, so "read" is tracked the same way Tier 5 tracked a
+// hidden execution -- a small marker table, not a mutation of the source
+// Vulnerability row.
+
+model ReadNotification {
+  id     String   @id
+  readAt DateTime @default(now())
+}
+
+// Tier 7 (decide, then build or cut; see docs/adr and this plan's §2/§7).
+// MarkdownAgent: apps/ui-app's agent-persona-as-markdown-file feature
+// (internal/handler/markdown_agents.go) -- real CRUD. `filename` is derived
+// as `${id}.md` for wire compatibility, never stored separately (the
+// retired Go backend parses real .md files on disk; this stores the same
+// structured fields in Postgres instead -- there is no markdown file on
+// disk to parse, and apps/ui-app's own client never reads the `raw` field).
+// Not wired into POST /api/multi-agent (stubbed since Tier 2) -- storage
+// is real, dispatch is not, same posture as Tier 5's AI roles/tool-guard.
+
+model MarkdownAgent {
+  id             String   @id
+  name           String
+  description    String   @default("")
+  isOrchestrator Boolean  @default(false)
+  tools          String[] @default([])
+  instruction    String   @default("")
+  bindRole       String   @default("")
+  maxIterations  Int      @default(0)
+  kind           String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Workflow: definition storage ONLY, per the repo owner's explicit
+// accept/cut decision for this tier -- apps/ui-app's "Workflows and
+// packages" module is a full node-graph orchestration engine (nodes:
+// start/tool/agent/condition/hitl/output/end, with validate/dry-run/
+// AI-draft-generation/package-import-export/runs-with-resume-after-HITL)
+// that Raptix has no equivalent of. Building real *execution* would mean
+// writing a new orchestration engine inside this BFF -- out of scope here.
+// list/create/update/delete of the graph definition (graphJson) are real;
+// everything execution-shaped is stubbed in workflows.routes.ts.
+
+model Workflow {
+  id              String   @id @default(cuid())
+  name            String
+  description     String   @default("")
+  version         Int      @default(1)
+  enabled         Boolean  @default(true)
+  graphJson       String   @default("{\"nodes\":[],\"edges\":[],\"config\":{}}")
+  validationError String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Project facts and fact edges: apps/ui-app's project "facts" tab and
+// fact-graph view (internal/database/project.go's ProjectFact/ProjectFactEdge
+// + internal/handler/project.go's factWithLinksResponse). The plan's first
+// draft routed these through the Neo4j AKG (knowledge/graph), but the
+// authoritative contract is relational CRUD -- fact_key/category/summary/
+// confidence records the Go backend kept in Postgres; the runtime's AKG is a
+// scanner-observation graph (Host/Service/Vulnerability nodes keyed by
+// engagement) with a different node model and no operator-facing CRUD. The
+// fact-graph view is derived here from the same two tables the mock derives
+// it from (see projects.routes.ts). promote-attack-chain (deriving facts from
+// a conversation transcript via an LLM call) stays stubbed until the LLM
+// client exists.
+
+model ProjectFact {
+  id                     String            @id @default(cuid())
+  projectId              String
+  project                Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  factKey                String
+  category               String            @default("note")
+  summary                String            @default("")
+  body                   String            @default("")
+  confidence             String            @default("medium")
+  pinned                 Boolean           @default(false)
+  deprecated             Boolean           @default(false)
+  relatedVulnerabilityId String            @default("")
+  sourceConversationId   String            @default("")
+  sourceMessageId        String            @default("")
+  verificationState      String            @default("observed")
+  verificationSource     String            @default("manual")
+  verifiedAt             DateTime?
+  verifiedBy             String            @default("")
+  revision               Int               @default(1)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  outgoingEdges          ProjectFactEdge[] @relation("factEdgeSource")
+  incomingEdges          ProjectFactEdge[] @relation("factEdgeTarget")
+  evidence               ProjectFactEvidence[]
+  verificationHistory    ProjectFactVerification[]
+
+  @@unique([projectId, factKey])
+  @@unique([id, projectId])
+  @@index([projectId, deprecated])
+  @@index([projectId, verificationState])
+}
+
+model ProjectFactEvidence {
+  id                 String      @id @default(cuid())
+  projectId          String
+  project            Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  factId             String
+  fact               ProjectFact @relation(fields: [factId, projectId], references: [id, projectId], onDelete: Cascade)
+  engagement         String
+  akgObservationKind String
+  akgObservationKey  String
+  observationId      String
+  provenanceChannel  String
+  snapshotJson       String
+  snapshotHash       String
+  createdAt          DateTime    @default(now())
+
+  @@unique([factId, akgObservationKind, akgObservationKey, snapshotHash], map: "fact_evidence_snapshot_key")
+  @@index([projectId, akgObservationKind, akgObservationKey], map: "fact_evidence_project_identity_idx")
+}
+
+model ProjectFactVerification {
+  id           String      @id @default(cuid())
+  factId       String
+  projectId    String
+  fact         ProjectFact @relation(fields: [factId, projectId], references: [id, projectId], onDelete: Cascade)
+  fromState    String
+  toState      String
+  actor        String
+  note         String      @default("")
+  factRevision Int
+  snapshotJson String
+  createdAt    DateTime    @default(now())
+
+  @@unique([factId, factRevision])
+}
+
+model ProjectFactEdge {
+  id            String      @id @default(cuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  edgeType      String      @default("related")
+  confidence    String      @default("medium")
+  createdAt     DateTime    @default(now())
+  sourceFact    ProjectFact @relation("factEdgeSource", fields: [sourceFactId], references: [id], onDelete: Cascade)
+  sourceFactId  String
+  targetFact    ProjectFact @relation("factEdgeTarget", fields: [targetFactId], references: [id], onDelete: Cascade)
+  targetFactId  String
+
+  @@index([projectId])
+  @@index([sourceFactId])
+  @@index([targetFactId])
+}
+
+// Tier 4 (Operations): "Batch task queues" maps to Tier 2's chat loop, not
+// the retired apps/web's campaign/gophish/evilginx integration (that
+// mapping in the plan's first draft was wrong -- confirmed from
+// apps/ui-app's authoritative src/features/tasks/model.ts: a BatchTask IS
+// a chat message, dispatched the same way POST /api/eino-agent dispatches
+// one). "Start" runs queued messages against Tier 2's ConversationStore/
+// RuntimeTransport; cron scheduling fields are stored and returned but not
+// yet auto-triggered (no background scheduler loop built this pass) --
+// see batch-tasks.routes.ts.
+
+model BatchQueue {
+  id                    String      @id @default(cuid())
+  title                 String
+  role                  String      @default("")
+  hitlPolicy            String      @default("")
+  scheduleMode          String      @default("manual")
+  cronExpr              String      @default("")
+  scheduleEnabled       Boolean     @default(true)
+  nextRunAt             DateTime?
+  lastScheduleTriggerAt DateTime?
+  lastScheduleError     String?
+  lastRunError          String?
+  projectId             String?
+  project               Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  concurrency           Int         @default(1)
+  status                String      @default("pending")
+  createdAt             DateTime    @default(now())
+  startedAt             DateTime?
+  completedAt           DateTime?
+  currentIndex          Int         @default(0)
+  tasks                 BatchTask[]
+
+  @@index([projectId])
+}
+
+model BatchTask {
+  id             String     @id @default(cuid())
+  queueId        String
+  queue          BatchQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  position       Int        @default(0)
+  message        String
+  conversationId String?
+  status         String     @default("pending")
+  startedAt      DateTime?
+  completedAt    DateTime?
+  error          String?
+  result         String?
+
+  @@index([queueId])
+}
+
+// Tier 4 (Vault): project-scoped secret storage, reversible (AES-256-GCM via
+// vault-crypto.ts), store/list(redacted)/reveal(audited)/revoke. Deliberately
+// NOT a global vault at launch: VaultSecret.projectId is required unless
+// scope is GLOBAL, which only the explicit promote action ever sets.
+// sourceProjectId is lineage after a promote, never re-interpreted as an
+// access scope. Every reveal (and every store/revoke/promote) writes a
+// VaultAudit row -- a dedicated table rather than the existing, deliberately
+// partial AuditLog model, so the trail is secret-id-indexed from day one.
+
+enum VaultSecretScope {
+  PROJECT
+  GLOBAL
+}
+
+model VaultSecret {
+  id              String           @id @default(cuid())
+  projectId       String?
+  project         Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scope           VaultSecretScope @default(PROJECT)
+  name            String
+  description     String           @default("")
+  kind            String           @default("credential")
+  cipherText      String
+  keyVersion      Int              @default(1)
+  sourceProjectId String?
+  revokedAt       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  createdBy       String           @default("")
+
+  @@index([projectId])
+  @@index([scope])
+  @@unique([projectId, name])
+}
+
+model VaultAudit {
+  id        String   @id @default(cuid())
+  secretId  String
+  action    String
+  actor     String
+  actorKind String
+  projectId String?
+  reason    String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([secretId])
+  @@index([createdAt])
+}
+
+// Tier 4: a webshell connection is metadata about an HTTP(S) webshell the
+// operator already holds on an authorized target (internal/database/
+// webshell.go's shape: url/password/type/method/cmdParam, not an SSH-style
+// session). stateJson is the opaque UI-side PersistState blob (saved DB
+// profiles, terminal tabs) the frontend round-trips -- apps/api does not
+// interpret it. `exec`/`file` (actually issuing the HTTP request to `url`)
+// are deliberately not built on this model -- see webshell.routes.ts.
+
+model WebShellConnection {
+  id            String         @id @default(cuid())
+  projectId     String?
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  url           String
+  password      String         @default("")
+  type          String         @default("php")
+  method        String         @default("post")
+  cmdParam      String         @default("")
+  remark        String         @default("")
+  encoding      String         @default("auto")
+  os            String         @default("auto")
+  stateJson     String         @default("{}")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+
+  @@index([projectId])
+}

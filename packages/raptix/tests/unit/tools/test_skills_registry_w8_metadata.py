@@ -1,6 +1,6 @@
 """W8 optional metadata surfaced on ``SkillRecord``."""
 
-from raptix.execution.tools.skills_registry import build_registry_from_package
+from raptix.execution.tools.plumbing.skills_registry import build_registry_from_package
 
 _LEGACY = (
     "---\nname: legacy-skill\ndescription: skill without the W8 metadata block.\n---\n# body\n"

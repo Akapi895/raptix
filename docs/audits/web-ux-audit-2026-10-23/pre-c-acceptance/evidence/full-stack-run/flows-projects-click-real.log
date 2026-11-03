@@ -1,0 +1,5 @@
+PASS the project list shows the engagements and opens one with its overview :: Stack verification project overview open
+PASS an admin creates a project through the form and the new project opens :: Click project mvltyshz opened
+PASS the created project opens again from the list :: Click project mvltyshz reopened from the list
+PASS a viewer is refused the create route, and no project is created :: form shown; route left; no project created
+projects click-through (real): 4 of 4 steps matched

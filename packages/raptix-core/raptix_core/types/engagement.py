@@ -67,6 +67,21 @@ class OpsecLevel(StrEnum):
     SILENT = "silent"  # Zero detection tolerance; abort if burned
 
 
+class EffectClass(StrEnum):
+    """Blast-radius class of an objective — drives fan-out admission (ADR-0077).
+
+    The generic dispatch gate compares this across in-flight work units:
+    ``read`` units may overlap freely, ``mutate`` units serialize on shared
+    resources, ``destructive`` units run alone and only in a mission-
+    sanctioned final phase. Unset on the objective means ``MUTATE`` —
+    unknown is always treated conservatively.
+    """
+
+    READ = "read"  # observation only; concurrency-safe by default
+    MUTATE = "mutate"  # changes state (account, policy, resource, data)
+    DESTRUCTIVE = "destructive"  # availability / irreversible; RoE-gated
+
+
 class C2Tier(StrEnum):
     """C2 infrastructure tier for objective execution."""
 
@@ -254,6 +269,18 @@ class EscalationContact(BaseModel):
     available: str = Field(default="24/7", description="Availability window")
 
 
+# Methods the operator confirms during planning. The runtime enforces them as bash
+# approval rules (raptix.middleware.hitl) even when a conversation's HITL is off.
+DANGEROUS_METHOD_LABELS: dict[str, str] = {
+    "denial_of_service": "Denial of Service (DoS/DDoS) and flooding",
+    "brute_force": "Brute-force or password spraying",
+    "data_destruction": "Destructive data changes (wipe, format, mass delete, drop)",
+    "ransomware": "Encrypting data for impact (ransomware)",
+    "persistence": "Persistence beyond the engagement",
+    "disable_security_controls": "Disabling security controls or audit logging",
+}
+
+
 class RoE(BaseModel):
     """Rules of Engagement — legally binding scope and boundaries.
 
@@ -276,7 +303,7 @@ class RoE(BaseModel):
     # Boundaries
     prohibited_actions: list[str] = Field(
         default_factory=lambda: [
-            "Denial of Service (DoS/DDoS)",
+            *DANGEROUS_METHOD_LABELS.values(),
             "Social engineering of employees (unless authorized)",
             "Physical access attempts (unless authorized)",
             "Data exfiltration of real customer data",
@@ -463,6 +490,38 @@ class Objective(BaseModel):
     concessions: list[str] = Field(
         default_factory=list,
         description="Pre-authorized assists if objective is blocked (TIBER/CORIE concept)",
+    )
+    effects: EffectClass = Field(
+        default=EffectClass.MUTATE,
+        description=(
+            "Blast-radius class for fan-out admission (ADR-0077); unset means "
+            "MUTATE — unknown is treated conservatively"
+        ),
+    )
+    resources: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Shared mutable resources this objective touches, e.g. "
+            "'account:svc', 'host:10.0.0.5', 'surface:/api/Users' — admission "
+            "serializes concurrent mutating work on the same resource"
+        ),
+    )
+    parallel_safe: bool | None = Field(
+        default=None,
+        description=(
+            "True when declared safe to run concurrently with other work; "
+            "False forces serialization; None (unset) is treated as False "
+            "for mutating work"
+        ),
+    )
+    fragile_target: bool = Field(
+        default=False,
+        description=(
+            "True when the target resource is known fragile (embedded device, "
+            "single-worker service, lockout-sensitive account): admission keeps "
+            "its in-flight unit count at per_target_max permanently, bypassing "
+            "progressive widening (ADR-0077)"
+        ),
     )
 
     notes: str = ""

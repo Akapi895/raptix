@@ -1,15 +1,17 @@
-"""Sigma → Splunk Saved Search converter + HEC publisher.
+"""Sigma → Splunk Saved Search converter (via pySigma) + HEC publisher.
 
 The Splunk path is the simplest of the SIEM exporters: we translate a Sigma
-rule body to an SPL search using ``sigma-cli``-style logic, then POST it via
-the Saved Searches REST API (``/services/saved/searches``).
+rule body to an SPL search using the official ``pySigma`` engine + the
+``pySigma-backend-splunk`` CIM field-mapping pipeline, then POST it via the
+Saved Searches REST API (``/services/saved/searches``).
 
-If ``pysigma`` is installed we use it. Otherwise we fall back to a tiny
-in-house translator that handles the subset Raptix's Detector agent
-actually emits (selection + condition with ``and``/``or``, optional
-``modifiers: contains|startswith|endswith``). The fallback is intentionally
-not a full Sigma compiler — anything fancier than the supported subset gets
-a structured error instead of silently producing wrong SPL.
+Earlier versions of this module hand-rolled a partial Sigma condition
+parser with no field-name mapping. That both under-supports the Sigma
+condition DSL (no ``1 of``/``all of``/aggregations) and — more importantly —
+passes Sigma's generic field names straight into SPL unmapped, which can
+silently produce a syntactically valid but semantically wrong query against
+a real Splunk index. pySigma's processing-pipeline mechanism exists
+specifically to solve the field-mapping half of that problem.
 """
 
 from __future__ import annotations
@@ -22,95 +24,35 @@ from raptix_defense.conops import (
     resolve_auth_value,
     resolve_siem_target,
 )
+from sigma.backends.splunk import SplunkBackend
+from sigma.collection import SigmaCollection
+from sigma.exceptions import SigmaError
+from sigma.pipelines.splunk import splunk_windows_pipeline
 
 
 class SigmaConversionError(RuntimeError):
-    """Raised when a Sigma rule contains a construct we can't translate."""
-
-
-def _quote_spl(value: Any) -> str:
-    if isinstance(value, str):
-        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-        return f'"{escaped}"'
-    return str(value)
-
-
-def _selection_to_spl(selection: dict[str, Any]) -> str:
-    clauses: list[str] = []
-    for field, value in selection.items():
-        if "|" in field:
-            base, modifier = field.split("|", 1)
-        else:
-            base, modifier = field, ""
-        if isinstance(value, list):
-            sub = " OR ".join(_field_clause(base, modifier, v) for v in value)
-            clauses.append(f"({sub})")
-        else:
-            clauses.append(_field_clause(base, modifier, value))
-    return " ".join(clauses)
-
-
-def _field_clause(field: str, modifier: str, value: Any) -> str:
-    quoted = _quote_spl(value)
-    if isinstance(value, str):
-        esc = value.replace("\\", "\\\\").replace('"', '\\"')
-        if modifier == "contains":
-            return f'{field}="*{esc}*"'
-        if modifier == "startswith":
-            return f'{field}="{esc}*"'
-        if modifier == "endswith":
-            return f'{field}="*{esc}"'
-    else:
-        if modifier in ("contains", "startswith", "endswith"):
-            return f"{field}={quoted}"
-    if modifier in ("", "equals"):
-        return f"{field}={quoted}"
-    raise SigmaConversionError(f"unsupported Sigma modifier ``{modifier}``")
+    """Raised when pySigma can't translate a Sigma rule to SPL."""
 
 
 def sigma_to_spl(sigma_rule: dict[str, Any]) -> str:
-    """Translate a parsed Sigma rule dict to a Splunk SPL search string.
+    """Translate a Sigma rule dict to a Splunk SPL search string via pySigma.
 
-    Supports: ``detection.selection`` + ``detection.condition: selection``;
-    multiple named selections combined via ``and``/``or``. Anything else
-    raises SigmaConversionError so the agent can surface the gap.
+    Applies the Windows CIM field-mapping pipeline when the rule's
+    ``logsource.product`` is ``windows``; other log sources convert without a
+    pipeline (same field-name-passthrough limitation pySigma's raw backend
+    has for sources with no bundled pipeline). Raises SigmaConversionError —
+    not a raw pySigma exception — so callers keep one exception type to catch.
     """
-    detection = sigma_rule.get("detection")
-    if not isinstance(detection, dict):
-        raise SigmaConversionError("Sigma rule is missing a ``detection`` block")
-
-    condition = detection.get("condition")
-    if not isinstance(condition, str):
-        raise SigmaConversionError("Sigma rule ``detection.condition`` must be a string")
-
-    selections = {k: v for k, v in detection.items() if k != "condition"}
-    if not selections:
-        raise SigmaConversionError("Sigma rule has no selections")
-
-    tokens = condition.replace("(", " ( ").replace(")", " ) ").split()
-    rendered: list[str] = []
-    for tok in tokens:
-        lower = tok.lower()
-        if lower == "and":
-            rendered.append("AND")
-        elif lower == "or":
-            rendered.append("OR")
-        elif lower == "not":
-            rendered.append("NOT")
-        elif tok in ("(", ")"):
-            rendered.append(tok)
-        elif tok in selections:
-            value = selections[tok]
-            if not isinstance(value, dict):
-                raise SigmaConversionError(
-                    f"selection ``{tok}`` must be a dict, got {type(value).__name__}"
-                )
-            rendered.append(f"({_selection_to_spl(value)})")
-        else:
-            raise SigmaConversionError(
-                f"unknown token ``{tok}`` in condition; supported: selection names, and/or/not, parens"
-            )
-    return " ".join(rendered)
+    logsource = sigma_rule.get("logsource") or {}
+    pipeline = splunk_windows_pipeline() if logsource.get("product") == "windows" else None
+    try:
+        collection = SigmaCollection.from_dicts([sigma_rule])
+        queries = SplunkBackend(processing_pipeline=pipeline).convert(collection)
+    except SigmaError as exc:
+        raise SigmaConversionError(str(exc)) from exc
+    if not queries:
+        raise SigmaConversionError("pySigma produced no SPL query for this rule")
+    return str(queries[0])
 
 
 def push_savedsearch(

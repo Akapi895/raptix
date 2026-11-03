@@ -11,6 +11,11 @@ metadata:
 
 # DAO Governance Attack
 
+DAOs delegate real financial control — treasury, upgrade authority,
+parameter changes — to a token-weighted vote. Every mechanism that
+turns "tokens" into "a passed proposal" (vote counting, delegation,
+quorum, time-locks, off-chain signaling) is a separate attack surface.
+
 ## Attack classes
 
 ### 1. Flash-loan-backed vote

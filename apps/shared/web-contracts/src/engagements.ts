@@ -92,6 +92,10 @@ export interface ProjectViewModel {
   targetType: EngagementTargetType
   targetValue: string
   authorizationConfirmed: boolean
+  /** Operator briefing captured at creation; the prompt Soundwave drafts scope/RoE from. */
+  brief: string | null
+  /** ISO instant of the explicit planning-handoff confirmation; null until confirmed. */
+  handoffConfirmedAt: string | null
   metadataState: MetadataState
   /** Engagement lifecycle; never a runtime pause/cancel state. */
   lifecycleStatus: EngagementStatus
@@ -111,8 +115,8 @@ export function isWorkspaceSlug(value: unknown): value is string {
 
 const PROJECT_VIEW_KEYS = [
   'id', 'workspaceSlug', 'displayName', 'targetType', 'targetValue', 'authorizationConfirmed',
-  'metadataState', 'lifecycleStatus', 'findingCount', 'assetCount', 'activeAgentCount',
-  'createdAt', 'updatedAt', 'source',
+  'brief', 'handoffConfirmedAt', 'metadataState', 'lifecycleStatus', 'findingCount', 'assetCount',
+  'activeAgentCount', 'createdAt', 'updatedAt', 'source',
 ] as const
 
 function isPublicCount(value: unknown): value is number {
@@ -128,6 +132,8 @@ export function isProjectViewModel(value: unknown): value is ProjectViewModel {
     isNonEmptyString(value.id) && isWorkspaceSlug(value.workspaceSlug) &&
     isNonEmptyString(value.displayName) && isEngagementTargetType(value.targetType) &&
     isNonEmptyString(value.targetValue) && typeof value.authorizationConfirmed === 'boolean' &&
+    (value.brief === null || isNonEmptyString(value.brief)) &&
+    (value.handoffConfirmedAt === null || isIsoUtcTimestamp(value.handoffConfirmedAt)) &&
     isMetadataState(value.metadataState) && isEngagementStatus(value.lifecycleStatus) &&
     (value.findingCount === null || isPublicCount(value.findingCount)) &&
     (value.assetCount === null || isPublicCount(value.assetCount)) &&

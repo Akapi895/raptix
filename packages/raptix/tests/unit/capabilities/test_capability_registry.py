@@ -1,4 +1,4 @@
-﻿"""Deterministic tests for the Wave T6 capability catalog + evaluators.
+"""Deterministic tests for the Wave T6 capability catalog + evaluators.
 
 No LLM, no network: availability uses injected probes; the real
 in-process carriers are exercised through the import probe exactly as
@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from raptix.execution.capabilities import (
+from raptix.capabilities import (
     AvailabilityEvaluator,
     CapabilityRegistry,
     EligibilityEvaluator,

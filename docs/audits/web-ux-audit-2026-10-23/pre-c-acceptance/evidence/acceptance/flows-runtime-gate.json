@@ -1,0 +1,39 @@
+{
+  "app": "http://127.0.0.1:2473",
+  "generatedAt": "2026-10-24T03:24:03.496Z",
+  "steps": [
+    {
+      "step": "operations list shows its execution threads section",
+      "matches": true,
+      "detail": "shows Execution threads"
+    },
+    {
+      "step": "fleet states that its runtime is not available, with the server reason",
+      "matches": true,
+      "detail": "shows Fleet data is unavailable / Runtime operations are not available on this server"
+    },
+    {
+      "step": "AI workspace states that the assistant runtime is not available",
+      "matches": true,
+      "detail": "shows Assistant runtime is not available on this server"
+    },
+    {
+      "step": "AI trace states the threads source is unavailable and shows no substitute trace",
+      "matches": true,
+      "detail": "shows Threads source unavailable / No substitute trace is shown"
+    },
+    {
+      "step": "Infrastructure grants tab lists its session grants and states that dispatch needs a live grant",
+      "matches": true,
+      "detail": "shows C2 session grants / Command dispatch requires a live approved grant"
+    }
+  ],
+  "fatal": null,
+  "mismatches": 0,
+  "notVerified": [
+    "execute / submit / pause / resume / cancel of operations",
+    "AI conversation send and stream",
+    "C2 command dispatch and session console",
+    "agent detail and branches"
+  ]
+}

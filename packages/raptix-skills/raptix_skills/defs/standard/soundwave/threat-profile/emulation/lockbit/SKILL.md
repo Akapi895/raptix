@@ -80,7 +80,7 @@ metadata:
 
 - Defense-evasion (Defender-disable via GPO), **shadow-copy/backup deletion**, mass deployment,
   and encryption are **destructive** — lab/canary only, with explicit authorization. Add an
-  `EMERGENCY` abort: *"production endpoint protection disabled, production backups/shadow copies
+  `emergency` abort: *"production endpoint protection disabled, production backups/shadow copies
   deleted, real data exfiltrated, or a production host encrypted."*
 - Exfil destination is an **engagement-controlled** bucket seeded with **canary** data only.
 

@@ -1,4 +1,4 @@
-"""Tests for raptix.mcp_server.auth — the bearer gate on the HTTP transport."""
+"""Tests for raptix.interfaces.mcp.auth — the bearer gate on the HTTP transport."""
 
 from __future__ import annotations
 
@@ -15,13 +15,13 @@ import jwt  # noqa: E402
 from cryptography.hazmat.primitives import serialization  # noqa: E402
 from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
 
-from raptix.mcp_server.auth import (  # noqa: E402
+from raptix.interfaces.mcp.auth import (  # noqa: E402
     build_auth,
     is_loopback_host,
     open_bind_error,
     resolve_auth_mode,
 )
-from raptix.mcp_server.config import ServerConfig  # noqa: E402
+from raptix.interfaces.mcp.config import ServerConfig  # noqa: E402
 
 
 def _cfg(**kw: object) -> ServerConfig:
@@ -202,14 +202,14 @@ def _middleware_names(app: object) -> set[str]:
 
 
 def test_build_server_installs_auth_middleware_when_secret_set() -> None:
-    from raptix.mcp_server.server import build_server
+    from raptix.interfaces.mcp.server import build_server
 
     server = build_server(_cfg(auth_token="x"), client=object(), host="0.0.0.0", port=8765)
     assert "AuthenticationMiddleware" in _middleware_names(server.streamable_http_app())
 
 
 def test_build_server_skips_auth_middleware_when_unset() -> None:
-    from raptix.mcp_server.server import build_server
+    from raptix.interfaces.mcp.server import build_server
 
     server = build_server(_cfg(), client=object(), host="127.0.0.1", port=8765)
     assert "AuthenticationMiddleware" not in _middleware_names(server.streamable_http_app())

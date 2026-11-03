@@ -1,0 +1,9 @@
+PASS the project agents list shows the agent assigned to the project :: heading shown; AG-007 listed
+PASS the agent opens its detail under its own id :: route opened; detail content shown
+PASS the same agent under another project is refused with the reason and no detail :: refusal with the reason shown; no agent detail shown
+PASS the infrastructure page shows its three tabs at global scope :: 3 of 3 tab labels shown
+PASS selecting the C2 infrastructure tab opens that tab in the route :: tab=c2 in the route
+PASS disabling the agent with a reason reports it disabled and offers Enable :: disable reported; Enable offered
+PASS enabling the agent again reports it enabled and offers Disable :: enable reported; Disable offered
+PASS a viewer sees the disable control disabled with its reason and gets no dialog or success report :: Disable disabled; reason "The Viewer role has read-only access."; no dialog; no success report
+agents click-through (mock): 8 of 8 steps matched

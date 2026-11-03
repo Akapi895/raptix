@@ -1,0 +1,6 @@
+PASS operator drafts a plan through the form and sees it as draft row shows draft: true; database status draft
+PASS operator proposes the plan; the row and the database show proposed database status proposed after reload
+PASS the author cannot approve their own proposal (the control is absent or refused, and nothing changes) no approve control for the author; database proposed
+PASS an independent reviewer approves the plan and the database records approved database status approved; decidedBy recorded: true
+PASS a viewer reads the approved plan and has no approve, reject or propose control shows approved: true; decision controls: 0; Revise control visible: false
+{"PASS":5}

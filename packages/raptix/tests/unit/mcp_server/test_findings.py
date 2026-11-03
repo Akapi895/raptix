@@ -1,4 +1,4 @@
-"""Tests for raptix.mcp_server.findings (KG -> summary/SARIF)."""
+"""Tests for raptix.interfaces.mcp.findings (KG -> summary/SARIF)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from raptix.mcp_server.findings import (
+from raptix.interfaces.mcp.findings import (
     engagement_workspace,
     load_findings_graph,
     summarize_findings,

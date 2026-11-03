@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.tool_eval import metrics, thresholds
-from benchmarks.tool_eval.evaluate import (
+from benchmarks.suites.tool_eval import metrics, thresholds
+from benchmarks.suites.tool_eval.evaluate import (
     config_b_surface,
     exposure_comparison,
     load_assembled_baseline,
@@ -25,7 +25,12 @@ from benchmarks.tool_eval.evaluate import (
     run_tier_c,
     today_static_tools,
 )
-from benchmarks.tool_eval.scenarios import DEV_FIXTURES, HELD_OUT_FIXTURES, Scenario, load_scenarios
+from benchmarks.suites.tool_eval.scenarios import (
+    DEV_FIXTURES,
+    HELD_OUT_FIXTURES,
+    Scenario,
+    load_scenarios,
+)
 
 FIXTURES = {"dev": DEV_FIXTURES, "held-out": HELD_OUT_FIXTURES}
 
@@ -265,7 +270,7 @@ class TestExposureComparison:
 
 class TestTierB:
     def test_scripted_policy_scores_perfect_selection(self) -> None:
-        from benchmarks.tool_eval.evaluate import ScriptedSelectionPolicy
+        from benchmarks.suites.tool_eval.evaluate import ScriptedSelectionPolicy
 
         scenarios = load_scenarios(FIXTURES["dev"])
         result = run_tier_b(scenarios, ScriptedSelectionPolicy())
@@ -288,7 +293,7 @@ class TestTierB:
         assert by_id["exploit-lateral-move"]["task_success"] is True
 
     def test_a_policy_that_picks_forbidden_tools_is_scored_negatively(self) -> None:
-        from benchmarks.tool_eval.evaluate import ScriptedSelectionPolicy
+        from benchmarks.suites.tool_eval.evaluate import ScriptedSelectionPolicy
 
         class ForbiddenPolicy(ScriptedSelectionPolicy):
             name = "forbidden"

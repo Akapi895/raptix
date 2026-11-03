@@ -23,6 +23,7 @@ Recon's job once a scope is confirmed).
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain.agents import create_agent
@@ -31,8 +32,8 @@ from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
 from raptix.execution.tools.references.tools import lookup_payload, search_security_references
+from raptix.execution.tools.research.cve import cve_lookup
 from raptix.execution.tools.research.semantic import inspect_asset, search_knowledge
-from raptix.execution.tools.research.tools import cve_lookup
 from raptix.execution.tools.web.search import web_fetch, web_search
 from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
 from raptix.intelligence.agents.build import build_middleware, build_tools
@@ -57,7 +58,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 
 
 _ROLE = "osint_operator"
-_RECURSION_LIMIT = 200
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_OSINT_OPERATOR_RECURSION_LIMIT", "200"))
 _SKILL_SOURCES: list[str] = ["/skills/standard/osint/", "/skills/shared/"]
 
 

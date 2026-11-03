@@ -37,7 +37,7 @@ from raptix.knowledge.graph.migration_runner import (
     list_applied,
 )
 from raptix.knowledge.graph.store import KGStore
-from raptix.runtime.cart import AttackGraphProtocol, EngagementSnapshot
+from raptix.execution.session.cart import AttackGraphProtocol, EngagementSnapshot
 
 # ── Migrations ──────────────────────────────────────────────────────────
 
@@ -168,9 +168,9 @@ class TestRecordObservationsLive:
 
         # Verify the edge exists in the graph.
         rows = kgstore.execute_read(
-            "MATCH (h:Host {key: $hk, engagement: $eng})-[r:HOSTS]->(s:Service {key: $sk, engagement: $eng}) "
+            "MATCH (h:Host {key: $hk, engagement: $engagement})-[r:HOSTS]->(s:Service {key: $sk, engagement: $engagement}) "
             "RETURN r.weight AS weight",
-            {"hk": host_key, "sk": svc_key, "eng": engagement},
+            {"hk": host_key, "sk": svc_key},
             engagement=engagement,
         )
         assert rows
@@ -190,13 +190,13 @@ class TestRecordObservationsLive:
             source_episode_id="tc-real",
         )
         rows = kgstore.execute_read(
-            "MATCH (n:Host) WHERE n.engagement = $eng AND n.key = $key "
+            "MATCH (n:Host) WHERE n.engagement = $engagement AND n.key = $key "
             "RETURN n.engagement AS engagement, "
             "       n.created_by AS created_by, "
             "       n.source_episode_id AS sep, "
             "       n.firstseen AS firstseen, "
             "       n.lastupdated AS lastupdated",
-            {"eng": engagement, "key": f"host::prov::{engagement}"},
+            {"key": f"host::prov::{engagement}"},
             engagement=engagement,
         )
         assert rows
@@ -229,12 +229,12 @@ class TestRecordObservationsLive:
             source_episode_id="tc-trusted",
         )
         rows = kgstore.execute_read(
-            "MATCH (n:Host) WHERE n.engagement = $eng AND n.key = $key "
+            "MATCH (n:Host) WHERE n.engagement = $engagement AND n.key = $key "
             "RETURN n.engagement AS engagement, "
             "       n.created_by AS created_by, "
             "       n.source_episode_id AS sep, "
             "       n.firstseen AS firstseen",
-            {"eng": engagement, "key": f"host::forge::{engagement}"},
+            {"key": f"host::forge::{engagement}"},
             engagement=engagement,
         )
         assert rows
@@ -328,9 +328,9 @@ class TestParallelWriteStress:
 
         assert all(r["created"] == 1 for r in results)
         rows = kgstore.execute_read(
-            "MATCH (n:Host) WHERE n.engagement = $eng "
+            "MATCH (n:Host) WHERE n.engagement = $engagement "
             "AND n.key STARTS WITH 'host::parallel::' RETURN count(n) AS c",
-            {"eng": engagement},
+            {},
             engagement=engagement,
         )
         assert rows[0]["c"] == n
@@ -359,8 +359,8 @@ class TestParallelWriteStress:
 
         # End state: exactly one node with this key.
         rows = kgstore.execute_read(
-            "MATCH (n:Host) WHERE n.engagement = $eng AND n.key = $key RETURN count(n) AS c",
-            {"eng": engagement, "key": shared_key},
+            "MATCH (n:Host) WHERE n.engagement = $engagement AND n.key = $key RETURN count(n) AS c",
+            {"key": shared_key},
             engagement=engagement,
         )
         assert rows[0]["c"] == 1
