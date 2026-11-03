@@ -110,7 +110,7 @@ export function seed(): Seed {
       { id: 'proj-lab-web', name: 'Lab Web Perimeter', description: 'External web surface of the demo lab (fictional).', scope_json: '{"targets":["198.51.100.0/24","app.example.com"]}', status: 'active', pinned: true, created_at: iso(60 * 24 * 14), updated_at: iso(35) },
       { id: 'proj-internal-api', name: 'Internal API Review', description: 'Authenticated review of the internal REST API (fictional).', scope_json: '{"targets":["api.example.com"]}', status: 'active', pinned: false, created_at: iso(60 * 24 * 6), updated_at: iso(60 * 5) },
       { id: 'proj-archive-2025', name: 'Archive 2025 Q3', description: 'Closed engagement kept for reference.', scope_json: '{}', status: 'archived', pinned: false, created_at: iso(60 * 24 * 120), updated_at: iso(60 * 24 * 60) },
-    ];
+    ].map(project => ({ ...project, auto_ingest_enabled: false, tried_edges_enabled: false }));
 
     const conversations = [
       { id: 'conv-recon-01', title: 'Recon of 198.51.100.0/24', projectId: 'proj-lab-web', roleName: 'Recon Analyst', agentMode: 'eino_single', pinned: true, createdAt: iso(180), updatedAt: iso(12) },

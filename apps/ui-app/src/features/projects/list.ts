@@ -29,6 +29,8 @@ export function createProjectList(ctx: ProjectsContext, refreshSelects: () => vo
     const desc = dom.el('projects-detail-desc'); if (desc) { if (project.description?.trim()) desc.title = project.description.trim(); else desc.removeAttribute('title'); }
     for (const [id, value] of [['name', project.name], ['description', project.description || ''], ['scope', project.scope_json || ''], ['status', project.status || 'active']] as const) dom.setValue(`project-edit-${id}`, value);
     dom.setChecked('project-edit-pinned', project.pinned);
+    dom.setChecked('project-edit-auto-ingest-enabled', project.auto_ingest_enabled);
+    dom.setChecked('project-edit-tried-edges-enabled', project.tried_edges_enabled);
     renderDetailLabels(); refreshSelects();
   }
   function renderDetailLabels() {

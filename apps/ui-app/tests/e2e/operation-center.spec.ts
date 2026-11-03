@@ -48,3 +48,54 @@ test('operation context preserves project-filtered navigation, settings and evid
   await page.keyboard.press('Escape');
   await expect(page.locator('#project-settings-dialog')).not.toBeVisible();
 });
+
+test('graph auto-capture settings persist independently per project across reloads', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  // Finish navbar project initialization before entering the project workspace.
+  async function enterWorkspace() {
+    await expect(page.locator('#csai-project-switcher .csai-ps-label')).toHaveText('Lab Web Perimeter');
+    await page.evaluate(() => { location.hash = 'operation-center'; });
+    await expect(page.locator('#page-projects.active')).toBeVisible();
+    await expect(page.locator('#project-facts-tbody')).toContainText('nginx');
+  }
+  await openApp(page, 'dashboard');
+  await enterWorkspace();
+  await page.locator('[data-action="projects.settings"]').click();
+  const autoIngest = page.locator('#project-edit-auto-ingest-enabled');
+  const triedEdges = page.locator('#project-edit-tried-edges-enabled');
+  await expect(autoIngest).not.toBeChecked();
+  await expect(triedEdges).not.toBeChecked();
+  await autoIngest.check();
+  await page.locator('[data-action="projects.saveProjectSettings"]').click();
+  await expect(page.locator('#project-settings-dialog')).not.toBeVisible();
+  await page.evaluate(() => history.replaceState(null, '', '/#dashboard'));
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
+  await enterWorkspace();
+  await expect(page.locator('#projects-detail-title')).not.toBeEmpty();
+  await page.locator('[data-action="projects.settings"]').click();
+  await expect(autoIngest).toBeChecked();
+  await expect(triedEdges).not.toBeChecked();
+  await triedEdges.check();
+  await autoIngest.uncheck();
+  await page.locator('[data-action="projects.saveProjectSettings"]').click();
+  await expect(page.locator('#project-settings-dialog')).not.toBeVisible();
+  await page.locator('[data-action="projects.settings"]').click();
+  await expect(autoIngest).not.toBeChecked();
+  await expect(triedEdges).toBeChecked();
+  await page.locator('.projects-settings-card--graph').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: join(tmpdir(), 'opencode', 'project-graph-toggles-desktop.png') });
+  await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
+  await page.screenshot({ path: join(tmpdir(), 'opencode', 'project-graph-toggles-dark.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await autoIngest.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: join(tmpdir(), 'opencode', 'project-graph-toggles-mobile.png') });
+  expect(await page.locator('#project-settings-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth)).toBe(true);
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('#csai-project-switcher .csai-ps-trigger').click();
+  await page.locator('.csai-ps-option').filter({ hasText: 'Internal API Review' }).click();
+  await page.locator('[data-action="projects.settings"]').click();
+  await expect(autoIngest).not.toBeChecked();
+  await expect(triedEdges).not.toBeChecked();
+});

@@ -5,7 +5,11 @@ import { offsetFields, timestampSchema } from './common';
 // handlers permit values beyond the documented active/archived convention.
 export const projectSchema = z.looseObject({
   id: z.string(), name: z.string(), description: z.string().optional(), scope_json: z.string().optional(),
-  status: z.string(), pinned: z.boolean(), created_at: timestampSchema, updated_at: timestampSchema,
+  status: z.string(), pinned: z.boolean(),
+  // Per-project override of the server-wide AutoIngest/TriedEdges defaults
+  // (both off by default -- docs/design/2026-11-03-graph-technical-design.md Mục 3/9).
+  auto_ingest_enabled: z.boolean().default(false), tried_edges_enabled: z.boolean().default(false),
+  created_at: timestampSchema, updated_at: timestampSchema,
 });
 // internal/handler/project.go:ListProjects returns an offset envelope.
 export const projectListSchema = z.looseObject({ projects: z.array(projectSchema), ...offsetFields });
@@ -24,6 +28,7 @@ export type ProjectList = z.infer<typeof projectListSchema>;
 export interface CreateProjectRequest { name: string; description?: string; scope_json?: string; status?: string }
 export interface UpdateProjectRequest {
   name?: string | null; description?: string | null; scope_json?: string | null; status?: string | null; pinned?: boolean | null;
+  auto_ingest_enabled?: boolean | null; tried_edges_enabled?: boolean | null;
 }
 export type ProjectQuery = { status?: string; search?: string; limit?: number; offset?: number };
 export type ProjectFactQuery = {
