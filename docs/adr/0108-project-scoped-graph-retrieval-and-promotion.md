@@ -26,6 +26,16 @@ Promotion reads Neo4j and commits the fact, bounded immutable evidence snapshots
 and verification history atomically in Postgres. Compare-and-set revisions reject
 concurrent edits and state transitions. No Neo4j write participates in promotion.
 
+Projects may independently opt into AutoIngest and TriedEdges using two persisted
+booleans, both defaulting to false. The BFF reads them from the project record for
+streaming, synchronous and batch runs; request-supplied toggles do not override
+the project. Graph assembly validates `configurable.graph_toggles`, scopes its
+assembly context to that run and captures effective values in middleware instances.
+Settings changes apply to new runs, including a new run on an existing thread.
+Executions without a project override retain the existing environment defaults.
+These settings control automatic AKG capture only; manual graph tools, reference
+retrieval, Skillogy and persistent findings retain their existing behavior.
+
 ## Threat model
 
 Scanner content and model-authored claims remain untrusted data. Parsing proves

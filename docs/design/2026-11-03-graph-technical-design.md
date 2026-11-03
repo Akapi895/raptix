@@ -361,3 +361,40 @@ Các phần còn lại của Mục test plan (unit mock driver, integration fixt
 ## 10. Việc KHÔNG làm trong tài liệu này
 
 Chưa viết code, chưa chạy migration, chưa ingest dữ liệu thật, **chưa và sẽ không sửa `middleware/roe.py`** (đảo ngược so với bản gốc — xem Mục 6). Tài liệu này là thiết kế kỹ thuật để duyệt trước khi bắt đầu bước 1 ở Mục 9.
+
+## 11. Bổ sung implementation: bật/tắt auto-capture theo project
+
+Theo yêu cầu bổ sung của người dùng, **Project Settings → Knowledge graph auto-capture**
+có hai lựa chọn độc lập: **Auto-ingest scanner output** và **Auto-record attempted targets**.
+`Project.autoIngestEnabled` / `triedEdgesEnabled` mặc định `false`, được lưu qua
+`PUT /api/projects/:id` bằng `auto_ingest_enabled` / `tried_edges_enabled`.
+Migration bổ sung: `20261103072413_project_graph_toggles`.
+
+- BFF đọc lựa chọn từ project trong DB và gửi `config.configurable.graph_toggles`
+  cho streaming chat, synchronous chat và batch task; không dùng giá trị do chat body gửi lên.
+- Runtime validate giá trị boolean, dùng ContextVar chỉ trong lúc assemble graph,
+  sau đó capture lựa chọn vào instance middleware và reset context bằng `finally`.
+  Cổng kiểm tra bên trong middleware dùng cùng lựa chọn, nên project bật vẫn hoạt động
+  khi biến môi trường toàn hệ thống đang tắt. Các project không ảnh hưởng lẫn nhau.
+- Thay đổi áp dụng cho **run mới**, kể cả run tiếp theo của conversation cũ;
+  run đang chạy giữ cấu hình lúc bắt đầu. CLI/runtime không có override vẫn dùng env mặc định.
+- Hai toggle chỉ điều khiển tự ghi Runtime Graph. `kg_query`, `kg_query_reference`,
+  quyền ghi thủ công hiện có, Skillogy và Persistent Findings không bị tắt theo.
+
+Kiểm chứng riêng cho bổ sung này: HTTP + Postgres thật qua
+`apps/api/tests/integration/project-graph-toggles.live.ts` (DB dùng một lần);
+Neo4j thật qua `test_project_graph_toggles_live.py`; agent loop với model xác định
+qua `test_project_graph_toggles.py`; UI demo qua `operation-center.spec.ts`
+(lưu/reload, đổi project, desktop/dark/mobile). Đây là functional verification,
+không phải smoke với provider LLM hoặc nghiệm thu khai thác một máy đích.
+
+Triển khai cần migration và build lại API/runtime/UI. Image API hiện có tự chạy
+`prisma migrate deploy` ở entrypoint trước khi khởi động server.
+
+Kết quả kiểm tra bổ sung (2026-11-03): API Vitest 287 pass; UI Vitest 660 pass
+với `--maxWorkers=2`; Python focused 95 pass, trong đó 2 test dùng Neo4j thật.
+Typecheck/lint hai app và production/demo build pass; basedpyright các file Python
+liên quan: 0 error, 5 warning. E2E toggle mới pass. Test điều hướng có sẵn
+`operation context preserves project-filtered navigation, settings and evidence workflows`
+có lần lỗi ở assertion lọc Fact `No matching` và có lần pass khi chạy riêng;
+không coi toàn bộ lane E2E là đã ổn định. Các DB dùng một lần đã được dọn sau kiểm tra.
