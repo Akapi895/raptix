@@ -39,7 +39,7 @@ class _Sandbox:
     def ls_info(self, directory: str):
         return [{"path": f"{directory}/{self.name}", "size": len(self.content)}]
 
-    def download_files(self, paths: list[str]):
+    def download_files(self, paths: list[str], **kwargs):
         self.downloaded.extend(paths)
         return [SimpleNamespace(content=self.content, error=None)]
 

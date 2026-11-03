@@ -99,7 +99,8 @@ def _top_vulns(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
         (
             "MATCH (v:Vulnerability) WHERE v.engagement = $engagement "
             "RETURN v.key AS key, v.label AS label, "
-            "       coalesce(v.severity, 'info') AS severity "
+            "       coalesce(v.severity, 'info') AS severity, "
+            "       coalesce(v.provenance_channel, 'legacy_unknown') AS provenance_channel "
             "LIMIT $cap"
         ),
         # Pull a wider window then re-rank locally so the Cypher stays
@@ -207,7 +208,8 @@ def _render_vulns(vulns: Iterable[Mapping[str, Any]]) -> str:
         sev = str(vuln.get("severity") or "").upper()
         label = vuln.get("label") or vuln.get("key") or "?"
         key = vuln.get("key") or "?"
-        lines.append(f"- `[{sev}]` {label} (`{key}`)")
+        channel = vuln.get("provenance_channel") or "legacy_unknown"
+        lines.append(f"- `[{sev}]` {label} (`{key}`) [source={channel}; not verified]")
     return "\n".join(lines)
 
 

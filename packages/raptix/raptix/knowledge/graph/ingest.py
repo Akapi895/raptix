@@ -161,7 +161,11 @@ def ingest(
             "scanner": scanner_kind,
         }
 
+    from raptix.knowledge.graph.trust import ChannelStore
+
     adapter = _REGISTRY[scanner_kind]
+    # An outer auto-ingest binding overrides this manual-import channel.
+    store = cast(KGStore, ChannelStore(store, "tool_ingest"))
     artifact_ref = workspace_artifact_ref(target, engagement)
     try:
         source = target.read_bytes()

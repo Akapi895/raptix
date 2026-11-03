@@ -169,7 +169,7 @@ Quét toàn repo (`cytoscape`/`d3-force`/`vis-network`/`dagre`/`sigma.js`/`G6`) 
 ### 3.2. Schema / nguồn / quyền đọc-viết / lifecycle từng graph **[Hiện trạng]**
 
 **AKG (Neo4j)**
-- Viết: chỉ qua tool call rõ ràng của agent — `kg_record` (JSON tay) / `kg_ingest` (output scanner qua parser). **Không có gì tự ghi sau mỗi tool call.** Cypher `MERGE` qua `UNWIND`; field provenance (engagement, firstseen, lastupdated, created_by, source_episode_id) server tự gán, agent không override được.
+- Viết: qua tool call rõ ràng của agent — `kg_record` (JSON tay) / `kg_ingest` (output scanner qua parser). **[Sửa sau review kỹ thuật lần 2 — xem `docs/design/2026-11-03-graph-technical-design.md` Mục 3]** Câu "không có gì tự ghi sau mỗi tool call" ở bản trước **sai một phần**: `KGAutoIngestMiddleware` + `TriedEdgesMiddleware` (`middleware/kg_autoingest.py`/`tried_edges.py`) đã tồn tại thật, quan sát output của tool `bash` sau khi chạy, tự nhận diện scanner đã biết (nmap/nuclei/ffuf/...) và tự ghi observation vào AKG qua `ParserRegistry` — nhưng **mặc định tắt** (env var `RAPTIX_KG_AUTOINGEST`/`RAPTIX_KG_TRIED_EDGES` = `"0"`) và **chỉ áp dụng cho tool `bash`**, không áp dụng cho domain tool khác. Cypher `MERGE` qua `UNWIND`; field provenance (engagement, firstseen, lastupdated, created_by, source_episode_id) server tự gán, agent không override được.
 - Scope: mọi Cypher runtime bị ép có `$engagement` (lấy từ state, LLM không set được — chặn prompt-injection vượt scope). **`$engagement` = `Project.workspaceSlug`, tức cùng phạm vi với `project` trong Postgres — xem Mục 3.6 để biết chi tiết đã xác minh.**
 - **Điểm cần xác minh thêm, chưa phải gap bảo mật đã xác nhận:** `kg_record`/`kg_ingest` không nằm trong `middleware/roe.py`'s `GATED_TOOL_NAMES` (khác với `bash`/`http_request`/`browser_action`/`web_fetch`). Đây là source-code audit — chưa đủ để kết luận chắc chắn có thể vượt toàn bộ RoE, cần kiểm tra thêm các lớp kiểm soát khác và phân biệt rõ "quyền ghi knowledge" với "quyền thực hiện hành động trên mục tiêu" (2 thứ khác nhau). Nếu sau khi kiểm tra xác nhận có khoảng trống thật, xử lý riêng (ADR + threat-model) **trước khi** mở rộng graph functionality, không gộp vào kế hoạch graph này.
 - Đọc: **không phải query theo yêu cầu** — `KGMiddleware` build lại 1 summary markdown nhỏ (đếm node/edge, top 5 vuln, ≤3 entrypoint chưa khám phá, ≤10 crown jewel, claims chưa verify tùy chọn — ~15-25 dòng) mỗi khi revision đổi, rồi **nhồi vào mọi system prompt mỗi turn**, bất kể có liên quan hay không. Không có tool query tùy ý cho LLM — muốn đào sâu phải tự `bash('cypher-shell ...')`.
@@ -201,7 +201,7 @@ Quét toàn repo (`cytoscape`/`d3-force`/`vis-network`/`dagre`/`sigma.js`/`G6`) 
 
 ### 3.4. Agent thực sự dùng từng nguồn thế nào hôm nay **[Hiện trạng]**
 
-- **AKG:** viết = chỉ tool call tay; đọc = nhồi summary cố định mỗi turn — **ngược hoàn toàn với nguyên tắc "selective/on-demand retrieval"** trong Mục 1. Không có tool query theo yêu cầu, chỉ có đường thoát `cypher-shell`.
+- **AKG:** viết = chủ yếu tool call tay, **+ 1 middleware auto-ingest đã tồn tại nhưng tắt mặc định, chỉ phạm vi `bash`** (sửa lại, xem Mục 3.2 và `docs/design/2026-11-03-graph-technical-design.md` Mục 3); đọc = nhồi summary cố định mỗi turn (có cache theo revision, nhưng bước CHÈN vẫn vô điều kiện mỗi turn) — **ngược hoàn toàn với nguyên tắc "selective/on-demand retrieval"** trong Mục 1. Có 1 tool query hẹp đã tồn tại (`kg_surface_inventory`, chỉ role orchestrator), ngoài ra chỉ có đường thoát `cypher-shell`.
 - **Skillogy:** RPC hẹp cho chọn skill — đã khá khớp với vai trò Skillogy Graph mục tiêu.
 - **Taxonomy bảo mật (ATT&CK/CWE/CAPEC/CISA KEV/OWASP/ATLAS): chưa được dùng như nguồn Knowledge Reference retrieval tổng quát hôm nay** — sửa lại cho chính xác hơn, vì MITRE ATT&CK **đã** được dùng gián tiếp (để xây Skillogy's tactic/technique tagging, Mục 3.2), chỉ là không phải như tri thức bảo mật tổng quát cho reasoning. Scan/index của Knowledge Management trả 501; `data/knowledge` chưa được ingest; ATT&CK bootstrap chỉ nuôi Skillogy (tactic+technique cho chọn skill — xem Mục 3.2). **Knowledge Reference Graph không có pipeline runtime nào để kế thừa, nhưng đã có sẵn 1 bộ dữ liệu đã chuẩn hóa (`data/knowledge`) làm input — khác với "phải xây từ đầu kể cả dữ liệu".**
 
@@ -246,9 +246,9 @@ Bản trước của tài liệu dùng "engagement" như 1 phạm vi có thể h
 
 **[Cần chốt]** Mục 1 đã bổ sung yêu cầu cụ thể (khi nào query, confidence, so sánh giả thuyết, xử lý evidence mâu thuẫn, suy luận không cần query, phân loại nguồn thông tin). Trước khi implementation: xác nhận policy này áp dụng thế nào vào middleware thật (ví dụ `KGMiddleware`/system prompt hiện tại) thay vì chỉ là nguyên tắc trên giấy.
 
-### Vấn đề 2 — Runtime Graph cần Observation Ingestion Layer, không chỉ thêm query tool
+### Vấn đề 2 — Observation Ingestion Layer: đã tồn tại, cần quyết định rollout, không phải xây mới [cập nhật sau review kỹ thuật lần 2]
 
-**[Cần chốt]** Theo audit (Mục 3.2), agent chỉ ghi AKG khi chủ động gọi `kg_record`/`kg_ingest` — không có gì tự động cập nhật sau mỗi tool call. Chỉ thêm query tool (bản trước của tài liệu) không đủ. Cần thiết kế **Observation Ingestion Layer** (Mục 2, Nhóm 2): nhận dữ liệu có cấu trúc từ tool phù hợp, chuẩn hóa, gắn provenance, cập nhật graph theo chính sách — chỉ ghi dữ liệu xác định được nguồn/quan hệ/độ tin cậy, không phải mọi dòng output. Agent vẫn chủ động ghi hypothesis khi cần.
+**[Hiện trạng — sửa lại]** Bản trước nói "không có gì tự động cập nhật sau mỗi tool call" — **sai một phần**, đã xác minh ngược lại: `KGAutoIngestMiddleware`/`TriedEdgesMiddleware` tồn tại thật, quan sát tool `bash` sau khi chạy, tự nhận diện output scanner đã biết và tự ghi AKG qua `ParserRegistry` — nhưng **tắt mặc định** (env var) và **chỉ phạm vi `bash`**. Chi tiết đầy đủ + quyết định rollout: `docs/design/2026-11-03-graph-technical-design.md` Mục 3. Không cần thiết kế "Observation Ingestion Layer" từ đầu — chỉ cần quyết định có bật mặc định hay không, và có cần mở rộng phạm vi ngoài `bash` hay không (chưa thấy nhu cầu rõ, vì hầu hết scanner CLI đã chạy qua `bash`).
 
 ### Vấn đề 3 — Persistent Graph: tách 2 phạm vi, không đồng nhất với cross-*project* learning
 
@@ -271,9 +271,9 @@ Bản trước của tài liệu dùng "engagement" như 1 phạm vi có thể h
 - Cross-taxonomy relationship có thật (CAPEC→CWE) và có loại chưa resolve được (CISA KEV→CVE, thiếu namespace `nvd:`) — cần tính đến khi thiết kế schema, không giả định mọi quan hệ đều sẵn dùng.
 - Vấn đề gitignore: cần 1 phương án quản lý dữ liệu hợp lý (ví dụ: giữ `data/knowledge` làm working copy ngoài git như hiện tại, nhưng thêm 1 manifest/hash nhỏ được commit để tái tạo được, hoặc 1 script fetch lại từ pipeline gốc của người dùng) — **không mặc định phải commit toàn bộ 5.850 file vào git**, và không tự ý xóa/yêu cầu tải lại dữ liệu hiện có khi chưa chứng minh được sự cần thiết.
 
-### Phát hiện phụ (bảo mật, ngoài phạm vi graph) [đã điều chỉnh mức độ chắc chắn]
+### Phát hiện phụ (bảo mật, ngoài phạm vi graph) [đã đóng — review kỹ thuật lần 2]
 
-`kg_record`/`kg_ingest` không có tên trong `GATED_TOOL_NAMES` — đây là **phát hiện cần xác minh thêm**, không phải kết luận chắc chắn đã có lỗ hổng vượt RoE (xem ghi chú đã sửa ở Mục 3.2). Nếu xác nhận có khoảng trống thật sau khi kiểm tra các lớp kiểm soát khác, xử lý riêng trước (RoE enforcement là guard rail; CONTRIBUTING_AGENT.md yêu cầu ADR + threat-model riêng để đụng vào), không gộp vào kế hoạch graph.
+`kg_record`/`kg_ingest` không có tên trong `GATED_TOOL_NAMES` — đã kiểm tra kỹ ở mức threat-model (`docs/design/2026-11-03-graph-technical-design.md` Mục 6): **không phải lỗ hổng, không cần sửa `middleware/roe.py`.** `evaluate_target()` tồn tại để chặn hành động mạng/lệnh thật ngoài scope (loại rủi ro khác hẳn); ghi 1 observation thụ động vào graph không có tác động ngoài hệ thống Raptix — rủi ro thật (dữ liệu sai/graph poisoning) đã được khống chế đúng chỗ bởi provenance server-lock + Validated Knowledge Promotion (finding không bao giờ tự động trở thành tri thức đã xác minh). Không xử lý gì thêm ở `roe.py`.
 
 ---
 
