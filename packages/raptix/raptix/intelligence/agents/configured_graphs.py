@@ -9,6 +9,7 @@ from urllib.parse import unquote
 
 from langchain_core.runnables import RunnableConfig
 
+from raptix.intelligence.agents.middleware_slots import graph_toggles_context
 from raptix.intelligence.agents.specialist_catalog import (
     ORCHESTRATORS,
     skill_catalog,
@@ -27,9 +28,21 @@ from raptix_core.plugin_loader import load_subagents_for_parent
 
 
 async def assemble_graph(role: str, config: RunnableConfig, **factory_kwargs: Any) -> Any:
+    configurable = config.get("configurable", {})
     snapshot = ConfigurationSnapshot.model_validate(
-        config.get("configurable", {}).get("specialist_configuration", {})
+        configurable.get("specialist_configuration", {})
     )
+    graph_toggles = configurable.get("graph_toggles")
+    if graph_toggles is not None:
+        if (
+            not isinstance(graph_toggles, dict)
+            or graph_toggles.keys() - {"auto_ingest_enabled", "tried_edges_enabled"}
+            or any(type(value) is not bool for value in graph_toggles.values())
+        ):
+            raise ConfigurationError(
+                "graph_toggles must contain only boolean auto-capture settings"
+            )
+        graph_toggles = dict(graph_toggles)
     factories = await asyncio.to_thread(specialist_factories)
     unknown = set(snapshot.specialists) - factories.keys()
     if unknown:
@@ -62,13 +75,20 @@ async def assemble_graph(role: str, config: RunnableConfig, **factory_kwargs: An
         assembly.skills[specialist] = list(
             dict.fromkeys(i.rsplit("/", 1)[0] + "/" for i in selection.skills)
         )
-    return await asyncio.to_thread(_build_graph, role, factories, assembly, factory_kwargs)
+    return await asyncio.to_thread(
+        _build_graph, role, factories, assembly, factory_kwargs, graph_toggles
+    )
 
 
 def _build_graph(
-    role: str, factories: dict[str, Any], assembly: Assembly, factory_kwargs: dict[str, Any]
+    role: str,
+    factories: dict[str, Any],
+    assembly: Assembly,
+    factory_kwargs: dict[str, Any],
+    graph_toggles: dict[str, Any] | None = None,
 ) -> Any:
-    token = assembly_context.set(assembly)
+    assembly_token = assembly_context.set(assembly)
+    toggles_token = graph_toggles_context.set(graph_toggles)
     try:
         if role in ORCHESTRATORS:
             module_name = "plugins.vulnresearch" if role == "vulnresearch" else "standard.raptix"
@@ -91,7 +111,8 @@ def _build_graph(
             raise ConfigurationError(f"Selected specialists were not assembled: {sorted(missing)}")
         return graph
     finally:
-        assembly_context.reset(token)
+        graph_toggles_context.reset(toggles_token)
+        assembly_context.reset(assembly_token)
 
 
 def graph_factory(role: str) -> Any:
