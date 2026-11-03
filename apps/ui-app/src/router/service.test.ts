@@ -40,7 +40,9 @@ describe('typed router', () => {
     expect(parseRoute('#asset-overview?project=p1')).toEqual({ page: 'asset-management', query: new URLSearchParams('project=p1') });
     expect(parseRoute('#asset-library')?.page).toBe('asset-management');
     expect(parseRoute('#c2')?.page).toBe('c2-listeners');
-    expect(parseRoute('#/agents-management')?.page).toBe('roles-management');
+    expect(parseRoute('#/agents-management')?.page).toBe('agents');
+    expect(parseRoute('#/specialist-management')?.page).toBe('agents');
+    expect(parseRoute('#/roles-management')?.page).toBe('agents');
     expect(parseRoute('#/operation-center')?.page).toBe('projects');
     expect(routeHash(parseRoute('#projects?project=p1')!)).toBe('operation-center?project=p1');
     expect(routeHash(parseRoute('#operation-center?project=p1')!)).toBe('operation-center?project=p1');
@@ -93,14 +95,14 @@ describe('typed router', () => {
     f.router.go('projects');
     expect(f.hash()).toBe('#operation-center');
   });
-  it('redirects old agent bookmarks to the existing configuration page once', () => {
-    const f = fixture('#agents-management'); f.router.start();
-    expect(f.hash()).toBe('#roles-management');
-    expect(f.events).toHaveLength(1);
-    expect(f.router.page()).toBe('roles-management');
-    f.external('#/agents-management');
-    expect(f.hash()).toBe('#roles-management');
-    expect(f.events).toHaveLength(1);
+  it('redirects old agent bookmarks to the canonical #agents page once, dropping configuration params', () => {
+    for (const legacy of ['agents-management', 'specialist-management', 'roles-management']) {
+      const f = fixture('#/' + legacy + '?scope=project&tab=tools&specialist=recon'); f.router.start();
+      expect(f.hash()).toBe('#agents');
+      expect(f.events).toHaveLength(1);
+      expect(f.router.page()).toBe('agents');
+      expect(pageIds).not.toContain(legacy);
+    }
     expect(pageIds).not.toContain('agents-management');
   });
   it('does not expose mutable query state', () => {

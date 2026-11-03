@@ -4,7 +4,7 @@ const pages = [
   'dashboard', 'chat', 'hitl', 'tool-guard', 'asset-library',
   'info-collect', 'projects', 'vulnerabilities', 'webshell', 'chat-files',
   'mcp-monitor', 'mcp-management', 'knowledge-management', 'knowledge-retrieval-logs',
-  'roles-management', 'workflows', 'skills-monitor', 'skills-management',
+  'agents', 'specialist-management', 'roles-management', 'workflows', 'skills-monitor', 'skills-management',
   'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-tasks',
   'c2-payloads', 'c2-events', 'c2-profiles',
 ] as const;

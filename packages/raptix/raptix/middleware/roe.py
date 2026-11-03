@@ -596,6 +596,9 @@ class RoEGuardrailMiddleware(AgentMiddleware):
     def _evaluate(self, request) -> tuple[Decision, MachineEnforcement, str]:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "unknown") if tool else "unknown"
+        metadata = getattr(tool, "metadata", None)
+        if isinstance(metadata, dict) and isinstance(metadata.get("mcp_tool"), str):
+            tool_name = metadata["mcp_tool"]
         if tool_name not in self._gated:
             return Decision.allow_default(), MachineEnforcement(), tool_name
         try:

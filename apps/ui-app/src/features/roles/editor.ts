@@ -43,6 +43,7 @@ export function createRoleToolsEditor(options: { service: RolesService; storage:
   let catalogueSearch = '';
   let grandTotal = 0;
   let mcpEnabledTotal = 0;
+  let generation = 0;
 
   function mergeAll(tools: readonly RoleTool[]): void {
     tools.forEach(tool => selection.merge(tool));
@@ -50,7 +51,9 @@ export function createRoleToolsEditor(options: { service: RolesService; storage:
 
   /** Pulls the whole catalogue for a search and, for the status filter, merges every tool into the state. */
   async function fetchCatalogue(keyword: string): Promise<void> {
+    const epoch = generation;
     const all = await service.listAllTools(keyword, CATALOG_PAGE_SIZE);
+    if (epoch !== generation) return;
     mergeAll(all);
     catalogue = all;
     catalogueSearch = keyword;
@@ -82,10 +85,16 @@ export function createRoleToolsEditor(options: { service: RolesService; storage:
     clientMode = false;
     catalogue = null;
     catalogueSearch = '';
-    applyPage(await service.listTools(page, pagination.pageSize, keyword));
+    const epoch = generation;
+    const pageResult = await service.listTools(page, pagination.pageSize, keyword);
+    if (epoch === generation) applyPage(pageResult);
   }
 
   function reset(): void {
+    generation++;
+    visible = [];
+    grandTotal = 0;
+    mcpEnabledTotal = 0;
     selection.reset();
     statusFilter = '';
     search = '';
@@ -169,6 +178,7 @@ export function createRoleToolsEditor(options: { service: RolesService; storage:
     /** Opens an existing role. The default role has no tool list to edit and is not loaded. */
     async beginEdit(role: Role): Promise<void> {
       reset();
+      const epoch = generation;
       const configured = role.tools && role.tools.length > 0 ? role.tools : (role.mcps ?? []);
       selection.usesAllTools = !role.tools || role.tools.length === 0;
       configured.forEach(key => selection.configured.add(key));
@@ -177,6 +187,7 @@ export function createRoleToolsEditor(options: { service: RolesService; storage:
         selection.preselect(configured);
       }
       await load(1, '');
+      if (epoch !== generation) return;
       if (selection.usesAllTools) {
         syncVisibleForAllTools();
       } else if (configured.length > 0) {
@@ -222,29 +233,34 @@ export function createRoleToolsEditor(options: { service: RolesService; storage:
     /** Works out what the save sends. Loads the catalogue first when the role uses every tool. */
     async planSave(isDefaultRole: boolean, isFirstUserRole: boolean): Promise<SavePlan> {
       if (isDefaultRole) return { tools: [], disabledNames: [], usesAllTools: false, firstRoleDefault: false };
-      let linked = selection.linkedEntries();
-      let firstRoleDefault = false;
-      if (isFirstUserRole && linked.length === 0) {
-        selection.usesAllTools = true;
-        firstRoleDefault = true;
-      } else if (selection.usesAllTools) {
-        if (selection.hasUnselectedEnabled()) {
-          await loadAllToSelection();
-          selection.linkEnabledExceptUnlinked();
-          selection.usesAllTools = false;
-        } else {
-          await loadAllToSelection();
-          if (!selection.hasDisabledSelected()) selection.linkAllEnabled();
-          linked = selection.linkedEntries();
+      try {
+        let linked = selection.linkedEntries();
+        let firstRoleDefault = false;
+        if (isFirstUserRole && linked.length === 0) {
+          selection.usesAllTools = true;
+          firstRoleDefault = true;
+        } else if (selection.usesAllTools) {
+          if (selection.hasUnselectedEnabled()) {
+            await loadAllToSelection();
+            selection.linkEnabledExceptUnlinked();
+            selection.usesAllTools = false;
+          } else {
+            await loadAllToSelection();
+            if (!selection.hasDisabledSelected()) selection.linkAllEnabled();
+            linked = selection.linkedEntries();
+          }
         }
+        const disabledKeys = selection.disabledKeys(linked.map(entry => entry.key));
+        return {
+          tools: selection.usesAllTools ? [] : selection.selectedKeys(),
+          disabledNames: disabledKeys.map(key => selection.states.get(key)?.name || keyFallbackName(key)),
+          usesAllTools: selection.usesAllTools,
+          firstRoleDefault,
+        };
+      } catch {
+        // Keep the original all-tools sentinel when enumeration fails.
+        return { tools: selection.usesAllTools ? [] : selection.linkedEntries().map(entry => entry.key), disabledNames: [], usesAllTools: selection.usesAllTools, firstRoleDefault: false };
       }
-      const disabledKeys = selection.disabledKeys(linked.map(entry => entry.key));
-      return {
-        tools: selection.usesAllTools ? [] : selection.selectedKeys(),
-        disabledNames: disabledKeys.map(key => selection.states.get(key)?.name || keyFallbackName(key)),
-        usesAllTools: selection.usesAllTools,
-        firstRoleDefault,
-      };
     },
   };
 }

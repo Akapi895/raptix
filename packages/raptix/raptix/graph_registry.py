@@ -75,6 +75,15 @@ _BUNDLE_TO_GRAPHS: dict[str, dict[str, str]] = {
     "plugins": PLUGIN_GRAPHS,
 }
 
+# Resolve a fresh capability snapshot for every direct graph invocation. The
+# original factory modules remain the defaults used by library callers.
+for _graphs in _BUNDLE_TO_GRAPHS.values():
+    for _graph_id in _graphs:
+        _graphs[_graph_id] = (
+            "./raptix/intelligence/agents/configured_graphs.py:"
+            + _graph_id.replace("-", "_")
+        )
+
 # Backward-compat alias — full unfiltered manifest (every OSS-shipped graph).
 # Prefer ``build_langserve_graphs()`` which respects RAPTIX_PLUGINS.
 BUILTIN_GRAPHS: dict[str, str] = {**STANDARD_GRAPHS, **PLUGIN_GRAPHS}

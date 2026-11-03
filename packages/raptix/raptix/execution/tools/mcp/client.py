@@ -32,6 +32,7 @@ convention used by ``RAPTIX_BUDGET__*``, ``RAPTIX_RUNTIME__*``,
 from __future__ import annotations
 
 import asyncio
+import importlib
 import json
 import os
 from collections.abc import Mapping
@@ -101,6 +102,10 @@ class MCPServerConfig:
             if self.headers:
                 payload["headers"] = dict(self.headers)
         return payload
+
+
+class MCPConnectionError(RuntimeError):
+    """A selected MCP server could not provide its tool catalog."""
 
 
 def _default_transport(entry: Mapping[str, Any]) -> Transport:
@@ -202,6 +207,8 @@ def mcp_servers_configured() -> bool:
 
 async def load_mcp_tools(
     config: tuple[MCPServerConfig, ...] | None = None,
+    *,
+    strict: bool = False,
 ) -> list[Any]:
     """Connect to every configured MCP server and return their tools.
 
@@ -218,8 +225,11 @@ async def load_mcp_tools(
         return []
 
     try:
-        from langchain_mcp_adapters.client import MultiServerMCPClient
+        adapter = await asyncio.to_thread(importlib.import_module, "langchain_mcp_adapters.client")
+        MultiServerMCPClient = adapter.MultiServerMCPClient
     except ImportError:
+        if strict:
+            raise MCPConnectionError("Install langchain-mcp-adapters to use MCP tools") from None
         log.warning(
             "%s is set but the optional 'langchain-mcp-adapters' package "
             "is not installed; install it (e.g. `pip install "
@@ -257,6 +267,10 @@ async def load_mcp_tools(
                     )
                     await _sleep(delay)
         if tools is None:
+            if strict:
+                raise MCPConnectionError(
+                    f"MCP server {srv.name!r} is unavailable; check its connection and credentials"
+                ) from None
             log.warning(
                 "MCP server %r unreachable, skipping (%s: %s)",
                 srv.name,

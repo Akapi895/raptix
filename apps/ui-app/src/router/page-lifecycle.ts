@@ -27,6 +27,7 @@ export interface PageLifecycleDependencies {
   refreshTokenUsage?: Hook;
   loadRoles?: Hook;
   renderRolesList?: Hook;
+  loadSpecialists?: Hook;
   refreshWorkflows?: Hook;
   loadSkillsMonitor?: Hook;
   initSkillsPagination?: Hook;
@@ -100,9 +101,10 @@ export function createPageLifecycle(root: Document, deps: PageLifecycleDependenc
           if (root.getElementById('settings-section-token-usage')?.classList.contains('active')) run(deps.refreshTokenUsage);
         }
         break;
-      case 'roles-management':
+      case 'agents':
         resetSearch('roles');
         if (deps.loadRoles) run(async () => { await deps.loadRoles?.(); if (sequence === token) await deps.renderRolesList?.(); });
+        run(deps.loadSpecialists);
         break;
       case 'workflows': run(deps.refreshWorkflows); break;
       case 'skills-monitor': run(deps.loadSkillsMonitor); break;

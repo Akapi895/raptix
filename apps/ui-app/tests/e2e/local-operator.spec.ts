@@ -15,9 +15,10 @@ test('retired platform management links redirect without requesting account admi
   await expect(page.locator('#main-sidebar [data-page="platform-rbac"]')).toHaveCount(0);
   await expect(page.locator('[data-i18n="navGroups.administration"]')).toHaveCount(0);
   await expect(page.locator('#main-sidebar [data-page="settings"]')).toBeVisible();
-  await page.locator('#main-sidebar [data-page="roles-management"] .nav-item-content').click();
-  await expect(page).toHaveURL(/#roles-management$/);
-  await expect(page.locator('.role-card').first()).toBeVisible();
+  await page.locator('#main-sidebar [data-page="agents"] .nav-item-content').click();
+  await expect(page).toHaveURL(/#agents$/);
+  await page.getByRole('tab', { name: 'Custom Agents', exact: true }).click();
+  await expect(page.locator('.agent-card-persona').first()).toBeVisible();
   expect(managementCalls).toEqual([]);
 });
 

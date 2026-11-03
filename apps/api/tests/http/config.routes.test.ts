@@ -114,10 +114,12 @@ describe("config routes", () => {
     expect(response.statusCode).toBe(501);
   });
 
-  it("tools get/put/schema are stubbed 501 -- no HTTP introspection of Raptix's real tool catalog", async () => {
+  it("tools listing 503s when no runtime catalog is reachable; put/schema stay stubbed 501", async () => {
     ({ app, token } = await buildAuthedTestApp());
+    // The default fake registers only the orchestrator graph, so no
+    // specialist catalog can be reached and the union is honestly empty.
     const get = await app.inject({ method: "GET", url: "/api/config/tools", headers: auth() });
-    expect(get.statusCode).toBe(501);
+    expect(get.statusCode).toBe(503);
     const put = await app.inject({ method: "PUT", url: "/api/config/tools", headers: auth(), payload: {} });
     expect(put.statusCode).toBe(501);
     const schema = await app.inject({ method: "GET", url: "/api/config/tools/bash/schema", headers: auth() });

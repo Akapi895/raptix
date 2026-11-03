@@ -81,7 +81,7 @@ describe('page lifecycle orchestration', () => {
       loadRoles: () => new Promise<void>(resolve => { finishRoles = resolve; }), startExternalMcpPoll, renderRolesList,
     });
     lifecycle.init(route('mcp-management')); await Promise.resolve();
-    lifecycle.init(route('roles-management')); lifecycle.invalidate();
+    lifecycle.init(route('agents')); lifecycle.invalidate();
     finishConfig?.(); finishRoles?.(); await Promise.resolve(); await Promise.resolve();
     expect(startExternalMcpPoll).not.toHaveBeenCalled(); expect(renderRolesList).not.toHaveBeenCalled();
   });

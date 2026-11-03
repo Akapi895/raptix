@@ -550,6 +550,9 @@ class HITLApprovalMiddleware(AgentMiddleware):
     def wrap_tool_call(self, request, handler) -> ToolMessage | Command:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
+        metadata = getattr(tool, "metadata", None)
+        if isinstance(metadata, dict) and isinstance(metadata.get("mcp_tool"), str):
+            tool_name = metadata["mcp_tool"]
         tool_args = _tool_call(request).get("args", {}) or {}
         rule = self._match_rule(
             tool_name, self._technique_tag(request), tool_args, self._hitl_enabled(request)
@@ -569,6 +572,9 @@ class HITLApprovalMiddleware(AgentMiddleware):
     async def awrap_tool_call(self, request, handler) -> ToolMessage | Command:
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
+        metadata = getattr(tool, "metadata", None)
+        if isinstance(metadata, dict) and isinstance(metadata.get("mcp_tool"), str):
+            tool_name = metadata["mcp_tool"]
         tool_args = _tool_call(request).get("args", {}) or {}
         rule = self._match_rule(
             tool_name, self._technique_tag(request), tool_args, self._hitl_enabled(request)

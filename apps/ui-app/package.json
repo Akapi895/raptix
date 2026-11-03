@@ -18,6 +18,7 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run build:demo && npm run test:e2e"
   },
   "dependencies": {
+    "@raptix/web-contracts": "*",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "cytoscape": "^3.33.1",

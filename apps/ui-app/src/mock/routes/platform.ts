@@ -8,6 +8,7 @@ import type { Context } from '../router';
 import type { Config, ExternalMCP, Skill, Workflow } from '../types';
 import { bodies } from '../bodies';
 import { z } from 'zod';
+import { registerSpecialistFixtures } from './specialists';
 
 interface OpenApiOperation {
   tags: string[]; summary: string; operationId: string;
@@ -16,6 +17,7 @@ interface OpenApiOperation {
 }
 
 export function registerPlatform(M: MockRuntime): void {
+  registerSpecialistFixtures(M);
 
   /* ---------- configuration ---------- */
 
@@ -239,7 +241,8 @@ export function registerPlatform(M: MockRuntime): void {
   M.route('POST', '/api/roles', bodies.aiRole, function (ctx) {
     const b = ctx.body || {};
     if (!b.name) return M.fail(400, 'Role name is required');
-    const r = { name: b.name, description: b.description || '', enabled: true, skills: b.skills || [], tools: b.tools || [], prompt: b.prompt || '', is_builtin: false, updated_at: M.nowISO() };
+    if (M.state.aiRoles.some(role => role.name === b.name)) return M.fail(409, 'a role with this name already exists');
+    const r = { name: b.name, description: b.description || '', enabled: b.enabled !== false, skills: b.skills || [], tools: b.tools || [], prompt: b.prompt || '', user_prompt: b.user_prompt || '', icon: b.icon || '', workflow_id: b.workflow_id || '', workflow_policy: b.workflow_policy || '', is_builtin: false, updated_at: M.nowISO() };
     M.state.aiRoles.push(r);
     M.save();
     return M.ok(r);
@@ -254,7 +257,7 @@ export function registerPlatform(M: MockRuntime): void {
   M.route('PUT', '/api/roles/:name', bodies.aiRole, function (ctx) {
     const r = M.state.aiRoles.filter(function (x) { return x.name === ctx.params.name; })[0];
     if (!r) return M.fail(404, 'Role not found');
-    M.mergeInto(r, ctx.body, ['description', 'enabled', 'skills', 'tools', 'prompt']);
+    M.mergeInto(r, ctx.body, ['description', 'enabled', 'skills', 'tools', 'prompt', 'user_prompt', 'icon', 'workflow_id', 'workflow_policy']);
     r.updated_at = M.nowISO();
     M.save();
     return M.ok(r);
@@ -266,6 +269,15 @@ export function registerPlatform(M: MockRuntime): void {
     M.state.aiRoles = M.state.aiRoles.filter(function (x) { return x.name !== ctx.params.name; });
     M.save();
     return M.ok({ success: true });
+  });
+
+  // Real agent specialists (recon, exploit, ...), distinct from the custom AI roles above.
+  M.route('GET', '/api/specialists', function () {
+    return M.ok({ specialists: [
+      { id: 'recon', name: 'Recon', description: 'Autonomous reconnaissance and intelligence gathering.' },
+      { id: 'exploit', name: 'Exploit', description: 'Initial access and vulnerability exploitation.' },
+      { id: 'ad_operator', name: 'AD Operator', description: 'Active Directory operations (active-directory domain plugin).' },
+    ] });
   });
 
   // Item shape follows internal/handler/markdown_agents.go (is_orchestrator, bind_role, tools...).

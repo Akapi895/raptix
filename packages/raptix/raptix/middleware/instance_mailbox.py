@@ -53,7 +53,7 @@ class InstanceMailboxMiddleware(AgentMiddleware):
     """Delivers accepted operator messages to a dispatched instance before its next model call."""
 
     async def awrap_model_call(self, request, handler):
-        check_instance_cancel()
+        await asyncio.to_thread(check_instance_cancel)
         scope = _safe_point_context()
         if scope is None:
             return await handler(request)
@@ -89,5 +89,5 @@ class InstanceMailboxMiddleware(AgentMiddleware):
         return handler(request)
 
     async def awrap_tool_call(self, request, handler):
-        check_instance_cancel()
+        await asyncio.to_thread(check_instance_cancel)
         return await handler(request)

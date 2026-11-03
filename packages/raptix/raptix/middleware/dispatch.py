@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import threading
+from collections.abc import Callable
 from copy import copy
 from typing import Annotated, Any, NotRequired
 
@@ -51,6 +52,18 @@ from raptix_core.types.dispatch_outcome import (
 from raptix_core.types.engagement import EffectClass, OpsecLevel
 
 log = logging.getLogger(__name__)
+
+
+async def _ledger_io(call: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    job = asyncio.create_task(asyncio.to_thread(call, *args, **kwargs))
+    try:
+        return await asyncio.shield(job)
+    except asyncio.CancelledError as cancelled:
+        try:
+            await asyncio.shield(job)
+        finally:
+            raise cancelled
+
 
 MAX_DISPATCHES = 256
 
@@ -624,14 +637,27 @@ class DispatchMiddleware(SubAgentMiddleware):
             objective_id: str | None = None,
             dispatch_id: str | None = None,
         ) -> Command:
-            prepared = self._prepare(description, subagent_type, runtime, objective_id, dispatch_id)
+            preparation = asyncio.create_task(
+                asyncio.to_thread(
+                    self._prepare, description, subagent_type, runtime, objective_id, dispatch_id
+                )
+            )
+            try:
+                prepared = await asyncio.shield(preparation)
+            except asyncio.CancelledError as cancelled:
+                try:
+                    abandoned = await asyncio.shield(preparation)
+                    if not isinstance(abandoned, Command):
+                        self._release(abandoned[1])
+                finally:
+                    raise cancelled
             if isinstance(prepared, Command):
                 return prepared
             context, key, fingerprint = prepared
             token = active_dispatch.set(context)
-            self._start_instance(context)
             error: Exception | None = None
             try:
+                await _ledger_io(self._start_instance, context)
                 try:
                     result = await asyncio.wait_for(
                         self._task.coroutine(
@@ -643,18 +669,24 @@ class DispatchMiddleware(SubAgentMiddleware):
                     )
                 except Exception as exc:
                     error = exc
-                    return self._finish(None, context, fingerprint, runtime, exc)
-                return self._finish(result, context, fingerprint, runtime)
+                    return await _ledger_io(self._finish, None, context, fingerprint, runtime, exc)
+                return await _ledger_io(self._finish, result, context, fingerprint, runtime)
             except asyncio.CancelledError as exc:
                 error = exc
                 raise
             finally:
-                self._end_instance(context, interrupted=isinstance(error, asyncio.CancelledError))
-                active_dispatch.reset(token)
-                self._record_outcome(
-                    key, ok=error is None or isinstance(error, InstanceCancellationRequested)
-                )
-                self._release(key)
+                try:
+                    await _ledger_io(
+                        self._end_instance,
+                        context,
+                        interrupted=isinstance(error, asyncio.CancelledError),
+                    )
+                finally:
+                    active_dispatch.reset(token)
+                    self._record_outcome(
+                        key, ok=error is None or isinstance(error, InstanceCancellationRequested)
+                    )
+                    self._release(key)
 
         return StructuredTool.from_function(
             name="task",

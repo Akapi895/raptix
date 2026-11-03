@@ -20,6 +20,7 @@ export interface RuntimeClientOptions {
 
 /** Port routes depend on (matches AuthStore/ProjectStore/ConversationStore) -- RuntimeClient implements it; tests use a fake. */
 export interface RuntimeTransport {
+  specialistRequest(path: string, body?: unknown): Promise<unknown>;
   ping(): Promise<{ version: string; graphIds: readonly string[] }>;
   createThread(threadId: string, metadata?: Record<string, string>): Promise<{ threadId: string; metadata: Record<string, unknown> }>;
   getThread(threadId: string): Promise<{ threadId: string; metadata: Record<string, unknown>; status?: string }>;
@@ -76,6 +77,11 @@ export class RuntimeClient implements RuntimeTransport {
     this.timeoutMs = options.timeoutMs ?? 15_000;
   }
 
+  public async specialistRequest(path: string, body?: unknown): Promise<unknown> {
+    if (!/^\/_raptix\/specialists(?:\/catalog\?specialist_id=[^&]+|\/validate)?$/.test(path)) throw new RuntimeRejectedError(400);
+    return this.fetchJson(path, body);
+  }
+
   private async fetchJson(
     path: string,
     body?: unknown,
@@ -95,7 +101,12 @@ export class RuntimeClient implements RuntimeTransport {
         redirect: "error",
       });
       if ([400, 404, 409, 422].includes(response.status)) {
-        throw new RuntimeRejectedError(response.status === 422 ? 400 : response.status);
+        let message = 'Runtime rejected the request';
+        if (path.startsWith('/_raptix/specialists')) {
+          const diagnostic = await response.json().catch(() => null) as { detail?: unknown } | null;
+          if (typeof diagnostic?.detail === 'string' && diagnostic.detail.length <= 1024) message = diagnostic.detail;
+        }
+        throw new RuntimeRejectedError(response.status === 422 ? 400 : response.status, message);
       }
       if (!response.ok) throw new RuntimeUnavailableError(`Runtime returned HTTP ${response.status}`);
       if (response.status === 204) return null;
@@ -168,7 +179,7 @@ export class RuntimeClient implements RuntimeTransport {
       await this.fetchJson(`/threads/${encodeURIComponent(threadId)}/runs`, {
         assistant_id: assistantId,
         input,
-        metadata: { ui_request_id: requestId },
+        metadata: { ui_request_id: requestId, specialist_configuration: (config?.configurable as Record<string, unknown> | undefined)?.specialist_configuration ?? null },
         multitask_strategy: "reject",
         if_not_exists: "reject",
         ...(config ? { config } : {}),
@@ -203,6 +214,7 @@ export class RuntimeClient implements RuntimeTransport {
   public streamRun(threadId: string, assistantId: string, input: Record<string, unknown>, config: Record<string, unknown>, signal: AbortSignal): AsyncIterable<RuntimeEvent> {
     return streamRuntimeRun(`${this.apiUrl}/threads/${encodeURIComponent(threadId)}/runs/stream`, this.apiToken, {
       assistant_id: assistantId, input, config, stream_mode: ["messages", "updates"],
+      metadata: { specialist_configuration: (config.configurable as Record<string, unknown> | undefined)?.specialist_configuration ?? null },
       multitask_strategy: "reject", if_not_exists: "reject", on_disconnect: "continue",
     }, signal);
   }

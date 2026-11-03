@@ -30,7 +30,7 @@ export const mcpSchema = z.object({ name: text, transport: text, command: text, 
 export const factSchema = z.object({ id: text, project_id: text, fact_key: text, category: text, summary: text, body: text, confidence: text, pinned: z.boolean(), deprecated: z.boolean(), incoming_links: z.number(), related_vulnerability_id: text, source_conversation_id: text, updated_at: text });
 export const factEdgeSchema = z.object({ id: text, project_id: text, source: text, target: text, source_fact_key: text, target_fact_key: text, type: text, edge_type: text, confidence: text });
 export const knowledgeSchema = z.object({ id: text, category: text, title: text, content: text, indexed: z.boolean(), updated_at: text });
-export const aiRoleSchema = z.object({ name: text, description: text, enabled: z.boolean(), skills: strings, tools: strings, prompt: text, is_builtin: z.boolean(), updated_at: text });
+export const aiRoleSchema = z.object({ name: text, description: text, enabled: z.boolean(), skills: strings, tools: strings, prompt: text, user_prompt: text.optional(), icon: text.optional(), workflow_id: text.optional(), workflow_policy: text.optional(), is_builtin: z.boolean(), updated_at: text });
 export const hitlConfigSchema = z.object({ enabled: z.boolean(), mode: text, timeoutSeconds: z.number(), toolWhitelist: strings, reviewer: text, auditAgentModel: text, sensitiveTools: strings.optional() });
 export const hitlPendingSchema = z.object({ id: text, interruptId: text, conversationId: text, tool: text, toolName: text, arguments: z.object({ endpoint: text, attempts: z.number() }), reason: text, status: text, reviewer: text, created_at: text });
 export const hitlLogSchema = z.object({ id: text, interruptId: text, tool: text, decision: text, reviewer: text, decidedAt: text, reason: text.optional(), conversationId: text.optional(), payload: text.optional(), comment: text.optional(), status: text.optional() });
@@ -64,6 +64,7 @@ const uploadSchema = z.object({ name: text, relativePath: text, subPath: text, a
 const folderSchema = z.object({ name: text, relativePath: text, subPath: text, conversationId: text, projectId: text });
 export const assignmentSchema = z.object({ id: text, user_id: text.optional(), resource_type: text.optional(), resource_id: text.optional(), created_at: text });
 export const seedSchema = z.object({
+  specialistConfigurations: z.object({ revision: z.number(), scopes: z.record(text, z.object({ skills: strings, tools: strings, mcp: strings })) }).optional(),
   workflowRuns: z.array(z.object({ run: runSchema, nodeRuns: z.array(nodeRunSchema) })).optional(),
   __version: z.literal(SEED_VERSION), auth: z.object({ username: text, password: text, token: text }), users: z.array(userSchema), roles: z.array(roleSchema), projects: z.array(projectSchema),
   conversations: z.array(conversationSchema), messages: z.array(messageSchema), vulnerabilities: z.array(vulnerabilitySchema), assets: z.array(assetSchema), batchQueues: z.array(queueSchema), skills: z.array(skillSchema), externalMCP: z.array(mcpSchema),

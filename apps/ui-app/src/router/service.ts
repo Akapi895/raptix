@@ -1,4 +1,4 @@
-export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'file-management', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'roles-management', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
+export const pageIds = ['dashboard', 'chat', 'hitl', 'tool-guard', 'asset-overview', 'asset-management', 'projects', 'vulnerabilities', 'webshell', 'file-management', 'mcp-monitor', 'mcp-management', 'knowledge-management', 'agents', 'workflows', 'skills-monitor', 'skills-management', 'settings', 'tasks', 'c2-listeners', 'c2-sessions', 'c2-activity', 'c2-tasks', 'c2-payloads', 'c2-events', 'c2-profiles'] as const;
 export type PageId = typeof pageIds[number];
 export interface Route { page: PageId; query: URLSearchParams }
 export interface Navigation { route: Route; previous: Route | null; kind: 'replace' | 'external' | 'initial'; pageChanged: boolean; restore: boolean }
@@ -13,7 +13,11 @@ export function parseRoute(hash: string): Route | null {
   if (page === 'c2-tasks' || page === 'c2-events') { query.set('tab', page === 'c2-events' ? 'events' : 'tasks'); page = 'c2-activity'; }
   if (page === 'c2-profiles') { page = 'c2-listeners'; query.set('tab', 'profiles'); }
   if (page === 'operation-center') page = 'projects';
-  if (page === 'agents-management') page = 'roles-management';
+  if (page === 'agents-management' || page === 'specialist-management' || page === 'roles-management') {
+    // The Agents page keeps selection, scope and tab state in the frontend; legacy deep links lose only those params.
+    page = 'agents';
+    for (const key of ['specialist', 'scope', 'tab']) query.delete(key);
+  }
   if (page === 'asset-overview' || page === 'assets' || page === 'asset-library') page = 'asset-management';
   if (page === 'chat-files' || page === 'files') page = 'file-management';
   if (page === 'mcp') page = 'mcp-management';
@@ -65,7 +69,7 @@ export function createRouter(port: RouterPort) {
     },
     go(page: string, query?: URLSearchParams | Record<string, string>): void {
       if (page === 'platform-rbac') { commit({ page: 'dashboard', query: new URLSearchParams() }, 'replace'); return; }
-      if (['c2-tasks', 'c2-events', 'c2-profiles', 'c2', 'knowledge-retrieval-logs'].includes(page)) { const route = parseRoute(page + (query ? '?' + new URLSearchParams(query) : '')); if (route) commit(route, 'replace'); return; }
+      if (['c2-tasks', 'c2-events', 'c2-profiles', 'c2', 'knowledge-retrieval-logs', 'specialist-management', 'agents-management', 'roles-management'].includes(page)) { const route = parseRoute(page + (query ? '?' + new URLSearchParams(query) : '')); if (route) commit(route, 'replace'); return; }
       if (page === 'tasks') { commit({ page: 'workflows', query: new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(query)), tab: 'schedule' }) }, 'replace'); return; }
       if (page === 'asset-overview') page = 'asset-management';
       if (page === 'assets') page = 'asset-management';
