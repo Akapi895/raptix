@@ -151,16 +151,26 @@ def _output(command: str) -> tuple[str, str] | None:
 class KGAutoIngestMiddleware(AgentMiddleware):
     """Best-effort KG writes; never replace the tool's response."""
 
-    def __init__(self, *, store: KGStore, sandbox: Any, role: str) -> None:
+    def __init__(
+        self, *, store: KGStore, sandbox: Any, role: str, enabled: bool | None = None
+    ) -> None:
         super().__init__()
         self._store = ChannelStore(store, "tool_autoingest")
         self._sandbox = sandbox
         self._role = role
+        self._enabled = enabled
         self._slots = threading.BoundedSemaphore(value=2)
 
     async def awrap_tool_call(self, request: Any, handler: Any) -> Any:
         result = await handler(request)
-        if os.environ.get("RAPTIX_KG_AUTOINGEST", "0").lower() not in {"1", "true", "yes"}:
+        enabled = (
+            self._enabled
+            if self._enabled is not None
+            else (
+                os.environ.get("RAPTIX_KG_AUTOINGEST", "0").strip().lower() in {"1", "true", "yes"}
+            )
+        )
+        if not enabled:
             return result
         try:
             await asyncio.wait_for(

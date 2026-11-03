@@ -27,6 +27,7 @@ import logging
 import os
 import uuid
 from collections.abc import Awaitable, Callable
+from contextvars import ContextVar
 from typing import Annotated, Any, NotRequired
 
 # Middleware classes & factory helpers — imported at module level so
@@ -91,6 +92,23 @@ from raptix_core.plugin_loader import load_plugin_skill_sources
 
 logger = logging.getLogger(__name__)
 
+# Task-local assembly input; factories capture each run's effective settings.
+# Runs without project overrides retain the environment defaults.
+graph_toggles_context: ContextVar[dict[str, bool] | None] = ContextVar(
+    "graph_toggles", default=None
+)
+
+
+def _graph_toggle(name: str, env_var: str) -> bool:
+    """``True`` when ``name`` ("auto_ingest_enabled"/"tried_edges_enabled")
+    should be on: the current project's override if one is set, else the
+    server-wide env var default."""
+    toggles = graph_toggles_context.get()
+    if toggles is not None and name in toggles:
+        return toggles[name]
+    return os.environ.get(env_var, "0").strip().lower() in {"1", "true", "yes"}
+
+
 # langchain's summary helper returns this literal as the summary text when
 # summary generation raises (langchain/agents/middleware/summarization.py).
 # A compaction event carrying it must be dropped, never applied (ADR-0047).
@@ -151,13 +169,7 @@ def _make_engagement_context(**_: Any):
 
 
 def _make_tried_edges(*, role: str, **_: Any):
-    import os
-
-    if os.environ.get("RAPTIX_KG_TRIED_EDGES", "0").strip().lower() not in {
-        "1",
-        "true",
-        "yes",
-    }:
+    if not _graph_toggle("tried_edges_enabled", "RAPTIX_KG_TRIED_EDGES"):
         return None
     from raptix.knowledge.graph.store import (
         KGStore,
@@ -167,7 +179,7 @@ def _make_tried_edges(*, role: str, **_: Any):
     from raptix.middleware.tried_edges import TriedEdgesMiddleware
 
     try:
-        return TriedEdgesMiddleware(store=KGStore.from_env(), role=role)
+        return TriedEdgesMiddleware(store=KGStore.from_env(), role=role, enabled=True)
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         logger.debug("tried-edge slot skipped: %s", exc)
         return None
@@ -298,8 +310,6 @@ def _make_kg(*, role: str, **_: Any):
 
 
 def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
-    import os
-
     from raptix.knowledge.graph.store import (
         KGStore,
         KGStoreConfigError,
@@ -307,14 +317,12 @@ def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
     )
     from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
 
-    if sandbox is None or os.environ.get("RAPTIX_KG_AUTOINGEST", "0").lower() not in {
-        "1",
-        "true",
-        "yes",
-    }:
+    if sandbox is None or not _graph_toggle("auto_ingest_enabled", "RAPTIX_KG_AUTOINGEST"):
         return None
     try:
-        return KGAutoIngestMiddleware(store=KGStore.from_env(), sandbox=sandbox, role=role)
+        return KGAutoIngestMiddleware(
+            store=KGStore.from_env(), sandbox=sandbox, role=role, enabled=True
+        )
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         logger.debug("KG auto-ingest slot skipped: %s", exc)
         return None
