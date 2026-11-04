@@ -242,7 +242,8 @@
                             <span data-i18n="nav.vulnerabilities">Vulnerabilities</span>
                         </div>
                     </div>
-                    <div class="nav-item" data-page="workflows" data-require-permission-any="workflow:read tasks:read">
+                    <!-- Workflows page is disabled; nav entry hidden (no data-page/data-require-permission so RBAC never un-hides it) and the route itself redirects to dashboard - see router/service.ts commit(). -->
+                    <div class="nav-item" hidden>
                         <div class="nav-item-content" data-title="Workflows"  data-i18n="nav.workflows" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="workflows">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="8" height="8" rx="2"/>
@@ -688,7 +689,8 @@
                                     </section>
                                 </div>
                                 <div class="dashboard-side">
-                                    <section class="dashboard-section dashboard-section-batch-side">
+                                    <!-- Links into the disabled Workflows page; hidden alongside it. -->
+                                    <section class="dashboard-section dashboard-section-batch-side" hidden>
                                         <div class="dashboard-section-header">
                                             <h3 class="dashboard-section-title" data-i18n="dashboard.batchQueues">Batch task queues</h3>
                                             <a class="dashboard-section-link"  data-i18n="dashboard.viewAll" data-action="navigate" data-page="tasks">View all →</a>

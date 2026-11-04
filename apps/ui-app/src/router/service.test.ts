@@ -82,8 +82,8 @@ describe('typed router', () => {
     f.router.go('chat'); expect(f.hash()).toBe('#chat');
   });
   it('canonicalizes alias hashchanges without a second navigation and rejects absent pages', () => {
-    const f = fixture('#c2-listeners', page => page !== 'workflows'); f.router.start();
-    f.external('#/c2'); f.router.go('tasks');
+    const f = fixture('#c2-listeners', page => page !== 'vault'); f.router.start();
+    f.external('#/c2'); f.router.go('vault');
     expect(f.hash()).toBe('#c2-listeners'); expect(f.events).toHaveLength(1);
     f.external('#/projects?project=p1');
     expect(f.hash()).toBe('#operation-center?project=p1');
@@ -94,6 +94,16 @@ describe('typed router', () => {
     expect(f.events).toHaveLength(eventCount);
     f.router.go('projects');
     expect(f.hash()).toBe('#operation-center');
+  });
+  it('workflows page is disabled: hash edits, go(), and the legacy tasks alias all redirect to dashboard', () => {
+    const f = fixture('#dashboard'); f.router.start();
+    f.external('#/workflows?tab=schedule');
+    expect(f.hash()).toBe('#dashboard'); expect(f.router.page()).toBe('dashboard');
+    f.router.go('dashboard');
+    f.router.go('tasks');
+    expect(f.hash()).toBe('#dashboard'); expect(f.router.page()).toBe('dashboard');
+    f.router.go('workflows');
+    expect(f.hash()).toBe('#dashboard'); expect(f.router.page()).toBe('dashboard');
   });
   it('redirects old agent bookmarks to the canonical #agents page once, dropping configuration params', () => {
     for (const legacy of ['agents-management', 'specialist-management', 'roles-management']) {

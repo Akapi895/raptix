@@ -239,8 +239,10 @@ describe('router browser parity (isolated, in-memory)', () => {
     expect(await calls(page)).toContain('retrieval');
     await page.waitForTimeout(100);
     expect(await calls(page)).not.toContain('index-tick');
-    await page.evaluate(() => (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.go('workflows'));
-    expect((await calls(page)).filter(call => call === 'workflows')).toHaveLength(1);
+    // workflows is a disabled page (redirects to dashboard); use another plain page to exercise
+    // this generic "navigate, then remount" lifecycle check instead.
+    await page.evaluate(() => (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness.bridge.router.go('vulnerabilities'));
+    expect((await calls(page)).filter(call => call === 'vulnerabilities')).toHaveLength(1);
     await page.evaluate(() => { const h = (globalThis as typeof globalThis & { routerHarness: Harness }).routerHarness; h.bridge.dispose(); h.bridge = h.install(); h.bridge.start(); h.bridge.start(); });
     await page.locator('.nav-item[data-page="dashboard"] .nav-item-content').click();
     expect((await calls(page)).filter(call => call === 'dashboard')).toHaveLength(2);
