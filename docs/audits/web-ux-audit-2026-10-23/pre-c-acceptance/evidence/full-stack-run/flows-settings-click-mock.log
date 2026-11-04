@@ -1,3 +1,0 @@
-PASS the organization settings page renders for an admin :: heading shown
-PASS an analyst finds the user list locked, with its reason on the screen :: reason shown
-settings click-through (mock): 2 of 2 steps matched

@@ -176,8 +176,10 @@ def create_raptix_agent(
         # ``opscontrol_unreachable``. Gating keeps the toolset honest per
         # topology instead of relying on the model to avoid an unusable tool.
         from raptix.execution.tools.ops import OPS_TOOLS, ops_available
+        from raptix.execution.tools.plumbing.candidate_verification import FINDING_READINESS_TOOLS
 
         standard_tools = {t.name: t for t in OPS_TOOLS} if ops_available() else {}
+        standard_tools.update({t.name: t for t in FINDING_READINESS_TOOLS})
         tools = build_tools(role=_ROLE, standard_tools=standard_tools)
     if middleware is None:
         middleware = build_middleware(

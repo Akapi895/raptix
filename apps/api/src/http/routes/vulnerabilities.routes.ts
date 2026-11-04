@@ -53,6 +53,7 @@ function toWire(vuln: VulnerabilityRecord): Record<string, unknown> {
     description: vuln.description,
     severity: vuln.severity,
     status: vuln.status,
+    verification_verdict: vuln.verificationVerdict,
     type: vuln.type,
     target: vuln.target,
     preconditions: vuln.preconditions,

@@ -15,3 +15,4 @@ import './file-manager.css';
 import './vulnerability-workspace.css';
 import './vault.css';
 import './knowledge.css';
+import './markdown.css';

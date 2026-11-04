@@ -407,6 +407,108 @@ async def reproduce_sealed(
     return result
 
 
+# `(?![\s\S])` (not bare `$`) for "end of string": with re.MULTILINE, a bare `$` matches at
+# every line end, which would cut the section off after its first line.
+_EVIDENCE_SECTION = re.compile(
+    r"^##\s+Evidence\s*\r?\n([\s\S]*?)(?=\r?\n##\s+|(?![\s\S]))", re.MULTILINE
+)
+_STATUS_LINE = re.compile(r"^status:\s*(\S+)", re.MULTILINE)
+
+
+def _has_real_evidence(markdown: str) -> bool:
+    """Whether the finding's `## Evidence` section has at least one non-blank content line."""
+    match = _EVIDENCE_SECTION.search(markdown)
+    if match is None:
+        return False
+    return any(line.strip() for line in match.group(1).splitlines())
+
+
+def _frontmatter_status(markdown: str) -> str:
+    """Best-effort read of the frontmatter `status:` line, without a full YAML parse."""
+    match = _STATUS_LINE.search(markdown)
+    return match.group(1) if match else "unknown"
+
+
+def _poc_block_state(markdown: str) -> str:
+    """'absent' (no Proof of Concept json block), 'invalid' (block present but malformed/incomplete), or 'present'."""
+    try:
+        block = read_poc_block(markdown)
+    except _Refused:
+        return "invalid"
+    return "present" if block is not None else "absent"
+
+
+def _finding_readiness(finding_id: str, markdown: str) -> dict[str, Any]:
+    status = _frontmatter_status(markdown)
+    has_evidence = _has_real_evidence(markdown)
+    poc_state = _poc_block_state(markdown)
+    if status != "candidate":
+        # Not this check's job: confirmed/rejected findings are the verifier's business, and
+        # any other value is surfaced verbatim rather than guessed at.
+        verdict = status
+    else:
+        missing = [
+            name
+            for name, ok in (("evidence", has_evidence), ("poc", poc_state == "present"))
+            if not ok
+        ]
+        verdict = "ready_for_verification" if not missing else "needs_" + "_and_".join(missing)
+    return {
+        "finding_id": finding_id,
+        "status": status,
+        "has_evidence": has_evidence,
+        "poc_block": poc_state,
+        "verdict": verdict,
+    }
+
+
+@tool
+async def scan_workspace_findings(config: RunnableConfig) -> str:
+    """Scan every findings/FIND-NNN.md and report whether each is ready for verification.
+
+    Deterministic replacement for manually `ls`/`glob`-ing findings/ and reading each file by
+    hand. For every finding, reports its frontmatter status, whether its `## Evidence` section
+    has real content, whether it has a complete sealed Proof of Concept block, and a verdict:
+    'ready_for_verification', 'needs_evidence', 'needs_poc', or 'needs_evidence_and_poc' for a
+    'candidate' finding, or the finding's own status verbatim once it is no longer 'candidate'
+    (confirmed/rejected/anything else). Call this before deciding whether to dispatch the
+    verifier for a finding or send it back to the agent that wrote it.
+    """
+    try:
+        files = project_files_for(config)
+    except ProjectFileUnavailable as exc:
+        return json.dumps({"error": "project_unavailable", "reason": str(exc)}, sort_keys=True)
+    try:
+        names = files.list_files("findings")
+    except ProjectFileUnavailable as exc:
+        return json.dumps({"error": "listing_failed", "reason": str(exc)}, sort_keys=True)
+    results: list[dict[str, Any]] = []
+    for name in sorted(names or []):
+        if "/" in name or not name.lower().endswith(".md"):
+            continue  # only top-level FIND-NNN.md; findings/poc/ and findings/evidence/ are not findings
+        finding_id = name[: -len(".md")]
+        if not FINDING_ID.fullmatch(finding_id):
+            continue
+        raw = files.read_bytes(f"findings/{name}")
+        if raw is None:
+            continue
+        try:
+            markdown = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            results.append(
+                {
+                    "finding_id": finding_id,
+                    "status": "unknown",
+                    "has_evidence": False,
+                    "poc_block": "invalid",
+                    "verdict": "not_utf8",
+                }
+            )
+            continue
+        results.append(_finding_readiness(finding_id, markdown))
+    return json.dumps({"findings": results}, sort_keys=True)
+
+
 @tool
 async def verify_workspace_candidate(finding_id: str, config: RunnableConfig) -> str:
     """Verify a workspace finding from its sealed Proof of Concept and record the verdict.
@@ -444,3 +546,6 @@ async def verify_workspace_candidate(finding_id: str, config: RunnableConfig) ->
 
 
 CANDIDATE_VERIFICATION_TOOLS = [verify_workspace_candidate]
+# Separate from CANDIDATE_VERIFICATION_TOOLS: this is the orchestrator's pre-dispatch check
+# (Phase 3 step 5 of the raptix workflow prompt), not part of the verifier role's own tool set.
+FINDING_READINESS_TOOLS = [scan_workspace_findings]

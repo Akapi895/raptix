@@ -242,7 +242,8 @@
                             <span data-i18n="nav.vulnerabilities">Vulnerabilities</span>
                         </div>
                     </div>
-                    <div class="nav-item" data-page="workflows" data-require-permission-any="workflow:read tasks:read">
+                    <!-- Workflows page is disabled; nav entry hidden (no data-page/data-require-permission so RBAC never un-hides it) and the route itself redirects to dashboard - see router/service.ts commit(). -->
+                    <div class="nav-item" hidden>
                         <div class="nav-item-content" data-title="Workflows"  data-i18n="nav.workflows" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="workflows">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="8" height="8" rx="2"/>
@@ -688,7 +689,8 @@
                                     </section>
                                 </div>
                                 <div class="dashboard-side">
-                                    <section class="dashboard-section dashboard-section-batch-side">
+                                    <!-- Links into the disabled Workflows page; hidden alongside it. -->
+                                    <section class="dashboard-section dashboard-section-batch-side" hidden>
                                         <div class="dashboard-section-header">
                                             <h3 class="dashboard-section-title" data-i18n="dashboard.batchQueues">Batch task queues</h3>
                                             <a class="dashboard-section-link"  data-i18n="dashboard.viewAll" data-action="navigate" data-page="tasks">View all →</a>
@@ -861,7 +863,7 @@
                                     <div id="recent-conversations-body" class="recent-conversations-body" hidden>
                                         <div class="section-header-actions recent-conversations-actions">
                                             <div class="conversation-sort-dropdown" id="conversation-sort-dropdown">
-                                                <button type="button" class="conversation-sort-btn" id="conversation-sort-btn" data-act-click='[["toggleConversationSortMenu","$event"]]' aria-haspopup="menu" aria-expanded="false" aria-controls="conversation-sort-menu" data-i18n="chat.sortConversations" data-i18n-attr="title" data-i18n-skip-text="true" title="Sort">
+                                                <button type="button" class="conversation-sort-btn" id="conversation-sort-btn" data-act-click='[["toggleConversationSortMenu","$event"]]' aria-haspopup="menu" aria-expanded="false" aria-controls="conversation-sort-menu" data-i18n="chat.sortConversations" data-i18n-attr="title,aria-label" data-i18n-skip-text="true" title="Sort" aria-label="Sort">
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                         <path d="M3 6h18M7 12h10M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                                     </svg>
@@ -891,7 +893,7 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <button class="batch-manage-btn" data-require-permission="chat:delete" data-act-click='[["showBatchManageModal"]]' data-i18n="chat.batchManage" data-i18n-attr="title" data-i18n-skip-text="true" title="Batch manage">
+                                            <button class="batch-manage-btn" data-require-permission="chat:delete" data-act-click='[["showBatchManageModal"]]' data-i18n="chat.batchManage" data-i18n-attr="title,aria-label" data-i18n-skip-text="true" title="Batch manage" aria-label="Batch manage">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                                     <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -977,10 +979,6 @@
 	                            </div>
 	                        </div>
                             </details>
-                            <button type="button" class="chat-new-task" data-require-permission="chat:write" data-act-click="[[&quot;startNewConversation&quot;]]">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                                <span data-i18n="chat.newTask">New task</span>
-                            </button>
                         </div>
                         
                         <!-- Chat interface -->
@@ -2864,13 +2862,14 @@
                         </div>
                     </div>
                     <nav class="workflow-tabs" aria-label="Workflow workspace">
-                        <button type="button" data-orch-click="tab" data-tab="builder" aria-current="page" data-require-permission="workflow:read">Builder</button>
-                        <button type="button" data-orch-click="tab" data-tab="runs" data-require-permission-any="workflow:read tasks:read">Runs</button>
+                        <!-- Builder tab is hidden (canvas editor disabled); no data-require-permission so the RBAC pass never un-hides it. -->
+                        <button type="button" data-orch-click="tab" data-tab="builder" hidden>Builder</button>
+                        <button type="button" data-orch-click="tab" data-tab="runs" aria-current="page" data-require-permission-any="workflow:read tasks:read">Runs</button>
                         <button type="button" data-orch-click="tab" data-tab="schedule" data-require-permission="tasks:read">Schedule</button>
                     </nav>
-                    <section id="workflow-runs" class="workflow-operations" hidden aria-label="Workflow runs"></section>
+                    <section id="workflow-runs" class="workflow-operations" aria-label="Workflow runs"></section>
                     <section id="workflow-schedule" class="workflow-operations" hidden aria-label="Schedules and queues"></section>
-                    <div class="page-content workflow-page-content" id="workflow-builder">
+                    <div class="page-content workflow-page-content" id="workflow-builder" hidden>
                         <aside id="workflow-switcher" class="workflow-sidebar workflow-popover" popover="auto" aria-label="Choose a workflow">
                             <div class="workflow-panel">
                                 <div class="workflow-panel-header">

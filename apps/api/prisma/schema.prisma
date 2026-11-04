@@ -195,6 +195,11 @@ model Vulnerability {
   description       String        @default("")
   severity          String
   status            String        @default("open")
+  // Independently re-derived by findings-sync.ts from findings/evidence/FIND-NNN_verification.json
+  // (seal-checked against the finding's current PoC block) -- never trust the raw `status:`
+  // frontmatter a generator agent could have self-written. One of: candidate | confirmed | rejected.
+  // Distinct from `status` above, which is the ticket's own open/resolved workflow state.
+  verificationVerdict String      @default("candidate")
   type              String        @default("")
   target            String        @default("")
   preconditions     String        @default("")

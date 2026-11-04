@@ -192,8 +192,9 @@ export function createWorkflowOrchestration(deps: {
     init(); if (!mounted) return;
     const hash = doc.defaultView?.location.hash ?? ''; const query = new URLSearchParams(hash.split('?')[1] ?? '');
     if (!/^#\/?workflows(?:\?|$)/.test(hash)) { tasks.hooks.cleanupTasksPage(); return; }
-    const requested = query.get('tab'); const next: Tab = requested === 'schedule' || requested === 'runs' ? requested : can('workflow:read') ? 'builder' : 'schedule';
-    if (next === 'schedule' && !can('tasks:read') || next === 'builder' && !can('workflow:read') || next === 'runs' && !can('workflow:read') && !can('tasks:read')) return;
+    // Builder is hidden (canvas editor disabled): never resolve to it, even from an old '?tab=builder' link.
+    const requested = query.get('tab'); const next: Tab = requested === 'schedule' ? 'schedule' : 'runs';
+    if (next === 'schedule' && !can('tasks:read') || next === 'runs' && !can('workflow:read') && !can('tasks:read')) return;
     // The resolved default tab must be reflected back into the URL so a bare #workflows
     // link is shareable/reloadable as the exact tab the viewer landed on.
     if (requested !== next) { query.set('tab', next); doc.defaultView!.location.hash = 'workflows?' + query; return; }
