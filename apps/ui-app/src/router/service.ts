@@ -49,6 +49,9 @@ export function createRouter(port: RouterPort) {
   let stop: (() => void) | undefined;
   const listeners = new Set<(event: Navigation) => void>();
   function commit(route: Route, kind: Navigation['kind'], restore = true): void {
+    // Workflows page is disabled; redirect to dashboard regardless of how it was reached
+    // (hash edit, bookmark, sidebar, or the legacy 'tasks' alias which also lands here).
+    if (route.page === 'workflows') route = { page: 'dashboard', query: new URLSearchParams() };
     if (port.canActivate && !port.canActivate(route.page)) return;
     const previous = current;
     if (previous && routeHash(previous) === routeHash(route)) {
