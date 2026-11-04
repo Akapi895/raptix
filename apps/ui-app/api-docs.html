@@ -117,7 +117,7 @@
         
         .api-docs-content {
             display: grid;
-            grid-template-columns: 280px 1fr;
+            grid-template-columns: 280px minmax(0, 1fr);
             gap: 24px;
         }
         
@@ -173,6 +173,7 @@
         }
         
         .api-docs-main {
+            min-width: 0;
             background: var(--bg-primary);
         }
         
@@ -412,6 +413,8 @@
         }
         
         .api-description-detail .code-block {
+            overflow-wrap: normal;
+            word-break: normal;
             background: var(--bg-secondary);
             padding: 12px;
             border-radius: 6px;
@@ -478,6 +481,8 @@
         }
         
         .api-description-detail {
+            min-width: 0;
+            overflow-wrap: anywhere;
             margin-top: 12px;
             padding-top: 12px;
             border-top: 1px solid var(--border-color);

@@ -76,7 +76,21 @@ export function formatMarkdownToHtml(
       html = hasHtml ? source : escapeHtmlLocal(source).replace(/\n/g, '<br>');
     }
   }
-  return sanitizeRichHtml(html, options?.profile);
+  const root = document.createElement('div');
+  // Markdown owns its table scrollers; the generic mobile table enhancer must skip them.
+  root.className = 'markdown-content m-no-wrap';
+  root.innerHTML = sanitizeRichHtml(html, options?.profile);
+  root.querySelectorAll('table').forEach(table => {
+    const scroll = document.createElement('div');
+    scroll.className = 'table-wrapper markdown-table-scroll';
+    scroll.tabIndex = 0;
+    scroll.setAttribute('role', 'region');
+    scroll.setAttribute('aria-label', 'Markdown table');
+    table.before(scroll);
+    scroll.append(table);
+  });
+  root.querySelectorAll('pre').forEach(pre => { pre.tabIndex = 0; });
+  return root.outerHTML;
 }
 
 export function stripSuspiciousImages(root: ParentNode | null | undefined): void {

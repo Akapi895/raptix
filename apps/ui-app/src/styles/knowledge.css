@@ -112,7 +112,7 @@ html[data-theme="dark"] .kn-graph-error { color: #ff9b9b; }
 .kn-doc-footnote { margin-inline-end: auto; color: var(--kn-muted); font-size: 11.5px; }
 .kn-document-details { display: flex; flex-direction: column; gap: 14px; }
 .kn-doc-summary h3, .kn-doc-overview h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text-primary, #17212f); }
-.kn-prose { max-width: 80ch; color: var(--text-primary, #17212f); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.kn-prose { min-width: 0; color: var(--text-primary, #17212f); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
 .kn-prose > :first-child { margin-top: 0; }
 .kn-prose > :last-child { margin-bottom: 0; }
 .kn-prose p { margin: 0 0 10px; }
