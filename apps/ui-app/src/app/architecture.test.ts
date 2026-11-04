@@ -41,7 +41,7 @@ describe('module application architecture', () => {
     const styles = readFileSync(join(project, 'src/styles/index.ts'), 'utf8');
     expect([...styles.matchAll(/import '([^']+)'/g)].map(match => match[1])).toEqual([
       './style.css', './tool-guard.css', './chat-plan-progress.css', './c2.css',
-      '@xterm/xterm/css/xterm.css', './mobile.css', './project-switcher.css', './chat-workspace.css', './execution-approvals.css', './asset-workspace.css', './workflow-builder.css', './capabilities.css', './file-manager.css', './vulnerability-workspace.css', './vault.css', './knowledge.css',
+      '@xterm/xterm/css/xterm.css', './mobile.css', './project-switcher.css', './chat-workspace.css', './execution-approvals.css', './asset-workspace.css', './workflow-builder.css', './capabilities.css', './file-manager.css', './vulnerability-workspace.css', './vault.css', './knowledge.css', './markdown.css',
     ]);
     expect(readFileSync(join(project, 'src/styles/style.css'), 'utf8')).toMatch(/#c62828/i);
   });
