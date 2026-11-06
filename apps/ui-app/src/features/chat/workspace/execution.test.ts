@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { executionAgents, type ExecutionEvent } from './execution';
+import { childTranscript, executionAgents, type ExecutionEvent, type ExecutionMessage } from './execution';
 
 const event = (eventType: string, einoAgent?: string, data: Record<string, unknown> = {}): ExecutionEvent => ({ eventType, data: { einoAgent, ...data } });
 const task = (caller: string, child: string, id: string) => event('tool_call', caller, { toolName: 'task', arguments: JSON.stringify({ subagent_type: child }), toolCallId: id });
@@ -72,5 +72,59 @@ describe('conversation execution evidence', () => {
     const agents = build(events);
     expect(agents).toHaveLength(101);
     expect(agents[100]?.parentId).toBe(agents[99]?.id);
+  });
+
+  it('carries the task() call id on a delegated agent, never on the main agent', () => {
+    const agents = build([event('iteration', 'lead', { einoScope: 'main' }), task('lead', 'recon', 'a')]);
+    expect(agents[0]?.callId).toBeUndefined();
+    expect(agents[1]?.callId).toBe('a');
+  });
+});
+
+const childEvent = (eventType: string, parentToolCallId: string, data: Record<string, unknown> = {}): ExecutionEvent => ({
+  eventType,
+  data: { einoAgent: 'appsec_specialist', parentToolCallId, ...data },
+});
+
+describe('childTranscript', () => {
+  it('returns only the events matching the given task() call id, in order', () => {
+    const messages: ExecutionMessage[] = [{
+      id: 'turn',
+      role: 'assistant',
+      processDetails: [
+        childEvent('child_start', 'call-1', { prompt: 'test sqli' }),
+        childEvent('child_tool_call', 'call-1', { toolName: 'bash', toolCallId: 'child-1', argumentsObj: { command: 'curl x' } }),
+        // A concurrent dispatch's own events must never leak into this one's transcript.
+        childEvent('child_start', 'call-2', { prompt: 'other dispatch' }),
+        childEvent('child_tool_result', 'call-1', { toolName: 'bash', toolCallId: 'child-1', content: '200 OK', isError: false }),
+        childEvent('child_end', 'call-1', { cancelled: false, error: false }),
+      ],
+    }];
+
+    expect(childTranscript(messages, 'call-1')).toEqual([
+      { type: 'start', prompt: 'test sqli' },
+      { type: 'tool_call', toolName: 'bash', toolCallId: 'child-1', argumentsObj: { command: 'curl x' } },
+      { type: 'tool_result', toolName: 'bash', toolCallId: 'child-1', content: '200 OK', isError: false },
+      { type: 'end', cancelled: false, error: false },
+    ]);
+  });
+
+  it('ignores the orchestrator\'s own tool_call/tool_result events (never a child_* eventType)', () => {
+    const messages: ExecutionMessage[] = [{
+      id: 'turn',
+      role: 'assistant',
+      processDetails: [
+        { eventType: 'tool_call', data: { einoAgent: 'raptix', toolCallId: 'call-1', toolName: 'task' } },
+        { eventType: 'tool_result', data: { toolCallId: 'call-1' } },
+      ],
+    }];
+    expect(childTranscript(messages, 'call-1')).toEqual([]);
+  });
+
+  it('returns an empty transcript for an unknown or missing call id', () => {
+    const messages: ExecutionMessage[] = [{ id: 'turn', role: 'assistant', processDetails: [childEvent('child_start', 'call-1', { prompt: 'x' })] }];
+    expect(childTranscript(messages, 'call-9')).toEqual([]);
+    expect(childTranscript(messages, '')).toEqual([]);
+    expect(childTranscript([], 'call-1')).toEqual([]);
   });
 });

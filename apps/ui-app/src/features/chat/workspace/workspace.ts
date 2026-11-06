@@ -2,8 +2,9 @@
 // The panel reads the conversation from the URL hash. It also resets the composer's conversation mode and role to their defaults.
 
 import { specialistLabel } from '../agent-labels';
-import { executionAgents, type ExecutionMessage, type ExecutionAgent } from './execution';
+import { childTranscript, executionAgents, type ExecutionMessage, type ExecutionAgent } from './execution';
 import { createExecutionHistory } from './execution-history';
+import { createAgentConversationOverlay } from './agent-conversation-view';
 
 export type WorkspaceTab = 'agents' | 'progress';
 
@@ -40,6 +41,7 @@ export interface WorkspacePorts {
   hash(): string;
   storage: { get(key: string): string | null; set(key: string, value: string): void };
   currentPage(): string | undefined;
+  activeProject(): string;
   currentRole?(): string | null | undefined;
   selectRole?(role: string): void;
   setInterval(callback: () => void, ms: number): number;
@@ -73,6 +75,10 @@ export function conversationFromHash(hash: string): string {
   return query.get('conversation') || '';
 }
 
+function agentFromHash(hash: string): string {
+  return hash.split('?')[0] === '#chat' ? new URLSearchParams(hash.split('?')[1] || '').get('subagent') || '' : '';
+}
+
 function taskTone(status: string | undefined): [string, string] {
   if (status === 'completed') return ['done', 'ok'];
   if (status === 'in_progress') return ['running', 'run'];
@@ -91,6 +97,10 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
     lastFetchAt: 0,
     closedAgents: new Set<string>(),
     agentSignature: '',
+    /** Set to a delegated ExecutionAgent's id while its own activity is shown in the main
+     *  chat area (agent-conversation-view.ts) instead of a side-panel list, so the periodic
+     *  refresh below can keep it live-updated without re-deriving which row was clicked. */
+    viewingAgentId: '',
   };
   let mounted = false;
   let stopped = false;
@@ -100,6 +110,15 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
   const soft = <T>(promise: Promise<T>, fallback: T): Promise<T> => promise.catch(() => fallback);
   const apiGet = (url: string) => ports.getJson(url);
   const executionHistory = createExecutionHistory(apiGet);
+  const conversationOverlay = createAgentConversationOverlay(doc);
+  function navigateAgent(callId: string): void {
+    const query = new URLSearchParams(ports.hash().split('?')[1] || '');
+    if (callId) query.set('subagent', callId); else query.delete('subagent');
+    doc.defaultView?.history.pushState(null, '', '#chat?' + query.toString());
+    state.agentSignature = '';
+    renderTab(true);
+  }
+  const backToParent = () => navigateAgent('');
 
   function section(label: string, count: number | string | null): HTMLElement {
     const s = el(doc, 'div', 'csai-wsp-section');
@@ -250,8 +269,18 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
       const agents = executionAgents(messages, active);
       const body = bodyEl();
       if (!body) return;
+      // Keep an open conversation overlay live while this dispatch is still running --
+      // the side panel's own tree renders unconditionally below regardless.
+      const selectedCall = agentFromHash(ports.hash());
+      if (selectedCall) {
+        const viewing = agents.find(item => item.callId === selectedCall);
+        state.viewingAgentId = viewing?.id || '';
+        if (viewing) conversationOverlay.show(specialistLabel(viewing.name), childTranscript(messages, selectedCall), backToParent);
+        else conversationOverlay.show('Subagent', [], backToParent, 'This subagent activity is unavailable. Return to the conversation to continue.');
+      }
+      if (state.tab !== 'agents') return;
       body.setAttribute('aria-busy', 'false');
-      const signature = JSON.stringify(agents);
+      const signature = JSON.stringify([agents, selectedCall]);
       if (signature === state.agentSignature && body.childElementCount) return;
       state.agentSignature = signature;
       const focused = doc.activeElement instanceof HTMLElement ? doc.activeElement.dataset.agentId : undefined;
@@ -273,6 +302,10 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
         const branch = el(doc, descendants.length ? 'details' : 'div', 'csai-wsp-branch') as HTMLDetailsElement;
         const row = el(doc, descendants.length ? 'summary' : 'div', 'csai-wsp-agent-row');
         row.dataset.agentId = agent.id;
+        if (agent.callId && agent.callId === selectedCall) {
+          row.classList.add('is-selected');
+          row.setAttribute('aria-current', 'true');
+        }
         const agentLabel = specialistLabel(agent.name);
         row.title = agentLabel;
         row.appendChild(el(doc, 'span', 'csai-wsp-agent-name', agentLabel));
@@ -282,6 +315,19 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
         status.setAttribute('aria-label', label);
         status.title = label;
         row.appendChild(status);
+        if (agent.callId) {
+          const viewBtn = doc.createElement('button');
+          viewBtn.type = 'button';
+          viewBtn.className = 'csai-wsp-agent-view-btn';
+          viewBtn.textContent = 'View';
+          viewBtn.setAttribute('aria-label', 'View ' + agentLabel + ' activity');
+          viewBtn.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            navigateAgent(agent.callId || '');
+          });
+          row.appendChild(viewBtn);
+        }
         branch.appendChild(row);
         if (descendants.length) {
           branch.open = !state.closedAgents.has(agent.id);
@@ -298,7 +344,10 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
       body.scrollTop = scrollTop;
       if (focused) [...body.querySelectorAll<HTMLElement>('[data-agent-id]')].find(row => row.dataset.agentId === focused)?.focus();
     }).catch(error => {
-      if (token === state.token) showError(error);
+      if (token === state.token) {
+        if (agentFromHash(ports.hash())) conversationOverlay.show('Subagent', [], backToParent, 'Could not load subagent activity. Select Agents to retry or return to the conversation.');
+        showError(error);
+      }
     });
   }
 
@@ -353,7 +402,10 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
   /** Renders the active tab for the open conversation. `force` ignores the refresh throttle (tab switch, conversation change). */
   function renderTab(force: boolean): void {
     const conversationId = conversationFromHash(ports.hash());
+    const selectedCall = agentFromHash(ports.hash());
+    if (!selectedCall && conversationOverlay.visible) conversationOverlay.hide();
     if (!conversationId) {
+      if (conversationOverlay.visible) conversationOverlay.hide();
       state.convId = '';
       state.token += 1;
       renderEmpty();
@@ -365,19 +417,24 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
     state.lastFetchAt = ports.now();
     state.token += 1;
     const token = state.token;
-    if (state.collapsed) return;
+    if (selectedCall && !conversationOverlay.visible) conversationOverlay.show('Subagent', [], backToParent, 'Loading subagent activity…');
+    if (state.collapsed && !selectedCall) return;
     const body = bodyEl();
     if (body && (force || changed)) {
       state.agentSignature = '';
-      if (changed) { state.closedAgents.clear(); executionHistory.clear(); }
+      if (changed) {
+        state.closedAgents.clear();
+        state.viewingAgentId = '';
+        executionHistory.clear();
+      }
       clear(body);
       body.setAttribute('aria-busy', 'true');
       const loading = emptyNote('Fetching conversation ' + state.tab + '…', 'Loading workspace');
       loading.setAttribute('role', 'status');
       body.appendChild(loading);
     }
-    if (state.tab === 'agents') renderAgents(conversationId, token);
-    else renderProgress(conversationId, token);
+    if (state.tab === 'agents' || selectedCall) renderAgents(conversationId, token);
+    if (state.tab === 'progress') renderProgress(conversationId, token);
   }
 
   // ---- composer role defaults ----
@@ -402,11 +459,19 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
   timers.push(boot);
 
   // The conversation changes with a replaced hash, which fires no event: the panel is refreshed on a slow timer while the chat page is shown.
+  let lastAgent = '';
+  let lastProject = ports.activeProject();
   timers.push(ports.setInterval(() => {
     if (!mounted || stopped) return;
     if (ports.currentPage() !== 'chat' || ports.hidden()) return;
+    const project = ports.activeProject();
+    if (project !== lastProject) {
+      lastProject = project;
+      if (agentFromHash(ports.hash())) navigateAgent('');
+    }
     const conversationId = conversationFromHash(ports.hash());
-    if (conversationId !== state.convId) renderTab(true);
+    const selectedCall = agentFromHash(ports.hash());
+    if (conversationId !== state.convId || selectedCall !== lastAgent) { lastAgent = selectedCall; renderTab(true); }
     else if (conversationId) renderTab(false);
   }, WATCH_MS));
 
@@ -414,6 +479,7 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
     stopped = true;
     state.token += 1;
     timers.forEach(timer => ports.clearInterval(timer));
+    if (conversationOverlay.visible) conversationOverlay.hide();
     doc.getElementById(PANEL_ID)?.remove();
   };
 }

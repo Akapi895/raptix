@@ -17,6 +17,7 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable
 
+from raptix.core.dispatch_context import DispatchContext, active_dispatch
 from raptix.core.subagent_streaming import (
     StreamingRunnable,
     clear_subagent_renderer,
@@ -292,3 +293,92 @@ class TestNoneIdToolCallGuard:
 
         results = [e for e in events if e["type"] == "subagent_tool_result"]
         assert results and results[0]["tool"] == "bash"
+
+
+class TestParentToolCallIdThreading:
+    """Every subagent_* event must carry the orchestrator's own task() tool_call
+    id (from active_dispatch), so apps/api can trace a child's own stream back
+    to the exact ExecutionAgent row that dispatched it (execution.ts)."""
+
+    def _capture_writer(self) -> tuple[list[dict[str, Any]], Any]:
+        events: list[dict[str, Any]] = []
+
+        def writer(payload: dict[str, Any]) -> None:
+            events.append(payload)
+
+        return events, writer
+
+    @pytest.mark.asyncio
+    async def test_ainvoke_tags_start_and_end_with_the_dispatch_tool_call_id(self) -> None:
+        state_final = {
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[{"id": "tc-1", "name": "bash", "args": {"command": "ls"}}],
+                )
+            ]
+        }
+        fake = CountingRunnable(stream_items=[state_final])
+        wrapper = StreamingRunnable(fake, "appsec_specialist")
+        events, writer = self._capture_writer()
+        from unittest.mock import patch
+
+        context = DispatchContext(
+            dispatch_id="disp-1", objective_id="OBJ-1", attempt=1, tool_call_id="orch-call-42"
+        )
+        dispatch_token = active_dispatch.set(context)
+        try:
+            with patch("raptix.core.subagent_streaming._get_writer", return_value=writer):
+                await wrapper.ainvoke({"messages": [HumanMessage(content="go")]})
+        finally:
+            active_dispatch.reset(dispatch_token)
+
+        starts = [e for e in events if e["type"] == "subagent_start"]
+        ends = [e for e in events if e["type"] == "subagent_end"]
+        calls = [e for e in events if e["type"] == "subagent_tool_call"]
+        assert starts and starts[0]["parent_tool_call_id"] == "orch-call-42"
+        assert ends and ends[0]["parent_tool_call_id"] == "orch-call-42"
+        assert calls and calls[0]["parent_tool_call_id"] == "orch-call-42"
+
+    def test_process_messages_tags_tool_call_with_parent_tool_call_id(self) -> None:
+        wrapper = StreamingRunnable(CountingRunnable([]), "appsec_specialist")
+        events, writer = self._capture_writer()
+
+        wrapper._process_messages(
+            [
+                AIMessage(
+                    content="",
+                    tool_calls=[{"id": "tc-1", "name": "bash", "args": {"command": "ls"}}],
+                ),
+            ],
+            {},
+            renderer=None,
+            has_renderer=False,
+            writer=writer,
+            session_id="sess-1",
+            parent_tool_call_id="orch-call-42",
+        )
+
+        calls = [e for e in events if e["type"] == "subagent_tool_call"]
+        assert calls and calls[0]["parent_tool_call_id"] == "orch-call-42"
+
+    def test_process_messages_defaults_parent_tool_call_id_to_none(self) -> None:
+        wrapper = StreamingRunnable(CountingRunnable([]), "appsec_specialist")
+        events, writer = self._capture_writer()
+
+        wrapper._process_messages(
+            [
+                AIMessage(
+                    content="",
+                    tool_calls=[{"id": "tc-1", "name": "bash", "args": {"command": "ls"}}],
+                ),
+            ],
+            {},
+            renderer=None,
+            has_renderer=False,
+            writer=writer,
+            session_id="sess-1",
+        )
+
+        calls = [e for e in events if e["type"] == "subagent_tool_call"]
+        assert calls and calls[0]["parent_tool_call_id"] is None

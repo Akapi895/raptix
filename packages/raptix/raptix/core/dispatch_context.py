@@ -24,6 +24,11 @@ class DispatchContext:
     fingerprint: str | None = None
     # The dispatch whose execution created this one; None for a dispatch the thread's orchestrator started.
     parent_dispatch_id: str | None = None
+    # The orchestrator's own tool_call id for the task() call that started this dispatch — the
+    # same id apps/api already captures as the ExecutionAgent's identity (execution.ts). Lets a
+    # child's own subagent_* stream events (subagent_streaming.py) be traced back to the exact
+    # delegation that spawned them, even when several dispatches share the same role name.
+    tool_call_id: str | None = None
 
 
 active_dispatch: ContextVar[DispatchContext | None] = ContextVar("active_dispatch", default=None)

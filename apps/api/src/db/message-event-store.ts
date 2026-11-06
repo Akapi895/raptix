@@ -16,9 +16,13 @@ export interface MessageEventInput {
 /**
  * The Agents tab's execution tree (apps/ui-app's Message.processDetails):
  * one row per tool_call/tool_result captured while an assistant turn
- * streams -- see services/execution-events.ts for what gets captured and
- * agent-loop.routes.ts for where it's written (once, after the turn's
- * Message row exists; never partial, never guessed).
+ * streams, plus -- since a dispatched specialist's own subagent_start/
+ * message/tool_call/tool_result/end activity started flowing through the
+ * runtime's "custom" stream mode -- one row per child_* event, each tagged
+ * with the orchestrator's task() tool_call id so the UI can trace it back
+ * to the exact delegation that spawned it. See services/execution-events.ts
+ * for what gets captured and agent-loop.routes.ts for where it's written
+ * (once, after the turn's Message row exists; never partial, never guessed).
  */
 export interface MessageEventStore {
   appendMany(messageId: string, events: MessageEventInput[]): Promise<void>;

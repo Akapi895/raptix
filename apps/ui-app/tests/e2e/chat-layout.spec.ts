@@ -108,6 +108,8 @@ test('Workspace distinguishes loading, running activity and plan status', async 
         return new Response(JSON.stringify({ messages: [{ id: 'execution-turn', role: 'assistant', processDetails: [
           { eventType: 'progress', data: { einoAgent: 'Recon Lead', einoRole: 'orchestrator' } },
           { eventType: 'tool_call', data: { einoAgent: 'Recon Lead', toolName: 'task', toolCallId: 'delegate-1', argumentsObj: { subagent_type: 'Web Tester' } } },
+          { eventType: 'child_start', data: { parentToolCallId: 'delegate-1', prompt: 'Inspect the service' } },
+          { eventType: 'child_message', data: { parentToolCallId: 'delegate-1', text: '**Evidence** from the service' } },
           { eventType: 'progress', data: { einoAgent: 'Web Tester' } },
           { eventType: 'tool_call', data: { einoAgent: 'Web Tester', toolName: 'task', toolCallId: 'delegate-2', argumentsObj: { subagent_type: 'Evidence Reviewer' } } },
           { eventType: 'tool_result', data: { einoAgent: 'Web Tester', toolCallId: 'delegate-2', success: false } },
@@ -146,6 +148,21 @@ test('Workspace distinguishes loading, running activity and plan status', async 
   await expect(body.locator('.csai-wsp-agent-name').filter({ hasText: 'Web Tester' })).toBeHidden();
   await lead.press('Enter');
   await expect(body.locator('.csai-wsp-agent-name').filter({ hasText: 'Evidence Reviewer' })).toBeVisible();
+  await body.getByRole('button', { name: 'View Web Tester activity' }).click();
+  const transcript = page.locator('#csai-subagent-conversation');
+  await expect(transcript).toBeVisible();
+  await expect(transcript.locator('strong')).toHaveText('Evidence');
+  await expect(page.locator('#chat-messages')).toBeHidden();
+  await expect(page.locator('#chat-input-container')).toBeHidden();
+  await expect(page).toHaveURL(/conversation=conv-recon-01.*subagent=delegate-1/);
+  await expect(body.locator('.is-selected')).toContainText('Web Tester');
+  await transcript.getByRole('button', { name: 'Back to conversation' }).click();
+  await expect(page.locator('#chat-messages .message.assistant')).toBeVisible();
+  await expect(page.locator('#chat-input-container')).toBeVisible();
+  await page.goBack();
+  await expect(transcript).toBeVisible();
+  await page.goForward();
+  await expect(transcript).toBeHidden();
   await expect(page.locator('#csai-ws-panel-body')).not.toContainText('Other project activity');
   await expect(page.locator('#csai-ws-panel-body')).toHaveAttribute('aria-busy', 'false');
   await page.locator('#csai-ws-panel-tab-progress').click();
@@ -161,4 +178,63 @@ test('Workspace routes conversation files to the unified file manager', async ({
   await expect(page).toHaveURL(/#chat-files\?conversation=conv-recon-01/);
   await expect(page.locator('#chat-files-filter-conv')).toHaveValue('conv-recon-01');
   await expect(page.locator('#chat-files-list-wrap')).toContainText('assessment.md');
+});
+
+test('a direct link to missing subagent activity survives reload and offers a way back', async ({ page }) => {
+  await openApp(page, 'chat?conversation=conv-recon-01&subagent=missing');
+  const transcript = page.locator('#csai-subagent-conversation');
+  await expect(transcript).toContainText('unavailable');
+  await expect(page.locator('#chat-input-container')).toBeHidden();
+  await page.reload();
+  await expect(transcript).toContainText('unavailable');
+  await transcript.getByRole('button', { name: 'Back to conversation' }).click();
+  await expect(page.locator('#chat-messages .message.assistant')).toBeVisible();
+  await expect(page.locator('#chat-input-container')).toBeVisible();
+});
+
+test('switching project while viewing a subagent does not leave stale child content', async ({ page }) => {
+  await openApp(page, 'chat?conversation=conv-recon-01&subagent=missing');
+  const transcript = page.locator('#csai-subagent-conversation');
+  await expect(transcript).toContainText('unavailable');
+  await page.locator('#csai-project-switcher .csai-ps-trigger').click();
+  await page.locator('.csai-ps-option').filter({ hasText: 'Internal API Review' }).click();
+  await expect(transcript).toBeHidden();
+  await expect(page.locator('#chat-input-container')).toBeVisible();
+});
+
+test('a deleted parent falls back to a usable new conversation', async ({ page }) => {
+  await openApp(page, 'chat?conversation=missing-parent&subagent=missing');
+  await expect(page.locator('#chat-messages')).toBeVisible();
+  await expect(page.locator('#chat-input-container')).toBeVisible();
+});
+
+test('a recorded subagent transcript survives refresh and scrolls independently', async ({ page }) => {
+  await openApp(page, 'dashboard');
+  await page.evaluate(() => {
+    const state = JSON.parse(localStorage.getItem('csai-mock-state-v1')!);
+    const message = state.messages.find((item: { id: string }) => item.id === 'msg-2');
+    message.processDetails = [
+      { eventType: 'progress', data: { einoAgent: 'Recon Lead', einoRole: 'orchestrator' } },
+      { eventType: 'tool_call', data: { einoAgent: 'Recon Lead', toolName: 'task', toolCallId: 'delegate-long', argumentsObj: { subagent_type: 'Web Tester' } } },
+      { eventType: 'child_start', data: { parentToolCallId: 'delegate-long', prompt: 'Inspect the service' } },
+      ...Array.from({ length: 45 }, (_, index) => ({ eventType: 'child_message', data: { parentToolCallId: 'delegate-long', text: `Evidence message ${index}` } })),
+      { eventType: 'child_tool_result', data: { parentToolCallId: 'delegate-long', toolName: 'scan', content: 'large output '.repeat(2000) } },
+    ];
+    localStorage.setItem('csai-mock-state-v1', JSON.stringify(state));
+  });
+  await page.goto('/#chat?conversation=conv-recon-01&subagent=delegate-long');
+  const transcript = page.locator('#csai-subagent-conversation');
+  await expect(transcript).toContainText('Evidence message 44');
+  await expect(page.locator('#chat-input-container')).toBeHidden();
+  expect(await transcript.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true);
+  await transcript.evaluate(el => { el.scrollTop = 0; });
+  await expect(transcript.getByText('Inspect the service')).toBeInViewport();
+  await expect(transcript.locator('.csai-subagent-tool')).toHaveAttribute('open', '');
+  await expect(transcript.locator('.csai-subagent-tool pre')).toContainText('large output');
+  await page.reload();
+  await expect(transcript).toContainText('Evidence message 44');
+  await expect(page.locator('#chat-input-container')).toBeHidden();
+  await transcript.getByRole('button', { name: 'Back to conversation' }).click();
+  await expect(page.locator('#chat-messages .message.assistant')).toBeVisible();
+  await expect(page.locator('#chat-input-container')).toBeVisible();
 });

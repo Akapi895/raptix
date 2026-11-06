@@ -3535,6 +3535,48 @@ html[data-theme="dark"] .sidebar-content:hover::-webkit-scrollbar-thumb:hover {
 .chat-messages:hover::-webkit-scrollbar-thumb:hover {
     background: color-mix(in srgb, var(--text-muted) 80%, transparent);
 }
+
+/* A dispatched specialist's own activity, shown read-only in place of the real
+   conversation (apps/ui-app's workspace/agent-conversation-view.ts). Same base layout
+   as .chat-messages (it reuses that class); #chat-messages itself stays intact, just
+   hidden, underneath. */
+.csai-subagent-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.csai-subagent-banner-back {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.csai-subagent-banner-back:hover {
+    background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+}
+
+.csai-subagent-banner-label {
+    font-size: 13px;
+    color: var(--chat-secondary);
+}
+
+.csai-subagent-empty {
+    color: var(--chat-secondary);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 40px;
+}
 .chat-welcome-empty-state {
     flex: 1 0 auto;
     width: 100%;

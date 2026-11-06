@@ -259,6 +259,52 @@ describe("agent-loop routes", () => {
     ]);
   });
 
+  it("captures a dispatched specialist's own activity from the custom stream mode, tagged with the parent task() call id", async () => {
+    runtime = new FakeRuntime();
+    runtime.stateValues = { messages: [{ type: "ai", content: "Dispatched appsec_specialist." }] };
+    runtime.streamEvents = [
+      {
+        event: "messages/partial",
+        data: [{ type: "ai", id: "answer", content: "", tool_calls: [{ id: "call-1", name: "task", args: { subagent_type: "appsec_specialist" } }] }],
+      },
+      { event: "updates", data: { model: {} } },
+      // raptix.core.subagent_streaming's own events, relayed verbatim through the runtime's
+      // "custom" stream mode once the dispatched specialist starts running.
+      { event: "custom", data: { type: "subagent_start", agent: "appsec_specialist", prompt: "test sqli", session_id: "sess-1", parent_tool_call_id: "call-1" } },
+      {
+        event: "custom",
+        data: { type: "subagent_tool_call", agent: "appsec_specialist", tool: "bash", args: { command: "curl /search" }, id: "child-tc-1", session_id: "sess-1", parent_tool_call_id: "call-1" },
+      },
+      {
+        event: "custom",
+        data: { type: "subagent_tool_result", agent: "appsec_specialist", tool: "bash", content: "200 OK", status: "success", id: "child-tc-1", session_id: "sess-1", parent_tool_call_id: "call-1" },
+      },
+      { event: "custom", data: { type: "subagent_end", agent: "appsec_specialist", elapsed: 1.2, cancelled: false, error: false, session_id: "sess-1", parent_tool_call_id: "call-1" } },
+      { event: "messages/complete", data: [{ type: "tool", tool_call_id: "call-1", name: "task", status: "success", content: "Confirmed." }] },
+      { event: "messages/partial", data: [{ type: "ai", id: "answer", content: "Dispatched appsec_specialist." }] },
+    ];
+    ({ app, token } = await buildAuthedApp(runtime));
+    const project = await app.inject({ method: "POST", url: "/api/projects", headers: headers(), payload: { name: "child transcript test" } });
+    const response = await app.inject({ method: "POST", url: "/api/eino-agent/stream", headers: headers(), payload: { message: "go", projectId: project.json().id } });
+    const events = response.body.split("\n").filter(line => line.startsWith("data: ")).map(line => JSON.parse(line.slice(6)));
+    const final = events.find(event => event.type === "response");
+    if (!final) throw new Error("no response event: " + JSON.stringify(events));
+    // The child's own events are projected live over SSE, not only persisted.
+    expect(events.map(event => event.type)).toEqual(expect.arrayContaining(["child_start", "child_tool_call", "child_tool_result", "child_end"]));
+
+    const history = await app.inject({ url: `/api/conversations/${final.data.conversationId}`, headers: headers() });
+    const assistant = history.json().messages.find((message: { role: string }) => message.role === "assistant");
+    const childEvents = assistant.processDetails.filter((event: { eventType: string }) => event.eventType.startsWith("child_"));
+    expect(childEvents).toEqual([
+      { eventType: "child_start", data: { einoAgent: "appsec_specialist", parentToolCallId: "call-1", sessionId: "sess-1", prompt: "test sqli" } },
+      { eventType: "child_tool_call", data: { einoAgent: "appsec_specialist", parentToolCallId: "call-1", sessionId: "sess-1", toolName: "bash", toolCallId: "child-tc-1", argumentsObj: { command: "curl /search" } } },
+      { eventType: "child_tool_result", data: { einoAgent: "appsec_specialist", parentToolCallId: "call-1", sessionId: "sess-1", toolName: "bash", toolCallId: "child-tc-1", content: "200 OK", isError: false, success: true } },
+      { eventType: "child_end", data: { einoAgent: "appsec_specialist", parentToolCallId: "call-1", sessionId: "sess-1", cancelled: false, error: false } },
+    ]);
+    // Every child event names the exact orchestrator tool_call it came from.
+    expect(childEvents.every((event: { data: { parentToolCallId: string } }) => event.data.parentToolCallId === "call-1")).toBe(true);
+  });
+
   it("rejects missing sessions, empty messages and unknown conversations before dispatch", async () => {
     runtime = new FakeRuntime();
     ({ app, token } = await buildAuthedApp(runtime));

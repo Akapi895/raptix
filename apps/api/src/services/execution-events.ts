@@ -14,6 +14,37 @@ interface RawMessageChunk {
   tool_calls?: unknown;
 }
 
+interface RawChildEvent {
+  type?: unknown;
+  agent?: unknown;
+  parent_tool_call_id?: unknown;
+  session_id?: unknown;
+  prompt?: unknown;
+  text?: unknown;
+  tool?: unknown;
+  args?: unknown;
+  id?: unknown;
+  content?: unknown;
+  status?: unknown;
+  cancelled?: unknown;
+  error?: unknown;
+}
+
+/**
+ * raptix.core.subagent_streaming's event "type" -> apps/ui-app's
+ * processDetails eventType, kept distinct from the orchestrator's own
+ * tool_call/tool_result/progress so execution.ts's status machine (keyed off
+ * those exact strings) never mistakes a child's internal activity for its
+ * own delegation lifecycle.
+ */
+const CHILD_EVENT_TYPES: Readonly<Record<string, string>> = {
+  subagent_start: "child_start",
+  subagent_message: "child_message",
+  subagent_tool_call: "child_tool_call",
+  subagent_tool_result: "child_tool_result",
+  subagent_end: "child_end",
+};
+
 /** The top-level orchestrator graph; apps/ui-app's execution.ts treats this as the run's main agent. */
 const MAIN_AGENT = "raptix";
 
@@ -93,4 +124,58 @@ export function captureExecutionEvents(chunk: unknown, buffer: ToolCallBuffer): 
     });
   }
   return events;
+}
+
+/**
+ * Translates one "custom" stream-mode chunk -- a dispatched specialist's own
+ * subagent_start/message/tool_call/tool_result/end event, emitted through
+ * raptix.core.subagent_streaming's get_stream_writer() channel -- into
+ * apps/ui-app's execution-tree envelope. Unlike captureExecutionEvents, these
+ * events are fully formed the moment they're seen (the child's own stream
+ * already yields complete message state, never growing partial chunks), so
+ * there is nothing to buffer.
+ *
+ * `parentToolCallId` is the orchestrator's own task() tool_call id (threaded
+ * through DispatchContext.tool_call_id server-side) -- the same id
+ * execution.ts uses as a delegated ExecutionAgent's identity. It is what
+ * lets the UI route a child's own activity back to the exact row that
+ * dispatched it, even when several dispatches share the same specialist name.
+ */
+export function captureChildEvents(chunk: unknown): MessageEventInput[] {
+  const raw = record(chunk) as RawChildEvent;
+  const eventType = CHILD_EVENT_TYPES[asString(raw.type)];
+  const einoAgent = asString(raw.agent);
+  if (!eventType || !einoAgent) return [];
+  const base = {
+    einoAgent,
+    parentToolCallId: asString(raw.parent_tool_call_id) || null,
+    sessionId: asString(raw.session_id) || null,
+  };
+  switch (eventType) {
+    case "child_start":
+      return [{ eventType, data: { ...base, prompt: asString(raw.prompt) } }];
+    case "child_message":
+      return [{ eventType, data: { ...base, text: asString(raw.text) } }];
+    case "child_tool_call":
+      return [{
+        eventType,
+        data: { ...base, toolName: asString(raw.tool), toolCallId: asString(raw.id) || null, argumentsObj: record(raw.args) },
+      }];
+    case "child_tool_result":
+      return [{
+        eventType,
+        data: {
+          ...base,
+          toolName: asString(raw.tool),
+          toolCallId: asString(raw.id) || null,
+          content: typeof raw.content === "string" ? raw.content : "",
+          isError: raw.status === "error",
+          success: raw.status !== "error",
+        },
+      }];
+    case "child_end":
+      return [{ eventType, data: { ...base, cancelled: raw.cancelled === true, error: raw.error === true } }];
+    default:
+      return [];
+  }
 }

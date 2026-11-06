@@ -7,6 +7,8 @@ const CHAT_HASH = '#chat';
 export function chatHashForConversation(hash: string, conversationId: string): string | null {
   const id = String(conversationId || '').trim();
   if (!id || hash.split('?')[0] !== CHAT_HASH) return null;
+  const query = new URLSearchParams(hash.split('?')[1] || '');
+  if (query.get('conversation') === id && query.has('subagent')) return null;
   const target = `${CHAT_HASH}?conversation=${encodeURIComponent(id)}`;
   return hash !== target ? target : null;
 }

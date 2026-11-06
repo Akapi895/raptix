@@ -256,7 +256,7 @@ export function createChatApplication(input: ChatDependencies) {
           doc.body.appendChild(link); link.click(); link.remove();
           browser.setTimeout(() => URL.revokeObjectURL(url), 1000);
         },
-        hash: () => browser.location.hash, storage, currentPage: deps.router.currentPage,
+        hash: () => browser.location.hash, storage, currentPage: deps.router.currentPage, activeProject: deps.projects.activeId,
         currentRole: deps.roles.current, selectRole: deps.roles.select, setInterval: resources.every, clearInterval: browser.clearInterval, now: Date.now,
         ready: () => !!doc.querySelector('#page-chat .chat-page-layout'), layout: () => doc.querySelector<HTMLElement>('#page-chat .chat-page-layout'), hidden: () => doc.hidden,
       }));

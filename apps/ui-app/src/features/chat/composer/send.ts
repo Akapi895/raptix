@@ -170,6 +170,7 @@ export interface SendOptions {
 
 /** Sends the message in the input (or the attachments alone). Resolves once the answer has been read. */
 export async function sendChatMessage(deps: SendDependencies, options: SendOptions = {}): Promise<void> {
+  if (typeof document !== 'undefined' && (new URLSearchParams(document.location.hash.split('?')[1] || '').has('subagent') || (document.getElementById('csai-subagent-conversation') && !document.getElementById('csai-subagent-conversation')?.hidden))) return;
   const input = deps.input();
   if (!input) return;
   let message = input.value.trim();

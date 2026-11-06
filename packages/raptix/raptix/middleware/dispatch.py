@@ -333,6 +333,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 replay_grant=grant.command_id if grant else None,
                 fingerprint=fingerprint,
                 parent_dispatch_id=parent.dispatch_id if parent else None,
+                tool_call_id=runtime.tool_call_id,
             ),
             key,
             fingerprint,

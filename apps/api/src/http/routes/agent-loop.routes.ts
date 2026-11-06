@@ -10,7 +10,7 @@ import { extractLastAssistantText } from "../../adapters/runtime/message-extract
 import type { RuntimeEvent } from "../../adapters/runtime/stream.js";
 import { RuntimeUnavailableError } from "../../adapters/runtime/errors.js";
 import { runAgentTurn, TERMINAL_RUN_STATUSES as TERMINAL_STATUSES } from "../../services/agent-turn.js";
-import { captureExecutionEvents, commitPendingToolCalls, createToolCallBuffer, type ToolCallBuffer } from "../../services/execution-events.js";
+import { captureChildEvents, captureExecutionEvents, commitPendingToolCalls, createToolCallBuffer, type ToolCallBuffer } from "../../services/execution-events.js";
 import type { MessageEventInput, MessageEventStore } from "../../db/message-event-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 import { replyRuntimeError } from "./conversations.routes.js";
@@ -267,6 +267,15 @@ async function projectRuntimeEvent(
     for (const toolEvent of settled) await emit(toolEvent.eventType, "", toolEvent.data as Record<string, unknown>);
     if (capture) capture.events.push(...settled);
     for (const stage of Object.keys(record(event.data))) await emit("progress", stage, { stage });
+  }
+  if (event.event === "custom") {
+    // A dispatched specialist's own activity (raptix.core.subagent_streaming's
+    // get_stream_writer() channel) -- always a single, fully-formed dict, never the
+    // growing-partial-chunk shape "messages/partial" uses, so nothing to buffer here.
+    const childEvents = captureChildEvents(event.data);
+    for (const childEvent of childEvents) await emit(childEvent.eventType, "", childEvent.data as Record<string, unknown>);
+    if (capture) capture.events.push(...childEvents);
+    return;
   }
   if (event.event !== "messages/partial" && event.event !== "messages/complete") return;
   for (const chunk of Array.isArray(event.data) ? event.data : []) {

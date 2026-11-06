@@ -18,6 +18,7 @@ export interface MessageMarkdown {
 
 export interface MessageViewDependencies {
   doc: Document;
+  messages?(): HTMLElement | null;
   t: Translate;
   locale(): string;
   markdown: MessageMarkdown;
@@ -126,7 +127,7 @@ export function createMessageView(deps: MessageViewDependencies): MessageView {
     createdAt: string | number | Date | null = null,
     options: AddMessageOptions | null = null,
   ): string {
-    const messagesDiv = byId('chat-messages');
+    const messagesDiv = deps.messages ? deps.messages() : byId('chat-messages');
     if (!messagesDiv) return '';
     const messageDiv = doc.createElement('div');
     const id = 'msg-' + Date.now() + '-' + nextSequence() + '-' + Math.random().toString(36).substr(2, 9);

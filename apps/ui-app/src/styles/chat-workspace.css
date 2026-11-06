@@ -139,6 +139,21 @@ html[data-theme="dark"] #page-chat { --chat-secondary: #abb7c8; }
   padding: var(--chat-gutter);
   background: transparent;
 }
+#page-chat #chat-messages[hidden],
+#page-chat #chat-input-container[hidden],
+#page-chat #csai-subagent-conversation[hidden] { display: none; }
+#page-chat #csai-subagent-conversation {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--chat-gutter);
+}
+.csai-subagent-tool { max-width: 100%; margin: 8px 0; color: var(--text-primary); }
+.csai-subagent-banner { position: sticky; top: calc(-1 * var(--chat-gutter)); z-index: 1; flex-wrap: wrap; background: var(--bg-secondary); }
+.csai-subagent-tool summary { cursor: pointer; }
+.csai-subagent-tool pre { max-width: 100%; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.csai-wsp-agent-row.is-selected { background: var(--bg-tertiary); }
 #page-chat .chat-welcome-empty-state {
   flex: 0 0 auto;
   min-height: 0;
@@ -281,6 +296,8 @@ html[data-theme="dark"] .csai-wsp-agent-status.is-completed { background: #7bdba
 html[data-theme="dark"] .csai-wsp-agent-status.is-running { background: #eac169; }
 html[data-theme="dark"] .csai-wsp-agent-status.is-failed { background: #ff9898; }
 .csai-wsp-status-note { margin: 0; color: var(--chat-secondary); font-size: 11px; line-height: 1.5; }
+.csai-wsp-agent-view-btn { flex: 0 0 auto; min-height: 24px; padding: 2px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: transparent; color: var(--chat-secondary); font: inherit; font-size: 11px; cursor: pointer; }
+.csai-wsp-agent-view-btn:hover { color: var(--text-primary); border-color: var(--text-primary); }
 .csai-wsp-file { min-width: 0; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
 .csai-wsp-file-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .csai-wsp-file-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; font-weight: 500; }
@@ -301,6 +318,7 @@ html[data-theme="dark"] .csai-wsp-agent-status.is-failed { background: #ff9898; 
 @media (pointer: coarse) {
   .csai-wsp-agent-row, .csai-wsp-disclosure > summary { min-height: 44px; }
   .csai-wsp-file-action { min-height: 44px; padding: 0 4px; }
+  .csai-wsp-agent-view-btn { min-height: 44px; }
   #page-chat .conversation-picker-panel .conversation-item-menu { width: 44px; height: 44px; flex-basis: 44px; }
   #page-chat #chat-conversation-search { min-height: 44px; }
 }

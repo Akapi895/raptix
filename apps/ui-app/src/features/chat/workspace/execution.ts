@@ -9,7 +9,18 @@ export interface ExecutionAgent {
   name: string;
   status: AgentStatus;
   parentId?: string;
+  /** The orchestrator's own task() tool_call id for this delegation -- unset for the main
+   *  agent. Matches child_* events' parentToolCallId (see childTranscript()), so a click can
+   *  show exactly this invocation's own activity even when several share the same name. */
+  callId?: string;
 }
+
+export type ChildTranscriptEntry =
+  | { type: 'start'; prompt: string }
+  | { type: 'message'; text: string }
+  | { type: 'tool_call'; toolName: string; toolCallId: string; argumentsObj: Record<string, unknown> }
+  | { type: 'tool_result'; toolName: string; toolCallId: string; content: string; isError: boolean }
+  | { type: 'end'; cancelled: boolean; error: boolean };
 
 function record(value: unknown): Record<string, unknown> {
   if (typeof value === 'string') {
@@ -68,7 +79,7 @@ export function executionAgents(messages: ExecutionMessage[], active: boolean | 
         const callId = text(data.toolCallId);
         if (childName && callId && !delegations.has(callId)) {
           // Each task call is an invocation, even when the same agent is used again.
-          const child: ExecutionAgent = { id: prefix + ':task:' + callId, name: childName, status: 'pending', parentId: agent.id };
+          const child: ExecutionAgent = { id: prefix + ':task:' + callId, name: childName, status: 'pending', parentId: agent.id, callId };
           turn.push(child);
           byName.set(childName, [...(byName.get(childName) || []), child]);
           delegations.set(callId, child);
@@ -99,4 +110,45 @@ export function executionAgents(messages: ExecutionMessage[], active: boolean | 
     agents.push(...turn);
   });
   return agents;
+}
+
+/**
+ * One dispatched specialist's own activity -- its subagent_start/message/
+ * tool_call/tool_result/end events (see execution-events.ts's captureChildEvents) --
+ * filtered out of every message's processDetails by the orchestrator task()
+ * call that spawned it (`callId`, an ExecutionAgent's own field above).
+ * Ordered as received, across every assistant turn (a delegation's events
+ * can outlive the turn that started it only in theory; in practice they
+ * land in the same turn, but scanning every turn costs nothing and never
+ * requires the caller to guess which one).
+ */
+export function childTranscript(messages: ExecutionMessage[], callId: string): ChildTranscriptEntry[] {
+  if (!callId) return [];
+  const entries: ChildTranscriptEntry[] = [];
+  for (const message of messages) {
+    for (const event of message.processDetails || []) {
+      const data = record(event.data);
+      if (text(data.parentToolCallId) !== callId) continue;
+      switch (event.eventType) {
+        case 'child_start':
+          entries.push({ type: 'start', prompt: text(data.prompt) });
+          break;
+        case 'child_message':
+          entries.push({ type: 'message', text: text(data.text) });
+          break;
+        case 'child_tool_call':
+          entries.push({ type: 'tool_call', toolName: text(data.toolName), toolCallId: text(data.toolCallId), argumentsObj: record(data.argumentsObj) });
+          break;
+        case 'child_tool_result':
+          entries.push({ type: 'tool_result', toolName: text(data.toolName), toolCallId: text(data.toolCallId), content: text(data.content), isError: data.isError === true });
+          break;
+        case 'child_end':
+          entries.push({ type: 'end', cancelled: data.cancelled === true, error: data.error === true });
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  return entries;
 }

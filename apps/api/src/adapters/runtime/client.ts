@@ -229,14 +229,17 @@ export class RuntimeClient implements RuntimeTransport {
 
   public streamRun(threadId: string, assistantId: string, input: Record<string, unknown>, config: Record<string, unknown>, signal: AbortSignal): AsyncIterable<RuntimeEvent> {
     return streamRuntimeRun(`${this.apiUrl}/threads/${encodeURIComponent(threadId)}/runs/stream`, this.apiToken, {
-      assistant_id: assistantId, input, config, stream_mode: ["messages", "updates"],
+      // "custom" carries a dispatched specialist's own subagent_start/message/tool_call/
+      // tool_result/end events (raptix.core.subagent_streaming's get_stream_writer() channel)
+      // -- the orchestrator's own messages/updates never include a child's internal activity.
+      assistant_id: assistantId, input, config, stream_mode: ["messages", "updates", "custom"],
       metadata: { specialist_configuration: (config.configurable as Record<string, unknown> | undefined)?.specialist_configuration ?? null },
       multitask_strategy: "reject", if_not_exists: "reject", on_disconnect: "continue",
     }, signal);
   }
 
   public joinRun(threadId: string, runId: string, signal: AbortSignal): AsyncIterable<RuntimeEvent> {
-    const url = `${this.apiUrl}/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}/stream?stream_mode=messages&stream_mode=updates`;
+    const url = `${this.apiUrl}/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}/stream?stream_mode=messages&stream_mode=updates&stream_mode=custom`;
     return joinRuntimeRun(url, this.apiToken, signal);
   }
 }

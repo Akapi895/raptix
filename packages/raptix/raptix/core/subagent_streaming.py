@@ -414,6 +414,9 @@ class StreamingRunnable(RunnableBinding):
             # single session and lost the first one's tool calls.
             "session_id": session_id,
             "dispatch_id": dispatch.dispatch_id if dispatch is not None else None,
+            # The orchestrator's own task() tool_call id — lets apps/api trace this
+            # invocation's events back to the exact ExecutionAgent row that dispatched it.
+            "parent_tool_call_id": dispatch.tool_call_id if dispatch is not None else None,
         }
         if writer:
             writer(event)
@@ -431,6 +434,7 @@ class StreamingRunnable(RunnableBinding):
         cancelled: bool = False,
         error: bool = False,
         transcript: list[dict] | None = None,
+        parent_tool_call_id: str | None = None,
     ) -> None:
         if has_renderer:
             renderer.on_subagent_end(self._name, elapsed, cancelled=cancelled, error=error)
@@ -442,6 +446,7 @@ class StreamingRunnable(RunnableBinding):
             "cancelled": cancelled,
             "error": error,
             "session_id": session_id,
+            "parent_tool_call_id": parent_tool_call_id,
         }
         if writer:
             writer(event)
@@ -457,6 +462,7 @@ class StreamingRunnable(RunnableBinding):
         writer: Callable | None,
         session_id: str,
         transcript: list[dict] | None = None,
+        parent_tool_call_id: str | None = None,
     ) -> None:
         """Process new messages and emit events to channels.
 
@@ -490,6 +496,7 @@ class StreamingRunnable(RunnableBinding):
                             "agent": self._name,
                             "text": text,
                             "session_id": session_id,
+                            "parent_tool_call_id": parent_tool_call_id,
                         }
                         if writer:
                             writer(event)
@@ -534,6 +541,7 @@ class StreamingRunnable(RunnableBinding):
                             # the id (rare; logged as a warning above).
                             "id": tc_id,
                             "session_id": session_id,
+                            "parent_tool_call_id": parent_tool_call_id,
                         }
                         if writer:
                             writer(event)
@@ -566,6 +574,7 @@ class StreamingRunnable(RunnableBinding):
                     # FIFO heuristic required.
                     "id": msg.tool_call_id,
                     "session_id": session_id,
+                    "parent_tool_call_id": parent_tool_call_id,
                 }
                 if writer:
                     # Live stream gets the FULL result.
@@ -590,6 +599,11 @@ class StreamingRunnable(RunnableBinding):
             with _bind_per_run_sandbox():
                 result = self._runnable.invoke(input, config, **kwargs)
             return _public_child_state(self._runnable, result)
+
+        from raptix.core.dispatch_context import active_dispatch
+
+        dispatch = active_dispatch.get()
+        parent_tool_call_id = dispatch.tool_call_id if dispatch is not None else None
 
         prompt = self._extract_prompt(input)
         # Per-invocation id so consumers can distinguish two concurrent
@@ -623,6 +637,7 @@ class StreamingRunnable(RunnableBinding):
                         writer,
                         session_id,
                         transcript,
+                        parent_tool_call_id,
                     )
 
         except (KeyboardInterrupt, asyncio.CancelledError):
@@ -635,6 +650,7 @@ class StreamingRunnable(RunnableBinding):
                 session_id,
                 cancelled=True,
                 transcript=transcript,
+                parent_tool_call_id=parent_tool_call_id,
             )
             raise
         except Exception as exc:
@@ -647,6 +663,7 @@ class StreamingRunnable(RunnableBinding):
                 session_id,
                 error=True,
                 transcript=transcript,
+                parent_tool_call_id=parent_tool_call_id,
             )
             # Return error state instead of re-raising. Re-raising crashes the
             # ToolNode step, which prevents ToolMessages from being saved to the
@@ -667,6 +684,7 @@ class StreamingRunnable(RunnableBinding):
             time.monotonic() - start,
             session_id,
             transcript=transcript,
+            parent_tool_call_id=parent_tool_call_id,
         )
         self._reset_failures()
 
@@ -716,6 +734,11 @@ class StreamingRunnable(RunnableBinding):
                 result = await self._runnable.ainvoke(input, config, **kwargs)
             return _public_child_state(self._runnable, result)
 
+        from raptix.core.dispatch_context import active_dispatch
+
+        dispatch = active_dispatch.get()
+        parent_tool_call_id = dispatch.tool_call_id if dispatch is not None else None
+
         prompt = self._extract_prompt(input)
         # Per-invocation id so consumers can distinguish two concurrent
         # ``task("recon", ...)`` dispatches by SESSION (see invoke() above).
@@ -754,6 +777,7 @@ class StreamingRunnable(RunnableBinding):
                         writer,
                         session_id,
                         transcript,
+                        parent_tool_call_id,
                     )
 
         except (KeyboardInterrupt, asyncio.CancelledError):
@@ -766,6 +790,7 @@ class StreamingRunnable(RunnableBinding):
                 session_id,
                 cancelled=True,
                 transcript=transcript,
+                parent_tool_call_id=parent_tool_call_id,
             )
             raise
         except Exception as exc:
@@ -778,6 +803,7 @@ class StreamingRunnable(RunnableBinding):
                 session_id,
                 error=True,
                 transcript=transcript,
+                parent_tool_call_id=parent_tool_call_id,
             )
             # Return error state instead of re-raising. Re-raising crashes the
             # ToolNode step, which prevents ToolMessages from being saved to the
@@ -798,6 +824,7 @@ class StreamingRunnable(RunnableBinding):
             time.monotonic() - start,
             session_id,
             transcript=transcript,
+            parent_tool_call_id=parent_tool_call_id,
         )
         self._reset_failures()
 
