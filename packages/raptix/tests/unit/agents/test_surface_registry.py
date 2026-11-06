@@ -57,8 +57,8 @@ def test_registry_builds_deterministic_unique_sessions() -> None:
     }
 
 
-def test_surface_exploit_role_has_kg_and_autoingest() -> None:
-    slots = SLOTS_PER_ROLE["surface_exploit"]
+def test_appsec_specialist_role_has_kg_and_autoingest() -> None:
+    slots = SLOTS_PER_ROLE["appsec_specialist"]
 
     assert MiddlewareSlot.KG in slots
     assert MiddlewareSlot.KG_AUTOINGEST in slots
@@ -102,7 +102,7 @@ def test_kg_inventory_and_objective_payload_are_deterministic() -> None:
     ]
     assert {cell["gen"] for cell in cells} == {0}
     assert payload["parent_id"] == "OBJ-001"
-    assert all(child["owner"] == "surface_exploit" for child in payload["children"])
+    assert all(child["owner"] == "appsec_specialist" for child in payload["children"])
     assert all(child["mitre"] == ["T1190"] for child in payload["children"])
     assert all("session_name=" in child["notes"] for child in payload["children"])
     assert all("gen=0" in child["notes"] for child in payload["children"])

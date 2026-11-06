@@ -23,7 +23,7 @@ def _cell_objectives() -> list[dict[str, Any]]:
             "cell_id": "sqli::endpoint::GET::https://app.test/search",
             "vuln_class": "sqli",
             "surface_key": "endpoint::GET::https://app.test/search",
-            "skill_path": "/skills/standard/surface_exploit/sqli/SKILL.md",
+            "skill_path": "/skills/standard/appsec_specialist/sqli/SKILL.md",
             "mitre": "T1190",
             "session_name": "se-sqli",
         },
@@ -31,7 +31,7 @@ def _cell_objectives() -> list[dict[str, Any]]:
             "cell_id": "xss::endpoint::GET::https://app.test/search",
             "vuln_class": "xss",
             "surface_key": "endpoint::GET::https://app.test/search",
-            "skill_path": "/skills/standard/surface_exploit/xss/SKILL.md",
+            "skill_path": "/skills/standard/appsec_specialist/xss/SKILL.md",
             "mitre": "T1190",
             "session_name": "se-xss",
         },
@@ -51,11 +51,11 @@ def test_next_surface_dispatch_selects_one_pending_cell_with_b5_metadata() -> No
         "vuln_class": "sqli",
         "surface_key": "endpoint::GET::https://app.test/search",
         "session_name": "se-sqli",
-        "skill_path": "/skills/standard/surface_exploit/sqli/SKILL.md",
+        "skill_path": "/skills/standard/appsec_specialist/sqli/SKILL.md",
         "task_description": (
             "Coverage cell OBJ-002: test only sqli against "
             "endpoint::GET::https://app.test/search. Use bash session se-sqli for every "
-            "command. Load /skills/standard/surface_exploit/sqli/SKILL.md before the first "
+            "command. Load /skills/standard/appsec_specialist/sqli/SKILL.md before the first "
             "probe. Return exactly one outcome: confirmed, ruled_out, or open_proof_gap, "
             "with KG evidence."
         ),
@@ -113,11 +113,11 @@ def _batch_objective(
     surface = f"endpoint::GET::https://app.test/{vuln_class}"
     return {
         "id": objective_id,
-        "owner": "surface_exploit",
+        "owner": "appsec_specialist",
         "status": status,
         "priority": priority,
         "title": f"Surface exploit: {vuln_class} @ {surface}",
-        "description": f"load /skills/standard/surface_exploit/{vuln_class}/SKILL.md first.",
+        "description": f"load /skills/standard/appsec_specialist/{vuln_class}/SKILL.md first.",
         "notes": f"session_name={session_name}",
     }
 

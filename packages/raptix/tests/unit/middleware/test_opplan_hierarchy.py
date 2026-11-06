@@ -318,7 +318,7 @@ class TestObjectiveExpand:
                     "title": "SQLi @ endpoint",
                     "description": "one cell",
                     "acceptance_criteria": ["evidence"],
-                    "owner": "surface_exploit",
+                    "owner": "appsec_specialist",
                     "notes": "cell_id=sqli::endpoint; session_name=se-test",
                     "mitre": ["T1190"],
                 }
@@ -326,7 +326,7 @@ class TestObjectiveExpand:
         )
 
         child = s["objectives"][1]
-        assert child["owner"] == "surface_exploit"
+        assert child["owner"] == "appsec_specialist"
         assert child["notes"] == "cell_id=sqli::endpoint; session_name=se-test"
         assert child["mitre"] == ["T1190"]
 
@@ -351,7 +351,7 @@ class TestObjectiveExpand:
                     "title": "Surface exploit: sqli @ endpoint::origin",
                     "description": "origin cell",
                     "acceptance_criteria": ["evidence"],
-                    "owner": "surface_exploit",
+                    "owner": "appsec_specialist",
                     "notes": "cell_id=sqli::origin; session_name=se-origin",
                 }
             ],
@@ -387,7 +387,7 @@ class TestObjectiveExpand:
                     "cell_id": "xss::chained",
                     "vuln_class": "xss",
                     "surface_key": "endpoint::chained",
-                    "skill_path": "/skills/standard/surface_exploit/xss/SKILL.md",
+                    "skill_path": "/skills/standard/appsec_specialist/xss/SKILL.md",
                     "session_name": "se-chained",
                     "via_cell": "sqli::origin",
                     "gen": 1,

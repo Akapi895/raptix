@@ -39,7 +39,7 @@ STANDARD_GRAPHS: dict[str, str] = {
     "autohunt": "./raptix/intelligence/agents/standard/autohunt.py:graph",
     "soundwave": "./raptix/intelligence/agents/standard/soundwave.py:graph",
     "exploit": "./raptix/intelligence/agents/standard/exploit.py:graph",
-    "surface_exploit": "./raptix/intelligence/agents/standard/surface_exploit.py:graph",
+    "appsec_specialist": "./raptix/intelligence/agents/standard/appsec_specialist.py:graph",
     "postexploit": "./raptix/intelligence/agents/standard/postexploit.py:graph",
     "analyst": "./raptix/intelligence/agents/standard/analyst.py:graph",
     "reverser": "./raptix/intelligence/agents/standard/reverser.py:graph",

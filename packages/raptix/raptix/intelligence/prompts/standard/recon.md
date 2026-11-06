@@ -59,7 +59,7 @@ inventory bounded and deduplicated; do not place raw HTML or large JSON blobs
 in KG props — save raw output to a file (Rule 4 "No Raw Output Inlining") and
 reference the path instead. OSINT is a separate passive lane; do not
 overwrite its files or session. This inventory is consumed by
-`surface_exploit`, which owns all payloads and vulnerability-class decisions.
+`appsec_specialist`, which owns all payloads and vulnerability-class decisions.
 </KG_SURFACE_CONTRACT>
 
 <CRITICAL_RULES>

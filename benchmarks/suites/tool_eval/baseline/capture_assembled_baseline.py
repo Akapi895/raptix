@@ -76,7 +76,7 @@ _ROLE_MODULES: tuple[str, ...] = (
     "raptix.intelligence.agents.standard.recon",
     "raptix.intelligence.agents.standard.exploit",
     "raptix.intelligence.agents.standard.postexploit",
-    "raptix.intelligence.agents.standard.surface_exploit",
+    "raptix.intelligence.agents.standard.appsec_specialist",
     "raptix.intelligence.agents.standard.analyst",
     "raptix.intelligence.agents.standard.forensicator",
     "raptix.intelligence.agents.standard.osint_operator",

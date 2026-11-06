@@ -19,7 +19,7 @@ _PROMPT = (
 )
 _SURFACE_EXPLOIT_PROMPT = (
     Path(__file__).resolve().parents[5]
-    / "packages/raptix/raptix/intelligence/prompts/standard/surface_exploit.md"
+    / "packages/raptix/raptix/intelligence/prompts/standard/appsec_specialist.md"
 )
 
 
@@ -28,7 +28,7 @@ def _cell(cell_id: str, *, gen: int = 0, priority: int = 1) -> dict[str, Any]:
         "cell_id": cell_id,
         "vuln_class": "sqli",
         "surface_key": f"endpoint::{cell_id}",
-        "skill_path": "/skills/standard/surface_exploit/sqli/SKILL.md",
+        "skill_path": "/skills/standard/appsec_specialist/sqli/SKILL.md",
         "session_name": f"se-{cell_id}",
         "gen": gen,
         "priority": priority,
@@ -103,7 +103,7 @@ def test_kg_inventory_round_trip_preserves_generation_and_deduplicates_cells() -
                 "url": "https://app.test/new?q=1",
                 "path": "/new",
                 "gen": 1,
-                "discovered_by": "surface_exploit",
+                "discovered_by": "appsec_specialist",
                 "via_cell": "sqli::endpoint::GET::https://app.test/origin",
             },
             "children": [

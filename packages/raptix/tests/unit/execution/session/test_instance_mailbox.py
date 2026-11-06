@@ -175,7 +175,7 @@ def test_replacement_attempt_goes_above_every_recorded_attempt_and_keeps_its_int
 
 
 def test_roster_keeps_the_dispatch_that_started_each_attempt(mailbox):
-    mailbox.start_instance("thread-1", "disp-parent", 1, "surface_exploit")
+    mailbox.start_instance("thread-1", "disp-parent", 1, "appsec_specialist")
     mailbox.start_instance("thread-1", "disp-child", 1, "recon", parent_dispatch_id="disp-parent")
     parents = {
         row.dispatch_id: row.parent_dispatch_id for _, row in mailbox.list_instances("thread-1")

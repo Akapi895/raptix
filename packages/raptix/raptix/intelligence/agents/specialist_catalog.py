@@ -27,7 +27,7 @@ def specialist_factories() -> dict[str, Any]:
         for parent in ("raptix", "vulnresearch")
         for s in load_subagents_for_parent(parent)
     }
-    for role in ("autohunt", "soundwave", "surface_exploit"):
+    for role in ("autohunt", "soundwave", "appsec_specialist"):
         module = importlib.import_module(f"raptix.intelligence.agents.standard.{role}")
         factories[role] = getattr(module, f"create_{role}_agent")
     return factories

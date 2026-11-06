@@ -26,7 +26,7 @@ const CATALOG: Readonly<Record<string, { name: string; description: string }>> =
   autohunt: { name: "Autohunt", description: "Autonomous single-target engagement bootstrap." },
   soundwave: { name: "Soundwave", description: "Engagement document writer." },
   exploit: { name: "Exploit", description: "Initial access and vulnerability exploitation." },
-  surface_exploit: { name: "Surface Exploit", description: "Parameterized web/API surface-exploit specialist." },
+  appsec_specialist: { name: "App/API Pentest", description: "Parameterized web/API pentest specialist." },
   postexploit: { name: "PostExploit", description: "Post-exploitation operations." },
   analyst: { name: "Analyst", description: "Vulnerability research specialist." },
   reverser: { name: "Reverser", description: "Reverse engineering (reversing domain plugin)." },

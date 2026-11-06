@@ -76,7 +76,7 @@ MAX_DRIVE_TURNS = 60
 PROCEED_MESSAGE = (
     "APPROVED. The operator grants standing authorization for the entire OPPLAN "
     "and every objective in it. Execute the full kill chain autonomously now — "
-    "dispatch recon, then surface_exploit per the coverage matrix — and do NOT "
+    "dispatch recon, then appsec_specialist per the coverage matrix — and do NOT "
     "pause for further approval or confirmation. Keep going until every "
     "objective reaches a terminal state. Stay strictly within RoE: read-only, "
     "non-destructive actions only."
@@ -87,7 +87,7 @@ PROCEED_MESSAGE = (
 PROCEED_MESSAGE_EXPLOIT = (
     "APPROVED. The operator grants standing authorization for the entire OPPLAN "
     "and every objective in it. Execute the full kill chain autonomously now — "
-    "dispatch recon, then surface_exploit per the coverage matrix — and do NOT "
+    "dispatch recon, then appsec_specialist per the coverage matrix — and do NOT "
     "pause for further approval or confirmation. ACTIVELY EXPLOIT each "
     "vulnerability to SOLVE its Juice Shop challenge (flip the solved flag); do "
     "not stop at read-only verification. Keep going until every objective reaches "

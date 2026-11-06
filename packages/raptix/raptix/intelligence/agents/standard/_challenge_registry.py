@@ -299,7 +299,7 @@ def build_challenge_children(cells: Sequence[Mapping[str, Any]]) -> list[dict[st
                 ],
                 "priority": order,
                 "mitre": [],
-                "owner": "surface_exploit",
+                "owner": "appsec_specialist",
                 "effects": str(cell.get("effects") or "read"),
                 "notes": _notes_for(cell),
             }

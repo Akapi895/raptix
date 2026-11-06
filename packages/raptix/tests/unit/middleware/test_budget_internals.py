@@ -539,7 +539,7 @@ def test_wrap_model_call_no_notice_injection_under_soft_warn():
 #
 # Q14 (P4 research, 2026-10-13): the pre-fix check was poll-then-decide with
 # no reservation, so N concurrently admitted calls (e.g. ADR-0026's bounded
-# 3-way surface_exploit fan-out) could all pass against the same stale
+# 3-way appsec_specialist fan-out) could all pass against the same stale
 # cached spend and collectively overshoot the cap before the next poll
 # caught it -- a real race, not a hypothetical one.
 

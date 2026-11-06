@@ -32,7 +32,7 @@ from raptix.intelligence.agents.standard.soundwave import create_soundwave_agent
 from raptix.intelligence.agents.standard.supply_chain_operator import (
     create_supply_chain_operator_agent,
 )
-from raptix.intelligence.agents.standard.surface_exploit import create_surface_exploit_agent
+from raptix.intelligence.agents.standard.appsec_specialist import create_appsec_specialist_agent
 
 __all__ = [
     "create_recon_agent",
@@ -40,7 +40,7 @@ __all__ = [
     "create_soundwave_agent",
     "create_analyst_agent",
     "create_exploit_agent",
-    "create_surface_exploit_agent",
+    "create_appsec_specialist_agent",
     "create_postexploit_agent",
     "create_raptix_agent",
     "create_reverser_agent",

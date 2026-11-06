@@ -525,7 +525,7 @@ AGENT_TIERS: dict[str, Tier] = {
     "raptix": Tier.HIGH,
     "decepticon": Tier.HIGH,  # compat alias for the historical role name
     "exploit": Tier.HIGH,
-    "surface_exploit": Tier.HIGH,
+    "appsec_specialist": Tier.HIGH,
     "exploiter": Tier.HIGH,
     "patcher": Tier.HIGH,
     "contract_auditor": Tier.HIGH,
@@ -561,7 +561,7 @@ AGENT_TEMPERATURES: dict[str, float] = {
     "soundwave": 0.4,
     "autohunt": 0.4,
     "exploit": 0.3,
-    "surface_exploit": 0.2,
+    "appsec_specialist": 0.2,
     "exploiter": 0.2,
     "detector": 0.2,
     "verifier": 0.2,

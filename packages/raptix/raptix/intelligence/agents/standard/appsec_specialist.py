@@ -1,4 +1,4 @@
-"""Parameterized web/API surface-exploit specialist."""
+"""Parameterized web/API pentest specialist."""
 
 from __future__ import annotations
 
@@ -23,14 +23,14 @@ from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
-_ROLE = "surface_exploit"
+_ROLE = "appsec_specialist"
 # Default raised from 300 to 1000 (matching recon/exploit, the other
 # bash-driven specialists) after a production run showed 18 of 20 dispatch
 # crashes landing at exactly the old 300 ceiling — a cell's own
 # register-user -> login -> captcha -> probe preamble alone can approach
 # that budget before any evidence is gathered. Env-tunable, same pattern
 # raptix.py already uses for the orchestrator's own limit.
-_RECURSION_LIMIT = int(os.environ.get("RAPTIX_SURFACE_EXPLOIT_RECURSION_LIMIT", "1000"))
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_APPSEC_SPECIALIST_RECURSION_LIMIT", "1000"))
 
 _STANDARD_TOOLS: dict[str, Any] = {
     tool.name: tool
@@ -48,7 +48,7 @@ _STANDARD_TOOLS: dict[str, Any] = {
 }
 
 
-def create_surface_exploit_agent(
+def create_appsec_specialist_agent(
     *,
     backend: Any = None,
     llm: Any = None,
@@ -59,7 +59,7 @@ def create_surface_exploit_agent(
     system_prompt: str | None = None,
     recursion_limit: int | None = None,
 ):
-    """Build the parameterized surface-exploit specialist."""
+    """Build the parameterized app/API pentest specialist."""
     if llm is None or fallback_models is None:
         factory = LLMFactory()
         if llm is None:
@@ -98,18 +98,18 @@ def create_surface_exploit_agent(
 
 
 if is_bundle_enabled("standard"):
-    graph = create_surface_exploit_agent()
+    graph = create_appsec_specialist_agent()
 
 
 SUBAGENT_SPEC = SubAgentSpec(
     name=_ROLE,
     description=(
-        "Web/API surface-exploit specialist. Each task names exactly one "
+        "Web/API pentest specialist. Each task names exactly one "
         "vulnerability class, one normalized surface, and one unique sandbox "
         "session. Load the cited class skill, test only that cell, record "
         "confirmed/ruled_out/open_proof_gap evidence, and do not scan broadly."
     ),
-    factory=create_surface_exploit_agent,
+    factory=create_appsec_specialist_agent,
     parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=21,

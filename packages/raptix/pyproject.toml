@@ -194,7 +194,7 @@ enabled = ["standard", "plugins"]
 # Standard bundle — attached to the ``raptix`` main agent.
 recon = "raptix.intelligence.agents.standard.recon:SUBAGENT_SPEC"
 exploit = "raptix.intelligence.agents.standard.exploit:SUBAGENT_SPEC"
-surface_exploit = "raptix.intelligence.agents.standard.surface_exploit:SUBAGENT_SPEC"
+appsec_specialist = "raptix.intelligence.agents.standard.appsec_specialist:SUBAGENT_SPEC"
 analyst = "raptix.intelligence.agents.standard.analyst:SUBAGENT_SPEC"
 postexploit = "raptix.intelligence.agents.standard.postexploit:SUBAGENT_SPEC"
 blue_cell = "raptix.intelligence.agents.standard.blue_cell:SUBAGENT_SPEC"

@@ -53,7 +53,7 @@ Concurrent-batch reservation
 -----------------------------
 Spend is polled, not pushed — ``/spend/tags`` only reflects *completed*
 calls. Without a local reservation, N calls admitted concurrently within
-one poll window (e.g. ADR-0026's bounded 3-way ``surface_exploit`` fan-out)
+one poll window (e.g. ADR-0026's bounded 3-way ``appsec_specialist`` fan-out)
 all see the same pre-call cached total and can all pass the check, so the
 batch's combined cost can overshoot the cap before the next poll catches
 it. ``_inflight`` tracks admitted-but-not-yet-completed calls per scope and

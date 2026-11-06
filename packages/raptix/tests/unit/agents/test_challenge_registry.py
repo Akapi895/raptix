@@ -149,7 +149,7 @@ def test_children_payload_matches_dispatch_contract() -> None:
         assert "gen=0" in child["notes"]
         assert "challenge_id=" in child["notes"]
         assert "challenge_name=" in child["notes"]
-        assert child["owner"] == "surface_exploit"
+        assert child["owner"] == "appsec_specialist"
         # skip outcomes require bounded empirical evidence
         assert any("evidence" in criterion.lower() for criterion in child["acceptance_criteria"])
 

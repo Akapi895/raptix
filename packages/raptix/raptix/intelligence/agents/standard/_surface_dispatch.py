@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-SURFACE_EXPLOIT_OWNER = "surface_exploit"
+SURFACE_EXPLOIT_OWNER = "appsec_specialist"
 DEFAULT_MAX_IN_FLIGHT = 3
 SURFACE_EXPLOIT_OUTCOME_STATUS = {
     "confirmed": "completed",

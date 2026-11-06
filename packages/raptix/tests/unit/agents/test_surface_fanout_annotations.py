@@ -60,7 +60,7 @@ def _unit(cell: dict, dispatch_id: str) -> WorkUnit:
     return WorkUnit(
         dispatch_id=dispatch_id,
         objective_id=f"OBJ-{dispatch_id}",
-        role="surface_exploit",
+        role="appsec_specialist",
         effects=EffectClass(cell["effects"]),
         resources=frozenset(cell["resources"]),
         parallel_safe=cell["parallel_safe"],
@@ -74,7 +74,7 @@ def test_same_endpoint_mutating_cells_serialize_different_endpoints_overlap() ->
     authz_other = WorkUnit(
         dispatch_id="d3",
         objective_id="OBJ-3",
-        role="surface_exploit",
+        role="appsec_specialist",
         effects=EffectClass.MUTATE,
         resources=frozenset({"mutate:endpoint::GET::/rest/other"}),
         parallel_safe=True,

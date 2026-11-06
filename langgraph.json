@@ -8,7 +8,7 @@
     "autohunt": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:autohunt",
     "soundwave": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:soundwave",
     "exploit": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:exploit",
-    "surface_exploit": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:surface_exploit",
+    "appsec_specialist": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:appsec_specialist",
     "postexploit": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:postexploit",
     "analyst": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:analyst",
     "reverser": "./packages/raptix/raptix/intelligence/agents/configured_graphs.py:reverser",

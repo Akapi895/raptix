@@ -43,7 +43,7 @@ class VulnClassSpec:
 
     @property
     def skill_path(self) -> str:
-        return f"/skills/standard/surface_exploit/{self.skill_slug}/SKILL.md"
+        return f"/skills/standard/appsec_specialist/{self.skill_slug}/SKILL.md"
 
 
 def _props(surface: Surface) -> Mapping[str, Any]:
@@ -407,7 +407,7 @@ def build_objective_expand_payload(
                 ],
                 "priority": priority,
                 "mitre": mitre_list,
-                "owner": "surface_exploit",
+                "owner": "appsec_specialist",
                 "effects": str(cell.get("effects") or EffectClass.READ.value),
                 "resources": [str(r) for r in (cell.get("resources") or [])],
                 "parallel_safe": cell.get("parallel_safe"),
