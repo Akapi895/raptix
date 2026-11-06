@@ -979,8 +979,15 @@
 	                            </div>
 	                        </div>
                             </details>
+                            <!-- Not a duplicate of the picker (F-04 removed this once on that assumption):
+                                 opening the picker only lets you pick an EXISTING conversation from the list;
+                                 nothing in it clears to a blank one. This is the only control that does. -->
+                            <button type="button" class="chat-new-task" data-require-permission="chat:write" data-act-click="[[&quot;startNewConversation&quot;]]">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                                <span data-i18n="chat.newTask">New task</span>
+                            </button>
                         </div>
-                        
+
                         <!-- Chat interface -->
                             <!-- Conversation top bar (shown only when a conversation is selected) -->
                             <div id="conversation-header" class="conversation-header" style="display: none;">
@@ -1296,16 +1303,23 @@
                         <section class="vault-card" aria-labelledby="vault-secrets-title">
                             <div class="vault-section-header">
                                 <h3 id="vault-secrets-title" data-i18n="vault.secretsTitle">Secrets</h3>
-                                <p data-i18n="vault.secretsHint">Reveal is explicit and audited. Revoke prevents reuse; it never regenerates a value.</p>
+                                <p data-i18n="vault.secretsHint">Reveal is explicit and audited. Revoke prevents reuse; it never regenerates a value. A promoted secret is visible to every project.</p>
                             </div>
-                            <div id="vault-secrets" class="vault-secrets"></div>
-                        </section>
-                        <section class="vault-card" aria-labelledby="vault-global-title">
-                            <div class="vault-section-header">
-                                <h3 id="vault-global-title" data-i18n="vault.globalTitle">Promoted (global) secrets</h3>
-                                <p data-i18n="vault.globalHint">Visible to every project. Promotion is a one-way, explicit action.</p>
+                            <div id="vault-secrets" class="vault-table-wrap">
+                                <table class="vault-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" data-i18n="vault.name">Name</th>
+                                            <th scope="col" data-i18n="vault.description">Description</th>
+                                            <th scope="col" data-i18n="vault.value">Value</th>
+                                            <th scope="col" data-i18n="vault.columnType">Type</th>
+                                            <th scope="col" data-i18n="vault.columnStatus">Status</th>
+                                            <th scope="col"><span class="sr-only">Actions</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vault-secrets-tbody"></tbody>
+                                </table>
                             </div>
-                            <div id="vault-global-secrets" class="vault-secrets"></div>
                         </section>
                     </div>
                     <dialog id="vault-add-dialog" class="vault-add-dialog" aria-labelledby="vault-add-title">

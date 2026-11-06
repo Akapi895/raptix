@@ -1,6 +1,7 @@
 // The workspace panel of the chat page: the agents of the open conversation and the plan it is following.
 // The panel reads the conversation from the URL hash. It also resets the composer's conversation mode and role to their defaults.
 
+import { specialistLabel } from '../agent-labels';
 import { executionAgents, type ExecutionMessage, type ExecutionAgent } from './execution';
 import { createExecutionHistory } from './execution-history';
 
@@ -272,8 +273,9 @@ export function startChatWorkspace(ports: WorkspacePorts): () => void {
         const branch = el(doc, descendants.length ? 'details' : 'div', 'csai-wsp-branch') as HTMLDetailsElement;
         const row = el(doc, descendants.length ? 'summary' : 'div', 'csai-wsp-agent-row');
         row.dataset.agentId = agent.id;
-        row.title = agent.name;
-        row.appendChild(el(doc, 'span', 'csai-wsp-agent-name', agent.name));
+        const agentLabel = specialistLabel(agent.name);
+        row.title = agentLabel;
+        row.appendChild(el(doc, 'span', 'csai-wsp-agent-name', agentLabel));
         const status = el(doc, 'span', 'csai-wsp-agent-status is-' + agent.status);
         const label = agent.status === 'unknown' ? 'Status unavailable' : agent.status[0]!.toUpperCase() + agent.status.slice(1);
         status.setAttribute('role', 'img');

@@ -48,22 +48,35 @@ export function createVaultView(dependencies: VaultViewDependencies) {
     select.disabled = !dependencies.canRead() || service.state.busy || service.state.projects.length === 0;
   }
 
+  /** A promoted (global) secret is read-only here regardless of which project is selected -- it
+   *  can only be revoked/re-promoted from the project that owns it, which this row doesn't know. */
   function renderRow(secret: VaultSecret, revocable: boolean): HTMLElement {
-    const row = doc.createElement('article');
+    const row = doc.createElement('tr');
     row.className = 'vault-secret-row';
     row.classList.toggle('is-revoked', isRevoked(secret));
-    const main = doc.createElement('div');
-    main.className = 'vault-secret-main';
-    main.append(text(doc, 'span', secret.name, 'vault-secret-name'));
-    if (secret.description) main.append(text(doc, 'span', secret.description, 'vault-secret-description'));
+
+    const nameCell = doc.createElement('td');
+    nameCell.append(text(doc, 'span', secret.name, 'vault-secret-name'));
+    if (isRevoked(secret)) nameCell.append(text(doc, 'span', t('revoked'), 'vault-secret-badge'));
+    row.append(nameCell);
+
+    row.append(text(doc, 'td', secret.description || '—'));
+
     const revealed = service.revealedValue(secret.id);
+    const valueCell = doc.createElement('td');
     const valueEl = text(doc, 'code', revealed ?? '••••••••', 'vault-secret-value');
     valueEl.classList.toggle('is-revealed', revealed !== null);
-    main.append(valueEl);
-    if (isRevoked(secret)) main.append(text(doc, 'span', t('revoked'), 'vault-secret-badge'));
+    valueCell.append(valueEl);
+    row.append(valueCell);
 
-    const actionsEl = doc.createElement('div');
-    actionsEl.className = 'vault-secret-actions';
+    const typeCell = doc.createElement('td');
+    typeCell.append(text(doc, 'span', t(secret.scope === 'GLOBAL' ? 'typeGlobal' : 'typeProject'), 'vault-secret-type vault-secret-type--' + secret.scope.toLowerCase()));
+    row.append(typeCell);
+
+    row.append(text(doc, 'td', t(isRevoked(secret) ? 'statusRevoked' : 'statusActive')));
+
+    const actionsCell = doc.createElement('td');
+    actionsCell.className = 'vault-secret-actions';
     if (!isRevoked(secret)) {
       const revealBtn = text(doc, 'button', t(revealed ? 'hide' : 'reveal'), 'btn-secondary') as HTMLButtonElement;
       revealBtn.type = 'button';
@@ -72,7 +85,7 @@ export function createVaultView(dependencies: VaultViewDependencies) {
         if (revealed !== null) { service.hide(secret.id); return; }
         service.reveal(secret).catch((error) => feedback((error as VaultError).message, true));
       });
-      actionsEl.append(revealBtn);
+      actionsCell.append(revealBtn);
       if (revocable) {
         const revokeBtn = text(doc, 'button', t('revoke'), 'btn-secondary') as HTMLButtonElement;
         revokeBtn.type = 'button';
@@ -88,26 +101,34 @@ export function createVaultView(dependencies: VaultViewDependencies) {
           if (!doc.defaultView?.confirm(t('promoteConfirm', { name: secret.name }))) return;
           service.promote(secret).catch((error) => feedback((error as VaultError).message, true));
         });
-        actionsEl.append(revokeBtn, promoteBtn);
+        actionsCell.append(revokeBtn, promoteBtn);
       }
     }
-    row.append(main, actionsEl);
+    row.append(actionsCell);
     return row;
-  }
-
-  function renderList(hostId: string, secrets: readonly VaultSecret[], revocable: boolean, emptyKey: string): void {
-    const host = el(doc, hostId);
-    if (!host) return;
-    host.replaceChildren();
-    const sorted = sortedByCreatedDesc(secrets);
-    if (!sorted.length) { host.append(text(doc, 'p', t(emptyKey), 'vault-empty')); return; }
-    sorted.forEach((secret) => host.append(renderRow(secret, revocable)));
   }
 
   function render(): void {
     renderProjectSelect();
-    renderList('vault-secrets', service.state.secrets, true, 'emptySecrets');
-    renderList('vault-global-secrets', service.state.globalSecrets, false, 'emptyGlobal');
+    const body = el(doc, 'vault-secrets-tbody');
+    if (body) {
+      body.replaceChildren();
+      // Project secrets and their promoted (global) counterparts are the same kind of
+      // record at different scopes -- one table, with the Type column as the only
+      // distinction, instead of two sections that just duplicate the same row shape.
+      const merged = sortedByCreatedDesc([...service.state.secrets, ...service.state.globalSecrets]);
+      if (!merged.length) {
+        const empty = doc.createElement('tr');
+        const cell = doc.createElement('td');
+        cell.colSpan = 6;
+        cell.className = 'vault-empty';
+        cell.textContent = t('emptyAll');
+        empty.append(cell);
+        body.append(empty);
+      } else {
+        merged.forEach((secret) => body.append(renderRow(secret, secret.scope === 'PROJECT')));
+      }
+    }
     const addBtn = el<HTMLButtonElement>(doc, 'vault-add');
     if (addBtn) addBtn.disabled = !dependencies.canWrite() || service.state.busy || !service.state.projectId;
   }

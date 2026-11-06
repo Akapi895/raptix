@@ -240,11 +240,16 @@ export class PrismaAssetStore implements AssetStore {
         skipped += 1;
         continue;
       }
-      const where = {
-        projectId: item.projectId ?? null,
-        ...(item.host ? { host: item.host } : item.ip ? { ip: item.ip } : { domain: item.domain }),
-      };
-      const existing = await this.db.asset.findFirst({ where });
+      // Matches on whichever identity fields this item actually carries, not just the
+      // highest-priority one: a re-sync that now knows the host (e.g. the KG resolved a
+      // hostname after an earlier pass only had the IP) must still land on the same row,
+      // or every re-sync of the same real target mints a fresh duplicate asset.
+      const identity = [
+        item.host ? { host: item.host } : null,
+        item.ip ? { ip: item.ip } : null,
+        item.domain ? { domain: item.domain } : null,
+      ].filter((clause): clause is { host: string } | { ip: string } | { domain: string } => clause !== null);
+      const existing = await this.db.asset.findFirst({ where: { projectId: item.projectId ?? null, OR: identity } });
       if (existing) {
         await this.db.asset.update({
           where: { id: existing.id },

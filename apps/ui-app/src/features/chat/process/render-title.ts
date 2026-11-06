@@ -2,6 +2,7 @@
 // helpers that translate tool names and retry reasons are passed in, because the page provides them.
 
 import type { Translate } from '../messages/text';
+import { specialistLabel } from '../agent-labels';
 
 /**
  * Helpers the page may provide. Each returns undefined when it has nothing to say, and the wording of this module is
@@ -216,5 +217,5 @@ function retryMessage(message: string, data: Record<string, unknown>, h: TitleHe
 export function agentPrefixOf(data: Record<string, unknown> | null | undefined): string {
   if (!data || data.einoAgent == null) return '';
   const name = String(data.einoAgent).trim();
-  return name ? '[' + name + '] ' : '';
+  return name ? '[' + specialistLabel(name) + '] ' : '';
 }
