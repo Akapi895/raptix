@@ -36,6 +36,7 @@ export function createVaultService(dependencies: VaultServiceDependencies) {
   const schedule = dependencies.setTimeout ?? ((fn, ms) => setTimeout(fn, ms));
   const cancel = dependencies.clearTimeout ?? ((handle) => clearTimeout(handle));
   const events = createEvents<VaultEvents>();
+  let projectEpoch = 0;
 
   const state = {
     projectId: null as string | null,
@@ -69,12 +70,14 @@ export function createVaultService(dependencies: VaultServiceDependencies) {
   /** No busy-guard: callers that already hold `state.busy` (add/revoke/promote) call this directly. */
   async function fetchSecrets(): Promise<void> {
     if (!state.projectId) return;
+    const epoch = projectEpoch;
     const [projectSecrets, globalSecrets] = await Promise.all([
       transport.get<unknown>(`/api/projects/${encodeURIComponent(state.projectId)}/vault/secrets`),
       transport.get<unknown>('/api/vault/global-secrets'),
     ]);
     const parsedProject = secretsResponseSchema.safeParse(projectSecrets);
     const parsedGlobal = secretsResponseSchema.safeParse(globalSecrets);
+    if (projectEpoch !== epoch) return;
     if (!parsedProject.success || !parsedGlobal.success) throw new VaultError(t('invalidResponse'));
     state.secrets = parsedProject.data.secrets.map(normalizeSecret);
     state.globalSecrets = parsedGlobal.data.secrets.map(normalizeSecret);
@@ -99,9 +102,11 @@ export function createVaultService(dependencies: VaultServiceDependencies) {
 
     selectProject(projectId: string): void {
       if (state.projectId === projectId) return;
+      projectEpoch++;
       clearAllRevealed();
       state.projectId = projectId;
       state.secrets = [];
+      state.globalSecrets = [];
       state.loaded = false;
       changed();
     },
@@ -143,10 +148,12 @@ export function createVaultService(dependencies: VaultServiceDependencies) {
     /** Reveal is explicit and audited server-side; the plaintext is held only in this map, cleared on timeout/hide/dispose. */
     async reveal(secret: VaultSecret): Promise<void> {
       if (!state.projectId || state.revealed.has(secret.id)) return;
+      const epoch = projectEpoch;
       try {
         const result = await transport.post<{ plaintext: string }>(
           `/api/projects/${encodeURIComponent(state.projectId)}/vault/secrets/${encodeURIComponent(secret.id)}/reveal`,
         );
+        if (projectEpoch !== epoch) return;
         const timer = schedule(() => { clearRevealed(secret.id); changed(); }, REVEAL_TIMEOUT_MS);
         state.revealed.set(secret.id, { value: result.plaintext, timer });
         changed();
@@ -192,6 +199,7 @@ export function createVaultService(dependencies: VaultServiceDependencies) {
     },
 
     dispose(): void {
+      projectEpoch++;
       clearAllRevealed();
     },
   };

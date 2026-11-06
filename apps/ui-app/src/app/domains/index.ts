@@ -283,7 +283,7 @@ export function createDomainApplication(deps: DomainDependencies) {
     now: Date.now, sleep: lifetime.sleep,
   });
   const toolGuard = initToolGuard({ doc, canRead: () => auth.hasPermission('config:read'), canWrite: () => can('config:write') });
-  const vault = initVault({ doc, canRead: () => auth.hasPermission('vault:read'), canWrite: () => can('vault:write') });
+  const vault = initVault({ doc, canRead: () => auth.hasPermission('vault:read'), canWrite: () => can('vault:write'), activeProject: projects.getActiveProjectId, onProjectChange: listener => projects.service.subscribe(listener) });
   function navigateNotification(item: NotificationItem): void {
     switch (item.type) {
       case 'vulnerability_created': if (item.vulnerabilityId) browser.location.hash = 'vulnerabilities?id=' + encodeURIComponent(item.vulnerabilityId); break;

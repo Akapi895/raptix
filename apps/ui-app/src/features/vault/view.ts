@@ -34,18 +34,24 @@ export function createVaultView(dependencies: VaultViewDependencies) {
     target.classList.toggle('is-error', error);
   };
 
-  function renderProjectSelect(): void {
-    const select = el<HTMLSelectElement>(doc, 'vault-project-select');
-    if (!select) return;
-    const current = service.state.projectId;
-    select.replaceChildren(...service.state.projects.map((project) => {
-      const option = doc.createElement('option');
-      option.value = project.id;
-      option.textContent = project.name;
-      option.selected = project.id === current;
-      return option;
-    }));
-    select.disabled = !dependencies.canRead() || service.state.busy || service.state.projects.length === 0;
+  function iconButton(label: string, path: string): HTMLButtonElement {
+    const button = doc.createElement('button');
+    button.type = 'button';
+    button.className = 'vault-icon-button';
+    button.title = label;
+    button.setAttribute('aria-label', label);
+    const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.7');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    const shape = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+    shape.setAttribute('d', path);
+    svg.append(shape);
+    button.append(svg);
+    return button;
   }
 
   /** A promoted (global) secret is read-only here regardless of which project is selected -- it
@@ -77,39 +83,56 @@ export function createVaultView(dependencies: VaultViewDependencies) {
 
     const actionsCell = doc.createElement('td');
     actionsCell.className = 'vault-secret-actions';
-    if (!isRevoked(secret)) {
-      const revealBtn = text(doc, 'button', t(revealed ? 'hide' : 'reveal'), 'btn-secondary') as HTMLButtonElement;
-      revealBtn.type = 'button';
+    function appendActions(target: HTMLElement): void {
+      if (isRevoked(secret)) return;
+      const revealBtn = iconButton(t(revealed !== null ? 'hide' : 'reveal'), revealed !== null ? 'M2 2l20 20M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A11 11 0 0 1 12 5c5 0 8.3 4.2 10 7a14 14 0 0 1-3.2 3.8M6.2 6.2A14 14 0 0 0 2 12c1.7 2.8 5 7 10 7 1.2 0 2.3-.2 3.3-.6' : 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z');
       revealBtn.disabled = !dependencies.canRead() || service.state.busy;
       revealBtn.addEventListener('click', () => {
         if (revealed !== null) { service.hide(secret.id); return; }
         service.reveal(secret).catch((error) => feedback((error as VaultError).message, true));
       });
-      actionsCell.append(revealBtn);
+      target.append(revealBtn);
       if (revocable) {
-        const revokeBtn = text(doc, 'button', t('revoke'), 'btn-secondary') as HTMLButtonElement;
-        revokeBtn.type = 'button';
+        const revokeBtn = iconButton(t('revoke'), 'M18 6 6 18M6 6l12 12M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z');
         revokeBtn.disabled = !dependencies.canWrite() || service.state.busy;
         revokeBtn.addEventListener('click', () => {
           if (!doc.defaultView?.confirm(t('revokeConfirm', { name: secret.name }))) return;
           service.revoke(secret).catch((error) => feedback((error as VaultError).message, true));
         });
-        const promoteBtn = text(doc, 'button', t('promote'), 'btn-secondary') as HTMLButtonElement;
-        promoteBtn.type = 'button';
+        const promoteBtn = iconButton(t('promote'), 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2c3 3 3 17 0 20M12 2c-3 3-3 17 0 20');
         promoteBtn.disabled = !dependencies.canWrite() || service.state.busy;
         promoteBtn.addEventListener('click', () => {
           if (!doc.defaultView?.confirm(t('promoteConfirm', { name: secret.name }))) return;
           service.promote(secret).catch((error) => feedback((error as VaultError).message, true));
         });
-        actionsCell.append(revokeBtn, promoteBtn);
+        target.append(revokeBtn, promoteBtn);
       }
+    }
+    if (!isRevoked(secret)) {
+      const desktop = doc.createElement('div');
+      desktop.className = 'vault-actions-desktop';
+      appendActions(desktop);
+      const menu = doc.createElement('details');
+      menu.className = 'vault-actions-menu';
+      const summary = doc.createElement('summary');
+      summary.className = 'vault-icon-button';
+      summary.setAttribute('aria-label', `Actions: ${secret.name}`);
+      summary.title = 'Actions';
+      summary.append(iconButton('Actions', 'M12 5h.01M12 12h.01M12 19h.01').firstChild!);
+      const options = doc.createElement('div');
+      options.className = 'vault-actions-options';
+      appendActions(options);
+      menu.append(summary, options);
+      menu.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && menu.open) { menu.open = false; summary.focus(); }
+      });
+      actionsCell.append(desktop, menu);
     }
     row.append(actionsCell);
     return row;
   }
 
   function render(): void {
-    renderProjectSelect();
     const body = el(doc, 'vault-secrets-tbody');
     if (body) {
       body.replaceChildren();
@@ -122,7 +145,7 @@ export function createVaultView(dependencies: VaultViewDependencies) {
         const cell = doc.createElement('td');
         cell.colSpan = 6;
         cell.className = 'vault-empty';
-        cell.textContent = t('emptyAll');
+        cell.textContent = !service.state.projectId ? 'Select a project in the top bar to view its secrets.' : service.state.busy && !service.state.loaded ? 'Loading secrets…' : t('emptyAll');
         empty.append(cell);
         body.append(empty);
       } else {
@@ -141,6 +164,8 @@ export function createVaultView(dependencies: VaultViewDependencies) {
     (el<HTMLInputElement>(doc, 'vault-add-value') ?? { value: '' }).value = '';
     (el<HTMLInputElement>(doc, 'vault-add-description') ?? { value: '' }).value = '';
     feedback(null);
+    const dialogFeedback = el(doc, 'vault-dialog-feedback');
+    if (dialogFeedback) { dialogFeedback.hidden = true; dialogFeedback.textContent = ''; }
     if (!dialog.dataset.vaultBound) {
       dialog.dataset.vaultBound = 'true';
       const onCancel = (event: Event) => { event.preventDefault(); closeAddDialog(); };
@@ -165,22 +190,14 @@ export function createVaultView(dependencies: VaultViewDependencies) {
       closeAddDialog();
       feedback(t('secretAdded'));
     } catch (error) {
-      feedback((error as VaultError).message, true);
+      const target = el(doc, 'vault-dialog-feedback');
+      if (target) { target.textContent = (error as VaultError).message; target.hidden = false; }
     }
   }
 
   function bind(): () => void {
     const offService = service.subscribe(render);
     disposers.push(offService);
-    const select = el<HTMLSelectElement>(doc, 'vault-project-select');
-    if (select) {
-      const onChange = () => {
-        service.selectProject(select.value);
-        void service.load().catch((error) => feedback((error as VaultError).message, true));
-      };
-      select.addEventListener('change', onChange);
-      disposers.push(() => select.removeEventListener('change', onChange));
-    }
     const unbindActions = [
       actions.register('vault.add', openAddDialog),
       actions.register('vault.dialog.close', closeAddDialog),
@@ -193,6 +210,7 @@ export function createVaultView(dependencies: VaultViewDependencies) {
   return {
     bind,
     render,
+    closeAddDialog,
     loadFeedback: feedback,
     dispose(): void {
       service.dispose();

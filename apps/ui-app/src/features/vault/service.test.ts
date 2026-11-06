@@ -28,6 +28,26 @@ describe('vault service', () => {
     expect(vault.state.globalSecrets[0]?.id).toBe('g1');
   });
 
+  it('discards late list and reveal responses after a project switch', async () => {
+    let resolveList!: (value: unknown) => void;
+    let resolveReveal!: (value: unknown) => void;
+    const list = new Promise(resolve => { resolveList = resolve; });
+    const get = vi.fn(() => list);
+    const post = vi.fn(() => new Promise(resolve => { resolveReveal = resolve; }));
+    const vault = service({ get, post, delete: vi.fn() });
+    vault.selectProject('p1');
+    const loading = vault.load();
+    const revealing = vault.reveal({ id: 's1' } as never);
+    vault.selectProject('p2');
+    vault.selectProject('p1');
+    resolveList({ secrets: [wireSecret()] });
+    resolveReveal({ plaintext: 'secret' });
+    await Promise.all([loading, revealing]);
+    expect(vault.revealedValue('s1')).toBeNull();
+    expect(vault.state.secrets).toEqual([]);
+    expect(vault.state.globalSecrets).toEqual([]);
+  });
+
   it('rejects an empty name before making any request', async () => {
     const post = vi.fn();
     const vault = service({ get: vi.fn(), post, delete: vi.fn() });

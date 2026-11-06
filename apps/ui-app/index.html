@@ -253,15 +253,6 @@
                             <span data-i18n="nav.workflows">Workflows</span>
                         </div>
                     </div>
-                    <div class="nav-item" data-page="webshell">
-                        <div class="nav-item-content" data-title="WebShell"  data-i18n="nav.webshell" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="webshell">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="4 17 10 11 4 5"></polyline>
-                                <line x1="12" y1="19" x2="20" y2="19"></line>
-                            </svg>
-                            <span data-i18n="nav.webshell">WebShell</span>
-                        </div>
-                    </div>
                     <div class="nav-item" data-page="vault">
                         <div class="nav-item-content" data-title="Vault"  data-i18n="nav.vault" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="vault">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -269,6 +260,23 @@
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
                             <span data-i18n="nav.vault">Vault</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-page="file-management">
+                        <div class="nav-item-content" data-title="Files"  data-i18n="nav.chatFiles" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="file-management">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <span data-i18n="nav.chatFiles">Files</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-page="webshell">
+                        <div class="nav-item-content" data-title="WebShell"  data-i18n="nav.webshell" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="webshell">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="4 17 10 11 4 5"></polyline>
+                                <line x1="12" y1="19" x2="20" y2="19"></line>
+                            </svg>
+                            <span data-i18n="nav.webshell">WebShell</span>
                         </div>
                     </div>
                     <!-- C2 sidebar entry (with submenu) -->
@@ -291,14 +299,6 @@
                             <div class="nav-submenu-item" data-page="c2-listeners" data-i18n="nav.c2Listeners" data-router-action="navigate" data-router-value="c2-listeners">Listeners</div>
                             <div class="nav-submenu-item" data-page="c2-activity" data-i18n="nav.c2Activity" data-router-action="navigate" data-router-value="c2-activity">Activity</div>
                             <div class="nav-submenu-item" data-page="c2-payloads" data-i18n="nav.c2Payloads" data-router-action="navigate" data-router-value="c2-payloads">Payloads</div>
-                        </div>
-                    </div>
-                    <div class="nav-item" data-page="file-management">
-                        <div class="nav-item-content" data-title="Files"  data-i18n="nav.chatFiles" data-i18n-attr="data-title" data-i18n-skip-text="true" data-router-action="navigate" data-router-value="file-management">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            <span data-i18n="nav.chatFiles">Files</span>
                         </div>
                     </div>
                     <div class="nav-section-label" role="presentation">
@@ -1294,8 +1294,7 @@
                     <div class="page-header">
                         <h2 data-i18n="vault.title">Vault</h2>
                         <div class="page-header-actions">
-                            <select id="vault-project-select" class="form-control vault-project-select" data-require-permission="vault:read"></select>
-                            <button type="button" id="vault-add" class="btn-primary" data-require-permission="vault:write" data-action="vault.add" data-i18n="vault.addSecret" disabled>Add secret</button>
+                            <button type="button" id="vault-add" class="btn-primary vault-add-button" data-require-permission="vault:write" data-action="vault.add" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="vault.addSecret">Add secret</span></button>
                         </div>
                     </div>
                     <div class="page-content vault-content">
@@ -1305,7 +1304,7 @@
                                 <h3 id="vault-secrets-title" data-i18n="vault.secretsTitle">Secrets</h3>
                                 <p data-i18n="vault.secretsHint">Reveal is explicit and audited. Revoke prevents reuse; it never regenerates a value. A promoted secret is visible to every project.</p>
                             </div>
-                            <div id="vault-secrets" class="vault-table-wrap">
+                            <div id="vault-secrets" class="vault-table-wrap m-no-wrap">
                                 <table class="vault-table">
                                     <thead>
                                         <tr>
@@ -1314,7 +1313,7 @@
                                             <th scope="col" data-i18n="vault.value">Value</th>
                                             <th scope="col" data-i18n="vault.columnType">Type</th>
                                             <th scope="col" data-i18n="vault.columnStatus">Status</th>
-                                            <th scope="col"><span class="sr-only">Actions</span></th>
+                                            <th scope="col">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="vault-secrets-tbody"></tbody>
@@ -1340,6 +1339,7 @@
                                 <label for="vault-add-description" data-i18n="vault.description">Description (optional)</label>
                                 <input id="vault-add-description" type="text" maxlength="500" autocomplete="off" spellcheck="false">
                             </div>
+                            <div id="vault-dialog-feedback" class="vault-feedback is-error" role="alert" hidden></div>
                             <footer class="vault-dialog-actions">
                                 <button type="button" class="btn-secondary" data-action="vault.dialog.close" data-i18n="vault.cancelAdd">Cancel</button>
                                 <button type="submit" id="vault-add-confirm" class="btn-primary" data-require-permission="vault:write" data-i18n="vault.addToList">Store secret</button>

@@ -2,19 +2,16 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 1200px;
     width: 100%;
-    margin: 0 auto;
 }
 .vault-page [hidden] { display: none !important; }
-.vault-project-select {
-    min-width: 200px;
-}
+.vault-add-button { display: inline-flex; align-items: center; gap: 6px; }
+.vault-add-button svg { width: 16px; height: 16px; }
 .vault-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px 20px 0;
     min-width: 0;
 }
 .vault-section-header { margin-bottom: 14px; }
@@ -26,7 +23,8 @@
     margin: 4px 0 0;
 }
 .vault-table-wrap { overflow-x: auto; }
-.vault-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.vault-table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 13px; }
+.vault-table th:last-child, .vault-table td:last-child { width: 120px; }
 .vault-table th {
     text-align: left;
     font-size: 11px;
@@ -45,7 +43,7 @@
 .vault-table tbody tr:last-child td { border-bottom: none; }
 .vault-table tbody tr:hover { background: var(--bg-secondary); }
 .vault-empty { color: var(--text-secondary); font-size: 12px; line-height: 1.7; text-align: center; padding: 24px 10px; }
-.vault-secret-row.is-revoked { opacity: 0.55; }
+.vault-secret-row.is-revoked .vault-secret-name { color: var(--text-secondary); }
 .vault-secret-name { font-weight: 600; }
 .vault-secret-value {
     font-family: var(--mono-font, monospace);
@@ -84,7 +82,13 @@
     border-radius: 6px;
     padding: 2px 6px;
 }
-.vault-secret-actions { display: flex; gap: 8px; flex-wrap: wrap; white-space: nowrap; }
+.vault-secret-actions { white-space: nowrap; }
+.vault-actions-menu { display: none; }
+.vault-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.vault-icon-button svg { width: 18px; height: 18px; }
+.vault-icon-button:hover:not(:disabled) { background: var(--bg-secondary); color: var(--text-primary); }
+.vault-icon-button:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 1px; }
+.vault-icon-button:disabled { opacity: .5; cursor: not-allowed; }
 .vault-feedback {
     font-size: 12px;
     padding: 8px 12px;
@@ -106,3 +110,23 @@
 .vault-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 .vault-field label { font-size: 12px; color: var(--text-secondary); }
 .vault-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+@media (max-width: 700px) {
+    .vault-card { padding: 14px 12px 0; }
+    .vault-icon-button { width: 40px; height: 40px; }
+    .vault-table { min-width: 0; }
+    .vault-table thead { display: none; }
+    .vault-table tbody, .vault-table tr { display: block; }
+    .vault-table tr.vault-secret-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+    .vault-table tr.vault-secret-row:last-child { border-bottom: 0; }
+    .vault-table tr.vault-secret-row td { width: auto; min-width: 0; padding: 0; border: 0; overflow-wrap: anywhere; }
+    .vault-table tr.vault-secret-row td:nth-child(1) { grid-column: 1; }
+    .vault-table tr.vault-secret-row td:nth-child(2) { grid-column: 1; color: var(--text-secondary); }
+    .vault-table tr.vault-secret-row td:nth-child(3) { grid-column: 1; overflow-x: auto; }
+    .vault-table tr.vault-secret-row td:nth-child(4), .vault-table tr.vault-secret-row td:nth-child(5) { grid-column: 1; }
+    .vault-table tr.vault-secret-row td:last-child { grid-column: 2; grid-row: 1 / span 5; }
+    .vault-actions-desktop { display: none; }
+    .vault-actions-menu { display: block; position: relative; }
+    .vault-actions-menu summary { list-style: none; }
+    .vault-actions-menu summary::-webkit-details-marker { display: none; }
+    .vault-actions-options { position: absolute; z-index: 2; right: 0; display: flex; padding: 4px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); box-shadow: 0 4px 12px rgb(0 0 0 / .15); }
+}

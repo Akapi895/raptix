@@ -14,6 +14,8 @@ export interface VaultFeatureDependencies {
   actions?: Actions;
   canRead(): boolean;
   canWrite(): boolean;
+  activeProject(): string;
+  onProjectChange(listener: () => void): () => void;
   translate?: (key: string, params?: Record<string, string | number>) => string;
 }
 
@@ -44,17 +46,37 @@ export function initVault(dependencies: VaultFeatureDependencies): VaultFeature 
   });
   let unbind: (() => void) | undefined;
   let unbindActions: (() => void) | undefined;
+  let unbindProject: (() => void) | undefined;
+  let pending = Promise.resolve();
+  function syncProject(): void {
+    const project = dependencies.activeProject();
+    if (service.state.projectId === project) return;
+    service.selectProject(project);
+    view.closeAddDialog();
+    view.loadFeedback(null);
+    pending = pending.catch(() => {}).then(async () => {
+      if (service.state.busy) await new Promise<void>(resolve => {
+        const off = service.subscribe(() => { if (!service.state.busy) { off(); resolve(); } });
+      });
+      if (dependencies.doc.getElementById('page-vault')?.classList.contains('active') && dependencies.canRead()) {
+        try { await service.load(); } catch (error) { view.loadFeedback((error as Error).message, true); }
+      }
+    });
+  }
   return {
     service,
     view,
     async start(): Promise<void> {
       unbind = view.bind();
       unbindActions = actions.bind(dependencies.doc);
+      unbindProject = dependencies.onProjectChange(syncProject);
+      syncProject();
     },
     async load(): Promise<void> {
       if (!dependencies.doc.getElementById('vault-secrets') || !dependencies.canRead()) return;
       try {
-        if (!service.state.projects.length) await service.loadProjects();
+        syncProject();
+        await pending;
         await service.load();
         view.render();
         view.loadFeedback(null);
@@ -65,6 +87,7 @@ export function initVault(dependencies: VaultFeatureDependencies): VaultFeature 
     dispose(): void {
       unbind?.();
       unbindActions?.();
+      unbindProject?.();
       view.dispose();
     },
   };
