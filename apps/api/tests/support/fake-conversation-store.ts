@@ -84,4 +84,16 @@ export class FakeConversationStore implements ConversationStore {
     this.messages.set(conversationId, list);
     return message;
   }
+
+  public async updateMessageContent(id: string, content: string): Promise<MessageRecord> {
+    for (const [conversationId, list] of this.messages) {
+      const index = list.findIndex((m) => m.id === id);
+      if (index === -1) continue;
+      const updated: MessageRecord = { ...list[index]!, content, updatedAt: new Date() };
+      list[index] = updated;
+      this.messages.set(conversationId, list);
+      return updated;
+    }
+    throw new Error(`message not found: ${id}`);
+  }
 }

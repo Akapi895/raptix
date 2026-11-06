@@ -3,14 +3,14 @@ import { PassThrough } from "node:stream";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import type { RuntimeRun, RuntimeTransport } from "../../adapters/runtime/client.js";
 import type { AuthStore } from "../../db/auth-store.js";
-import type { ConversationStore } from "../../db/conversation-store.js";
+import type { ConversationStore, MessageRecord } from "../../db/conversation-store.js";
 import type { ProjectStore } from "../../db/project-store.js";
 import { runConfigurableFor } from "../../adapters/sandbox/routing.js";
 import { extractLastAssistantText } from "../../adapters/runtime/message-extract.js";
 import type { RuntimeEvent } from "../../adapters/runtime/stream.js";
 import { RuntimeUnavailableError } from "../../adapters/runtime/errors.js";
 import { runAgentTurn, TERMINAL_RUN_STATUSES as TERMINAL_STATUSES } from "../../services/agent-turn.js";
-import { captureExecutionEvents } from "../../services/execution-events.js";
+import { captureExecutionEvents, commitPendingToolCalls, createToolCallBuffer, type ToolCallBuffer } from "../../services/execution-events.js";
 import type { MessageEventInput, MessageEventStore } from "../../db/message-event-store.js";
 import { createRequireSession } from "../plugins/auth-guard.js";
 import { replyRuntimeError } from "./conversations.routes.js";
@@ -42,6 +42,15 @@ interface CancelBody {
 }
 
 const asString = (value: unknown): string | undefined => (typeof value === "string" && value.length > 0 ? value : undefined);
+
+// An autonomous mission (OPPLAN with multiple objectives, each dispatching its own
+// sub-agent) can legitimately run a single top-level turn for hours -- 30 minutes
+// aborted real, still-productive runs mid-mission (observed: exploit/appsec_specialist
+// dispatches still producing tool calls in the runtime well past the old limit) and
+// reported them as "Agent run failed" even though the run itself kept going server-side
+// as a background run. The abort only ever tears down this HTTP connection to the
+// runtime, never the run.
+const RUNTIME_STREAM_TIMEOUT_MS = 4 * 60 * 60_000;
 
 /**
  * Best-effort project-scoped sandbox routing for the non-streaming chat path
@@ -246,15 +255,26 @@ async function projectRuntimeEvent(
   event: RuntimeEvent,
   emit: (type: string, message: string, data?: Record<string, unknown>) => Promise<void>,
   seen: Set<string>,
-  capture?: { events: MessageEventInput[]; seenCalls: Set<string> },
+  toolCalls: ToolCallBuffer,
+  capture?: { events: MessageEventInput[] },
 ): Promise<void> {
   if (event.event === "error") throw new RuntimeUnavailableError("The agent run failed; check the runtime logs.");
   if (event.event === "updates") {
+    // A graph step boundary: the model call that just finished has nothing left to add to any
+    // tool_call it made, so this is the first safe point to finalize (and project live) whatever
+    // got buffered -- see ToolCallBuffer for why committing on first sight would be wrong.
+    const settled = commitPendingToolCalls(toolCalls);
+    for (const toolEvent of settled) await emit(toolEvent.eventType, "", toolEvent.data as Record<string, unknown>);
+    if (capture) capture.events.push(...settled);
     for (const stage of Object.keys(record(event.data))) await emit("progress", stage, { stage });
   }
   if (event.event !== "messages/partial" && event.event !== "messages/complete") return;
   for (const chunk of Array.isArray(event.data) ? event.data : []) {
-    if (capture) capture.events.push(...captureExecutionEvents(chunk, capture.seenCalls));
+    // tool_call chunks only ever update the buffer (see captureExecutionEvents); only a
+    // tool_result (never chunked) can come back here ready to project immediately.
+    const toolResults = captureExecutionEvents(chunk, toolCalls);
+    for (const toolEvent of toolResults) await emit(toolEvent.eventType, "", toolEvent.data as Record<string, unknown>);
+    if (capture) capture.events.push(...toolResults);
     const message = record(chunk);
     if (message.type !== "ai" || typeof message.id !== "string") continue;
     const content = typeof message.content === "string" ? message.content : Array.isArray(message.content)
@@ -268,18 +288,36 @@ async function projectRuntimeEvent(
 async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions, conversation: { id: string; runtimeThreadId: string; roleName?: string | null }, userMessageId: string, message: string, configurable: Record<string, unknown>): Promise<void> {
   const emit = (type: string, text = "", data: Record<string, unknown> = {}) => writeEvent(output, type, text, { ...data, conversationId: conversation.id });
   const heartbeat = setInterval(() => { if (!output.destroyed && output.writableLength === 0) output.write(": heartbeat\n\n"); }, 15_000);
+  // A placeholder row created up front, not just at the end: the Agents tab (apps/ui-app's
+  // workspace panel) polls GET /api/conversations/:id and needs a message id to attach
+  // tool_call/tool_result events to while this turn is still streaming, not only once it
+  // finishes. It settles into the real answer (or a failure notice) before the turn ends.
+  let placeholder: MessageRecord | null = null;
+  let flushedEventCount = 0;
+  const flushCapturedEvents = async (capture: { events: MessageEventInput[] }) => {
+    if (!placeholder || capture.events.length <= flushedEventCount) return;
+    await options.messageEventStore.appendMany(placeholder.id, capture.events.slice(flushedEventCount));
+    flushedEventCount = capture.events.length;
+  };
   try {
+    placeholder = await options.conversationStore.appendMessage(conversation.id, "assistant", "Processing...");
     await emit("conversation");
     await emit("message_saved", "", { userMessageId });
     await emit("progress", "Starting agent");
     let runId = "";
     const seen = new Set<string>();
-    const capture = { events: [] as MessageEventInput[], seenCalls: new Set<string>() };
+    const toolCalls = createToolCallBuffer();
+    const capture = { events: [] as MessageEventInput[] };
     const input = { messages: [{ role: "user", content: message }], engagement_name: configurable.engagement_name, workspace_path: "/workspace" };
-    for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, conversation.roleName ?? options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 1000 }, AbortSignal.timeout(30 * 60_000))) {
+    for await (const event of options.runtime.streamRun(conversation.runtimeThreadId, conversation.roleName ?? options.defaultAssistantId ?? "raptix", input, { configurable, recursion_limit: 1000 }, AbortSignal.timeout(RUNTIME_STREAM_TIMEOUT_MS))) {
       if (event.event === "metadata" && typeof record(event.data).run_id === "string") runId = record(event.data).run_id as string;
-      await projectRuntimeEvent(event, emit, seen, capture);
+      await projectRuntimeEvent(event, emit, seen, toolCalls, capture);
+      await flushCapturedEvents(capture);
     }
+    // Safety net: the stream can end (success or not) right after a dispatch with no further
+    // "updates" event to commit it through -- never leave a real tool call unreported.
+    capture.events.push(...commitPendingToolCalls(toolCalls));
+    await flushCapturedEvents(capture);
     if (!runId) throw new RuntimeUnavailableError("Runtime stream ended without a run identity");
     let run = await options.runtime.getRun(conversation.runtimeThreadId, runId);
     // The HTTP stream can close just before the runtime records its terminal status.
@@ -289,6 +327,7 @@ async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions,
       run = await options.runtime.getRun(conversation.runtimeThreadId, runId);
     }
     if (run.status !== "success") {
+      await options.conversationStore.updateMessageContent(placeholder.id, run.status === "interrupted" ? "Cancelled." : "Agent run failed.");
       await emit(run.status === "interrupted" ? "cancelled" : "error", `Agent run status: ${run.status}`, { retryable: false });
       await emit("done", "", { status: run.status === "interrupted" ? "cancelled" : "failed" });
       return;
@@ -299,11 +338,11 @@ async function streamReply(output: PassThrough, options: AgentLoopRoutesOptions,
     if (role !== "ai" && role !== "assistant") throw new RuntimeUnavailableError("Run finished without a new assistant answer");
     const answer = extractLastAssistantText(state.values);
     if (!answer) throw new RuntimeUnavailableError("Run finished without an assistant answer");
-    const saved = await options.conversationStore.appendMessage(conversation.id, "assistant", answer);
-    await options.messageEventStore.appendMany(saved.id, capture.events);
+    const saved = await options.conversationStore.updateMessageContent(placeholder.id, answer);
     await emit("response", answer, { messageId: saved.id, finalized: true, finalizable: false, evidenceVerified: false, completionReason: "stop", mcpExecutionIds: [] });
     await emit("done", "", { status: "success" });
   } catch (error) {
+    if (placeholder) await options.conversationStore.updateMessageContent(placeholder.id, "Agent run failed.").catch(() => {});
     await emit("error", error instanceof RuntimeUnavailableError ? error.message : "Unable to complete the agent turn", { retryable: false });
     await emit("done", "", { status: "failed" });
   } finally {
@@ -325,9 +364,11 @@ async function joinReply(output: PassThrough, runtime: RuntimeTransport, convers
   const heartbeat = setInterval(() => { if (!output.destroyed && output.writableLength === 0) output.write(": heartbeat\n\n"); }, 15_000);
   try {
     const seen = new Set<string>();
-    for await (const event of runtime.joinRun(threadId, runId, AbortSignal.timeout(30 * 60_000))) {
-      await projectRuntimeEvent(event, emit, seen);
+    const toolCalls = createToolCallBuffer();
+    for await (const event of runtime.joinRun(threadId, runId, AbortSignal.timeout(RUNTIME_STREAM_TIMEOUT_MS))) {
+      await projectRuntimeEvent(event, emit, seen, toolCalls);
     }
+    for (const toolEvent of commitPendingToolCalls(toolCalls)) await emit(toolEvent.eventType, "", toolEvent.data as Record<string, unknown>);
     const run = await runtime.getRun(threadId, runId);
     await emit("done", "", { status: run.status === "success" ? "success" : run.status === "interrupted" ? "cancelled" : "failed" });
   } catch (error) {

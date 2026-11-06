@@ -45,6 +45,8 @@ export interface ConversationStore {
   delete(id: string): Promise<boolean>;
   listMessages(conversationId: string): Promise<MessageRecord[]>;
   appendMessage(conversationId: string, role: string, content: string): Promise<MessageRecord>;
+  /** Rewrites an existing message's content in place (e.g. a streamed turn's placeholder settling into its final answer). */
+  updateMessageContent(id: string, content: string): Promise<MessageRecord>;
 }
 
 export class PrismaConversationStore implements ConversationStore {
@@ -112,5 +114,9 @@ export class PrismaConversationStore implements ConversationStore {
 
   public async appendMessage(conversationId: string, role: string, content: string): Promise<MessageRecord> {
     return this.db.message.create({ data: { conversationId, role, content } });
+  }
+
+  public async updateMessageContent(id: string, content: string): Promise<MessageRecord> {
+    return this.db.message.update({ where: { id }, data: { content } });
   }
 }

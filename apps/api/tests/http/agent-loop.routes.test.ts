@@ -226,11 +226,21 @@ describe("agent-loop routes", () => {
     runtime = new FakeRuntime();
     runtime.stateValues = { messages: [{ type: "ai", content: "Dispatched recon." }] };
     runtime.streamEvents = [
+      // A tool call's arguments arrive as a growing JSON string across several "messages/partial"
+      // chunks of the SAME message -- never a "messages/complete" (langgraph_api only gives that
+      // event type to messages that never chunk, like the ToolMessage below). The first chunk for
+      // a call id is typically {}, well before the args are parseable; only the "updates" graph
+      // step boundary after it is a safe point to treat the buffered args as settled.
+      {
+        event: "messages/partial",
+        data: [{ type: "ai", id: "answer", content: "", tool_calls: [{ id: "call-1", name: "task", args: {} }] }],
+      },
       {
         event: "messages/partial",
         data: [{ type: "ai", id: "answer", content: "", tool_calls: [{ id: "call-1", name: "task", args: { subagent_type: "recon", objective_id: "OBJ-001" } }] }],
       },
-      { event: "messages/partial", data: [{ type: "tool", tool_call_id: "call-1", name: "task", status: "success", content: "Recon done." }] },
+      { event: "updates", data: { model: {} } },
+      { event: "messages/complete", data: [{ type: "tool", tool_call_id: "call-1", name: "task", status: "success", content: "Recon done." }] },
       { event: "messages/partial", data: [{ type: "ai", id: "answer", content: "Dispatched recon." }] },
     ];
     ({ app, token } = await buildAuthedApp(runtime));
