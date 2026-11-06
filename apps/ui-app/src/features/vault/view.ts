@@ -25,6 +25,7 @@ function text(doc: Document, tag: string, value: unknown, className?: string): H
 export function createVaultView(dependencies: VaultViewDependencies) {
   const { doc, service, actions, t } = dependencies;
   const disposers: (() => void)[] = [];
+  let loadError = false;
 
   const feedback = (message: string | null, error = false) => {
     const target = el(doc, 'vault-feedback');
@@ -32,6 +33,12 @@ export function createVaultView(dependencies: VaultViewDependencies) {
     target.textContent = message ?? '';
     target.hidden = !message;
     target.classList.toggle('is-error', error);
+  };
+
+  const loadFeedback = (message: string | null, error = false) => {
+    loadError = error && !!message;
+    feedback(message, error);
+    render();
   };
 
   function iconButton(label: string, path: string): HTMLButtonElement {
@@ -145,7 +152,8 @@ export function createVaultView(dependencies: VaultViewDependencies) {
         const cell = doc.createElement('td');
         cell.colSpan = 6;
         cell.className = 'vault-empty';
-        cell.textContent = !service.state.projectId ? 'Select a project in the top bar to view its secrets.' : service.state.busy && !service.state.loaded ? 'Loading secrets…' : t('emptyAll');
+        cell.textContent = !service.state.projectId ? 'Select a project in the top bar to view its secrets.' : service.state.busy && !service.state.loaded ? 'Loading secrets…' : loadError ? 'Secrets could not be loaded. Reopen Vault to try again.' : t('emptyAll');
+        cell.setAttribute('role', 'status');
         empty.append(cell);
         body.append(empty);
       } else {
@@ -211,7 +219,7 @@ export function createVaultView(dependencies: VaultViewDependencies) {
     bind,
     render,
     closeAddDialog,
-    loadFeedback: feedback,
+    loadFeedback,
     dispose(): void {
       service.dispose();
       disposers.splice(0).reverse().forEach((dispose) => dispose());

@@ -14,8 +14,11 @@ for (const width of [1440, 768, 390]) {
     await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
     await page.evaluate(() => {
       const original = window.fetch.bind(window);
+      (window as Window & { vaultMutations?: string[] }).vaultMutations = [];
       window.fetch = async (input, init) => {
         const url = new URL(input instanceof Request ? input.url : String(input), location.href);
+        if (url.pathname.includes('/vault/secrets/') && (init?.method === 'DELETE' || url.pathname.endsWith('/promote'))) (window as Window & { vaultMutations?: string[] }).vaultMutations!.push(url.pathname);
+        if (init?.method === 'DELETE' && /\/vault\/secrets\/[^/]+$/.test(url.pathname)) return Response.json({});
         if (url.pathname === '/api/vault/global-secrets') return Response.json({ secrets: [{ id: 'g1', project_id: null, scope: 'GLOBAL', name: 'Shared secret', description: '', kind: 'credential', source_project_id: 'proj-lab-web', revoked_at: null, created_at: '2026-11-02T00:00:00Z', created_by: 'operator' }] });
         const match = url.pathname.match(/^\/api\/projects\/([^/]+)\/vault\/secrets(?:\/([^/]+)\/(reveal|promote))?$/);
         if (!match) return original(input, init);
@@ -45,11 +48,21 @@ for (const width of [1440, 768, 390]) {
     await row.getByRole('button', { name: 'Reveal', exact: true }).filter({ visible: true }).click();
     await expect(row.locator('.vault-secret-value')).toHaveText('sensitive-fixture');
     if (width <= 700) await row.locator('summary').click();
-    page.once('dialog', dialog => dialog.dismiss());
+    page.once('dialog', dialog => { expect(dialog.message()).toContain('Secret proj-lab-web'); void dialog.dismiss(); });
     await row.getByRole('button', { name: /revoke/i }).filter({ visible: true }).click();
     await expect(row).toContainText('Secret proj-lab-web');
-    page.once('dialog', dialog => dialog.dismiss());
+    page.once('dialog', dialog => { expect(dialog.message()).toContain('Secret proj-lab-web'); void dialog.dismiss(); });
     await row.getByRole('button', { name: /promote/i }).filter({ visible: true }).click();
+    expect(await page.evaluate(() => (window as Window & { vaultMutations?: string[] }).vaultMutations)).toEqual([]);
+    if (width === 1440) {
+      page.once('dialog', dialog => dialog.accept());
+      await row.getByRole('button', { name: /promote/i }).filter({ visible: true }).click();
+      await expect.poll(() => page.evaluate(() => (window as Window & { vaultMutations?: string[] }).vaultMutations?.length)).toBe(1);
+      await expect(row.getByRole('button', { name: /revoke/i }).filter({ visible: true })).toBeEnabled();
+      page.once('dialog', dialog => dialog.accept());
+      await row.getByRole('button', { name: /revoke/i }).filter({ visible: true }).click();
+      await expect.poll(() => page.evaluate(() => (window as Window & { vaultMutations?: string[] }).vaultMutations?.length)).toBe(2);
+    }
     await page.locator('#csai-project-switcher .csai-ps-trigger').click();
     await page.locator('.csai-ps-option').filter({ hasText: 'Internal API Review' }).click();
     await expect(row).not.toContainText('proj-lab-web');
