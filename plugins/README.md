@@ -16,7 +16,7 @@ only Python stdlib and public SDK/core contracts.
 | phishing | `raptix_phishing` | Phisher and deconfliction-preserving identity/workflow resources |
 | active-directory | `raptix_active_directory` | AD operator, ADCS/Kerberos/delegation/GPO/shadow-credentials/DCSync analysis |
 | web | `raptix_web` | JWT, OAuth and cookie/session analysis |
-| network | `raptix_network` | Offline vulnerability assessment and report models |
+| network | `raptix_network` | Domain-name registration only — asset-map coverage is implemented by core KG ingest, not this package |
 
 ## Public contracts
 
