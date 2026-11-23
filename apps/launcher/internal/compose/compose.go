@@ -49,20 +49,12 @@ func New() *Compose {
 	}
 }
 
-// Profiles defines the Docker Compose profile names this launcher
-// recognizes. The shipped catalog (cli + every specialist workload)
-// is the union — `cli` is always activated by `raptix start`;
-// the specialist workloads come up on demand through ADR-0006's
-// opscontrol daemon. The launcher keeps the names here as constants
-// only so `down` / `stop` can sweep every container regardless of
-// which workloads the agent ended up spawning.
+// Profiles lists optional workload profiles used for teardown.
 var Profiles = struct {
-	CLI       string
 	C2        string
 	AD        string
 	Reversing string
 }{
-	CLI:       "cli",
 	C2:        "c2-sliver",
 	AD:        "ad",
 	Reversing: "reversing",
@@ -75,7 +67,6 @@ var Profiles = struct {
 // brought up an ad-hoc combination of specialists.
 func AllProfiles() []string {
 	return []string{
-		"--profile", Profiles.CLI,
 		"--profile", Profiles.C2,
 		"--profile", Profiles.AD,
 		"--profile", Profiles.Reversing,
@@ -306,36 +297,6 @@ func (c *Compose) Exec(service string, command ...string) error {
 	return c.run(args, false)
 }
 
-// RunInteractive runs a one-off container with stdin attached.
-func (c *Compose) RunInteractive(profiles []string, service string, env map[string]string, command ...string) error {
-	cmdArgs := c.baseArgs()
-	for _, p := range profiles {
-		cmdArgs = append(cmdArgs, "--profile", p)
-	}
-	// Note: --no-build is intentionally absent. `docker compose run` does
-	// not accept --no-build (only `up` does); passing it raises
-	// "unknown flag: --no-build" on every Compose version. The original
-	// concern (OSS users without source triggering a build) doesn't
-	// apply here because the cli image is pulled at install time and
-	// `run` only builds when the image is missing.
-	cmdArgs = append(cmdArgs, "run", "--rm")
-	for k, v := range env {
-		cmdArgs = append(cmdArgs, "-e", k+"="+v)
-	}
-	cmdArgs = append(cmdArgs, service)
-	cmdArgs = append(cmdArgs, command...)
-
-	cmd := exec.Command(c.Runtime.Bin, cmdArgs...)
-	cmd.Env = c.composeEnv()
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s compose run %s: %w", c.Runtime.Name, service, err)
-	}
-	return nil
-}
-
 // CleanScratch removes legacy root-level scratch/session directories inside
 // the running sandbox. Current bash tooling writes these directories under
 // each engagement workspace; this cleanup only retires leftovers from older
@@ -354,29 +315,4 @@ func (c *Compose) CleanScratch() {
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	_ = cmd.Run()
-}
-
-// RemoveOrphanedCLI removes any leftover CLI containers.
-func (c *Compose) RemoveOrphanedCLI() {
-	// Best-effort cleanup of orphaned CLI containers.
-	// Anchor the filter to the stack naming convention used by ContainerName
-	// so we don't accidentally match unrelated containers. Use the detected
-	// runtime binary (docker / podman / nerdctl) and its env.
-	stack := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
-	prefix := "raptix"
-	if stack != "" {
-		prefix = "raptix-" + stack
-	}
-	ps := exec.Command(c.Runtime.Bin, "ps", "-aq", "--filter", fmt.Sprintf("name=^%s-cli", prefix))
-	ps.Env = c.composeEnv()
-	out, err := ps.Output()
-	if err != nil || len(out) == 0 {
-		return
-	}
-	ids := strings.Fields(strings.TrimSpace(string(out)))
-	for _, id := range ids {
-		rm := exec.Command(c.Runtime.Bin, "rm", "-f", id)
-		rm.Env = c.composeEnv()
-		_ = rm.Run()
-	}
 }

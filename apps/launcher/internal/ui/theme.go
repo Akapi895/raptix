@@ -17,7 +17,6 @@ var (
 	Dim    = lipgloss.NewStyle().Faint(true)
 	Bold   = lipgloss.NewStyle().Bold(true)
 
-	// Banner style — red to match Ink CLI
 	BannerStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#FF0000"))
 

@@ -1,6 +1,4 @@
-# apps/api -- the ui-app BFF (ADR-0106). Multi-stage build mirroring
-# cli.Dockerfile's shape: build with full devDependencies (Prisma CLI,
-# TypeScript), ship only the compiled output + production node_modules.
+# Build apps/api with its devDependencies and ship compiled output with production dependencies.
 
 # ── Stage 1: Build ────────────────────────────────────────────────
 FROM node:24-slim AS builder
@@ -41,7 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -
 #
 # npm workspaces hoist shared deps to the *root* node_modules, not
 # apps/api/node_modules (which holds only what couldn't be hoisted) --
-# copy the root one, the same as cli.Dockerfile does for apps/cli.
+# copy the root one.
 COPY --from=builder /app/apps/api/package.json ./
 COPY --from=builder /app/apps/api/prisma.config.ts ./
 COPY --from=builder /app/node_modules ./node_modules

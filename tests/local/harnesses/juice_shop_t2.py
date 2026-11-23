@@ -583,7 +583,6 @@ def _shared_runtime_digests(repo_root: Path) -> dict[str, str | None]:
         "litellm": f"ghcr.io/akapi895/raptix-litellm:{version}",
         "sandbox": f"ghcr.io/akapi895/raptix-sandbox:{version}",
         "skillogy": f"ghcr.io/akapi895/raptix-skillogy:{version}",
-        "cli": f"ghcr.io/akapi895/raptix-cli:{version}",
     }
     return {name: _image_id(image) for name, image in images.items()}
 

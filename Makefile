@@ -5,9 +5,9 @@
 # what you test is exactly what ships.
 #
 # Common workflows:
-#   make dogfood      Full OSS UX (launcher → onboard → CLI) on local code
+#   make dogfood      Launcher and Web stack on local code
 #   make smoke        Compose-only smoke (no launcher) — fast pre-release check
-#   make quality      PR gate (Python + CLI + Web)
+#   make quality      PR gate (Python checks)
 #   make dev          Backend hot-reload (compose watch) — daily dev loop
 #   make help         List all targets
 
@@ -20,7 +20,7 @@ COMPOSE       := docker compose
 # ``$(COMPOSE_DEV)``. Closes #214.
 COMPOSE_DEV   := docker compose -f docker-compose.yml -f docker-compose.dev.yml
 COMPOSE_WATCH := docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.watch.yml
-PROFILES_ALL  := --profile cli --profile c2-sliver
+PROFILES_ALL  := --profile c2-sliver
 # apps/web (React UI + Fastify/Prisma server) was retired by ADR-0106 in
 # favor of apps/ui-app + a new apps/api backend. apps/api now has a
 # docker-compose service (`api`, plus the `raptix-api-postgres-init`
@@ -50,12 +50,6 @@ endef
 # here before any subprocess inherits the env.
 export RAPTIX_HOME ?= $(HOME)/.raptix
 
-# Host port the compose stack publishes LangGraph on. Compose reads .env
-# directly; plain Make does not, so extract it here (CRLF-safe) and forward it
-# in dev recipes. Keeps `make cli-dev` pointed at the started stack instead of
-# silently dialing the 2024 default.
-LANGGRAPH_HOST_PORT := $(or $(shell sed -n 's/^LANGGRAPH_PORT=[[:space:]]*//p' .env 2>/dev/null | tr -d '\r' | tail -1),2024)
-
 # Mirror the launcher's start.go credential mount logic so `make dev` (and any
 # other target that calls `docker compose`) populates the litellm container's
 # Claude Code + Codex CLI OAuth tokens without requiring users to run
@@ -66,8 +60,8 @@ export CODEX_AUTH_VOLUME ?= $(shell test -f $(HOME)/.codex/auth.json && echo $(H
 
 .PHONY: help \
         dogfood launcher smoke \
-        dev cli-dev infra \
-        quality quality-strict quality-cli test test-local lint lint-fix \
+        dev infra \
+        quality quality-strict test test-local lint lint-fix \
         ci-lint ci-test ci-test-coverage ci-test-coverage-report \
         status logs health clean \
         node-install \
@@ -79,13 +73,12 @@ help:
 	@echo "Raptix — Pre-release Verification & Development"
 	@echo ""
 	@echo "Pre-release verification (release readiness):"
-	@echo "  make dogfood      Full OSS UX (launcher → onboard → CLI) on local code"
+	@echo "  make dogfood      Launcher and Web stack on local code"
 	@echo "  make smoke        Compose-only smoke (no launcher) — fast OSS-shape check"
 	@echo "  make launcher     Build the Go launcher binary ($(LAUNCHER_BIN))"
 	@echo ""
 	@echo "Development (build the thing being released):"
 	@echo "  make dev          Backend hot-reload (compose watch)"
-	@echo "  make cli-dev      CLI locally + backend hot-reload"
 	@echo ""
 	@echo "Quality gates (PR readiness):"
 	@echo "  make quality        PR gate — mirrors CI PR lane (fast, no slow tests, errors-only typecheck)"
@@ -112,11 +105,7 @@ help:
 
 # ── Pre-release Verification (PRIMARY) ───────────────────────────
 
-## End-to-end OSS dogfood: launcher onboard → engagement picker → compose up
-## → CLI. Identical UX to a real `curl | bash` install, but every image and
-## the launcher itself come from the current checkout (tag :dev). The
-## launcher version is "dev" so auto-update + config-sync are skipped — the
-## symlinked .dogfood/ tree is the source of truth.
+## Launch a locally built stack using an isolated installation directory.
 dogfood: launcher
 	@echo "[dogfood] Stopping any prior launcher and repo-root stacks..."
 	$(CLEAN_LAUNCHER_STACK)
@@ -128,7 +117,7 @@ dogfood: launcher
 	@ln -sfn $(CURDIR)/.env.example        $(DOGFOOD_HOME)/.env.example
 	@echo ""
 	@echo "[dogfood] Building images from local code (tag :dev)..."
-	RAPTIX_VERSION=dev $(COMPOSE) --profile cli build
+	RAPTIX_VERSION=dev $(COMPOSE) build
 	@echo ""
 	@echo "[dogfood] Launching ./$(LAUNCHER_BIN) (RAPTIX_HOME=$(DOGFOOD_HOME))"
 	@echo ""
@@ -156,17 +145,17 @@ smoke:
 	@$(COMPOSE) $(PROFILES_ALL) down --volumes --remove-orphans 2>/dev/null; true
 	@echo ""
 	@echo "[2/4] Building images from local code..."
-	$(COMPOSE) --profile cli build
+	$(COMPOSE) build
 	@echo ""
 	@echo "[3/4] Starting services (--no-build --wait, OSS launcher flow)..."
-	$(COMPOSE) --profile cli up -d --no-build --wait \
+	$(COMPOSE) up -d --no-build --wait \
 		--wait-timeout $${RAPTIX_STARTUP_TIMEOUT_SECONDS:-600}
 	@echo ""
 	@echo "[4/4] Health checks..."
 	@$(MAKE) -s health
 	@echo ""
 	@echo "=== smoke OK — stack mirrors OSS user state ==="
-	@echo "  Web:          optional (/web from CLI)"
+	@echo "  Web:          http://localhost:$${UI_PORT:-5173}"
 	@echo "  LangGraph:    http://localhost:$${LANGGRAPH_PORT:-2024}"
 	@echo "  Run dogfood:  make dogfood"
 	@echo "  Teardown:     make clean"
@@ -177,27 +166,7 @@ smoke:
 dev:
 	$(COMPOSE_WATCH) watch
 
-## CLI locally (Node) — backend stays in Docker with hot-reload sync.
-##
-## Build chain: shared/streaming dist → cli dist → run.
-## `npm run dev` only watches tsc; `node --watch` re-execs on dist changes.
-## Load the same .env as Compose so the local CLI receives the engagement pin.
-## The CLI is an Ink app, so `node` MUST stay in the foreground — Ink needs a
-## real TTY (raw mode) on stdin, which a backgrounded job does not get. So tsc
-## watch runs in the background and a trap tears it down when the foreground
-## `node` exits (Ctrl-C).
-cli-dev: infra
-	@$(COMPOSE_WATCH) watch --no-up --quiet langgraph &
-	npm run build --workspace=@raptix/streaming
-	cd apps/cli && npm run build
-	cd apps/cli && npm run dev & TSC_PID=$$!; \
-	  trap "kill $$TSC_PID 2>/dev/null" EXIT INT TERM; \
-	  cd apps/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:$(LANGGRAPH_HOST_PORT)} node --env-file-if-exists=../../.env --watch dist/index.js
-
 # Internal: bring up backend infra (built from local code).
-# Chains the dev override so local-dev workflows (cli-dev) pick up
-# the skills bind mount alongside the base stack. The OSS launcher path
-# (smoke + dogfood) keeps ``$(COMPOSE)`` to mirror what end users run.
 infra:
 	@echo "[infra] Ensuring backend services are running..."
 	@$(COMPOSE_DEV) up -d --build postgres neo4j litellm langgraph sandbox skillogy
@@ -280,27 +249,19 @@ ci-test-coverage:
 ci-test-coverage-report:
 	uv run pytest -n auto --cov --cov-report=xml --cov-report=term --cov-fail-under=0 -m "not slow"
 
-quality-cli: node-install
-	# streaming workspace must be built first — its package.json main
-	# resolves to dist/, which cli's typecheck + build consume.
-	npm run build --workspace=@raptix/streaming
-	npm run typecheck --workspace=@raptix/cli
-	npm run build --workspace=@raptix/cli
-	npm run test --workspace=@raptix/cli
-
-## PR gate — mirrors CI PR lane (errors-only typecheck + fast pytest + CLI).
+## PR gate — mirrors CI PR lane (errors-only typecheck + fast pytest).
 ## Use before opening a PR; security/release/remote-run checks are separate gates.
 ## apps/ui-app / apps/api have their own CI job (the `web` job in
 ## .github/workflows/ci.yml) but no Make target of their own yet -- run
 ## `npm run typecheck|lint|build|test --workspace=@raptix/api` and the
 ## apps/ui-app equivalents directly until one is added here.
-quality: ci-lint ci-test quality-cli
+quality: ci-lint ci-test
 	@echo ""
 	@echo "OK — PR gates passed (mirrors CI PR lane)"
 
 ## Release gate — mirrors CI main-push lane (coverage 60%) + full basedpyright
 ## audit (warnings + info). Run before tagging a release.
-quality-strict: ci-lint ci-test-coverage quality-cli
+quality-strict: ci-lint ci-test-coverage
 	@echo ""
 	@echo "==> basedpyright (full — warning + info audit, non-blocking)"
 	uv run basedpyright

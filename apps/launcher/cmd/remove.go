@@ -59,7 +59,6 @@ func runRemove(cmd *cobra.Command, args []string) error {
 	// poisoning a subsequent reinstall with stale schema state.
 	ui.Info("Stopping services and removing volumes...")
 	_ = c.DownAndPurge()
-	c.RemoveOrphanedCLI()
 
 	// Phase 2: Remove Docker images
 	ui.Info("Removing Docker images...")

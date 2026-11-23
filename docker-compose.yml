@@ -135,13 +135,7 @@ services:
       - raptix-net
     restart: "no"
 
-  # apps/api -- the ui-app BFF (ADR-0106). Reaches langgraph over raptix-net
-  # the same way the CLI does, with no bearer token by default (matching
-  # today's actual `langgraph dev` behavior; RAPTIX_RUNTIME_API_TOKEN_FILE
-  # stays optional -- see apps/api/.env.example). On sandbox-net too, ahead
-  # of need, so joining it later (once per-project sandbox provisioning
-  # exists, see apps/launcher/internal/sandboxes/) is a code change in
-  # apps/api only, not another compose edit.
+  # The Web API connects to LangGraph and the project sandboxes.
   api:
     image: ghcr.io/akapi895/raptix-api:${RAPTIX_VERSION:-stable}
     build:
@@ -489,7 +483,7 @@ services:
 
   # LangGraph Platform — Agent API Server
   # Exposes all agents (raptix, soundwave, recon, exploit, postexploit)
-  # as a streaming API on port 2024. Ink CLI connects here.
+  # as a streaming API on port 2024.
   langgraph:
     image: ghcr.io/akapi895/raptix-langgraph:${RAPTIX_VERSION:-stable}
     # Append --allow-blocking by default so blockbuster doesn't fatally
@@ -541,9 +535,7 @@ services:
       - RAPTIX_RUNTIME_API_TOKEN_FILE=${RAPTIX_RUNTIME_API_TOKEN_FILE:-/run/raptix/sandbox-secrets/runtime-api-token}
       # Vault: where the agent's vault tools reach apps/api, and the bearer
       # token they present to its internal routes (apps/api verifies it).
-      # Distinct from RAPTIX_API_URL (set on the cli service only, meaning
-      # "this stack's own langgraph API") -- RAPTIX_WEB_API_URL always means
-      # apps/api, the Node service that owns Vault/Project/WebShell records.
+      # RAPTIX_WEB_API_URL points to apps/api, which owns the vault and project records.
       - RAPTIX_WEB_API_URL=${RAPTIX_WEB_API_URL:-http://api:8080}
       - RAPTIX_WEB_API_INTERNAL_TOKEN_FILE=${RAPTIX_WEB_API_INTERNAL_TOKEN_FILE:-/run/raptix/sandbox-secrets/web-api-internal-token}
       # The same workspace root as the runtime, so a pinned engagement's files
@@ -579,7 +571,7 @@ services:
       # $RAPTIX_HOME/telemetry; without this mount it lived only in the
       # container's writable layer, so every image update minted a NEW id
       # (measured: 95% of "installs" survived a single day). Persisting it here
-      # also makes the agent and the host CLI agree on one id.
+      # keeps runtime telemetry aligned with this installation.
       - ${RAPTIX_HOME:-~/.raptix}/telemetry:/root/.raptix/telemetry
       # SQLite checkpoints and dev-server thread/run metadata survive recreate.
       - langgraph_state:/app/.langgraph_api
@@ -623,59 +615,6 @@ services:
     restart: unless-stopped
     logging: *default-logging
 
-
-  # Web dashboard: the legacy Next.js `web` service was retired (W20).
-  # The active web tier is the web-raptix stack — Vite UI + independent
-  # API server — deployed via docker-compose.web-raptix.yml on port 3000.
-  # The archived image remains pullable from GHCR for emergency rollback.
-
-  # Ink CLI — Interactive terminal UI
-  # Runs via: docker compose run --rm cli
-  cli:
-    image: ghcr.io/akapi895/raptix-cli:${RAPTIX_VERSION:-stable}
-    build:
-      context: .
-      dockerfile: infra/containers/cli.Dockerfile
-      args:
-        VERSION: ${VERSION:-0.0.0}
-    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-cli
-    stdin_open: true
-    tty: true
-    # v1.1.8 `/web` slash command legacy: the CLI container keeps the
-    # docker.sock + on-host compose project mount so slash commands can
-    # reach the host daemon. Since W20, `/web` only reports the URL —
-    # the dashboard lifecycle moved to the web-raptix stack on the host
-    # (docker-compose.web-raptix.yml).
-    #
-    # OSS scope: user == host owner. Multi-tenant deployments never
-    # expose the docker socket to a tenant CLI — those deployments
-    # override this service's volumes via a compose overlay.
-    environment:
-      - RAPTIX_API_URL=http://langgraph:2024
-      - TERM=xterm-256color
-      - COLORTERM=truecolor
-      - RAPTIX_VERSION=${RAPTIX_VERSION:-}
-      - RAPTIX_STACK_NAME=${RAPTIX_STACK_NAME:-}
-      - RAPTIX_HOME=/raptix-home
-      - RAPTIX_COMPOSE_FILE=/raptix-home/docker-compose.yml
-      - RAPTIX_COMPOSE_ENV_FILE=/raptix-home/.env
-      - RAPTIX_COMPOSE_PROJECT=raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}
-      - WEB_PORT=${WEB_PORT:-3000}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${RAPTIX_HOME:-~/.raptix}:/raptix-home
-    # Do NOT override WORKDIR — the cli image's entrypoint is
-    # `node dist/index.js` resolved relative to /app (set by
-    # infra/containers/cli.Dockerfile). The slash command resolves the
-    # compose project via the RAPTIX_COMPOSE_FILE / _ENV_FILE
-    # env vars above, so working_dir on this container is irrelevant.
-    depends_on:
-      langgraph:
-        condition: service_healthy
-    networks:
-      - raptix-net
-    profiles:
-      - cli
 
   # ── C2 Infrastructure (profile-based, default: c2-sliver) ───────────
   # Each C2 framework runs as a profile-based service on sandbox-net.

@@ -205,7 +205,7 @@ function Main {
         Push-Location $installDir
         $env:RAPTIX_VERSION = $version
         $env:RAPTIX_HOME    = $installDir
-        try { docker compose --profile cli pull } catch { Write-Warn 'Warning: failed to pull some images - run "raptix update" later.' }
+        try { docker compose pull } catch { Write-Warn 'Warning: failed to pull some images - run "raptix update" later.' }
         Pop-Location
     }
 

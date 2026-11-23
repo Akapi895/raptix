@@ -2,7 +2,6 @@
   "name": "raptix",
   "private": true,
   "workspaces": [
-    "apps/cli",
     "apps/desktop",
     "apps/ui-app",
     "apps/api",

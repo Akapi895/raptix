@@ -3,7 +3,7 @@
 # Auto-merge behaviour:
 #   - This file is merged with `docker-compose.yml` only when a Makefile
 #     target passes it explicitly (`-f docker-compose.dev.yml`); it is the
-#     contributor convenience layer — `make dev`, `make cli-dev`, the
+#     contributor convenience layer — `make dev`, the
 #     benchmark harness pick it up via the COMPOSE_DEV/COMPOSE_WATCH vars.
 #   - The OSS installer (`scripts/install.sh`) does NOT download this
 #     file, so end users running the launcher (`raptix start`) get

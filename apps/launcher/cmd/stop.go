@@ -13,7 +13,6 @@ var stopCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c := compose.New()
 		ui.Info("Stopping Raptix services...")
-		c.RemoveOrphanedCLI()
 		// Clear legacy root-level scratch/session buffers before tearing the
 		// stack down. Current runs keep these under engagement workspaces.
 		c.CleanScratch()

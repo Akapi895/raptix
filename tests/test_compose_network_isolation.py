@@ -97,20 +97,6 @@ DUAL_HOMED_SERVICES: frozenset[str] = frozenset(
     }
 )
 
-# The only services permitted to mount the host docker socket. `cli` needs
-# it for the /web slash command, which shells out to
-# `docker compose --profile web up -d web` against the host daemon (#625).
-# It is a client, not an agent: it executes operator keystrokes, never
-# model-directed commands, so it is not the container-escape surface this
-# guard exists for. Multi-tenant deployments drop the mount via a compose
-# overlay. Adding a service that *does* run agent code here is not a
-# deliberate update — it is the regression this test catches.
-DOCKER_SOCKET_SERVICES: frozenset[str] = frozenset(
-    {
-        "cli",
-    }
-)
-
 
 @pytest.fixture(autouse=True)
 def _ensure_dotenv():
@@ -128,23 +114,15 @@ def _ensure_dotenv():
 def _rendered_compose() -> dict:
     """Return the post-interpolation compose document as a dict.
 
-    Uses ``--profiles`` so that profile-gated services
-    (c2-sliver, ghidra-mcp, cli) are present in the render and
-    therefore subject to the same invariants as the always-on
-    services.
+    Render optional services so they are subject to the same checks.
     """
     if shutil.which("docker") is None:
         pytest.skip("docker CLI not available")
     env = {
         **os.environ,
-        # COMPOSE_PROFILES enables every profile in the file so the
-        # render sees every service. The list mirrors the profiles
-        # defined in docker-compose.yml; extend here when a new
-        # profile is added.
-        "COMPOSE_PROFILES": "c2-sliver,reversing,cli",
     }
     result = subprocess.run(
-        ["docker", "compose", "-f", str(COMPOSE), "config"],
+        ["docker", "compose", "-f", str(COMPOSE), "--profile", "*", "config"],
         env=env,
         cwd=REPO_ROOT,
         capture_output=True,
@@ -235,36 +213,15 @@ def test_no_service_uses_host_networking():
     )
 
 
-def test_only_allowlisted_services_mount_docker_socket():
-    """``/var/run/docker.sock`` is confined to DOCKER_SOCKET_SERVICES.
-
-    The HTTP-only sandbox migration replaced ``docker exec`` with a
-    FastAPI daemon on port 9999 inside the sandbox container. Mounting
-    the docker socket into a service that runs agent code reintroduces a
-    container-escape path — a compromised process there can spawn or
-    modify peer containers, including the management plane.
-    """
+def test_no_service_mounts_docker_socket():
+    """Keep host Docker access out of the Compose containers."""
     services = _rendered_compose()["services"]
-    actual: set[str] = set()
-    for name, svc in services.items():
-        if any("docker.sock" in src for src in _service_volumes(svc)):
-            actual.add(name)
-    unexpected = actual - DOCKER_SOCKET_SERVICES
-    stale = DOCKER_SOCKET_SERVICES - actual
-    msgs: list[str] = []
-    if unexpected:
-        msgs.append(
-            f"services mounting docker.sock without an allowlist entry: {sorted(unexpected)}\n"
-            "Fix: use the sandbox HTTP daemon (port 9999) instead of docker exec "
-            "(see packages/raptix/raptix/backends/), or — if the service runs "
-            "no agent code — add it to DOCKER_SOCKET_SERVICES with the reason."
-        )
-    if stale:
-        msgs.append(
-            f"DOCKER_SOCKET_SERVICES lists services that no longer mount it: {sorted(stale)}\n"
-            "Fix: drop the stale entry so the allowlist stays honest."
-        )
-    assert not msgs, "\n\n".join(msgs)
+    offenders = [
+        name
+        for name, service in services.items()
+        if any("docker.sock" in source for source in _service_volumes(service))
+    ]
+    assert not offenders, f"services mounting the host Docker socket: {sorted(offenders)}"
 
 
 def test_published_ports_bind_to_loopback():

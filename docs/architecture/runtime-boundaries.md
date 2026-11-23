@@ -2,7 +2,7 @@
 
 ## Repository layout
 
-- `apps/` contains the web console, Web API, CLI, desktop app and launcher.
+- `apps/` contains the Web console, Web API, shared TypeScript packages and launcher.
 - `packages/` contains the Python runtime, core contracts, plugin SDK and skill corpus.
 - `plugins/` contains domain packages that use the SDK and core contracts.
 - `infra/` contains container definitions, provider configuration and the telemetry gateway.

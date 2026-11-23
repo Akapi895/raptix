@@ -505,7 +505,7 @@ pull_images() {
     (cd "$install_dir" && \
         RAPTIX_VERSION="$RAPTIX_VERSION" \
         RAPTIX_HOME="$install_dir" \
-        docker compose --profile cli pull) || {
+        docker compose pull) || {
         warn "Warning: Failed to pull some images."
         info "You can pull them manually later: raptix update"
     }

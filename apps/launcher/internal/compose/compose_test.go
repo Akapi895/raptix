@@ -26,11 +26,7 @@ func TestNew(t *testing.T) {
 
 func TestAllProfiles(t *testing.T) {
 	profiles := AllProfiles()
-	// ADR-0006 Sprint 2 expanded the catalog to cover every workload
-	// the launcher may need to tear down: cli + c2-sliver + ad +
-	// reversing = 4 profiles = 8 cli args (--profile NAME).
 	expected := []string{
-		"--profile", "cli",
 		"--profile", "c2-sliver",
 		"--profile", "ad",
 		"--profile", "reversing",

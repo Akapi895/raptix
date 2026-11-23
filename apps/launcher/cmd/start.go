@@ -89,7 +89,7 @@ var skipUpdate bool
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start Raptix services and launch the CLI",
+	Short: "Start Raptix services and the Web console",
 	RunE:  runStart,
 }
 
@@ -306,7 +306,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	c := compose.New()
 
 	ui.Info("Starting Raptix services...")
-	if err := c.Up(compose.Profiles.CLI); err != nil {
+	if err := c.Up(); err != nil {
 		return fmt.Errorf("start services: %w", err)
 	}
 
@@ -315,32 +315,11 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// 6. Launch CLI
-	fmt.Println()
-	ui.Info("Launching Raptix CLI...")
-
-	cliEnv := map[string]string{
-		"RAPTIX_VERSION":      version,
-		"RAPTIX_ASSISTANT_ID": choice.AssistantID,
-		"RAPTIX_ENGAGEMENT":   choice.Engagement,
+	port := config.Get(env, "UI_PORT", "5173")
+	if override := os.Getenv("UI_PORT"); override != "" {
+		port = override
 	}
-	if port := config.Get(env, "WEB_PORT", "3000"); port != "" {
-		cliEnv["WEB_PORT"] = port
-	}
-
-	// Pass through terminal. Services are intentionally left running on CLI exit
-	// so re-entry is fast (cold start is ~75s); use 'raptix stop' to shut
-	// the stack down.
-	if err := c.RunInteractive(
-		[]string{compose.Profiles.CLI},
-		"cli",
-		cliEnv,
-	); err != nil {
-		ui.Warning("CLI exited with error: " + err.Error())
-		return fmt.Errorf("cli: %w", err)
-	}
-
-	ui.DimText("CLI exited. Services kept running — run 'raptix stop' to shut down.")
+	ui.Success("Raptix Web console: http://127.0.0.1:" + port)
 	return nil
 }
 
