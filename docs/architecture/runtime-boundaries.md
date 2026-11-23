@@ -5,7 +5,7 @@
 - `apps/` contains the Web console, Web API, shared TypeScript packages and launcher.
 - `packages/` contains the Python runtime, core contracts, plugin SDK and skill corpus.
 - `plugins/` contains domain packages that use the SDK and core contracts.
-- `infra/` contains container definitions, provider configuration and the telemetry gateway.
+- `infra/` contains container definitions and provider configuration.
 - `tests/` contains cross-package checks.
 
 See [Dependency rules](dependency-rules.md) before changing package imports.
@@ -40,9 +40,8 @@ raptix/
 │   ├── mcp/                # Model Context Protocol server
 │   └── api/                # LangGraph HTTP API + checkpointer
 ├── skills/                 # Runtime skill loader/registry/selector/engine
-├── specialist_contracts/   # Plugin/specialist capability contracts, evidence gates, scorecards
-│                           # (benchmark/compliance — distinct from capabilities/ above)
-└── telemetry/
+└── specialist_contracts/   # Plugin/specialist capability contracts, evidence gates, scorecards
+                            # (benchmark/compliance — distinct from capabilities/ above)
 ```
 
 ## Ownership rules

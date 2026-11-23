@@ -320,25 +320,6 @@ RAPTIX_MODEL_PROFILE=eco
 	}
 }
 
-func TestTelemetryConsentWritesEnv(t *testing.T) {
-	// The onboard wizard writes the telemetry consent choice via the embedded
-	// env.example. Verify the key is in the template and the choice lands.
-	out := filepath.Join(t.TempDir(), ".env")
-	if err := WriteEnvFromEmbed(out, map[string]string{"RAPTIX_TELEMETRY": "research"}); err != nil {
-		t.Fatalf("WriteEnvFromEmbed() error: %v", err)
-	}
-	env, err := LoadEnv(out)
-	if err != nil {
-		t.Fatalf("LoadEnv() error: %v", err)
-	}
-	if env["RAPTIX_TELEMETRY"] != "research" {
-		t.Errorf("RAPTIX_TELEMETRY = %q, want %q", env["RAPTIX_TELEMETRY"], "research")
-	}
-	if _, ok := env["RAPTIX_TELEMETRY_ENDPOINT"]; !ok {
-		t.Error("RAPTIX_TELEMETRY_ENDPOINT missing from embedded template")
-	}
-}
-
 func TestWriteEnvFromEmbedReplacesPermissiveFilePrivately(t *testing.T) {
 	out := filepath.Join(t.TempDir(), ".env")
 	// Given an existing configuration created with unsafe legacy permissions.
@@ -363,8 +344,8 @@ func TestWriteEnvFromEmbedReplacesPermissiveFilePrivately(t *testing.T) {
 
 func TestBackfillEnvFromEmbed(t *testing.T) {
 	out := filepath.Join(t.TempDir(), ".env")
-	// Backfill the missing endpoint while preserving existing values.
-	seed := "RAPTIX_TELEMETRY=off\nANTHROPIC_API_KEY=sk-real-user-key\n"
+	// Backfill a missing template key while preserving existing values.
+	seed := "ANTHROPIC_API_KEY=sk-real-user-key\n"
 	if err := os.WriteFile(out, []byte(seed), 0o600); err != nil {
 		t.Fatalf("seed .env: %v", err)
 	}
@@ -373,8 +354,8 @@ func TestBackfillEnvFromEmbed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BackfillEnvFromEmbed() error: %v", err)
 	}
-	if !strings.Contains(strings.Join(added, ","), "RAPTIX_TELEMETRY_ENDPOINT") {
-		t.Errorf("expected RAPTIX_TELEMETRY_ENDPOINT in added keys, got %v", added)
+	if !strings.Contains(strings.Join(added, ","), "RAPTIX_LANGUAGE") {
+		t.Errorf("expected RAPTIX_LANGUAGE in added keys, got %v", added)
 	}
 
 	env, err := LoadEnv(out)
@@ -382,13 +363,10 @@ func TestBackfillEnvFromEmbed(t *testing.T) {
 		t.Fatalf("LoadEnv() error: %v", err)
 	}
 	// New key backfilled from the template default.
-	if env["RAPTIX_TELEMETRY_ENDPOINT"] == "" {
-		t.Error("RAPTIX_TELEMETRY_ENDPOINT not backfilled")
+	if env["RAPTIX_LANGUAGE"] == "" {
+		t.Error("RAPTIX_LANGUAGE not backfilled")
 	}
 	// Existing values preserved exactly (never overwritten).
-	if env["RAPTIX_TELEMETRY"] != "off" {
-		t.Errorf("RAPTIX_TELEMETRY = %q, want preserved %q", env["RAPTIX_TELEMETRY"], "off")
-	}
 	if env["ANTHROPIC_API_KEY"] != "sk-real-user-key" {
 		t.Errorf("ANTHROPIC_API_KEY = %q, want preserved real key", env["ANTHROPIC_API_KEY"])
 	}
@@ -409,11 +387,11 @@ func TestBackfillEnvFromEmbed(t *testing.T) {
 
 func TestSetEnvKey(t *testing.T) {
 	out := filepath.Join(t.TempDir(), ".env")
-	if err := os.WriteFile(out, []byte("RAPTIX_TELEMETRY=off\n# a comment\nFOO=bar\n"), 0o600); err != nil {
+	if err := os.WriteFile(out, []byte("EXISTING_KEY=off\n# a comment\nFOO=bar\n"), 0o600); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
 	// Replace an existing key.
-	if err := SetEnvKey(out, "RAPTIX_TELEMETRY", "research"); err != nil {
+	if err := SetEnvKey(out, "EXISTING_KEY", "research"); err != nil {
 		t.Fatalf("SetEnvKey replace: %v", err)
 	}
 	// Append a missing key.
@@ -424,8 +402,8 @@ func TestSetEnvKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadEnv: %v", err)
 	}
-	if env["RAPTIX_TELEMETRY"] != "research" {
-		t.Errorf("RAPTIX_TELEMETRY = %q, want research", env["RAPTIX_TELEMETRY"])
+	if env["EXISTING_KEY"] != "research" {
+		t.Errorf("EXISTING_KEY = %q, want research", env["EXISTING_KEY"])
 	}
 	if env["NEW_KEY"] != "val" {
 		t.Errorf("NEW_KEY = %q, want val", env["NEW_KEY"])

@@ -146,8 +146,6 @@ func runStart(cmd *cobra.Command, args []string) error {
 
 	// Ensure workspace directory exists
 	_ = os.MkdirAll(filepath.Join(home, "workspace"), 0o755)
-	// Pre-create the telemetry directory so Docker does not make it root-owned.
-	_ = os.MkdirAll(filepath.Join(home, "telemetry"), 0o755)
 
 	// Ensure RAPTIX_HOME is set in .env (Docker Compose needs absolute path)
 	if config.Get(env, "RAPTIX_HOME", "") == "" {

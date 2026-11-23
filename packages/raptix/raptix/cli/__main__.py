@@ -9,7 +9,6 @@ from raptix.cli.auth import main as auth_main
 from raptix.cli.export_transcript import main as export_transcript_main
 from raptix.cli.kg import main as kg_main
 from raptix.cli.scan import main as scan_main
-from raptix.cli.telemetry import main as telemetry_main
 from raptix.cli.zip import main as zip_main
 
 
@@ -22,7 +21,6 @@ def _print_help() -> int:
         "  audit              Verify engagement audit ledgers\n"
         "  zip                Export/import engagement workspaces as ZIP archives\n\n"
         "  export-transcript  Render an engagement event log as Markdown\n\n"
-        "  telemetry          Inspect/control usage telemetry (status|preview|off|on)\n\n"
         "  kg                 Engagement-scoped attack-graph maintenance (reset)\n\n"
         "Run a subcommand with --help for its flags.",
         file=sys.stderr,
@@ -46,8 +44,6 @@ def main(argv: list[str] | None = None) -> int:
         return zip_main(rest)
     if sub == "export-transcript":
         return export_transcript_main(rest)
-    if sub == "telemetry":
-        return telemetry_main(rest)
     if sub == "kg":
         return kg_main(rest)
     print(f"unknown subcommand: {sub}\n", file=sys.stderr)

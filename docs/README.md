@@ -15,4 +15,4 @@
 
 - [Threat model](security/threat-model.md), [security controls](security/security-controls.md) and [sandbox isolation](security/sandbox-isolation.md) describe the trust boundaries.
 - [Scope enforcement](security/roe-machine-enforcement.md), [approval](security/hitl-approval.md) and [prompt-injection defense](security/prompt-injection-defense.md) describe execution controls.
-- [Audit ledger](security/audit-ledger.md), [Blue Cell](security/blue-cell.md), [Neo4j hardening](security/neo4j-hardening.md) and [telemetry](security/telemetry.md) cover evidence, monitoring and data handling.
+- [Audit ledger](security/audit-ledger.md), [Blue Cell](security/blue-cell.md) and [Neo4j hardening](security/neo4j-hardening.md) cover evidence, monitoring and data handling.

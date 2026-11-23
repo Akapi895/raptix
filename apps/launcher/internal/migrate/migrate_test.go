@@ -13,11 +13,7 @@ func newTestCtx(t *testing.T, env map[string]string, tty bool) *Ctx {
 	home := t.TempDir()
 	envPath := filepath.Join(home, ".env")
 	// A minimal .env so file-writing steps have something to edit.
-	if _, ok := env["RAPTIX_TELEMETRY"]; ok {
-		_ = os.WriteFile(envPath, []byte("RAPTIX_TELEMETRY="+env["RAPTIX_TELEMETRY"]+"\n"), 0o600)
-	} else {
-		_ = os.WriteFile(envPath, []byte("FOO=bar\n"), 0o600)
-	}
+	_ = os.WriteFile(envPath, []byte("FOO=bar\n"), 0o600)
 	c := &Ctx{
 		EnvPath: envPath,
 		Env:     env,
@@ -87,89 +83,27 @@ func TestRun_InteractiveRunsOnceThenAcked(t *testing.T) {
 	}
 }
 
-func TestTelemetryReconsent_Yes(t *testing.T) {
-	defer swapConfirm(true)()
-	c := newTestCtx(t, map[string]string{"RAPTIX_TELEMETRY": "off"}, true)
-	if _, err := applyTelemetryReconsent(c); err != nil {
-		t.Fatalf("applyTelemetryReconsent: %v", err)
-	}
-	assertEnvKey(t, c.EnvPath, "RAPTIX_TELEMETRY", "research")
-	if c.Env["RAPTIX_TELEMETRY"] != "research" {
-		t.Errorf("in-memory env not updated: %q", c.Env["RAPTIX_TELEMETRY"])
-	}
-}
-
-func TestTelemetryReconsent_No(t *testing.T) {
-	defer swapConfirm(false)()
-	c := newTestCtx(t, map[string]string{"RAPTIX_TELEMETRY": "off"}, true)
-	if _, err := applyTelemetryReconsent(c); err != nil {
-		t.Fatalf("applyTelemetryReconsent: %v", err)
-	}
-	assertEnvKey(t, c.EnvPath, "RAPTIX_TELEMETRY", "off")
-}
-
-func TestTelemetryReconsent_HardOptOutDoNotTrack(t *testing.T) {
-	// DO_NOT_TRACK must skip the prompt entirely and leave the value alone.
-	called := false
-	restore := confirm
-	confirm = func(_, _, _, _ string, _ bool) bool { called = true; return true }
-	defer func() { confirm = restore }()
-
-	c := newTestCtx(t, map[string]string{"RAPTIX_TELEMETRY": "off", "DO_NOT_TRACK": "1"}, true)
-	if _, err := applyTelemetryReconsent(c); err != nil {
-		t.Fatalf("applyTelemetryReconsent: %v", err)
-	}
-	if called {
-		t.Error("prompt shown despite DO_NOT_TRACK")
-	}
-	assertEnvKey(t, c.EnvPath, "RAPTIX_TELEMETRY", "off")
-}
-
-func TestTelemetryReconsent_HardOptOutMarker(t *testing.T) {
-	called := false
-	restore := confirm
-	confirm = func(_, _, _, _ string, _ bool) bool { called = true; return true }
-	defer func() { confirm = restore }()
-
-	c := newTestCtx(t, map[string]string{"RAPTIX_TELEMETRY": "off"}, true)
-	markerDir := filepath.Join(c.Home, "telemetry")
-	if err := os.MkdirAll(markerDir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(markerDir, "opt_out"), []byte("opted out\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := applyTelemetryReconsent(c); err != nil {
-		t.Fatalf("applyTelemetryReconsent: %v", err)
-	}
-	if called {
-		t.Error("prompt shown despite opt-out marker")
-	}
-	assertEnvKey(t, c.EnvPath, "RAPTIX_TELEMETRY", "off")
-}
-
 func TestEnvBackfillStepReflectsIntoEnv(t *testing.T) {
-	c := newTestCtx(t, map[string]string{"RAPTIX_TELEMETRY": "off"}, false)
+	c := newTestCtx(t, map[string]string{}, false)
 	if _, err := applyEnvBackfill(c); err != nil {
 		t.Fatalf("applyEnvBackfill: %v", err)
 	}
-	// The endpoint (a template default missing from the seed) should now be
-	// both on disk and reflected into the in-memory env map.
-	if c.Env["RAPTIX_TELEMETRY_ENDPOINT"] == "" {
+	// A template default missing from the seed should now be both on disk
+	// and reflected into the in-memory env map.
+	if c.Env["RAPTIX_LANGUAGE"] == "" {
 		t.Error("backfilled key not reflected into in-memory env")
 	}
 }
 
-// TestRunAll_ExistingUserUpgrade covers config backfill and one-time consent on upgrade.
+// TestRunAll_ExistingUserUpgrade covers config backfill on upgrade.
 func TestRunAll_ExistingUserUpgrade(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("RAPTIX_HOME", home)
 	envPath := filepath.Join(home, ".env")
-	if err := os.WriteFile(envPath, []byte("RAPTIX_TELEMETRY=off\nANTHROPIC_API_KEY=sk-real\n"), 0o600); err != nil {
+	if err := os.WriteFile(envPath, []byte("ANTHROPIC_API_KEY=sk-real\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	defer swapConfirm(true)()
 	restoreTTY := isInteractive
 	isInteractive = func() bool { return true }
 	defer func() { isInteractive = restoreTTY }()
@@ -184,40 +118,10 @@ func TestRunAll_ExistingUserUpgrade(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got["RAPTIX_TELEMETRY_ENDPOINT"] == "" {
-		t.Error("endpoint not backfilled for existing user")
-	}
-	if got["RAPTIX_TELEMETRY"] != "research" {
-		t.Errorf("RAPTIX_TELEMETRY = %q, want research after consent", got["RAPTIX_TELEMETRY"])
+	if got["RAPTIX_LANGUAGE"] == "" {
+		t.Error("template default not backfilled for existing user")
 	}
 	if got["ANTHROPIC_API_KEY"] != "sk-real" {
 		t.Errorf("real key not preserved: %q", got["ANTHROPIC_API_KEY"])
-	}
-
-	// Second start: consent must NOT be asked again.
-	asked := false
-	confirm = func(_, _, _, _ string, _ bool) bool { asked = true; return true }
-	env2, _ := config.LoadEnv(envPath)
-	RunAll(env2)
-	if asked {
-		t.Error("re-consent prompt fired a second time (ack not honored)")
-	}
-}
-
-
-func swapConfirm(answer bool) func() {
-	restore := confirm
-	confirm = func(_, _, _, _ string, _ bool) bool { return answer }
-	return func() { confirm = restore }
-}
-
-func assertEnvKey(t *testing.T, path, key, want string) {
-	t.Helper()
-	env, err := config.LoadEnv(path)
-	if err != nil {
-		t.Fatalf("LoadEnv: %v", err)
-	}
-	if env[key] != want {
-		t.Errorf("%s = %q, want %q", key, env[key], want)
 	}
 }

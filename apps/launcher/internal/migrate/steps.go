@@ -2,34 +2,10 @@ package migrate
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
-
-	"charm.land/huh/v2"
 
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
 )
-
-// TelemetryPolicyID identifies the consent migration. Use a new ID when asking users again.
-const TelemetryPolicyID = "telemetry-policy-2026-06"
-
-// confirm is indirected so tests can answer the prompt without a TTY.
-var confirm = func(title, description, affirmative, negative string, defaultYes bool) bool {
-	v := defaultYes
-	if err := huh.NewConfirm().
-		Title(title).
-		Description(description).
-		Affirmative(affirmative).
-		Negative(negative).
-		Value(&v).
-		Run(); err != nil {
-		// A prompt error (e.g. aborted) must not silently enable a
-		// data-collection setting — fail to the conservative answer.
-		return false
-	}
-	return v
-}
 
 // Registry is the ordered list of migrations applied at every start.
 // Append a Step here to ship a future config/policy migration.
@@ -40,12 +16,6 @@ func Registry() []Step {
 			Description: "Backfill newly-added env.example keys into an existing .env",
 			Interactive: false,
 			Apply:       applyEnvBackfill,
-		},
-		{
-			ID:          TelemetryPolicyID,
-			Description: "Re-ask telemetry consent after the opt-out policy change",
-			Interactive: true,
-			Apply:       applyTelemetryReconsent,
 		},
 	}
 }
@@ -80,60 +50,3 @@ func applyEnvBackfill(c *Ctx) (string, error) {
 	), nil
 }
 
-const telemetryConsentBlurb = "" +
-	"Raptix is free and open source. Sharing anonymous usage helps fund\n" +
-	"and improve it, and — with your consent — contributes masked red-team\n" +
-	"reasoning to train future open offensive-security agents.\n\n" +
-	"What is shared (research tier):\n" +
-	"  • anonymous structural stats (tools used, finding severity/CWE, phase)\n" +
-	"  • the agent's red-team REASONING, with target identifiers MASKED\n" +
-	"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n" +
-	"Never sent at any tier: raw prompts, real target IPs/hosts, credentials.\n" +
-	"Your IP is dropped at the gateway.\n\n" +
-	"You can change this anytime: set RAPTIX_TELEMETRY=off (or basic) in\n" +
-	"~/.raptix/.env, run `raptix-cli telemetry off`, or DO_NOT_TRACK=1."
-
-func applyTelemetryReconsent(c *Ctx) (string, error) {
-	// Record existing opt-outs without prompting again.
-	if truthy(os.Getenv("DO_NOT_TRACK")) || truthy(c.Env["DO_NOT_TRACK"]) || hasOptOutMarker(c.Home) {
-		return "", nil
-	}
-
-	consent := confirm(
-		"Share anonymous + masked red-team telemetry?",
-		telemetryConsentBlurb,
-		"Yes, share",
-		"No, keep it off (recommended)",
-		false, // default No — telemetry is opt-in
-	)
-
-	mode := "research"
-	if !consent {
-		mode = "off"
-	}
-	if err := config.SetEnvKey(c.EnvPath, "RAPTIX_TELEMETRY", mode); err != nil {
-		return "", err
-	}
-	c.Env["RAPTIX_TELEMETRY"] = mode
-
-	if consent {
-		return "Telemetry: research tier enabled (identifiers masked). " +
-			"Disable anytime with RAPTIX_TELEMETRY=off or DO_NOT_TRACK=1.", nil
-	}
-	return "Telemetry: kept off.", nil
-}
-
-// hasOptOutMarker mirrors the Python config's persistent opt-out marker at
-// $RAPTIX_HOME/telemetry/opt_out (raptix_core/.../telemetry).
-func hasOptOutMarker(home string) bool {
-	_, err := os.Stat(filepath.Join(home, "telemetry", "opt_out"))
-	return err == nil
-}
-
-func truthy(v string) bool {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "1", "true", "yes", "on":
-		return true
-	}
-	return false
-}

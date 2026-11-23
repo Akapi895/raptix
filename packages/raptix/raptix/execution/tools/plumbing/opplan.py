@@ -452,16 +452,6 @@ def _add_objective_impl(
     objectives = list(state.get("objectives", []))
     objectives.append(obj_dict)
 
-    # Ground-truth telemetry: which kill-chain phase the engagement is
-    # working — no objective text/target. No-op unless telemetry is on.
-    try:
-        from raptix.telemetry.sink import get_sink, session_id_for
-
-        sid = session_id_for(engagement_name or state.get("engagement_name", ""))
-        get_sink().record_phase(getattr(phase, "value", str(phase)), "pending", session_id=sid)
-    except Exception:  # noqa: BLE001 — telemetry must never break the tool
-        pass
-
     # Build state update — always include objectives + counter
     update: dict[str, Any] = {
         "objectives": objectives,
@@ -750,21 +740,6 @@ def _update_objective_impl(
 
         target["status"] = status
         updated_fields.append(f"status → {status}")
-
-        # Ground-truth telemetry: the objective's OUTCOME. Recording only
-        # the creation of an objective (add_objective, always "pending")
-        # answers what was attempted but never what completed or stalled —
-        # the whole point of the phase signal. No objective text/target.
-        try:
-            from raptix.telemetry.sink import get_sink, session_id_for
-
-            get_sink().record_phase(
-                str(target.get("phase", "")),
-                status,
-                session_id=session_id_for(state.get("engagement_name", "")),
-            )
-        except Exception:  # noqa: BLE001 — telemetry must never break the tool
-            pass
 
     # ── Notes ─────────────────────────────────────────────────────
     if notes is not None:

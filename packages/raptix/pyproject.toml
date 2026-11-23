@@ -123,18 +123,13 @@ dependencies = [
 neo4j = ["neo4j>=6,<7"]
 # Durable local Agent Server checkpoints; installed in the LangGraph image.
 runtime-persistence = ["langgraph-checkpoint-sqlite>=3,<4"]
-telemetry = [
-    "opentelemetry-api>=1.27",
-    "opentelemetry-sdk>=1.27",
-    "opentelemetry-exporter-otlp>=1.27",
-]
 # MCP server — exposes Raptix engagement control over the Model
 # Context Protocol so external agents (OpenClaw, Hermes, or any MCP
 # client) can drive engagements. Provides the ``raptix-mcp`` script.
 # pyjwt[crypto] backs the JWT (OAuth 2.1 resource-server) auth mode on the
 # streamable-http transport; shared-secret + stdio modes never import it.
 mcp = ["mcp>=1.9.0", "pyjwt[crypto]>=2.10"]
-all = ["raptix[neo4j,telemetry,mcp]"]
+all = ["raptix[neo4j,mcp]"]
 
 [project.scripts]
 raptix-cli = "raptix.cli.__main__:main"

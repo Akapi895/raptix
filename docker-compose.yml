@@ -572,12 +572,6 @@ services:
       # the LiteLLM container's job.
       - ${CLAUDE_CREDENTIALS_VOLUME:-/dev/null}:/root/.claude/.credentials.json:ro
       - ${CODEX_AUTH_VOLUME:-/dev/null}:/root/.codex/auth.json:ro
-      # Telemetry identity. The anonymous install_id is minted under
-      # $RAPTIX_HOME/telemetry; without this mount it lived only in the
-      # container's writable layer, so every image update minted a NEW id
-      # (measured: 95% of "installs" survived a single day). Persisting it here
-      # keeps runtime telemetry aligned with this installation.
-      - ${RAPTIX_HOME:-~/.raptix}/telemetry:/root/.raptix/telemetry
       # SQLite checkpoints and dev-server thread/run metadata survive recreate.
       - langgraph_state:/app/.langgraph_api
       # Curated sources are never edited by scan/index operations.
@@ -648,27 +642,6 @@ services:
     logging: *default-logging
     profiles:
       - c2-sliver
-
-  # ─── Optional: OpenTelemetry collector for self-hosted traces ──────────
-  # Uncomment to receive Raptix spans locally (Jaeger all-in-one).
-  # Raptix stays default-off; set OTEL_ENABLED=1 plus the env vars below
-  # in the langgraph service to actually emit spans.
-  #
-  # jaeger:
-  #   image: jaegertracing/all-in-one:1.60
-  #   container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-jaeger
-  #   environment:
-  #     - COLLECTOR_OTLP_ENABLED=true
-  #   ports:
-  #     - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"
-  #     - "127.0.0.1:${OTEL_HTTP_PORT:-4318}:4318"
-  #   networks:
-  #     - raptix-net
-  #
-  # To export Raptix spans to this service, set on the langgraph service:
-  #   - OTEL_ENABLED=1
-  #   - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
-  #   - OTEL_SERVICE_NAME=raptix
 
   skillogy:
     image: ghcr.io/akapi895/raptix-skillogy:${RAPTIX_VERSION:-stable}

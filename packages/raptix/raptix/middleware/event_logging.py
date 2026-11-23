@@ -40,7 +40,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import re
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
@@ -48,17 +47,10 @@ from langchain_core.messages import ToolMessage
 from typing_extensions import override
 
 from raptix.execution.backends.project_files import (
-    ProjectFiles,
     ProjectFileUnavailable,
     project_files_for_runtime,
 )
 from raptix.execution.session.event_log import EventLog, EventType
-from raptix.telemetry.sink import (
-    get_sink,
-    reset_current_session,
-    session_id_for,
-    set_current_session,
-)
 
 log = logging.getLogger(__name__)
 
@@ -141,48 +133,6 @@ def _content_length(content: Any) -> int:
     return len(str(content))
 
 
-_TRAJ_TEXT_CAP = 12000
-
-
-def _msg_text(content: Any) -> str:
-    """Flatten a message's content (str or content-block list) to plain text."""
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts: list[str] = []
-        for block in content:
-            if isinstance(block, str):
-                parts.append(block)
-            elif isinstance(block, dict):
-                parts.append(str(block.get("text", "")))
-        return " ".join(p for p in parts if p)
-    return str(content) if content is not None else ""
-
-
-# Harness-injected blocks that ride along inside a human message (background-job
-# notices, hook output). They are machine-generated, not what the user typed, so
-# they are stripped before the human turn is captured — otherwise ~1 in 4
-# "user prompts" in the corpus is a system notice.
-_SYSTEM_REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.DOTALL)
-
-
-def _last_human_text(messages: Any) -> str:
-    """The most recent human-message text — the objective/instruction context."""
-    for msg in reversed(list(messages or [])):
-        if getattr(msg, "type", "") == "human":
-            return _msg_text(getattr(msg, "content", ""))
-    return ""
-
-
-def _user_text(messages: Any) -> str:
-    """The human turn with harness-injected blocks removed.
-
-    What remains is what the operator (or, for a subagent, the orchestrator)
-    actually wrote — the prompt-pattern signal the corpus exists to capture.
-    """
-    return _SYSTEM_REMINDER.sub("", _last_human_text(messages)).strip()
-
-
 def _ai_message(response: Any) -> Any:
     """The ``AIMessage`` inside a model-call result.
 
@@ -206,34 +156,6 @@ def _ai_message(response: Any) -> Any:
     return response  # already an AIMessage (the simplified middleware return)
 
 
-def _reasoning_text(response: Any) -> str:
-    """The model's chain-of-thought, wherever the provider parked it.
-
-    Reasoning never arrives as plain ``text``: Anthropic extended thinking (on by
-    default, see ``infra/config/claude_code_handler.py``) returns ``thinking`` content
-    blocks, LangChain's standard shape uses ``reasoning`` blocks, and
-    OpenAI-compatible proxies (LiteLLM, DeepSeek) put it in
-    ``additional_kwargs["reasoning_content"]``. Reading only ``text`` — as this
-    middleware used to — captured none of it.
-    """
-    parts: list[str] = []
-    kwargs = getattr(response, "additional_kwargs", None)
-    if isinstance(kwargs, dict):
-        raw = kwargs.get("reasoning_content")
-        if isinstance(raw, str) and raw:
-            parts.append(raw)
-    content = getattr(response, "content", None)
-    if isinstance(content, list):
-        for block in content:
-            if not isinstance(block, dict):
-                continue
-            for key in ("thinking", "reasoning"):
-                raw = block.get(key)
-                if isinstance(raw, str) and raw:
-                    parts.append(raw)
-    return "\n".join(parts)
-
-
 def _model_name(request: Any) -> str:
     """Model id off the bound chat model.
 
@@ -245,64 +167,6 @@ def _model_name(request: Any) -> str:
     if model is None:
         return ""
     return str(getattr(model, "model_name", "") or getattr(model, "name", "") or "")
-
-
-def _session_id(engagement: str | None) -> str:
-    """A stable per-engagement session id. Delegates to the telemetry canonical
-    :func:`session_id_for` so the middleware, OPPLAN, and finding tools all hash
-    the engagement name identically (the grouping key must agree everywhere)."""
-    return session_id_for(engagement)
-
-
-def _roe_literal_targets(files: ProjectFiles) -> list[str]:
-    """Literal in-scope hosts/IPs from the project's ``plan/roe.json``.
-
-    These are the engagement's actual authorized targets — ground truth that the
-    research masker masks with certainty, covering identifiers the generic PII
-    detectors miss (bare hostnames, NetBIOS names). CIDRs and domain globs are
-    skipped (the detectors handle the concrete hosts under them).
-    """
-    from raptix.middleware.roe import load_rules
-
-    rules = load_rules(files)
-    return [r.pattern for r in rules.in_scope if r.resolved_kind() in ("ip", "host")]
-
-
-# Identity fields the operator DECLARES when the RoE is written — the
-# roe-template skill interviews for each of them ("Client organization" is
-# question 2). Nothing here is guessed: an absent field masks nothing.
-_ROE_IDENTITY_FIELDS = ("client", "engagement_name", "engagement_slug", "authorized_by")
-
-
-def _engagement_identity_terms(files: ProjectFiles) -> list[str]:
-    """Who was tested, as declared by the engagement itself.
-
-    No detector can find this. A client name is not shaped like a hostname, so
-    regex cannot; a PII model scores F1 ~0.5 on names cross-domain, degrades
-    further the further text sits from its training distribution, and would have
-    to run on every trajectory step. The engagement, meanwhile, simply knows —
-    the RoE interview asks for the client organization outright.
-
-    Measured in the live corpus, these leaked verbatim: ``Workspace:
-    /workspace/<client>-new`` inside prompts, and the authorizer's name.
-
-    Only the values the operator declared in ``plan/roe.json`` are used. Terms
-    under 4 characters are skipped because a 2-3 character string matches
-    everywhere — there is no word list.
-    """
-    import json
-
-    raw = files.read_bytes("plan/roe.json")
-    try:
-        data = json.loads(raw) if raw is not None else {}
-    except ValueError:
-        data = {}
-    terms: list[str] = []
-    if isinstance(data, dict):
-        terms.extend(
-            value for key in _ROE_IDENTITY_FIELDS if isinstance(value := data.get(key), str)
-        )
-    return [t for t in {t.strip() for t in terms} if len(t) >= 4]
 
 
 class EventLogMiddleware(AgentMiddleware):
@@ -325,15 +189,6 @@ class EventLogMiddleware(AgentMiddleware):
         # Cache one EventLog per (workspace_root, engagement_id) so we don't
         # rebuild (and re-mkdir) on every model/tool call.
         self._logs: dict[tuple[str, str], EventLog] = {}
-        # Consent-gated maintainer telemetry. Shared no-op sink when disabled
-        # (the default), so this adds zero behavior unless the user opts in.
-        self._telemetry = get_sink()
-        # Workspaces whose RoE targets have already been fed to the masker.
-        self._roe_seen: set[str] = set()
-        # Last human-input hash per session, so the objective that repeats on
-        # every model call inside this agent's loop is emitted once. The step
-        # counter itself lives on the sink — it must be shared across agents.
-        self._last_prompt: dict[str, str] = {}
         # Warning budget: a broken sink used to warn on EVERY event for the
         # whole run, drowning everything else. Warn once per (event, log).
         self._warned: set[tuple[str, str]] = set()
@@ -368,26 +223,20 @@ class EventLogMiddleware(AgentMiddleware):
         self._warned.add((event, scope))
         log.warning("EventLogMiddleware: %s (engagement=%s)", message, scope)
 
-    def _context(self, request: Any) -> tuple[EventLog | None, str | None, str]:
-        """Resolve the EventLog, agent name, and per-engagement session id.
-
-        ``session_id`` is hashed from the engagement so every telemetry event —
-        not only research trajectory steps — carries the engagement grouping key
-        (enables per-engagement analytics: kill-chain depth, tools/engagement).
-        """
+    def _context(self, request: Any) -> tuple[EventLog | None, str | None]:
+        """Resolve the EventLog and agent name for this request's scope."""
         _workspace, engagement, agent = self._resolve_scope(request)
-        sid = _session_id(engagement)
         try:
             files = project_files_for_runtime(getattr(request, "runtime", None))
         except ProjectFileUnavailable as exc:
             self._warn_once(
                 "no-project-files", engagement, f"events disabled for this scope: {exc}"
             )
-            return None, agent, sid
+            return None, agent
         key = (files.key, engagement)
         cached = self._logs.get(key)
         if cached is not None:
-            return cached, agent, sid
+            return cached, agent
         event_log = EventLog.for_project(files, engagement)
         self._logs[key] = event_log
         # Run-start anchor: without this every events.jsonl begins
@@ -397,7 +246,7 @@ class EventLogMiddleware(AgentMiddleware):
             event_log.append(EventType.AGENT_SESSION_START, {"agent": agent or ""}, agent=agent)
         except Exception:  # noqa: BLE001 — logging must never break the run
             pass
-        return event_log, agent, sid
+        return event_log, agent
 
     def _safe_append(
         self,
@@ -405,16 +254,8 @@ class EventLogMiddleware(AgentMiddleware):
         event_type: EventType,
         payload: dict[str, Any],
         agent: str | None,
-        session_id: str | None = None,
-        *,
-        telemetry: bool = True,
     ) -> None:
-        """Append one event, swallowing any I/O failure with a warning.
-
-        ``telemetry=False`` writes to disk only — used where a richer, correctly
-        classified version of the same event is emitted elsewhere (findings are
-        telemetered from the KG write path, which knows severity/CWE/MITRE).
-        """
+        """Append one event, swallowing any I/O failure with a warning."""
         try:
             event_log.append(event_type, payload, agent=agent)
         except Exception:  # noqa: BLE001 — logging must never break the run
@@ -430,19 +271,11 @@ class EventLogMiddleware(AgentMiddleware):
                     getattr(event_type, "value", event_type),
                     exc_info=True,
                 )
-        if not telemetry:
-            return
-        # Mirror the same redacted event to the consent-gated telemetry sink.
-        # `record` is itself fail-closed and never raises, so disk logging and
-        # telemetry stay independent — one failing never affects the other.
-        self._telemetry.record(
-            getattr(event_type, "value", str(event_type)), payload, agent, session_id=session_id
-        )
 
     # ── payload builders ──────────────────────────────────────────────────
 
     def _emit_llm_call(self, request: Any) -> None:
-        event_log, agent, sid = self._context(request)
+        event_log, agent = self._context(request)
         if event_log is None:
             return
         messages = getattr(request, "messages", None) or []
@@ -450,10 +283,10 @@ class EventLogMiddleware(AgentMiddleware):
         payload: dict[str, Any] = {"messages": len(messages)}
         if model_name:
             payload["model"] = model_name
-        self._safe_append(event_log, EventType.LLM_CALL, payload, agent, sid)
+        self._safe_append(event_log, EventType.LLM_CALL, payload, agent)
 
     def _emit_llm_response(self, request: Any, response: Any) -> None:
-        event_log, agent, sid = self._context(request)
+        event_log, agent = self._context(request)
         if event_log is None:
             return
         payload: dict[str, Any] = {}
@@ -466,21 +299,21 @@ class EventLogMiddleware(AgentMiddleware):
             stop = metadata.get("finish_reason") or metadata.get("stop_reason")
             if stop:
                 payload["stop"] = stop
-        self._safe_append(event_log, EventType.LLM_RESPONSE, payload, agent, sid)
+        self._safe_append(event_log, EventType.LLM_RESPONSE, payload, agent)
 
     def _emit_tool_call(self, request: Any) -> None:
-        event_log, agent, sid = self._context(request)
+        event_log, agent = self._context(request)
         if event_log is None:
             return
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
         args = getattr(request, "tool_call_args", None) or {}
         payload = {"tool": tool_name, "args": _redact_args(args)}
-        self._safe_append(event_log, EventType.TOOL_CALL, payload, agent, sid)
+        self._safe_append(event_log, EventType.TOOL_CALL, payload, agent)
 
     def _emit_tool_exception(self, request: Any, *, cancelled: bool = False) -> None:
         """Emit the failed half of a tool.call/result pair on a handler raise."""
-        event_log, agent, sid = self._context(request)
+        event_log, agent = self._context(request)
         if event_log is None:
             return
         tool = getattr(request, "tool", None)
@@ -489,10 +322,10 @@ class EventLogMiddleware(AgentMiddleware):
             "tool": tool_name,
             "status": "cancelled" if cancelled else "exception",
         }
-        self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent, sid)
+        self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent)
 
     def _emit_tool_result(self, request: Any, response: Any) -> None:
-        event_log, agent, sid = self._context(request)
+        event_log, agent = self._context(request)
         if event_log is None:
             return
         tool = getattr(request, "tool", None)
@@ -504,146 +337,22 @@ class EventLogMiddleware(AgentMiddleware):
                 "status": status,
                 "output_chars": _content_length(getattr(response, "content", "")),
             }
-            self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent, sid)
+            self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent)
             # Emit the finding only after a *successful* finding-tool result, so
             # a failed validate_finding (status='error') never births a phantom
             # finding.created. Order stays tool.call -> tool.result -> finding.
             if status not in {"error"} and _is_finding_tool(tool_name):
-                # Disk only: the telemetry copy is emitted by the KG write path
-                # with the real severity/CWE/MITRE, so mirroring the bare
-                # tool-name version here would double-count every finding.
                 self._safe_append(
                     event_log,
                     EventType.FINDING_CREATED,
                     {"tool": tool_name},
                     agent,
-                    sid,
-                    telemetry=False,
                 )
         else:
             # A Command (graph control-flow) carries no tool output to size, and
             # is not a tool *result*, so it never emits a finding.
             payload = {"tool": tool_name, "status": "command"}
-            self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent, sid)
-
-    # ── research trajectory capture (reasoning corpus) ────────────────────
-    # Only runs under research consent. Emits the raw prompt / agent reasoning /
-    # action / observation to the telemetry sink, which MASKS target identifiers
-    # before anything leaves the machine. No-op (and no extraction cost) otherwise.
-
-    def _ensure_roe_known(self, request: Any) -> None:
-        """Once per project, feed the masker the RoE in-scope literal targets."""
-        try:
-            files = project_files_for_runtime(getattr(request, "runtime", None))
-        except ProjectFileUnavailable:
-            return
-        if files.key in self._roe_seen:
-            return
-        try:
-            targets = _roe_literal_targets(files)
-            identities = _engagement_identity_terms(files)
-        except ProjectFileUnavailable:
-            return  # not marked seen: the next event retries the read
-        except Exception:  # noqa: BLE001 — never break the run on a bad RoE file
-            targets, identities = [], []
-        self._roe_seen.add(files.key)
-        if targets:
-            self._telemetry.add_known_targets(targets)
-        # Client / engagement identity. Separate placeholder type because it is a
-        # different disclosure: <HOST_1> is a machine, <ORG_1> is who was tested.
-        if identities:
-            self._telemetry.add_known_targets(identities, "ORG")
-
-    def _next_step(self, session_id: str) -> int:
-        return self._telemetry.next_step(session_id)
-
-    def _session_of(self, request: Any) -> str:
-        _workspace, engagement, _agent = self._resolve_scope(request)
-        return _session_id(engagement)
-
-    def _emit_trajectory_model(self, request: Any, response: Any) -> None:
-        if not self._telemetry.research:
-            return
-        try:
-            import hashlib
-
-            _workspace, engagement, agent = self._resolve_scope(request)
-            self._ensure_roe_known(request)
-            sid = _session_id(engagement)
-            model = _model_name(request)
-            prompt = _user_text(getattr(request, "messages", None))[:_TRAJ_TEXT_CAP]
-            # Chain-of-thought first, then the visible answer. A tool-calling turn
-            # usually has empty visible content — the reasoning IS the turn.
-            message = _ai_message(response)
-            reasoning = "\n".join(
-                part
-                for part in (
-                    _reasoning_text(message),
-                    _msg_text(getattr(message, "content", "")),
-                )
-                if part
-            )[:_TRAJ_TEXT_CAP]
-            # Human input — emit only when it changes (the objective repeats every
-            # model call inside the agent loop; we want one human turn, not N).
-            if prompt:
-                ph = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-                if self._last_prompt.get(sid) != ph:
-                    self._last_prompt[sid] = ph
-                    self._telemetry.record_step(
-                        {
-                            "role": "human",
-                            "session_id": sid,
-                            "step": self._next_step(sid),
-                            "text": prompt,
-                        },
-                        agent,
-                        model=model,
-                    )
-            # Agent output — the reasoning / chain-of-thought.
-            if reasoning:
-                self._telemetry.record_step(
-                    {
-                        "role": "agent",
-                        "session_id": sid,
-                        "step": self._next_step(sid),
-                        "text": reasoning,
-                    },
-                    agent,
-                    model=model,
-                )
-        except Exception:  # noqa: BLE001 — telemetry must never break the run
-            log.debug("trajectory model capture failed", exc_info=True)
-
-    def _emit_trajectory_tool(self, request: Any, response: Any) -> None:
-        if not self._telemetry.research:
-            return
-        try:
-            import json
-
-            _workspace, engagement, agent = self._resolve_scope(request)
-            self._ensure_roe_known(request)
-            sid = _session_id(engagement)
-            tool = getattr(getattr(request, "tool", None), "name", "") or ""
-            args = getattr(request, "tool_call_args", None) or {}
-            try:
-                args_text = json.dumps(args, default=str)[:_TRAJ_TEXT_CAP]
-            except (TypeError, ValueError):
-                args_text = str(args)[:_TRAJ_TEXT_CAP]
-            observation = ""
-            if isinstance(response, ToolMessage):
-                observation = _msg_text(getattr(response, "content", ""))[:_TRAJ_TEXT_CAP]
-            step: dict[str, Any] = {
-                "role": "tool",
-                "session_id": sid,
-                "step": self._next_step(sid),
-                "args_text": args_text,
-                "observation": observation,
-            }
-            if tool:  # omit empty tool — the gateway rejects an empty slug
-                step["tool"] = tool
-            self._telemetry.record_step(step, agent)
-        except Exception:  # noqa: BLE001 — telemetry must never break the run
-            log.debug("trajectory tool capture failed", exc_info=True)
+            self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent)
 
     # ── middleware hooks ──────────────────────────────────────────────────
 
@@ -652,7 +361,6 @@ class EventLogMiddleware(AgentMiddleware):
         self._emit_llm_call(request)
         response = handler(request)
         self._emit_llm_response(request, response)
-        self._emit_trajectory_model(request, response)
         return response
 
     @override
@@ -660,46 +368,29 @@ class EventLogMiddleware(AgentMiddleware):
         self._emit_llm_call(request)
         response = await handler(request)
         self._emit_llm_response(request, response)
-        self._emit_trajectory_model(request, response)
         return response
 
     @override
     def wrap_tool_call(self, request, handler):
         self._emit_tool_call(request)
-        # Bind the engagement for the duration of the tool call so a tool that
-        # emits telemetry itself (the finding path) lands in the right session.
-        token = set_current_session(self._session_of(request))
         try:
-            try:
-                response = handler(request)
-            except (Exception, asyncio.CancelledError) as exc:
-                # An orphan tool.call is exactly the "hole" a timeline
-                # post-mortem trips over: emit the failed half before the
-                # exception continues up the middleware stack.
-                self._emit_tool_exception(
-                    request, cancelled=isinstance(exc, asyncio.CancelledError)
-                )
-                raise
-        finally:
-            reset_current_session(token)
+            response = handler(request)
+        except (Exception, asyncio.CancelledError) as exc:
+            # An orphan tool.call is exactly the "hole" a timeline
+            # post-mortem trips over: emit the failed half before the
+            # exception continues up the middleware stack.
+            self._emit_tool_exception(request, cancelled=isinstance(exc, asyncio.CancelledError))
+            raise
         self._emit_tool_result(request, response)
-        self._emit_trajectory_tool(request, response)
         return response
 
     @override
     async def awrap_tool_call(self, request, handler):
         self._emit_tool_call(request)
-        token = set_current_session(self._session_of(request))
         try:
-            try:
-                response = await handler(request)
-            except (Exception, asyncio.CancelledError) as exc:
-                self._emit_tool_exception(
-                    request, cancelled=isinstance(exc, asyncio.CancelledError)
-                )
-                raise
-        finally:
-            reset_current_session(token)
+            response = await handler(request)
+        except (Exception, asyncio.CancelledError) as exc:
+            self._emit_tool_exception(request, cancelled=isinstance(exc, asyncio.CancelledError))
+            raise
         self._emit_tool_result(request, response)
-        self._emit_trajectory_tool(request, response)
         return response

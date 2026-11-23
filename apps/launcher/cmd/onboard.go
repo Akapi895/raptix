@@ -9,7 +9,6 @@ import (
 	"charm.land/huh/v2"
 	"github.com/Akapi895/raptix/apps/launcher/cmd/opscontrol"
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
-	"github.com/Akapi895/raptix/apps/launcher/internal/migrate"
 	"github.com/Akapi895/raptix/apps/launcher/internal/platform"
 	"github.com/Akapi895/raptix/apps/launcher/internal/ui"
 	"github.com/spf13/cobra"
@@ -223,7 +222,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		language            = "en"
 		useLangSmith        bool
 		langSmithKey        string
-		telemetryConsent    = true // opt-out: default to sharing (masked)
 	)
 	// A timed-out probe is treated as unreachable.
 	probeTimer := time.NewTimer(onboardOllamaProbeBudget)
@@ -720,37 +718,10 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 				Validate(nonEmpty),
 		).Title("5 / 5  ·  LangSmith").
 			WithHideFunc(func() bool { return !useLangSmith }),
-
-		huh.NewGroup(
-			huh.NewConfirm().
-				Title("Share anonymous + masked red-team telemetry?").
-				Description(
-					"Raptix is free/OSS — sharing usage helps fund and improve it,\n"+
-						"and contributes masked red-team reasoning to train future open\n"+
-						"offensive-security agents.\n\n"+
-						"  • anonymous structural stats (tools used, finding severity/CWE,\n"+
-						"    kill-chain phase)\n"+
-						"  • the agent's red-team REASONING, with target identifiers MASKED\n"+
-						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
-						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
-						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
-						"(or basic) in .env, `raptix-cli telemetry off`, or DO_NOT_TRACK=1.",
-				).
-				Affirmative("Yes, share (recommended)").
-				Negative("No, keep it off").
-				Value(&telemetryConsent),
-		).Title("5 / 5  ·  Usage telemetry"),
 	).WithTheme(huh.ThemeFunc(ui.RaptixTheme))
 
 	if err := form.Run(); err != nil {
 		return fmt.Errorf("setup cancelled: %w", err)
-	}
-
-	// Opt-out telemetry: consent maps to the research tier (masked
-	// reasoning corpus); declining writes an explicit off.
-	telemetryChoice := "research"
-	if !telemetryConsent {
-		telemetryChoice = "off"
 	}
 
 	// Require a tool-capable model before writing .env.
@@ -886,16 +857,8 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		values["LANGSMITH_PROJECT"] = "raptix"
 	}
 
-	// Telemetry requires consent and a configured endpoint.
-	values["RAPTIX_TELEMETRY"] = telemetryChoice
-
 	if err := config.WriteEnvFromEmbed(config.EnvPath(), values); err != nil {
 		return fmt.Errorf("write .env: %w", err)
-	}
-
-	// Record the consent answer so the startup migration can skip the prompt.
-	if err := migrate.MarkAcked(config.RaptixHome(), migrate.TelemetryPolicyID); err != nil {
-		ui.Warning("Could not record telemetry consent ack: " + err.Error())
 	}
 
 	// Summary
@@ -908,9 +871,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	fmt.Println(ui.Dim.Render("  │") + ui.Cyan.Render("  Language  ") + ui.Dim.Render(language))
 	if useLangSmith {
 		fmt.Println(ui.Dim.Render("  │") + ui.Cyan.Render("  LangSmith ") + ui.Green.Render("enabled"))
-	}
-	if telemetryChoice != "off" {
-		fmt.Println(ui.Dim.Render("  │") + ui.Cyan.Render("  Telemetry ") + ui.Green.Render(telemetryChoice))
 	}
 	fmt.Println(ui.Dim.Render("  │"))
 	fmt.Println(ui.Dim.Render("  │  ") + ui.Dim.Render(config.EnvPath()))

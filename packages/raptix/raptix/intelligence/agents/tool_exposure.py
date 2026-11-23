@@ -2,9 +2,7 @@
 
 Local-only, opt-in instrumentation of ``build_tools()``'s output: which
 tools a role's agent is offered this build, and a rough estimate of their
-schema size. This is deliberately separate from ``raptix.telemetry`` (the
-consent-gated, Tier-A corpus shipped to the maintainer gateway) — exposure
-counts are a development signal for the waves in
+schema size. Exposure counts are a development signal for the waves in
 ``docs/architecture/tool-ownership.md`` (T0 baseline, T11
 evaluation), never shipped off-machine, and never carry parameter values.
 
