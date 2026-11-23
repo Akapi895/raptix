@@ -304,10 +304,6 @@ ALLOWED_DYNAMIC_PROVIDERS = frozenset(
         # the unrecognized-provider error doesn't fire first and
         # confuse the user with a misleading "use custom/<model>" hint.
         "auth",
-        "gemini_sub",
-        "copilot",
-        "grok_sub",
-        "pplx_sub",
         "custom",
         "llamacpp",
     }
@@ -473,27 +469,10 @@ def _provider_prefix(model_name: str) -> str:
     return model_name.split("/", 1)[0].lower().replace("-", "_")
 
 
-_SUBSCRIPTION_PROVIDER_PREFIXES = frozenset(
-    {
-        "auth",  # auth/claude-*, auth/gpt-* — Claude Code OAuth + Codex ChatGPT
-        "gemini_sub",  # gemini-sub/* — Gemini Advanced subscription
-        "copilot",  # copilot/* — Copilot Pro subscription
-        "grok_sub",  # grok-sub/* — SuperGrok subscription
-        "pplx_sub",  # pplx-sub/* — Perplexity Pro subscription
-    }
-)
-
-
 def validate_model_name(model_name: str) -> None:
     """Validate user-supplied dynamic model IDs before registering routes.
 
-    Rejects subscription / OAuth provider prefixes (``auth/*``, ``gemini-sub/*``,
-    ``copilot/*``, ``grok-sub/*``, ``pplx-sub/*``) for the API-key registration
-    path — those routes are added by ``_inject_subscription_routes`` when the
-    matching ``RAPTIX_AUTH_*`` flag is set, with custom-provider dispatch
-    in ``litellm_startup.py``. Trying to register them as API-key routes here
-    would produce a phantom ``<PROVIDER>_API_KEY`` env-var lookup that never
-    resolves.
+    OAuth routes must already be configured before applying an override.
 
     ``merge_dynamic_models`` skips this validation when the model is already
     present in the model_list, so a user setting
@@ -504,7 +483,9 @@ def validate_model_name(model_name: str) -> None:
     if "/" not in model_name:
         raise ValueError(f"model {model_name!r} must use LiteLLM provider/model format")
     provider = _provider_prefix(model_name)
-    if provider in _SUBSCRIPTION_PROVIDER_PREFIXES:
+    if provider in {"gemini_sub", "copilot", "grok_sub", "pplx_sub"}:
+        raise ValueError(f"{provider}/* routes are no longer supported")
+    if provider == "auth":
         raise ValueError(
             f"{provider}/* routes are not allowed as dynamic API-key model "
             f"routes. Enable the matching subscription via "
@@ -737,25 +718,8 @@ def build_model_entry(model_name: str) -> dict[str, Any]:
 
 
 # ── Subscription OAuth routes ───────────────────────────────────────────
-# These were previously static in litellm.yaml. LiteLLM's native providers
-# (chatgpt, gemini-sub, copilot, grok-sub, pplx-sub) attempt OAuth
-# handshakes at startup when they see their routes. If the user hasn't
-# enabled the auth method, the handshake blocks → times out → container
-# becomes unhealthy. Gating on RAPTIX_AUTH_* prevents that.
-
-# Shadow pricing for subscription OAuth routes (USD per token, as of
-# 2026-05-14). These routes are paid via flat monthly subscriptions
-# (ChatGPT Pro/Plus/Team, Gemini Advanced, Copilot Pro, SuperGrok,
-# Perplexity Pro), so per-token cost is NOT what the user actually pays.
-# We stamp the equivalent paid-API price into ``model_info`` so
-# /spend/logs reports an "API-equivalent" USD number — useful for
-# comparing benchmark cost across paid and subscription routes
-# apples-to-apples. The OSS user's real cash spend stays the
-# subscription fee; this number is opportunity cost.
-#
-# Perplexity Sonar numbers are best-effort against the published rate
-# card (Sonar $1/$1, Sonar Pro $3/$15) — search-call surcharge not
-# modeled.
+# Subscription routes are enabled by an explicit auth flag.
+# Shadow prices show the API-equivalent cost of Codex subscription requests.
 _SUBSCRIPTION_SHADOW_PRICING: dict[str, tuple[float, float]] = {
     # gpt-5.6-{sol,terra,luna} are the GPT-5.6-family frontier checkpoints the
     # Codex subscription actually serves (all three verified 2026-07-13 via
@@ -776,16 +740,6 @@ _SUBSCRIPTION_SHADOW_PRICING: dict[str, tuple[float, float]] = {
     # actually serves (verified 2026-06-25 via /backend-api/codex/models);
     # gpt-5.3-codex is the API slug. Same shadow pricing.
     "auth/gpt-5.3-codex-spark": (0.00000175, 0.000014),
-    "gemini-sub/gemini-2.5-pro": (0.00000125, 0.00001),
-    "gemini-sub/gemini-2.5-flash": (0.0000003, 0.0000025),
-    "copilot/gpt-5.5": (0.000005, 0.000030),
-    "copilot/claude-sonnet-4-6": (0.000003, 0.000015),
-    "copilot/gpt-5.4-mini": (0.00000075, 0.0000045),
-    "copilot/gpt-5.3-codex": (0.00000175, 0.000014),
-    "grok-sub/grok-4.3": (0.00000125, 0.0000025),
-    "grok-sub/grok-4-1-fast-reasoning": (0.0000002, 0.0000005),
-    "pplx-sub/sonar-pro": (0.000003, 0.000015),
-    "pplx-sub/sonar": (0.000001, 0.000001),
 }
 
 
@@ -868,72 +822,6 @@ _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
             "litellm_params": {"model": "codex-oauth/oauth-gpt-5.3-codex-spark"},
         },
     ],
-    "RAPTIX_AUTH_GEMINI": [
-        {
-            "model_name": "gemini-sub/gemini-2.5-pro",
-            "litellm_params": {"model": "gemini-sub/gemini-2.5-pro"},
-        },
-        {
-            "model_name": "gemini-sub/gemini-2.5-flash",
-            "litellm_params": {"model": "gemini-sub/gemini-2.5-flash"},
-        },
-    ],
-    "RAPTIX_AUTH_COPILOT": [
-        # GitHub Copilot retired gpt-4o / o1 / o3-mini on 2025-10-23.
-        # Current Copilot model picker exposes (as of 2026-05-14):
-        #   OpenAI:   gpt-5 mini, gpt-5.2, gpt-5.2-Codex, gpt-5.3-Codex,
-        #             gpt-5.4, gpt-5.4 mini, gpt-5.4 nano, gpt-5.5
-        #   Anthropic: Haiku 4.5, Opus 4.5/4.6/4.7, Sonnet 4.5/4.6
-        #   Google:    Gemini 2.5 Pro, Gemini 3 Flash (preview)
-        #   xAI:       Grok Code Fast 1
-        # Default tier picks below avoid the LiteLLM main.py:2561
-        # short-circuit by choosing slugs NOT in
-        # ``open_ai_chat_completion_models`` — no sentinel needed.
-        # ``claude-sonnet-4-6`` is in ``anthropic_models`` but main.py
-        # does not early-check that list (only openai's), so it routes
-        # cleanly through the ``copilot`` custom provider.
-        {
-            "model_name": "copilot/gpt-5.5",
-            "litellm_params": {"model": "copilot/gpt-5.5"},
-        },
-        {
-            "model_name": "copilot/claude-sonnet-4-6",
-            "litellm_params": {"model": "copilot/claude-sonnet-4-6"},
-        },
-        {
-            "model_name": "copilot/gpt-5.4-mini",
-            "litellm_params": {"model": "copilot/gpt-5.4-mini"},
-        },
-        # Code-heavy override (option α). gpt-5.3-codex is in
-        # ``open_ai_chat_completion_models``, so the ``oauth-`` slug
-        # sentinel is required to dodge the main.py:2561 short-circuit.
-        # copilot_handler._upstream_model_slug strips ``oauth-`` before
-        # posting to api.githubcopilot.com. Pick via
-        # ``RAPTIX_MODEL_<ROLE>=copilot/gpt-5.3-codex`` for
-        # patcher / exploiter / contract_auditor.
-        {
-            "model_name": "copilot/gpt-5.3-codex",
-            "litellm_params": {"model": "copilot/oauth-gpt-5.3-codex"},
-        },
-    ],
-    "RAPTIX_AUTH_GROK": [
-        # grok-3 / grok-3-mini retired by xAI on 2026-05-15. Replaced
-        # with the current production lineup: grok-4.3 (flagship) and
-        # grok-4-1-fast-reasoning (cost-efficient MID). Both slugs are
-        # NOT in ``open_ai_chat_completion_models`` so no sentinel needed.
-        {
-            "model_name": "grok-sub/grok-4.3",
-            "litellm_params": {"model": "grok-sub/grok-4.3"},
-        },
-        {
-            "model_name": "grok-sub/grok-4-1-fast-reasoning",
-            "litellm_params": {"model": "grok-sub/grok-4-1-fast-reasoning"},
-        },
-    ],
-    "RAPTIX_AUTH_PERPLEXITY": [
-        {"model_name": "pplx-sub/sonar-pro", "litellm_params": {"model": "pplx-sub/sonar-pro"}},
-        {"model_name": "pplx-sub/sonar", "litellm_params": {"model": "pplx-sub/sonar"}},
-    ],
 }
 
 # Fallback entries for subscription routes — appended to litellm_settings.fallbacks
@@ -941,19 +829,6 @@ _SUBSCRIPTION_FALLBACKS: dict[str, list[dict[str, list[str]]]] = {
     "RAPTIX_AUTH_CHATGPT": [
         {"auth/gpt-5.5": ["auth/gpt-5.4"]},
         {"auth/gpt-5.4": ["auth/gpt-5.4-mini"]},
-    ],
-    "RAPTIX_AUTH_GEMINI": [
-        {"gemini-sub/gemini-2.5-pro": ["gemini-sub/gemini-2.5-flash"]},
-    ],
-    "RAPTIX_AUTH_COPILOT": [
-        {"copilot/gpt-5.5": ["copilot/claude-sonnet-4-6"]},
-        {"copilot/claude-sonnet-4-6": ["copilot/gpt-5.4-mini"]},
-    ],
-    "RAPTIX_AUTH_GROK": [
-        {"grok-sub/grok-4.3": ["grok-sub/grok-4-1-fast-reasoning"]},
-    ],
-    "RAPTIX_AUTH_PERPLEXITY": [
-        {"pplx-sub/sonar-pro": ["pplx-sub/sonar"]},
     ],
 }
 

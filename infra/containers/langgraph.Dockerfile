@@ -30,10 +30,7 @@ RUN sed -i 's/^version = "[^"]*"/version = "'"$VERSION"'"/' \
         packages/*/pyproject.toml \
         plugins/*/pyproject.toml
 
-# Stamp the source revision this image was built from. The lab/benchmark
-# harness (tests/local/harnesses/lab_run.py) refuses to run when this
-# label doesn't match the checkout's HEAD — "which code is in the image"
-# used to be recorded-but-unverifiable (repo_dirty note only).
+# Record the source revision in the image metadata.
 ARG RAPTIX_REPO_HEAD=
 LABEL org.opencontainers.image.revision="${RAPTIX_REPO_HEAD}"
 

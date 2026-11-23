@@ -6,11 +6,6 @@ dep), so a minimal stub is injected before the handlers are loaded. The
 handlers also do ``from oauth_token_store import ...`` by bare name, so the
 ``config/`` directory is placed on ``sys.path``.
 
-Covered fixes:
-  * B9  — codex refresh error must not leak raw token fields
-  * B10 — copilot streaming must emit tool_calls + preserve finish_reason
-  * B11 — grok streaming must emit tool_calls + preserve finish_reason
-  * B13 — gemini must map ``finishReason`` instead of hardcoding ``"stop"``
 """
 
 from __future__ import annotations
@@ -20,7 +15,6 @@ import importlib.util
 import sys
 import types
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -99,25 +93,6 @@ def _load(name: str) -> Any:
 
 codex = _load("codex_chatgpt_handler")
 claude = _load("claude_code_handler")
-copilot = _load("copilot_handler")
-grok = _load("grok_handler")
-gemini = _load("gemini_handler")
-perplexity = _load("perplexity_handler")
-
-
-def _response(message: dict[str, Any], finish_reason: str = "stop") -> Any:
-    """Build a minimal ModelResponse-like object for ``_response_to_chunks``."""
-    usage = SimpleNamespace(prompt_tokens=3, completion_tokens=5, total_tokens=8)
-    choice = {"index": 0, "message": message, "finish_reason": finish_reason}
-    return SimpleNamespace(choices=[choice], usage=usage)
-
-
-_TOOL_CALL = {
-    "id": "call_1",
-    "type": "function",
-    "function": {"name": "run_shell", "arguments": '{"cmd": "ls"}'},
-}
-
 
 # ── B9: codex refresh must not leak raw token data ──────────────────────
 
@@ -153,188 +128,6 @@ class TestCodexRefreshNoSecretLeak:
         assert "id_token" in message
         assert "access_token" not in message
         assert "SECRET" not in message
-
-
-# ── B10 / B11: streaming must preserve tool calls + finish_reason ───────
-
-
-@pytest.mark.parametrize(
-    "handler", [copilot.copilot_handler_instance, grok.grok_sub_handler_instance]
-)
-class TestStreamingToolCalls:
-    def test_tool_calls_are_emitted_not_dropped(self, handler) -> None:
-        resp = _response(
-            {"role": "assistant", "content": "", "tool_calls": [_TOOL_CALL]},
-            finish_reason="tool_calls",
-        )
-        chunks = handler._response_to_chunks(resp)
-        tool_chunks = [c for c in chunks if c["tool_use"] is not None]
-        assert len(tool_chunks) == 1
-        assert tool_chunks[0]["tool_use"]["function"]["name"] == "run_shell"
-        assert tool_chunks[0]["finish_reason"] == "tool_calls"
-        assert tool_chunks[0]["is_finished"] is True
-
-    def test_text_then_tool_call_ordering(self, handler) -> None:
-        resp = _response(
-            {"role": "assistant", "content": "thinking", "tool_calls": [_TOOL_CALL]},
-            finish_reason="tool_calls",
-        )
-        chunks = handler._response_to_chunks(resp)
-        assert chunks[0]["text"] == "thinking"
-        assert chunks[0]["tool_use"] is None
-        assert chunks[0]["is_finished"] is False
-        assert chunks[-1]["tool_use"] is not None
-
-    def test_finish_reason_is_preserved_for_plain_text(self, handler) -> None:
-        # A truncated completion must not be reported as a clean "stop".
-        resp = _response({"role": "assistant", "content": "partial"}, finish_reason="length")
-        chunks = handler._response_to_chunks(resp)
-        assert len(chunks) == 1
-        assert chunks[0]["finish_reason"] == "length"
-        assert chunks[0]["text"] == "partial"
-        assert chunks[0]["tool_use"] is None
-
-
-# ── B13: gemini finishReason mapping ────────────────────────────────────
-
-
-class TestGeminiFinishReason:
-    @pytest.mark.parametrize(
-        ("reason", "expected"),
-        [
-            ("STOP", "stop"),
-            ("MAX_TOKENS", "length"),
-            ("SAFETY", "content_filter"),
-            ("RECITATION", "content_filter"),
-            ("OTHER", "stop"),
-            (None, "stop"),
-            ("", "stop"),
-        ],
-    )
-    def test_map_finish_reason(self, reason, expected) -> None:
-        assert gemini._map_finish_reason(reason) == expected
-
-
-# ── error-proofing: brittle provider-response parsing ───────────────────
-
-
-class _ParseResp:
-    """Minimal httpx.Response stand-in for handler parsing paths."""
-
-    def __init__(self, status_code=200, json_data=None, text="", raise_json=False):
-        self.status_code = status_code
-        self._json_data = json_data
-        self.text = text
-        self._raise_json = raise_json
-
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            import httpx
-
-            raise httpx.HTTPStatusError(
-                "err", request=httpx.Request("GET", "https://example.test"), response=self
-            )
-
-    def json(self):
-        if self._raise_json:
-            raise ValueError("Expecting value")
-        return self._json_data
-
-
-class TestCopilotMintHardening:
-    def test_missing_token_raises_actionable_error_without_leaking_source(self, monkeypatch):
-        secret = "gho_SUPER_SECRET_SOURCE_TOKEN"
-        monkeypatch.setattr(
-            copilot, "_http_post", lambda *a, **k: _ParseResp(200, {"expires_at": 123})
-        )
-        with pytest.raises(copilot.litellm.AuthenticationError) as exc:
-            copilot._mint_copilot_token(secret)
-        assert "subscription" in exc.value.message.lower()
-        assert secret not in exc.value.message
-
-    def test_non_json_mint_response_degrades_cleanly(self, monkeypatch):
-        monkeypatch.setattr(
-            copilot,
-            "_http_post",
-            lambda *a, **k: _ParseResp(200, raise_json=True, text="<html>gateway</html>"),
-        )
-        with pytest.raises(copilot.litellm.AuthenticationError):
-            copilot._mint_copilot_token("gho_x")
-
-    def test_garbage_expires_at_does_not_crash(self, monkeypatch):
-        monkeypatch.setattr(
-            copilot,
-            "_http_post",
-            lambda *a, **k: _ParseResp(200, {"token": "ct", "expires_at": "not-a-number"}),
-        )
-        minted = copilot._mint_copilot_token("gho_x")
-        assert minted["copilot_token"] == "ct"
-        assert minted["expires_at"] == 0
-
-
-class TestGeminiRefreshHardening:
-    def test_missing_access_token_raises_without_leaking_refresh(self, monkeypatch):
-        secret = "REFRESH-SECRET-do-not-leak"
-        monkeypatch.setattr(
-            gemini, "oauth_refresh_request", lambda *a, **k: {"expires_in": 3600, "scope": "x"}
-        )
-        with pytest.raises(gemini.litellm.AuthenticationError) as exc:
-            gemini._refresh_google_token({"refreshToken": secret})
-        assert "access_token" in exc.value.message
-        assert secret not in exc.value.message
-
-
-@pytest.mark.parametrize(
-    ("mod", "fn"),
-    [
-        (grok, "_exchange_session_for_access"),
-        (perplexity, "_exchange_session_for_access"),
-    ],
-)
-class TestSessionExchangeHardening:
-    def test_rejected_cookie_raises_auth_error_not_raw_traceback(self, monkeypatch, mod, fn):
-        session = "SESSION-COOKIE-SECRET"
-        monkeypatch.setattr(mod.httpx, "get", lambda *a, **k: _ParseResp(401, text="unauthorized"))
-        with pytest.raises(mod.litellm.AuthenticationError) as exc:
-            getattr(mod, fn)(session)
-        assert "401" in exc.value.message
-        assert session not in exc.value.message
-
-    def test_non_json_session_response_degrades_cleanly(self, monkeypatch, mod, fn):
-        monkeypatch.setattr(
-            mod.httpx, "get", lambda *a, **k: _ParseResp(200, raise_json=True, text="not json")
-        )
-        with pytest.raises(mod.litellm.AuthenticationError):
-            getattr(mod, fn)("SESSION")
-
-
-@pytest.mark.parametrize(
-    ("mod", "handler", "model"),
-    [
-        (copilot, copilot.copilot_handler_instance, "copilot/gpt-5"),
-        (grok, grok.grok_sub_handler_instance, "grok-sub/grok-4.3"),
-        (gemini, gemini.gemini_sub_handler_instance, "gemini-sub/gemini-2.5-pro"),
-        (perplexity, perplexity.perplexity_sub_handler_instance, "pplx-sub/sonar-pro"),
-    ],
-)
-class TestCompletionMalformedResponse:
-    def test_non_json_200_raises_api_error(self, monkeypatch, mod, handler, model):
-        monkeypatch.setattr(
-            mod,
-            "with_retry_on_401",
-            lambda send, **k: _ParseResp(200, raise_json=True, text="<html>oops</html>"),
-        )
-        with pytest.raises(mod.litellm.APIError):
-            handler.completion(model=model, messages=[{"role": "user", "content": "hi"}])
-
-    def test_non_dict_json_200_raises_api_error(self, monkeypatch, mod, handler, model):
-        monkeypatch.setattr(
-            mod,
-            "with_retry_on_401",
-            lambda send, **k: _ParseResp(200, json_data=["not", "an", "object"]),
-        )
-        with pytest.raises(mod.litellm.APIError):
-            handler.completion(model=model, messages=[{"role": "user", "content": "hi"}])
 
 
 # ── Claude refresh hardening: malformed refresh response ────────────────

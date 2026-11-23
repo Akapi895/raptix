@@ -18,7 +18,7 @@ Surface REST/GraphQL endpoints and the parameter surface of known endpoints. Thi
 ### REST API Discovery
 ```bash
 # Common API paths
-ffuf -u https://<target>/api/FUZZ -w /usr/share/wordlists/api-endpoints.txt -mc 200,201,401,403,405
+ffuf -u https://<target>/api/FUZZ -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt -mc 200,201,401,403,405
 
 # Version enumeration
 for v in v1 v2 v3; do
@@ -54,14 +54,14 @@ Look for in responses:
 
 ```bash
 # GET parameter fuzzing
-ffuf -u "https://<target>/page?FUZZ=test" -w /usr/share/wordlists/params.txt -mc 200 -fs <default_size>
+ffuf -u "https://<target>/page?FUZZ=test" -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -mc 200 -fs <default_size>
 
 # POST parameter fuzzing
 ffuf -u "https://<target>/login" -X POST \
     -d "FUZZ=test" -H "Content-Type: application/x-www-form-urlencoded" \
-    -w /usr/share/wordlists/params.txt -mc 200 -fs <default_size>
+    -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -mc 200 -fs <default_size>
 
 # Header fuzzing
 ffuf -u "https://<target>/" -H "FUZZ: test" \
-    -w /usr/share/wordlists/headers.txt -mc 200 -fs <default_size>
+    -w /usr/share/seclists/Discovery/Web-Content/BurpSuite-ParamMiner/lowercase-headers -mc 200 -fs <default_size>
 ```

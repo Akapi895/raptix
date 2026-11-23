@@ -24,11 +24,8 @@ _PROVIDER_ENV_VARS = (
     "LLAMACPP_MODEL",
     "CUSTOM_OPENAI_API_KEY",
     "CLAUDE_CODE_CREDENTIALS_PATH",
+    "ANTHROPIC_OAUTH_TOKEN",
     "CODEX_AUTH_PATH",
-    "GEMINI_TOKENS_PATH",
-    "COPILOT_TOKENS_PATH",
-    "GROK_TOKENS_PATH",
-    "PERPLEXITY_TOKENS_PATH",
 )
 
 
@@ -85,22 +82,14 @@ def test_placeholder_key_is_not_configured(clean_env):
     assert not inv.any_active
 
 
-def test_subscription_auto_routes_by_default(clean_env, tmp_path):
-    # A fully-wired Gemini Advanced subscription is now in the DEFAULT priority
-    # chain, so it is routed without the user authoring RAPTIX_AUTH_PRIORITY
-    # (the footgun the earlier release left for google/copilot/grok/perplexity).
-    cred = tmp_path / "gemini.json"
-    cred.write_text(json.dumps({"access_token": "x"}))
-    clean_env.setenv("RAPTIX_AUTH_GEMINI", "true")
-    clean_env.setenv("GEMINI_TOKENS_PATH", str(cred))
+def test_subscription_auto_routes_by_default(clean_env):
+    clean_env.setenv("RAPTIX_AUTH_CLAUDE_CODE", "true")
+    clean_env.setenv("ANTHROPIC_OAUTH_TOKEN", "test-env-token")
     inv = factory.auth_inventory()
-    gem = next(s for s in inv.statuses if s.method == AuthMethod.GOOGLE_OAUTH)
-    assert gem.configured
-    assert gem.kind == "subscription"
-    assert gem.in_priority
-    assert gem.active
-    assert AuthMethod.GOOGLE_OAUTH in inv.resolved_chain
-    assert AuthMethod.GOOGLE_OAUTH not in {s.method for s in inv.configured_but_idle}
+    claude = next(s for s in inv.statuses if s.method == AuthMethod.ANTHROPIC_OAUTH)
+    assert claude.configured and claude.in_priority and claude.active
+    assert claude.kind == "subscription"
+    assert AuthMethod.ANTHROPIC_OAUTH in inv.resolved_chain
 
 
 def test_configured_but_idle_when_priority_omits(clean_env):
@@ -117,18 +106,17 @@ def test_configured_but_idle_when_priority_omits(clean_env):
     assert AuthMethod.ANTHROPIC_API in {s.method for s in inv.configured_but_idle}
 
 
-def test_explicit_priority_routes_subscription(clean_env, tmp_path):
-    cred = tmp_path / "gemini.json"
-    cred.write_text(json.dumps({"access_token": "x"}))
+def test_explicit_priority_ignores_retired_subscription(clean_env):
     clean_env.setenv("RAPTIX_AUTH_GEMINI", "true")
-    clean_env.setenv("GEMINI_TOKENS_PATH", str(cred))
-    clean_env.setenv("RAPTIX_AUTH_PRIORITY", "google_oauth")
+    clean_env.setenv("GEMINI_ACCESS_TOKEN", "unused-token")
+    clean_env.setenv("GEMINI_API_KEY", "AIza" + "a" * 35)
+    clean_env.setenv("RAPTIX_AUTH_PRIORITY", "google_oauth,google_api")
     inv = factory.auth_inventory()
-    gem = next(s for s in inv.statuses if s.method == AuthMethod.GOOGLE_OAUTH)
-    assert gem.active
-    assert inv.priority_explicit
-    assert inv.resolved_chain == (AuthMethod.GOOGLE_OAUTH,)
-    assert not inv.configured_but_idle
+    retired = next(s for s in inv.statuses if s.method == AuthMethod.GOOGLE_OAUTH)
+    assert retired.kind == "subscription"
+    assert retired.in_priority and not retired.configured and not retired.active
+    assert retired.detail == "subscription handler retired"
+    assert inv.resolved_chain == (AuthMethod.GOOGLE_API,)
 
 
 def test_cli_status_json(clean_env, capsys):

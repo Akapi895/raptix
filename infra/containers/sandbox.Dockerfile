@@ -3,10 +3,7 @@
 # To update: docker pull kalilinux/kali-rolling:latest && docker inspect --format='{{index .RepoDigests 0}}' kalilinux/kali-rolling:latest
 FROM kalilinux/kali-rolling@sha256:ab7f9873e9d976d62f59e172350604dd980339f567bfb2eaa5c2bdfaa2dc42b7
 
-# Stamp the source revision this image was built from. The lab/benchmark
-# harness (tests/local/harnesses/lab_run.py) refuses to run when this
-# label doesn't match the checkout's HEAD — "which code is in the image"
-# used to be recorded-but-unverifiable (repo_dirty note only).
+# Record the source revision in the image metadata.
 ARG RAPTIX_REPO_HEAD=
 LABEL org.opencontainers.image.revision="${RAPTIX_REPO_HEAD}"
 
@@ -138,7 +135,7 @@ RUN pip3 install --break-system-packages --no-cache-dir \
 #   * yt-dlp       — Phase 0 media route (YouTube/Vimeo/… --dump-json)
 #   * pydantic*    — raptix-core dep so the per-hop RoE scope_check
 #                    (evaluate_target on <workspace>/plan/roe.json) is live.
-RUN pip3 install --break-system-packages --no-cache-dir \
+RUN pip3 install --break-system-packages --no-cache-dir --ignore-installed certifi \
     "curl_cffi>=0.15.0" \
     "beautifulsoup4>=4.12.0" \
     "pyyaml>=6.0.0" \
@@ -345,6 +342,40 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
         echo "INSTALL_NETWORK_EXTRA=false — skipping sandbox-network-extra profile" ; \
     fi
 
+# ── sandbox-seclists: full upstream SecLists corpus (opt-in) ────────
+# Replaces the previous repo-vendored, hand-picked dictionary subset with
+# the FULL danielmiessler/SecLists tree at the Kali-standard
+# /usr/share/seclists path the recon/exploit SKILL.md files document (e.g.
+# Discovery/Web-Content, Passwords/Default-Credentials), without
+# vendoring ~1GB+ into git. Same reproducibility rule as the
+# nuclei-templates corpus: pinned to a SecLists release tag, fetched only
+# at build time, never at runtime.
+#
+# The download lands in a BuildKit cache mount keyed by a fixed id, so a
+# rebuild — on this checkout or any other repo on the same Docker host
+# that pins the same SECLISTS_VERSION with the same cache id — reuses the
+# cached tarball instead of refetching it from GitHub.
+ARG INSTALL_SECLISTS=false
+ARG SECLISTS_VERSION=""
+RUN --mount=type=cache,target=/var/cache/seclists,id=raptix-seclists-dl \
+    if [ "$INSTALL_SECLISTS" = "true" ]; then \
+        if [ -z "$SECLISTS_VERSION" ]; then \
+            echo "SECLISTS_VERSION must be pinned to a SecLists release tag — refusing an unpinned seclists-profile build" >&2; \
+            exit 1; \
+        fi && \
+        mkdir -p /opt/raptix/tool-versions /usr/share/seclists && \
+        if [ ! -f "/var/cache/seclists/${SECLISTS_VERSION}.tar.gz" ]; then \
+            curl -fsSL -o "/var/cache/seclists/${SECLISTS_VERSION}.tar.gz" \
+                "https://github.com/danielmiessler/SecLists/archive/refs/tags/${SECLISTS_VERSION}.tar.gz" ; \
+        fi && \
+        tar -xzf "/var/cache/seclists/${SECLISTS_VERSION}.tar.gz" -C /usr/share/seclists --strip-components=1 && \
+        printf 'seclists\t%s (pinned corpus at /usr/share/seclists)\n' \
+            "$SECLISTS_VERSION" \
+            > /opt/raptix/tool-versions/sandbox-seclists.tsv ; \
+    else \
+        echo "INSTALL_SECLISTS=false — skipping sandbox-seclists profile" ; \
+    fi
+
 # ── TC-8: smart-contract audit profile (opt-in) ─────────────────────
 # Slither (pinned pip version) for static Solidity analysis — the
 # offline pattern scanner in plugins/contracts stays the zero-dep tier;
@@ -400,16 +431,11 @@ COPY packages/raptix-core/raptix_core /opt/raptix_core
 # versioned with the checkout, so cracking benchmarks never depend on a
 # mutable corpus and the JohnAdapter's wordlist path always exists.
 COPY infra/containers/sandbox-wordlist.txt /opt/raptix/share/wordlists/benchmark-dict.txt
-# Pinned recon dictionary set — repo-committed and versioned with the
-# checkout, shipped to the paths the recon/api-enumeration skills document
-# (/usr/share/wordlists/*). Same reproducibility rule as the credentials
-# dictionary: no mutable, network-fetched corpus at build or run time.
-COPY infra/containers/wordlists/ /usr/share/wordlists/
 # Kali's dirb package installs its dictionaries under
 # /usr/share/dirb/wordlists, but the recon skills and the gobuster
 # adapter document /usr/share/wordlists/dirb/common.txt. Link the
 # documented path to the packaged one so those examples resolve.
-RUN ln -sfn /usr/share/dirb/wordlists /usr/share/wordlists/dirb
+RUN mkdir -p /usr/share/wordlists && ln -sfn /usr/share/dirb/wordlists /usr/share/wordlists/dirb
 ENV PYTHONPATH=/opt
 
 # Install the Playwright templates' node deps LOCALLY (in their own dir) so the

@@ -208,30 +208,16 @@ async def call_with_timeout(coro: Awaitable[Any], timeout: float) -> Any:
         raise LLMTimeoutError(f"LLM request timed out after {timeout:g} seconds") from exc
 
 
-# Default ordering when RAPTIX_AUTH_PRIORITY is not set. Every OAuth
-# (subscription) method precedes its closest paid-API peer so a subscription
-# is spent first and only falls back to the metered API when its quota hits —
-# never the other way. Copilot (broad multi-model subscription) sits just
-# after the OpenAI slot; Perplexity (search-augmented, niche for general
-# agent work) sits low. Local/cloud-local methods sit at the end: hosted
-# providers are usually preferred when both are available; locals are the
-# last-resort fallback.
-#
-# NOTE: all six subscription methods are listed here so a credential wired
-# without an explicit RAPTIX_AUTH_PRIORITY is actually routed. Before,
-# google/copilot/grok/perplexity OAuth were absent — a configured
-# subscription was silently never used (surfaced by `raptix-cli auth`).
+# Default priority puts supported subscriptions before their matching API keys.
+# Local providers come last unless RAPTIX_AUTH_PRIORITY overrides the order.
 _DEFAULT_AUTH_PRIORITY: tuple[AuthMethod, ...] = (
     AuthMethod.ANTHROPIC_OAUTH,
     AuthMethod.ANTHROPIC_API,
     AuthMethod.OPENAI_OAUTH,
     AuthMethod.OPENAI_API,
-    AuthMethod.COPILOT_OAUTH,
-    AuthMethod.GOOGLE_OAUTH,
     AuthMethod.GOOGLE_API,
     AuthMethod.MINIMAX_API,
     AuthMethod.DEEPSEEK_API,
-    AuthMethod.GROK_OAUTH,
     AuthMethod.XAI_API,
     AuthMethod.MISTRAL_API,
     AuthMethod.OPENROUTER_API,
@@ -248,7 +234,6 @@ _DEFAULT_AUTH_PRIORITY: tuple[AuthMethod, ...] = (
     AuthMethod.BEDROCK_API,
     AuthMethod.VERTEX_API,
     AuthMethod.AZURE_API,
-    AuthMethod.PERPLEXITY_OAUTH,
     AuthMethod.LMSTUDIO_LOCAL,
     AuthMethod.LLAMACPP_LOCAL,
     AuthMethod.CUSTOM_OPENAI_API,
@@ -324,10 +309,6 @@ _API_METHOD_ENV: dict[AuthMethod, str] = {
 _OAUTH_METHOD_ENV: dict[AuthMethod, str] = {
     AuthMethod.ANTHROPIC_OAUTH: "RAPTIX_AUTH_CLAUDE_CODE",
     AuthMethod.OPENAI_OAUTH: "RAPTIX_AUTH_CHATGPT",
-    AuthMethod.GOOGLE_OAUTH: "RAPTIX_AUTH_GEMINI",
-    AuthMethod.COPILOT_OAUTH: "RAPTIX_AUTH_COPILOT",
-    AuthMethod.GROK_OAUTH: "RAPTIX_AUTH_GROK",
-    AuthMethod.PERPLEXITY_OAUTH: "RAPTIX_AUTH_PERPLEXITY",
 }
 
 # Vendor-specific API key prefix hints. When the method has a known
@@ -384,10 +365,6 @@ _OAUTH_CREDENTIAL_PATHS: dict[AuthMethod, tuple[tuple[str, str], ...]] = {
         ("", "~/.config/anthropic/q/tokens.json"),  # legacy emulator path
     ),
     AuthMethod.OPENAI_OAUTH: (("CODEX_AUTH_PATH", "~/.codex/auth.json"),),
-    AuthMethod.GOOGLE_OAUTH: (("GEMINI_TOKENS_PATH", "~/.config/gemini/tokens.json"),),
-    AuthMethod.COPILOT_OAUTH: (("COPILOT_TOKENS_PATH", "~/.config/copilot/tokens.json"),),
-    AuthMethod.GROK_OAUTH: (("GROK_TOKENS_PATH", "~/.config/grok/tokens.json"),),
-    AuthMethod.PERPLEXITY_OAUTH: (("PERPLEXITY_TOKENS_PATH", "~/.config/perplexity/tokens.json"),),
 }
 
 # Env vars each LiteLLM OAuth handler accepts as a credential *in place of*
@@ -399,10 +376,6 @@ _OAUTH_CREDENTIAL_PATHS: dict[AuthMethod, tuple[tuple[str, str], ...]] = {
 # ``_OAUTH_CREDENTIAL_PATHS`` — so it is intentionally absent here.
 _OAUTH_ENV_CREDENTIALS: dict[AuthMethod, tuple[str, ...]] = {
     AuthMethod.ANTHROPIC_OAUTH: ("ANTHROPIC_OAUTH_TOKEN",),
-    AuthMethod.GOOGLE_OAUTH: ("GEMINI_ACCESS_TOKEN", "GEMINI_SESSION_COOKIES"),
-    AuthMethod.COPILOT_OAUTH: ("COPILOT_ACCESS_TOKEN", "COPILOT_REFRESH_TOKEN"),
-    AuthMethod.GROK_OAUTH: ("GROK_ACCESS_TOKEN", "GROK_SESSION_TOKEN"),
-    AuthMethod.PERPLEXITY_OAUTH: ("PERPLEXITY_ACCESS_TOKEN", "PERPLEXITY_SESSION_TOKEN"),
 }
 
 
@@ -549,7 +522,7 @@ def _oauth_credentials_present(method: AuthMethod) -> bool:
 def _oauth_env_credentials_present(method: AuthMethod) -> bool:
     """Return True if any env var the handler accepts as a credential is set.
 
-    Env-only OAuth setups (e.g. ``GEMINI_ACCESS_TOKEN`` with no token file)
+    Env-only OAuth setups (e.g. ``ANTHROPIC_OAUTH_TOKEN`` without a token file)
     are valid: the LiteLLM handler authenticates straight from the env. Such
     a method must not be dropped from the fallback chain just because no file
     exists on disk.
@@ -718,7 +691,15 @@ def _resolve_credentials() -> Credentials:
 
 # ── Auth inventory (headless introspection for CLI / SDK / dashboard) ─────
 
-_SUBSCRIPTION_METHODS: frozenset[AuthMethod] = frozenset(_OAUTH_METHOD_ENV)
+_RETIRED_SUBSCRIPTION_METHODS = frozenset(
+    {
+        AuthMethod.GOOGLE_OAUTH,
+        AuthMethod.COPILOT_OAUTH,
+        AuthMethod.GROK_OAUTH,
+        AuthMethod.PERPLEXITY_OAUTH,
+    }
+)
+_SUBSCRIPTION_METHODS: frozenset[AuthMethod] = frozenset(_OAUTH_METHOD_ENV) | _RETIRED_SUBSCRIPTION_METHODS
 _LOCAL_METHODS: frozenset[AuthMethod] = frozenset(
     {
         AuthMethod.OLLAMA_LOCAL,
@@ -744,7 +725,6 @@ _METHOD_LABEL: dict[AuthMethod, str] = {
     AuthMethod.OPENAI_API: "OpenAI — API key",
     AuthMethod.OPENAI_OAUTH: "OpenAI — ChatGPT (Pro/Plus/Team)",
     AuthMethod.GOOGLE_API: "Google — Gemini API key",
-    AuthMethod.GOOGLE_OAUTH: "Google — Gemini Advanced (Google One)",
     AuthMethod.MINIMAX_API: "MiniMax — API key",
     AuthMethod.DEEPSEEK_API: "DeepSeek — API key",
     AuthMethod.XAI_API: "xAI — API key",
@@ -774,9 +754,6 @@ _METHOD_LABEL: dict[AuthMethod, str] = {
     AuthMethod.ZENMUX_API: "ZenMux — API key",
     AuthMethod.QIANFAN_API: "Baidu Qianfan (ERNIE) — API key",
     AuthMethod.CLOUDFLARE_GATEWAY_API: "Cloudflare AI Gateway — API key + base URL",
-    AuthMethod.COPILOT_OAUTH: "GitHub Copilot — Pro subscription",
-    AuthMethod.GROK_OAUTH: "xAI SuperGrok — X Premium+",
-    AuthMethod.PERPLEXITY_OAUTH: "Perplexity — Pro subscription",
     AuthMethod.OLLAMA_LOCAL: "Ollama — local",
     AuthMethod.OLLAMA_CLOUD: "Ollama Cloud — API key",
     AuthMethod.LMSTUDIO_LOCAL: "LM Studio — local",
@@ -803,6 +780,8 @@ def _method_env_var(method: AuthMethod) -> str:
 
 def _method_detail(method: AuthMethod, *, configured: bool) -> str:
     """One-line hint: confirmation when configured, remediation otherwise."""
+    if method in _RETIRED_SUBSCRIPTION_METHODS:
+        return "subscription handler retired"
     env = _method_env_var(method)
     if method in _OAUTH_METHOD_ENV:
         flag = _OAUTH_METHOD_ENV[method]
@@ -859,11 +838,7 @@ class AuthInventory:
 
     @property
     def configured_but_idle(self) -> tuple[AuthMethodStatus, ...]:
-        """Configured methods NOT on the resolved chain — almost always
-        because the method is missing from ``RAPTIX_AUTH_PRIORITY``
-        (google_oauth / copilot_oauth / grok_oauth / perplexity_oauth are
-        not in the default priority), so the credential is wired but the
-        runtime will never route to it."""
+        """Configured methods excluded from the resolved priority chain."""
         return tuple(s for s in self.statuses if s.configured and not s.active)
 
 

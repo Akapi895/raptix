@@ -181,10 +181,10 @@ ffuf -u https://<target>/FUZZ -w /usr/share/wordlists/dirb/common.txt -mc 200,30
 ffuf -u https://<target>/FUZZ -w /usr/share/wordlists/dirb/common.txt -e .php,.asp,.aspx,.jsp,.html,.js,.json,.xml,.txt,.bak,.old
 
 # Subdomain fuzzing via Host header
-ffuf -u https://<target>/ -H "Host: FUZZ.<target>" -w /usr/share/wordlists/subdomains.txt -fs <default_size>
+ffuf -u https://<target>/ -H "Host: FUZZ.<target>" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_size>
 
 # API endpoint discovery
-ffuf -u https://<target>/api/FUZZ -w /usr/share/wordlists/api-endpoints.txt -mc 200,201,401,403
+ffuf -u https://<target>/api/FUZZ -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt -mc 200,201,401,403
 
 # Save JSON output
 ffuf -u https://<target>/FUZZ -w wordlist.txt -o ffuf_results.json -of json
@@ -193,7 +193,7 @@ ffuf -u https://<target>/FUZZ -w wordlist.txt -o ffuf_results.json -of json
 ### gobuster (Alternative)
 ```bash
 gobuster dir -u https://<target> -w /usr/share/wordlists/dirb/common.txt -o gobuster_<target>.txt
-gobuster dns -d <target> -w /usr/share/wordlists/subdomains.txt
+gobuster dns -d <target> -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
 ```
 
 ## 5. Vulnerability Scanning

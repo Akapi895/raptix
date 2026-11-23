@@ -51,10 +51,10 @@ done
 ```bash
 # vHost fuzzing via Host header
 ffuf -u https://<target_ip>/ -H "Host: FUZZ.<target>" \
-    -w /usr/share/wordlists/subdomains.txt -fs <default_size>
+    -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_size>
 
 # With TLS SNI
-ffuf -u https://FUZZ.<target>/ -w /usr/share/wordlists/subdomains.txt \
+ffuf -u https://FUZZ.<target>/ -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
     -mc 200,301,302,403 -fs <default_size>
 ```
 

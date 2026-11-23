@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -143,59 +142,6 @@ func TestValidateAPIKeys_AcceptsAllProviders(t *testing.T) {
 	}
 }
 
-// TestValidateAuth_OAuthSubscriptions verifies each custom subscription handler
-// accepts any of its supported credential surfaces — env token or tokens.json.
-func TestValidateAuth_OAuthSubscriptions(t *testing.T) {
-	cases := []struct {
-		toggle    string
-		envName   string
-		configDir string
-		fileFmt   string
-	}{
-		{"RAPTIX_AUTH_GEMINI", "GEMINI_SESSION_COOKIES", "gemini", "tokens.json"},
-		{"RAPTIX_AUTH_COPILOT", "COPILOT_REFRESH_TOKEN", "copilot", "tokens.json"},
-		{"RAPTIX_AUTH_GROK", "GROK_SESSION_TOKEN", "grok", "tokens.json"},
-		{"RAPTIX_AUTH_PERPLEXITY", "PERPLEXITY_SESSION_TOKEN", "perplexity", "tokens.json"},
-	}
-	for _, c := range cases {
-		t.Run(c.envName+" via env", func(t *testing.T) {
-			home := t.TempDir()
-			t.Setenv("HOME", home)
-			t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
-			env := map[string]string{c.toggle: "true", c.envName: "anything-not-empty"}
-			if err := ValidateAuth(env); err != nil {
-				t.Errorf("expected env-token to satisfy %s: %v", c.toggle, err)
-			}
-		})
-		t.Run(c.envName+" via tokens.json", func(t *testing.T) {
-			home := t.TempDir()
-			t.Setenv("HOME", home)
-			t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
-			dir := filepath.Join(home, ".config", c.configDir)
-			if err := os.MkdirAll(dir, 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(dir, c.fileFmt), []byte("{}"), 0o600); err != nil {
-				t.Fatal(err)
-			}
-			env := map[string]string{c.toggle: "true"}
-			if err := ValidateAuth(env); err != nil {
-				t.Errorf("expected tokens.json to satisfy %s: %v", c.toggle, err)
-			}
-		})
-		t.Run(c.envName+" toggle on but no creds fails", func(t *testing.T) {
-			home := t.TempDir()
-			t.Setenv("HOME", home)
-			t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
-			env := map[string]string{c.toggle: "true"}
-			err := ValidateAuth(env)
-			if err == nil {
-				t.Errorf("expected %s with no creds to fail", c.toggle)
-			}
-		})
-	}
-}
-
 func TestValidateAuth_ChatGPTNativeOAuth(t *testing.T) {
 	t.Run("toggle on allows native device login without session cookie", func(t *testing.T) {
 		home := t.TempDir()
@@ -207,16 +153,6 @@ func TestValidateAuth_ChatGPTNativeOAuth(t *testing.T) {
 		}
 	})
 
-	t.Run("uses codex auth.json path", func(t *testing.T) {
-		home := t.TempDir()
-		t.Setenv("HOME", home)
-		t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
-		got := subscriptionTokenPaths(map[string]string{}, home, oauthSubscriptions["chatgpt"])
-		want := []string{filepath.Join(home, ".codex", "auth.json")}
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("unexpected ChatGPT token paths: got %v want %v", got, want)
-		}
-	})
 }
 
 func TestValidateAuth_OllamaLocal(t *testing.T) {
@@ -227,7 +163,7 @@ func TestValidateAuth_OllamaLocal(t *testing.T) {
 	t.Run("priority+base passes", func(t *testing.T) {
 		env := map[string]string{
 			"RAPTIX_AUTH_PRIORITY": "ollama_local",
-			"OLLAMA_API_BASE":          "http://host.docker.internal:11434",
+			"OLLAMA_API_BASE":      "http://host.docker.internal:11434",
 		}
 		if err := ValidateAuth(env); err != nil {
 			t.Errorf("expected ollama_local to pass without API key: %v", err)
@@ -325,7 +261,7 @@ func TestValidateAuth_OAuthFallsBackToAPIKey(t *testing.T) {
 	t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
 	env := map[string]string{
 		"RAPTIX_AUTH_CLAUDE_CODE": "true",
-		"ANTHROPIC_API_KEY":           "sk-ant-api03-realkeythatislongenough",
+		"ANTHROPIC_API_KEY":       "sk-ant-api03-realkeythatislongenough",
 	}
 	if err := ValidateAuth(env); err != nil {
 		t.Errorf("expected fallback to API key when OAuth file missing: %v", err)
@@ -360,7 +296,7 @@ RAPTIX_MODEL_PROFILE=eco
 	}
 
 	values := map[string]string{
-		"ANTHROPIC_API_KEY":        "sk-real-key",
+		"ANTHROPIC_API_KEY":    "sk-real-key",
 		"RAPTIX_MODEL_PROFILE": "max",
 	}
 

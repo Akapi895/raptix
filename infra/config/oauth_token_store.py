@@ -1,7 +1,7 @@
 """Shared OAuth token store helpers for LiteLLM custom handlers.
 
 Mounted into the LiteLLM container alongside the per-provider handler
-modules (claude_code_handler, codex_chatgpt_handler, copilot_handler, ...).
+modules (claude_code_handler, codex_chatgpt_handler).
 Centralizes credential I/O so a refresh on the host (e.g. ``codex login``
 rotating ``~/.codex/auth.json`` or Claude Code rotating
 ``~/.claude/.credentials.json``) is picked up by the running container

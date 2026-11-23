@@ -155,7 +155,7 @@ func cleanPathFromFile(path string) {
 	for i < len(lines) {
 		line := lines[i]
 		if strings.TrimSpace(line) == "# raptix" && i+1 < len(lines) && isInstallPathLine(lines[i+1]) {
-			// Also drop a single preceding blank line install.sh inserts.
+			// Drop a preceding blank line left by the legacy installer.
 			if n := len(out); n > 0 && strings.TrimSpace(out[n-1]) == "" {
 				out = out[:n-1]
 			}
@@ -172,8 +172,7 @@ func cleanPathFromFile(path string) {
 	}
 }
 
-// isInstallPathLine reports whether a line matches the PATH addition
-// install.sh writes (bash/zsh export or fish_add_path with .local/bin).
+// isInstallPathLine matches PATH entries written by the legacy installer.
 func isInstallPathLine(line string) bool {
 	s := strings.TrimSpace(line)
 	if !strings.Contains(s, ".local/bin") {

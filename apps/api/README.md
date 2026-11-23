@@ -317,12 +317,6 @@ path to it, not a gap introduced here).
   (`interfaces/api/auth.py`). `RuntimeTransport` is the port routes depend
   on; `RuntimeClient` implements it, `tests/support/fake-runtime.ts` fakes
   it.
-- `src/integrations/` — infrastructure plumbing (environments) salvaged from
-  the retired `apps/web/server` (recoverable from git history prior to the
-  ADR-0106 deletion commit). Not yet populated -- C2 and sandbox-files are
-  now `adapters/c2/` and `adapters/sandbox/` instead (Tier 3/4), campaigns
-  turned out not to be what "Batch task queues" needed (see
-  `batch-tasks.routes.ts`'s note).
 - `prisma/schema.prisma` — `Operator`/`Session` (Tier 1),
   `Project`/`Conversation`/`Message` (Tier 2), `Asset`/`Vulnerability`/
   `AlertSubscription` (Tier 3), `BatchQueue`/`BatchTask`/

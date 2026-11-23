@@ -133,18 +133,14 @@ def test_validate_model_name_rejects_bare_or_internal_routes() -> None:
         validate_model_name("unknown/model")
 
 
-def test_validate_model_name_rejects_other_subscription_prefixes() -> None:
-    """Subscription providers register through ``custom_provider_map`` in
-    ``litellm_startup.py`` — admitting them on the API-key dynamic path
-    would synthesize a ``<PROVIDER>_API_KEY`` env lookup that never works.
-    """
+def test_validate_model_name_rejects_retired_subscription_prefixes() -> None:
     for slug in (
         "gemini-sub/gemini-2.5-pro",
         "copilot/gpt-5.5",
         "grok-sub/grok-4.3",
         "pplx-sub/sonar",
     ):
-        with pytest.raises(ValueError, match="not allowed as dynamic API-key model routes"):
+        with pytest.raises(ValueError, match="routes are no longer supported"):
             validate_model_name(slug)
 
 

@@ -130,7 +130,6 @@ known-first-party = ["raptix", "raptix_core", "raptix_sdk"]
 "apps/**" = ["TID251"]
 "scripts/**" = ["TID251"]
 "infra/config/**" = ["TID251"]
-"tests/local/**" = ["TID251"]
 "plugins/**" = ["TID251"]
 
 [tool.pytest.ini_options]

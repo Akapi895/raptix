@@ -130,7 +130,7 @@ amass intel -asn 12345 -whois -d example.com
 ### DNS Brute Force (Secondary)
 ```bash
 # Using a wordlist if available
-for sub in $(cat /usr/share/wordlists/subdomains.txt); do
+for sub in $(cat /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt); do
     dig +short "$sub.example.com" | grep -v "^$" && echo "$sub.example.com"
 done
 ```

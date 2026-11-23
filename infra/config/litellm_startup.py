@@ -147,10 +147,6 @@ _probe_ollama_if_configured()
 import litellm  # noqa: E402
 from auth_handler import auth_handler_instance  # noqa: E402
 from codex_chatgpt_handler import codex_chatgpt_handler_instance  # noqa: E402
-from copilot_handler import copilot_handler_instance  # noqa: E402
-from gemini_handler import gemini_sub_handler_instance  # noqa: E402
-from grok_handler import grok_sub_handler_instance  # noqa: E402
-from perplexity_handler import perplexity_sub_handler_instance  # noqa: E402
 
 # ── Custom provider registration ─────────────────────────────────────
 # The ``auth/`` namespace dispatches to per-provider OAuth handlers via
@@ -166,19 +162,9 @@ from perplexity_handler import perplexity_sub_handler_instance  # noqa: E402
 # Currently affected:
 #   - ChatGPT Codex (auth/gpt-5.5/5.4/5.4-mini/5.3-codex) →
 #       codex-oauth/oauth-gpt-<slug>
-#   - Copilot opt-in (copilot/gpt-5.3-codex) → copilot/oauth-gpt-5.3-codex
-# Default Copilot tier picks (gpt-5.5, claude-sonnet-4-6, gpt-5.4-mini)
-# and all other subscription routes (claude-*, gemini-2.5-*, grok-4.*,
-# sonar*) use slugs that do NOT collide with open_ai_chat_completion_models
-# and pass through their providers directly with no aliasing.
-
 litellm.custom_provider_map = [
     {"provider": "auth", "custom_handler": auth_handler_instance},
     {"provider": "codex-oauth", "custom_handler": codex_chatgpt_handler_instance},
-    {"provider": "gemini-sub", "custom_handler": gemini_sub_handler_instance},
-    {"provider": "copilot", "custom_handler": copilot_handler_instance},
-    {"provider": "grok-sub", "custom_handler": grok_sub_handler_instance},
-    {"provider": "pplx-sub", "custom_handler": perplexity_sub_handler_instance},
 ]
 
 from litellm.utils import custom_llm_setup  # noqa: E402
@@ -187,7 +173,7 @@ custom_llm_setup()
 
 
 print(
-    "[raptix] auth dispatcher (claude_code, codex_chatgpt) + 4 subscription handlers registered",
+    "[raptix] Claude Code and Codex OAuth handlers registered",
     flush=True,
 )
 

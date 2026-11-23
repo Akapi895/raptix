@@ -37,23 +37,19 @@ const claudeSetupTokenDocsURL = "https://code.claude.com/docs/en/authentication"
 
 // AuthMethod identifiers — must match raptix/intelligence/llm/models.py::AuthMethod.
 const (
-	methodAnthropicOAuth  = "anthropic_oauth"
-	methodAnthropicAPI    = "anthropic_api"
-	methodOpenAIOAuth     = "openai_oauth"
-	methodOpenAIAPI       = "openai_api"
-	methodGoogleOAuth     = "google_oauth"
-	methodGoogleAPI       = "google_api"
-	methodMiniMaxAPI      = "minimax_api"
-	methodDeepSeekAPI     = "deepseek_api"
-	methodXAIAPI          = "xai_api"
-	methodGrokOAuth       = "grok_oauth"
-	methodMistralAPI      = "mistral_api"
-	methodOpenRouterAPI   = "openrouter_api"
-	methodNvidiaAPI       = "nvidia_api"
-	methodCopilotOAuth    = "copilot_oauth"
-	methodPerplexityOAuth = "perplexity_oauth"
-	methodOllamaLocal     = "ollama_local"
-	methodOllamaCloud     = "ollama_cloud"
+	methodAnthropicOAuth = "anthropic_oauth"
+	methodAnthropicAPI   = "anthropic_api"
+	methodOpenAIOAuth    = "openai_oauth"
+	methodOpenAIAPI      = "openai_api"
+	methodGoogleAPI      = "google_api"
+	methodMiniMaxAPI     = "minimax_api"
+	methodDeepSeekAPI    = "deepseek_api"
+	methodXAIAPI         = "xai_api"
+	methodMistralAPI     = "mistral_api"
+	methodOpenRouterAPI  = "openrouter_api"
+	methodNvidiaAPI      = "nvidia_api"
+	methodOllamaLocal    = "ollama_local"
+	methodOllamaCloud    = "ollama_cloud"
 	// Cloud gateways added in the OpenClaude provider migration.
 	methodBedrockAPI      = "bedrock_api"
 	methodVertexAPI       = "vertex_api"
@@ -91,17 +87,13 @@ var methodOrder = []string{
 	methodAnthropicAPI,
 	methodOpenAIOAuth,
 	methodOpenAIAPI,
-	methodGoogleOAuth,
 	methodGoogleAPI,
 	methodMiniMaxAPI,
 	methodDeepSeekAPI,
 	methodXAIAPI,
-	methodGrokOAuth,
 	methodMistralAPI,
 	methodOpenRouterAPI,
 	methodNvidiaAPI,
-	methodCopilotOAuth,
-	methodPerplexityOAuth,
 	// Cloud gateways — anthropic-via-cloud paths first, then
 	// other multi-vendor hubs.
 	methodBedrockAPI,
@@ -184,23 +176,19 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	}()
 
 	var (
-		methods                []string
-		anthropicKey           string
-		claudeOAuthToken       string
-		openaiKey              string
-		geminiKey              string
-		minimaxKey             string
-		deepseekKey            string
-		xaiKey                 string
-		mistralKey             string
-		openrouterKey          string
-		nvidiaKey              string
-		geminiSessionCookies   string
-		copilotRefreshToken    string
-		grokSessionToken       string
-		perplexitySessionToken string
-		ollamaAPIBase          = defaultOllamaAPIBase
-		ollamaModel            = defaultOllamaModel
+		methods          []string
+		anthropicKey     string
+		claudeOAuthToken string
+		openaiKey        string
+		geminiKey        string
+		minimaxKey       string
+		deepseekKey      string
+		xaiKey           string
+		mistralKey       string
+		openrouterKey    string
+		nvidiaKey        string
+		ollamaAPIBase    = defaultOllamaAPIBase
+		ollamaModel      = defaultOllamaModel
 		// Cloud gateways
 		awsAccessKeyID     string
 		awsSecretAccessKey string
@@ -277,10 +265,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 					huh.NewOption("Mistral API Key   — (no fixed prefix)", methodMistralAPI),
 					huh.NewOption("OpenRouter API Key — sk-or-...", methodOpenRouterAPI),
 					huh.NewOption("Nvidia NIM API Key — nvapi-...", methodNvidiaAPI),
-					huh.NewOption("Gemini Advanced     — Google One AI Premium subscription (gemini-sub/*)", methodGoogleOAuth),
-					huh.NewOption("SuperGrok           — X Premium+ Grok subscription (grok-sub/*)", methodGrokOAuth),
-					huh.NewOption("GitHub Copilot Pro  — Copilot subscription (copilot/*)", methodCopilotOAuth),
-					huh.NewOption("Perplexity Pro      — Perplexity subscription (pplx-sub/*)", methodPerplexityOAuth),
 					huh.NewOption("AWS Bedrock         — Anthropic models on AWS (bedrock/*)", methodBedrockAPI),
 					huh.NewOption("GCP Vertex AI       — Anthropic + Gemini on GCP (vertex_ai/*)", methodVertexAPI),
 					huh.NewOption("Azure OpenAI        — Azure-hosted GPT deployments (azure/*)", methodAzureAPI),
@@ -423,56 +407,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 				Validate(nonEmpty),
 		).Title("2 / 5  ·  Nvidia NIM API").
 			WithHideFunc(func() bool { return !contains(methods, methodNvidiaAPI) }),
-
-		// Optional Gemini cookie string. A local tokens.json is the fallback.
-		huh.NewGroup(
-			huh.NewNote().
-				Title("Gemini Advanced Subscription").
-				Description("Open gemini.google.com → DevTools → Application →\nCookies → gemini.google.com. Copy the values of\nNID, __Secure-1PSID, __Secure-1PSIDTS as a single\nsemicolon-joined string. Or leave blank to use\nGEMINI_ACCESS_TOKEN / ~/.config/gemini/tokens.json."),
-			huh.NewInput().
-				Title("GEMINI_SESSION_COOKIES").
-				Placeholder("NID=...; __Secure-1PSID=...   (leave blank to skip)").
-				EchoMode(huh.EchoModePassword).
-				Value(&geminiSessionCookies),
-		).Title("2 / 5  ·  Gemini Advanced").
-			WithHideFunc(func() bool { return !contains(methods, methodGoogleOAuth) }),
-
-		huh.NewGroup(
-			huh.NewNote().
-				Title("SuperGrok Subscription").
-				Description("Open grok.com → DevTools → Application →\nCookies → grok.com → copy the value of\n`auth_token`. Or leave blank to use\nGROK_ACCESS_TOKEN / ~/.config/grok/tokens.json."),
-			huh.NewInput().
-				Title("GROK_SESSION_TOKEN").
-				Placeholder("paste auth_token cookie value (leave blank to skip)").
-				EchoMode(huh.EchoModePassword).
-				Value(&grokSessionToken),
-		).Title("2 / 5  ·  SuperGrok").
-			WithHideFunc(func() bool { return !contains(methods, methodGrokOAuth) }),
-
-		// Copilot uses a rotating refresh token, with tokens.json as a fallback.
-		huh.NewGroup(
-			huh.NewNote().
-				Title("GitHub Copilot Pro Subscription").
-				Description("Provide a Copilot refresh token (long-lived, used\nto rotate access tokens). Or leave blank to use\nCOPILOT_ACCESS_TOKEN / ~/.config/copilot/tokens.json."),
-			huh.NewInput().
-				Title("COPILOT_REFRESH_TOKEN").
-				Placeholder("ghu_... or ghr_... (leave blank to skip)").
-				EchoMode(huh.EchoModePassword).
-				Value(&copilotRefreshToken),
-		).Title("2 / 5  ·  Copilot Pro").
-			WithHideFunc(func() bool { return !contains(methods, methodCopilotOAuth) }),
-
-		huh.NewGroup(
-			huh.NewNote().
-				Title("Perplexity Pro Subscription").
-				Description("Open perplexity.ai → DevTools → Application →\nCookies → perplexity.ai → copy the value of\n`next-auth.session-token`. Or leave blank to use\nPERPLEXITY_ACCESS_TOKEN / ~/.config/perplexity/tokens.json."),
-			huh.NewInput().
-				Title("PERPLEXITY_SESSION_TOKEN").
-				Placeholder("paste next-auth.session-token (leave blank to skip)").
-				EchoMode(huh.EchoModePassword).
-				Value(&perplexitySessionToken),
-		).Title("2 / 5  ·  Perplexity Pro").
-			WithHideFunc(func() bool { return !contains(methods, methodPerplexityOAuth) }),
 
 		huh.NewGroup(
 			huh.NewNote().
@@ -841,14 +775,10 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		"RAPTIX_AUTH_PRIORITY":    strings.Join(priority, ","),
 		"RAPTIX_AUTH_CLAUDE_CODE": boolStr(contains(methods, methodAnthropicOAuth)),
 		"RAPTIX_AUTH_CHATGPT":     boolStr(contains(methods, methodOpenAIOAuth)),
-		"RAPTIX_AUTH_GEMINI":      boolStr(contains(methods, methodGoogleOAuth)),
-		"RAPTIX_AUTH_GROK":        boolStr(contains(methods, methodGrokOAuth)),
-		"RAPTIX_AUTH_COPILOT":     boolStr(contains(methods, methodCopilotOAuth)),
-		"RAPTIX_AUTH_PERPLEXITY":  boolStr(contains(methods, methodPerplexityOAuth)),
-		"LITELLM_MASTER_KEY":          installationSecrets.LiteLLMMasterKey,
-		"LITELLM_SALT_KEY":            installationSecrets.LiteLLMSaltKey,
-		"POSTGRES_PASSWORD":           installationSecrets.PostgresPassword,
-		"NEO4J_PASSWORD":              installationSecrets.Neo4jPassword,
+		"LITELLM_MASTER_KEY":      installationSecrets.LiteLLMMasterKey,
+		"LITELLM_SALT_KEY":        installationSecrets.LiteLLMSaltKey,
+		"POSTGRES_PASSWORD":       installationSecrets.PostgresPassword,
+		"NEO4J_PASSWORD":          installationSecrets.Neo4jPassword,
 	}
 
 	if anthropicKey != "" {
@@ -881,18 +811,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	}
 	if nvidiaKey != "" {
 		values["NVIDIA_API_KEY"] = nvidiaKey
-	}
-	if geminiSessionCookies != "" {
-		values["GEMINI_SESSION_COOKIES"] = geminiSessionCookies
-	}
-	if grokSessionToken != "" {
-		values["GROK_SESSION_TOKEN"] = grokSessionToken
-	}
-	if copilotRefreshToken != "" {
-		values["COPILOT_REFRESH_TOKEN"] = copilotRefreshToken
-	}
-	if perplexitySessionToken != "" {
-		values["PERPLEXITY_SESSION_TOKEN"] = perplexitySessionToken
 	}
 	if contains(methods, methodOllamaLocal) {
 		values["OLLAMA_API_BASE"] = strings.TrimSpace(ollamaAPIBase)

@@ -744,15 +744,7 @@ model_list:
       output_cost_per_token: 0.000005
 
   # ── Subscription OAuth routes ──────────────────────────────────────────
-  # ChatGPT (auth/gpt-*), Gemini Advanced (gemini-sub/*), Copilot
-  # (copilot/*), SuperGrok (grok-sub/*), and Perplexity Pro (pplx-sub/*)
-  # are registered DYNAMICALLY by litellm_dynamic_config.py, gated on
-  # their respective RAPTIX_AUTH_* flags. Each route dispatches to a
-  # Raptix custom handler defined under config/<provider>_handler.py
-  # (claude_code, codex_chatgpt, gemini, copilot, grok, perplexity) — all
-  # share oauth_token_store.py for atomic token refresh + mtime caching,
-  # so a host-side ``codex login`` / Claude Code rotation is picked up by
-  # the running container without restart.
+  # ChatGPT subscription routes are added at startup when enabled.
 
   # ── Local LLM (Ollama) ──────────────────────────────────────────────
   # Ollama routes are registered dynamically at proxy startup by
@@ -776,13 +768,7 @@ litellm_settings:
   # when ``database_url`` is set, and listing handlers here would also
   # create a circular import with the dispatcher defined in startup.
   #
-  # Active custom providers (all registered in litellm_startup.py):
-  #   - auth         → dispatches Claude Code (auth/claude-*) +
-  #                    Codex ChatGPT (auth/gpt-*) via auth_handler.AuthDispatcher
-  #   - gemini-sub   → gemini_handler.gemini_sub_handler_instance
-  #   - copilot      → copilot_handler.copilot_handler_instance
-  #   - grok-sub     → grok_handler.grok_sub_handler_instance
-  #   - pplx-sub     → perplexity_handler.perplexity_sub_handler_instance
+  # The startup entrypoint registers the Claude Code and Codex handlers.
   num_retries: 3
   retry_after: 30
 
@@ -833,7 +819,6 @@ router_settings:
     - {"gemini/gemini-2.5-flash": ["gemini/gemini-2.5-flash-lite"]}
     # Gemini 3.x (GA) within-family degradation — 3.5-flash → 3.1-flash-lite
     - {"gemini/gemini-3.5-flash": ["gemini/gemini-3.1-flash-lite"]}
-    # Gemini Advanced subscription fallbacks (registered dynamically)
     # MiniMax (no LOW tier)
     - {"minimax/MiniMax-M3": ["minimax/MiniMax-M2.7-highspeed"]}
     # DeepSeek — v4-flash falls through to legacy deepseek-chat (non-thinking)
@@ -873,7 +858,6 @@ router_settings:
     - {"qianfan/ernie-4.5-turbo-32k": ["qianfan/ernie-speed-pro-128k"]}
     - {"cfgateway/anthropic/claude-opus-4-6": ["cfgateway/anthropic/claude-sonnet-4-6"]}
     - {"cfgateway/anthropic/claude-sonnet-4-6": ["cfgateway/anthropic/claude-haiku-4-5"]}
-    # Copilot, SuperGrok, Perplexity fallbacks (registered dynamically)
   routing_strategy: simple-shuffle
   num_retries: 5
   timeout: 300

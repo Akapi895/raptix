@@ -232,23 +232,23 @@ var keyFormatRules = map[string]struct {
 	Prefix string
 	Hint   string
 }{
-	"ANTHROPIC_API_KEY":              {Prefix: "sk-", Hint: "Anthropic keys start with 'sk-'"},
-	"OPENAI_API_KEY":                 {Prefix: "sk-", Hint: "OpenAI keys start with 'sk-'"},
-	"GEMINI_API_KEY":                 {Prefix: "AIza", Hint: "Gemini keys start with 'AIza'"},
-	"OPENROUTER_API_KEY":             {Prefix: "sk-or-", Hint: "OpenRouter keys start with 'sk-or-'"},
-	"NVIDIA_API_KEY":                 {Prefix: "nvapi-", Hint: "NVIDIA keys start with 'nvapi-'"},
-	"DEEPSEEK_API_KEY":               {Prefix: "sk-", Hint: "DeepSeek keys start with 'sk-'"},
-	"XAI_API_KEY":                    {Prefix: "xai-", Hint: "xAI keys start with 'xai-'"},
-	"MINIMAX_API_KEY":                {Prefix: "", Hint: ""},
-	"MISTRAL_API_KEY":                {Prefix: "", Hint: ""},
-	"GROQ_API_KEY":                   {Prefix: "gsk_", Hint: "Groq keys start with 'gsk_'"},
-	"TOGETHER_API_KEY":               {Prefix: "", Hint: ""},
-	"FIREWORKS_API_KEY":              {Prefix: "fw_", Hint: "Fireworks keys start with 'fw_'"},
-	"COHERE_API_KEY":                 {Prefix: "", Hint: ""},
-	"MOONSHOT_API_KEY":               {Prefix: "sk-", Hint: "Moonshot keys start with 'sk-'"},
-	"KIMI_API_KEY":                   {Prefix: "sk-kimi-", Hint: "Kimi for Coding keys start with 'sk-kimi-'"},
-	"ZAI_API_KEY":                    {Prefix: "", Hint: ""},
-	"DASHSCOPE_API_KEY":              {Prefix: "sk-", Hint: "DashScope keys start with 'sk-'"},
+	"ANTHROPIC_API_KEY":  {Prefix: "sk-", Hint: "Anthropic keys start with 'sk-'"},
+	"OPENAI_API_KEY":     {Prefix: "sk-", Hint: "OpenAI keys start with 'sk-'"},
+	"GEMINI_API_KEY":     {Prefix: "AIza", Hint: "Gemini keys start with 'AIza'"},
+	"OPENROUTER_API_KEY": {Prefix: "sk-or-", Hint: "OpenRouter keys start with 'sk-or-'"},
+	"NVIDIA_API_KEY":     {Prefix: "nvapi-", Hint: "NVIDIA keys start with 'nvapi-'"},
+	"DEEPSEEK_API_KEY":   {Prefix: "sk-", Hint: "DeepSeek keys start with 'sk-'"},
+	"XAI_API_KEY":        {Prefix: "xai-", Hint: "xAI keys start with 'xai-'"},
+	"MINIMAX_API_KEY":    {Prefix: "", Hint: ""},
+	"MISTRAL_API_KEY":    {Prefix: "", Hint: ""},
+	"GROQ_API_KEY":       {Prefix: "gsk_", Hint: "Groq keys start with 'gsk_'"},
+	"TOGETHER_API_KEY":   {Prefix: "", Hint: ""},
+	"FIREWORKS_API_KEY":  {Prefix: "fw_", Hint: "Fireworks keys start with 'fw_'"},
+	"COHERE_API_KEY":     {Prefix: "", Hint: ""},
+	"MOONSHOT_API_KEY":   {Prefix: "sk-", Hint: "Moonshot keys start with 'sk-'"},
+	"KIMI_API_KEY":       {Prefix: "sk-kimi-", Hint: "Kimi for Coding keys start with 'sk-kimi-'"},
+	"ZAI_API_KEY":        {Prefix: "", Hint: ""},
+	"DASHSCOPE_API_KEY":  {Prefix: "sk-", Hint: "DashScope keys start with 'sk-'"},
 	// GitHub fine-grained PATs start with github_pat_; classic PATs
 	// start with ghp_. Accept either by skipping the prefix check.
 	"GITHUB_TOKEN":                   {Prefix: "", Hint: ""},
@@ -256,7 +256,7 @@ var keyFormatRules = map[string]struct {
 	"AZURE_API_KEY":                  {Prefix: "", Hint: ""},
 	"GOOGLE_APPLICATION_CREDENTIALS": {Prefix: "", Hint: "must be an absolute path to a service-account JSON file"},
 
-	"CUSTOM_OPENAI_API_KEY":          {Prefix: "", Hint: ""},
+	"CUSTOM_OPENAI_API_KEY": {Prefix: "", Hint: ""},
 }
 
 // validateKeyFormat returns an empty string if the key looks valid, or a reason if not.
@@ -315,57 +315,11 @@ func ValidateAPIKeys(env map[string]string) error {
 	return fmt.Errorf("%s", msg.String())
 }
 
-// subscriptionMethod describes credential lookup in runtime order: access token, session credential, then file.
-// AbsolutePath overrides ConfigDir and TokenFile.
-type subscriptionMethod struct {
-	Toggle                string   // RAPTIX_AUTH_<X> boolean enabling this path
-	TokenEnvs             []string // env vars that satisfy the path on their own
-	ConfigDir             string   // ~/.config/<dir>/<token file> fallback
-	TokenFile             string   // token file name; defaults to tokens.json
-	DirEnv                string   // optional host-side token directory env var
-	AbsolutePath          string   // optional fixed-relative-to-$HOME path (e.g. .codex/auth.json)
-	LegacyDir             string   // optional legacy ~/.config/<dir>/<token file> fallback
-	Label                 string   // human name for error messages
-	AllowInteractiveLogin bool     // provider can bootstrap credentials at runtime
-}
-
-var oauthSubscriptions = map[string]subscriptionMethod{
-	"chatgpt": {
-		Toggle:                "RAPTIX_AUTH_CHATGPT",
-		AbsolutePath:          ".codex/auth.json",
-		Label:                 "ChatGPT",
-		AllowInteractiveLogin: true,
-	},
-	"gemini": {
-		Toggle:    "RAPTIX_AUTH_GEMINI",
-		TokenEnvs: []string{"GEMINI_ACCESS_TOKEN", "GEMINI_SESSION_COOKIES"},
-		ConfigDir: "gemini",
-		Label:     "Gemini Advanced",
-	},
-	"copilot": {
-		Toggle:    "RAPTIX_AUTH_COPILOT",
-		TokenEnvs: []string{"COPILOT_ACCESS_TOKEN", "COPILOT_REFRESH_TOKEN"},
-		ConfigDir: "copilot",
-		Label:     "Copilot Pro",
-	},
-	"grok": {
-		Toggle:    "RAPTIX_AUTH_GROK",
-		TokenEnvs: []string{"GROK_ACCESS_TOKEN", "GROK_SESSION_TOKEN"},
-		ConfigDir: "grok",
-		Label:     "SuperGrok",
-	},
-	"perplexity": {
-		Toggle:    "RAPTIX_AUTH_PERPLEXITY",
-		TokenEnvs: []string{"PERPLEXITY_ACCESS_TOKEN", "PERPLEXITY_SESSION_TOKEN"},
-		ConfigDir: "perplexity",
-		Label:     "Perplexity Pro",
-	},
-}
-
 // ValidateAuth accepts any valid subscription credential, local model configuration or provider key.
 // If all checks fail, report the error for the explicitly selected OAuth method first.
 func ValidateAuth(env map[string]string) error {
 	claudeOAuth := isTruthy(Get(env, "RAPTIX_AUTH_CLAUDE_CODE", ""))
+	chatGPTOAuth := isTruthy(Get(env, "RAPTIX_AUTH_CHATGPT", ""))
 	ollamaErr := validateOllamaCredentials(env)
 	apiErr := ValidateAPIKeys(env)
 
@@ -374,11 +328,10 @@ func ValidateAuth(env map[string]string) error {
 			return nil
 		}
 	}
-	for _, sub := range oauthSubscriptions {
-		if !isTruthy(Get(env, sub.Toggle, "")) {
-			continue
-		}
-		if err := validateSubscriptionCredentials(env, sub); err == nil {
+	var chatGPTErr error
+	if chatGPTOAuth {
+		// ChatGPT accepts interactive login when the host token file is absent.
+		if _, chatGPTErr = os.UserHomeDir(); chatGPTErr == nil {
 			return nil
 		}
 	}
@@ -393,11 +346,8 @@ func ValidateAuth(env map[string]string) error {
 	if claudeOAuth {
 		return validateClaudeCredentials()
 	}
-	for _, key := range []string{"chatgpt", "gemini", "copilot", "grok", "perplexity"} {
-		sub := oauthSubscriptions[key]
-		if isTruthy(Get(env, sub.Toggle, "")) {
-			return validateSubscriptionCredentials(env, sub)
-		}
+	if chatGPTErr != nil {
+		return fmt.Errorf("locate home directory: %w", chatGPTErr)
 	}
 	if hasOllamaSelected(env) {
 		return ollamaErr
@@ -470,78 +420,6 @@ func validateClaudeCredentials() error {
 		return fmt.Errorf("no access token found in %s\nRun 'claude /login' to re-authenticate.", path)
 	}
 	return nil
-}
-
-// validateSubscriptionCredentials checks for a token or credential file in runtime lookup order.
-// Token formats vary by provider and are validated at runtime.
-func validateSubscriptionCredentials(env map[string]string, sub subscriptionMethod) error {
-	for _, name := range sub.TokenEnvs {
-		if strings.TrimSpace(env[name]) != "" {
-			return nil
-		}
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("locate home directory: %w", err)
-	}
-	paths := subscriptionTokenPaths(env, home, sub)
-	for _, path := range paths {
-		if _, err := os.Stat(path); err == nil {
-			return nil
-		}
-	}
-	if sub.AllowInteractiveLogin {
-		return nil
-	}
-	hints := strings.Join(sub.TokenEnvs, " or ")
-	return fmt.Errorf(
-		"%s subscription token not configured.\n"+
-			"Provide one of:\n"+
-			"  - %s env var\n"+
-			"  - %s on disk\n"+
-			"Run 'raptix onboard --reset' to (re)configure interactively.",
-		sub.Label, hints, strings.Join(paths, " or "),
-	)
-}
-
-func subscriptionTokenPaths(env map[string]string, home string, sub subscriptionMethod) []string {
-	var paths []string
-	if sub.AbsolutePath != "" {
-		// Single-file handler (e.g. ChatGPT → ~/.codex/auth.json).
-		// ConfigDir / TokenFile / LegacyDir do not apply.
-		paths = append(paths, filepath.Join(home, sub.AbsolutePath))
-		return dedupeStrings(paths)
-	}
-	tokenFile := sub.TokenFile
-	if tokenFile == "" {
-		tokenFile = "tokens.json"
-	}
-	if sub.DirEnv != "" {
-		if dir := strings.TrimSpace(Get(env, sub.DirEnv, os.Getenv(sub.DirEnv))); dir != "" {
-			paths = append(paths, filepath.Join(dir, tokenFile))
-		}
-	}
-	paths = append(paths, filepath.Join(home, ".config", sub.ConfigDir, tokenFile))
-	if sub.LegacyDir != "" {
-		paths = append(paths, filepath.Join(home, ".config", sub.LegacyDir, tokenFile))
-	}
-	return dedupeStrings(paths)
-}
-
-func dedupeStrings(values []string) []string {
-	seen := make(map[string]struct{}, len(values))
-	out := make([]string, 0, len(values))
-	for _, value := range values {
-		if value == "" {
-			continue
-		}
-		if _, ok := seen[value]; ok {
-			continue
-		}
-		seen[value] = struct{}{}
-		out = append(out, value)
-	}
-	return out
 }
 
 // extractClaudeAccessToken checks the current nested format before the legacy top-level keys.

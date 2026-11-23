@@ -344,6 +344,11 @@ services:
         INSTALL_NETWORK_EXTRA: ${INSTALL_NETWORK_EXTRA:-false}
         # TC-8: smart-contract static analysis (pinned slither).
         INSTALL_CONTRACTS_TOOLS: ${INSTALL_CONTRACTS_TOOLS:-false}
+        # Full upstream SecLists corpus, pinned to a release tag — the
+        # build refuses to run without it, so no checkout silently
+        # depends on a mutable, network-fetched corpus.
+        INSTALL_SECLISTS: ${INSTALL_SECLISTS:-false}
+        SECLISTS_VERSION: ${SECLISTS_VERSION:-}
         # Source-revision stamp; the lab harness verifies it against HEAD.
         RAPTIX_REPO_HEAD: ${RAPTIX_REPO_HEAD:-}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox

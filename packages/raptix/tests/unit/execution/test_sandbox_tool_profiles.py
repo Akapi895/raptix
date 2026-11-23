@@ -41,6 +41,9 @@ T8_PROFILES: Final[dict[str, frozenset[str]]] = {
     # dedicated venv — not an apt package; version recorded via
     # `slither --version`, the profile has no dpkg row).
     "sandbox-contracts": frozenset(),
+    # Full upstream SecLists corpus — fetched from a pinned release tag,
+    # not an apt package; version recorded from the SECLISTS_VERSION arg.
+    "sandbox-seclists": frozenset(),
 }
 
 T8_BUILD_ARGS: Final[dict[str, str]] = {
@@ -50,6 +53,7 @@ T8_BUILD_ARGS: Final[dict[str, str]] = {
     "sandbox-credentials": "INSTALL_CREDENTIAL_TOOLS",
     "sandbox-network-extra": "INSTALL_NETWORK_EXTRA",
     "sandbox-contracts": "INSTALL_CONTRACTS_TOOLS",
+    "sandbox-seclists": "INSTALL_SECLISTS",
 }
 
 
@@ -170,6 +174,25 @@ def test_nuclei_template_pin_is_passed_through_compose() -> None:
     assert build_args.get("NUCLEI_TEMPLATES_VERSION") == "${NUCLEI_TEMPLATES_VERSION:-}"
 
 
+def test_seclists_corpus_is_pinned_not_runtime_fetched(
+    instructions: list[str],
+) -> None:
+    """The full SecLists corpus is pinned to a SECLISTS_VERSION release
+    tag; the profile build refuses to run without it, and the pinned
+    corpus lands at /usr/share/seclists."""
+    run_instruction = _profile_run_instruction(instructions, "INSTALL_SECLISTS")
+    assert 'if [ -z "$SECLISTS_VERSION" ]' in run_instruction
+    assert "exit 1" in run_instruction  # refuses an unpinned build
+    assert "/usr/share/seclists" in run_instruction
+    assert "danielmiessler/SecLists" in run_instruction
+
+
+def test_seclists_pin_is_passed_through_compose() -> None:
+    compose = yaml.safe_load(COMPOSE_PATH.read_text(encoding="utf-8"))
+    build_args = compose["services"]["sandbox"]["build"]["args"]
+    assert build_args.get("SECLISTS_VERSION") == "${SECLISTS_VERSION:-}"
+
+
 def test_credentials_profile_ships_the_pinned_wordlist_copy(
     instructions: list[str],
 ) -> None:
@@ -184,34 +207,6 @@ def test_credentials_profile_ships_the_pinned_wordlist_copy(
         line.strip() for line in wordlist.splitlines() if line.strip() and not line.startswith("#")
     ]
     assert len(entries) >= 10, "benchmark dictionary must have a usable entry set"
-
-
-RECON_WORDLIST_FILES: Final[tuple[str, ...]] = (
-    "subdomains.txt",
-    "api-endpoints.txt",
-    "params.txt",
-    "headers.txt",
-    "seclists/usernames/top-usernames-shortlist.txt",
-)
-
-
-def test_recon_wordlists_are_copy_pinned_from_checkout() -> None:
-    """The recon dictionary set is COPYed from the checkout (not
-    downloaded) into the paths the recon/api-enumeration skills document,
-    so their ``ffuf -w /usr/share/wordlists/...`` examples resolve without
-    a mutable, network-fetched corpus."""
-    dockerfile_text = DOCKERFILE_PATH.read_text(encoding="utf-8")
-    assert "infra/containers/wordlists/ /usr/share/wordlists/" in dockerfile_text
-    wordlist_root = REPO_ROOT / "infra" / "containers" / "wordlists"
-    for relative in RECON_WORDLIST_FILES:
-        path = wordlist_root / relative
-        assert path.is_file(), f"pinned wordlist {relative} is missing from the checkout"
-        entries = [
-            line.strip()
-            for line in path.read_text(encoding="utf-8").splitlines()
-            if line.strip() and not line.startswith("#")
-        ]
-        assert entries, f"pinned wordlist {relative} has no usable entries"
 
 
 def test_dirb_wordlist_documented_path_is_linked() -> None:
