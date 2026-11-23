@@ -114,6 +114,32 @@ describe("vulnerability routes", () => {
     expect(stats.json()).toMatchObject({ total: 2, by_severity: { high: 1, low: 1 } });
   });
 
+  it("counts agent-written 'informational' findings in the info severity bucket, stats and filter alike", async () => {
+    await create({ severity: "informational", title: "Banner disclosure" });
+    await create({ severity: "info", title: "Server header" });
+    await create({ severity: "high" });
+
+    const stats = await app.inject({ method: "GET", url: "/api/vulnerabilities/stats", headers: auth() });
+    expect(stats.json()).toMatchObject({ total: 3, by_severity: { info: 2, high: 1 } });
+
+    const filtered = await app.inject({ method: "GET", url: "/api/vulnerabilities?severity=info", headers: auth() });
+    expect(filtered.json().vulnerabilities.map((v: { severity: string }) => v.severity)).toEqual(["info", "info"]);
+  });
+
+  it("stats scope to project_id instead of returning every project's total", async () => {
+    const projectA = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "A" } });
+    const projectB = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "B" } });
+    await create({ severity: "high", project_id: projectA.json().id });
+    await create({ severity: "low", title: "Weak TLS cipher", project_id: projectA.json().id });
+    await create({ severity: "medium", title: "Open redirect", project_id: projectB.json().id });
+
+    const global = await app.inject({ method: "GET", url: "/api/vulnerabilities/stats", headers: auth() });
+    expect(global.json()).toMatchObject({ total: 3 });
+
+    const scoped = await app.inject({ method: "GET", url: "/api/vulnerabilities/stats?project_id=" + projectA.json().id, headers: auth() });
+    expect(scoped.json()).toMatchObject({ total: 2, by_severity: { high: 1, low: 1 } });
+  });
+
   it("GET syncs real findings/*.md from the project's sandbox instead of staying empty", async () => {
     const { app: scopedApp, token: scopedToken, options } = await buildAuthedTestApp();
     const scopedAuth = { authorization: `Bearer ${scopedToken}` };

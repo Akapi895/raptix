@@ -6,7 +6,7 @@ env-driven (``RAPTIX_MCP__SERVERS``) and requires the optional
 ``langchain-mcp-adapters`` package to be installed separately —
 nothing in this subpackage is imported at framework start-up.
 
-See ``docs/mcp.md`` for operator-facing configuration notes.
+See ``docs/mcp-servers.md`` for operator-facing configuration notes.
 """
 
 from __future__ import annotations

@@ -16,12 +16,8 @@ import (
 
 // composeOverlayBody is the docker-compose overlay that bind-mounts
 // the opscontrol UDS into the langgraph container. It is
-// LAUNCHER-OWNED: written by EnsureRunning on every `raptix start`,
-// never shipped via the release manifest, never hand-edited. Keeping
-// it embedded in the launcher binary collapses the previous
-// "release.yml manifest must list every config file" failure mode
-// (which caused the v1.1.10 upgrade warning) into a single binary —
-// the overlay is now versioned in lockstep with the launcher.
+// EnsureRunning writes this overlay on every `raptix start`.
+// The embedded copy follows the launcher binary's version.
 const composeOverlayBody = `# docker-compose.opscontrol.yml — LAUNCHER-MANAGED runtime overlay (ADR-0006).
 # Do NOT hand-edit. The launcher rewrites this file on every ` + "`raptix start`" + `
 # (cmd/opscontrol/supervisor.go:writeComposeOverlay) so any manual edits are

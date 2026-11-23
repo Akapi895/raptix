@@ -1,10 +1,6 @@
 # Security Controls
 
-> One-page reference for the runtime guards in the agent middleware
-> stack: what each control does, its default posture, the knob that
-> changes it, and how to verify it is active.
-
-## TL;DR
+## Middleware assembly
 
 Every agent assembles its middleware stack by walking `MiddlewareSlot` in
 declaration order; a role only instantiates the slots in its
@@ -37,9 +33,7 @@ disable when `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` is set: engagement
 context, RoE enforcement, untrusted-output, prompt-injection shield,
 sandbox notification, and HITL approval. The gate exists so an
 accidentally-installed plugin cannot silently subvert the safety story.
-`RAPTIX_ALLOW_SAFETY_OVERRIDES` is documented in the
-[library-usage](../library-usage.md) and
-[plugin-author-guide](../plugin-author-guide.md) docs.
+Review changes to safety-critical controls against the [threat model](threat-model.md).
 
 ## Environment variables
 
@@ -85,5 +79,5 @@ See [hitl-approval](./hitl-approval.md) for the policy and approval flow.
 - [RoE Machine Enforcement](./roe-machine-enforcement.md)
 - [Audit Ledger](./audit-ledger.md)
 - [HITL Approval](./hitl-approval.md)
-- [Threat Model](./raptix-threat-model.md)
+- [Threat Model](threat-model.md)
 - [Prompt-Injection Defense](./prompt-injection-defense.md)

@@ -6,9 +6,7 @@ sandbox HTTP client, and skill catalogs.
 
 This package lives in the workspace under `packages/raptix/`. See the
 umbrella [`README.md`](../../README.md) for the project overview,
-[`docs/`](../../docs/) for architecture, and the spec at
-[`docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md`](../../docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md)
-for the rationale behind the core/framework/sdk split.
+the [runtime boundaries](../../docs/architecture/runtime-boundaries.md) and [package dependency rules](../../docs/architecture/dependency-rules.md).
 
 ## Install
 

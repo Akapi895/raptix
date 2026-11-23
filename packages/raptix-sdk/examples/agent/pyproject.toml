@@ -1,7 +1,7 @@
 [project]
 name = "raptix-example-agent"
 version = "0.0.1"
-description = "Decepticon plugin scaffolded by raptix-sdk."
+description = "Raptix plugin scaffolded by raptix-sdk."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.13"

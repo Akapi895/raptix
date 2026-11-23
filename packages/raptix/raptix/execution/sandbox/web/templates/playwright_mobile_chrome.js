@@ -137,7 +137,7 @@ async function main() {
 
   let ctx;
   try {
-    // Decepticon: prefer the sandbox's system Chromium (INSANE_CHROMIUM_PATH);
+    // Raptix: prefer the sandbox's system Chromium (INSANE_CHROMIUM_PATH);
     // else the real Chrome channel.
     ctx = await chromium.launchPersistentContext(profileDir, {
       ...(process.env.INSANE_CHROMIUM_PATH

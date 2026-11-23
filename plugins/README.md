@@ -60,5 +60,5 @@ uv build --all-packages
 ```
 
 Authority: `raptix-repository-architecture.md` §17/W10 and
-`docs/adr/0038-domain-plugin-composition.md`. Safety overrides continue to
+the original ADR-0038 at Git commit `8e5d356b`. Safety overrides continue to
 require the existing runtime gate; domain extraction changes no policy.

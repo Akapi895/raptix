@@ -10,7 +10,7 @@
  * Selection writes to the per-process assistant override (see
  * commands/assistantOverride.ts) which useAgent reads on every submit()
  * / resume(), beating the default INITIAL_ASSISTANT_ID and the
- * soundwave→decepticon in-flight handoff. The choice persists for the
+ * Soundwave → Raptix handoff. The choice persists for the
  * lifetime of this CLI process.
  *
  * Usage:
@@ -75,7 +75,7 @@ const agent: Command = {
             lines.push(`Active orchestrator override: ${current}`);
           } else {
             lines.push(
-              "No override active — using the default orchestrator selection (decepticon, or soundwave→decepticon handoff).",
+              "No override active. Raptix is the default orchestrator and takes over after a Soundwave handoff.",
             );
           }
           lines.push("");

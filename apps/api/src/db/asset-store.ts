@@ -26,6 +26,10 @@ export interface AssetRecord {
   lastSeenAt: Date;
   createdAt: Date;
   updatedAt: Date;
+  /** Joined Project.name. Undefined when the record was read without its relations. */
+  projectName?: string;
+  /** Latest ScanLink: null = never scanned, undefined = read without its relations. */
+  lastScan?: { at: Date; conversationId: string; queueId: string; taskId: string } | null;
 }
 
 /** Mirrors apps/ui-app's AssetInput (src/api/types/asset.ts) field-for-field. */
@@ -89,7 +93,9 @@ export interface AssetStore {
   setProjectBinding(ids: string[], projectId: string | null): Promise<number>;
   /** Records which scan conversation / batch task touched which asset (assets feature's ScanLink payload). */
   createScanLinks(links: ScanLinkInput[]): Promise<number>;
-  stats(): Promise<{
+  /** Unfiltered when projectId is omitted -- callers that show a project-scoped page
+   *  (apps/ui-app's assets overview KPI tile) must pass the active project themselves. */
+  stats(projectId?: string): Promise<{
     total: number;
     ips: number;
     domains: number;
@@ -125,9 +131,23 @@ function toRecord(row: {
   lastSeenAt: Date;
   createdAt: Date;
   updatedAt: Date;
+  project?: { name: string } | null;
+  scanLinks?: { createdAt: Date; conversationId: string; queueId: string; taskId: string }[];
 }): AssetRecord {
-  return { ...row };
+  const { project, scanLinks, ...base } = row;
+  const latest = scanLinks?.[0];
+  return {
+    ...base,
+    projectName: project === undefined ? undefined : (project?.name ?? ""),
+    lastScan: scanLinks === undefined ? undefined : latest ? { at: latest.createdAt, conversationId: latest.conversationId, queueId: latest.queueId, taskId: latest.taskId } : null,
+  };
 }
+
+/** What the assets table and detail panel read beyond the row itself (project name, latest scan). */
+const RELATIONS_INCLUDE = {
+  project: { select: { name: true } },
+  scanLinks: { orderBy: { createdAt: "desc" }, take: 1 },
+} as const;
 
 const DEFAULT_FIELDS: Required<Omit<AssetFields, "projectId" | "tags">> = {
   host: "",
@@ -174,20 +194,20 @@ export class PrismaAssetStore implements AssetStore {
         : {}),
     };
     const [rows, total] = await Promise.all([
-      this.db.asset.findMany({ where, orderBy: { updatedAt: "desc" }, take: query.limit, skip: query.offset }),
+      this.db.asset.findMany({ where, orderBy: { updatedAt: "desc" }, take: query.limit, skip: query.offset, include: RELATIONS_INCLUDE }),
       this.db.asset.count({ where }),
     ]);
     return { assets: rows.map(toRecord), total };
   }
 
   public async findById(id: string): Promise<AssetRecord | null> {
-    const row = await this.db.asset.findUnique({ where: { id } });
+    const row = await this.db.asset.findUnique({ where: { id }, include: RELATIONS_INCLUDE });
     return row ? toRecord(row) : null;
   }
 
   public async findByIds(ids: string[]): Promise<AssetRecord[]> {
     if (ids.length === 0) return [];
-    const rows = await this.db.asset.findMany({ where: { id: { in: ids } } });
+    const rows = await this.db.asset.findMany({ where: { id: { in: ids } }, include: RELATIONS_INCLUDE });
     return rows.map(toRecord);
   }
 
@@ -203,6 +223,7 @@ export class PrismaAssetStore implements AssetStore {
         tags: fields.tags ?? [],
         lastSeenAt: new Date(),
       },
+      include: RELATIONS_INCLUDE,
     });
     return toRecord(row);
   }
@@ -297,7 +318,7 @@ export class PrismaAssetStore implements AssetStore {
     return result.count;
   }
 
-  public async stats(): Promise<{
+  public async stats(projectId?: string): Promise<{
     total: number;
     ips: number;
     domains: number;
@@ -306,13 +327,14 @@ export class PrismaAssetStore implements AssetStore {
     protocols: { name: string; count: number }[];
   }> {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const scope = projectId ? { projectId } : {};
     const [total, ipRows, domainRows, portRows, recent, protocolRows] = await Promise.all([
-      this.db.asset.count(),
-      this.db.asset.findMany({ where: { ip: { not: "" } }, select: { ip: true }, distinct: ["ip"] }),
-      this.db.asset.findMany({ where: { domain: { not: "" } }, select: { domain: true }, distinct: ["domain"] }),
-      this.db.asset.findMany({ where: { port: { not: 0 } }, select: { port: true }, distinct: ["port"] }),
-      this.db.asset.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-      this.db.asset.groupBy({ by: ["protocol"], where: { protocol: { not: "" } }, _count: { _all: true } }),
+      this.db.asset.count({ where: scope }),
+      this.db.asset.findMany({ where: { ...scope, ip: { not: "" } }, select: { ip: true }, distinct: ["ip"] }),
+      this.db.asset.findMany({ where: { ...scope, domain: { not: "" } }, select: { domain: true }, distinct: ["domain"] }),
+      this.db.asset.findMany({ where: { ...scope, port: { not: 0 } }, select: { port: true }, distinct: ["port"] }),
+      this.db.asset.count({ where: { ...scope, createdAt: { gte: sevenDaysAgo } } }),
+      this.db.asset.groupBy({ by: ["protocol"], where: { ...scope, protocol: { not: "" } }, _count: { _all: true } }),
     ]);
     return {
       total,

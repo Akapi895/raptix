@@ -8,7 +8,7 @@ as well.
 
 Parsers receive ``(artifact, content)`` — never resolve
 ``artifact.artifact_ref`` as a filesystem path (it may be ``artifact://``,
-``s3://``, a database id). See ``docs/tool-optimization-implementation-plan.md``
+``s3://``, a database id). See ``docs/architecture/tool-ownership.md``
 Wave T3.
 """
 

@@ -142,7 +142,7 @@ def test_ops_available_false_when_socket_node_but_no_daemon(tmp_path, monkeypatc
 
 @pytest.mark.skipif(sys.platform == "win32", reason="AF_UNIX not available on Windows")
 def test_ops_available_true_when_daemon_accepting(tmp_path, monkeypatch) -> None:
-    # `decepticon start` topology — a live daemon is bound to + accepting on the
+    # `raptix start` topology — a live daemon is bound to + accepting on the
     # socket. Only a successful connect flips this True.
     import socket as _socket
 

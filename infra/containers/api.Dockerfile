@@ -55,7 +55,7 @@ COPY --from=builder /app/apps/shared/streaming/dist ./apps/shared/streaming/dist
 # Raptix's real skill corpus (read-only; see src/adapters/skills/corpus.ts
 # and skills.routes.ts for why writes stay stubbed). Git-authored, so this
 # image is only as fresh as its last rebuild -- matches the corpus's own
-# audit-skills -> build-skill-graph -> commit pipeline (CLAUDE.md).
+# audit-skills -> build-skill-graph -> workflow is defined in the Makefile.
 COPY packages/raptix-skills/raptix_skills/defs ./skills-corpus
 
 ENV NODE_ENV=production

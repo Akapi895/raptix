@@ -19,7 +19,7 @@ Submodules:
     consumed by the framework's RoE-enforcement middleware. Distinct from
     ``engagement.RoE`` (the planning document).
   * ``capability`` — capability-registry contracts (Wave T2 of
-    ``docs/tool-optimization-implementation-plan.md``): ``CapabilityManifest``,
+    ``docs/architecture/tool-ownership.md``): ``CapabilityManifest``,
     ``ImplementationSpec``, ``CompletionSpec``, the Availability/
     Eligibility pair, and the Request/Execution/Observation/Result
     round-trip types.

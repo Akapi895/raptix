@@ -142,7 +142,7 @@ def create_raptix_agent(
     # ``raptix.subagents`` entry-point group; this main agent picks
     # up every spec whose ``parent_agents`` includes ``"raptix"``.
     # Community or downstream plugin packages can extend this roster without
-    # modifying OSS — see ``decepticon/plugin_loader.py`` for the loader
+    # modifying OSS — see ``raptix_core/plugin_loader.py`` for the loader
     # contract and ``pyproject.toml`` for the registered specs.
     #
     # Each discovered subagent is wrapped in StreamingRunnable so its
@@ -169,7 +169,7 @@ def create_raptix_agent(
         # underlying daemon socket.
         #
         # Register ``ops_*`` ONLY when the opscontrol daemon socket is
-        # present (``decepticon start`` topology). Daemon-less topologies —
+        # present (``raptix start`` topology). Daemon-less topologies —
         # ``make dev`` / ``make smoke``, and hosted deployments that manage
         # workload teardown externally — have no socket, so offering these
         # tools would only let the orchestrator call something that returns

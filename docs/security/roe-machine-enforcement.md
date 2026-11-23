@@ -1,9 +1,6 @@
 # RoE Machine Enforcement
 
-> How the machine-readable Rules of Engagement block out-of-scope and
-> forbidden tool calls at the moment the agent tries to run them.
-
-## TL;DR
+## Enforcement modes
 
 The human-readable RoE (`in_scope`, `out_of_scope`, `prohibited_actions`)
 that Soundwave authors during planning is for the operator's review. A
@@ -180,7 +177,7 @@ are written to the audit ledger.
 
 RoE enforcement is layered (defense-in-depth), and the names reflect it:
 
-1. **RoE Guardrail Middleware** (parser, this document) — reads the
+1. **RoE Guardrail Middleware** reads the
    literal command text, extracts the target hosts, and refuses early in
    `enforce` mode. This is a **fast-fail UX signal**: it tells the model
    before a wasted round-trip with a clear `[ROE_REFUSED]` reason. It is
@@ -231,7 +228,7 @@ the egress layer's job.
   knob/default table.
 - [HITL Approval](./hitl-approval.md) — the operator-approval gate that
   sits above RoE; operator approval cannot override an RoE refusal.
-- [Threat Model](./raptix-threat-model.md) — Raptix's own attack
+- [Threat Model](threat-model.md) — Raptix's own attack
   surface.
-- [Engagement Workflow](../engagement-workflow.md) — where `plan/roe.json`
+- Engagement Workflow — where `plan/roe.json`
   comes from.

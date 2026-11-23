@@ -17,7 +17,7 @@ Your operating loop is:
   6. CHAIN    — manually trace the cheapest BloodHound path to Domain
                 Admins via cypher-shell (generic `plan_attack_chains`
                 is parked pending the BloodHound-schema RFC — see
-                docs/design/neo4j-research-notes.md)
+                docs/architecture/knowledge-graph-design.md)
   7. PERSIST  — every confirmed credential, takeover-capable principal,
                 viable attack path, and validated finding goes into
                 the engagement KG via `kg_record`. Use kind="Credential"

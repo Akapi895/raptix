@@ -5,12 +5,16 @@ import { editorTarget, FILTER_IDS, IMPORT_MAX_BYTES, isIPv4, isIPv6, normalizeDo
 import type { AssetsService } from './service';
 import { createAssetWorkspace } from './workspace';
 import { createAssetEvidence } from './detail';
+import { relatedFindings } from './intelligence';
 import { downloadTemplate, exportAssets, readImportFile } from './spreadsheet';
+import type { Vulnerability } from '../../api/types/vulnerability';
 
 export function createAssetsView(doc: Document, service: AssetsService, deps: AssetsDependencies) {
   const abort = new AbortController(), dom = createDOM(doc, abort.signal), s = service.state, t = deps.t;
   const workspace = createAssetWorkspace(doc, service, deps, abort.signal, detailRecord, async (id, value) => { dom.set(id, value); syncSelect(id); await load(1); });
   const evidence = createAssetEvidence(doc, service, deps, abort.signal);
+  /** Project findings behind the Related findings column; null while loading or unavailable. */
+  let findings: Vulnerability[] | null = null, findingsKey = '', findingsFailed = false;
   let activeProject = deps.activeProject(), projectOff: (() => void) | undefined, loadSequence = 0;
   let activated = false, disposed = false, editorFocus: Element | null = null, importFocus: Element | null = null, importSequence = 0;
   const selectIds = ['asset-status-filter', 'asset-project-filter', 'asset-risk-filter', 'asset-scan-filter', 'asset-environment-filter', 'asset-criticality-filter', 'asset-sort-filter', 'asset-saved-view-select', 'asset-batch-project', 'asset-edit-project', 'asset-edit-status', 'asset-edit-environment', 'asset-edit-criticality', 'asset-bulk-status', 'asset-bulk-environment', 'asset-bulk-criticality', 'asset-page-size-pagination'];
@@ -30,21 +34,51 @@ export function createAssetsView(doc: Document, service: AssetsService, deps: As
     dom.busy('asset-merge-selected', count < 2); const merge = dom.get('asset-merge-selected'); if (merge) merge.title = count < 2 ? t('assets.mergeRequiresMultiple') : '';
     const all = dom.get('asset-select-page'); if (all instanceof HTMLInputElement) { const selected = s.items.filter(a => s.selected.has(a.id)).length; all.checked = s.items.length > 0 && selected === s.items.length; all.indeterminate = selected > 0 && selected < s.items.length; }
   }
-  function ownership(asset: Asset) {
-    const owner = asset.responsible_person?.trim(), department = asset.department?.trim();
-    if (!owner && !department) return `<span class="asset-ownership-empty">${e(t('assets.unassigned'))}</span>`;
-    return `<div class="asset-ownership" title="${e([owner ? t('assets.responsiblePerson') + ': ' + owner : '', department ? t('assets.department') + ': ' + department : ''].filter(Boolean).join(' · '))}"><span class="asset-ownership__primary">${e(owner || department)}</span>${owner && department ? `<span class="asset-ownership__secondary">${e(department)}</span>` : ''}</div>`;
+  /** Findings tied to a row; empty until the project's findings have loaded, or when the user cannot read them. */
+  function rowRelated(asset: Asset): Vulnerability[] {
+    return findings && deps.can('vulnerability:read') && !findingsFailed ? relatedFindings(asset, findings).findings : [];
+  }
+  const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
+  /** Worst severity among related findings, as a Risk level. */
+  function topSeverity(related: Vulnerability[]): string | undefined {
+    return SEVERITY_ORDER.find(severity => related.some(f => f.severity === severity));
+  }
+  function relatedCell(asset: Asset, args: { index: number }) {
+    if (!deps.can('vulnerability:read') || findingsFailed) return '<span class="muted">-</span>';
+    if (!findings) return '<span class="muted">…</span>';
+    const count = rowRelated(asset).length;
+    return count ? `<button class="asset-vulnerability-link" ${action('asset.vulnerabilities', args)}>${count}</button>` : '<span class="muted">0</span>';
+  }
+  /** Loads the project's findings once per project filter and mutation revision, then re-renders the rows that depend on them. */
+  async function loadFindings() {
+    if (!deps.can('vulnerability:read')) return;
+    const params = new URLSearchParams(), project = service.params().get('project_id') || '';
+    if (project) params.set('project_id', project);
+    const key = project + '|' + service.revision;
+    if (findingsKey === key) return;
+    findingsKey = key; findings = null; findingsFailed = false;
+    try {
+      const result = await service.findings(params, abort.signal);
+      if (disposed || findingsKey !== key) return;
+      findings = result;
+    } catch (error) {
+      if (disposed || findingsKey !== key) return;
+      console.warn(error); findingsKey = ''; findingsFailed = true;
+    }
+    renderRows();
   }
   function renderRows() {
     dom.html('asset-table-body', s.items.length ? s.items.map((asset, index) => {
-      const level = risk(asset.risk_level), count = Number(asset.vulnerability_count || 0), svc = [asset.protocol, asset.port ? ':' + asset.port : ''].join('') || '-';
+      // Risk is the recorded criticality when one exists, otherwise the worst related finding's severity.
+      const level = risk(asset.criticality ? asset.risk_level : topSeverity(rowRelated(asset)) ?? asset.risk_level);
+      const svc = asset.port ? `${asset.protocol ? asset.protocol + '/' : ''}${asset.port}` : (asset.protocol || '-');
       const args = { index };
       return `<tr><td class="asset-check-cell"><input type="checkbox" class="theme-checkbox" ${s.selected.has(asset.id) ? 'checked' : ''} ${action('asset.select', args, 'change')} aria-label="${e(t('assets.selectAsset'))}"></td>
         <td><button class="asset-target-link" title="${e([...new Set([asset.host, asset.ip, asset.domain].filter(Boolean))].join(' · '))}" ${action('asset.detail', args)}>${e(targetLabel(asset))}</button></td><td><span class="asset-service" title="${e(svc)}">${e(svc)}</span></td>
-        <td>${asset.project_name ? `<span class="asset-project-badge" title="${e(asset.project_name)}">${e(asset.project_name)}</span>` : '<span class="muted">-</span>'}</td><td>${ownership(asset)}</td><td>${e(asset.last_scan_at ? new Date(asset.last_scan_at).toLocaleString() : '-')}</td>
-        <td>${count ? `<button class="asset-vulnerability-link" ${action('asset.vulnerabilities', args)}>${count}</button>` : '<span class="muted">0</span>'}</td><td><span class="asset-risk asset-risk--${level.level}">${e(level.label)}</span></td><td><span class="asset-status asset-status--${e(asset.status || 'active')}">${e(t(asset.status === 'inactive' ? 'assets.statusInactive' : 'assets.statusActive'))}</span></td>
+        <td>${e(asset.last_scan_at ? new Date(asset.last_scan_at).toLocaleString() : '-')}</td>
+        <td>${relatedCell(asset, args)}</td><td><span class="asset-risk asset-risk--${level.level}">${e(level.label)}</span></td><td><span class="asset-status asset-status--${e(asset.status || 'active')}">${e(t(asset.status === 'inactive' ? 'assets.statusInactive' : 'assets.statusActive'))}</span></td>
         <td class="asset-row-actions"><button class="btn-link" ${action('asset.scan-chat', args)}>${e(t('assets.sendToChatShort'))}</button><button class="btn-link" data-require-permission="asset:write" ${action('asset.edit', args)}>${e(t('common.edit'))}</button><button class="btn-link asset-delete" data-require-permission="asset:delete" ${action('asset.delete', args)}>${e(t('common.delete'))}</button></td></tr>`;
-    }).join('') : `<tr><td colspan="10"><div class="asm-empty"><h3>No assets found</h3><p>Adjust your filters or discover assets for this project.</p><button class="btn-secondary" type="button" ${action('asset.reset')}>Reset filters</button> <button class="btn-primary" type="button" data-require-permission="fofa:execute" ${action('asset.discover')}>Discover Assets</button></div></td></tr>`);
+    }).join('') : `<tr><td colspan="8"><div class="asm-empty"><h3>No assets found</h3><p>Adjust your filters or discover assets for this project.</p><button class="btn-secondary" type="button" ${action('asset.reset')}>Reset filters</button> <button class="btn-primary" type="button" data-require-permission="fofa:execute" ${action('asset.discover')}>Discover Assets</button></div></td></tr>`);
     const body = dom.get('asset-table-body'); if (body) deps.applyPermissions(body); updateSelection();
   }
   function renderPagination() {
@@ -66,10 +100,10 @@ export function createAssetsView(doc: Document, service: AssetsService, deps: As
     const project = deps.activeProject();
     if (activeProject !== project || page == null) { activeProject = project; dom.set('asset-project-filter', project); syncSelect('asset-project-filter'); }
     filters();
-    dom.html('asset-table-body', `<tr><td colspan="10" class="muted">${e(t('common.loading'))}</td></tr>`);
+    dom.html('asset-table-body', `<tr><td colspan="8" class="muted">${e(t('common.loading'))}</td></tr>`);
     const summary = workspace.refresh(page == null);
-    try { await service.load(page); if (disposed || sequence !== loadSequence) return; renderRows(); renderPagination(); dom.text('asset-list-meta', t('assets.totalMeta', { count: s.total })); }
-    catch (error) { if (disposed || sequence !== loadSequence) return; console.warn(error); s.items = []; s.total = 0; s.totalPages = 1; dom.text('asset-list-meta', ''); dom.html('asset-table-body', `<tr><td colspan="10" class="muted">${e(t('assets.loadFailed'))}. <button class="btn-link" type="button" ${action('asset.load')}>Retry</button></td></tr>`); renderPagination(); }
+    try { await service.load(page); if (disposed || sequence !== loadSequence) return; renderRows(); renderPagination(); dom.text('asset-list-meta', t('assets.totalMeta', { count: s.total })); void loadFindings(); }
+    catch (error) { if (disposed || sequence !== loadSequence) return; console.warn(error); s.items = []; s.total = 0; s.totalPages = 1; dom.text('asset-list-meta', ''); dom.html('asset-table-body', `<tr><td colspan="8" class="muted">${e(t('assets.loadFailed'))}. <button class="btn-link" type="button" ${action('asset.load')}>Retry</button></td></tr>`); renderPagination(); }
     await summary;
   }
   async function overview() { deps.switchPage('asset-management'); await load(1); }

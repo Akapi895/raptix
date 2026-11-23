@@ -78,9 +78,7 @@ from raptix_core.registry import (
 )
 from raptix_sdk.domains import create_domain_agent, domain_subagent, installed_domain_packs
 
-# Read the installed distribution version — release.yml stamps the git
-# tag into wheel metadata at build time; local checkouts read 0.0.0.
-# Mirrors raptix-core / decepticon so all three report consistently.
+# Read the installed package metadata. Local checkouts default to 0.0.0.
 try:
     __version__ = _version("raptix-sdk")
 except PackageNotFoundError:

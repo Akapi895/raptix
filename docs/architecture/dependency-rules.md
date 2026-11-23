@@ -1,8 +1,8 @@
-# Dependency Rules
+# Dependency rules
 
 ## Import direction graph
 
-```
+```text
 Apps  →  Runtime  →  Core
           ↑
          SDK ←→ Core
@@ -16,12 +16,12 @@ Apps  →  Runtime  →  Core
 
 | Package | May import | Must NOT import |
 |---------|-----------|----------------|
-| `raptix-core` | stdlib, `dataclasses`, `typing` | Any runtime framework (LangChain, FastAPI, neo4j, httpx, docker, playwright) |
+| `raptix-core` | Standard library, Pydantic, Pydantic Settings, `typing-extensions` | Runtime frameworks and clients such as LangChain, FastAPI, Neo4j, HTTPX, Docker and Playwright |
 | `raptix-sdk` | `raptix-core` | `raptix` runtime internals |
 | `raptix` (runtime) | `raptix-core`, third-party | — |
 | Plugins | `raptix-sdk`, `raptix-core`, stdlib | `raptix` runtime internals |
 | Skills | Nothing (Markdown + YAML) | Any Python package |
-| Apps | `raptix` public surface | Deep runtime internals |
+| Apps | Public service APIs and shared application contracts | Python runtime internals |
 
 ## Enforcement
 
@@ -35,4 +35,3 @@ These rules are enforced by structural tests (W13):
 ## Exceptions
 
 - `infra/config/` LLM provider handlers: zero `raptix` dependency by design (ADR-0039)
-- `apps/web/tools/` build scripts: allowlisted, AST-checked for forbidden imports

@@ -60,7 +60,7 @@ from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 # kg_query / kg_stats were removed pending the Neo4j middleware redesign
-# (see docs/design/neo4j-research-notes.md). KG surface is currently
+# (see docs/architecture/knowledge-graph-design.md). KG surface is currently
 # limited to the analyst agent. SCANNER_TOOLS is kept (it is the scanner
 # plugin's purpose); note that kg_add_candidate inside SCANNER_TOOLS still
 # routes through the broken graph_transaction shim and is in scope for

@@ -1,9 +1,6 @@
 # Prompt-Injection Defense
 
-> Structural quarantine + heuristic risk tagging for every tool output
-> the agent reads, plus the operator-visible audit trail.
-
-## Why this is the first line of defense
+## Untrusted tool output
 
 Raptix's agents read attacker-influenceable bytes on every
 iteration: HTTP response bodies, service banners, file contents

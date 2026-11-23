@@ -17,18 +17,18 @@ and can be ordered independently in the priority list.
 Examples
 --------
 User has [anthropic_api, openai_api]. Profile=eco.
-  decepticon (HIGH) → primary=anthropic/claude-opus-4-8, fallback=openai/gpt-5.5
+  raptix (HIGH) → primary=anthropic/claude-opus-4-8, fallback=openai/gpt-5.5
   recon (LOW)       → primary=anthropic/claude-haiku-4-5, fallback=openai/gpt-5-nano
 
 User has [anthropic_oauth, anthropic_api]. Profile=eco.
-  decepticon (HIGH) → primary=auth/claude-opus-4-8, fallback=anthropic/claude-opus-4-8
+  raptix (HIGH) → primary=auth/claude-opus-4-8, fallback=anthropic/claude-opus-4-8
   (OAuth subscription primary, paid API as fallback when subscription quota hits.)
 
 User has [anthropic_oauth] only. Profile=eco.
-  decepticon (HIGH) → primary=auth/claude-opus-4-8, fallback=None
+  raptix (HIGH) → primary=auth/claude-opus-4-8, fallback=None
 
 User has [openai_api]. Profile=eco.
-  decepticon (HIGH) → primary=openai/gpt-5.5, fallback=None
+  raptix (HIGH) → primary=openai/gpt-5.5, fallback=None
   recon (LOW)       → primary=openai/gpt-5-nano, fallback=None
 
 Tier × AuthMethod matrix
@@ -267,7 +267,7 @@ METHOD_MODELS: dict[AuthMethod, dict[Tier, str]] = {
         # Picks below avoid the LiteLLM main.py:2561 short-circuit by using
         # slugs that are NOT in ``open_ai_chat_completion_models``:
         #   - gpt-5.5            (general HIGH)
-        #   - claude-sonnet-4-6  (cyber MID per Cybench, cross-vendor via Copilot)
+        #   - claude-sonnet-4-6  (cyber MID, cross-vendor via Copilot)
         #   - gpt-5.4-mini       (cost-effective LOW)
         # For code-heavy roles (patcher, exploiter, contract_auditor), the
         # ``copilot/gpt-5.3-codex`` route is registered as an alternative in
@@ -879,7 +879,7 @@ class LLMModelMapping(BaseModel):
 
         Plugin orchestrators with a custom role (e.g. ``"raptix-pro"``)
         that aren't part of the OSS ``AGENT_TIERS`` registry can pass
-        ``default_role="decepticon"`` (or any OSS role) to inherit that
+        ``default_role="raptix"`` (or any OSS role) to inherit that
         role's assignment as fallback. The plugin can later register its
         own assignment via entry-point without changing the call site.
 

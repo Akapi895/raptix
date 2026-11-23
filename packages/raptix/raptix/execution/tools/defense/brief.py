@@ -2,7 +2,7 @@
 
 Reads the engagement knowledge graph that Blue Cell (``DetectionFired`` /
 ``DETECTED``) and the Defender (``DefenseAction``) populated, and renders the
-proven-coverage report documented in ``docs/features/blue-cell.md``: coverage
+proven-coverage report documented in ``docs/security/blue-cell.md``: coverage
 %, MTTD stats, the detected-technique table (slowest first), the detection-gap
 list (Findings nothing caught), and the deployed-rule inventory — plus an
 ATT&CK Navigator layer the customer's SOC can open directly.
@@ -122,7 +122,7 @@ def build_defense_brief(
 
 
 def render_brief_markdown(brief: dict[str, Any]) -> str:
-    """Render the brief in the text form from docs/features/blue-cell.md."""
+    """Render the brief in the text form from docs/security/blue-cell.md."""
     cov, mttd = brief["coverage"], brief["mttd"]
     lines = [f"Engagement: {brief['engagement']}"]
     if brief["window"]:

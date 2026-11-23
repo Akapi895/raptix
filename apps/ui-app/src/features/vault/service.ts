@@ -126,7 +126,9 @@ export function createVaultService(dependencies: VaultServiceDependencies) {
     },
 
     async add(name: string, value: string, description: string): Promise<void> {
-      if (!state.projectId || state.busy) return;
+      // A refused add must say so: returning quietly let the dialog report "Secret stored" with nothing sent.
+      if (!state.projectId) throw new VaultError(`${t('addFailed')}: select a project in the top bar first`);
+      if (state.busy) throw new VaultError(`${t('addFailed')}: another vault action is still running`);
       try {
         validateAddFields(name, value);
       } catch (error) {

@@ -14,7 +14,7 @@ a role. Three modes via ``RAPTIX_DYNAMIC_TOOL_EXPOSURE``:
   Shadow logging stays on in every non-``off`` mode for ongoing
   regression monitoring.
 
-Exposure logic (docs/tool-optimization-implementation-plan.md, T9):
+Exposure logic (docs/architecture/tool-ownership.md, T9):
 
     eligible =
         role allowed

@@ -19,7 +19,7 @@ This package provides:
     that want full Sigma can swap in `pysigma` via the entry-point
     surface.
 
-See ``docs/features/blue-cell.md`` for the full architecture.
+See ``docs/security/blue-cell.md`` for the full architecture.
 """
 
 from __future__ import annotations

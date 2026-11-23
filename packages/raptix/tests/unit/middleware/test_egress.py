@@ -59,22 +59,22 @@ def test_in_scope_host_and_glob_go_to_allowed_hosts():
 
 def test_signed_root_url_compiles_to_host_allowlist():
     pol = compile_egress_policy(
-        _rules(mode="enforce", in_scope=[{"target": "https://decepticon.red/", "type": "auto"}])
+        _rules(mode="enforce", in_scope=[{"target": "https://raptix.test/", "type": "auto"}])
     )
 
-    assert "decepticon.red" in pol.allowed_hosts
-    assert "https://decepticon.red/" not in pol.allowed_hosts
+    assert "raptix.test" in pol.allowed_hosts
+    assert "https://raptix.test/" not in pol.allowed_hosts
     assert pol.default_drop is True
 
 
 def test_path_specific_url_cannot_open_egress():
     pol = compile_egress_policy(
         _rules(
-            mode="enforce", in_scope=[{"target": "https://decepticon.red/admin", "type": "auto"}]
+            mode="enforce", in_scope=[{"target": "https://raptix.test/admin", "type": "auto"}]
         )
     )
 
-    assert "decepticon.red" not in pol.allowed_hosts
+    assert "raptix.test" not in pol.allowed_hosts
     assert pol.default_drop is True
 
 
@@ -82,12 +82,12 @@ def test_url_exclusion_denies_host_even_with_path():
     pol = compile_egress_policy(
         _rules(
             mode="enforce",
-            in_scope=["decepticon.red"],
-            out_of_scope=[{"target": "https://decepticon.red/admin", "type": "auto"}],
+            in_scope=["raptix.test"],
+            out_of_scope=[{"target": "https://raptix.test/admin", "type": "auto"}],
         )
     )
 
-    assert "decepticon.red" in pol.denied_hosts
+    assert "raptix.test" in pol.denied_hosts
 
 
 def test_osint_search_providers_are_always_allowed():

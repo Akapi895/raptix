@@ -3,7 +3,7 @@ import { errorMessage, escapeHtml as e, type AssetsDependencies } from './contra
 import { targetLabel, type Asset } from './model';
 import type { AssetsService } from './service';
 import { closeAppModal } from '../../ui/modal';
-import { buildAssetGraph } from './intelligence';
+import { relatedFindings } from './intelligence';
 
 /** The current contract retains the latest scan link, not an append-only scan ledger. */
 export function createAssetEvidence(doc: Document, service: AssetsService, deps: AssetsDependencies, signal: AbortSignal) {
@@ -45,8 +45,7 @@ export function createAssetEvidence(doc: Document, service: AssetsService, deps:
     if (value.project_id) params.set('project_id', value.project_id);
     void service.findings(params, controller.signal).then(findings => {
       if (controller.signal.aborted || signal.aborted) return;
-      const matched = new Set(buildAssetGraph([value], findings).nodes.flatMap(node => node.findingId ? [node.findingId] : []));
-      const related = findings.filter(f => matched.has(f.id) || ((f.project_id || '') === (value.project_id || '') && (value.last_scan_task_id ? f.task_id === value.last_scan_task_id : !!value.last_scan_conversation_id && f.conversation_id === value.last_scan_conversation_id)));
+      const { findings: related, matched } = relatedFindings(value, findings);
       dom.html('asset-evidence-findings', `<h3>Related findings</h3><p class="muted">Target matches use recorded addresses or endpoints. Scan-linked findings may include other targets in a shared scan.</p>${related.length ? `<ul class="asm-finding-list">${related.map(f => `<li><button ${action('evidence.finding', { id: f.id })} type="button">${e(f.title)}</button><span class="asset-risk asset-risk--${['critical', 'high', 'medium', 'low', 'info'].includes(f.severity) ? f.severity : 'unassessed'}">${e(f.severity)}</span><span>${e(f.status)}</span><small>${e(f.target || 'Target not recorded')} · ${matched.has(f.id) ? 'Recorded target match' : 'Latest scan association'}</small></li>`).join('')}</ul>` : '<div class="asm-empty"><h4>No related findings returned</h4><p>There are no recorded target matches or findings from the latest linked scan. The inventory risk and count remain as reported by the asset API.</p></div>'}`);
     }).catch(error => { if (!controller.signal.aborted && !signal.aborted) dom.html('asset-evidence-findings', `<p class="asm-error">Could not load findings: ${e(errorMessage(error))}</p>`); });
   }

@@ -507,9 +507,9 @@ services:
       - -c
       - >
         if [ -z "$${LANGGRAPH_STRICT_ASYNC:-}" ]; then
-          exec langgraph dev --host 0.0.0.0 --port 2024 --no-browser --n-jobs-per-worker 10 --allow-blocking;
+          exec langgraph dev --host 0.0.0.0 --port 2024 --no-browser --no-reload --n-jobs-per-worker 10 --allow-blocking;
         else
-          exec langgraph dev --host 0.0.0.0 --port 2024 --no-browser --n-jobs-per-worker 10;
+          exec langgraph dev --host 0.0.0.0 --port 2024 --no-browser --no-reload --n-jobs-per-worker 10;
         fi
     build:
       context: .
@@ -563,7 +563,7 @@ services:
       - RAPTIX_SKILLOGY_URL=http://skillogy:9100
       # Neo4j is the sole KG backend (no RAPTIX_KG_BACKEND needed)
       # BENCHMARK_MODE flows in via `env_file: .env` above — no need to
-      # re-declare it here. Set BENCHMARK_MODE=1 in .env to engage CTF/XBOW
+      # re-declare it here. Set BENCHMARK_MODE=1 in .env to engage CTF
       # benchmark mode (rule overrides + challenge context inject).
     volumes:
       # Mount the OAuth credential files read-only so the LLM factory can
@@ -776,7 +776,7 @@ services:
   # `neo4j` database on the `neo4j` container.  BHCE writes its own
   # ADCS / AD label schema via its `dawgs` driver, so it gets its
   # own Neo4j instance to avoid label/constraint collisions.
-  # See docs/adr/0005-bloodhound-via-bhce-rest-client.md §Context.
+  # See docs/architecture/runtime-boundaries.md §Context.
   #
   # Why reuse Postgres: BHCE only needs one Postgres database
   # (`bloodhound`) with the `pg_trgm` extension.  The idempotent

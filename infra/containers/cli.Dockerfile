@@ -7,9 +7,7 @@ COPY package.json package-lock.json ./
 COPY apps/cli/package.json apps/cli/
 COPY apps/shared/streaming/package.json apps/shared/streaming/
 
-# Stamp the package version from the git tag at build time. Source-tree
-# package.json carries a "0.0.0" sentinel; release.yml passes the real
-# version via --build-arg so the shipped package metadata matches the tag.
+# VERSION sets the metadata for the CLI package built into this image.
 ARG VERSION=0.0.0
 RUN sed -i 's/"version": "[^"]*"/"version": "'"$VERSION"'"/' apps/cli/package.json
 

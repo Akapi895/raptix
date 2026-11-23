@@ -292,13 +292,13 @@ def test_unresolved_cloud_metadata_alias_keeps_signed_target_reachable():
         MachineEnforcement.from_dict(
             {
                 "mode": "enforce",
-                "in_scope": [{"target": "https://decepticon.red/", "type": "auto"}],
+                "in_scope": [{"target": "https://raptix.test/", "type": "auto"}],
             }
         )
     )
 
     def resolver(hosts):
-        return ("203.0.113.20",) if "decepticon.red" in hosts else ()
+        return ("203.0.113.20",) if "raptix.test" in hosts else ()
 
     result = apply_egress(
         policy,

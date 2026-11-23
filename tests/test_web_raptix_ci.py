@@ -15,31 +15,25 @@ def workflow() -> dict[str, Any]:
 
 def test_web_filter_output_is_exported_and_every_quality_step_consumes_it() -> None:
     jobs = workflow()["jobs"]
-    assert jobs["changes"]["outputs"]["web-raptix"] == "${{ steps.app.outputs['web-raptix'] }}"
-    steps = jobs["web-raptix"]["steps"]
-    assert steps[0]["if"] == "needs.changes.outputs['web-raptix'] != 'true'"
+    assert jobs["changes"]["outputs"]["web"] == "${{ steps.app.outputs.web }}"
+    steps = jobs["web"]["steps"]
+    assert steps[0]["if"] == "needs.changes.outputs.web != 'true'"
     for step in steps[1:]:
-        expected = "needs.changes.outputs['web-raptix'] == 'true'"
-        if step.get("uses", "").startswith("actions/upload-artifact@"):
-            expected = f"always() && {expected}"
-        assert step["if"] == expected
+        assert step["if"] == "needs.changes.outputs.web == 'true'"
         assert not step.get("continue-on-error", False)
     commands = "\n".join(step.get("run", "") for step in steps)
     for script in ("typecheck", "lint", "build", "test"):
-        assert f"npm run {script} --workspace=@raptix/web-raptix-server" in commands
-        assert f"npm run {script} --workspace=@raptix/web-raptix" in commands
-    assert "node apps/web/tools/verify-docker-real-mode.mjs" in commands
-    assert "VITE_DATA_MODE=real" not in commands  # Docker default must be exercised.
+        assert f"npm run {script} --workspace=@raptix/api" in commands
+    assert "npm run build --workspace=@raptix/ui-app" in commands
+    assert "cd apps/ui-app && npx vitest run" in commands
 
 
-def test_required_status_includes_new_web_job_and_only_existing_dependencies() -> None:
+def test_required_status_includes_web_and_docker_checks() -> None:
     jobs = workflow()["jobs"]
-    dependencies = jobs["ci-ok"]["needs"]
-    assert "web-raptix" in dependencies
-    assert "web" not in dependencies
-    assert set(dependencies) <= set(jobs)
+    dependencies = set(jobs["ci-ok"]["needs"])
+    assert {"web", "docker-build", "compose-validate"} <= dependencies <= jobs.keys()
     commands = "\n".join(step.get("run", "") for step in jobs["compose-validate"]["steps"])
-    assert "docker compose -f docker-compose.web-raptix.yml config" in commands
+    assert "docker compose -f docker-compose.yml config" in commands
 
 
 def test_change_detection_can_read_pr_files_without_write_permissions() -> None:
@@ -50,36 +44,50 @@ def test_change_detection_can_read_pr_files_without_write_permissions() -> None:
     assert "write" not in permissions.values()
 
 
-def test_owned_prisma_client_is_generated_before_clean_server_typecheck() -> None:
-    steps = workflow()["jobs"]["web-raptix"]["steps"]
+def test_prisma_client_is_generated_before_api_typecheck() -> None:
+    steps = workflow()["jobs"]["web"]["steps"]
     commands = "\n".join(step.get("run", "") for step in steps)
-    generate = commands.index("npm run prisma:generate --workspace=@raptix/web-raptix-server")
-    typecheck = commands.index("npm run typecheck --workspace=@raptix/web-raptix-server")
+    generate = commands.index("npx prisma generate --schema=apps/api/prisma/schema.prisma")
+    typecheck = commands.index("npm run typecheck --workspace=@raptix/api")
     assert generate < typecheck
 
 
 @pytest.mark.parametrize(
-    ("changed_path", "should_run"),
+    ("changed_path", "expected"),
     [
-        ("apps/web/src/App.tsx", True),
-        ("apps/web/server/src/main.ts", True),
-        ("apps/shared/web-contracts/src/projects.ts", True),
-        ("apps/shared/streaming/src/index.ts", True),
-        ("infra/containers/web-raptix.Dockerfile", True),
-        ("infra/containers/web-raptix-server.Dockerfile", True),
-        ("infra/containers/web-raptix-proxy.conf", True),
-        ("docker-compose.web-raptix.yml", True),
-        ("package-lock.json", True),
-        (".github/workflows/ci.yml", True),
-        ("docs/QUALITY_BAR.md", False),
-        ("clients/web/src/app/page.tsx", False),
-        ("apps/launcher/main.go", False),
+        (
+            "apps/api/src/services/tool-catalog.ts",
+            {("app", "web"), ("docker", "api")},
+        ),
+        (
+            "apps/ui-app/src/ui/actions.ts",
+            {("app", "web"), ("docker", "ui-app")},
+        ),
+        (
+            "apps/shared/web-contracts/src/projects.ts",
+            {("app", "web"), ("docker", "api"), ("docker", "ui-app")},
+        ),
+        ("infra/containers/api.Dockerfile", {("docker", "api")}),
+        ("infra/containers/ui-app.Dockerfile", {("docker", "ui-app")}),
+        ("infra/containers/ui-app.nginx.conf", {("docker", "ui-app")}),
+        ("package-lock.json", {("app", "web"), ("docker", "api"), ("docker", "ui-app")}),
+        ("docs/architecture/runtime-boundaries.md", set()),
+        ("apps/launcher/main.go", set()),
     ],
 )
-def test_actual_web_filter_routes_source_contracts_and_deployment_changes(
-    changed_path: str, should_run: bool
+def test_web_changes_trigger_source_checks_and_affected_images(
+    changed_path: str, expected: set[tuple[str, str]]
 ) -> None:
     steps = workflow()["jobs"]["changes"]["steps"]
-    app = next(step for step in steps if step.get("id") == "app")
-    patterns = yaml.safe_load(app["with"]["filters"])["web-raptix"]
-    assert any(fnmatchcase(changed_path, pattern) for pattern in patterns) is should_run
+    filters = {
+        step["id"]: yaml.safe_load(step["with"]["filters"])
+        for step in steps
+        if step.get("id") in {"app", "docker"}
+    }
+    web_filters = {("app", "web"), ("docker", "api"), ("docker", "ui-app")}
+    triggered = {
+        (step, lane)
+        for step, lane in web_filters
+        if any(fnmatchcase(changed_path, pattern) for pattern in filters[step][lane])
+    }
+    assert triggered == expected

@@ -2,7 +2,7 @@
  * Canonical event types from StreamingRunnable's get_stream_writer().
  *
  * This is the single source of truth — both Web and CLI import from here.
- * Matches the backend contract at decepticon/core/subagent_streaming.py.
+ * Matches the backend contract at packages/raptix/raptix/core/subagent_streaming.py.
  */
 
 /** String literal union of all sub-agent event types. */

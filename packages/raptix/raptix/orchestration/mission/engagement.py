@@ -10,7 +10,7 @@ Two channels feed this middleware:
    state fields. The checkpointer persists the hydrated state across runs,
    so subsequent runs read straight from state without re-hydrating.
 
-2. Benchmark path (XBOW / CTF harness): when the LangGraph container is
+2. Benchmark path (CTF harness): when the LangGraph container is
    launched with `BENCHMARK_MODE=1` (via .env), this middleware additionally
    injects (a) the rule-suspension addendum that used to live in the system
    prompt and (b) the per-challenge context (target URL, vulnerability tags,

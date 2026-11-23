@@ -1,7 +1,7 @@
 [project]
 name = "raptix-sdk"
 version = "0.0.0"
-description = "Decepticon plugin author SDK: protocols, fixtures, scaffolding"
+description = "Raptix plugin author SDK: protocols, fixtures, scaffolding"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.13"

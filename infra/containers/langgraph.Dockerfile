@@ -16,19 +16,14 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:0.8.15 /uv /usr/local/bin/uv
 
 # Copy workspace files (uv.lock included so the install is reproducible).
-# Phase 0 of the core/framework/sdk split (per docs/superpowers/specs/
-# 2026-05-23-core-framework-sdk-split-design.md) relocates the source
-# tree from raptix/ at the repo root to packages/raptix/raptix/.
+# The runtime source lives in packages/raptix/raptix/.
 # COPY pulls the whole packages/ tree so the workspace resolver finds
 # runtime/core/SDK/skills members and domain-pack dependency closure.
 COPY pyproject.toml langgraph.json README.md uv.lock ./
 COPY packages/ packages/
 COPY plugins/ plugins/
 
-# Stamp the package version from the git tag at build time. Source-tree
-# pyprojects carry a "0.0.0" sentinel; release.yml passes the real
-# version via --build-arg so the installed package metadata matches the
-# tag in lockstep across workspace wheels.
+# VERSION sets the metadata for all workspace wheels built into this image.
 ARG VERSION=0.0.0
 RUN sed -i 's/^version = "[^"]*"/version = "'"$VERSION"'"/' \
         pyproject.toml \

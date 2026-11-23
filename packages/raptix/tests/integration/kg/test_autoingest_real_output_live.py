@@ -1,6 +1,6 @@
 """Live-Neo4j proof that re-ingesting the same real scanner output is
 idempotent at the graph level, not just "same observation keys" (the
-stronger half of docs/design/2026-11-03-graph-technical-design.md Mục 9
+stronger half of docs/architecture/knowledge-graph-design.md Mục 9
 roadmap step 1, criterion (c)). Companion to the parser-level checks in
 packages/raptix/tests/unit/middleware/test_autoingest_real_scanner_output.py,
 which run key-stability checks without a live store."""

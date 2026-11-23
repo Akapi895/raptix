@@ -1,59 +1,44 @@
-# Raptix UI
+# Raptix Web console
 
-Standalone TypeScript, DOM and Vite frontend extracted from CyberStrikeAI. The
-local demo runs without a backend. See the [final UI audit](docs/final-ui-audit.md)
-and [frontend API inventory](docs/ui-api-endpoints.md) for portability notes and
-the existing interface surface.
+The TypeScript and Vite frontend is adapted from CyberStrikeAI. It presents projects, conversations, findings and evidence. [Web integration](../../docs/architecture/web-integration.md)
 
 ## Run
 
-Requires Node.js >=22.12 and the Playwright Chromium browser.
+For the local demo, use Node.js 22.12 or later and run these commands from the repository root.
 
 ```sh
 npm ci
-npx playwright install chromium
-npm run dev -- --mode demo
+npm run build --workspace=@raptix/web-contracts
+npm run dev --workspace=@raptix/ui-app -- --mode demo
 ```
 
-Development in demo mode and `build:demo` use the local demo API. `npm run dev` uses the configured API unless `VITE_MOCK=1` is set. `npm run build` produces `dist/`; demo output is separate in `dist-demo/`. See `.env.example` for the HTTP base and development proxy. Some realtime and legacy requests use same-origin paths; see the audit before moving the package.
+Open the URL printed by Vite, usually `http://127.0.0.1:5173/`. Demo mode uses sample data. For Web API development, run without `--mode demo`, leave `VITE_MOCK` off and configure the API base and proxy target. [UI environment template](.env.example)
 
 ## Docker
 
-From the repository root, build and start the production UI against `apps/api`:
+Use the repository's [.env template](../../.env.example) for the deployment configuration. From the repository root, build the UI and start it with its Compose dependencies.
 
 ```sh
 docker compose up -d --build ui
 ```
 
-Open `http://127.0.0.1:5173/` (override the host port with `UI_PORT` in the
-root `.env`). Stop any Vite dev server using that port first. Nginx serves the
-compiled frontend and proxies `/api` to the API container, including SSE and
-WebSocket requests. The image does not include local `.env` files or use the
-development-only `API_PROXY_TARGET`.
-
-Once created, the UI container's `restart: unless-stopped` policy brings it
-back when Docker Desktop starts. No Windows Startup shortcut or host Node
-process is needed. After an explicit `docker compose stop` or `down`, run
-`docker compose up -d ui` to enable it again. Source changes need a rebuild.
+Open `http://127.0.0.1:5173/`, or use the port set by `UI_PORT`. Nginx serves the built frontend and forwards `/api` requests to the Web API, including SSE and WebSockets. See the [Web API setup](../api/README.md#dev) and [model settings](../../docs/model-settings.md) for backend configuration.
 
 ## Verification
 
-From this directory:
+After installing dependencies and building the shared contracts, run the frontend checks from the repository root.
 
 ```sh
-npm run check
+npx playwright install chromium
+npm run check --workspace=@raptix/ui-app
 ```
 
-This runs typecheck, ESLint, Vitest, production build, demo build, then Playwright. Both builds must immediately precede e2e. Playwright starts fresh preview servers on ports 4173 (demo) and 4174 (production) with strict ports and server reuse disabled. Stop an existing preview before running the gate.
-
-`tests/e2e/fixtures.ts` fails demo tests on browser exceptions, console errors or unhandled mock API routes. CRUD coverage uses the demo transport and verifies writes survive reloads. Production tests exercise startup with controlled responses; they do not establish compatibility with a future backend.
+The checks include type checking, linting, unit tests and browser tests of both builds. Playwright needs ports 4173 and 4174 free for its preview servers. Its demo cases exercise UI behavior with sample data. The [Web integration guide](../../docs/architecture/web-integration.md#verification) describes deployment checks.
 
 ## Frontend structure
 
-- Feature code lives under `src/features/`; cross-feature imports use public entry points. Platform adapters own browser/transport boundaries.
-- `src/main.ts` starts shared UI, typed domain composition, markup actions, and router/auth startup. Cleanup runs in reverse registration order; preserve that lifecycle when moving the package.
-- Classic runtime and compatibility bridges have already been removed. Existing DOM hooks, route aliases, storage keys and API-facing interfaces remain intentional compatibility boundaries.
+- `src/features/` contains screen and feature code.
+- `src/api/` owns the browser-facing API client and contracts.
+- `src/main.ts` initializes the application, router and session handling.
 
-See the [UI export checklist](docs/ui-export-checklist.md) for the final verification
-results, root-hosting assumptions and deferred work. This package does not include
-the real Raptix backend and does not establish frontend–backend compatibility.
+[Endpoint inventory](docs/ui-api-endpoints.md) · [Frontend OpenAPI contract](docs/openapi.yaml)

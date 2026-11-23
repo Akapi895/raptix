@@ -379,7 +379,7 @@ def build_kg_tools(
             difficulties are the target's own vocabulary; no target-
             specific content is baked into the mapping and hints are
             deliberately never ingested (see
-            docs/adr/0075-challenge-inventory.md).
+            historical ADR-0075).
             """
             engagement = _resolve_engagement(state)
             if not engagement:

@@ -7,8 +7,7 @@ serverless workers, type-checking-only environments.
 
 Stable surface for plugin authors and downstream commercial layers
 (e.g. dashboards, B2B API services). See the umbrella
-[`README.md`](../../README.md) and the design spec at
-[`docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md`](../../docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md).
+[`README.md`](../../README.md) and the [package dependency rules](../../docs/architecture/dependency-rules.md).
 
 ## Install
 

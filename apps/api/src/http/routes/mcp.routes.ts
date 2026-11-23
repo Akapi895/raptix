@@ -15,7 +15,7 @@ export interface McpRoutesOptions {
 
 /**
  * `/api/mcp/tools` would need a live registry of Raptix's own ~159
- * @tool-decorated functions (docs/architecture/tool-classification.md) --
+ * @tool-decorated functions (docs/architecture/tool-ownership.md#tool-classification) --
  * no HTTP introspection endpoint for that catalog exists anywhere in the
  * runtime. Hardcoding a copy here would silently drift from the real
  * catalog; stub honestly instead.

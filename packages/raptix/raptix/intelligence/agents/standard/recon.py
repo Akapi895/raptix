@@ -59,7 +59,7 @@ from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plug
 
 # Name-keyed registry so plugin overrides can target specific tools.
 # KG tools were removed pending the Neo4j middleware redesign (see
-# docs/design/neo4j-research-notes.md). Recon writes findings to files
+# docs/architecture/knowledge-graph-design.md). Recon writes findings to files
 # (recon/SUMMARY.md, findings/FIND-NNN.md); the future KG middleware
 # will ingest those files into Neo4j without burdening the agent's
 # tool surface.

@@ -18,7 +18,7 @@ from raptix.knowledge.graph.asset_identity import host_or_dns_ref, identity_prop
 from raptix.knowledge.graph.ingest import _adapt_nmap_xml
 
 ROOT = Path(__file__).resolve().parents[5]
-MATRIX = ROOT / "docs" / "design" / "2026-10-20-asset-map-coverage-matrix.json"
+MATRIX = ROOT / "packages" / "raptix" / "tests" / "fixtures" / "asset-map-coverage.json"
 ENGAGEMENT = "eng-domain-map"
 EPISODE = "episode-domain-map"
 

@@ -52,8 +52,7 @@ raptix-network = { workspace = true }
 
 # Project-level plugin activation, read by ``raptix_core.plugin_loader``
 # from the CWD's pyproject.toml. Kept at the workspace root so the
-# in-checkout dev workflow (``make dev``, ``langgraph dev``,
-# ``make benchmark``) automatically activates both OSS bundles
+# in-checkout dev workflow (``make dev``, ``langgraph dev``) activates both OSS bundles
 # without forcing every contributor to remember the env var.
 # OSS end-user installs that don't clone this repo fall back to the
 # hardcoded ``["standard"]`` default; downstream Docker images override via
@@ -94,10 +93,6 @@ lint = [
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-extend-exclude = [
-    "benchmarks/external",
-    "benchmarks/results",
-]
 
 [tool.ruff.lint]
 # TID251 = flake8-tidy-imports banned-api. Enables the
@@ -132,7 +127,6 @@ known-first-party = ["raptix", "raptix_core", "raptix_sdk"]
 # legitimately depend on langchain / langgraph / deepagents / httpx / fastapi.
 "packages/raptix/**" = ["TID251"]
 "packages/raptix-sdk/**" = ["TID251"]
-"benchmarks/**" = ["TID251"]
 "apps/**" = ["TID251"]
 "scripts/**" = ["TID251"]
 "infra/config/**" = ["TID251"]
@@ -201,7 +195,6 @@ include = [
     "packages/raptix/tests",
     "packages/raptix-sdk",
     "packages/raptix-sdk/tests",
-    "benchmarks",
     "plugins",
 ]
 exclude = [
@@ -209,8 +202,6 @@ exclude = [
     "**/node_modules",
     "reference",
     "packages/raptix/raptix/auth/providers",
-    "benchmarks/external",
-    "benchmarks/results",
 ]
 # Use pyright "standard" semantics rather than the basedpyright "all" default —
 # the existing codebase predates basedpyright's stricter rules. As code is
@@ -258,7 +249,6 @@ reportPrivateImportUsage = "warning"
 [tool.bandit]
 exclude_dirs = [
     "tests",
-    "benchmarks/external",
     "node_modules",
     ".venv",
 ]
@@ -273,7 +263,6 @@ files = [
 ]
 exclude = [
     "tests/",
-    "benchmarks/external",
     "node_modules",
     ".venv",
 ]
@@ -337,7 +326,6 @@ paths = [
 ]
 exclude = [
     "tests/",
-    "benchmarks/external",
     ".venv/",
     "node_modules/",
 ]
@@ -365,7 +353,6 @@ ignore_names = [
 [tool.deptry]
 extend_exclude = [
     "tests",
-    "benchmarks/external",
     "scripts",
     ".venv",
     "node_modules",

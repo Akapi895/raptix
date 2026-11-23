@@ -72,7 +72,7 @@ _ROLE = "vulnresearch"
 _RECURSION_LIMIT = 1000
 
 # kg_query / kg_stats were removed pending the Neo4j middleware redesign
-# (see docs/design/neo4j-research-notes.md). KG surface is currently
+# (see docs/architecture/knowledge-graph-design.md). KG surface is currently
 # limited to the analyst agent. This orchestrator now relies purely on
 # subagent dispatch and has no direct tools.
 _STANDARD_TOOLS: dict[str, Any] = {}

@@ -5,7 +5,7 @@ tools a role's agent is offered this build, and a rough estimate of their
 schema size. This is deliberately separate from ``raptix.telemetry`` (the
 consent-gated, Tier-A corpus shipped to the maintainer gateway) — exposure
 counts are a development signal for the waves in
-``docs/tool-optimization-implementation-plan.md`` (T0 baseline, T11
+``docs/architecture/tool-ownership.md`` (T0 baseline, T11
 evaluation), never shipped off-machine, and never carry parameter values.
 
 Off by default (zero cost): gated by ``RAPTIX_TOOL_TELEMETRY=1``. No
@@ -57,9 +57,7 @@ def _schema_char_estimate(tool: Any) -> int:
 def summarize_tool_exposure(role: str, tools: list[Any]) -> dict[str, Any]:
     """Pure summary of the tool set offered to ``role`` — no logging, no I/O.
 
-    Used both by :func:`record_tool_exposure` (gated logging inside
-    ``build_tools()``) and by the baseline-capture script in
-    ``benchmarks/suites/tool_eval/baseline/``, so the two never drift.
+    Used by :func:`record_tool_exposure` for gated logging inside ``build_tools()``.
     """
     names = sorted({_tool_name(t) for t in tools})
     return {

@@ -149,7 +149,7 @@ async function main() {
     // no_viewport (JS: viewport:null), persistent context, and NO custom
     // headers/UA/flags. We only override viewport for patchright; plain
     // playwright keeps the fixed viewport it has always used.
-    // Decepticon: launch the sandbox's system Chromium by executablePath when
+    // Raptix: launch the sandbox's system Chromium by executablePath when
     // provided (INSANE_CHROMIUM_PATH); else fall back to the real Chrome channel.
     const ctxOpts = { headless };
     if (process.env.INSANE_CHROMIUM_PATH) {
@@ -159,7 +159,7 @@ async function main() {
     }
     // Chromium refuses to launch as root (the sandbox user) without
     // --no-sandbox; --disable-dev-shm-usage avoids /dev/shm exhaustion crashes
-    // in containers with a small shm. Decepticon sandbox-runtime adaptation.
+    // in containers with a small shm. Raptix sandbox-runtime adaptation.
     ctxOpts.args = ['--no-sandbox', '--disable-dev-shm-usage'];
     if (automation === 'patchright') {
       ctxOpts.viewport = null;     // == no_viewport=True (use real window size)

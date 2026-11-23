@@ -1,6 +1,6 @@
 """Thin Python client for the BloodHound Community Edition v9.2.2 REST API.
 
-ADR: docs/adr/0005-bloodhound-via-bhce-rest-client.md
+ADR: docs/architecture/runtime-boundaries.md
 
 This module exists so the agent surface (``raptix.execution.tools.ad.bh_*``)
 can call the real BHCE instead of the in-house ingest + post-process

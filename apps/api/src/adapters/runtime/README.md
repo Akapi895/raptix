@@ -6,4 +6,4 @@ the Python runtime's LangGraph HTTP API. Holds `RAPTIX_RUNTIME_API_TOKEN_FILE`
 `client.ts` (Tier 1, unit-tested against a local mock HTTP server) implements
 `/info`, `/assistants/search`, `/threads`, and `/threads/:id/runs`. Not yet
 wired to any route -- Tier 2 does that (Projects, chat, HITL). See
-`docs/design/2026-10-31-ui-app-integration-implementation-plan.md`.
+`docs/architecture/web-integration.md`.

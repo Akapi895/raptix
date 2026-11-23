@@ -1,4 +1,4 @@
-# Decepticon telemetry gateway — Cloudflare Worker config.
+# Raptix telemetry gateway — Cloudflare Worker config.
 #
 # Deploy (maintainer-side):
 #   npm install

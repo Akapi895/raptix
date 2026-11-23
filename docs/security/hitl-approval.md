@@ -1,16 +1,8 @@
 # HITL Approval
 
-> The human-in-the-loop checkpoint that pauses high-impact tool calls
-> until the operator approves, denies, or redirects them.
+## Policy and defaults
 
-## TL;DR
-
-Autonomous execution on real client infrastructure cannot be
-all-or-nothing. Some actions — credential dumping, C2 implant
-deployment, pushing detection rules to a production SIEM, destructive
-operations — need a human stop-the-line gate. `HITLApprovalMiddleware`
-intercepts tool calls that match a declarative policy, pauses the run,
-and applies the operator's decision.
+`HITLApprovalMiddleware` pauses the run when a tool call matches the approval policy. The operator can approve, deny or redirect the call.
 
 It is **opt-in and off by default**: the slot factory returns nothing
 unless `RAPTIX_HITL__ENABLED` is truthy, so default engagements never
@@ -122,5 +114,5 @@ The middleware does not hardcode any event-log format; it talks to an
   below HITL; operator approval cannot override an RoE refusal.
 - [Audit Ledger](./audit-ledger.md) — the append-only record of RoE
   decisions.
-- [Threat Model](./raptix-threat-model.md) — HITL as the
+- [Threat Model](threat-model.md) — HITL as the
   operator-approval control.

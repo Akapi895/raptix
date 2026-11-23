@@ -6,7 +6,7 @@ activity through ``blue_cell_scan`` (tap + rule matcher), records each hit as a
 ``DetectionFired`` node in the knowledge graph — linked ``-[:USES_RULE]->`` the
 rule and ``-[:DETECTED]->`` the Finding/Technique it caught — and reports the
 **detection gaps** (Findings nothing detected) as the headline blue-team
-deliverable. See ``docs/features/blue-cell.md``.
+deliverable. See ``docs/security/blue-cell.md``.
 
 Key design choices — enforced by the tool surface, not just the prompt:
 

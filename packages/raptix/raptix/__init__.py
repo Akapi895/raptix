@@ -5,19 +5,17 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
 
 try:
-    # pyproject.toml carries a "0.0.0" sentinel; release.yml stamps the
-    # real tag into the package metadata at Docker build time, and
-    # importlib.metadata reads it back here. Local checkouts read 0.0.0.
-    __version__ = _version("decepticon")
+    # Read the installed package metadata. Local checkouts default to 0.0.0.
+    __version__ = _version("raptix")
 except PackageNotFoundError:
     __version__ = "0.0.0"
 
-__package_name__ = "decepticon"
+__package_name__ = "raptix"
 
 # Phase 2 framework boot — register OSS roles with RoleRegistry and
 # materialize the PluginRegistry singleton. Idempotent / opt-out via env.
 #
-# The sandbox container ships only a subset of decepticon
+# The sandbox container ships only a subset of Raptix
 # (execution/sandbox/{kernel,server} + bare __init__.py) without
 # raptix-core installed, so it must opt out of the full framework boot.
 # The sandbox.Dockerfile sets RAPTIX_SKIP_BOOT=1 in its ENV so this

@@ -17,7 +17,8 @@ function findDuplicateGroups(assets: Asset[]): { groups: number; assets: number 
   return { groups: duplicated.length, assets: duplicated.reduce((sum, members) => sum + members.length, 0) };
 }
 export function summarizeAssets(assets: Asset[], now = Date.now()) {
-  const distinct = (key: 'ip' | 'domain') => new Set(assets.map(a => a[key]?.toLowerCase()).filter(Boolean)).size;
+  // A row can record several names or addresses ("a.test, b.test"), so count each one.
+  const distinct = (key: 'ip' | 'domain') => new Set(assets.flatMap(a => (a[key] || '').split(/[\s,;|]+/)).map(value => value.toLowerCase()).filter(Boolean)).size;
   const scanned = assets.filter(a => a.last_scan_at).length;
   const recent = assets.filter(a => { const date = Date.parse(a.first_seen_at); return date >= now - 7 * DAY && date <= now; });
   const protocols = new Map<string, number>();
@@ -49,6 +50,27 @@ function endpoint(raw: string): string {
     if (!url.hostname || url.username || url.password) return '';
     return `${url.protocol.toLowerCase()}//${url.hostname.toLowerCase()}:${url.port || ({ 'https:': '443', 'http:': '80' }[url.protocol] || '')}`;
   } catch { return raw.trim().toLowerCase().replace(/\/$/, ''); }
+}
+
+const DEFAULT_PORT: Record<string, number> = { 'http:': 80, 'https:': 443 };
+/** scheme://, optional bracketed IPv6 or name, optional :port. A regex rather than the URL parser: browsers
+ *  disagree on non-web schemes such as tcp:// or x://, and the URL parser turned those into empty hosts. */
+const TARGET_PATTERN = /^(?:([a-z][a-z0-9+.-]*):\/\/)?(\[[^\]]+\]|[^/:?#\s]+)(?::(\d{1,5}))?/;
+/** Host and port a finding target names. Targets are stored as "<kind>:<url or host:port>" (e.g. "http:https://x/y",
+ *  "net:tcp://10.0.0.1:3306"); a bare host is accepted too. Port is 0 when the target names none. */
+export function targetHost(raw: string): { host: string; port: number } | null {
+  const value = raw.trim().toLowerCase().replace(/^(?:net|http|https):(?!\/\/)/, '');
+  const match = TARGET_PATTERN.exec(value);
+  if (!match) return null;
+  const [, scheme, name, explicitPort] = match;
+  const host = (name ?? '').replace(/^\[|\]$/g, '');
+  if (!host) return null;
+  return { host, port: Number(explicitPort) || (scheme ? DEFAULT_PORT[`${scheme}:`] ?? 0 : 0) };
+}
+/** Hostnames an asset records, from its host (which may be a URL or a comma list), ip and domain. */
+function assetHosts(asset: Asset): string[] {
+  const names = [asset.host, asset.ip, asset.domain].flatMap(value => (value || '').split(/[\s,;|]+/)).map(value => targetHost(value)?.host);
+  return [...new Set(names.filter((name): name is string => !!name))];
 }
 
 export function buildAssetGraph(assets: Asset[], findings: Vulnerability[] = []): AssetGraph {
@@ -87,15 +109,20 @@ export function buildAssetGraph(assets: Asset[], findings: Vulnerability[] = [])
       const service = node(id('service', `${serviceNode}|${asset.protocol}|${asset.server}`), [asset.protocol, asset.server].filter(Boolean).join(' · '), 'service', asset);
       edge(serviceNode, service, 'identified service', asset); serviceNode = service;
     }
+    const hosts = assetHosts(asset);
     for (const finding of findings) {
       if ((finding.project_id || '') !== scope || !finding.target?.trim()) continue;
-      const target = endpoint(finding.target);
+      const target = endpoint(finding.target), named = targetHost(finding.target);
       const exactHost = asset.host && target === endpoint(asset.host);
       const structuredEndpoint = asset.protocol && asset.port > 0 && [asset.domain, asset.ip].filter(Boolean).some(value =>
         target === endpoint(`${asset.protocol}://${value.includes(':') ? `[${value}]` : value}:${asset.port}`));
       const address = [asset.domain, asset.ip].filter(Boolean).find(value => target === value.toLowerCase());
       const explicitPort = [asset.domain, asset.ip].filter(Boolean).some(value => target === `${value.toLowerCase()}:${asset.port}` || target === `[${value.toLowerCase()}]:${asset.port}`);
-      if (!exactHost && !structuredEndpoint && !address && !explicitPort) continue;
+      // Same host. A manual endpoint row's port must agree with the finding's. A KG host row aggregates every
+      // service on the host and records only its primary port, so its port cannot rule a finding out.
+      const aggregateRow = asset.source === 'neo4j-kg';
+      const hostMatch = !!named && hosts.includes(named.host) && (aggregateRow || !asset.port || !named.port || named.port === asset.port);
+      if (!exactHost && !structuredEndpoint && !address && !explicitPort && !hostMatch) continue;
       const destination = address ? (address === asset.domain ? domain : ip) || root : serviceNode;
       const findingNode = node(id('vulnerability', finding.id), finding.title, 'vulnerability', asset);
       Object.assign(nodes.get(findingNode)!, { findingId: finding.id, severity: finding.severity });
@@ -103,4 +130,12 @@ export function buildAssetGraph(assets: Asset[], findings: Vulnerability[] = [])
     }
   }
   return { nodes: [...nodes.values()], edges: [...edges.values()] };
+}
+
+/** Findings tied to one asset: recorded target matches, plus findings from its latest linked scan.
+ *  The inventory table's Related findings count and the detail panel both use this rule. */
+export function relatedFindings(asset: Asset, findings: Vulnerability[]): { findings: Vulnerability[]; matched: Set<string> } {
+  const matched = new Set(buildAssetGraph([asset], findings).nodes.flatMap(node => node.findingId ? [node.findingId] : []));
+  const related = findings.filter(f => matched.has(f.id) || ((f.project_id || '') === (asset.project_id || '') && (asset.last_scan_task_id ? f.task_id === asset.last_scan_task_id : !!asset.last_scan_conversation_id && f.conversation_id === asset.last_scan_conversation_id)));
+  return { findings: related, matched };
 }

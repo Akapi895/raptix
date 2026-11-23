@@ -5,7 +5,7 @@ delegates to runtime subsystems for engagement management, conversation
 state, and finding retrieval.
 
 The server SDK (``mcp``) is an optional dependency: install with
-``pip install 'decepticon[mcp]'``. Importing this package is safe without it;
+``pip install 'raptix[mcp]'``. Importing this package is safe without it;
 only :func:`main` and :func:`raptix.interfaces.mcp.server.build_server`
 require the SDK.
 """

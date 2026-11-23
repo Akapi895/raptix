@@ -200,7 +200,7 @@ def test_render_text_no_resolved_chain_shows_warning():
     inv = _make_inventory(statuses=statuses, resolved_chain=(), priority_explicit=False)
     output = auth._render_text(inv)
     assert "⚠ No usable credential detected." in output
-    assert "decepticon onboard" in output
+    assert "raptix onboard" in output
     assert "Subscriptions (OAuth)" in output
     assert "API keys" in output
     assert "Local / custom endpoints" in output

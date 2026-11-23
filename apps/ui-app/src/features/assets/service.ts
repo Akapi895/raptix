@@ -66,7 +66,7 @@ export function createAssetsService(options: { request: Request; storage: KeyVal
       const data = await api<{ projects?: ProjectOption[] } | ProjectOption[]>('/api/projects?limit=500');
       state.projects = Array.isArray(data) ? data : data.projects ?? []; state.projectsLoaded = true;
     },
-    overview: () => api<AssetStats>('/api/assets/stats?days=' + state.overviewDays),
+    overview: () => { const params = buildFilterParams(state.filters); params.set('days', String(state.overviewDays)); return api<AssetStats>('/api/assets/stats?' + params); },
     /** Read every matching page: KPI and graph totals must never describe only the visible page. */
     async inventory(params = buildFilterParams(state.filters), signal?: AbortSignal): Promise<Asset[]> {
       const items = new Map<string, Asset>();

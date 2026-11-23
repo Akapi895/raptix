@@ -29,7 +29,7 @@ Convergent industry pattern: Claude Code's ``Bash(run_in_background)``
 → background-completion notification, Raptix's own
 ``SandboxNotificationMiddleware`` for tmux session completions, and the
 LangChain ``async-deep-agents`` reference implementation all use this
-shape. See docs/adr/0006 §6 for the full reference list.
+shape. The full reference list is in the original ADR-0006, section 6, in Git history.
 """
 
 from __future__ import annotations

@@ -9,6 +9,7 @@
 
 export const AGENT_LABELS: Record<string, string> = {
   // Orchestrator
+  raptix: "Raptix",
   decepticon: "Raptix",
 
   // Document generation

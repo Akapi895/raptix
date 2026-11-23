@@ -18,7 +18,7 @@ export interface SkillsRoutesOptions {
  *
  * Writes stay stubbed, deliberately, not piecemeal: the corpus is a
  * Git-authored tree; editing it is documented as a audit-skills ->
- * build-skill-graph -> check-skill-graph -> commit pipeline (CLAUDE.md),
+ * build-skill-graph -> check-skill-graph -> pipeline in the Makefile,
  * never a live-mutable store. A PUT/POST/DELETE here would write a file
  * without regenerating the Neo4j skill graph, silently desyncing the two
  * -- the same guard-rail-adjacent correctness concern Tier 4 stubbed

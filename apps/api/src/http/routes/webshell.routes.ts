@@ -48,11 +48,7 @@ function fieldsFromBody(body: Record<string, unknown> | undefined): WebShellConn
  * exec/file would issue the actual HTTP request to `connection.url` with the
  * stored password to run a command or move a file on the target. That is a
  * raw outbound HTTP relay to an operator-supplied URL, bypassing Raptix's
- * sandbox-mediated network egress and RoE/scope checks entirely -- this
- * repo's guard-rail rule (CONTRIBUTING_AGENT.md: "do not weaken guard rails
- * without an ADR + threat model") forbids introducing that kind of
- * unguarded relay casually. Stub honestly rather than build it without a
- * safety gate.
+ * sandbox-mediated network egress and RoE checks. See docs/security/threat-model.md.
  */
 async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
   await reply.code(501).send({ error: "Not implemented for this deployment" });

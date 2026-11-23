@@ -1,19 +1,8 @@
 # Neo4j Hardening
 
-> Why the `neo4j` service runs with an explicit APOC allowlist and how to
-> safely extend it.
+## Network boundary
 
-## TL;DR
-
-The Raptix `neo4j` container hosts the engagement knowledge graph
-and is **dual-homed across `sandbox-net` and `raptix-net`** so the
-orchestrator on the management plane can read findings written by
-agents from inside the sandbox. That bridge is by design - but it also
-means Neo4j is the **shortest path** from a compromised sandbox into
-the management plane.
-
-This document explains the procedure-level controls that close that
-path and the defense-in-depth checks layered on top of them.
+The `neo4j` container hosts the engagement knowledge graph and joins both `sandbox-net` and `raptix-net`. The orchestrator can read findings written from the sandbox. The shared service makes Neo4j part of the boundary between the sandbox and management networks.
 
 ## Threat model
 

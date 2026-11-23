@@ -9,7 +9,7 @@ export interface ProjectRecord {
   status: string;
   pinned: boolean;
   /** Per-project override of the server-wide RAPTIX_KG_AUTOINGEST/RAPTIX_KG_TRIED_EDGES
-   * defaults (both off by default) -- docs/design/2026-11-03-graph-technical-design.md Mục 3/9. */
+   * defaults (both off by default) -- docs/architecture/knowledge-graph-design.md Mục 3/9. */
   autoIngestEnabled: boolean;
   triedEdgesEnabled: boolean;
   /** Sandbox identity (ADR-0086 A/ADR-0102) -- internal only, never on the wire (see projects.routes.ts's toWire). */

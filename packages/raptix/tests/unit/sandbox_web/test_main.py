@@ -37,13 +37,13 @@ def test_scope_check_enforces_in_scope(tmp_path: Path) -> None:
 def test_scope_check_accepts_signed_root_url(tmp_path: Path) -> None:
     ws = _write_roe(
         tmp_path,
-        {"mode": "enforce", "in_scope": [{"target": "https://decepticon.red/", "type": "auto"}]},
+        {"mode": "enforce", "in_scope": [{"target": "https://raptix.test/", "type": "auto"}]},
     )
     check = cli._build_scope_check(str(ws))
 
     assert check is not None
-    assert check("https://decepticon.red/") is True
-    assert check("https://decepticon.red.evil.test/") is False
+    assert check("https://raptix.test/") is True
+    assert check("https://raptix.test.evil.test/") is False
 
 
 def test_fetch_command_emits_envelope(

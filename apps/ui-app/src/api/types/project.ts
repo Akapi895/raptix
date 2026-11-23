@@ -7,7 +7,7 @@ export const projectSchema = z.looseObject({
   id: z.string(), name: z.string(), description: z.string().optional(), scope_json: z.string().optional(),
   status: z.string(), pinned: z.boolean(),
   // Per-project override of the server-wide AutoIngest/TriedEdges defaults
-  // (both off by default -- docs/design/2026-11-03-graph-technical-design.md Mục 3/9).
+  // (both off by default -- docs/architecture/knowledge-graph-design.md Mục 3/9).
   auto_ingest_enabled: z.boolean().default(false), tried_edges_enabled: z.boolean().default(false),
   created_at: timestampSchema, updated_at: timestampSchema,
 });

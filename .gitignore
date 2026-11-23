@@ -92,11 +92,6 @@ workspace/
 /telemetry/
 test-results*/
 generated/
-benchmarks/scenarios/
-
-# Published evidence excludes raw logs and full transcript dumps.
-benchmarks/results/published/**/logs/
-benchmarks/results/published/**/analysis/record*.jsonl
 
 # Local reference corpus — dev-only, ~34 MB (PayloadsAllTheThings + OWASP WSTG).
 # Runtime corpora are fetched into ~/.raptix/references/ by
@@ -111,7 +106,8 @@ skills/_corpus/
 .claude/
 .agents/
 
-# Project-specific Claude Code instructions (private)
+# Local agent instructions
+/AGENTS.md
 CLAUDE.md
 references/octogent
 apps/launcher/raptix
@@ -119,26 +115,13 @@ apps/launcher/raptix
 # basedpyright JSON output from `make ci-lint` (CI uploads as artifact on failure)
 bp.json
 
-# Generated runs and external repositories are local-only.
-benchmarks/results/runs/*
-!benchmarks/results/runs/README.md
-benchmarks/external/*
-!benchmarks/external/README.md
-
-# Personal, disposable Sliver C2 test lab — never a tracked benchmark suite.
-benchmarks/sliver-lab/
-
 # Ad-hoc local scratch dumps (docker ps / vitest output), never source of truth.
 /now.txt
 /infra-test.log
-benchmarks/results/published/xbow/XBEN-*-24/evidence/langsmith_trace.json
-benchmarks/results/published/xbow/XBEN-*-24/evidence/iter14_pass.json
-benchmarks/results/published/xbow/XBEN-*-24/evidence/*_iter*.json
 
 # Codex / OMX runtime artefacts (never committed)
 .omx/
 .env.bak.*
-benchmarks/results/published/xbow/XBEN-*-24/run-loop*.log
 
 # Git worktrees
 .worktrees/

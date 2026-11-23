@@ -8,7 +8,7 @@ from raptix_sdk import ToolProtocol
 class HelloTool:
     """Minimal ToolProtocol-compliant tool."""
 
-    name = "decepticon_example_tool"
+    name = "raptix_example_tool"
     description = "Hello-world tool scaffolded by raptix-sdk."
 
     def invoke(self, input: object, *, config: object | None = None) -> object:

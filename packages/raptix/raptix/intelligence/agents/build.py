@@ -411,7 +411,7 @@ def build_middleware(
         raise KeyError(
             f"unknown role {role!r}; pass ``slots=`` explicitly "
             f"(plugin orchestrators with a custom role) or add the role "
-            f"to SLOTS_PER_ROLE in decepticon/agents/middleware_slots.py "
+            f"to SLOTS_PER_ROLE in raptix_core/contracts/slots.py "
             f"(OSS roles)."
         )
     role_slots = slots
@@ -527,7 +527,7 @@ def build_tools(
 
     result = list(base.values())
     result.extend(load_plugin_tools(role=role))
-    # T0 baseline telemetry (docs/tool-optimization-implementation-plan.md):
+    # T0 baseline telemetry (docs/architecture/tool-ownership.md):
     # logging-only, gated by RAPTIX_TOOL_TELEMETRY, never mutates ``result``.
     record_tool_exposure(role, result)
     # T9 shadow + T12 active dynamic exposure: shadow logs the diff;

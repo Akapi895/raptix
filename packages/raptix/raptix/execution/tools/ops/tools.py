@@ -47,7 +47,7 @@ def _diagnose_unreachable(exc: OpsControlUnreachableError) -> str:
             "hint": (
                 "The opscontrol daemon owns the docker socket per ADR-0006. "
                 "If you reached this from `make dev` / `make smoke` the stack "
-                "is daemon-less by design — bring it up via `decepticon start` "
+                "is daemon-less by design — bring it up via `raptix start` "
                 "to enable workload spawning."
             ),
         }

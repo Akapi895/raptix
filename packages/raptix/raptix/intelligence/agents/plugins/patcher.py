@@ -58,7 +58,7 @@ from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 # KG tools and patch_propose / patch_verify were removed pending the
-# Neo4j middleware redesign (see docs/design/neo4j-research-notes.md).
+# Neo4j middleware redesign (see docs/architecture/knowledge-graph-design.md).
 # patch_propose / patch_verify route through the broken graph_transaction
 # shim; they will return after the refactor lands.
 _STANDARD_TOOLS: dict[str, Any] = {

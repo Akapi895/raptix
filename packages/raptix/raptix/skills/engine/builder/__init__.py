@@ -18,7 +18,7 @@ Layout
 - (forthcoming) ``manifest.py`` — manifest.json with build stats + version pins.
 - (forthcoming) ``cli.py`` — ``python -m raptix.skills.engine.builder``.
 
-See ``docs/design/skillogy-brain-redesign.md`` §5 for the full spec.
+See ``docs/architecture/skills.md#skillogy`` for the builder boundary and the original design location.
 """
 
 from raptix.skills.engine.builder.seeds import (

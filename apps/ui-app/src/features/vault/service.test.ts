@@ -56,6 +56,13 @@ describe('vault service', () => {
     expect(post).not.toHaveBeenCalled();
   });
 
+  it('refuses to add without a selected project instead of reporting success', async () => {
+    const post = vi.fn();
+    const vault = service({ get: vi.fn(), post, delete: vi.fn() });
+    await expect(vault.add('db-password', 'Sup3r!', '')).rejects.toThrow(VaultError);
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it('stores a secret then reloads the list', async () => {
     const get = vi.fn(async () => ({ secrets: [wireSecret()] }));
     const post = vi.fn(async () => ({ id: 's1' }));

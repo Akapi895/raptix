@@ -4,7 +4,7 @@ name = "raptix-core"
 # rest of the workspace. See containers/langgraph.Dockerfile and the
 # release workflow.
 version = "0.0.0"
-description = "Decepticon contract layer: pure types, protocols, plugin contracts, registry primitives"
+description = "Raptix contract layer: pure types, protocols, plugin contracts, registry primitives"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.13"

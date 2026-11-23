@@ -311,8 +311,9 @@ def test_runtime_catalog_auth_validation_and_documented_response_schema() -> Non
     headers = {"Authorization": "Bearer " + token}
     response = client.get("/_raptix/specialists/catalog?specialist_id=recon", headers=headers)
     assert response.status_code == 200
+    fixtures = Path(__file__).resolve().parents[2] / "fixtures"
     specification = yaml.safe_load(
-        (Path(__file__).resolve().parents[5] / "docs/api/specialists.openapi.yaml").read_text()
+        (fixtures / "specialists.openapi.yaml").read_text(encoding="utf-8")
     )
     Draft202012Validator(
         {"$ref": "#/components/schemas/Catalog", "components": specification["components"]}

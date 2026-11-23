@@ -2,7 +2,7 @@
 
 Captured 2026-11-03 by actually running each binary inside the `raptix-sandbox`
 container (the same image `KGAutoIngestMiddleware` auto-ingests from in
-production), per `docs/design/2026-11-03-graph-technical-design.md` Mục 9
+production), per `docs/architecture/knowledge-graph-design.md` Mục 9
 roadmap step 1: validate parsing against real tool output, not hand-written
 minimal fixtures.
 

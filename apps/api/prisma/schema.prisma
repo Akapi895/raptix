@@ -10,7 +10,7 @@ datasource db {
 // Tier 1 (ADR-0106): the only business records with no Raptix runtime
 // equivalent that Tier 1 itself needs -- a single-operator credential and
 // its sessions. RBAC/AI-roles proper is a Tier 6 design spike (see
-// docs/design/2026-10-31-ui-app-integration-implementation-plan.md); this
+// docs/architecture/web-integration.md); this
 // is intentionally not that schema.
 
 model Operator {

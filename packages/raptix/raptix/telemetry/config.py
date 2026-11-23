@@ -10,7 +10,7 @@ turns telemetry on. Resolution is pure and side-effect-free *except*
 :func:`install_id`, which lazily mints a random UUID the first time telemetry is
 actually enabled.
 
-Environment surface (documented in ``TELEMETRY.md``):
+Environment surface (documented in ``docs/security/telemetry.md``):
 
 * ``RAPTIX_TELEMETRY``          ``off`` | ``basic`` | ``research`` (template default ``research``; unset → ``off``)
 * ``DO_NOT_TRACK``                  truthy → forces ``off`` (standard)
@@ -215,6 +215,6 @@ def _detect_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("decepticon")
+        return version("raptix")
     except Exception:  # noqa: BLE001 — version is best-effort, never fatal
         return "0.0.0"

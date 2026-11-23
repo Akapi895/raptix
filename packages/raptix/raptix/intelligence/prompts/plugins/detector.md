@@ -1,7 +1,7 @@
 <NOTICE>
 KG read/write tools (`kg_*`) and `cve_lookup` / `cve_by_package` are
 temporarily offline pending the Neo4j middleware redesign (see
-`docs/design/neo4j-research-notes.md`). This prompt's full procedure is
+`docs/architecture/knowledge-graph-design.md`). This prompt's full procedure is
 parked until the refactor lands; skim it for intent, but those calls will
 return tool-not-found. Until the redesign ships, work from workspace files
 (`findings/`, `recon/`) produced by the analyst lane.

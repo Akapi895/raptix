@@ -1,6 +1,6 @@
 """``raptix-cli auth`` — headless provider/auth introspection.
 
-The interactive ``decepticon onboard`` wizard (Go launcher) is the place to
+The interactive ``raptix onboard`` wizard (Go launcher) is the place to
 *configure* credentials. This command is the headless complement: it reports
 what is actually wired — API keys, subscription (OAuth) logins, and local
 endpoints — exactly as the runtime factory will resolve them, for the SDK,
@@ -142,7 +142,7 @@ def _render_text(inv: AuthInventory) -> str:
         lines.append("  " + " → ".join(m.value for m in inv.resolved_chain))
     else:
         lines.append("⚠ No usable credential detected.")
-        lines.append("  Run `decepticon onboard` (or set an API key / subscription) — every")
+        lines.append("  Run `raptix onboard` (or set an API key / subscription) — every")
         lines.append("  model call will 401 until at least one method is configured.")
     lines.append("")
 

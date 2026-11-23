@@ -16,7 +16,7 @@ from the target's own scoreboard, so the cell maps 1:1 onto a
 verifiable outcome and a stalled or crashed cell can only lose the work
 of a single entry.
 
-Objectivity contract (see ``docs/adr/0075-challenge-inventory.md``) —
+Objectivity contract (see ``historical ADR-0075``) —
 this module must stay free of target-specific content:
 
 - Entries, categories, and difficulty are the target's own data (the

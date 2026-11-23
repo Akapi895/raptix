@@ -8,7 +8,7 @@ from raptix_sdk import MiddlewareProtocol, MiddlewareSlot
 class HelloMiddleware:
     """Minimal MiddlewareProtocol-compliant middleware."""
 
-    name = "decepticon_example_middleware"
+    name = "raptix_example_middleware"
     slot: MiddlewareSlot | str = MiddlewareSlot.SKILLS
     priority = 150
 

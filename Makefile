@@ -26,7 +26,7 @@ PROFILES_ALL  := --profile cli --profile c2-sliver
 # docker-compose service (`api`, plus the `raptix-api-postgres-init`
 # sidecar) -- `docker compose up -d api` brings it up with the rest of the
 # stack. It still has no dedicated Make targets (quality/health/etc.) --
-# see docs/design/2026-10-31-ui-app-integration-implementation-plan.md.
+# see docs/architecture/web-integration.md.
 
 # Dogfood: isolated $RAPTIX_HOME so the launcher can onboard, write .env,
 # and stand up the stack without touching the user's real ~/.raptix. The
@@ -71,7 +71,7 @@ export CODEX_AUTH_VOLUME ?= $(shell test -f $(HOME)/.codex/auth.json && echo $(H
         ci-lint ci-test ci-test-coverage ci-test-coverage-report \
         status logs health clean \
         node-install \
-        benchmark recreate-litellm
+        recreate-litellm
 
 # ── Help (default target) ────────────────────────────────────────
 
@@ -100,7 +100,7 @@ help:
 	@echo "  make lint-fix       Auto-fix Python lint + format"
 	@echo ""
 	@echo "Web (apps/ui-app + apps/api): docker compose up -d api brings up apps/api;"
-	@echo "no dedicated Make targets yet — see docs/design/2026-10-31-ui-app-integration-implementation-plan.md"
+	@echo "no dedicated Make targets yet — see docs/architecture/web-integration.md"
 	@echo ""
 	@echo "Ops:"
 	@echo "  make status       docker compose ps"
@@ -109,7 +109,6 @@ help:
 	@echo "  make clean        Full teardown (compose volumes + .dogfood/)"
 	@echo ""
 	@echo "Other:"
-	@echo "  make benchmark [ARGS=\"--level 1\"]"
 
 # ── Pre-release Verification (PRIMARY) ───────────────────────────
 
@@ -313,7 +312,7 @@ quality-strict: ci-lint ci-test-coverage quality-cli
 # apps/ui-app + apps/api. `docker compose up -d api` (or the base `$(COMPOSE)`
 # invocation this Makefile already uses) brings up apps/api; there is no
 # dedicated web Make target (start/stop/status) yet -- see
-# docs/design/2026-10-31-ui-app-integration-implementation-plan.md.
+# docs/architecture/web-integration.md.
 
 # ── Status / Logs / Health / Clean ───────────────────────────────
 
@@ -371,16 +370,6 @@ recreate-litellm:
 	@docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-litellm sh -c 'test -s /root/.claude/.credentials.json' \
 		&& echo "recreate-litellm: creds mount OK" \
 		|| (echo "recreate-litellm: creds mount EMPTY — onboard first" && exit 1)
-
-## Run benchmark suite (usage: make benchmark ARGS="--level 1")
-benchmark:
-	uv run python -m benchmarks.runner $(ARGS)
-
-## CVE-Bench offline dry run (mocked LLM + sandbox, 3 fixtures, seed=0).
-## Output: benchmarks/results/runs/cve-bench/<run-id>/report.jsonl
-cve-bench-dry:
-	CVE_BENCH_DRY_RUN_SEED=0 PYTHONHASHSEED=0 \
-		uv run python -m benchmarks.suites.cve_bench.dry_run $(ARGS)
 
 .PHONY: ingest-knowledge-reference-graph
 ingest-knowledge-reference-graph:

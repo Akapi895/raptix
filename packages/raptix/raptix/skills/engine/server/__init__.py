@@ -4,8 +4,8 @@ The legacy in-memory ``SkillRegistry`` and the markdown ``ingest_directory``
 helper were removed; their files (``registry.py`` and ``ingest.py``) are
 kept for one release as no-import-graph dead code so anyone importing
 the old names sees a clean ``ImportError`` from this package instead of
-a stale class. See ``docs/design/skillogy-brain-redesign.md`` Amendment
-v0.2.2 for the rationale.
+a stale class. The original service design is referenced in
+``docs/architecture/skills.md#skillogy``.
 """
 
 from raptix.skills.engine.server.app import build_app

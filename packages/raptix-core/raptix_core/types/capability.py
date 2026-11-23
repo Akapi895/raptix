@@ -1,6 +1,6 @@
 """Capability contracts — the WHAT/HOW split the runtime resolves against.
 
-Wave T2 of ``docs/tool-optimization-implementation-plan.md``. These types
+Wave T2 of ``docs/architecture/tool-ownership.md``. These types
 are the executor-agnostic contract between the planner (decides WHAT —
 a :class:`CapabilityRequest`), the runtime resolver (decides HOW — an
 :class:`ImplementationSpec`), and the parser/verifier (decides WHAT

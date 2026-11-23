@@ -1,8 +1,20 @@
-# Runtime Boundaries
+# Runtime boundaries
+
+## Repository layout
+
+- `apps/` contains the web console, Web API, CLI, desktop app and launcher.
+- `packages/` contains the Python runtime, core contracts, plugin SDK and skill corpus.
+- `plugins/` contains domain packages that use the SDK and core contracts.
+- `infra/` contains container definitions, provider configuration and the telemetry gateway.
+- `tests/` contains cross-package checks.
+
+See [Dependency rules](dependency-rules.md) before changing package imports.
+
+## Runtime layout
 
 The runtime package (`packages/raptix/raptix/`) is split into subsystems with clear ownership.
 
-```
+```text
 raptix/
 ├── orchestration/
 │   ├── phases/             # UKC macro-phase state machine (ADR-0037)
@@ -30,7 +42,6 @@ raptix/
 ├── skills/                 # Runtime skill loader/registry/selector/engine
 ├── specialist_contracts/   # Plugin/specialist capability contracts, evidence gates, scorecards
 │                           # (benchmark/compliance — distinct from capabilities/ above)
-├── compat/                 # Phase-1 shims (removed at 2.0.0)
 └── telemetry/
 ```
 
@@ -42,3 +53,9 @@ raptix/
 4. `orchestration/mission/` owns engagement lifecycle and OPPLAN objectives.
 5. Post-tool middleware hooks must bound work, catch failures silently, and return the original result unchanged.
 6. `capabilities/` resolves WHAT (semantic capability → implementation); `execution/` performs HOW. Never re-nest one inside the other.
+
+## Domain services
+
+BloodHound CE uses its official HMAC-authenticated API and a dedicated Neo4j instance. Its data and migrations have a separate owner from the Raptix graph. [Integration client](../../packages/raptix/raptix/execution/tools/ad/bhce_client.py)
+
+The host controller owns container lifecycle operations for the workloads it allows. Runtime calls go through that controller boundary. [Sandbox isolation](../security/sandbox-isolation.md) · [Host controller](../../apps/launcher/internal/opscontrol/)

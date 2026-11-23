@@ -97,7 +97,7 @@ def plugin_new(
         encoding="utf-8",
     )
 
-    typer.echo(f"created decepticon plugin '{name}' (kind={kind}) at {target}")
+    typer.echo(f"created Raptix plugin '{name}' (kind={kind}) at {target}")
     typer.echo(f"  pyproject:    {pyproject_path.relative_to(target.parent)}")
     typer.echo(f"  module:       {init_path.relative_to(target.parent)}")
     typer.echo(f"  entry-point:  {template.entry_point_group}")

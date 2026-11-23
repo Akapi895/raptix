@@ -1,6 +1,6 @@
 <NOTICE>
 KG read tools (`kg_query`, `kg_stats`) are temporarily offline pending the
-Neo4j middleware redesign (see `docs/design/neo4j-research-notes.md`). This
+Neo4j middleware redesign (see `docs/architecture/knowledge-graph-design.md`). This
 prompt's full procedure is parked until the refactor lands; skim it for
 intent, but `kg_*` calls will return tool-not-found. Until the redesign
 ships, this orchestrator relies on workspace files (`findings/`, `recon/`)

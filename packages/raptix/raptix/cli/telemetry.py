@@ -101,7 +101,7 @@ def _status(cfg: TelemetryConfig) -> int:
     print(f"  opted_out: {is_opted_out()}")
     if cfg.enabled:
         print(f"  install_id: {cfg.install_id}")
-    print("\nRaw prompts, targets, and credentials are NEVER transmitted. See TELEMETRY.md.")
+    print("\nRaw prompts, targets, and credentials are NEVER transmitted. See docs/security/telemetry.md.")
     return 0
 
 

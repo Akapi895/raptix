@@ -6,7 +6,7 @@ governance, closure, scope, vault...) into the contract `apps/ui-app` already
 speaks (`apps/ui-app/docs/openapi.yaml`, `apps/ui-app/docs/api-contracts.md`).
 
 **Tier 1-7 are done** — this is the last planned tier; see
-`docs/design/2026-10-31-ui-app-integration-implementation-plan.md` §2/§5
+`docs/architecture/web-integration.md` §2/§5
 for the repo owner's per-module accept/cut decisions. Markdown agents (built)
 and Workflows (definition CRUD only, execution stubbed) were accepted;
 Robots and bindings and System updates were cut -- their `apps/ui-app`
@@ -15,7 +15,7 @@ frontend features were removed outright (not just left without a backend).
 **All 7 tiers are real code, but "the API contract is done" is not the same
 as "the stack runs end to end."** apps/api now has a `docker-compose.yml`
 service and a CI job (see "Dev" below and
-`docs/design/2026-10-31-ui-app-integration-implementation-plan.md` §8), but
+`docs/architecture/web-integration.md` §8), but
 two things it depends on are still unwired: nothing provisions a project's
 sandbox yet (Files/HITL stay real-but-503 until it is -- see "What
 provisions a project's sandbox" below), and there's no bearer token
@@ -115,9 +115,7 @@ path to it, not a gap introduced here).
   actually issuing the HTTP request to the connection's `url` to run a
   command or move a file on the target -- are stubbed `501`: that is a raw
   outbound HTTP relay to an operator-supplied URL with no RoE/scope gate,
-  bypassing Raptix's sandbox-mediated network egress entirely. Building
-  that without a safety gate is exactly what CONTRIBUTING_AGENT.md's
-  guard-rail rule requires an ADR + threat model for.
+  bypassing Raptix's sandbox-mediated network egress entirely. Changes to this boundary require a design decision and [threat model](../../docs/security/threat-model.md).
 - `src/http/routes/c2.routes.ts` + `src/adapters/c2/` -- a bridge client
   (`C2BridgeClient`, port `C2Transport`) ported from the retired
   `apps/web/server`'s `SliverClient`: one endpoint (`${url}/v1/c2`), one

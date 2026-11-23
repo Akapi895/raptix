@@ -97,7 +97,7 @@ def test_build_model_entry_ollama_chat_default_when_env_unset(monkeypatch) -> No
 
 def test_build_model_entry_ollama_cloud_prefers_cloud_api_key(monkeypatch) -> None:
     """OLLAMA_CLOUD_API_KEY (what the onboard wizard writes) wins over
-    OLLAMA_API_KEY so a user who followed `decepticon onboard` authenticates."""
+    OLLAMA_API_KEY so a user who followed `raptix onboard` authenticates."""
     monkeypatch.setenv("OLLAMA_CLOUD_API_KEY", "sk-cloud")
     monkeypatch.setenv("OLLAMA_API_KEY", "sk-legacy")
     monkeypatch.delenv("OLLAMA_CLOUD_API_BASE", raising=False)

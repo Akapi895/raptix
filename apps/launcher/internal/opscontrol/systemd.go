@@ -279,7 +279,7 @@ func (s *SystemdManager) renderUnit(spec InstallSpec) string {
 	// install tolerant of `.env` not existing yet.
 	return fmt.Sprintf(`[Unit]
 Description=Raptix opscontrol daemon (ADR-0006)
-Documentation=https://github.com/Akapi895/raptix/blob/main/docs/adr/0006-agent-driven-container-lifecycle.md
+Documentation=https://github.com/Akapi895/raptix/blob/main/docs/security/sandbox-isolation.md
 After=network-online.target
 Wants=network-online.target
 

@@ -13,7 +13,7 @@ Hooks into the framework's import to:
      (gap §8 #7).
 
 This module is private (``_boot``); the framework re-imports it from
-``decepticon/__init__.py``. Plugin authors interact with the
+``raptix/__init__.py``. Plugin authors interact with the
 registries through their public API only.
 """
 

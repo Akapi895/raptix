@@ -19,7 +19,7 @@
 # initdb and from the compose `bhce-postgres-init` sidecar so upgrades gain
 # the BloodHound role/database without deleting user data.
 #
-# ADR: docs/adr/0005-bloodhound-via-bhce-rest-client.md
+# ADR: docs/architecture/runtime-boundaries.md
 set -euo pipefail
 
 BHCE_DB_NAME="${BHCE_POSTGRES_DB:-bloodhound}"

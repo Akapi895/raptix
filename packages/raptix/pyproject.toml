@@ -32,8 +32,7 @@ classifiers = [
 ]
 
 dependencies = [
-    # Contract layer (split out in Phase 1 of the core/framework/sdk
-    # redesign — see docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md).
+    # Contract layer. See docs/architecture/dependency-rules.md.
     # Workspace-resolved to the in-tree packages/raptix-core/ during
     # dev; pinned to the same version as raptix at release time.
     "raptix-core",
@@ -129,7 +128,7 @@ telemetry = [
     "opentelemetry-sdk>=1.27",
     "opentelemetry-exporter-otlp>=1.27",
 ]
-# MCP server — exposes Decepticon engagement control over the Model
+# MCP server — exposes Raptix engagement control over the Model
 # Context Protocol so external agents (OpenClaw, Hermes, or any MCP
 # client) can drive engagements. Provides the ``raptix-mcp`` script.
 # pyjwt[crypto] backs the JWT (OAuth 2.1 resource-server) auth mode on the
@@ -180,8 +179,8 @@ raptix-mcp = "raptix.interfaces.mcp.__main__:main"
 # Default keeps OSS lean. The ``plugins`` bundle (vulnresearch family)
 # is opt-in. See raptix/plugin_loader.py for the loader contract.
 
-# Default Decepticon project config — kept in OSS so this checkout's
-# native dev workflow (e.g. ``make benchmark``, ``langgraph dev``)
+# Default Raptix project config — kept in OSS so this checkout's
+# native dev workflow (e.g. ``langgraph dev``)
 # automatically activates both bundles instead of forcing every
 # developer to remember the env var. End-user OSS installs that DON'T
 # clone this repo see the hardcoded ``["standard"]`` default; downstream

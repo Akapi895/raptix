@@ -31,7 +31,7 @@ def ops_available() -> bool:
     """True when the opscontrol daemon is actually REACHABLE.
 
     The socket is the ADR-0006 capability grant: a live daemon listens on it
-    only when the stack was brought up via ``decepticon start`` (the daemon
+    only when the stack was brought up via ``raptix start`` (the daemon
     bind-mounts it into the langgraph container). Daemon-less topologies —
     ``make dev`` / ``make smoke``, and hosted deployments that manage workload
     teardown externally (no opscontrol on the runtime) — have no live daemon,
@@ -109,7 +109,7 @@ class OpsControlClient:
         except (FileNotFoundError, httpx.ConnectError) as exc:
             raise OpsControlUnreachableError(
                 f"opscontrol daemon not reachable at {self._socket_path}: {exc}. "
-                "Was the stack brought up via `decepticon start`? "
+                "Was the stack brought up via `raptix start`? "
                 "`make dev` / `make smoke` are daemon-less by design."
             ) from exc
         body: dict[str, Any]

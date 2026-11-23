@@ -79,7 +79,7 @@ def configure_logging(
     level: str | int | None = None,
     fmt: str | None = None,
 ) -> None:
-    """Configure the root ``decepticon`` logger.
+    """Configure the root ``raptix`` logger.
 
     Idempotent: calling twice replaces the prior handler so tests can
     reconfigure freely. Honors env vars when args are omitted.

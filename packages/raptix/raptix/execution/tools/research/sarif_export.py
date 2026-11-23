@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any
 
 _TOOL_NAME = "Raptix"
-_TOOL_INFORMATION_URI = "https://decepticon.red"
+_TOOL_INFORMATION_URI = "https://github.com/Akapi895/raptix"
 
 _LEVEL_MAP = {
     "critical": ("error", 10.0),

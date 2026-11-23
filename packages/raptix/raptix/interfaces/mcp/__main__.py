@@ -15,7 +15,7 @@ from raptix.interfaces.mcp.config import ServerConfig, load_config
 
 _INSTALL_HINT = (
     "raptix-mcp requires the optional 'mcp' dependency. "
-    "Install it with:  pip install 'decepticon[mcp]'"
+    "Install it with:  pip install 'raptix[mcp]'"
 )
 
 

@@ -12,7 +12,7 @@ Submodules:
   * ``roles``    — ``RoleRegistry`` pluggable role catalog. Plugins
     register custom roles via ``raptix.roles`` entry-point group
     (closes gap §8 #5 — a vendor ``apt`` no longer abuses
-    ``default_role="decepticon"``).
+    ``default_role="raptix"``).
   * ``skills``   — ``SkillSourceRegistry`` validating ``/skills/<.../>``
     paths and warning on collisions (closes gap §8 #12).
   * ``safety``   — ``SafetyRegistry`` for plugin-extended safety-critical

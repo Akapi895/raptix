@@ -1,7 +1,7 @@
 """HTTP client for apps/api's internal vault routes.
 
 apps/api/Postgres owns Vault secrets (same as Project/WebShellConnection --
-see this repo's CLAUDE.md on business-record ownership); the Python runtime
+see docs/architecture/knowledge-graph-design.md on business-record ownership); the Python runtime
 reaches it over HTTP, the reverse direction of the existing runtime-api-token
 lane (``interfaces/api/auth.py``). ``RAPTIX_WEB_API_URL`` points at apps/api
 (default ``http://api:8080``) -- distinct from ``RAPTIX_API_URL``, which some

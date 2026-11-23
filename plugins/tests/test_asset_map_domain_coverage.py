@@ -16,7 +16,7 @@ from raptix_core.contracts.slots import SLOTS_PER_ROLE
 from raptix_core.types.asset import AssetKind
 
 ROOT = Path(__file__).resolve().parents[2]
-MATRIX = ROOT / "docs" / "design" / "2026-10-20-asset-map-coverage-matrix.json"
+MATRIX = ROOT / "packages" / "raptix" / "tests" / "fixtures" / "asset-map-coverage.json"
 VERIFICATION_STATES = {"unverified", "partial", "verified-data", "blocked"}
 REGISTRATIONS = {"entry-point", "graph-only", "orchestrator", "domain-pack", "library-only"}
 # ``decepticon`` is a runtime alias of ``raptix`` (middleware_slots.py), so the core table omits it.

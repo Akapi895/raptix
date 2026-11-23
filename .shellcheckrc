@@ -1,5 +1,0 @@
-enable=all
-disable=SC2250
-disable=SC2312
-shell=bash
-external-sources=true

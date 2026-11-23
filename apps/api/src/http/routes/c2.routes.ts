@@ -30,9 +30,7 @@ async function replyC2Error(reply: FastifyReply, error: unknown): Promise<void> 
  * approved ScopeRevision + a per-command grant (C2GrantsService) before
  * ever calling the provider -- apps/api has no Scope/Governance subsystem
  * (Tier 6). Wiring a session.tasks dispatch (send a command to a live
- * implant) with no RoE/scope gate at all would be exactly the kind of
- * guard-rail weakening CONTRIBUTING_AGENT.md requires an ADR + threat
- * model for; refusing by default is the safe, intentional choice.
+ * implant) requires RoE and scope checks. See docs/security/threat-model.md.
  */
 async function notImplementedForThisDeployment(_request: unknown, reply: FastifyReply): Promise<void> {
   await reply.code(501).send({ error: "Not implemented for this deployment" });

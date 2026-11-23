@@ -3,7 +3,7 @@
 Agent tools grouped by attack-surface / capability domain. This directory is
 intentionally **flat** (one subpackage per domain) rather than nested: several
 domains — notably `bash/`, `sandbox` dispatch and the C2 integrations — are
-frozen paths under the project guardrails (see `AGENTS.md`), so they must keep
+frozen paths under the project guardrails (see [threat model](../../../../../docs/security/threat-model.md)), so they must keep
 stable import paths and are never moved for cosmetic grouping.
 
 ## Domain groups
@@ -41,4 +41,4 @@ stable import paths and are never moved for cosmetic grouping.
 - Keep one concern per tool module; shared helpers belong in the group's
   package, not spread across domains.
 - Never widen a tool's blast radius (new network egress, new exec path) without
-  the guardrail review that `AGENTS.md` requires.
+  a review of the affected guardrails.

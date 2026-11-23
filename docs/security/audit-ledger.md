@@ -1,18 +1,13 @@
 # Audit Ledger
 
-> The HMAC-chained, append-only record of every RoE decision — the legal
-> artifact for paid and regulated engagement out-briefs.
-
-## TL;DR
+## Record format and location
 
 Every RoE evaluation (PASS as well as REFUSE) emits one record to an
 append-only JSON Lines ledger. Each record is hash-chained to its
 predecessor and optionally bound to an operator-held HMAC secret, so
 tampering with record N invalidates every record after N.
 
-The ledger lives at `<workspace>/audit/roe-decisions.jsonl`. It is the
-key artifact for "what the agent tried, what was approved, what was
-blocked."
+The ledger lives at `<workspace>/audit/roe-decisions.jsonl`.
 
 Source of record:
 [`middleware/_audit_sink.py`](../../packages/raptix/raptix/middleware/_audit_sink.py)
@@ -102,8 +97,7 @@ silently.
   LangGraph orchestrator runs one event loop per engagement workspace;
   the append-then-fsync is atomic per record on POSIX append-only files,
   and on Windows for buffer sizes under 4096 bytes.
-- The **`raptix audit verify` CLI hook is a TODO** — call
-  `verify_ledger` directly until it lands.
+- The ledger module exposes `verify_ledger` for checking a retained file.
 
 ## See also
 
@@ -111,5 +105,5 @@ silently.
   these records and the decision codes they carry.
 - [Security Controls](./security-controls.md) — the runtime-guard
   knob/default table, including the audit env vars.
-- [Threat Model](./raptix-threat-model.md) — the ledger as the
+- [Threat Model](threat-model.md) — the ledger as the
   repudiation control for the sandbox and orchestrator assets.

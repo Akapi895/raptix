@@ -148,7 +148,7 @@ def _read_fragment(name: str) -> str:
 # rules, OPSEC discipline, hand-off format) — not on-demand skill catalog
 # entries. Roles without a workflow file get no extra content (no fallback,
 # no warning — the absence is the contract). See "Amendment v0.2.2" in
-# docs/design/skillogy-brain-redesign.md.
+# docs/architecture/skills.md#skillogy.
 
 _WORKFLOWS_DIR = _PROMPTS_DIR / "workflows"
 

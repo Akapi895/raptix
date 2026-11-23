@@ -107,7 +107,7 @@ def undeclared_claims() -> tuple[UndeclaredClaim, ...]:
     return (
         UndeclaredClaim(
             claim="analyst.fuzz_target executes fuzz campaigns",
-            source="execution/tools/research/fuzz.py; docs/architecture/tool-classification.md",
+            source="execution/tools/research/fuzz.py; docs/architecture/tool-ownership.md#tool-classification",
             kind="source_generation",
             note=(
                 "Declares classify + harness generation only; no campaign "
@@ -117,7 +117,7 @@ def undeclared_claims() -> tuple[UndeclaredClaim, ...]:
         ),
         UndeclaredClaim(
             claim="contracts.scan_solidity / contracts.run_foundry_poc",
-            source="docs/architecture/tool-classification.md (frozen v2 table)",
+            source="docs/architecture/tool-ownership.md#tool-classification (frozen v2 table)",
             kind="wording_gap",
             note=(
                 "Target IDs from the frozen classification, not current "
@@ -308,9 +308,7 @@ def availability_evaluate(evaluator: Any, manifest: CapabilityManifest) -> dict[
 def write_coverage_report(path: str | Path, inventory: Mapping[str, Any]) -> Path:
     """Write the report to a NEW run/evaluation output path.
 
-    Refuses to overwrite the frozen T0 baseline files
-    (``benchmarks/suites/tool_eval/baseline/{baseline,assembled_baseline}.jsonl``)
-    — the inventory never mutates the frozen baseline.
+    Refuses to overwrite frozen baseline reports.
     """
     report_path = Path(path).resolve()
     if (

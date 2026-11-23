@@ -110,17 +110,17 @@ def _config_file_bundles() -> frozenset[str] | None:
     """
     cwd = Path.cwd()
 
-    decepticon_toml = cwd / ".raptix.toml"
-    if decepticon_toml.is_file():
+    raptix_toml = cwd / ".raptix.toml"
+    if raptix_toml.is_file():
         try:
-            data = tomllib.loads(decepticon_toml.read_text(encoding="utf-8"))
+            data = tomllib.loads(raptix_toml.read_text(encoding="utf-8"))
             value = data.get("plugins", {}).get("enabled")
             if value is not None:
                 normalized = _normalize_bundles_value(value)
                 if normalized is not None:
                     return normalized
         except Exception:
-            logger.exception("failed to read %s", decepticon_toml)
+            logger.exception("failed to read %s", raptix_toml)
 
     pyproject = cwd / "pyproject.toml"
     if pyproject.is_file():
@@ -338,8 +338,8 @@ class SubAgentSpec:
             factory is invoked lazily by the main agent at construction
             time.
         parent_agents: tuple of main-agent names this subagent should be
-            attached to (e.g. ``("decepticon",)`` or
-            ``("decepticon", "vulnresearch")``).
+            attached to (e.g. ``("raptix",)`` or
+            ``("raptix", "vulnresearch")``).
         bundle: optional grouping label for organizational/audit purposes
             (e.g. ``"standard"`` for OSS-standard subagents,
             ``"plugins"`` for plugin-shape subagents, or any plugin
@@ -665,7 +665,7 @@ def load_plugin_agents() -> dict[str, str]:
     Returns a mapping of ``agent_name`` → ``module:graph`` paths suitable
     for LangGraph Platform's ``LANGSERVE_GRAPHS`` env or ``langgraph.json``.
     Plugin agent modules MUST expose a module-level ``graph`` attribute,
-    matching how OSS agents are wired (``decepticon/agents/recon.py:graph``).
+    matching how OSS agents are wired (``raptix/intelligence/agents/standard/recon.py:graph``).
     """
     found: dict[str, str] = {}
     try:

@@ -147,18 +147,16 @@ export class FakeAssetStore implements AssetStore {
 
   public async createScanLinks(links: ScanLinkInput[]): Promise<number> {
     for (const link of links) {
-      this.scanLinks.push({
-        assetId: link.assetId,
-        conversationId: link.conversationId ?? "",
-        queueId: link.queueId ?? "",
-        taskId: link.taskId ?? "",
-      });
+      const scan = { assetId: link.assetId, conversationId: link.conversationId ?? "", queueId: link.queueId ?? "", taskId: link.taskId ?? "" };
+      this.scanLinks.push(scan);
+      const asset = this.assets.get(link.assetId);
+      if (asset) this.assets.set(link.assetId, { ...asset, lastScan: { at: new Date(), conversationId: scan.conversationId, queueId: scan.queueId, taskId: scan.taskId } });
     }
     return links.length;
   }
 
-  public async stats() {
-    const rows = [...this.assets.values()];
+  public async stats(projectId?: string) {
+    const rows = projectId ? [...this.assets.values()].filter((a) => a.projectId === projectId) : [...this.assets.values()];
     return {
       total: rows.length,
       ips: new Set(rows.map((a) => a.ip).filter(Boolean)).size,

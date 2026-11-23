@@ -11,7 +11,7 @@ def get_agent() -> object:
     example of the framework's factory pattern.
     """
     raise NotImplementedError(
-        "decepticon_example_agent: replace get_agent() with your compiled-graph factory"
+        "raptix_example_agent: replace get_agent() with your compiled-graph factory"
     )
 
 

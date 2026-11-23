@@ -413,7 +413,7 @@ def _ollama_cloud_configured() -> bool:
     ``OLLAMA_CLOUD_MODEL``, or a cloud API key
     (``OLLAMA_CLOUD_API_KEY`` / ``OLLAMA_API_KEY``) is enough to opt in.
     The key is included so a user who pasted only their key into
-    `decepticon onboard` (relying on the default base + model) is still
+    `raptix onboard` (relying on the default base + model) is still
     detected as a cloud user instead of silently falling through.
     """
     return bool(
@@ -1545,7 +1545,7 @@ def _reraise_if_connection_error(exc: Exception) -> None:
     ):
         raise RuntimeError(
             f"LLM proxy unreachable ({err_type}): {_redact_secrets(str(exc))}. "
-            f"Check 'decepticon logs litellm' for details."
+            f"Check 'raptix logs litellm' for details."
         ) from exc
 
 
@@ -1644,8 +1644,8 @@ def _reraise_with_actionable_message(exc: Exception, model_name: str) -> None:
     ):
         raise RuntimeError(
             f"{fatal_prefix}Model '{model_name}' rejected your credentials (401). "
-            f"Check the API key for that provider in ~/.decepticon/.env, "
-            f"or run 'decepticon onboard --reset'.\nUnderlying: {safe_msg}"
+            f"Check the API key for that provider in ~/.raptix/.env, "
+            f"or run 'raptix onboard --reset'.\nUnderlying: {safe_msg}"
         ) from exc
 
     if (
@@ -1844,13 +1844,13 @@ class LLMFactory:
 
         ``default_role`` lets plugin orchestrators inherit an OSS role's
         assignment when their custom role is not in ``AGENT_TIERS`` —
-        e.g. ``LLMFactory().get_model("raptix-pro", default_role="decepticon")``.
+        e.g. ``LLMFactory().get_model("raptix-pro", default_role="raptix")``.
 
         When the caller leaves ``default_role`` unset, the factory consults
         ``raptix_core.registry.RoleRegistry`` for the role's registered
         ``llm_role_fallback`` and uses that. This is how plugin-shipped
         roles such as a downstream ``apt`` orchestrator stop needing every call
-        site to thread ``default_role="decepticon"`` through manually
+        site to thread ``default_role="raptix"`` through manually
         (closes spec §8 gap #5).
         """
         if role in self._cache:

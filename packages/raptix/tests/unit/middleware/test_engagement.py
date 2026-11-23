@@ -369,8 +369,8 @@ def test_benchmark_mode_full_context(
     monkeypatch.setenv("BENCHMARK_MODE", "1")
     req = _FakeRequest(
         state={
-            "engagement_name": "benchmark-XBEN-001-24",
-            "workspace_path": "/workspace/benchmark-XBEN-001-24",
+            "engagement_name": "benchmark-challenge-001",
+            "workspace_path": "/workspace/benchmark-challenge-001",
             "target_url": "http://host.docker.internal:33001",
             "target_extra_ports": {},
             "vulnerability_tags": ["sqli", "auth-bypass"],
@@ -382,7 +382,7 @@ def test_benchmark_mode_full_context(
 
     text = _flatten(result.system_message)
     # engagement section
-    assert "Engagement name: benchmark-XBEN-001-24" in text
+    assert "Engagement name: benchmark-challenge-001" in text
     # per-challenge context
     assert "## CTF Benchmark Challenge" in text
     assert "**Target URL:** http://host.docker.internal:33001" in text

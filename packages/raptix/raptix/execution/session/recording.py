@@ -2,13 +2,11 @@
 
 Why this exists
 ---------------
-Raptix's benchmark numbers (XBOW 98.08%) are not currently reproducible
-on demand. A run that hit 102/104 today may hit 99/104 tomorrow because the
-underlying LLM is non-deterministic and tool outputs against live targets
-drift. Without a record/replay layer you cannot:
+Model responses vary and tool outputs change as target state changes.
+Recording a run makes its inputs and responses available for replay.
 
 - Bisect a regression (was it the prompt change or the model change?).
-- Certify a release against a fixed transcript.
+- Check a build against a fixed transcript.
 - Test middleware modifications without paying the LLM cost for every run.
 - Reproduce a flaky benchmark failure long enough to debug it.
 

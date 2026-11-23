@@ -1,5 +1,5 @@
 """Validate scanner auto-ingest against REAL tool output, not hand-written
-minimal fixtures -- docs/design/2026-11-03-graph-technical-design.md Mục 9
+minimal fixtures -- docs/architecture/knowledge-graph-design.md Mục 9
 roadmap step 1, required before any default-on decision for
 ``RAPTIX_KG_AUTOINGEST``/``RAPTIX_KG_TRIED_EDGES``.
 

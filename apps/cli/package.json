@@ -1,7 +1,7 @@
 {
   "name": "@raptix/cli",
   "version": "0.0.0",
-  "description": "Decepticon Ink CLI — terminal interface for LangGraph Platform agents",
+  "description": "Raptix Ink CLI — terminal interface for LangGraph Platform agents",
   "type": "module",
   "main": "dist/index.js",
   "bin": {

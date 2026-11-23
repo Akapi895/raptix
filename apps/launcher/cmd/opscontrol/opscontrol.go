@@ -24,7 +24,7 @@ the entire stack up front.
 
 The daemon HTTP API is reachable only over a Unix domain socket
 bind-mounted into the langgraph container. See
-docs/adr/0006-agent-driven-container-lifecycle.md.`,
+docs/security/sandbox-isolation.md.`,
 }
 
 func init() {

@@ -75,7 +75,7 @@ try {
   await expect(page.locator("#page-knowledge-management h2").first()).toHaveText("Knowledge");
   const scan = await waitForJob();
   assert.equal(scan.discovered_items, 5850, "Actual repository corpus must be discovered");
-  const manifest = JSON.parse(await readFile(resolve('docs/design/graph-corpus-manifest.json'), 'utf8')) as { corpus_sha256: string };
+  const manifest = JSON.parse(await readFile(new URL('../fixtures/graph-corpus-manifest.json', import.meta.url), 'utf8')) as { corpus_sha256: string };
   assert.equal(scan.corpus_sha256, manifest.corpus_sha256, 'The normalized source corpus must retain its pinned checksum');
   await page.locator('[data-action="knowledge.refreshPage"]').click();
   await expect(page.locator(".knowledge-item-card").first()).toBeVisible();

@@ -42,6 +42,23 @@ describe("asset routes", () => {
     expect(body.assets[0]).toMatchObject({ host: "host-a.example.com", vulnerability_count: 0 });
   });
 
+  it("list exposes the latest scan link so the table's Last scan column and scan evidence can render", async () => {
+    await importOne("host-scan.example.com");
+    const [asset] = (await app.inject({ method: "GET", url: "/api/assets", headers: auth() })).json().assets;
+    expect(asset.last_scan_at).toBeUndefined();
+
+    await app.inject({
+      method: "POST",
+      url: "/api/assets/scan-links",
+      headers: auth(),
+      payload: { scans: [{ asset_id: asset.id, conversation_id: "conv-1" }] },
+    });
+
+    const [scanned] = (await app.inject({ method: "GET", url: "/api/assets", headers: auth() })).json().assets;
+    expect(scanned).toMatchObject({ last_scan_conversation_id: "conv-1", last_scan_queue_id: "", last_scan_task_id: "" });
+    expect(Number.isNaN(Date.parse(scanned.last_scan_at))).toBe(false);
+  });
+
   it("re-importing the same host upserts instead of duplicating", async () => {
     await importOne("host-b.example.com");
     const second = await importOne("host-b.example.com");
@@ -151,6 +168,23 @@ describe("asset routes", () => {
     await importOne("host-h.example.com");
     const stats = await app.inject({ method: "GET", url: "/api/assets/stats", headers: auth() });
     expect(stats.json()).toMatchObject({ total: 1, ips: 1 });
+  });
+
+  it("stats scope to project_id instead of returning every project's total", async () => {
+    const projectA = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "A" } });
+    const projectB = await app.inject({ method: "POST", url: "/api/projects", headers: auth(), payload: { name: "B" } });
+    await importOne("host-scope-1.example.com");
+    await importOne("host-scope-2.example.com");
+    const list = await app.inject({ method: "GET", url: "/api/assets", headers: auth() });
+    const idFor = (host: string) => (list.json().assets as { host: string; id: string }[]).find((a) => a.host === host)?.id;
+    await app.inject({ method: "PUT", url: "/api/assets/project-binding", headers: auth(), payload: { asset_ids: [idFor("host-scope-1.example.com")], project_id: projectA.json().id } });
+    await app.inject({ method: "PUT", url: "/api/assets/project-binding", headers: auth(), payload: { asset_ids: [idFor("host-scope-2.example.com")], project_id: projectB.json().id } });
+
+    const global = await app.inject({ method: "GET", url: "/api/assets/stats", headers: auth() });
+    expect(global.json()).toMatchObject({ total: 2 });
+
+    const scoped = await app.inject({ method: "GET", url: "/api/assets/stats?project_id=" + projectA.json().id, headers: auth() });
+    expect(scoped.json()).toMatchObject({ total: 1 });
   });
 
   it("scan-links records asset-to-scan links and rejects unknown assets", async () => {

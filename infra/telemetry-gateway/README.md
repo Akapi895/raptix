@@ -1,7 +1,7 @@
 # Raptix Telemetry Gateway (PoC)
 
 The public, unauthenticated **ingest gateway** for OSS maintainer telemetry —
-Layer 1 of [`docs/design/2026-06-20-telemetry-data-collection-design.md`](../docs/design/2026-06-20-telemetry-data-collection-design.md).
+See the [telemetry reference](../../docs/security/telemetry.md) for the data collected and the consent controls.
 
 A Cloudflare Worker that sits between many OSS clients and the maintainer's
 analytics backend. It exists to enforce the privacy invariants an analytics backend
@@ -11,7 +11,7 @@ cannot, and to hold the backend secret so the OSS client never has to.
 > forward + rate-limit) **plus** a Python client that emits to it: consent
 > resolution, sanitizer, batch exporter, and a sink wired into
 > `EventLogMiddleware` (`packages/raptix/raptix/telemetry/`), the
-> `raptix-cli telemetry` subcommand, and `TELEMETRY.md`. Remaining: MITRE
+> `raptix-cli telemetry` subcommand, and `docs/security/telemetry.md`. Remaining: MITRE
 > tagging at the agent layer (the heatmap source) and production hardening.
 
 ## Why a gateway (and not client → a third-party analytics backend directly)
@@ -90,5 +90,5 @@ change the other (a generator can replace the hand-mirror later).
 
 1. Python client emitter — reuse `event_log.py` shapes, POST Tier-A batches.
 2. Consent CLI — `raptix telemetry status|off|preview`, honor `DO_NOT_TRACK`.
-3. `TELEMETRY.md` — every field, the redaction rules, the endpoint.
+3. `docs/security/telemetry.md` — every field, the redaction rules, the endpoint.
 4. Tier-B classification/redaction behind `extended` consent.

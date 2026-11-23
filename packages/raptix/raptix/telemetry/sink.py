@@ -254,7 +254,7 @@ class TelemetrySink:
     def preview(self, sample_events: list[dict[str, Any]]) -> dict[str, Any]:
         """Return the exact envelope that *would* be sent for ``sample_events``.
 
-        Powers ``decepticon telemetry preview`` — transparency before any send.
+        Powers ``raptix telemetry preview`` — transparency before any send.
         """
         mapped = [
             ev

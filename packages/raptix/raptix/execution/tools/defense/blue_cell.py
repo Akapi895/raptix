@@ -2,7 +2,7 @@
 
 The Offensive Vaccine pipeline documents a ``Defender`` that writes Sigma
 rules, but nothing in the OSS ever ran those rules against the agent's own
-activity (``docs/features/blue-cell.md``). ``blue_cell_scan`` is that missing
+activity (``docs/security/blue-cell.md``). ``blue_cell_scan`` is that missing
 runtime: it replays the engagement's sandbox session logs through the shipped
 :class:`~raptix.blue_cell.tap.BlueCellTap` +
 :class:`~raptix.blue_cell.rule_match.RuleMatcher`, and records every rule

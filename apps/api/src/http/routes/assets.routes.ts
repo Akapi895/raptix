@@ -34,6 +34,7 @@ function toWire(asset: AssetRecord): Record<string, unknown> {
   return {
     id: asset.id,
     project_id: asset.projectId ?? "",
+    project_name: asset.projectName ?? "",
     host: asset.host,
     ip: asset.ip,
     port: asset.port,
@@ -59,6 +60,14 @@ function toWire(asset: AssetRecord): Record<string, unknown> {
     updated_at: asset.updatedAt.toISOString(),
     vulnerability_count: 0,
     risk_level: asset.criticality || "unknown",
+    ...(asset.lastScan
+      ? {
+          last_scan_at: asset.lastScan.at.toISOString(),
+          last_scan_conversation_id: asset.lastScan.conversationId,
+          last_scan_queue_id: asset.lastScan.queueId,
+          last_scan_task_id: asset.lastScan.taskId,
+        }
+      : {}),
   };
 }
 
@@ -136,9 +145,16 @@ export function registerAssetRoutes(app: FastifyInstance, options: AssetRoutesOp
     },
   );
 
-  app.get("/api/assets/stats", { preHandler: requireSession }, async (_request, reply) => {
-    await reply.send(await assetStore.stats());
-  });
+  app.get<{ Querystring: Pick<ListQuery, "project_id"> }>(
+    "/api/assets/stats",
+    { preHandler: requireSession },
+    async (request, reply) => {
+      // apps/ui-app's assets/service.ts overview() sends project_id whenever the
+      // project filter is set -- previously ignored here, so the KPI tile showed
+      // every project's asset count while the filtered inventory below it showed one.
+      await reply.send(await assetStore.stats(request.query.project_id));
+    },
+  );
 
   app.put<{ Params: { id: string }; Body: Record<string, unknown> }>(
     "/api/assets/:id",

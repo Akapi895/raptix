@@ -4,6 +4,8 @@ export interface KgHost {
   /** IP when discovered by address, hostname when discovered by name only (e.g. a container) -- never both empty. */
   host: string;
   ip: string;
+  /** The domain the scanner recorded for this host, "" when none. */
+  hostname?: string;
   services: { port: number; protocol: string; service: string; banner: string; status: string }[];
 }
 
@@ -27,6 +29,7 @@ export class Neo4jKnowledgeGraph implements KnowledgeGraph {
     this.driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
   }
 
+  /** The scanner writes each host's domain into `label`; `hostname` is only set by other writers, so it falls back to `label`. */
   public async hostsForEngagement(engagement: string): Promise<KgHost[]> {
     const session = this.driver.session({ defaultAccessMode: neo4j.session.READ });
     try {
@@ -35,7 +38,7 @@ export class Neo4jKnowledgeGraph implements KnowledgeGraph {
           WITH h LIMIT 500
           OPTIONAL MATCH (h)-[r:HOSTS]-(s:Service)
           WHERE s.engagement = $engagement AND r.engagement = $engagement
-         RETURN h.ip AS ip, h.hostname AS hostname,
+         RETURN h.ip AS ip, coalesce(h.hostname, h.label) AS hostname,
                 collect(CASE WHEN s IS NULL THEN NULL ELSE {port: s.port, protocol: s.protocol, service: s.service, banner: s.banner, status: s.status} END) AS services`,
         { engagement },
         { timeout: 4000 },
@@ -55,7 +58,7 @@ export class Neo4jKnowledgeGraph implements KnowledgeGraph {
             status: asString(entry.status),
           }))
           .filter((service) => service.port > 0);
-        return [{ host, ip, services }];
+        return [{ host, ip, hostname: hostname ?? "", services }];
       });
     } finally {
       await session.close();

@@ -164,7 +164,7 @@ def test_plan_reexpansion_deduplicates_existing_cells_per_challenge() -> None:
 
 
 def test_registry_stays_free_of_target_specific_content_and_hints() -> None:
-    # Objectivity contract (docs/adr/0075): no payloads, endpoints,
+    # Objectivity contract (original ADR-0075): no payloads, endpoints,
     # credentials, target names — and no hint ingestion (discovery mode).
     forbidden = ("juice", "owasp", "/rest/", "/ftp", "coupon")
     lowered = _MODULE_SOURCE.lower()

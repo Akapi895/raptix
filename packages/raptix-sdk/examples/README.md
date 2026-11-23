@@ -35,7 +35,4 @@ uv run raptix-sdk plugin new \
     --path=./my-plugin
 ```
 
-See the umbrella spec at
-[`docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md`](../../../docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md)
-§6.3 for the SDK design rationale and §14 #7 / #8 for the acceptance
-criteria these examples satisfy.
+See the [package dependency rules](../../../docs/architecture/dependency-rules.md).

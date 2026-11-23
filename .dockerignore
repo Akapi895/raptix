@@ -41,6 +41,8 @@
 **/.mypy_cache
 
 # ── Agent tooling state ─────────────────────────────────────
+AGENTS.md
+CLAUDE.md
 **/.omc
 **/.claude
 .claude-flow
@@ -55,8 +57,6 @@ reference
 assets
 tests
 workspace
-benchmarks/results
-benchmarks/external
 
 # Local console data; not needed by any image
 data

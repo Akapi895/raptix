@@ -1,14 +1,11 @@
-"""Spec §14 acceptance — make_agent_backend(extra_routes=).
-
-Verifies acceptance criterion #11 from
-``docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md``:
+"""Backend routing tests for make_agent_backend(extra_routes=).
 
   ``make_agent_backend(sandbox, extra_routes={"/foo/": some_backend})``
   is exercised by a test that reads from ``/foo/x.txt`` and the vendor
   overlay pattern from the previous PR is a one-liner.
 
-Also verifies the spec §16.4 #5 longest-prefix-wins ordering — a
-tenant-specific ``/skills/tenant/<id>/`` route must override the
+Longest-prefix-wins ordering means a tenant-specific
+``/skills/tenant/<id>/`` route must override the
 generic ``/skills/`` default deterministically.
 """
 

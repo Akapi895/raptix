@@ -87,7 +87,6 @@ rules:
     paths:
       exclude:
         - "**/tests/**"
-        - "benchmarks/**"
         - ".env.example"
         - "**/litellm_startup.py"
         - "packages/raptix-core/raptix_core/types/llm.py"

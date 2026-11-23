@@ -4,7 +4,7 @@ OSS roles are pre-registered at framework boot from
 ``raptix_core.contracts.slots.SLOTS_PER_ROLE``. Plugins register
 custom roles via the new ``raptix.roles`` entry-point group;
 this closes gap §8 #5 (a vendor ``apt`` previously had to abuse
-``default_role="decepticon"`` in ``LLMFactory``).
+``default_role="raptix"`` in ``LLMFactory``).
 
 Per spec §16.4 #3 ``register()`` is idempotent on identical parameters:
 multi-process workers each register on startup without conflict.

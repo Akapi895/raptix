@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://decepticon.dev/telemetry/tier-a-1.0.json",
-  "title": "Decepticon Telemetry Tier-A Batch",
+  "title": "Raptix Telemetry Tier-A Batch",
   "description": "Language-neutral mirror of src/schema.ts. The Python client validates against this; the Worker enforces the Zod equivalent at ingest. Keep both in sync.",
   "type": "object",
   "additionalProperties": false,

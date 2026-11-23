@@ -248,10 +248,19 @@ export function registerVulnerabilityRoutes(app: FastifyInstance, options: Vulne
     await reply.send(await vulnerabilityStore.filterOptions());
   });
 
-  app.get("/api/vulnerabilities/stats", { preHandler: requireSession }, async (_request, reply) => {
-    const stats = await vulnerabilityStore.stats();
-    await reply.send({ total: stats.total, by_severity: stats.bySeverity, by_status: stats.byStatus });
-  });
+  app.get<{ Querystring: Pick<ListQuery, "project_id"> }>(
+    "/api/vulnerabilities/stats",
+    { preHandler: requireSession },
+    async (request, reply) => {
+      // The dashboard's own filters (apps/ui-app's vulnerability/service.ts stats(dashboard=true))
+      // send project_id whenever a project is active -- this was previously ignored, so the page's
+      // summary tile showed every project's total while the filtered list below it showed one.
+      const stats = request.query.project_id
+        ? await vulnerabilityStore.projectStats(request.query.project_id)
+        : await vulnerabilityStore.stats();
+      await reply.send({ total: stats.total, by_severity: stats.bySeverity, by_status: stats.byStatus });
+    },
+  );
 
   app.get("/api/vulnerability-alerts/subscription", { preHandler: requireSession }, async (_request, reply) => {
     const subscription = await alertSubscriptionStore.get();

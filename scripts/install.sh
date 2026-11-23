@@ -283,8 +283,7 @@ download_files() {
 
 # Download config-checksums.txt for the resolved release tag, then verify
 # every config file we wrote in download_files. The manifest is in
-# sha256sum format ("<hex>  <relative-path>"), produced by the launcher
-# release job (.github/workflows/release.yml).
+# Config checksum manifest uses sha256sum format ("<hex>  <relative-path>").
 verify_config_manifest() {
     local install_dir="$1"
     if [[ "$RAPTIX_VERSION" == "latest" || "$RAPTIX_VERSION" == "stable" ]]; then

@@ -578,7 +578,7 @@ class TestResolveCredentials:
         assert creds.methods == Credentials.all_api_methods().methods
 
         # ERROR diagnostic must mention the env var name so an operator
-        # scanning ``decepticon logs langgraph`` knows where to look.
+        # scanning ``raptix logs langgraph`` knows where to look.
         error_records = [r for r in caplog.records if r.levelname == "ERROR"]
         assert any("RAPTIX_AUTH_PRIORITY" in r.getMessage() for r in error_records), (
             f"No ERROR log mentioned RAPTIX_AUTH_PRIORITY. "
@@ -770,7 +770,7 @@ class TestActionableErrorTranslation:
             self._translate(exc, "openai/gpt-5.5")
         msg = str(info.value)
         assert "credentials (401)" in msg
-        assert "decepticon onboard --reset" in msg
+        assert "raptix onboard --reset" in msg
 
     def test_429_ratelimit_branch(self):
         exc = type("RateLimitError", (Exception,), {})("Error code: 429")

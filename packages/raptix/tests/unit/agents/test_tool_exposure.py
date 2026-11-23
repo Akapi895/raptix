@@ -1,6 +1,6 @@
 """T0 baseline telemetry: tool-exposure summary + logging hook.
 
-Pins two contracts from ``docs/tool-optimization-implementation-plan.md``
+Pins two contracts from ``docs/architecture/tool-ownership.md``
 Wave T0:
 
   - ``summarize_tool_exposure`` is pure (no logging, no I/O) and reports
