@@ -1,252 +1,66 @@
-# Blue Cell detection coverage
+# Blue Cell — kiểm chứng độ che phủ phát hiện
 
-Blue Cell evaluates Sigma-style rules against recorded agent activity, measures time to detection and writes coverage results to the engagement knowledge graph.
+Blue Cell đánh giá rule kiểu Sigma đối chiếu với hoạt động thật của
+agent, đo thời gian tới khi bị phát hiện (MTTD), ghi kết quả vào
+knowledge graph của engagement.
 
-## Coverage verification
+## Vì sao cần cái này
 
-The Offensive Vaccine pipeline (Scanner → Detector → Verifier →
-Exploiter → Patcher → **Defender**) is documented as the project's
-defining feature. The Defender writes Defense Briefs — Sigma rules,
-PoC artifacts, recommended patches. But nothing in the OSS runs the
-Defender's rules against the agent's own activity. The customer's SOC
-team gets a PDF; nobody proves the rules actually fire.
+Pipeline Scanner → Detector → Verifier → Exploiter → Patcher đã sinh ra
+Defense Brief (rule Sigma, PoC, bản vá đề xuất) — nhưng nếu không có gì
+chạy thử lại các rule đó trên chính hoạt động tấn công của agent, team
+SOC chỉ nhận 1 bản PDF mà không ai chứng minh rule thật sự bắt được gì.
+Blue Cell đọc lại hoạt động của phía Red Cell, chấm điểm rule của
+Detector trên đó, và sinh ra 1 báo cáo "Detection Coverage" dạng "rule
+này bắt được kỹ thuật X trong 3.2s; rule này bỏ lọt 4 kỹ thuật khác" —
+khác biệt giữa "chúng tôi viết vài rule Sigma" và "chúng tôi viết rule
+Sigma VÀ đã xác minh chúng trên đúng kill-chain đã chạy".
 
-Blue Cell is the runtime piece. It reads what Red Cell does, scores
-the Detector's rules against it, and emits a structured
-"Detection Coverage" deliverable that says **"this rule fired in
-3.2s on this technique; this rule MISSED these other 4 techniques."**
+## Luồng dữ liệu
 
-That's the difference between a "we wrote some Sigma rules" deliverable
-and a "we wrote some Sigma rules AND validated them end-to-end against
-the same kill chain we ran" deliverable.
+Sandbox/target ghi log (qua tap sidecar tùy chọn) → `BlueCellTap` chuẩn
+hóa thành `TapEvent` → `RuleMatcher` so khớp với rule Sigma-style từ
+Detector → mỗi lần khớp ghi 1 node `DetectionFired` vào Neo4j, nối cạnh
+`DETECTED`→`Finding` (kỹ thuật tấn công nào bị bắt) và
+`USES_RULE`→`DefenseAction` (rule nào bắt được). `Finding` không có
+cạnh `DetectionFired` nào là **lỗ hổng phát hiện** — deliverable quan
+trọng nhất cho blue team.
 
-## Architecture
+## Rule matcher
 
-```
-                       raptix-net (mgmt)
-        ┌───────────────────────────────────────────────────┐
-        │                                                   │
-        │   orchestrator ◄────────────────────────────┐     │
-        │       │ task()                               │     │
-        │       ▼                                      │     │
-        │   subagents ──── bash() ─────────┐           │     │
-        │   (recon, exploit, ...)          │           │     │
-        │                                   │           │     │
-        └───────────────────────────────────┼───────────┼─────┘
-                                            │           │
-                       sandbox-net          │           │
-        ┌──────────────────────────────────────────┐    │
-        │                                  │       │    │
-        │  sandbox (Kali)                  │       │    │
-        │     │                            │       │    │
-        │     │ stdout / stderr            │       │    │
-        │     ▼                            │       │    │
-        │  /workspace/.sessions/*.log ─────┼───────┼────┘
-        │                                  │       │
-        │  foothold/target host(s)         │       │
-        │     │                            │       │
-        │     │ raptix-telemetry-collector (sidecar daemon, optional)
-        │     ▼                            │       │
-        │  /workspace/.sessions/_target/<host>.log
-        │                                  │       │
-        └──────────────────────────────────┴───────┘
-                                            │
-                                            ▼
-                  raptix.blue_cell.BlueCellTap
-                                            │
-                                            │ TapEvent stream
-                                            ▼
-                  raptix.blue_cell.RuleMatcher  ◄── rules/sigma-*.jsonl
-                                            │           (Detector output)
-                                            │ DetectionEvent stream
-                                            ▼
-                          BlueCellAgent (read-only)
-                                            │
-                                            │ kg_add_node(DetectionFired, ...)
-                                            │ kg_add_edge(DETECTED, ...)
-                                            ▼
-                                       Neo4j knowledge graph
-                                            │
-                                            ▼
-                         Defense Brief + ATT&CK Navigator export
-```
+Matcher Sigma-style tối giản, hỗ trợ 2 dạng: match đơn giản (1 selection,
+condition ngầm định) và multi-selection kiểu Sigma thật (nhiều
+`selections` + biểu thức `condition` dùng `and`/`or`/`not`). Pattern mặc
+định là substring, prefix `re:` chuyển sang regex. Bộ matcher này phủ
+được khoảng 80% rule Sigma thật trong thực tế mà không cần phụ thuộc
+`pysigma` đầy đủ — có sẵn 10 rule mẫu cho các kỹ thuật phổ biến
+(Kerberoast, AS-REP roast, DCSync, Pass-the-Hash, web-shell drop,
+PowerShell download cradle, password spray, nmap timing aggressive,
+LSASS dump, curl-piped-to-bash).
 
-## Components
+## Báo cáo Defense Brief
 
-### `raptix.blue_cell.tap.BlueCellTap`
+Ở cuối engagement, Blue Cell sinh báo cáo dạng: tổng số kỹ thuật quan
+sát được, số bị phát hiện/bỏ lọt (%), MTTD trung vị/p95, danh sách kỹ
+thuật bị phát hiện (kèm rule + thời gian), danh sách kỹ thuật bỏ lọt
+(kèm lý do — chưa có rule, hay rule có nhưng điều kiện quá hẹp), và đề
+xuất cải thiện rule cụ thể.
 
-Tails sandbox + target log files; yields `TapEvent` objects with
-normalized fields: ``ts``, ``source``, ``actor.process``,
-``actor.command_line``, ``network.destinations``, ``raw``.
+## Trạng thái
 
-The tap is intentionally simple — a feeder, not a parser. SIEM-grade
-enrichment (Sysmon parsing, Windows-event normalization) belongs in a
-follow-up that swaps in a sidecar telemetry collector per foothold.
+Agent factory (`create_blue_cell_agent`,
+`intelligence/agents/standard/blue_cell.py`) đã tồn tại trong code hiện
+tại — không còn là "follow-up" như tài liệu gốc từng ghi. Một số phần
+khác vẫn ở mức thiết kế, chưa chắc đã triển khai đầy đủ: vòng lặp phản
+hồi thích ứng (hạ `opsec_level` khi MTTD thấp), bộ nạp rule dựa trên
+`pysigma` đầy đủ, sidecar telemetry phía target, export ATT&CK
+Navigator — kiểm tra trực tiếp `packages/raptix/raptix/blue_cell/` để
+biết trạng thái mới nhất trước khi dựa vào các phần này.
 
-### `raptix.blue_cell.rule_match`
+## Tham khảo
 
-A minimal Sigma-flavored rule matcher:
-
-```python
-from raptix.blue_cell.rule_match import load_rules, RuleMatcher
-
-rules = load_rules("packages/raptix/raptix/blue_cell/sample_rules.jsonl")
-matcher = RuleMatcher(rules)
-hits = matcher.match(event_dict, now_ts=time.time())
-```
-
-Rule shape supports two formats:
-
-**Simple match (one selection, implicit condition):**
-
-```json
-{
-  "id": "DCEP-T1558.003-kerberoast",
-  "title": "Kerberoast",
-  "level": "high",
-  "mitre": ["T1558.003"],
-  "match": {"actor.command_line": "GetUserSPNs"}
-}
-```
-
-**Multi-selection (Sigma-style `condition` over named selections):**
-
-```json
-{
-  "id": "DCEP-T1003.006-dcsync",
-  "title": "DCSync via secretsdump",
-  "level": "critical",
-  "mitre": ["T1003.006"],
-  "selections": {
-    "tool": {"actor.command_line": "secretsdump"},
-    "dcsync_flag": {"actor.command_line": "re:-just-dc(?:-ntlm)?"}
-  },
-  "condition": "tool and dcsync_flag"
-}
-```
-
-Field patterns are substrings by default; `re:` prefix promotes to
-regex (case-insensitive). The condition string supports `and`, `or`,
-`not`, and parentheses over selection names.
-
-Full pysigma compatibility is a follow-up. The bootstrap matcher
-covers ~80% of real-world Sigma rules without the pysigma footprint
-(deployers can install pysigma and convert their rules through it).
-
-### `raptix.blue_cell.sample_rules.jsonl`
-
-Ten baseline detection rules covering common offensive techniques:
-Kerberoast, AS-REP roast, DCSync, Pass-the-Hash, web-shell drop,
-PowerShell download cradle, password spray, aggressive nmap timing,
-LSASS dump (mimikatz), curl-piped-to-bash. Operator deployments swap
-this for their own ruleset; the file is the schema reference.
-
-### Knowledge graph integration
-
-Each hit becomes a `DetectionFired` node with:
-
-```python
-{
-  "key": f"detection::{rule.id}::{event_ts}",
-  "rule_id": rule.id,
-  "rule_title": rule.title,
-  "rule_level": rule.level,
-  "mitre": list(rule.mitre),
-  "matched_fields": dict(hit.matched_fields),
-  "event_ts": hit.event_ts,
-  "detection_ts": hit.detection_ts,
-  "mttd_seconds": hit.mttd_seconds,
-  "source": event["source"],
-}
-```
-
-Edges:
-
-- `DetectionFired -[:DETECTED]-> Finding` — link to the offensive
-  Finding the rule caught.
-- `DetectionFired -[:USES_RULE]-> DefenseAction` — link to the
-  Sigma-rule artifact the Detector produced.
-
-`Finding`s that never get a `DetectionFired` edge are the engagement's
-**detection gaps** — the most important blue-team deliverable.
-
-## Adaptive feedback loop
-
-When a `DetectionFired` lands with a low MTTD (e.g. <5s, configurable),
-the orchestrator's pre-iteration hook (planned, not in this commit):
-
-1. Reads recent `DetectionFired` events for the current objective.
-2. If avg MTTD < threshold, appends a `SystemMessage` to the next
-   model call: *"The last attempt fired detection rule X in 2.4s.
-   The technique signature is being watched. Adjust your approach."*
-3. Optionally downgrades the OPPLAN objective's `opsec_level` from
-   `loud` to `stealth`.
-
-This is the Red-vs-Blue learning loop the project's 2021 history page
-promised. The hook is documented; implementation lands in the
-follow-up sprint that wires the orchestrator's planning side.
-
-## Defense Brief format
-
-At engagement out-brief, the Blue Cell agent emits a structured report:
-
-```
-Engagement: <slug>
-Time window: <start> -> <end>
-
-Detection coverage:
-   42 attacks observed
-   28 detected (66.7%)
-   14 missed (33.3%)
-   median MTTD: 3.8s
-   p95 MTTD: 24.1s
-
-Detected techniques (sorted by MTTD desc):
-   T1558.003 Kerberoast        — fired in 1.2s  (rule DCEP-T1558.003-kerberoast)
-   T1003.006 DCSync            — fired in 2.4s  (rule DCEP-T1003.006-dcsync)
-   T1059.001 PS download       — fired in 0.8s  (rule DCEP-T1059.001-...)
-   ...
-
-Missed techniques:
-   T1574.002 DLL side-loading via PSExec - no rule
-   T1218.011 rundll32 with comsvcs.dll  - rule exists but condition too strict
-   ...
-
-Proposed rule improvements:
-   - DCEP-T1218.011: extend match to comsvcs.dll regardless of rundll32 arg position
-```
-
-## What ships in this commit vs. follow-up
-
-**In this commit (Tier 6 scaffolding):**
-
-- `raptix.blue_cell.tap.BlueCellTap` — sandbox log tail + normalize.
-- `raptix.blue_cell.rule_match.RuleMatcher` — Sigma-flavored
-  regex matcher with `and`/`or`/`not` condition support.
-- `raptix.blue_cell.sample_rules.jsonl` — 10 baseline rules.
-- 12 unit tests covering rule loading, substring/regex match, boolean
-  conditions, MTTD scoring, end-to-end kerberoast detection.
-- This design doc.
-
-**Follow-up (tracked):**
-
-- `raptix.intelligence.agents.standard.blue_cell.create_blue_cell_agent` —
-  read-only agent factory consuming the tap + matcher.
-- Orchestrator pre-iteration hook reading `DetectionFired` events
-  for adaptive OPSEC.
-- pysigma-based rule loader for full Sigma compatibility.
-- `raptix-telemetry-collector` sidecar for target-side telemetry.
-- ATT&CK Navigator JSON export.
-- Customer-deliverable Defense Brief generator.
-
-## References
-
-- [SigmaHQ/sigma](https://github.com/SigmaHQ/sigma) — the rule format
-  this matcher's authoring conventions follow.
-- [Mordor](https://github.com/OTRF/mordor) — adversary-activity
-  datasets useful as Blue Cell regression-test corpora.
-- `docs/offensive-vaccine.md`
-  — the broader pipeline this closes.
-- [`docs/security/threat-model.md`](threat-model.md)
-  — the threat model Blue Cell helps validate (Red Cell on the front
-  side, Blue Cell on the back).
+[SigmaHQ/sigma](https://github.com/SigmaHQ/sigma) — chuẩn rule mà
+matcher này theo quy ước đặt tên · [Mordor](https://github.com/OTRF/mordor)
+— dataset hoạt động tấn công dùng làm test hồi quy cho Blue Cell ·
+[Mô hình mối đe dọa](threat-model.md) — Red Cell phía tấn công, Blue Cell
+phía xác minh phát hiện.

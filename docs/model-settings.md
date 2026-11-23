@@ -1,344 +1,151 @@
-# Models
+# Chọn model
 
-Raptix routes every LLM call through a [LiteLLM](https://github.com/BerriAI/litellm) proxy that abstracts Anthropic, OpenAI, Google, MiniMax, DeepSeek, xAI, Mistral, OpenRouter, Nvidia NIM, **local Ollama**, **self-hosted vLLM**, plus subscription OAuth handlers for Claude Code and ChatGPT behind a single endpoint. The model assigned to each agent — and the model that takes over when the primary fails — is computed at startup from your **credentials inventory** plus the active **profile**.
+Mọi lệnh gọi LLM đi qua một proxy [LiteLLM](https://github.com/BerriAI/litellm)
+che giấu sự khác biệt giữa Anthropic, OpenAI, Google, MiniMax, DeepSeek,
+xAI, Mistral, OpenRouter, Nvidia NIM, Ollama/vLLM tự host, và cả OAuth
+subscription (Claude Code, ChatGPT) — tất cả qua 1 endpoint. Model gán
+cho mỗi agent, và model thay thế khi primary lỗi, được tính lúc khởi
+động từ **kho credential** + **profile** đang bật.
 
-The credential inventory and preference order determine the primary and fallback model chain for each role.
+## 3 trục quyết định
 
----
+| Trục | Giá trị | Ai quyết định |
+| --- | --- | --- |
+| **Tier** | `HIGH`/`MID`/`LOW` | Theo agent (orchestrator→HIGH, recon→LOW), profile có thể ép lại |
+| **AuthMethod** | API: `anthropic_api`, `openai_api`, `google_api`... · OAuth: `anthropic_oauth`, `openai_oauth` · Local: `ollama_local` | Kho credential của bạn |
+| **Profile** | `eco`/`max`/`test` | `RAPTIX_MODEL_PROFILE` |
 
-## How model selection works
+Với mỗi agent, Raptix tính tier (theo profile) rồi đi qua danh sách
+AuthMethod theo thứ tự ưu tiên, lấy model mà method đó có ở tier đó —
+**kết quả đầu tiên là primary, mọi kết quả còn lại xếp hàng làm
+fallback**. `ModelFallbackMiddleware` của langchain tự thử từng fallback
+theo thứ tự khi primary lỗi.
 
-Three orthogonal axes:
+Ma trận đầy đủ Tier×AuthMethod (bảng dưới chỉ liệt kê các provider chính;
+`AuthMethod`/`METHOD_MODELS` trong `packages/raptix-core/raptix_core/types/llm.py`
+là nguồn chuẩn đầy đủ, gồm cả Bedrock/Vertex/Azure, Groq/Together/
+Fireworks..., và các gateway đa nhà cung cấp):
 
-| Axis        | Values                                                                                                | Decided by              |
-|-------------|--------------------------------------------------------------------------------------------------------|--------------------------|
-| **Tier**    | `HIGH` / `MID` / `LOW`                                                                                 | Agent (e.g. orchestrator → HIGH, recon → LOW), overridable by profile |
-| **AuthMethod** | API: `anthropic_api` / `openai_api` / `google_api` / `minimax_api` / `deepseek_api` / `xai_api` / `mistral_api` / `openrouter_api` / `nvidia_api`<br/>OAuth: `anthropic_oauth` / `openai_oauth`<br/>Local: `ollama_local` | Your credentials inventory |
-| **Profile** | `eco` / `max` / `test`                                                                                 | `RAPTIX_MODEL_PROFILE` |
+| | HIGH | MID | LOW |
+| --- | --- | --- | --- |
+| `anthropic_api` | `claude-opus-4-8` | `claude-sonnet-5` | `claude-haiku-4-5` |
+| `anthropic_oauth` | cùng model, qua subscription | | |
+| `openai_api` | `gpt-5.5` | `gpt-5.4` | `gpt-5-nano` |
+| `google_api` | `gemini-2.5-pro` | `gemini-2.5-flash` | `gemini-2.5-flash-lite` |
+| `ollama_local` | `ollama_chat/<model đã pull>` — như nhau ở mọi tier | | |
 
-For each agent, Raptix resolves a tier (from the profile) and walks your AuthMethod priority list, emitting the model identifier that method provides at that tier. The first hit is the primary; **every remaining hit is queued as a fallback in priority order**. langchain's `ModelFallbackMiddleware` walks the queue on primary failure, trying each method in turn until one succeeds.
+Khi 1 method không có model ở tier đang hỏi (ví dụ MiniMax không có
+LOW), resolver bỏ qua method đó và thử method tiếp theo trong danh sách
+ưu tiên của bạn.
 
-### Tier × AuthMethod matrix
+## Profile
 
-|                       | **HIGH**                                  | **MID**                                       | **LOW**                                       |
-|-----------------------|-------------------------------------------|-----------------------------------------------|-----------------------------------------------|
-| `anthropic_api`       | `anthropic/claude-opus-4-8`               | `anthropic/claude-sonnet-5`                   | `anthropic/claude-haiku-4-5`                  |
-| `anthropic_oauth`     | `auth/claude-opus-4-8`                    | `auth/claude-sonnet-5`                        | `auth/claude-haiku-4-5`                       |
-| `openai_api`          | `openai/gpt-5.5`                          | `openai/gpt-5.4`                              | `openai/gpt-5-nano`                           |
-| `openai_oauth`        | `auth/gpt-5.5`                            | `auth/gpt-5.4`                                | `auth/gpt-5.4-mini`                           |
-| `google_api`          | `gemini/gemini-2.5-pro`                   | `gemini/gemini-2.5-flash`                     | `gemini/gemini-2.5-flash-lite`                |
-| `minimax_api`         | `minimax/MiniMax-M3`                      | `minimax/MiniMax-M2.7-highspeed`              | — *(falls through)*                           |
-| `deepseek_api`        | `deepseek/deepseek-v4-pro`                | `deepseek/deepseek-v4-flash`                   | `deepseek/deepseek-v4-flash`                   |
-| `xai_api`             | `xai/grok-4.3`                            | `xai/grok-4-1-fast-reasoning`                 | — *(falls through)*                           |
-| `mistral_api`         | `mistral/mistral-large-latest`            | `mistral/codestral-latest`                    | — *(falls through)*                           |
-| `openrouter_api`      | `openrouter/anthropic/claude-opus-4-8`    | `openrouter/anthropic/claude-sonnet-4-6`      | `openrouter/anthropic/claude-haiku-4-5`       |
-| `nvidia_api`          | `nvidia_nim/meta/llama-3.3-70b-instruct`  | `nvidia_nim/nvidia/llama-3.1-nemotron-70b-instruct` | `nvidia_nim/meta/llama-3.2-3b-instruct` |
-| `ollama_local`        | `ollama_chat/<OLLAMA_MODEL>`              | `ollama_chat/<OLLAMA_MODEL>`                  | `ollama_chat/<OLLAMA_MODEL>`                  |
+`RAPTIX_MODEL_PROFILE` (mặc định `eco`) quyết định mỗi agent chạy ở tier
+nào:
 
-`ollama_local` collapses across tiers — local GPUs typically run a single model — and the slug is whatever you pulled (e.g. `qwen3-coder:30b`). When a method has no model at the requested tier (MiniMax LOW, Mistral LOW, ...), the resolver skips it and continues with the next method in your priority list.
+- **`eco`** (mặc định production) — mỗi agent chạy đúng tier phù hợp
+  khối lượng việc: HIGH cho `raptix`/`exploit`/`exploiter`/`patcher`/
+  `contract_auditor`/`analyst`/`vulnresearch`; MID cho phần lớn chuyên
+  gia; LOW cho `soundwave`/`recon`/`scanner`/`wireless_operator`/
+  `osint_operator`.
+- **`max`** — mọi agent chạy HIGH, dùng khi độ chính xác quan trọng hơn
+  chi phí.
+- **`test`** — mọi agent chạy LOW (rẻ nhất), dùng cho dev/CI.
 
-The matrix above lists the primary tier-mapped providers. Raptix resolves the same tier × AuthMethod chain for additional providers not shown above: managed cloud platforms (AWS Bedrock, GCP Vertex AI, Azure OpenAI), further direct APIs (Groq, Together, Fireworks, Cohere, Moonshot, Z.ai, DashScope, Cerebras, Xiaomi MiMo, Baidu Qianfan), multi-vendor gateways (GitHub Models, Hugging Face, OpenCode, Vercel AI Gateway, Cloudflare AI Gateway, Venice, NanoGPT, Synthetic, ZenMux), and local / self-hosted OpenAI-compatible servers (vLLM, Ollama Cloud, LM Studio, llama.cpp, and custom endpoints). `AuthMethod` and `METHOD_MODELS` in `packages/raptix-core/raptix_core/types/llm.py` are the authoritative source for the full provider list and each provider's tier→model mapping.
+## Kho credential
 
----
-
-## Profiles
-
-`RAPTIX_MODEL_PROFILE` (default: `eco`) controls which tier each agent runs at.
-
-### `eco` — per-agent tier (production default)
-
-Each agent runs at the tier suited to its workload:
-
-| Tier  | Agents                                                                                          |
-|-------|-------------------------------------------------------------------------------------------------|
-| HIGH  | `raptix`, `exploit`, `exploiter`, `patcher`, `contract_auditor`, `analyst`, `vulnresearch`   |
-| MID   | `detector`, `verifier`, `blue_cell`, `postexploit`, `ad_operator`, `cloud_hunter`, `reverser`, `phisher`, `mobile_operator`, `iot_operator`, `ics_operator`, `forensicator`, `supply_chain_operator` |
-| LOW   | `soundwave`, `recon`, `scanner`, `wireless_operator`, `osint_operator`                          |
-
-### `max` — every agent on HIGH
-
-For high-value targets where accuracy outweighs cost. Forces every agent to the HIGH tier.
-
-### `test` — every agent on LOW
-
-For development / CI. Forces every agent to the cheapest tier (Haiku-class).
-
----
-
-## Credentials inventory
-
-Your inventory is built at startup from environment variables, written by `raptix onboard`.
+Dựng lúc khởi động từ biến môi trường (do `raptix onboard` ghi):
 
 ```bash
-# Priority order (first = preferred). When unset, the factory's built-in
-# `_DEFAULT_AUTH_PRIORITY` order applies (OAuth subscriptions ahead of their
-# paid per-token peers, hosted providers before local endpoints, with
-# unconfigured methods skipped at runtime). See `_DEFAULT_AUTH_PRIORITY` in
-# `raptix/intelligence/llm/factory.py` for the full ordered list.
-RAPTIX_AUTH_PRIORITY=anthropic_oauth,openai_api
-
-# Set true if you have an active Claude Code OAuth subscription
-# (anthropic_oauth in the priority list above).
-RAPTIX_AUTH_CLAUDE_CODE=true
-
-# Per-method credentials. Placeholder values (`your-..-key-here`) are
-# treated as "not configured" and silently dropped from the inventory.
+RAPTIX_AUTH_PRIORITY=anthropic_oauth,openai_api   # thứ tự ưu tiên
+RAPTIX_AUTH_CLAUDE_CODE=true                       # có subscription Claude Code
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
-GEMINI_API_KEY=AIza...
-MINIMAX_API_KEY=eyJ...
-DEEPSEEK_API_KEY=sk-...
-XAI_API_KEY=xai-...
-MISTRAL_API_KEY=...
-OPENROUTER_API_KEY=sk-or-...
-NVIDIA_API_KEY=nvapi-...
-
-# Local LLM (no API key — point at your Ollama server)
-OLLAMA_API_BASE=http://host.docker.internal:11434
+OLLAMA_API_BASE=http://host.docker.internal:11434  # local, không cần key
 OLLAMA_MODEL=qwen3-coder:30b
 ```
 
-The factory walks the priority list, drops methods whose detection check fails (placeholder API key, or `RAPTIX_AUTH_CLAUDE_CODE=false`), and uses what's left.
+Giá trị placeholder (`your-..-key-here`) bị coi là "chưa cấu hình" và tự
+loại khỏi kho credential.
 
----
+## Vài ví dụ dây chuyền fallback (profile `eco`)
 
-## Fallback chain examples
+**Chỉ 1 key (Anthropic)** — không có fallback, chỉ 1 credential.
 
-All examples assume the `eco` profile.
+**OAuth Claude Code + API key Anthropic** (subscription chạy chính, API
+trả phí làm lưới đỡ):
 
-### Single API key (Anthropic only)
+| Agent (tier) | Primary | Fallback |
+| --- | --- | --- |
+| raptix (HIGH) | `auth/claude-opus-4-8` | `anthropic/claude-opus-4-8` |
+| recon (LOW) | `auth/claude-haiku-4-5` | `anthropic/claude-haiku-4-5` |
 
-```
-RAPTIX_AUTH_PRIORITY=anthropic_api
-ANTHROPIC_API_KEY=sk-ant-...
-```
+OAuth không tốn phí API; khi hết quota subscription, rơi xuống API trả
+phí cùng dòng model, cùng chất lượng.
 
-| Agent (tier)     | Primary                       | Fallback |
-|------------------|-------------------------------|----------|
-| raptix (HIGH)| `anthropic/claude-opus-4-7`   | —        |
-| detector (MID)   | `anthropic/claude-sonnet-4-6` | —        |
-| recon (LOW)      | `anthropic/claude-haiku-4-5`  | —        |
+**Trộn provider (Anthropic + OpenAI)** — khi Anthropic rate-limit/outage,
+OpenAI nhận thay, liền mạch, không cần cấu hình thêm gì khác ngoài khai
+2 key.
 
-No fallback — only one credential.
+**Chỉ Ollama local (offline, miễn phí)**:
 
-### Single API key (OpenAI only)
-
-```
-RAPTIX_AUTH_PRIORITY=openai_api
-OPENAI_API_KEY=sk-...
-```
-
-| Agent (tier)     | Primary               | Fallback |
-|------------------|------------------------|----------|
-| raptix (HIGH)| `openai/gpt-5.5`      | —        |
-| detector (MID)   | `openai/gpt-5.4`      | —        |
-| recon (LOW)      | `openai/gpt-5-nano` | —        |
-
-### Claude Code OAuth + Anthropic API (subscription primary, paid fallback)
-
-```
-RAPTIX_AUTH_PRIORITY=anthropic_oauth,anthropic_api
-RAPTIX_AUTH_CLAUDE_CODE=true
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-| Agent (tier)     | Primary                  | Fallback                         |
-|------------------|---------------------------|----------------------------------|
-| raptix (HIGH)| `auth/claude-opus-4-7`   | `anthropic/claude-opus-4-7`     |
-| detector (MID)   | `auth/claude-sonnet-4-6` | `anthropic/claude-sonnet-4-6`   |
-| recon (LOW)      | `auth/claude-haiku-4-5`  | `anthropic/claude-haiku-4-5`    |
-
-OAuth runs primary (no API cost). When the subscription quota hits, fallback drops to the paid API key — same model family, same quality.
-
-### Mixed providers (Anthropic + OpenAI)
-
-```
-RAPTIX_AUTH_PRIORITY=anthropic_api,openai_api
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-```
-
-| Agent (tier)     | Primary                       | Fallback                |
-|------------------|-------------------------------|-------------------------|
-| raptix (HIGH)| `anthropic/claude-opus-4-7`   | `openai/gpt-5.5`        |
-| detector (MID)   | `anthropic/claude-sonnet-4-6` | `openai/gpt-5.4`        |
-| recon (LOW)      | `anthropic/claude-haiku-4-5`  | `openai/gpt-5-nano`   |
-
-Cross-provider fallback — when Anthropic hits a rate limit or outage, OpenAI takes over seamlessly.
-
-### Local Ollama only (offline / cost-free)
-
-```
+```bash
 RAPTIX_AUTH_PRIORITY=ollama_local
 OLLAMA_API_BASE=http://host.docker.internal:11434
 OLLAMA_MODEL=qwen3-coder:30b
 ```
 
-| Agent (tier)     | Primary                          | Fallback |
-|------------------|----------------------------------|----------|
-| raptix (HIGH)| `ollama_chat/qwen3-coder:30b`    | —        |
-| detector (MID)   | `ollama_chat/qwen3-coder:30b`    | —        |
-| recon (LOW)      | `ollama_chat/qwen3-coder:30b`    | —        |
+Model giống nhau ở mọi tier vì phần cứng local thường không chạy nổi 3
+model khác nhau cùng lúc. Dùng provider `ollama_chat/` (gọi
+`/api/chat`, hỗ trợ tool-calling) chứ không phải `ollama/` cũ (gọi
+`/api/generate`, bị từ chối vì agent luôn cần gọi tool). `raptix onboard`
+tự kiểm tra Ollama có model hỗ trợ `tools` trước khi cho chọn; LiteLLM
+container kiểm tra lại lần 2 lúc khởi động (bắt được trường hợp
+`OLLAMA_HOST=127.0.0.1`-only mà wizard trên host không thấy được).
 
-Same model across all tiers because local hardware typically can't
-run three different models simultaneously. The `ollama_chat/` provider
-routes to Ollama's `/api/chat` endpoint, the only one that supports
-tool/function calling — the legacy `ollama/` provider hits
-`/api/generate` and is rejected at LiteLLM-config-merge time because
-Raptix agents always emit tool calls.
+**Llama.cpp (GGUF) local**: dùng lại provider `openai/` của LiteLLM (gắn
+`api_base` tới `LLAMACPP_API_BASE`) vì llama.cpp chưa có LiteLLM provider
+riêng — cách tích hợp này do chính người duy trì LiteLLM khuyến nghị
+(issue #151), tránh phải vendor `llama-cpp-python` làm dependency runtime.
 
-Two probes guard the wiring end-to-end:
+## Cơ chế failover
 
-1. **`raptix onboard`** — the wizard hits `/api/tags` and
-   `/api/show` on the host, filters to models that report `tools` in
-   their capabilities, and presents only that list as the
-   `OLLAMA_MODEL` choice. If Ollama is unreachable or has no
-   tool-capable models pulled, the wizard refuses to write `.env`
-   and prints the exact remediation steps.
+`ModelFallbackMiddleware` theo dõi mọi lệnh gọi LLM. Khi primary lỗi
+(outage, rate-limit 429, context quá dài, lỗi mạng), nó tự thử từng
+fallback đã xếp hàng theo thứ tự — agent không thấy gián đoạn, giữ
+nguyên lịch sử hội thoại và tool call đang gọi. Độ dài dây chuyền = số
+AuthMethod đã cấu hình, không có giới hạn trên, không âm thầm cắt bớt.
+Chỉ khi mọi method đều lỗi, agent mới thấy lỗi thật.
 
-2. **litellm container startup** — re-runs the same checks from
-   inside the container, the only place that can detect
-   `OLLAMA_HOST=127.0.0.1`-only bindings (which look fine to the
-   wizard's host probe but are invisible from the container). Every
-   diagnostic appears in `raptix logs litellm` prefixed with
-   `[raptix ollama]`.
+## Proxy LiteLLM
 
-### Local Ollama + cloud fallback
+Toàn bộ traffic qua container LiteLLM (cổng 4000): 1 API thống nhất, đo
+token theo model/role, rate-limit theo provider, gộp chi phí theo
+provider. Cấu hình ở `config/litellm.yaml`, xác thực bằng
+`LITELLM_MASTER_KEY` trong `.env`.
 
-```
-RAPTIX_AUTH_PRIORITY=ollama_local,anthropic_api
-OLLAMA_API_BASE=http://host.docker.internal:11434
-OLLAMA_MODEL=qwen3-coder:30b
-ANTHROPIC_API_KEY=sk-ant-...
-```
+## Thêm model mới
 
-| Agent (tier)     | Primary                          | Fallback                       |
-|------------------|----------------------------------|--------------------------------|
-| raptix (HIGH)| `ollama_chat/qwen3-coder:30b`    | `anthropic/claude-opus-4-7`    |
-| detector (MID)   | `ollama_chat/qwen3-coder:30b`    | `anthropic/claude-sonnet-4-6`  |
-| recon (LOW)      | `ollama_chat/qwen3-coder:30b`    | `anthropic/claude-haiku-4-5`   |
+1. Thêm 1 entry `model_list` vào `config/litellm.yaml` (định danh
+   `provider/model` + biến env chứa key).
+2. Thêm định danh đó vào ô phù hợp của `METHOD_MODELS`
+   (`raptix_core.types.llm`).
+3. Nếu là AuthMethod mới: thêm vào `AuthMethod`, map
+   `_API_METHOD_ENV` của factory, và danh sách lựa chọn của wizard
+   onboard.
 
-Local model handles routine work; when the local model fails (OOM,
-context overflow, hardware fault), Anthropic takes over for that
-request only.
+Không cần sửa YAML để thêm model Ollama/gateway tùy biến — chỉ cần set
+biến env (`OLLAMA_MODEL`+`OLLAMA_API_BASE`, `RAPTIX_MODEL`,
+`RAPTIX_MODEL_<ROLE>`, `RAPTIX_LITELLM_MODELS`, `CUSTOM_OPENAI_API_BASE`),
+`litellm_dynamic_config.py` tự đăng ký route lúc proxy khởi động.
 
+## OAuth subscription
 
-### Local llama.cpp (GGUF) only
-
-```
-RAPTIX_AUTH_PRIORITY=llamacpp_local
-LLAMACPP_API_BASE=http://host.docker.internal:8080/v1
-LLAMACPP_MODEL=qwen2.5-coder-7b-instruct-q4_k_m
-```
-
-| Agent (tier)     | Primary                                                  | Fallback |
-|------------------|----------------------------------------------------------|----------|
-| raptix (HIGH)| `llamacpp/qwen2.5-coder-7b-instruct-q4_k_m`              | —        |
-| detector (MID)   | `llamacpp/qwen2.5-coder-7b-instruct-q4_k_m`              | —        |
-| recon (LOW)      | `llamacpp/qwen2.5-coder-7b-instruct-q4_k_m`              | —        |
-
-Run a GGUF model with llama.cpp's OpenAI-compatible server:
+Dùng subscription hàng tháng thay vì trả theo token. ChatGPT đọc trực
+tiếp từ credential store của Codex CLI (`~/.codex/auth.json`) — `codex
+login` trên host là đủ, không cần rebuild container nào.
 
 ```bash
-llama-server -m /path/to/qwen2.5-coder-7b-instruct-q4_k_m.gguf --port 8080
-# server listens on http://localhost:8080/v1
+RAPTIX_AUTH_CLAUDE_CODE=true     # subscription Claude
+RAPTIX_AUTH_CHATGPT=true         # subscription ChatGPT
 ```
-
-Like Ollama, the model collapses across tiers — `llama-server` runs one
-GGUF at a time. The `llamacpp/<model>` route remaps to LiteLLM's
-`openai/` provider (since llama.cpp does not have a dedicated LiteLLM
-provider) plus a custom `api_base` pointed at `LLAMACPP_API_BASE`. This
-is the integration the maintainer recommended on issue #151 — it reuses
-the existing LiteLLM provider machinery and avoids vendoring
-`llama-cpp-python` as a runtime dependency.
-
-Tool calling works as long as the GGUF was trained or fine-tuned with
-function-calling support (Qwen 2.5 Coder, Llama 3.1 Instruct, Mistral
-Small Instruct all qualify). The `llama-server` request format is
-identical to OpenAI's; LiteLLM translates the agent's tool calls
-through unchanged.
-
-### MiniMax-only (LOW gap)
-
-```
-RAPTIX_AUTH_PRIORITY=minimax_api
-MINIMAX_API_KEY=eyJ...
-```
-
-| Agent (tier)     | Primary                | Notes                                     |
-|------------------|------------------------|-------------------------------------------|
-| raptix (HIGH)| `minimax/MiniMax-M3` | OK                                        |
-| detector (MID)   | `minimax/MiniMax-M2.7-highspeed` | OK                                        |
-| recon (LOW)      | *(role unassigned)*    | MiniMax has no LOW model and no fallback method |
-
-The Recon/Scanner/Soundwave roles fail to initialize. Add a second AuthMethod (e.g. `openai_api`) to fill the LOW slot.
-
----
-
-## Failover behavior
-
-`ModelFallbackMiddleware` (from `langchain.agents.middleware`) watches every LLM call. On primary failure (provider outage, 429 rate limit, context overflow, network error), it transparently retries each queued fallback in order until one succeeds. Agents see no interruption — same conversation history, same tool call.
-
-The middleware receives the full chain `[primary, *fallbacks]` from `LLMFactory.get_fallback_models(role)`. If the user has all five AuthMethods configured, that's a five-deep chain; with a single credential it's primary-only and the middleware short-circuits. The chain length scales with credentials inventory — no upper cap, no silent truncation. Only when every method fails does the agent surface the error.
-
----
-
-## LiteLLM proxy
-
-All traffic flows through the LiteLLM container on port 4000. The proxy provides:
-
-- **Unified API** — agents call one endpoint, model identifier picks the backend
-- **Usage tracking** — tokens per model per agent role
-- **Rate limiting** — per-provider knobs
-- **Cost attribution** — billing data aggregated across providers
-
-Configuration: `config/litellm.yaml`. Authentication: `LITELLM_MASTER_KEY` in `.env`.
-
----
-
-## Adding a model
-
-To wire in a new provider model:
-
-1. Add a `model_list` entry to `config/litellm.yaml` with the LiteLLM `provider/model` identifier and the env var that holds the key.
-2. Add the model identifier to the appropriate cell of `METHOD_MODELS` in `raptix_core.types.llm`.
-3. If introducing a new AuthMethod, also add it to `AuthMethod`, the factory's `_API_METHOD_ENV` map, and the onboard wizard's option list.
-
-Tests in `tests/unit/llm/test_models.py` will catch dropped tiers or missing matrix entries.
-
-### Dynamic model registration (Ollama, custom gateways, ad-hoc overrides)
-
-You don't need to edit YAML to add an Ollama model. Set the env vars
-below and `litellm_dynamic_config.py` registers the route at proxy
-startup:
-
-| Env var | What it does |
-|---------|---|
-| `OLLAMA_MODEL=<tag>` + `OLLAMA_API_BASE=<url>` | Registers `ollama_chat/<tag>` automatically. Used by the `ollama_local` AuthMethod. |
-| `RAPTIX_MODEL=<provider/model>` | Registers a global override (e.g. `groq/llama-3.3-70b-versatile`). |
-| `RAPTIX_MODEL_<ROLE>=<provider/model>` | Per-role override (e.g. `RAPTIX_MODEL_RECON=ollama_chat/llama3.2`). |
-| `RAPTIX_LITELLM_MODELS=<a,b,c>` | Bulk register multiple ids without editing YAML. |
-| `CUSTOM_OPENAI_API_BASE` + `CUSTOM_OPENAI_API_KEY` | OpenAI-compatible gateway. Use `custom/<model>` in the override env. |
-
-The proxy logs `[raptix] registered N dynamic model route(s)` at
-startup so you can confirm what got picked up.
-
----
-
-## Subscription OAuth Providers
-
-Use monthly subscriptions instead of per-token API billing. All providers use custom LiteLLM handlers that authenticate via OAuth/session tokens. ChatGPT in particular reads from the Codex CLI credential store (`~/.codex/auth.json`), so a host-side `codex login` flows into the running container without a rebuild.
-
-| Subscription | AuthMethod | Models | Handler |
-|---|---|---|---|
-| Claude Max/Pro/Team | `anthropic_oauth` | auth/claude-opus, sonnet, haiku | `claude_code_handler.py` |
-| ChatGPT Pro/Plus/Team | `openai_oauth` | auth/gpt-5.5, gpt-5.4, gpt-5.4-mini (+ gpt-5.3-codex for code roles) | `codex_chatgpt_handler.py` (reads `~/.codex/auth.json`) |
-
-Enable in `.env`:
-
-```bash
-RAPTIX_AUTH_CLAUDE_CODE=true     # Claude subscription
-RAPTIX_AUTH_CHATGPT=true         # ChatGPT subscription
-```
-
-See [Web setup](../apps/ui-app/README.md#docker) for deployment.

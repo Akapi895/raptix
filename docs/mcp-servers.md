@@ -1,28 +1,26 @@
-# MCP tool servers (opt-in)
+# MCP tool server (tùy chọn)
 
-Raptix can attach to external **Model Context Protocol** (MCP)
-servers — e.g. a Kali MCP daemon or HexStrike — and expose their
-tools to the agents alongside the built-in ones.
+Raptix có thể gắn vào server **Model Context Protocol** (MCP) ngoài —
+ví dụ Kali MCP daemon, HexStrike — và cho agent dùng tool của server đó
+cùng với tool built-in.
 
-The integration is **opt-in** and **additive**: nothing is loaded
-unless you both (a) install the optional adapter package and (b)
-point Raptix at one or more MCP servers via an env var.
+Tích hợp này **tùy chọn** và **chỉ cộng thêm**: không tải gì nếu bạn
+không (a) cài package adapter tùy chọn và (b) chỉ Raptix tới ít nhất 1
+MCP server qua biến môi trường.
 
-## 1. Install the adapter
+## 1. Cài adapter
 
 ```bash
 pip install langchain-mcp-adapters
 ```
 
-The dependency is intentionally **not** in `raptix`'s base
-install — operators who don't use MCP don't pay for it. If the
-package is missing when MCP is configured, Raptix logs a single
-warning and continues with built-in tools only.
+Dependency này **không** nằm trong install cơ bản của `raptix` — ai
+không dùng MCP thì không phải cài. Thiếu package này khi đã khai MCP
+server, Raptix chỉ log 1 warning và tiếp tục chạy với tool built-in.
 
-## 2. Declare your servers
+## 2. Khai server
 
-Set `RAPTIX_MCP__SERVERS` to a JSON object mapping a server name
-to a per-server config:
+Set `RAPTIX_MCP__SERVERS` là 1 JSON object map tên server → config:
 
 ```bash
 export RAPTIX_MCP__SERVERS='{
@@ -31,20 +29,27 @@ export RAPTIX_MCP__SERVERS='{
 }'
 ```
 
-Per-server fields:
+| Field | Cần khi | Ghi chú |
+| --- | --- | --- |
+| `transport` | luôn (có default tự suy ra) | `streamable_http`, `sse`, hoặc `stdio` |
+| `url` | transport HTTP | endpoint server |
+| `command` | `stdio` | lệnh khởi chạy |
+| `args` | `stdio` (tùy chọn) | danh sách argument CLI |
+| `headers` | HTTP (tùy chọn) | header thêm, ví dụ `Authorization` |
 
-| Field       | Required for             | Notes                                   |
-|-------------|--------------------------|-----------------------------------------|
-| `transport` | always (default inferred) | `streamable_http`, `sse`, or `stdio`   |
-| `url`       | HTTP transports          | server endpoint                         |
-| `command`   | `stdio`                  | executable to launch                    |
-| `args`      | `stdio` (optional)       | list of CLI args                        |
-| `headers`   | HTTP (optional)          | extra headers, e.g. `Authorization`     |
+JSON sai định dạng, transport không hợp lệ, hoặc server không kết nối
+được — đều chỉ **log và bỏ qua**, không bao giờ làm crash agent.
 
-Malformed JSON, unknown transports, or unreachable servers are
-**logged and skipped** — they never crash the agent process.
+## 3. Tool đã được gắn vào agent thật
 
-## 3. Programmatic use
+`configured_graphs.py::assemble_graph` gọi `discover_mcp(selected_servers)`
+rồi ghép thẳng tool trả về vào danh sách tool của specialist lúc dựng
+graph — nghĩa là MCP tool đã được nối vào tool list thật của agent, có
+thể dùng ngay khi operator chọn server MCP đó cho role tương ứng (không
+phải tự động cho mọi agent, mà theo lựa chọn qua
+`interfaces/api/specialist_routes.py`).
+
+Dùng trực tiếp trong code nếu cần:
 
 ```python
 from raptix.execution.tools.mcp import load_mcp_tools, mcp_servers_configured
@@ -52,6 +57,3 @@ from raptix.execution.tools.mcp import load_mcp_tools, mcp_servers_configured
 if mcp_servers_configured():
     tools = await load_mcp_tools()
 ```
-
-Auto-wiring these tools into the live agent graphs is a planned
-follow-up; for now the loader is the seam.

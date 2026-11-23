@@ -1,83 +1,67 @@
-# Security Controls
+# Kiểm soát hệ thống
 
-## Middleware assembly
+## Middleware an toàn
 
-Every agent assembles its middleware stack by walking `MiddlewareSlot` in
-declaration order; a role only instantiates the slots in its
-`SLOTS_PER_ROLE` set. Five of those slots are the runtime security
-guards. Two are always-on and `SAFETY_CRITICAL` (cannot be silently
-disabled by a plugin); the rest opt in.
+Mỗi agent dựng middleware stack theo `MiddlewareSlot` đã khai (chỉ các
+slot trong `SLOTS_PER_ROLE` của role đó được tạo). 5 slot dưới đây là
+guard an toàn runtime; 2 trong số đó **always-on và `SAFETY_CRITICAL`**
+(không plugin nào tắt được trừ khi set
+`RAPTIX_ALLOW_SAFETY_OVERRIDES=1`).
 
-Source of record:
-[`contracts/slots.py`](../../packages/raptix-core/raptix_core/contracts/slots.py)
-(slot enum, `SAFETY_CRITICAL_SLOTS`, `_BASE_SLOTS`),
-[`middleware/hitl.py`](../../packages/raptix/raptix/middleware/hitl.py),
-and
-[`middleware/budget.py`](../../packages/raptix/raptix/middleware/budget.py).
+| Control | Mặc định | Biến điều khiển | Cách kiểm chứng |
+| --- | --- | --- | --- |
+| **RoE guardrail** | Chỉ audit, không chặn. Safety-critical. | `mode` trong `<workspace>/plan/roe.json:machine_enforcement` (`audit`/`warn`/`enforce`) | Thêm 1 target ngoài phạm vi ở mode `enforce` → nhận `ToolMessage` `[ROE_REFUSED]` + dòng `OUT_OF_SCOPE` trong audit ledger |
+| **RoE egress guardrail** (network) | Bật mặc định khi `enforce`; đây là ranh giới scope thật sự | Tự động khi `machine_enforcement.mode=enforce` (dịch thành nftables + DNS allowlist trong sandbox); tắt bằng `RAPTIX_EGRESS_DISABLE=1` | Ở mode `enforce`, kết nối ra ngoài phạm vi bằng IP trực tiếp bị chặn ở tầng network dù command parser bị vượt qua |
+| **Untrusted-output quarantine** | Luôn bật, mọi role. Safety-critical. | Không có — nằm trong `_BASE_SLOTS` | Đọc 1 banner độc hại → tool output được bọc trong `<UNTRUSTED_TOOL_OUTPUT>` |
+| **Prompt-injection shield** | Luôn bật, mọi role. Safety-critical. | Không có — cùng cổng override như trên | Payload bị deny-list trong tool output bị bọc trước khi tới lượt gọi model kế tiếp |
+| **HITL approval** | Tắt mặc định — opt-in | `RAPTIX_HITL__ENABLED` | Bật, kích hoạt mục tiêu `T1003` hoặc tool `sliver_*` → run tạm dừng, chờ ghi vào `<workspace>/approvals/requests.jsonl` |
+| **Budget enforcement** | No-op trừ khi đặt cap | `RAPTIX_BUDGET__ENGAGEMENT_USD` / `RAPTIX_BUDGET__PER_AGENT_USD` | Đặt cap thấp → nhận event `budget_warning` ở ngưỡng mềm, `BudgetExceeded` (dừng run) ở 100% |
 
-## Controls overview
+**"Safety-critical" nghĩa là gì**: `SAFETY_CRITICAL_SLOTS` liệt kê các
+slot mà plugin chỉ được thay/tắt khi có
+`RAPTIX_ALLOW_SAFETY_OVERRIDES=1` — gồm engagement context, RoE
+enforcement, untrusted-output, prompt-injection shield, sandbox
+notification, HITL approval. Cổng này tồn tại để một plugin cài nhầm
+không thể âm thầm phá vỡ toàn bộ câu chuyện an toàn. Mọi thay đổi vào
+các control này phải đối chiếu lại [mô hình mối đe dọa](threat-model.md).
 
-| Control (slot) | Default posture | Knob | How to verify |
-|----------------|-----------------|------|---------------|
-| **RoE guardrail** (`roe-guardrail`) | Audit-only; logs but never blocks. Safety-critical. Pre-rename alias `roe-enforcement` valid until 2.0.0. | `mode` in `<workspace>/plan/roe.json:machine_enforcement` (`audit`/`warn`/`enforce`) | Add an out-of-scope target under `enforce`; expect a `[ROE_REFUSED]` `ToolMessage` and an `OUT_OF_SCOPE` row in the [audit ledger](./audit-ledger.md). |
-| **RoE egress guardrail** (network) | On by default for `enforce` mode; authoritative scope boundary. | Automatic when `machine_enforcement.mode=enforce` (compiles → sandbox nftables + DNS allowlist); opt out with `RAPTIX_EGRESS_DISABLE=1`. | Under `enforce`, an out-of-scope connect-by-IP from the sandbox is dropped at the network edge even when the command parser is bypassed (live-verified: `ping 8.8.8.8` blocked, in-scope + management reachable). |
-| **Untrusted-output quarantine** (`untrusted-output`) | Always on, every role. Safety-critical. | None — in `_BASE_SLOTS`; only a plugin with `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` can replace it. | Read a hostile banner; tool output is wrapped in the `<UNTRUSTED_TOOL_OUTPUT>` envelope. See [prompt-injection-defense](./prompt-injection-defense.md). |
-| **Prompt-injection shield** (`prompt-injection-shield`) | Always on, every role. Safety-critical. | None — in `_BASE_SLOTS`; same override gate as above. | Deny-listed payloads in tool output are wrapped before reaching the next model call. |
-| **HITL approval** (`hitl-approval`) | Off by default — opt-in. Safety-critical when enabled. | `RAPTIX_HITL__ENABLED` (truthy enables) | Enable it, trigger a `T1003` objective or a `sliver_*` tool; the run pauses for an approval written to `<workspace>/approvals/requests.jsonl`. See [hitl-approval](./hitl-approval.md). |
-| **Budget enforcement** (`budget`) | No-op unless a cap is set. In `_BASE_SLOTS`. | `RAPTIX_BUDGET__ENGAGEMENT_USD` / `RAPTIX_BUDGET__PER_AGENT_USD` (a positive cap enables it) | Set a low cap; expect a `budget_warning` stream event at the soft threshold and `BudgetExceeded` (run terminates) at 100%. |
+### Biến môi trường
 
-### What "safety-critical" means
+**Budget**: `RAPTIX_BUDGET__ENGAGEMENT_USD`/`RAPTIX_BUDGET__PER_AGENT_USD`
+(mặc định `0.0` = tắt), `RAPTIX_BUDGET__SOFT_WARN_AT_PCT` (mặc định
+`0.7`), `RAPTIX_BUDGET__POLL_SECONDS` (mặc định `5.0`). Middleware chỉ
+chặn lệnh gọi LLM, không chặn tool call — 1 vòng tool đang chạy và câu
+tổng hợp cuối vẫn có thể hoàn tất trước khi lần inference kế tiếp bị
+chặn. Dữ liệu chi tiêu lấy từ bảng `spend_logs` của LiteLLM; lỗi
+provider được coi là "chưa có dữ liệu lượt này, không chặn" chứ không
+dừng cứng.
 
-`SAFETY_CRITICAL_SLOTS` lists the slots a plugin can only replace or
-disable when `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` is set: engagement
-context, RoE enforcement, untrusted-output, prompt-injection shield,
-sandbox notification, and HITL approval. The gate exists so an
-accidentally-installed plugin cannot silently subvert the safety story.
-Review changes to safety-critical controls against the [threat model](threat-model.md).
+**Audit ledger**: `RAPTIX_AUDIT_HMAC_KEY` (secret của operator để ký
+HMAC-SHA-256 chuỗi audit), `RAPTIX_ROE_AUDIT_PATH` (mặc định
+`<workspace>/audit/roe-decisions.jsonl`). Chi tiết định dạng chain và
+cách verify: [enforcement-and-accountability.md](enforcement-and-accountability.md).
 
-## Environment variables
+**HITL**: `RAPTIX_HITL__ENABLED` (mặc định tắt; các giá trị
+`""`/`0`/`false`/`no`/`off` đều coi là tắt).
 
-These runtime-guard knobs are otherwise undocumented; their defaults are
-read in `budget.py` and the audit sink.
+## Sandbox — ranh giới workspace và container
 
-### Budget
+Compose service cơ bản mount workspace ở `/workspace`; mỗi engagement
+có thể bị pin vào đúng workspace của nó — một prefix đường dẫn trên
+mount chung là 1 kiểm tra scope ở tầng runtime, nên khi đánh giá mức
+cách ly thực tế phải xem đúng mount đang chạy, không suy đoán từ tên
+biến. Ở luồng Web, `apps/api` tự resolve project→workspace và dùng
+sandbox controller khi đã cấu hình URL+credential; file và bản ghi phê
+duyệt đều đi qua sandbox gắn với project đó.
 
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `RAPTIX_BUDGET__ENGAGEMENT_USD` | `0.0` | Hard USD cap for the whole engagement. Non-positive = disabled. |
-| `RAPTIX_BUDGET__PER_AGENT_USD` | `0.0` | Hard USD cap per specialist agent. Non-positive = disabled. |
-| `RAPTIX_BUDGET__SOFT_WARN_AT_PCT` | `0.7` | Fraction of a cap at which a `budget_warning` stream event fires (the agent proceeds). |
-| `RAPTIX_BUDGET__POLL_SECONDS` | `5.0` | How often LiteLLM spend is re-queried; spend is cached for this interval. |
+**Container**: drop toàn bộ capability trước khi thêm lại đúng tập đã
+khai, bật `no-new-privileges`, **giới hạn 4 GiB RAM, tối đa 4096
+process** (`docker-compose.yml`). Host controller (launcher Go) sở hữu
+vòng đời container được phép chạy, giữ credential phía service, không
+lộ ra runtime.
 
-The middleware is a no-op unless `ENGAGEMENT_USD` or `PER_AGENT_USD` is
-positive. It blocks LLM calls only, never tool calls — an in-flight tool
-round-trip and a final synthesis message can still complete before the
-next inference fails. Spend comes from LiteLLM's `spend_logs` table
-(requires `DATABASE_URL`); a provider error is treated as "no data this
-turn, don't enforce" rather than a hard stop.
-
-### Audit ledger
-
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `RAPTIX_AUDIT_HMAC_KEY` | unset (`hmac` field empty) | Operator secret that binds the audit chain via HMAC-SHA-256. |
-| `RAPTIX_ROE_AUDIT_PATH` | `<workspace>/audit/roe-decisions.jsonl` | Pins the ledger to a deterministic path. |
-
-See [audit-ledger](./audit-ledger.md) for the chain format and
-verification.
-
-### HITL
-
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `RAPTIX_HITL__ENABLED` | unset (disabled) | Truthy enables the approval gate. Falsy spellings (`""`, `0`, `false`, `no`, `off`) keep it off. |
-
-See [hitl-approval](./hitl-approval.md) for the policy and approval flow.
-
-## See also
-
-- [RoE Machine Enforcement](./roe-machine-enforcement.md)
-- [Audit Ledger](./audit-ledger.md)
-- [HITL Approval](./hitl-approval.md)
-- [Threat Model](threat-model.md)
-- [Prompt-Injection Defense](./prompt-injection-defense.md)
+**Kiểm chứng hardening**: so sánh mount/capability/security-opt/resource
+limit đã deploy với cấu hình mong đợi; xác nhận workspace có tên không
+nhìn thấy thư mục project khác; test cách ly network bằng
+`tests/test_compose_network_isolation.py` (HTTP test cục bộ — còn mount
+và limit thật phải kiểm tra trực tiếp trên deployment).

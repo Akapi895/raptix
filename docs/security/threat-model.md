@@ -1,186 +1,110 @@
-# Raptix threat model
+# Mô hình mối đe dọa (threat model)
 
-The STRIDE analysis covers compromise paths through the operator, management and sandbox planes.
+Phân tích STRIDE trên đường xâm nhập xuyên qua 3 mặt tin cậy.
 
-## Scope
+## 3 mặt tin cậy
 
-Three trust planes:
+1. **Operator** — người chạy Raptix, máy của họ, token OAuth
+   Claude/OpenAI/Codex, file `.env` chứa API key.
+2. **Management** (`raptix-net`) — LangGraph, LiteLLM, PostgreSQL, Neo4j.
+3. **Operational** (`sandbox-net`) — sandbox Kali, server Sliver C2 (khi
+   bật), hạ tầng target.
 
-1. **Operator plane.** The human running Raptix, their workstation,
-   their Claude/OpenAI/Codex OAuth tokens, the `.env` file with API
-   keys.
-2. **Management plane.** Everything on `raptix-net`: LangGraph,
-   LiteLLM, PostgreSQL and Neo4j.
-3. **Operational plane.** Everything on `sandbox-net`: the Kali
-   sandbox, Sliver C2 server (when active), target infrastructure.
+Cầu nối giữa các mặt là đường xâm nhập nguy hiểm nhất.
 
-Bridges between planes are the highest-impact compromise paths.
+## 4 cầu nối, xếp theo mức độ thiệt hại
 
-## Bridges
+| Cầu nối | Mang theo | Nếu bị chiếm |
+| --- | --- | --- |
+| Neo4j dual-homed | Cypher/APOC | RCE từ sandbox sang management nếu APOC không giới hạn |
+| LiteLLM | File OAuth + API key provider | Chiếm toàn bộ LLM provider, tốn chi phí engagement, lộ credential chéo khách hàng |
+| Plugin entry-point | Python chạy tùy ý lúc `import raptix` | 1 bundle độc hại `pip install` → RCE lúc agent khởi động |
+| Web dashboard | Sửa OPPLAN, override của operator, trạng thái engagement | Chiếm toàn quyền agent nếu web expose không auth |
 
-```
-                       OPERATOR
-                          │
-                          │ keys, OAuth, RoE authoring
-                          ▼
-            ┌────────────────────────────┐
-            │   raptix-net (mgmt)    │
-            │                            │
-            │  langgraph ──► litellm ──► [Anthropic/OpenAI/...]
-            │      │           ▲
-            │      │           │ holds every API key + OAuth file
-            │      │           │
-            │      ▼           │
-            │   neo4j  ◄───────────────────────────┐
-            │      │                                │
-            │      │ DUAL-HOMED                     │
-            │      │                                │
-            │      ▼                                │
-            │            sandbox-net ──────────────┘
-            │              │
-            │              │ kg_query, kg_add_*
-            │              │ over Bolt
-            │              ▼
-            │           sandbox (Kali)
-            │              │
-            │              │ HTTP requests, file reads, banner grabs
-            │              ▼
-            │           TARGETS (legitimate threat surface)
-            └────────────────────────────┘
-```
+## STRIDE theo từng tài nguyên (tóm tắt — chỉ các mục còn mở hoặc đáng chú ý)
 
-The four bridges, in decreasing blast radius:
+**Neo4j**: rủi ro lớn nhất đã đóng — allowlist APOC + tắt file-I/O chặn
+`apoc.cypher.runFile('file:///proc/self/environ')` đọc env management
+(xem [neo4j-hardening.md](neo4j-hardening.md)). Còn mở: user Cypher dùng
+chung giữa sandbox và management (chưa tách theo engagement); chưa có
+timeout riêng cho truy vấn nặng ngoài transaction timeout mặc định của
+Neo4j.
 
-| Bridge | Carries | Compromised → |
-|--------|---------|----------------|
-| **Neo4j dual-homing** | Cypher / APOC procedures | sandbox → mgmt plane RCE if APOC procedures are unrestricted |
-| **LiteLLM** | OAuth files + provider API keys | full LLM-provider compromise; engagement spend; cross-customer cred theft |
-| **Plugin entry-points** | Arbitrary Python on `import raptix` | `pip install` of one malicious bundle → agent-startup RCE |
-| **Web dashboard** | OPPLAN edits, operator overrides, engagement state | full agent control if web is exposed without auth (PR #338) |
+**LiteLLM**: OAuth/API key giữ phía server, không lộ ra sandbox. Rủi ro
+còn mở: master key mặc định (`sk-raptix-master`) cần operator tự đổi.
+Chi tiêu theo engagement được chặn bởi `BudgetEnforcementMiddleware`
+(xem [security-controls.md](security-controls.md)).
 
-## STRIDE walk
+**Sandbox**: `UntrustedOutputMiddleware` + detector injection chặn lệnh
+bị banner độc hại ghi đè; `RoEEnforcementMiddleware` chặn target ngoài
+phạm vi (xem [enforcement-and-accountability.md](enforcement-and-accountability.md)).
+Giới hạn tài nguyên hiện tại: `mem_limit: 4g`, `pids_limit: 4096` — **đã
+triển khai** (không còn là kế hoạch; file này từng ghi sai là "mem
+unbounded, pids_limit 1024, Open"). Còn mở: 1 container Kali dùng chung
+nhiều engagement (chưa tách container theo engagement); chưa có ranh
+giới kernel riêng (microVM) cho đa khách hàng.
 
-Per-asset analysis.
+**LangGraph orchestrator**: `UntrustedOutputMiddleware` bọc kết quả mọi
+`task()`; `recursion_limit` theo role (200-1000) chặn đệ quy vô hạn.
+Còn mở: danh sách subagent cho phép dựa vào `raptix.subagents` entry
+point, phụ thuộc operator tự tin tưởng plugin đã cài, chưa có ký số
+bundle.
 
-### Asset: Neo4j
+**Web dashboard**: route graph đã được chặn theo quyền sở hữu Prisma +
+giới hạn label theo engagement. Còn mở: deploy không phải localhost chưa
+có auth mặc định.
 
-| Threat | Vector | Mitigation | Status |
-|--------|--------|-----------|--------|
-| **Spoofing** | Shared single-user Cypher creds across sandbox + mgmt | Per-engagement Cypher user (planned, see "Future hardening" below) | Open |
-| **Tampering** | Cypher injection via interpolated label | `_apoc_safety.ensure_safe` + parameter-bound queries | Done ([apoc-safety](../../packages/raptix/raptix/execution/tools/research/_apoc_safety.py)) |
-| **Repudiation** | No audit of Cypher writes per engagement | RoE audit ledger covers tool calls; KG-internal writes not yet logged | Partial |
-| **Information disclosure** | `apoc.cypher.runFile('file:///proc/self/environ')` reads mgmt env | APOC allowlist + file-I/O procedures disabled | Done ([hardening](./neo4j-hardening.md)) |
-| **Information disclosure** | Web `engagements/[id]/graph` route returned full graph | Per-engagement label scoping + Prisma ownership check | Done |
-| **Denial of service** | Heavy `MATCH (n)` traversal | `cypher.statistics_divergence` heuristic + query timeouts | Partial — Neo4j's default tx timeout applies; no per-tool timeout |
-| **Elevation of privilege** | `apoc.systemdb.execute` reaches system DB | Procedure denylist | Done |
+## Các chuỗi xâm nhập nguy hiểm nhất
 
-### Asset: LiteLLM container
+1. **Banner độc → APOC → lộ env management.** Trang target trả về text
+   ảnh hưởng lệnh `kg_query` kế tiếp của agent. Trước khi hardening,
+   agent có thể bị dẫn tới gọi `apoc.cypher.runFile(...)` đọc
+   `/proc/self/environ`, lộ creds Postgres/LiteLLM/OAuth. **Đã chặn**
+   bằng allowlist APOC + envelope untrusted-output.
+2. **Lộ dữ liệu chéo engagement qua web dashboard.** Route graph từng
+   không lọc theo `[id]`, trả nguyên graph. **Đã chặn** bằng kiểm tra
+   quyền sở hữu Prisma + giới hạn label theo engagement.
+3. **Máy operator → đọc file OAuth của LiteLLM.** File
+   `~/.claude/.credentials.json` mount RO vào LiteLLM. Máy operator bị
+   chiếm có quyền đọc file đó sẽ lấy được token OAuth. **Giảm nhẹ một
+   phần** — file chỉ mount RO vào LiteLLM (không vào sandbox), còn lại
+   phụ thuộc vệ sinh bảo mật của máy operator.
+4. **Plugin entry-point bị đầu độc.** `pip install` một package
+   typosquat, `__init__.py` của nó đánh cắp `.env` lúc agent khởi động.
+   **Đã chặn** bằng allowlist `RAPTIX_PLUGINS` (operator phải khai rõ);
+   **còn mở**: chưa có xác minh ký số bundle.
 
-| Threat | Vector | Mitigation | Status |
-|--------|--------|-----------|--------|
-| **Spoofing** | Default master key `sk-raptix-master` documented | `.env.example` warns; web health route refuses to fall back | Partial — operator must rotate |
-| **Tampering** | LiteLLM admin UI mutates routing | Master key never exposed to sandbox network | Done |
-| **Information disclosure** | OAuth credential files bind-mounted (Claude/Codex) | Bind RO; LiteLLM container itself is on `raptix-net` only | Done |
-| **Information disclosure** | Health endpoint hardcoded master key as fallback | Removed; health refuses without explicit `LITELLM_API_KEY` | Done |
-| **Denial of service** | Per-engagement model-tier spend not capped | `BudgetEnforcementMiddleware` (in `_BASE_SLOTS`) hard-pauses at the per-engagement / per-agent USD cap | Done — opt-in via `RAPTIX_BUDGET__*` ([security-controls](./security-controls.md)) |
-| **Elevation of privilege** | Compromised LiteLLM → upstream provider impersonation | Provider keys held server-side; client can't extract | Done (LiteLLM design) |
+## Hướng hardening tiếp theo (chưa làm)
 
-### Asset: Sandbox container
+Theo thứ tự ưu tiên: user Cypher riêng theo từng engagement (giới hạn
+thiệt hại khi 1 sandbox bị chiếm chỉ trong phạm vi engagement đó) →
+container sandbox riêng theo từng engagement (chặn rò `.scratch/` giữa 2
+engagement) → ký số bundle plugin (Ed25519, operator pin trust set) →
+sandbox microVM Firecracker (ranh giới kernel, chỉ cho deploy multi-tenant)
+→ transparency log kiểu Sigstore cho audit ledger (để chính operator
+cũng không thể viết lại lịch sử). Giới hạn chi tiêu theo engagement đã
+triển khai xong (`BudgetEnforcementMiddleware`), không còn trong danh
+sách chờ.
 
-| Threat | Vector | Mitigation | Status |
-|--------|--------|-----------|--------|
-| **Spoofing** | Sandbox HTTP daemon has no auth by default | `SANDBOX_TOKEN` env enables Bearer auth; loopback-only deploys are fine without | Partial |
-| **Tampering** | Agent's command rewritten by hostile banner | UntrustedOutputMiddleware + injection detector | Done ([prompt-injection-defense](./prompt-injection-defense.md)) |
-| **Tampering** | Out-of-scope target reached | RoEEnforcementMiddleware refuses + chained audit log | Done ([RoE schema + middleware](../../packages/raptix-core/raptix_core/types/roe.py)) |
-| **Repudiation** | Operator denies engagement actions | HMAC-chained audit ledger (`<workspace>/audit/roe-decisions.jsonl`) | Done |
-| **Information disclosure** | One Kali container shared across engagements | Per-engagement sandbox containers (planned, see Tier 3) | Open |
-| **Denial of service** | Sandbox `pids_limit: 1024` exists; mem unbounded | `mem_limit` per service (planned) | Open |
-| **Elevation of privilege** | Sandbox kernel exploit → host | Firecracker microVM per objective (planned, multi-tenant deployments only) | Open |
+## Ngoài phạm vi tài liệu này
 
-### Asset: LangGraph orchestrator
+Mô hình mối đe dọa phía target (thuộc khách hàng), độ tin cậy của
+provider LLM upstream (Raptix tin theo công bố an ninh của họ), vệ sinh
+bảo mật máy operator (theo chuẩn endpoint thông thường), và lọc network
+ingress ngoài phạm vi compose cấp (người triển khai tự chịu trách nhiệm
+firewall ngoài các cổng `127.0.0.1:*` đã mở).
 
-| Threat | Vector | Mitigation | Status |
-|--------|--------|-----------|--------|
-| **Spoofing** | Plugin entry-point hijack | `RAPTIX_PLUGINS` env explicit allowlist; signed bundles (planned) | Partial |
-| **Tampering** | Prompt-injection in subagent output reaches orchestrator | UntrustedOutputMiddleware wraps every `task()` result | Done |
-| **Repudiation** | OPPLAN object reordered post-hoc | OPPLAN edits via tool calls land in the RoE audit ledger as decision records | Done |
-| **Information disclosure** | OPPLAN dumped to a tool that reads `/workspace` content | EngagementFilesystemBackend scopes paths to engagement workspace | Done |
-| **Denial of service** | Infinite recursion via `task()` -> orchestrator -> `task()` | Per-agent `recursion_limit` defaults (200-1000 depending on role) | Done |
-| **Elevation of privilege** | Compromised orchestrator dispatches arbitrary subagents | SubAgent allowlist via `raptix.subagents` entry-point group | Partial — relies on operator trust of installed plugins |
+## Tài liệu tham chiếu chi tiết
 
-### Asset: Web dashboard
+[Kiểm soát hệ thống](security-controls.md) · [Kiểm soát & trách
+nhiệm (RoE/HITL/audit)](enforcement-and-accountability.md) · [Phòng vệ
+prompt-injection](prompt-injection-defense.md) · [Neo4j
+hardening](neo4j-hardening.md)
 
-| Threat | Vector | Mitigation | Status |
-|--------|--------|-----------|--------|
-| **Spoofing** | No auth on non-localhost deploys | PR #338 (open) adds password / bind-restriction | Open |
-| **Tampering** | OPPLAN edits via API | API requires `requireAuth()` (currently no-op in OSS) | Partial |
-| **Information disclosure** | `engagements/[id]/graph` route ignored `[id]`, returned full graph | Prisma ownership + per-engagement scoped Cypher | Done |
-| **Information disclosure** | `engagements/[id]/graph` fell back to public Neo4j password | Refuses to query with `raptix-graph` | Done |
-| **Information disclosure** | Health route hardcoded `LITELLM_API_KEY = "sk-raptix-master"` | Removed; refuses without explicit env | Done |
-| **Denial of service** | `MATCH (n)` cypher dump on every dashboard render | Per-engagement filtering bounds the query | Done |
-| **Elevation of privilege** | Operator override without audit | Audit trail logs OPERATOR_OVERRIDE event class | Partial |
+## Báo lỗi bảo mật
 
-### Asset: Plugin author surface
-
-| Threat | Vector | Mitigation | Status |
-|--------|--------|-----------|--------|
-| **Spoofing** | `pip install raptix-plugin-evil` typosquat | Operator-explicit `RAPTIX_PLUGINS` allowlist; no auto-enable | Done |
-| **Tampering** | PluginBundle replaces ENGAGEMENT_CONTEXT or RoE middleware | `SAFETY_CRITICAL_SLOTS` gate requires `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` | Done |
-| **Repudiation** | Plugin issues tool calls without audit | All tool calls flow through middleware stack; ledger captures them | Done |
-| **Information disclosure** | Plugin reads `~/.config/raptix/` | Plugin code runs in agent process; no FS sandboxing | Open |
-| **Denial of service** | Plugin import hangs | Entry-point loading timeout (planned) | Open |
-| **Elevation of privilege** | Plugin escalates to bypass middleware | SAFETY_CRITICAL gate; threat-model doc this file documents | Partial |
-
-## Highest-impact compromise chains
-
-The chains that matter, ranked by realistic damage:
-
-1. **Hostile banner → APOC → mgmt env exfil.** A target webpage returns text that influences the agent's next `kg_query` call. Pre-hardening, agent issues `CALL apoc.cypher.runFile('file:///proc/self/environ')`; the response carries PostgreSQL creds, LiteLLM master key, OAuth tokens. **Closed** by allowlist-only APOC + UntrustedOutput envelope (Tier 1, Tier 4a).
-
-2. **Cross-engagement data leak via web dashboard.** Any authenticated user opens `engagements/<their-id>/graph`; the route ran `MATCH (n) OPTIONAL MATCH (n)-[r]->(m)` against the shared Neo4j. Hostile customer reads competitor's findings. **Closed** by Prisma ownership + per-engagement label scoping (Tier 4b).
-
-3. **Operator workstation → LiteLLM OAuth file read.** Operator's `~/.claude/.credentials.json` is bind-mounted RO into LiteLLM. Compromised host with read on that file gets the OAuth token. **Mitigation**: the file is RO mounted only into LiteLLM, not into sandbox; standard OS file perms (600) apply to operator host. **Status**: partial — relies on operator host hygiene.
-
-4. **Plugin entry-point poisoning.** Operator runs `pip install raptix-plugin-foo` from a typosquat. Bundle's `__init__.py` exfiltrates `.env` at agent startup. **Closed** by `RAPTIX_PLUGINS` allowlist; **Open** signed-bundle verification.
-
-5. **Prompt-injection-driven RCE via docker socket.** The old `DockerSandbox` transport mounted `/var/run/docker.sock` into the LangGraph container; any agent-controlled command could escape to the host. **Closed** by the HTTP-only sandbox transport rewrite (predates this PR; see [`backends/factory.py`](../../packages/raptix/raptix/execution/backends/factory.py)).
-
-## Future hardening
-
-Tracked in this PR's roadmap, in order of priority:
-
-1. **Per-engagement Cypher user** (`raptix-sandbox-<engagement>`, rotating Bolt token). Caps the impact of a single sandbox compromise to that engagement's portion of the graph.
-2. **Per-engagement sandbox container** (Docker SDK based lifecycle, one container per engagement open). Eliminates the "Engagement A's `.scratch/` is visible to Engagement B" leak. Tier 3 of this PR ships the design + compose hardening; full lifecycle ships in a follow-up.
-3. ~~**Per-engagement budget cap**~~ — **shipped.** `BudgetEnforcementMiddleware` (in `_BASE_SLOTS`) soft-warns at a configurable fraction of the cap and hard-pauses the run at 100%, scoped per-engagement and per-agent. Enable via `RAPTIX_BUDGET__ENGAGEMENT_USD` / `RAPTIX_BUDGET__PER_AGENT_USD`; see [security-controls](./security-controls.md). Automatic model-tier downgrade at threshold is not implemented.
-4. **Plugin bundle signature** (PluginBundle ships an Ed25519 signature; operator pins trust set; `pip install` of an unpinned bundle is rejected at boot).
-5. **Firecracker microVM sandbox** (one ~125ms-boot microVM per objective). Kernel boundary instead of namespace boundary. Multi-tenant deployments only; OSS keeps Docker.
-6. **Sigstore-style transparent log** for the RoE audit ledger. Today the ledger lives next to the engagement workspace; the HMAC key is operator-held. For paid engagements, ship the chain hash to a third-party transparency log (Rekor) so even the operator can't rewrite history.
-
-## Out of scope
-
-This document does NOT cover:
-
-- **Target-side threat model**: that's the customer's domain.
-- **OpenAI/Anthropic/Google provider trust**: Raptix trusts the upstream LLM providers' published security posture.
-- **Operator workstation hardening**: standard endpoint hygiene applies.
-- **Network ingress filtering** above what compose provides: deployers responsible for firewalling beyond `127.0.0.1:*` exposed ports.
-
-## Runtime security reference
-
-The controls referenced throughout this STRIDE walk are documented in
-detail in the runtime security reference suite:
-
-- [Security Controls](./security-controls.md) — knob/default/verify table
-  for every runtime guard, plus the budget, audit, and HITL env vars.
-- [RoE Machine Enforcement](./roe-machine-enforcement.md) — the scope and
-  forbidden-command gate for bash tool calls.
-- [Audit Ledger](./audit-ledger.md) — the HMAC-chained record of RoE
-  decisions and how to verify it.
-- [HITL Approval](./hitl-approval.md) — the opt-in operator-approval gate
-  for high-impact actions.
-
-## Reporting
-
-Report vulnerabilities in Raptix, its bundled dependencies or its default configuration privately. Include the affected version, steps to reproduce, and potential impact. [Private vulnerability report](https://github.com/Akapi895/raptix/security/advisories/new)
-
-If private reporting is unavailable, contact the repository maintainer privately. Keep working exploits, credentials and other sensitive evidence out of public issues.
+Báo lỗi bảo mật của Raptix, dependency đóng gói sẵn, hoặc cấu hình mặc
+định — báo riêng tư, kèm version bị ảnh hưởng, bước lặp lại, mức độ ảnh
+hưởng: [Private vulnerability report](https://github.com/Akapi895/raptix/security/advisories/new).
+Không đăng exploit hoạt động được, credential, hay bằng chứng nhạy cảm
+khác lên issue công khai.
