@@ -7,22 +7,15 @@ import (
 	"strings"
 )
 
-// osReleasePath is overridable in tests. The default reads the
-// freedesktop.org /etc/os-release file present on every modern Linux
-// distribution (Debian, Kali, Arch, BlackArch, Parrot, Raspberry Pi OS).
+// osReleasePath is the standard Linux distribution metadata file.
 var osReleasePath = "/etc/os-release"
 
-// dockerProbe runs a `docker` subcommand and reports whether it
-// succeeded. Overridable in tests so the host's real Docker state does
-// not make the suite non-deterministic.
+// dockerProbe can be stubbed so tests do not depend on Docker.
 var dockerProbe = func(args ...string) bool {
 	return exec.Command("docker", args...).Run() == nil
 }
 
-// SystemInfo is a one-shot snapshot of the host environment. `raptix
-// onboard` renders it so the user can confirm — before configuring any
-// credentials — that the machine they are on is actually able to run the
-// Docker stack, on whichever OS/architecture they happen to be using.
+// SystemInfo captures host architecture and Docker readiness for onboarding.
 type SystemInfo struct {
 	OS               string // GOOS: "windows", "darwin", "linux"
 	Arch             string // GOARCH: "amd64", "arm64", ...
@@ -33,10 +26,7 @@ type SystemInfo struct {
 	ComposeAvailable bool   // Docker Compose v2 (`docker compose`) works
 }
 
-// LinuxDistro returns the human-readable distribution name from
-// /etc/os-release (PRETTY_NAME), e.g. "Kali GNU/Linux Rolling" or
-// "Debian GNU/Linux 12 (bookworm)". Returns "" on non-Linux hosts or
-// when the file cannot be read/parsed.
+// LinuxDistro reads PRETTY_NAME from /etc/os-release, or returns an empty string if unavailable.
 func LinuxDistro() string {
 	if runtime.GOOS != "linux" {
 		return ""
@@ -53,9 +43,7 @@ func LinuxDistro() string {
 	return ""
 }
 
-// Detect probes the host environment once. The Docker checks shell out
-// to the `docker` CLI; each is independently guarded so a missing binary
-// or stopped daemon degrades to a false flag rather than an error.
+// Detect probes Docker and reports failures as readiness flags.
 func Detect() SystemInfo {
 	si := SystemInfo{
 		OS:     runtime.GOOS,

@@ -4,7 +4,7 @@
 // Every literal is written with unicode escapes so no CJK characters appear in
 // this repository; decode with e.g. JSON.parse('"' + literal + '"') when needed.
 // Replace these matches with stable codes (error_code, role.is_default, ...)
-// once the backend provides them - see ui-app/docs/english-only-plan.md.
+// when the backend exposes them.
 
 /** Assistant placeholder persisted by the backend while a reply is streaming. */
 export const BACKEND_PROCESSING_PLACEHOLDER = '\u5904\u7406\u4e2d...';

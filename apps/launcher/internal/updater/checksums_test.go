@@ -7,10 +7,7 @@ import (
 	"testing"
 )
 
-// Verifies that the manifest parser tolerates the formatting variations
-// `sha256sum` and similar tools actually emit: standard two-space
-// separator, the `*` binary-mode prefix, leading/trailing whitespace,
-// and blank lines.
+// Cover text and binary-mode sha256sum entries and blank lines.
 func TestParseChecksumManifest(t *testing.T) {
 	in := strings.NewReader(strings.Join([]string{
 		"",                                                                       // blank line — must be skipped
@@ -42,9 +39,6 @@ func TestParseChecksumManifest(t *testing.T) {
 	}
 }
 
-// Rejects manifest lines that don't have at least <hex> <path>; a
-// malformed manifest must fail loudly rather than silently lose
-// entries — that's the entire point of the integrity check.
 func TestParseChecksumManifestRejectsMalformed(t *testing.T) {
 	_, err := parseChecksumManifest(strings.NewReader("only-one-field"))
 	if err == nil {
@@ -59,10 +53,7 @@ func TestSha256FileAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Expected SHA-256 of "hello\n" — independently computable with
-	// `printf 'hello\n' | sha256sum`. Pinning the literal value protects
-	// against accidental algorithm changes (e.g. trimming the trailing
-	// newline) and serves as the canonical fixture for future tests.
+	// SHA-256 of hello followed by a newline.
 	const wantHash = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"
 
 	got, err := sha256File(target)

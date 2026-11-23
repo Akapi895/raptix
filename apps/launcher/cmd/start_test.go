@@ -69,9 +69,7 @@ func TestCandidateProbeURLs_WSLWithoutResolvedHostStillTriesLoopback(t *testing.
 }
 
 func TestCandidateProbeURLs_DedupesWhenResolvedHostIsLoopback(t *testing.T) {
-	// A WSL2 setup where /etc/resolv.conf already points at 127.0.0.1
-	// (e.g. systemd-resolved local stub on the distro) should not
-	// produce two identical loopback entries.
+	// WSL's nameserver can already be loopback. Probe it only once.
 	withProbeStubs(t, true, "127.0.0.1")
 	got := candidateProbeURLs("http://host.docker.internal:11434")
 	want := []string{
@@ -107,9 +105,7 @@ func TestCandidateProbeURLs_PreservesScheme(t *testing.T) {
 	}
 }
 
-// withUpdateStubs swaps the auto-update / prompt-update function variables
-// for the duration of one test, restoring them via t.Cleanup. The stubs
-// record which branch ran (and how many times) without touching GitHub.
+// withUpdateStubs records which update path runs without contacting GitHub.
 func withUpdateStubs(t *testing.T) (auto, prompt *int) {
 	t.Helper()
 	autoCount, promptCount := 0, 0
@@ -131,9 +127,6 @@ func TestApplyAutoUpdate_RoutingMatrix(t *testing.T) {
 		wantPrompt  int
 		description string
 	}{
-		// Default-on: unset triggers silent auto-update. This is the
-		// key behaviour change from v1.1.12 — fix-shipped → fix-applied
-		// no longer requires the user to act.
 		{"", 1, 0, "unset → silent auto-update"},
 		{"  ", 1, 0, "whitespace-only → silent auto-update"},
 		{"true", 1, 0, "true → silent auto-update (backwards-compat)"},
@@ -168,11 +161,6 @@ func TestApplyAutoUpdate_RoutingMatrix(t *testing.T) {
 	}
 }
 
-// --no-update is a one-shot override that must beat the persistent
-// .env setting in every direction — including the default-on path and
-// the explicit AUTO_UPDATE=true path. Without this short-circuit a CI
-// runner that pinned `raptix --no-update` would still re-exec into
-// a newer binary, defeating the pin.
 func TestApplyAutoUpdate_NoUpdateFlagAlwaysWins(t *testing.T) {
 	envValues := []string{"", "true", "1", "yes", "on", "prompt", "ask", "interactive"}
 	for _, ev := range envValues {

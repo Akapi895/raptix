@@ -20,9 +20,7 @@ func withOllamaProbeClient(t *testing.T, c *http.Client) {
 	t.Cleanup(func() { ollamaProbeClient = prev })
 }
 
-// ollamaTestServer fakes /api/tags and /api/show. A nil capabilities
-// entry simulates older Ollama (no capabilities field); a missing
-// entry causes /api/show to 404.
+// ollamaTestServer omits capabilities for nil entries and returns 404 for missing models.
 func ollamaTestServer(t *testing.T, capabilities map[string][]string) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()

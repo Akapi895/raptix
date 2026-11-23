@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// The trusted host controller for project environments (ADR-0092). It runs on the host, listens on loopback only, and
-// reads its token from a file. Stopping it does not stop the environment containers it created.
+// The host controller binds to loopback and reads its token from disk.
+// Environment containers outlive the controller.
 var environmentControllerFlags struct {
 	listen         string
 	tokenFile      string

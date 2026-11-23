@@ -1,7 +1,4 @@
-/**
- * Internal validation primitives shared by the boundary validators.
- * Not part of the public package interface (index.ts does not re-export).
- */
+/** Internal helpers for validating API payloads. */
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

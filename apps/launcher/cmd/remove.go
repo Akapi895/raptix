@@ -54,13 +54,10 @@ func runRemove(cmd *cobra.Command, args []string) error {
 	home := config.RaptixHome()
 	c := compose.New()
 
-	// Phase 1: Stop containers + drop named volumes (postgres / neo4j /
-	// sliver). Down() alone leaves them behind, occupying GB of disk and
-	// poisoning a subsequent reinstall with stale schema state.
+	// Purge named volumes as part of a full uninstall.
 	ui.Info("Stopping services and removing volumes...")
 	_ = c.DownAndPurge()
 
-	// Phase 2: Remove Docker images
 	ui.Info("Removing Docker images...")
 	out, err := exec.Command("docker", "images", "--format", "{{.Repository}}:{{.Tag}}", "--filter", "reference=*raptix*").Output()
 	if err == nil {
@@ -69,7 +66,6 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Phase 3: Remove config directory
 	var preserveWorkspace bool
 	if !removeYes {
 		form := huh.NewForm(
@@ -108,12 +104,10 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Phase 4: Remove launcher binary
 	execPath, _ := os.Executable()
 	ui.Info("Removing launcher binary...")
 	_ = os.Remove(execPath)
 
-	// Phase 5: Clean PATH from shell rc files
 	cleanShellRC()
 
 	ui.Success("Raptix has been removed")
@@ -142,17 +136,7 @@ func cleanShellRC() {
 	}
 }
 
-// cleanPathFromFile removes the exact two-line block install.sh appends:
-//
-//	# raptix
-//	export PATH="$HOME/.local/bin:$PATH"      # bash/zsh
-//	fish_add_path $HOME/.local/bin            # fish
-//
-// Matching only this marker block avoids touching unrelated PATH lines
-// the user may have written themselves. The previous heuristic looked for
-// `raptix` AND `.local/bin` on the same line, which never matched
-// install.sh's actual output and left the export line behind on every
-// uninstall.
+// cleanPathFromFile removes the installer's marked PATH block and preserves other entries.
 func cleanPathFromFile(path string) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -198,9 +182,8 @@ func isInstallPathLine(line string) bool {
 	return strings.HasPrefix(s, "export PATH=") || strings.HasPrefix(s, "fish_add_path ")
 }
 
-// backupWorkspace moves src to dst, falling back to copy + remove on
-// cross-device or permission errors. Refuses to overwrite an existing dst
-// so a previous backup is never silently clobbered.
+// backupWorkspace moves the workspace without replacing an existing backup.
+// It falls back to copying when renaming fails.
 func backupWorkspace(src, dst string) error {
 	if _, err := os.Stat(dst); err == nil {
 		return fmt.Errorf("backup target already exists: %s", dst)

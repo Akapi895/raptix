@@ -1,10 +1,4 @@
-/**
- * Sub-agent session derivation — pure function, no React dependency.
- *
- * Groups a flat event stream into structured sessions by scanning for
- * subagent_start/subagent_end boundaries. Extracted from CLI's
- * useSubAgentSessions hook for cross-platform reuse.
- */
+/** Derive execution sessions from sub-agent events. */
 
 import type { StreamEvent } from "./types.js";
 
@@ -32,24 +26,12 @@ export interface SubAgentSession {
   status: "running" | "completed" | "error";
 }
 
-/**
- * Derive structured sub-agent sessions from a flat event stream.
- *
- * Sessions are built by scanning for subagent_start/subagent_end events
- * and collecting all events with a matching `subagent` field between them.
- *
- * @param events - Flat array of events with at minimum: id, type, subagent?, content?, timestamp
- * @returns Array of derived sessions in chronological order
- */
+/** Group events between matching start and end boundaries in chronological order. */
 export function deriveSubAgentSessions(events: readonly StreamEvent[]): SubAgentSession[] {
   const sessions: SubAgentSession[] = [];
   const openSessions = new Map<string, SubAgentSession>();
 
-  // Per-invocation key. The backend's StreamingRunnable now stamps every
-  // emit with a unique `sessionId`; older event streams (and any consumer
-  // that hasn't picked up the new field yet) fall back to the agent name.
-  // Falling back drops parallel-same-agent grouping but at least keeps
-  // single-agent runs working.
+  // Legacy events fall back to the agent name. Concurrent runs need a session ID.
   const sessionKey = (e: StreamEvent): string =>
     (e.sessionId ?? "") + "::" + (e.subagent ?? "");
 
@@ -75,9 +57,7 @@ export function deriveSubAgentSessions(events: readonly StreamEvent[]): SubAgent
       if (session) {
         session.endEventId = event.id;
         session.endTime = event.timestamp;
-        // Detect failure from either the CLI-normalized `status` field or the
-        // raw backend `error` boolean (SubagentCustomEvent). The enclosing
-        // branch already guarantees this is a `subagent_end` event.
+        // Accept both normalized status and the raw error flag.
         session.status =
           event.status === "error" || event.error === true ? "error" : "completed";
         session.eventIds.push(event.id);

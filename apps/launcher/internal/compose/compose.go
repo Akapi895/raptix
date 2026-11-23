@@ -20,25 +20,16 @@ type Compose struct {
 	EnvFile     string
 	Project     string
 	Standalone  bool
-	// Runtime is the container runtime selected at construction time
-	// (docker / podman / nerdctl). Stored so every call uses the same
-	// binary + socket and we don't re-probe on every invocation.
+	// Runtime is the detected container runtime, reused for every Compose call.
 	Runtime runtime.Runtime
 }
 
-// New creates a Compose instance using the Raptix home directory.
-// The container runtime is detected at construction time so every
-// subsequent call uses the same binary. Falls back to "docker" if no
-// runtime is reachable so existing tests and dev workflows that don't
-// have Podman installed keep working unchanged.
+// New uses the Raptix home and falls back to Docker if no runtime responds.
 func New() *Compose {
 	home := config.RaptixHome()
 	rt, err := runtime.Detect()
 	if err != nil {
-		// No runtime available right now — fall back to assuming
-		// docker. The user will get a clear error from the first
-		// `docker` exec if it's really missing, and the onboard
-		// System Check surfaces it well before reaching here.
+		// Let the first Docker command report why the runtime is unavailable.
 		rt = runtime.Runtime{Name: "docker", Bin: "docker", ComposeArgs: []string{"compose"}}
 	}
 	return &Compose{
@@ -60,11 +51,7 @@ var Profiles = struct {
 	Reversing: "reversing",
 }
 
-// AllProfiles returns every profile flag the launcher should pass
-// to `docker compose down`. Workloads the agent never spawned are
-// silently no-ops; the cost of listing them is one cli-arg per
-// profile, which beats orphaning containers when an engagement
-// brought up an ad-hoc combination of specialists.
+// AllProfiles includes every profile so teardown can remove any workload.
 func AllProfiles() []string {
 	return []string{
 		"--profile", Profiles.C2,
@@ -73,43 +60,21 @@ func AllProfiles() []string {
 	}
 }
 
-// baseArgs returns the common compose arguments for the detected
-// runtime. For Docker this is ["compose", "-f", ...]; for Podman 4.4+
-// it's the same shape; for the podman-compose wrapper the leading
-// "compose" is omitted because the wrapper IS the compose tool.
-//
-// Defaults to ["compose"] when c.Runtime is the zero value so tests
-// that instantiate Compose{} directly (without going through New())
-// still produce the Docker-shaped argv.
+// baseArgs builds the common Compose arguments. The zero-value runtime uses Docker's subcommand form.
 func (c *Compose) baseArgs() []string {
 	prefix := c.Runtime.ComposeArgs
 	if prefix == nil && c.Runtime.Bin == "" {
 		prefix = []string{"compose"}
 	}
 	args := append([]string{}, prefix...)
-	// `-p` is explicit so the launcher's project name matches what the
-	// opscontrol daemon uses on its own compose calls (DockerComposeBackend
-	// reads the same helper). Without `-p`, compose defaults to the
-	// sanitized basename of $RAPTIX_HOME — that agrees by accident in
-	// normal flows but breaks the moment any caller passes a different
-	// `-p` (CI, manual debugging, …) and produces a "container_name in
-	// use by another project" conflict on the next ops_start.
+	// Use the same explicit project name as the host daemon to avoid container name conflicts.
 	project := c.Project
 	if project == "" {
 		project = opscontrol.ComposeProjectName()
 	}
 	args = append(args, "-p", project)
 	args = append(args, "-f", c.ComposeFile, "--env-file", c.EnvFile)
-	// ADR-0006 Sprint 1: include the opscontrol overlay only when
-	// the file exists AND the host socket has been bound. Attaching
-	// the overlay without RAPTIX_OPSCONTROL_SOCK_HOST exported
-	// would mount /dev/null into langgraph (the old `:-/dev/null`
-	// fallback in the overlay) — that's a wiring bug masquerading
-	// as a "daemon unreachable" diagnostic at agent runtime,
-	// which is much harder to debug than a missing overlay at boot.
-	// EnsureRunning() exports the env var on success; the user-side
-	// fallback (no service manager + spawn failed) keeps the overlay
-	// out so the boot doesn't silently regress to the broken state.
+	// Attach the overlay only when the daemon socket is available.
 	if override := filepath.Join(c.Home, "docker-compose.opscontrol.yml"); !c.Standalone && fileExists(override) &&
 		os.Getenv("RAPTIX_OPSCONTROL_SOCK_HOST") != "" {
 		args = append(args, "-f", override)
@@ -122,13 +87,7 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-// ContainerName builds the docker container name for a Raptix
-// service, mirroring the “${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}“
-// template used by docker-compose.yml (#216). Unset/empty → today's
-// “raptix-<svc>“ name verbatim; “stack2“ → “raptix-stack2-<svc>“.
-// Keeps the Go launcher and YAML naming convention in lockstep so
-// “docker exec“/“logs“/“stop“ resolve the right container in
-// dual-stack runs.
+// ContainerName mirrors docker-compose.yml, including the optional stack suffix.
 func ContainerName(svc string) string {
 	stack := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
 	if stack == "" {
@@ -137,10 +96,7 @@ func ContainerName(svc string) string {
 	return "raptix-" + stack + "-" + svc
 }
 
-// readVersion returns the installed version from $RAPTIX_HOME/.version,
-// or an empty string if the file is missing or unreadable. The launcher
-// (install + explicit update) is the single writer; compose falls back to
-// :stable (the conservative default channel tag) when the marker is absent.
+// readVersion returns the installed version or an empty string so Compose can use its default tag.
 func (c *Compose) readVersion() string {
 	data, err := os.ReadFile(filepath.Join(c.Home, ".version"))
 	if err != nil {
@@ -149,25 +105,14 @@ func (c *Compose) readVersion() string {
 	return strings.TrimSpace(string(data))
 }
 
-// composeEnv returns the parent environment with RAPTIX_VERSION pinned
-// from the .version file plus any runtime-derived env (DOCKER_HOST for
-// Podman, etc.). docker compose treats the process environment as
-// higher precedence than --env-file, so this overrides any stale value the
-// user may have written into .env and avoids the silent `:stable` drift
-// that occurs when the variable is unset.
+// composeEnv gives the installed version precedence over .env and applies runtime-specific settings.
 func (c *Compose) composeEnv() []string {
-	// Single source of truth for compose interpolation env (STACK_NAME +
-	// COMPOSE_PROJECT). The daemon's DockerComposeBackend reads from the
-	// same helper so the two never write DIFFERENT container_name
-	// values into the SAME compose project. See
-	// opscontrol.ComposeCommandEnv() for the rationale.
+	// Share interpolation settings with the host daemon to keep container names consistent.
 	env := opscontrol.ComposeCommandEnv()
 	if v := c.readVersion(); v != "" {
 		env = append(env, "RAPTIX_VERSION="+imageTag(v))
 	}
-	// Inject DOCKER_HOST for Podman so nested Docker-API clients in
-	// containers (testcontainers, kubectl-with-docker-shim) find the
-	// Podman socket. No-op for Docker.
+	// Expose Podman's compatibility socket to Docker API clients.
 	env = c.Runtime.Apply(env)
 	return env
 }
@@ -191,15 +136,8 @@ func (c *Compose) run(args []string, interactive bool) error {
 	return nil
 }
 
-// Up starts services in detached mode and blocks until healthchecks pass.
-//
-// `--wait` (Docker Compose 2.0+) makes `up` block until each service's compose
-// healthcheck transitions to healthy, eliminating the need for the launcher to
-// re-implement HTTP polling.
-//
-// `--wait-timeout` is the single user-facing patience knob. Override via
-// RAPTIX_STARTUP_TIMEOUT_SECONDS for slower hardware. Default 600s
-// covers most environments after measuring 136s LiteLLM cold start in CI.
+// Up starts services and waits for their Compose health checks.
+// RAPTIX_STARTUP_TIMEOUT_SECONDS overrides the wait budget.
 func (c *Compose) Up(profiles ...string) error {
 	args := []string{}
 	for _, p := range profiles {
@@ -227,23 +165,16 @@ func (c *Compose) Down() error {
 	return c.run(args, false)
 }
 
-// DownAndPurge tears down containers, networks, and named volumes. Used by
-// `raptix remove` so a full uninstall doesn't leave gigabytes of
-// postgres/neo4j data behind.
+// DownAndPurge removes containers, networks and named volumes during uninstall.
 func (c *Compose) DownAndPurge() error {
 	args := AllProfiles()
 	args = append(args, "down", "--volumes", "--remove-orphans")
 	return c.run(args, false)
 }
 
-// Pull pulls images for services with a version tag. An explicit version
-// argument overrides the .version file (used by the updater right after a
-// new release lands). Empty version → fall back to whatever .version says.
+// Pull uses the supplied version, falling back to the installed version.
 func (c *Compose) Pull(version string) error {
 	cmd := exec.Command(c.Runtime.Bin, append(c.baseArgs(), "pull")...)
-	// Base off composeEnv so the stack-name + runtime injections apply
-	// here too; an explicit version arg overrides the .version-derived
-	// RAPTIX_VERSION (later entries win in the child process env).
 	env := c.composeEnv()
 	if version != "" {
 		env = append(env, "RAPTIX_VERSION="+imageTag(version))
@@ -273,10 +204,7 @@ func (c *Compose) Stop(services ...string) error {
 	return c.run(args, false)
 }
 
-// UpServices starts only the named services (compose also starts their
-// depends_on dependencies) and waits for healthchecks. Used when the rest
-// of the shared stack is already running, e.g. `raptix web start
-// --start-infra=false`.
+// UpServices starts the named services and their dependencies, then waits for health checks.
 func (c *Compose) UpServices(services ...string) error {
 	args := append([]string{"up", "-d", "--no-build", "--wait", "--wait-timeout", startupTimeoutSeconds()}, services...)
 	return c.run(args, false)
@@ -297,10 +225,7 @@ func (c *Compose) Exec(service string, command ...string) error {
 	return c.run(args, false)
 }
 
-// CleanScratch removes legacy root-level scratch/session directories inside
-// the running sandbox. Current bash tooling writes these directories under
-// each engagement workspace; this cleanup only retires leftovers from older
-// versions.
+// CleanScratch removes pre-engagement scratch and session directories from the sandbox.
 func (c *Compose) CleanScratch() {
 	cmd := exec.Command(
 		c.Runtime.Bin,

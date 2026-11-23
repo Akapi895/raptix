@@ -15,10 +15,8 @@ type Orphan struct {
 	State         string `json:"state"`
 }
 
-// FindOrphans lists the containers labelled as owned by one deployment and returns those whose environment is not in
-// known. It is read-only: one docker ps, no change to any container or volume. Volumes are not listed because the
-// controller does not label them; their names carry the environment stem, which the operator checks against the
-// report.
+// FindOrphans reports owned containers whose environments are no longer known.
+// The check is read-only and excludes unlabeled volumes.
 func FindOrphans(ctx context.Context, runner Runner, deploymentID string, known map[string]bool) ([]Orphan, error) {
 	if deploymentID == "" {
 		return nil, fmt.Errorf("%w: deployment id is required", errInvalidSpec)

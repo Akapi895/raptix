@@ -14,10 +14,7 @@ import (
 	"time"
 )
 
-// Server is the HTTP API the agent calls. It binds to a Unix-domain
-// socket — never to TCP — and a langgraph-only bind-mount is the
-// capability grant. ADR-0006 §1' and §6 (Anthropic Claude Code
-// sandboxing, Vercel Sandbox, Fly Machines) converge on this shape.
+// Server exposes the workload API through a Unix socket mounted only in the runtime container.
 type Server struct {
 	Backend   Backend
 	Allowlist *Allowlist
@@ -39,14 +36,9 @@ func NewServer(backend Backend, allow *Allowlist, logger *slog.Logger) *Server {
 	}
 }
 
-// Listen binds the UDS at socketPath and runs the HTTP server. The
-// caller is responsible for cleaning up the socket file on shutdown
-// (Serve does the unlink before binding to recover from a stale file
-// left by a previous crash).
+// Listen binds the Unix socket. The caller cleans up the socket after shutdown.
 func (s *Server) Listen(ctx context.Context, socketPath string) error {
-	// Stale socket file from a previous unclean shutdown would
-	// otherwise fail the bind. Removing a non-socket inode would be
-	// destructive, so guard with an os.Stat first.
+	// Remove a stale socket before binding. Refuse to delete other file types.
 	if info, err := os.Stat(socketPath); err == nil {
 		if info.Mode()&os.ModeSocket == 0 {
 			return fmt.Errorf("opscontrol: %s exists and is not a socket; refusing to overwrite", socketPath)
@@ -102,10 +94,7 @@ func (s *Server) mux() http.Handler {
 	return mux
 }
 
-// healthResponse is the envelope `/v1/health` returns. The allowlist
-// is included so a misconfigured allowlist (e.g., bad
-// RAPTIX_OPS_ALLOWLIST_EXTRA) is caught by operators without
-// reading daemon logs.
+// healthResponse reports daemon health and the effective allowlist.
 type healthResponse struct {
 	OK        bool     `json:"ok"`
 	Backend   string   `json:"backend"`
@@ -132,23 +121,12 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 	}
 	engagementID := strings.TrimSpace(r.URL.Query().Get("engagement"))
 
-	// Async control plane (ADR-0006 §1' converges with Fly Machines /
-	// Modal Sandbox / Anthropic Bash run_in_background): the HTTP
-	// handler returns IMMEDIATELY with the registry state. Long-running
-	// compose calls (BHCE cold start measured 90-300s) run in a
-	// goroutine bound to the daemon's own context, and the
-	// OpsControlNotificationMiddleware delivers state transitions to
-	// the agent through <system-reminder> blocks on its next turn.
-	// Holding the HTTP request open for 5+ minutes invites
-	// load-balancer timeouts, NAT eviction, and silent client
-	// disconnects — none of which the agent loop can recover from.
+	// Return the initial state immediately. Lifecycle work can outlast the HTTP request.
 
 	lock := s.Registry.lockFor(workload)
 	lock.Lock()
 
-	// State-aware fast paths run while holding the lock so a
-	// race-in second request observes the in-flight Starting state
-	// instead of duplicating the spawn.
+	// Check state under the workload lock to avoid starting it twice.
 	if existing, ok := s.Registry.get(workload); ok {
 		switch existing.State {
 		case StateRunning, StateStarting:
@@ -164,11 +142,7 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 
 	s.Registry.set(workload, StateStarting, engagementID)
 
-	// The goroutine owns the lock for the full duration of the spawn.
-	// We deliberately use a daemon-scoped context, not r.Context() —
-	// the request returns in milliseconds, so a request-scoped
-	// context would cancel compose mid-spawn the moment the client
-	// disconnects.
+	// The goroutine holds the workload lock. Use the daemon context so an HTTP disconnect cannot cancel startup.
 	go func() {
 		defer lock.Unlock()
 		ctx := context.Background()
@@ -204,25 +178,12 @@ func (s *Server) handleStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Async control plane — same shape as handleStart. The HTTP
-	// handler returns IMMEDIATELY with state: "stopping"; the
-	// long-running `compose stop` + `compose rm -fs` (which can
-	// take a minute+ on a BHCE Neo4j shutdown) runs in a goroutine
-	// bound to a daemon-scoped context. The previous synchronous
-	// implementation tied the compose call to `r.Context()`, so if
-	// the agent's ops_stop tool-result chunked-response was cut
-	// short the compose call was cancelled mid-shutdown and the
-	// registry was never flipped to "stopped" — even though docker
-	// itself had brought the containers down. The middleware then
-	// missed the running->stopped transition and the agent waited
-	// forever for an auto-notification that never came.
+	// Use the daemon context for shutdown so the registry can record the outcome after the HTTP request ends.
 
 	lock := s.Registry.lockFor(workload)
 	lock.Lock()
 
-	// Preserve the engagement tag across stop so the cleanup audit
-	// trail (workloadsForEngagement) and the middleware-injected
-	// reminder still carry the originating engagement id.
+	// Keep the engagement ID so notifications and cleanup records can still identify the workload.
 	priorEngagement := ""
 	if existing, ok := s.Registry.get(workload); ok {
 		priorEngagement = existing.EngagementID
@@ -244,12 +205,7 @@ func (s *Server) handleStop(w http.ResponseWriter, r *http.Request) {
 		defer lock.Unlock()
 		ctx := context.Background()
 		if err := s.Backend.Stop(ctx, workload); err != nil {
-			// Mark Unknown so the middleware emits a transition
-			// reminder and the agent stops waiting for a clean
-			// "stopped". The actual container state on the docker
-			// daemon may be partially-down at this point; the
-			// agent + operator can reconcile via `ops_status` or
-			// `docker ps`.
+			// Report Unknown when shutdown leaves the container state uncertain.
 			s.Registry.set(workload, StateUnknown, priorEngagement)
 			s.Logger.Error("opscontrol stop failed",
 				"workload", workload,
@@ -272,20 +228,14 @@ func (s *Server) handleStop(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// cleanupResponse summarizes a bulk engagement teardown so the agent
-// can confirm what was stopped (or surface which workloads errored
-// out and stayed up).
+// cleanupResponse reports the outcomes of a bulk engagement teardown.
 type cleanupResponse struct {
 	Engagement string   `json:"engagement"`
 	Stopped    []string `json:"stopped"`
 	Errors     map[string]string `json:"errors,omitempty"`
 }
 
-// engagementName matches what RFC 1123-style identifiers and our
-// engagement picker emit. We are intentionally lax (allow dots /
-// underscores) because engagement IDs are operator-chosen and have
-// no shell-injection blast radius — the daemon only uses the ID as a
-// registry key, never as a shell argument.
+// engagementName accepts dots and underscores. IDs are used only as registry keys.
 var engagementName = regexp.MustCompile(`^[A-Za-z0-9._-]{1,128}$`)
 
 func (s *Server) handleCleanupEngagement(w http.ResponseWriter, r *http.Request) {

@@ -1,11 +1,4 @@
-/**
- * Capability wire contract for `GET /api/capabilities`.
- *
- * Flags describe what the system supports/has available; they never replace
- * server authorization. Reason strings come from the server (e.g.
- * "runtime_unavailable", "not_verified", "service_missing") and are not
- * enumerated here so the server can add reasons without a contract bump.
- */
+/** Capability availability and server-defined reasons. The server enforces authorization. */
 import { isNonEmptyString, isRecord } from './guards.js'
 
 export interface Capability {
@@ -29,10 +22,7 @@ export interface CapabilitiesDocument {
   mode: string
   /** Stable, non-secret installation identity; absent on older servers. */
   deploymentId?: string
-  /**
-   * Who may decide a workflow item. `required` keeps the four-eyes rule (the author never decides their own item);
-   * `single-operator` lets the same person decide it (ADR-0100). Absent on older servers, which mean `required`.
-   */
+  /** Single-operator mode allows self-approval. The required policy uses a second reviewer and is the fallback. */
   independentReview?: 'required' | 'single-operator'
   capabilities: Record<string, Capability>
 }

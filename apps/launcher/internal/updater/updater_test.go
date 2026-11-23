@@ -29,9 +29,7 @@ func TestCompareVersions(t *testing.T) {
 		{"1.10.0", "1.9.0", false},
 		{"2.0.0", "1.99.99", false},
 		{"0.9.9", "1.0.0", true},
-		// SemVer §11 prerelease precedence: a prerelease is LOWER than
-		// its associated normal version. Matters for the `latest`
-		// channel, which surfaces -rc builds.
+		// A prerelease sorts before the final release with the same version.
 		{"1.2.0-rc.1", "1.2.0", true},      // rc → final is an update
 		{"1.2.0", "1.2.0-rc.1", false},     // final → rc is NOT an update (downgrade)
 		{"1.2.0-rc.1", "1.2.0-rc.2", true}, // rc.1 → rc.2 is an update
@@ -86,48 +84,13 @@ func TestDisplayVersion(t *testing.T) {
 	}
 }
 
-func TestFetchLatestRelease_Mock(t *testing.T) {
-	release := Release{
-		TagName: "v1.2.0",
-		Assets: []Asset{
-			{Name: "raptix-linux-amd64", BrowserDownloadURL: "https://example.com/binary"},
-		},
-	}
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(release)
-	}))
-	defer server.Close()
-
-	// Can't easily test FetchLatestRelease without changing the URL,
-	// so we test the JSON parsing directly
-	resp, err := http.Get(server.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	var got Release
-	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
-		t.Fatal(err)
-	}
-
-	if got.TagName != "v1.2.0" {
-		t.Errorf("TagName = %q, want v1.2.0", got.TagName)
-	}
-	if len(got.Assets) != 1 || got.Assets[0].Name != "raptix-linux-amd64" {
-		t.Errorf("Assets = %v", got.Assets)
-	}
-}
-
 func TestFetchRelease_LatestUsesReleasesLatestEndpoint(t *testing.T) {
-	// latest = newest FINAL release immediately. GitHub's /releases/latest
-	// already excludes pre-releases and drafts.
+	asset := Asset{Name: "raptix-linux-amd64", BrowserDownloadURL: "https://example.com/binary"}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/releases/latest" {
 			t.Errorf("latest channel must call /releases/latest, got %q", r.URL.Path)
 		}
-		json.NewEncoder(w).Encode(Release{TagName: "v1.3.0"})
+		json.NewEncoder(w).Encode(Release{TagName: "v1.3.0", Assets: []Asset{asset}})
 	}))
 	defer srv.Close()
 	defer withAPIBaseURL(srv.URL)()
@@ -138,6 +101,9 @@ func TestFetchRelease_LatestUsesReleasesLatestEndpoint(t *testing.T) {
 	}
 	if rel.TagName != "v1.3.0" {
 		t.Errorf("TagName = %q, want v1.3.0", rel.TagName)
+	}
+	if len(rel.Assets) != 1 || rel.Assets[0] != asset {
+		t.Errorf("Assets = %v, want a single %v", rel.Assets, asset)
 	}
 }
 
@@ -256,11 +222,7 @@ func TestPromptIfUpdateAvailable_SkipsDevBuilds(t *testing.T) {
 }
 
 func TestPromptIfUpdateAvailable_SkipsNonInteractive(t *testing.T) {
-	// Test runs are always non-interactive (stdin is the test harness
-	// pipe), so PromptIfUpdateAvailable must fall straight through
-	// without ever calling huh.Run. A non-zero version that would
-	// otherwise fail the "is dev?" gate is safe — the function returns
-	// silently on the TTY check before fetching anything.
+	// Non-interactive stdin must not open the confirmation form.
 	applied, err := PromptIfUpdateAvailable("0.0.0", ChannelStable)
 	if err != nil {
 		t.Errorf("PromptIfUpdateAvailable err = %v", err)
@@ -276,7 +238,6 @@ func TestApplyUpdate_NilRelease(t *testing.T) {
 	}
 }
 
-// ---- downloadFile ----
 
 func TestDownloadFile_Success(t *testing.T) {
 	want := "hello from mock server"
@@ -347,12 +308,9 @@ func TestDownloadFile_NetworkError(t *testing.T) {
 	}
 }
 
-// ---- SelfUpdate ----
 
 func TestSelfUpdate_NoMatchingAsset(t *testing.T) {
-	// A release whose only asset targets a different platform should
-	// fail with an error that names the current GOOS/GOARCH so the
-	// operator knows why the binary was not replaced.
+	// Check that the error identifies the platform when the release has no matching binary.
 	release := &Release{
 		TagName: "v9.9.9",
 		Assets:  []Asset{{Name: "raptix-plan9-mips", BrowserDownloadURL: "http://localhost/plan9"}},
@@ -487,7 +445,6 @@ func TestCleanupOldBinary_WindowsRemovesStaleBackup(t *testing.T) {
 	}
 }
 
-// ---- WriteVersion ----
 
 func TestWriteVersion_StripsVPrefix(t *testing.T) {
 	dir := t.TempDir()
@@ -521,7 +478,6 @@ func TestWriteVersion_NoPrefix(t *testing.T) {
 	}
 }
 
-// ---- ApplyUpdate ----
 
 func TestApplyUpdate_ConfigFailurePreventsVersionChange(t *testing.T) {
 	home := t.TempDir()
@@ -548,9 +504,7 @@ func TestApplyUpdate_ConfigFailurePreventsVersionChange(t *testing.T) {
 }
 
 func TestAutoUpdateIfAvailable_SkipsDevBuilds(t *testing.T) {
-	// "dev" / empty version is a local build that does not track published
-	// releases — the unattended AUTO_UPDATE path must no-op without any
-	// GitHub round-trip (mirrors PromptIfUpdateAvailable's dev gate).
+	// Dev builds must return without contacting GitHub.
 	for _, v := range []string{"dev", ""} {
 		applied, err := AutoUpdateIfAvailable(v, ChannelStable)
 		if err != nil {

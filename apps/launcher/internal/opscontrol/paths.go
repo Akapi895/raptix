@@ -1,9 +1,4 @@
-// Package opscontrol implements the ADR-0006 agent-driven container
-// lifecycle daemon and its Backend Protocol.
-//
-// The daemon is the only process that holds the docker socket; the
-// agent calls into it over a Unix-domain socket bind-mounted into
-// langgraph (and only langgraph). See docs/security/sandbox-isolation.md.
+// Package opscontrol manages workload lifecycle on the host. The runtime reaches it over a Unix socket.
 package opscontrol
 
 import (
@@ -14,21 +9,13 @@ import (
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
 )
 
-// StackName returns the value of RAPTIX_STACK_NAME, sanitized to
-// match the same `[a-z0-9-]{1,32}` shape we accept in compose object
-// names. Empty when the user has not opted into a named stack.
-//
-// Stack-aware paths let two stacks (e.g., the default install and an
-// engagement-isolation dogfood install) coexist on the same host
-// without colliding socket/PID files or systemd unit names.
+// StackName returns the sanitized RAPTIX_STACK_NAME or an empty string for the default stack.
 func StackName() string {
 	name := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
 	if name == "" {
 		return ""
 	}
-	// Conservative: only [a-z0-9-]{1,32}. The compose-side container
-	// naming already accepts this, and stricter here means a malformed
-	// stack name never lands in a unit file or socket path.
+	// Restrict stack names before using them in unit names and socket paths.
 	if len(name) > 32 {
 		name = name[:32]
 	}
@@ -55,45 +42,25 @@ func stackSuffix() string {
 	return ""
 }
 
-// HostSocketPath returns the host-side path of the opscontrol UDS.
-// ADR-0006 §1' specifies /var/run/raptix-ops.sock for the
-// container-internal mount; the host path is rooted under
-// $RAPTIX_HOME so rootless / WSL2 / Mac users do not need write
-// access to /var/run. Compose maps the host path → the ADR-mandated
-// container path.
-//
-// Stack-scoped form (RAPTIX_STACK_NAME=stack2):
-//
-//	$RAPTIX_HOME/run/ops.stack2.sock
+// HostSocketPath keeps a separate socket for each stack under RAPTIX_HOME/run.
 func HostSocketPath() string {
 	return filepath.Join(config.RaptixHome(), "run", "ops"+stackSuffix()+".sock")
 }
 
-// ContainerSocketPath is the ADR-0006 §1' mandated path inside the
-// langgraph container. The Python OpsControlClient defaults to it.
-// This path is stack-agnostic — each stack gets its own langgraph
-// container, so the in-container path can stay constant.
+// ContainerSocketPath is constant because each stack has its own runtime container.
 const ContainerSocketPath = "/var/run/raptix-ops.sock"
 
-// PIDFilePath returns the location of the daemon's PID file. Used by
-// `raptix start` to detect whether a daemon is already running
-// and by `raptix stop` to send SIGTERM.
-//
-// Stack-scoped form: $RAPTIX_HOME/run/opscontrol.stack2.pid
+// PIDFilePath keeps a separate daemon PID file for each stack.
 func PIDFilePath() string {
 	return filepath.Join(config.RaptixHome(), "run", "opscontrol"+stackSuffix()+".pid")
 }
 
-// EnsureRunDir creates $RAPTIX_HOME/run with mode 0700. Idempotent.
-// Used by both the launcher (before spawning the daemon) and the
-// daemon itself (before binding the socket).
+// EnsureRunDir creates the private directory for the daemon socket and PID file.
 func EnsureRunDir() error {
 	return os.MkdirAll(filepath.Join(config.RaptixHome(), "run"), 0o700)
 }
 
-// ServiceUnitName returns the OS-native service identifier for the
-// current stack. systemd uses it as the .service basename; launchd
-// uses it as the label. Stack-scoped form: "raptix-opscontrol-stack2".
+// ServiceUnitName includes the stack name to keep service definitions separate.
 func ServiceUnitName() string {
 	suffix := StackName()
 	if suffix == "" {
@@ -102,33 +69,11 @@ func ServiceUnitName() string {
 	return "raptix-opscontrol-" + suffix
 }
 
-// ComposeProjectEnv is the explicit override env var. Setting it pins
-// both the launcher's and the daemon's compose project so dynamic
-// workloads spawn INTO that project alongside any services the user
-// already manages there (vendor-dev compose stack, plugin-managed
-// projects, etc.) rather than into a separate "raptix" project.
+// ComposeProjectEnv overrides the project for both the launcher and the daemon.
 const ComposeProjectEnv = "RAPTIX_COMPOSE_PROJECT"
 
-// ComposeProjectName returns the docker compose `-p PROJECT` value
-// the launcher AND the daemon must both pass on every compose call.
-//
-// Resolution order:
-//
-//  1. RAPTIX_COMPOSE_PROJECT env — explicit user override. Use
-//     this to target an existing compose project (e.g. set
-//     RAPTIX_COMPOSE_PROJECT=raptix-vendor-dev so ops_start("ad")
-//     adds bhce to the running vendor-dev stack rather than spinning
-//     up its own raptix-* containers).
-//  2. Stack-name fallback — "raptix[-${RAPTIX_STACK_NAME}]".
-//     Stable, deterministic, never hardcoded into the binary.
-//
-// The point of having a single helper called from both sides is that
-// "container_name:" fields in docker-compose.yml are global to the
-// docker daemon — two compose projects competing for the same
-// container_name produce "Conflict. The container name
-// '/raptix-…' is already in use". This helper plus
-// ComposeCommandEnv guarantee the launcher and the opscontrol daemon
-// agree on the same project.
+// ComposeProjectName uses RAPTIX_COMPOSE_PROJECT first, then raptix with the optional stack suffix.
+// A shared name avoids container name conflicts between launcher and daemon.
 func ComposeProjectName() string {
 	if v := strings.TrimSpace(os.Getenv(ComposeProjectEnv)); v != "" {
 		return v
@@ -140,26 +85,8 @@ func ComposeProjectName() string {
 	return "raptix-" + suffix
 }
 
-// ComposeCommandEnv returns the environment every docker compose call
-// should run with. Both the launcher's Compose wrapper and the
-// daemon's DockerComposeBackend pass this slice to exec.Cmd so the
-// two never disagree on container_name interpolation
-// (RAPTIX_STACK_NAME) or project name (RAPTIX_COMPOSE_PROJECT).
-//
-// Why this matters: compose interpolates ${RAPTIX_STACK_NAME} into
-// the container_name field of every service. If the launcher process
-// has it unset and the daemon process has it set (via the
-// --env-file fallback), the two write DIFFERENT container_name values
-// into the SAME compose project. The next `compose up` from either
-// side then sees "config drift", marks the existing containers
-// "Recreate", and tears them down mid-engagement.
-//
-// Normalisation:
-//
-//   - If the variable is missing from the process environment, we
-//     append "VAR=" to the returned env. That forces compose to
-//     interpolate the empty string (not the --env-file value, not
-//     the literal "${VAR}" placeholder).
+// ComposeCommandEnv keeps project and container names consistent between Compose callers.
+// Empty process values take precedence over conflicting .env settings.
 func ComposeCommandEnv() []string {
 	env := os.Environ()
 	for _, key := range []string{
@@ -170,22 +97,7 @@ func ComposeCommandEnv() []string {
 			env = append(env, key+"=")
 		}
 	}
-	// COMPOSE_PROFILES is special: docker compose treats it as an
-	// implicit `--profile` source whose values UNION with explicit
-	// `--profile X` flags. ADR-0006 turns specialist workloads into
-	// agent-driven spawns, so the only legal source of profile
-	// activation is the launcher's `--profile cli` and the daemon's
-	// `--profile <workload>`. Force COMPOSE_PROFILES="" in every
-	// compose subprocess so a pre-ADR-0006 install's
-	// `COMPOSE_PROFILES=c2-sliver` in $RAPTIX_HOME/.env does not
-	// silently bleed into every up/stop/config call -- if it does,
-	// compose merges that c2-sliver into the daemon's "ad" call and
-	// the launcher's "cli" call alike, the resulting config-hash
-	// drifts between them, and ops_start tags every live container
-	// "Recreate" mid-engagement.
-	//
-	// Last-set-wins in child env so this OVERRIDES whatever the
-	// parent process inherited from .env or the operator's shell.
+	// Clear COMPOSE_PROFILES in the child so only explicitly selected profiles start.
 	env = append(env, "COMPOSE_PROFILES=")
 	return env
 }

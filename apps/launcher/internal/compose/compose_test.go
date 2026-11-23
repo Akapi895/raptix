@@ -6,10 +6,6 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	// filepath.Join is OS-aware (LF separators on Unix, backslash on
-	// Windows). Use t.TempDir() to get a valid path on whatever runner
-	// executes the test rather than hardcoding a /tmp path that doesn't
-	// exist on Windows.
 	home := t.TempDir()
 	t.Setenv("RAPTIX_HOME", home)
 	c := New()
@@ -49,12 +45,7 @@ func TestBaseArgs(t *testing.T) {
 		EnvFile:     "/test/.env",
 	}
 	args := c.baseArgs()
-	// Expected shape: ["compose", "-p", "raptix", "-f",
-	//                  "/test/docker-compose.yml", "--env-file", "/test/.env"]
-	// `-p raptix` is explicit so the launcher and the opscontrol
-	// daemon both target the same compose project; otherwise the
-	// daemon's no-`-p` default ("raptix" via dir basename) drifts
-	// the moment any caller passes `-p X` themselves.
+	// Keep the project name explicit so the launcher and host daemon target the same stack.
 	want := []string{
 		"compose",
 		"-p", "raptix",

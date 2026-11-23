@@ -3,7 +3,7 @@
 Backend-for-frontend for `apps/ui-app` (ADR-0106). Translates Raptix's domain
 model (OPPLAN/`EngagementContext`, capability runtime, AKG, asset-map,
 governance, closure, scope, vault...) into the contract `apps/ui-app` already
-speaks (`apps/ui-app/docs/openapi.yaml`, `apps/ui-app/docs/api-contracts.md`).
+speaks, as described in `apps/ui-app/docs/openapi.yaml`.
 
 **Tier 1-7 are done** — this is the last planned tier; see
 `docs/architecture/web-integration.md` §2/§5

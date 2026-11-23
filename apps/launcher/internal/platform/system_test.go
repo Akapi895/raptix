@@ -86,10 +86,6 @@ func TestOSLabel(t *testing.T) {
 	}
 }
 
-// TestDockerHint_ComposeMissing exercises the Compose-v2-not-installed
-// branch — Docker engine itself is running but the `docker compose`
-// subcommand fails. Common on RHEL/CentOS where docker-compose v1 is
-// shipped as a separate package.
 func TestDockerHint_ComposeMissing(t *testing.T) {
 	si := SystemInfo{
 		OS:               "linux",
@@ -109,10 +105,6 @@ func TestDockerHint_ComposeMissing(t *testing.T) {
 	}
 }
 
-// TestDockerHint_LinuxDaemonStopped covers the Linux-non-WSL branch
-// that points the user at `systemctl start docker` instead of Docker
-// Desktop. Without this case, the launcher would show the macOS / WSL
-// "Start Docker Desktop" hint to a Kali / Debian / Arch user — wrong UX.
 func TestDockerHint_LinuxDaemonStopped(t *testing.T) {
 	si := SystemInfo{
 		OS:              "linux",
@@ -126,10 +118,6 @@ func TestDockerHint_LinuxDaemonStopped(t *testing.T) {
 	}
 }
 
-// TestDockerHint_WSLDaemonStopped covers the WSL-on-Windows branch
-// where the right remediation is "Start Docker Desktop on Windows",
-// not `systemctl` (which won't work — WSL2 typically doesn't run
-// systemd, and Docker Desktop integration is the supported path).
 func TestDockerHint_WSLDaemonStopped(t *testing.T) {
 	si := SystemInfo{
 		OS:              "linux",
@@ -146,10 +134,6 @@ func TestDockerHint_WSLDaemonStopped(t *testing.T) {
 	}
 }
 
-// TestDockerHint_PerOSInstallURL verifies the install URL points at the
-// correct vendor docs per OS. A Windows user being told to install
-// Docker Engine (Linux package) is a UX failure that wastes ~10
-// minutes of operator time on first run.
 func TestDockerHint_PerOSInstallURL(t *testing.T) {
 	cases := []struct {
 		os       string
@@ -167,19 +151,13 @@ func TestDockerHint_PerOSInstallURL(t *testing.T) {
 	}
 }
 
-// TestDetect_ComposeAvailableWhenDockerInstalled checks the happy path
-// where both `docker info` and `docker compose version` succeed; the
-// existing TestDetectDockerFlags only exercises the failure branch.
 func TestDetect_ComposeAvailableWhenDockerInstalled(t *testing.T) {
 	origProbe := dockerProbe
 	defer func() { dockerProbe = origProbe }()
 
 	dockerProbe = func(args ...string) bool { return true }
 	si := Detect()
-	// Detect() only sets compose/running flags when the `docker` binary
-	// is on PATH. On a runner without docker installed, these will be
-	// false regardless of the probe stub. Skip in that case rather than
-	// asserting an environment-dependent invariant.
+	// Detect checks for the Docker binary before calling the stub, so skip if Docker is absent.
 	if !si.DockerInstalled {
 		t.Skip("docker binary not on PATH for this runner")
 	}
@@ -191,9 +169,6 @@ func TestDetect_ComposeAvailableWhenDockerInstalled(t *testing.T) {
 	}
 }
 
-// TestLinuxDistroIgnoresQuotedValues exercises the unquoting logic so
-// distros that don't quote PRETTY_NAME (Arch, some Debian rolling
-// builds) parse correctly.
 func TestLinuxDistroIgnoresQuotedValues(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("LinuxDistro only reads /etc/os-release on Linux")

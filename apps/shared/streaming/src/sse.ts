@@ -1,4 +1,4 @@
-/** Incremental SSE framing. IDs are explicit wire cursors, never event identities. */
+/** Parse SSE chunks and retain explicit replay cursors. */
 export interface SseFrame { event: string; data: string; id?: string }
 export class SseFrameError extends Error {
   public constructor() { super('SSE frame exceeds its bounded framing contract'); this.name = 'SseFrameError'; }

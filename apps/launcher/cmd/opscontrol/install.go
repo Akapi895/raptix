@@ -33,14 +33,7 @@ func runInstall(_ *cobra.Command, _ []string) error {
 	return EnsureInstalled()
 }
 
-// EnsureInstalled is the shared entry point used by `raptix
-// opscontrol install` and by the onboard wizard's post-config hook.
-// Idempotent: re-running rewrites the unit (so a launcher upgrade
-// updates the ExecStart path), then re-enables and restarts.
-//
-// On hosts without a recognized service manager this returns nil
-// after logging a note — the launcher's spawn fallback continues to
-// work, so onboard should not bail.
+// EnsureInstalled refreshes the managed unit or leaves startup to the launcher on unsupported hosts.
 func EnsureInstalled() error {
 	mgr := internal.DetectServiceManager()
 	if !mgr.Available() {
@@ -54,11 +47,7 @@ func EnsureInstalled() error {
 		return fmt.Errorf("opscontrol: resolve binary path: %w", err)
 	}
 
-	// systemd's ReadWritePaths= refuses to set up the unit's mount
-	// namespace if the path does not exist yet. Pre-create the home
-	// directory and its run/ subdirectory so the very first start
-	// after install succeeds. (Onboard normally creates these too;
-	// this is the standalone `raptix opscontrol install` path.)
+	// Create the directories before systemd applies ReadWritePaths.
 	homePath := config.RaptixHome()
 	if err := os.MkdirAll(homePath, 0o700); err != nil {
 		return fmt.Errorf("opscontrol: pre-create home: %w", err)
@@ -78,11 +67,7 @@ func EnsureInstalled() error {
 		return err
 	}
 
-	// systemd's `enable --now` returns as soon as the unit transitions
-	// out of `inactive` — the daemon may still be `activating` when
-	// the call returns. Poll until either `active` or the deadline
-	// expires; failing fast on the first inactive read produced a
-	// confusing "installed but not active" message in PR review.
+	// The service may still be activating after enable --now returns.
 	if err := waitForActive(mgr, 10*time.Second); err != nil {
 		return err
 	}
@@ -91,14 +76,7 @@ func EnsureInstalled() error {
 	return nil
 }
 
-// waitForActive polls until BOTH (a) mgr.Active() returns true AND
-// (b) the host socket file exists as a real Unix socket. Checking
-// only Active() is fragile: a unit that crash-loops via
-// Restart=on-failure can flicker through `active`/`activating` states
-// before the daemon has bound the socket — a stale "active" snapshot
-// then lets install report success against a daemon that actually
-// never started. Socket existence is the load-bearing signal because
-// the agent contract IS the socket.
+// waitForActive requires an active unit and a Unix socket. A restarting unit may briefly appear active.
 func waitForActive(mgr internal.ServiceManager, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	socketPath := internal.HostSocketPath()

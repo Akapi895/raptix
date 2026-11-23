@@ -26,10 +26,8 @@ type Config struct {
 	Runner Runner
 }
 
-// Ensure starts the sandbox of one project and returns once its container is healthy. It is the only path that creates
-// a project sandbox: the web API calls it when a project is created. It creates the project's own volume with the
-// compose file, and then creates the plan directory inside the container, so no process on the host or in the API
-// writes a project's files.
+// Ensure waits for a healthy project sandbox, then creates its plan directory inside the container.
+// The project volume keeps writes off the host and API filesystems.
 func Ensure(cfg Config, slug string) error {
 	if cfg.Runner == nil || cfg.Bin == "" || cfg.Home == "" || cfg.Key == "" {
 		return fmt.Errorf("sandbox ensure needs a runtime, a home directory, the sandbox key and a runner")

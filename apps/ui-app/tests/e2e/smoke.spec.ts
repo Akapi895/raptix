@@ -41,3 +41,38 @@ test('API documentation has its own entry', async ({ page }) => {
   await expect(page.locator('.api-docs-container')).toBeVisible();
   await expect(page.locator('#csai-mock-badge')).toBeVisible();
 });
+
+test('narrow viewports build the mobile tab bar and drawer head', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openApp(page, 'chat');
+  await expect(page.locator('#m-tabbar')).toBeVisible();
+  await expect(page.locator('#main-sidebar .m-drawer-head')).toHaveCount(1);
+});
+
+test('desktop viewports do not build the mobile chrome', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, 'chat');
+  await expect(page.locator('#m-tabbar')).toHaveCount(0);
+});
+
+test('feature navigation shows concise names and canonical URLs, including old bookmarks', async ({ page }) => {
+  await openApp(page);
+  await page.addStyleTag({ content: '#csai-mock-badge { pointer-events: none; }' });
+  for (const [internal, label, canonical, legacy] of [
+    ['asset-management', 'Assets', 'assets', 'asset-management'],
+    ['webshell', 'WebShell', 'webshell', 'webshell-management'],
+    ['file-management', 'Files', 'files', 'file-management'],
+    ['mcp-management', 'MCP', 'mcp-management', 'mcp'],
+    ['settings', 'Settings', 'settings', 'system-settings'],
+  ] as const) {
+    const nav = internal === 'mcp-management' ? 'mcp' : internal;
+    const link = page.locator(`.nav-item[data-page="${nav}"] .nav-item-content`);
+    await expect(link).toContainText(label);
+    await link.click();
+    await expect(page).toHaveURL(new RegExp(`#${canonical}$`));
+    await expect(page.locator(`#page-${internal}.active h2`).first()).toHaveText(label);
+    await page.evaluate(hash => { location.hash = hash; }, `${legacy}?source=bookmark`);
+    await expect(page).toHaveURL(new RegExp(`#${canonical}\\?source=bookmark$`));
+    await expect(page.locator(`#page-${internal}.active`)).toBeVisible();
+  }
+});

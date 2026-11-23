@@ -78,10 +78,7 @@ func TestDetect_RespectsInvalidOverride(t *testing.T) {
 }
 
 func TestPodmanSocket_ReturnsEmptyWhenNothingExists(t *testing.T) {
-	// Force every search path to a non-existent directory by clearing
-	// XDG_RUNTIME_DIR; getuid() will still be set but the rootless +
-	// rootful paths are very unlikely to exist on a CI runner that
-	// doesn't have podman installed.
+	// Clearing XDG_RUNTIME_DIR leaves only the fallback socket locations.
 	t.Setenv("XDG_RUNTIME_DIR", "/tmp/does-not-exist-raptix-test")
 	// Best-effort: this also succeeds on a runner with Podman
 	// installed, so just check it returns a string (path) or empty.

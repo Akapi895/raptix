@@ -40,7 +40,7 @@ export type WebShellAcquisitionState = (typeof WEB_SHELL_ACQUISITION_STATES)[num
 export const WEB_SHELL_SOURCES = ['manual', 'poc_acquisition'] as const
 export type WebShellSource = (typeof WEB_SHELL_SOURCES)[number]
 
-/** The typed profile a WebShell connection stores. It is data, never a curl string. */
+/** Stored connection profile. */
 export interface WebShellProfile {
   provider: WebShellProvider
   target: string

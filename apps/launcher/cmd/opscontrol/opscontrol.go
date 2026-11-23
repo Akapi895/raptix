@@ -1,13 +1,4 @@
-// Package opscontrol exposes the `raptix opscontrol` Cobra
-// command tree. The daemon's actual HTTP server + Backend live in
-// `internal/opscontrol`; this package wires them into the launcher
-// CLI so the same binary that onboards a user also runs the
-// lifecycle daemon.
-//
-// ADR-0006 §1' specifies a host-binary daemon as the only process
-// that touches the docker socket. Embedding it in the launcher rather
-// than shipping a second binary keeps the OSS release matrix
-// unchanged (single `raptix` artifact) and onboarding simple.
+// Package opscontrol wires the host daemon into the launcher CLI.
 package opscontrol
 
 import "github.com/spf13/cobra"

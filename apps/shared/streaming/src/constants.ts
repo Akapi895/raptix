@@ -1,11 +1,4 @@
-/**
- * Stream configuration constants matching the LangGraph Chat UI reference.
- *
- * Used in both submit() options (Web useStream) and client.runs.stream() (CLI).
- *
- * The streamMode values are typed as a mutable tuple to satisfy the SDK's
- * StreamMode[] type without requiring the SDK as a dependency.
- */
+/** LangGraph stream modes. The mutable tuple matches the SDK input type. */
 export const STREAM_OPTIONS = {
   streamMode: ["values", "messages", "updates", "custom"] as ("values" | "messages" | "updates" | "custom")[],
   streamSubgraphs: true as const,

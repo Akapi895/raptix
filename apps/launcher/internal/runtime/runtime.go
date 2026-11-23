@@ -1,17 +1,5 @@
-// Package runtime detects which container runtime is available on the
-// host (Docker, Podman, or nerdctl) and exposes the binary path plus
-// the right "compose" sub-command so the rest of the launcher can call
-// `Runtime().Bin compose ...` without caring which one is installed.
-//
-// Selection order (first hit wins):
-//  1. $RAPTIX_CONTAINER_RUNTIME explicit override ("docker", "podman", "nerdctl")
-//  2. `docker` on $PATH and `docker info` succeeds (real Docker, Lima/Colima/Rancher Desktop docker shim)
-//  3. `podman` on $PATH and `podman info` succeeds (rootless or rootful Podman 4+)
-//  4. `nerdctl` on $PATH and `nerdctl info` succeeds (containerd-native)
-//
-// On Podman, if a Docker compatibility socket is published, `DOCKER_HOST`
-// is auto-set so any nested tooling (kubectl-with-docker-shim,
-// playwright/testcontainers, etc.) finds the socket.
+// Package runtime selects a reachable Docker, Podman or nerdctl installation.
+// RAPTIX_CONTAINER_RUNTIME overrides the default lookup order.
 package runtime
 
 import (
@@ -30,16 +18,9 @@ type Runtime struct {
 	Name string
 	// Bin is the absolute path of the binary to invoke.
 	Bin string
-	// ComposeArgs is the prefix to prepend before compose sub-arguments.
-	// For Docker this is ["compose"] (Compose v2 plugin). For Podman it
-	// is also ["compose"] when Podman 4.4+ ships the built-in compose
-	// command, OR ["compose"] via the `podman-compose` Python wrapper
-	// (both expose the same `compose -f file up -d` shape).
+	// ComposeArgs holds the subcommand prefix. A standalone Compose wrapper needs no prefix.
 	ComposeArgs []string
-	// DockerHost is the socket the runtime exposes through the Docker API.
-	// For native Docker this is unset. For Podman it points at the
-	// rootless or rootful Podman socket so other Docker-API consumers
-	// keep working.
+	// DockerHost holds the Docker API socket override, when available.
 	DockerHost string
 	// Rootless reports whether the runtime is running unprivileged.
 	// Affects volume-mount semantics + recommended sysctls.
@@ -49,11 +30,8 @@ type Runtime struct {
 	Version string
 }
 
-// Detect runs the selection rules and returns the chosen runtime. It
-// never panics; on failure it returns a zero-value Runtime and an error
-// so the caller can render an installation hint.
+// Detect returns the selected runtime or an error suitable for an installation hint.
 func Detect() (Runtime, error) {
-	// 1. Explicit override
 	if forced := strings.ToLower(strings.TrimSpace(os.Getenv("RAPTIX_CONTAINER_RUNTIME"))); forced != "" {
 		switch forced {
 		case "docker", "podman", "nerdctl":
@@ -84,9 +62,7 @@ func probe(name string) (Runtime, error) {
 	if err != nil {
 		return Runtime{}, fmt.Errorf("%s not on PATH", name)
 	}
-	// `<bin> info` succeeds only when the daemon is reachable. Don't
-	// blindly accept the binary's presence — Docker Desktop might be
-	// installed but stopped.
+	// Probe the daemon because the binary can be installed while the service is stopped.
 	if err := exec.Command(bin, "info").Run(); err != nil {
 		return Runtime{}, fmt.Errorf("%s installed but daemon not reachable: %w", name, err)
 	}
@@ -97,15 +73,11 @@ func probe(name string) (Runtime, error) {
 
 	switch name {
 	case "podman":
-		// Try the well-known rootless + rootful socket paths and stick
-		// the first existing one into DOCKER_HOST so anything else that
-		// speaks the Docker API auto-finds Podman's compatibility socket.
+		// Reuse the first available Podman compatibility socket for Docker API clients.
 		if sock := podmanSocket(); sock != "" {
 			r.DockerHost = "unix://" + sock
 		}
-		// `podman compose` is built-in from Podman 4.4 onward; older
-		// installs need the separate `podman-compose` Python wrapper.
-		// Fall back to it only if `podman compose --help` rejects.
+		// Use the standalone Podman Compose wrapper only when the built-in command is unavailable.
 		if !hasBuiltinPodmanCompose(bin) {
 			if pc, err := exec.LookPath("podman-compose"); err == nil {
 				r.Bin = pc
@@ -120,9 +92,7 @@ func probe(name string) (Runtime, error) {
 	return r, nil
 }
 
-// podmanSocket returns the path of an existing Podman API socket, or
-// "" if none can be located. Checks rootless ($XDG_RUNTIME_DIR) first,
-// then the rootful default.
+// podmanSocket checks the rootless socket before the system socket.
 func podmanSocket() string {
 	if xdg := os.Getenv("XDG_RUNTIME_DIR"); xdg != "" {
 		p := filepath.Join(xdg, "podman", "podman.sock")
@@ -147,24 +117,18 @@ func podmanSocket() string {
 	return ""
 }
 
-// rootless returns true when the runtime is running without root
-// privileges. Docker Desktop on macOS/Windows is "rootless" from the
-// host's perspective; the linux Docker daemon defaults to rootful.
+// rootless reports whether the runtime runs without host root privileges.
 func rootless(bin, name string) bool {
 	switch name {
 	case "podman":
-		// `podman info --format {{.Host.Security.Rootless}}` returns
-		// "true" or "false". Older Podman doesn't have that key — assume
-		// rootless when the binary path is in $HOME (homebrew, nix).
+		// Fall back to a home-directory heuristic if Podman cannot report its rootless state.
 		out, err := exec.Command(bin, "info", "--format", "{{.Host.Security.Rootless}}").Output()
 		if err == nil {
 			return strings.TrimSpace(string(out)) == "true"
 		}
 		return strings.HasPrefix(bin, os.Getenv("HOME"))
 	case "docker":
-		// Linux Docker is rootful unless explicitly configured (dockerd-
-		// rootless-setuptool.sh). macOS/Windows Docker Desktop is rootless
-		// from the host's perspective.
+		// Desktop runs outside the host's root context. Linux Docker defaults to rootful.
 		if runtime.GOOS == "linux" {
 			// `docker info --format {{.SecurityOptions}}` lists "rootless"
 			// when the daemon is rootless.
@@ -210,9 +174,7 @@ func fileExists(p string) bool {
 	return err == nil
 }
 
-// Apply mutates the provided env slice to include any runtime-derived
-// env vars (DOCKER_HOST for Podman, etc.). Pure: the input slice is not
-// modified — a new slice is returned.
+// Apply adds runtime environment overrides to a new slice.
 func (r Runtime) Apply(env []string) []string {
 	if r.DockerHost == "" {
 		return env

@@ -1,10 +1,4 @@
-/**
- * Error wire contract shared by web-raptix-server responses and browser parsing.
- *
- * The new DTO is `code` + `message` (camelCase public interface). Captured legacy
- * bodies such as `{"error": "..."}` are legacy-raw and intentionally fail
- * {@link isApiError}; the server peer owns the mapping.
- */
+/** Public API errors carry code and message. The server maps legacy error bodies. */
 import { isNonEmptyString, isRecord } from './guards.js'
 
 /** Closed set; extend only in agreement with the server peer and update tests. */
@@ -22,7 +16,7 @@ export function isApiErrorCode(value: unknown): value is ApiErrorCode {
 export interface ApiError {
   code: ApiErrorCode
   message: string
-  /** Opaque structured context; never put secrets or raw backend stack traces here. */
+  /** Public error context. Exclude secrets and backend stack traces. */
   details?: unknown
 }
 

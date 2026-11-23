@@ -1,8 +1,4 @@
-/**
- * Work and findings on one asset (plan phase 6). A finding counts for an asset only when its owning
- * record names that asset; findings without such a reference are reported as unlinked, never guessed
- * from their text, their hostname or the latest run.
- */
+/** Asset activity and findings. Attribution requires an explicit asset reference. */
 import { isAssetMapAssetRef, type AssetMapAssetRef } from './asset-map.js'
 import { isNonEmptyString, isRecord } from './guards.js'
 

@@ -160,15 +160,11 @@ func TestEnvBackfillStepReflectsIntoEnv(t *testing.T) {
 	}
 }
 
-// TestRunAll_ExistingUserUpgrade exercises the fully wired path an existing
-// (pre-endpoint) user hits at `raptix start`: env-backfill adds the
-// telemetry endpoint their .env never had, and the one-time re-consent
-// prompt flips them to research — then never fires again.
+// TestRunAll_ExistingUserUpgrade covers config backfill and one-time consent on upgrade.
 func TestRunAll_ExistingUserUpgrade(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("RAPTIX_HOME", home)
 	envPath := filepath.Join(home, ".env")
-	// A pre-#706 .env: telemetry off, NO endpoint key at all.
 	if err := os.WriteFile(envPath, []byte("RAPTIX_TELEMETRY=off\nANTHROPIC_API_KEY=sk-real\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +204,6 @@ func TestRunAll_ExistingUserUpgrade(t *testing.T) {
 	}
 }
 
-// --- helpers ---
 
 func swapConfirm(answer bool) func() {
 	restore := confirm

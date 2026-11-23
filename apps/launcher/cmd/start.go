@@ -20,7 +20,6 @@ import (
 	"github.com/Akapi895/raptix/apps/launcher/internal/health"
 	"github.com/Akapi895/raptix/apps/launcher/internal/migrate"
 	"github.com/Akapi895/raptix/apps/launcher/internal/platform"
-	"github.com/Akapi895/raptix/apps/launcher/internal/starprompt"
 	"github.com/Akapi895/raptix/apps/launcher/internal/ui"
 	"github.com/Akapi895/raptix/apps/launcher/internal/updater"
 	"github.com/spf13/cobra"
@@ -45,20 +44,7 @@ var (
 	promptUpdateFn = updater.PromptIfUpdateAvailable
 )
 
-// applyAutoUpdate dispatches the self-update check based on AUTO_UPDATE.
-// See the inline comment in start() (section 2.5) for the value table
-// and rationale for default-on behaviour.
-//
-// The `skip` argument is the --no-update CLI flag. When true it
-// short-circuits *before* the env lookup so the operator's one-shot
-// override always wins over the persistent .env setting — including
-// AUTO_UPDATE=true and AUTO_UPDATE=prompt. This is the escape hatch
-// for "I know there's a newer version, I want this exact binary".
-//
-// Unrecognized values (e.g. AUTO_UPDATE=disabled, where the operator
-// probably MEANT "false") fall through to the prompt path rather than
-// silent auto-update. Fail-loud beats fail-silent — an unexpected
-// re-exec is harder to debug than a one-line prompt.
+// applyAutoUpdate honors --no-update before AUTO_UPDATE. Unknown values use the prompt path.
 func applyAutoUpdate(env map[string]string, version string, skip bool) {
 	if skip {
 		return
@@ -81,10 +67,6 @@ func applyAutoUpdate(env map[string]string, version string, skip bool) {
 	}
 }
 
-// skipUpdate is bound to --no-update. One-shot override for the
-// AUTO_UPDATE=true (now default) self-update path: useful in CI, when
-// debugging a specific launcher version, or when intentionally
-// running an older release against a known-good stack.
 var skipUpdate bool
 
 var startCmd = &cobra.Command{
@@ -96,9 +78,7 @@ var startCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(startCmd)
 
-	// PersistentFlag on root → inherited by `start`, so both
-	// `raptix --no-update` (no subcommand → runStart) and
-	// `raptix start --no-update` accept the flag.
+	// The root flag covers both implicit and explicit start.
 	rootCmd.PersistentFlags().BoolVar(&skipUpdate, "no-update", false,
 		"Skip the self-update check for this launch (does not change AUTO_UPDATE in .env)")
 
@@ -108,7 +88,6 @@ func init() {
 }
 
 func runStart(cmd *cobra.Command, args []string) error {
-	// 1. Check .env exists
 	if !config.EnvExists() {
 		ui.Warning("No configuration found. Running setup wizard...")
 		fmt.Println()
@@ -118,31 +97,19 @@ func runStart(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 	}
 
-	// 1.5. One-shot migration for v1.1.7→v1.1.8 upgraders.
-	// Old .env files ship with an active "COMPOSE_PROFILES=c2-sliver"
-	// line that forces every default start to bring up the Sliver C2
-	// container. ADR-0006 routes specialist workloads through ops_start
-	// instead; the stale line is silently rewritten to a comment (with
-	// a one-line notice and a .env.bak backup) before LoadEnv reads it,
-	// so the rest of the boot path sees the post-migration state.
+	// Migrate the legacy default profile before loading .env so optional workloads stay off at boot.
 	if rewrote, mErr := config.MigrateActiveComposeProfiles(config.EnvPath()); mErr != nil {
 		ui.Warning("Could not migrate stale COMPOSE_PROFILES in .env: " + mErr.Error())
 	} else if rewrote {
 		ui.Info("Migrated stale COMPOSE_PROFILES in .env (specialist workloads now spawn via ops_start). Backup at " + config.EnvPath() + ".bak")
 	}
 
-	// 2. Load and validate .env
 	env, err := config.LoadEnv(config.EnvPath())
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
 
-	// 2.1. Apply idempotent config/policy migrations for already-onboarded
-	// users. They never re-run the onboard wizard (step 1 only fires when
-	// .env is absent), so this is how a new release's env keys and policy
-	// changes reach them: env-key backfill (every start) + one-time
-	// interactive re-consent prompts (deferred on non-TTY). New steps plug
-	// into internal/migrate.Registry — no wiring needed here.
+	// Run config migrations for existing installations. Interactive steps wait for a TTY.
 	migrate.RunAll(env)
 
 	if err := config.ValidateAuth(env); err != nil {
@@ -159,13 +126,9 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Docker Compose V2 is required. Got: %s. Upgrade Docker Desktop or install the compose plugin.", strings.TrimSpace(string(out)))
 	}
 
-	// Warn — don't block — if Ollama is selected but the URL doesn't
-	// reach a running server. We translate ``host.docker.internal`` to
-	// ``localhost`` for the host-side probe; from inside the litellm
-	// container the original URL is what gets used at runtime.
+	// Probe Ollama from the host with a translated URL. LiteLLM still uses the configured URL.
 	probeOllamaIfSelected(env)
 
-	// 2.3. Ensure config files exist (docker-compose.yml, litellm.yaml, workspace)
 	home := config.RaptixHome()
 	composePath := filepath.Join(home, "docker-compose.yml")
 	if _, err := os.Stat(composePath); os.IsNotExist(err) {
@@ -175,11 +138,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 			ref = config.Get(env, "RAPTIX_BRANCH", "main")
 		}
 		ui.Info("Downloading configuration files...")
-		// release == nil here: this branch only triggers when compose
-		// files are missing on launch (e.g. user wiped ~/.raptix), so
-		// we lack the prefetched Release object that ApplyUpdate carries.
-		// SyncConfigFiles falls back to unverified download with a
-		// warning — the install.sh path is the verified-by-default entry.
+		// Recovery without release metadata downloads config without checksum verification and warns.
 		if err := updater.SyncConfigFiles(ref, nil); err != nil {
 			return fmt.Errorf("sync config: %w", err)
 		}
@@ -187,9 +146,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 
 	// Ensure workspace directory exists
 	_ = os.MkdirAll(filepath.Join(home, "workspace"), 0o755)
-	// Same for the telemetry dir the langgraph container mounts: if Docker
-	// creates it first it lands root-owned, and the host-side CLI can no longer
-	// write the anonymous install id.
+	// Pre-create the telemetry directory so Docker does not make it root-owned.
 	_ = os.MkdirAll(filepath.Join(home, "telemetry"), 0o755)
 
 	// Ensure RAPTIX_HOME is set in .env (Docker Compose needs absolute path)
@@ -200,15 +157,10 @@ func runStart(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// 2.6. Set CLAUDE_CREDENTIALS_VOLUME for conditional mount in docker-compose.
-	// When the credentials file exists, mount it into litellm. Otherwise mount
-	// /dev/null (NUL on Windows) so docker doesn't create it as a directory.
+	// Use the null device when credentials are absent so Docker cannot create a directory at the mount source.
 	userHome, homeErr := os.UserHomeDir()
 	if homeErr != nil {
-		// A failed home-dir resolution must not fall through to a relative
-		// ".claude/..." path, which os.Stat would resolve against the CWD and
-		// mis-mount. Skip the optional host credential mounts; onboarding can
-		// supply them later.
+		// Skip optional credential mounts if the home directory is unknown.
 		ui.Warning("Could not resolve home directory; skipping host credential mounts: " + homeErr.Error())
 		_ = os.Setenv("CLAUDE_CREDENTIALS_VOLUME", nullDevice())
 		_ = os.Setenv("CODEX_AUTH_VOLUME", nullDevice())
@@ -220,9 +172,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 			_ = os.Setenv("CLAUDE_CREDENTIALS_VOLUME", nullDevice())
 		}
 
-		// Same pattern for the Codex CLI credential store at ~/.codex/auth.json.
-		// The new auth/ ChatGPT handler reads (and writes) this file directly so
-		// a host-side `codex login` flows into the container without a rebuild.
+		// Mount the host Codex credential store so the container can use host logins.
 		codexAuthPath := filepath.Join(userHome, ".codex", "auth.json")
 		if _, statErr := os.Stat(codexAuthPath); statErr == nil {
 			_ = os.Setenv("CODEX_AUTH_VOLUME", codexAuthPath)
@@ -231,35 +181,10 @@ func runStart(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// 2.5. Update check, gated by AUTO_UPDATE in .env:
-	//   unset (default) → fully unattended: apply the update + re-exec
-	//   true / 1 / yes  → same as default (kept for backwards-compat)
-	//   prompt / ask    → interactive prompt on a TTY, passive notice otherwise
-	//   false           → skip entirely (air-gapped / version-pinned deploys)
-	//
-	// Default-on rationale: every released hotfix is dead weight until the
-	// operator picks it up. The previous default ("prompt on TTY, notice
-	// otherwise") meant a bug-fix release sat on the user's machine,
-	// un-applied, until they noticed the notice and re-ran. Silent self-
-	// update collapses the "fix shipped" → "fix running on user host" gap
-	// from days/weeks to the next `raptix start`, which is the same
-	// behaviour Discord/Slack/electron-updater apps already use.
-	//
-	// Synchronous on purpose: the prompt + unattended paths apply and re-exec
-	// before the rest of `start` proceeds. The GitHub fetch fails fast so a
-	// slow network never blocks startup.
+	// Apply updates before startup continues because the updater may replace the current process.
 	applyAutoUpdate(env, version, skipUpdate)
 
-	// 2.6. One-time GitHub star ask. Idempotent across launches — the
-	// ack file at $RAPTIX_HOME/.starred suppresses the prompt
-	// after the user has been through it once. Silent no-op on
-	// non-interactive stdin, so CI / piped invocations are untouched.
-	starprompt.PromptIfNotStarred()
-
-	// 3. Engagement picker — must run BEFORE compose Up so the sandbox
-	// container starts with /workspace bound to the chosen engagement
-	// directory. Without this, the operator would briefly see the whole
-	// workspace through the sandbox before any picking happens.
+	// Select the engagement before Compose binds its workspace.
 	fmt.Println()
 	choice, err := engagement.Select(home)
 	if err != nil {
@@ -270,39 +195,25 @@ func runStart(cmd *cobra.Command, args []string) error {
 	if err := os.Setenv("RAPTIX_ENGAGEMENT_WORKSPACE", choice.WorkspacePath); err != nil {
 		return fmt.Errorf("set engagement workspace env: %w", err)
 	}
-	// Export the engagement slug too: compose interpolates it into the
-	// sandbox + langgraph containers' RAPTIX_ENGAGEMENT, which the bash
-	// tool and the sandbox daemon use as the hard workspace fence
-	// (docs/design/2026-10-07-run-isolation-reproducibility-plan.md D2).
+	// Pass the engagement slug to both containers so workspace boundaries match.
 	if err := os.Setenv("RAPTIX_ENGAGEMENT", choice.Engagement); err != nil {
 		return fmt.Errorf("set engagement slug env: %w", err)
 	}
 
-	// 4. Spawn the opscontrol daemon BEFORE `compose up` so the
-	// langgraph socket bind-mount has a real socket to attach to.
-	// ADR-0006 §1' — daemon owns docker socket; agent reaches it
-	// only via the langgraph-only UDS mount.
+	// Start the daemon before Compose mounts its socket.
 	sock, err := opscontrol.EnsureRunning()
 	if err != nil {
-		// Non-fatal for backwards compatibility with stacks that
-		// have not yet adopted the docker-compose.opscontrol.yml
-		// override: agent ops_* tools will return a "daemon
-		// unreachable" diagnostic rather than crashing the boot.
+		// Startup can continue without the daemon. Optional workloads remain unavailable.
 		ui.Warning("opscontrol daemon not started: " + err.Error())
 	} else if err := os.Setenv("RAPTIX_OPSCONTROL_SOCK_HOST", sock); err != nil {
 		ui.Warning("set RAPTIX_OPSCONTROL_SOCK_HOST: " + err.Error())
 	}
 
-	// 4.5. Refuse to start with default credentials. The compose file
-	// ships sk-raptix-master / raptix as fallbacks so a bare
-	// `docker compose up` still works for dev, but the launcher is the
-	// supported path — a default-keyed LiteLLM proxy on a reachable host
-	// is a free LLM proxy for anyone who finds it. Fail loud with the fix.
+	// Reject the bundled fallback credentials before starting services.
 	if err := checkDefaultCredentials(env); err != nil {
 		return err
 	}
 
-	// 5. Start services
 	c := compose.New()
 
 	ui.Info("Starting Raptix services...")
@@ -310,7 +221,6 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("start services: %w", err)
 	}
 
-	// 5. Health checks
 	if err := health.WaitForServices(env); err != nil {
 		return err
 	}
@@ -323,21 +233,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// probeOllamaIfSelected does a best-effort GET on /api/tags to verify the
-// user's Ollama server is reachable when `ollama_local` is configured.
-// Failures don't block startup — the user might be about to launch
-// Ollama, or running on an unusual setup we can't introspect. We just
-// surface a hint so they aren't surprised by a 'model not found' on the
-// first agent prompt.
-//
-// On WSL2 the probe walks several candidate hosts because there's no
-// single "the host" address: Docker Desktop installs may have
-// host.docker.internal in /etc/hosts; native-WSL Docker installs need
-// the Windows host IP from /etc/resolv.conf; an Ollama running inside
-// the WSL distro itself sits on 127.0.0.1. Whichever returns 2xx wins.
-// checkDefaultCredentials refuses to start when compose fallback credentials
-// are still in effect. A bare docker compose up remains available for dev,
-// while the supported launcher path cannot expose a default-keyed service.
+// checkDefaultCredentials rejects the credentials a bare Compose run uses by default.
 func checkDefaultCredentials(env map[string]string) error {
 	defaults := map[string][]string{
 		"LITELLM_MASTER_KEY": {"sk-raptix-master"},
@@ -407,26 +303,8 @@ func probeOllamaIfSelected(env map[string]string) {
 	))
 }
 
-// candidateProbeURLs returns the URLs the launcher should probe to
-// verify host-side Ollama reachability. The returned list is ordered
-// best-first so the loop short-circuits on the most likely candidate.
-//
-// For URLs that don't reference `host.docker.internal` the list is
-// just the URL itself — the user wired up an explicit address (real
-// IP, DNS name) and we trust it.
-//
-// For `host.docker.internal` the resolution depends on platform:
-//
-//   - Always try the URL verbatim first. Docker Desktop on macOS,
-//     Windows, and WSL2 typically populates /etc/hosts with this name.
-//   - On WSL, also try the Windows host IP found in /etc/resolv.conf.
-//     Native-WSL Docker installs (no Docker Desktop) don't get the
-//     hosts entry, but the Windows host is always the WSL2 default
-//     nameserver, so this catches the "Ollama on Windows" case.
-//   - Always fall back to 127.0.0.1. Native Linux Docker reaches the
-//     host loopback via the `extra_hosts: host-gateway` mapping,
-//     which on the host is just localhost. On WSL this also catches
-//     the "Ollama running inside the WSL distro" case.
+// candidateProbeURLs tries the configured address first. For host.docker.internal,
+// it also tries the Windows host on WSL and then loopback.
 func candidateProbeURLs(raw string) []string {
 	u, err := url.Parse(raw)
 	if err != nil {

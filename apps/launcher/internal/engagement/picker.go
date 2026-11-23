@@ -1,11 +1,5 @@
-// Package engagement scans the host workspace for engagements and runs the
-// launcher-side picker. The picker is split between two libraries:
-//
-//   - The main list (engagement selection + inline delete) is a custom
-//     bubbletea + bubbles/list program because per-item action keys ('d'
-//     for delete) are not in huh's form vocabulary.
-//   - The slug-input prompt that follows "[+] New" stays on huh — it is a
-//     single-field form with regex validation, exactly what huh is for.
+// Package engagement scans the workspace and runs the launcher picker.
+// The list handles per-item deletion, and a separate form validates new slugs.
 package engagement
 
 import (
@@ -61,9 +55,7 @@ func isReady(home, slug string) bool {
 	return true
 }
 
-// ScanEngagements returns every directory under home/workspace/ regardless
-// of completeness. Sort: ready engagements first (most recent RoE), then
-// in-progress engagements (most recent dir mtime).
+// ScanEngagements lists ready directories by RoE timestamp, then incomplete directories by modification time.
 func ScanEngagements(home string) ([]engagementEntry, error) {
 	root := filepath.Join(home, "workspace")
 	entries, err := os.ReadDir(root)
@@ -174,10 +166,7 @@ func (i pickerItem) Description() string {
 }
 
 type pickerKeyMap struct {
-	// Quit reuses the list's built-in `q` / ctrl+c binding — we only intercept
-	// the keystroke so we can set a quit result before tea.Quit. We do NOT
-	// publish it through AdditionalShortHelpKeys (the default keymap already
-	// renders "q quit"); doing so produced a duplicate hint.
+	// Let the built-in keymap display quit. Intercept the key only to record the result.
 	Quit   key.Binding
 	Delete key.Binding
 }
@@ -217,19 +206,14 @@ type pickerModel struct {
 	quitting bool
 }
 
-// resizeList recomputes the list dimensions for the current window size,
-// shrinking by the actual rendered height of the confirm overlay (computed
-// at the live terminal width) when it is visible.
+// resizeList reserves room for the rendered confirmation overlay.
 func (m *pickerModel) resizeList() {
 	if m.width == 0 || m.height == 0 {
 		return
 	}
 	height := m.height - 2
 	if m.confirmDelete {
-		// Render the overlay at the current width and reserve its exact
-		// height + the leading newline that View() inserts before it. This
-		// keeps the layout correct even when the body wraps on narrow
-		// terminals.
+		// Measure at the current terminal width so wrapped text fits.
 		overlay := m.renderConfirmOverlay()
 		height -= lipgloss.Height(overlay) + 1
 	}

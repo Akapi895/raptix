@@ -8,9 +8,7 @@ import (
 	"syscall"
 )
 
-// setControllerDetached puts the spawned controller in its own session so
-// it survives the launcher exiting (no controlling terminal, not in the
-// launcher's process group).
+// setControllerDetached starts a new session so the controller outlives the launcher.
 func setControllerDetached(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 }

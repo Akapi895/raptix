@@ -12,9 +12,8 @@ import (
 
 const maxEnsureBytes = 4 << 10
 
-// NewHandler serves the one operation the web API needs from the host: make sure a project's sandbox is running.
-// The bearer token is held only as a digest and compared in constant time. Failures return stable codes; Docker's own
-// error text stays in the operator's log, never in the response.
+// NewHandler serves sandbox creation for the web API.
+// It compares token digests in constant time and keeps Docker errors in operator logs.
 func NewHandler(ensure func(slug string) error, token string) (http.Handler, error) {
 	if len(token) < minSecretLen {
 		return nil, fmt.Errorf("controller token must be at least %d bytes", minSecretLen)

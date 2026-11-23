@@ -1,10 +1,4 @@
-/**
- * Normalizer tests against W00 source-emitter captured fields.
- *
- * Field values are taken verbatim from
- * apps/web/tests/fixtures/w00/runtime/runtime-emitter-capture.json
- * (provenance: source-emitter-controlled, StreamingRunnable @ subagent_streaming.py).
- */
+/** Samples use fields captured from the backend event emitter. */
 
 import { describe, expect, it } from "vitest";
 import {

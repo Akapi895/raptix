@@ -4,7 +4,7 @@
   "info": {
     "title": "Raptix extracted frontend API expectations and mock contracts",
     "version": "2026-10-31",
-    "description": "Source-grounded extraction. NOT a future backend specification. Security requirements are advertised/client conventions; mock dispatcher does not enforce global authentication. UNKNOWN annotations and x-* evidence are part of this document. See api-contracts.md and api-contract-gaps.md."
+    "description": "Endpoint inventory derived from the Web client. Schemas and annotations describe client expectations. Refer to Web integration for deployment availability."
   },
   "servers": [
     {

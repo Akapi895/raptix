@@ -15,21 +15,13 @@ import (
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
 )
 
-// DockerComposeBackend shells out to `docker compose` to fulfill the
-// Backend Protocol. ADR-0006 §5' chose shell-out over the docker SDK
-// so profile resolution (depends_on chains, healthchecks, wait
-// semantics) stays in upstream compose. This keeps a non-trivial
-// resolver out of our codebase.
+// DockerComposeBackend delegates profile and dependency resolution to Docker Compose.
 type DockerComposeBackend struct {
-	// ComposeFile + EnvFile + (optional) extra files combine into the
-	// `-f`/`--env-file` prefix every compose call uses. Defaults from
-	// $RAPTIX_HOME.
+	// ComposeFile, EnvFile and extra files form the shared Compose arguments.
 	ComposeFile string
 	EnvFile     string
 	ExtraFiles  []string
-	// WaitTimeoutSeconds caps the `--wait` flag on `up`. ADR-0006
-	// notes BHCE cold-start is ~30s; we default to 180s to absorb
-	// goose migrations and dawgs index build.
+	// WaitTimeoutSeconds caps startup time, including cold-start migrations.
 	WaitTimeoutSeconds int
 	runs sync.Map
 }
@@ -47,13 +39,7 @@ func NewDockerComposeBackend() *DockerComposeBackend {
 
 func (b *DockerComposeBackend) Name() string { return "docker-compose" }
 
-// baseArgs returns the shared prefix for every compose call. The
-// `-p PROJECT` flag is explicit and shares the value with the
-// launcher's compose.baseArgs() through ComposeProjectName(), so both
-// sides own the same compose project — that guarantees the daemon
-// can adopt containers the launcher already created (and vice versa)
-// instead of getting a "container_name already in use" conflict from
-// docker when the two project names accidentally drift apart.
+// baseArgs uses the launcher's project name so both can manage the same containers.
 func (b *DockerComposeBackend) baseArgs() []string {
 	args := []string{
 		"compose",
@@ -112,20 +98,8 @@ func labeledComposeOverride(services []string, workload, engagement, runID strin
 	}
 	return file.Name(), nil
 }
-// Start runs `docker compose --profile <workload> up -d --wait`. The
-// caller (server.go) has already taken the per-workload mutex, so
-// concurrent calls on the same workload are serialized.
-//
-// `--no-recreate` is load-bearing for the agent-driven flow. Without
-// it, compose's incremental model rebuilds the merged config every
-// time the daemon adds a profile on top of what the launcher already
-// activated -- the resulting per-service config-hash differs from
-// what the launcher wrote, and compose tags every live container
-// "Recreate" mid-engagement. Workload spawn is purely ADDITIVE
-// (langgraph / litellm / sandbox were correctly running BEFORE
-// ops_start; they must keep running AFTER). `--no-recreate` tells
-// compose to skip the hash diff and only create services the
-// requested profile activates that are not already running.
+// Start waits for the selected workload. The caller holds its lock.
+// --no-recreate prevents adding a profile from replacing running services.
 func (b *DockerComposeBackend) Start(ctx context.Context, workload, engagementID string) (Handle, error) {
 	if engagementID == "" {
 		return Handle{}, fmt.Errorf("workload %s requires an engagement id", workload)
@@ -159,31 +133,8 @@ func (b *DockerComposeBackend) Start(ctx context.Context, workload, engagementID
 	return Handle{Workload: workload, State: StateRunning, EngagementID: engagementID}, nil
 }
 
-// Stop terminates and removes only the services exclusive to the
-// workload's compose profile, leaving the always-on management plane
-// (litellm, postgres, neo4j, sandbox, skillogy, langgraph) untouched.
-//
-// The dynamic-spawn contract (ADR-0006) implies a full lifecycle:
-// `ops_start("ad")` materializes the BHCE sidecars, `ops_stop("ad")`
-// should leave the operator's `docker ps` exactly as it was before
-// the spawn — otherwise `Exited (0)` BHCE / Neo4j / postgres-init
-// containers accumulate across an engagement and the operator has to
-// clean them by hand. Named volumes survive `rm` (compose only
-// removes volumes when `down -v` is passed), so BHCE's Neo4j and
-// Postgres data is preserved across stop/start cycles.
-//
-// Subtle: `docker compose --profile X stop` and `--profile X rm` do
-// NOT operate on profile X exclusively. Per compose docs, "service
-// without profile is always selected" — so the profile flag is
-// additive (default + X) and naive `--profile X stop` would halt the
-// always-on management plane too. We resolve the profile's
-// exclusive service list once via set-difference and then issue
-// `stop` / `rm -fs` with explicit service names so default services
-// are never targeted.
-//
-// We also deliberately don't use `compose down`: it always targets
-// the whole project regardless of `--profile`, so a single
-// `ops_stop("ad")` would nuke the entire stack.
+// Stop removes only services unique to the selected profile and leaves volumes intact.
+// Compose profile flags also select default services, so pass explicit service names.
 func (b *DockerComposeBackend) Stop(ctx context.Context, workload string) error {
 	value, ok := b.runs.Load(workload)
 	if !ok {
@@ -262,12 +213,7 @@ func (b *DockerComposeBackend) listServices(ctx context.Context, profile string)
 	return names, nil
 }
 
-// List delegates to the in-memory registry. ADR-0006 §5' allows the
-// backend to be the source of truth, but a `docker compose ps` round
-// trip for every `ops_status()` call is wasteful when the daemon
-// already owns the lifecycle transitions that mutate state. The
-// registry is the source of truth; backend.List exists so future
-// non-daemon-driven backends (Kubernetes pod watch) can override it.
+// List reads the registry rather than polling Compose.
 func (b *DockerComposeBackend) List(_ context.Context) ([]WorkloadStatus, error) {
 	// The server passes its own registry snapshot in; this backend
 	// returns nil to mean "use the registry".

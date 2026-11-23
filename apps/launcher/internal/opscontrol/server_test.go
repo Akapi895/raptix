@@ -12,9 +12,7 @@ import (
 	"time"
 )
 
-// fakeBackend is an in-memory Backend used by the server tests. It
-// records every Start/Stop call so tests can verify idempotency and
-// per-workload serialization without a real docker daemon.
+// fakeBackend records lifecycle calls without running Docker.
 type fakeBackend struct {
 	startCount atomic.Int32
 	stopCount  atomic.Int32
@@ -172,10 +170,7 @@ func TestServer_StopAfterStart(t *testing.T) {
 		}
 	}
 
-	// Poll until the goroutine has invoked backend.Stop. The
-	// fakeBackend's stop is a no-op so this resolves in one tick
-	// in the happy path; the deadline guards against goroutine
-	// scheduling jitter under -race.
+	// Wait for the asynchronous stop to reach the backend.
 	deadline := time.Now().Add(1 * time.Second)
 	for time.Now().Before(deadline) {
 		if be.stopCount.Load() == 1 {
@@ -256,11 +251,7 @@ func TestServer_CleanupEngagementRejectsBadID(t *testing.T) {
 		urlPath := "/v1/engagements/" + strings.ReplaceAll(bad, " ", "%20") + "/cleanup"
 		r := httptest.NewRequest(http.MethodPost, urlPath, nil)
 		s.mux().ServeHTTP(w, r)
-		// ServeMux returns 301 (path normalization) for `../etc` and
-		// empty-segment paths before our handler runs; that is still
-		// "rejected before the backend was called", which is the
-		// security property we care about. The handler-level 400 covers
-		// names that survive mux normalization.
+		// ServeMux may redirect malformed paths before the handler runs. Verify that neither path reaches the backend.
 		if w.Code < 300 || w.Code >= 500 {
 			t.Errorf("engagement=%q got status %d; want a 3xx/4xx rejection", bad, w.Code)
 		}
@@ -287,10 +278,7 @@ func TestServer_ListReflectsRegistry(t *testing.T) {
 			t.Fatalf("start: %d", w.Code)
 		}
 	}
-	// Start is async — poll the list endpoint until the registry
-	// transitions out of "starting" or a generous deadline expires.
-	// The fakeBackend's zero start delay makes this resolve in a
-	// single iteration in the happy path.
+	// Wait for the asynchronous start to leave the starting state.
 	var got []WorkloadStatus
 	deadline := time.Now().Add(1 * time.Second)
 	for time.Now().Before(deadline) {

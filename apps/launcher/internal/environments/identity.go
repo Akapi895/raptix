@@ -1,7 +1,5 @@
-// Package environments is the trusted host controller for per-project runtime
-// and sandbox containers (ADR-0092). It runs only allowlisted operations on
-// resources that carry this deployment's labels, and it never accepts a
-// container name, Compose file, mount or image from a caller.
+// Package environments manages deployment-owned runtime and sandbox containers.
+// Callers cannot supply container names, Compose files, mounts or images.
 package environments
 
 import (
@@ -89,9 +87,7 @@ func (id Identity) Labels() map[string]string {
 	}
 }
 
-// Owns reports whether labels belong to this deployment, project, environment
-// and role. The generation is compared separately so a recreate can replace
-// an older incarnation of the same container.
+// Owns checks the deployment, project, environment and role. Generation is checked separately for replacement.
 func (id Identity) Owns(labels map[string]string) bool {
 	return labels[LabelManaged] == "true" &&
 		labels[LabelDeployment] == id.DeploymentID &&

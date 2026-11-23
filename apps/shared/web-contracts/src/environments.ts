@@ -1,6 +1,6 @@
 import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 
-// ADR-0092: project environment lifecycle commands and the single active slot.
+// Project lifecycle commands share one active slot.
 
 export const ENVIRONMENT_COMMAND_ACTIONS = ['activate', 'stop', 'archive', 'unarchive'] as const
 export const DEPLOYMENT_SLOT_PHASES = ['idle', 'starting', 'ready', 'stopping', 'uncertain'] as const
@@ -23,10 +23,7 @@ export interface EnvironmentCommandResult {
   phase: DeploymentSlotPhase
   version: number
   commandId: string | null
-  /**
-   * Set only when the active project is the caller's own project. A `busy`
-   * result never carries it, so a caller cannot learn another project's id.
-   */
+  /** Visible only when the caller owns the active project. */
   activeEngagementId?: string | null
   /** Bounded refusal code; never free text from another project. */
   reason?: string
@@ -47,12 +44,12 @@ export function isEnvironmentCommandResult(v: unknown): v is EnvironmentCommandR
   if (v.commandId !== null && !isNonEmptyString(v.commandId)) return false
   if (v.activeEngagementId !== undefined && v.activeEngagementId !== null && !isNonEmptyString(v.activeEngagementId)) return false
   if (v.reason !== undefined && typeof v.reason !== 'string') return false
-  // A busy answer means the slot is held: it can never be idle, and it never names the active project.
+  // Busy responses report an occupied slot and omit the active project.
   if (v.status === 'busy') return v.phase !== 'idle' && !('activeEngagementId' in v)
   return true
 }
 
-/** What a caller may see about one project's environment. The slot is shared, so other projects appear only as `held`. */
+/** Project environment status. Other projects appear as held. */
 export interface EnvironmentStateView {
   engagementId: string
   environment: {
@@ -62,7 +59,7 @@ export interface EnvironmentStateView {
     observedAt: string | null
     /** True after an archive. Archived data is kept; the project cannot start until it is unarchived. */
     archived: boolean
-    /** Bounded code for the last failed or undrained attempt, cleared by the next ready. Never free text. */
+    /** Code for the latest failed or undrained attempt, cleared when ready. */
     lastError: string | null
   }
   slot: {

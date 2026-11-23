@@ -14,10 +14,7 @@ import (
 	internal "github.com/Akapi895/raptix/apps/launcher/internal/opscontrol"
 )
 
-// composeOverlayBody is the docker-compose overlay that bind-mounts
-// the opscontrol UDS into the langgraph container. It is
-// EnsureRunning writes this overlay on every `raptix start`.
-// The embedded copy follows the launcher binary's version.
+// composeOverlayBody mounts the daemon socket in LangGraph and ships with the launcher.
 const composeOverlayBody = `# docker-compose.opscontrol.yml — LAUNCHER-MANAGED runtime overlay (ADR-0006).
 # Do NOT hand-edit. The launcher rewrites this file on every ` + "`raptix start`" + `
 # (cmd/opscontrol/supervisor.go:writeComposeOverlay) so any manual edits are
@@ -35,51 +32,19 @@ services:
       - "${RAPTIX_OPSCONTROL_SOCK_HOST}:/var/run/raptix-ops.sock:rw"
 `
 
-// writeComposeOverlay materializes the launcher-managed compose overlay
-// at $RAPTIX_HOME/docker-compose.opscontrol.yml. Idempotent — same
-// content every call. Removed the previous design where this file was
-// downloaded via the release manifest; that made every compose-overlay
-// change a forced point release with sync warnings.
+// writeComposeOverlay refreshes the launcher-managed Compose file.
 func writeComposeOverlay() error {
 	target := filepath.Join(config.RaptixHome(), "docker-compose.opscontrol.yml")
 	return os.WriteFile(target, []byte(composeOverlayBody), 0o644)
 }
 
-// EnsureRunning is the launcher-side entry point: `raptix start`
-// calls it before `compose up`. It returns the host socket path so
-// the caller can export it to docker compose (used by
-// docker-compose.opscontrol.yml).
-//
-// Three modes, picked in order:
-//
-//  1. **Managed-service mode** (Alt A, preferred): a systemd user
-//     unit or launchd LaunchAgent is installed and active. The
-//     daemon lifecycle is owned by the init system — survives
-//     reboot, restarts on crash. The launcher does not start or
-//     stop the daemon; it only waits for the socket to be ready
-//     (in case the service was just installed and is still
-//     warming up).
-//
-//  2. **Managed-service-but-inactive**: the unit is installed but
-//     stopped (e.g., operator ran `raptix opscontrol stop` by
-//     hand). EnsureRunning asks the manager to start it.
-//
-//  3. **Launcher-spawn fallback**: no service manager is available
-//     on this host (Windows, WSL2 without systemd, Linux without
-//     per-user systemd). The launcher forks a detached daemon and
-//     writes a PID file the way it did pre-Alt-A.
-//
-// All three modes are idempotent — calling EnsureRunning twice in
-// quick succession is safe.
+// EnsureRunning reuses or starts the managed service, then waits for its socket.
+// Without an installed unit, it starts a detached daemon.
 func EnsureRunning() (socketPath string, err error) {
 	if err := internal.EnsureRunDir(); err != nil {
 		return "", err
 	}
-	// Write the docker-compose overlay BEFORE the daemon starts; the
-	// compose layer in `raptix start` calls baseArgs immediately
-	// after, and baseArgs only attaches `-f docker-compose.opscontrol.yml`
-	// when the file exists on disk. Embedded body + idempotent write
-	// = the overlay is always current with the launcher binary.
+	// Write the overlay before Compose resolves its file list.
 	if err := writeComposeOverlay(); err != nil {
 		return "", fmt.Errorf("opscontrol: write compose overlay: %w", err)
 	}
@@ -107,26 +72,12 @@ func EnsureRunning() (socketPath string, err error) {
 			}
 			return socketPath, nil
 		}
-		// Service manager is available but no unit installed yet —
-		// fall through to launcher-spawn. The user can opt into
-		// managed-service mode later with `raptix opscontrol
-		// install`.
 	}
 
-	// Fallback path: launcher-spawn. Same logic as the original
-	// Sprint 1 supervisor.
 	return ensureRunningLauncherSpawn(socketPath)
 }
 
-// Stop is called by `raptix stop` AFTER `compose down`. In
-// managed-service mode the daemon is intentionally NOT killed — it
-// lives across launcher sessions so `raptix start` does not pay
-// the daemon-warmup cost every time. Operators who want the daemon
-// down call `raptix opscontrol stop` explicitly or run
-// `raptix opscontrol uninstall`.
-//
-// In launcher-spawn fallback mode Stop sends SIGTERM and waits up to
-// 5s for the daemon to exit, then unlinks the socket.
+// Stop terminates a launcher-spawned daemon after Compose teardown. Managed units stay running.
 func Stop() error {
 	mgr := internal.DetectServiceManager()
 	if mgr.Available() {
@@ -135,9 +86,6 @@ func Stop() error {
 			return err
 		}
 		if installed {
-			// Managed-service mode: the daemon stays up. Compose
-			// teardown is already done by the caller; the daemon's
-			// own workloads are gone with it.
 			return nil
 		}
 	}
@@ -202,10 +150,7 @@ func stopLauncherSpawn() error {
 	return errors.New("opscontrol: daemon did not exit within 5s")
 }
 
-// waitForSocket polls until the socket file appears as a real Unix
-// socket or the deadline expires. 50ms cadence — the daemon binds in
-// <100ms in practice, so this is one or two iterations on the happy
-// path.
+// waitForSocket waits for a Unix socket until the deadline.
 func waitForSocket(path string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
@@ -217,9 +162,7 @@ func waitForSocket(path string, timeout time.Duration) error {
 	return fmt.Errorf("socket %s did not appear within %s", path, timeout)
 }
 
-// readPID returns the recorded daemon PID and whether the process is
-// currently alive. A stale PID file (process gone) returns
-// (pid, false), and callers usually treat that as "no daemon".
+// readPID returns the recorded PID and whether it is alive.
 func readPID() (int, bool) {
 	raw, err := os.ReadFile(internal.PIDFilePath())
 	if err != nil {

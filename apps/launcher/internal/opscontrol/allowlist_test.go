@@ -69,9 +69,7 @@ func TestPermits_RejectsUnknownButValid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadAllowlist: %v", err)
 	}
-	// "fake-but-valid-name" matches the regex but is not in the
-	// baked-in catalog, so it must be rejected. This is the OWASP
-	// LLM06 "narrow extension" property in action.
+	// A valid name still requires a catalog entry.
 	if al.Permits("fake-but-valid-name") {
 		t.Error(`Permits("fake-but-valid-name") = true; valid name must still be rejected if not in catalog`)
 	}

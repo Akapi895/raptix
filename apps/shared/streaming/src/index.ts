@@ -1,13 +1,4 @@
-/**
- * @raptix/streaming — Shared LangGraph streaming infrastructure.
- *
- * Provides the canonical event types, stream configuration, and utility
- * functions used by both the Web dashboard and CLI clients.
- *
- * Built to ESM via tsc; relative specifiers carry the `.js` suffix so
- * Node's ESM resolver accepts the emitted dist/ at runtime (Next.js and
- * TS resolve the source via package `exports`).
- */
+/** Shared LangGraph stream types and helpers. Use .js specifiers for Node ESM. */
 
 // Types
 export type { SubagentCustomEvent, SubagentEventType, StreamEvent } from "./types.js";

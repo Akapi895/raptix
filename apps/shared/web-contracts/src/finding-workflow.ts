@@ -26,12 +26,7 @@ export interface FindingHistoryRecord {
   fromStatus: string | null; toStatus: string | null; version: number; evidenceRefs: string[];
 }
 export interface FindingRetestRecord { id: string; actorId: string; createdAt: string; result: 'Resolved' | 'Persists' | 'Partial'; note: string; findingVersion: number; evidenceRefs: string[] }
-/**
- * A retained capture that carries a finding's reproduction, identified by capture id and the digest recorded when it was linked.
- * Name, classification and read rights are resolved on every read against the capture's current state: `filename` is null when the
- * caller may not see it, `classification` is null when the capture is no longer retained, and `canReadOriginal` says whether the
- * original bytes can be read by this caller.
- */
+/** Capture ID and recorded digest. Each read resolves the visible name, classification and access to original bytes. */
 export interface FindingReproductionArtifact {
   captureId: string
   filename: string | null
@@ -41,10 +36,7 @@ export interface FindingReproductionArtifact {
   classification: 'unclassified' | 'standard' | 'sensitive' | null
   canReadOriginal: boolean
 }
-/**
- * Reproduction package of a curated finding. A finding that predates the package carries no `reproduction` key;
- * callers render that as missing and never infer one from the description or the producer source.
- */
+/** Reproduction data recorded for a finding. Older records may omit it. */
 export interface FindingReproduction {
   prerequisites: string
   inputs: string
@@ -52,7 +44,7 @@ export interface FindingReproduction {
   expectedObservation: string
   limitations: string
   artifact: FindingReproductionArtifact | null
-  /** Recorded verification. Only `not_recorded` exists until a re-run ships as a separate execution. */
+  /** Stored verification state for this reproduction. */
   verification: 'not_recorded'
 }
 /** Write shape. The artifact is named by capture id and digest; the server resolves its name and size. */
@@ -75,11 +67,7 @@ export interface CuratedFindingView {
   comments: FindingCommentRecord[]; history: FindingHistoryRecord[]; retests: FindingRetestRecord[];
 }
 export interface CuratedFindingsView { engagementId: string; findings: CuratedFindingView[]; transitions: Readonly<Record<string, readonly string[]>>; source: 'db' }
-/**
- * One finding in the cross-project list: the row fields and the project it belongs to, no activity or evidence. A
- * `producer` row is an unverified runtime claim (status `ai_suggested`) that no curated record imports; it has no
- * timestamps because the workspace file records none.
- */
+/** Cross-project summary. Producer rows are unverified claims without recorded timestamps. */
 export interface AccessibleFindingRow {
   id: string; engagementId: string; projectName: string; targetValue: string | null; title: string;
   severity: CuratedFindingView['severity']; status: CuratedFindingView['status'] | 'ai_suggested'; sourceType: 'authored' | 'imported' | 'producer';

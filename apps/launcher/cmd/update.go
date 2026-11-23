@@ -76,9 +76,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		// --force: re-sync config + re-pull images without bumping the
 		// binary (already on release.TagName).
 		ui.Info("Syncing configuration files...")
-		// Mirror ApplyUpdate's release/branch split: pass the Release
-		// through when ref tracks the tag so the manifest verifies, nil
-		// when RAPTIX_BRANCH is overriding the ref (branch mode).
+		// Use release checksums only when refreshing the release's own ref.
 		syncRelease := release
 		if ref != release.TagName && ref != strings.TrimPrefix(release.TagName, "v") {
 			syncRelease = nil

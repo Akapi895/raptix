@@ -28,7 +28,7 @@ async function notImplementedForThisDeployment(_request: unknown, reply: Fastify
   await reply.code(501).send({ error: "Not implemented for this deployment" });
 }
 
-/** Everything under apps/ui-app/docs/api-contracts.md's "Authentication and account" module (7 ops). */
+/** Authentication and account endpoints described in the Web OpenAPI contract. */
 export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOptions): void {
   const { store, sessionDurationHours, auditLogStore } = options;
   const requireSession = createRequireSession(store);

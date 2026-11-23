@@ -41,10 +41,7 @@ func TestDetectServiceManager_ReturnsCorrectShape(t *testing.T) {
 	if m == nil {
 		t.Fatal("DetectServiceManager returned nil")
 	}
-	// Two valid outcomes:
-	//   - the platform's manager is wired up and Available() probes
-	//     decide whether it's actually usable on this host
-	//   - the noop manager is returned for unsupported platforms
+	// The manager can be unavailable on a CI runner even when its platform is supported.
 	switch runtime.GOOS {
 	case "linux":
 		if _, ok := m.(*SystemdManager); !ok {

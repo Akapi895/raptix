@@ -2,11 +2,7 @@ package opscontrol
 
 import "context"
 
-// WorkloadState is the narrow vocabulary the API uses to describe a
-// workload's lifecycle. The DockerComposeBackend maps `compose ps`
-// container states onto these four values; KubernetesBackend (future)
-// will map pod Phase. The agent never sees container-runtime-specific
-// states.
+// WorkloadState is the backend-independent lifecycle state.
 type WorkloadState string
 
 const (
@@ -17,12 +13,7 @@ const (
 	StateUnknown  WorkloadState = "unknown"
 )
 
-// Handle is what Backend.Start returns. ADR-0006 §5' also lists
-// EndpointURL and BootstrapTokenRef on this struct; those fields are
-// intentionally deferred to Sprint 3 (BHCE token bootstrap migration)
-// because Sprint 1 has nothing to put in them. Adding a field to a
-// Go struct is non-breaking, so future sprints can land them without
-// touching agent code.
+// Handle identifies a workload started by the backend.
 type Handle struct {
 	Workload     string        `json:"workload"`
 	State        WorkloadState `json:"state"`
@@ -37,29 +28,18 @@ type WorkloadStatus struct {
 	Since        string        `json:"since,omitempty"`
 }
 
-// Backend abstracts the substrate that actually starts and stops
-// workloads. ADR-0006 §5' lists DockerComposeBackend, KubernetesBackend,
-// CloudRunBackend, FargateBackend, NomadBackend. Sprint 1 ships
-// DockerComposeBackend only; the interface exists so the daemon HTTP
-// surface and the `(workload, lifecycle_op)` tuple stay
-// backend-independent.
+// Backend manages workload lifecycle without exposing runtime details to HTTP clients.
 type Backend interface {
-	// Start brings up the workload. Idempotent: calling it on an
-	// already-running workload returns the existing handle without
-	// re-running compose up.
+	// Start returns the existing handle if the workload is already running.
 	Start(ctx context.Context, workload string, engagementID string) (Handle, error)
 
 	// Stop tears down the workload. Idempotent: stopping a stopped
 	// workload returns nil.
 	Stop(ctx context.Context, workload string) error
 
-	// List returns the current state of every known workload — both
-	// running ones and ones the daemon has previously started in this
-	// session.
+	// List returns the state of workloads known to this daemon session.
 	List(ctx context.Context) ([]WorkloadStatus, error)
 
-	// Name identifies the backend in `/v1/health`. Useful for
-	// operators diagnosing "why didn't K8s spawn?" issues across
-	// runtimes.
+	// Name identifies the backend in /v1/health.
 	Name() string
 }

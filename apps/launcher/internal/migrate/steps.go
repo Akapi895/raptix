@@ -11,9 +11,7 @@ import (
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
 )
 
-// TelemetryPolicyID identifies the one-time telemetry re-consent prompt.
-// Bumping the date suffix (a new step ID) re-asks every user again after a
-// future policy change.
+// TelemetryPolicyID identifies the consent migration. Use a new ID when asking users again.
 const TelemetryPolicyID = "telemetry-policy-2026-06"
 
 // confirm is indirected so tests can answer the prompt without a TTY.
@@ -96,9 +94,7 @@ const telemetryConsentBlurb = "" +
 	"~/.raptix/.env, run `raptix-cli telemetry off`, or DO_NOT_TRACK=1."
 
 func applyTelemetryReconsent(c *Ctx) (string, error) {
-	// Honor hard opt-outs without prompting (and record the ack so we
-	// never re-ask): DO_NOT_TRACK, or the persistent opt-out marker
-	// written by `raptix-cli telemetry off`.
+	// Record existing opt-outs without prompting again.
 	if truthy(os.Getenv("DO_NOT_TRACK")) || truthy(c.Env["DO_NOT_TRACK"]) || hasOptOutMarker(c.Home) {
 		return "", nil
 	}

@@ -122,11 +122,6 @@ func TestValidateAPIKeys_RejectsBadFormat(t *testing.T) {
 	}
 }
 
-// TestValidateAPIKeys_AcceptsAllProviders covers issue #105: keys for
-// providers added past the original four (Anthropic/OpenAI/Gemini/MiniMax)
-// were silently dropped because APIKeyNames + keyFormatRules only knew
-// about the original four. Each provider must now satisfy the gate on
-// its own.
 func TestValidateAPIKeys_AcceptsAllProviders(t *testing.T) {
 	tests := []struct {
 		name string
@@ -224,9 +219,6 @@ func TestValidateAuth_ChatGPTNativeOAuth(t *testing.T) {
 	})
 }
 
-// TestValidateAuth_OllamaLocal covers issue #106: the user picks
-// ollama_local and sets OLLAMA_API_BASE, no API key needed. The
-// previous gate rejected this because it only checked API-key columns.
 func TestValidateAuth_OllamaLocal(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -435,8 +427,7 @@ func TestWriteEnvFromEmbedReplacesPermissiveFilePrivately(t *testing.T) {
 
 func TestBackfillEnvFromEmbed(t *testing.T) {
 	out := filepath.Join(t.TempDir(), ".env")
-	// Simulate a pre-#706 .env: has telemetry mode but NOT the endpoint,
-	// plus a real user value that must be preserved untouched.
+	// Backfill the missing endpoint while preserving existing values.
 	seed := "RAPTIX_TELEMETRY=off\nANTHROPIC_API_KEY=sk-real-user-key\n"
 	if err := os.WriteFile(out, []byte(seed), 0o600); err != nil {
 		t.Fatalf("seed .env: %v", err)
@@ -513,7 +504,6 @@ func TestWriteEnv_CommentedOutLines(t *testing.T) {
 	tmplPath := filepath.Join(dir, ".env.example")
 	outPath := filepath.Join(dir, "out", ".env")
 
-	// Template with commented-out AWS Bedrock vars (the bug in #674)
 	template := `# Config
 ANTHROPIC_API_KEY=your-anthropic-key-here
 # --- AWS Bedrock ---

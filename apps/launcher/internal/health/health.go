@@ -26,9 +26,7 @@ const (
 
 // Timeouts are var (not const) so tests can shrink them.
 var (
-	// LangGraph healthcheck (compose) only verifies /ok responds. The graph may
-	// still be compiling — this functional probe waits for the coordinator
-	// assistant to appear in /assistants/search.
+	// Wait for assistant registration because Compose's /ok check can pass before compilation.
 	LangGraphTimeout = 60 * time.Second
 
 	// Reserved for ad-hoc diagnostics commands.
@@ -39,13 +37,8 @@ var (
 	PollInterval = 2 * time.Second
 )
 
-// CheckLangGraph polls /assistants/search until the response references the
-// raptix assistant. Compose's healthcheck only verifies that /ok serves;
-// graph compilation can still be in progress, so this functional probe is the
-// only signal that the agent is actually callable.
-//
-// RAPTIX_STARTUP_TIMEOUT_SECONDS overrides LangGraphTimeout for slow
-// environments where graph compile is the long pole.
+// CheckLangGraph waits for the Raptix assistant to appear in /assistants/search.
+// RAPTIX_STARTUP_TIMEOUT_SECONDS overrides the default timeout.
 func CheckLangGraph(env map[string]string) error {
 	port := config.Get(env, "LANGGRAPH_PORT", DefaultLangGraphPort)
 	url := fmt.Sprintf("http://localhost:%s/assistants/search", port)
@@ -149,14 +142,7 @@ func CheckWeb(env map[string]string) error {
 	return fmt.Errorf("web dashboard not ready after %s (port %s)", WebTimeout, port)
 }
 
-// WaitForServices verifies the agent stack is functionally ready.
-//
-// Infrastructure readiness (postgres, neo4j, litellm, langgraph http server,
-// web) is delegated to Docker Compose healthchecks via `compose up --wait`,
-// so by the time this runs every container is already healthy. The remaining
-// gap is graph-compile readiness inside LangGraph: /ok answers before the
-// raptix graph finishes compiling, so we probe /assistants/search until
-// the assistant is registered.
+// WaitForServices checks assistant registration after Compose has checked container health.
 func WaitForServices(env map[string]string) error {
 	ui.Info("Verifying agent stack...")
 	if err := CheckLangGraph(env); err != nil {

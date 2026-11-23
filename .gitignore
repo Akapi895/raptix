@@ -22,6 +22,10 @@ Temp/
 
 # Python specific
 build/
+!/apps/ui-app/build/
+/apps/ui-app/build/*
+!/apps/ui-app/build/api-docs-route.ts
+!/apps/ui-app/build/eslint-architecture.js
 develop-eggs/
 dist/
 downloads/

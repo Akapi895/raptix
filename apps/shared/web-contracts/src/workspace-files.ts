@@ -1,4 +1,4 @@
-/** The project's /workspace as its sandbox holds it: a read-only listing and a bounded file preview for the operator. */
+/** Read-only workspace listing and bounded file previews. */
 
 export interface WorkspaceTreeEntry {
   /** Path relative to /workspace, '/'-separated. */

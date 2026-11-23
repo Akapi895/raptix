@@ -1,8 +1,4 @@
-/**
- * Runtime instance wire contracts (P10): the dispatch roster, the attempt mailbox, operator messages and
- * control acknowledgements. Shared by the runtime facade (server) and the browser; the browser never defines
- * these shapes itself.
- */
+/** Runtime dispatches, attempts, operator messages and acknowledgements. */
 import { isRecord } from './guards.js'
 import { isRequestRecoveryView, type RequestRecoveryView } from './ownership.js'
 
@@ -16,7 +12,7 @@ export interface RuntimeInstanceView {
   attempt: number
   role: string | null
   objectiveId: string | null
-  /** The dispatch that started this one; null for the orchestrator and for rows recorded before parents were kept. */
+  /** Parent dispatch. Null for the orchestrator or older rows without a parent. */
   parentDispatchId: string | null
   outcome: string
   terminal: boolean
@@ -47,7 +43,7 @@ export interface InstanceMessageView {
   sourceMessageId: string | null
 }
 
-/** `cancel_requested` is the operator's recorded intent; only `cancelled`, `finished` or `interrupted` is an observed end. */
+/** Cancel intent. The attempt reports its final status separately. */
 export type InstanceAttemptState = 'running' | 'cancel_requested' | 'cancelled' | 'finished' | 'interrupted'
 
 export interface InstanceAttemptView {
@@ -104,7 +100,7 @@ export function isInstanceCancelAck(v: unknown): v is InstanceCancelAck {
   return isRecord(v) && v.state === 'cancel_requested'
 }
 
-/** P10d: a retry or reassign request and the orchestrator run that admits the replacement attempt. */
+/** Retry or reassignment request with the run that starts the replacement. */
 export interface InstanceCommandAck {
   commandId: string
   kind: 'retry' | 'reassign'

@@ -14,24 +14,16 @@ import (
 // discovery. Tests swap it via withOllamaProbeClient.
 var ollamaProbeClient = &http.Client{Timeout: 1500 * time.Millisecond}
 
-// ollamaProbeMaxBody caps response reads. /api/tags and /api/show
-// payloads are tiny in practice; the cap is defense-in-depth against
-// a misconfigured reverse proxy returning an unbounded HTML page.
+// ollamaProbeMaxBody limits response reads from Ollama or its proxy.
 const ollamaProbeMaxBody = 2 << 20 // 2 MiB
 
-// ollamaProbeResult drives the wizard's UI branch. Reachable=true with
-// empty ToolCapableModels means Ollama is up but has nothing usable
-// pulled; Reachable=false means we couldn't reach it at all.
+// ollamaProbeResult distinguishes an unreachable server from one with no tool-capable models.
 type ollamaProbeResult struct {
 	Reachable         bool
 	ToolCapableModels []string
 }
 
-// probeOllamaForOnboard returns models on the host that advertise
-// ``tools``. Multi-candidate URL strategy mirrors the host-side
-// reachability probe; the first candidate to answer /api/tags wins.
-// Per-model /api/show calls run in parallel so a power user with many
-// pulled models still finishes inside the wizard's overall budget.
+// probeOllamaForOnboard uses the first host URL that answers /api/tags, then probes its models in parallel.
 func probeOllamaForOnboard(baseURL string) ollamaProbeResult {
 	for _, candidate := range candidateProbeURLs(baseURL) {
 		models, ok := fetchOllamaTags(candidate)
@@ -46,11 +38,7 @@ func probeOllamaForOnboard(baseURL string) ollamaProbeResult {
 	return ollamaProbeResult{}
 }
 
-// filterToolCapable returns the subset of ``models`` whose /api/show
-// response advertises the ``tools`` capability. Each call goes out
-// concurrently — Ollama answers /api/show locally and the wizard's
-// overall budget is small, so serializing the calls would only matter
-// for users with many pulled models, but parallelizing costs nothing.
+// filterToolCapable checks /api/show in parallel to stay within the onboarding timeout.
 func filterToolCapable(baseURL string, models []string) []string {
 	results := make([]bool, len(models))
 	var wg sync.WaitGroup
@@ -83,9 +71,7 @@ type ollamaShowResponse struct {
 	Capabilities []string `json:"capabilities"`
 }
 
-// fetchOllamaTags returns the /api/tags model names plus an ok flag —
-// distinguishes "answered with zero models" from "no answer" since
-// both produce empty slices but mean different things to the wizard.
+// fetchOllamaTags distinguishes an empty model list from an unreachable server.
 func fetchOllamaTags(baseURL string) ([]string, bool) {
 	resp, err := ollamaProbeClient.Get(strings.TrimRight(baseURL, "/") + "/api/tags")
 	if err != nil {
@@ -112,9 +98,7 @@ func fetchOllamaTags(baseURL string) ([]string, bool) {
 	return out, true
 }
 
-// hasOllamaToolsCapability returns true only when /api/show lists
-// ``tools`` in capabilities. Older Ollama (< 0.3) without the field
-// reports false — the wizard's strict list stays trustworthy.
+// hasOllamaToolsCapability requires an explicit tools capability in /api/show.
 func hasOllamaToolsCapability(baseURL, model string) bool {
 	payload, err := json.Marshal(map[string]string{"name": model})
 	if err != nil {

@@ -1,8 +1,4 @@
-/**
- * Asset Map read models (plan phase 3, ADR-0094). Every response states what it
- * loaded and what it knows about the whole: `total` is null when unknown, never zero,
- * and `loaded` is never presented as the environment size.
- */
+/** Asset Map responses report the loaded count and use null for an unknown total. */
 import { isNonEmptyString, isRecord } from './guards.js'
 
 export const ASSET_MAP_KINDS = ['host', 'dns_name', 'web_origin', 'network_segment', 'cloud_resource', 'identity', 'mobile_app', 'device', 'artifact'] as const
@@ -19,7 +15,7 @@ export interface AssetMapCompleteness {
   /** True when a server budget cut the response short. */
   truncated: boolean
   source: { catalog: AssetMapSourceState; graph: AssetMapSourceState }
-  /** Changes whenever the catalog or the graph changes; paging restarts when it does. */
+  /** Restart paging when the catalog or graph revision changes. */
   revision: string
 }
 
@@ -70,7 +66,7 @@ export interface AssetMapNeighborEdge {
 export interface AssetMapNeighborhood {
   engagementId: string
   assetId: string
-  /** Every graph node that carries this asset identity, so one asset split across writers stays whole. */
+  /** All graph nodes that share this asset identity. */
   centers: AssetMapNeighborNode[]
   nodes: AssetMapNeighborNode[]
   edges: AssetMapNeighborEdge[]

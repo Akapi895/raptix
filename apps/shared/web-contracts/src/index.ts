@@ -1,10 +1,4 @@
-/**
- * @raptix/web-contracts — shared browser/API wire contracts.
- *
- * Pure ESM DTOs plus runtime boundary validators. Consumers:
- * web-raptix (browser) and web-raptix-server (Fastify). No React, Next,
- * Prisma, LangGraph SDK or secrets.
- */
+/** Shared browser and API data types and validators. */
 
 export * from './errors.js'
 export * from './capabilities.js'

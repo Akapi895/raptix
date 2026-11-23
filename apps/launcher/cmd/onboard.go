@@ -11,15 +11,11 @@ import (
 	"github.com/Akapi895/raptix/apps/launcher/internal/config"
 	"github.com/Akapi895/raptix/apps/launcher/internal/migrate"
 	"github.com/Akapi895/raptix/apps/launcher/internal/platform"
-	"github.com/Akapi895/raptix/apps/launcher/internal/starprompt"
 	"github.com/Akapi895/raptix/apps/launcher/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-// onboardOllamaProbeBudget bounds the wait for the background Ollama
-// discovery probe at form-construction time. Per-request timeout
-// (ollama_models.go) is much shorter; this is the worst-case across
-// all candidate URLs.
+// onboardOllamaProbeBudget bounds how long form construction waits for discovery.
 const onboardOllamaProbeBudget = 3 * time.Second
 
 var resetFlag bool
@@ -82,33 +78,14 @@ const (
 	defaultAzureAPIVersion = "2024-08-01-preview"
 )
 
-// Default Ollama wiring shown to OSS users. `host.docker.internal`
-// is the universal answer regardless of where Ollama runs (macOS host,
-// WSL2 distro, native Linux): from inside Raptix's containers it
-// resolves to the host network namespace via the
-// `extra_hosts: [host.docker.internal:host-gateway]` entry on the
-// litellm service in docker-compose.yml. `localhost` is never the
-// right answer here — that's the container itself.
-//
-// The host's Ollama must additionally be bound to 0.0.0.0 (the default
-// 127.0.0.1 binding only accepts host-side connections); the wizard
-// surfaces this requirement to the user.
-//
-// The default model is the smallest/fastest one most laptops can
-// actually run; users with a GPU will pick something like qwen3-coder:30b.
+// Containers reach host Ollama through Compose's host-gateway mapping.
+// Ollama must listen on a host address accessible from Docker.
 const (
 	defaultOllamaAPIBase = "http://host.docker.internal:11434"
 	defaultOllamaModel   = "llama3.2"
 )
 
-// methodOrder is the priority order surfaced in the wizard. The
-// resulting RAPTIX_AUTH_PRIORITY preserves this order, filtered
-// to the methods the user actually selected. OAuth precedes the
-// matching API on purpose: a subscription primary should fall back
-// to the paid API only when the subscription quota is exhausted.
-// Ollama sits last: cloud providers are usually preferred when both
-// are configured, but a user wanting to lead with local-only inference
-// can reorder the priority manually in .env.
+// methodOrder sets the default RAPTIX_AUTH_PRIORITY. OAuth precedes the matching paid API, and Ollama comes last.
 var methodOrder = []string{
 	methodAnthropicOAuth,
 	methodAnthropicAPI,
@@ -147,12 +124,7 @@ var methodOrder = []string{
 	methodCustomOpenAIAPI,
 }
 
-// systemCheckGroup renders the host-environment snapshot as the first
-// step of onboarding. It detects OS/architecture (so the user sees the
-// machine is recognized — be it Windows, macOS, a Linux pentest distro,
-// or a Raspberry Pi) and the Docker readiness state, with OS-specific
-// remediation when something is missing. It never blocks: credentials
-// can be configured before Docker is sorted out.
+// systemCheckGroup shows Docker readiness without blocking onboarding.
 func systemCheckGroup(sys platform.SystemInfo) *huh.Group {
 	var b strings.Builder
 
@@ -205,9 +177,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Kick off Ollama discovery in the background so the network
-	// round-trip overlaps with huh's startup work; the OLLAMA_MODEL
-	// field type depends on the result (Select vs remediation Note).
+	// Discover Ollama models while building the form.
 	probeCh := make(chan ollamaProbeResult, 1)
 	go func() {
 		probeCh <- probeOllamaForOnboard(defaultOllamaAPIBase)
@@ -267,10 +237,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		langSmithKey        string
 		telemetryConsent    = true // opt-out: default to sharing (masked)
 	)
-	// Block on the probe (zero-value result on timeout means
-	// "unreachable" — drops through to the remediation Note).
-	// time.NewTimer + Stop avoids the time.After timer leak when the
-	// probe finishes first.
+	// A timed-out probe is treated as unreachable.
 	probeTimer := time.NewTimer(onboardOllamaProbeBudget)
 	var ollamaProbe ollamaProbeResult
 	select {
@@ -280,14 +247,9 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	}
 	ollamaModelField := buildOllamaModelField(ollamaProbe, &ollamaModel)
 
-	// Probe the host environment so the wizard can confirm — up front —
-	// that this machine (whatever OS/arch it is) can actually run the
-	// Docker stack, and surface remediation before the user spends time
-	// entering credentials.
 	sysInfo := platform.Detect()
 
 	form := huh.NewForm(
-		// Step 0: system check.
 		systemCheckGroup(sysInfo),
 
 		// Intro
@@ -297,7 +259,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 				Description("Configure auth methods, model profile, and\nobservability.\n\nUse ↑↓ to navigate, space to toggle, Enter to confirm."),
 		),
 
-		// Step 1: Auth methods (multi-select)
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
 				Title("Auth Methods").
@@ -347,14 +308,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("1 / 5  ·  Credentials").
 			Description("Select all that apply"),
 
-		// Step 2-claude-oauth: Claude Code subscription long-lived token.
-		// Run `claude setup-token` once (any machine, interactive browser
-		// OAuth) → paste the 1-year token here. It is honored via the
-		// ANTHROPIC_OAUTH_TOKEN env override, which carries expiresAt=0 so it
-		// is never auto-refreshed — headless-safe for 24/7 / cloud, with no
-		// live Claude Code session and no ~/.claude/.credentials.json mount.
-		// Optional: leave blank to fall back to the rotating on-disk
-		// credentials from an interactive `claude` login.
+		// A long-lived Claude token overrides credentials from the local login.
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Claude Code Subscription — 1-year token").
@@ -380,7 +334,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Claude Code Subscription").
 			WithHideFunc(func() bool { return !contains(methods, methodAnthropicOAuth) }),
 
-		// Step 2a: Anthropic API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Anthropic API Key").
@@ -391,7 +344,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Anthropic API").
 			WithHideFunc(func() bool { return !contains(methods, methodAnthropicAPI) }),
 
-		// Step 2c: OpenAI API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("OpenAI API Key").
@@ -402,7 +354,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  OpenAI API").
 			WithHideFunc(func() bool { return !contains(methods, methodOpenAIAPI) }),
 
-		// Step 2c: Google API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Google (Gemini) API Key").
@@ -413,7 +364,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Google API").
 			WithHideFunc(func() bool { return !contains(methods, methodGoogleAPI) }),
 
-		// Step 2d: MiniMax API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("MiniMax API Key").
@@ -424,7 +374,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  MiniMax API").
 			WithHideFunc(func() bool { return !contains(methods, methodMiniMaxAPI) }),
 
-		// Step 2d-i: DeepSeek API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("DeepSeek API Key").
@@ -435,7 +384,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  DeepSeek API").
 			WithHideFunc(func() bool { return !contains(methods, methodDeepSeekAPI) }),
 
-		// Step 2d-ii: xAI API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("xAI API Key").
@@ -446,7 +394,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  xAI API (Grok)").
 			WithHideFunc(func() bool { return !contains(methods, methodXAIAPI) }),
 
-		// Step 2d-iii: Mistral API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Mistral API Key").
@@ -457,7 +404,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Mistral API").
 			WithHideFunc(func() bool { return !contains(methods, methodMistralAPI) }),
 
-		// Step 2e: OpenRouter API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("OpenRouter API Key").
@@ -468,7 +414,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  OpenRouter API").
 			WithHideFunc(func() bool { return !contains(methods, methodOpenRouterAPI) }),
 
-		// Step 2f: Nvidia NIM API key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Nvidia NIM API Key").
@@ -479,10 +424,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Nvidia NIM API").
 			WithHideFunc(func() bool { return !contains(methods, methodNvidiaAPI) }),
 
-		// Step 2-oauth-i: Gemini Advanced subscription
-		// Multi-cookie value (NID + Secure-1PSID + Secure-1PSIDTS, etc.)
-		// joined with semicolons. Optional — power users can drop a
-		// tokens.json under ~/.config/gemini/ instead and skip with Enter.
+		// Optional Gemini cookie string. A local tokens.json is the fallback.
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Gemini Advanced Subscription").
@@ -495,7 +437,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Gemini Advanced").
 			WithHideFunc(func() bool { return !contains(methods, methodGoogleOAuth) }),
 
-		// Step 2-oauth-ii: SuperGrok subscription
 		huh.NewGroup(
 			huh.NewNote().
 				Title("SuperGrok Subscription").
@@ -508,10 +449,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  SuperGrok").
 			WithHideFunc(func() bool { return !contains(methods, methodGrokOAuth) }),
 
-		// Step 2-oauth-iii: GitHub Copilot Pro subscription
-		// Refresh token rotation, not a single session cookie. Devs can
-		// extract one from VSCode's Copilot extension config or follow
-		// gh-copilot-cli onboarding. Optional via tokens.json fallback.
+		// Copilot uses a rotating refresh token, with tokens.json as a fallback.
 		huh.NewGroup(
 			huh.NewNote().
 				Title("GitHub Copilot Pro Subscription").
@@ -524,7 +462,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Copilot Pro").
 			WithHideFunc(func() bool { return !contains(methods, methodCopilotOAuth) }),
 
-		// Step 2-oauth-iv: Perplexity Pro subscription
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Perplexity Pro Subscription").
@@ -537,10 +474,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Perplexity Pro").
 			WithHideFunc(func() bool { return !contains(methods, methodPerplexityOAuth) }),
 
-		// Step 2g: Local Ollama. The OLLAMA_MODEL field is built from
-		// the host probe (buildOllamaModelField): a strict Select when
-		// tool-capable models are pulled, a remediation Note otherwise.
-		// The post-form gate refuses to write .env in the Note cases.
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Local Ollama").
@@ -554,7 +487,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Local LLM (Ollama)").
 			WithHideFunc(func() bool { return !contains(methods, methodOllamaLocal) }),
 
-		// Step 2-cloud-i: AWS Bedrock — three-field group (key + secret + region)
 		huh.NewGroup(
 			huh.NewNote().
 				Title("AWS Bedrock").
@@ -577,7 +509,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  AWS Bedrock").
 			WithHideFunc(func() bool { return !contains(methods, methodBedrockAPI) }),
 
-		// Step 2-cloud-ii: GCP Vertex AI — service-account JSON path + project + region
 		huh.NewGroup(
 			huh.NewNote().
 				Title("GCP Vertex AI").
@@ -600,7 +531,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  GCP Vertex AI").
 			WithHideFunc(func() bool { return !contains(methods, methodVertexAPI) }),
 
-		// Step 2-cloud-iii: Azure OpenAI — key + endpoint + version
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Azure OpenAI Service").
@@ -623,7 +553,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Azure OpenAI").
 			WithHideFunc(func() bool { return !contains(methods, methodAzureAPI) }),
 
-		// Step 2-cloud-iv: GitHub Models — PAT
 		huh.NewGroup(
 			huh.NewInput().
 				Title("GITHUB_TOKEN").
@@ -635,7 +564,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  GitHub Models").
 			WithHideFunc(func() bool { return !contains(methods, methodGitHubModelsAPI) }),
 
-		// Step 2-cloud-v: Groq
 		huh.NewGroup(
 			huh.NewInput().
 				Title("GROQ_API_KEY").
@@ -646,7 +574,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Groq Cloud").
 			WithHideFunc(func() bool { return !contains(methods, methodGroqAPI) }),
 
-		// Step 2-cloud-vi: Together AI
 		huh.NewGroup(
 			huh.NewInput().
 				Title("TOGETHER_API_KEY").
@@ -657,7 +584,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Together AI").
 			WithHideFunc(func() bool { return !contains(methods, methodTogetherAPI) }),
 
-		// Step 2-cloud-vii: Fireworks AI
 		huh.NewGroup(
 			huh.NewInput().
 				Title("FIREWORKS_API_KEY").
@@ -668,7 +594,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Fireworks AI").
 			WithHideFunc(func() bool { return !contains(methods, methodFireworksAPI) }),
 
-		// Step 2-cloud-viii: Cohere
 		huh.NewGroup(
 			huh.NewInput().
 				Title("COHERE_API_KEY").
@@ -679,7 +604,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Cohere").
 			WithHideFunc(func() bool { return !contains(methods, methodCohereAPI) }),
 
-		// Step 2-cloud-ix: Moonshot Kimi K2
 		huh.NewGroup(
 			huh.NewInput().
 				Title("MOONSHOT_API_KEY").
@@ -690,7 +614,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Moonshot Kimi K2").
 			WithHideFunc(func() bool { return !contains(methods, methodMoonshotAPI) }),
 
-		// Step 2-cloud-ix-b: Kimi for Coding (K3 / K2.7)
 		huh.NewGroup(
 			huh.NewInput().
 				Title("KIMI_API_KEY").
@@ -702,7 +625,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Kimi for Coding").
 			WithHideFunc(func() bool { return !contains(methods, methodKimiAPI) }),
 
-		// Step 2-cloud-x: Z.ai GLM-4.5
 		huh.NewGroup(
 			huh.NewInput().
 				Title("ZAI_API_KEY").
@@ -714,7 +636,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Z.ai GLM-4.5").
 			WithHideFunc(func() bool { return !contains(methods, methodZaiAPI) }),
 
-		// Step 2-cloud-xi: Alibaba DashScope (Qwen)
 		huh.NewGroup(
 			huh.NewInput().
 				Title("DASHSCOPE_API_KEY").
@@ -725,7 +646,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  DashScope (Qwen)").
 			WithHideFunc(func() bool { return !contains(methods, methodDashscopeAPI) }),
 
-		// Step 2-local-ii: LM Studio (local OpenAI-compatible)
 		huh.NewGroup(
 			huh.NewNote().
 				Title("LM Studio").
@@ -744,7 +664,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  LM Studio").
 			WithHideFunc(func() bool { return !contains(methods, methodLMStudioLocal) }),
 
-		// Step 2-local-iii: Ollama Cloud (hosted)
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Ollama Cloud").
@@ -767,7 +686,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Ollama Cloud").
 			WithHideFunc(func() bool { return !contains(methods, methodOllamaCloud) }),
 
-		// Step 2-custom: Custom OpenAI-compatible endpoint
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Custom OpenAI-compatible Endpoint").
@@ -790,7 +708,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("2 / 5  ·  Custom OpenAI Endpoint").
 			WithHideFunc(func() bool { return !contains(methods, methodCustomOpenAIAPI) }),
 
-		// Step 3: Model profile
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Model Profile").
@@ -803,7 +720,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 				Value(&profile),
 		).Title("3 / 5  ·  Profile"),
 
-		// Step 4: Language
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Agent Language").
@@ -852,7 +768,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 				Value(&language),
 		).Title("4 / 5  ·  Language"),
 
-		// Step 5a: LangSmith toggle
 		huh.NewGroup(
 			huh.NewConfirm().
 				Title("Enable LangSmith?").
@@ -862,7 +777,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 				Value(&useLangSmith),
 		).Title("5 / 5  ·  Observability"),
 
-		// Step 5b: LangSmith key
 		huh.NewGroup(
 			huh.NewInput().
 				Title("LangSmith API Key").
@@ -873,7 +787,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		).Title("5 / 5  ·  LangSmith").
 			WithHideFunc(func() bool { return !useLangSmith }),
 
-		// Step 5c: usage telemetry consent (opt-out — default yes)
 		huh.NewGroup(
 			huh.NewConfirm().
 				Title("Share anonymous + masked red-team telemetry?").
@@ -906,17 +819,11 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		telemetryChoice = "off"
 	}
 
-	// Strict-mode gate: refuse to write .env when the user picked
-	// Ollama but the host probe found no tool-capable model. The
-	// in-form Note shows the same remediation; this is the boundary
-	// guarantee that a broken setup never ships.
+	// Require a tool-capable model before writing .env.
 	if contains(methods, methodOllamaLocal) && len(ollamaProbe.ToolCapableModels) == 0 {
 		return ollamaUnusableError(ollamaProbe, ollamaAPIBase)
 	}
 
-	// huh.MultiSelect returns selected values in option order, not the
-	// order the user toggled. Re-derive the priority by walking
-	// methodOrder and keeping only what the user picked.
 	priority := make([]string, 0, len(methods))
 	for _, m := range methodOrder {
 		if contains(methods, m) {
@@ -948,9 +855,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		values["ANTHROPIC_API_KEY"] = anthropicKey
 	}
 	if claudeOAuthToken != "" {
-		// Long-lived `claude setup-token`. The claude_code handler reads this
-		// as a synthetic credential (expiresAt=0 → never refreshed); no
-		// credentials-file mount or live CC session needed.
+		// An explicit setup token is treated as non-refreshable.
 		values["ANTHROPIC_OAUTH_TOKEN"] = strings.TrimSpace(claudeOAuthToken)
 	}
 	if openaiKey != "" {
@@ -1017,9 +922,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		values["AZURE_API_VERSION"] = strings.TrimSpace(azureAPIVersion)
 	}
 	if githubToken != "" {
-		// LiteLLM's github/ provider reads GITHUB_API_KEY; the GitHub
-		// CLI + most docs use GITHUB_TOKEN. Set both so either path
-		// works without operator surprise.
+		// LiteLLM reads GITHUB_API_KEY, while the GitHub CLI reads GITHUB_TOKEN.
 		values["GITHUB_TOKEN"] = strings.TrimSpace(githubToken)
 		values["GITHUB_API_KEY"] = strings.TrimSpace(githubToken)
 	}
@@ -1050,9 +953,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	if contains(methods, methodLMStudioLocal) {
 		values["LMSTUDIO_API_BASE"] = strings.TrimSpace(lmStudioAPIBase)
 		values["LMSTUDIO_MODEL"] = strings.TrimSpace(lmStudioModel)
-		// LM Studio accepts any string as the API key; set a sentinel
-		// so LiteLLM's openai-compatible shim doesn't fail an empty
-		// Authorization header.
+		// LM Studio accepts a placeholder key for the OpenAI-compatible client.
 		values["LMSTUDIO_API_KEY"] = "lm-studio"
 	}
 	if contains(methods, methodCustomOpenAIAPI) {
@@ -1067,18 +968,14 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		values["LANGSMITH_PROJECT"] = "raptix"
 	}
 
-	// Anonymous usage telemetry consent. Only sends when a gateway endpoint is
-	// configured (RAPTIX_TELEMETRY_ENDPOINT, shipped in .env.example); an
-	// unset endpoint keeps it dormant even when the user opted in.
+	// Telemetry requires consent and a configured endpoint.
 	values["RAPTIX_TELEMETRY"] = telemetryChoice
 
 	if err := config.WriteEnvFromEmbed(config.EnvPath(), values); err != nil {
 		return fmt.Errorf("write .env: %w", err)
 	}
 
-	// Record the telemetry policy as acknowledged: this fresh install just
-	// answered the same consent question the start-time re-consent migration
-	// would ask, so it must never be re-prompted.
+	// Record the consent answer so the startup migration can skip the prompt.
 	if err := migrate.MarkAcked(config.RaptixHome(), migrate.TelemetryPolicyID); err != nil {
 		ui.Warning("Could not record telemetry consent ack: " + err.Error())
 	}
@@ -1102,11 +999,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	fmt.Println(ui.Dim.Render("  └──────────────────────────────────┘"))
 	fmt.Println()
 
-	// Install opscontrol as a managed service (ADR-0006). Idempotent
-	// — re-running onboard re-templates the unit so a launcher
-	// upgrade picks up the new ExecStart path. On hosts without
-	// systemd-user / launchd this is a no-op announcement, and the
-	// launcher's spawn fallback takes over at `raptix start`.
+	// Refresh the service definition on rerun. Hosts without a service manager use the startup fallback.
 	fmt.Println()
 	if err := opscontrol.EnsureInstalled(); err != nil {
 		// Non-fatal: onboarding can complete without managed-service
@@ -1114,12 +1007,6 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		ui.Warning("opscontrol install skipped: " + err.Error())
 	}
 	fmt.Println()
-
-	// One-time GitHub star ask — the natural post-onboarding moment.
-	// Suppressed on subsequent runs by the ack file at
-	// $RAPTIX_HOME/.starred, so a re-run of `raptix onboard
-	// --reset` does not re-prompt.
-	starprompt.PromptIfNotStarred()
 
 	ui.DimText("  Run 'raptix' to start the platform")
 	return nil
@@ -1156,10 +1043,7 @@ func nonEmpty(s string) error {
 	return nil
 }
 
-// optionalClaudeOAuthToken accepts an empty value (the user falls back to the
-// on-disk credentials file) but, when provided, requires the Claude OAuth
-// token shape (`sk-ant-oat01-…`) so a mistyped API key or stray paste is
-// caught at the prompt rather than failing silently at runtime.
+// optionalClaudeOAuthToken accepts a setup token or an empty value for local credentials.
 func optionalClaudeOAuthToken(s string) error {
 	t := strings.TrimSpace(s)
 	if t == "" {
@@ -1178,10 +1062,7 @@ func boolStr(b bool) string {
 	return "false"
 }
 
-// buildOllamaModelField returns the OLLAMA_MODEL form field that
-// matches the host probe outcome: strict Select when tool-capable
-// models are pulled, otherwise a remediation Note (different message
-// for the reachable-but-no-tools case vs unreachable Ollama).
+// buildOllamaModelField offers a model picker or a hint based on the probe result.
 func buildOllamaModelField(probe ollamaProbeResult, selected *string) huh.Field {
 	if len(probe.ToolCapableModels) > 0 {
 		options := make([]huh.Option[string], 0, len(probe.ToolCapableModels))
@@ -1209,9 +1090,7 @@ func buildOllamaModelField(probe ollamaProbeResult, selected *string) huh.Field 
 		Description("Could not reach Ollama at " + defaultOllamaAPIBase + ".\n\nMost likely Ollama isn't running or is bound to\n127.0.0.1 only (which the Raptix container can't\nsee). Launch it on all interfaces, pull a tool-capable\nmodel, then re-run the wizard:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n  ollama pull qwen3-coder:30b\n  ollama show qwen3-coder:30b   # capabilities should list 'tools'\n\nThen press Esc and re-run 'raptix onboard'.")
 }
 
-// ollamaUnusableError surfaces the post-form remediation when the user
-// picked Ollama but the probe found nothing usable. Two flavors so the
-// hint matches whichever in-form Note was shown.
+// ollamaUnusableError matches the setup hint to the probe result.
 func ollamaUnusableError(probe ollamaProbeResult, baseURL string) error {
 	if probe.Reachable {
 		return fmt.Errorf(

@@ -1,14 +1,4 @@
-/**
- * Run/thread wire contracts: the public event envelope, stream subscription
- * request, run identity and snapshot.
- *
- * `RunEventKind` is a W01 SUBSET of envelope coverage: only the canonical
- * custom sub-agent event kinds (type from @raptix/streaming; no second
- * event-name set). LangGraph root SDK message/state kinds are a W08 extension.
- * `runId: null` = unattributed checkpoint history; `toolCallId: null` matches
- * the producer emitting no tool-call ID; `cursor` (SSE Last-Event-ID) is
- * distinct from `eventId` (reducer dedup key).
- */
+/** Run and thread events, subscriptions and snapshots. SSE cursors support replay separately from event deduplication. */
 import type { SubagentEventType } from '@raptix/streaming'
 import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 
@@ -55,7 +45,7 @@ export interface RunEventEnvelope {
   occurredAt: string | null
   /** Boundary receive time (UTC ISO-8601). */
   observedAt: string
-  /** Per-kind payload; typed per-kind validation lands with the reducer. */
+  /** Payload for the event kind. */
   payload: unknown
 }
 
@@ -74,11 +64,7 @@ export function isRunEventEnvelope(value: unknown): value is RunEventEnvelope {
   return Object.prototype.hasOwnProperty.call(value, 'payload')
 }
 
-/**
- * Execution view-state (guide section 5.3 layer 2) — a UI projection, NOT the
- * raw wire status. The raw SDK/runtime status is captured later and preserved
- * separately on {@link RunSnapshot.rawStatus}.
- */
+/** UI execution state. The raw runtime status is stored separately. */
 export const RUN_VIEW_STATUSES = [
   'idle', 'submitting', 'pending', 'running', 'awaiting_approval',
   'interrupted', 'completed', 'failed', 'cancelled', 'unknown',

@@ -18,11 +18,11 @@ var (
 	Bold   = lipgloss.NewStyle().Bold(true)
 
 	BannerStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FF0000"))
+			Foreground(lipgloss.Color("#FF0000"))
 
 	BannerBold = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FF0000")).
-		Bold(true)
+			Foreground(lipgloss.Color("#FF0000")).
+			Bold(true)
 )
 
 // Full banner: braille logo + block-character text art (≥140 cols)

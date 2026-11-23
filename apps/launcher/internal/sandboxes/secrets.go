@@ -54,9 +54,7 @@ func ReadSecret(path string) (string, error) {
 	return value, nil
 }
 
-// InitSecrets creates the sandbox key, the controller token, the runtime API token, the vault master key and the
-// web API internal token in dir with mode 0600. An existing file is kept, so a rerun never rotates a key that
-// running sandboxes or stored vault secrets depend on.
+// InitSecrets creates missing keys and tokens with mode 0600 and preserves existing credentials.
 func InitSecrets(dir string) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("create secrets directory: %w", err)

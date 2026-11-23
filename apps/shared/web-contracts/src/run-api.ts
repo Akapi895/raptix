@@ -12,12 +12,7 @@ export interface ScopedThreadMessage {
   /** Thinking trace stowed in `additional_kwargs.reasoning_content` (assistant only, optional). */
   reasoning?: string
 }
-/**
- * One durable checkpoint transcript entry (W09). Provenance `key` comes from
- * the shared event-identity normalizer; `runId` stays null because checkpoint
- * transcripts accumulate across runs and unattributed history must remain
- * thread-level rather than being assigned to an active run.
- */
+/** Checkpoint transcript entry. Its event key is stable and its run remains unattributed. */
 export interface ThreadHistoryEvent {
   key: string | null; runId: null; source: 'checkpoint'; truncated: boolean; payload: CustomPayload | ToolPayload
 }
@@ -31,26 +26,26 @@ export interface ScopedThreadView {
   transcripts?: ThreadHistoryEvent[]; transcriptsTruncated?: boolean
   /** Per-conversation tool approval switch; absent means on (the default). */
   hitlEnabled?: boolean
-  /** Restored graph-interrupt question (W11): lets the picker survive reloads. */
+  /** Pending question restored after reload. */
   pendingQuestion?: PendingInterruptView
   /** Every restorable `ask_user_question` interrupt (parallel tool calls raise several at once). */
   pendingQuestions?: PendingInterruptView[]
 }
-/** Owner-scoped bound-thread list for the Console selector (W10). */
+/** Threads available to the owner in the console. */
 export interface ScopedThreadListView {
   engagementId: string; threads: ThreadBindingView[]; source: 'runtime'
 }
-/** One pending `ask_user_question` graph interrupt restored from thread state (W11). */
+/** Pending question restored from thread state. */
 export interface PendingInterruptView {
   questionId: string; question: string; header: string
   options: { label: string; description: string }[]
   multiSelect: boolean; allowOther: boolean; source: 'runtime'
   /** LangGraph interrupt identity — required to resume when several interrupts are pending at once. */
   interruptId?: string
-  /** P10e: the dispatch attempt that asked, when the question came from a running instance. The batch answer still covers every pending question. */
+  /** Originating attempt, when known. Batch answers cover all pending questions. */
   instance?: { dispatchId: string; attempt: number }
 }
-/** One workspace-file-backed HITL approval request, public projection (W11). */
+/** Public approval request read from the workspace. */
 export interface ApprovalRequestView {
   engagementId: string; requestId: string; engagementName: string; agentName: string; toolName: string
   toolArgsRedacted: Record<string, unknown>
@@ -90,7 +85,7 @@ export function isApprovalRequestView(v: unknown): v is ApprovalRequestView {
 export function isApprovalsView(v: unknown): v is ApprovalsView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && v.source === 'workspace' && Array.isArray(v.approvals) && v.approvals.every(isApprovalRequestView)
 }
-/** One parsed `FIND-*.md` workspace finding, public projection with parser-quality flags (W12). */
+/** Parsed workspace finding with validation flags. */
 export interface FindingView {
   engagementId: string; id: string; title: string
   severity: 'critical' | 'high' | 'medium' | 'low' | 'informational'
@@ -220,18 +215,14 @@ export function isAssetSummaryView(v: unknown): v is AssetSummaryView {
 export function isAssetsView(v: unknown): v is AssetsView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.assets) && v.assets.every(isAssetSummaryView) && typeof v.truncated === 'boolean' && v.source === 'graph'
 }
-/** One merged, explicitly-labeled operations-log entry (W14). `at` is ISO 8601. */
+/** Operations log entry with an ISO 8601 timestamp. */
 export interface TimelineEntryView {
   id: string; at: string
   source: 'runtime' | 'checkpoint' | 'workspace'
   kind: string; label: string
   agent?: string; tool?: string; runId?: string; status?: string
 }
-/**
- * Merged operations timeline: runtime run states, checkpoint transcripts and
- * workspace artifact-mtime entries keep distinct `source` labels; artifact
- * mtimes are presence markers, never exact tool execution times.
- */
+/** Operations timeline with source labels for runs, checkpoints and artifact timestamps. */
 export interface TimelineView {
   engagementId: string; entries: TimelineEntryView[]
   /** The source window hit its bound, so older activity beyond it is not projected. */
@@ -254,11 +245,7 @@ export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
 export function isTimelineView(v: unknown): v is TimelineView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && typeof v.hasMore === 'boolean' && typeof v.untimedCheckpoints === 'number' && typeof v.unavailableThreads === 'number' && v.source === 'mixed'
 }
-/**
- * W15 engagement settings: only the fields the new server actually persists
- * today. `name` is the immutable workspace slug; `targetChange` states the
- * lifecycle/lock policy up front instead of failing opaquely on save.
- */
+/** Persisted engagement settings. The name is immutable and targetChange describes the edit policy. */
 export interface EngagementSettingsView {
   engagementId: string; displayName: string; name: string
   targetType: EngagementTargetType; targetValue: string
@@ -273,13 +260,7 @@ export function isEngagementSettingsView(v: unknown): v is EngagementSettingsVie
   if (!isRecord(v.targetChange) || typeof v.targetChange.allowed !== 'boolean') return false
   return v.targetChange.reason === null || isNonEmptyString(v.targetChange.reason)
 }
-/**
- * W17 vector campaigns: persisted drafts plus truthful provider jobs. The
- * campaign provider is not wired in this build, so every generate/deploy
- * attempt records a durable job whose `status` states the unavailable outcome
- * — a job view never claims generated/delivered, and the campaign stays in
- * draft until a real provider contract exists.
- */
+/** Campaign drafts and provider job outcomes. An unavailable provider leaves the campaign in draft. */
 export type CampaignVector = 'phishing' | 'web' | 'mobile'
 export interface CampaignProviderCapabilities {
   engagementId: string; source: 'configuration'; draftPersistence: true
@@ -336,12 +317,7 @@ export function isCampaignView(v: unknown): v is CampaignView {
 export function isCampaignsView(v: unknown): v is CampaignsView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.campaigns) && v.campaigns.every(isCampaignView) && typeof v.truncated === 'boolean'
 }
-/**
- * W18 credentials vault: redacted metadata by default (kind/label/provenance
- * plus the reveal audit state) and a dedicated authorized reveal response.
- * The metadata view never carries a plaintext secret, and the reveal view is
- * only produced by the explicit reveal endpoint.
- */
+/** Redacted Vault metadata. Plaintext is returned only by the authorized reveal endpoint. */
 export interface VaultSecretView {
   id: string; engagementId: string
   kind: string; label: string
@@ -370,16 +346,11 @@ export function isVaultRevealView(v: unknown): v is VaultRevealView {
   if (!isRecord(v) || !isNonEmptyString(v.secretId) || !isNonEmptyString(v.engagementId) || !isNonEmptyString(v.plaintext)) return false
   return isNonEmptyString(v.revealedAt) && !Number.isNaN(Date.parse(v.revealedAt))
 }
-/**
- * W19 members, extended by integration ticket 07: the local single-user
- * topology stays truthful (single operator, invites unsupported); multi-user
- * deployments (RAPTIX_WEB_AUTH_MODE=multi) report persisted memberships with
- * invite/role APIs backed by session-authenticated, server-side checks.
- */
+/** Membership view for single-operator or multi-user deployments. */
 export interface MemberView {
   id: string; label: string; role: string; source: 'local' | 'membership'
 }
-/** P11: the operation lifecycle the runtime reports for one execution thread. `state` is the server's word. */
+/** Runtime-reported operation state for an execution thread. */
 export interface OperationView {
   engagementId: string; threadId: string; state: string
   latestRunId: string | null; latestRunStatus: string | null; source: 'runtime'

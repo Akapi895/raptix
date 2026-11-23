@@ -5,26 +5,14 @@ import (
 	"time"
 )
 
-// registryEntry is one in-memory record of a workload the daemon has
-// touched in this session. The map is process-local — Sprint 1 does
-// not persist across daemon restart. Restart-survival belongs to
-// Sprint 4 (Web Dashboard + status panel).
+// registryEntry stores one workload's state for this daemon session.
 type registryEntry struct {
 	State        WorkloadState
 	EngagementID string
 	UpdatedAt    time.Time
 }
 
-// registry tracks workload→entry. Sprint 1's only consumer of
-// EngagementID is `/v1/profiles` for now; the engagement-scoped bulk
-// cleanup tool ships with Sprint 2 (orchestrator prompt update).
-//
-// The registry also owns the per-workload mutex used to serialize
-// concurrent start/stop on the same workload (P3 from the design
-// review). Two `ops_start("ad")` calls land on the same mutex; the
-// second blocks until the first finishes, observes the registry
-// already records `running`, and the backend returns the existing
-// handle without re-running compose up.
+// registry tracks workload state and serializes start and stop with per-workload locks.
 type registry struct {
 	mu      sync.Mutex
 	entries map[string]*registryEntry
@@ -91,10 +79,7 @@ func (r *registry) snapshot() []WorkloadStatus {
 	return out
 }
 
-// workloadsForEngagement returns the names of every workload currently
-// associated with engagementID and not already in StateStopped. The
-// caller is responsible for taking per-workload mutexes before
-// stopping each one; this method is read-only.
+// workloadsForEngagement lists active workloads. The caller locks each workload before stopping it.
 func (r *registry) workloadsForEngagement(engagementID string) []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()

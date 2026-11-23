@@ -1,13 +1,6 @@
-/**
- * Pure utility functions for stream event processing.
- *
- * Zero dependencies — used by both Web and CLI.
- */
+/** Shared helpers for processing stream events. */
 
-/**
- * Extract text from LangChain message content.
- * Handles both string content and content-block arrays (Anthropic format).
- */
+/** Read text from a string or an array of content blocks. */
 export function extractText(content: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
@@ -23,10 +16,7 @@ export function extractText(content: unknown): string {
   return "";
 }
 
-/**
- * Strip `<result>` XML tags from AI message content.
- * These tags are used internally by the agent framework and should not be shown to users.
- */
+/** Remove internal result tags before display. */
 export function stripResultTags(text: string): string {
   return text.replace(/<\/?result>/g, "").trim();
 }

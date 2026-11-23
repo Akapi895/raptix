@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Container paths are canonical and fixed (ADR-0092 mount invariants).
+// Container mount paths are fixed.
 const (
 	RuntimeStatePath = "/app/.langgraph_api"
 	workspacePrefix  = "/workspace/"
@@ -47,9 +47,8 @@ func (p ImagePolicy) Check(ref string) error {
 	return nil
 }
 
-// NormalizeHostPath turns a Windows, WSL or POSIX host path into the form the
-// Docker client expects, and proves it sits under root. It refuses ".." before
-// cleaning, and any character that could add a mount option (",", "=", quotes).
+// NormalizeHostPath converts a host path for Docker and checks that it falls under root.
+// Reject traversal and mount-option characters before cleaning.
 func NormalizeHostPath(root, p string) (string, error) {
 	clean, err := cleanHostPath(p)
 	if err != nil {
@@ -92,16 +91,15 @@ type Spec struct {
 	WorkspaceHostPath string
 	MemoryBytes       int64
 	PidsLimit         int
-	// RuntimeEnv is the bootstrap allowlist the host grants the runtime only (ADR-0092 §5.2). The sandbox receives none.
+	// RuntimeEnv is the bootstrap allowlist for the runtime. Sandboxes receive none.
 	RuntimeEnv map[string]string
 }
 
 // WorkspaceTarget is the canonical in-container workspace for this project.
 func (s Spec) WorkspaceTarget() string { return workspacePrefix + s.WorkspaceSlug }
 
-// CreateArgs renders the docker create argv. There is no shell, no env file,
-// no privileged flag and no Docker socket. A runtime gets a private state
-// volume. A sandbox gets only its project workspace, on its environment network.
+// CreateArgs builds Docker arguments directly, without a shell or privileged options.
+// Runtime state and sandbox workspaces use separate volumes.
 func (s Spec) CreateArgs() ([]string, error) {
 	if err := s.Identity.Validate(); err != nil {
 		return nil, err

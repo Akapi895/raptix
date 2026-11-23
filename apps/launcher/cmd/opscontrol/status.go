@@ -54,9 +54,7 @@ func runStatus(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-// probeHealth performs a one-shot GET /v1/health over the Unix socket.
-// Returns the decoded body or a diagnostic error suitable for the
-// user-facing CLI ("daemon not reachable: socket missing", etc.).
+// probeHealth sends GET /v1/health over the Unix socket.
 func probeHealth(socketPath string) (map[string]any, error) {
 	tr := &http.Transport{
 		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {

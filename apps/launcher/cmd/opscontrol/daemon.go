@@ -40,23 +40,13 @@ func runDaemon(_ *cobra.Command, _ []string) error {
 
 	backend := internal.NewDockerComposeBackend()
 
-	// Wire the launcher's compose override into the backend so
-	// docker compose sees the langgraph socket bind-mount that
-	// the agent needs to reach this daemon. `make dev` / `make smoke`
-	// won't include this file, so they stay daemon-less by design.
+	// Use the launcher overlay so the runtime mounts the daemon socket.
 	overridePath := filepath.Join(filepath.Dir(backend.ComposeFile), "docker-compose.opscontrol.yml")
 	if _, err := os.Stat(overridePath); err == nil {
 		backend.ExtraFiles = append(backend.ExtraFiles, overridePath)
 	}
 
-	// The overlay templates ${RAPTIX_OPSCONTROL_SOCK_HOST} into
-	// langgraph's bind mount. Export it BEFORE the first compose call
-	// so the daemon's spawn of bhce / c2-sliver / … produces the same
-	// langgraph mount the launcher would have produced. Without this
-	// the overlay either fails to interpolate (compose errors loudly)
-	// or, with the old `:-/dev/null` fallback, silently mounts
-	// /dev/null and the agent-side OpsControlClient hits ECONNREFUSED
-	// at runtime.
+	// Export the host socket before Compose interpolates the overlay.
 	if err := os.Setenv("RAPTIX_OPSCONTROL_SOCK_HOST", internal.HostSocketPath()); err != nil {
 		return fmt.Errorf("opscontrol: export socket path: %w", err)
 	}
@@ -64,9 +54,7 @@ func runDaemon(_ *cobra.Command, _ []string) error {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	server := internal.NewServer(backend, allow, logger)
 
-	// Write the PID file so `raptix stop` knows who to signal.
-	// We write our own PID (not the parent shell's) so that a
-	// foreground run still places a valid marker.
+	// Record the daemon's own PID even when it runs in the foreground.
 	pidPath := internal.PIDFilePath()
 	if err := os.WriteFile(pidPath, []byte(strconv.Itoa(os.Getpid())), 0o600); err != nil {
 		return fmt.Errorf("opscontrol: write pid file: %w", err)

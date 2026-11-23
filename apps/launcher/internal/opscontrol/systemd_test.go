@@ -6,10 +6,6 @@ import (
 	"testing"
 )
 
-// TestRemoveStaleDropIns_DeletesDeadBinaryOverride covers the v1.1.10
-// dogfood regression: a `systemctl edit` override from an earlier test
-// pinned ExecStart= to /tmp/raptix-stop-v3 (since deleted), and
-// the launcher kept silently re-using it on `install`.
 func TestRemoveStaleDropIns_DeletesDeadBinaryOverride(t *testing.T) {
 	tmp := t.TempDir()
 	dropInDir := filepath.Join(tmp, "raptix-opscontrol.service.d")
@@ -37,9 +33,6 @@ func TestRemoveStaleDropIns_DeletesDeadBinaryOverride(t *testing.T) {
 	}
 }
 
-// TestRemoveStaleDropIns_KeepsLiveBinaryOverride is the safety contract:
-// an operator's legitimate override (custom env vars, restart policy
-// tweaks) that points to a real binary must survive install.
 func TestRemoveStaleDropIns_KeepsLiveBinaryOverride(t *testing.T) {
 	tmp := t.TempDir()
 	dropInDir := filepath.Join(tmp, "raptix-opscontrol.service.d")
@@ -66,9 +59,6 @@ func TestRemoveStaleDropIns_KeepsLiveBinaryOverride(t *testing.T) {
 	}
 }
 
-// TestRemoveStaleDropIns_AcceptsModifierPrefixes covers systemd's
-// ExecStart modifier syntax (- @ : + ! !!) so we don't false-positive
-// or false-negative on operator overrides that use them.
 func TestRemoveStaleDropIns_AcceptsModifierPrefixes(t *testing.T) {
 	tmp := t.TempDir()
 	dropInDir := filepath.Join(tmp, "raptix-opscontrol.service.d")

@@ -158,9 +158,8 @@ func writeEnvFromString(tmpl string, outputPath string, values map[string]string
 	return writePrivateFile(outputPath, []byte(strings.Join(out, "\n")))
 }
 
-// writePrivateFile atomically replaces path with a file that is private from
-// its first byte. os.WriteFile's mode is ignored when path already exists,
-// which could leave credentials world-readable after onboard --reset.
+// writePrivateFile atomically replaces the destination with a private file.
+// Writing over an existing file with os.WriteFile would keep its old permissions.
 func writePrivateFile(path string, data []byte) (retErr error) {
 	dir := filepath.Dir(path)
 	tmp, err := os.CreateTemp(dir, ".env.tmp-*")
@@ -189,10 +188,8 @@ func writePrivateFile(path string, data []byte) (retErr error) {
 	return nil
 }
 
-// APIKeyNames lists the API key environment variable names to check.
-// Order matters: a valid key in this list satisfies the "at least one
-// credential" startup gate. Keep in sync with keyFormatRules below and
-// with raptix/intelligence/llm/factory.py::_API_METHOD_ENV.
+// APIKeyNames lists provider keys accepted by the startup credential check.
+// Keep the list aligned with keyFormatRules and the runtime's _API_METHOD_ENV.
 var APIKeyNames = []string{
 	"ANTHROPIC_API_KEY",
 	"OPENAI_API_KEY",
@@ -230,15 +227,7 @@ func IsPlaceholder(val string) bool {
 	return strings.HasSuffix(val, PlaceholderSuffix) || val == ""
 }
 
-// keyFormatRules maps an API key env var to its expected prefix and human-readable hint.
-// Format checks are intentionally lenient — providers occasionally evolve key shapes
-// (OpenAI shipped sk-proj-* in 2024, Anthropic sk-ant-api03-* etc.). The check only
-// rejects values that are obviously malformed (typos, missing prefix).
-//
-// An empty Prefix means "no fixed shape, skip the prefix check" (only the
-// length floor still applies). MiniMax/Mistral keys ship without a
-// universal prefix and would otherwise be rejected when the user pastes
-// the right key.
+// keyFormatRules rejects obvious typos. Providers without a stable prefix get only a length check.
 var keyFormatRules = map[string]struct {
 	Prefix string
 	Hint   string
@@ -326,27 +315,8 @@ func ValidateAPIKeys(env map[string]string) error {
 	return fmt.Errorf("%s", msg.String())
 }
 
-// subscriptionMethod groups the env signal + credential layout for one
-// OAuth subscription handler so we don't repeat the validation logic.
-// Resolution order matches each runtime provider exactly:
-//
-//  1. <PROVIDER>_ACCESS_TOKEN   — pre-extracted Bearer
-//  2. <PROVIDER>_SESSION_TOKEN  — browser session cookie value
-//  3. configured token file on disk
-//
-// Two providers diverge slightly:
-//   - Gemini Advanced ships a multi-cookie value (GEMINI_SESSION_COOKIES)
-//     instead of a single session token. accept either env name.
-//   - Copilot Pro uses a refresh-token rotation (COPILOT_REFRESH_TOKEN)
-//     instead of a session cookie. Same fall-through, different env name.
-//   - ChatGPT uses Raptix's auth/ handler reading the Codex CLI
-//     credential store at ~/.codex/auth.json. The launcher mounts that
-//     file into the container so a host-side `codex login` is visible
-//     to the running proxy without rebuilding.
-//
-// AbsolutePath is set for handlers that store a single credential file
-// at a fixed absolute path (rather than under ~/.config/<dir>/<file>).
-// When set, ConfigDir / TokenFile are ignored.
+// subscriptionMethod describes credential lookup in runtime order: access token, session credential, then file.
+// AbsolutePath overrides ConfigDir and TokenFile.
 type subscriptionMethod struct {
 	Toggle                string   // RAPTIX_AUTH_<X> boolean enabling this path
 	TokenEnvs             []string // env vars that satisfy the path on their own
@@ -392,28 +362,8 @@ var oauthSubscriptions = map[string]subscriptionMethod{
 	},
 }
 
-// ValidateAuth ensures at least one valid AuthMethod is configured.
-//
-// OAuth paths:
-//   - RAPTIX_AUTH_CLAUDE_CODE=true requires a parseable
-//     ~/.claude/.credentials.json. LiteLLM mounts that file read-only.
-//   - RAPTIX_AUTH_<X>=true (CHATGPT, GEMINI, COPILOT, GROK,
-//     PERPLEXITY) is satisfied by a token env var or a token file at its
-//     mounted token directory. ChatGPT uses LiteLLM native OAuth and is
-//     allowed through so LiteLLM can run its device-code login flow.
-//
-// Local LLM path: ollama_local in RAPTIX_AUTH_PRIORITY (or any
-// OLLAMA_API_BASE configured) is treated as a valid credential. Ollama
-// reachability is probed separately at startup (start.go).
-//
-// API path: at least one configured provider key (ANTHROPIC / OPENAI /
-// GEMINI / MINIMAX / OPENROUTER / NVIDIA / DEEPSEEK / XAI / MISTRAL)
-// must be non-placeholder and well-formed.
-//
-// At least one path must succeed. When OAuth is requested and its
-// credentials are broken, the other paths are checked as fallbacks;
-// if all fail, the OAuth error is surfaced first because that was the
-// user's explicit choice.
+// ValidateAuth accepts any valid subscription credential, local model configuration or provider key.
+// If all checks fail, report the error for the explicitly selected OAuth method first.
 func ValidateAuth(env map[string]string) error {
 	claudeOAuth := isTruthy(Get(env, "RAPTIX_AUTH_CLAUDE_CODE", ""))
 	ollamaErr := validateOllamaCredentials(env)
@@ -455,9 +405,7 @@ func ValidateAuth(env map[string]string) error {
 	return apiErr
 }
 
-// hasOllamaSelected returns true when the user has explicitly opted into
-// the local-Ollama auth method (via the priority list or by setting
-// OLLAMA_API_BASE without any other API key).
+// hasOllamaSelected checks explicit priority or an Ollama URL without another API key.
 func hasOllamaSelected(env map[string]string) bool {
 	priority := strings.ToLower(strings.TrimSpace(env["RAPTIX_AUTH_PRIORITY"]))
 	for _, m := range strings.Split(priority, ",") {
@@ -468,15 +416,7 @@ func hasOllamaSelected(env map[string]string) bool {
 	return env["OLLAMA_API_BASE"] != ""
 }
 
-// validateOllamaCredentials accepts the Ollama path when the user has
-// either listed ollama_local in RAPTIX_AUTH_PRIORITY or set
-// OLLAMA_API_BASE directly. Ollama itself has no API key — the
-// only required signal is the base URL pointing at a running instance.
-//
-// We don't probe the URL here; the launcher runs on the host while the
-// LiteLLM container talks to the URL from inside Docker, so a host-side
-// reachability check would lie when the user (correctly) wired up
-// host.docker.internal-style addressing.
+// validateOllamaCredentials checks configuration only. Reachability depends on container routing.
 func validateOllamaCredentials(env map[string]string) error {
 	if !hasOllamaSelected(env) {
 		return fmt.Errorf("ollama not configured")
@@ -500,11 +440,7 @@ func isTruthy(s string) bool {
 	return false
 }
 
-// validateClaudeCredentials verifies ~/.claude/.credentials.json exists, is a regular
-// file, parses as JSON, and carries an access token in one of the shapes the LiteLLM
-// claude_code_handler accepts (claudeAiOauth.accessToken, top-level accessToken, or
-// legacy oauthToken). Compose mounts this path into the LiteLLM container; if it's
-// missing or empty, authentication fails opaquely on the first prompt instead of here.
+// validateClaudeCredentials checks that the mounted file contains a token accepted by LiteLLM.
 func validateClaudeCredentials() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -536,17 +472,8 @@ func validateClaudeCredentials() error {
 	return nil
 }
 
-// validateSubscriptionCredentials verifies the user has at least one credential
-// path wired up for an OAuth subscription handler. The runtime providers
-// walk the same resolution order at runtime:
-//
-//  1. <PROVIDER>_ACCESS_TOKEN env (pre-extracted Bearer)
-//  2. <PROVIDER>_SESSION_TOKEN / _SESSION_COOKIES / _REFRESH_TOKEN env
-//  3. configured token file on disk
-//
-// We don't validate token shape — providers ship them in many formats and shapes
-// drift across versions. We only catch the "toggled on in onboard but never
-// pasted a token" case before the first agent prompt fails opaquely.
+// validateSubscriptionCredentials checks for a token or credential file in runtime lookup order.
+// Token formats vary by provider and are validated at runtime.
 func validateSubscriptionCredentials(env map[string]string, sub subscriptionMethod) error {
 	for _, name := range sub.TokenEnvs {
 		if strings.TrimSpace(env[name]) != "" {
@@ -617,9 +544,7 @@ func dedupeStrings(values []string) []string {
 	return out
 }
 
-// extractClaudeAccessToken walks the credentials JSON in the same resolution order as
-// the LiteLLM handler (infra/config/claude_code_handler.py): current nested format first,
-// then legacy top-level keys. Returns "" if no usable token is present.
+// extractClaudeAccessToken checks the current nested format before the legacy top-level keys.
 func extractClaudeAccessToken(creds map[string]any) string {
 	if oauth, ok := creds["claudeAiOauth"].(map[string]any); ok {
 		if tok, _ := oauth["accessToken"].(string); tok != "" {
@@ -654,23 +579,8 @@ func AppendEnvLine(path, key, value string) error {
 	return err
 }
 
-// BackfillEnvFromEmbed appends any ACTIVE key present in the embedded
-// env.example template but missing from the user's .env, using the
-// template's default value. It is the general "a new release added a
-// config key, get it to already-onboarded users" primitive: those users
-// never re-run the onboard wizard (cmd/start.go only runs it when .env is
-// absent), so without this a key added to the template after their
-// install would never reach their container (telemetry vars, for one,
-// flow into langgraph purely via env_file:.env).
-//
-// Guarantees:
-//   - Existing keys and their values are NEVER modified (only additions).
-//   - Commented / optional template lines (e.g. "# LANGGRAPH_PORT=2024")
-//     are ignored — only active defaults are backfilled.
-//   - A one-time ".env.bak" snapshot is written before the first append.
-//   - Idempotent: a second call with no new template keys is a no-op.
-//
-// Returns the list of keys added (nil when nothing changed).
+// BackfillEnvFromEmbed adds missing active defaults without overwriting existing keys.
+// It creates .env.bak before the first append and returns the keys added.
 func BackfillEnvFromEmbed(envPath string) ([]string, error) {
 	data, err := os.ReadFile(envPath)
 	if err != nil {
@@ -734,12 +644,7 @@ func BackfillEnvFromEmbed(envPath string) ([]string, error) {
 	return added, nil
 }
 
-// SetEnvKey sets KEY=value in the .env at path, replacing the first active
-// occurrence in place (preserving surrounding lines and comments) or
-// appending the line when the key is absent. Unlike AppendEnvLine it
-// overwrites an existing value, so it is the right primitive for a
-// migration that must change a setting (e.g. flipping RAPTIX_TELEMETRY
-// after a re-consent prompt).
+// SetEnvKey replaces the first active entry or appends the key if missing.
 func SetEnvKey(path, key, value string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -772,30 +677,8 @@ func Get(env map[string]string, key, fallback string) string {
 	return fallback
 }
 
-// MigrateActiveComposeProfiles comments out any active "COMPOSE_PROFILES="
-// line in the .env file.
-//
-// Before ADR-0006 (v1.1.7 and earlier) the OSS .env.example shipped with
-// an active "COMPOSE_PROFILES=c2-sliver" line so `raptix start`
-// always brought the Sliver C2 container up. ADR-0006 routes every
-// specialist workload (c2-sliver, ad, reversing, …) through the
-// opscontrol daemon; the orchestrator decides when each plane comes up
-// via `ops_start(...)`. A stale active COMPOSE_PROFILES from a v1.1.7-era
-// .env forces those workloads to spawn on every `raptix start`,
-// defeating the dynamic-spawn design and re-introducing the idle-cost +
-// attack-surface that ADR-0006 was meant to remove.
-//
-// Behaviour:
-//   - rewrites every active "COMPOSE_PROFILES=…" line to a "# Migrated …"
-//     comment, preserving the original value inline so the operator can
-//     restore it by hand if they really want global activation
-//   - commented-out lines are left untouched (idempotent on repeat starts)
-//   - a single ".env.bak" backup is written next to the .env on the first
-//     migration; subsequent migrations skip the backup if one already
-//     exists, so a later edit-and-restart can't silently overwrite the
-//     pre-migration snapshot
-//   - returns (rewrote, error); rewrote=true is the signal for the caller
-//     to surface a one-line notice to the user
+// MigrateActiveComposeProfiles comments out active profile entries so optional workloads stay off at startup.
+// It preserves original values in comments and creates a backup only if none exists.
 func MigrateActiveComposeProfiles(envPath string) (bool, error) {
 	data, err := os.ReadFile(envPath)
 	if err != nil {

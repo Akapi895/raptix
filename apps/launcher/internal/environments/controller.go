@@ -314,8 +314,7 @@ func (c *Controller) hostWorkspace(raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// The project workspace is created on first use, one directory under a root that must already exist (ADR-0092 I06).
-	// The path was checked against the root above and is checked again below, once it exists.
+	// Check the workspace path again after creation to verify it remains under the root.
 	real, err := c.resolve(norm)
 	if errors.Is(err, fs.ErrNotExist) {
 		if _, rootErr := os.Stat(c.cfg.WorkspaceRoot); rootErr != nil {
@@ -458,9 +457,7 @@ func generationOf(labels map[string]string) int64 {
 	return gen
 }
 
-// isNotFound reports a daemon answer that a resource is absent. Docker words it differently per kind: "No such
-// container", "No such volume", "network X not found". Only a daemon error counts, so a missing docker client
-// binary is never mistaken for an absent resource.
+// isNotFound recognizes missing-resource replies from Docker without masking errors from the client.
 func isNotFound(stderr string) bool {
 	lower := strings.ToLower(stderr)
 	return strings.Contains(lower, "error response from daemon") && (strings.Contains(lower, "no such") || strings.Contains(lower, "not found"))

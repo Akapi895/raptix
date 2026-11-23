@@ -19,9 +19,7 @@ var stopCmd = &cobra.Command{
 		if err := c.Down(); err != nil {
 			return err
 		}
-		// Tear down the opscontrol daemon after compose so any
-		// workload it owned has already been removed by `compose down`.
-		// Non-fatal: a never-started daemon is a no-op here.
+		// Shut down Compose workloads before stopping their host daemon.
 		if err := opscontrol.Stop(); err != nil {
 			ui.Warning("opscontrol stop: " + err.Error())
 		}

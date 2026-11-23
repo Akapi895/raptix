@@ -1,13 +1,4 @@
-/**
- * Engagement/project wire contracts.
- *
- * `Engagement` is the LEGACY captured contract (W00 HTTP fixture / DB row
- * shape, camelCase). Keep legacy parsing distinct and marked legacy: the
- * server maps it to the public `ProjectViewModel`, which never exposes
- * `workspacePath`/`userId`. Approval HITL wire: legacy snake_case payloads
- * (`request_id`, epoch-seconds `created_at`) stay legacy-raw and are
- * intentionally not re-described here.
- */
+/** Legacy engagement rows and the public project view. The server maps between them. */
 import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 
 export const ENGAGEMENT_STATUSES = ['draft', 'planning', 'running', 'completed', 'failed'] as const
@@ -22,7 +13,7 @@ export function isEngagementTargetType(value: unknown): value is EngagementTarge
   return typeof value === 'string' && (ENGAGEMENT_TARGET_TYPES as readonly string[]).includes(value)
 }
 
-/** Legacy captured engagement row (W00 fixtures 004/006/007). Not the public project DTO. */
+/** Legacy API engagement row. */
 export interface Engagement {
   id: string
   name: string
@@ -65,13 +56,7 @@ export function isCreateEngagementRequest(value: unknown): value is CreateEngage
   )
 }
 
-/**
- * Public project view model (guide section 5.2): a NEW public DTO, not the
- * legacy captured DB row. Counts are `null` when no projection source exists;
- * `0` only when the projection/API confirms confirmed emptiness. The public
- * shape never carries `workspacePath` or `userId` — the validator rejects
- * those keys and absolute-path-shaped slugs.
- */
+/** Public project fields. Null counts indicate unavailable data. Zero means confirmed empty. */
 export const METADATA_STATES = ['verified', 'needs_review'] as const
 export type MetadataState = (typeof METADATA_STATES)[number]
 export function isMetadataState(value: unknown): value is MetadataState {
@@ -108,7 +93,7 @@ export interface ProjectViewModel {
   source?: ProjectSource
 }
 
-/** Slug, not a path: no separators, so no absolute workspace path can leak through. */
+/** Workspace slug. Path separators are invalid. */
 export function isWorkspaceSlug(value: unknown): value is string {
   return isNonEmptyString(value) && !value.includes('/') && !value.includes('\\')
 }

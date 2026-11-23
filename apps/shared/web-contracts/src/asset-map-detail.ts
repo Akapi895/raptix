@@ -1,8 +1,4 @@
-/**
- * Asset detail read model (plan phase 4): the inspector for one asset plus its typed
- * domain detail. Kinds without a typed view answer `unsupported` with a reason, never
- * an empty list that would read as "nothing found".
- */
+/** Asset detail view. Unsupported kinds return a reason. */
 import { isNonEmptyString, isRecord } from './guards.js'
 import { isAssetMapAssetRef, isAssetMapCompleteness, type AssetMapAssetRef, type AssetMapCompleteness } from './asset-map.js'
 
@@ -11,7 +7,7 @@ export interface AssetMapProvenanceSource {
   count: number
 }
 
-/** A pointer back to the observation that asserted this asset. Raw payloads stay in artifact storage. */
+/** Observation provenance. Raw payloads stay in artifact storage. */
 /** A capture imported from the workspace artifact an observation came from. */
 export interface AssetMapEvidenceCapture {
   id: string
@@ -24,11 +20,11 @@ export interface AssetMapEvidenceRef {
   source: string
   sourceEpisodeId: string | null
   observedAt: string | null
-  /** The engagement-relative workspace artifact the observation was read from, when known. */
+  /** Path of the source artifact within the engagement, when known. */
   artifactRef: string | null
-  /** The sha256 of the artifact bytes the observation was parsed from. A capture links only when its digest equals this. */
+  /** SHA-256 of the parsed bytes. A capture links only when its digest matches. */
   artifactDigest: string | null
-  /** The capture of that artifact version in this engagement, or null while that version has not been imported. */
+  /** Capture for this artifact version, or null until imported. */
   capture: AssetMapEvidenceCapture | null
 }
 

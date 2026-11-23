@@ -16,10 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// controllerFlags are the sandbox-controller knobs `web start` and
-// `web sandboxes start` accept. Empty means "resolve from the environment,
-// the stack's .env, or the defaults" — resolveControllerSettings owns that
-// order, so the same flags mean the same thing on both commands.
+// controllerFlags are shared by web start and web sandboxes start.
 type controllerFlags struct {
 	secretsDir string
 	network    string
@@ -35,10 +32,7 @@ func addControllerFlags(cmd *cobra.Command, f *controllerFlags) {
 	fl.StringVar(&f.listen, "sandbox-listen", "", "address the controller serves on (default: 127.0.0.1:9200)")
 }
 
-// controllerSettings are the resolved values the sandbox controller needs.
-// The controller is a host process (only the host has the container
-// runtime), so the launcher forks itself detached to serve it, and
-// `stop`/`status` address it through a PID file next to its log.
+// controllerSettings configures the detached host process and its PID and log paths.
 type controllerSettings struct {
 	home       string
 	secretsDir string
@@ -59,10 +53,7 @@ func controllerLogPath(s controllerSettings) string {
 	return filepath.Join(controllerDir(s), "controller.log")
 }
 
-// loadStackEnv returns the environment values of the deployment whose
-// sandbox settings should be reused. A dev checkout runs compose from the
-// repository (./.env), an installed launcher from the Raptix home; the
-// first file that exists wins, and a missing file just means "no overrides".
+// loadStackEnv reads the first available .env from the checkout or installation.
 func loadStackEnv() (map[string]string, error) {
 	for _, path := range []string{".env", filepath.Join(config.RaptixHome(), ".env")} {
 		if _, err := os.Stat(path); err != nil {
@@ -73,11 +64,8 @@ func loadStackEnv() (map[string]string, error) {
 	return map[string]string{}, nil
 }
 
-// resolveControllerSettings resolves where and how the controller runs:
-// explicit flags win, then the process environment, then the deployment's
-// .env, then defaults. The home is derived from the secrets dir's parent,
-// so one root holds secrets, compose files, the PID file and the log
-// together (the layout the retired apps/web stack's controller used).
+// resolveControllerSettings uses flags, process env, deployment .env, then defaults.
+// The secrets directory's parent becomes the controller home.
 func resolveControllerSettings(flags controllerFlags) (controllerSettings, error) {
 	env, err := loadStackEnv()
 	if err != nil {
@@ -106,11 +94,8 @@ func resolveControllerSettings(flags controllerFlags) (controllerSettings, error
 	}, nil
 }
 
-// ensureSandboxController starts the controller unless a healthy one is
-// already running. Secrets are created first if missing (idempotent: an
-// existing key is never rotated, sandboxes may already have been started
-// with it), then the launcher forks itself as `web sandboxes serve` with
-// the resolved settings and waits for the listener to accept connections.
+// ensureSandboxController reuses a healthy process or starts one and waits for its listener.
+// Missing secrets are initialized without rotating existing keys.
 func ensureSandboxController(out io.Writer, s controllerSettings) error {
 	if err := sandboxes.InitSecrets(s.secretsDir); err != nil {
 		return err
@@ -160,9 +145,7 @@ func ensureSandboxController(out io.Writer, s controllerSettings) error {
 	return nil
 }
 
-// stopSandboxController terminates the controller recorded in the PID file
-// and removes the file. Sandboxes are left running: they belong to
-// projects, not to the controller's lifetime.
+// stopSandboxController stops the host process while leaving project sandboxes running.
 func stopSandboxController(s controllerSettings) error {
 	pidPath := controllerPIDPath(s)
 	pid, alive := readControllerPID(pidPath)
@@ -195,9 +178,7 @@ func controllerStatus(s controllerSettings) string {
 	return fmt.Sprintf("sandbox controller: running (pid %d, listening on %s)", pid, s.listen)
 }
 
-// readControllerPID returns the recorded PID and whether that process is
-// still alive. A stale PID file (process gone) reads as "not running";
-// the next start overwrites it.
+// readControllerPID treats a stale PID file as stopped.
 func readControllerPID(path string) (int, bool) {
 	raw, err := os.ReadFile(path)
 	if err != nil {

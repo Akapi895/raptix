@@ -1,9 +1,4 @@
-/**
- * Canonical event types from StreamingRunnable's get_stream_writer().
- *
- * This is the single source of truth — both Web and CLI import from here.
- * Matches the backend contract at packages/raptix/raptix/core/subagent_streaming.py.
- */
+/** Shared types for events emitted by StreamingRunnable. */
 
 /** String literal union of all sub-agent event types. */
 export type SubagentEventType =
@@ -35,28 +30,17 @@ export interface SubagentCustomEvent {
   status?: string;
   cancelled?: boolean;
   error?: boolean;
-  // Raw emitter identity fields (subagent_streaming.py). `session_id` is the
-  // invocation-unique grouping key (camelCased to `sessionId` in StreamEvent
-  // and the normalized shape); `created_at` is an ISO-8601 UTC timestamp.
-  // Present on every StreamingRunnable event; the ask_user_question,
-  // engagement_ready and background_complete emitters do not set them yet.
+  // Invocation ID and UTC timestamp from StreamingRunnable. Other emitters may omit them.
   session_id?: string;
   created_at?: string;
-  // ask_user_question fields. `id` is the LangChain tool_call_id and is used
-  // by consumers to deduplicate the second emission that fires when LangGraph
-  // re-executes the tool body after Command(resume=...). Nullable: tool_call
-  // events forward ToolCall.id verbatim and LangChain allows None
-  // (subagent_tool_call emits `"id": null` when the model omitted it), so
-  // `null` means "explicitly no id" and must not be treated as a usable key.
+  // Tool-call ID used to deduplicate resumed questions. Null explicitly marks a missing ID.
   id?: string | null;
   question?: string;
   header?: string;
   options?: AskUserOption[];
   multi_select?: boolean;
   allow_other?: boolean;
-  // background_complete fields (auto-delivered when a bash background
-  // session finishes). ``content`` carries the captured output (already
-  // truncated to a head+tail preview by the middleware when large).
+  // Background completion fields. Large output may arrive as a head-and-tail preview.
   session?: string;
   command?: string;
   exit_code?: number | null;
@@ -69,23 +53,10 @@ export interface StreamEvent {
   content?: string;
   subagent?: string;
   timestamp: number;
-  /**
-   * Terminal status for `subagent_end` events. The CLI normalizes the
-   * backend's `error` boolean into `"error" | "success"` before events reach
-   * the shared utilities; consumers that forward the raw backend event leave
-   * this unset and set `error` instead (see {@link SubagentCustomEvent}).
-   * `deriveSubAgentSessions` honors either signal.
-   */
+  /** Normalized completion status. Session grouping also accepts the raw error flag. */
   status?: string;
   /** Raw backend error flag on `subagent_end` (the SubagentCustomEvent contract). */
   error?: boolean;
-  /**
-   * Per-invocation id emitted by the backend's StreamingRunnable. Lets
-   * `deriveSubAgentSessions` distinguish two concurrent dispatches of the
-   * SAME agent (e.g. orchestrator calling `task("recon", ...)` twice in
-   * parallel) — before this field existed the grouping was keyed on
-   * agent name and the second start silently collapsed the first
-   * session's stream into the second.
-   */
+  /** Invocation ID that separates concurrent runs of the same agent. */
   sessionId?: string;
 }

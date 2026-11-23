@@ -41,7 +41,7 @@ export interface PlanningView {
   readiness: { state: 'ready' | 'blocked'; reasons: string[]; runtimeSignal: 'not_observed' }
 }
 
-// -- O06 (ADR-0083): document source + draft views ----------------------
+// Published documents and saved drafts.
 // One read of the published file with both faces (raw source and the public
 // projection), the digest precondition base, schema validation errors and the
 // actor's saved draft. Drafts live server-side; publish is a separate,

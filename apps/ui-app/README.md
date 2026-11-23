@@ -41,4 +41,4 @@ The checks include type checking, linting, unit tests and browser tests of both 
 - `src/api/` owns the browser-facing API client and contracts.
 - `src/main.ts` initializes the application, router and session handling.
 
-[Endpoint inventory](docs/ui-api-endpoints.md) · [Frontend OpenAPI contract](docs/openapi.yaml)
+[OpenAPI contract](docs/openapi.yaml) · [Realtime transport](docs/realtime-api-contracts.md)

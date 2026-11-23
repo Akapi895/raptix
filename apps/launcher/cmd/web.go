@@ -96,9 +96,7 @@ func init() {
 		if port == "" {
 			port = "8080"
 		}
-		// The controller is what makes project creation work (ADR-0086 A):
-		// start it alongside the API so the operator never runs
-		// `sandboxes serve` by hand. Idempotent; already-running wins.
+		// Start the sandbox controller alongside the API so it can create projects.
 		settings, err := resolveControllerSettings(controller)
 		if err != nil {
 			return err

@@ -2,7 +2,6 @@
   "name": "raptix",
   "private": true,
   "workspaces": [
-    "apps/desktop",
     "apps/ui-app",
     "apps/api",
     "apps/shared/*"
@@ -14,8 +13,6 @@
     "build:api": "npm run build --workspace=@raptix/api",
     "start": "npm run start --workspace=@raptix/api",
     "start:web": "npm run preview --workspace=@raptix/ui-app",
-    "desktop": "npm run start --workspace=@raptix/desktop",
-    "desktop:test": "npm test --workspace=@raptix/desktop",
     "prisma:generate": "npm run prisma:generate --workspace=@raptix/api",
     "prisma:migrate": "npm run prisma:migrate --workspace=@raptix/api"
   },

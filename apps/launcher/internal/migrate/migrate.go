@@ -1,25 +1,5 @@
-// Package migrate runs idempotent, ordered upgrade steps at
-// `raptix start` so that already-onboarded users — who never re-run
-// the onboard wizard (cmd/start.go only invokes it when .env is absent) —
-// still pick up config keys and policy changes introduced by later
-// releases.
-//
-// There are two kinds of step:
-//
-//   - Non-interactive (Interactive=false): a pure, self-idempotent config
-//     migration. Runs on EVERY start regardless of TTY and is never
-//     ack-recorded (so it keeps catching newly-added keys after each
-//     update). Example: backfilling new env.example keys into an existing
-//     .env.
-//
-//   - Interactive (Interactive=true): a one-time prompt, e.g. a consent
-//     re-ask after a policy change. It is recorded in the ack store so it
-//     runs at most once, and is SILENTLY SKIPPED (deferred) when stdin is
-//     not a TTY — so CI / piped starts are never blocked and the next
-//     interactive start reconsiders.
-//
-// Adding a future migration is one line: append a Step to Registry().
-// That is the whole mechanism; no new wiring in start.go.
+// Package migrate applies upgrade steps during startup. Config backfills run every time.
+// Interactive steps wait for a TTY and are recorded after success.
 package migrate
 
 import (
@@ -55,9 +35,7 @@ type Step struct {
 	ID          string
 	Description string
 	Interactive bool
-	// Apply performs the migration and returns a human note to surface
-	// (empty for "nothing happened"). For interactive steps a nil error
-	// records the ack so the step never runs again.
+	// Apply returns an optional operator message. A successful interactive step is recorded.
 	Apply func(c *Ctx) (note string, err error)
 }
 
@@ -67,9 +45,7 @@ var (
 	isInteractive = func() bool { return term.IsTerminal(int(os.Stdin.Fd())) }
 )
 
-// RunAll builds a real Ctx from the launcher environment and applies the
-// registered steps. env is the already-loaded .env map; steps may mutate
-// it so the rest of `start` sees post-migration values.
+// RunAll applies registered migrations to the loaded environment, which steps may update in place.
 func RunAll(env map[string]string) {
 	home := config.RaptixHome()
 	c := &Ctx{
@@ -111,10 +87,7 @@ func Run(c *Ctx, steps []Step) {
 	}
 }
 
-// MarkAcked records an interactive migration as already handled. The
-// onboard wizard calls this for the telemetry policy so a fresh install —
-// which just made the same choice in the wizard — never gets re-prompted
-// at first start.
+// MarkAcked records a choice made during onboarding so startup can skip that prompt.
 func MarkAcked(home, id string) error {
 	c := &Ctx{ackPath: filepath.Join(home, ackFileName)}
 	c.loadAcks()

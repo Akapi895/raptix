@@ -22,9 +22,7 @@ import (
 	"github.com/Akapi895/raptix/apps/launcher/internal/ui"
 )
 
-// ConfigManifestAsset is the name of the sha256sum-format manifest the
-// release workflow uploads alongside the Go binaries. It pins
-// base/web Compose files, infra/config/litellm.yaml, and .env.example.
+// ConfigManifestAsset names the release checksum manifest for configuration files.
 const ConfigManifestAsset = "config-checksums.txt"
 
 // BinaryChecksumsAsset is GoReleaser's binary checksum manifest. Same
@@ -39,26 +37,10 @@ var RawBaseURL = "https://raw.githubusercontent.com/" + Repo
 // an httptest server.
 var APIBaseURL = "https://api.github.com/repos/" + Repo
 
-// executableFn is a var so tests can redirect binary writes to a temp dir
-// instead of overwriting the test binary itself. Matches the isWSLFn /
-// wslHostIPFn pattern used in cmd/start.go.
+// executableFn lets tests replace a temporary binary in place of the running test binary.
 var executableFn = os.Executable
 
-// Channel selects which releases the updater tracks. The model mirrors
-// Claude Code's update channels: both are FINAL-only (pre-releases are
-// never auto-selected); the difference is a bake/soak delay, not
-// pre-release inclusion.
-//
-//   - ChannelStable (default): the newest FINAL release that has baked on
-//     the latest channel for at least the soak window (default ~1 week) —
-//     a delayed, more-vetted promotion. Maps to GHCR ":stable".
-//   - ChannelLatest: the newest FINAL release, immediately (GitHub
-//     "latest", which excludes pre-releases). Maps to GHCR ":latest".
-//
-// Raptix defaults to stable (conservative for an offensive-security
-// tool); the channel semantics match Claude Code's soak model, only the
-// default differs (Claude Code defaults to latest). Selected via the
-// "RAPTIX_CHANNEL" key in ".env".
+// Channel selects final releases. Stable waits for the soak window. Latest tracks new releases immediately.
 type Channel string
 
 const (
@@ -69,9 +51,7 @@ const (
 // nowFn is injectable so tests can pin "now" for stable soak math.
 var nowFn = time.Now
 
-// stableSoak is how long a final release must bake on the latest channel
-// before the stable channel adopts it (Claude-Code-style ~1 week).
-// Override with RAPTIX_STABLE_SOAK_DAYS. A var so tests can pin it.
+// stableSoak is the promotion delay and can be overridden with RAPTIX_STABLE_SOAK_DAYS.
 var stableSoak = resolveStableSoak()
 
 func resolveStableSoak() time.Duration {
@@ -87,9 +67,7 @@ func resolveStableSoak() time.Duration {
 	return time.Duration(days * 24 * float64(time.Hour))
 }
 
-// ResolveChannel normalizes a raw "RAPTIX_CHANNEL" value. Empty or
-// unrecognized values resolve to the safe default (stable) so a typo can
-// never silently opt a security-tool user onto the faster channel.
+// ResolveChannel defaults to stable for empty or unrecognized values.
 func ResolveChannel(raw string) Channel {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
 	case string(ChannelLatest):
@@ -114,23 +92,11 @@ type Asset struct {
 	BrowserDownloadURL string `json:"browser_download_url"`
 }
 
-// FetchRelease gets the release to track for the given channel.
-//
-//   - latest: the newest FINAL release, immediately (GitHub
-//     /releases/latest, which excludes pre-releases and drafts).
-//   - stable: the newest FINAL release that has baked for at least the
-//     soak window. Falls back to the newest final when nothing has soaked
-//     yet, so stable always resolves to something installable.
+// FetchRelease selects a final release. Stable falls back to latest if no release has aged enough.
 func FetchRelease(ch Channel) (*Release, error) {
 	if ch == ChannelStable {
 		return fetchSoakedStable()
 	}
-	return fetchLatestFinal()
-}
-
-// FetchLatestRelease is the latest-channel fetch (newest final), kept for
-// callers that don't thread a channel through.
-func FetchLatestRelease() (*Release, error) {
 	return fetchLatestFinal()
 }
 
@@ -153,9 +119,6 @@ func fetchLatestFinal() (*Release, error) {
 	return &release, nil
 }
 
-// fetchSoakedStable lists releases and returns the newest FINAL one that
-// has baked for at least the soak window. Falls back to the newest final
-// when nothing has soaked yet (e.g. a brand-new project).
 func fetchSoakedStable() (*Release, error) {
 	releases, err := listReleases()
 	if err != nil {
@@ -186,9 +149,7 @@ func listReleases() ([]Release, error) {
 	return releases, nil
 }
 
-// pickSoakedStable returns the highest-precedence FINAL (non-draft, non-
-// prerelease) release published at least `soak` before `now`, or nil when
-// none qualify.
+// pickSoakedStable returns the highest final version that meets the age requirement, or nil.
 func pickSoakedStable(releases []Release, now time.Time, soak time.Duration) *Release {
 	cutoff := now.Add(-soak)
 	var best *Release
@@ -221,12 +182,7 @@ func CompareVersions(current, latest string) bool {
 	return compareSemver(current, latest) < 0
 }
 
-// compareSemver compares two semver strings. Returns -1, 0, or 1. Honors
-// SemVer §11 prerelease precedence: a prerelease (“1.2.0-rc.1“) ranks
-// LOWER than its associated normal version (“1.2.0“), and prerelease
-// identifiers are compared field-by-field. Build metadata (“+...“) is
-// ignored. This matters for the “latest“ channel, which surfaces -rc
-// builds the “stable“ channel never sees.
+// compareSemver compares version precedence and ignores build metadata.
 func compareSemver(a, b string) int {
 	aBase, aPre := splitPrerelease(a)
 	bBase, bPre := splitPrerelease(b)
@@ -279,10 +235,7 @@ func compareNumericBase(a, b string) int {
 	return 0
 }
 
-// comparePrerelease compares dot-separated prerelease identifiers per
-// SemVer §11: numeric identifiers compare numerically, alphanumerics
-// compare lexically, numeric ranks below alphanumeric, and when every
-// shared identifier is equal the longer set has higher precedence.
+// comparePrerelease follows SemVer precedence for numeric and text identifiers.
 func comparePrerelease(a, b string) int {
 	aIDs := strings.Split(a, ".")
 	bIDs := strings.Split(b, ".")
@@ -336,27 +289,12 @@ func parseUint(s string) (int, bool) {
 	return n, true
 }
 
-// SyncConfigFiles verifies and installs the base Compose and LiteLLM configs.
-//
-// When “release“ is non-nil AND the release exposes a
-// “config-checksums.txt“ asset, every downloaded file is verified
-// against the manifest before being written to the install dir.
-// raw.githubusercontent.com (where the config files live) is served
-// from GitHub's CDN; the release asset is the authoritative integrity
-// pin for the same tag.
-//
-// Branch-tracking installs (RAPTIX_BRANCH set in .env, no release
-// asset available) fall back to the legacy download-without-verify
-// behavior with a warning. “release == nil“ exists for this path.
+// SyncConfigFiles verifies all downloads against release checksums when a manifest exists.
+// Branch installs and releases without a manifest use the unverified fallback with a warning.
 func SyncConfigFiles(branch string, release *Release) error {
 	home := config.RaptixHome()
 	files := map[string]string{
-		// docker-compose.opscontrol.yml is intentionally absent: it is
-		// LAUNCHER-MANAGED (cmd/opscontrol/supervisor.go embeds the
-		// body and writes it at every `raptix start`), so the file
-		// is never downloaded, never manifest-verified, and never
-		// release-tied. Previously every overlay change forced a point
-		// release with a "no checksum entry" sync warning.
+		// The launcher writes the opscontrol overlay locally, so it is excluded from downloads.
 		"docker-compose.yml":        filepath.Join(home, "docker-compose.yml"),
 		"infra/config/litellm.yaml": filepath.Join(home, "infra", "config", "litellm.yaml"),
 	}
@@ -394,11 +332,7 @@ func SyncConfigFiles(branch string, release *Release) error {
 	return nil
 }
 
-// fetchManifest downloads a sha256sum-format manifest asset from the
-// given release and returns it as a map of "manifest path → hex digest".
-// Returns (nil, nil) when “release“ is nil OR the asset is absent
-// (branch-tracking installs and pre-1.0.27 releases respectively); the
-// caller treats that as legacy mode and skips per-file verification.
+// fetchManifest loads the release checksum map. A missing release or asset yields a nil map.
 func fetchManifest(client *http.Client, release *Release, assetName string) (map[string]string, error) {
 	if release == nil {
 		ui.Warning("No release pinned for sync — skipping checksum verification (branch mode).")
@@ -423,10 +357,7 @@ func fetchManifest(client *http.Client, release *Release, assetName string) (map
 	return parseChecksumManifest(resp.Body)
 }
 
-// parseChecksumManifest reads sha256sum format ("<hex>  <path>" or
-// "<hex> *<path>") and returns a {path: hex} map. Whitespace-only and
-// empty lines are tolerated; malformed lines are rejected so a corrupted
-// manifest cannot silently lose entries.
+// parseChecksumManifest accepts sha256sum format and rejects malformed entries.
 func parseChecksumManifest(r io.Reader) (map[string]string, error) {
 	out := map[string]string{}
 	scanner := bufio.NewScanner(r)
@@ -435,9 +366,7 @@ func parseChecksumManifest(r io.Reader) (map[string]string, error) {
 		if line == "" {
 			continue
 		}
-		// "<hex>  <path>" — split on the first whitespace run; the
-		// remainder is the path. Tolerate the optional " *" prefix
-		// (sha256sum's binary-mode marker).
+		// Accept the optional sha256sum binary-mode marker before a path.
 		fields := strings.Fields(line)
 		if len(fields) < 2 {
 			return nil, fmt.Errorf("malformed manifest line: %q", line)
@@ -520,9 +449,8 @@ func downloadFile(client *http.Client, url, dst string) error {
 	return os.WriteFile(dst, data, 0o600)
 }
 
-// CleanupOldBinary removes the backup left by a successful Windows update.
-// It is best-effort because the old parent process may still hold the file
-// open during the immediate post-update re-exec; the next launch retries it.
+// CleanupOldBinary removes the Windows backup on a best-effort basis.
+// The previous process may still hold it open during restart.
 func CleanupOldBinary() {
 	if runtime.GOOS != "windows" {
 		return
@@ -555,12 +483,8 @@ func replaceExecutable(tmpPath, execPath string) error {
 	return nil
 }
 
-// SelfUpdate downloads and replaces the current binary. The download is
-// verified against “checksums.txt“ (GoReleaser-produced) before the
-// executable swap — a tampered binary on the GitHub CDN never reaches
-// disk in the executable path. Releases that predate checksum
-// verification (no “checksums.txt“ asset) emit a warning and fall
-// back to the legacy unverified replace.
+// SelfUpdate verifies the binary before replacement when the release has a checksum manifest.
+// Older releases without checksums use the legacy path and emit a warning.
 func SelfUpdate(release *Release) error {
 	assetName := fmt.Sprintf("raptix-%s-%s", runtime.GOOS, runtime.GOARCH)
 
@@ -588,9 +512,7 @@ func SelfUpdate(release *Release) error {
 	}
 
 	tmpPath := execPath + ".tmp"
-	// Create temp file owner-only so an unverified binary is never
-	// world-readable or executable. Chmod to 0o755 happens only after
-	// checksum verification succeeds, immediately before the rename.
+	// Keep the temporary binary private and non-executable until verification.
 	tmp, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		return fmt.Errorf("create temp file: %w", err)
@@ -603,10 +525,7 @@ func SelfUpdate(release *Release) error {
 	}
 	tmp.Close()
 
-	// Verify the downloaded binary before swapping it into place. If the
-	// release predates checksum publishing (pre-1.0.27) fetchManifest
-	// returns (nil, nil) and we skip with a warning — that keeps existing
-	// upgrade paths working while the new check rolls out.
+	// Warn when legacy releases lack a checksum manifest.
 	manifest, err := fetchManifest(client, release, BinaryChecksumsAsset)
 	if err != nil {
 		os.Remove(tmpPath)
@@ -642,12 +561,7 @@ func WriteVersion(version string) error {
 	return os.WriteFile(versionFile, []byte(strings.TrimPrefix(version, "v")), 0o644)
 }
 
-// NotifyIfUpdateAvailable checks GitHub releases and prints a non-blocking
-// update notice. It never mutates the binary, config files, or Docker images;
-// users apply updates explicitly with `raptix update`.
-//
-// Used as the fallback path when “PromptIfUpdateAvailable“ cannot present
-// an interactive prompt (e.g. stdin is not a TTY in CI / piped invocation).
+// NotifyIfUpdateAvailable prints an update notice without modifying the installation.
 func NotifyIfUpdateAvailable(currentVersion string, ch Channel) bool {
 	release, err := FetchRelease(ch)
 	if err != nil {
@@ -663,25 +577,15 @@ func NotifyIfUpdateAvailable(currentVersion string, ch Channel) bool {
 	return true
 }
 
-// ApplyUpdate runs the full upgrade flow: SyncConfigFiles, Docker image
-// pull, SelfUpdate (binary), WriteVersion. Shared between the
-// “raptix update“ command and the interactive launch-time prompt.
-//
-// “ref“ is the git ref used for “SyncConfigFiles“ — “release.TagName“
-// for tagged releases, or a branch name for development tracking.
-//
-// Config verification and image-pull failures abort before replacing the binary
-// or version marker, so a partial release is never announced as installed.
+// ApplyUpdate syncs config and pulls images before replacing the binary or writing the version.
+// The ref is the release tag or an explicit branch override.
 func ApplyUpdate(release *Release, ref string) error {
 	if release == nil {
 		return fmt.Errorf("nil release")
 	}
 
 	ui.Info("Syncing configuration files...")
-	// Pass release through so SyncConfigFiles can verify against the
-	// release-pinned manifest when we're tracking a tag. Branch-mode
-	// (ref differs from release.TagName) gets nil so verification is
-	// skipped with a warning instead of failing.
+	// Branch configs cannot be checked against the release manifest.
 	syncRelease := release
 	if ref != release.TagName && ref != strings.TrimPrefix(release.TagName, "v") {
 		syncRelease = nil
@@ -706,24 +610,8 @@ func ApplyUpdate(release *Release, ref string) error {
 	return nil
 }
 
-// PromptIfUpdateAvailable presents an interactive y/n confirmation when a
-// newer release exists. On approval, applies the update and re-execs the
-// running launcher with the freshly installed binary so the rest of the
-// caller's flow runs against the new version (matches the Claude Code /
-// Codex CLI behavior of "update applied, restarting").
-//
-// Returns “true“ only when the user approved AND ApplyUpdate succeeded
-// AND re-exec was issued. On POSIX the re-exec replaces the process via
-// “syscall.Exec“, so a true return is effectively unreachable; the
-// helper still returns the value for tests and Windows callers, where
-// re-exec spawns a child + “os.Exit“ from the parent.
-//
-// Skips silently (returns false, nil) when:
-//   - “currentVersion“ is empty / "dev" — local build, no published release to track.
-//   - “FetchLatestRelease“ fails — offline or GitHub unavailable.
-//   - the latest release is not newer than “currentVersion“.
-//   - stdin is not a TTY — CI / piped invocations fall back to
-//     “NotifyIfUpdateAvailable“ so the user still sees the notice.
+// PromptIfUpdateAvailable asks before updating and restarting. Without a TTY it prints a notice.
+// Development builds, failed release checks and current versions skip the update.
 func PromptIfUpdateAvailable(currentVersion string, ch Channel) (bool, error) {
 	if currentVersion == "" || currentVersion == "dev" {
 		return false, nil
@@ -775,11 +663,6 @@ func PromptIfUpdateAvailable(currentVersion string, ch Channel) (bool, error) {
 	return applyAndReexec(release, currentVersion)
 }
 
-// isInteractiveStdin returns true when the launcher's stdin is connected
-// to a real terminal. Piped / redirected stdin (CI, log shippers,
-// supervisor pipelines) returns false so the launch flow falls back to
-// the passive update notice instead of blocking on a prompt that nobody
-// can answer.
 func isInteractiveStdin() bool {
 	return term.IsTerminal(int(os.Stdin.Fd()))
 }
@@ -806,10 +689,7 @@ func resolveUpdateRef(release *Release) string {
 	return ref
 }
 
-// applyAndReexec runs the full upgrade (config sync + image pull + binary
-// self-update + .version stamp) then re-execs into the freshly installed
-// binary. Shared by the interactive prompt (after confirmation) and the
-// unattended AUTO_UPDATE path so both behave identically.
+// applyAndReexec restarts the launcher only after the update succeeds.
 func applyAndReexec(release *Release, currentVersion string) (bool, error) {
 	if err := ApplyUpdate(release, resolveUpdateRef(release)); err != nil {
 		ui.Warning("Update failed: " + err.Error())
@@ -824,16 +704,11 @@ func applyAndReexec(release *Release, currentVersion string) (bool, error) {
 		ui.DimText("Run `raptix` again to use the new version.")
 		os.Exit(0)
 	}
-	// POSIX exec replaces the process — control never reaches here. The
-	// Windows path inside reexecSelf calls os.Exit after spawning the
-	// child, so this is also unreachable on Windows. Kept for symmetry.
+	// A successful restart does not return on either platform.
 	return true, nil
 }
 
-// AutoUpdateIfAvailable applies a newer release WITHOUT prompting. Wired to
-// the AUTO_UPDATE=true launch path for fully-unattended self-update (servers,
-// CI runners, kiosk deployments). Skips silently on dev builds, when offline,
-// or when already current — a self-update must never block or break a launch.
+// AutoUpdateIfAvailable updates without prompting and skips dev builds, failed checks and current versions.
 func AutoUpdateIfAvailable(currentVersion string, ch Channel) (bool, error) {
 	if currentVersion == "" || currentVersion == "dev" {
 		return false, nil
@@ -845,10 +720,6 @@ func AutoUpdateIfAvailable(currentVersion string, ch Channel) (bool, error) {
 	if !CompareVersions(currentVersion, release.TagName) {
 		return false, nil
 	}
-	// Default-on as of v1.1.12: silent self-update is the default. The
-	// suffix tells users they CAN opt out — important for the first
-	// release after the flip, when an unexpected re-exec might confuse
-	// operators who never set AUTO_UPDATE themselves.
 	ui.Info(fmt.Sprintf(
 		"Auto-updating: %s → %s (set AUTO_UPDATE=false to disable)",
 		displayVersion(currentVersion),

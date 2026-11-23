@@ -10,11 +10,7 @@ import (
 	"strings"
 )
 
-// LaunchdManager owns a per-user LaunchAgent at
-// ~/Library/LaunchAgents/red.raptix.opscontrol[.${STACK}].plist.
-//
-// LaunchAgents (not LaunchDaemons) is intentional — same UID story
-// as the systemd user-unit choice in systemd.go.
+// LaunchdManager installs a per-user LaunchAgent so the daemon runs as the operator.
 type LaunchdManager struct {
 	Label string // e.g. "red.raptix.opscontrol" or
 	//               "red.raptix.opscontrol.stack2"
@@ -32,10 +28,7 @@ var launchctlBinary = "launchctl"
 
 func (l *LaunchdManager) Name() string { return "launchd" }
 
-// Available probes the user-session launchd by asking for its print
-// dump. Exit 0 → bus is reachable; non-zero → no session bus (e.g.
-// CI runner without `launchctl bootstrap`). Failure degrades to
-// noopManager.
+// Available checks for a reachable user launchd session.
 func (l *LaunchdManager) Available() bool {
 	if _, err := exec.LookPath(launchctlBinary); err != nil {
 		return false
@@ -67,10 +60,7 @@ func (l *LaunchdManager) Installed() (bool, error) {
 	return err == nil, err
 }
 
-// Active uses `launchctl print` against the user domain. The output
-// contains a `state = running` line when the agent has live processes.
-// We grep for that — `launchctl list <label>` is the older surface
-// and returns 0 even when the agent has never started.
+// Active checks for launchd's running state. A known label alone is insufficient.
 func (l *LaunchdManager) Active() (bool, error) {
 	uid := strconv.Itoa(os.Getuid())
 	out, err := exec.Command(launchctlBinary, "print", "gui/"+uid+"/"+l.Label).Output()
@@ -150,9 +140,7 @@ func (l *LaunchdManager) Stop() error {
 	return nil
 }
 
-// renderPlist produces the LaunchAgent .plist body. KeepAlive +
-// SuccessfulExit=false mirrors systemd's Restart=on-failure — the
-// daemon comes back on crash but won't loop after a clean stop.
+// renderPlist restarts the daemon on a crash and leaves it stopped after a clean exit.
 func (l *LaunchdManager) renderPlist(spec InstallSpec) string {
 	logPath := filepath.Join(spec.HomePath, "run", "opscontrol"+stackSuffix())
 	stackEntry := ""

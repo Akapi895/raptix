@@ -8,12 +8,7 @@ import (
 	"strings"
 )
 
-// DefaultAllowlist is the workload catalog from ADR-0006's catalog
-// table. It lives in the binary, not in user-visible config, so OSS
-// users do not gain `ops_start("malicious")` rights by editing .env.
-// New OSS workloads are added by amending this slice and the
-// docker-compose.yml profile entry (extension protocol §Catalog
-// extension protocol).
+// DefaultAllowlist is the built-in workload catalog. Add new entries alongside their Compose profiles.
 var DefaultAllowlist = []string{
 	"ad",
 	"c2-sliver",
@@ -29,15 +24,10 @@ var DefaultAllowlist = []string{
 	"supply-chain",
 }
 
-// AllowlistExtraEnv lets tests / plugin authors append (never remove)
-// names without rebuilding the binary. Removing or overriding the
-// baked-in list is intentionally not possible — see ADR-0006 §1'.
+// AllowlistExtraEnv can add names to the catalog. It cannot remove built-in entries.
 const AllowlistExtraEnv = "RAPTIX_OPS_ALLOWLIST_EXTRA"
 
-// workloadName matches the names compose accepts as profile labels
-// (lowercase, digits, dash). The 63-char cap mirrors DNS-label
-// semantics so KubernetesBackend can reuse the validator without
-// rework.
+// workloadName accepts lowercase letters, digits and dashes, up to 63 characters.
 var workloadName = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,62}$`)
 
 // Allowlist is the resolved permission set used by the daemon.
@@ -45,9 +35,7 @@ type Allowlist struct {
 	members map[string]struct{}
 }
 
-// LoadAllowlist returns the default catalog merged with any extra
-// names from RAPTIX_OPS_ALLOWLIST_EXTRA. Invalid names in the env
-// variable are reported as an error rather than silently dropped.
+// LoadAllowlist adds environment overrides and rejects invalid names.
 func LoadAllowlist() (*Allowlist, error) {
 	members := make(map[string]struct{}, len(DefaultAllowlist))
 	for _, name := range DefaultAllowlist {

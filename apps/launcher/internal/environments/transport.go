@@ -21,8 +21,7 @@ const (
 	minTokenBytes    = 32
 )
 
-// NewServer returns an HTTP server bound to a loopback IP address only. The
-// controller is never reachable from another host (ADR-0092 transport decision).
+// NewServer accepts loopback addresses only.
 func NewServer(addr string, handler http.Handler) (*http.Server, error) {
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
